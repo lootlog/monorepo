@@ -30,6 +30,7 @@ type RequestMargonemAccountProofOptions = {
   characterId: string;
   clanId?: number;
   fetchFn?: typeof fetch;
+  signal?: AbortSignal;
 };
 
 const NONCE_BYTES = 16;
@@ -67,6 +68,7 @@ export async function requestMargonemAccountProof({
   characterId,
   clanId,
   fetchFn = fetch,
+  signal,
 }: RequestMargonemAccountProofOptions): Promise<MargonemAccountProof> {
   const token = createMargonemAccountProofToken({
     socketId,
@@ -77,6 +79,7 @@ export async function requestMargonemAccountProof({
 
   const response = await fetchFn(MARGONEM_ACCOUNT_VALIDATE_URL, {
     method: "POST",
+    signal,
     credentials: "include",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -89,7 +92,17 @@ export async function requestMargonemAccountProof({
   }
 
   const data: unknown = await response.json();
-  const proof = parseMargonemAccountProofResponse(data);
+
+  if (!isMargonemAccountProofResponse(data))
+    throw new Error("Invalid Margonem account proof response");
+
+  const proof: ParsedMargonemAccountProofResponse = {
+    userId: String(data.user_id),
+    token: data.token,
+    ts: data.ts,
+    validatedString: data.validatedString,
+    signatureBase64: data.signatureBase64,
+  };
 
   if (proof.token !== token || proof.userId !== accountId) {
     throw new Error("Margonem account proof does not match current account");
@@ -99,22 +112,6 @@ export async function requestMargonemAccountProof({
     ...proof,
     characterId,
     clanId,
-  };
-}
-
-function parseMargonemAccountProofResponse(
-  data: unknown,
-): ParsedMargonemAccountProofResponse {
-  if (!isMargonemAccountProofResponse(data)) {
-    throw new Error("Invalid Margonem account proof response");
-  }
-
-  return {
-    userId: String(data.user_id),
-    token: data.token,
-    ts: data.ts,
-    validatedString: data.validatedString,
-    signatureBase64: data.signatureBase64,
   };
 }
 

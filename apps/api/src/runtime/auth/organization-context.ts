@@ -20,6 +20,7 @@ import {
   PERMISSIONS_CACHE_TTL_SECONDS,
 } from "#src/shared/cache";
 import { MembersData } from "#src/http-api/handlers/members/members.handlers";
+import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 
@@ -131,7 +132,10 @@ export class OrganizationContextLookup extends Context.Service<
       readonly userId: string;
       readonly discordId: string;
       readonly guildId: string;
-    }) => Effect.Effect<OrganizationContext | null, OrganizationNotFound>;
+    }) => Effect.Effect<
+      OrganizationContext | null,
+      OrganizationNotFound | ReauthenticationRequired
+    >;
   }
 >()("@lootlog/api/http-api/organization-context") {
   static layerTest(service: OrganizationContextLookup["Service"]) {
@@ -268,7 +272,7 @@ export class OrganizationContextLookup extends Context.Service<
                   guild.id,
                   false,
                 )
-                .pipe(Effect.orDie);
+                .pipe(Effect.catchTag("MembersOperationError", Effect.die));
 
               if (!member?.active) return null;
 

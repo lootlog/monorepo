@@ -40,6 +40,10 @@ export function getLegacyAuthTokenCacheKey(userId: string): string {
   return `${AUTH_TOKEN_CACHE_KEY_PREFIX}:${userId}`;
 }
 
+export function getUserGuildPermissionsCacheScope(discordId: string): string {
+  return `user-guild-permissions:${discordId}`;
+}
+
 export function getUserLootlogConfigCacheScope(discordId: string): string {
   return `${USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX}:${discordId}`;
 }

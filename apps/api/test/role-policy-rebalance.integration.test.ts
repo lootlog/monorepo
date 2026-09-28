@@ -94,10 +94,15 @@ describe("Role policy rebalance against PostgreSQL", () => {
         );
         const published: Array<typeof GuildMemberChanged.Type> = [];
         let cleared = false;
+        const invalidatedUsers = new Set<string>();
         let failDelivery = false;
 
         const layer = RolesData.layerDatabase(
           {
+            invalidateUserGuildPermissions: (discordId) =>
+              Effect.sync(() => {
+                invalidatedUsers.add(discordId);
+              }),
             deleteByPattern: () =>
               Effect.sync(() => {
                 cleared = true;
@@ -107,6 +112,7 @@ describe("Role policy rebalance against PostgreSQL", () => {
             memberPolicyChanged: (member) =>
               Effect.gen(function* () {
                 expect(cleared).toBe(true);
+                expect(invalidatedUsers.has(member.discordId)).toBe(true);
 
                 if (failDelivery)
                   return yield* Effect.fail(new Error("broker unavailable"));

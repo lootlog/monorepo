@@ -10,6 +10,9 @@ import {
   getChatControllerGetChatMessagesQueryKey,
 } from "@lootlog/client/main";
 import { configureApiClients } from "@lootlog/client/transport";
+import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
+import { Permission } from "@lootlog/schema/permissions";
+import { applyChatAccessPolicy } from "../chat-access-policy";
 
 import { useChatGuildData } from "./use-chat-guild-data";
 
@@ -105,6 +108,77 @@ describe("useChatGuildData", () => {
         ),
       ).toEqual(["message-1", "message-2"]);
     });
+  });
+
+  it("finishes the initial history request once and excludes messages hidden by the joining policy", async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+
+    queryClients.push(queryClient);
+    const response = Promise.withResolvers<Response>();
+    historyRequests.mockReturnValue(response.promise);
+
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(
+      () =>
+        useChatGuildData({
+          currentCharacterNick: "Hero",
+          guilds: [{ id: "guild-1", name: "Guild" }],
+          selectedGuildId: "guild-1",
+        }),
+      { wrapper },
+    );
+
+    await waitFor(() => expect(historyRequests).toHaveBeenCalledTimes(1));
+    const visible = createMessage("visible", "2026-01-01T10:01:00.000Z");
+
+    const hidden = createChatMessage({
+      id: "hidden-titan",
+      type: "NPC",
+      npc: {
+        id: 1,
+        name: "Titan",
+        lvl: 100,
+        prof: "w",
+        wt: 100,
+        type: 3,
+        icon: "",
+        location: "Map",
+      },
+    });
+
+    act(() =>
+      applyChatAccessPolicy(
+        queryClient,
+        createAccessPolicySnapshot(
+          [
+            {
+              guild: { id: "guild-1", ownerId: "owner" },
+              roles: [
+                {
+                  permissions: [Permission.LOOTLOG_CHAT_READ],
+                  lvlRangeFrom: 0,
+                  lvlRangeTo: 500,
+                },
+              ],
+            },
+          ],
+          "reader",
+        ),
+      ),
+    );
+    expect(historyRequests).toHaveBeenCalledTimes(1);
+    response.resolve(Response.json([visible, hidden]));
+    await waitFor(() =>
+      expect(
+        result.current.messagesByGuildId["guild-1"]?.map(({ id }) => id),
+      ).toEqual(["visible"]),
+    );
+    expect(historyRequests).toHaveBeenCalledTimes(1);
   });
 
   it("keeps the mention context identity when a message from a known sender arrives", async () => {

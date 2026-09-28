@@ -26,17 +26,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -84,17 +86,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -149,17 +153,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -207,17 +213,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -274,17 +282,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -335,17 +345,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -396,17 +408,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -461,17 +475,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -525,17 +541,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -596,17 +614,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -663,17 +683,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -732,17 +754,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: <No Content>
           content:
@@ -803,17 +827,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: <No Content>
           content:
@@ -874,17 +900,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: <No Content>
           content:
@@ -946,17 +974,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: <No Content>
           content:
@@ -1018,17 +1048,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: <No Content>
           content:
@@ -1085,17 +1117,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: <No Content>
           content:
@@ -1150,17 +1184,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: <No Content>
           content:
@@ -1215,17 +1251,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: <No Content>
           content:
@@ -1285,17 +1323,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: <No Content>
           content:
@@ -1353,17 +1393,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -1415,17 +1457,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -1477,17 +1521,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -1541,17 +1587,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -1613,17 +1661,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -1684,17 +1734,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -1768,17 +1820,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -1876,17 +1930,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -1948,17 +2004,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -2020,17 +2078,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -2083,6 +2143,13 @@ paths:
           schema:
             type: string
           required: true
+        - name: freshness
+          in: query
+          schema:
+            type: string
+            enum:
+              - required
+          required: false
       security: []
       responses:
         "200":
@@ -2228,17 +2295,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: <No Content>
           content:
@@ -2297,17 +2366,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: <No Content>
           content:
@@ -2371,17 +2442,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -2446,17 +2519,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -2516,17 +2591,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -2605,17 +2682,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -2668,17 +2747,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -2755,17 +2836,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -2843,17 +2926,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -2935,17 +3020,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -3015,17 +3102,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -3096,17 +3185,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -3175,17 +3266,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -3241,17 +3334,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -3306,17 +3401,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -3371,17 +3468,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -3431,17 +3530,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -3504,17 +3605,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -3572,17 +3675,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -3637,17 +3742,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -3730,17 +3837,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -3791,17 +3900,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -3871,17 +3982,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -4064,17 +4177,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -4165,17 +4280,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -4247,17 +4364,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -4323,17 +4442,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -4394,17 +4515,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -4463,17 +4586,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -4547,17 +4672,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -4622,17 +4749,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -4702,17 +4831,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -4791,12 +4922,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -4870,12 +5002,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -5005,17 +5138,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: <No Content>
           content:
@@ -5069,17 +5204,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: <No Content>
           content:
@@ -5139,17 +5276,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: <No Content>
           content:
@@ -5210,17 +5349,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: <No Content>
           content:
@@ -5276,12 +5417,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse
+          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -5370,12 +5512,13 @@ paths:
                   - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse
+          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -5447,12 +5590,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse
+          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -5539,12 +5683,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse
+          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -5613,12 +5758,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse
+          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -5686,12 +5832,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse
+          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -5763,12 +5910,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse
+          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -5824,12 +5972,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse
+          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -5894,12 +6043,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse
+          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -5983,12 +6133,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse
+          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -6056,12 +6207,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse
+          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -6130,12 +6282,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse
+          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -6204,12 +6357,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse
+          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -6277,12 +6431,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse
+          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -6359,12 +6514,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: OrganizationWorkspaceErrorResponse
+          description: OrganizationWorkspaceErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -6449,17 +6605,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -6513,17 +6671,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -6582,17 +6742,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -6650,17 +6812,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -6723,17 +6887,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -6798,17 +6964,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -6862,17 +7030,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -6948,17 +7118,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -7023,17 +7195,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -7103,17 +7277,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -7179,17 +7355,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -7254,17 +7432,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -7325,17 +7505,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -7392,17 +7574,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -7452,17 +7636,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -7522,17 +7708,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -7591,17 +7779,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -7669,17 +7859,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -7742,17 +7934,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -7802,17 +7996,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -7878,17 +8074,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -7949,17 +8147,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -8020,17 +8220,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -8081,17 +8283,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -8141,17 +8345,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -8214,17 +8420,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -8290,17 +8498,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -8357,12 +8567,13 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -8443,12 +8654,13 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -8521,12 +8733,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -8582,12 +8795,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -8640,12 +8854,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -8719,12 +8934,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -8797,12 +9013,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -8887,12 +9104,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -8977,12 +9195,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -9067,12 +9286,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -9151,12 +9371,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -9241,12 +9462,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | ReauthenticationRequired
           content:
             application/json:
               schema:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - type: object
                     properties:
                       message:
@@ -9326,17 +9548,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -9386,17 +9610,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -9468,17 +9694,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -9533,17 +9761,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -9610,17 +9840,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -9684,17 +9916,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -9760,17 +9994,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -9841,17 +10077,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -9916,17 +10154,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -9991,17 +10231,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -10066,17 +10308,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -10142,17 +10386,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -10228,17 +10474,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -10304,17 +10552,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -10379,17 +10629,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -10450,17 +10702,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -10526,17 +10780,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -10595,17 +10851,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -10675,17 +10933,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -10756,17 +11016,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -10826,17 +11088,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -10897,17 +11161,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -10978,17 +11244,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -11058,17 +11326,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -11140,17 +11410,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -11221,17 +11493,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -11302,17 +11576,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -11371,17 +11647,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -11450,17 +11728,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -11521,17 +11801,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -11597,17 +11879,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -11685,17 +11969,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -11762,17 +12048,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -11866,17 +12154,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -11958,17 +12248,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -12056,17 +12348,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -12149,17 +12443,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -12235,17 +12531,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -12316,17 +12614,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -12397,17 +12697,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -12478,17 +12780,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -12560,17 +12864,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -12636,17 +12942,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -12710,17 +13018,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -12786,17 +13096,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -12860,17 +13172,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -12934,17 +13248,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -13006,17 +13322,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -13096,17 +13414,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -13180,17 +13500,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -13248,17 +13570,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -13323,17 +13647,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -13448,17 +13774,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -13511,17 +13839,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -13586,17 +13916,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -13660,17 +13992,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -13721,17 +14055,19 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -13838,17 +14174,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -13961,17 +14299,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -14037,17 +14377,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -14103,17 +14445,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -14244,17 +14588,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -14342,17 +14688,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -14423,17 +14771,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -14524,17 +14874,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -14668,17 +15020,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: HttpErrorResponse
           content:
@@ -14740,17 +15094,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -14867,17 +15223,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: <No Content>
           content:
@@ -14930,17 +15288,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -15002,17 +15362,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -15071,17 +15433,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -15145,17 +15509,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -15214,17 +15580,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -15282,17 +15650,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -15356,17 +15726,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -15425,17 +15797,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -15494,17 +15868,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/RequestValidationError"
         "401":
-          description: Error
+          description: ReauthenticationRequired
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
         "403":
           description: Error
           content:
@@ -15895,6 +16271,24 @@ components:
         - generatedAt
         - windowStart
         - items
+      additionalProperties: false
+    ReauthenticationRequiredEncoded:
+      type: object
+      properties:
+        _tag:
+          type: string
+          enum:
+            - ReauthenticationRequired
+        code:
+          type: string
+        requiresReauth:
+          type: boolean
+          enum:
+            - true
+      required:
+        - _tag
+        - code
+        - requiresReauth
       additionalProperties: false
     RequestValidationError:
       type: object
@@ -24074,6 +24468,93 @@ components:
           type: integer
           minimum: 0
           maximum: 9007199254740991
+        revision:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        volunteers:
+          type: array
+          items:
+            type: object
+            properties:
+              characterId:
+                type: string
+                minLength: 1
+                maxLength: 255
+              nick:
+                type: string
+                maxLength: 255
+              icon:
+                type: string
+                maxLength: 2048
+              lvl:
+                type: number
+              prof:
+                type: string
+                maxLength: 100
+              partyPresence:
+                type: string
+                enum:
+                  - OUTSIDE
+                  - IN_PARTY
+            required:
+              - characterId
+              - nick
+              - icon
+              - lvl
+              - prof
+              - partyPresence
+            additionalProperties: false
+        partyState:
+          anyOf:
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - UNKNOWN
+              required:
+                - status
+              additionalProperties: false
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - OBSERVED
+                observedAt:
+                  type: string
+                  format: date-time
+                  pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                members:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      characterId:
+                        type: string
+                        minLength: 1
+                        maxLength: 255
+                      nick:
+                        type: string
+                        maxLength: 255
+                      icon:
+                        type: string
+                        maxLength: 2048
+                      lvl:
+                        type: number
+                      prof:
+                        type: string
+                        maxLength: 100
+                    required:
+                      - characterId
+                    additionalProperties: false
+                  maxItems: 20
+              required:
+                - status
+                - observedAt
+                - members
+              additionalProperties: false
         guildIds:
           type: array
           items:
@@ -24093,18 +24574,36 @@ components:
               type: string
             icon:
               type: string
-            type:
-              type: string
             name:
               type: string
             location:
               type: string
             lvl:
-              type: number
+              anyOf:
+                - type: number
+                - type: string
+                  enum:
+                    - Infinity
+                    - -Infinity
+                    - NaN
+            type:
+              type: string
             x:
-              type: number
+              anyOf:
+                - type: number
+                - type: string
+                  enum:
+                    - Infinity
+                    - -Infinity
+                    - NaN
             y:
-              type: number
+              anyOf:
+                - type: number
+                - type: string
+                  enum:
+                    - Infinity
+                    - -Infinity
+                    - NaN
           required:
             - name
             - location
@@ -24240,6 +24739,89 @@ components:
           type: integer
           minimum: 0
           maximum: 9007199254740991
+        partyState:
+          anyOf:
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - UNKNOWN
+              required:
+                - status
+              additionalProperties: false
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - OBSERVED
+                observedAt:
+                  type: string
+                  format: date-time
+                  pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                members:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      characterId:
+                        type: string
+                        minLength: 1
+                        maxLength: 255
+                      nick:
+                        type: string
+                        maxLength: 255
+                      icon:
+                        type: string
+                        maxLength: 2048
+                      lvl:
+                        type: number
+                      prof:
+                        type: string
+                        maxLength: 100
+                    required:
+                      - characterId
+                    additionalProperties: false
+                  maxItems: 20
+              required:
+                - status
+                - observedAt
+                - members
+              additionalProperties: false
+        volunteers:
+          type: array
+          items:
+            type: object
+            properties:
+              characterId:
+                type: string
+                minLength: 1
+                maxLength: 255
+              nick:
+                type: string
+                maxLength: 255
+              icon:
+                type: string
+                maxLength: 2048
+              lvl:
+                type: number
+              prof:
+                type: string
+                maxLength: 100
+              partyPresence:
+                type: string
+                enum:
+                  - OUTSIDE
+                  - IN_PARTY
+            required:
+              - characterId
+              - nick
+              - icon
+              - lvl
+              - prof
+              - partyPresence
+            additionalProperties: false
         status:
           type: string
           enum:
@@ -24615,6 +25197,89 @@ components:
               type: integer
               minimum: 0
               maximum: 9007199254740991
+            partyState:
+              anyOf:
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - UNKNOWN
+                  required:
+                    - status
+                  additionalProperties: false
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - OBSERVED
+                    observedAt:
+                      type: string
+                      format: date-time
+                      pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                    members:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          characterId:
+                            type: string
+                            minLength: 1
+                            maxLength: 255
+                          nick:
+                            type: string
+                            maxLength: 255
+                          icon:
+                            type: string
+                            maxLength: 2048
+                          lvl:
+                            type: number
+                          prof:
+                            type: string
+                            maxLength: 100
+                        required:
+                          - characterId
+                        additionalProperties: false
+                      maxItems: 20
+                  required:
+                    - status
+                    - observedAt
+                    - members
+                  additionalProperties: false
+            volunteers:
+              type: array
+              items:
+                type: object
+                properties:
+                  characterId:
+                    type: string
+                    minLength: 1
+                    maxLength: 255
+                  nick:
+                    type: string
+                    maxLength: 255
+                  icon:
+                    type: string
+                    maxLength: 2048
+                  lvl:
+                    type: number
+                  prof:
+                    type: string
+                    maxLength: 100
+                  partyPresence:
+                    type: string
+                    enum:
+                      - OUTSIDE
+                      - IN_PARTY
+                required:
+                  - characterId
+                  - nick
+                  - icon
+                  - lvl
+                  - prof
+                  - partyPresence
+                additionalProperties: false
             status:
               type: string
               enum:
@@ -24792,6 +25457,34 @@ components:
     PartyReadyRoomObservationDto:
       type: object
       properties:
+        expectedRevision:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        members:
+          type: array
+          items:
+            type: object
+            properties:
+              characterId:
+                type: string
+                minLength: 1
+                maxLength: 255
+              nick:
+                type: string
+                maxLength: 255
+              icon:
+                type: string
+                maxLength: 2048
+              lvl:
+                type: number
+              prof:
+                type: string
+                maxLength: 100
+            required:
+              - characterId
+            additionalProperties: false
+          maxItems: 20
         memberCharacterIds:
           type: array
           items:

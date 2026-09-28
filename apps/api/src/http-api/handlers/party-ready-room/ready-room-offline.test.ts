@@ -15,7 +15,7 @@ import { ReadyRoomData } from "./party-ready-room.handlers.js";
 import { makeReadyRoomDataLayer } from "./ready-room.data-layer.js";
 import type { ReadyRoomRedis } from "./ready-room.repository.js";
 
-it("expires only the disconnected character's existing gathering or application and tolerates repeated offline delivery", async () => {
+it("expires only the disconnected character's existing gathering or application, publishes despite chat cleanup failure and tolerates repeated offline delivery", async () => {
   const boundary = await createDatabaseBoundary();
   const disconnectedAt = Date.parse("2026-09-10T10:00:00Z");
   const createdAt = new Date(disconnectedAt - 60_000).toISOString();
@@ -96,6 +96,7 @@ it("expires only the disconnected character's existing gathering or application 
   let conflictDelivered = false;
   const cancellations: unknown[] = [];
   const updates: unknown[] = [];
+  const gatheringUpdates: unknown[] = [];
 
   const redis: ReadyRoomRedis = {
     getJson: (key, schema) => {
@@ -152,12 +153,17 @@ it("expires only the disconnected character's existing gathering or application 
         Effect.sync(() => {
           updates.push(update);
         }),
+      publishGatheringUpdate: (event) =>
+        Effect.sync(() => {
+          gatheringUpdates.push(event);
+        }),
       publishCancellation: (event) =>
         Effect.sync(() => {
           cancellations.push(event);
         }),
       publishGathering: () => Effect.void,
-      endPartyGatheringMessages: () => Effect.void,
+      endPartyGatheringMessages: () =>
+        Effect.fail(new Error("Chat storage unavailable")),
     },
     () => disconnectedAt + 10_000,
   ).pipe(Layer.provide(Layer.succeed(ApiDatabase, boundary.database)));
@@ -184,12 +190,37 @@ it("expires only the disconnected character's existing gathering or application 
     expect(cancellations).toEqual([
       { notificationId: "owned", guildId: "organization" },
     ]);
+    expect(updates).toContainEqual(
+      expect.objectContaining({
+        recipientDiscordId: "owner",
+        update: expect.objectContaining({
+          type: "REMOVE",
+          notificationId: "owned",
+        }),
+      }),
+    );
     expect(rooms.slice(1, -2)).toEqual(untouched);
     expect(rooms.at(-2)).toMatchObject({ status: "ACTIVE", revision: 2 });
     expect(Object.keys(rooms.at(-2)?.participants ?? {})).toEqual([
       "alternate",
       "newer",
       "stranger",
+    ]);
+    expect(gatheringUpdates).toEqual([
+      expect.objectContaining({
+        notificationId: "owned",
+        update: { type: "REMOVE", notificationId: "owned", revision: 2 },
+      }),
+      expect.objectContaining({
+        notificationId: "application",
+        update: {
+          type: "UPSERT",
+          gathering: expect.objectContaining({
+            notificationId: "application",
+            applicantCount: 1,
+          }),
+        },
+      }),
     ]);
     expect(conflictDelivered).toBe(true);
     expect(rooms.at(-1)).toMatchObject({
@@ -199,10 +230,12 @@ it("expires only the disconnected character's existing gathering or application 
     });
     const afterFirstDelivery = structuredClone(rooms);
     const deliveredUpdates = updates.length;
+    const deliveredGatheringUpdates = gatheringUpdates.length;
     await Effect.runPromise(offline);
     expect(rooms).toEqual(afterFirstDelivery);
     expect(cancellations).toHaveLength(1);
     expect(updates).toHaveLength(deliveredUpdates);
+    expect(gatheringUpdates).toHaveLength(deliveredGatheringUpdates);
   } finally {
     await boundary.dispose();
   }

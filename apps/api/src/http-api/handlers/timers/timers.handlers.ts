@@ -1,6 +1,7 @@
 import {
   pathString,
   statusCodeResponse,
+  reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
@@ -32,6 +33,7 @@ import {
   TimersInfrastructureError,
   type TimersNotFound,
 } from "./timer-errors.js";
+import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 
 export type TimersIdentity = {
   readonly userId: string;
@@ -56,7 +58,10 @@ export class TimersAuthorization extends Context.Service<
     readonly requireGuild: (options: {
       readonly guildId: string;
       readonly capability: PermissionValue;
-    }) => Effect.Effect<TimersGuildAccess, TimersAccessDenied | TimersNotFound>;
+    }) => Effect.Effect<
+      TimersGuildAccess,
+      TimersAccessDenied | TimersNotFound | ReauthenticationRequired
+    >;
   }
 >()("@lootlog/api/http-api/timers/authorization") {}
 
@@ -162,12 +167,16 @@ const mapResponseError = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
     Effect.mapError((cause) => new TimersInfrastructureError({ cause })),
   );
 
-type TimersHttpFailure = TimersAccessDenied | TimersDataFailure;
+type TimersHttpFailure =
+  | TimersAccessDenied
+  | TimersDataFailure
+  | ReauthenticationRequired;
 
 const toHttpResponse = <A, R>(effect: Effect.Effect<A, TimersHttpFailure, R>) =>
   Effect.catchTags(effect, {
     ApplicationError: applicationErrorResponse,
     TimersAccessDenied: statusCodeResponse,
+    ReauthenticationRequired: reauthenticationRequiredResponse,
     TimersInfrastructureError: (error) => Effect.die(error.cause),
     TimersNotFound: statusCodeResponse,
   });

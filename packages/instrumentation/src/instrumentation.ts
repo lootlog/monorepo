@@ -115,7 +115,7 @@ export const httpServerRouteMetrics = HttpRouter.middleware(
 ).layer;
 
 export const isHealthcheck = (url: string) =>
-  /^\/+healthz\/*(?:[?#]|$)/i.test(url);
+  /^\/+(?:healthz|readyz)\/*(?:[?#]|$)/i.test(url);
 
 export const httpServerMetrics = HttpMiddleware.make(
   <E, R>(

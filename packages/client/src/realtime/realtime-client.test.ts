@@ -1,4 +1,7 @@
-import { decodeClientCommand } from "@lootlog/protocol/realtime";
+import {
+  decodeClientCommand,
+  type ServerEvent,
+} from "@lootlog/protocol/realtime";
 import {
   decodeRealtimeFrame,
   encodeRealtimeFrame,
@@ -43,7 +46,7 @@ class TestWebSocket implements RealtimeWebSocket {
     this.dispatch("open");
   }
 
-  message(data: string | Uint8Array): void {
+  message(data: string | Uint8Array | Blob): void {
     this.dispatch("message", { data });
   }
 
@@ -1036,4 +1039,80 @@ describe("RealtimeClient", () => {
     await vi.advanceTimersByTimeAsync(25_000);
     expect(socket.sent).toHaveLength(sentAfterClear);
   });
+});
+
+it("discards decoded and queued frames from a previous connection after reconnect", async () => {
+  const sockets: TestWebSocket[] = [];
+
+  const client = new RealtimeClient({
+    url: "https://gateway.example.test",
+    webSocketFactory: () => {
+      const socket = new TestWebSocket();
+      sockets.push(socket);
+
+      return socket;
+    },
+  });
+
+  const events: ServerEvent[] = [];
+  client.subscribe((event) => events.push(event));
+  const decoding = Promise.withResolvers<void>();
+  const bytes = Promise.withResolvers<ArrayBuffer>();
+
+  class DelayedFrame extends Blob {
+    override arrayBuffer(): Promise<ArrayBuffer> {
+      decoding.resolve();
+
+      return bytes.promise;
+    }
+  }
+
+  try {
+    client.connect();
+    const first = socketAt(sockets, 0);
+    first.open();
+    first.message(new DelayedFrame());
+    first.message(
+      encodeRealtimeFrame({
+        v: 1,
+        type: "permissions.updated",
+        data: {
+          organizationIds: ["previous-organization"],
+          subscriptionScopes: [],
+        },
+      }),
+    );
+    await decoding.promise;
+    first.close();
+    client.connect();
+    const replacement = socketAt(sockets, 1);
+    replacement.open();
+
+    const hello = {
+      v: 1,
+      type: "session.hello",
+      data: { connectionId: "new-connection" },
+    } satisfies ServerEvent;
+
+    const delivered = Promise.withResolvers<void>();
+    client.subscribe((event) => {
+      if (
+        event.type === "session.hello" &&
+        event.data.connectionId === "new-connection"
+      )
+        delivered.resolve();
+    });
+    replacement.message(encodeRealtimeFrame(hello));
+    bytes.resolve(
+      encodeRealtimeFrame({
+        v: 1,
+        type: "session.hello",
+        data: { connectionId: "old-connection" },
+      }).slice().buffer,
+    );
+    await delivered.promise;
+    expect(events).toEqual([hello]);
+  } finally {
+    client.disconnect();
+  }
 });

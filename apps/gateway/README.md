@@ -63,6 +63,49 @@ include cookie values or private handshake headers in reports or committed tests
 
 ## Realtime connection diagnostics
 
+### Gathering state rollout
+
+Deploy every Gateway replica with federation version 3 before deploying the API
+publisher of `guilds.party-gathering.updated`, then deploy the Game client.
+Gateway retries the new queue while any live replica reports an older federation
+version. Complete the Gateway rollout before enabling the publisher; the normal
+bounded retry policy still applies and exhausted deliveries reach its DLQ.
+
+Clients offer `lootlog.party-gathering-state.v1` alongside the wire subprotocol.
+Only opted-in session clients receive `party-gathering.state-updated`; API keys
+and older clients do not. The join acknowledgement advertises this capability
+only after the whole Gateway cluster supports it. Existing gathering notification
+and private ready-room events remain unchanged.
+
+The state event carries an Organization-scoped volunteer roster and the last
+observed party composition. Each replica applies the same chat/NPC source policy
+as the active-gatherings endpoint, including removal events. Source authorization
+metadata remains private to federation; each public snapshot names only its
+recipient Organization. Like the active-gatherings endpoint, a snapshot keeps
+the organizer's Discord ID so clients can show the organizer's name and role. Clients combine equally revisioned snapshots from
+multiple authorized Organizations and reconcile an initial snapshot on reconnect.
+The same publication includes the organizer as a direct recipient, so an
+authorized organizer without chat-read permission still receives updates. Source
+authorization remains required, and overlapping direct and chat audiences receive
+one frame per publication.
+Volunteering or accepting an invitation does not establish party membership.
+Game clients on a Gateway with this capability rely on these events and the
+reconnect snapshot; they no longer refetch discovery for chat, notification or
+private ready-room events.
+
+### Session hello
+
+Clients offer `lootlog.session-hello.v1` alongside the wire subprotocol. The
+Gateway then sends `session.hello` with the connection ID as soon as the socket
+opens, before any join. The Game client uses it to obtain the Margonem account
+proof before its first `session.join`, so a connection needs one join instead
+of an unverified join followed by a proof-bearing one. Clients that receive no
+hello within one second, including those on older Gateways, keep the two-step
+join. Deploy the Gateway before the Game client; rolling the Gateway back only
+restores the two-step join.
+
+### Connection metrics
+
 `lootlog_gateway_connections_opened_total` counts admitted sockets. Connection
 capacity rejections are counted only by the existing runtime gauge
 `lootlog_gateway_connections_rejected_total`, which samples the process's
@@ -224,6 +267,25 @@ rebalance. It sends `permissions.updated` only when the effective policy changes
 Role identifiers, role order, and redundant overlapping grants do not cause a
 client refresh. Subsequent source-event filtering uses the refreshed roles even
 when no client event is sent.
+
+During reconciliation Gateway requests
+`GET /internal/guilds/user-permissions?freshness=required`. The API bypasses its
+aggregate permission cache for these checks. Ordinary reads retain the 60-second
+API projection cache and Gateway's existing bounded stale-read behavior.
+
+The API shares one projection loader between public and internal permission
+reads. Its Redis generation scope belongs to the Discord identity and covers
+session and Organization-scoped API-key variants. Role and membership changes
+invalidate this scope before publishing policy changes. A fill started before
+invalidation can only write to the old generation. Gateway also fences HTTP
+responses against invalidation before committing refreshed roles to sessions.
+
+Deploy the API before Gateway so every required-freshness request reaches a
+version that understands the optional query parameter. API replicas running the
+new code ignore legacy unversioned aggregate entries; those expire normally.
+No database migration or browser/client rollout is required. Run
+`bun run test:permissions` to verify API reads, policy events, replica rebalances,
+and protected delivery together.
 
 The realtime v1 events retain `organizationIds` and `subscriptionScopes` and add
 these optional fields:

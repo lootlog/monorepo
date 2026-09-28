@@ -21,7 +21,7 @@ export const useUserPreferences = (enabled = true) => {
       enabled,
       staleTime: 60_000,
       refetchOnMount: false,
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false,
       retry: false,
     },
   });

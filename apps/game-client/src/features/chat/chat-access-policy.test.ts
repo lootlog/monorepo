@@ -308,7 +308,7 @@ describe("chat policy reconciliation", () => {
     client.clear();
   });
 
-  it("immediately retries permitted history interrupted by the first snapshot", async () => {
+  it("prunes cached history without interrupting permitted initial requests", async () => {
     vi.useFakeTimers();
     const client = new QueryClient();
     const release = retainChatAccessPolicy(client);
@@ -334,13 +334,13 @@ describe("chat policy reconciliation", () => {
     const off = observer.subscribe(() => {});
     applyChatAccessPolicy(client, policy(false));
     expect(client.getQueryData(key("one"))).toEqual([]);
-    expect(client.getQueryData(key("two"))).toEqual([]);
-    expect(fetch).toHaveBeenCalledTimes(2);
-    resolve?.([message("two", "stale")]);
+    expect(client.getQueryData(key("two"))).toBeUndefined();
+    expect(fetch).toHaveBeenCalledTimes(1);
+    resolve?.(rows);
     await vi.advanceTimersByTimeAsync(0);
     expect(client.getQueryData(key("two"))).toEqual(rows);
     await vi.advanceTimersByTimeAsync(5000);
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenCalledTimes(1);
     expect(client.getQueryData(key("two"))).toEqual(rows);
     off();
     release();

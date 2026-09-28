@@ -4,10 +4,7 @@ import { getVisibleLootlogGuilds } from "@/lib/selected-lootlog-guild";
 import { useGlobalStore } from "@/store/global.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGameStore } from "@/store/game.store";
-import {
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
-  useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@lootlog/client/main";
+import { useAccessibleGuilds } from "@/hooks/api/use-accessible-guilds";
 
 export function useCurrentCharacterId(): string | null {
   return useGameStore((state) => state.game?.hero.characterId ?? null);
@@ -30,12 +27,7 @@ export function useSelectedLootlogGuildInitialization(): void {
   const queryEnabled = gameInitialized && Boolean(characterId);
 
   const { data: guilds, isFetched: areGuildsFetched } =
-    useUsersControllerGetCurrentUserAccessibleGuilds({
-      query: {
-        queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-        enabled: queryEnabled,
-      },
-    });
+    useAccessibleGuilds(queryEnabled);
 
   const { data: userPreferences, isFetched: areUserPreferencesFetched } =
     useUserPreferences(queryEnabled);

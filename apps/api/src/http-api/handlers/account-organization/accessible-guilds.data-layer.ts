@@ -44,6 +44,12 @@ export interface AccessibleGuildPorts {
     value: GuildSummary[],
     ttlSeconds: number,
   ) => Effect.Effect<unknown, unknown>;
+  readonly setIfAbsent: (
+    key: string,
+    value: string,
+    ttlSeconds: number,
+  ) => Effect.Effect<boolean, unknown>;
+  readonly deleteCached: (key: string) => Effect.Effect<unknown, unknown>;
   readonly queueRefresh: (options: {
     readonly discordId: string;
     readonly guildId: string;
@@ -58,6 +64,13 @@ export const makeAccessibleGuilds = (
   ports: AccessibleGuildPorts,
   environment: RuntimeEnvironment,
 ) => {
+  // A refresh that succeeds keeps the member fresh for one soft TTL, and the
+  // queued job retries on its own, so one background enqueue per window is
+  // enough; later requests would only repeat BullMQ round trips.
+  const refreshMarkerTtlSeconds = Math.ceil(
+    getMemberCacheSoftTtl(environment) / 1000,
+  );
+
   const queue = (
     identity: AuthenticatedIdentity,
     guildIds: ReadonlyArray<string>,
@@ -65,15 +78,32 @@ export const makeAccessibleGuilds = (
   ) =>
     Effect.forEach(
       guildIds,
-      (guildId) =>
-        ports
-          .queueRefresh({
-            ...identity,
-            guildId,
-            priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
-            reason,
-          })
-          .pipe(Effect.ignore),
+      (guildId) => {
+        const markerKey = `member:refresh:background:${identity.userId}:${guildId}`;
+
+        // Release a claimed marker whenever the enqueue does not succeed,
+        // including interruption, so another read can queue the refresh.
+        return Effect.uninterruptibleMask((restore) =>
+          ports.setIfAbsent(markerKey, "1", refreshMarkerTtlSeconds).pipe(
+            Effect.flatMap((claimed) =>
+              claimed
+                ? restore(
+                    ports.queueRefresh({
+                      ...identity,
+                      guildId,
+                      priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
+                      reason,
+                    }),
+                  ).pipe(
+                    Effect.onError(() =>
+                      ports.deleteCached(markerKey).pipe(Effect.ignore),
+                    ),
+                  )
+                : Effect.void,
+            ),
+          ),
+        ).pipe(Effect.ignore);
+      },
       { concurrency: "unbounded", discard: true },
     );
 

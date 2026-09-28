@@ -1,4 +1,7 @@
-import { emptyStatusResponse } from "#src/shared/http/handler-response";
+import {
+  emptyStatusResponse,
+  reauthenticationRequiredResponse,
+} from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
@@ -9,6 +12,7 @@ import {
 import type { PublicGuildStatsCard } from "#src/public-guild-stats-card/public-guild-stats-card.service";
 import { RefreshStatsCardResponse } from "#src/contracts/guild-stats-card/schemas";
 import { GameMapsResponse } from "#src/contracts/maps/schemas";
+import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 
 const PUBLIC_CACHE_CONTROL = "public, max-age=300, must-revalidate";
 
@@ -33,7 +37,10 @@ export class PublicSystemAuthorization extends Context.Service<
     readonly requireCapability: (options: {
       readonly guildId: string;
       readonly anyOf: ReadonlyArray<PermissionValue>;
-    }) => Effect.Effect<{ readonly guildId: string }, PublicSystemAccessDenied>;
+    }) => Effect.Effect<
+      { readonly guildId: string },
+      PublicSystemAccessDenied | ReauthenticationRequired
+    >;
   }
 >()("@lootlog/api/http-api/public-system/authorization") {}
 
@@ -138,11 +145,14 @@ export const getPublicStatsCard = Effect.fn(
 export const toPublicSystemHttpResponse = <A, R>(
   effect: Effect.Effect<
     A,
-    PublicSystemAccessDenied | PublicSystemOperationError,
+    | PublicSystemAccessDenied
+    | PublicSystemOperationError
+    | ReauthenticationRequired,
     R
   >,
 ) =>
   Effect.catchTags(effect, {
     PublicSystemAccessDenied: emptyStatusResponse,
+    ReauthenticationRequired: reauthenticationRequiredResponse,
     PublicSystemOperationError: (error) => Effect.die(error.cause),
   });

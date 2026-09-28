@@ -399,7 +399,7 @@ export class RealtimeClient {
     });
     socket.addEventListener("message", (event) => {
       this.messageChain = this.messageChain
-        .then(() => this.handleMessage(event.data))
+        .then(() => this.handleMessage(event.data, socket))
         .catch(() =>
           socket.close(
             REALTIME_CLIENT_CLOSE_CODES.malformedFrame,
@@ -491,8 +491,14 @@ export class RealtimeClient {
     }
   }
 
-  private async handleMessage(data: unknown): Promise<void> {
+  private async handleMessage(
+    data: unknown,
+    socket: RealtimeWebSocket,
+  ): Promise<void> {
+    if (this.socket !== socket) return;
     const frame = await this.decodeFrame(data);
+
+    if (this.socket !== socket) return;
 
     if ("status" in frame) {
       const pending = this.pending.get(frame.requestId);

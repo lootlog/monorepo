@@ -9,6 +9,8 @@ import { areReadyRoomsSynchronized } from "@/features/party-finder/hooks/use-rea
 import { mergeReadyRoomProjectionIntoCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
 import { useGlobalStore } from "@/store/global.store";
 import { readSeededReadyRoomCache } from "@/test/ready-room-fixtures";
+import { queryKeys } from "@/features/public-api/query-keys";
+import { EMPTY_READY_ROOM_CACHE } from "@/features/party-finder/ready-room-cache";
 
 const listReadyRooms = vi.fn<() => Promise<PartyReadyRoomProjection[]>>();
 
@@ -78,6 +80,28 @@ describe("usePartyReadyRoomSync", () => {
       });
       expect(areReadyRoomsSynchronized(queryClient)).toBe(true);
     });
+  });
+
+  it("does not restart the initial snapshot when the gateway first joins an empty cache", async () => {
+    useGlobalStore
+      .getState()
+      .setSocketState({ connected: false, joined: false });
+    queryClient.setQueryData(queryKeys.readyRooms(), EMPTY_READY_ROOM_CACHE);
+    const response = Promise.withResolvers<PartyReadyRoomProjection[]>();
+    listReadyRooms.mockReturnValue(response.promise);
+    renderSync();
+
+    act(() => {
+      useGlobalStore
+        .getState()
+        .setSocketState({ connected: true, joined: true });
+    });
+    await waitFor(() => expect(listReadyRooms).toHaveBeenCalled());
+    expect(listReadyRooms).toHaveBeenCalledTimes(1);
+    response.resolve([createProjection(3)]);
+    await waitFor(() =>
+      expect(areReadyRoomsSynchronized(queryClient)).toBe(true),
+    );
   });
 
   it("preserves a newer socket projection received during a delayed list request", async () => {

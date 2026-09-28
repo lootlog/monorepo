@@ -1,22 +1,18 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { expect, it, onTestFinished, vi } from "vitest";
+import { expect, it, onTestFinished } from "vitest";
 import { createTimerHttpFixture } from "@/features/timers/timer-http-fixtures";
 import { queryKeys } from "@/features/public-api/query-keys";
-import { AppSocket, disposeSocket } from "@/lib/socket";
 import { useTimers } from "./use-timers";
+import { createGameAccessCache } from "@/lib/game-access-cache";
+import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
+import { Permission } from "@lootlog/schema/permissions";
+import { createTimerFixture } from "@/features/timers/timer-fixtures";
 
 it("does not refetch fresh timer data on focus or remount", async () => {
   const fixture = createTimerHttpFixture(() => Response.json([]));
   onTestFinished(fixture.cleanup);
-
-  // No realtime session here; use-timers-socket.test covers the wait for one.
-  const wait = vi
-    .spyOn(AppSocket.prototype, "waitForSession")
-    .mockResolvedValue();
-
-  onTestFinished(() => wait.mockRestore());
   fixture.queryClient.removeQueries({ queryKey: queryKeys.allTimers() });
 
   const wrapper = ({ children }: { children: ReactNode }) => (
@@ -39,16 +35,13 @@ it("does not refetch fresh timer data on focus or remount", async () => {
   expect(fixture.requests).toHaveLength(1);
 });
 
-it("loads the timer list without realtime once the session wait expires", async () => {
-  vi.useFakeTimers({ shouldAdvanceTime: true });
-  onTestFinished(() => {
-    vi.useRealTimers();
-  });
-  disposeSocket();
-  onTestFinished(disposeSocket);
-  const fixture = createTimerHttpFixture(() => Response.json([]));
-  onTestFinished(fixture.cleanup);
+it("completes one initial request while applying the latest policy before exposing its rows", async () => {
+  const allowed = createTimerFixture({ guildId: "a" });
+  const removed = createTimerFixture({ guildId: "removed" });
+  const response = Promise.withResolvers<Response>();
+  const fixture = createTimerHttpFixture(() => response.promise);
   fixture.queryClient.removeQueries({ queryKey: queryKeys.allTimers() });
+  const access = createGameAccessCache(fixture.queryClient);
 
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={fixture.queryClient}>
@@ -56,13 +49,43 @@ it("loads the timer list without realtime once the session wait expires", async 
     </QueryClientProvider>
   );
 
-  const { result } = renderHook(() => useTimers({ world: "luvia" }), {
+  const { result, unmount } = renderHook(() => useTimers({ world: "luvia" }), {
     wrapper,
   });
 
-  // The window shows loading, not an empty list, while it waits.
-  expect(result.current.isLoading).toBe(true);
-  await act(() => vi.advanceTimersByTimeAsync(5_000));
-  await waitFor(() => expect(result.current.isSuccess).toBe(true));
-  expect(fixture.requests).toHaveLength(1);
+  try {
+    await waitFor(() => expect(fixture.requests).toHaveLength(1));
+    act(() =>
+      access.apply({
+        accessPolicy: createAccessPolicySnapshot(
+          [
+            {
+              guild: { id: "a", ownerId: "owner" },
+              roles: [
+                {
+                  permissions: [
+                    Permission.LOOTLOG_ACCESS,
+                    Permission.LOOTLOG_TIMERS_READ,
+                    Permission.LOOTLOG_TIMERS_HEROES_READ,
+                  ],
+                  lvlRangeFrom: 0,
+                  lvlRangeTo: 500,
+                },
+              ],
+            },
+          ],
+          "reader",
+        ),
+      }),
+    );
+    expect(fixture.requests).toHaveLength(1);
+    response.resolve(Response.json([allowed, removed]));
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.map((row) => row.guildId)).toEqual(["a"]);
+    expect(fixture.requests).toHaveLength(1);
+  } finally {
+    unmount();
+    access.dispose();
+    fixture.cleanup();
+  }
 });

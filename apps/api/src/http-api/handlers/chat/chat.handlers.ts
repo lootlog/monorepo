@@ -1,6 +1,7 @@
 import {
   pathString,
   emptyStatusResponse,
+  reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
@@ -20,6 +21,7 @@ import {
 import { DomainDateTime } from "#src/shared/schema/response-codecs";
 
 import { LootlogApi } from "../../lootlog-api.js";
+import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 
 export type ChatIdentity = {
   readonly userId: string;
@@ -46,7 +48,7 @@ export class ChatOperationError extends TaggedErrorClass<ChatOperationError>()(
   { cause: Schema.Defect() },
 ) {}
 
-type AccessFailure = ChatAccessDenied | ChatNotFound;
+type AccessFailure = ChatAccessDenied | ChatNotFound | ReauthenticationRequired;
 
 export class ChatAuthorization extends Context.Service<
   ChatAuthorization,
@@ -94,12 +96,17 @@ const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
     Effect.mapError((cause) => new ChatOperationError({ cause })),
   );
 
-type ChatFailure = ChatAccessDenied | ChatNotFound | ChatOperationError;
+type ChatFailure =
+  | ChatAccessDenied
+  | ChatNotFound
+  | ChatOperationError
+  | ReauthenticationRequired;
 
 const declaredHttpFailure = <A, R>(effect: Effect.Effect<A, ChatFailure, R>) =>
   Effect.catchTags(effect, {
     ChatAccessDenied: (error) =>
       error.status === 403 ? emptyStatusResponse(error) : Effect.die(error),
+    ReauthenticationRequired: reauthenticationRequiredResponse,
     ChatNotFound: emptyStatusResponse,
     ChatOperationError: (error) => {
       const status = applicationErrorStatusOrUndefined(error.cause);

@@ -1640,6 +1640,14 @@ export const PUBLIC_API_OPERATIONS = [
   {
     service: "activity",
     method: "GET",
+    path: "/readyz",
+    operationId: "ReadyzController_check",
+    access: "session-only",
+    data: "organization",
+  },
+  {
+    service: "activity",
+    method: "GET",
     path: "/guilds/{guildId}/activity-logs",
     operationId: "ActivitiesController_findByGuild",
     access: "read",

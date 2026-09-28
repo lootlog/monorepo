@@ -71,6 +71,14 @@ it("opens the map ping wheel from the configured hotkey and cancels it on Escape
   test.open();
 
   // AppContent initializes the native character, so acknowledge its provider join.
+  await waitFor(() =>
+    expect(
+      test.wire.frames.some(
+        (frame) => "type" in frame && frame.type === "session.join",
+      ),
+    ).toBe(true),
+  );
+
   const join = test.wire.frames.findLast(
     (frame) => "type" in frame && frame.type === "session.join",
   );
