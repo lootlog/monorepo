@@ -1109,3 +1109,82 @@ it("only offers recovery for a complete deletion in its organization and world, 
     await boundary.dispose();
   }
 });
+
+it("keeps the five newest timer history entries without pruning other organizations, worlds or timers", async () => {
+  const {
+    boundary,
+    database,
+    original,
+    access,
+    resetEntry,
+    remove,
+    readHistory,
+  } = await createResetRollbackFixture();
+
+  try {
+    const otherGuild = createGuildFixture({ id: "other-guild" });
+    const otherMember = createMemberFixture({ id: 3, guildId: otherGuild.id });
+    await boundary.run(database.insert(guildTable).values(otherGuild));
+    await boundary.run(database.insert(memberTable).values(otherMember));
+    const { id: _id, ...entry } = resetEntry;
+
+    const inserted = await boundary.run(
+      database
+        .insert(timerHistoryEntryTable)
+        .values(
+          Array.from({ length: 6 }, (_, index) => ({
+            ...entry,
+            createdAt: new Date(Date.now() - index * 60_000),
+          })),
+        )
+        .returning(),
+    );
+
+    const foreignEntries = await boundary.run(
+      database
+        .insert(timerHistoryEntryTable)
+        .values(
+          inserted.flatMap(({ id: _entryId, ...history }) => [
+            { ...history, world: "other-world" },
+            { ...history, timerKey: "301:other-hero" },
+            {
+              ...history,
+              guildId: otherGuild.id,
+              actorMemberId: otherMember.id,
+              timerCreatedById: otherMember.id,
+            },
+          ]),
+        )
+        .returning(),
+    );
+
+    const newestPriorEntries = (await readHistory()).slice(0, 4);
+
+    await boundary.run(remove(access, original.timerKey, original.world));
+
+    const retained = await readHistory();
+    expect(retained).toHaveLength(5);
+    expect(retained[0]?.action).toBe("DELETE");
+    expect(retained.slice(1).map(({ id }) => id)).toEqual(
+      newestPriorEntries.map(({ id }) => id),
+    );
+
+    const allEntries = await boundary.run(
+      database.select().from(timerHistoryEntryTable),
+    );
+
+    expect(
+      allEntries
+        .filter(
+          ({ guildId, world, timerKey }) =>
+            guildId !== original.guildId ||
+            world !== original.world ||
+            timerKey !== original.timerKey,
+        )
+        .map(({ id }) => id)
+        .sort(),
+    ).toEqual(foreignEntries.map(({ id }) => id).sort());
+  } finally {
+    await boundary.dispose();
+  }
+});

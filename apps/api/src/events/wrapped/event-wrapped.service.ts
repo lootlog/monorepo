@@ -1,3 +1,4 @@
+import { buildLootVisibilityCacheScope } from "#src/loots/loot-visibility-cache";
 import { roundEventDisplayValue } from "#src/events/round-event-display-value";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
@@ -132,7 +133,7 @@ export const makeEventWrapped = (
     const cacheKey = getEventWrappedCacheKey(
       guild.id,
       eventId,
-      buildVisibilityCacheScope(permissions, roles),
+      stableJsonCacheKey(buildLootVisibilityCacheScope(permissions, roles)),
     );
 
     const load = getWrappedUncached(guild, eventId, permissions, roles);
@@ -402,22 +403,6 @@ export const makeEventWrapped = (
 
       return response;
     });
-  }
-
-  function buildVisibilityCacheScope(permissions: Permission[], roles: Role[]) {
-    const visibilityScope = {
-      permissions: [...permissions].sort(),
-      roles: roles
-        .map((role) => ({
-          id: role.id,
-          lvlRangeFrom: role.lvlRangeFrom,
-          lvlRangeTo: role.lvlRangeTo,
-          permissions: [...role.permissions].sort(),
-        }))
-        .sort((leftRole, rightRole) => leftRole.id.localeCompare(rightRole.id)),
-    };
-
-    return stableJsonCacheKey(visibilityScope);
   }
 
   function getEventLoots(params: {

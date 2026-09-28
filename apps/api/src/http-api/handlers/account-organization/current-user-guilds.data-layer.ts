@@ -1,3 +1,5 @@
+import type { GuildSummary } from "./accessible-guilds.data-layer.js";
+import { readGuildOrderPreference } from "#src/guilds/guild-order-query";
 import { sortGuildsByPreference } from "#src/guilds/guild-order";
 import { hydrateMemberRoles } from "#src/members/member-role-hydration";
 import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
@@ -7,11 +9,7 @@ import type { RESTAPIPartialCurrentUserGuild } from "discord-api-types/v10";
 import { Permission } from "@lootlog/schema/permissions";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import {
-  guildTable,
-  memberTable,
-  userSettingsTable,
-} from "#src/database/drizzle/schema";
+import { guildTable, memberTable } from "#src/database/drizzle/schema";
 import { isDiscordAdministrator } from "#src/discord/is-discord-administrator";
 import { getMemberCacheSoftTtl } from "#src/members/member-cache";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/member-refresh-queue";
@@ -23,17 +21,6 @@ import {
   type AuthenticatedIdentity,
   AccountOrganizationOperationError,
 } from "./account-organization.operations.js";
-
-type GuildSummary = {
-  readonly id: string;
-  readonly name: string;
-  readonly icon: string | null;
-  readonly vanityUrl: string | null;
-  readonly ownerId: string;
-  readonly publicStatsCardEnabled: boolean;
-  readonly hasLootlogAccess: boolean;
-  readonly isAccessDataStale: boolean;
-};
 
 export interface CurrentUserGuildPorts {
   readonly accessibleFallback: (
@@ -114,18 +101,6 @@ export const makeCurrentUserGuilds = (
 
       return yield* hydrateMemberRoles(database, members);
     });
-
-  const sort = (userId: string, summaries: GuildSummary[]) =>
-    database
-      .select({ guildsOrder: userSettingsTable.guildsOrder })
-      .from(userSettingsTable)
-      .where(eq(userSettingsTable.userId, userId))
-      .limit(1)
-      .pipe(
-        Effect.map((rows) =>
-          sortGuildsByPreference(summaries, rows[0]?.guildsOrder ?? []),
-        ),
-      );
 
   const operation = Effect.fn("getCurrentUserGuilds")(function* (
     identity: AuthenticatedIdentity,
@@ -283,7 +258,12 @@ export const makeCurrentUserGuilds = (
       };
     });
 
-    return yield* sort(identity.userId, summaries);
+    const preferredIds = yield* readGuildOrderPreference(
+      database,
+      identity.userId,
+    );
+
+    return sortGuildsByPreference(summaries, preferredIds);
   });
 
   return (identity: AuthenticatedIdentity, refresh = false) =>

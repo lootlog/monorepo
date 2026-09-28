@@ -1,3 +1,4 @@
+import { normalizeBattleSearchText } from "./normalize-battle-search-text";
 import type {
   BattleWarrior as Warrior,
   RawBattleParsedEvent,
@@ -14,13 +15,6 @@ export type BattleLogSearchMatch = {
 };
 
 export type BattleLogSearchDirection = "previous" | "next";
-
-const DIACRITICS_REGEX = /\p{Diacritic}/gu;
-
-const POLISH_CHARACTER_REPLACEMENTS = new Map([
-  ["Ł", "L"],
-  ["ł", "l"],
-]);
 
 const ACTION_SEARCH_LABELS = new Map([
   ["+crit", ["Cios krytyczny"]],
@@ -105,18 +99,6 @@ const appendActionSearchParts = (
   });
 };
 
-export const normalizeBattleLogSearchText = (value: string): string =>
-  value
-    .replace(
-      /[Łł]/g,
-      (character) => POLISH_CHARACTER_REPLACEMENTS.get(character) ?? character,
-    )
-    .normalize("NFD")
-    .replace(DIACRITICS_REGEX, "")
-    .toLocaleLowerCase("pl-PL")
-    .replace(/\s+/g, " ")
-    .trim();
-
 export const buildBattleLogRawSearchText = ({
   event,
   attacker,
@@ -152,7 +134,7 @@ export const findBattleLogSearchMatches = ({
   query: string;
   entries: BattleLogSearchEntry[];
 }): BattleLogSearchMatch[] => {
-  const normalizedQuery = normalizeBattleLogSearchText(query);
+  const normalizedQuery = normalizeBattleSearchText(query);
 
   if (normalizedQuery.length === 0) {
     return [];
@@ -165,9 +147,9 @@ export const findBattleLogSearchMatches = ({
       return;
     }
 
-    const normalizedRawText = normalizeBattleLogSearchText(entry.rawText);
+    const normalizedRawText = normalizeBattleSearchText(entry.rawText);
 
-    const normalizedVisibleText = normalizeBattleLogSearchText(
+    const normalizedVisibleText = normalizeBattleSearchText(
       entry.visibleText ?? "",
     );
 

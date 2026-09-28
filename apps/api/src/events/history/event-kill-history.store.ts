@@ -1,3 +1,4 @@
+import { topMemberDisplayRoles } from "#src/members/member-display-role";
 import {
   and,
   asc,
@@ -17,7 +18,6 @@ import {
 import { alias } from "drizzle-orm/pg-core";
 import { Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import { topMemberDisplayRoles } from "#src/members/member-display-role";
 import {
   eventHeroKillTable,
   eventHeroNpcTable,

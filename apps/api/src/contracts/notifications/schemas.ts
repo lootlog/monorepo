@@ -1,7 +1,5 @@
-import {
-  discordPermissionFields,
-  DiscordGuildSyncStatus,
-} from "@lootlog/schema/discord";
+import { discordPermissionFields } from "@lootlog/schema/discord";
+import { DiscordGuildSyncStateResponse } from "#src/contracts/guilds/schemas";
 /** Shared input and output schemas for the notifications feature. */
 import * as Schema from "effect/Schema";
 import {
@@ -111,21 +109,9 @@ export const AvailableOrganizationNotificationTargetsResponse = Schema.Struct({
     }),
   ),
   syncState: Schema.Union([
-    Schema.StructWithRest(
-      Schema.Struct({
-        guildId: Schema.String,
-        status: DiscordGuildSyncStatus,
-        ...discordPermissionFields,
-        channelCount: SafeInteger,
-        selectableChannelCount: SafeInteger,
-        lastAttemptAt: Schema.Union([DateTimeString, Schema.Null]),
-        lastSuccessAt: Schema.Union([DateTimeString, Schema.Null]),
-        lastError: Schema.Union([Schema.String, Schema.Null]),
-        createdAt: DateTimeString,
-        updatedAt: DateTimeString,
-      }),
-      [Schema.Record(Schema.String, JsonValue)],
-    ),
+    Schema.StructWithRest(Schema.Struct(DiscordGuildSyncStateResponse.fields), [
+      Schema.Record(Schema.String, JsonValue),
+    ]),
     Schema.Null,
   ]),
 }).annotate({ identifier: "GuildAvailableNotificationTargetsResponseDto" });
@@ -206,20 +192,24 @@ const notificationRuleFields = {
   updatedAt: DateTimeString,
 };
 
+const notificationRuleResponseFields = (
+  metadata: Schema.Codec<Schema.Json>,
+) => ({
+  ...notificationRuleFields,
+  targets: Schema.Array(
+    Schema.Struct({
+      ruleId: SafeInteger,
+      targetId: SafeInteger,
+      createdAt: DateTimeString,
+      target: Schema.Struct(notificationTargetFields(metadata)),
+    }),
+  ),
+});
+
 export const OrganizationNotificationRulesResponse = Schema.Struct({
   items: Schema.Array(
     Schema.Struct({
-      ...notificationRuleFields,
-      targets: Schema.Array(
-        Schema.Struct({
-          ruleId: SafeInteger,
-          targetId: SafeInteger,
-          createdAt: DateTimeString,
-          target: Schema.Struct(
-            notificationTargetFields(OrganizationNotificationRuleMetadata),
-          ),
-        }),
-      ),
+      ...notificationRuleResponseFields(OrganizationNotificationRuleMetadata),
       testTrigger: NotificationTestQuota,
     }),
   ),
@@ -388,17 +378,9 @@ export const CreateNotificationRuleRequest = Schema.Struct({
 export type CreateNotificationRuleRequest =
   typeof CreateNotificationRuleRequest.Type;
 
-export const NotificationRuleResponse = Schema.Struct({
-  ...notificationRuleFields,
-  targets: Schema.Array(
-    Schema.Struct({
-      ruleId: SafeInteger,
-      targetId: SafeInteger,
-      createdAt: DateTimeString,
-      target: Schema.Struct(notificationTargetFields(NotificationRuleMetadata)),
-    }),
-  ),
-}).annotate({ identifier: "NotificationRuleResponseDto" });
+export const NotificationRuleResponse = Schema.Struct(
+  notificationRuleResponseFields(NotificationRuleMetadata),
+).annotate({ identifier: "NotificationRuleResponseDto" });
 
 export type NotificationRuleResponse = typeof NotificationRuleResponse.Type;
 
@@ -572,19 +554,7 @@ export const WatchedItemResponse = Schema.Struct({
   ]),
   notificationRule: Schema.Union([
     Schema.StructWithRest(
-      Schema.Struct({
-        ...notificationRuleFields,
-        targets: Schema.Array(
-          Schema.Struct({
-            ruleId: SafeInteger,
-            targetId: SafeInteger,
-            createdAt: DateTimeString,
-            target: Schema.Struct(
-              notificationTargetFields(WatchedItemMetadata),
-            ),
-          }),
-        ),
-      }),
+      Schema.Struct(notificationRuleResponseFields(WatchedItemMetadata)),
       [Schema.Record(Schema.String, JsonValue)],
     ),
     Schema.Null,

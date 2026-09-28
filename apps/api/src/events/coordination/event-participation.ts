@@ -1,3 +1,4 @@
+import { getTrackingDurationSecondsForRanking } from "#src/events/kills/event-ranking-policy";
 import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
 import { selectEventKillPoints } from "#src/events/kills/event-point-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
@@ -307,14 +308,8 @@ export const makeEventParticipation = (
 
                   const ranking = rankingRows[0];
 
-                  const trackingSeconds = Number.isFinite(
-                    point.trackingDurationSeconds,
-                  )
-                    ? Math.max(
-                        0,
-                        Math.round(point.trackingDurationSeconds ?? 0),
-                      )
-                    : 0;
+                  const trackingSeconds =
+                    getTrackingDurationSecondsForRanking(point);
 
                   if (ranking) {
                     const totalKills = ranking.totalKills + 1;
