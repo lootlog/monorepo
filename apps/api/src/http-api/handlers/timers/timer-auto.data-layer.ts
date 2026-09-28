@@ -1,7 +1,8 @@
+import { pruneTimerHistory } from "./timer-history-retention.js";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { upsertActorCharacter } from "./timer-actor-snapshot.js";
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, gt, gte, inArray, isNull, lte, or } from "drizzle-orm";
+import { and, desc, eq, gt, gte, isNull, lte, or } from "drizzle-orm";
 import { Clock, Effect, Predicate, Result, Schema } from "effect";
 import { partition } from "es-toolkit";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
@@ -462,27 +463,12 @@ export const makeAutoTimer = (
             timerActorCharacterLvl: timer.actorCharacterLvl,
           });
 
-          const stale = yield* transaction
-            .select({ id: timerHistoryEntryTable.id })
-            .from(timerHistoryEntryTable)
-            .where(
-              and(
-                eq(timerHistoryEntryTable.guildId, guildId),
-                eq(timerHistoryEntryTable.world, payload.world),
-                eq(timerHistoryEntryTable.timerKey, timerKey),
-              ),
-            )
-            .orderBy(desc(timerHistoryEntryTable.id))
-            .offset(5);
-
-          if (stale.length > 0) {
-            yield* transaction.delete(timerHistoryEntryTable).where(
-              inArray(
-                timerHistoryEntryTable.id,
-                stale.map(({ id }) => id),
-              ),
-            );
-          }
+          yield* pruneTimerHistory(
+            transaction,
+            guildId,
+            payload.world,
+            timerKey,
+          );
 
           return {
             _tag: "Created" as const,
