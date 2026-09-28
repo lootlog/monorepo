@@ -73,7 +73,24 @@ export function usePartyReadyRoomObserver(): void {
       ...new Set(partyMembers.map(({ characterId }) => characterId)),
     ].sort();
 
-    const snapshot = `${ownedReadyRoom.notificationId}:${memberCharacterIds.join(",")}`;
+    const members = memberCharacterIds.flatMap((characterId) => {
+      const member = partyMembers.find(
+        (entry) => entry.characterId === characterId,
+      );
+
+      if (!member) return [];
+
+      return [
+        {
+          characterId,
+          nick: member.name,
+          icon: member.icon,
+          prof: member.profession ?? undefined,
+        },
+      ];
+    });
+
+    const snapshot = JSON.stringify([ownedReadyRoom.notificationId, members]);
 
     if (lastReportedSnapshot.current === snapshot) return;
     lastReportedSnapshot.current = snapshot;
@@ -81,22 +98,7 @@ export function usePartyReadyRoomObserver(): void {
     reportSnapshot({
       notificationId: ownedReadyRoom.notificationId,
       memberCharacterIds,
-      members: memberCharacterIds.flatMap((characterId) => {
-        const member = partyMembers.find(
-          (entry) => entry.characterId === characterId,
-        );
-
-        if (!member) return [];
-
-        return [
-          {
-            characterId,
-            nick: member.name,
-            icon: member.icon,
-            prof: member.profession ?? undefined,
-          },
-        ];
-      }),
+      members,
       organizerAccountId: ownedReadyRoom.organizerCharacter.accountId,
       organizerCharacterId: ownedReadyRoom.organizerCharacter.characterId,
     });

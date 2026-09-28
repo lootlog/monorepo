@@ -31,7 +31,10 @@ import {
 import { chatData } from "#src/runtime/features/chat";
 import { messagingData } from "#src/runtime/features/messaging";
 import { publicSystemData } from "#src/runtime/features/public-system";
-import { readyRoomData } from "#src/runtime/features/ready-room";
+import {
+  readyRoomData,
+  readyRoomPublications,
+} from "#src/runtime/features/ready-room";
 import { userLootlogConfigData } from "#src/runtime/features/user-settings";
 import {
   recordsData,
@@ -91,6 +94,7 @@ export const apiRequestDataLayers = coreDataLayers.pipe(
 
 export const apiDataLayers = Layer.mergeAll(
   coreDataLayers,
+  readyRoomPublications,
   BullWorkers,
   RabbitConsumers.pipe(Layer.provide(readyRoomData)),
   ScheduledJobs,
