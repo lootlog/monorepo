@@ -1,5 +1,6 @@
 import { notificationChannelMetadata } from "#src/notifications/targets/notification-channel-metadata";
 import {
+  deleteNotificationTargetAndOrphanedRules,
   mapNotificationTarget,
   updateNotificationTarget,
 } from "#src/notifications/targets/notification-target-store";
@@ -8,7 +9,6 @@ import { and, count, desc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
-  notificationRuleTable,
   notificationRuleTargetTable,
   notificationTargetTable,
 } from "#src/database/drizzle/schema";
@@ -264,26 +264,16 @@ export const makeNotificationGuildTargets = (
           discard: true,
         },
       );
-      yield* database
-        .transaction((transaction) =>
-          Effect.gen(function* () {
-            yield* transaction
-              .delete(notificationTargetTable)
-              .where(eq(notificationTargetTable.id, targetId));
-
-            if (orphanedRuleIds.length > 0) {
-              yield* transaction
-                .delete(notificationRuleTable)
-                .where(inArray(notificationRuleTable.id, orphanedRuleIds));
-            }
-          }),
-        )
-        .pipe(
-          Effect.mapError(databaseFailure("notifications.targets.delete")),
-          Effect.withSpan("notifications.targets.delete.transaction", {
-            attributes: { adapter: "notifications.drizzle", retryCount: 0 },
-          }),
-        );
+      yield* deleteNotificationTargetAndOrphanedRules(
+        database,
+        targetId,
+        orphanedRuleIds,
+      ).pipe(
+        Effect.mapError(databaseFailure("notifications.targets.delete")),
+        Effect.withSpan("notifications.targets.delete.transaction", {
+          attributes: { adapter: "notifications.drizzle", retryCount: 0 },
+        }),
+      );
 
       return { success: true as const };
     },
