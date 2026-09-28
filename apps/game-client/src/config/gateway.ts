@@ -31,6 +31,7 @@ export enum GatewayEvent {
   // notifications
   NOTIFICATION = "notifications-send",
   NOTIFICATIONS_VOLUNTEER = "notifications-volunteer",
+  PARTY_GATHERING_STATE_UPDATE = "party-gathering:state-update",
   PARTY_GATHERING_SEND = "party-gathering-send",
   PARTY_GATHERING_CANCEL = "party-gathering-cancel",
   PARTY_READY_ROOM_UPDATE = "party-ready-room:update",

@@ -63,6 +63,34 @@ include cookie values or private handshake headers in reports or committed tests
 
 ## Realtime connection diagnostics
 
+### Gathering state rollout
+
+Deploy every Gateway replica with federation version 3 before deploying the API
+publisher of `guilds.party-gathering.updated`, then deploy the Game client.
+Gateway retries the new queue while any live replica reports an older federation
+version. Complete the Gateway rollout before enabling the publisher; the normal
+bounded retry policy still applies and exhausted deliveries reach its DLQ.
+
+Clients offer `lootlog.party-gathering-state.v1` alongside the wire subprotocol.
+Only opted-in session clients receive `party-gathering.state-updated`; API keys
+and older clients do not. The join acknowledgement advertises this capability
+only after the whole Gateway cluster supports it. Existing gathering notification
+and private ready-room events remain unchanged.
+
+The state event carries an Organization-scoped volunteer roster and the last
+observed party composition. Each replica applies the same chat/NPC source policy
+as the active-gatherings endpoint, including removal events. Source authorization
+metadata remains private to federation; each public snapshot names only its
+recipient Organization. Clients combine equally revisioned snapshots from
+multiple authorized Organizations and reconcile an initial snapshot on reconnect.
+The same publication includes the organizer as a direct recipient, so an
+authorized organizer without chat-read permission still receives updates. Source
+authorization remains required, and overlapping direct and chat audiences receive
+one frame per publication.
+Volunteering or accepting an invitation does not establish party membership.
+
+### Connection metrics
+
 `lootlog_gateway_connections_opened_total` counts admitted sockets. Connection
 capacity rejections are counted only by the existing runtime gauge
 `lootlog_gateway_connections_rejected_total`, which samples the process's

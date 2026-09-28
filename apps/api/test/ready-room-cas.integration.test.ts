@@ -67,6 +67,21 @@ describe("Ready Room revision CAS integration", () => {
         world: "Test",
         status: "ACTIVE",
         revision: 1,
+        partyMemberCount: 2,
+        partyState: {
+          status: "OBSERVED",
+          observedAt: timestamp,
+          members: [
+            {
+              characterId: id,
+              nick: "Organizer",
+              lvl: 200,
+              prof: "w",
+              icon: "hero.gif",
+            },
+            { characterId: `${id}-guest`, nick: "Guest" },
+          ],
+        },
         createdAt: timestamp,
         updatedAt: timestamp,
         expiresAt: new Date(Date.now() + 60_000).toISOString(),

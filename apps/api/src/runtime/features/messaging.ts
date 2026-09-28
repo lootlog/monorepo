@@ -60,7 +60,17 @@ export const messagingData = Layer.unwrap(
         create: (input) =>
           createReadyRoomForNotification(
             readyRedis,
-            { publish: publishReadyRoom },
+            {
+              publish: publishReadyRoom,
+              publishGatheringUpdate: (envelope) =>
+                rabbit
+                  .publish({
+                    exchange: "default",
+                    routingKey: RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED,
+                    content: new TextEncoder().encode(JSON.stringify(envelope)),
+                  })
+                  .pipe(Effect.asVoid),
+            },
             input,
           ),
       },

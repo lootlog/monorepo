@@ -18,8 +18,7 @@
     "addFriend": "Dodaj do znajomych"
   },
   "list": {
-    "waiting": "Oczekiwanie na zgłoszenia…",
-    "allInParty": "Zgłoszeni gracze są już w grupie."
+    "waiting": "Oczekiwanie na zgłoszenia…"
   },
   "form": {
     "validation": {
@@ -50,5 +49,18 @@
     "title": "Anulować zbiórkę?",
     "description": "Zbiórka zniknie u wszystkich członków Lootloga, a zgłoszeni do niej gracze nie dostaną zaproszeń.",
     "confirm": "Anuluj zbiórkę"
+  },
+  "roster": {
+    "volunteers": "Chętni ({{count}})",
+    "volunteersUnknown": "Lista chętnych niedostępna",
+    "volunteersEmpty": "Brak zgłoszeń",
+    "party": "Grupa ({{count}}/10)",
+    "partyUnknown": "Skład grupy nieznany",
+    "partyEmpty": "Brak grupy",
+    "partyStale": "Skład grupy może być nieaktualny",
+    "observedAt": "Odczyt z gry: {{time}}",
+    "characterUnknown": "Postać #{{characterId}}",
+    "inParty": "W grupie",
+    "outsideParty": "Poza grupą"
   }
 }

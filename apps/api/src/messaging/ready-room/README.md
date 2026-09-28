@@ -4,7 +4,7 @@ Active gatherings are Redis v3 aggregates with a maximum lifetime of 30 minutes.
 Creation atomically adds the room to an expiry-scored index for every target
 Organization and world. Discovery reads these indexes, removes expired entries,
 and checks the current aggregate status and current membership, chat permissions,
-NPC tier, and role level range. It returns summaries without participant rosters
+NPC tier, and role level range. It returns visible character rosters without private account data
 or hidden Organization IDs. Cancellation leaves a short aggregate tombstone;
 discovery rejects it immediately even while its index entry remains.
 
@@ -26,9 +26,10 @@ Discovery summaries include nonnegative integer `applicantCount` and
 `inPartyCount` values derived from registered characters. Both exclude the
 organizer character, even if explicitly registered; `inPartyCount` includes only
 registered characters observed in the party, not unrelated party members.
-Only visible gatherings expose these totals, and participant projections remain
-private. Deploy this additive API response before the updated game client; the
-legacy counters require no persistence migration.
+Only visible gatherings expose these totals. Participant projections retain
+private ownership and action metadata; their additional volunteer roster carries
+only the same public character fields as discovery. Deploy the additive API
+response before the updated game client; legacy counters keep their meaning.
 
 The optional `partyMemberCount` reports the total deduplicated character IDs from
 an organizer observation, including the organizer and unregistered party members.
@@ -88,8 +89,9 @@ sequence above.
   and Organization indexes, deduplication, revision conflicts and cancellation.
 - `ready-room-visibility.test.ts` exercises membership, tier and level policy
   against the database boundary.
-- Handler tests assert that active summaries omit participant data; gateway
-  source-event tests assert the corresponding delivery restrictions.
+- Handler tests assert that active summaries expose volunteers and observations
+  without private participant ownership data; gateway source-event tests assert
+  the corresponding delivery restrictions.
 - Run `bun run client:generate` and review the additive OpenAPI/client changes.
   Run `bun run client:check` on the committed result; its generated-file check
   rejects any uncommitted generated outputs, even when regeneration is stable.
@@ -108,3 +110,40 @@ new gathering or application. Duplicate facts do not advance terminal state.
 Deploy the API consumer before the gateway publisher; no HTTP contract changes
 are required. The timer starts when the gateway detects disconnection, so network
 failures can take longer to detect than an ordinary browser close.
+
+## Live volunteer and party state
+
+Discovery and personal projections include `volunteers` (character ID, nickname,
+icon, level, profession, and last observed party presence). Every registered
+character is present even when outside the party. The separate `partyState` is
+`UNKNOWN` until an organizer observation supplies actual member IDs, then
+`OBSERVED` with `observedAt` and all observed members, including non-volunteers.
+Withdrawing or removing an application changes the volunteer list, not the last
+observed game party. Resolving invitation targets does not prove membership.
+
+New clients may add `members` with available character display fields to the
+existing `memberCharacterIds` observation payload. The IDs remain authoritative;
+extra metadata cannot add a party member. Old clients can continue reporting IDs
+alone. Known organizer/volunteer details fill missing metadata; otherwise clients
+display an unnamed character. Room keys and schema version remain v3 and old
+aggregates decode with unknown party state. Do not infer their composition from a
+legacy count. Observed data becomes visibly stale after two minutes; clients use
+a local deadline without polling. A later actual observation can refresh it.
+
+Every committed creation, application, departure, removal, observation, or
+cancellation publishes `guilds.party-gathering.updated` for each source
+Organization. Its full snapshot or monotonic removal is forwarded as
+`party-gathering.state-updated` only to sessions declaring
+`lootlog.party-gathering-state.v1`. Gateway chat-source visibility applies before
+delivery, including NPC tier/level filters and the existing organizer override.
+Routing metadata stays in the internal envelope; each public snapshot contains
+only visible Organization IDs and minimal roster data. Revision handling prevents
+an older snapshot from resurrecting a removed gathering. Reconnects fetch the
+existing active endpoint and reconcile concurrent events without periodic reads.
+
+Deploy the new gateway consumer/schema first, then drain old API writers before
+switching to the new API, and finally deploy the client. Old clients continue
+using the legacy counters and personal updates and do not receive the new event.
+Client parsers accept absent additive fields from old servers and show unknown
+roster/party state. During rollback, follow the drain and 30-minute lifetime
+procedure above: an old writer can discard observed party metadata.

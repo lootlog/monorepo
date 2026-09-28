@@ -4,11 +4,11 @@ import { CHAT_GATHERING_ACTION_CLASS } from "../chat.constants";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { partyReadyRoomControllerApply } from "@lootlog/client/main";
 import {
-  partyReadyRoomControllerApply,
-  type ActivePartyGatheringSummary,
-} from "@lootlog/client/main";
-import { decodePartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
+  decodePartyReadyRoomProjection,
+  type PartyGatheringSummary,
+} from "@lootlog/schema/party-ready-room";
 import {
   useActivePartyGatherings,
   ACTIVE_GATHERINGS_QUERY_KEY,
@@ -25,8 +25,8 @@ import {
 import { ChatHiddenGatherings } from "./chat-hidden-gatherings";
 
 export function selectFeaturedGathering(
-  candidates: ActivePartyGatheringSummary[],
-  frozen: ActivePartyGatheringSummary | null,
+  candidates: PartyGatheringSummary[],
+  frozen: PartyGatheringSummary | null,
 ) {
   if (frozen)
     return (
@@ -80,16 +80,14 @@ export function ChatGatheringBar({
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
 
-  const [frozen, setFrozen] = useState<ActivePartyGatheringSummary | null>(
-    null,
-  );
+  const [frozen, setFrozen] = useState<PartyGatheringSummary | null>(null);
 
   const barRef = useRef<HTMLDivElement>(null);
   const hiddenTriggerRef = useRef<HTMLButtonElement>(null);
   const pendingRef = useRef(false);
 
   const application = useMutation({
-    mutationFn: (target: ActivePartyGatheringSummary) => {
+    mutationFn: (target: PartyGatheringSummary) => {
       const character = buildCurrentCharacterPayload();
 
       if (!character || target.world !== useGameStore.getState().game?.world)
@@ -118,7 +116,7 @@ export function ChatGatheringBar({
 
   const hiddenIds = scopeKey ? hiddenByScope[scopeKey] : undefined;
 
-  const hidden = (candidate: ActivePartyGatheringSummary) =>
+  const hidden = (candidate: PartyGatheringSummary) =>
     (hiddenIds?.[candidate.notificationId] ?? 0) > discovery.observedAt;
 
   const candidates = eligibleGatherings.filter(
@@ -129,10 +127,7 @@ export function ChatGatheringBar({
   const locked = hovered || focused || application.isPending;
   const target = selectFeaturedGathering(candidates, locked ? frozen : null);
 
-  const apply = (
-    candidate: ActivePartyGatheringSummary,
-    allowHidden = false,
-  ) => {
+  const apply = (candidate: PartyGatheringSummary, allowHidden = false) => {
     if (
       pendingRef.current ||
       room ||
@@ -148,7 +143,7 @@ export function ChatGatheringBar({
     application.mutate(candidate);
   };
 
-  const hideGathering = (candidate: ActivePartyGatheringSummary) => {
+  const hideGathering = (candidate: PartyGatheringSummary) => {
     if (!scopeKey || pendingRef.current || roomId === candidate.notificationId)
       return;
     useHiddenPartyGatheringsStore
@@ -301,6 +296,7 @@ export function ChatGatheringBar({
     candidates.length + hiddenGatherings.length > 0 && (
       <ChatHiddenGatherings
         triggerRef={hiddenTriggerRef}
+        stale={discovery.isStale}
         gatherings={hiddenGatherings}
         activeGatherings={candidates}
         pending={application.isPending}
