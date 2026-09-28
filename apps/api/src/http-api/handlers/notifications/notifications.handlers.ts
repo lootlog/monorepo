@@ -2,6 +2,7 @@ import { operationIdentifiers } from "../../operation-identifiers.js";
 import {
   optionalPathString,
   statusCodeResponse,
+  reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
@@ -27,6 +28,7 @@ import { applicationErrorResponse } from "../../application-error-response.js";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
 import { LootlogApi } from "../../lootlog-api.js";
 import { NotificationOperations } from "./notifications.data-layer.js";
+import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 
 type Guild = typeof guildTable.$inferSelect;
 
@@ -71,7 +73,8 @@ type NotificationsHttpFailure =
   | NotificationsAccessDenied
   | NotificationsBadRequest
   | NotificationsDataError
-  | NotificationsNotFound;
+  | NotificationsNotFound
+  | ReauthenticationRequired;
 
 export class NotificationsAuthorization extends Context.Service<
   NotificationsAuthorization,
@@ -86,7 +89,9 @@ export class NotificationsAuthorization extends Context.Service<
       readonly mode: "any";
     }) => Effect.Effect<
       NotificationGuildCaller,
-      NotificationsAccessDenied | NotificationsNotFound
+      | NotificationsAccessDenied
+      | NotificationsNotFound
+      | ReauthenticationRequired
     >;
   }
 >()("@lootlog/api/http-api/notifications/authorization") {}
@@ -127,6 +132,7 @@ const toHttpResponse = <A, R>(
   Effect.catchTags(effect, {
     ApplicationError: applicationErrorResponse,
     NotificationsAccessDenied: statusCodeResponse,
+    ReauthenticationRequired: reauthenticationRequiredResponse,
     NotificationsBadRequest: statusCodeResponse,
     NotificationsDataError: (error) => Effect.die(error.cause),
     NotificationsNotFound: statusCodeResponse,

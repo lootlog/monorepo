@@ -28,6 +28,7 @@ const game = {
     level: 230,
     name: "Current hero",
     profession: "w",
+    stasis: false,
     x: 1,
     y: 2,
   },

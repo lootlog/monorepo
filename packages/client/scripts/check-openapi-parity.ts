@@ -924,6 +924,66 @@ const normalizeInternalPermissionFreshness = (
   return { ...operation, parameters: expectedParameters.slice(0, 2) };
 };
 
+const ACTIVITY_LEGACY_HEALTH_DETAILS: JsonValue = {
+  type: "object",
+  additionalProperties: {
+    type: "object",
+    properties: { status: { type: "string" } },
+    required: ["status"],
+  },
+};
+
+const ACTIVITY_LEGACY_HEALTH_SCHEMA: JsonValue = {
+  type: "object",
+  properties: {
+    status: { type: "string" },
+    info: { ...ACTIVITY_LEGACY_HEALTH_DETAILS, nullable: true },
+    error: { ...ACTIVITY_LEGACY_HEALTH_DETAILS, nullable: true },
+    details: ACTIVITY_LEGACY_HEALTH_DETAILS,
+  },
+};
+
+// LOO-218: activity-http.test.ts verifies that failed or stalled dependencies
+// leave process liveness at 200; database failure is exposed only by /readyz.
+const normalizeActivityLiveness = (
+  service: string,
+  operationKey: string,
+  operation: JsonValue,
+): JsonValue => {
+  if (service !== "activity" || operationKey !== "GET /healthz")
+    return operation;
+
+  assertErrorResponse(
+    operation,
+    "GET /healthz",
+    "200",
+    "HealthzControllerCheck200",
+    ACTIVITY_LEGACY_HEALTH_SCHEMA,
+  );
+
+  if (
+    !isJsonObject(operation) ||
+    !isJsonObject(operation.responses) ||
+    operation.responses["503"] !== undefined ||
+    operation.summary !== "Liveness check"
+  ) {
+    throw new Error("Activity liveness must not declare dependency failure");
+  }
+
+  return {
+    ...operation,
+    summary: "Health check",
+    responses: {
+      ...operation.responses,
+      "503": {
+        content: {
+          "application/json": { schema: ACTIVITY_LEGACY_HEALTH_SCHEMA },
+        },
+      },
+    },
+  };
+};
+
 export const normalizeAllowedChanges = (
   service: string,
   operationKey: string,
@@ -964,6 +1024,7 @@ export const normalizeAllowedChanges = (
     operationKey,
     normalized,
   );
+  normalized = normalizeActivityLiveness(service, operationKey, normalized);
 
   if (service === "api" && operationKey === "GET /guilds/@me/manageable") {
     normalized = normalizeManageableOrganizationResponse(normalized, schemas);
@@ -1133,16 +1194,64 @@ const KILL_HISTORY_ADDITION: JsonValue = {
   },
 };
 
-// Intentional private additions verified against real persistence and authorization tests:
+const activityReadinessDatabase = (status: "up" | "down"): JsonValue => ({
+  type: "object",
+  properties: {
+    database: {
+      type: "object",
+      properties: { status: { type: "string", enum: [status] } },
+      required: ["status"],
+    },
+  },
+  required: ["database"],
+});
+
+// Verified through the real HTTP encoder and SQL transport in activity-http.test.ts.
+const ACTIVITY_READINESS_ADDITION: JsonValue = {
+  operationId: "ReadyzController_check",
+  parameters: [],
+  responses: Object.fromEntries(
+    ["200", "503"].map((status) => {
+      const database = activityReadinessDatabase(
+        status === "200" ? "up" : "down",
+      );
+
+      const nullValue = { type: "object", nullable: true, enum: [null] };
+
+      return [
+        status,
+        {
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  status: {
+                    type: "string",
+                    enum: [status === "200" ? "ok" : "error"],
+                  },
+                  info: status === "200" ? database : nullValue,
+                  error: status === "200" ? nullValue : database,
+                  details: database,
+                },
+                required: ["status", "info", "error", "details"],
+              },
+            },
+          },
+        },
+      ];
+    }),
+  ),
+};
+
+// Intentional additions verified against HTTP, persistence and authorization tests:
 // activity/src/online/online-repository.integration.test.ts;
 // api/test/kill-analytics.integration.test.ts, user-feed.integration.test.ts and records.operations.test.ts.
-const PERSONAL_ANALYTICS_ADDITIONS = new Map<
-  string,
-  Partial<Record<string, JsonValue>>
->(
+const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
   Object.entries({
     auth: authApiAdditions,
     activity: {
+      "GET /readyz": ACTIVITY_READINESS_ADDITION,
       "GET /users/@me/activity/online": {
         operationId: "UsersActivityController_getOnline",
         parameters: ["from", "to"].map((name) => ({
@@ -1343,24 +1452,26 @@ const PERSONAL_ANALYTICS_ADDITIONS = new Map<
   } satisfies Record<string, Record<string, JsonValue>>),
 );
 
-export const assertVerifiedPersonalAddition = (
+export const assertVerifiedAddition = (
   service: string,
   operationKey: string,
   operation: JsonValue | undefined,
 ): void => {
-  const expected = PERSONAL_ANALYTICS_ADDITIONS.get(service)?.[operationKey];
+  const expected = VERIFIED_ADDITIONS.get(service)?.[operationKey];
 
   if (!expected || !isJsonObject(operation)) {
-    throw new Error(
-      `Unverified personal API addition: ${service} ${operationKey}`,
-    );
+    throw new Error(`Unverified API addition: ${service} ${operationKey}`);
   }
 
   const keyNormalized =
     service === "auth"
       ? operation
       : normalizeApiKeyErrors(
-          service === "api" ? normalizeValidationErrors(operation) : operation,
+          service === "api"
+            ? normalizeReauthenticationErrors(
+                normalizeValidationErrors(operation),
+              )
+            : operation,
           expected,
         );
 
@@ -1372,7 +1483,7 @@ export const assertVerifiedPersonalAddition = (
     JSON.stringify(normalizeOpenApiRepresentation(expected))
   ) {
     throw new Error(
-      `Verified personal API contract changed: ${service} ${operationKey}`,
+      `Verified API contract changed: ${service} ${operationKey}`,
     );
   }
 };
@@ -1460,12 +1571,16 @@ export const normalizeApiKeyErrors = (
   return { ...operation, responses };
 };
 
-// Verified by the real endpoint validation cases in the API schema-error-response tests.
-// Remove only the new validation alternative; retain every existing 400 contract.
-export const normalizeValidationErrors = (operation: JsonValue): JsonValue => {
+// Removes one middleware error alternative from a status while retaining every
+// existing contract for that status.
+const withoutErrorAlternative = (
+  operation: JsonValue,
+  status: string,
+  ref: string,
+): JsonValue => {
   if (!isJsonObject(operation) || !isJsonObject(operation.responses))
     return operation;
-  const response = operation.responses["400"];
+  const response = operation.responses[status];
 
   if (!isJsonObject(response) || !isJsonObject(response.content))
     return operation;
@@ -1481,16 +1596,16 @@ export const normalizeValidationErrors = (operation: JsonValue): JsonValue => {
     (alternative) =>
       !isJsonObject(alternative) ||
       Object.keys(alternative).length !== 1 ||
-      alternative.$ref !== "#/components/schemas/RequestValidationError",
+      alternative.$ref !== ref,
   );
 
   if (remaining.length === alternatives.length) return operation;
   const responses = { ...operation.responses };
 
   if (remaining.length === 0) {
-    delete responses["400"];
+    delete responses[status];
   } else {
-    responses["400"] = {
+    responses[status] = {
       ...response,
       content: {
         ...response.content,
@@ -1507,6 +1622,27 @@ export const normalizeValidationErrors = (operation: JsonValue): JsonValue => {
 
   return { ...operation, responses };
 };
+
+// Verified by the real endpoint validation cases in the API schema-error-response tests.
+// Remove only the new validation alternative; retain every existing 400 contract.
+export const normalizeValidationErrors = (operation: JsonValue): JsonValue =>
+  withoutErrorAlternative(
+    operation,
+    "400",
+    "#/components/schemas/RequestValidationError",
+  );
+
+// Verified by the reauthentication cases in the API HTTP boundary e2e spec.
+// Remove only the bearer middleware's 401 alternative; retain every existing
+// 401 contract.
+export const normalizeReauthenticationErrors = (
+  operation: JsonValue,
+): JsonValue =>
+  withoutErrorAlternative(
+    operation,
+    "401",
+    "#/components/schemas/ReauthenticationRequiredEncoded",
+  );
 
 if (import.meta.main) {
   const changedOperations: string[] = [];
@@ -1529,7 +1665,9 @@ if (import.meta.main) {
           key,
           normalizeApiKeyErrors(
             service.current === "api"
-              ? normalizeValidationErrors(operation)
+              ? normalizeReauthenticationErrors(
+                  normalizeValidationErrors(operation),
+                )
               : operation,
             beforeKeys.get(key),
           ),
@@ -1541,7 +1679,7 @@ if (import.meta.main) {
     const removals = [...baseline.keys()].filter((key) => !current.has(key));
 
     const expectedAdditions = Object.keys(
-      PERSONAL_ANALYTICS_ADDITIONS.get(service.current) ?? {},
+      VERIFIED_ADDITIONS.get(service.current) ?? {},
     );
 
     if (
@@ -1554,7 +1692,7 @@ if (import.meta.main) {
     }
 
     for (const key of additions) {
-      assertVerifiedPersonalAddition(service.current, key, current.get(key));
+      assertVerifiedAddition(service.current, key, current.get(key));
     }
 
     // User editing and the unused Organization loot count endpoint were removed.
@@ -1610,6 +1748,6 @@ if (import.meta.main) {
   }
 
   process.stdout.write(
-    "OpenAPI parity passed: 243 baseline operations plus verified private analytics additions\n",
+    "OpenAPI parity passed: 243 baseline operations plus verified additions\n",
   );
 }
