@@ -1,7 +1,10 @@
-import { decodeOpenApiDocument, isJsonObject } from "./openapi-document.js";
+import {
+  decodeOpenApiDocument,
+  isJsonArray,
+  isJsonObject,
+  type OpenApiDocument,
+} from "./openapi-document.js";
 import { expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
-import { parse } from "yaml";
 import {
   assertVerifiedPersonalAddition,
   normalizeAllowedChanges,
@@ -9,6 +12,23 @@ import {
   normalizeValidationErrors,
   normalizeOpenApiRepresentation,
 } from "./check-openapi-parity.js";
+
+const documents = new Map<string, Promise<OpenApiDocument>>();
+
+const readDocument = (service: string) => {
+  let document = documents.get(service);
+
+  if (!document) {
+    document = Bun.file(
+      new URL(`../../../apps/${service}/openapi.yaml`, import.meta.url),
+    )
+      .text()
+      .then((source) => decodeOpenApiDocument(Bun.YAML.parse(source)));
+    documents.set(service, document);
+  }
+
+  return document.then((value) => structuredClone(value));
+};
 
 const httpErrorResponse = {
   content: {
@@ -23,15 +43,8 @@ test.each([
   ["battlelog", "/internal/delete-user-data"],
 ] as const)(
   "%s service-auth exception rejects loss of its credential header or denial response",
-  (service, path) => {
-    const document = decodeOpenApiDocument(
-      parse(
-        readFileSync(
-          new URL(`../../../apps/${service}/openapi.yaml`, import.meta.url),
-          "utf8",
-        ),
-      ),
-    );
+  async (service, path) => {
+    const document = await readDocument(service);
 
     const raw = document.paths?.[path]?.post;
 
@@ -149,15 +162,8 @@ test.each([
   ],
 ] as const)(
   "%s exceptions enforce the complete generated error schema",
-  (service, key, path, method, status, schemaName) => {
-    const document = decodeOpenApiDocument(
-      parse(
-        readFileSync(
-          new URL(`../../../apps/${service}/openapi.yaml`, import.meta.url),
-          "utf8",
-        ),
-      ),
-    );
+  async (service, key, path, method, status, schemaName) => {
+    const document = await readDocument(service);
 
     const operation = document.paths?.[path]?.[method];
     expect(operation).toBeDefined();
@@ -280,15 +286,13 @@ test.each([
   ["api", "/guilds/{guildId}/events/{eventId}/kill-history"],
 ] as const)(
   "verified private addition %s %s pins authentication, filters and response",
-  (service, path) => {
-    const document = parse(
-      readFileSync(
-        new URL(`../../../apps/${service}/openapi.yaml`, import.meta.url),
-        "utf8",
-      ),
-    );
+  async (service, path) => {
+    const document = await readDocument(service);
+    const operation = document.paths?.[path]?.get;
 
-    const operation = document.paths[path].get;
+    if (!isJsonObject(operation) || !isJsonArray(operation.parameters))
+      throw new Error("Missing test operation parameters");
+    const parameters = operation.parameters;
     const key = `GET ${path}`;
     expect(() =>
       assertVerifiedPersonalAddition(service, key, operation),
@@ -303,7 +307,7 @@ test.each([
       assertVerifiedPersonalAddition(service, key, {
         ...operation,
         parameters: [
-          ...operation.parameters,
+          ...parameters,
           {
             name: "userId",
             in: "query",
@@ -339,15 +343,13 @@ test.each([
   "/guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills",
 ])(
   "legacy history migration %s requires deprecation and cursor errors",
-  (path) => {
-    const document = parse(
-      readFileSync(
-        new URL("../../../apps/api/openapi.yaml", import.meta.url),
-        "utf8",
-      ),
-    );
+  async (path) => {
+    const document = await readDocument("api");
+    const operation = document.paths?.[path]?.get;
 
-    const operation = document.paths[path].get;
+    if (!isJsonObject(operation) || !isJsonObject(operation.responses))
+      throw new Error("Missing test operation responses");
+    const responses = operation.responses;
     const key = `GET ${path}`;
 
     expect(() =>
@@ -359,23 +361,26 @@ test.each([
     expect(() =>
       normalizeAllowedChanges("api", key, {
         ...operation,
-        responses: { ...operation.responses, "400": {} },
+        responses: { ...responses, "400": {} },
       }),
     ).toThrow();
   },
 );
 
-test("manageable guild migration pins the Discord summary response and preserves unrelated contracts", () => {
-  const document = parse(
-    readFileSync(
-      new URL("../../../apps/api/openapi.yaml", import.meta.url),
-      "utf8",
-    ),
-  );
+test("manageable guild migration pins the Discord summary response and preserves unrelated contracts", async () => {
+  const document = await readDocument("api");
 
   const key = "GET /guilds/@me/manageable";
-  const operation = document.paths["/guilds/@me/manageable"].get;
-  const schemas = document.components.schemas;
+  const operation = document.paths?.["/guilds/@me/manageable"]?.get;
+  const schemas = document.components?.schemas;
+
+  if (
+    !isJsonObject(operation) ||
+    !isJsonObject(operation.responses) ||
+    !schemas ||
+    !isJsonObject(schemas.ManageableOrganizationResponse)
+  )
+    throw new Error("Missing manageable Organization contract");
   const normalized = normalizeAllowedChanges("api", key, operation, schemas);
   expect(normalized).toHaveProperty(
     "responses.200.content.application/json.schema.items.$ref",
@@ -404,7 +409,7 @@ test("manageable guild migration pins the Discord summary response and preserves
     ).toThrow("contract changed");
   }
 
-  for (const responses of [
+  const invalidResponses: Parameters<typeof normalizeAllowedChanges>[2][] = [
     {},
     { "200": { content: { "text/plain": { schema: { type: "string" } } } } },
     {
@@ -419,7 +424,9 @@ test("manageable guild migration pins the Discord summary response and preserves
         },
       },
     },
-  ]) {
+  ];
+
+  for (const responses of invalidResponses) {
     expect(() =>
       normalizeAllowedChanges("api", key, { ...operation, responses }, schemas),
     ).toThrow("must declare a 200 ManageableOrganizationResponse");
