@@ -1,3 +1,4 @@
+import { buildLootVisibilityCacheScope } from "#src/loots/loot-visibility-cache";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   getEffectiveCapabilities,
@@ -115,18 +116,6 @@ const CACHE_TTL_SECONDS = 10;
 
 const MAX_PENDING_DETAIL_READS = 1_024;
 
-const visibilityScope = (permissions: Permission[], roles: Role[]) => ({
-  permissions: [...permissions].sort(),
-  roles: roles
-    .map((role) => ({
-      id: role.id,
-      lvlRangeFrom: role.lvlRangeFrom,
-      lvlRangeTo: role.lvlRangeTo,
-      permissions: [...role.permissions].sort(),
-    }))
-    .sort((left, right) => left.id.localeCompare(right.id)),
-});
-
 const cacheKey = (
   guild: Guild,
   permissions: Permission[],
@@ -140,7 +129,7 @@ const cacheKey = (
     Buffer.from(
       stableJsonStringify({
         params: { ...params, cursor: 0 },
-        visibilityScope: visibilityScope(permissions, roles),
+        visibilityScope: buildLootVisibilityCacheScope(permissions, roles),
       }),
     ).toString("base64url"),
   ].join(":");
@@ -350,7 +339,7 @@ export const makeLootsOperations = ({
           const key = stableJsonStringify({
             guildId: guild.id,
             lootId,
-            visibilityScope: visibilityScope(permissions, roles),
+            visibilityScope: buildLootVisibilityCacheScope(permissions, roles),
           });
 
           const pending = pendingDetails.get(key);

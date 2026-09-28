@@ -1,4 +1,6 @@
+import { notificationChannelMetadata } from "#src/notifications/targets/notification-channel-metadata";
 import {
+  deleteNotificationTargetAndOrphanedRules,
   mapNotificationTarget,
   updateNotificationTarget,
 } from "#src/notifications/targets/notification-target-store";
@@ -7,7 +9,6 @@ import { and, count, desc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
-  notificationRuleTable,
   notificationRuleTargetTable,
   notificationTargetTable,
 } from "#src/database/drizzle/schema";
@@ -59,23 +60,6 @@ export class NotificationGuildTargetFailure extends TaggedErrorClass<Notificatio
   "NotificationGuildTargetFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
-
-const targetMetadata = (
-  channel: Pick<
-    NotificationGuildChannel,
-    | "channelType"
-    | "requiredPermissions"
-    | "grantedPermissions"
-    | "missingPermissions"
-    | "hasRequiredPermissions"
-  >,
-) => ({
-  channelType: channel.channelType,
-  requiredPermissions: channel.requiredPermissions,
-  grantedPermissions: channel.grantedPermissions,
-  missingPermissions: channel.missingPermissions,
-  hasRequiredPermissions: channel.hasRequiredPermissions,
-});
 
 export const makeNotificationGuildTargets = (
   database: ApiDatabaseValue,
@@ -177,7 +161,7 @@ export const makeNotificationGuildTargets = (
         externalId: data.externalId,
         displayName: data.displayName ?? selected.name,
         guildName: null,
-        metadata: targetMetadata(selected),
+        metadata: notificationChannelMetadata(selected),
         active: true,
         canSend: selected.hasRequiredPermissions,
         lastSyncedAt: new Date(selected.lastSyncedAt),
@@ -194,7 +178,7 @@ export const makeNotificationGuildTargets = (
         ],
         set: {
           displayName: data.displayName ?? selected.name,
-          metadata: targetMetadata(selected),
+          metadata: notificationChannelMetadata(selected),
           active: true,
           canSend: selected.hasRequiredPermissions,
           lastSyncedAt: new Date(selected.lastSyncedAt),
@@ -280,26 +264,16 @@ export const makeNotificationGuildTargets = (
           discard: true,
         },
       );
-      yield* database
-        .transaction((transaction) =>
-          Effect.gen(function* () {
-            yield* transaction
-              .delete(notificationTargetTable)
-              .where(eq(notificationTargetTable.id, targetId));
-
-            if (orphanedRuleIds.length > 0) {
-              yield* transaction
-                .delete(notificationRuleTable)
-                .where(inArray(notificationRuleTable.id, orphanedRuleIds));
-            }
-          }),
-        )
-        .pipe(
-          Effect.mapError(databaseFailure("notifications.targets.delete")),
-          Effect.withSpan("notifications.targets.delete.transaction", {
-            attributes: { adapter: "notifications.drizzle", retryCount: 0 },
-          }),
-        );
+      yield* deleteNotificationTargetAndOrphanedRules(
+        database,
+        targetId,
+        orphanedRuleIds,
+      ).pipe(
+        Effect.mapError(databaseFailure("notifications.targets.delete")),
+        Effect.withSpan("notifications.targets.delete.transaction", {
+          attributes: { adapter: "notifications.drizzle", retryCount: 0 },
+        }),
+      );
 
       return { success: true as const };
     },

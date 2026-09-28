@@ -1,10 +1,13 @@
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
-import { topMemberDisplayRoles } from "#src/members/member-display-role";
+import {
+  memberDisplayRolesQuery,
+  topMemberDisplayRoles,
+} from "#src/members/member-display-role";
 import { eventMapScope } from "#src/events/event-scope-query";
 import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -15,8 +18,6 @@ import {
   eventMapToMemberTable,
   eventTable,
   memberTable,
-  memberToRoleTable,
-  roleTable,
 } from "#src/database/drizzle/schema";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { RedisService } from "#src/redis/redis.service";
@@ -125,16 +126,7 @@ export const makeEventMapAssignments = (
           ? []
           : yield* query(
               "events.assignments.roles",
-              database
-                .select({
-                  memberId: memberToRoleTable.A,
-                  position: roleTable.position,
-                  color: roleTable.color,
-                })
-                .from(memberToRoleTable)
-                .innerJoin(roleTable, eq(roleTable.id, memberToRoleTable.B))
-                .where(inArray(memberToRoleTable.A, memberIds))
-                .orderBy(desc(roleTable.position)),
+              memberDisplayRolesQuery(database, memberIds),
             );
 
       return assignments.map(({ member }) => ({

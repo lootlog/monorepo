@@ -2,7 +2,7 @@ import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import { StatisticsFiltersMobile } from "./statistics-filters-mobile";
 import { StatisticsFiltersDesktop } from "./statistics-filters-desktop";
 
-interface StatisticsFiltersProps {
+export interface StatisticsFiltersProps {
   characterId?: string;
   period: Period;
   minLevel?: number;

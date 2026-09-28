@@ -1,3 +1,4 @@
+import { readNotificationRuleTargets } from "#src/notifications/targets/notification-target-store";
 import {
   notificationApiKeyOrganizations,
   notificationRulesInApiKeyScope,
@@ -116,31 +117,10 @@ export const makeNotificationRuleOperations = (
 
       const ruleIds = ruleRows.map(({ id }) => id);
 
-      const links =
-        ruleIds.length === 0
-          ? []
-          : yield* database
-              .select({
-                link: notificationRuleTargetTable,
-                target: notificationTargetTable,
-              })
-              .from(notificationRuleTargetTable)
-              .innerJoin(
-                notificationTargetTable,
-                eq(
-                  notificationRuleTargetTable.targetId,
-                  notificationTargetTable.id,
-                ),
-              )
-              .where(inArray(notificationRuleTargetTable.ruleId, ruleIds));
-
-      const targetsByRule = new Map<number, typeof links>();
-
-      for (const link of links) {
-        const targets = targetsByRule.get(link.link.ruleId) ?? [];
-        targets.push(link);
-        targetsByRule.set(link.link.ruleId, targets);
-      }
+      const targetsByRule = yield* readNotificationRuleTargets(
+        database,
+        ruleIds,
+      );
 
       return ruleRows.map((rule) => ({
         ...rule,
@@ -150,13 +130,7 @@ export const makeNotificationRuleOperations = (
             : Schema.decodeUnknownSync(NotificationFiltersResponse)(
                 rule.filters,
               ),
-        targets: (targetsByRule.get(rule.id) ?? []).map(({ link, target }) => ({
-          ...link,
-          target: {
-            ...target,
-            metadata: target.metadata,
-          },
-        })),
+        targets: targetsByRule.get(rule.id) ?? [],
       }));
     }).pipe(
       Effect.mapError(

@@ -1,3 +1,4 @@
+import { buildLootVisibilityCacheRoles } from "#src/loots/loot-visibility-cache";
 import { Capability, type AccessPolicy } from "@lootlog/domain/access-policy";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
@@ -81,14 +82,7 @@ export const visibilityCacheScope = (
     : {
         visibilityVersion: 2,
         administrativeUser: false,
-        roles: roles
-          .map((role) => ({
-            id: role.id,
-            lvlRangeFrom: role.lvlRangeFrom,
-            lvlRangeTo: role.lvlRangeTo,
-            permissions: [...role.permissions].sort(),
-          }))
-          .sort((left, right) => left.id.localeCompare(right.id)),
+        roles: buildLootVisibilityCacheRoles(roles),
       };
 
 export const cachedKillQuery = <

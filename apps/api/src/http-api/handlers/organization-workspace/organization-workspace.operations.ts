@@ -1,3 +1,4 @@
+import { readGuildOrderPreference } from "#src/guilds/guild-order-query";
 import { sortGuildsByPreference } from "#src/guilds/guild-order";
 import {
   AcceptedReservationShareBoundary,
@@ -32,7 +33,6 @@ import {
   memberToRoleTable,
   reservationTable,
   roleTable,
-  userSettingsTable,
 } from "#src/database/drizzle/schema";
 import { presentReservation } from "#src/reservations/reservation-presentation";
 import {
@@ -144,18 +144,14 @@ export class MyReservationsData extends Context.Service<
       MyReservationsData.of({
         listMine: ({ userId, discordId }, query) =>
           Effect.gen(function* () {
-            const [guildRows, preferenceRows] = yield* Effect.all(
+            const [guildRows, preferredIds] = yield* Effect.all(
               [
                 selectAccessibleGuilds(database, discordId).pipe(
                   Effect.map((rows) =>
                     rows.map(({ guild }) => ({ id: guild.id })),
                   ),
                 ),
-                database
-                  .select({ guildsOrder: userSettingsTable.guildsOrder })
-                  .from(userSettingsTable)
-                  .where(eq(userSettingsTable.userId, userId))
-                  .limit(1),
+                readGuildOrderPreference(database, userId),
               ],
               { concurrency: "unbounded" },
             );
@@ -164,7 +160,7 @@ export class MyReservationsData extends Context.Service<
 
             const guildIds = sortGuildsByPreference(
               guildRows,
-              preferenceRows[0]?.guildsOrder ?? [],
+              preferredIds,
             ).map(({ id }) => id);
 
             const now = new Date(yield* Clock.currentTimeMillis);
