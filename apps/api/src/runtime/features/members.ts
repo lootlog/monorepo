@@ -43,6 +43,7 @@ import type { MemberBulkRefreshJobData } from "#src/members/member.types";
 import {
   getMemberReadCacheScope,
   getPermissionsCacheKey,
+  getUserGuildPermissionsCacheScope,
   getUserLootlogConfigCacheScope,
 } from "#src/shared/cache";
 import { applicationLogger } from "#src/shared/application-logger";
@@ -168,6 +169,7 @@ export const memberServicesLive = Layer.effect(
                 adapter(() =>
                   redis.invalidateScopes(
                     getUserLootlogConfigCacheScope(member.discordId),
+                    getUserGuildPermissionsCacheScope(member.discordId),
                   ),
                 ),
                 adapter(() =>
@@ -220,6 +222,7 @@ export const memberServicesLive = Layer.effect(
                 adapter(() =>
                   redis.invalidateScopes(
                     getUserLootlogConfigCacheScope(discordId),
+                    getUserGuildPermissionsCacheScope(discordId),
                   ),
                 ),
                 adapter(() =>
