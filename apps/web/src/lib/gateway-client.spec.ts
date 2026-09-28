@@ -243,6 +243,28 @@ it("treats the first access policy as the page's baseline and reports later revo
   );
 });
 
+it("keeps a permissions update without a baseline unknown so stale caches are cleared", () => {
+  const subscribe = vi.spyOn(RealtimeClient.prototype, "subscribe");
+  const client = new GatewayClient();
+  const deliver = subscribe.mock.calls[0]?.[0];
+  const handler = vi.fn();
+  client.on(GatewayEvent.PERMISSIONS_UPDATED, handler);
+
+  // The gateway sends this before rejecting a join that lost every Organization.
+  deliver?.({
+    v: 1,
+    type: "permissions.updated",
+    data: {
+      organizationIds: [],
+      subscriptionScopes: [],
+      accessPolicy: createAccessPolicySnapshot([], "discord-member"),
+    },
+  });
+  expect(handler).toHaveBeenLastCalledWith(
+    expect.objectContaining({ accessPolicyChanges: undefined }),
+  );
+});
+
 it.each([
   { joins: 1, delay: 200, recover: false },
   { joins: 1, delay: 5_000, recover: true },
