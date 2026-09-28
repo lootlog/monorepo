@@ -137,6 +137,7 @@ describe("Discord user guild list cache against Dragonfly", () => {
     // deactivate memberships from a list that may predate a join.
     expect(result.guilds.map(({ id }) => id)).toEqual(["left-guild"]);
     expect(result.fresh).toBe(false);
+    expect(result.stale).toBe(true);
 
     discord.resolve(discordResponse([{ id: "current-guild" }]));
     await waitFor(["current-guild"]);
