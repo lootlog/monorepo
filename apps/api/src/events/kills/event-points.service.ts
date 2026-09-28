@@ -1,4 +1,5 @@
 import {
+  getTrackingDurationSecondsForRanking,
   isKillPointCountedInRanking,
   roundPoints,
 } from "#src/events/kills/event-ranking-policy";
@@ -118,16 +119,6 @@ export const makeEventPoints = (
         wasPresent: params.wasPresent,
       },
     });
-  }
-
-  function getTrackingDurationSecondsForRanking(params: {
-    trackingDurationSeconds: number | null | undefined;
-  }): number {
-    if (!Number.isFinite(params.trackingDurationSeconds)) {
-      return 0;
-    }
-
-    return Math.max(0, Math.round(params.trackingDurationSeconds));
   }
 
   function createRankingKey(params: {
