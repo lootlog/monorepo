@@ -1,7 +1,6 @@
 import { expect, test } from "bun:test";
 import { Effect } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
-import type { GuildMemberChanged } from "@lootlog/protocol/rabbit/events";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import {
   createGuildFixture,
@@ -14,10 +13,11 @@ import {
   roleTable,
 } from "#src/database/drizzle/schema";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
+import { makeMemberDelivery } from "#src/members/member-delivery.operations";
+import { makeMemberStore } from "#src/members/member.store";
 import { makeGuildLifecycle } from "./guild-lifecycle.operations.js";
-import { makeMemberRemoval } from "#src/members/member-removal.operations";
 
-test("Discord role revocation and deletion invalidate members before publishing and repair failed delivery on replay", async () => {
+test("Discord role revocation and deletion rebalance only active holders, survive failed delivery, and ignore cosmetic edits", async () => {
   const boundary = await createDatabaseBoundary();
 
   try {
@@ -57,35 +57,38 @@ test("Discord role revocation and deletion invalidate members before publishing 
       boundary.database.insert(memberToRoleTable).values({ A: 1, B: "role-1" }),
     );
     const invalidated = new Set<string>();
-    const delivered: Array<typeof GuildMemberChanged.Type> = [];
+    const delivered: string[] = [];
     let failInvalidation = true;
     let failDelivery = false;
 
-    const lifecycle = makeGuildLifecycle(boundary.database, {
-      clearCacheKey: () => Effect.void,
-      clearCachePattern: () => Effect.void,
-      notifyMembersRemoved: () => Effect.void,
-      invalidateUserGuildPermissions: (discordId) =>
+    const delivery = makeMemberDelivery(makeMemberStore(boundary.database), {
+      clearMemberCaches: () => Effect.void,
+      publishMemberRemoved: () => Effect.void,
+      invalidateMember: ({ discordId }) =>
         failInvalidation
           ? Effect.fail(new Error("cache unavailable"))
           : Effect.sync(() => {
               invalidated.add(discordId);
             }),
-      publishMemberPolicyChanged: (member) =>
+      publishMemberUpdated: ({ discordId }) =>
         Effect.gen(function* () {
-          expect(invalidated.has(member.discordId)).toBe(true);
+          expect(invalidated.has(discordId)).toBe(true);
 
           if (failDelivery)
             return yield* Effect.fail(new Error("broker unavailable"));
 
-          const current = yield* selectAccessibleGuilds(
-            boundary.database,
-            member.discordId,
-          );
-
-          expect(current).toEqual([]);
-          delivered.push(member);
+          expect(
+            yield* selectAccessibleGuilds(boundary.database, discordId),
+          ).toEqual([]);
+          delivered.push(discordId);
         }),
+    });
+
+    const lifecycle = makeGuildLifecycle(boundary.database, {
+      invalidateUserGuildPermissions: () => Effect.void,
+      clearCacheKey: () => Effect.void,
+      clearCachePattern: () => Effect.void,
+      deliverMemberChanges: delivery.deliverAll,
     });
 
     const role = {
@@ -100,30 +103,56 @@ test("Discord role revocation and deletion invalidate members before publishing 
     await expect(boundary.run(lifecycle.upsertRole(role))).rejects.toThrow(
       "cache unavailable",
     );
-    expect(delivered).toEqual([]);
     failInvalidation = false;
+    // The redelivered event sees no change; the committed outbox row repairs it.
     await boundary.run(lifecycle.upsertRole(role));
-    expect(delivered).toEqual([
-      { guildId: "guild-1", discordId: "discord-1", userId: "user-1" },
-    ]);
+    expect(delivered).toEqual([]);
+    await boundary.run(delivery.dispatchPending());
+    expect(delivered).toEqual(["discord-1"]);
     expect(invalidated.has("other-discord")).toBe(false);
 
+    // A rename or recolor leaves every permission projection unchanged.
     delivered.length = 0;
+    invalidated.clear();
+    await boundary.run(
+      lifecycle.upsertRole({ ...role, name: "Renamed", color: 0xff0000 }),
+    );
+    await boundary.run(delivery.dispatchPending());
+    expect(delivered).toEqual([]);
+    expect(invalidated.size).toBe(0);
+
+    // Deleting the now permissionless role changes no projection either.
+    await boundary.run(lifecycle.deleteRole(role));
+    await boundary.run(delivery.dispatchPending());
+    expect(delivered).toEqual([]);
+
+    await boundary.run(
+      boundary.database.insert(roleTable).values({
+        id: "role-2",
+        guildId: "guild-1",
+        name: "Reader",
+        permissions: [Permission.LOOTLOG_ACCESS],
+        updatedAt: new Date(0),
+      }),
+    );
+    await boundary.run(
+      boundary.database.insert(memberToRoleTable).values({ A: 1, B: "role-2" }),
+    );
+    const reader = { ...role, id: "role-2", name: "Reader" };
     failDelivery = true;
-    await expect(boundary.run(lifecycle.deleteRole(role))).rejects.toThrow(
+    await expect(boundary.run(lifecycle.deleteRole(reader))).rejects.toThrow(
       "broker unavailable",
     );
     failDelivery = false;
-    await boundary.run(lifecycle.deleteRole(role));
-    expect(delivered).toEqual([
-      { guildId: "guild-1", discordId: "discord-1", userId: "user-1" },
-    ]);
+    // Holders were queued before the assignments cascaded with the role.
+    await boundary.run(delivery.dispatchPending());
+    expect(delivered).toEqual(["discord-1"]);
   } finally {
     await boundary.dispose();
   }
 });
 
-test("Organization removal retries member revocation after persisted deactivation and notification failure", async () => {
+test("Organization removal revokes members through the outbox and the owner's aggregate projection", async () => {
   const boundary = await createDatabaseBoundary();
 
   try {
@@ -149,37 +178,34 @@ test("Organization removal retries member revocation after persisted deactivatio
     await boundary.run(
       boundary.database.insert(memberToRoleTable).values({ A: 1, B: "role-1" }),
     );
-    expect(
-      await boundary.run(
-        selectAccessibleGuilds(boundary.database, "discord-1"),
-      ),
-    ).toHaveLength(1);
     let failInvalidation = true;
-    let failDelivery = false;
     const delivered: string[] = [];
+    const invalidatedOwners: string[] = [];
 
-    const removal = makeMemberRemoval(boundary.database, {
+    const delivery = makeMemberDelivery(makeMemberStore(boundary.database), {
       clearMemberCaches: () =>
         failInvalidation
           ? Effect.fail(new Error("cache unavailable"))
           : Effect.void,
       publishMemberRemoved: ({ discordId, globalUserId }) =>
         Effect.gen(function* () {
-          if (failDelivery)
-            return yield* Effect.fail(new Error("broker unavailable"));
           expect(
             yield* selectAccessibleGuilds(boundary.database, discordId),
           ).toEqual([]);
           delivered.push(globalUserId);
         }),
+      invalidateMember: () => Effect.void,
+      publishMemberUpdated: () => Effect.void,
     });
 
     const lifecycle = makeGuildLifecycle(boundary.database, {
+      invalidateUserGuildPermissions: (discordId) =>
+        Effect.sync(() => {
+          invalidatedOwners.push(discordId);
+        }),
       clearCacheKey: () => Effect.void,
       clearCachePattern: () => Effect.void,
-      invalidateUserGuildPermissions: () => Effect.void,
-      publishMemberPolicyChanged: () => Effect.void,
-      notifyMembersRemoved: removal.notifyMembersRemoved,
+      deliverMemberChanges: delivery.deliverAll,
     });
 
     const removeGuild = () =>
@@ -187,17 +213,11 @@ test("Organization removal retries member revocation after persisted deactivatio
 
     await expect(removeGuild()).rejects.toThrow("cache unavailable");
     expect(delivered).toEqual([]);
-    expect(
-      await boundary.run(
-        selectAccessibleGuilds(boundary.database, "discord-1"),
-      ),
-    ).toEqual([]);
     failInvalidation = false;
-    failDelivery = true;
-    await expect(removeGuild()).rejects.toThrow("broker unavailable");
-    failDelivery = false;
     await removeGuild();
+    await boundary.run(delivery.dispatchPending());
     expect(delivered).toEqual(["user-1"]);
+    expect(invalidatedOwners).toEqual(["owner-1"]);
   } finally {
     await boundary.dispose();
   }

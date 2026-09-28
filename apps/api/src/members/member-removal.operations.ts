@@ -1,33 +1,20 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, eq, inArray, isNotNull, notInArray, or } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, notInArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
-import { chunk } from "es-toolkit";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { memberTable, memberToRoleTable } from "#src/database/drizzle/schema";
-import type {
-  DeactivateMembersMissingFromDiscordGuildsOptions,
-  MemberRemovalNotificationTarget,
-} from "./member.types.js";
+import type { MemberDelivery } from "./member-delivery.operations.js";
+import { queueMemberDeliveries } from "./member.store.js";
+import type { DeactivateMembersMissingFromDiscordGuildsOptions } from "./member.types.js";
 
 class MemberRemovalFailure extends TaggedErrorClass<MemberRemovalFailure>()(
   "MemberRemovalFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
 
-export interface MemberRemovalPorts {
-  readonly clearMemberCaches: (
-    member: MemberRemovalNotificationTarget,
-  ) => Effect.Effect<unknown, unknown>;
-  readonly publishMemberRemoved: (
-    member: Required<
-      Pick<MemberRemovalNotificationTarget, "discordId" | "guildId">
-    > & { readonly globalUserId: string },
-  ) => Effect.Effect<unknown, unknown>;
-}
-
 export const makeMemberRemoval = (
   database: ApiDatabaseValue,
-  ports: MemberRemovalPorts,
+  delivery: Pick<MemberDelivery, "deliverAll">,
 ) => {
   const operation = <A>(name: string, effect: Effect.Effect<A, unknown>) =>
     effect.pipe(
@@ -39,49 +26,19 @@ export const makeMemberRemoval = (
       }),
     );
 
-  const notifyMemberRemoved = (member: MemberRemovalNotificationTarget) =>
-    ports.clearMemberCaches(member).pipe(
-      Effect.andThen(
-        member.globalUserId
-          ? ports.publishMemberRemoved({
-              discordId: member.discordId,
-              guildId: member.guildId,
-              globalUserId: member.globalUserId,
-            })
-          : Effect.void,
-      ),
-    );
-
-  const notifyMembersRemoved = (
-    members: ReadonlyArray<MemberRemovalNotificationTarget>,
-    batchSize = 25,
-  ) =>
-    Effect.forEach(
-      chunk(members, batchSize),
-      (batch) =>
-        Effect.forEach(batch, notifyMemberRemoved, {
-          concurrency: "unbounded",
-          discard: true,
-        }),
-      { concurrency: 1, discard: true },
-    );
-
   const deactivateMembersMissingFromDiscordGuilds = Effect.fn(
     "members.deactivateMissing",
   )(function* (options: DeactivateMembersMissingFromDiscordGuildsOptions) {
     const missing = yield* operation(
       "members.deactivateMissing.find",
       database
-        .select()
+        .select({ id: memberTable.id })
         .from(memberTable)
         .where(
           and(
             eq(memberTable.userId, options.discordId),
             eq(memberTable.globalUserId, options.userId),
-            or(
-              eq(memberTable.active, true),
-              eq(memberTable.lastDiscordStatus, options.status),
-            ),
+            eq(memberTable.active, true),
             isNotNull(memberTable.globalUserId),
             options.activeDiscordGuildIds.length > 0
               ? notInArray(memberTable.guildId, [
@@ -93,46 +50,53 @@ export const makeMemberRemoval = (
     );
 
     if (missing.length === 0) return 0;
-    // The persisted reason retains targets for retry after invalidation or delivery fails.
-    const ids = missing.filter(({ active }) => active).map(({ id }) => id);
     const now = new Date(yield* Clock.currentTimeMillis);
 
-    if (ids.length > 0)
-      yield* operation(
-        "members.deactivateMissing.transaction",
-        database.transaction((transaction) =>
-          Effect.gen(function* () {
-            yield* transaction
-              .update(memberTable)
-              .set({
-                active: false,
-                lastDiscordAttemptAt: now,
-                lastDiscordStatus: options.status,
-                updatedAt: now,
-              })
-              .where(inArray(memberTable.id, ids));
-            yield* transaction
-              .delete(memberToRoleTable)
-              .where(inArray(memberToRoleTable.A, ids));
-          }),
-        ),
-      );
-    yield* notifyMembersRemoved(
-      missing.map((member) => ({
-        discordId: member.userId,
-        guildId: member.guildId,
-        globalUserId: member.globalUserId,
-      })),
+    // The removal delivery commits with the deactivation, so a failed
+    // invalidation or publication is retried by the delivery dispatcher.
+    const deactivated = yield* operation(
+      "members.deactivateMissing.transaction",
+      database.transaction((transaction) =>
+        Effect.gen(function* () {
+          const rows = yield* transaction
+            .update(memberTable)
+            .set({
+              active: false,
+              lastDiscordAttemptAt: now,
+              lastDiscordStatus: options.status,
+              updatedAt: now,
+            })
+            .where(
+              and(
+                inArray(
+                  memberTable.id,
+                  missing.map(({ id }) => id),
+                ),
+                eq(memberTable.active, true),
+              ),
+            )
+            .returning({ id: memberTable.id });
+
+          const ids = rows.map(({ id }) => id);
+
+          if (ids.length === 0) return ids;
+
+          yield* transaction
+            .delete(memberToRoleTable)
+            .where(inArray(memberToRoleTable.A, ids));
+          yield* queueMemberDeliveries(transaction, ids, true);
+
+          return ids;
+        }),
+      ),
     );
 
-    return ids.length;
+    yield* delivery.deliverAll(deactivated);
+
+    return deactivated.length;
   });
 
-  return {
-    deactivateMembersMissingFromDiscordGuilds,
-    notifyMemberRemoved,
-    notifyMembersRemoved,
-  };
+  return { deactivateMembersMissingFromDiscordGuilds };
 };
 
 export type MemberRemoval = ReturnType<typeof makeMemberRemoval>;
