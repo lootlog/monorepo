@@ -284,30 +284,15 @@ export class RedisService {
     pattern: string,
     batchSize = DEFAULT_DELETE_BATCH_SIZE,
   ): Promise<number> {
-    const prefixedPattern = this.prefixKey(pattern);
-    let cursor = "0";
     let deletedCount = 0;
 
-    do {
-      const [nextCursor, matchedKeys] = await this.run(
-        this.redis.send<[string, string[]]>(
-          "SCAN",
-          cursor,
-          "MATCH",
-          prefixedPattern,
-          "COUNT",
-          String(DEFAULT_SCAN_COUNT),
-        ),
-      );
-
-      cursor = nextCursor;
-
+    for await (const matchedKeys of this.scanKeyBatches(pattern)) {
       for (const batch of chunk(matchedKeys, batchSize)) {
         deletedCount += await this.run(
           this.redis.send<number>("DEL", ...batch),
         );
       }
-    } while (cursor !== "0");
+    }
 
     return deletedCount;
   }
@@ -445,8 +430,17 @@ export class RedisService {
   }
 
   async scan(pattern: string): Promise<string[]> {
-    const prefixedPattern = this.prefixKey(pattern);
     const keys: string[] = [];
+
+    for await (const matchedKeys of this.scanKeyBatches(pattern)) {
+      keys.push(...matchedKeys);
+    }
+
+    return keys.map((key) => this.unprefixKey(key));
+  }
+
+  private async *scanKeyBatches(pattern: string): AsyncGenerator<string[]> {
+    const prefixedPattern = this.prefixKey(pattern);
     let cursor = "0";
 
     do {
@@ -462,9 +456,7 @@ export class RedisService {
       );
 
       cursor = nextCursor;
-      keys.push(...matchedKeys);
+      yield matchedKeys;
     } while (cursor !== "0");
-
-    return keys.map((key) => this.unprefixKey(key));
   }
 }
