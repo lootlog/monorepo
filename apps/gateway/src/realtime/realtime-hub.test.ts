@@ -2326,6 +2326,7 @@ test("gathering rosters reach authorized observers across gateways without expos
                 payload: {
                   type: "UPSERT",
                   gathering: {
+                    organizerDiscordId: "organizer",
                     guildIds: [sourceGuild],
                     volunteers: [volunteer],
                     partyState: { members: [partyMember] },
@@ -2334,9 +2335,6 @@ test("gathering rosters reach authorized observers across gateways without expos
               },
             },
           ]);
-          expect(
-            JSON.stringify(target.sent.map(decodeRealtimeFrame)),
-          ).not.toContain("organizerDiscordId");
           expect(
             JSON.stringify(target.sent.map(decodeRealtimeFrame)),
           ).not.toContain("private-");

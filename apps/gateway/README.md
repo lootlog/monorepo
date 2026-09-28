@@ -81,7 +81,8 @@ The state event carries an Organization-scoped volunteer roster and the last
 observed party composition. Each replica applies the same chat/NPC source policy
 as the active-gatherings endpoint, including removal events. Source authorization
 metadata remains private to federation; each public snapshot names only its
-recipient Organization. Clients combine equally revisioned snapshots from
+recipient Organization. Like the active-gatherings endpoint, a snapshot keeps
+the organizer's Discord ID so clients can show the organizer's name and role. Clients combine equally revisioned snapshots from
 multiple authorized Organizations and reconcile an initial snapshot on reconnect.
 The same publication includes the organizer as a direct recipient, so an
 authorized organizer without chat-read permission still receives updates. Source

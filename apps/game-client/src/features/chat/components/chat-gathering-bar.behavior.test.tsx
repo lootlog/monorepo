@@ -9,6 +9,7 @@ import {
 import userEvent from "@testing-library/user-event";
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
+  getMembersControllerGetGuildMembersSummaryQueryKey,
   getMembersControllerGetMeQueryKey,
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   getUsersControllerGetUserPreferencesQueryKey,
@@ -1041,6 +1042,7 @@ it("updates every volunteer and the independent observed party for an observer w
 
   const gathering = createGathering({
     revision: 1,
+    organizerDiscordId: "organizer",
     volunteers: [waiting, joining],
     partyState: {
       status: "OBSERVED",
@@ -1051,6 +1053,15 @@ it("updates every volunteer and the independent observed party for an observer w
 
   const harness = await setup([gathering]);
   const requests = harness.discovery.mock.calls.length;
+  act(() =>
+    harness.queryClient.setQueryData(
+      getMembersControllerGetGuildMembersSummaryQueryKey({
+        guildId: "guild-1",
+      }),
+      [{ id: 1, userId: "organizer", name: "Organizer member" }],
+    ),
+  );
+  expect(await screen.findByText("Organizer member")).toBeVisible();
   const volunteers = await screen.findByRole("region", { name: "Chętni (2)" });
   expect(within(volunteers).getByText("Waiting player (190m)")).toBeVisible();
   expect(within(volunteers).getByText("Joining player (190m)")).toBeVisible();
@@ -1096,6 +1107,7 @@ it("updates every volunteer and the independent observed party for an observer w
     ),
   ).toBeVisible();
   expect(screen.getByLabelText("W grupie: 2/10")).toBeVisible();
+  expect(screen.getByText("Organizer member")).toBeVisible();
 
   await harness.receive({
     v: 1,
