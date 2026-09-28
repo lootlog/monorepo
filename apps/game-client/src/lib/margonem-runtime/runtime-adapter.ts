@@ -141,6 +141,7 @@ abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {
         maxHp: hero.warrior_stats?.maxhp ?? 0,
         name: hero.nick,
         profession: hero.prof,
+        stasis: hero.stasis === 1,
         x: hero.x,
         y: hero.y,
       }),
