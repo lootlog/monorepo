@@ -10,6 +10,12 @@ type NpcTypeValues<TNpcType extends string> = {
   NPC: TNpcType;
 };
 
+/**
+ * Weight the strongest NPC of a loot must reach for the API to accept it.
+ * Loots from weaker NPCs are rejected for every Organization.
+ */
+export const MIN_LOOT_NPC_WT = 10;
+
 export const getNpcTypeByWt = <TNpcType extends string>(
   npcTypes: NpcTypeValues<TNpcType>,
   wt: number,

@@ -230,7 +230,7 @@ export class DiscordGuildMemberClient {
       if (!isApiGuildMember(member))
         throw new TypeError("Invalid Discord guild member response");
       this.logger.log({
-        level: "info",
+        level: "debug",
         message: "Discord API returned member data",
         path,
       });
