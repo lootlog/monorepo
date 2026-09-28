@@ -22,6 +22,7 @@ import type { EventPointsStore } from "#src/events/kills/event-points.repository
 import {
   calculateTrackingDurationSeconds,
   clipIntervalToWindow,
+  getTrackingWindowDurationSeconds,
 } from "#src/events/monitoring/tracking-window";
 
 type CalculateMemberPointsParams = {
@@ -158,17 +159,8 @@ export const makeEventPoints = (
       return undefined;
     }
 
-    const trackingWindowStartTime =
-      params.minSpawnTimeAtKill > params.killedAt
-        ? params.killedAt
-        : params.minSpawnTimeAtKill;
-
-    const trackingWindowDurationSeconds = Math.max(
-      0,
-      Math.floor(
-        (params.killedAt.getTime() - trackingWindowStartTime.getTime()) / 1000,
-      ),
-    );
+    const trackingWindowDurationSeconds =
+      getTrackingWindowDurationSeconds(params);
 
     if (trackingWindowDurationSeconds <= 0) {
       return undefined;
