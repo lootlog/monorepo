@@ -26,6 +26,7 @@ import {
   getMemberReadCacheScope,
   getPermissionsCacheKey,
   getUserLootlogConfigCacheScope,
+  getUserGuildPermissionsCacheScope,
 } from "#src/shared/cache";
 import { DependencyUnavailableError } from "#src/shared/http/http-errors";
 import {
@@ -162,6 +163,7 @@ const invalidateRemovedMember = (
   const effects: Array<Effect.Effect<unknown, unknown>> = [
     ports.invalidateCacheScopes(
       getUserLootlogConfigCacheScope(member.discordId),
+      getUserGuildPermissionsCacheScope(member.discordId),
     ),
     ports.invalidateCacheScopes(getMemberReadCacheScope(member.guildId)),
   ];
@@ -177,16 +179,21 @@ const invalidateRemovedMember = (
       ports.deleteCacheKey(
         getPermissionsCacheKey(member.globalUserId, member.guildId),
       ),
-      ports.publishMemberRemoved({
-        id: member.discordId,
-        discordId: member.discordId,
-        userId: member.globalUserId,
-        guildId: member.guildId,
-      }),
     );
   }
 
-  return Effect.all(effects, { concurrency: "unbounded", discard: true });
+  return Effect.all(effects, { concurrency: "unbounded", discard: true }).pipe(
+    Effect.andThen(
+      member.globalUserId
+        ? ports.publishMemberRemoved({
+            id: member.discordId,
+            discordId: member.discordId,
+            userId: member.globalUserId,
+            guildId: member.guildId,
+          })
+        : Effect.void,
+    ),
+  );
 };
 
 export const makeUserAccountDeletion = (
@@ -214,6 +221,7 @@ export const makeUserAccountDeletion = (
         ports.deleteCacheKey(getLegacyAuthTokenCacheKey(identity.userId)),
         ports.invalidateCacheScopes(
           getUserLootlogConfigCacheScope(identity.discordId),
+          getUserGuildPermissionsCacheScope(identity.discordId),
         ),
         ...removedMembers.map((member) =>
           invalidateRemovedMember(ports, member),
