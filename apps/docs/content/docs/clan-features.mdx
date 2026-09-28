@@ -212,6 +212,11 @@ znajduje się po prawej stronie jego danych. Bez NPC jest obok opisu lub
 zakresu poziomów; tylko pusta zbiórka ma tę akcję w nagłówku.
 Zapraszanie działa na postaci organizatora po synchronizacji zbiórki.
 Wysłanie zaproszenia nie oznacza, że dana osoba już dołączyła do grupy.
+Po chwilowym błędzie wysyłania składu Lootlog ponawia zgłoszenie najwyżej
+dwa razy, po 1 i 2 sekundach, zawsze z najnowszym składem grupy. Po udanej
+synchronizacji osoba, która opuściła grupę, ponownie kwalifikuje się do zaproszenia.
+Jeśli wszystkie próby zawiodą, kolejna zmiana składu lub ponowne połączenie
+rozpoczyna nowe zgłoszenie.
 Organizator ma w menu zbiórki opcję **Lista chętnych**. Otwiera ona okno
 **Twoja zbiórka**, dostępne tylko dla organizatora. Okno pokazuje zgłoszonych,
 którzy są jeszcze poza grupą; osoby, które już dołączyły, znikają z listy.
