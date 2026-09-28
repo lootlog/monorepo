@@ -1,144 +1,123 @@
-import {
-  decodePartyReadyRoomProjection,
-  PARTY_OBSERVATION_HEARTBEAT_MS,
-  type PartyGatheringPartyMember,
-} from "@lootlog/schema/party-ready-room";
-import { useEffect, useEffectEvent, useRef } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { partyReadyRoomControllerObserveParty } from "@lootlog/client/main";
+import { useEffect, useRef } from "react";
+import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { usePartyStore } from "@/store/party.store";
+import { useGameStore } from "@/store/game.store";
 import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
 import { useGlobalStore } from "@/store/global.store";
 import {
+  areReadyRoomsSynchronized,
+  readReadyRoomCache,
   useOwnedReadyRoom,
   useReadyRoomsSynchronized,
 } from "@/features/party-finder/hooks/use-ready-rooms";
-import { useReadyRoomsCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
+import { mergeReadyRoomProjectionIntoCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
+import { selectOwnedReadyRoom } from "@/features/party-finder/ready-room-cache";
+import {
+  createReadyRoomPartyReporter,
+  type ReadyRoomPartyObservation,
+} from "@/features/party-finder/ready-room-party-reporter";
 
-type ObservePartyVariables = {
-  notificationId: string;
-  memberCharacterIds: string[];
-  members: PartyGatheringPartyMember[];
-  organizerAccountId: string;
-  organizerCharacterId: string;
-};
+function readObservation(
+  client: QueryClient,
+): ReadyRoomPartyObservation | null {
+  const room = selectOwnedReadyRoom(readReadyRoomCache(client));
+  const currentCharacter = getCurrentReadyRoomCharacterIdentity();
+  const { connected, joined } = useGlobalStore.getState().socketState;
+  const { members, status } = usePartyStore.getState();
+
+  if (
+    !room ||
+    !connected ||
+    !joined ||
+    !areReadyRoomsSynchronized(client) ||
+    status !== "ready" ||
+    currentCharacter?.accountId !== room.organizerCharacter.accountId ||
+    currentCharacter.characterId !== room.organizerCharacter.characterId
+  )
+    return null;
+
+  const memberCharacterIds = [
+    ...new Set(members.map(({ characterId }) => characterId)),
+  ].sort();
+
+  return {
+    scope: JSON.stringify([
+      room.notificationId,
+      [...room.guildIds].sort(),
+      room.world,
+      room.organizerDiscordId,
+      currentCharacter.accountId,
+      currentCharacter.characterId,
+      useGameStore.getState().game?.world,
+    ]),
+    notificationId: room.notificationId,
+    body: {
+      expectedRevision: room.revision,
+      memberCharacterIds,
+      members: memberCharacterIds.flatMap((characterId) => {
+        const member = members.find(
+          (entry) => entry.characterId === characterId,
+        );
+
+        return member
+          ? [
+              {
+                characterId,
+                nick: member.name,
+                icon: member.icon,
+                prof: member.profession ?? undefined,
+              },
+            ]
+          : [];
+      }),
+      organizerAccountId: currentCharacter.accountId,
+      organizerCharacterId: currentCharacter.characterId,
+    },
+  };
+}
 
 export function usePartyReadyRoomObserver(): void {
+  const queryClient = useQueryClient();
   const ownedReadyRoom = useOwnedReadyRoom();
   const readyRoomsSynchronized = useReadyRoomsSynchronized();
-  const { mergeProjection } = useReadyRoomsCache();
   const { connected, joined } = useGlobalStore((state) => state.socketState);
   const partyMembers = usePartyStore((state) => state.members);
   const partyStatus = usePartyStore((state) => state.status);
+  const accountId = useGameStore((state) => state.game?.hero.accountId);
+  const characterId = useGameStore((state) => state.game?.hero.characterId);
+  const world = useGameStore((state) => state.game?.world);
 
-  const lastReport = useRef<{ snapshot: string; reportedAt: number } | null>(
-    null,
-  );
-
-  const { mutate: observeParty } = useMutation({
-    mutationFn: ({ notificationId, ...body }: ObservePartyVariables) =>
-      partyReadyRoomControllerObserveParty({ notificationId }, body),
-    onSuccess: (projection) => {
-      mergeProjection(decodePartyReadyRoomProjection(projection));
-    },
-    onError: (cause) => {
-      console.warn("Failed to report the observed party snapshot", cause);
-    },
-  });
-
-  const reportSnapshot = useEffectEvent((variables: ObservePartyVariables) => {
-    observeParty(variables);
-  });
+  const reporter = useRef<ReturnType<
+    typeof createReadyRoomPartyReporter
+  > | null>(null);
 
   useEffect(() => {
-    const currentCharacter = getCurrentReadyRoomCharacterIdentity();
+    const current = createReadyRoomPartyReporter(
+      () => readObservation(queryClient),
+      (projection) =>
+        mergeReadyRoomProjectionIntoCache(projection, queryClient),
+    );
 
-    const isOrganizingCharacter =
-      currentCharacter !== null &&
-      currentCharacter.accountId ===
-        ownedReadyRoom?.organizerCharacter.accountId &&
-      currentCharacter.characterId ===
-        ownedReadyRoom?.organizerCharacter.characterId;
+    reporter.current = current;
 
-    if (
-      !ownedReadyRoom ||
-      !connected ||
-      !joined ||
-      !readyRoomsSynchronized ||
-      partyStatus !== "ready" ||
-      !isOrganizingCharacter
-    ) {
-      lastReport.current = null;
-
-      return;
-    }
-
-    const memberCharacterIds = [
-      ...new Set(partyMembers.map(({ characterId }) => characterId)),
-    ].sort();
-
-    const members = memberCharacterIds.flatMap((characterId) => {
-      const member = partyMembers.find(
-        (entry) => entry.characterId === characterId,
-      );
-
-      if (!member) return [];
-
-      return [
-        {
-          characterId,
-          nick: member.name,
-          icon: member.icon,
-          prof: member.profession ?? undefined,
-        },
-      ];
-    });
-
-    const snapshot = JSON.stringify([ownedReadyRoom.notificationId, members]);
-
-    const report = () => {
-      const reportedAt = Date.now();
-      lastReport.current = { snapshot, reportedAt };
-      reportSnapshot({
-        notificationId: ownedReadyRoom.notificationId,
-        memberCharacterIds,
-        members,
-        organizerAccountId: ownedReadyRoom.organizerCharacter.accountId,
-        organizerCharacterId: ownedReadyRoom.organizerCharacter.characterId,
-      });
-
-      return reportedAt;
+    return () => {
+      reporter.current = null;
+      current.dispose();
     };
+  }, [queryClient]);
 
-    let reportedAt =
-      lastReport.current?.snapshot === snapshot
-        ? lastReport.current.reportedAt
-        : report();
-
-    // Viewers treat an observation as stale after a fixed age, so re-report an
-    // unchanged party on a timer measured from the last report. Frequent party
-    // store updates (HP changes) rerun this effect without delaying it.
-    let heartbeat = 0;
-
-    const scheduleHeartbeat = () => {
-      heartbeat = window.setTimeout(
-        () => {
-          reportedAt = report();
-          scheduleHeartbeat();
-        },
-        Math.max(0, reportedAt + PARTY_OBSERVATION_HEARTBEAT_MS - Date.now()),
-      );
-    };
-
-    scheduleHeartbeat();
-
-    return () => window.clearTimeout(heartbeat);
+  useEffect(() => {
+    reporter.current?.flush();
   }, [
+    queryClient,
     ownedReadyRoom,
     partyMembers,
     partyStatus,
     connected,
     joined,
     readyRoomsSynchronized,
+    accountId,
+    characterId,
+    world,
   ]);
 }
