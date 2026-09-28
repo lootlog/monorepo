@@ -194,10 +194,12 @@ export class OrganizationContextLookup extends Context.Service<
               return;
             }
 
+            const key = refreshAheadKey(options.userId, guildId);
+
             // The marker lives until the context stops being fresh, so each
             // user and guild queues at most one refresh per aging window.
             const claimed = yield* cache.setIfAbsent(
-              refreshAheadKey(options.userId, guildId),
+              key,
               "1",
               Math.max(
                 Math.ceil((lastSync.getTime() + softTtl - now) / 1000),
@@ -213,7 +215,10 @@ export class OrganizationContextLookup extends Context.Service<
               userId: options.userId,
               priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
               reason: "organization-context-refresh-ahead",
-            });
+            }).pipe(
+              // A failed enqueue must not block the retry until the soft TTL.
+              Effect.tapError(() => cache.del(key).pipe(Effect.ignore)),
+            );
           }).pipe(
             Effect.ignore,
             Effect.withSpan("organization-context.refresh-ahead"),
