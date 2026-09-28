@@ -510,6 +510,7 @@ export const makeReadyRoomDataLayer = (
         organizerAccountId: string,
         organizerCharacterId: string,
         memberCharacterIds: ReadonlyArray<string>,
+        expectedRevision: number | undefined,
         attempt: number,
       ): Effect.Effect<unknown, unknown> =>
         Effect.gen(function* () {
@@ -522,6 +523,15 @@ export const makeReadyRoomDataLayer = (
           ) {
             return yield* Effect.fail(
               new PermissionDeniedError({ code: "FORBIDDEN" }),
+            );
+          }
+
+          if (
+            expectedRevision !== undefined &&
+            aggregate.revision !== expectedRevision
+          ) {
+            return yield* Effect.fail(
+              new ResourceConflictError({ code: "REVISION_CONFLICT" }),
             );
           }
 
@@ -542,7 +552,9 @@ export const makeReadyRoomDataLayer = (
             }
           }
 
+          // A versioned no-op must fence older in-flight observations too.
           if (
+            expectedRevision === undefined &&
             changed.length === 0 &&
             aggregate.partyMemberCount === memberIds.size
           ) {
@@ -576,7 +588,8 @@ export const makeReadyRoomDataLayer = (
           }
 
           if (result.status === "conflict") {
-            return attempt + 1 >= MAX_CAS_ATTEMPTS
+            return expectedRevision !== undefined ||
+              attempt + 1 >= MAX_CAS_ATTEMPTS
               ? yield* Effect.fail(
                   new ResourceConflictError({ code: "REVISION_CONFLICT" }),
                 )
@@ -586,6 +599,7 @@ export const makeReadyRoomDataLayer = (
                   organizerAccountId,
                   organizerCharacterId,
                   memberCharacterIds,
+                  expectedRevision,
                   attempt + 1,
                 );
           }
@@ -1103,6 +1117,7 @@ export const makeReadyRoomDataLayer = (
               payload.organizerAccountId,
               payload.organizerCharacterId,
               payload.memberCharacterIds,
+              payload.expectedRevision,
               0,
             ),
           ),

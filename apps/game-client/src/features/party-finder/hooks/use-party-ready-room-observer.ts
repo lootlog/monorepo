@@ -48,6 +48,7 @@ function readObservation(
     ]),
     notificationId: room.notificationId,
     body: {
+      expectedRevision: room.revision,
       memberCharacterIds: [
         ...new Set(members.map(({ characterId }) => characterId)),
       ].sort(),
