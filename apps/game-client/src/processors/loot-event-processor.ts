@@ -13,7 +13,6 @@ import {
   type LootCreateDebugContext,
 } from "@/lib/loot-create-debug";
 import { getLoot } from "@/utils/game/get-loots";
-import { getLoadedCatchingGuildIds } from "@/lib/catching-guild-ids";
 import {
   getBattleParticipants,
   type Npc,
@@ -183,7 +182,7 @@ export class LootEventProcessor {
       game,
     );
 
-    if (this.isRejectedByEveryOrganization(npcs, game, debugContext)) return;
+    if (this.isRejectedByEveryOrganization(npcs, debugContext)) return;
 
     const { hero, map } = game;
 
@@ -222,37 +221,20 @@ export class LootEventProcessor {
       });
   }
 
-  // The API rejects these loots for every Organization, so submitting them
-  // only produces a 400 response.
+  // The API rejects loot from weaker NPCs for every Organization, so
+  // submitting it only produces a 400 response.
   private isRejectedByEveryOrganization(
     npcs: ReadonlyArray<Pick<Npc, "wt">>,
-    game: RuntimeGameSnapshot,
     debugContext: LootCreateDebugContext,
   ): boolean {
-    if (!npcs.some((npc) => npc.wt >= MIN_LOOT_NPC_WT)) {
-      logLootCreateDebug("skipped", {
-        ...debugContext,
-        reason: "npc-wt-too-low",
-      });
+    if (npcs.some((npc) => npc.wt >= MIN_LOOT_NPC_WT)) return false;
 
-      return true;
-    }
+    logLootCreateDebug("skipped", {
+      ...debugContext,
+      reason: "npc-wt-too-low",
+    });
 
-    const catchingGuildIds = getLoadedCatchingGuildIds(
-      game.hero.accountId,
-      game.hero.characterId,
-    );
-
-    if (catchingGuildIds?.length === 0) {
-      logLootCreateDebug("skipped", {
-        ...debugContext,
-        reason: "empty-catching-whitelist",
-      });
-
-      return true;
-    }
-
-    return false;
+    return true;
   }
 
   private captureMapPlayers(
@@ -361,7 +343,7 @@ export class LootEventProcessor {
       },
     ];
 
-    if (this.isRejectedByEveryOrganization(npcs, game, debugContext)) {
+    if (this.isRejectedByEveryOrganization(npcs, debugContext)) {
       useDialogStore.getState().clearNpcContext();
 
       return;
