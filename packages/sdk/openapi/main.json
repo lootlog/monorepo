@@ -32669,6 +32669,11 @@
       "PartyReadyRoomObservationDto": {
         "type": "object",
         "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
           "memberCharacterIds": {
             "type": "array",
             "items": {

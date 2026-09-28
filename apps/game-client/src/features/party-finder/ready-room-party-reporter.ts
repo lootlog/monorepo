@@ -1,5 +1,12 @@
-import { partyReadyRoomControllerObserveParty } from "@lootlog/client/main";
-import { isRetryableApiFailure } from "@lootlog/client/transport";
+import {
+  partyReadyRoomControllerGet,
+  partyReadyRoomControllerObserveParty,
+} from "@lootlog/client/main";
+import {
+  getApiErrorStatus,
+  getApiErrorStringField,
+  isRetryableApiFailure,
+} from "@lootlog/client/transport";
 import {
   decodePartyReadyRoomProjection,
   type PartyReadyRoomProjection,
@@ -8,7 +15,9 @@ import {
 export type ReadyRoomPartyObservation = {
   scope: string;
   notificationId: string;
-  body: Parameters<typeof partyReadyRoomControllerObserveParty>[1];
+  body: Parameters<typeof partyReadyRoomControllerObserveParty>[1] & {
+    expectedRevision: number;
+  };
 };
 
 type PendingObservation = {
@@ -20,7 +29,9 @@ type PendingObservation = {
 
 const RETRY_DELAYS_MS = [1_000, 2_000];
 
-// Remounting the observer must not overlap a POST that can still commit.
+export const READY_ROOM_PARTY_REQUEST_TIMEOUT_MS = 5_000;
+
+// Share the bounded request across remounts to avoid unnecessary CAS conflicts.
 let activeReport: Promise<void> | null = null;
 
 export function createReadyRoomPartyReporter(
@@ -44,7 +55,12 @@ export function createReadyRoomPartyReporter(
       ? JSON.stringify([observation.scope, observation.body.memberCharacterIds])
       : null;
 
-    if (pending?.key === key) return;
+    if (pending?.key === key && observation) {
+      pending.observation = observation;
+
+      return;
+    }
+
     clearRetry();
     pending =
       observation && key !== null
@@ -56,10 +72,30 @@ export function createReadyRoomPartyReporter(
     current.attempts += 1;
 
     try {
+      if (current.attempts > 1) {
+        const projection = decodePartyReadyRoomProjection(
+          await partyReadyRoomControllerGet(
+            { notificationId: current.observation.notificationId },
+            { apiClient: { timeoutMs: READY_ROOM_PARTY_REQUEST_TIMEOUT_MS } },
+          ),
+        );
+
+        if (disposed) return;
+        refreshObservation();
+
+        if (pending !== current) return;
+
+        mergeProjection(projection);
+        refreshObservation();
+
+        if (pending !== current) return;
+      }
+
       const projection = decodePartyReadyRoomProjection(
         await partyReadyRoomControllerObserveParty(
           { notificationId: current.observation.notificationId },
           current.observation.body,
+          { apiClient: { timeoutMs: READY_ROOM_PARTY_REQUEST_TIMEOUT_MS } },
         ),
       );
 
@@ -79,7 +115,14 @@ export function createReadyRoomPartyReporter(
       console.warn("Failed to report the observed party snapshot", cause);
       const delay = RETRY_DELAYS_MS[current.attempts - 1];
 
-      if (delay === undefined || !isRetryableApiFailure(cause)) {
+      const revisionConflict =
+        getApiErrorStatus(cause) === 409 &&
+        getApiErrorStringField(cause, "code") === "REVISION_CONFLICT";
+
+      if (
+        delay === undefined ||
+        (!revisionConflict && !isRetryableApiFailure(cause))
+      ) {
         current.attempts = RETRY_DELAYS_MS.length + 1;
 
         return;
@@ -115,8 +158,7 @@ export function createReadyRoomPartyReporter(
       return;
     }
 
-    // The endpoint replaces presence without a client revision. Wait for each
-    // request to settle before sending the latest roster, including scope changes.
+    // A timeout releases this queue. expectedRevision fences the old server write.
     const request = report(pending);
     activeReport = request;
     void request.then(() => {

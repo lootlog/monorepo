@@ -108,3 +108,26 @@ new gathering or application. Duplicate facts do not advance terminal state.
 Deploy the API consumer before the gateway publisher; no HTTP contract changes
 are required. The timer starts when the gateway detects disconnection, so network
 failures can take longer to detect than an ordinary browser close.
+
+## Bounded party observation recovery
+
+`POST /messaging/party-gathering/{notificationId}/party-observation` accepts an
+optional `expectedRevision`. When supplied, the API commits only against that
+exact room revision. A mismatched revision or a lost compare-and-set returns
+`409 REVISION_CONFLICT` without replaying the roster against newer state.
+A successful versioned observation advances the revision even when presence is
+unchanged, so an older request cannot later overwrite an acknowledged roster.
+Requests without the field retain the existing server-side conflict retries.
+
+The game client bounds each observation and recovery read to five seconds. It
+retries transient failures, including revision conflicts, at most twice after
+one and two seconds. Each retry first reads the current room revision and then
+reports the latest local roster, provided the room, Organizations, character,
+and connection context still match. A timed-out request may continue on the
+server; revision checks prevent it from overwriting a later accepted report.
+
+Deploy this API change to every writer before deploying the updated game client.
+Older API instances ignore the new field and cannot protect overlapping requests
+after a client timeout. No persisted aggregate or Redis migration is needed.
+For rollback, restore the previous client before removing API revision checks;
+keep those checks until updated clients and their outstanding requests are gone.

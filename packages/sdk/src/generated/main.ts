@@ -6207,6 +6207,11 @@ export interface PartyReadyRoomResolveInvitationTargetsDto {
 
 export interface PartyReadyRoomObservationDto {
   /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  expectedRevision?: number;
+  /**
      * @maxItems 20
      * @items.minLength 1
      * @items.maxLength 255

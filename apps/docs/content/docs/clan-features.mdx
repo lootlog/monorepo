@@ -213,7 +213,9 @@ zakresu poziomów; tylko pusta zbiórka ma tę akcję w nagłówku.
 Zapraszanie działa na postaci organizatora po synchronizacji zbiórki.
 Wysłanie zaproszenia nie oznacza, że dana osoba już dołączyła do grupy.
 Po chwilowym błędzie wysyłania składu Lootlog ponawia zgłoszenie najwyżej
-dwa razy, po 1 i 2 sekundach, zawsze z najnowszym składem grupy. Po udanej
+dwa razy, po 1 i 2 sekundach, zawsze z najnowszym składem grupy. Każda próba
+odczytu lub wysłania danych ma limit 5 sekund. Przed ponowieniem Lootlog
+odświeża stan zbiórki, również po konflikcie z inną zmianą. Po udanej
 synchronizacji osoba, która opuściła grupę, ponownie kwalifikuje się do zaproszenia.
 Jeśli wszystkie próby zawiodą, kolejna zmiana składu lub ponowne połączenie
 rozpoczyna nowe zgłoszenie.
