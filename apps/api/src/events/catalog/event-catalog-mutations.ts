@@ -24,6 +24,7 @@ import {
   eventMapCoverageGapTable,
   eventMapLocationTable,
   eventMapTable,
+  eventRankingTable,
   eventTable,
   timerTable,
 } from "#src/database/drizzle/schema";
@@ -51,8 +52,8 @@ class EventCatalogMutationError extends TaggedErrorClass<EventCatalogMutationErr
 
 export const makeEventCatalogMutations = (
   database: typeof ApiDatabase.Service,
-  redis: RedisService,
-  logger: Logger,
+  redis: Pick<RedisService, "invalidateScopes" | "deleteByPattern">,
+  logger: Pick<Logger, "warn">,
 ) => {
   const query = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
@@ -290,15 +291,32 @@ export const makeEventCatalogMutations = (
 
     deleteHero: (guild: { id: string }, eventId: string, heroId: string) =>
       Effect.gen(function* () {
-        if (!(yield* findHero(guild.id, eventId, heroId)))
+        const hero = yield* findHero(guild.id, eventId, heroId);
+
+        if (!hero)
           return yield* Effect.fail(
             new ResourceNotFoundError("Hero not found"),
           );
+        // Kills, points, maps and tracking history cascade with the hero.
+        // Rankings are keyed by hero name, so remove them explicitly to keep
+        // ranking totals consistent with the remaining kill points.
         yield* query(
           "events.catalog.deleteHero",
-          database
-            .delete(eventHeroNpcTable)
-            .where(eq(eventHeroNpcTable.id, heroId)),
+          database.transaction((transaction) =>
+            Effect.gen(function* () {
+              yield* transaction
+                .delete(eventRankingTable)
+                .where(
+                  and(
+                    eq(eventRankingTable.eventId, eventId),
+                    eq(eventRankingTable.heroNpcName, hero.npcName),
+                  ),
+                );
+              yield* transaction
+                .delete(eventHeroNpcTable)
+                .where(eq(eventHeroNpcTable.id, heroId));
+            }),
+          ),
         );
         yield* invalidate(guild.id, eventId);
 
