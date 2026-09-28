@@ -12,6 +12,7 @@ import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { createTimerFixture } from "./timer-fixtures";
 import { createTimerViewFixture } from "./timer-view-fixtures";
 import { Timers } from "./timers";
+import { AppSocket } from "@/lib/socket";
 
 const createVisibleTimer = () =>
   createTimerFixture({
@@ -169,6 +170,8 @@ it("recovers from empty filters without erasing the user's saved hidden timers",
 it("retries a failed world request and displays the recovered timer", async () => {
   const user = userEvent.setup();
   const requests: Request[] = [];
+  // No realtime session here; use-timers-socket.test covers the wait for one.
+  vi.spyOn(AppSocket.prototype, "waitForSession").mockResolvedValue();
 
   const fixture = mountTimers((value) => {
     value.queryClient.removeQueries({ queryKey: queryKeys.timers("gefion") });
