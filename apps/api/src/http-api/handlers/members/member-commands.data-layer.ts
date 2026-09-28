@@ -17,7 +17,11 @@ import {
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/member-refresh-queue";
 import { ErrorKey } from "#src/members/error-key";
-import { isTransientMemberSyncStatus } from "#src/members/member-discord-sync-status";
+import {
+  isTransientMemberSyncStatus,
+  MEMBER_DISCORD_SYNC_STATUS,
+} from "#src/members/member-discord-sync-status";
+import type { MemberRefreshScheduleResult } from "#src/members/member-refresh-scheduler";
 import type {
   MemberBulkRefreshJobData,
   MemberRefreshAttempt,
@@ -45,6 +49,13 @@ export interface MemberCommandsPorts {
     readonly reason: string;
     readonly throwOnUnexpectedError: boolean;
   }) => Effect.Effect<MemberRefreshAttempt, unknown>;
+  readonly queueGuildMemberRefresh: (options: {
+    readonly discordId: string;
+    readonly guildId: string;
+    readonly userId: string;
+    readonly priority: number;
+    readonly reason: string;
+  }) => Effect.Effect<MemberRefreshScheduleResult, unknown>;
   readonly recordStaleUse: (
     reason: MemberRefreshAttempt["status"],
   ) => Effect.Effect<unknown, unknown>;
@@ -116,18 +127,40 @@ const isFresh = (member: StoredMemberWithRoles | null, cacheExpiry: Date) =>
     member.lastDiscordSyncAt.getTime() >= cacheExpiry.getTime(),
   );
 
+const memberWithinStaleAccessGrace = (
+  member: StoredMemberWithRoles | null,
+  now: Date,
+) =>
+  member?.active &&
+  member.lastDiscordSyncAt &&
+  now.getTime() - member.lastDiscordSyncAt.getTime() <= STALE_ACCESS_GRACE_MS
+    ? member
+    : null;
+
 const useStaleMember = (
   member: StoredMemberWithRoles | null,
   refreshAttempt: MemberRefreshAttempt,
   now: Date,
 ) =>
+  Boolean(memberWithinStaleAccessGrace(member, now)) ||
   Boolean(
     member?.active &&
     member.lastDiscordSyncAt &&
-    (now.getTime() - member.lastDiscordSyncAt.getTime() <=
-      STALE_ACCESS_GRACE_MS ||
-      isTransientMemberSyncStatus(refreshAttempt.status)),
+    isTransientMemberSyncStatus(refreshAttempt.status),
   );
+
+const staleMember = (
+  member: StoredMemberWithRoles,
+  refresh: Pick<MemberRefreshAttempt, "refreshQueued" | "nextRefreshAt">,
+) => ({
+  ...member,
+  isStale: true,
+  staleWarning: refresh.refreshQueued
+    ? "Using cached data while a Discord refresh is queued"
+    : "Using cached data due to Discord API rate limiting or errors",
+  refreshQueued: refresh.refreshQueued,
+  nextRefreshAt: refresh.nextRefreshAt,
+});
 
 const throwSyncError = (attempt: MemberRefreshAttempt) =>
   attempt.error instanceof Error
@@ -141,6 +174,30 @@ export const makeMembersDataLayer = (
   Layer.effect(
     MembersData,
     Effect.map(ApiDatabase, (database) => {
+      const refreshInBackground = (
+        stored: StoredMemberWithRoles,
+        identity: MembersIdentity,
+        guildId: string,
+      ) =>
+        Effect.gen(function* () {
+          const scheduled = yield* ports.queueGuildMemberRefresh({
+            discordId: identity.discordId,
+            guildId,
+            userId: identity.userId,
+            priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
+            reason: "member-read",
+          });
+
+          yield* ports
+            .recordStaleUse(MEMBER_DISCORD_SYNC_STATUS.QUEUED)
+            .pipe(Effect.ignore);
+
+          return staleMember(stored, {
+            refreshQueued: scheduled.queued,
+            nextRefreshAt: scheduled.nextRefreshAt,
+          });
+        });
+
       const getMember = (options: {
         readonly identity: MembersIdentity;
         readonly guildId: string;
@@ -184,6 +241,20 @@ export const makeMembersDataLayer = (
 
           if (fresh) return stored;
 
+          // A read never waits on Discord for a member synced within the
+          // stale-access grace: the queued refresh revokes access if needed.
+          const graceMember = options.refresh
+            ? null
+            : memberWithinStaleAccessGrace(stored, now);
+
+          if (graceMember) {
+            return yield* refreshInBackground(
+              graceMember,
+              options.identity,
+              desiredGuildId,
+            );
+          }
+
           const refreshAttempt = yield* ports.refreshGuildMember({
             discordId: options.identity.discordId,
             guildId: desiredGuildId,
@@ -211,21 +282,15 @@ export const makeMembersDataLayer = (
 
           if (refreshAttempt.status === "NOT_FOUND") return null;
 
-          if (!useStaleMember(stored, refreshAttempt, now)) return null;
+          if (!stored || !useStaleMember(stored, refreshAttempt, now)) {
+            return null;
+          }
 
           yield* ports
             .recordStaleUse(refreshAttempt.status)
             .pipe(Effect.ignore);
 
-          return {
-            ...stored,
-            isStale: true,
-            staleWarning: refreshAttempt.refreshQueued
-              ? "Using cached data while a Discord refresh is queued"
-              : "Using cached data due to Discord API rate limiting or errors",
-            refreshQueued: refreshAttempt.refreshQueued,
-            nextRefreshAt: refreshAttempt.nextRefreshAt,
-          };
+          return staleMember(stored, refreshAttempt);
         });
 
       const deactivate = (guildId: string, discordId: string) =>

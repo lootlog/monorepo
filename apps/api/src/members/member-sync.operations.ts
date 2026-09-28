@@ -34,6 +34,7 @@ export interface MemberSyncPorts {
     readonly discordId: string;
     readonly guildId: string;
     readonly userId: string;
+    readonly readProjectionChanged: boolean;
   }) => Effect.Effect<unknown, unknown>;
 }
 
@@ -92,24 +93,25 @@ export const makeMemberSync = (
       discordMember.guildId,
     );
 
-    const member = yield* store.upsertMemberWithRoles(
-      discordMember.user.id,
-      discordMember.guildId,
-      {
-        avatar: discordMember.avatar ?? discordMember.user.avatar,
-        banner: discordMember.banner,
-        name:
-          discordMember.nick ??
-          discordMember.user.global_name ??
-          discordMember.user.username,
-        active: true,
-        globalUserId: discordMember.globalUserId,
-        lastDiscordAttemptAt: syncTimestamp,
-        lastDiscordSyncAt: syncTimestamp,
-        lastDiscordStatus: MEMBER_DISCORD_SYNC_STATUS.SUCCESS,
-      },
-      existingRoleIds,
-    );
+    const { member, readProjectionChanged } =
+      yield* store.upsertMemberWithRoles(
+        discordMember.user.id,
+        discordMember.guildId,
+        {
+          avatar: discordMember.avatar ?? discordMember.user.avatar,
+          banner: discordMember.banner,
+          name:
+            discordMember.nick ??
+            discordMember.user.global_name ??
+            discordMember.user.username,
+          active: true,
+          globalUserId: discordMember.globalUserId,
+          lastDiscordAttemptAt: syncTimestamp,
+          lastDiscordSyncAt: syncTimestamp,
+          lastDiscordStatus: MEMBER_DISCORD_SYNC_STATUS.SUCCESS,
+        },
+        existingRoleIds,
+      );
 
     // Even unchanged roles need fresh permission-cache sync timestamps and must
     // retry invalidation if the previous attempt committed but cache clearing failed.
@@ -117,6 +119,7 @@ export const makeMemberSync = (
       discordId: discordMember.user.id,
       guildId: discordMember.guildId,
       userId: discordMember.globalUserId,
+      readProjectionChanged,
     });
 
     return member;
