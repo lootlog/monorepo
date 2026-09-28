@@ -69,7 +69,7 @@ export const useChatMessagesListener = (
 ) => {
   const queryClient = useQueryClient();
   const { connected, joined, joinedGuilds, socket } = useSocket();
-  const { data: sessionData } = useSession();
+  const { data: sessionData, isPending: isSessionPending } = useSession();
   const { presentNotifications } = useNotificationPresenter();
 
   const [chatCacheBatcher] = useState(() =>
@@ -95,8 +95,13 @@ export const useChatMessagesListener = (
   const permissionGenerationRef = useRef(0);
   const guildPermissionGenerationsRef = useRef(new Map<string, number>());
   useEffect(() => retainChatAccessPolicy(queryClient), [queryClient]);
-  const accountCacheIdentity = `${sessionData?.user?.discordId ?? ""}\u0000${runtimeAccountId}`;
-  const previousAccountCacheIdentityRef = useRef(accountCacheIdentity);
+
+  const previousAccountCacheIdentityRef = useRef({
+    accountId: runtimeAccountId,
+    discordId: sessionData?.user?.discordId,
+    sessionResolved: !isSessionPending,
+  });
+
   useEffect(
     () => () => {
       chatCacheBatcher.flush();
@@ -122,12 +127,33 @@ export const useChatMessagesListener = (
   ]);
 
   useEffect(() => {
-    if (previousAccountCacheIdentityRef.current !== accountCacheIdentity) {
+    const previous = previousAccountCacheIdentityRef.current;
+    const discordId = sessionData?.user?.discordId;
+    const sessionResolved = !isSessionPending;
+    const accountChanged = previous.accountId !== runtimeAccountId;
+
+    const sessionChanged =
+      previous.sessionResolved &&
+      sessionResolved &&
+      previous.discordId !== discordId;
+
+    if (accountChanged || sessionChanged) {
       chatCacheBatcher.discardAll();
       removeAllChatMessagesQueries(queryClient);
-      previousAccountCacheIdentityRef.current = accountCacheIdentity;
     }
-  }, [accountCacheIdentity, chatCacheBatcher, queryClient]);
+
+    previousAccountCacheIdentityRef.current = {
+      accountId: runtimeAccountId,
+      discordId: sessionResolved ? discordId : previous.discordId,
+      sessionResolved: previous.sessionResolved || sessionResolved,
+    };
+  }, [
+    runtimeAccountId,
+    sessionData?.user?.discordId,
+    isSessionPending,
+    chatCacheBatcher,
+    queryClient,
+  ]);
 
   useEffect(() => {
     if (!joined) {

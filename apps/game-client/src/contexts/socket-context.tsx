@@ -12,6 +12,7 @@ import { GatewayEvent } from "@/config/gateway";
 import {
   type AppSocket,
   getSocket,
+  getGameSessionIdentity,
   type PermissionsUpdatedPayload,
 } from "@/lib/socket";
 import {
@@ -24,6 +25,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   useSyncExternalStore,
   type ReactNode,
@@ -36,6 +38,14 @@ type SocketContextValue = {
   joinedGuilds: string[];
   status: RealtimeConnectionStatus;
 };
+
+const EMPTY_JOINED_GUILDS: string[] = [];
+
+// A join that fails on an open socket, such as an invalid response, is not
+// followed by a reconnect, so the provider retries it itself.
+const JOIN_RETRY_BASE_DELAY_MS = 1_000;
+
+const JOIN_RETRY_MAX_DELAY_MS = 30_000;
 
 const SocketContext = createContext<SocketContextValue>({
   socket: null,
@@ -72,11 +82,50 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     getConnectionState,
   );
 
-  const [joined, setJoined] = useState(false);
+  const hasBeenUnavailable = useRef(false);
+
+  useEffect(() => {
+    if (connectionState === "reconnecting") hasBeenUnavailable.current = true;
+  }, [connectionState]);
+
+  const [joinedCharacterIdentity, setJoinedCharacterIdentity] = useState<
+    string | null
+  >(null);
+
   const [hasBeenOnline, setHasBeenOnline] = useState(false);
-  const [joinedGuilds, setJoinedGuilds] = useState<string[]>([]);
+  const [joinFailed, setJoinFailed] = useState(false);
+  const [joinRetry, setJoinRetry] = useState(0);
+  const joinAttempt = useRef(0);
+  const joinFailures = useRef(0);
+  const joinRetryTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [guildIds, setJoinedGuilds] = useState<string[]>([]);
   const gameInitialized = useGlobalStore((s) => s.gameState.gameInitialized);
   const setSocketState = useGlobalStore((s) => s.setSocketState);
+
+  const characterIdentity = useGameStore((state) => {
+    const game = state.game;
+
+    return game
+      ? getGameSessionIdentity({ world: game.world, ...game.hero })
+      : null;
+  });
+
+  const joined =
+    characterIdentity !== null && joinedCharacterIdentity === characterIdentity;
+
+  const joinedGuilds = joined ? guildIds : EMPTY_JOINED_GUILDS;
+
+  const previousCharacterIdentity = useRef(characterIdentity);
+
+  useEffect(() => {
+    if (previousCharacterIdentity.current === characterIdentity) return;
+    const previous = previousCharacterIdentity.current;
+    previousCharacterIdentity.current = characterIdentity;
+
+    if (previous !== null) socket.disconnect();
+
+    if (characterIdentity !== null) socket.connect();
+  }, [characterIdentity, socket]);
 
   useEffect(() => {
     setSocketState({ connected, joined, joinedGuilds });
@@ -100,33 +149,63 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
 
-        await socket.join({
-          world,
-          name: hero.name,
-          lvl: hero.level,
-          icon: hero.icon,
-          prof: hero.profession,
-          characterId,
-          accountId,
-          clan: hero.clan
-            ? {
-                id: hero.clan.id,
-                name: hero.clan.name,
-                rank: hero.clan.rank,
-              }
-            : undefined,
-        });
+        const attempt = ++joinAttempt.current;
+
+        await socket
+          .join({
+            world,
+            name: hero.name,
+            lvl: hero.level,
+            icon: hero.icon,
+            prof: hero.profession,
+            characterId,
+            accountId,
+            clan: hero.clan
+              ? {
+                  id: hero.clan.id,
+                  name: hero.clan.name,
+                  rank: hero.clan.rank,
+                }
+              : undefined,
+          })
+          .catch((error: Error) => {
+            if (import.meta.env.DEV)
+              console.warn("[Gateway] Failed to join", error);
+
+            // A newer join supersedes this attempt. The closed socket that a
+            // refusal leaves behind must still degrade, so this ignores cleanup.
+            if (attempt !== joinAttempt.current) return;
+            // Load HTTP snapshots instead of waiting for a join that may never
+            // succeed, and catch up on missed events once a later join succeeds.
+            hasBeenUnavailable.current = true;
+            setJoinFailed(true);
+
+            // A closed socket reconnects through the realtime client's backoff
+            // or, after a non-retryable refusal, through the reconnect action.
+            if (!socket.connected) return;
+
+            const delay = Math.min(
+              JOIN_RETRY_MAX_DELAY_MS,
+              JOIN_RETRY_BASE_DELAY_MS * 2 ** joinFailures.current,
+            );
+
+            joinFailures.current += 1;
+            clearTimeout(joinRetryTimer.current);
+            joinRetryTimer.current = setTimeout(
+              () => setJoinRetry((retry) => retry + 1),
+              Math.round(delay * (0.5 + Math.random())),
+            );
+          });
       }
     };
 
-    void emitJoin().catch((error) => {
-      if (import.meta.env.DEV) console.warn("[Gateway] Failed to join", error);
-    });
+    void emitJoin();
 
     return () => {
       cancelled = true;
+      clearTimeout(joinRetryTimer.current);
     };
-  }, [gameInitialized, connected, socket]);
+  }, [gameInitialized, connected, socket, characterIdentity, joinRetry]);
 
   useEffect(() => {
     const accessCache = createGameAccessCache(queryClient);
@@ -135,13 +214,15 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     let joinedConnection = false;
 
     const handleDisconnect = () => {
+      hasBeenUnavailable.current = true;
       joinedConnection = false;
-      setJoined(false);
+      setJoinedCharacterIdentity(null);
       setJoinedGuilds([]);
     };
 
     const handleJoin = (data: {
       status: "success" | "error";
+      characterIdentity: string;
       code?: string;
       message?: string;
       guildsCount?: number;
@@ -151,12 +232,18 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      setJoined(true);
+      setJoinedCharacterIdentity(data.characterIdentity);
       setHasBeenOnline(true);
+      setJoinFailed(false);
+      joinFailures.current = 0;
       setJoinedGuilds(data.guildIds ?? []);
 
       if (!joinedConnection) {
-        if (hasJoined || !socket.getAccessPolicy())
+        if (
+          hasJoined ||
+          hasBeenUnavailable.current ||
+          !socket.getAccessPolicy()
+        )
           refreshChatAfterReconnect(queryClient, data.guildIds ?? []);
         hasJoined = true;
         joinedConnection = true;
@@ -174,7 +261,6 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, {
         mapId: map.id,
         mapName: map.name,
-        isAfk: false,
       });
     };
 
@@ -197,7 +283,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         }
 
         setJoinedGuilds([]);
-        setJoined(false);
+        setJoinedCharacterIdentity(null);
 
         return;
       }
@@ -233,6 +319,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     connected,
     hasBeenOnline,
     joined,
+    joinFailed,
     state: connectionState,
   });
 
@@ -247,3 +334,10 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useSocket = () => useContext(SocketContext);
+
+/** Wait for the first subscription before fetching snapshots, with REST fallback after a connection or join failure. */
+export const useRealtimeSnapshotReady = () => {
+  const { socket, status } = useSocket();
+
+  return socket === null || status !== "connecting";
+};

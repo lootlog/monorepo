@@ -8,6 +8,8 @@ import {
   type ActivePartyGatheringSummary,
 } from "@lootlog/client/main";
 import { configureApiClients } from "@lootlog/client/transport";
+import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
+import { Permission } from "@lootlog/schema/permissions";
 import { createRealtimeTest } from "@/test/realtime-test";
 import { useActivePartyGatherings } from "./use-active-party-gatherings";
 
@@ -280,6 +282,17 @@ it("patches observer rosters without HTTP and preserves pushes over delayed disc
   const initial = Promise.withResolvers<Response>();
   const request = vi.fn(() => initial.promise);
 
+  const policy = (permissions: Permission[]) =>
+    createAccessPolicySnapshot(
+      [
+        {
+          guild: { id: "guild-1", ownerId: "owner" },
+          roles: [{ permissions, lvlRangeFrom: 0, lvlRangeTo: 500 }],
+        },
+      ],
+      "observer",
+    );
+
   const restoreApi = configureApiClients({
     main: { baseUrl: "https://api.example.test", fetch: async () => request() },
   });
@@ -291,7 +304,7 @@ it("patches observer rosters without HTTP and preserves pushes over delayed disc
   try {
     act(() => harness.setSessionDiscordId("observer"));
     harness.open();
-    await harness.join(["guild-1"], undefined, [
+    await harness.join(["guild-1"], policy([Permission.LOOTLOG_CHAT_READ]), [
       "lootlog.party-gathering-state.v1",
     ]);
     await waitFor(() => expect(request).toHaveBeenCalled());
@@ -368,6 +381,43 @@ it("patches observer rosters without HTTP and preserves pushes over delayed disc
     await harness.receive(
       event({ ...departed, notificationId: "wrong-world", world: "other" }),
     );
+    expect(result.current.data).toHaveLength(1);
+
+    // Live state already carries these changes, so legacy signals and a
+    // policy change outside gathering access must not reread or blank the bar.
+    await harness.receive(
+      {
+        v: 1,
+        type: "notification.sent",
+        data: {
+          organizationId: "guild-1",
+          payload: { notificationId: "next", isGatheringParty: true },
+        },
+      },
+      {
+        v: 1,
+        type: "chat.updated",
+        data: {
+          organizationId: "guild-1",
+          payload: { messageId: "message", message: "Edited" },
+        },
+      },
+      {
+        v: 1,
+        type: "permissions.updated",
+        data: {
+          organizationIds: ["guild-1"],
+          subscriptionScopes: [],
+          accessPolicy: policy([
+            Permission.LOOTLOG_CHAT_READ,
+            Permission.LOOTLOG_TIMERS_READ,
+          ]),
+        },
+      },
+    );
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 600));
+    });
     expect(result.current.data).toHaveLength(1);
     expect(request).toHaveBeenCalledTimes(requestsAfterJoin);
     const refresh = Promise.withResolvers<Response>();

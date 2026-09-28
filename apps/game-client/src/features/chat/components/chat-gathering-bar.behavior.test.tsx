@@ -374,6 +374,8 @@ it("invites applicants only when available, blocks double clicks and recovers af
       },
     });
   });
+  harness.open();
+  await harness.join();
   await waitFor(() => expect(invite).toBeEnabled());
   const pending = Promise.withResolvers<Response>();
   harness.mutation.mockReturnValue(pending.promise);
@@ -713,6 +715,8 @@ it("restores hidden gatherings through their floating menu and keeps new IDs and
       hero: { accountId: "account-1", characterId: "another-character" },
     }),
   );
+  harness.open();
+  await harness.join();
   expect(
     await screen.findByRole("button", { name: "Zgłoś się" }),
   ).toBeEnabled();
@@ -721,6 +725,8 @@ it("restores hidden gatherings through their floating menu and keeps new IDs and
       hero: { accountId: "account-1", characterId: "101" },
     }),
   );
+  harness.open();
+  await harness.join();
   await waitFor(() =>
     expect(screen.queryByRole("button", { name: "Zgłoś się" })).toBeNull(),
   );

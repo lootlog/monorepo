@@ -1,10 +1,7 @@
 import { orderGuilds as orderLootlogGuilds } from "@lootlog/domain/guild-preferences";
 import { useUserPreferences } from "@/hooks/api/use-user-preferences";
 import { getVisibleLootlogGuilds } from "@/lib/selected-lootlog-guild";
-import {
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
-  useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@lootlog/client/main";
+import { useAccessibleGuilds } from "@/hooks/api/use-accessible-guilds";
 
 /**
  * The one reader of the user's Lootlogs for every list, picker and name lookup
@@ -13,13 +10,7 @@ import {
  * reach them; `visibleGuilds` drops the hidden ones for in-game switchers.
  */
 export const useLootlogGuilds = () => {
-  const guildsQuery = useUsersControllerGetCurrentUserAccessibleGuilds({
-    query: {
-      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-      refetchOnMount: false,
-      staleTime: 1000 * 60 * 5,
-    },
-  });
+  const guildsQuery = useAccessibleGuilds();
 
   const preferencesQuery = useUserPreferences();
 

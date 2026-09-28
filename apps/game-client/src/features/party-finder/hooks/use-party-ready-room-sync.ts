@@ -30,6 +30,7 @@ export function usePartyReadyRoomSync(): void {
   useReadyRoomsSynchronized();
 
   const wasJoined = useRef(joined);
+  const hasJoined = useRef(joined);
   const lastIdentity = useRef(`${world ?? ""}:${characterId ?? ""}`);
 
   // Every gateway join and character switch resynchronizes: updates missed
@@ -38,10 +39,12 @@ export function usePartyReadyRoomSync(): void {
   // render needs no invalidation of its own.
   useEffect(() => {
     const identity = `${world ?? ""}:${characterId ?? ""}`;
-    const rejoined = joined && !wasJoined.current;
+    const rejoined = joined && !wasJoined.current && hasJoined.current;
     const identityChanged = identity !== lastIdentity.current;
     wasJoined.current = joined;
     lastIdentity.current = identity;
+
+    if (joined) hasJoined.current = true;
 
     if (!joined || (!rejoined && !identityChanged)) return;
 

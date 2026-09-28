@@ -743,11 +743,25 @@ export const makeReadyRoomDataLayer = (
               .pipe(Effect.ignore),
           { discard: true },
         );
-        yield* effects.endPartyGatheringMessages(
-          result.aggregate.notificationId,
-          result.aggregate.guildIds,
-        );
         yield* publish(result.aggregate, recipients);
+        // The cancellation is committed and retries cannot repeat it, so a chat
+        // cleanup failure must neither skip publications nor fail the request.
+        yield* effects
+          .endPartyGatheringMessages(
+            result.aggregate.notificationId,
+            result.aggregate.guildIds,
+          )
+          .pipe(
+            Effect.catch(() =>
+              Effect.logError(
+                "Cancelled gathering chat messages remain unchanged",
+              ).pipe(
+                Effect.annotateLogs({
+                  notificationId: result.aggregate.notificationId,
+                }),
+              ),
+            ),
+          );
 
         return result.aggregate;
       });

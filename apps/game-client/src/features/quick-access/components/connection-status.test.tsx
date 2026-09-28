@@ -27,6 +27,24 @@ it("shows connecting, then memberships and heartbeat latency, and lets a dropped
   );
   const gateway = createTimerRealtimeFixture();
   const previousGameState = useGameStore.getState();
+  useGameStore.getState().replaceGame({
+    hero: {
+      accountId: "2",
+      characterId: "1",
+      currentHp: 100,
+      icon: "hero.gif",
+      level: 100,
+      maxHp: 100,
+      name: "Hero",
+      profession: "w",
+      stasis: false,
+      x: 1,
+      y: 2,
+    },
+    interface: "ni",
+    map: { id: 100, name: "Karka-han", visibility: 0 },
+    world: "luvia",
+  });
 
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
@@ -54,24 +72,6 @@ it("shows connecting, then memberships and heartbeat latency, and lets a dropped
     vi.useFakeTimers();
     let now = 1_000;
     vi.spyOn(performance, "now").mockImplementation(() => now);
-    useGameStore.getState().replaceGame({
-      hero: {
-        accountId: "2",
-        characterId: "1",
-        currentHp: 100,
-        icon: "hero.gif",
-        level: 100,
-        maxHp: 100,
-        name: "Hero",
-        profession: "w",
-        stasis: false,
-        x: 1,
-        y: 2,
-      },
-      interface: "ni",
-      map: { id: 100, name: "Karka-han", visibility: 0 },
-      world: "luvia",
-    });
     getSocket().emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, { isAfk: false });
     const publication = gateway.wire.frames.at(-1);
 
