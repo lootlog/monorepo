@@ -58,7 +58,7 @@ export interface CurrentUserGuildPorts {
     readonly userId: string;
     readonly priority: number;
     readonly reason: string;
-  }) => Effect.Effect<{ readonly refreshQueued: boolean }, unknown>;
+  }) => Effect.Effect<unknown, unknown>;
 }
 
 const fallbackEligible = (error: unknown) => {
@@ -191,6 +191,7 @@ export const makeCurrentUserGuilds = (
         return [
           {
             guildId: guild.id,
+            grantsAccessOnRefresh: !hasAccess,
             rank: !member ? 0 : !hasAccess ? 1 : privileged ? 2 : 3,
           },
         ];
@@ -200,18 +201,19 @@ export const makeCurrentUserGuilds = (
           left.rank - right.rank || left.guildId.localeCompare(right.guildId),
       );
 
+    // Only a refresh that can grant missing access waits on Discord, and at
+    // most twice per request; stored access is shown until the queue refreshes it.
     let immediate = 0;
 
     for (const candidate of candidates) {
-      if (immediate < 2) {
-        const refreshed = yield* ports.refreshMember({
+      if (candidate.grantsAccessOnRefresh && immediate < 2) {
+        immediate += 1;
+        yield* ports.refreshMember({
           ...identity,
           guildId: candidate.guildId,
           priority: MEMBER_REFRESH_PRIORITY.CONNECT,
           reason: "guild-connect",
         });
-
-        if (!refreshed.refreshQueued) immediate += 1;
       } else {
         yield* ports.queueMember({
           ...identity,

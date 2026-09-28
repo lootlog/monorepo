@@ -11,7 +11,7 @@ import { useSettingsStore } from "@/store/settings.store";
 import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query";
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
 import { mapGuildMembersByUserId } from "@/lib/api/generated-helpers";
-import { useState, type FC, type ReactNode } from "react";
+import { useEffect, useState, type FC, type ReactNode } from "react";
 import { useGameStore } from "@/store/game.store";
 import { useTranslation } from "react-i18next";
 import {
@@ -28,6 +28,10 @@ import { toolbarStripClassName } from "@/components/ui/toolbar-strip";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { EmptyState } from "@/components/empty-state";
 import type { LevelRange } from "@/components/level-range-filter";
+import {
+  getCharacterFilterKey,
+  getCharacterFilterScopeKey,
+} from "@/lib/character-filter-scope";
 
 type OnlinePlayersListProps = {
   viewMode: OnlinePlayersViewMode;
@@ -126,6 +130,11 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
 
   const guildId = guildIdByCharId[characterId];
   const world = guildId ? worldByGuildId[guildId] : undefined;
+  const viewedWorld = world ?? defaultWorld;
+
+  const filterScope = useGameStore((state) =>
+    getCharacterFilterScopeKey(state.game, viewedWorld),
+  );
 
   const {
     accessState,
@@ -136,7 +145,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
     onlinePlayers,
     refreshing,
     retry,
-  } = usePlayersPresence(guildId, world ?? defaultWorld);
+  } = usePlayersPresence(guildId, viewedWorld);
 
   const { guildsQuery } = useLootlogGuilds();
 
@@ -154,9 +163,19 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
     void guildsQuery.refetch();
   };
 
-  const filtersByGuildId = useOnlinePlayersStore(
-    (state) => state.filtersByGuildId,
+  const filtersByScope = useOnlinePlayersStore((state) => state.filtersByScope);
+
+  const legacyFiltersByGuildId = useOnlinePlayersStore(
+    (state) => state.legacyFiltersByGuildId,
   );
+
+  const initializeCharacterFilters = useOnlinePlayersStore(
+    (state) => state.initializeCharacterFilters,
+  );
+
+  useEffect(() => {
+    if (filterScope) initializeCharacterFilters(filterScope);
+  }, [filterScope, legacyFiltersByGuildId, initializeCharacterFilters]);
 
   const setFilters = useOnlinePlayersStore((state) => state.setFilters);
 
@@ -172,22 +191,25 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filters = guildId
-    ? (filtersByGuildId[guildId] ?? DEFAULT_ONLINE_PLAYERS_FILTERS)
-    : DEFAULT_ONLINE_PLAYERS_FILTERS;
+  const filters =
+    guildId && filterScope
+      ? (filtersByScope[getCharacterFilterKey(filterScope, guildId)] ??
+        legacyFiltersByGuildId[guildId] ??
+        DEFAULT_ONLINE_PLAYERS_FILTERS)
+      : DEFAULT_ONLINE_PLAYERS_FILTERS;
 
   const areFiltersActive = areOnlinePlayerFiltersActive(searchQuery, filters);
 
   const handleLevelRangeChange = (range: LevelRange) => {
-    if (!guildId) return;
+    if (!guildId || !filterScope) return;
 
-    setFilters(guildId, { ...filters, ...range });
+    setFilters(filterScope, guildId, { ...filters, ...range });
   };
 
   const handleProfessionChange = (profession: ProfessionFilterValue) => {
-    if (!guildId) return;
+    if (!guildId || !filterScope) return;
 
-    setFilters(guildId, {
+    setFilters(filterScope, guildId, {
       ...filters,
       selectedProfession: profession,
     });
@@ -196,9 +218,9 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
   const handleResetFilters = () => {
     setSearchQuery("");
 
-    if (!guildId) return;
+    if (!guildId || !filterScope) return;
 
-    setFilters(guildId, { ...DEFAULT_ONLINE_PLAYERS_FILTERS });
+    setFilters(filterScope, guildId, { ...DEFAULT_ONLINE_PLAYERS_FILTERS });
   };
 
   const missingMemberIds = guildMembers

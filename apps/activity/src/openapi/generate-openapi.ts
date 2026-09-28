@@ -26,53 +26,36 @@ preserveOpenApi30Contract(
     "ActivitiesController_findByUser:limit": boundedInteger(1, 100, 50),
   },
   {
-    "HealthzController_check:200":
-      "Service is healthy\n\nThe Health Check is successful",
-    "HealthzController_check:503":
-      "Service is unhealthy\n\nThe Health Check is not successful",
+    "HealthzController_check:200": "The Activity process is responding",
+    "ReadyzController_check:200": "PostgreSQL is available",
+    "ReadyzController_check:503": "PostgreSQL is unavailable or timed out",
     "ActivitiesController_findOne:404": "Activity not found",
     "ActivitiesController_deleteActivity:404": "Activity not found",
   },
 );
 
-setOpenApiCompatibilityValue(
-  document,
-  [
-    "paths",
-    "/healthz",
-    "get",
-    "responses",
-    "503",
-    "content",
-    "application/json",
-    "schema",
-    "properties",
-    "error",
-    "example",
-  ],
-  { redis: { status: "down", message: "Could not connect" } },
-);
-
-setOpenApiCompatibilityValue(
-  document,
-  [
-    "paths",
-    "/healthz",
-    "get",
-    "responses",
-    "503",
-    "content",
-    "application/json",
-    "schema",
-    "properties",
-    "details",
-    "example",
-  ],
-  {
-    database: { status: "up" },
-    redis: { status: "down", message: "Could not connect" },
-  },
-);
+// OpenAPI 3.0 represents a null-only value through a nullable enum.
+for (const [status, property] of [
+  ["200", "error"],
+  ["503", "info"],
+] as const) {
+  setOpenApiCompatibilityValue(
+    document,
+    [
+      "paths",
+      "/readyz",
+      "get",
+      "responses",
+      status,
+      "content",
+      "application/json",
+      "schema",
+      "properties",
+      property,
+    ],
+    { type: "object", nullable: true, enum: [null] },
+  );
+}
 
 for (const schemaName of [
   "PaginatedActivitiesResponseDto",

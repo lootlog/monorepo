@@ -33,6 +33,7 @@ describe("WorldSelector", () => {
         maxHp: 1,
         name: "Hero",
         profession: "w",
+        stasis: false,
         x: 1,
         y: 2,
       },

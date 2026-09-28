@@ -2,6 +2,7 @@ import type { MemberWithRoles } from "#src/members/member.types";
 import {
   pathString,
   emptyStatusResponse,
+  reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
@@ -18,6 +19,7 @@ import {
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
 import { LootlogApi } from "../../lootlog-api.js";
+import type { ReauthenticationRequired } from "../../contracts/shared.js";
 import {
   MemberReferencesResponse,
   MemberSummariesResponse,
@@ -51,7 +53,10 @@ export class MembersOperationError extends TaggedErrorClass<MembersOperationErro
   { cause: Schema.Defect() },
 ) {}
 
-type AccessFailure = MembersAccessDenied | MembersNotFound;
+type AccessFailure =
+  | MembersAccessDenied
+  | MembersNotFound
+  | ReauthenticationRequired;
 
 export class MembersAuthorization extends Context.Service<
   MembersAuthorization,
@@ -73,7 +78,10 @@ export class MembersData extends Context.Service<
       identity: MembersIdentity,
       guildId: string,
       refresh: boolean,
-    ) => Effect.Effect<MemberWithRoles | null, MembersOperationError>;
+    ) => Effect.Effect<
+      MemberWithRoles | null,
+      MembersOperationError | ReauthenticationRequired
+    >;
     readonly refreshMember: (guildId: string, discordId: string) => DataEffect;
     readonly deactivateMember: (
       guildId: string,
@@ -126,10 +134,8 @@ const requireGuild = (guildId: string, anyOf: ReadonlyArray<PermissionValue>) =>
     service.requireGuild({ guildId, anyOf }),
   );
 
-const data = <A>(
-  operation: (
-    service: MembersData["Service"],
-  ) => Effect.Effect<A, MembersOperationError>,
+const data = <A, E>(
+  operation: (service: MembersData["Service"]) => Effect.Effect<A, E>,
 ) => Effect.flatMap(MembersData, operation);
 
 const readData = <A>(
@@ -152,12 +158,14 @@ const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
 type MembersFailure =
   | MembersAccessDenied
   | MembersNotFound
-  | MembersOperationError;
+  | MembersOperationError
+  | ReauthenticationRequired;
 
 const orDieHttpFailure = <A, R>(effect: Effect.Effect<A, MembersFailure, R>) =>
   Effect.catchTags(effect, {
     MembersAccessDenied: emptyStatusResponse,
     MembersNotFound: emptyStatusResponse,
+    ReauthenticationRequired: reauthenticationRequiredResponse,
     MembersOperationError: (error) => {
       const status = applicationErrorStatusOrUndefined(error.cause);
 
@@ -180,6 +188,7 @@ const declaredEmptyError = <A, R>(
       statuses.includes(error.status)
         ? emptyStatusResponse(error)
         : Effect.die(error),
+    ReauthenticationRequired: reauthenticationRequiredResponse,
     MembersOperationError: (error) => {
       const status = applicationErrorStatusOrUndefined(error.cause);
 

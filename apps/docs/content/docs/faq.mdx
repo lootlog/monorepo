@@ -88,6 +88,9 @@ Automatyczny timer jest wysyłany tylko po zalogowaniu do Lootloga. Jeśli
 konfiguracja postaci jeszcze się pobiera albo jej pobranie się nie udało,
 dodatek wysyła timer, a API sprawdza aktualne przypisania i uprawnienia.
 Pobrana konfiguracja bez wybranych Lootlogów dla tej postaci wyłącza wysyłanie.
+Postać w stanie nieaktywności (AFK) nie wysyła automatycznych timerów, bo
+moment, w którym widzi zniknięcie potwora, nie musi być momentem jego zabicia.
+Dzięki temu nie nadpisuje timera dodanego wcześniej przez inną postać.
 
 Jeśli dodatek nie może ustalić nazwy mapy, zapisuje komunikat o braku
 lokalizacji i nie wysyła niepełnych danych. Dotyczy to nowego i starego

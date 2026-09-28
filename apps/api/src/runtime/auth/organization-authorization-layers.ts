@@ -61,6 +61,7 @@ import {
   AccountOrganizationNotFound,
 } from "#src/http-api/handlers/account-organization/account-organization.operations";
 import { requestScopedIdentity } from "#src/runtime/auth/forward-auth-identity";
+import { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 import {
   OrganizationContextLookup,
   OrganizationNotFound,
@@ -131,15 +132,21 @@ const toAuthorizedCaller = (access: ResolvedAccess) => ({
 });
 
 const mapAccessError = <NotFound, Forbidden>(
-  error: OrganizationNotFound | OrganizationForbidden,
+  error:
+    | OrganizationNotFound
+    | OrganizationForbidden
+    | ReauthenticationRequired,
   errors: {
     readonly notFound: () => NotFound;
     readonly forbidden: () => Forbidden;
   },
-): NotFound | Forbidden =>
-  error instanceof OrganizationNotFound
+): NotFound | Forbidden | ReauthenticationRequired => {
+  if (error instanceof ReauthenticationRequired) return error;
+
+  return error instanceof OrganizationNotFound
     ? errors.notFound()
     : errors.forbidden();
+};
 
 type GuildNotFoundError<E> = new (props: {
   readonly status: 404;
@@ -155,6 +162,8 @@ type GuildForbiddenError<E> = new (props: {
  * Every handler port resolves organization access the same way: look the
  * caller up, project the resolved access into the shape that port declares,
  * and translate the two access failures into that port's own tagged errors.
+ * `ReauthenticationRequired` passes through unchanged: the bearer middleware
+ * declares it for every authenticated endpoint.
  * The tagged errors stay distinct per port because `Effect.catchTags` and the
  * HTTP status mapping dispatch on them; a port that reports both failures with
  * one class simply passes that class twice.
