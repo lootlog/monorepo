@@ -4,21 +4,8 @@ import { BattlePanelLevelRange } from "@/features/user/battle-panel/components/b
 import { PeriodSelector } from "@/components/filters/period-selector";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Award } from "lucide-react";
-import type { Period } from "@/features/user/battle-panel/battle-panel-search";
+import type { StatisticsFiltersProps } from "./statistics-filters";
 import { useTranslation } from "react-i18next";
-
-type StatisticsFiltersDesktopProps = {
-  characterId?: string;
-  period: Period;
-  minLevel?: number;
-  maxLevel?: number;
-  ph?: boolean;
-  onCharacterChange: (characterId: string | undefined) => void;
-  onPeriodChange: (period: Period) => void;
-  onMinLevelChange: (minLevel: number | undefined) => void;
-  onMaxLevelChange: (maxLevel: number | undefined) => void;
-  onPhChange: (ph: boolean) => void;
-};
 
 export const StatisticsFiltersDesktop = ({
   characterId,
@@ -31,7 +18,7 @@ export const StatisticsFiltersDesktop = ({
   onMinLevelChange,
   onMaxLevelChange,
   onPhChange,
-}: StatisticsFiltersDesktopProps) => {
+}: StatisticsFiltersProps) => {
   const { t } = useTranslation();
 
   return (
