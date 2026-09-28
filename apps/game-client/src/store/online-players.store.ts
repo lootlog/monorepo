@@ -7,10 +7,14 @@ import {
 } from "@/features/online-players/online-players-list.helpers";
 import type { OnlinePlayersViewMode } from "@/features/online-players/online-players.types";
 import { storageKey } from "@/lib/storage-key";
+import {
+  getCharacterFilterKey,
+  migrateCharacterFilters,
+} from "@/lib/character-filter-scope";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-const STORAGE_KEY = storageKey("ll-online-players-state");
+export const ONLINE_PLAYERS_STORAGE_KEY = storageKey("ll-online-players-state");
 
 const DEFAULT_VIEW_MODE: OnlinePlayersViewMode = "accounts";
 
@@ -30,10 +34,16 @@ const isProfessionFilterValue = (
 type OnlinePlayersState = {
   viewMode: OnlinePlayersViewMode;
   filtersVisible: boolean;
-  filtersByGuildId: Record<string, OnlinePlayersFiltersValue | undefined>;
+  filtersByScope: Record<string, OnlinePlayersFiltersValue>;
+  legacyFiltersByGuildId: Record<string, OnlinePlayersFiltersValue>;
   setViewMode: (viewMode: OnlinePlayersViewMode) => void;
   toggleFiltersVisible: () => void;
-  setFilters: (guildId: string, filters: OnlinePlayersFiltersValue) => void;
+  initializeCharacterFilters: (scopeKey: string) => void;
+  setFilters: (
+    scopeKey: string,
+    guildId: string,
+    filters: OnlinePlayersFiltersValue,
+  ) => void;
 };
 
 const isViewMode = (viewMode: unknown): viewMode is OnlinePlayersViewMode => {
@@ -55,17 +65,17 @@ const isOnlinePlayersFiltersValue = (
   );
 };
 
-const sanitizeFiltersByGuildId = (
-  filtersByGuildId: unknown,
-): Record<string, OnlinePlayersFiltersValue | undefined> => {
-  if (!isObjectRecord(filtersByGuildId)) {
+const sanitizeFilters = (
+  filtersByKey: unknown,
+): Record<string, OnlinePlayersFiltersValue> => {
+  if (!isObjectRecord(filtersByKey)) {
     return {};
   }
 
   const entries: Array<[string, OnlinePlayersFiltersValue]> = [];
 
-  for (const [guildId, filters] of Object.entries(filtersByGuildId)) {
-    if (isOnlinePlayersFiltersValue(filters)) entries.push([guildId, filters]);
+  for (const [key, filters] of Object.entries(filtersByKey)) {
+    if (isOnlinePlayersFiltersValue(filters)) entries.push([key, filters]);
   }
 
   return Object.fromEntries(entries);
@@ -75,7 +85,7 @@ export const migrateOnlinePlayersState = (
   persisted: unknown,
 ): Pick<
   OnlinePlayersState,
-  "viewMode" | "filtersVisible" | "filtersByGuildId"
+  "viewMode" | "filtersVisible" | "filtersByScope" | "legacyFiltersByGuildId"
 > => {
   const state = isObjectRecord(persisted) ? persisted : undefined;
 
@@ -85,42 +95,64 @@ export const migrateOnlinePlayersState = (
       typeof state?.filtersVisible === "boolean"
         ? state.filtersVisible
         : DEFAULT_FILTERS_VISIBLE,
-    filtersByGuildId: sanitizeFiltersByGuildId(state?.filtersByGuildId),
+    filtersByScope: sanitizeFilters(state?.filtersByScope),
+    legacyFiltersByGuildId: sanitizeFilters(
+      state?.legacyFiltersByGuildId ?? state?.filtersByGuildId,
+    ),
   };
 };
 
 export const useOnlinePlayersStore = create<OnlinePlayersState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       viewMode: DEFAULT_VIEW_MODE,
       filtersVisible: DEFAULT_FILTERS_VISIBLE,
-      filtersByGuildId: {},
+      filtersByScope: {},
+      legacyFiltersByGuildId: {},
       setViewMode: (viewMode) => set({ viewMode }),
       toggleFiltersVisible: () =>
         set((state) => ({ filtersVisible: !state.filtersVisible })),
-      setFilters: (guildId, filters) =>
+      initializeCharacterFilters: (scopeKey) => {
+        if (Object.keys(get().legacyFiltersByGuildId).length === 0) return;
+
         set((state) => ({
-          filtersByGuildId: {
-            ...state.filtersByGuildId,
-            [guildId]: {
+          filtersByScope: {
+            ...migrateCharacterFilters(state.legacyFiltersByGuildId, scopeKey),
+            ...state.filtersByScope,
+          },
+          legacyFiltersByGuildId: {},
+        }));
+      },
+      setFilters: (scopeKey, guildId, filters) =>
+        set((state) => ({
+          filtersByScope: {
+            ...migrateCharacterFilters(state.legacyFiltersByGuildId, scopeKey),
+            ...state.filtersByScope,
+            [getCharacterFilterKey(scopeKey, guildId)]: {
               minLvl: filters.minLvl,
               maxLvl: filters.maxLvl,
               selectedProfession:
                 filters.selectedProfession ?? ALL_PROFESSIONS_VALUE,
             },
           },
+          legacyFiltersByGuildId: {},
         })),
     }),
     {
-      name: STORAGE_KEY,
+      name: ONLINE_PLAYERS_STORAGE_KEY,
       partialize: (state) => ({
         viewMode: state.viewMode,
         filtersVisible: state.filtersVisible,
-        filtersByGuildId: state.filtersByGuildId,
+        filtersByScope: state.filtersByScope,
+        legacyFiltersByGuildId: state.legacyFiltersByGuildId,
       }),
       storage: createJSONStorage(() => localStorage),
-      version: 1,
+      version: 2,
       migrate: migrateOnlinePlayersState,
+      merge: (persisted, current) => ({
+        ...current,
+        ...migrateOnlinePlayersState(persisted),
+      }),
     },
   ),
 );
