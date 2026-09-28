@@ -25,8 +25,14 @@ export const useTimersSocket = () => {
       return;
     }
 
+    // Invalidation alone would reuse an in-flight fetch of a list without
+    // data, even one sent before the join, so the fetch is cancelled first.
     const refreshTimers = () => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.allTimers() });
+      void queryClient
+        .cancelQueries({ queryKey: queryKeys.allTimers() })
+        .then(() =>
+          queryClient.invalidateQueries({ queryKey: queryKeys.allTimers() }),
+        );
     };
 
     // Listeners stay attached from mount so none of a session's events can
