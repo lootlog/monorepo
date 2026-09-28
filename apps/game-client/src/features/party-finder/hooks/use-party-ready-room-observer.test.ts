@@ -153,6 +153,62 @@ describe("usePartyReadyRoomObserver", () => {
     await waitFor(() => expect(observeParty).toHaveBeenCalledTimes(2));
   });
 
+  it.each([
+    {
+      field: "nickname",
+      update: { name: "Updated" },
+      expected: { nick: "Updated" },
+    },
+    {
+      field: "icon",
+      update: { icon: "updated.gif" },
+      expected: { icon: "updated.gif" },
+    },
+    {
+      field: "profession",
+      update: { profession: "m" },
+      expected: { prof: "m" },
+    },
+  ])(
+    "reports a changed $field for an unchanged party roster",
+    async ({ update, expected }) => {
+      const member = {
+        characterId: "10",
+        name: "First",
+        icon: "first.gif",
+        isLeader: true,
+        currentHp: 100,
+        maxHp: 100,
+        profession: "w",
+        accountId: "1",
+      };
+
+      usePartyStore.getState().setMembers([member]);
+      renderObserver();
+
+      await waitFor(() => expect(observeParty).toHaveBeenCalledTimes(1));
+      act(() =>
+        usePartyStore.getState().setMembers([{ ...member, ...update }]),
+      );
+
+      await waitFor(() => expect(observeParty).toHaveBeenCalledTimes(2));
+      expect(await observeParty.mock.calls[1]?.[0].json()).toEqual({
+        memberCharacterIds: ["10"],
+        members: [
+          {
+            characterId: "10",
+            nick: "First",
+            icon: "first.gif",
+            prof: "w",
+            ...expected,
+          },
+        ],
+        organizerAccountId: "account",
+        organizerCharacterId: "character",
+      });
+    },
+  );
+
   it("does not report another character's party for the organizer", async () => {
     usePartyStore.getState().setMembers([]);
     mergeReadyRoomProjectionIntoCache(

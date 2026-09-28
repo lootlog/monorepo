@@ -25,11 +25,11 @@ import {
   createReadyRoomClientUpdate,
   createGatheringCharacter,
   createPartyGatheringSummary,
-  createPartyGatheringUpdateEnvelope,
   createReadyRoomProjection,
   getReadyRoomActiveRecipientDiscordIds,
 } from "#src/messaging/ready-room/ready-room-projection";
 import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";
+import { makeReadyRoomPublicationOutbox } from "#src/messaging/ready-room/ready-room-publication-outbox";
 import {
   ResourceConflictError,
   PermissionDeniedError,
@@ -78,21 +78,6 @@ export interface ReadyRoomEffects {
   ) => Effect.Effect<void, unknown>;
 }
 
-const publishGatheringUpdate = (
-  effects: Pick<ReadyRoomEffects, "publishGatheringUpdate">,
-  aggregate: ReadyRoomAggregate,
-) =>
-  Effect.forEach(
-    aggregate.guildIds,
-    (guildId) =>
-      effects
-        .publishGatheringUpdate(
-          createPartyGatheringUpdateEnvelope(aggregate, guildId),
-        )
-        .pipe(Effect.ignore),
-    { discard: true },
-  );
-
 export const createReadyRoomForNotification = (
   redis: ReadyRoomRedis,
   effects: Pick<ReadyRoomEffects, "publish" | "publishGatheringUpdate">,
@@ -108,6 +93,12 @@ export const createReadyRoomForNotification = (
 ) => {
   const now = clock();
   const timestamp = new Date(now).toISOString();
+
+  const gatheringPublications = makeReadyRoomPublicationOutbox(
+    redis,
+    effects.publishGatheringUpdate,
+    clock,
+  );
 
   const aggregate: ReadyRoomAggregate = {
     schemaVersion: 3,
@@ -167,7 +158,7 @@ export const createReadyRoomForNotification = (
           .publish(envelope)
           .pipe(
             Effect.ignore,
-            Effect.andThen(publishGatheringUpdate(effects, result.aggregate)),
+            Effect.andThen(gatheringPublications.publish(result.aggregate)),
             Effect.as(result.aggregate),
           );
       }),
@@ -198,6 +189,12 @@ export const makeReadyRoomDataLayer = (
     ReadyRoomData,
     Effect.map(ApiDatabase, (database) => {
       const repository = makeReadyRoomRepository(redis, clock);
+
+      const gatheringPublications = makeReadyRoomPublicationOutbox(
+        redis,
+        effects.publishGatheringUpdate,
+        clock,
+      );
 
       const operation = <A, E>(effect: Effect.Effect<A, E>) =>
         effect.pipe(
@@ -242,7 +239,7 @@ export const makeReadyRoomDataLayer = (
               .pipe(Effect.ignore);
           },
           { discard: true },
-        ).pipe(Effect.andThen(publishGatheringUpdate(effects, aggregate)));
+        ).pipe(Effect.andThen(gatheringPublications.publish(aggregate)));
 
       const getLive = (notificationId: string) =>
         repository.get(notificationId).pipe(

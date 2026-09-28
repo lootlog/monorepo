@@ -69,6 +69,8 @@ describe("Effect Ready Room repository", () => {
       "party-ready-room:v3:organizer:discord-1",
       "party-ready-room:v3:character:Tempest:character-1",
       "party-ready-room:v3:discovery:guild-1:Tempest",
+      "party-ready-room:v3:publications",
+      "party-ready-room:v3:publication-due",
     ]);
     expect(calls[0]?.arguments_[3]).toBe(1800);
     expect(calls[0]?.arguments_[4]).toBe(Date.parse(aggregate().expiresAt));

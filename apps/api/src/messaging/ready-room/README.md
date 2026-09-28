@@ -141,6 +141,24 @@ only visible Organization IDs and minimal roster data. Revision handling prevent
 an older snapshot from resurrecting a removed gathering. Reconnects fetch the
 existing active endpoint and reconcile concurrent events without periodic reads.
 
+Each Redis mutation atomically stores its latest aggregate in a publication
+outbox. The request attempts immediate delivery; a scoped API worker also drains
+pending entries at startup and every second. Each worker attempt leases the
+entry for 30 seconds; failure or interruption leaves it eligible for retry after
+that lease expires. Delivery
+to all source Organizations must succeed before acknowledgement. Acknowledgement
+checks the revision, so a concurrent newer update remains pending. New snapshots
+replace superseded pending revisions for the same gathering.
+
+Pending entries have no room TTL. Cancellation remains deliverable after its
+short room tombstone disappears, and an active snapshot that expires before
+delivery produces a removal. Rabbit message IDs distinguish the Organization,
+revision, and update type; duplicate delivery remains safe. The gateway applies
+current membership and source visibility on delivery. Publication failures are
+logged without roster data. Before removing this API worker during a rollback,
+drain the pending publication hash and due index; retain pending entries through
+broker outages instead of deleting them.
+
 Deploy the new gateway consumer/schema first, then drain old API writers before
 switching to the new API, and finally deploy the client. Old clients continue
 using the legacy counters and personal updates and do not receive the new event.
