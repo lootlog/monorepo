@@ -1306,7 +1306,11 @@ export const assertVerifiedPersonalAddition = (
     service === "auth"
       ? operation
       : normalizeApiKeyErrors(
-          service === "api" ? normalizeValidationErrors(operation) : operation,
+          service === "api"
+            ? normalizeReauthenticationErrors(
+                normalizeValidationErrors(operation),
+              )
+            : operation,
           expected,
         );
 
@@ -1406,12 +1410,16 @@ export const normalizeApiKeyErrors = (
   return { ...operation, responses };
 };
 
-// Verified by the real endpoint validation cases in the API schema-error-response tests.
-// Remove only the new validation alternative; retain every existing 400 contract.
-export const normalizeValidationErrors = (operation: JsonValue): JsonValue => {
+// Removes one middleware error alternative from a status while retaining every
+// existing contract for that status.
+const withoutErrorAlternative = (
+  operation: JsonValue,
+  status: string,
+  ref: string,
+): JsonValue => {
   if (!isJsonObject(operation) || !isJsonObject(operation.responses))
     return operation;
-  const response = operation.responses["400"];
+  const response = operation.responses[status];
 
   if (!isJsonObject(response) || !isJsonObject(response.content))
     return operation;
@@ -1427,16 +1435,16 @@ export const normalizeValidationErrors = (operation: JsonValue): JsonValue => {
     (alternative) =>
       !isJsonObject(alternative) ||
       Object.keys(alternative).length !== 1 ||
-      alternative.$ref !== "#/components/schemas/RequestValidationError",
+      alternative.$ref !== ref,
   );
 
   if (remaining.length === alternatives.length) return operation;
   const responses = { ...operation.responses };
 
   if (remaining.length === 0) {
-    delete responses["400"];
+    delete responses[status];
   } else {
-    responses["400"] = {
+    responses[status] = {
       ...response,
       content: {
         ...response.content,
@@ -1453,6 +1461,27 @@ export const normalizeValidationErrors = (operation: JsonValue): JsonValue => {
 
   return { ...operation, responses };
 };
+
+// Verified by the real endpoint validation cases in the API schema-error-response tests.
+// Remove only the new validation alternative; retain every existing 400 contract.
+export const normalizeValidationErrors = (operation: JsonValue): JsonValue =>
+  withoutErrorAlternative(
+    operation,
+    "400",
+    "#/components/schemas/RequestValidationError",
+  );
+
+// Verified by the reauthentication cases in the API HTTP boundary e2e spec.
+// Remove only the bearer middleware's 401 alternative; retain every existing
+// 401 contract.
+export const normalizeReauthenticationErrors = (
+  operation: JsonValue,
+): JsonValue =>
+  withoutErrorAlternative(
+    operation,
+    "401",
+    "#/components/schemas/ReauthenticationRequiredEncoded",
+  );
 
 if (import.meta.main) {
   const changedOperations: string[] = [];
@@ -1475,7 +1504,9 @@ if (import.meta.main) {
           key,
           normalizeApiKeyErrors(
             service.current === "api"
-              ? normalizeValidationErrors(operation)
+              ? normalizeReauthenticationErrors(
+                  normalizeValidationErrors(operation),
+                )
               : operation,
             beforeKeys.get(key),
           ),

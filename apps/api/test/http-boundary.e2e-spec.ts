@@ -17,7 +17,11 @@ import { BunRedis, BunHttpServer } from "@effect/platform-bun";
 import { Effect, Layer, ManagedRuntime, Schema } from "effect";
 import { FetchHttpClient, HttpRouter } from "effect/unstable/http";
 import { Redis } from "effect/unstable/persistence";
-import { getCompleteUserGuildsCacheKey } from "#src/discord/discord-cache.util";
+import {
+  getCompleteUserGuildsCacheKey,
+  getGuildMemberCacheKeys,
+} from "#src/discord/discord-cache.util";
+import { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 import { RedisService } from "#src/redis/redis.service";
 import { getPermissionsCacheKey } from "#src/shared/cache";
 import { LootlogApiRouter } from "../src/runtime/application/http-routes.js";
@@ -974,6 +978,71 @@ describe("API HTTP boundary", () => {
     expect(forbiddenHistory.status).toBe(403);
   });
 
+  it("asks the caller to sign in again when Discord rejects their member refresh", async () => {
+    await databaseRuntime.runPromise(
+      database
+        .update(memberTable)
+        .set({ lastDiscordSyncAt: new Date(Date.now() - 24 * 60 * 60 * 1000) })
+        .where(eq(memberTable.guildId, authorizedGuildId)),
+    );
+    await redis.set(
+      getGuildMemberCacheKeys({ guildId: authorizedGuildId, ...caller })
+        .unauthorized,
+      "1",
+      60,
+    );
+
+    // Each route declares different own errors (empty 404, none, open 403);
+    // none of them may claim the failure. Sequential: a concurrent refresh
+    // would wait on the per-user lock.
+    for (const path of [
+      "/members/@me",
+      "/events",
+      `/timers/missing-timer/history?world=${world}`,
+    ]) {
+      const response = await request(`/guilds/${authorizedGuildId}${path}`);
+
+      expect(response.status).toBe(401);
+      expect(await response.json()).toEqual(
+        Schema.encodeSync(ReauthenticationRequired)(
+          new ReauthenticationRequired({
+            code: "DISCORD_UNAUTHORIZED",
+            requiresReauth: true,
+          }),
+        ),
+      );
+    }
+  });
+
+  it("keeps an admin signed in when another member's Discord authorization fails", async () => {
+    const other = { userId: "user-2", discordId: "discord-2" };
+
+    await databaseRuntime.runPromise(
+      database.insert(memberTable).values({
+        userId: other.discordId,
+        globalUserId: other.userId,
+        guildId: authorizedGuildId,
+        name: "Member with expired Discord authorization",
+        lastDiscordSyncAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        updatedAt: new Date(),
+      }),
+    );
+    await redis.set(
+      getGuildMemberCacheKeys({ guildId: authorizedGuildId, ...other })
+        .unauthorized,
+      "1",
+      60,
+    );
+
+    const response = await request(
+      `/guilds/${authorizedGuildId}/members/${other.discordId}/refresh`,
+      { method: "POST" },
+    );
+
+    expect(response.status).not.toBe(401);
+    expect(response.status).toBeLessThan(500);
+  });
+
   it.each([
     { path: "/map-templates", field: "name" },
     { path: "/events", field: "name" },
@@ -995,6 +1064,7 @@ describe("API HTTP boundary", () => {
       });
     },
   );
+
   it.each([
     { suffix: "/members", method: "GET" },
     { suffix: "/members/references", method: "GET" },
