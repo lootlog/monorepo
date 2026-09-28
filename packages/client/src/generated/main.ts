@@ -28223,7 +28223,7 @@ export const getUpdateEventUrl = ({ guildId, eventId }: UpdateEventPathParameter
 }
 
 /**
- * Update an existing event
+ * Update an existing event. heroNpcs lists every hero and map the event should have: heroes are matched by npcName and maps by mapId, so retained ones keep their kills and tracking history. It can add heroes and maps and rename maps; a list that omits an existing hero or map is rejected. Remove them with the hero and map delete operations.
  * @summary Update event
  */
 export const updateEvent = async ({ guildId, eventId }: UpdateEventPathParameters,
@@ -29234,7 +29234,7 @@ export const getEventsAssignmentControllerDeleteHeroUrl = ({ guildId, eventId, h
 }
 
 /**
- * Remove a hero from the event
+ * Remove a hero from the event together with its maps, kills, kill points, tracking history and ranking entries
  * @summary Delete hero
  */
 export const eventsAssignmentControllerDeleteHero = async ({ guildId, eventId, heroId }: EventsAssignmentControllerDeleteHeroPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
