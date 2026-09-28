@@ -49,6 +49,7 @@ describe("Ready Room revision CAS integration", () => {
     };
 
     return {
+      redis: readyRedis,
       repository: makeReadyRoomRepository(readyRedis, clock),
       outbox: (
         publish: (
@@ -262,6 +263,42 @@ describe("Ready Room revision CAS integration", () => {
         update: { type: "REMOVE", revision: 2 },
       },
     ]);
+  });
+
+  it("drops an undecodable pending publication without blocking valid ones", async () => {
+    const { redis: readyRedis, repository, outbox } = makeHarness();
+    const aggregate = createAggregate();
+    await Effect.runPromise(
+      readyRedis.eval(
+        `redis.call("hset", KEYS[1], ARGV[1], ARGV[2])
+redis.call("zadd", KEYS[2], 0, ARGV[1])
+return 1`,
+        READY_ROOM_PUBLICATION_KEYS,
+        ["undecodable", "{}"],
+      ),
+    );
+    expect((await Effect.runPromise(repository.create(aggregate))).status).toBe(
+      "created",
+    );
+
+    const delivered: PartyGatheringUpdateEnvelope[] = [];
+
+    await Effect.runPromise(
+      outbox((envelope) => Effect.sync(() => delivered.push(envelope)))
+        .dispatch,
+    );
+    expect(delivered).toMatchObject([
+      { notificationId: aggregate.notificationId, revision: 1 },
+    ]);
+    expect(
+      await Effect.runPromise(
+        readyRedis.eval(
+          `return redis.call("hlen", KEYS[1]) + redis.call("zcard", KEYS[2])`,
+          READY_ROOM_PUBLICATION_KEYS,
+          [],
+        ),
+      ),
+    ).toBe(0);
   });
 
   it("uses a distinct expiry removal identity after partially delivered active snapshots", async () => {
