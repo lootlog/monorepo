@@ -7,6 +7,7 @@ import {
   decodeRealtimeFrame,
   encodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
+import { stubMargonemAccountFetch } from "@/test/margonem-account-fetch";
 import { configureGameClientPlatform } from "./game-client-platform";
 import { useGameStore } from "@/store/game.store";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -346,21 +347,26 @@ describe("access policy synchronization", () => {
       prof: "w",
     };
 
-    const proof = {
-      userId: "20",
-      characterId: "10",
-      token: "token",
-      ts: 1,
-      validatedString: "proof",
-      signatureBase64: "signature",
+    const externalFetch = stubMargonemAccountFetch();
+
+    const openConnection = () => {
+      socket.disconnect();
+      socket.connect();
+      listeners.get("open")?.({});
+      listeners.get("message")?.({
+        data: encodeRealtimeFrame({
+          v: 1,
+          type: "session.hello",
+          data: { connectionId: "connection" },
+        }),
+      });
     };
 
     try {
       socket.on(GatewayEvent.PERMISSIONS_UPDATED, policies);
       socket.on(GatewayEvent.JOIN, () => received.push("join"));
-      socket.connect();
-      listeners.get("open")?.({});
-      await socket.join(joinData, proof);
+      openConnection();
+      await socket.join(joinData);
       expect(received).toEqual(["policy", "join"]);
       expect(socket.getAccessPolicy()).toEqual(policy);
       const requestsAfterJoin = send.mock.calls.length;
@@ -382,33 +388,30 @@ describe("access policy synchronization", () => {
       await Promise.resolve();
       expect(policies).toHaveBeenCalledOnce();
       expect(send).toHaveBeenCalledTimes(requestsAfterJoin);
-      await socket.join(joinData, proof);
+      await socket.join(joinData);
       expect(policies).toHaveBeenCalledOnce();
-      expect(send).toHaveBeenCalledTimes(requestsAfterJoin + 1);
+      expect(send).toHaveBeenCalledTimes(requestsAfterJoin);
       policy = createAccessPolicySnapshot([], "user");
-      await socket.join(joinData, proof);
+      openConnection();
+      await socket.join(joinData);
       expect(policies).toHaveBeenCalledTimes(2);
       expect(policies.mock.calls[1]).toBeDefined();
       expect(socket.getAccessPolicy()).toEqual(policy);
-      await socket.join(
-        { ...joinData, accountId: "other" },
-        { ...proof, userId: "other" },
-      );
+      await socket.join({ ...joinData, accountId: "other" });
       expect(policies).toHaveBeenCalledTimes(3);
       includePolicy = false;
-      await socket.join(joinData, proof);
+      await socket.join(joinData);
       expect(policies).toHaveBeenCalledTimes(4);
       expect(socket.getAccessPolicy()).toBeUndefined();
       expect(received.slice(-2)).toEqual(["policy", "join"]);
       denyJoin = true;
+      openConnection();
 
       const joinsBeforeDenial = received.filter(
         (event) => event === "join",
       ).length;
 
-      await expect(socket.join(joinData, proof)).rejects.toThrow(
-        "No organizations",
-      );
+      await expect(socket.join(joinData)).rejects.toThrow("No organizations");
       expect(received.filter((event) => event === "join")).toHaveLength(
         joinsBeforeDenial,
       );
@@ -416,6 +419,7 @@ describe("access policy synchronization", () => {
       expect(socket.getAccessPolicy()).toEqual(policy);
       expect(policies).toHaveBeenCalledTimes(5);
     } finally {
+      externalFetch.mockRestore();
       disposeSocket();
       restore();
     }
@@ -459,7 +463,16 @@ it("lets the provider rejoin the current world once after reconnect", async () =
       };
 
       wires.push({
-        open: () => listeners.get("open")?.({}),
+        open: () => {
+          listeners.get("open")?.({});
+          listeners.get("message")?.({
+            data: encodeRealtimeFrame({
+              v: 1,
+              type: "session.hello",
+              data: { connectionId: "fixture" },
+            }),
+          });
+        },
         close: () => wire.close(),
       });
 
@@ -477,31 +490,21 @@ it("lets the provider rejoin the current world once after reconnect", async () =
   const { GatewayEvent } = await import("@/config/gateway");
   let world = "alpha";
 
-  const proof = {
-    userId: "20",
-    characterId: "10",
-    token: "fixture",
-    ts: 1,
-    validatedString: "fixture",
-    signatureBase64: "fixture",
-  };
+  const externalFetch = stubMargonemAccountFetch();
 
   const pending: Array<Promise<unknown>> = [];
   facade.on(GatewayEvent.CONNECT, () =>
     queueMicrotask(() => {
       pending.push(
-        facade.join(
-          {
-            world,
-            accountId: "20",
-            characterId: "10",
-            name: "Hero",
-            lvl: 100,
-            prof: "w",
-            icon: "hero.gif",
-          },
-          proof,
-        ),
+        facade.join({
+          world,
+          accountId: "20",
+          characterId: "10",
+          name: "Hero",
+          lvl: 100,
+          prof: "w",
+          icon: "hero.gif",
+        }),
       );
     }),
   );
@@ -518,6 +521,7 @@ it("lets the provider rejoin the current world once after reconnect", async () =
     await vi.waitFor(() => expect(joinedWorlds).toEqual(["alpha", "beta"]));
     await Promise.all(pending);
   } finally {
+    externalFetch.mockRestore();
     disposeSocket();
     restore();
   }

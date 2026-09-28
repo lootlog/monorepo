@@ -1,6 +1,13 @@
+import type { ActivePartyGatheringUpdate } from "@lootlog/schema/party-ready-room";
+import {
+  applyActiveGatheringUpdate,
+  applyActiveGatheringsSnapshot,
+  EMPTY_ACTIVE_GATHERINGS,
+  type ActiveGatheringsCache,
+} from "../active-party-gatherings-cache";
 import { isApiError } from "@lootlog/client/transport";
 import { throttle } from "es-toolkit";
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { partyReadyRoomControllerActive } from "@lootlog/client/main";
 import { useSocket } from "@/contexts/socket-context";
@@ -16,26 +23,69 @@ export const ACTIVE_GATHERINGS_QUERY_KEY = ["active-party-gatherings"];
 // for each; the trailing edge fires after the last update, so none is missed.
 const RECONCILE_THROTTLE_MS = 500;
 
-export function useActivePartyGatherings() {
+export function useActivePartyGatherings({ visible = true } = {}) {
   const [now, setNow] = useState(Date.now);
+  const [recoveryInterval] = useState(() => 60_000 + Math.random() * 6_000);
+  const accountId = useGameStore((state) => state.game?.hero.accountId);
+  const characterId = useGameStore((state) => state.game?.hero.characterId);
   const world = useGameStore((state) => state.game?.world ?? "");
   const { socket, connected, joined } = useSocket();
   const { data: session } = useSession();
   const { visibleGuilds, areVisibleGuildsResolved } = useLootlogGuilds();
   const queryClient = useQueryClient();
 
+  const queryKey = [
+    ...ACTIVE_GATHERINGS_QUERY_KEY,
+    session?.user?.id,
+    accountId,
+    characterId,
+    world,
+  ];
+
+  const readable = [
+    joined,
+    session?.user.id,
+    world,
+    areVisibleGuildsResolved,
+  ].every(Boolean);
+
   const query = useQuery({
-    queryKey: [...ACTIVE_GATHERINGS_QUERY_KEY, session?.user?.id, world],
-    queryFn: ({ signal }) =>
-      partyReadyRoomControllerActive({ world }, { signal }),
-    enabled:
-      joined &&
-      connected &&
-      !!session?.user.id &&
-      !!world &&
-      areVisibleGuildsResolved,
+    queryKey,
+    queryFn: async ({ signal }) => {
+      const baseline =
+        queryClient.getQueryData<ActiveGatheringsCache>(queryKey) ??
+        EMPTY_ACTIVE_GATHERINGS;
+
+      if (baseline.snapshotAppliedAt !== null)
+        queryClient.setQueryData<ActiveGatheringsCache>(queryKey, {
+          ...baseline,
+          snapshotAppliedAt: null,
+        });
+
+      const rooms = await partyReadyRoomControllerActive({ world }, { signal });
+
+      return applyActiveGatheringsSnapshot(
+        queryClient.getQueryData<ActiveGatheringsCache>(queryKey) ??
+          EMPTY_ACTIVE_GATHERINGS,
+        rooms,
+        baseline,
+      );
+    },
+    enabled: readable && connected && visible,
     staleTime: 0,
   });
+
+  const recoverSnapshot = useEffectEvent(() => {
+    void query.refetch({ cancelRefetch: false });
+  });
+
+  useEffect(() => {
+    if (!readable || !connected || !visible) return;
+    // A fixed cadence cannot be postponed by frequent deltas updating the cache.
+    const timer = window.setInterval(recoverSnapshot, recoveryInterval);
+
+    return () => window.clearInterval(timer);
+  }, [readable, connected, visible, recoveryInterval]);
 
   // oxlint-disable-next-line react-doctor/effect-needs-cleanup -- Cleanup removes every listener with the same event and handler, including the events loop.
   useEffect(() => {
@@ -56,7 +106,22 @@ export function useActivePartyGatherings() {
       void queryClient.resetQueries({ queryKey: ACTIVE_GATHERINGS_QUERY_KEY });
     };
 
-    invalidate();
+    const updateActive = (update: ActivePartyGatheringUpdate) => {
+      if (update.type === "UPSERT" && update.summary.world !== world) return;
+      queryClient.setQueryData<ActiveGatheringsCache>(
+        [
+          ...ACTIVE_GATHERINGS_QUERY_KEY,
+          session?.user?.id,
+          accountId,
+          characterId,
+          world,
+        ],
+        (cache) =>
+          applyActiveGatheringUpdate(cache ?? EMPTY_ACTIVE_GATHERINGS, update),
+      );
+    };
+
+    socket.on(GatewayEvent.ACTIVE_PARTY_GATHERING_UPDATE, updateActive);
 
     const events = [
       GatewayEvent.CHAT_MESSAGE_UPDATE,
@@ -77,24 +142,38 @@ export function useActivePartyGatherings() {
         reconcile();
     };
 
-    socket.on(GatewayEvent.NOTIFICATION, newGathering);
-    socket.on(GatewayEvent.CHAT_MESSAGE, newGathering);
+    // Older gateways lack summaries; retain reconciliation until their rollout completes.
+    const legacy = !socket.supportsActivePartyGatherings();
 
-    for (const event of events) socket.on(event, reconcile);
+    if (legacy) socket.on(GatewayEvent.NOTIFICATION, newGathering);
+
+    if (legacy) socket.on(GatewayEvent.CHAT_MESSAGE, newGathering);
+
+    if (legacy) for (const event of events) socket.on(event, reconcile);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
 
     return () => {
       reconcile.cancel();
+      socket.off(GatewayEvent.ACTIVE_PARTY_GATHERING_UPDATE, updateActive);
       socket.off(GatewayEvent.NOTIFICATION, newGathering);
       socket.off(GatewayEvent.CHAT_MESSAGE, newGathering);
 
       for (const event of events) socket.off(event, reconcile);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
     };
-  }, [connected, joined, socket, queryClient]);
+  }, [
+    connected,
+    joined,
+    socket,
+    queryClient,
+    session?.user?.id,
+    accountId,
+    characterId,
+    world,
+  ]);
   useEffect(() => {
     const nextExpiry = Math.min(
-      ...(query.data ?? []).flatMap((room) => {
+      ...(query.data?.rooms ?? []).flatMap((room) => {
         const expiry = Date.parse(room.expiresAt);
 
         return expiry > Date.now() ? [expiry] : [];
@@ -124,15 +203,17 @@ export function useActivePartyGatherings() {
     observedAt,
     world,
     visibleGuilds,
-    isStale: query.isError || !connected,
+    isStale: query.isError || !connected || !query.data?.snapshotAppliedAt,
     data:
-      joined && areVisibleGuildsResolved && !accessDenied
-        ? (query.data ?? []).filter(
-            (room) =>
-              room.world === world &&
-              Date.parse(room.expiresAt) > observedAt &&
-              room.guildIds.some((id) => enabledIds.has(id)),
-          )
+      readable && !accessDenied
+        ? (query.data?.rooms ?? [])
+            .filter(
+              (room) =>
+                room.world === world &&
+                Date.parse(room.expiresAt) > observedAt &&
+                room.guildIds.some((id) => enabledIds.has(id)),
+            )
+            .map((room) => ({ ...room, guildIds: [...room.guildIds] }))
         : [],
   };
 }

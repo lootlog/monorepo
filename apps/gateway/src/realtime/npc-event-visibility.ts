@@ -1,3 +1,4 @@
+import { ActivePartyGatheringUpdateSchema } from "@lootlog/schema/party-ready-room";
 import {
   canManageOwnPartyGathering,
   canReadNpcFeatureSource,
@@ -245,9 +246,54 @@ const isUnscopedReadyRoomUpdate = (event: Event): boolean => {
   );
 };
 
+const prepareActiveGatheringVisibility = (
+  event: Extract<Event, { type: "active-party-gathering.updated" }>,
+): ((session: SessionData, guild: UserGuildData | undefined) => boolean) => {
+  const decoded = Schema.decodeUnknownOption(ActivePartyGatheringUpdateSchema)(
+    event.data.payload,
+  );
+
+  if (
+    Option.isNone(decoded) ||
+    decoded.value.guildId !== event.data.organizationId
+  )
+    return () => false;
+  const update = decoded.value;
+  const source = update.type === "UPSERT" ? update.summary : update;
+
+  if (
+    update.type === "UPSERT" &&
+    (update.summary.guildIds.length !== 1 ||
+      update.summary.guildIds[0] !== event.data.organizationId)
+  )
+    return () => false;
+
+  const routing =
+    source.npc === undefined
+      ? { tier: "base" as const }
+      : npcRouting(source.npc);
+
+  return (session, guild) =>
+    Boolean(
+      guild &&
+      routing &&
+      (isOrganizationAdministrator(session, guild) ||
+        (source.organizerDiscordId !== undefined &&
+          canManageOwnPartyGathering(
+            guild.roles,
+            source.organizerDiscordId,
+            session.discordId,
+          )) ||
+        canReadNpcFeatureSource(guild.roles, "chat", routing)),
+    );
+};
+
 export const prepareNpcSourceEvent = (
   event: Event,
 ): ((session: SessionData, guild: UserGuildData | undefined) => boolean) => {
+  if (event.type === "active-party-gathering.updated")
+    return prepareActiveGatheringVisibility(event);
+
   if (isUnscopedReadyRoomUpdate(event)) return () => true;
 
   switch (event.type) {

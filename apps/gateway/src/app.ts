@@ -14,6 +14,8 @@ import { recordHttpServerMetrics } from "@lootlog/instrumentation";
 import { RabbitMessaging } from "@lootlog/messaging";
 import {
   REALTIME_BATTLE_PING_CAPABILITY,
+  REALTIME_SESSION_HELLO_CAPABILITY,
+  REALTIME_ACTIVE_PARTY_GATHERINGS_CAPABILITY,
   REALTIME_TEAM_BATTLE_PING_CAPABILITY,
   REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
   REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
@@ -318,6 +320,12 @@ const negotiateCapabilities = (
 
   return {
     supportsFeed: offeredProtocols.includes(REALTIME_FEED_CAPABILITY),
+    supportsSessionHello: offersGameCapability(
+      REALTIME_SESSION_HELLO_CAPABILITY,
+    ),
+    supportsActivePartyGatherings: offersGameCapability(
+      REALTIME_ACTIVE_PARTY_GATHERINGS_CAPABILITY,
+    ),
     supportsNotificationVolunteer: offersGameCapability(
       REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
     ),
@@ -542,6 +550,13 @@ export const createGatewayWebSocket = (
 
       metrics.open(socket);
       application.hub.register(socket);
+
+      if (socket.data.supportsSessionHello)
+        application.hub.sendEvent(socket, {
+          v: 1,
+          type: "session.hello",
+          data: { connectionId: socket.data.connectionId },
+        });
     },
     message(socket: GatewaySocket, message: string | Buffer) {
       application.ingress.message(socket, message);

@@ -12,6 +12,7 @@ import { GatewayEvent } from "@/config/gateway";
 import {
   type AppSocket,
   getSocket,
+  getGameSessionIdentity,
   type PermissionsUpdatedPayload,
 } from "@/lib/socket";
 import {
@@ -24,6 +25,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   useSyncExternalStore,
   type ReactNode,
@@ -36,6 +38,8 @@ type SocketContextValue = {
   joinedGuilds: string[];
   status: RealtimeConnectionStatus;
 };
+
+const EMPTY_JOINED_GUILDS: string[] = [];
 
 const SocketContext = createContext<SocketContextValue>({
   socket: null,
@@ -72,11 +76,45 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     getConnectionState,
   );
 
-  const [joined, setJoined] = useState(false);
+  const hasBeenUnavailable = useRef(false);
+
+  useEffect(() => {
+    if (connectionState === "reconnecting") hasBeenUnavailable.current = true;
+  }, [connectionState]);
+
+  const [joinedCharacterIdentity, setJoinedCharacterIdentity] = useState<
+    string | null
+  >(null);
+
   const [hasBeenOnline, setHasBeenOnline] = useState(false);
-  const [joinedGuilds, setJoinedGuilds] = useState<string[]>([]);
+  const [guildIds, setJoinedGuilds] = useState<string[]>([]);
   const gameInitialized = useGlobalStore((s) => s.gameState.gameInitialized);
   const setSocketState = useGlobalStore((s) => s.setSocketState);
+
+  const characterIdentity = useGameStore((state) => {
+    const game = state.game;
+
+    return game
+      ? getGameSessionIdentity({ world: game.world, ...game.hero })
+      : null;
+  });
+
+  const joined =
+    characterIdentity !== null && joinedCharacterIdentity === characterIdentity;
+
+  const joinedGuilds = joined ? guildIds : EMPTY_JOINED_GUILDS;
+
+  const previousCharacterIdentity = useRef(characterIdentity);
+
+  useEffect(() => {
+    if (previousCharacterIdentity.current === characterIdentity) return;
+    const previous = previousCharacterIdentity.current;
+    previousCharacterIdentity.current = characterIdentity;
+
+    if (previous !== null) socket.disconnect();
+
+    if (characterIdentity !== null) socket.connect();
+  }, [characterIdentity, socket]);
 
   useEffect(() => {
     setSocketState({ connected, joined, joinedGuilds });
@@ -126,7 +164,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       cancelled = true;
     };
-  }, [gameInitialized, connected, socket]);
+  }, [gameInitialized, connected, socket, characterIdentity]);
 
   useEffect(() => {
     const accessCache = createGameAccessCache(queryClient);
@@ -135,13 +173,15 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     let joinedConnection = false;
 
     const handleDisconnect = () => {
+      hasBeenUnavailable.current = true;
       joinedConnection = false;
-      setJoined(false);
+      setJoinedCharacterIdentity(null);
       setJoinedGuilds([]);
     };
 
     const handleJoin = (data: {
       status: "success" | "error";
+      characterIdentity: string;
       code?: string;
       message?: string;
       guildsCount?: number;
@@ -151,12 +191,16 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      setJoined(true);
+      setJoinedCharacterIdentity(data.characterIdentity);
       setHasBeenOnline(true);
       setJoinedGuilds(data.guildIds ?? []);
 
       if (!joinedConnection) {
-        if (hasJoined || !socket.getAccessPolicy())
+        if (
+          hasJoined ||
+          hasBeenUnavailable.current ||
+          !socket.getAccessPolicy()
+        )
           refreshChatAfterReconnect(queryClient, data.guildIds ?? []);
         hasJoined = true;
         joinedConnection = true;
@@ -174,7 +218,6 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, {
         mapId: map.id,
         mapName: map.name,
-        isAfk: false,
       });
     };
 
@@ -197,7 +240,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         }
 
         setJoinedGuilds([]);
-        setJoined(false);
+        setJoinedCharacterIdentity(null);
 
         return;
       }
@@ -247,3 +290,10 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useSocket = () => useContext(SocketContext);
+
+/** Wait for the first subscription before fetching snapshots, with REST fallback after a connection failure. */
+export const useRealtimeSnapshotReady = () => {
+  const { socket, status } = useSocket();
+
+  return socket === null || status !== "connecting";
+};

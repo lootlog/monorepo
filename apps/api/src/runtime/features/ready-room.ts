@@ -31,6 +31,15 @@ export const readyRoomData = Layer.unwrap(
         ) => attempt(() => redis.eval<A>(script, [...keys], [...arguments_])),
       },
       {
+        publishActive: (payload) =>
+          rabbit
+            .publish({
+              exchange: "default",
+              routingKey:
+                RabbitRoutingKey.GUILDS_ACTIVE_PARTY_GATHERING_UPDATED,
+              content: new TextEncoder().encode(JSON.stringify(payload)),
+            })
+            .pipe(Effect.asVoid),
         publish: (envelope) =>
           rabbit
             .publish({

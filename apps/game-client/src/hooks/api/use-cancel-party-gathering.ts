@@ -1,9 +1,12 @@
+import {
+  removeActiveGathering,
+  type ActiveGatheringsCache,
+} from "@/features/chat/active-party-gatherings-cache";
 import { toast } from "sonner";
 import { ACTIVE_GATHERINGS_QUERY_KEY } from "@/features/chat/hooks/use-active-party-gatherings";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { decodePartyReadyRoomClientUpdate } from "@lootlog/schema/party-ready-room";
 import {
-  type ActivePartyGatheringSummary,
   getChatControllerGetChatMessagesQueryKey,
   partyReadyRoomControllerCancel,
 } from "@lootlog/client/main";
@@ -36,17 +39,19 @@ export const useCancelPartyGathering = () => {
         { expectedRevision: ownedReadyRoom.revision },
       );
 
-      applyUpdate(decodePartyReadyRoomClientUpdate(response));
-      queryClient.setQueriesData<ActivePartyGatheringSummary[]>(
+      const update = decodePartyReadyRoomClientUpdate(response);
+      applyUpdate(update);
+      queryClient.setQueriesData<ActiveGatheringsCache>(
         { queryKey: ACTIVE_GATHERINGS_QUERY_KEY },
-        (rooms) =>
-          rooms?.filter(
-            (room) => room.notificationId !== ownedReadyRoom.notificationId,
-          ),
+        (cache) =>
+          cache && update.type === "REMOVE"
+            ? removeActiveGathering(
+                cache,
+                update.notificationId,
+                update.revision,
+              )
+            : cache,
       );
-      void queryClient.invalidateQueries({
-        queryKey: ACTIVE_GATHERINGS_QUERY_KEY,
-      });
       await Promise.all(
         ownedReadyRoom.guildIds.map((guildId) =>
           queryClient.invalidateQueries({

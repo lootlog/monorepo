@@ -11,6 +11,7 @@ import { Effect, Layer } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { NOTIFICATION_SEND_PERMISSIONS } from "@lootlog/domain/npc-permissions";
 import type {
+  ActivePartyGatheringUpdate,
   PartyGatheringNpc,
   PartyReadyRoomCharacter,
   PartyReadyRoomParticipant,
@@ -45,6 +46,9 @@ const ROOM_LIFETIME_MS = 30 * 60 * 1000;
 const MAX_CAS_ATTEMPTS = 4;
 
 export interface ReadyRoomEffects {
+  readonly publishActive: (
+    update: ActivePartyGatheringUpdate,
+  ) => Effect.Effect<void, unknown>;
   readonly publishCancellation: (payload: {
     readonly notificationId: string;
     readonly guildId: string;
@@ -69,9 +73,92 @@ export interface ReadyRoomEffects {
   ) => Effect.Effect<void, unknown>;
 }
 
+const activeGatheringSummary = (
+  room: ReadyRoomAggregate,
+  guildIds: readonly string[],
+) => {
+  const applicants = Object.values(room.participants).filter(
+    ({ character }) =>
+      character.accountId !== room.organizerCharacter.accountId ||
+      character.characterId !== room.organizerCharacter.characterId,
+  );
+
+  return {
+    revision: room.revision,
+    notificationId: room.notificationId,
+    organizerName: room.organizerCharacter.nick,
+    organizerDiscordId: room.organizerDiscordId,
+    organizerLvl: room.organizerCharacter.lvl,
+    organizerProf: room.organizerCharacter.prof,
+    applicantCount: applicants.length,
+    ...(room.partyMemberCount !== undefined && {
+      partyMemberCount: room.partyMemberCount,
+    }),
+    inPartyCount: applicants.filter(
+      ({ partyPresence }) => partyPresence === "IN_PARTY",
+    ).length,
+    guildIds,
+    world: room.world,
+    ...(room.description !== undefined && {
+      description: room.description,
+    }),
+    ...(room.minLvl !== undefined && { minLvl: room.minLvl }),
+    ...(room.maxLvl !== undefined && { maxLvl: room.maxLvl }),
+    ...(room.npc && {
+      npc: {
+        ...(room.npc.icon !== undefined && {
+          icon: room.npc.icon,
+        }),
+        ...(room.npc.type !== undefined && {
+          type: room.npc.type,
+        }),
+        ...(room.npc.prof !== undefined && {
+          prof: room.npc.prof,
+        }),
+        name: room.npc.name,
+        location: room.npc.location,
+        lvl: room.npc.lvl,
+        ...(room.npc.x !== undefined && { x: room.npc.x }),
+        ...(room.npc.y !== undefined && { y: room.npc.y }),
+      },
+    }),
+    createdAt: room.createdAt,
+    expiresAt: room.expiresAt,
+  };
+};
+
+const publishActiveGathering = (
+  effects: Pick<ReadyRoomEffects, "publishActive">,
+  room: ReadyRoomAggregate,
+) =>
+  Effect.forEach(
+    room.guildIds,
+    (guildId) =>
+      effects
+        .publishActive(
+          room.status === "ACTIVE"
+            ? {
+                type: "UPSERT",
+                guildId,
+                revision: room.revision,
+                summary: activeGatheringSummary(room, [guildId]),
+              }
+            : {
+                type: "REMOVE",
+                guildId,
+                notificationId: room.notificationId,
+                revision: room.revision,
+                organizerDiscordId: room.organizerDiscordId,
+                ...(room.npc && { npc: room.npc }),
+              },
+        )
+        .pipe(Effect.ignore),
+    { discard: true },
+  );
+
 export const createReadyRoomForNotification = (
   redis: ReadyRoomRedis,
-  effects: Pick<ReadyRoomEffects, "publish">,
+  effects: Pick<ReadyRoomEffects, "publish" | "publishActive">,
   input: {
     readonly npc?: PartyGatheringNpc;
     readonly notificationId: string;
@@ -141,7 +228,11 @@ export const createReadyRoomForNotification = (
 
         return effects
           .publish(envelope)
-          .pipe(Effect.ignore, Effect.as(result.aggregate));
+          .pipe(
+            Effect.ignore,
+            Effect.andThen(publishActiveGathering(effects, result.aggregate)),
+            Effect.as(result.aggregate),
+          );
       }),
     );
 };
@@ -214,7 +305,7 @@ export const makeReadyRoomDataLayer = (
               .pipe(Effect.ignore);
           },
           { discard: true },
-        );
+        ).pipe(Effect.andThen(publishActiveGathering(effects, aggregate)));
 
       const getLive = (notificationId: string) =>
         repository.get(notificationId).pipe(
@@ -853,57 +944,7 @@ export const makeReadyRoomDataLayer = (
 
                   if (visible.length === 0) return [];
 
-                  const applicants = Object.values(room.participants).filter(
-                    ({ character }) =>
-                      character.accountId !==
-                        room.organizerCharacter.accountId ||
-                      character.characterId !==
-                        room.organizerCharacter.characterId,
-                  );
-
-                  return [
-                    {
-                      notificationId: room.notificationId,
-                      organizerName: room.organizerCharacter.nick,
-                      organizerDiscordId: room.organizerDiscordId,
-                      organizerLvl: room.organizerCharacter.lvl,
-                      organizerProf: room.organizerCharacter.prof,
-                      applicantCount: applicants.length,
-                      ...(room.partyMemberCount !== undefined && {
-                        partyMemberCount: room.partyMemberCount,
-                      }),
-                      inPartyCount: applicants.filter(
-                        ({ partyPresence }) => partyPresence === "IN_PARTY",
-                      ).length,
-                      guildIds: visible,
-                      world: room.world,
-                      ...(room.description !== undefined && {
-                        description: room.description,
-                      }),
-                      ...(room.minLvl !== undefined && { minLvl: room.minLvl }),
-                      ...(room.maxLvl !== undefined && { maxLvl: room.maxLvl }),
-                      ...(room.npc && {
-                        npc: {
-                          ...(room.npc.icon !== undefined && {
-                            icon: room.npc.icon,
-                          }),
-                          ...(room.npc.type !== undefined && {
-                            type: room.npc.type,
-                          }),
-                          ...(room.npc.prof !== undefined && {
-                            prof: room.npc.prof,
-                          }),
-                          name: room.npc.name,
-                          location: room.npc.location,
-                          lvl: room.npc.lvl,
-                          ...(room.npc.x !== undefined && { x: room.npc.x }),
-                          ...(room.npc.y !== undefined && { y: room.npc.y }),
-                        },
-                      }),
-                      createdAt: room.createdAt,
-                      expiresAt: room.expiresAt,
-                    },
-                  ];
+                  return [activeGatheringSummary(room, visible)];
                 })
                 .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
             }),

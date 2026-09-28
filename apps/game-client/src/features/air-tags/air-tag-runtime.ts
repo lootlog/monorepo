@@ -91,7 +91,7 @@ export class AirTagRuntime {
         airTagReceiveController.retainOrganizations(this.allowedOrganizations);
       }
 
-      this.subscribeCurrentMap(true, undefined, previousState.enabled);
+      this.subscribeCurrentMap(undefined, previousState.enabled);
     }
   }
 
@@ -103,7 +103,7 @@ export class AirTagRuntime {
 
     if (this.isPublishing(this.state)) {
       airTagRenderer.register();
-      this.subscribeCurrentMap(false, { id: mapId, name: mapName });
+      this.subscribeCurrentMap({ id: mapId, name: mapName });
     }
   }
 
@@ -198,12 +198,11 @@ export class AirTagRuntime {
     if (this.policyRefreshTimer !== null) clearTimeout(this.policyRefreshTimer);
     this.policyRefreshTimer = setTimeout(() => {
       this.policyRefreshTimer = null;
-      this.subscribeCurrentMap(false, undefined, true);
+      this.subscribeCurrentMap(undefined, true);
     }, 5_000);
   }
 
   private subscribeCurrentMap(
-    updatePresence: boolean,
     mapOverride?: { id: number; name: string },
     preserveScopes = false,
   ): void {
@@ -217,15 +216,6 @@ export class AirTagRuntime {
 
     this.currentMapId = map.id;
     this.currentMapName = map.name;
-    const socket = getSocket();
-
-    if (updatePresence) {
-      socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, {
-        mapId: map.id,
-        mapName: map.name,
-      });
-    }
-
     const requestId = crypto.randomUUID();
     airTagReceiveController.beginSubscription(
       requestId,

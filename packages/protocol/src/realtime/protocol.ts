@@ -26,6 +26,9 @@ import {
 
 export const REALTIME_PROTOCOL_VERSION = 1;
 
+export const REALTIME_ACTIVE_PARTY_GATHERINGS_CAPABILITY =
+  "lootlog.active-party-gatherings.v1";
+
 // Offered alongside v1 by clients that understand feed events; never selected as the wire protocol.
 export const REALTIME_FEED_CAPABILITY = "lootlog.feed.v1";
 
@@ -63,6 +66,8 @@ export const REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY =
 // per target and no removals.
 export const REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY =
   "lootlog.air-tag-scope-update.v1";
+
+export const REALTIME_SESSION_HELLO_CAPABILITY = "lootlog.session-hello.v1";
 
 export const REALTIME_JSON_SUBPROTOCOL = "lootlog.realtime.json.v1";
 
@@ -386,6 +391,10 @@ const OrganizationEvent = Schema.Struct({
 
 export const ServerEvent = Schema.Union([
   serverEvent(
+    "session.hello",
+    Schema.Struct({ connectionId: Schema.NonEmptyString }),
+  ),
+  serverEvent(
     "session.joined",
     Schema.Struct({
       connectionId: Schema.NonEmptyString,
@@ -427,6 +436,7 @@ export const ServerEvent = Schema.Union([
   serverEvent("party-gathering.updated", OrganizationEvent),
   serverEvent("party-gathering.cancelled", OrganizationEvent),
   serverEvent("party-ready-room.updated", OrganizationEvent),
+  serverEvent("active-party-gathering.updated", OrganizationEvent),
   serverEvent("map-ping.received", MapPingEventSchema),
   serverEvent("battle-ping.received", BattlePingEventSchema),
   serverEvent("air-tag.updated", AirTagUpdateEventSchema),

@@ -54,6 +54,12 @@ const retryable = (
 
 export const gatewayConsumerSpecs: ReadonlyArray<ConsumerSpec> = [
   retryable(
+    "gateway-guilds-active-party-gathering-updated",
+    RabbitRoutingKey.GUILDS_ACTIVE_PARTY_GATHERING_UPDATED,
+    RabbitRoutingKey.GUILDS_ACTIVE_PARTY_GATHERING_UPDATED_RETRY,
+    RabbitRoutingKey.GUILDS_ACTIVE_PARTY_GATHERING_UPDATED_DLQ,
+  ),
+  retryable(
     "gateway-guilds-kills-accepted-v1",
     RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1,
     RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1_RETRY,
@@ -617,6 +623,10 @@ export class RabbitBridge {
       [RabbitRoutingKey.GUILDS_NOTIFICATIONS_SEND]: {
         topic: "organization.notifications",
         type: "notification.sent",
+      },
+      [RabbitRoutingKey.GUILDS_ACTIVE_PARTY_GATHERING_UPDATED]: {
+        topic: "party.ready-room",
+        type: "active-party-gathering.updated",
       },
       [RabbitRoutingKey.GUILDS_PARTY_GATHERING]: {
         topic: "organization.notifications",

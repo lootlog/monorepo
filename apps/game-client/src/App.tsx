@@ -10,7 +10,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ExtensionLogin } from "@/components/extension-login";
 import { isExtensionClient } from "@/lib/game-client-platform";
 import { authClient } from "@/lib/auth-client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { disposeSocket } from "@/lib/socket";
 import { resetTransientRuntimeState } from "@/lib/runtime-state";
 import { useLogsStore } from "@/store/logs.store";
@@ -19,46 +19,65 @@ function App() {
   const session = authClient.useSession();
   const extension = isExtensionClient();
   const userId = session.data?.user.id ?? null;
-  const [activeUserId, setActiveUserId] = useState(userId);
+
+  const [activeUserId, setActiveUserId] = useState<string | null | undefined>(
+    extension ? userId : undefined,
+  );
+
   // Unmount the old session before clearing its projections and starting another.
   useEffect(() => {
     if (
-      !extension ||
       session.isPending ||
       session.error ||
-      activeUserId === userId
+      activeUserId === userId ||
+      (activeUserId === undefined && userId === null)
     )
       return;
-    disposeSocket();
-    disposeSoundPlayback();
-    queryClient.clear();
-    resetTransientRuntimeState();
-    useLogsStore.getState().clearActions();
+
+    // The first userscript session belongs to the tree already starting up.
+    if (activeUserId !== undefined) {
+      disposeSocket();
+      disposeSoundPlayback();
+      queryClient.clear();
+      resetTransientRuntimeState();
+      useLogsStore.getState().clearActions();
+    }
+
     // The new tree must wait until the old tree unmounts and its external socket/cache are cleared.
     // eslint-disable-next-line react/set-state-in-effect
     setActiveUserId(userId);
   }, [extension, session.isPending, session.error, activeUserId, userId]);
-  const showGame = !extension || (userId !== null && activeUserId === userId);
+
+  const confirmedUserId =
+    session.isPending || session.error ? activeUserId : userId;
+
+  const changingUser =
+    activeUserId !== undefined && activeUserId !== confirmedUserId;
+
+  const showGame = !changingUser && (!extension || userId !== null);
+  const connectGame = activeUserId === undefined || confirmedUserId !== null;
+
+  let content: ReactNode = (
+    <ErrorBoundary
+      FallbackComponent={AppErrorBoundaryFallback}
+      onError={(error) => {
+        disposeSoundPlayback();
+        console.warn("[ErrorBoundary]", error);
+      }}
+    >
+      <AppContent />
+    </ErrorBoundary>
+  );
+
+  if (connectGame) content = <SocketProvider>{content}</SocketProvider>;
+
+  if (!showGame) content = extension ? <ExtensionLogin /> : null;
 
   return (
     <ThemeProvider>
       <TooltipProvider>
         <QueryClientProvider client={queryClient}>
-          {showGame ? (
-            <SocketProvider>
-              <ErrorBoundary
-                FallbackComponent={AppErrorBoundaryFallback}
-                onError={(error) => {
-                  disposeSoundPlayback();
-                  console.warn("[ErrorBoundary]", error);
-                }}
-              >
-                <AppContent />
-              </ErrorBoundary>
-            </SocketProvider>
-          ) : (
-            <ExtensionLogin />
-          )}
+          {content}
         </QueryClientProvider>
       </TooltipProvider>
     </ThemeProvider>

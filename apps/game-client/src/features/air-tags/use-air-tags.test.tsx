@@ -73,6 +73,11 @@ describe("useAirTags", () => {
     );
     const view = renderHook(() => useAirTags(), { wrapper: test.wrapper });
     await test.join();
+    expect(
+      test.wire.frames.filter(
+        (frame) => "type" in frame && frame.type === "presence.publish",
+      ),
+    ).toHaveLength(1);
     await test.acknowledge(["guild-1"]);
     await test.receive(update);
     expect(
@@ -93,14 +98,16 @@ describe("useAirTags", () => {
       airTagReceiveController.getRenderableTargets(Date.now(), 10000),
     ).toEqual([expect.objectContaining({ targetId: "guild-2", x: 30 })]);
     act(() => test.wire.close());
-    await test.receive({
-      ...update,
-      data: {
-        ...update.data,
-        revision: 4,
-        target: { ...update.data.target, x: 40 },
-      },
-    });
+    await act(() =>
+      test.wire.receive({
+        ...update,
+        data: {
+          ...update.data,
+          revision: 4,
+          target: { ...update.data.target, x: 40 },
+        },
+      }),
+    );
     expect(
       airTagReceiveController.getRenderableTargets(Date.now(), 10000),
     ).toEqual([expect.objectContaining({ targetId: "guild-2", x: 30 })]);

@@ -1,3 +1,4 @@
+import { ActivePartyGatheringUpdateSchema } from "@lootlog/schema/party-ready-room";
 import { UserFeedItem } from "../feed.js";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { DateTimeWithOffsetString } from "@lootlog/schema/http-scalars";
@@ -385,6 +386,8 @@ const canonicalRabbitEventSchemas = {
   [RabbitRoutingKey.PRESENCE_CHECK_REQUEST]: PresenceCheckRequested,
   [RabbitRoutingKey.PRESENCE_COVERAGE_CHECK]: PresenceCoverageChecked,
   [RabbitRoutingKey.USERS_PARTY_READY_ROOM_UPDATED]: PartyReadyRoomUpdated,
+  [RabbitRoutingKey.GUILDS_ACTIVE_PARTY_GATHERING_UPDATED]:
+    ActivePartyGatheringUpdateSchema,
 } as const;
 
 export type CanonicalRabbitEventRoutingKey =

@@ -650,6 +650,12 @@ export class RealtimeHub {
     event: Event,
     guild = findEventGuild(session, eventOrganizationId(event)),
   ): boolean {
+    if (
+      event.type === "active-party-gathering.updated" &&
+      !session.supportsActivePartyGatherings
+    )
+      return false;
+
     if (isReadyRoomRemoval(event)) return true;
 
     if (event.type === "reservation.changed")

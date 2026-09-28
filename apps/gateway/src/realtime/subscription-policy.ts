@@ -1,3 +1,4 @@
+import { NOTIFICATION_SEND_PERMISSIONS } from "@lootlog/domain/npc-permissions";
 import { Permission } from "@lootlog/schema/permissions";
 import type {
   SubscriptionScope,
@@ -56,6 +57,12 @@ export const canSubscribe = (session: SessionData, scope: Scope): boolean => {
     !session.apiKeyAccess.organizationIds.includes(organizationId)
   )
     return false;
+
+  if (scope.topic === "party.ready-room")
+    return [
+      Permission.LOOTLOG_CHAT_READ,
+      ...NOTIFICATION_SEND_PERMISSIONS,
+    ].some((permission) => hasPermission(session, organizationId, permission));
   const permission = TOPIC_PERMISSION.get(scope.topic);
 
   if (!permission)
@@ -81,6 +88,17 @@ export const defaultScopes = (session: SessionData): Scope[] => {
   const scopes: Scope[] = [];
 
   for (const organizationId of organizationIds(session)) {
+    const activeGatheringsScope = {
+      topic: "party.ready-room",
+      organizationId,
+    } satisfies Scope;
+
+    if (
+      session.supportsActivePartyGatherings &&
+      canSubscribe(session, activeGatheringsScope)
+    )
+      scopes.push(activeGatheringsScope);
+
     for (const topic of TOPIC_PERMISSION.keys()) {
       if (topic === "map.air-tags") continue;
       const scope = { topic, organizationId } satisfies Scope;
