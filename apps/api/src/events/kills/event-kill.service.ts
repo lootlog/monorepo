@@ -31,6 +31,8 @@ import {
   calculateTrackingDurationSeconds,
   getEffectiveWindowEndAt,
   clipIntervalToWindow,
+  getTrackingWindowDurationSeconds,
+  getTrackingWindowStartTime,
 } from "#src/events/monitoring/tracking-window";
 import { findActiveEventHeroesByNpc as findActiveEventHeroMatchesByNpc } from "#src/events/kills/find-active-event-heroes-by-npc";
 import type { ActiveEventHeroStore } from "#src/events/kills/active-event-hero.repository";
@@ -549,18 +551,16 @@ export const makeEventKills = (
       const scoringWindowStartTime =
         windowOpenedAt > effectiveKilledAt ? effectiveKilledAt : windowOpenedAt;
 
-      const trackingWindowStartTime =
-        minSpawnTimeAtKill > effectiveKilledAt
-          ? effectiveKilledAt
-          : minSpawnTimeAtKill;
+      const trackingWindow = {
+        killedAt: effectiveKilledAt,
+        minSpawnTimeAtKill,
+      };
 
-      const trackingWindowDurationSeconds = Math.max(
-        0,
-        Math.floor(
-          (effectiveKilledAt.getTime() - trackingWindowStartTime.getTime()) /
-            1000,
-        ),
-      );
+      const trackingWindowStartTime =
+        getTrackingWindowStartTime(trackingWindow);
+
+      const trackingWindowDurationSeconds =
+        getTrackingWindowDurationSeconds(trackingWindow);
 
       const heroMaps = yield* repository.findMaps(eventHero.id);
       const heroMapIds = heroMaps.map((map) => map.id);
