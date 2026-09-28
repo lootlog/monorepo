@@ -35,6 +35,15 @@ export interface MemberSyncPorts {
     readonly guildId: string;
     readonly userId: string;
   }) => Effect.Effect<unknown, unknown>;
+  readonly publishMemberUpdated: (options: {
+    readonly discordId: string;
+    readonly guildId: string;
+    readonly userId: string;
+  }) => Effect.Effect<unknown, unknown>;
+  readonly refreshPermissionCache: (options: {
+    readonly guildId: string;
+    readonly userId: string;
+  }) => Effect.Effect<unknown, unknown>;
 }
 
 export const makeMemberSync = (
@@ -43,6 +52,39 @@ export const makeMemberSync = (
   removal: MemberRemoval,
   ports: MemberSyncPorts,
 ) => {
+  const deliverPendingChanges = (memberId: number, skipLocked = false) =>
+    store.deliverPendingChanges(
+      memberId,
+      (member, permissionsChanged) => {
+        if (!member.active) {
+          return removal.notifyMemberRemoved({
+            discordId: member.userId,
+            guildId: member.guildId,
+            globalUserId: member.globalUserId,
+          });
+        }
+
+        if (!member.globalUserId) return Effect.void;
+
+        const target = {
+          discordId: member.userId,
+          guildId: member.guildId,
+          userId: member.globalUserId,
+        };
+
+        return ports
+          .invalidateMember(target)
+          .pipe(
+            Effect.andThen(() =>
+              permissionsChanged
+                ? ports.publishMemberUpdated(target)
+                : Effect.void,
+            ),
+          );
+      },
+      skipLocked,
+    );
+
   const markAttempt = Effect.fn("members.sync.markAttempt")(
     function* (options: {
       readonly discordId: string;
@@ -51,13 +93,6 @@ export const makeMemberSync = (
       readonly deactivate?: boolean;
       readonly markSynced?: boolean;
     }) {
-      const existing = yield* store.findMember(
-        options.discordId,
-        options.guildId,
-      );
-
-      if (!existing) return null;
-
       const member = yield* store.markSyncAttempt({
         userId: options.discordId,
         guildId: options.guildId,
@@ -67,13 +102,7 @@ export const makeMemberSync = (
         attemptedAt: new Date(yield* Clock.currentTimeMillis),
       });
 
-      if (options.deactivate && existing.active) {
-        yield* removal.notifyMemberRemoved({
-          discordId: options.discordId,
-          guildId: options.guildId,
-          globalUserId: existing.globalUserId,
-        });
-      }
+      if (member) yield* deliverPendingChanges(member.id);
 
       return member;
     },
@@ -87,17 +116,12 @@ export const makeMemberSync = (
   ) {
     const syncTimestamp = new Date(yield* Clock.currentTimeMillis);
 
-    const existingRoleIds = yield* store.findExistingRoleIds(
-      discordMember.roles,
-      discordMember.guildId,
-    );
-
     const member = yield* store.upsertMemberWithRoles(
       discordMember.user.id,
       discordMember.guildId,
       {
-        avatar: discordMember.avatar ?? discordMember.user.avatar,
-        banner: discordMember.banner,
+        avatar: discordMember.avatar ?? discordMember.user.avatar ?? null,
+        banner: discordMember.banner ?? null,
         name:
           discordMember.nick ??
           discordMember.user.global_name ??
@@ -108,13 +132,11 @@ export const makeMemberSync = (
         lastDiscordSyncAt: syncTimestamp,
         lastDiscordStatus: MEMBER_DISCORD_SYNC_STATUS.SUCCESS,
       },
-      existingRoleIds,
+      discordMember.roles,
     );
 
-    // Even unchanged roles need fresh permission-cache sync timestamps and must
-    // retry invalidation if the previous attempt committed but cache clearing failed.
-    yield* ports.invalidateMember({
-      discordId: discordMember.user.id,
+    yield* deliverPendingChanges(member.id);
+    yield* ports.refreshPermissionCache({
       guildId: discordMember.guildId,
       userId: discordMember.globalUserId,
     });
@@ -245,7 +267,30 @@ export const makeMemberSync = (
     },
   );
 
-  return { syncMemberFromDiscord, createOrUpdateMember };
+  let deliveryCursor = 0;
+
+  const dispatchPendingChanges = Effect.fn("members.sync.dispatchPending")(
+    function* () {
+      const pending = yield* store.findPendingMemberIds(deliveryCursor);
+
+      for (const { memberId } of pending) {
+        yield* deliverPendingChanges(memberId, true).pipe(
+          Effect.catch((error) =>
+            Effect.logError("Member sync delivery failed", error),
+          ),
+        );
+        deliveryCursor = memberId;
+      }
+
+      if (pending.length < 25) deliveryCursor = 0;
+    },
+  );
+
+  return {
+    syncMemberFromDiscord,
+    createOrUpdateMember,
+    dispatchPendingChanges,
+  };
 };
 
 export type MemberSync = ReturnType<typeof makeMemberSync>;

@@ -239,21 +239,11 @@ export const memberServicesLive = Layer.effect(
           {
             getGuildMember: discord.getGuildMember,
             nextRefreshAt,
+            refreshPermissionCache: ({ userId, guildId }) =>
+              adapter(() => redis.del(getPermissionsCacheKey(userId, guildId))),
             invalidateMember: ({ discordId, guildId, userId }) =>
               Effect.all(
                 [
-                  rabbit.publish({
-                    exchange: "default",
-                    routingKey: RabbitRoutingKey.GUILDS_MEMBERS_UPDATE,
-                    content: new TextEncoder().encode(
-                      JSON.stringify({
-                        id: discordId,
-                        discordId,
-                        userId,
-                        guildId,
-                      }),
-                    ),
-                  }),
                   adapter(() =>
                     redis.del(getPermissionsCacheKey(userId, guildId)),
                   ),
@@ -268,6 +258,14 @@ export const memberServicesLive = Layer.effect(
                 ],
                 { concurrency: "unbounded", discard: true },
               ),
+            publishMemberUpdated: ({ discordId, guildId, userId }) =>
+              rabbit.publish({
+                exchange: "default",
+                routingKey: RabbitRoutingKey.GUILDS_MEMBERS_UPDATE,
+                content: new TextEncoder().encode(
+                  JSON.stringify({ id: discordId, discordId, userId, guildId }),
+                ),
+              }),
           },
         );
 

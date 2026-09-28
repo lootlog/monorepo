@@ -351,12 +351,6 @@ export const memberTable = pgTable(
       table["guildId"],
     ),
     index("Member_id_guildId_idx").on(table["id"], table["guildId"]),
-    index("Member_userId_guildId_active_lastDiscordSyncAt_idx").on(
-      table["userId"],
-      table["guildId"],
-      table["active"],
-      table["lastDiscordSyncAt"],
-    ),
     index("Member_globalUserId_guildId_active_idx").on(
       table["globalUserId"],
       table["guildId"],
@@ -371,6 +365,16 @@ export const memberTable = pgTable(
       .onUpdate("cascade"),
   ],
 );
+
+export const memberSyncDeliveryTable = pgTable("MemberSyncDelivery", {
+  memberId: integer("memberId")
+    .primaryKey()
+    .references(() => memberTable.id, { onDelete: "cascade" }),
+  permissionsChanged: boolean("permissionsChanged").notNull(),
+  createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
+    .defaultNow()
+    .notNull(),
+});
 
 export const timerTable = pgTable(
   "Timer",
