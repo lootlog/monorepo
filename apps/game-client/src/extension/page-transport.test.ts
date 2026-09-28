@@ -324,33 +324,39 @@ describe("page transport", () => {
     await expect(heartbeat).rejects.toBeInstanceOf(RealtimeRequestError);
   });
 
-  it("delivers realtime state and events and honors unsubscription", async () => {
-    const bridge = setup();
-    const realtime = bridge.platform.createRealtime();
-    const states = vi.fn<Parameters<typeof realtime.subscribeState>[0]>();
-    const events = vi.fn<Parameters<typeof realtime.subscribe>[0]>();
-    const unsubscribe = realtime.subscribe(events);
-    realtime.subscribeState(states);
-    expect(states).toHaveBeenCalledWith("disconnected");
+  it.each(["session.hello", "session.joined"] as const)(
+    "delivers realtime state and %s events and honors unsubscription",
+    async (type) => {
+      const bridge = setup();
+      const realtime = bridge.platform.createRealtime();
+      const states = vi.fn<Parameters<typeof realtime.subscribeState>[0]>();
+      const events = vi.fn<Parameters<typeof realtime.subscribe>[0]>();
+      const unsubscribe = realtime.subscribe(events);
+      realtime.subscribeState(states);
+      expect(states).toHaveBeenCalledWith("disconnected");
 
-    const event = {
-      v: 1,
-      type: "session.joined",
-      data: {
-        connectionId: "connection",
-        organizationIds: [],
-        subscriptionScopes: [],
-      },
-    };
+      const event = {
+        v: 1,
+        type,
+        data:
+          type === "session.hello"
+            ? { connectionId: "connection" }
+            : {
+                connectionId: "connection",
+                organizationIds: [],
+                subscriptionScopes: [],
+              },
+      };
 
-    bridge.send({ type: "state", state: "ready" });
-    bridge.send({ type: "event", event });
-    await vi.waitFor(() => expect(events).toHaveBeenCalledWith(event));
-    expect(states).toHaveBeenLastCalledWith("ready");
-    unsubscribe();
-    bridge.send({ type: "event", event });
-    bridge.send({ type: "closed" });
-    await vi.waitFor(() => expect(bridge.closed).toHaveBeenCalledOnce());
-    expect(events).toHaveBeenCalledTimes(1);
-  });
+      bridge.send({ type: "state", state: "ready" });
+      bridge.send({ type: "event", event });
+      await vi.waitFor(() => expect(events).toHaveBeenCalledWith(event));
+      expect(states).toHaveBeenLastCalledWith("ready");
+      unsubscribe();
+      bridge.send({ type: "event", event });
+      bridge.send({ type: "closed" });
+      await vi.waitFor(() => expect(bridge.closed).toHaveBeenCalledOnce());
+      expect(events).toHaveBeenCalledTimes(1);
+    },
+  );
 });

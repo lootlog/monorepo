@@ -18,6 +18,7 @@ const patchesFor = (domain: "timers" | "appearance") =>
 
 const userScope = { type: "USER", id: "user" } as const;
 
+import { getCharacterFilterKey } from "@/lib/character-filter-scope";
 import { NpcType } from "@/api/npcs.api";
 import { TIMERS_STORAGE_KEY, useTimersStore } from "./timers.store";
 
@@ -34,6 +35,7 @@ const resetTimersStore = () => {
     hiddenDefaultColors: [],
     customLists: {},
     timersFilters: {},
+    legacyTimersFilters: {},
     timerFiltersEnabled: false,
     colorFiltersEnabled: false,
     timerFiltersSearchText: "",
@@ -196,7 +198,7 @@ describe("timers.store", () => {
     vi.advanceTimersByTime(500);
     store.setTimersSortOrder("desc");
     vi.advanceTimersByTime(500);
-    store.setTimersFilters("global", {
+    store.setTimersFilters("character", "global", {
       minLvl: 50,
       maxLvl: 150,
       selectedNpcTypes: [NpcType.HERO],
@@ -210,7 +212,7 @@ describe("timers.store", () => {
       displayConfig: nextDisplayConfig,
       timersSortOrder: "desc",
       timersFilters: {
-        global: {
+        [getCharacterFilterKey("character", "global")]: {
           minLvl: 50,
           maxLvl: 150,
           selectedNpcTypes: [NpcType.HERO],
@@ -500,7 +502,7 @@ describe("timers.store", () => {
       window.localStorage.getItem(TIMERS_STORAGE_KEY) ?? "null",
     );
 
-    expect(persistedState.version).toBe(6);
+    expect(persistedState.version).toBe(7);
     expect(persistedState.state.generalConfig).toEqual({
       removeTimerAfterMs: 60000,
       timersGrouping: true,

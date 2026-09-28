@@ -11,6 +11,7 @@ import type { ServerEvent } from "@lootlog/protocol/realtime";
 import { getChatControllerGetChatMessagesQueryKey } from "@lootlog/client/main";
 import type { ChatMessage } from "@/api/chat.api";
 import { authClient } from "@/lib/auth-client";
+import { getSocket } from "@/lib/socket";
 import { useGameStore } from "@/store/game.store";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { createRealtimeTest } from "@/test/realtime-test";
@@ -149,6 +150,63 @@ describe("useChatMessagesListener", () => {
     await act(() => vi.advanceTimersByTimeAsync(5_000));
     expect(harness.chatHistoryRequest).toHaveBeenCalledOnce();
     expect(result.current.messagesByGuildId["guild-1"]).toEqual(history);
+  });
+
+  it("defers initial history until join, serves REST when unreachable, and recovers the first offline gap", async () => {
+    harness.queryClient.removeQueries({ queryKey: key() });
+    const before = message("before-offline");
+    const missed = message("missed-offline");
+    let history = [before];
+    harness.chatHistoryRequest.mockImplementation(() =>
+      Promise.resolve(Response.json(history)),
+    );
+
+    const { result } = renderHook(
+      () => {
+        useChatMessagesListener();
+
+        return useChatGuildData({
+          currentCharacterNick: "Current Hero",
+          guilds: [{ id: "guild-1", name: "Guild" }],
+          selectedGuildId: "guild-1",
+        });
+      },
+      { wrapper: harness.wrapper },
+    );
+
+    await act(async () => {});
+    expect(harness.chatHistoryRequest).not.toHaveBeenCalled();
+    expect(result.current.initialLoading).toBe(true);
+    act(() => harness.wire.close());
+    await waitFor(() =>
+      expect(result.current.messagesByGuildId["guild-1"]).toEqual([before]),
+    );
+    expect(harness.chatHistoryRequest).toHaveBeenCalledTimes(1);
+    history = [before, missed];
+    act(() => getSocket().connect());
+    harness.open();
+    await harness.join(
+      ["guild-1"],
+      createAccessPolicySnapshot(
+        [
+          {
+            guild: { id: "guild-1", ownerId: "owner" },
+            roles: [
+              {
+                permissions: [Permission.LOOTLOG_CHAT_READ],
+                lvlRangeFrom: 0,
+                lvlRangeTo: 500,
+              },
+            ],
+          },
+        ],
+        "reader",
+      ),
+    );
+    await waitFor(() =>
+      expect(result.current.messagesByGuildId["guild-1"]).toEqual(history),
+    );
+    expect(harness.chatHistoryRequest).toHaveBeenCalledTimes(2);
   });
 
   it("recovers missed messages once after a policy rejoin without clearing the transcript", async () => {
@@ -642,7 +700,15 @@ describe("useChatMessagesListener", () => {
       created(message("kept")),
       created(message("dropped", "guild-2")),
     );
-    await harness.join(["guild-1"], policy(["guild-1"]));
+    await harness.receive({
+      v: 1,
+      type: "permissions.updated",
+      data: {
+        organizationIds: ["guild-1"],
+        subscriptionScopes: [],
+        accessPolicy: policy(["guild-1"]),
+      },
+    });
     flushFrame();
     expect(cached()).toEqual([message("kept")]);
     expect(cached("guild-2")).toBeUndefined();

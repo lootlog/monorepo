@@ -3,6 +3,7 @@ import { operationIdentifiers } from "../../operation-identifiers.js";
 import {
   optionalPathString,
   statusCodeResponse,
+  reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
@@ -48,6 +49,7 @@ import { applicationErrorResponse } from "../../application-error-response.js";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
 import { LootlogApi } from "../../lootlog-api.js";
 import { EventOperations } from "./events.data-layer.js";
+import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 
 type Guild = typeof guildTable.$inferSelect;
 
@@ -91,7 +93,8 @@ type EventsHttpFailure =
   | EventsAccessDenied
   | EventsBadRequest
   | EventsDataError
-  | EventsNotFound;
+  | EventsNotFound
+  | ReauthenticationRequired;
 
 export interface EventAuthorizationRequirement {
   readonly guildId: string;
@@ -106,7 +109,7 @@ export class EventsAuthorization extends Context.Service<
       requirement: EventAuthorizationRequirement,
     ) => Effect.Effect<
       AuthorizedEventCaller,
-      EventsAccessDenied | EventsNotFound
+      EventsAccessDenied | EventsNotFound | ReauthenticationRequired
     >;
   }
 >()("@lootlog/api/http-api/events/authorization") {}
@@ -180,6 +183,7 @@ const toHttpResponse = <A, R>(effect: Effect.Effect<A, EventsHttpFailure, R>) =>
   Effect.catchTags(effect, {
     ApplicationError: applicationErrorResponse,
     EventsAccessDenied: statusCodeResponse,
+    ReauthenticationRequired: reauthenticationRequiredResponse,
     EventsBadRequest: statusCodeResponse,
     EventsDataError: (error) => Effect.die(error.cause),
     EventsNotFound: statusCodeResponse,

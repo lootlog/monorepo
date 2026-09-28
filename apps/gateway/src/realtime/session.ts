@@ -27,7 +27,9 @@ export interface SessionData extends AuthenticatedIdentity {
   readonly platform: typeof PresencePlatform.Type;
   readonly userAgent?: string;
   readonly supportsFeed?: boolean;
+  readonly supportsSessionHello?: boolean;
   readonly supportsNotificationVolunteer?: boolean;
+  readonly supportsPartyGatheringState?: boolean;
   readonly supportsBattlePings?: boolean;
   readonly supportsTeamBattlePings?: boolean;
   readonly supportsAirTagMapThreats?: boolean;

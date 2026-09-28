@@ -1,3 +1,4 @@
+import { useTimerFilters } from "@/features/timers/hooks/use-timer-filters";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
@@ -25,7 +26,6 @@ type TimersStoreState = ReturnType<typeof useTimersStore.getState>;
 
 const getTimersViewState = ({
   settingsKey,
-  timersFilters,
   hiddenTimers,
   pinnedTimers,
   timerFiltersSearchText,
@@ -36,7 +36,6 @@ const getTimersViewState = ({
   timers,
 }: {
   settingsKey: string;
-  timersFilters: TimersStoreState["timersFilters"];
   hiddenTimers: TimersStoreState["hiddenTimers"];
   pinnedTimers: TimersStoreState["pinnedTimers"];
   timerFiltersSearchText: TimersStoreState["timerFiltersSearchText"];
@@ -46,7 +45,6 @@ const getTimersViewState = ({
   allowWorldSelection: boolean | undefined;
   timers: Timer[] | undefined;
 }) => ({
-  filters: timersFilters[settingsKey] ?? DEFAULT_TIMERS_FILTERS,
   hiddenTimers: hiddenTimers[settingsKey] ?? [],
   pinnedTimers: pinnedTimers[settingsKey] ?? [],
   searchText: timerFiltersSearchText ?? "",
@@ -96,8 +94,6 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     setTimerFiltersSearchText,
     timersSortOrder,
     setTimersSortOrder,
-    timersFilters,
-    setTimersFilters,
     displayConfig,
     timersColors,
     customLists,
@@ -115,8 +111,6 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
       setTimerFiltersSearchText: state.setTimerFiltersSearchText,
       timersSortOrder: state.timersSortOrder,
       setTimersSortOrder: state.setTimersSortOrder,
-      timersFilters: state.timersFilters,
-      setTimersFilters: state.setTimersFilters,
       displayConfig: state.displayConfig,
       timersColors: state.timersColors,
       customLists: state.customLists,
@@ -128,7 +122,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     data: timers,
     error: timersError,
     isFetching: timersFetching,
-    isLoading: timersLoading,
+    isPending: timersLoading,
     refetch: refetchTimers,
   } = useTimers({ world: desiredWorld });
 
@@ -138,9 +132,9 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   const timersRefreshing = timersFetching && hasTimersResponse;
   const [showHiddenTimers, setShowHiddenTimers] = useState(false);
   const settingsKey = generalConfig.timersGrouping ? "global" : guildId;
+  const { filters, setFilters } = useTimerFilters(settingsKey, desiredWorld);
 
   const {
-    filters,
     hiddenTimers: hiddenTimersForSettings,
     pinnedTimers: pinnedTimersForSettings,
     searchText,
@@ -151,7 +145,6 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     timers: resolvedTimers,
   } = getTimersViewState({
     settingsKey,
-    timersFilters,
     hiddenTimers,
     pinnedTimers,
     timerFiltersSearchText,
@@ -207,7 +200,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
 
   const handleResetFilters = () => {
     setTimerFiltersSearchText("");
-    setTimersFilters(settingsKey, {
+    setFilters({
       ...DEFAULT_TIMERS_FILTERS,
       selectedColors: [...DEFAULT_TIMERS_FILTERS.selectedColors],
       selectedLists: [...DEFAULT_TIMERS_FILTERS.selectedLists],
@@ -246,6 +239,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
           <div aria-hidden="true" />
         </div>
         <TimersContent
+          world={desiredWorld}
           sortedTimers={sortedTimers}
           settingsKey={settingsKey}
           hiddenTimers={hiddenTimersForSettings}
@@ -306,6 +300,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     >
       <div className="ll:flex ll:flex-col ll:h-full">
         <TimersContent
+          world={desiredWorld}
           sortedTimers={sortedTimers}
           settingsKey={settingsKey}
           hiddenTimers={hiddenTimersForSettings}

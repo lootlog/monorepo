@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent } from "react";
+import { useEffect, useEffectEvent, useRef } from "react";
 import type { Timer } from "@/api/timers.api";
 import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
@@ -8,9 +8,10 @@ import { queryKeys } from "@/features/public-api/query-keys";
 import { getTimerQueryGuildId } from "@/lib/game-access-cache";
 
 export const useTimersSocket = () => {
-  const { socket, connected, joined, joinedGuilds } = useSocket();
+  const { socket, connected, joined, joinedGuilds, status } = useSocket();
   const { upsertTimer, removeTimer } = useTimersCache();
   const queryClient = useQueryClient();
+  const needsCatchUp = useRef(false);
 
   const handleTimerCreate = useEffectEvent((data: Timer) => {
     upsertTimer(data);
@@ -20,51 +21,9 @@ export const useTimersSocket = () => {
     removeTimer(data);
   });
 
-  useEffect(() => {
-    if (!socket) {
-      return;
-    }
-
-    // Invalidation alone would reuse an in-flight fetch of a list without
-    // data, even one sent before the join, so the fetch is cancelled first.
-    const refreshTimers = () => {
-      void queryClient
-        .cancelQueries({ queryKey: queryKeys.allTimers() })
-        .then(() =>
-          queryClient.invalidateQueries({ queryKey: queryKeys.allTimers() }),
-        );
-    };
-
-    // Listeners stay attached from mount so none of a session's events can
-    // arrive before them; events outside a joined session are ignored.
-    const onTimerCreate = (data: Timer) => {
-      if (socket.sessionJoined) handleTimerCreate(data);
-    };
-
-    const onTimerDelete = (data: Timer) => {
-      if (socket.sessionJoined) handleTimerDelete(data);
-    };
-
-    socket.on(GatewayEvent.TIMERS_CREATE, onTimerCreate);
-    socket.on(GatewayEvent.TIMERS_DELETE, onTimerDelete);
-    // Refetching inside the join event cancels a snapshot fetch that still
-    // waits for the session, before it sends any request.
-    socket.on(GatewayEvent.JOIN, refreshTimers);
-
-    // Events were not applied while unmounted.
-    if (socket.sessionJoined) refreshTimers();
-
-    return () => {
-      socket.off(GatewayEvent.TIMERS_CREATE, onTimerCreate);
-      socket.off(GatewayEvent.TIMERS_DELETE, onTimerDelete);
-      socket.off(GatewayEvent.JOIN, refreshTimers);
-    };
-  }, [socket, queryClient]);
-
-  useEffect(() => {
-    if (!connected || !joined || !socket) {
-      return;
-    }
+  const refreshAfterReconnect = useEffectEvent(() => {
+    void queryClient.cancelQueries({ queryKey: queryKeys.allTimers() });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.allTimers() });
 
     const histories = {
       predicate: (query: Query) => {
@@ -80,5 +39,32 @@ export const useTimersSocket = () => {
 
     void queryClient.cancelQueries(histories);
     void queryClient.invalidateQueries({ ...histories, refetchType: "active" });
-  }, [connected, joined, joinedGuilds, socket, queryClient]);
+  });
+
+  useEffect(() => {
+    if (status === "unreachable") needsCatchUp.current = true;
+
+    if (!connected || !joined || !socket) {
+      return;
+    }
+
+    const onTimerCreate = (data: Timer) => {
+      handleTimerCreate(data);
+    };
+
+    const onTimerDelete = (data: Timer) => {
+      handleTimerDelete(data);
+    };
+
+    socket.on(GatewayEvent.TIMERS_CREATE, onTimerCreate);
+    socket.on(GatewayEvent.TIMERS_DELETE, onTimerDelete);
+
+    if (needsCatchUp.current) refreshAfterReconnect();
+    needsCatchUp.current = true;
+
+    return () => {
+      socket.off(GatewayEvent.TIMERS_CREATE, onTimerCreate);
+      socket.off(GatewayEvent.TIMERS_DELETE, onTimerDelete);
+    };
+  }, [connected, joined, socket, status]);
 };

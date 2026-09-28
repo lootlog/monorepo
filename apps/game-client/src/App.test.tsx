@@ -5,6 +5,7 @@ import {
   type RealtimeWebSocket,
 } from "@lootlog/client/realtime";
 import { createNativeRuntime } from "@/test/native-runtime";
+import { RealtimeWire } from "@/test/realtime-wire";
 import { useGameStore } from "@/store/game.store";
 
 vi.stubGlobal("Engine", createNativeRuntime());
@@ -70,6 +71,28 @@ function seedPrivateState() {
   });
 }
 
+const sessionFor = (userId: string | null) =>
+  userId
+    ? {
+        user: {
+          id: userId,
+          name: "Player",
+          email: "player@example.test",
+          emailVerified: false,
+          discordId: "123",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        session: {
+          id: "session",
+          userId,
+          expiresAt: new Date(Date.now() + 60_000).toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    : null;
+
 let restorePlatform: (() => void) | undefined;
 
 afterEach(() => {
@@ -77,38 +100,19 @@ afterEach(() => {
   restorePlatform?.();
   restorePlatform = undefined;
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+  vi.stubGlobal("Engine", createNativeRuntime());
 });
 
 describe("extension session lifecycle", () => {
   it("opens no socket without a session, starts after login and disconnects on confirmed logout", async () => {
     let userId: string | null = null;
 
-    const fetcher = vi.fn<typeof fetch>().mockImplementation(() =>
-      Promise.resolve(
-        Response.json(
-          userId
-            ? {
-                user: {
-                  id: userId,
-                  name: "Player",
-                  email: "player@example.test",
-                  emailVerified: false,
-                  discordId: "123",
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                },
-                session: {
-                  id: "session",
-                  userId,
-                  expiresAt: new Date(Date.now() + 60_000).toISOString(),
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                },
-              }
-            : null,
-        ),
-      ),
-    );
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockImplementation(() =>
+        Promise.resolve(Response.json(sessionFor(userId))),
+      );
 
     const socket: RealtimeWebSocket = {
       readyState: 0,
@@ -168,6 +172,65 @@ describe("extension session lifecycle", () => {
     expect(socket.close).toHaveBeenCalledWith(1000, "client disconnect");
     expect(factory).toHaveBeenCalledTimes(2);
     expect(privateState()).toEqual(clearedState);
+    view.unmount();
+  });
+
+  it("keeps the initial userscript connection and clears private state on confirmed logout and account switch", async () => {
+    vi.stubGlobal("Engine", createNativeRuntime());
+    const initial = Promise.withResolvers<Response>();
+    let userId: string | null = "userscript-first";
+    let initialRead = true;
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = input instanceof Request ? input.url : String(input);
+
+      if (!url.includes("get-session")) return Response.json(null);
+
+      if (initialRead) {
+        initialRead = false;
+
+        return initial.promise;
+      }
+
+      return Response.json(sessionFor(userId));
+    });
+    const wires: RealtimeWire[] = [];
+    vi.stubGlobal(
+      "WebSocket",
+      class extends RealtimeWire {
+        constructor() {
+          super();
+          wires.push(this);
+        }
+      },
+    );
+    act(() => authClient.$store.notify("$sessionSignal"));
+    const view = render(<App />);
+    await waitFor(() => expect(wires).toHaveLength(1));
+    const marker = ["initial-userscript-session"];
+    queryClient.setQueryData(marker, "kept");
+    await act(async () => {
+      initial.resolve(Response.json(sessionFor(userId)));
+    });
+    await waitFor(() =>
+      expect(authClient.$store.atoms.session.get().data?.user.id).toBe(
+        "userscript-first",
+      ),
+    );
+    expect(wires).toHaveLength(1);
+    expect(queryClient.getQueryData(marker)).toBe("kept");
+    seedPrivateState();
+    userId = "userscript-second";
+    act(() => authClient.$store.notify("$sessionSignal"));
+    await waitFor(() => expect(wires).toHaveLength(2));
+    expect(wires[0]?.readyState).toBe(3);
+    expect(privateState()).toEqual(clearedState);
+    seedPrivateState();
+    userId = null;
+    act(() => authClient.$store.notify("$sessionSignal"));
+    await waitFor(() => expect(wires[1]?.readyState).toBe(3));
+    expect(privateState()).toEqual(clearedState);
+    expect(wires).toHaveLength(2);
+    expect(screen.queryByRole("link")).toBeNull();
     view.unmount();
   });
 
