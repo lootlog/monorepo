@@ -12,8 +12,8 @@ import {
   getMembersControllerGetMeQueryKey,
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   getUsersControllerGetUserPreferencesQueryKey,
-  type ActivePartyGatheringSummary,
 } from "@lootlog/client/main";
+import type { PartyGatheringSummary } from "@lootlog/schema/party-ready-room";
 import { configureApiClients } from "@lootlog/client/transport";
 import { createRealtimeTest } from "@/test/realtime-test";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
@@ -35,8 +35,8 @@ import { ChatGatheringBar } from "./chat-gathering-bar";
 import { ChatInput } from "./chat-input";
 
 const createGathering = (
-  overrides: Partial<ActivePartyGatheringSummary> = {},
-): ActivePartyGatheringSummary => ({
+  overrides: Partial<PartyGatheringSummary> = {},
+): PartyGatheringSummary => ({
   notificationId: "room-1",
   organizerName: "Leader",
   applicantCount: 0,
@@ -48,7 +48,7 @@ const createGathering = (
   ...overrides,
 });
 
-const setup = async (rooms: ActivePartyGatheringSummary[] = []) => {
+const setup = async (rooms: PartyGatheringSummary[] = []) => {
   const harness = createRealtimeTest();
   // Start from a synchronized empty collection so mounting a Ready Room view
   // reads the cache instead of issuing its own list request.
@@ -281,6 +281,17 @@ it("shows actual party size independently of applications and opens management",
     ...readyRoomOrganizerFixture,
     world: "luvia",
     partyMemberCount: 5,
+    partyState: {
+      status: "OBSERVED" as const,
+      observedAt: new Date().toISOString(),
+      members: [
+        "organizer-character",
+        "second-character",
+        "third",
+        "fourth",
+        "fifth",
+      ].map((characterId) => ({ characterId })),
+    },
     participants: {
       ...readyRoomOrganizerFixture.participants,
       second: {
@@ -415,8 +426,24 @@ it.each(["OUTSIDE", "IN_PARTY"] as const)(
       mergeReadyRoomProjectionIntoCache(
         {
           ...room,
+          partyState: {
+            status: "OBSERVED",
+            observedAt: new Date().toISOString(),
+            members: [
+              {
+                characterId:
+                  partyPresence === "IN_PARTY"
+                    ? participant.character.characterId
+                    : "other-character",
+              },
+            ],
+          },
           participants: {
-            "participant-1": { ...participant, partyPresence },
+            "participant-1": {
+              ...participant,
+              partyPresence:
+                partyPresence === "IN_PARTY" ? "OUTSIDE" : "IN_PARTY",
+            },
             second: {
               ...createReadyRoomParticipant("second", "other-character"),
               partyPresence:
@@ -544,6 +571,13 @@ it("keeps full discovery counts after joining despite a private projection and m
     applicantCount: 6,
     inPartyCount: 2,
     partyMemberCount: 8,
+    partyState: {
+      status: "OBSERVED",
+      observedAt: new Date().toISOString(),
+      members: Array.from({ length: 8 }, (_, index) => ({
+        characterId: String(index),
+      })),
+    },
   });
 
   const harness = await setup([gathering]);
@@ -566,7 +600,19 @@ it("keeps full discovery counts after joining despite a private projection and m
 
   harness.discovery.mockImplementation(async () =>
     Response.json([
-      { ...gathering, applicantCount: 7, inPartyCount: 3, partyMemberCount: 9 },
+      {
+        ...gathering,
+        applicantCount: 7,
+        inPartyCount: 3,
+        partyMemberCount: 9,
+        partyState: {
+          status: "OBSERVED",
+          observedAt: new Date().toISOString(),
+          members: Array.from({ length: 9 }, (_, index) => ({
+            characterId: String(index),
+          })),
+        },
+      },
     ]),
   );
   await harness.refresh();
@@ -955,4 +1001,202 @@ it("applies directly from the hidden tab without restoring the gathering and sur
     hiddenBefore,
   );
   expect(await screen.findByRole("alert")).toBeVisible();
+});
+
+it("updates every volunteer and the independent observed party for an observer without refetching", async () => {
+  const waiting = {
+    characterId: "waiting",
+    nick: "Waiting player",
+    lvl: 190,
+    prof: "m",
+    icon: "waiting.gif",
+    partyPresence: "OUTSIDE" as const,
+  };
+
+  const joining = {
+    ...waiting,
+    characterId: "joining",
+    nick: "Joining player",
+  };
+
+  const organizer = { characterId: "leader", nick: "Observed leader" };
+
+  const gathering = createGathering({
+    revision: 1,
+    volunteers: [waiting, joining],
+    partyState: {
+      status: "OBSERVED",
+      observedAt: new Date().toISOString(),
+      members: [organizer],
+    },
+  });
+
+  const harness = await setup([gathering]);
+  const requests = harness.discovery.mock.calls.length;
+  const volunteers = await screen.findByRole("region", { name: "Chętni (2)" });
+  expect(within(volunteers).getByText("Waiting player (190m)")).toBeVisible();
+  expect(within(volunteers).getByText("Joining player (190m)")).toBeVisible();
+  expect(
+    within(screen.getByRole("region", { name: "Grupa:" })).getByText(
+      "Observed leader",
+    ),
+  ).toBeVisible();
+
+  await harness.receive({
+    v: 1,
+    type: "party-gathering.state-updated",
+    data: {
+      organizationId: "guild-1",
+      payload: {
+        type: "UPSERT",
+        gathering: {
+          ...gathering,
+          revision: 2,
+          volunteers: [waiting, { ...joining, partyPresence: "IN_PARTY" }],
+          partyState: {
+            status: "OBSERVED",
+            observedAt: new Date().toISOString(),
+            members: [organizer, joining],
+          },
+        },
+      },
+    },
+  });
+  expect(
+    within(screen.getByRole("region", { name: "Chętni (2)" })).getByText(
+      "Waiting player (190m)",
+    ),
+  ).toBeVisible();
+  expect(
+    within(screen.getByRole("region", { name: "Chętni (2)" })).getByText(
+      "Joining player (190m)",
+    ),
+  ).toBeVisible();
+  expect(
+    await within(screen.getByRole("region", { name: "Grupa:" })).findByText(
+      "Joining player (190m)",
+    ),
+  ).toBeVisible();
+  expect(screen.getByLabelText("W grupie: 2/10")).toBeVisible();
+
+  await harness.receive({
+    v: 1,
+    type: "party-gathering.state-updated",
+    data: {
+      organizationId: "guild-1",
+      payload: {
+        type: "UPSERT",
+        gathering: {
+          ...gathering,
+          revision: 3,
+          volunteers: [joining],
+          partyState: {
+            status: "OBSERVED",
+            observedAt: new Date().toISOString(),
+            members: [organizer],
+          },
+        },
+      },
+    },
+  });
+  await screen.findByRole("region", { name: "Chętni (1)" });
+  expect(screen.queryByText("Waiting player (190m)")).not.toBeInTheDocument();
+  expect(
+    within(screen.getByRole("region", { name: "Chętni (1)" })).getByText(
+      "Joining player (190m)",
+    ),
+  ).toBeVisible();
+  expect(
+    within(screen.getByRole("region", { name: "Grupa:" })).queryByText(
+      "Joining player (190m)",
+    ),
+  ).not.toBeInTheDocument();
+  expect(screen.getByLabelText("W grupie: 1/10")).toBeVisible();
+  expect(screen.getByRole("button", { name: "Zgłoś się" })).toBeEnabled();
+  expect(harness.discovery).toHaveBeenCalledTimes(requests);
+});
+
+it("shows a newer organization roster while the participant projection is still behind", async () => {
+  const room = createChatReadyRoom({ world: "luvia", revision: 5 });
+  const participant = room.participants["participant-1"];
+
+  if (!participant) throw new Error("Expected current participant");
+
+  const volunteer = {
+    ...participant.character,
+    partyPresence: "OUTSIDE" as const,
+  };
+
+  const gathering = createGathering({
+    revision: 5,
+    volunteers: [volunteer],
+    partyState: {
+      status: "OBSERVED",
+      observedAt: new Date().toISOString(),
+      members: [{ characterId: "leader", nick: "Party leader" }],
+    },
+  });
+
+  const harness = await setup([gathering]);
+
+  await act(async () =>
+    mergeReadyRoomProjectionIntoCache(
+      {
+        ...room,
+        volunteers: gathering.volunteers,
+        partyState: gathering.partyState,
+      },
+      harness.queryClient,
+    ),
+  );
+  expect(
+    await screen.findByRole("button", { name: "Wycofaj zgłoszenie" }),
+  ).toHaveAccessibleDescription("Zgłoszono");
+
+  await harness.receive({
+    v: 1,
+    type: "party-gathering.state-updated",
+    data: {
+      organizationId: "guild-1",
+      payload: {
+        type: "UPSERT",
+        gathering: {
+          ...gathering,
+          revision: 6,
+          volunteers: [
+            { ...volunteer, partyPresence: "IN_PARTY" },
+            {
+              ...volunteer,
+              characterId: "new-volunteer",
+              nick: "New volunteer",
+            },
+          ],
+          partyState: {
+            status: "OBSERVED",
+            observedAt: new Date().toISOString(),
+            members: [volunteer],
+          },
+        },
+      },
+    },
+  });
+  const volunteers = await screen.findByRole("region", { name: "Chętni (2)" });
+  expect(
+    within(volunteers).getByText(
+      `New volunteer (${volunteer.lvl}${volunteer.prof})`,
+    ),
+  ).toBeVisible();
+  expect(
+    screen.getByRole("button", { name: "Wycofaj zgłoszenie" }),
+  ).toHaveAccessibleDescription("W grupie");
+  expect(
+    within(screen.getByRole("region", { name: "Grupa:" })).queryByText(
+      "Party leader",
+    ),
+  ).not.toBeInTheDocument();
+  expect(
+    readSeededReadyRoomCache(harness.queryClient).projections[
+      room.notificationId
+    ]?.revision,
+  ).toBe(5);
 });

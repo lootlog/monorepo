@@ -184,7 +184,7 @@ chęć udziału.
 Pływający panel u góry czatu pokazuje od razu dostępne zbiórki innych graczy ze wszystkich
 włączonych organizacji na bieżącym świecie, od najnowszej. Jest niezależna od historii
 wiadomości i filtra rozmowy. Zbiórki są pobierane również po wejściu do gry
-i ponownym połączeniu. Cały pasek cudzej zbiórki służy do zgłoszenia. Domyślnie widoczna jest najnowsza zbiórka; przycisk z liczbą pozostałych rozwija starsze. Ukrywanie jest dostępne w menu zbiórki.
+i ponownym połączeniu. Kliknięcie celu lub opisu cudzej zbiórki służy do zgłoszenia. Domyślnie widoczna jest najnowsza zbiórka; przycisk z liczbą pozostałych rozwija starsze. Ukrywanie jest dostępne w menu zbiórki.
 Twoja zbiórka, gdy jesteś organizatorem, znajduje się zawsze na końcu listy,
 najbliżej pola pisania. Panel organizatora pokazuje nazwę NPC lub „Twoja zbiórka”, licznik i przycisk „Zaproś”. Zarządzanie oraz anulowanie są dostępne w menu. Zbiórki mają gradient od przezroczystości do delikatnego fioletu, a pole pisania zachowuje zwykłe tło czatu.
 Zbiórki oddzielają cienkie, neutralne poziome linie. Przycisk ukrytych zbiórek znajduje się w prawym dolnym rogu obszaru wiadomości.
@@ -198,24 +198,37 @@ Zbiórki NPC pokazują również grafikę potwora, jeśli zapisano ją przy zgł
 Obok grafiki widać nazwę, poziom i dostępną profesję, a niżej lokację oraz
 współrzędne, jeśli zostały podane.
 Nagłówek zbiórki pokazuje nazwę organizatora z Discorda w kolorze jego roli — przed zgłoszeniem i po nim.
-Licznik obok tytułu pokazuje aktualny skład grupy względem limitu 10 osób.
-Przykładowo `(2/10)` oznacza dwie osoby w grupie. Obejmuje organizatora i osoby
-bez zgłoszenia; nie pokazuje liczby chętnych. Przed pierwszym odczytem składu
-wyświetla `(—/10)`. Uczestnik dodatkowo widzi
-status swojej bieżącej postaci na przycisku zgłoszenia. Zielony znacznik
-potwierdza zgłoszenie, a podpowiedź informuje też o obecności w grupie.
-Jego liczniki odświeżają się wraz z listą
-zbiórek, co 30 sekund oraz po obsługiwanych zdarzeniach. Brak dostępnej
-wartości oznacza kreska „—”.
+Każda widoczna zbiórka pokazuje dwie osobne listy. **Chętni** obejmują wszystkie
+zgłoszone postacie, również te, które jeszcze nie dołączyły do grupy. **Grupa**
+pokazuje skład odczytany z gry organizatora, w tym osoby bez zgłoszenia.
+Obie listy są dostępne organizatorowi, uczestnikom i pozostałym osobom,
+które mają dostęp do zbiórki i jej NPC. Obok nicku chętnego widać poziom,
+profesję oraz potwierdzoną obecność w grupie, gdy jej odczyt jest aktualny.
+
+Licznik obok tytułu pokazuje liczbę osób w grupie względem limitu 10 osób.
+Przykładowo `(2/10)` oznacza dwie osoby w odczytanym składzie, niezależnie
+od liczby chętnych. Przed pierwszym odczytem wyświetla `(—/10)` i informację,
+że skład grupy jest nieznany. Przy liście grupy widać czas odczytu z gry.
+Po dwóch minutach bez nowego odczytu lub utracie synchronizacji pojawia się
+ostrzeżenie o możliwie nieaktualnym składzie, a licznik ma postać `(~2/10)`.
+Starszy dodatek może nie dostarczać nazw członków grupy lub całego składu.
+Wtedy brakujące nazwy zastępuje identyfikator postaci, a brak odczytu pozostaje
+widoczny jako stan nieznany.
+
+Zgłoszenia, wycofania, usunięcia i zmiany składu docierają na żywo,
+bez okresowego odpytywania serwera. Ponowne połączenie pobiera bieżący stan.
+Uczestnik dodatkowo widzi status swojej postaci na przycisku zgłoszenia.
+Zielony znacznik potwierdza zgłoszenie. Informacja o obecności w grupie
+wymaga aktualnego odczytu z gry. Przyjęcie zaproszenia samo jej nie potwierdza.
 Ikona **Zaproś zgłoszonych** zaprasza osoby pozostające poza grupą. Przy NPC
 znajduje się po prawej stronie jego danych. Bez NPC jest obok opisu lub
 zakresu poziomów; tylko pusta zbiórka ma tę akcję w nagłówku.
 Zapraszanie działa na postaci organizatora po synchronizacji zbiórki.
 Wysłanie zaproszenia nie oznacza, że dana osoba już dołączyła do grupy.
 Organizator ma w menu zbiórki opcję **Lista chętnych**. Otwiera ona okno
-**Twoja zbiórka**, dostępne tylko dla organizatora. Okno pokazuje zgłoszonych,
-którzy są jeszcze poza grupą; osoby, które już dołączyły, znikają z listy.
-Nagłówek okna pokazuje stan grupy i czas do wygaśnięcia zbiórki. Plus w wierszu
+**Twoja zbiórka**, dostępne tylko dla organizatora. Okno pokazuje wszystkich
+chętnych oraz osobny skład grupy. Osoby, które dołączyły do grupy, pozostają
+na liście zgłoszeń. Nagłówek okna pokazuje stan grupy i czas do wygaśnięcia zbiórki. Plus w wierszu
 lub dwuklik zaprasza gracza, a prawy przycisk myszy otwiera menu z opcjami
 **Dodaj do znajomych** i **Usuń ze zbiórki**. **Zaproś wszystkich** pokazuje
 liczbę osób do zaproszenia. Obok znajduje się **Anuluj zbiórkę**, które przed

@@ -48,7 +48,9 @@
     "refreshing": "Odświeżanie…",
     "cancelling": "Anulowanie…",
     "withdrawing": "Wycofywanie…",
-    "retry": "Odśwież"
+    "retry": "Odśwież",
+    "partyMemberCountStale": "Ostatnio w grupie: {{count}}/10. Stan może być nieaktualny.",
+    "countsStale": "(~{{inParty}}/10)"
   },
   "integration": {
     "tab": "Lootlog",

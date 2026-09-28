@@ -1,5 +1,6 @@
 import type {
   PartyGatheringNpc,
+  PartyGatheringPartyState,
   PartyReadyRoomCharacter,
   PartyReadyRoomParticipant,
   PartyReadyRoomStatus,
@@ -17,6 +18,7 @@ export interface ReadyRoomAggregate {
   minLvl?: number;
   maxLvl?: number;
   partyMemberCount?: number;
+  partyState?: PartyGatheringPartyState;
   status: PartyReadyRoomStatus;
   revision: number;
   createdAt: string;

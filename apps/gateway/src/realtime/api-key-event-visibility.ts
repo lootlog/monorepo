@@ -31,6 +31,7 @@ export function prepareApiKeyEventVisibility(event: ServerEvent) {
           access.organizationIds.includes(id),
         );
       case "notification.volunteer":
+      case "party-gathering.state-updated":
         return false;
       case "reservation.changed":
         return (

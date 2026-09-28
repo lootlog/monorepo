@@ -136,6 +136,52 @@ describe("Ready Room projections", () => {
     expect(createReadyRoomProjection(aggregate, "unrelated")).toBeNull();
   });
 
+  it("shares every volunteer without exposing another participant's action or account identity", () => {
+    const other = {
+      ...aggregate.participants.first,
+      participantId: "other",
+      discordId: "other-user",
+      character: {
+        ...aggregate.participants.first.character,
+        accountId: "other-account",
+        characterId: "other-character",
+      },
+    };
+
+    const room = createReadyRoomProjection(
+      { ...aggregate, participants: { ...aggregate.participants, other } },
+      "shared",
+    );
+
+    expect(room?.participants).not.toHaveProperty("other");
+    expect(room?.volunteers).toEqual([
+      {
+        characterId: "character-first",
+        nick: "First",
+        icon: "first.gif",
+        lvl: 180,
+        prof: "m",
+        partyPresence: "OUTSIDE",
+      },
+      {
+        characterId: "character-second",
+        nick: "Second",
+        icon: "second.gif",
+        lvl: 190,
+        prof: "p",
+        partyPresence: "IN_PARTY",
+      },
+      {
+        characterId: "other-character",
+        nick: "First",
+        icon: "first.gif",
+        lvl: 180,
+        prof: "m",
+        partyPresence: "OUTSIDE",
+      },
+    ]);
+  });
+
   it("deduplicates organizer and participant recipients", () => {
     expect(getReadyRoomActiveRecipientDiscordIds(aggregate)).toEqual([
       "organizer",

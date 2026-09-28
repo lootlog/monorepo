@@ -113,6 +113,10 @@ describe("usePartyReadyRoomObserver", () => {
     expect(request?.url).toContain("room-1");
     expect(await request?.json()).toEqual({
       memberCharacterIds: ["10", "20"],
+      members: [
+        { characterId: "10", nick: "First", icon: "first.gif", prof: "w" },
+        { characterId: "20", nick: "Second", icon: "second.gif", prof: "m" },
+      ],
       organizerAccountId: "account",
       organizerCharacterId: "character",
     });
@@ -122,6 +126,15 @@ describe("usePartyReadyRoomObserver", () => {
       usePartyStore
         .getState()
         .setMembers([...members.toReversed(), ...members]),
+    );
+    expect(observeParty).toHaveBeenCalledTimes(2);
+    act(() =>
+      usePartyStore.getState().setMembers(
+        members.map((member) => ({
+          ...member,
+          currentHp: member.currentHp - 10,
+        })),
+      ),
     );
     expect(observeParty).toHaveBeenCalledTimes(2);
   });

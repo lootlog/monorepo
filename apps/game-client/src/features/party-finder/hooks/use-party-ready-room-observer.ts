@@ -1,4 +1,7 @@
-import { decodePartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
+import {
+  decodePartyReadyRoomProjection,
+  type PartyGatheringPartyMember,
+} from "@lootlog/schema/party-ready-room";
 import { useEffect, useEffectEvent, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { partyReadyRoomControllerObserveParty } from "@lootlog/client/main";
@@ -14,6 +17,7 @@ import { useReadyRoomsCache } from "@/features/party-finder/hooks/use-ready-room
 type ObservePartyVariables = {
   notificationId: string;
   memberCharacterIds: string[];
+  members: PartyGatheringPartyMember[];
   organizerAccountId: string;
   organizerCharacterId: string;
 };
@@ -77,6 +81,22 @@ export function usePartyReadyRoomObserver(): void {
     reportSnapshot({
       notificationId: ownedReadyRoom.notificationId,
       memberCharacterIds,
+      members: memberCharacterIds.flatMap((characterId) => {
+        const member = partyMembers.find(
+          (entry) => entry.characterId === characterId,
+        );
+
+        if (!member) return [];
+
+        return [
+          {
+            characterId,
+            nick: member.name,
+            icon: member.icon,
+            prof: member.profession ?? undefined,
+          },
+        ];
+      }),
       organizerAccountId: ownedReadyRoom.organizerCharacter.accountId,
       organizerCharacterId: ownedReadyRoom.organizerCharacter.characterId,
     });

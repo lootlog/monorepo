@@ -31983,6 +31983,109 @@
             "minimum": 0,
             "maximum": 9007199254740991
           },
+          "partyState": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["UNKNOWN"]
+                  }
+                },
+                "required": ["status"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["OBSERVED"]
+                  },
+                  "observedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                  },
+                  "members": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "characterId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 255
+                        },
+                        "nick": {
+                          "type": "string",
+                          "maxLength": 255
+                        },
+                        "icon": {
+                          "type": "string",
+                          "maxLength": 2048
+                        },
+                        "lvl": {
+                          "type": "number"
+                        },
+                        "prof": {
+                          "type": "string",
+                          "maxLength": 100
+                        }
+                      },
+                      "required": ["characterId"],
+                      "additionalProperties": false
+                    },
+                    "maxItems": 20
+                  }
+                },
+                "required": ["status", "observedAt", "members"],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "volunteers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "characterId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 255
+                },
+                "nick": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "icon": {
+                  "type": "string",
+                  "maxLength": 2048
+                },
+                "lvl": {
+                  "type": "number"
+                },
+                "prof": {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                "partyPresence": {
+                  "type": "string",
+                  "enum": ["OUTSIDE", "IN_PARTY"]
+                }
+              },
+              "required": [
+                "characterId",
+                "nick",
+                "icon",
+                "lvl",
+                "prof",
+                "partyPresence"
+              ],
+              "additionalProperties": false
+            }
+          },
           "status": {
             "type": "string",
             "enum": ["ACTIVE"]
@@ -32441,6 +32544,109 @@
                 "minimum": 0,
                 "maximum": 9007199254740991
               },
+              "partyState": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": ["UNKNOWN"]
+                      }
+                    },
+                    "required": ["status"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": ["OBSERVED"]
+                      },
+                      "observedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                      },
+                      "members": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "characterId": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 255
+                            },
+                            "nick": {
+                              "type": "string",
+                              "maxLength": 255
+                            },
+                            "icon": {
+                              "type": "string",
+                              "maxLength": 2048
+                            },
+                            "lvl": {
+                              "type": "number"
+                            },
+                            "prof": {
+                              "type": "string",
+                              "maxLength": 100
+                            }
+                          },
+                          "required": ["characterId"],
+                          "additionalProperties": false
+                        },
+                        "maxItems": 20
+                      }
+                    },
+                    "required": ["status", "observedAt", "members"],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "volunteers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "characterId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 255
+                    },
+                    "nick": {
+                      "type": "string",
+                      "maxLength": 255
+                    },
+                    "icon": {
+                      "type": "string",
+                      "maxLength": 2048
+                    },
+                    "lvl": {
+                      "type": "number"
+                    },
+                    "prof": {
+                      "type": "string",
+                      "maxLength": 100
+                    },
+                    "partyPresence": {
+                      "type": "string",
+                      "enum": ["OUTSIDE", "IN_PARTY"]
+                    }
+                  },
+                  "required": [
+                    "characterId",
+                    "nick",
+                    "icon",
+                    "lvl",
+                    "prof",
+                    "partyPresence"
+                  ],
+                  "additionalProperties": false
+                }
+              },
               "status": {
                 "type": "string",
                 "enum": ["ACTIVE"]
@@ -32669,6 +32875,37 @@
       "PartyReadyRoomObservationDto": {
         "type": "object",
         "properties": {
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "characterId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 255
+                },
+                "nick": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "icon": {
+                  "type": "string",
+                  "maxLength": 2048
+                },
+                "lvl": {
+                  "type": "number"
+                },
+                "prof": {
+                  "type": "string",
+                  "maxLength": 100
+                }
+              },
+              "required": ["characterId"],
+              "additionalProperties": false
+            },
+            "maxItems": 20
+          },
           "memberCharacterIds": {
             "type": "array",
             "items": {
