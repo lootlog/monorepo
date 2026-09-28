@@ -67,6 +67,7 @@ const mountContent = (
     <QueryClientProvider client={fixture.queryClient}>
       <div onPointerDown={onPointerDown}>
         <TimersContent
+          world="luvia"
           sortedTimers={[]}
           settingsKey="guild-1"
           hiddenTimers={[]}

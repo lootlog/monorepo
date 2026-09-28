@@ -1,4 +1,4 @@
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import { getNpcTypeByWt, MIN_LOOT_NPC_WT } from "@lootlog/domain/npc-type";
 import { getProfByShortname } from "@lootlog/domain/profession";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import {
@@ -182,6 +182,8 @@ export class LootEventProcessor {
       game,
     );
 
+    if (this.isRejectedByEveryOrganization(npcs, debugContext)) return;
+
     const { hero, map } = game;
 
     const payload = {
@@ -217,6 +219,22 @@ export class LootEventProcessor {
         });
         console.warn("[LootEventProcessor] Failed to create loot:", error);
       });
+  }
+
+  // The API rejects loot from weaker NPCs for every Organization, so
+  // submitting it only produces a 400 response.
+  private isRejectedByEveryOrganization(
+    npcs: ReadonlyArray<Pick<Npc, "wt">>,
+    debugContext: LootCreateDebugContext,
+  ): boolean {
+    if (npcs.some((npc) => npc.wt >= MIN_LOOT_NPC_WT)) return false;
+
+    logLootCreateDebug("skipped", {
+      ...debugContext,
+      reason: "npc-wt-too-low",
+    });
+
+    return true;
   }
 
   private captureMapPlayers(
@@ -324,6 +342,12 @@ export class LootEventProcessor {
         location: mapName,
       },
     ];
+
+    if (this.isRejectedByEveryOrganization(npcs, debugContext)) {
+      useDialogStore.getState().clearNpcContext();
+
+      return;
+    }
 
     const { hero } = game;
 

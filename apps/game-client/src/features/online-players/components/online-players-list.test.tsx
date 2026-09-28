@@ -19,7 +19,11 @@ import {
 } from "@lootlog/client/main";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { useSettingsStore } from "@/store/settings.store";
-import { useOnlinePlayersStore } from "@/store/online-players.store";
+import {
+  useOnlinePlayersStore,
+  ONLINE_PLAYERS_STORAGE_KEY,
+} from "@/store/online-players.store";
+import { useGameStore } from "@/store/game.store";
 import {
   createOnlinePlayersTest,
   createOnlinePresence,
@@ -361,10 +365,110 @@ describe("OnlinePlayersList", () => {
     fireEvent.change(screen.getByLabelText("Poziom do"), {
       target: { value: "90" },
     });
-    expect(useOnlinePlayersStore.getState().filtersByGuildId).toMatchObject({
-      "guild-1": { minLvl: 100, maxLvl: 500, selectedProfession: "all" },
-      "guild-2": { minLvl: 0, maxLvl: 90, selectedProfession: "all" },
+    expect(screen.getByLabelText("Poziom do")).toHaveValue(90);
+    act(() =>
+      useSettingsStore.setState({ guildIdByCharId: { "10": "guild-1" } }),
+    );
+    expect(screen.getByLabelText("Poziom od")).toHaveValue(100);
+    expect(screen.getByLabelText("Poziom do")).toHaveValue(500);
+  });
+
+  it("restores each character's saved filters after switching and reloading", async () => {
+    useSettingsStore.setState({
+      guildIdByCharId: { "10": "guild-1", "20": "guild-1" },
     });
+
+    const view = await render(
+      <OnlinePlayersList viewMode="accounts" filtersVisible />,
+    );
+
+    await screen.findByText("Hero (123w)");
+    fireEvent.change(screen.getByLabelText("Poziom od"), {
+      target: { value: "100" },
+    });
+    act(() => setTestRuntimeGame({ hero: { characterId: "20" } }));
+    expect(screen.getByLabelText("Poziom od")).toHaveValue(0);
+    expect(screen.getByText("Scout (80h)")).toBeVisible();
+    fireEvent.change(screen.getByLabelText("Poziom do"), {
+      target: { value: "90" },
+    });
+    expect(screen.queryByText("Hero (123w)")).not.toBeInTheDocument();
+    act(() => setTestRuntimeGame({ hero: { characterId: "10" } }));
+    expect(screen.getByLabelText("Poziom od")).toHaveValue(100);
+    expect(screen.getByLabelText("Poziom do")).toHaveValue(500);
+    expect(screen.queryByText("Scout (80h)")).not.toBeInTheDocument();
+
+    view.unmount();
+    const storageName = ONLINE_PLAYERS_STORAGE_KEY;
+    const saved = localStorage.getItem(storageName);
+    useOnlinePlayersStore.setState(
+      useOnlinePlayersStore.getInitialState(),
+      true,
+    );
+
+    if (saved) localStorage.setItem(storageName, saved);
+    await useOnlinePlayersStore.persist.rehydrate();
+    setTestRuntimeGame({ hero: { characterId: "20" } });
+    await render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
+
+    expect(screen.getByLabelText("Poziom od")).toHaveValue(0);
+    expect(screen.getByLabelText("Poziom do")).toHaveValue(90);
+    expect(await screen.findByText("Scout (80h)")).toBeVisible();
+    expect(screen.queryByText("Hero (123w)")).not.toBeInTheDocument();
+  });
+
+  it("waits for a known character before claiming or writing legacy filters", async () => {
+    useOnlinePlayersStore.setState({
+      legacyFiltersByGuildId: {
+        "guild-1": { minLvl: 100, maxLvl: 200, selectedProfession: "all" },
+      },
+    });
+    useGameStore.getState().clearGame();
+    useSettingsStore.setState({
+      guildIdByCharId: { "": "guild-1", "10": "guild-1" },
+    });
+    await render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
+    fireEvent.change(screen.getByLabelText("Poziom od"), {
+      target: { value: "80" },
+    });
+    expect(useOnlinePlayersStore.getState().filtersByScope).toEqual({});
+    expect(
+      useOnlinePlayersStore.getState().legacyFiltersByGuildId,
+    ).toHaveProperty("guild-1");
+
+    act(() => setTestRuntimeGame({ hero: { characterId: "10" } }));
+    expect(screen.getByLabelText("Poziom od")).toHaveValue(100);
+    expect(screen.getByLabelText("Poziom do")).toHaveValue(200);
+    expect(useOnlinePlayersStore.getState().legacyFiltersByGuildId).toEqual({});
+  });
+
+  it("assigns late-hydrated legacy filters to the character viewing them", async () => {
+    await render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
+    localStorage.setItem(
+      ONLINE_PLAYERS_STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        state: {
+          filtersByGuildId: {
+            "guild-1": { minLvl: 100, maxLvl: 200, selectedProfession: "all" },
+          },
+        },
+      }),
+    );
+    await act(async () => {
+      await useOnlinePlayersStore.persist.rehydrate();
+    });
+    expect(screen.getByLabelText("Poziom od")).toHaveValue(100);
+    act(() => {
+      useSettingsStore.setState({
+        guildIdByCharId: { "10": "guild-1", "20": "guild-1" },
+      });
+      setTestRuntimeGame({ hero: { characterId: "20" } });
+    });
+    expect(screen.getByLabelText("Poziom od")).toHaveValue(0);
+    act(() => setTestRuntimeGame({ hero: { characterId: "10" } }));
+    expect(screen.getByLabelText("Poziom od")).toHaveValue(100);
+    expect(screen.getByLabelText("Poziom do")).toHaveValue(200);
   });
 
   it("filters account entries by profession", async () => {

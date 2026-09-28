@@ -1,11 +1,24 @@
-import { act, render, screen, within, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  within,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, expect, it, onTestFinished, vi } from "vitest";
 import { configureApiClients } from "@lootlog/client/transport";
 import { getGuildsControllerGetWorldsByGuildIdQueryKey } from "@lootlog/client/main";
 import { queryKeys } from "@/features/public-api/query-keys";
-import { useTimersStore, DEFAULT_TIMERS_FILTERS } from "@/store/timers.store";
+import { getCharacterFilterKey } from "@/lib/character-filter-scope";
+import {
+  useTimersStore,
+  DEFAULT_TIMERS_FILTERS,
+  TIMERS_STORAGE_KEY,
+} from "@/store/timers.store";
+import { useGameStore } from "@/store/game.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
@@ -157,9 +170,14 @@ it("recovers from empty filters without erasing the user's saved hidden timers",
   expect(screen.queryByText(/\[H\] Tanroth/)).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Pokaż wszystkie" }));
   expect(useTimersStore.getState().timerFiltersSearchText).toBe("");
-  expect(useTimersStore.getState().timersFilters["guild-1"]).toEqual(
-    DEFAULT_TIMERS_FILTERS,
-  );
+  expect(
+    useTimersStore.getState().timersFilters[
+      getCharacterFilterKey(
+        JSON.stringify(["gefion", "202", "101", "gefion"]),
+        "guild-1",
+      )
+    ],
+  ).toEqual(DEFAULT_TIMERS_FILTERS);
   expect(useTimersStore.getState().hiddenTimers).toEqual({
     "guild-1": ["timer-1"],
   });
@@ -288,3 +306,161 @@ it.each(["filtered", "closed"] as const)(
     ).toBe(state === "closed" ? 0 : 1);
   },
 );
+
+it.each([
+  { underBag: false, grouped: false },
+  { underBag: true, grouped: false },
+  { underBag: false, grouped: true },
+  { underBag: true, grouped: true },
+])(
+  "restores each character's level range after switching and reload (underBag=$underBag, grouped=$grouped)",
+  async ({ underBag, grouped }) => {
+    mountTimers(() => {
+      useSettingsStore.setState({
+        guildIdByCharId: { "101": "guild-1", "102": "guild-1" },
+      });
+      useTimersStore.setState((state) => ({
+        timerFiltersEnabled: true,
+        generalConfig: {
+          ...state.generalConfig,
+          timersUnderBag: underBag,
+          timersGrouping: grouped,
+        },
+      }));
+    });
+    fireEvent.change(screen.getByLabelText("Poziom do"), {
+      target: { value: "100" },
+    });
+    expect(screen.queryByText(/\[H\] Tanroth/)).not.toBeInTheDocument();
+    act(() =>
+      setTestRuntimeGame({ hero: { characterId: "102" }, world: "gefion" }),
+    );
+    expect(screen.getByLabelText("Poziom do")).toHaveValue(300);
+    expect(screen.getByText(/\[H\] Tanroth/)).toBeVisible();
+    fireEvent.change(screen.getByLabelText("Poziom od"), {
+      target: { value: "250" },
+    });
+    expect(screen.queryByText(/\[H\] Tanroth/)).not.toBeInTheDocument();
+
+    const saved = localStorage.getItem(TIMERS_STORAGE_KEY);
+
+    if (!saved) throw new Error("Expected persisted timer filters");
+    await act(async () => {
+      useTimersStore.setState(useTimersStore.getInitialState(), true);
+      localStorage.setItem(TIMERS_STORAGE_KEY, saved);
+      await useTimersStore.persist.rehydrate();
+      setTestRuntimeGame({ hero: { characterId: "101" }, world: "gefion" });
+    });
+    expect(screen.getByLabelText("Poziom od")).toHaveValue(0);
+    expect(screen.getByLabelText("Poziom do")).toHaveValue(100);
+    expect(screen.queryByText(/\[H\] Tanroth/)).not.toBeInTheDocument();
+    act(() =>
+      setTestRuntimeGame({ hero: { characterId: "102" }, world: "gefion" }),
+    );
+    expect(screen.getByLabelText("Poziom od")).toHaveValue(250);
+    expect(screen.getByLabelText("Poziom do")).toHaveValue(300);
+  },
+);
+
+it("migrates all legacy timer filters once, after the character is known", async () => {
+  const legacyFilters = {
+    "guild-1": { ...DEFAULT_TIMERS_FILTERS, minLvl: 50, maxLvl: 100 },
+    "guild-2": { ...DEFAULT_TIMERS_FILTERS, minLvl: 200, maxLvl: 250 },
+    global: { ...DEFAULT_TIMERS_FILTERS, minLvl: 70, maxLvl: 180 },
+  };
+
+  mountTimers(() => {
+    localStorage.setItem(
+      TIMERS_STORAGE_KEY,
+      JSON.stringify({
+        version: 6,
+        state: {
+          timersFilters: legacyFilters,
+          timerFiltersEnabled: true,
+          pinnedTimers: { "guild-1": ["kept"] },
+        },
+      }),
+    );
+    void useTimersStore.persist.rehydrate();
+    useGameStore.getState().clearGame();
+  });
+  fireEvent.change(screen.getByLabelText("Poziom od"), {
+    target: { value: "200" },
+  });
+  expect(useTimersStore.getState().legacyTimersFilters).toEqual(legacyFilters);
+  expect(useTimersStore.getState().timersFilters).toEqual({});
+
+  act(() => setTestRuntimeGame({ world: "gefion" }));
+  expect(screen.getByLabelText("Poziom od")).toHaveValue(50);
+  expect(screen.getByLabelText("Poziom do")).toHaveValue(100);
+  expect(useTimersStore.getState().legacyTimersFilters).toEqual({});
+  expect(useTimersStore.getState().pinnedTimers).toEqual({
+    "guild-1": ["kept"],
+  });
+
+  act(() => {
+    useSettingsStore.setState({
+      guildIdByCharId: { "101": "guild-1", "102": "guild-2" },
+    });
+    setTestRuntimeGame({ hero: { characterId: "102" }, world: "gefion" });
+  });
+  expect(screen.getByLabelText("Poziom od")).toHaveValue(0);
+  expect(screen.getByLabelText("Poziom do")).toHaveValue(300);
+  act(() => {
+    useSettingsStore.setState({ guildIdByCharId: { "101": "guild-2" } });
+    setTestRuntimeGame({ world: "gefion" });
+  });
+  expect(screen.getByLabelText("Poziom od")).toHaveValue(200);
+  expect(screen.getByLabelText("Poziom do")).toHaveValue(250);
+  act(() =>
+    useTimersStore.setState((state) => ({
+      generalConfig: { ...state.generalConfig, timersGrouping: true },
+    })),
+  );
+  expect(screen.getByLabelText("Poziom od")).toHaveValue(70);
+  expect(screen.getByLabelText("Poziom do")).toHaveValue(180);
+  await act(async () => {
+    await useTimersStore.persist.rehydrate();
+  });
+  expect(screen.getByLabelText("Poziom do")).toHaveValue(180);
+});
+
+it("isolates timer level filters across accounts, game worlds and viewed worlds", () => {
+  mountTimers((fixture) => {
+    useTimersStore.setState({ timerFiltersEnabled: true });
+    fixture.queryClient.setQueryData(queryKeys.timers("luvia"), []);
+  });
+  fireEvent.change(screen.getByLabelText("Poziom do"), {
+    target: { value: "100" },
+  });
+  act(() =>
+    setTestRuntimeGame({ hero: { accountId: "303" }, world: "gefion" }),
+  );
+  expect(screen.getByLabelText("Poziom do")).toHaveValue(300);
+  fireEvent.change(screen.getByLabelText("Poziom do"), {
+    target: { value: "200" },
+  });
+  act(() => {
+    useSettingsStore.setState({ allowWorldSelection: true });
+    setTestRuntimeGame({ world: "luvia" });
+  });
+  // The viewed world remains gefion, but the playing character is on luvia.
+  expect(screen.getByLabelText("Poziom do")).toHaveValue(300);
+  act(() => setTestRuntimeGame({ world: "gefion" }));
+  expect(screen.getByLabelText("Poziom do")).toHaveValue(100);
+  act(() =>
+    useSettingsStore.setState({ worldByGuildId: { "guild-1": "luvia" } }),
+  );
+  expect(screen.getByLabelText("Poziom do")).toHaveValue(300);
+  fireEvent.change(screen.getByLabelText("Poziom do"), {
+    target: { value: "250" },
+  });
+  act(() =>
+    useSettingsStore.setState({ worldByGuildId: { "guild-1": "gefion" } }),
+  );
+  expect(screen.getByLabelText("Poziom do")).toHaveValue(100);
+  act(() =>
+    setTestRuntimeGame({ hero: { accountId: "303" }, world: "gefion" }),
+  );
+  expect(screen.getByLabelText("Poziom do")).toHaveValue(200);
+});

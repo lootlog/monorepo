@@ -249,7 +249,7 @@
           {
             "boundaryFunctions": [
               "migrateOnlinePlayersState",
-              "sanitizeFiltersByGuildId"
+              "sanitizeFilters"
             ]
           }
         ],
