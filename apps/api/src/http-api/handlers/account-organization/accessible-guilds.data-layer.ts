@@ -18,17 +18,6 @@ import {
 
 const CACHE_TTL_SECONDS = 30;
 
-export type GuildSummary = {
-  readonly id: string;
-  readonly name: string;
-  readonly icon: string | null;
-  readonly vanityUrl: string | null;
-  readonly ownerId: string;
-  readonly publicStatsCardEnabled: boolean;
-  readonly hasLootlogAccess: boolean;
-  readonly isAccessDataStale: boolean;
-};
-
 export const GuildSummaryCacheSchema = Schema.mutable(
   Schema.Array(
     Schema.Struct({
@@ -43,6 +32,8 @@ export const GuildSummaryCacheSchema = Schema.mutable(
     }),
   ),
 );
+
+export type GuildSummary = (typeof GuildSummaryCacheSchema.Type)[number];
 
 export interface AccessibleGuildPorts {
   readonly getCached: (

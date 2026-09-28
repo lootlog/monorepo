@@ -1,3 +1,4 @@
+import type { GuildSummary } from "./accessible-guilds.data-layer.js";
 import { readGuildOrderPreference } from "#src/guilds/guild-order-query";
 import { sortGuildsByPreference } from "#src/guilds/guild-order";
 import { and, eq, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
@@ -16,25 +17,10 @@ import {
 
 const SYNC_THROTTLE_TTL_SECONDS = 600;
 
-type PlainGuild = {
-  readonly id: string;
-  readonly name: string;
-  readonly icon: string | null;
-  readonly vanityUrl: string | null;
-  readonly ownerId: string;
-  readonly publicStatsCardEnabled: boolean;
-};
-
 export interface UserGuildListPorts {
-  readonly accessible: (identity: AuthenticatedIdentity) => Effect.Effect<
-    ReadonlyArray<
-      PlainGuild & {
-        readonly hasLootlogAccess: boolean;
-        readonly isAccessDataStale: boolean;
-      }
-    >,
-    unknown
-  >;
+  readonly accessible: (
+    identity: AuthenticatedIdentity,
+  ) => Effect.Effect<ReadonlyArray<GuildSummary>, unknown>;
   readonly deactivateMissing: (options: {
     readonly discordId: string;
     readonly userId: string;
