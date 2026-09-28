@@ -33,6 +33,7 @@ export enum GatewayEvent {
   NOTIFICATIONS_VOLUNTEER = "notifications-volunteer",
   PARTY_GATHERING_SEND = "party-gathering-send",
   PARTY_GATHERING_CANCEL = "party-gathering-cancel",
+  ACTIVE_PARTY_GATHERING_UPDATE = "active-party-gathering:update",
   PARTY_READY_ROOM_UPDATE = "party-ready-room:update",
   CHAT_MESSAGE_DELETE = "chat-message-delete",
   CHAT_MESSAGE_UPDATE = "chat-message-update",

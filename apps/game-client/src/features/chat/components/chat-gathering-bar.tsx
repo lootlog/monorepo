@@ -50,7 +50,7 @@ export function ChatGatheringBar({
   ) => ReactNode;
 }) {
   const { t } = useTranslation("chat");
-  const discovery = useActivePartyGatherings();
+  const discovery = useActivePartyGatherings({ visible: isVisible });
   const level = useGameStore((state) => state.game?.hero.level ?? 0);
 
   const scopeKey = useGameStore((state) =>

@@ -325,19 +325,23 @@ describe("gateway HTTP boundary", () => {
   });
 
   test.each([
-    [false, false, false, false],
-    [true, false, false, false],
-    [false, true, false, false],
-    [false, false, true, false],
-    [false, false, false, true],
-    [true, true, true, true],
+    [false, false, false, false, false, false],
+    [true, false, false, false, false, false],
+    [false, true, false, false, false, false],
+    [false, false, true, false, false, false],
+    [false, false, false, true, false, false],
+    [false, false, false, false, true, false],
+    [false, false, false, false, false, true],
+    [true, true, true, true, true, true],
   ])(
-    "negotiates feed (%s), volunteer (%s), battle ping (%s) and team battle ping (%s) opt-in while echoing only the wire protocol",
+    "negotiates feed (%s), volunteer (%s), battle ping (%s) and team battle ping (%s), session hello (%s) and active gatherings (%s) opt-in while echoing only the wire protocol",
     async (
       supportsFeed,
       supportsNotificationVolunteer,
       supportsBattlePings,
       supportsTeamBattlePings,
+      supportsSessionHello,
+      supportsActivePartyGatherings,
     ) => {
       let upgradeOptions:
         | {
@@ -347,6 +351,8 @@ describe("gateway HTTP boundary", () => {
               readonly supportsNotificationVolunteer?: boolean;
               readonly supportsBattlePings?: boolean;
               readonly supportsTeamBattlePings?: boolean;
+              readonly supportsSessionHello?: boolean;
+              readonly supportsActivePartyGatherings?: boolean;
             };
           }
         | undefined;
@@ -363,7 +369,7 @@ describe("gateway HTTP boundary", () => {
           origin: "https://classic.margonem.pl",
           "x-auth-user-id": "user-1",
           "x-auth-discord-id": "discord-1",
-          "sec-websocket-protocol": `lootlog.realtime.v1${supportsFeed ? ", lootlog.feed.v1" : ""}${supportsNotificationVolunteer ? ", lootlog.notification-volunteer.v1" : ""}${supportsBattlePings ? ", lootlog.battle-ping.v1" : ""}${supportsTeamBattlePings ? ", lootlog.battle-ping.team.v1" : ""}`,
+          "sec-websocket-protocol": `lootlog.realtime.v1${supportsFeed ? ", lootlog.feed.v1" : ""}${supportsNotificationVolunteer ? ", lootlog.notification-volunteer.v1" : ""}${supportsBattlePings ? ", lootlog.battle-ping.v1" : ""}${supportsTeamBattlePings ? ", lootlog.battle-ping.team.v1" : ""}${supportsSessionHello ? ", lootlog.session-hello.v1" : ""}${supportsActivePartyGatherings ? ", lootlog.active-party-gatherings.v1" : ""}`,
         },
       });
 
@@ -389,6 +395,12 @@ describe("gateway HTTP boundary", () => {
       );
       expect(upgradeOptions?.data.supportsTeamBattlePings).toBe(
         supportsTeamBattlePings,
+      );
+      expect(upgradeOptions?.data.supportsSessionHello).toBe(
+        supportsSessionHello,
+      );
+      expect(upgradeOptions?.data.supportsActivePartyGatherings).toBe(
+        supportsActivePartyGatherings,
       );
       expect(upgradeOptions?.headers).toEqual({
         "sec-websocket-protocol": "lootlog.realtime.v1",

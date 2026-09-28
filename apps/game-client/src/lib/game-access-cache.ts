@@ -20,6 +20,92 @@ const isGuildQueryParams = Schema.is(Schema.Struct({ guildId: Schema.String }));
 
 type TimerRecord = { guildId: string; npc: { type: string; lvl: number } };
 
+const policies = new WeakMap<QueryClient, AccessPolicySnapshot>();
+
+export const getGameAccessPolicy = (queryClient: QueryClient) =>
+  policies.get(queryClient);
+
+const filterTimers = <T extends TimerRecord>(
+  rows: T[],
+  policy: AccessPolicySnapshot,
+): T[] => {
+  const organizations = new Map(
+    policy.organizations.map((organization) => [
+      organization.organizationId,
+      organization,
+    ]),
+  );
+
+  const filtered = rows.filter((row) => {
+    const organization = organizations.get(row.guildId);
+
+    return (
+      organization !== undefined &&
+      canReadPolicyNpc(organization, "timers", row.npc)
+    );
+  });
+
+  return filtered.length === rows.length ? rows : filtered;
+};
+
+export const applyGameTimerAccess = <T extends TimerRecord>(
+  queryClient: QueryClient,
+  rows: T[],
+): T[] => {
+  const policy = policies.get(queryClient);
+
+  return policy ? filterTimers(rows, policy) : rows;
+};
+
+const filterOrganizations = (
+  guilds: UserCurrentGuildResponseDtoOutput[],
+  policy: AccessPolicySnapshot,
+) => {
+  const organizations = new Map(
+    policy.organizations.map((organization) => [
+      organization.organizationId,
+      organization,
+    ]),
+  );
+
+  return guilds.flatMap((guild) => {
+    const organization = organizations.get(guild.id);
+
+    if (!organization) return [];
+
+    const hasLootlogAccess = organization.permissions.includes(
+      Permission.LOOTLOG_ACCESS,
+    );
+
+    return guild.hasLootlogAccess === hasLootlogAccess &&
+      !guild.isAccessDataStale
+      ? guild
+      : { ...guild, hasLootlogAccess, isAccessDataStale: false };
+  });
+};
+
+export const applyGameOrganizationAccess = (
+  queryClient: QueryClient,
+  guilds: UserCurrentGuildResponseDtoOutput[],
+) => {
+  const policy = policies.get(queryClient);
+
+  return policy ? filterOrganizations(guilds, policy) : guilds;
+};
+
+export const isOrganizationMetadataMissing = (
+  policy: AccessPolicySnapshot | undefined,
+  guilds: readonly { id: string }[],
+): boolean => {
+  const ids = new Set(guilds.map((guild) => guild.id));
+
+  return (
+    policy?.organizations.some(
+      (organization) => !ids.has(organization.organizationId),
+    ) ?? false
+  );
+};
+
 export const getTimerQueryGuildId = (
   query: Query,
 ): string | null | undefined => {
@@ -44,13 +130,6 @@ const reconcileTimers = (
   initial: boolean,
   pendingQueries: Set<Query>,
 ) => {
-  const organizations = new Map(
-    policy.organizations.map((organization) => [
-      organization.organizationId,
-      organization,
-    ]),
-  );
-
   const timerChanges =
     changes?.filter((change) => change.areas.includes("timers")) ?? [];
 
@@ -83,28 +162,28 @@ const reconcileTimers = (
       initial ||
       (scope === null ? restricted.size > 0 : restricted.has(scope))
     ) {
+      // The global timer reader filters its response against the latest policy
+      // before caching it, so its first request can finish without restarting.
+      const preserveInitialRequest = initial && scope === null && canReadScope;
+
       if (
+        !preserveInitialRequest &&
         query.state.fetchStatus === "fetching" &&
         query.state.data === undefined &&
         canReadScope
       )
         pendingQueries.add(query);
+
       // Cancellation reverts an in-flight query before the policy filter runs.
-      void queryClient.cancelQueries({ queryKey: query.queryKey, exact: true });
-      queryClient.setQueryData<TimerRecord[]>(query.queryKey, (rows) => {
-        if (!rows) return [];
-
-        const filtered = rows.filter((row) => {
-          if (!initial && !restricted.has(row.guildId)) return true;
-          const organization = organizations.get(row.guildId);
-
-          return (
-            organization !== undefined &&
-            canReadPolicyNpc(organization, "timers", row.npc)
-          );
+      if (!preserveInitialRequest)
+        void queryClient.cancelQueries({
+          queryKey: query.queryKey,
+          exact: true,
         });
+      queryClient.setQueryData<TimerRecord[]>(query.queryKey, (rows) => {
+        if (!rows) return preserveInitialRequest ? rows : [];
 
-        return filtered.length === rows.length ? rows : filtered;
+        return filterTimers(rows, policy);
       });
     }
 
@@ -117,12 +196,11 @@ const reconcileTimers = (
   }
 };
 
-const reconcileOrganizations = (
+const reconcilePermissions = (
   queryClient: QueryClient,
   policy: AccessPolicySnapshot,
   changes: readonly AccessPolicyChange[] | undefined,
   initial: boolean,
-  pendingQueries: Set<Query>,
 ) => {
   const organizations = new Map(
     policy.organizations.map((organization) => [
@@ -159,7 +237,15 @@ const reconcileOrganizations = (
       ...(organizations.get(id)?.permissions ?? []),
     ]);
   }
+};
 
+const reconcileOrganizations = (
+  queryClient: QueryClient,
+  policy: AccessPolicySnapshot,
+  changes: readonly AccessPolicyChange[] | undefined,
+  initial: boolean,
+  pendingQueries: Set<Query>,
+) => {
   const guildsKey = getUsersControllerGetCurrentUserAccessibleGuildsQueryKey();
 
   const membershipChanged = changes?.some((change) =>
@@ -171,32 +257,29 @@ const reconcileOrganizations = (
       .getQueryCache()
       .find({ queryKey: guildsKey });
 
-    if (activeQuery?.state.fetchStatus === "fetching")
+    if (!initial && activeQuery?.state.fetchStatus === "fetching")
       pendingQueries.add(activeQuery);
-    void queryClient.cancelQueries({ queryKey: guildsKey });
+
+    if (!initial) void queryClient.cancelQueries({ queryKey: guildsKey });
     queryClient.setQueryData<UserCurrentGuildResponseDtoOutput[]>(
       guildsKey,
-      (guilds) =>
-        guilds?.flatMap((guild) => {
-          if (!organizations.has(guild.id)) return [];
-          const organization = organizations.get(guild.id);
-
-          const hasLootlogAccess =
-            organization?.permissions.includes(Permission.LOOTLOG_ACCESS) ??
-            false;
-
-          return guild.hasLootlogAccess === hasLootlogAccess &&
-            !guild.isAccessDataStale
-            ? guild
-            : { ...guild, hasLootlogAccess, isAccessDataStale: false };
-        }),
+      (guilds) => (guilds ? filterOrganizations(guilds, policy) : guilds),
     );
 
     if (
-      !initial &&
-      changes?.some(
-        (change) => change.expanded && change.areas.includes("organization"),
-      )
+      (initial &&
+        activeQuery?.state.data !== undefined &&
+        activeQuery.state.fetchStatus !== "fetching" &&
+        isOrganizationMetadataMissing(
+          policy,
+          queryClient.getQueryData<UserCurrentGuildResponseDtoOutput[]>(
+            guildsKey,
+          ) ?? [],
+        )) ||
+      (!initial &&
+        changes?.some(
+          (change) => change.expanded && change.areas.includes("organization"),
+        ))
     ) {
       const query = queryClient.getQueryCache().find({ queryKey: guildsKey });
 
@@ -235,6 +318,7 @@ export const createGameAccessCache = (queryClient: QueryClient) => {
 
       if (!policy) {
         currentPolicy = undefined;
+        policies.delete(queryClient);
 
         for (const query of queryClient.getQueryCache().getAll()) {
           if (getTimerQueryGuildId(query) === undefined) continue;
@@ -260,7 +344,9 @@ export const createGameAccessCache = (queryClient: QueryClient) => {
       );
 
       currentPolicy = policy;
+      policies.set(queryClient, policy);
       reconcileTimers(queryClient, policy, changes, initial, pendingQueries);
+      reconcilePermissions(queryClient, policy, changes, initial);
       reconcileOrganizations(
         queryClient,
         policy,
@@ -271,6 +357,8 @@ export const createGameAccessCache = (queryClient: QueryClient) => {
       scheduleRefresh(initial);
     },
     dispose() {
+      if (policies.get(queryClient) === currentPolicy)
+        policies.delete(queryClient);
       clearTimeout(refreshTimer);
       void queryClient.invalidateQueries({
         predicate: (query) => pendingQueries.has(query),

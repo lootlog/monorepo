@@ -148,6 +148,7 @@ it("expires only the disconnected character's existing gathering or application 
   const layer = makeReadyRoomDataLayer(
     redis,
     {
+      publishActive: () => Effect.void,
       publish: (update) =>
         Effect.sync(() => {
           updates.push(update);

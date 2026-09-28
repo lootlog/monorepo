@@ -6122,6 +6122,11 @@ export type ActivePartyGatheringSummaryNpc = {
 };
 
 export interface ActivePartyGatheringSummary {
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  revision?: number;
   notificationId: string;
   organizerName: string;
   organizerDiscordId?: string;

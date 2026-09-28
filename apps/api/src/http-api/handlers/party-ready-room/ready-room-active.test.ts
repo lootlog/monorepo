@@ -37,7 +37,10 @@ import {
   PartyReadyRoomHandlers,
   ReadyRoomAuthorization,
 } from "./party-ready-room.handlers.js";
-import { makeReadyRoomDataLayer } from "./ready-room.data-layer.js";
+import {
+  makeReadyRoomDataLayer,
+  createReadyRoomForNotification,
+} from "./ready-room.data-layer.js";
 import type { ReadyRoomRedis } from "./ready-room.repository.js";
 
 it("lets senders discover and cancel their own NPC gatherings outside read filters without leaking hidden Organizations", async () => {
@@ -138,6 +141,7 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
   let emptyIndex = false;
   const gatheringEvents: unknown[] = [];
   const cancellationEvents: unknown[] = [];
+  const activeEvents: unknown[] = [];
 
   const redis: ReadyRoomRedis = {
     getJson: (key, schema) => {
@@ -192,6 +196,10 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
     makeReadyRoomDataLayer(
       redis,
       {
+        publishActive: (update) =>
+          Effect.sync(() => {
+            activeEvents.push(update);
+          }),
         publish: () => Effect.void,
         publishCancellation: (payload) =>
           Effect.sync(() => {
@@ -309,6 +317,7 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
     expect(querySpy).toHaveBeenCalledTimes(2);
 
     const summary = {
+      revision: 1,
       notificationId: "minimal",
       organizerName: "Author",
       organizerDiscordId: "owner",
@@ -554,6 +563,22 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
     );
 
     expect(cancel.status).toBe(201);
+    expect(activeEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "REMOVE",
+          guildId: "visible",
+          notificationId: "own-filtered",
+          revision: 2,
+        }),
+        expect.objectContaining({
+          type: "REMOVE",
+          guildId: "hidden",
+          notificationId: "own-filtered",
+          revision: 2,
+        }),
+      ]),
+    );
     expect(cancellationEvents).toEqual([
       { notificationId: "own-filtered", guildId: "visible" },
       { notificationId: "own-filtered", guildId: "hidden" },
@@ -582,6 +607,25 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
     );
 
     expect(created.status).toBe(201);
+    expect(activeEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "UPSERT",
+          guildId: "visible",
+          revision: 1,
+          summary: expect.objectContaining({
+            guildIds: ["visible"],
+            applicantCount: 0,
+            inPartyCount: 0,
+          }),
+        }),
+      ]),
+    );
+    expect(
+      activeEvents.some((event) =>
+        JSON.stringify(event).includes('"participants"'),
+      ),
+    ).toBe(false);
     const createdRoom = await created.json();
     expect(gatheringEvents).toEqual([
       {
@@ -627,6 +671,48 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
         .set({ permissions: [Permission.LOOTLOG_NOTIFICATIONS_SEND] })
         .where(eq(roleTable.id, "sender")),
     );
+    await Effect.runPromise(
+      createReadyRoomForNotification(
+        redis,
+        {
+          publish: () => Effect.void,
+          publishActive: (update) =>
+            Effect.sync(() => {
+              activeEvents.push(update);
+            }),
+        },
+        {
+          notificationId: "notification-created",
+          organizerDiscordId: "npc-organizer",
+          organizerCharacter: base.organizerCharacter,
+          world: base.world,
+          guildIds: ["visible", "hidden"],
+          npc: { name: "NPC", location: "Map", lvl: 100, type: "HERO" },
+        },
+        clock,
+      ),
+    );
+    expect(activeEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "UPSERT",
+          guildId: "visible",
+          summary: expect.objectContaining({
+            notificationId: "notification-created",
+            guildIds: ["visible"],
+            npc: expect.objectContaining({ type: "HERO" }),
+          }),
+        }),
+        expect.objectContaining({
+          type: "UPSERT",
+          guildId: "hidden",
+          summary: expect.objectContaining({
+            notificationId: "notification-created",
+            guildIds: ["hidden"],
+          }),
+        }),
+      ]),
+    );
     closeDatabaseOnCommit = true;
 
     const committedObservation = await boundary.handler(
@@ -648,6 +734,30 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
     );
 
     expect(committedObservation.status).toBe(201);
+    expect(activeEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "UPSERT",
+          guildId: "visible",
+          revision: 3,
+          summary: expect.objectContaining({
+            notificationId: "minimal",
+            guildIds: ["visible"],
+            partyMemberCount: 1,
+          }),
+        }),
+        expect.objectContaining({
+          type: "UPSERT",
+          guildId: "hidden",
+          revision: 3,
+          summary: expect.objectContaining({
+            notificationId: "minimal",
+            guildIds: ["hidden"],
+            partyMemberCount: 1,
+          }),
+        }),
+      ]),
+    );
     expect(await committedObservation.json()).toEqual(
       expect.objectContaining({ partyMemberCount: 1, revision: 3 }),
     );

@@ -1,5 +1,7 @@
 import { act, render, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { GatewayEvent } from "@/config/gateway";
+import { useGameStore } from "@/store/game.store";
 import { getSocket } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
@@ -85,7 +87,7 @@ describe("SocketProvider", () => {
     );
   });
 
-  it("restores the real provider session, fresh proof and presence after reconnect", async () => {
+  it("restores one verified session and current presence after reconnect and character changes", async () => {
     const test = setup();
     const proofs: string[] = [];
     vi.spyOn(globalThis, "fetch").mockImplementation(async (_input, init) => {
@@ -128,13 +130,16 @@ describe("SocketProvider", () => {
     await waitFor(() =>
       expect(useGlobalStore.getState().socketState.joined).toBe(true),
     );
+    act(() =>
+      getSocket().emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, { isAfk: true }),
+    );
     const firstCount = test.wire.frames.length;
     act(() => test.wire.close());
     expect(useGlobalStore.getState().socketState.joined).toBe(false);
     connection = "connection-2";
     act(() => {
       getSocket().connect();
-      test.wire.open();
+      test.open(connection);
     });
     await waitFor(() =>
       expect(useGlobalStore.getState().socketState.joined).toBe(true),
@@ -145,9 +150,9 @@ describe("SocketProvider", () => {
       (frame) => "type" in frame && frame.type === "session.join",
     );
 
-    expect(joins).toHaveLength(2);
+    expect(joins).toHaveLength(1);
     expect(joins[0]).toMatchObject({ data: { character: expectedJoinData } });
-    expect(joins[1]).toMatchObject({
+    expect(joins[0]).toMatchObject({
       data: { margonemAccountProof: { token: proofs[1] } },
     });
     expect(proofs).toHaveLength(2);
@@ -161,6 +166,48 @@ describe("SocketProvider", () => {
     expect(useGlobalStore.getState().socketState.joinedGuilds).toEqual([
       "guild-1",
     ]);
+    expect(
+      restored.find(
+        (frame) => "type" in frame && frame.type === "presence.publish",
+      ),
+    ).toMatchObject({ data: { isAfk: true } });
+
+    const beforeCharacterChange = test.wire.frames.length;
+    const game = useGameStore.getState().game;
+
+    if (!game) throw new Error("Expected current character");
+    act(() =>
+      useGameStore
+        .getState()
+        .replaceGame({ ...game, hero: { ...game.hero, characterId: "11" } }),
+    );
+    expect(useGlobalStore.getState().socketState.joined).toBe(false);
+    connection = "connection-3";
+    test.open(connection);
+    await waitFor(() =>
+      expect(useGlobalStore.getState().socketState.joined).toBe(true),
+    );
+    const replacement = test.wire.frames.slice(beforeCharacterChange);
+    expect(
+      replacement.filter(
+        (frame) => "type" in frame && frame.type === "session.join",
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        data: expect.objectContaining({
+          character: expect.objectContaining({ characterId: "11" }),
+          margonemAccountProof: expect.objectContaining({ token: proofs[2] }),
+        }),
+      }),
+    ]);
+    expect(proofs[2]).toContain("connection-3");
+    expect(
+      replacement.find(
+        (frame) => "type" in frame && frame.type === "presence.publish",
+      ),
+    ).toMatchObject({
+      data: { isAfk: false, character: { characterId: "11" } },
+    });
   });
 
   it("synchronizes joined organizations after permission updates", async () => {

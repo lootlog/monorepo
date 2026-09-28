@@ -116,7 +116,7 @@ export class PublicOnlinePlayersController {
         ? scope.source.getCurrentSnapshot()
         : scope.source.getSnapshot();
 
-      if (snapshot.refreshing || snapshot.error) return;
+      if (!snapshot.hasLoaded || snapshot.refreshing || snapshot.error) return;
       const result = resultFromSnapshot(snapshot);
       const resultJson = JSON.stringify(result);
 

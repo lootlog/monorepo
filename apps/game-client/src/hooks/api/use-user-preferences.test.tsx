@@ -1,5 +1,9 @@
 import { configureApiClients } from "@lootlog/client/transport";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  focusManager,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi, onTestFinished } from "vitest";
@@ -9,7 +13,10 @@ import type {
   UserPreferencesResponseDtoOutput,
 } from "@lootlog/client/main";
 
-import { useUpdateUserPreferences } from "./use-user-preferences";
+import {
+  useUpdateUserPreferences,
+  useUserPreferences,
+} from "./use-user-preferences";
 
 const respond = vi.fn<() => Promise<UserPreferencesResponseDtoOutput>>();
 
@@ -119,6 +126,33 @@ describe("useUpdateUserPreferences", () => {
       },
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
+
+  it("keeps saved preferences on focus until they are explicitly invalidated", async () => {
+    const preferences = createTestUserPreferences();
+    const queryKey = UsersModule.getUsersControllerGetUserPreferencesQueryKey();
+    queryClient.setQueryData(queryKey, preferences, {
+      updatedAt: Date.now() - 120_000,
+    });
+    respond.mockResolvedValue({ ...preferences, hiddenGuildIds: ["guild-1"] });
+
+    const { result } = renderHook(() => useUserPreferences(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await act(async () => {
+      focusManager.setFocused(false);
+      focusManager.setFocused(true);
+    });
+    expect(respond).not.toHaveBeenCalled();
+    await act(async () => {
+      await queryClient.invalidateQueries({ queryKey });
+    });
+    await waitFor(() =>
+      expect(result.current.data?.hiddenGuildIds).toEqual(["guild-1"]),
+    );
+    expect(respond).toHaveBeenCalledTimes(1);
+    focusManager.setFocused(undefined);
   });
 
   it("optimistically replaces hidden guild ids", async () => {

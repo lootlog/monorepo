@@ -974,6 +974,7 @@ describe("CommandHandler session lifecycle", () => {
       data: {
         capabilities: [
           "connection.ping",
+          "lootlog.active-party-gatherings.v1",
           "lootlog.battle-ping.v1",
           "lootlog.battle-ping.team.v1",
           "lootlog.air-tag-map-threat.v1",

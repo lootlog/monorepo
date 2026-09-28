@@ -128,6 +128,12 @@ export const RabbitRoutingKey = {
   SEARCH_ITEMS_INDEX: "search.items.index",
   SEARCH_NPCS_INDEX: "search.npcs.index",
   SEARCH_PLAYERS_INDEX: "search.players.index",
+  GUILDS_ACTIVE_PARTY_GATHERING_UPDATED:
+    "guilds.active-party-gathering.updated",
+  GUILDS_ACTIVE_PARTY_GATHERING_UPDATED_DLQ:
+    "guilds.active-party-gathering.updated.dlq",
+  GUILDS_ACTIVE_PARTY_GATHERING_UPDATED_RETRY:
+    "guilds.active-party-gathering.updated.retry",
   USERS_PARTY_READY_ROOM_UPDATED: "users.party-ready-room.updated",
   USERS_PARTY_READY_ROOM_UPDATED_DLQ: "users.party-ready-room.updated.dlq",
   USERS_PARTY_READY_ROOM_UPDATED_RETRY: "users.party-ready-room.updated.retry",

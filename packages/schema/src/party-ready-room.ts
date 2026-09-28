@@ -1,5 +1,10 @@
 import { Schema } from "effect";
-import { NonNegativeSafeInteger } from "./http-scalars.js";
+import {
+  DateTimeString,
+  FiniteNumber,
+  NonNegativeSafeInteger,
+  PositiveSafeInteger,
+} from "./http-scalars.js";
 
 const PARTY_READY_ROOM_STATUSES = ["ACTIVE", "CANCELLED"] as const;
 
@@ -186,3 +191,57 @@ const PartyReadyRoomClientUpdateSchema = Schema.Union([
 export const decodePartyReadyRoomClientUpdate = Schema.decodeUnknownSync(
   PartyReadyRoomClientUpdateSchema,
 );
+
+export const ActivePartyGatheringSummarySchema = Schema.Struct({
+  revision: Schema.optionalKey(PositiveSafeInteger),
+  notificationId: Schema.String,
+  organizerName: Schema.String,
+  organizerDiscordId: Schema.optionalKey(Schema.String),
+  organizerLvl: Schema.optionalKey(FiniteNumber),
+  organizerProf: Schema.optionalKey(Schema.String),
+  applicantCount: NonNegativeSafeInteger,
+  inPartyCount: NonNegativeSafeInteger,
+  partyMemberCount: Schema.optionalKey(NonNegativeSafeInteger),
+  guildIds: Schema.Array(Schema.String),
+  world: Schema.String,
+  description: Schema.optionalKey(Schema.String),
+  minLvl: Schema.optionalKey(FiniteNumber),
+  maxLvl: Schema.optionalKey(FiniteNumber),
+  npc: Schema.optionalKey(
+    Schema.Struct({
+      prof: Schema.optionalKey(Schema.String),
+      icon: Schema.optionalKey(Schema.String),
+      type: Schema.optionalKey(Schema.String),
+      name: Schema.String,
+      location: Schema.String,
+      lvl: FiniteNumber,
+      x: Schema.optionalKey(FiniteNumber),
+      y: Schema.optionalKey(FiniteNumber),
+    }),
+  ),
+  createdAt: DateTimeString,
+  expiresAt: DateTimeString,
+}).annotate({ identifier: "ActivePartyGatheringSummary" });
+
+export type ActivePartyGatheringSummary =
+  typeof ActivePartyGatheringSummarySchema.Type;
+
+export const ActivePartyGatheringUpdateSchema = Schema.Union([
+  Schema.Struct({
+    type: Schema.Literal("UPSERT"),
+    guildId: Schema.String,
+    revision: PositiveSafeInteger,
+    summary: ActivePartyGatheringSummarySchema,
+  }),
+  Schema.Struct({
+    type: Schema.Literal("REMOVE"),
+    guildId: Schema.String,
+    notificationId: Schema.String,
+    revision: PositiveSafeInteger,
+    organizerDiscordId: Schema.String,
+    npc: Schema.optionalKey(PartyGatheringNpcSchema),
+  }),
+]);
+
+export type ActivePartyGatheringUpdate =
+  typeof ActivePartyGatheringUpdateSchema.Type;

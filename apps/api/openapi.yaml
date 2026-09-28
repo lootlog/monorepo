@@ -24052,6 +24052,10 @@ components:
     ActivePartyGatheringSummary:
       type: object
       properties:
+        revision:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
         notificationId:
           type: string
         organizerName:

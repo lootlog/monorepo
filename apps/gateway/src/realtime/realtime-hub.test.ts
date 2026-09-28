@@ -2629,3 +2629,107 @@ test("resolves timer routing once while preserving recipient authorization acros
     routing.mockRestore();
   }
 });
+
+test("active gathering summaries reach capable members without notifying old clients or revoked audiences", async () => {
+  const bus = new FederationBus();
+  const hub = new RealtimeHub(config, new FakeRedisStore(bus));
+
+  const scope = {
+    topic: "party.ready-room" as const,
+    organizationId: "organization-1",
+  };
+
+  const capable = makeSocket({
+    ...makeSession("active"),
+    supportsActivePartyGatherings: true,
+  });
+
+  const legacy = makeSocket(makeSession("legacy"));
+
+  const revoked = makeSocket({
+    ...makeSession("revoked"),
+    supportsActivePartyGatherings: true,
+  });
+
+  for (const target of [capable, legacy, revoked]) {
+    hub.register(target.socket);
+    hub.subscribe(target.socket, scope);
+  }
+
+  revoked.socket.data.guilds = [];
+
+  const payload = {
+    type: "UPSERT",
+    guildId: "organization-1",
+    revision: 1,
+    summary: {
+      notificationId: "room",
+      organizerName: "Organizer",
+      applicantCount: 0,
+      inPartyCount: 0,
+      guildIds: ["organization-1"],
+      world: "world",
+      createdAt: "2026-09-09T10:00:00.000Z",
+      expiresAt: "2026-09-09T10:30:00.000Z",
+    },
+  };
+
+  const handlers = new Map<
+    string,
+    (delivery: RabbitDelivery) => Effect.Effect<void, unknown>
+  >();
+
+  const messaging: RabbitMessagingService = {
+    publish: () => Effect.void,
+    ack: () => Effect.void,
+    nack: () => Effect.void,
+    consume: (options, handler) =>
+      Effect.sync(() => {
+        handlers.set(options.queue, handler);
+
+        return { consumerTag: options.queue, cancel: Effect.void };
+      }),
+  };
+
+  const unexpected = () => {
+    throw new Error("Unexpected control operation");
+  };
+
+  const bridge = new RabbitBridge(
+    messaging,
+    hub,
+    { rebalanceAcrossInstances: unexpected },
+    { coverageForMap: unexpected },
+    { publish: unexpected },
+  );
+
+  await Effect.runPromise(
+    Effect.scoped(
+      Effect.gen(function* () {
+        yield* bridge.start();
+
+        const handler = handlers.get(
+          "gateway-guilds-active-party-gathering-updated",
+        );
+
+        if (!handler) throw new Error("Active gathering consumer not started");
+        yield* handler(
+          createRabbitDelivery(
+            RabbitRoutingKey.GUILDS_ACTIVE_PARTY_GATHERING_UPDATED,
+            Buffer.from(JSON.stringify(payload)),
+          ),
+        );
+      }),
+    ),
+  );
+
+  expect(capable.sent.map((bytes) => decode(bytes))).toEqual([
+    {
+      v: 1,
+      type: "active-party-gathering.updated",
+      data: { organizationId: "organization-1", payload },
+    },
+  ]);
+  expect(legacy.sent).toEqual([]);
+  expect(revoked.sent).toEqual([]);
+});
