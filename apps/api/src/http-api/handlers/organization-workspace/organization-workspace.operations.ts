@@ -12,6 +12,7 @@ import {
 } from "./organization-workspace-response.schema.js";
 import type { GuildMemberChanged } from "@lootlog/protocol/rabbit/events";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
+import { selectActiveRoleHolders } from "#src/members/member-role-holders";
 import {
   pathString,
   statusCodeResponse,
@@ -30,8 +31,6 @@ import { and, asc, desc, eq, gte, inArray, lt, or } from "drizzle-orm";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
-  memberTable,
-  memberToRoleTable,
   reservationTable,
   roleTable,
 } from "#src/database/drizzle/schema";
@@ -369,33 +368,27 @@ export class RolesData extends Context.Service<
                   getPermissionsCachePattern(guildId),
                 );
 
-                const members = yield* database
-                  .select({
-                    discordId: memberTable.userId,
-                    userId: memberTable.globalUserId,
-                  })
-                  .from(memberTable)
-                  .innerJoin(
-                    memberToRoleTable,
-                    eq(memberToRoleTable.A, memberTable.id),
-                  )
-                  .where(
-                    and(
-                      eq(memberTable.guildId, guildId),
-                      eq(memberTable.active, true),
-                      eq(memberToRoleTable.B, roleId),
-                    ),
-                  );
+                const members = yield* selectActiveRoleHolders(
+                  database,
+                  guildId,
+                  roleId,
+                );
 
                 yield* Effect.forEach(
                   members,
                   (member) =>
                     member.userId
-                      ? events.memberPolicyChanged({
-                          guildId,
-                          discordId: member.discordId,
-                          userId: member.userId,
-                        })
+                      ? cache
+                          .invalidateUserGuildPermissions(member.discordId)
+                          .pipe(
+                            Effect.andThen(
+                              events.memberPolicyChanged({
+                                guildId,
+                                discordId: member.discordId,
+                                userId: member.userId,
+                              }),
+                            ),
+                          )
                       : Effect.void,
                   { concurrency: 4, discard: true },
                 );
@@ -420,6 +413,9 @@ export interface RolePolicyEvents {
 }
 
 export interface RolesCache {
+  readonly invalidateUserGuildPermissions: (
+    discordId: string,
+  ) => Effect.Effect<void, unknown>;
   readonly deleteByPattern: (pattern: string) => Effect.Effect<void, unknown>;
 }
 

@@ -268,6 +268,25 @@ Role identifiers, role order, and redundant overlapping grants do not cause a
 client refresh. Subsequent source-event filtering uses the refreshed roles even
 when no client event is sent.
 
+During reconciliation Gateway requests
+`GET /internal/guilds/user-permissions?freshness=required`. The API bypasses its
+aggregate permission cache for these checks. Ordinary reads retain the 60-second
+API projection cache and Gateway's existing bounded stale-read behavior.
+
+The API shares one projection loader between public and internal permission
+reads. Its Redis generation scope belongs to the Discord identity and covers
+session and Organization-scoped API-key variants. Role and membership changes
+invalidate this scope before publishing policy changes. A fill started before
+invalidation can only write to the old generation. Gateway also fences HTTP
+responses against invalidation before committing refreshed roles to sessions.
+
+Deploy the API before Gateway so every required-freshness request reaches a
+version that understands the optional query parameter. API replicas running the
+new code ignore legacy unversioned aggregate entries; those expire normally.
+No database migration or browser/client rollout is required. Run
+`bun run test:permissions` to verify API reads, policy events, replica rebalances,
+and protected delivery together.
+
 The realtime v1 events retain `organizationIds` and `subscriptionScopes` and add
 these optional fields:
 

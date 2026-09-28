@@ -2,6 +2,7 @@ import {
   decodeOpenApiDocument,
   isJsonArray,
   isJsonObject,
+  type JsonValue,
   type OpenApiDocument,
 } from "./openapi-document.js";
 import { expect, test } from "bun:test";
@@ -504,6 +505,56 @@ test("validation-error allowance preserves prior bad-request response alternativ
   expect(normalizeValidationErrors(operation(original))).toEqual(
     operation(original),
   );
+});
+
+test("gateway freshness migration preserves ordinary reads and rejects a weakened refresh contract", async () => {
+  const document = await readDocument("api");
+
+  const operation = document.paths?.["/internal/guilds/user-permissions"]?.get;
+
+  if (!isJsonObject(operation) || !Array.isArray(operation.parameters))
+    throw new Error("Missing internal permissions operation");
+
+  const key = "GET /internal/guilds/user-permissions";
+  const parameters = operation.parameters;
+  expect(normalizeAllowedChanges("api", key, operation)).toMatchObject({
+    parameters: parameters.filter(
+      (parameter) => isJsonObject(parameter) && parameter.name !== "freshness",
+    ),
+  });
+
+  const replacements: Array<JsonValue | undefined> = [
+    undefined,
+    { type: "string" },
+    { type: "string", enum: ["stale"] },
+  ];
+
+  for (const replacement of replacements) {
+    expect(() =>
+      normalizeAllowedChanges("api", key, {
+        ...operation,
+        parameters: parameters.flatMap((parameter) => {
+          if (!isJsonObject(parameter) || parameter.name !== "freshness")
+            return [parameter];
+
+          return replacement === undefined
+            ? []
+            : [{ ...parameter, schema: replacement }];
+        }),
+      }),
+    ).toThrow("optional required-freshness query");
+  }
+
+  expect(() =>
+    normalizeAllowedChanges("api", key, {
+      ...operation,
+      parameters: parameters.map((parameter) =>
+        isJsonObject(parameter) && parameter.name === "freshness"
+          ? { ...parameter, required: true }
+          : parameter,
+      ),
+    }),
+  ).toThrow("optional required-freshness query");
 });
 
 test("Activity probe migrations reject dependency errors on liveness and incomplete readiness contracts", async () => {

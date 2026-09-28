@@ -138,12 +138,15 @@ describe("internal guild HttpApi handlers", () => {
 
     const cache = {
       get: () => Effect.succeed(null),
-      getJson: () => Effect.succeed(null),
       set: () => Effect.void,
-      setJson: (_key, value) =>
-        Effect.sync(() => {
-          cached.push(value);
-        }),
+      getOrSetJsonEffect: ({ factory }) =>
+        factory.pipe(
+          Effect.tap((value) =>
+            Effect.sync(() => {
+              cached.push(value);
+            }),
+          ),
+        ),
       del: () => Effect.void,
     } satisfies InternalGuildsCache;
 
@@ -182,9 +185,8 @@ describe("internal guild HttpApi handlers", () => {
             publicStatsCardEnabled: false,
           }),
         ),
-      getJson: () => Effect.succeed(null),
       set: () => Effect.void,
-      setJson: () => Effect.void,
+      getOrSetJsonEffect: ({ factory }) => factory,
       del: () => Effect.void,
     } satisfies InternalGuildsCache;
 
