@@ -89,6 +89,20 @@ authorized organizer without chat-read permission still receives updates. Source
 authorization remains required, and overlapping direct and chat audiences receive
 one frame per publication.
 Volunteering or accepting an invitation does not establish party membership.
+Game clients on a Gateway with this capability rely on these events and the
+reconnect snapshot; they no longer refetch discovery for chat, notification or
+private ready-room events.
+
+### Session hello
+
+Clients offer `lootlog.session-hello.v1` alongside the wire subprotocol. The
+Gateway then sends `session.hello` with the connection ID as soon as the socket
+opens, before any join. The Game client uses it to obtain the Margonem account
+proof before its first `session.join`, so a connection needs one join instead
+of an unverified join followed by a proof-bearing one. Clients that receive no
+hello within one second, including those on older Gateways, keep the two-step
+join. Deploy the Gateway before the Game client; rolling the Gateway back only
+restores the two-step join.
 
 ### Connection metrics
 
