@@ -5,6 +5,7 @@ import {
 } from "#src/events/kills/event-ranking-policy";
 import type { eventKillPointTable } from "#src/database/drizzle/schema";
 import { Array as Arr, Clock, Effect } from "effect";
+import { groupBy } from "es-toolkit";
 import type { EventEmitter } from "#src/events/event-emitter";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
@@ -908,52 +909,23 @@ export const makeEventPoints = (
 
     return Effect.gen(function* () {
       yield* Effect.forEach(
-        rankableKillPoints,
-        (killPoint) =>
-          Effect.gen(function* () {
-            const trackingDurationSeconds =
-              getTrackingDurationSecondsForRanking({
-                trackingDurationSeconds: killPoint.trackingDurationSeconds,
-              });
-
-            const existing = yield* repository.findRankingByKey(
-              eventId,
-              killPoint.memberId,
-              heroNpcName,
-            );
-
-            if (existing) {
-              const newTotalKills = existing.totalKills + 1;
-
-              const newAvgAfk =
-                (existing.avgAfkPercentage * existing.totalKills +
-                  killPoint.afkPercentage) /
-                newTotalKills;
-
-              yield* repository.incrementRanking(
-                existing.id,
-                killPoint.points,
-                trackingDurationSeconds,
-                Math.round(newAvgAfk * 100) / 100,
-                existing.pointsModified ||
-                  killPoint.manualAdjustmentPoints !== 0,
-              );
-
-              return;
-            }
-
-            yield* repository.createRanking({
-              eventId,
+        Object.entries(groupBy(rankableKillPoints, ({ killId }) => killId)),
+        ([killId, points]) =>
+          repository.addKillToRankings(
+            eventId,
+            heroNpcName,
+            killId,
+            points.map((killPoint) => ({
               memberId: killPoint.memberId,
-              heroNpcName,
-              totalPoints: killPoint.points,
-              totalKills: 1,
-              totalTimeSeconds: trackingDurationSeconds,
-              avgAfkPercentage: killPoint.afkPercentage,
+              points: killPoint.points,
+              trackingSeconds: getTrackingDurationSecondsForRanking({
+                trackingDurationSeconds: killPoint.trackingDurationSeconds,
+              }),
+              afkPercentage: killPoint.afkPercentage,
               pointsModified: killPoint.manualAdjustmentPoints !== 0,
-            });
-          }),
-        { concurrency: "unbounded", discard: true },
+            })),
+          ),
+        { discard: true },
       );
 
       yield* emitRankingUpdateByEventId(eventId);

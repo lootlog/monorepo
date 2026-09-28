@@ -22,6 +22,7 @@ import { UpdateEventRequest } from "#src/contracts/events/schemas";
 import { makeEventsCatalogRead } from "#src/events/catalog/events-catalog-read";
 import { makeEventUpdate } from "#src/events/catalog/event-update";
 import { makeEventCatalogMutations } from "#src/events/catalog/event-catalog-mutations";
+import { makeEventPointsStore } from "#src/events/kills/event-points.repository";
 
 describe("event update Effect module", () => {
   it.each([
@@ -464,6 +465,38 @@ describe("event hero list history", () => {
       });
       expect((await readCatalog(boundary)).maps).toEqual([
         { id: "map-b", heroNpcId: "hero-b", mapId: 200, mapName: "Jaskinia" },
+      ]);
+    }));
+
+  it("adds kill points to rankings only while the kill still exists", () =>
+    withSeededEvent(async (boundary) => {
+      await boundary.run(
+        makeEventCatalogMutations(boundary.database, redis, logger).deleteHero(
+          { id: "guild-1" },
+          "event-1",
+          "hero-a",
+        ),
+      );
+
+      const store = makeEventPointsStore(boundary.database);
+
+      const addKill = (heroNpcName: string, killId: string) =>
+        boundary.run(
+          store.addKillToRankings("event-1", heroNpcName, killId, [
+            {
+              memberId: 1,
+              points: 10,
+              trackingSeconds: 60,
+              afkPercentage: 0,
+              pointsModified: false,
+            },
+          ]),
+        );
+
+      expect(await addKill("Kotołak", "kill-a")).toBe(false);
+      expect(await addKill("Mietek", "kill-b")).toBe(true);
+      expect((await readHistory(boundary)).rankings).toEqual([
+        { heroNpcName: "Mietek", totalPoints: 20 },
       ]);
     }));
 });

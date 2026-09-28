@@ -299,11 +299,16 @@ export const makeEventCatalogMutations = (
           );
         // Kills, points, maps and tracking history cascade with the hero.
         // Rankings are keyed by hero name, so remove them explicitly to keep
-        // ranking totals consistent with the remaining kill points.
+        // ranking totals consistent with the remaining kill points. Deleting
+        // the hero first waits for ranking writes that hold a kill lock, so
+        // the ranking delete also sees rankings they committed meanwhile.
         yield* query(
           "events.catalog.deleteHero",
           database.transaction((transaction) =>
             Effect.gen(function* () {
+              yield* transaction
+                .delete(eventHeroNpcTable)
+                .where(eq(eventHeroNpcTable.id, heroId));
               yield* transaction
                 .delete(eventRankingTable)
                 .where(
@@ -312,9 +317,6 @@ export const makeEventCatalogMutations = (
                     eq(eventRankingTable.heroNpcName, hero.npcName),
                   ),
                 );
-              yield* transaction
-                .delete(eventHeroNpcTable)
-                .where(eq(eventHeroNpcTable.id, heroId));
             }),
           ),
         );
