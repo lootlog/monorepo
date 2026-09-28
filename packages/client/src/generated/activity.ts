@@ -271,31 +271,124 @@ export type HealthzControllerCheck429 = {
   message: string;
 };
 
-/**
- * @nullable
- */
-export type HealthzControllerCheck503Info = {[key: string]: {
-  status: string;
-}} | null;
+export type ReadyzControllerCheck200Status = typeof ReadyzControllerCheck200Status[keyof typeof ReadyzControllerCheck200Status];
+
+
+export const ReadyzControllerCheck200Status = {
+  ok: 'ok',
+} as const;
+
+export type ReadyzControllerCheck200InfoDatabaseStatus = typeof ReadyzControllerCheck200InfoDatabaseStatus[keyof typeof ReadyzControllerCheck200InfoDatabaseStatus];
+
+
+export const ReadyzControllerCheck200InfoDatabaseStatus = {
+  up: 'up',
+} as const;
+
+export type ReadyzControllerCheck200InfoDatabase = {
+  status: ReadyzControllerCheck200InfoDatabaseStatus;
+};
+
+export type ReadyzControllerCheck200Info = {
+  database: ReadyzControllerCheck200InfoDatabase;
+};
 
 /**
  * @nullable
  */
-export type HealthzControllerCheck503Error = {[key: string]: {
-  status: string;
-}} | null;
+export type ReadyzControllerCheck200Error = typeof ReadyzControllerCheck200Error[keyof typeof ReadyzControllerCheck200Error] | null;
 
-export type HealthzControllerCheck503Details = {[key: string]: {
-  status: string;
-}};
 
-export type HealthzControllerCheck503 = {
-  status?: string;
+export const ReadyzControllerCheck200Error = {
+} as const;
+
+export type ReadyzControllerCheck200DetailsDatabaseStatus = typeof ReadyzControllerCheck200DetailsDatabaseStatus[keyof typeof ReadyzControllerCheck200DetailsDatabaseStatus];
+
+
+export const ReadyzControllerCheck200DetailsDatabaseStatus = {
+  up: 'up',
+} as const;
+
+export type ReadyzControllerCheck200DetailsDatabase = {
+  status: ReadyzControllerCheck200DetailsDatabaseStatus;
+};
+
+export type ReadyzControllerCheck200Details = {
+  database: ReadyzControllerCheck200DetailsDatabase;
+};
+
+export type ReadyzControllerCheck200 = {
+  status: ReadyzControllerCheck200Status;
+  info: ReadyzControllerCheck200Info;
   /** @nullable */
-  info?: HealthzControllerCheck503Info;
+  error: ReadyzControllerCheck200Error;
+  details: ReadyzControllerCheck200Details;
+};
+
+export type ReadyzControllerCheck401 = {
+  message: string;
+};
+
+export type ReadyzControllerCheck403 = {
+  message: string;
+};
+
+export type ReadyzControllerCheck429 = {
+  message: string;
+};
+
+export type ReadyzControllerCheck503Status = typeof ReadyzControllerCheck503Status[keyof typeof ReadyzControllerCheck503Status];
+
+
+export const ReadyzControllerCheck503Status = {
+  error: 'error',
+} as const;
+
+/**
+ * @nullable
+ */
+export type ReadyzControllerCheck503Info = typeof ReadyzControllerCheck503Info[keyof typeof ReadyzControllerCheck503Info] | null;
+
+
+export const ReadyzControllerCheck503Info = {
+} as const;
+
+export type ReadyzControllerCheck503ErrorDatabaseStatus = typeof ReadyzControllerCheck503ErrorDatabaseStatus[keyof typeof ReadyzControllerCheck503ErrorDatabaseStatus];
+
+
+export const ReadyzControllerCheck503ErrorDatabaseStatus = {
+  down: 'down',
+} as const;
+
+export type ReadyzControllerCheck503ErrorDatabase = {
+  status: ReadyzControllerCheck503ErrorDatabaseStatus;
+};
+
+export type ReadyzControllerCheck503Error = {
+  database: ReadyzControllerCheck503ErrorDatabase;
+};
+
+export type ReadyzControllerCheck503DetailsDatabaseStatus = typeof ReadyzControllerCheck503DetailsDatabaseStatus[keyof typeof ReadyzControllerCheck503DetailsDatabaseStatus];
+
+
+export const ReadyzControllerCheck503DetailsDatabaseStatus = {
+  down: 'down',
+} as const;
+
+export type ReadyzControllerCheck503DetailsDatabase = {
+  status: ReadyzControllerCheck503DetailsDatabaseStatus;
+};
+
+export type ReadyzControllerCheck503Details = {
+  database: ReadyzControllerCheck503DetailsDatabase;
+};
+
+export type ReadyzControllerCheck503 = {
+  status: ReadyzControllerCheck503Status;
   /** @nullable */
-  error?: HealthzControllerCheck503Error;
-  details?: HealthzControllerCheck503Details;
+  info: ReadyzControllerCheck503Info;
+  error: ReadyzControllerCheck503Error;
+  details: ReadyzControllerCheck503Details;
 };
 
 export type ActivitiesControllerFindByGuildPathParameters = {
@@ -677,8 +770,8 @@ export const getHealthzControllerCheckUrl = () => {
 }
 
 /**
- * Check the health status of the Activity service (database, API service, memory, disk)
- * @summary Health check
+ * Check that the Activity process and HTTP event loop respond without checking dependencies
+ * @summary Liveness check
  */
 export const healthzControllerCheck = async ( options?: Parameters<typeof activityFetch>[1]): Promise<HealthzControllerCheck200> => {
 
@@ -702,7 +795,7 @@ export const getHealthzControllerCheckQueryKey = () => {
     }
 
 
-export const getHealthzControllerCheckQueryOptions = <TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck401 | HealthzControllerCheck403 | HealthzControllerCheck429 | HealthzControllerCheck503>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerCheck>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
+export const getHealthzControllerCheckQueryOptions = <TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck401 | HealthzControllerCheck403 | HealthzControllerCheck429>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerCheck>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -721,10 +814,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type HealthzControllerCheckQueryResult = NonNullable<Awaited<ReturnType<typeof healthzControllerCheck>>>
-export type HealthzControllerCheckQueryError = ErrorType<HealthzControllerCheck401 | HealthzControllerCheck403 | HealthzControllerCheck429 | HealthzControllerCheck503>
+export type HealthzControllerCheckQueryError = ErrorType<HealthzControllerCheck401 | HealthzControllerCheck403 | HealthzControllerCheck429>
 
 
-export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck401 | HealthzControllerCheck403 | HealthzControllerCheck429 | HealthzControllerCheck503>>(
+export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck401 | HealthzControllerCheck403 | HealthzControllerCheck429>>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerCheck>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof healthzControllerCheck>>,
@@ -734,7 +827,7 @@ export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof heal
       >, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck401 | HealthzControllerCheck403 | HealthzControllerCheck429 | HealthzControllerCheck503>>(
+export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck401 | HealthzControllerCheck403 | HealthzControllerCheck429>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerCheck>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof healthzControllerCheck>>,
@@ -744,15 +837,15 @@ export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof heal
       >, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck401 | HealthzControllerCheck403 | HealthzControllerCheck429 | HealthzControllerCheck503>>(
+export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck401 | HealthzControllerCheck403 | HealthzControllerCheck429>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerCheck>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Health check
+ * @summary Liveness check
  */
 
-export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck401 | HealthzControllerCheck403 | HealthzControllerCheck429 | HealthzControllerCheck503>>(
+export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck401 | HealthzControllerCheck403 | HealthzControllerCheck429>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerCheck>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -765,9 +858,9 @@ export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof heal
 }
 
 /**
- * @summary Health check
+ * @summary Liveness check
  */
-export const prefetchHealthzControllerCheckQuery = async <TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck401 | HealthzControllerCheck403 | HealthzControllerCheck429 | HealthzControllerCheck503>>(
+export const prefetchHealthzControllerCheckQuery = async <TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck401 | HealthzControllerCheck403 | HealthzControllerCheck429>>(
  queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerCheck>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
 
   ): Promise<QueryClient> => {
@@ -792,7 +885,7 @@ export const invalidateHealthzControllerCheck = async (
 }
 
 /**
- * @summary Health check
+ * @summary Liveness check
  */
 export const useSetHealthzControllerCheckQueryData = () => {
   const queryClient = useQueryClient();
@@ -802,12 +895,156 @@ export const useSetHealthzControllerCheckQueryData = () => {
 }
 
 /**
- * @summary Health check
+ * @summary Liveness check
  */
 export const useGetHealthzControllerCheckQueryData = () => {
   const queryClient = useQueryClient();
   return () =>
     queryClient.getQueryData<Awaited<ReturnType<typeof healthzControllerCheck>>>(getHealthzControllerCheckQueryKey());
+}
+
+
+
+export const getReadyzControllerCheckUrl = () => {
+
+
+
+
+  return `/readyz`
+}
+
+/**
+ * Check the Activity service's direct PostgreSQL dependency with a three-second timeout; no other service health endpoints are called
+ * @summary Readiness check
+ */
+export const readyzControllerCheck = async ( options?: Parameters<typeof activityFetch>[1]): Promise<ReadyzControllerCheck200> => {
+
+  return activityFetch<ReadyzControllerCheck200>(getReadyzControllerCheckUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getReadyzControllerCheckQueryKey = () => {
+    return [
+    `/readyz`
+    ] as const;
+    }
+
+
+export const getReadyzControllerCheckQueryOptions = <TData = Awaited<ReturnType<typeof readyzControllerCheck>>, TError = ErrorType<ReadyzControllerCheck401 | ReadyzControllerCheck403 | ReadyzControllerCheck429 | ReadyzControllerCheck503>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readyzControllerCheck>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getReadyzControllerCheckQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof readyzControllerCheck>>> = ({ signal }) => readyzControllerCheck({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof readyzControllerCheck>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ReadyzControllerCheckQueryResult = NonNullable<Awaited<ReturnType<typeof readyzControllerCheck>>>
+export type ReadyzControllerCheckQueryError = ErrorType<ReadyzControllerCheck401 | ReadyzControllerCheck403 | ReadyzControllerCheck429 | ReadyzControllerCheck503>
+
+
+export function useReadyzControllerCheck<TData = Awaited<ReturnType<typeof readyzControllerCheck>>, TError = ErrorType<ReadyzControllerCheck401 | ReadyzControllerCheck403 | ReadyzControllerCheck429 | ReadyzControllerCheck503>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof readyzControllerCheck>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof readyzControllerCheck>>,
+          TError,
+          Awaited<ReturnType<typeof readyzControllerCheck>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof activityFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReadyzControllerCheck<TData = Awaited<ReturnType<typeof readyzControllerCheck>>, TError = ErrorType<ReadyzControllerCheck401 | ReadyzControllerCheck403 | ReadyzControllerCheck429 | ReadyzControllerCheck503>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readyzControllerCheck>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof readyzControllerCheck>>,
+          TError,
+          Awaited<ReturnType<typeof readyzControllerCheck>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof activityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReadyzControllerCheck<TData = Awaited<ReturnType<typeof readyzControllerCheck>>, TError = ErrorType<ReadyzControllerCheck401 | ReadyzControllerCheck403 | ReadyzControllerCheck429 | ReadyzControllerCheck503>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readyzControllerCheck>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Readiness check
+ */
+
+export function useReadyzControllerCheck<TData = Awaited<ReturnType<typeof readyzControllerCheck>>, TError = ErrorType<ReadyzControllerCheck401 | ReadyzControllerCheck403 | ReadyzControllerCheck429 | ReadyzControllerCheck503>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readyzControllerCheck>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getReadyzControllerCheckQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Readiness check
+ */
+export const prefetchReadyzControllerCheckQuery = async <TData = Awaited<ReturnType<typeof readyzControllerCheck>>, TError = ErrorType<ReadyzControllerCheck401 | ReadyzControllerCheck403 | ReadyzControllerCheck429 | ReadyzControllerCheck503>>(
+ queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readyzControllerCheck>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getReadyzControllerCheckQueryOptions(options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useReadyzControllerCheck} query
+ */
+export const invalidateReadyzControllerCheck = async (
+ queryClient: QueryClient,  options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getReadyzControllerCheckQueryKey() }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Readiness check
+ */
+export const useSetReadyzControllerCheckQueryData = () => {
+  const queryClient = useQueryClient();
+  return (updater: Awaited<ReturnType<typeof readyzControllerCheck>> | undefined | ((old: Awaited<ReturnType<typeof readyzControllerCheck>> | undefined) => Awaited<ReturnType<typeof readyzControllerCheck>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof readyzControllerCheck>>>({ exact: $exactMatch, queryKey: getReadyzControllerCheckQueryKey() }, updater);
+  };
+}
+
+/**
+ * @summary Readiness check
+ */
+export const useGetReadyzControllerCheckQueryData = () => {
+  const queryClient = useQueryClient();
+  return () =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof readyzControllerCheck>>>(getReadyzControllerCheckQueryKey());
 }
 
 
