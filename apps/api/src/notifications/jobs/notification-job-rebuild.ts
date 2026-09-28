@@ -4,10 +4,12 @@ import type {
   NotificationJobStore,
   NotificationRuleWithTargets,
 } from "#src/notifications/jobs/notification-job-store";
-import type { NotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
+import {
+  enqueuePendingNotificationJob,
+  type NotificationJobScheduler,
+} from "#src/notifications/jobs/notification-job-scheduler";
 import {
   NotificationJobKind,
-  NotificationJobStatus,
   NotificationOwnerType,
   NotificationScheduleAnchor,
   NotificationScheduleStrategy,
@@ -145,12 +147,7 @@ export const makeNotificationJobRebuild = (
           })
           .pipe(
             Effect.flatMap((job) =>
-              job?.status === NotificationJobStatus.PENDING
-                ? scheduler.enqueue(
-                    job.id,
-                    Math.max(0, scheduledFor.getTime() - Date.now()),
-                  )
-                : Effect.void,
+              enqueuePendingNotificationJob(scheduler, job, scheduledFor),
             ),
           );
       },
