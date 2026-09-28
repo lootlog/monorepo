@@ -307,7 +307,7 @@ export const roleTable = pgTable(
   },
   (table) => [
     uniqueIndex("Role_id_guildId_key").on(table["id"], table["guildId"]),
-    index("Role_id_guildId_idx").on(table["id"], table["guildId"]),
+    index("Role_guildId_idx").on(table["guildId"]),
     foreignKey({
       columns: [table["guildId"]],
       foreignColumns: [guildTable["id"]],
@@ -915,6 +915,7 @@ export const lootlogConfigNpcTable = pgTable(
     updatedAt: timestamp("updatedAt", { mode: "date", precision: 3 }).notNull(),
   },
   (table) => [
+    index("LootlogConfigNpc_lootlogConfigId_idx").on(table["lootlogConfigId"]),
     foreignKey({
       columns: [table["lootlogConfigId"]],
       foreignColumns: [lootlogConfigTable["id"]],
