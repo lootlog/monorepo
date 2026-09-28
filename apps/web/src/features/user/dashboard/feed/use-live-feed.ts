@@ -126,8 +126,12 @@ export function useLiveFeed() {
       }, 5000);
     };
 
-    const handleJoin = (payload: { status: "success" | "error" }) => {
-      if (payload.status !== "success") return;
+    const handleJoin = (payload: {
+      status: "success" | "error";
+      recover: boolean;
+    }) => {
+      // A join right after the initial history fetch has nothing to catch up.
+      if (payload.status !== "success" || !payload.recover) return;
       // Pausing live updates does not pause source-access revalidation.
       void refresh(true);
     };

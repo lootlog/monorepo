@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { and, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
-import { Clock, Effect } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import type { RedlockService } from "#src/redis/redlock";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -14,6 +14,8 @@ import {
 } from "#src/database/drizzle/schema";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { EventEmitter } from "#src/events/event-emitter";
+import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
+import { isEventActiveAt } from "#src/events/monitoring/event-activity";
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
 import { getSyntheticNpcId } from "#src/events/kills/get-synthetic-npc-id";
 import { buildTimerKey } from "#src/timers/timer-key";
@@ -24,11 +26,21 @@ const UNASSIGNED: GapType = "UNASSIGNED";
 
 const UNCOVERED: GapType = "UNCOVERED";
 
+const EventMapWindows = Schema.Array(
+  Schema.Struct({
+    mapName: Schema.String,
+    startsAt: Schema.NullOr(Schema.Date),
+    endsAt: Schema.NullOr(Schema.Date),
+    createdAt: Schema.Date,
+  }),
+);
+
 export const makeEventPresenceTracking = (
   database: typeof ApiDatabase.Service,
   timers: EventTimersPort,
   redlockService: RedlockService,
   publisher: EventEmitter,
+  readCache: Pick<EventReadCache, "getGuildEntry" | "getOrSet">,
 ) => {
   const redlock = redlockService.createInstance();
 
@@ -144,6 +156,52 @@ export const makeEventPresenceTracking = (
             { discard: true },
           ),
         ),
+      );
+    });
+
+  // Coverage checks arrive for every map and AFK change. Most maps belong to
+  // no event, so rule them out from the cached event maps before locking.
+  const hasActiveEventMap = (guildId: string, mapName: string) =>
+    Effect.gen(function* () {
+      const referenceTime = new Date(yield* Clock.currentTimeMillis);
+
+      const windows = yield* readCache.getOrSet(
+        readCache.getGuildEntry(guildId, "presence-event-maps"),
+        EventMapWindows,
+        () =>
+          query(
+            "events.presence.eventMaps",
+            database
+              .selectDistinct({
+                mapName: eventMapTable.mapName,
+                startsAt: eventTable.startsAt,
+                endsAt: eventTable.endsAt,
+                createdAt: eventTable.createdAt,
+              })
+              .from(eventMapTable)
+              .innerJoin(
+                eventHeroNpcTable,
+                eq(eventHeroNpcTable.id, eventMapTable.heroNpcId),
+              )
+              .innerJoin(
+                eventTable,
+                eq(eventTable.id, eventHeroNpcTable.eventId),
+              )
+              .where(
+                and(
+                  eq(eventTable.guildId, guildId),
+                  or(
+                    isNull(eventTable.endsAt),
+                    gt(eventTable.endsAt, referenceTime),
+                  ),
+                ),
+              ),
+          ),
+      );
+
+      return windows.some(
+        (window) =>
+          window.mapName === mapName && isEventActiveAt(window, referenceTime),
       );
     });
 
@@ -335,17 +393,21 @@ export const makeEventPresenceTracking = (
     ) {
       const lockKey = `presence:lock:${guildId}:${mapName}:${discordId}`;
 
-      return redlock
-        .using(
-          [lockKey],
-          5_000,
-          handleInternal(guildId, mapName, discordId, hasPlayer, isAfk),
-        )
-        .pipe(
-          Effect.withSpan("events.presence.lock", {
-            attributes: { adapter: "events.redlock", retryCount: 0 },
-          }),
-        );
+      return Effect.gen(function* () {
+        if (!(yield* hasActiveEventMap(guildId, mapName))) return;
+
+        yield* redlock
+          .using(
+            [lockKey],
+            5_000,
+            handleInternal(guildId, mapName, discordId, hasPlayer, isAfk),
+          )
+          .pipe(
+            Effect.withSpan("events.presence.lock", {
+              attributes: { adapter: "events.redlock", retryCount: 0 },
+            }),
+          );
+      });
     },
   };
 };

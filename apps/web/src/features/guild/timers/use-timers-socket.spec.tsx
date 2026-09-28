@@ -9,6 +9,7 @@ import {
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { configureApiClients } from "@lootlog/client/transport";
+import { RealtimeClient } from "@lootlog/client/realtime";
 import { createElement, type PropsWithChildren } from "react";
 import { afterEach, expect, it, onTestFinished, vi } from "vitest";
 import { createTestGateway } from "@/lib/testing/gateway";
@@ -158,28 +159,55 @@ it("reconciles an event racing the initial snapshot and rejects its late respons
   expect(fetchTimers).toHaveBeenCalledTimes(2);
 });
 
-it("refetches after rejoin to recover missed events", async () => {
-  const fetchTimers = vi
-    .fn<() => Promise<Response>>()
-    .mockResolvedValueOnce(Response.json([timer]))
-    .mockResolvedValue(Response.json([]));
+it.each([
+  { joins: 1, requests: 1, data: [timer] },
+  { joins: 2, requests: 2, data: [] },
+])(
+  "refetches only after a rejoin to recover missed events ($joins joins)",
+  async ({ joins, requests, data }) => {
+    vi.spyOn(RealtimeClient.prototype, "connect").mockReturnValue(undefined);
 
-  const { result, gateway } = mount(fetchTimers);
-  await waitFor(() => expect(result.current.data).toEqual([timer]));
-  act(() =>
-    gateway.deliver({
-      v: 1,
-      type: "session.joined",
-      data: {
-        connectionId: "rejoined",
-        organizationIds: ["one"],
-        subscriptionScopes: [],
-      },
-    }),
-  );
-  await waitFor(() => expect(fetchTimers).toHaveBeenCalledTimes(2));
-  await waitFor(() => expect(result.current.data).toEqual([]));
-});
+    const fetchTimers = vi
+      .fn<() => Promise<Response>>()
+      .mockResolvedValueOnce(Response.json([timer]))
+      .mockResolvedValue(Response.json([]));
+
+    const { result, gateway } = mount(fetchTimers);
+    await waitFor(() => expect(result.current.data).toEqual([timer]));
+    gateway.socket.connect();
+
+    const accessPolicy = createAccessPolicySnapshot(
+      guilds.map((guild) => ({
+        guild: { id: guild.id, ownerId: "owner" },
+        roles: [
+          {
+            permissions: [Permission.LOOTLOG_TIMERS_READ],
+            lvlRangeFrom: 0,
+            lvlRangeTo: 500,
+          },
+        ],
+      })),
+      "member",
+    );
+
+    await act(async () => {
+      for (let join = 0; join < joins; join++)
+        gateway.deliver({
+          v: 1,
+          type: "session.joined",
+          data: {
+            connectionId: `connection-${join}`,
+            organizationIds: guilds.map((guild) => guild.id),
+            subscriptionScopes: [],
+            accessPolicy,
+          },
+        });
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    await waitFor(() => expect(result.current.data).toEqual(data));
+    expect(fetchTimers).toHaveBeenCalledTimes(requests);
+  },
+);
 
 it("clears restricted cached worlds and aliases and rejects an old in-flight response", async () => {
   let resolveOld: (response: Response) => void = () => undefined;

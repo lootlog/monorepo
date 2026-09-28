@@ -241,6 +241,7 @@ it.each([
   "missing-battle-warriors",
   "missing-fight-data",
   "empty-parsed-loots",
+  "npc-wt-too-low",
 ])("reports why battle loot was skipped: %s", (reason) => {
   const fixture = createFixture();
   const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
@@ -253,6 +254,15 @@ it.each([
   if (reason === "missing-fight-data") delete event.f;
 
   if (reason === "empty-parsed-loots") event.item = {};
+
+  if (reason === "npc-wt-too-low")
+    useBattleStore.setState({
+      battleWarriors: {
+        ...useBattleStore.getState().battleWarriors,
+        "-501": createBattleWarrior(-501, { originalId: 501, wt: 9 }),
+      },
+    });
+
   fixture.processor.handleLootFromBattle(event);
   expect(fixture.requests).toHaveLength(0);
   expect(log).toHaveBeenCalledWith(
@@ -378,6 +388,17 @@ it("reports missing dialog snapshot with the event's deleted NPC ids", () => {
       resolutionSource: "fallback-lookup",
     }),
   );
+});
+
+it("consumes dialog context without submitting loot from an NPC every Organization rejects", async () => {
+  const fixture = createFixture();
+  setDialogNpcContext(501, { ...createRuntimeNpc(), weight: 9 });
+  fixture.processor.handleDialogLoot(createLootEvent("dialog"));
+  expect(useDialogStore.getState().npcContext).toBeNull();
+  setDialogNpcContext(502, createRuntimeNpc(502));
+  fixture.processor.handleDialogLoot(createLootEvent("dialog"));
+  expect(await fixture.payload()).toMatchObject({ npcs: [{ id: 502 }] });
+  expect(fixture.requests).toHaveLength(1);
 });
 
 it("retains dialog context through empty loot and consumes it after one valid loot", async () => {
