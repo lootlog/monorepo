@@ -423,7 +423,10 @@ it("reports a fetched empty page as empty but a policy clear as pending", async 
     '"isEmpty":true,"isPending":false',
   );
 
-  const permissionsUpdated = (levelTo: number) =>
+  // A restriction clears the active list; the tab is hidden, so the
+  // reconciliation refetch has not run yet and no page exists.
+  vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
+  await act(async () => {
     gateway.deliver({
       v: 1,
       type: "permissions.updated",
@@ -438,7 +441,7 @@ it("reports a fetched empty page as empty but a policy clear as pending", async 
                 {
                   permissions: [Permission.LOOTLOG_LOOTS_READ],
                   lvlRangeFrom: 0,
-                  lvlRangeTo: levelTo,
+                  lvlRangeTo: 100,
                 },
               ],
             },
@@ -447,13 +450,6 @@ it("reports a fetched empty page as empty but a policy clear as pending", async 
         ),
       },
     });
-
-  // A restriction clears the active list; the tab is hidden, so the
-  // reconciliation refetch has not run yet and no page exists.
-  vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
-  await act(async () => {
-    permissionsUpdated(300);
-    permissionsUpdated(100);
     await vi.advanceTimersByTimeAsync(1);
   });
   expect(screen.getByRole("status").textContent).toContain(
