@@ -232,7 +232,7 @@ export const BullWorkers = Layer.effectDiscard(
         const workers = [
           new Worker(
             MEMBER_REFRESH_QUEUE,
-            (job) => runWorker(processMemberRefresh(job)),
+            (job, token) => runWorker(processMemberRefresh(job, token)),
             { connection, prefix: "{bull}", concurrency: 10 },
           ),
           new Worker(
