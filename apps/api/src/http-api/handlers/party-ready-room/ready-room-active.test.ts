@@ -142,6 +142,9 @@ it("keeps authorized gathering rosters current across discovery, observations, a
 
   let closeDatabaseOnCommit = false;
   let emptyIndex = false;
+  let delayNextCommit = false;
+  const olderCommitStarted = Promise.withResolvers<void>();
+  const releaseOlderCommit = Promise.withResolvers<void>();
   const gatheringEvents: unknown[] = [];
   const cancellationEvents: unknown[] = [];
   const stateEvents: PartyGatheringUpdateEnvelope[] = [];
@@ -177,17 +180,30 @@ it("keeps authorized gathering rosters current across discovery, observations, a
           Schema.fromJsonString(PartyReadyRoomAggregateSchema),
         )(String(args[1]));
 
-        const index = rooms.findIndex(
-          (room) => room.notificationId === next.notificationId,
-        );
+        const expected = Schema.decodeUnknownSync(
+          Schema.fromJsonString(PartyReadyRoomAggregateSchema),
+        )(String(args[0]));
 
-        rooms[index] = next;
+        return Effect.gen(function* () {
+          if (script === COMMIT_READY_ROOM_SCRIPT && delayNextCommit) {
+            delayNextCommit = false;
+            olderCommitStarted.resolve();
+            yield* Effect.promise(() => releaseOlderCommit.promise);
+          }
 
-        return closeDatabaseOnCommit
-          ? Effect.promise(() => databaseBoundary.dispose()).pipe(
-              Effect.as(["COMMITTED"]),
-            )
-          : Effect.succeed(["COMMITTED"]);
+          const index = rooms.findIndex(
+            (room) => room.notificationId === next.notificationId,
+          );
+
+          if (rooms[index]?.revision !== expected.revision) return ["CONFLICT"];
+
+          rooms[index] = next;
+
+          if (closeDatabaseOnCommit)
+            yield* Effect.promise(() => databaseBoundary.dispose());
+
+          return ["COMMITTED"];
+        });
       }
 
       return Effect.succeed(
@@ -588,6 +604,89 @@ it("keeps authorized gathering rosters current across discovery, observations, a
       update: { type: "UPSERT", gathering: renewed },
     });
 
+    // The heartbeat just renewed an unchanged roster, so an unversioned report
+    // would be skipped. A versioned one must still advance the revision, or a
+    // delayed request carrying the same revision could overwrite it.
+    const observeAtRevision = (memberCharacterIds: string[]) =>
+      boundary.handler(
+        new Request(
+          "http://api.test/messaging/party-gathering/npc/party-observation",
+          {
+            method: "POST",
+            headers: {
+              authorization: "Bearer test",
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({
+              organizerAccountId: "1",
+              organizerCharacterId: "2",
+              memberCharacterIds,
+              expectedRevision: 7,
+            }),
+          },
+        ),
+      );
+
+    delayNextCommit = true;
+    const olderObservation = observeAtRevision(["2", "5"]);
+    await olderCommitStarted.promise;
+
+    const unchangedObservation = await observeAtRevision([
+      "2",
+      "3",
+      "outsider-a",
+      "outsider-c",
+    ]);
+
+    releaseOlderCommit.resolve();
+    const delayedResponse = await olderObservation;
+
+    expect(unchangedObservation.status).toBe(201);
+    expect(await unchangedObservation.json()).toMatchObject({ revision: 8 });
+    expect(delayedResponse.status).toBe(409);
+    expect(await delayedResponse.json()).toMatchObject({
+      code: "REVISION_CONFLICT",
+    });
+
+    const staleObservation = await observeAtRevision(["2", "5"]);
+    expect(staleObservation.status).toBe(409);
+    expect(await staleObservation.json()).toMatchObject({
+      code: "REVISION_CONFLICT",
+    });
+
+    const recoveredRoom = await boundary.handler(
+      new Request("http://api.test/messaging/party-gathering/npc", {
+        headers: { authorization: "Bearer test" },
+      }),
+    );
+
+    expect(await recoveredRoom.json()).toMatchObject({
+      revision: 8,
+      partyMemberCount: 4,
+      participants: {
+        alternate: { partyPresence: "IN_PARTY" },
+        other: { partyPresence: "OUTSIDE" },
+      },
+    });
+
+    const invitationTargets = await boundary.handler(
+      new Request(
+        "http://api.test/messaging/party-gathering/npc/invitations/targets",
+        {
+          method: "POST",
+          headers: {
+            authorization: "Bearer test",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({ participantIds: ["alternate", "other"] }),
+        },
+      ),
+    );
+
+    expect(await invitationTargets.json()).toEqual({
+      targets: [{ participantId: "other", characterId: "5" }],
+    });
+
     const afterObservation = await boundary.handler(
       new Request(
         "http://api.test/messaging/party-gathering/active?world=experimental",
@@ -878,6 +977,7 @@ it("keeps authorized gathering rosters current across discovery, observations, a
       expect.objectContaining({ partyMemberCount: 1, revision: 3 }),
     );
   } finally {
+    releaseOlderCommit.resolve();
     querySpy.mockRestore();
     await boundary.dispose();
     await databaseBoundary.dispose();

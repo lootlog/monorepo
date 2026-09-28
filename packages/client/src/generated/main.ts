@@ -6824,6 +6824,11 @@ export type PartyReadyRoomObservationDtoMembersItem = {
 };
 
 export interface PartyReadyRoomObservationDto {
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  expectedRevision?: number;
   /** @maxItems 20 */
   members?: PartyReadyRoomObservationDtoMembersItem[];
   /**

@@ -3,6 +3,23 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased: Conditional party observations
+
+`POST /messaging/party-gathering/{notificationId}/party-observation` accepts
+an optional positive integer `expectedRevision`. Use the latest room projection's
+`revision` to prevent a delayed observation from overwriting a newer roster.
+When supplied, a stale revision or a concurrent write returns
+`409 REVISION_CONFLICT`. A successful conditional observation advances the room
+revision even if the roster is unchanged and was observed moments ago. Requests
+without the field keep their existing behavior, including returning the current
+room without a new revision for an unchanged roster observed within 45 seconds.
+
+After a conflict or an uncertain HTTP result, read the room again and retry the
+latest roster with its current revision. Bound both the requests and retry count;
+aborting HTTP does not cancel a server write. Deploy the API to every writer
+before relying on the precondition. No persistence migration is required.
+Generated clients include the optional field for the next SDK release.
+
 ## Unreleased: Event hero lists keep history
 
 `PATCH /guilds/{guildId}/events/{eventId}` no longer rebuilds the event's heroes

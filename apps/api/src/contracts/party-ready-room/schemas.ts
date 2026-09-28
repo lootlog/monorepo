@@ -192,6 +192,7 @@ export type PartyInvitationTargetsResponse =
   typeof PartyInvitationTargetsResponse.Type;
 
 export const ObservePartyRequest = Schema.Struct({
+  expectedRevision: Schema.optionalKey(PositiveSafeInteger),
   members: Schema.optionalKey(
     Schema.Array(PartyGatheringPartyMemberSchema).check(Schema.isMaxLength(20)),
   ),
