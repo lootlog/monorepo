@@ -106,10 +106,15 @@ export const useTimersSocket = ({ socket, guilds }: Options) => {
         // snapshot cannot overwrite the delivered event or a permission reset.
         if (needsSnapshot) void queryClient.cancelQueries(query);
 
-        queryClient.setQueryData<TimerResponseDto[]>(queryKey, (old) =>
-          timer
-            ? upsertTimerInCollection(old, timer)
-            : removeTimerFromCollection(old, identity.data),
+        // A patch changes one timer; the rest of the list, and the expiries it
+        // already reflects, still date from the last HTTP snapshot.
+        queryClient.setQueryData<TimerResponseDto[]>(
+          queryKey,
+          (old) =>
+            timer
+              ? upsertTimerInCollection(old, timer)
+              : removeTimerFromCollection(old, identity.data),
+          { updatedAt: state?.dataUpdatedAt },
         );
 
         if (needsSnapshot) void queryClient.invalidateQueries(query);

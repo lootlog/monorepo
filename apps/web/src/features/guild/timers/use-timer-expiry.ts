@@ -10,6 +10,7 @@ export function useTimerExpiry(
   timers: Pick<TimerResponseDto, "timerKey" | "maxSpawnTime">[] | undefined,
   guildId: string | undefined,
   world: string | null | undefined,
+  fetchedAt: number,
 ) {
   const queryClient = useQueryClient();
   const expiredRef = useRef(new Map<string, string>());
@@ -21,7 +22,10 @@ export function useTimerExpiry(
     let hasNewExpiry = false;
 
     for (const timer of timers ?? []) {
-      if (Date.parse(timer.maxSpawnTime) > currentTime) continue;
+      const maxSpawnTime = Date.parse(timer.maxSpawnTime);
+
+      // A response already reflects every expiry that preceded it.
+      if (maxSpawnTime > currentTime || maxSpawnTime <= fetchedAt) continue;
       expired.set(timer.timerKey, timer.maxSpawnTime);
 
       if (expiredRef.current.get(timer.timerKey) !== timer.maxSpawnTime) {

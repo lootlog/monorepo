@@ -4,6 +4,8 @@ import {
   type BasicPresence,
   type ServerEvent,
 } from "@lootlog/client/realtime";
+import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
+import { Permission } from "@lootlog/schema/permissions";
 import { GatewayEvent } from "@/config/gateway";
 import { GatewayClient } from "./gateway-client";
 
@@ -185,4 +187,58 @@ it("delivers complete feed entries without turning them into loot invalidation s
   deliver?.({ v: 1, type: "feed.entry", data: entry });
   expect(entryHandler).toHaveBeenCalledWith(entry);
   expect(lootHandler).not.toHaveBeenCalled();
+});
+
+it("treats the first access policy as the page's baseline and reports later revocations", () => {
+  vi.spyOn(RealtimeClient.prototype, "request").mockResolvedValue(undefined);
+  const subscribe = vi.spyOn(RealtimeClient.prototype, "subscribe");
+  const client = new GatewayClient();
+  const deliver = subscribe.mock.calls[0]?.[0];
+  const handler = vi.fn();
+  client.on(GatewayEvent.JOIN, handler);
+
+  const joined = (permissions?: Permission[]) =>
+    deliver?.({
+      v: 1,
+      type: "session.joined",
+      data: {
+        connectionId: "connection-1",
+        organizationIds: ["organization-1"],
+        subscriptionScopes: [],
+        accessPolicy: permissions
+          ? createAccessPolicySnapshot(
+              [
+                {
+                  guild: { id: "organization-1", ownerId: "owner" },
+                  roles: [{ permissions, lvlRangeFrom: 0, lvlRangeTo: 500 }],
+                },
+              ],
+              "discord-member",
+            )
+          : undefined,
+      },
+    });
+
+  // Reporting the first join as unknown made every page load reset its data.
+  joined([Permission.LOOTLOG_LOOTS_READ]);
+  expect(handler).toHaveBeenLastCalledWith(
+    expect.objectContaining({ accessPolicyChanges: [] }),
+  );
+
+  joined([]);
+  expect(handler).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      accessPolicyChanges: [
+        expect.objectContaining({
+          organizationId: "organization-1",
+          restricted: true,
+        }),
+      ],
+    }),
+  );
+
+  joined();
+  expect(handler).toHaveBeenLastCalledWith(
+    expect.objectContaining({ accessPolicyChanges: undefined }),
+  );
 });

@@ -129,6 +129,7 @@ export class GatewayClient {
   private readonly listeners = new RealtimeEventListeners<GatewayEvent>();
   private wasConnected = false;
   private accessPolicy: AccessPolicySnapshot | undefined;
+  private hasAccessPolicyBaseline = false;
 
   constructor() {
     // GatewayProvider owns joins after current user and Organization data are ready.
@@ -207,14 +208,19 @@ export class GatewayClient {
   }
 
   private updateAccessPolicy(next: AccessPolicySnapshot | undefined) {
-    const changes =
-      this.accessPolicy && next
-        ? diffAccessPolicies(this.accessPolicy, next)
-        : undefined;
+    const previous = this.accessPolicy;
+    const isBaseline = !this.hasAccessPolicyBaseline;
 
     this.accessPolicy = next;
+    this.hasAccessPolicyBaseline = true;
 
-    return changes;
+    if (!next) return undefined;
+
+    // The first snapshot describes the access the page's HTTP data was loaded
+    // under, so it changes nothing; later snapshots are diffed against it.
+    if (isBaseline) return [];
+
+    return previous ? diffAccessPolicies(previous, next) : undefined;
   }
 
   private handleServerEvent(event: ServerEvent): void {
