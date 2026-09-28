@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from "bun:test";
-import { Deferred, Effect, Layer } from "effect";
+import { Effect, Layer, Queue } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -38,7 +38,7 @@ const guild = {
 };
 
 describe("organization context lookup", () => {
-  it("queues one background refresh for an aging cached context and keeps its permissions", async () => {
+  it("queues one background refresh for an aging cached context, retries a failed enqueue, and keeps its permissions", async () => {
     const cachedContext = {
       guildId,
       ownerId: guild.ownerId,
@@ -66,35 +66,49 @@ describe("organization context lookup", () => {
     );
 
     const result = await Effect.gen(function* () {
-      const claims = yield* Deferred.make<void>();
-      const queued = yield* Deferred.make<void>();
-      let claimAttempts = 0;
+      // Each lookup forks its refresh-ahead; one entry per finished attempt.
+      const settled = yield* Queue.unbounded<void>();
+      let enqueueAttempts = 0;
 
       const cache: OrganizationContextCache = {
         get: (key) => Effect.sync(() => store.get(key) ?? null),
         set: (key, value) => Effect.sync(() => store.set(key, value)),
-        del: (key) => Effect.sync(() => store.delete(key)),
+        del: (key) =>
+          Effect.sync(() => store.delete(key)).pipe(
+            Effect.tap(() => Queue.offer(settled, undefined)),
+          ),
         setIfAbsent: (key, value) =>
           Effect.gen(function* () {
-            claimAttempts += 1;
             const claimed = !store.has(key);
 
             if (claimed) store.set(key, value);
-
-            if (claimAttempts === 2) yield* Deferred.succeed(claims, undefined);
+            else yield* Queue.offer(settled, undefined);
 
             return claimed;
           }),
       };
 
+      // The queue is briefly unavailable for the first enqueue.
       const queueRefresh = mock<OrganizationContextRefresh>(() =>
-        Deferred.succeed(queued, undefined),
+        Effect.suspend(() =>
+          (enqueueAttempts += 1) === 1
+            ? Effect.fail("queue unavailable")
+            : Queue.offer(settled, undefined),
+        ),
       );
 
       const contexts = yield* Effect.gen(function* () {
         const lookup = yield* OrganizationContextLookup;
 
-        return [yield* lookup.lookup(identity), yield* lookup.lookup(identity)];
+        return yield* Effect.forEach([1, 2, 3], () =>
+          lookup
+            .lookup(identity)
+            .pipe(
+              Effect.tap(() =>
+                Queue.take(settled).pipe(Effect.timeout("1 second")),
+              ),
+            ),
+        );
       }).pipe(
         Effect.provide(
           OrganizationContextLookup.layerDatabase(cache, queueRefresh).pipe(
@@ -125,27 +139,25 @@ describe("organization context lookup", () => {
         ),
       );
 
-      yield* Deferred.await(queued).pipe(Effect.timeout("1 second"));
-      yield* Deferred.await(claims);
-
       return { contexts, queueRefresh };
     }).pipe(Effect.runPromise);
 
     expect(result.contexts.map((context) => context?.permissions)).toEqual([
       cachedContext.permissions,
       cachedContext.permissions,
+      cachedContext.permissions,
     ]);
     expect(getMe).not.toHaveBeenCalled();
-    expect(result.queueRefresh.mock.calls).toEqual([
-      [
-        {
-          discordId: identity.discordId,
-          guildId,
-          userId: identity.userId,
-          priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
-          reason: "organization-context-refresh-ahead",
-        },
-      ],
-    ]);
+
+    const refresh = {
+      discordId: identity.discordId,
+      guildId,
+      userId: identity.userId,
+      priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
+      reason: "organization-context-refresh-ahead",
+    };
+
+    // The failed enqueue released its claim; the retry then holds it.
+    expect(result.queueRefresh.mock.calls).toEqual([[refresh], [refresh]]);
   });
 });
