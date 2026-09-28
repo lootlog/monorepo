@@ -19,7 +19,8 @@ HTTP servers install both `httpServerRouteMetrics` on routes and
 `httpServerMetrics` around the HTTP boundary. Duration is emitted as
 `http.server.request.duration` in seconds, including failures and interruptions.
 Only matched route templates become labels; unknown paths have no route label.
-Healthchecks produce neither request metrics nor access logs. The gateway's
+`/healthz` liveness and `/readyz` readiness probes produce neither request metrics,
+access logs nor traces. The gateway's
 native upgrade boundary records its own status and span once.
 
 Traces retain HTTP method, route and status, but omit full URLs, query strings
