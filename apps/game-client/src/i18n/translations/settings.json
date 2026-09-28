@@ -204,7 +204,7 @@
     "title": "Skróty klawiszowe",
     "description": "Skonfiguruj skróty klawiaturowe i przyciski myszy.",
     "capture": "Naciśnij klawisz lub przycisk myszy…",
-    "conflict": "Ten skrót jest już przypisany do innej akcji.",
+    "conflict": "Ten skrót jest już przypisany do innej akcji. Wybierz inny skrót lub zmień przypisanie tamtej akcji.",
     "changeLabel": "Zmień skrót: {{action}}",
     "modifiers": {
       "ctrl": "Ctrl",
