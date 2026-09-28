@@ -29,6 +29,7 @@ it("keeps authorized air targets while coalescing grants and excludes revoked ta
       level: 100,
       name: "Hero",
       profession: "w",
+      stasis: false,
       x: 1,
       y: 2,
     },

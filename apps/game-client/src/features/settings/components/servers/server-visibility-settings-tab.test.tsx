@@ -150,6 +150,7 @@ describe("ServerVisibilitySettingsTab", () => {
         maxHp: 100,
         name: "Hero",
         profession: "w",
+        stasis: false,
         x: 1,
         y: 2,
       },

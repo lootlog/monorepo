@@ -25,6 +25,7 @@ const DEFAULT_TEST_HERO: RuntimeHero = {
   maxHp: 100,
   name: "Tester",
   profession: "w",
+  stasis: false,
   x: 1,
   y: 2,
 };
