@@ -1,8 +1,13 @@
-import { Clock, Effect } from "effect";
+import { DelayedError } from "bullmq";
+import { Clock, Effect, Random } from "effect";
 import type { DiscordSyncDiagnosticsService } from "#src/discord/discord-sync-diagnostics.service";
 import type { MemberRefreshScheduler } from "./member-refresh-scheduler.js";
 import type { MemberRefreshPorts } from "./member-refresh.operations.js";
 import { isRetryableMemberRefreshStatus } from "./member-discord-sync-status.js";
+
+// The user lock covers all of a user's guild jobs, and a Discord refresh
+// usually finishes within a second, so a contended job waits about that long.
+const LOCKED_RETRY_DELAY_MS = 1000;
 
 export const makeMemberRefreshProcessor = ({
   scheduler,
@@ -27,16 +32,23 @@ export const makeMemberRefreshProcessor = ({
   const diagnostic = <A>(operation: () => Promise<A>) =>
     Effect.tryPromise({ try: operation, catch: (cause) => cause });
 
-  return (job: {
-    readonly id?: string | number;
-    readonly timestamp?: number;
-    readonly data: {
-      readonly discordId: string;
-      readonly guildId: string;
-      readonly userId: string;
-      readonly reason: string;
-    };
-  }) => {
+  return (
+    job: {
+      readonly id?: string | number;
+      readonly timestamp?: number;
+      readonly data: {
+        readonly discordId: string;
+        readonly guildId: string;
+        readonly userId: string;
+        readonly reason: string;
+      };
+      readonly moveToDelayed: (
+        timestamp: number,
+        token?: string,
+      ) => Promise<void>;
+    },
+    token?: string,
+  ) => {
     const lockOwner = `job:${job.id}`;
     const startedAt = job.timestamp ?? Date.now();
 
@@ -47,14 +59,33 @@ export const makeMemberRefreshProcessor = ({
       );
 
       if (!acquired) {
-        yield* diagnostic(() =>
-          diagnostics.recordMemberRefreshMetric({
-            outcome: "failed",
-            reason: "MEMBER_REFRESH_LOCKED",
-          }),
+        // Another guild job for the same user holds the lock. Delaying keeps
+        // the job, its priority and its attempts; failing would burn an
+        // attempt on contention alone.
+        const now = yield* Clock.currentTimeMillis;
+
+        const nextRefreshAt = yield* scheduler.getNextRefreshAt(
+          job.data.userId,
         );
 
-        return yield* Effect.fail(new Error("MEMBER_REFRESH_LOCKED"));
+        const jitter = yield* Random.nextIntBetween(0, LOCKED_RETRY_DELAY_MS);
+
+        yield* Effect.tryPromise(() =>
+          job.moveToDelayed(
+            Math.max(nextRefreshAt?.getTime() ?? 0, now) +
+              LOCKED_RETRY_DELAY_MS +
+              jitter,
+            token,
+          ),
+        );
+        yield* diagnostic(() =>
+          diagnostics.recordMemberRefreshMetric({
+            outcome: "delayed",
+            reason: "MEMBER_REFRESH_LOCKED",
+          }),
+        ).pipe(Effect.ignore);
+
+        return yield* Effect.fail(new DelayedError());
       }
 
       const process = Effect.gen(function* () {
