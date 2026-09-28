@@ -1,6 +1,6 @@
 import { ReadyRoomData } from "#src/http-api/handlers/party-ready-room/party-ready-room.handlers";
 import { makeGuildKillActivityCleanup } from "#src/kills/guild-kill-activity";
-import { Effect, FiberSet, Layer } from "effect";
+import { Effect, FiberSet, Layer, Schedule } from "effect";
 import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 
@@ -197,6 +197,14 @@ export const BullWorkers = Layer.effectDiscard(
 
     const { refreshMember, scheduler, diagnostics, sync } =
       yield* MemberServices;
+
+    yield* sync.dispatchPendingChanges().pipe(
+      Effect.catch((error) =>
+        Effect.logError("Member sync dispatch failed", error),
+      ),
+      Effect.repeat(Schedule.spaced("5 seconds")),
+      Effect.forkScoped,
+    );
 
     const { kills } = yield* EventsServices;
     const { dispatch } = yield* NotificationsServices;

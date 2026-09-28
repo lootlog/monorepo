@@ -1,9 +1,11 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, sql } from "drizzle-orm";
 import { Effect, Schema } from "effect";
+import { isEqual, pickBy } from "es-toolkit";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { findActiveGuild } from "#src/guilds/active-guild-lookup";
 import {
+  memberSyncDeliveryTable,
   memberTable,
   memberToRoleTable,
   roleTable,
@@ -81,25 +83,24 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
       ),
     );
 
-  const findExistingRoleIds = (
-    roleIds: ReadonlyArray<string>,
-    guildId: string,
+  type Transaction = Parameters<
+    Parameters<ApiDatabaseValue["transaction"]>[0]
+  >[0];
+
+  const queueDelivery = (
+    transaction: Transaction,
+    memberId: number,
+    permissionsChanged: boolean,
   ) =>
-    roleIds.length === 0
-      ? Effect.succeed([])
-      : operation(
-          "memberStore.existingRoles",
-          database
-            .select({ id: roleTable.id })
-            .from(roleTable)
-            .where(
-              and(
-                inArray(roleTable.id, [...roleIds]),
-                eq(roleTable.guildId, guildId),
-              ),
-            )
-            .pipe(Effect.map((rows) => rows.map(({ id }) => id))),
-        );
+    transaction
+      .insert(memberSyncDeliveryTable)
+      .values({ memberId, permissionsChanged })
+      .onConflictDoUpdate({
+        target: memberSyncDeliveryTable.memberId,
+        set: {
+          permissionsChanged: sql`${memberSyncDeliveryTable.permissionsChanged} or ${permissionsChanged}`,
+        },
+      });
 
   const upsertMemberWithRoles = (
     userId: string,
@@ -111,34 +112,41 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
       "memberStore.upsert.transaction",
       database.transaction((transaction) =>
         Effect.gen(function* () {
-          const rows = yield* transaction
-            .insert(memberTable)
-            .values({
-              userId,
-              guildId,
-              ...values,
-              createdAt: values.lastDiscordSyncAt,
-              updatedAt: values.lastDiscordSyncAt,
-            })
-            .onConflictDoUpdate({
-              target: [memberTable.userId, memberTable.guildId],
-              set: { ...values, updatedAt: values.lastDiscordSyncAt },
-            })
-            .returning();
+          const lookup = () =>
+            transaction
+              .select()
+              .from(memberTable)
+              .where(
+                and(
+                  eq(memberTable.userId, userId),
+                  eq(memberTable.guildId, guildId),
+                ),
+              )
+              .for("update");
 
-          const member = rows[0];
+          let [existing] = yield* lookup();
+          let created = false;
 
-          if (!member) return yield* Effect.die("Member was not returned");
-          yield* transaction
-            .delete(memberToRoleTable)
-            .where(eq(memberToRoleTable.A, member.id));
+          if (!existing) {
+            const inserted = yield* transaction
+              .insert(memberTable)
+              .values({
+                userId,
+                guildId,
+                ...values,
+                createdAt: values.lastDiscordSyncAt,
+                updatedAt: values.lastDiscordSyncAt,
+              })
+              .onConflictDoNothing({
+                target: [memberTable.userId, memberTable.guildId],
+              })
+              .returning();
 
-          if (roleIds.length > 0) {
-            yield* transaction
-              .insert(memberToRoleTable)
-              .values(roleIds.map((roleId) => ({ A: member.id, B: roleId })))
-              .onConflictDoNothing();
+            created = inserted.length > 0;
+            [existing] = created ? inserted : yield* lookup();
           }
+
+          if (!existing) return yield* Effect.die("Member was not returned");
 
           const roles =
             roleIds.length === 0
@@ -146,7 +154,82 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
               : yield* transaction
                   .select()
                   .from(roleTable)
-                  .where(inArray(roleTable.id, [...roleIds]));
+                  .where(
+                    and(
+                      inArray(roleTable.id, [...roleIds]),
+                      eq(roleTable.guildId, guildId),
+                    ),
+                  )
+                  .orderBy(desc(roleTable.position));
+
+          const currentRoles = yield* transaction
+            .select({ id: memberToRoleTable.B })
+            .from(memberToRoleTable)
+            .where(eq(memberToRoleTable.A, existing.id));
+
+          const currentIds = new Set(currentRoles.map(({ id }) => id));
+          const desiredIds = new Set(roles.map(({ id }) => id));
+
+          const removedIds = [...currentIds].filter(
+            (id) => !desiredIds.has(id),
+          );
+
+          const addedIds = [...desiredIds].filter((id) => !currentIds.has(id));
+
+          const permissionsChanged =
+            created ||
+            existing.active !== values.active ||
+            existing.globalUserId !== values.globalUserId ||
+            removedIds.length > 0 ||
+            addedIds.length > 0;
+
+          const profileChanged =
+            existing.name !== values.name ||
+            existing.avatar !== values.avatar ||
+            existing.banner !== values.banner;
+
+          const changed = permissionsChanged || profileChanged;
+
+          let member = existing;
+
+          const updates = pickBy(
+            values,
+            (value, key) => !isEqual(existing[key], value),
+          );
+
+          if (!created && (changed || Object.keys(updates).length > 0)) {
+            const [updated] = yield* transaction
+              .update(memberTable)
+              .set({
+                ...updates,
+                ...(changed && { updatedAt: values.lastDiscordSyncAt }),
+              })
+              .where(eq(memberTable.id, existing.id))
+              .returning();
+
+            if (!updated) return yield* Effect.die("Member was not returned");
+            member = updated;
+          }
+
+          if (removedIds.length > 0) {
+            yield* transaction
+              .delete(memberToRoleTable)
+              .where(
+                and(
+                  eq(memberToRoleTable.A, member.id),
+                  inArray(memberToRoleTable.B, removedIds),
+                ),
+              );
+          }
+
+          if (addedIds.length > 0) {
+            yield* transaction
+              .insert(memberToRoleTable)
+              .values(addedIds.map((id) => ({ A: member.id, B: id })));
+          }
+
+          if (changed)
+            yield* queueDelivery(transaction, member.id, permissionsChanged);
 
           return { ...member, roles };
         }),
@@ -161,63 +244,120 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
     readonly markSynced: boolean;
     readonly attemptedAt: Date;
   }) =>
-    findMember(options.userId, options.guildId).pipe(
-      Effect.flatMap((existing) => {
-        if (!existing) return Effect.succeed(null);
+    operation(
+      "memberStore.markSync.transaction",
+      database.transaction((transaction) =>
+        Effect.gen(function* () {
+          const [existing] = yield* transaction
+            .select()
+            .from(memberTable)
+            .where(
+              and(
+                eq(memberTable.userId, options.userId),
+                eq(memberTable.guildId, options.guildId),
+              ),
+            )
+            .for("update");
 
-        return operation(
-          "memberStore.markSync.transaction",
-          database.transaction((transaction) =>
-            Effect.gen(function* () {
-              const update: Partial<typeof memberTable.$inferInsert> = {
-                lastDiscordAttemptAt: options.attemptedAt,
+          if (!existing) return null;
+
+          const currentRoles = yield* transaction
+            .select({ role: roleTable })
+            .from(memberToRoleTable)
+            .innerJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
+            .where(eq(memberToRoleTable.A, existing.id));
+
+          const changed =
+            options.deactivate && (existing.active || currentRoles.length > 0);
+
+          const [member] = yield* transaction
+            .update(memberTable)
+            .set({
+              lastDiscordAttemptAt: options.attemptedAt,
+              ...(existing.lastDiscordStatus !== options.status && {
                 lastDiscordStatus: options.status,
-                updatedAt: options.attemptedAt,
-              };
+              }),
+              ...(options.markSynced && {
+                lastDiscordSyncAt: options.attemptedAt,
+              }),
+              ...(options.deactivate && existing.active && { active: false }),
+              ...(changed && { updatedAt: options.attemptedAt }),
+            })
+            .where(eq(memberTable.id, existing.id))
+            .returning();
 
-              if (options.markSynced)
-                update.lastDiscordSyncAt = options.attemptedAt;
+          if (!member) return null;
 
-              if (options.deactivate) update.active = false;
+          if (options.deactivate && currentRoles.length > 0) {
+            yield* transaction
+              .delete(memberToRoleTable)
+              .where(eq(memberToRoleTable.A, member.id));
+          }
 
-              const rows = yield* transaction
-                .update(memberTable)
-                .set(update)
-                .where(eq(memberTable.id, existing.id))
-                .returning();
+          if (changed) yield* queueDelivery(transaction, member.id, true);
 
-              if (options.deactivate) {
-                yield* transaction
-                  .delete(memberToRoleTable)
-                  .where(eq(memberToRoleTable.A, existing.id));
-              }
+          return {
+            ...member,
+            roles: options.deactivate
+              ? []
+              : currentRoles.map(({ role }) => role),
+          };
+        }),
+      ),
+    );
 
-              const member = rows[0];
+  const deliverPendingChanges = (
+    memberId: number,
+    deliver: (
+      member: typeof memberTable.$inferSelect,
+      permissionsChanged: boolean,
+    ) => Effect.Effect<unknown, unknown>,
+    skipLocked = false,
+  ) =>
+    operation(
+      "memberStore.deliverPendingChanges",
+      database.transaction((transaction) =>
+        Effect.gen(function* () {
+          const [pending] = yield* transaction
+            .select()
+            .from(memberSyncDeliveryTable)
+            .where(eq(memberSyncDeliveryTable.memberId, memberId))
+            .for("update", skipLocked ? { skipLocked: true } : undefined);
 
-              if (!member) return null;
+          if (!pending) return;
 
-              if (options.deactivate) return { ...member, roles: [] };
+          const [member] = yield* transaction
+            .select()
+            .from(memberTable)
+            .where(eq(memberTable.id, memberId));
 
-              const roles = yield* transaction
-                .select({ role: roleTable })
-                .from(memberToRoleTable)
-                .innerJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-                .where(eq(memberToRoleTable.A, existing.id));
+          if (member) yield* deliver(member, pending.permissionsChanged);
+          yield* transaction
+            .delete(memberSyncDeliveryTable)
+            .where(eq(memberSyncDeliveryTable.memberId, memberId));
+        }).pipe(Effect.timeout("10 seconds")),
+      ),
+    );
 
-              return { ...member, roles: roles.map(({ role }) => role) };
-            }),
-          ),
-        );
-      }),
+  const findPendingMemberIds = (afterMemberId: number) =>
+    operation(
+      "memberStore.pendingDeliveries",
+      database
+        .select({ memberId: memberSyncDeliveryTable.memberId })
+        .from(memberSyncDeliveryTable)
+        .where(gt(memberSyncDeliveryTable.memberId, afterMemberId))
+        .orderBy(asc(memberSyncDeliveryTable.memberId))
+        .limit(25),
     );
 
   return {
+    findPendingMemberIds,
     findMember,
     findMemberWithRoles,
     resolveActiveGuildId,
-    findExistingRoleIds,
     upsertMemberWithRoles,
     markSyncAttempt,
+    deliverPendingChanges,
   };
 };
 

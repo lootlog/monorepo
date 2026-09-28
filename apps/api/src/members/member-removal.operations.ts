@@ -40,9 +40,8 @@ export const makeMemberRemoval = (
     );
 
   const notifyMemberRemoved = (member: MemberRemovalNotificationTarget) =>
-    Effect.all(
-      [
-        ports.clearMemberCaches(member),
+    ports.clearMemberCaches(member).pipe(
+      Effect.andThen(() =>
         member.globalUserId
           ? ports.publishMemberRemoved({
               discordId: member.discordId,
@@ -50,8 +49,7 @@ export const makeMemberRemoval = (
               globalUserId: member.globalUserId,
             })
           : Effect.void,
-      ],
-      { concurrency: "unbounded", discard: true },
+      ),
     );
 
   const notifyMembersRemoved = (
