@@ -90,6 +90,7 @@
     "deps:check": "POSTGRESQL_CONNECTION_URI=postgresql://knip:knip@127.0.0.1:1/knip knip --dependencies --no-config-hints",
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
+    "test:permissions": "tsc --noEmit -p apps/gateway/tsconfig.permissions.json && bun --conditions=development test apps/gateway/test/permission-revocation.test.ts",
     "perf:gateway": "bun tools/k6/gateway.mjs",
     "perf:k6": "bun tools/k6/run-k6.mjs",
     "perf:k6:smoke": "bun tools/k6/run-k6.mjs --profile smoke",
