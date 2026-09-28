@@ -1,3 +1,4 @@
+import { getItemTypeByCl } from "@lootlog/domain/item-type";
 import {
   createItemStatsHash,
   createPlayerSnapshotHash,
@@ -52,41 +53,6 @@ const mainPool = new pg.Pool({
 });
 
 const mainDatabase = drizzle({ client: mainPool });
-
-const ITEM_TYPES = new Map<number, string>([
-  [1, "ONE_HAND_WEAPON"],
-  [2, "TWO_HAND_WEAPON"],
-  [3, "ONE_AND_HALF_HAND_WEAPON"],
-  [4, "DISTANCE_WEAPON"],
-  [5, "HELP_WEAPON"],
-  [6, "WAND_WEAPON"],
-  [7, "ORB_WEAPON"],
-  [8, "ARMOR"],
-  [9, "HELMET"],
-  [10, "BOOTS"],
-  [11, "GLOVES"],
-  [12, "RING"],
-  [13, "NECKLACE"],
-  [14, "SHIELD"],
-  [15, "NEUTRAL"],
-  [16, "CONSUME"],
-  [17, "GOLD"],
-  [18, "KEYS"],
-  [19, "QUEST"],
-  [20, "RENEWABLE"],
-  [21, "ARROWS"],
-  [22, "TALISMAN"],
-  [23, "BOOK"],
-  [24, "BAG"],
-  [25, "BLESS"],
-  [26, "UPGRADE"],
-  [27, "RECIPE"],
-  [28, "COINAGE"],
-  [29, "QUIVER"],
-  [30, "OUTFITS"],
-  [31, "PETS"],
-  [32, "TELEPORTS"],
-]);
 
 // Use separate connection string for battlelog if provided
 const battlelogConnectionUri =
@@ -307,7 +273,7 @@ async function findOrCreateItemSnapshot(
       icon: item.icon,
       lvl: parsedStats["lvl"] ? Number(parsedStats["lvl"]) : 0,
       rarity: item.rarity,
-      itemType: ITEM_TYPES.get(item.cl),
+      itemType: getItemTypeByCl(item.cl),
       statRaw: item.stat,
       statsSnapshot: parsedStats,
     })

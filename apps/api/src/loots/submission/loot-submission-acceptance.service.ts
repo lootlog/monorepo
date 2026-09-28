@@ -26,7 +26,7 @@ import type {
   CreateLootResponse,
 } from "#src/contracts/loots/schemas";
 import { ErrorKey } from "#src/loots/error-key";
-import { getItemTypeByCl } from "#src/shared/margonem/item-type";
+import { getItemTypeByCl } from "@lootlog/domain/item-type";
 import { getProfByShortname } from "@lootlog/domain/profession";
 import { parseRequiredProfessions } from "#src/loots/required-professions";
 import {

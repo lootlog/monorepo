@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { ItemTypeEnum, ProfessionEnum } from "@lootlog/schema/loot";
-import { getItemTypeByCl } from "./item-type.js";
+import { getItemTypeByCl } from "@lootlog/domain/item-type";
 import {
   getProfByShortname,
   getShortnameByProf,
