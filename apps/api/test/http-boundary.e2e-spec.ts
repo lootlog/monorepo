@@ -21,6 +21,7 @@ import {
   getCompleteUserGuildsCacheKey,
   getGuildMemberCacheKeys,
 } from "#src/discord/discord-cache.util";
+import { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 import { RedisService } from "#src/redis/redis.service";
 import { getPermissionsCacheKey } from "#src/shared/cache";
 import { LootlogApiRouter } from "../src/runtime/application/http-routes.js";
@@ -1002,7 +1003,14 @@ describe("API HTTP boundary", () => {
       const response = await request(`/guilds/${authorizedGuildId}${path}`);
 
       expect(response.status).toBe(401);
-      expect(await response.json()).toMatchObject({ requiresReauth: true });
+      expect(await response.json()).toEqual(
+        Schema.encodeSync(ReauthenticationRequired)(
+          new ReauthenticationRequired({
+            code: "DISCORD_UNAUTHORIZED",
+            requiresReauth: true,
+          }),
+        ),
+      );
     }
   });
 
