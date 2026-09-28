@@ -7,6 +7,7 @@ import {
   eventHeroKillTable,
   eventKillPointTable,
   eventMapAssignmentHistoryTable,
+  eventMapCoverageGapTable,
   eventMapTable,
   eventRankingTable,
   eventTable,
@@ -420,6 +421,20 @@ describe("event hero list history", () => {
           mapName: "Wieża",
         },
       ]);
+      expect(
+        await boundary.run(
+          boundary.database
+            .select({
+              mapId: eventMapTable.mapId,
+              gapType: eventMapCoverageGapTable.gapType,
+            })
+            .from(eventMapCoverageGapTable)
+            .innerJoin(
+              eventMapTable,
+              eq(eventMapTable.id, eventMapCoverageGapTable.mapId),
+            ),
+        ),
+      ).toEqual([{ mapId: 101, gapType: "UNASSIGNED" }]);
       expect(updated.heroNpcs.map((hero) => hero.npcName)).toEqual(
         expect.arrayContaining(["Kotołak", "Mietek", "Nowy"]),
       );

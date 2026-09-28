@@ -11,6 +11,8 @@ and maps by `mapId`, so retained heroes and maps keep their IDs, kills, kill
 points, tracking history and ranking entries. The list can add heroes, add
 maps, rename maps and set a hero's `npcId`; omitting `npcId` keeps the stored
 value.
+As with the map create operation, a map added to an existing hero starts with
+an open unassigned coverage gap.
 
 A `heroNpcs` list that omits an existing hero or map now returns `400` and
 changes nothing. Previously the omitted records were deleted with their history.
