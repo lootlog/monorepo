@@ -21,13 +21,22 @@ if not payload then
   return {}
 end
 redis.call("zadd", KEYS[2], ARGV[2], ids[1])
-return { payload }
+return { ids[1], payload }
 `;
 
 const ACKNOWLEDGE_PUBLICATION_SCRIPT = `
 local payload = redis.call("hget", KEYS[1], ARGV[1])
 if not payload then return 0 end
 if cjson.decode(payload).revision ~= tonumber(ARGV[2]) then return 0 end
+redis.call("hdel", KEYS[1], ARGV[1])
+redis.call("zrem", KEYS[2], ARGV[1])
+return 1
+`;
+
+// Drops a pending entry only while it still holds the undecodable payload, so a
+// valid publication committed for the same room in the meantime survives.
+const DROP_PUBLICATION_SCRIPT = `
+if redis.call("hget", KEYS[1], ARGV[1]) ~= ARGV[2] then return 0 end
 redis.call("hdel", KEYS[1], ARGV[1])
 redis.call("zrem", KEYS[2], ARGV[1])
 return 1
@@ -89,19 +98,33 @@ export const makeReadyRoomPublicationOutbox = (
         [now, now + 30_000],
       );
 
-      const [payload] = yield* Schema.decodeUnknownEffect(
+      const [id, payload] = yield* Schema.decodeUnknownEffect(
         Schema.Array(Schema.String),
       )(result);
 
-      if (payload === undefined) break;
+      if (id === undefined || payload === undefined) break;
 
       yield* Schema.decodeUnknownEffect(
         Schema.fromJsonString(PartyReadyRoomAggregateSchema),
       )(payload).pipe(
-        Effect.flatMap(publish),
-        Effect.catch(() =>
-          Effect.logError("Invalid pending Ready Room publication"),
-        ),
+        Effect.matchEffect({
+          onSuccess: publish,
+          // Retrying cannot make the payload decodable; keep it from being
+          // claimed again every lease.
+          onFailure: () =>
+            Effect.logError(
+              "Dropping invalid pending Ready Room publication",
+            ).pipe(
+              Effect.annotateLogs({ notificationId: id }),
+              Effect.andThen(
+                redis.eval(
+                  DROP_PUBLICATION_SCRIPT,
+                  READY_ROOM_PUBLICATION_KEYS,
+                  [id, payload],
+                ),
+              ),
+            ),
+        }),
       );
     }
   });
