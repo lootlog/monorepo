@@ -23,6 +23,7 @@ import { makeNotificationsEvents } from "#src/notifications/delivery/notificatio
 import { makeTimersCleanup } from "#src/timers/timers-cleanup";
 import { makeReservationsCleanup } from "#src/reservations/reservations-cleanup";
 import { applicationLogger } from "#src/shared/application-logger";
+import { getUserGuildPermissionsCacheScope } from "#src/shared/cache";
 import { ApiRedis, redisUrl } from "#src/runtime/infrastructure/api-redis";
 import { apiRabbitFailurePolicies } from "#src/runtime/infrastructure/api-rabbit";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
@@ -56,6 +57,10 @@ export const RabbitConsumers = Layer.effectDiscard(
       Effect.tryPromise({ try: operation, catch: (cause) => cause });
 
     const guildLifecycle = makeGuildLifecycle(database, {
+      invalidateUserGuildPermissions: (discordId) =>
+        adapter(() =>
+          redis.invalidateScopes(getUserGuildPermissionsCacheScope(discordId)),
+        ),
       clearCachePattern: (pattern) =>
         adapter(() => redis.deleteByPattern(pattern)),
       clearCacheKey: (key) => adapter(() => redis.del(key)),
