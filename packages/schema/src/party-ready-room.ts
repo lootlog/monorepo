@@ -159,6 +159,18 @@ export const PartyGatheringPartyStateSchema = Schema.Union([
 export type PartyGatheringPartyState =
   typeof PartyGatheringPartyStateSchema.Type;
 
+// Viewers show an observed party as stale once `observedAt` is this old.
+export const PARTY_OBSERVATION_FRESHNESS_MS = 2 * 60_000;
+
+// The organizer's client re-reports an unchanged party this often so that
+// viewers keep receiving a fresh `observedAt` well before it goes stale.
+export const PARTY_OBSERVATION_HEARTBEAT_MS = 60_000;
+
+// The API commits an unchanged observation only once it is at least this old.
+// It stays below the heartbeat interval so every heartbeat refreshes viewers,
+// while repeated reports (reconnects, remounts) do not publish a new revision.
+export const PARTY_OBSERVATION_REFRESH_MS = 45_000;
+
 export const PartyGatheringVolunteerSchema = Schema.Struct({
   ...PartyGatheringCharacterSchema.fields,
   partyPresence: Schema.Literals(PARTY_READY_ROOM_PARTY_PRESENCE_STATES),

@@ -128,7 +128,12 @@ alone. Known organizer/volunteer details fill missing metadata; otherwise client
 display an unnamed character. Room keys and schema version remain v3 and old
 aggregates decode with unknown party state. Do not infer their composition from a
 legacy count. Observed data becomes visibly stale after two minutes; clients use
-a local deadline without polling. A later actual observation can refresh it.
+a local deadline without polling. The organizer's client re-reports an unchanged
+party every minute while its room is live. The API commits an unchanged
+observation only when the stored one is at least 45 seconds old, so each
+heartbeat publishes a renewed `observedAt` while reconnects and remounts within
+that window do not create revisions. The three durations live together in
+`@lootlog/schema/party-ready-room`.
 
 Every committed creation, application, departure, removal, observation, or
 cancellation publishes `guilds.party-gathering.updated` for each source

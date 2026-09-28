@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import type { PartyGatheringSummary } from "@lootlog/schema/party-ready-room";
+import {
+  PARTY_OBSERVATION_FRESHNESS_MS,
+  type PartyGatheringSummary,
+} from "@lootlog/schema/party-ready-room";
 import { useGlobalStore } from "@/store/global.store";
-
-const PARTY_OBSERVATION_FRESHNESS_MS = 2 * 60 * 1000;
 
 export function useGatheringPartyState(
   partyState: PartyGatheringSummary["partyState"],

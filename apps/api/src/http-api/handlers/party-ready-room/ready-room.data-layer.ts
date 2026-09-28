@@ -11,13 +11,14 @@ import { Effect, Layer } from "effect";
 import { isEqual } from "es-toolkit";
 import { Permission } from "@lootlog/schema/permissions";
 import { NOTIFICATION_SEND_PERMISSIONS } from "@lootlog/domain/npc-permissions";
-import type {
-  PartyGatheringNpc,
-  PartyGatheringPartyMember,
-  PartyGatheringUpdateEnvelope,
-  PartyReadyRoomCharacter,
-  PartyReadyRoomParticipant,
-  PartyReadyRoomUpdateEnvelope,
+import {
+  PARTY_OBSERVATION_REFRESH_MS,
+  type PartyGatheringNpc,
+  type PartyGatheringPartyMember,
+  type PartyGatheringUpdateEnvelope,
+  type PartyReadyRoomCharacter,
+  type PartyReadyRoomParticipant,
+  type PartyReadyRoomUpdateEnvelope,
 } from "@lootlog/schema/party-ready-room";
 import { ApiDatabase } from "#src/database/drizzle/database";
 
@@ -617,7 +618,8 @@ export const makeReadyRoomDataLayer = (
             aggregate.partyMemberCount === memberIds.size &&
             isEqual(previousMembers, partyMembers) &&
             aggregate.partyState?.status === "OBSERVED" &&
-            clock() - Date.parse(aggregate.partyState.observedAt) < 120_000
+            clock() - Date.parse(aggregate.partyState.observedAt) <
+              PARTY_OBSERVATION_REFRESH_MS
           ) {
             return yield* projectionForViewer(aggregate, discordId);
           }

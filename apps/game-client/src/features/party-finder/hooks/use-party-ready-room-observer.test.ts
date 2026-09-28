@@ -1,8 +1,19 @@
 import { configureApiClients } from "@lootlog/client/transport";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import type { PartyReadyRoomOrganizerProjection } from "@lootlog/schema/party-ready-room";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  PARTY_OBSERVATION_FRESHNESS_MS,
+  type PartyReadyRoomOrganizerProjection,
+} from "@lootlog/schema/party-ready-room";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  onTestFinished,
+  vi,
+} from "vitest";
 import { usePartyReadyRoomObserver } from "@/features/party-finder/hooks/use-party-ready-room-observer";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createElement, type ReactNode } from "react";
@@ -137,6 +148,58 @@ describe("usePartyReadyRoomObserver", () => {
       ),
     );
     expect(observeParty).toHaveBeenCalledTimes(2);
+  });
+
+  it("re-reports an unchanged party before viewers mark it stale, despite frequent party store updates", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
+
+    const member = {
+      characterId: "10",
+      name: "First",
+      icon: "first.gif",
+      isLeader: true,
+      currentHp: 100,
+      maxHp: 100,
+      profession: "w",
+      accountId: "1",
+    };
+
+    usePartyStore.getState().setMembers([member]);
+    renderObserver();
+    await waitFor(() => expect(observeParty).toHaveBeenCalledTimes(1));
+
+    // Party store updates such as HP changes arrive far more often than the
+    // heartbeat and must not keep postponing it.
+    let currentHp = member.currentHp;
+
+    const churn = window.setInterval(() => {
+      currentHp -= 1;
+      usePartyStore.getState().setMembers([{ ...member, currentHp }]);
+    }, 5_000);
+
+    onTestFinished(() => window.clearInterval(churn));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(PARTY_OBSERVATION_FRESHNESS_MS - 1);
+    });
+
+    expect(observeParty.mock.calls.length).toBeGreaterThan(1);
+
+    const bodies = await Promise.all(
+      observeParty.mock.calls.map(([request]) => request.json()),
+    );
+
+    expect(new Set(bodies.map((body) => JSON.stringify(body))).size).toBe(1);
+    expect(bodies[0]).toEqual({
+      memberCharacterIds: ["10"],
+      members: [
+        { characterId: "10", nick: "First", icon: "first.gif", prof: "w" },
+      ],
+      organizerAccountId: "account",
+      organizerCharacterId: "character",
+    });
   });
 
   it("waits for the runtime party snapshot and does not report reset state as an empty party", async () => {
