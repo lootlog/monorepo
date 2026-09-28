@@ -1,13 +1,6 @@
 import { Schema } from "effect";
 
-const KillStatsPeriodSchema = Schema.Literals([
-  "all",
-  "24h",
-  "3d",
-  "7d",
-  "14d",
-  "30d",
-]);
+import { KillStatsPeriodSchema } from "#src/contracts/kills/schemas";
 
 export type KillStatsPeriod = typeof KillStatsPeriodSchema.Type;
 
