@@ -222,7 +222,7 @@ const fixture = async () => {
       }),
     );
 
-    return { ...boundary, history, readCache, redis };
+    return { ...boundary, history, points, readCache, redis };
   } catch (cause) {
     await boundary.dispose();
     throw cause;
@@ -230,6 +230,105 @@ const fixture = async () => {
 };
 
 describe("kill history database reads", () => {
+  it("clips presence windows and rounds short sessions only after aggregation", async () => {
+    const f = await fixture();
+    const start = time("10:00");
+
+    const at = (milliseconds: number) =>
+      new Date(start.getTime() + milliseconds);
+
+    try {
+      await f.run(
+        Effect.gen(function* () {
+          yield* f.database.insert(eventMapTable).values({
+            id: "map",
+            heroNpcId: "low",
+            mapId: 1,
+            mapName: "Map",
+            updatedAt: time("00:00"),
+          });
+          yield* f.database.insert(eventPresenceLogTable).values(
+            [
+              { id: "crosses-start", start: -1000, end: 400, isAfk: false },
+              { id: "short-session", start: 700, end: 1100, isAfk: false },
+              { id: "open-afk", start: 1600, end: null, isAfk: true },
+              { id: "after-window", start: 3000, end: 4000, isAfk: false },
+            ].map((log) => ({
+              id: log.id,
+              mapId: "map",
+              memberId: 1,
+              isAfk: log.isAfk,
+              startedAt: at(log.start),
+              endedAt: log.end === null ? null : at(log.end),
+            })),
+          );
+          yield* f.database.insert(eventPresenceLogTable).values({
+            id: "crosses-end",
+            mapId: "map",
+            memberId: 2,
+            isAfk: true,
+            startedAt: at(1500),
+            endedAt: at(3000),
+          });
+        }),
+      );
+
+      for (const since of [start, undefined]) {
+        const presenceTimeSeconds = since ? 1 : 2;
+        const afkPercentage = since ? 33.33 : 18.18;
+
+        expect(
+          await f.run(
+            f.points.getMembersPresenceStats("low", [1, 2], since, at(2000)),
+          ),
+        ).toEqual([
+          {
+            memberId: 1,
+            timeOnMapSeconds: presenceTimeSeconds,
+            afkPercentage,
+            wasPresent: true,
+            mapName: "Map",
+          },
+          {
+            memberId: 2,
+            timeOnMapSeconds: 1,
+            afkPercentage: 100,
+            wasPresent: true,
+            mapName: "Map",
+          },
+        ]);
+        expect(
+          await f.run(
+            f.points.getMemberPresenceStatsPerMap(["map"], 1, since, at(2000)),
+          ),
+        ).toEqual([{ mapId: "map", presenceTimeSeconds, afkTimeSeconds: 0 }]);
+
+        const members = await f.run(
+          f.points.getMembersPresenceStatsPerMap(
+            ["map"],
+            [1, 2],
+            since,
+            at(2000),
+          ),
+        );
+
+        expect(
+          members.toSorted((left, right) => left.memberId - right.memberId),
+        ).toEqual([
+          { memberId: 1, mapId: "map", presenceTimeSeconds, afkTimeSeconds: 0 },
+          {
+            memberId: 2,
+            mapId: "map",
+            presenceTimeSeconds: 1,
+            afkTimeSeconds: 1,
+          },
+        ]);
+      }
+    } finally {
+      await f.dispose();
+    }
+  });
+
   it("refreshes cached member points and publishes edits excluded from ranking", async () => {
     const f = await fixture();
 
