@@ -81,11 +81,7 @@ type AggregatedMember = {
   totalKills: number;
   totalTimeSeconds: number;
   totalAfkSeconds: number;
-  distinctMapIds: Set<string>;
-  distinctHeroIds: Set<string>;
-  assignmentCount: number;
   totalAssignedSeconds: number;
-  longestSingleAssignmentSeconds: number;
   maxMapsPerRespawn: number;
   avgMapsPerRespawn: number;
 };
@@ -487,11 +483,7 @@ export const makeEventWrapped = (
         totalKills: 0,
         totalTimeSeconds: 0,
         totalAfkSeconds: 0,
-        distinctMapIds: new Set<string>(),
-        distinctHeroIds: new Set<string>(),
-        assignmentCount: 0,
         totalAssignedSeconds: 0,
-        longestSingleAssignmentSeconds: 0,
         maxMapsPerRespawn: 0,
         avgMapsPerRespawn: 0,
       };
@@ -515,11 +507,7 @@ export const makeEventWrapped = (
         totalKills: 0,
         totalTimeSeconds: 0,
         totalAfkSeconds: 0,
-        distinctMapIds: new Set<string>(),
-        distinctHeroIds: new Set<string>(),
-        assignmentCount: 0,
         totalAssignedSeconds: 0,
-        longestSingleAssignmentSeconds: 0,
         maxMapsPerRespawn: 0,
         avgMapsPerRespawn: 0,
       };
@@ -531,14 +519,7 @@ export const makeEventWrapped = (
         windowEnd: options.eventWindowEnd,
       });
 
-      existing.assignmentCount += 1;
       existing.totalAssignedSeconds += durationSeconds;
-      existing.longestSingleAssignmentSeconds = Math.max(
-        existing.longestSingleAssignmentSeconds,
-        durationSeconds,
-      );
-      existing.distinctMapIds.add(assignment.mapId);
-      existing.distinctHeroIds.add(assignment.heroNpcId);
 
       members.set(assignment.memberId, existing);
     }
