@@ -300,7 +300,7 @@ extend the interval before discovering revoked access. The current bot does
 not consume member-update or member-removal events, so push delivery cannot
 replace this refresh. Role changes and reactivation still invalidate member
 caches and publish `members.update`; deactivation publishes `members.remove`.
-Profile changes invalidate member views without triggering a permission
+Name and avatar changes invalidate member views without triggering a permission
 rebalance. Successful no-op synchronization refreshes permission-cache freshness
 without publishing a change event.
 

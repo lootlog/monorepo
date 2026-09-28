@@ -183,12 +183,13 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
             removedIds.length > 0 ||
             addedIds.length > 0;
 
-          const profileChanged =
+          const readProjectionChanged =
+            permissionsChanged ||
             existing.name !== values.name ||
-            existing.avatar !== values.avatar ||
-            existing.banner !== values.banner;
+            existing.avatar !== values.avatar;
 
-          const changed = permissionsChanged || profileChanged;
+          const changed =
+            readProjectionChanged || existing.banner !== values.banner;
 
           let member = existing;
 
@@ -228,7 +229,7 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
               .values(addedIds.map((id) => ({ A: member.id, B: id })));
           }
 
-          if (changed)
+          if (readProjectionChanged)
             yield* queueDelivery(transaction, member.id, permissionsChanged);
 
           return { ...member, roles };

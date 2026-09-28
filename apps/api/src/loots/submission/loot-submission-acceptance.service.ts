@@ -1,7 +1,7 @@
 import type { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
 import { createItemStatsHash } from "@lootlog/database/snapshot-hash";
 import { Effect, Schema } from "effect";
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import { getNpcTypeByWt, MIN_LOOT_NPC_WT } from "@lootlog/domain/npc-type";
 import type {
   GuildLootCreatedEventV2,
   GuildLootEventNpc,
@@ -193,7 +193,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
             : new InvalidRequestError(ErrorKey.NPC_WT_TOO_LOW),
       });
 
-      if (npcData.primary.wt < 10) {
+      if (npcData.primary.wt < MIN_LOOT_NPC_WT) {
         return yield* Effect.fail(
           new InvalidRequestError(ErrorKey.NPC_WT_TOO_LOW),
         );

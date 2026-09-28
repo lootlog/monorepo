@@ -15,6 +15,7 @@ import {
   RouterProvider,
 } from "@tanstack/react-router";
 import { configureApiClients } from "@lootlog/client/transport";
+import { RealtimeClient } from "@lootlog/client/realtime";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
@@ -313,6 +314,11 @@ it.each(["permissions", "reconnect"] as const)(
     client.setQueryData(["/guilds/alias/loots/1"], loot);
     client.setQueryData(["/guilds/one/loots/stats"], { count: 1 });
     await act(async () => {
+      gateway.deliver({
+        v: 1,
+        type: "loot.created",
+        data: { version: 2, guildId: "one", lootId: 2, npcs: [] },
+      });
       await vi.advanceTimersByTimeAsync(35_000);
     });
     expect(listRequests).toHaveBeenCalledTimes(2);
@@ -536,6 +542,11 @@ it("resumes event reconciliation for new filters after an old filter's refresh f
 
   const { gateway, fetch } = await mount(listRequests);
   await act(async () => {
+    gateway.deliver({
+      v: 1,
+      type: "loot.created",
+      data: { version: 2, guildId: "one", lootId: 2, npcs: [] },
+    });
     await vi.advanceTimersByTimeAsync(35_000);
   });
   await act(async () => {
@@ -557,6 +568,27 @@ it("resumes event reconciliation for new filters after an old filter's refresh f
       String(input).includes("search=shield"),
     ),
   ).toHaveLength(2);
+});
+
+it("does not refetch the list after the page's first join", async () => {
+  vi.spyOn(RealtimeClient.prototype, "connect").mockReturnValue(undefined);
+  const listRequests = vi.fn(async () => Response.json([loot]));
+  const { gateway } = await mount(listRequests);
+  gateway.socket.connect();
+  await act(async () => {
+    gateway.deliver({
+      v: 1,
+      type: "session.joined",
+      data: {
+        connectionId: "connection",
+        organizationIds: ["one", "two"],
+        subscriptionScopes: [],
+      },
+    });
+    await vi.advanceTimersByTimeAsync(40_000);
+  });
+  expect(screen.getByRole("status").textContent).toContain('"ids":[1]');
+  expect(listRequests).toHaveBeenCalledTimes(1);
 });
 
 it("keeps fetched loots when joining before the route alias is resolved", async () => {
