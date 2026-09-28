@@ -10,8 +10,6 @@ import { useGameStore } from "@/store/game.store";
 import { useOthersStore } from "@/store/others.store";
 import { useNpcsStore } from "@/store/npcs.store";
 import { useSettingsStore } from "@/store/settings.store";
-import { queryClient } from "@/lib/query-client";
-import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey } from "@lootlog/client/main";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { LOOT_CREATE_DEBUG_PREFIX } from "@/lib/loot-create-debug";
 import { LootEventProcessor } from "./loot-event-processor";
@@ -143,10 +141,7 @@ beforeEach(() => {
   useSettingsStore.getState().setLootDebugLoggingEnabled(false);
 });
 
-afterEach(() => {
-  vi.restoreAllMocks();
-  queryClient.clear();
-});
+afterEach(() => vi.restoreAllMocks());
 
 it("captures map characters and the hero once for a legendary elite II loot", async () => {
   const fixture = createFixture();
@@ -247,7 +242,6 @@ it.each([
   "missing-fight-data",
   "empty-parsed-loots",
   "npc-wt-too-low",
-  "empty-catching-whitelist",
 ])("reports why battle loot was skipped: %s", (reason) => {
   const fixture = createFixture();
   const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
@@ -269,13 +263,6 @@ it.each([
       },
     });
 
-  if (reason === "empty-catching-whitelist")
-    queryClient.setQueryData(
-      getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
-        accountId: "202",
-      }),
-      { "999": { catchingGuildIds: ["guild-1"] } },
-    );
   fixture.processor.handleLootFromBattle(event);
   expect(fixture.requests).toHaveLength(0);
   expect(log).toHaveBeenCalledWith(
@@ -412,21 +399,6 @@ it("consumes dialog context without submitting loot from an NPC every Organizati
   fixture.processor.handleDialogLoot(createLootEvent("dialog"));
   expect(await fixture.payload()).toMatchObject({ npcs: [{ id: 502 }] });
   expect(fixture.requests).toHaveLength(1);
-});
-
-it("submits battle loot while the catching whitelist is not loaded or lists the character", async () => {
-  const fixture = createFixture();
-  fixture.processor.handleLootFromBattle(createBattleLootEvent());
-  await fixture.payload(0);
-  queryClient.setQueryData(
-    getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
-      accountId: "202",
-    }),
-    { "101": { catchingGuildIds: ["guild-1"] } },
-  );
-  fixture.processor.handleLootFromBattle(createBattleLootEvent());
-  await fixture.payload(1);
-  expect(fixture.requests).toHaveLength(2);
 });
 
 it("retains dialog context through empty loot and consumes it after one valid loot", async () => {

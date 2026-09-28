@@ -375,7 +375,6 @@ export const membersData = Layer.unwrap(
     return makeMembersDataLayer(
       {
         refreshGuildMember: refresh.refreshGuildMemberWithinBudget,
-        queueGuildMemberRefresh: refresh.queueMemberRefresh,
         recordStaleUse: (reason) =>
           promise(() =>
             diagnostics.recordMemberRefreshMetric({
