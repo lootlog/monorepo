@@ -81,21 +81,28 @@ export const makeAccessibleGuilds = (
       (guildId) => {
         const markerKey = `member:refresh:background:${identity.userId}:${guildId}`;
 
-        return ports.setIfAbsent(markerKey, "1", refreshMarkerTtlSeconds).pipe(
-          Effect.flatMap((claimed) =>
-            claimed
-              ? ports
-                  .queueRefresh({
-                    ...identity,
-                    guildId,
-                    priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
-                    reason,
-                  })
-                  .pipe(Effect.tapError(() => ports.deleteCached(markerKey)))
-              : Effect.void,
+        // Release a claimed marker whenever the enqueue does not succeed,
+        // including interruption, so another read can queue the refresh.
+        return Effect.uninterruptibleMask((restore) =>
+          ports.setIfAbsent(markerKey, "1", refreshMarkerTtlSeconds).pipe(
+            Effect.flatMap((claimed) =>
+              claimed
+                ? restore(
+                    ports.queueRefresh({
+                      ...identity,
+                      guildId,
+                      priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
+                      reason,
+                    }),
+                  ).pipe(
+                    Effect.onError(() =>
+                      ports.deleteCached(markerKey).pipe(Effect.ignore),
+                    ),
+                  )
+                : Effect.void,
+            ),
           ),
-          Effect.ignore,
-        );
+        ).pipe(Effect.ignore);
       },
       { concurrency: "unbounded", discard: true },
     );
