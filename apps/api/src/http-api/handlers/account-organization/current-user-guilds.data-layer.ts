@@ -1,3 +1,4 @@
+import type { GuildSummary } from "./accessible-guilds.data-layer.js";
 import { readGuildOrderPreference } from "#src/guilds/guild-order-query";
 import { sortGuildsByPreference } from "#src/guilds/guild-order";
 import { hydrateMemberRoles } from "#src/members/member-role-hydration";
@@ -20,17 +21,6 @@ import {
   type AuthenticatedIdentity,
   AccountOrganizationOperationError,
 } from "./account-organization.operations.js";
-
-type GuildSummary = {
-  readonly id: string;
-  readonly name: string;
-  readonly icon: string | null;
-  readonly vanityUrl: string | null;
-  readonly ownerId: string;
-  readonly publicStatsCardEnabled: boolean;
-  readonly hasLootlogAccess: boolean;
-  readonly isAccessDataStale: boolean;
-};
 
 export interface CurrentUserGuildPorts {
   readonly accessibleFallback: (
