@@ -35,13 +35,18 @@ export function useKillStatsUpdates(socket: Pick<GatewayClient, "on" | "off">) {
       }, 1_000);
     };
 
+    // A join right after the page's initial reads has nothing to recover.
+    const onJoin = (payload: { recover: boolean }) => {
+      if (payload.recover) scheduleRefresh();
+    };
+
     socket.on(GatewayEvent.KILLS_CHANGED, scheduleRefresh);
-    socket.on(GatewayEvent.JOIN, scheduleRefresh);
+    socket.on(GatewayEvent.JOIN, onJoin);
 
     return () => {
       clearTimeout(timer);
       socket.off(GatewayEvent.KILLS_CHANGED, scheduleRefresh);
-      socket.off(GatewayEvent.JOIN, scheduleRefresh);
+      socket.off(GatewayEvent.JOIN, onJoin);
     };
   }, [queryClient, socket]);
 }

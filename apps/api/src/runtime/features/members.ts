@@ -241,7 +241,12 @@ export const memberServicesLive = Layer.effect(
           {
             getGuildMember: discord.getGuildMember,
             nextRefreshAt,
-            invalidateMember: ({ discordId, guildId, userId }) =>
+            invalidateMember: ({
+              discordId,
+              guildId,
+              userId,
+              readProjectionChanged,
+            }) =>
               Effect.all(
                 [
                   adapter(() =>
@@ -253,9 +258,17 @@ export const memberServicesLive = Layer.effect(
                       getUserGuildPermissionsCacheScope(discordId),
                     ),
                   ),
-                  adapter(() =>
-                    redis.invalidateScopes(getMemberReadCacheScope(guildId)),
-                  ),
+                  // Member-read caches expire within a minute, so a sync that
+                  // changes nothing they show skips the guild-wide eviction.
+                  ...(readProjectionChanged
+                    ? [
+                        adapter(() =>
+                          redis.invalidateScopes(
+                            getMemberReadCacheScope(guildId),
+                          ),
+                        ),
+                      ]
+                    : []),
                 ],
                 { concurrency: "unbounded", discard: true },
               ).pipe(

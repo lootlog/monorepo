@@ -126,6 +126,7 @@ export const eventsServicesLive = Layer.effect(
       timers,
       new RedlockService(redis),
       emitter,
+      readCache,
     );
 
     const points = makeEventPoints(
