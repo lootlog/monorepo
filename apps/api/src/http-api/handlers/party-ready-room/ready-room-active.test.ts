@@ -14,6 +14,7 @@ import {
   memberToRoleTable,
 } from "#src/database/drizzle/schema";
 import {
+  PARTY_OBSERVATION_HEARTBEAT_MS,
   type PartyGatheringUpdateEnvelope,
   PartyReadyRoomAggregateSchema,
 } from "@lootlog/schema/party-ready-room";
@@ -52,7 +53,8 @@ it("keeps authorized gathering rosters current across discovery, observations, a
     discordId: "owner",
   };
 
-  const clock = () => Date.parse("2026-09-09T10:00:00Z");
+  let now = Date.parse("2026-09-09T10:00:00Z");
+  const clock = () => now;
 
   const base: ReadyRoomAggregate = {
     schemaVersion: 3,
@@ -72,7 +74,7 @@ it("keeps authorized gathering rosters current across discovery, observations, a
     revision: 1,
     createdAt: new Date(clock()).toISOString(),
     updatedAt: new Date(clock()).toISOString(),
-    expiresAt: new Date(clock() + 60_000).toISOString(),
+    expiresAt: new Date(clock() + 10 * 60_000).toISOString(),
     participants: {},
   };
 
@@ -548,6 +550,43 @@ it("keeps authorized gathering rosters current across discovery, observations, a
     expect(latestObservation.update.gathering.guildIds).toEqual([
       latestObservation.guildId,
     ]);
+
+    // The organizer's heartbeat re-reports an unchanged party; viewers must
+    // receive the renewed observation before it turns stale.
+    now += PARTY_OBSERVATION_HEARTBEAT_MS;
+
+    const heartbeat = await boundary.handler(
+      new Request(
+        "http://api.test/messaging/party-gathering/npc/party-observation",
+        {
+          method: "POST",
+          headers: {
+            authorization: "Bearer test",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            organizerAccountId: "1",
+            organizerCharacterId: "2",
+            memberCharacterIds: ["2", "3", "outsider-a", "outsider-c"],
+          }),
+        },
+      ),
+    );
+
+    const renewed = {
+      revision: 7,
+      partyState: {
+        status: "OBSERVED",
+        observedAt: new Date(now).toISOString(),
+      },
+    };
+
+    expect(heartbeat.status).toBe(201);
+    expect(await heartbeat.json()).toMatchObject(renewed);
+    expect(stateEvents.at(-1)).toMatchObject({
+      revision: 7,
+      update: { type: "UPSERT", gathering: renewed },
+    });
 
     const afterObservation = await boundary.handler(
       new Request(
