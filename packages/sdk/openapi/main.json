@@ -43,18 +43,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -131,18 +138,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -218,18 +232,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -320,18 +341,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -412,18 +440,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -511,18 +546,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -608,18 +650,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -717,18 +766,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -825,18 +881,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -935,18 +998,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -1045,18 +1115,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -1147,18 +1224,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -1246,18 +1330,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -1353,18 +1444,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -1457,18 +1555,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -1550,18 +1655,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -1643,18 +1755,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -1741,18 +1860,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -1856,18 +1982,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -1974,18 +2107,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -2110,18 +2250,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -2263,18 +2410,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -2379,18 +2533,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -2484,18 +2645,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -2598,18 +2766,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -2713,18 +2888,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -2820,18 +3002,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -2958,18 +3147,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -3061,18 +3257,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -3203,18 +3406,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -3346,18 +3556,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -3495,18 +3712,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -3626,18 +3850,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -3759,18 +3990,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -3885,18 +4123,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -3985,18 +4230,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -4084,18 +4336,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -4383,18 +4642,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -4530,18 +4796,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -4660,18 +4933,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -4781,18 +5061,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -4893,18 +5180,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -5006,18 +5300,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -5140,18 +5441,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -5259,18 +5567,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -5391,18 +5706,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -5534,13 +5856,16 @@
             }
           },
           "401": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -5663,13 +5988,16 @@
             }
           },
           "401": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -5796,18 +6124,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -5893,18 +6228,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -6000,18 +6342,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -6108,18 +6457,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -6209,13 +6565,16 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -6365,13 +6724,16 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -6492,13 +6854,16 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -6644,13 +7009,16 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -6766,13 +7134,16 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -6886,13 +7257,16 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -7009,13 +7383,16 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -7106,13 +7483,16 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -7218,13 +7598,16 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -7362,13 +7745,16 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -7483,13 +7869,16 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -7605,13 +7994,16 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -7727,13 +8119,16 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -7848,13 +8243,16 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -7980,13 +8378,16 @@
             }
           },
           "401": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "OrganizationWorkspaceErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -8125,18 +8526,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -8226,18 +8634,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -8332,18 +8747,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -8436,18 +8858,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -8548,18 +8977,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -8664,18 +9100,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -8765,18 +9208,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -8899,18 +9349,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -9018,18 +9475,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -9142,18 +9606,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -9263,18 +9734,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -9379,18 +9857,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -9491,18 +9976,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -9593,18 +10085,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -9687,18 +10186,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -9795,18 +10301,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -9901,18 +10414,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -10026,18 +10546,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -10138,18 +10665,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -10232,18 +10766,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -10350,18 +10891,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -10463,18 +11011,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -10572,18 +11127,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -10664,18 +11226,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -10758,18 +11327,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -10874,18 +11450,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -10992,18 +11575,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -11098,13 +11688,16 @@
             }
           },
           "401": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -11247,13 +11840,16 @@
             }
           },
           "401": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -11363,13 +11959,16 @@
             }
           },
           "401": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -11455,13 +12054,16 @@
             }
           },
           "401": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -11586,13 +12188,16 @@
             }
           },
           "401": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -11716,13 +12321,16 @@
             }
           },
           "401": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -11866,13 +12474,16 @@
             }
           },
           "401": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -12016,13 +12627,16 @@
             }
           },
           "401": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -12166,13 +12780,16 @@
             }
           },
           "401": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -12306,13 +12923,16 @@
             }
           },
           "401": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -12456,13 +13076,16 @@
             }
           },
           "401": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
                   "anyOf": [
                     {
                       "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
                     },
                     {
                       "type": "object",
@@ -12597,18 +13220,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -12691,18 +13321,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -12818,18 +13455,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -12921,18 +13565,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -13044,18 +13695,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -13158,18 +13816,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -13279,18 +13944,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -13405,18 +14077,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -13521,18 +14200,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -13637,18 +14323,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -13753,18 +14446,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -13870,18 +14570,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -14003,18 +14710,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -14120,18 +14834,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -14235,18 +14956,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -14344,18 +15072,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -14461,18 +15196,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -14566,18 +15308,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -14690,18 +15439,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -14815,18 +15571,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -14922,18 +15685,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -15034,18 +15804,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -15159,18 +15936,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -15282,18 +16066,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -15409,18 +16200,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -15534,18 +16332,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -15660,18 +16465,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -15766,18 +16578,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -15889,18 +16708,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -15998,18 +16824,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -16115,18 +16948,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -16252,18 +17092,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -16371,18 +17218,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -16533,18 +17387,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -16680,18 +17541,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -16836,18 +17704,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -16984,18 +17859,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -17117,18 +17999,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -17242,18 +18131,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -17368,18 +18264,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -17493,18 +18396,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -17620,18 +18530,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -17737,18 +18654,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -17851,18 +18775,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -17968,18 +18899,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -18082,18 +19020,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -18196,18 +19141,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -18310,18 +19262,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -18454,18 +19413,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -18585,18 +19551,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -18690,18 +19663,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -18806,18 +19786,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -18998,18 +19985,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -19094,18 +20088,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -19210,18 +20211,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -19324,18 +20332,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -19420,18 +20435,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -19585,18 +20607,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -19760,18 +20789,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -19869,18 +20905,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -19969,18 +21012,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -20163,18 +21213,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -20315,18 +21372,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -20444,18 +21508,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -20593,18 +21664,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -20802,18 +21880,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -21007,18 +22092,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -21103,18 +22195,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -21214,18 +22313,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -21320,18 +22426,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -21434,18 +22547,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -21540,18 +22660,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -21644,18 +22771,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -21758,18 +22892,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -21864,18 +23005,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -21970,18 +23118,25 @@
             }
           },
           "401": {
-            "description": "Error",
+            "description": "ReauthenticationRequired",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReauthenticationRequiredEncoded"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -22534,6 +23689,24 @@
           }
         },
         "required": ["code", "message", "issues"],
+        "additionalProperties": false
+      },
+      "ReauthenticationRequiredEncoded": {
+        "type": "object",
+        "properties": {
+          "_tag": {
+            "type": "string",
+            "enum": ["ReauthenticationRequired"]
+          },
+          "code": {
+            "type": "string"
+          },
+          "requiresReauth": {
+            "type": "boolean",
+            "enum": [true]
+          }
+        },
+        "required": ["_tag", "code", "requiresReauth"],
         "additionalProperties": false
       },
       "UserPreferencesResponseDto_Output": {

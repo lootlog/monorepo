@@ -3,7 +3,7 @@ import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { parse } from "yaml";
 import {
-  assertVerifiedPersonalAddition,
+  assertVerifiedAddition,
   normalizeAllowedChanges,
   normalizeApiKeyErrors,
   normalizeValidationErrors,
@@ -290,17 +290,15 @@ test.each([
 
     const operation = document.paths[path].get;
     const key = `GET ${path}`;
+    expect(() => assertVerifiedAddition(service, key, operation)).not.toThrow();
     expect(() =>
-      assertVerifiedPersonalAddition(service, key, operation),
-    ).not.toThrow();
-    expect(() =>
-      assertVerifiedPersonalAddition(service, key, {
+      assertVerifiedAddition(service, key, {
         ...operation,
         security: [],
       }),
     ).toThrow("contract changed");
     expect(() =>
-      assertVerifiedPersonalAddition(service, key, {
+      assertVerifiedAddition(service, key, {
         ...operation,
         parameters: [
           ...operation.parameters,
@@ -314,7 +312,7 @@ test.each([
       }),
     ).toThrow("contract changed");
     expect(() =>
-      assertVerifiedPersonalAddition(service, key, {
+      assertVerifiedAddition(service, key, {
         ...operation,
         responses: {
           "200": {
@@ -328,7 +326,7 @@ test.each([
       }),
     ).toThrow("contract changed");
     expect(() =>
-      assertVerifiedPersonalAddition(service, `${key}/unreviewed`, operation),
+      assertVerifiedAddition(service, `${key}/unreviewed`, operation),
     ).toThrow("Unverified");
   },
 );
@@ -499,4 +497,84 @@ test("validation-error allowance preserves prior bad-request response alternativ
   expect(normalizeValidationErrors(operation(original))).toEqual(
     operation(original),
   );
+});
+
+test("Activity probe migrations reject dependency errors on liveness and incomplete readiness contracts", () => {
+  const document = decodeOpenApiDocument(
+    parse(
+      readFileSync(
+        new URL("../../../apps/activity/openapi.yaml", import.meta.url),
+        "utf8",
+      ),
+    ),
+  );
+
+  const liveness = document.paths?.["/healthz"]?.get;
+  const readiness = document.paths?.["/readyz"]?.get;
+
+  if (
+    !isJsonObject(liveness) ||
+    !isJsonObject(liveness.responses) ||
+    !isJsonObject(readiness) ||
+    !isJsonObject(readiness.responses)
+  ) {
+    throw new Error("Missing Activity probes");
+  }
+
+  const livenessResponses = liveness.responses;
+  const readinessResponses = readiness.responses;
+  const live = livenessResponses["200"];
+  const ready = readinessResponses["200"];
+  const unavailable = readinessResponses["503"];
+
+  if (live === undefined || ready === undefined || unavailable === undefined) {
+    throw new Error("Missing Activity probe responses");
+  }
+
+  expect(() =>
+    normalizeAllowedChanges("activity", "GET /healthz", liveness),
+  ).not.toThrow();
+  expect(() =>
+    normalizeAllowedChanges("activity", "GET /healthz", {
+      ...liveness,
+      responses: { ...livenessResponses, "503": unavailable },
+    }),
+  ).toThrow("liveness must not declare dependency failure");
+  expect(() =>
+    normalizeAllowedChanges("activity", "GET /healthz", {
+      ...liveness,
+      responses: { "200": ready },
+    }),
+  ).toThrow("HealthzControllerCheck200");
+  expect(
+    normalizeAllowedChanges("activity", "GET /unrelated", liveness),
+  ).toEqual(normalizeOpenApiRepresentation(liveness));
+
+  expect(() =>
+    assertVerifiedAddition("activity", "GET /readyz", readiness),
+  ).not.toThrow();
+
+  const invalidReadiness: Parameters<typeof assertVerifiedAddition>[2][] = [
+    { ...readiness, responses: { "200": ready } },
+    { ...readiness, responses: { ...readinessResponses, "503": {} } },
+    { ...readiness, responses: { ...readinessResponses, "500": {} } },
+    { ...readiness, security: [{ bearer: [] }] },
+    {
+      ...readiness,
+      responses: {
+        ...readinessResponses,
+        "503": { content: { "text/plain": { schema: { type: "string" } } } },
+      },
+    },
+    {
+      ...readiness,
+      responses: { ...readinessResponses, "503": live },
+    },
+  ];
+
+  for (const operation of invalidReadiness) {
+    expect(() =>
+      assertVerifiedAddition("activity", "GET /readyz", operation),
+    ).toThrow("contract changed");
+  }
 });

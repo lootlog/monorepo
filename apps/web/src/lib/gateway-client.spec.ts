@@ -1,9 +1,11 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import {
   RealtimeClient,
   type BasicPresence,
   type ServerEvent,
 } from "@lootlog/client/realtime";
+import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
+import { Permission } from "@lootlog/schema/permissions";
 import { GatewayEvent } from "@/config/gateway";
 import { GatewayClient } from "./gateway-client";
 
@@ -186,3 +188,117 @@ it("delivers complete feed entries without turning them into loot invalidation s
   expect(entryHandler).toHaveBeenCalledWith(entry);
   expect(lootHandler).not.toHaveBeenCalled();
 });
+
+it("treats the first access policy as the page's baseline and reports later revocations", () => {
+  vi.spyOn(RealtimeClient.prototype, "request").mockResolvedValue(undefined);
+  const subscribe = vi.spyOn(RealtimeClient.prototype, "subscribe");
+  const client = new GatewayClient();
+  const deliver = subscribe.mock.calls[0]?.[0];
+  const handler = vi.fn();
+  client.on(GatewayEvent.JOIN, handler);
+
+  const joined = (permissions?: Permission[]) =>
+    deliver?.({
+      v: 1,
+      type: "session.joined",
+      data: {
+        connectionId: "connection-1",
+        organizationIds: ["organization-1"],
+        subscriptionScopes: [],
+        accessPolicy: permissions
+          ? createAccessPolicySnapshot(
+              [
+                {
+                  guild: { id: "organization-1", ownerId: "owner" },
+                  roles: [{ permissions, lvlRangeFrom: 0, lvlRangeTo: 500 }],
+                },
+              ],
+              "discord-member",
+            )
+          : undefined,
+      },
+    });
+
+  // Reporting the first join as unknown made every page load reset its data.
+  joined([Permission.LOOTLOG_LOOTS_READ]);
+  expect(handler).toHaveBeenLastCalledWith(
+    expect.objectContaining({ accessPolicyChanges: [] }),
+  );
+
+  joined([]);
+  expect(handler).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      accessPolicyChanges: [
+        expect.objectContaining({
+          organizationId: "organization-1",
+          restricted: true,
+        }),
+      ],
+    }),
+  );
+
+  joined();
+  expect(handler).toHaveBeenLastCalledWith(
+    expect.objectContaining({ accessPolicyChanges: undefined }),
+  );
+});
+
+it("keeps a permissions update without a baseline unknown so stale caches are cleared", () => {
+  const subscribe = vi.spyOn(RealtimeClient.prototype, "subscribe");
+  const client = new GatewayClient();
+  const deliver = subscribe.mock.calls[0]?.[0];
+  const handler = vi.fn();
+  client.on(GatewayEvent.PERMISSIONS_UPDATED, handler);
+
+  // The gateway sends this before rejecting a join that lost every Organization.
+  deliver?.({
+    v: 1,
+    type: "permissions.updated",
+    data: {
+      organizationIds: [],
+      subscriptionScopes: [],
+      accessPolicy: createAccessPolicySnapshot([], "discord-member"),
+    },
+  });
+  expect(handler).toHaveBeenLastCalledWith(
+    expect.objectContaining({ accessPolicyChanges: undefined }),
+  );
+});
+
+it.each([
+  { joins: 1, delay: 200, recover: false },
+  { joins: 1, delay: 5_000, recover: true },
+  { joins: 2, delay: 200, recover: true },
+])(
+  "asks listeners to recover after join $joins arriving $delay ms after connecting: $recover",
+  ({ joins, delay, recover }) => {
+    vi.useFakeTimers();
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
+    vi.spyOn(RealtimeClient.prototype, "connect").mockReturnValue(undefined);
+    vi.spyOn(RealtimeClient.prototype, "request").mockResolvedValue(undefined);
+    const subscribe = vi.spyOn(RealtimeClient.prototype, "subscribe");
+    const client = new GatewayClient();
+    const deliver = subscribe.mock.calls[0]?.[0];
+    const handler = vi.fn();
+    client.on(GatewayEvent.JOIN, handler);
+    client.connect();
+    vi.advanceTimersByTime(delay);
+
+    for (let join = 0; join < joins; join++)
+      deliver?.({
+        v: 1,
+        type: "session.joined",
+        data: {
+          connectionId: "connection-1",
+          organizationIds: ["organization-1"],
+          subscriptionScopes: [],
+        },
+      });
+
+    expect(handler).toHaveBeenLastCalledWith(
+      expect.objectContaining({ recover }),
+    );
+  },
+);

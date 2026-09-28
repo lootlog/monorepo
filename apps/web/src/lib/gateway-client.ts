@@ -113,6 +113,10 @@ const serverEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
   "event.respawn-window-closed": GatewayEvent.EVENT_RESPAWN_WINDOW_CLOSED,
 };
 
+// Production joins complete 150–250 ms after the first connect. A slower first
+// join may follow events that the page's initial HTTP reads could not include.
+const FRESH_JOIN_WINDOW_MS = 2_000;
+
 export class GatewayClient {
   private readonly readable =
     import.meta.env.VITE_GATEWAY_FRAME_ENCODING === "json";
@@ -129,6 +133,8 @@ export class GatewayClient {
   private readonly listeners = new RealtimeEventListeners<GatewayEvent>();
   private wasConnected = false;
   private accessPolicy: AccessPolicySnapshot | undefined;
+  private hasJoined = false;
+  private firstConnectAt: number | undefined;
 
   constructor() {
     // GatewayProvider owns joins after current user and Organization data are ready.
@@ -151,6 +157,7 @@ export class GatewayClient {
   }
 
   connect(): void {
+    this.firstConnectAt ??= Date.now();
     this.realtime.connect();
   }
 
@@ -206,22 +213,38 @@ export class GatewayClient {
     }
   }
 
-  private updateAccessPolicy(next: AccessPolicySnapshot | undefined) {
-    const changes =
-      this.accessPolicy && next
-        ? diffAccessPolicies(this.accessPolicy, next)
-        : undefined;
-
+  private updateAccessPolicy(
+    next: AccessPolicySnapshot | undefined,
+    isFirstJoin = false,
+  ) {
+    const previous = this.accessPolicy;
     this.accessPolicy = next;
 
-    return changes;
+    if (!next) return undefined;
+
+    if (previous) return diffAccessPolicies(previous, next);
+
+    // The first join's snapshot describes the access the page's HTTP data was
+    // loaded under. Any other event without a baseline, such as the empty
+    // update sent before a join is rejected, may revoke cached data.
+    return isFirstJoin ? [] : undefined;
   }
 
   private handleServerEvent(event: ServerEvent): void {
     if (event.type === "session.joined") {
+      // Listeners recover missed events unless this join subscribed right
+      // after the page's initial HTTP reads.
+      const recover =
+        this.hasJoined ||
+        this.firstConnectAt === undefined ||
+        Date.now() - this.firstConnectAt > FRESH_JOIN_WINDOW_MS;
+
       const accessPolicyChanges = this.updateAccessPolicy(
         event.data.accessPolicy,
+        !this.hasJoined,
       );
+
+      this.hasJoined = true;
 
       if (event.data.organizationIds.length > 0) {
         void this.realtime
@@ -237,6 +260,7 @@ export class GatewayClient {
         guildsCount: event.data.organizationIds.length,
         guildIds: [...event.data.organizationIds],
         accessPolicyChanges,
+        recover,
       });
 
       return;

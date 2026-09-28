@@ -26,6 +26,7 @@ type GatewayPolicyPayload = {
 
 type GatewayJoinPayload = GatewayPolicyPayload & {
   status: "error" | "success";
+  recover: boolean;
 };
 
 type Props = {
@@ -64,7 +65,10 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
       return;
     }
 
-    void reconcileEventPolicyQueries(queryClient, data.accessPolicyChanges);
+    // A first join with a known policy leaves the freshly loaded data alone.
+    if (data.recover || !data.accessPolicyChanges)
+      void reconcileEventPolicyQueries(queryClient, data.accessPolicyChanges);
+
     setJoined(true);
   });
 

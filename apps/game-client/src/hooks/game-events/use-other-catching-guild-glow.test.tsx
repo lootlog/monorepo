@@ -135,6 +135,7 @@ function setRuntime(heroId: number | null | undefined = 101) {
       maxHp: 1,
       name: "Hero",
       profession: "w",
+      stasis: false,
       x: 1,
       y: 2,
     },

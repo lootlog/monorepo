@@ -180,6 +180,17 @@ it.each([undefined, 1])(
   },
 );
 
+it("does not submit a kill observed while the character is in stasis", () => {
+  const fixture = createFixture();
+  const game = fixture.ingress.game;
+
+  if (!game) throw new Error("Expected the test runtime game");
+  fixture.ingress.game = { ...game, hero: { ...game.hero, stasis: true } };
+  fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
+  expect(useNpcDetectorStore.getState().npcs).toEqual([]);
+  expect(useLogsStore.getState().actions).toEqual([]);
+});
+
 it("does not submit low-weight NPCs", () => {
   const fixture = createFixture();
   fixture.ingress.npcsById[500] = {

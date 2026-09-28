@@ -1,5 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, inArray } from "drizzle-orm";
+import { isEqual, xor } from "es-toolkit";
 import { Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { findActiveGuild } from "#src/guilds/active-guild-lookup";
@@ -111,6 +112,22 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
       "memberStore.upsert.transaction",
       database.transaction((transaction) =>
         Effect.gen(function* () {
+          const previousRows = yield* transaction
+            .select({
+              name: memberTable.name,
+              avatar: memberTable.avatar,
+              active: memberTable.active,
+              globalUserId: memberTable.globalUserId,
+            })
+            .from(memberTable)
+            .where(
+              and(
+                eq(memberTable.userId, userId),
+                eq(memberTable.guildId, guildId),
+              ),
+            )
+            .limit(1);
+
           const rows = yield* transaction
             .insert(memberTable)
             .values({
@@ -129,9 +146,11 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
           const member = rows[0];
 
           if (!member) return yield* Effect.die("Member was not returned");
-          yield* transaction
+
+          const previousRoles = yield* transaction
             .delete(memberToRoleTable)
-            .where(eq(memberToRoleTable.A, member.id));
+            .where(eq(memberToRoleTable.A, member.id))
+            .returning({ id: memberToRoleTable.B });
 
           if (roleIds.length > 0) {
             yield* transaction
@@ -148,7 +167,24 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
                   .from(roleTable)
                   .where(inArray(roleTable.id, [...roleIds]));
 
-          return { ...member, roles };
+          const previous = previousRows[0];
+
+          // Guild member lists read only these fields, so a sync that keeps
+          // them unchanged must not evict the guild's member-read caches.
+          const readProjectionChanged =
+            !previous ||
+            !isEqual(previous, {
+              name: member.name,
+              avatar: member.avatar,
+              active: member.active,
+              globalUserId: member.globalUserId,
+            }) ||
+            xor(
+              previousRoles.map(({ id }) => id),
+              roleIds,
+            ).length > 0;
+
+          return { member: { ...member, roles }, readProjectionChanged };
         }),
       ),
     );

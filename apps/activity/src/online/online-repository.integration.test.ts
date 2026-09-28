@@ -29,7 +29,7 @@ import { HttpRouter, HttpServer } from "effect/unstable/http";
 import { PgClient } from "@effect/sql-pg";
 import { OnlineRepository } from "./online-repository.js";
 import type { UserOnlineCheckpointV1 } from "@lootlog/protocol/rabbit/events";
-import { ActivityRoutes, ActivityHealth } from "#src/http/activity-http";
+import { ActivityRoutes, ActivityReadiness } from "#src/http/activity-http";
 import { ActivityRepository } from "#src/activities/activity-repository";
 import { Permissions } from "#src/activities/activity-permissions";
 
@@ -945,8 +945,8 @@ describe("durable private online history", () => {
         OnlineRepository.layer.pipe(Layer.provideMerge(database)),
       ),
       Layer.provideMerge(
-        Layer.succeed(ActivityHealth, {
-          check: () => Effect.die("unused health"),
+        Layer.succeed(ActivityReadiness, {
+          check: () => Effect.die("unused readiness"),
         }),
       ),
       Layer.provideMerge(

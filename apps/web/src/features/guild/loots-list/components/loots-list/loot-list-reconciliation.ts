@@ -49,6 +49,7 @@ export function createLootListReconciliation({
       schedule();
     },
     resume: schedule,
+    isDirty: () => dirty,
     dispose() {
       disposed = true;
 

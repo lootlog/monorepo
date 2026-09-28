@@ -46,6 +46,13 @@ describe("HTTP server metrics", () => {
         Layer.merge(
           HttpRouter.add(
             "GET",
+            "/readyz",
+            HttpServerResponse.empty({ status: 202 }),
+          ),
+        ),
+        Layer.merge(
+          HttpRouter.add(
+            "GET",
             "/*",
             HttpServerResponse.empty({ status: 204 }),
           ),
@@ -72,6 +79,12 @@ describe("HTTP server metrics", () => {
         "/HEALTHZ",
         "//healthz",
         "///HeAlThZ///?probe=readiness",
+        "/readyz",
+        "/readyz?probe=readiness",
+        "/readyz/",
+        "/READYZ",
+        "//readyz",
+        "///ReAdYz///?probe=readiness",
       ];
 
       const healthResponses = await Promise.all(
@@ -88,15 +101,21 @@ describe("HTTP server metrics", () => {
       expect(after.count - before.count).toBe(0);
 
       const otherResponses = await Promise.all(
-        ["/healthz-other", "/healthz/other", "/users"].map((path) =>
+        [
+          "/healthz-other",
+          "/healthz/other",
+          "/readyz-other",
+          "/readyz/other",
+          "/users",
+        ].map((path) =>
           boundary.handler(new Request(`http://localhost${path}`)),
         ),
       );
 
       expect(otherResponses.map((response) => response.status)).toEqual([
-        204, 204, 204,
+        204, 204, 204, 204, 204,
       ]);
-      expect(messages).toHaveLength(3);
+      expect(messages).toHaveLength(5);
     } finally {
       await boundary.dispose();
     }
