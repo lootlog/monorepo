@@ -1,5 +1,5 @@
 import { runLogEffect } from "@lootlog/instrumentation";
-import { Effect } from "effect";
+import { Effect, Option, Schema } from "effect";
 
 export interface ApplicationLogger {
   log(entry: unknown, ...context: unknown[]): void;
@@ -9,8 +9,26 @@ export interface ApplicationLogger {
   debug(entry: unknown, ...context: unknown[]): void;
 }
 
+const levelLoggers = {
+  debug: Effect.logDebug,
+  info: Effect.logInfo,
+  warn: Effect.logWarning,
+  error: Effect.logError,
+} as const;
+
+const decodeEntryLevel = Schema.decodeUnknownOption(
+  Schema.Struct({ level: Schema.Literals(["debug", "info", "warn", "error"]) }),
+);
+
 export const applicationLogger: ApplicationLogger = {
-  log: (entry, ...context) => runLogEffect(Effect.logInfo(entry, ...context)),
+  // Structured entries name their own level; everything else is info.
+  log: (entry, ...context) =>
+    runLogEffect(
+      Option.match(decodeEntryLevel(entry), {
+        onNone: () => Effect.logInfo,
+        onSome: ({ level }) => levelLoggers[level],
+      })(entry, ...context),
+    ),
   info: (entry, ...context) => runLogEffect(Effect.logInfo(entry, ...context)),
   warn: (entry, ...context) =>
     runLogEffect(Effect.logWarning(entry, ...context)),
