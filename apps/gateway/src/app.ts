@@ -19,6 +19,7 @@ import {
   REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
   REALTIME_FEED_CAPABILITY,
   REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
+  REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
   REALTIME_JSON_SUBPROTOCOL,
   REALTIME_SUBPROTOCOL,
 } from "@lootlog/protocol/realtime";
@@ -320,6 +321,9 @@ const negotiateCapabilities = (
     supportsFeed: offeredProtocols.includes(REALTIME_FEED_CAPABILITY),
     supportsNotificationVolunteer: offersGameCapability(
       REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
+    ),
+    supportsPartyGatheringState: offersGameCapability(
+      REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
     ),
     supportsBattlePings: offersGameCapability(REALTIME_BATTLE_PING_CAPABILITY),
     supportsAirTagMapThreats: offersGameCapability(

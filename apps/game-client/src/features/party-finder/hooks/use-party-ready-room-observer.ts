@@ -1,4 +1,8 @@
-import { decodePartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
+import {
+  decodePartyReadyRoomProjection,
+  PARTY_OBSERVATION_HEARTBEAT_MS,
+  type PartyGatheringPartyMember,
+} from "@lootlog/schema/party-ready-room";
 import { useEffect, useEffectEvent, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { partyReadyRoomControllerObserveParty } from "@lootlog/client/main";
@@ -14,6 +18,7 @@ import { useReadyRoomsCache } from "@/features/party-finder/hooks/use-ready-room
 type ObservePartyVariables = {
   notificationId: string;
   memberCharacterIds: string[];
+  members: PartyGatheringPartyMember[];
   organizerAccountId: string;
   organizerCharacterId: string;
 };
@@ -25,7 +30,10 @@ export function usePartyReadyRoomObserver(): void {
   const { connected, joined } = useGlobalStore((state) => state.socketState);
   const partyMembers = usePartyStore((state) => state.members);
   const partyStatus = usePartyStore((state) => state.status);
-  const lastReportedSnapshot = useRef<string | null>(null);
+
+  const lastReport = useRef<{ snapshot: string; reportedAt: number } | null>(
+    null,
+  );
 
   const { mutate: observeParty } = useMutation({
     mutationFn: ({ notificationId, ...body }: ObservePartyVariables) =>
@@ -60,7 +68,7 @@ export function usePartyReadyRoomObserver(): void {
       partyStatus !== "ready" ||
       !isOrganizingCharacter
     ) {
-      lastReportedSnapshot.current = null;
+      lastReport.current = null;
 
       return;
     }
@@ -69,17 +77,62 @@ export function usePartyReadyRoomObserver(): void {
       ...new Set(partyMembers.map(({ characterId }) => characterId)),
     ].sort();
 
-    const snapshot = `${ownedReadyRoom.notificationId}:${memberCharacterIds.join(",")}`;
+    const members = memberCharacterIds.flatMap((characterId) => {
+      const member = partyMembers.find(
+        (entry) => entry.characterId === characterId,
+      );
 
-    if (lastReportedSnapshot.current === snapshot) return;
-    lastReportedSnapshot.current = snapshot;
+      if (!member) return [];
 
-    reportSnapshot({
-      notificationId: ownedReadyRoom.notificationId,
-      memberCharacterIds,
-      organizerAccountId: ownedReadyRoom.organizerCharacter.accountId,
-      organizerCharacterId: ownedReadyRoom.organizerCharacter.characterId,
+      return [
+        {
+          characterId,
+          nick: member.name,
+          icon: member.icon,
+          prof: member.profession ?? undefined,
+        },
+      ];
     });
+
+    const snapshot = JSON.stringify([ownedReadyRoom.notificationId, members]);
+
+    const report = () => {
+      const reportedAt = Date.now();
+      lastReport.current = { snapshot, reportedAt };
+      reportSnapshot({
+        notificationId: ownedReadyRoom.notificationId,
+        memberCharacterIds,
+        members,
+        organizerAccountId: ownedReadyRoom.organizerCharacter.accountId,
+        organizerCharacterId: ownedReadyRoom.organizerCharacter.characterId,
+      });
+
+      return reportedAt;
+    };
+
+    let reportedAt =
+      lastReport.current?.snapshot === snapshot
+        ? lastReport.current.reportedAt
+        : report();
+
+    // Viewers treat an observation as stale after a fixed age, so re-report an
+    // unchanged party on a timer measured from the last report. Frequent party
+    // store updates (HP changes) rerun this effect without delaying it.
+    let heartbeat = 0;
+
+    const scheduleHeartbeat = () => {
+      heartbeat = window.setTimeout(
+        () => {
+          reportedAt = report();
+          scheduleHeartbeat();
+        },
+        Math.max(0, reportedAt + PARTY_OBSERVATION_HEARTBEAT_MS - Date.now()),
+      );
+    };
+
+    scheduleHeartbeat();
+
+    return () => window.clearTimeout(heartbeat);
   }, [
     ownedReadyRoom,
     partyMembers,

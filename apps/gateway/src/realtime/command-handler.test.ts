@@ -55,6 +55,7 @@ class FakeGuildStore {
 }
 
 class FakeHub {
+  clusterFederationVersion = 2;
   readonly deliveryOrder: string[] = [];
   readonly responses: unknown[] = [];
   readonly events: unknown[] = [];
@@ -948,6 +949,52 @@ describe("CommandHandler session lifecycle", () => {
     });
     expect(activity.calls.map(({ type }) => type)).toEqual(["CONNECT_EVENT"]);
   });
+
+  test.each([
+    { federationVersion: 2, apiKey: false, available: false },
+    { federationVersion: 3, apiKey: false, available: true },
+    { federationVersion: 3, apiKey: true, available: false },
+  ])(
+    "advertises live gathering state only after the federation rollout for game sessions: %j",
+    async ({ federationVersion, apiKey, available }) => {
+      const { handler, hub } = setup();
+      hub.clusterFederationVersion = federationVersion;
+      const socket = makeSocket().socket;
+
+      if (apiKey) {
+        socket.data.apiKeyAccess = {
+          keyId: "key",
+          organizationIds: ["organization-1"],
+          mode: "read",
+          personalData: true,
+          expiresAt: null,
+        };
+        socket.data.apiKeyLeaseExpiresAt = Date.now() + 60_000;
+      }
+
+      await Effect.runPromise(
+        handler.handle(
+          socket,
+          Buffer.from(
+            encode({
+              v: 1,
+              type: "session.join",
+              requestId: "join",
+              data: {},
+            }),
+          ),
+        ),
+      );
+      const capability = ["lootlog.party-gathering-state.v1"];
+      expect(hub.responses[0]).toMatchObject({
+        data: {
+          capabilities: available
+            ? expect.arrayContaining(capability)
+            : expect.not.arrayContaining(capability),
+        },
+      });
+    },
+  );
 
   test("advertises connection.ping and battle pings on join and answers pings for game and API key sockets", async () => {
     const { handler, hub, presence } = setup();
