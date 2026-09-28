@@ -122,7 +122,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     data: timers,
     error: timersError,
     isFetching: timersFetching,
-    isLoading: timersLoading,
+    isPending: timersLoading,
     refetch: refetchTimers,
   } = useTimers({ world: desiredWorld });
 

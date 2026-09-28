@@ -68,6 +68,8 @@ export const REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY =
 export const REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY =
   "lootlog.air-tag-scope-update.v1";
 
+export const REALTIME_SESSION_HELLO_CAPABILITY = "lootlog.session-hello.v1";
+
 export const REALTIME_JSON_SUBPROTOCOL = "lootlog.realtime.json.v1";
 
 // Browser-permitted application codes; reasons are deliberately static and contain no identity.
@@ -389,6 +391,10 @@ const OrganizationEvent = Schema.Struct({
 });
 
 export const ServerEvent = Schema.Union([
+  serverEvent(
+    "session.hello",
+    Schema.Struct({ connectionId: Schema.NonEmptyString }),
+  ),
   serverEvent(
     "session.joined",
     Schema.Struct({

@@ -46,11 +46,18 @@ const proofRequests: Request[] = [];
 
 const sockets: AppSocket[] = [];
 
-const createSocket = () => {
+const createSocket = (hello = true) => {
   const socket = new AppSocket();
   sockets.push(socket);
   socket.connect();
   wire.open();
+
+  if (hello)
+    wire.receive({
+      v: 1,
+      type: "session.hello",
+      data: { connectionId: "connection-1" },
+    });
 
   return socket;
 };
@@ -60,6 +67,7 @@ afterEach(() => {
   restorePlatform();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 import { AppSocket, type GameSessionJoinData } from "./socket";
@@ -225,20 +233,183 @@ describe("game realtime verification and presence selection", () => {
     );
   });
 
-  it("joins as reported before upgrading the session with a connection-bound proof", async () => {
+  it("joins once with a connection-bound proof", async () => {
     const socket = createSocket();
     await socket.join(joinData);
 
     expect(proofRequests).toHaveLength(1);
     expect(proofRequests[0]?.method).toBe("POST");
+    expect(mocks.join).toHaveBeenCalledTimes(1);
+    expect(mocks.join.mock.calls[0]?.[0]).toMatchObject({
+      margonemAccountProof: { signatureBase64: "signature" },
+    });
+  });
+
+  it("coalesces concurrent and repeated joins for the same character on one connection", async () => {
+    const socket = createSocket();
+    await Promise.all([socket.join(joinData), socket.join(joinData)]);
+    await socket.join(joinData);
+    expect(proofRequests).toHaveLength(1);
+    expect(mocks.join).toHaveBeenCalledOnce();
+  });
+
+  it("upgrades an older gateway session with its connection-bound proof without repeating local hydration", async () => {
+    vi.useFakeTimers();
+    const socket = createSocket(false);
+    const onJoin = vi.fn();
+    socket.on(GatewayEvent.JOIN, onJoin);
+    const joined = socket.join(joinData);
+    await vi.advanceTimersByTimeAsync(1_000);
+    await joined;
+    await socket.join(joinData);
+    expect(proofRequests).toHaveLength(1);
     expect(mocks.join).toHaveBeenCalledTimes(2);
     expect(mocks.join.mock.calls[0]?.[0]).not.toHaveProperty(
       "margonemAccountProof",
     );
     expect(mocks.join.mock.calls[1]?.[0]).toMatchObject({
-      margonemAccountProof: { signatureBase64: "signature" },
+      margonemAccountProof: {
+        characterId: "10",
+        token: expect.stringContaining("lootlog:connection-1:20:"),
+        signatureBase64: "signature",
+      },
+    });
+    expect(onJoin).toHaveBeenCalledOnce();
+  });
+
+  it.each(["dispose", "reconnect", "character"] as const)(
+    "does not upgrade an obsolete legacy session after %s while its proof is pending",
+    async (change) => {
+      vi.useFakeTimers();
+      const fetchProof = globalThis.fetch;
+      const response = Promise.withResolvers<void>();
+
+      const proofFetch = vi
+        .fn<typeof fetch>()
+        .mockImplementationOnce(async (...args) => {
+          await response.promise;
+
+          return fetchProof(...args);
+        })
+        .mockImplementation(fetchProof);
+
+      vi.stubGlobal("fetch", proofFetch);
+      const socket = createSocket(false);
+      const oldJoin = socket.join(joinData);
+      const oldOutcome = oldJoin.catch((error: Error) => error);
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(mocks.join).toHaveBeenCalledOnce();
+      expect(proofFetch).toHaveBeenCalledOnce();
+
+      if (change === "dispose") {
+        socket.dispose();
+      } else {
+        if (change === "reconnect") {
+          socket.disconnect();
+          socket.connect();
+          wire.open();
+          mocks.join.mockResolvedValue({
+            connectionId: "connection-2",
+            organizationIds: ["organization-1"],
+          });
+        }
+
+        const currentJoin = socket.join({
+          ...joinData,
+          characterId: change === "character" ? "11" : "10",
+        });
+
+        await vi.advanceTimersByTimeAsync(1_000);
+        await currentJoin;
+      }
+
+      response.resolve();
+      expect(await oldOutcome).toMatchObject({
+        message: expect.stringContaining("Realtime session changed"),
+      });
+
+      const verifiedJoins = mocks.join.mock.calls
+        .map(([data]) => data)
+        .filter((data) => data.margonemAccountProof);
+
+      const currentProof = expect.objectContaining({
+        characterId: change === "character" ? "11" : "10",
+        token: expect.stringContaining(
+          `lootlog:${change === "reconnect" ? "connection-2" : "connection-1"}:20:`,
+        ),
+      });
+
+      expect(verifiedJoins.map((data) => data.margonemAccountProof)).toEqual(
+        change === "dispose" ? [] : [currentProof],
+      );
+    },
+  );
+
+  it("abandons a pending account proof when the session is disposed", async () => {
+    const response = Promise.withResolvers<Response>();
+    vi.stubGlobal("fetch", () => response.promise);
+    const socket = createSocket();
+    const joined = socket.join(joinData);
+    const outcome = joined.catch((error: Error) => error);
+    await Promise.resolve();
+    socket.dispose();
+    response.resolve(new Response(null, { status: 503 }));
+    expect(await outcome).toMatchObject({
+      message: expect.stringContaining("Realtime session changed"),
+    });
+    expect(mocks.join).not.toHaveBeenCalled();
+  });
+
+  it("discards an old character proof before sending the replacement character join", async () => {
+    const response = Promise.withResolvers<Response>();
+
+    const proofFetch = vi
+      .fn<typeof fetch>()
+      .mockReturnValueOnce(response.promise)
+      .mockResolvedValueOnce(new Response(null, { status: 503 }));
+
+    vi.stubGlobal("fetch", proofFetch);
+    const socket = createSocket();
+    const oldJoin = socket.join(joinData);
+    const outcome = oldJoin.catch((error: Error) => error);
+    await vi.waitFor(() => expect(proofFetch).toHaveBeenCalledOnce());
+    const newJoin = socket.join({ ...joinData, characterId: "11" });
+    response.resolve(new Response(null, { status: 503 }));
+    expect(await outcome).toMatchObject({
+      message: expect.stringContaining("Realtime session changed"),
+    });
+    await newJoin;
+    expect(mocks.join).toHaveBeenCalledOnce();
+    expect(mocks.join.mock.calls[0]?.[0]).toMatchObject({
+      character: { characterId: "11" },
     });
   });
+
+  it.each([true, false])(
+    "keeps one reported join when the proof times out (hello: %s)",
+    async (hello) => {
+      vi.useFakeTimers();
+      vi.stubGlobal(
+        "fetch",
+        (_input: Parameters<typeof fetch>[0], init?: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => {
+            init?.signal?.addEventListener(
+              "abort",
+              () => reject(init.signal?.reason),
+              { once: true },
+            );
+          }),
+      );
+      const socket = createSocket(hello);
+      const joined = socket.join(joinData);
+      await vi.advanceTimersByTimeAsync(hello ? 5_000 : 6_000);
+      await joined;
+      expect(mocks.join).toHaveBeenCalledOnce();
+      expect(mocks.join.mock.calls[0]?.[0]).not.toHaveProperty(
+        "margonemAccountProof",
+      );
+    },
+  );
 
   it("sends battle pings only while joined to a gateway that advertises them", async () => {
     const socket = createSocket();
@@ -250,6 +421,14 @@ describe("game realtime verification and presence selection", () => {
       connectionId: "connection-1",
       organizationIds: ["organization-1"],
       capabilities: ["connection.ping", REALTIME_BATTLE_PING_CAPABILITY],
+    });
+    socket.disconnect();
+    socket.connect();
+    wire.open();
+    wire.receive({
+      v: 1,
+      type: "session.hello",
+      data: { connectionId: "connection-1" },
     });
     await socket.join(joinData);
     expect(socket.supportsBattlePings()).toBe(true);
@@ -264,6 +443,14 @@ describe("game realtime verification and presence selection", () => {
         REALTIME_BATTLE_PING_CAPABILITY,
         REALTIME_TEAM_BATTLE_PING_CAPABILITY,
       ],
+    });
+    socket.disconnect();
+    socket.connect();
+    wire.open();
+    wire.receive({
+      v: 1,
+      type: "session.hello",
+      data: { connectionId: "connection-1" },
     });
     await socket.join(joinData);
     expect(socket.supportsTeamBattlePings()).toBe(true);

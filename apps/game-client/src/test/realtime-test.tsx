@@ -19,6 +19,7 @@ import { disposeSocket, getSocket } from "@/lib/socket";
 import { queryClient } from "@/lib/query-client";
 import { RealtimeWire } from "@/test/realtime-wire";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import { useGameStore } from "@/store/game.store";
 import { useGlobalStore } from "@/store/global.store";
 import { useNotificationsStore } from "@/store/notifications.store";
 
@@ -135,7 +136,20 @@ export const createRealtimeTest = () => {
     });
   };
 
-  const open = () => act(() => wire.open());
+  const open = (connectionId = "connection-1") =>
+    act(() => {
+      wire.open();
+      wire.receive({ v: 1, type: "session.hello", data: { connectionId } });
+    });
+
+  const expectJoinRequest = (firstFrame: number) => {
+    if (
+      !wire.frames
+        .slice(firstFrame)
+        .some((frame) => "type" in frame && frame.type === "session.join")
+    )
+      throw new Error("Waiting for join request");
+  };
 
   const join = async (
     organizationIds = ["guild-1"],
@@ -143,15 +157,39 @@ export const createRealtimeTest = () => {
     capabilities?: string[],
   ) => {
     await act(async () => {
-      const joined = getSocket().join({
-        world: "luvia",
-        name: "Current Hero",
-        lvl: 300,
-        icon: "hero.gif",
-        characterId: "1",
-        accountId: "1",
-        prof: "w",
+      if (realtime.state === "ready") {
+        getSocket().disconnect();
+        getSocket().connect();
+        open();
+      }
+
+      if (!getSocket().connected) {
+        getSocket().connect();
+        open();
+      }
+
+      wire.receive({
+        v: 1,
+        type: "session.hello",
+        data: { connectionId: "connection-1" },
       });
+      const firstFrame = wire.frames.length;
+      const game = useGameStore.getState().game;
+
+      if (!game) throw new Error("Expected game character before join");
+
+      const joined = getSocket().join({
+        world: game.world,
+        name: game.hero.name,
+        lvl: game.hero.level,
+        icon: game.hero.icon,
+        characterId: game.hero.characterId,
+        accountId: game.hero.accountId,
+        prof: game.hero.profession,
+        clan: game.hero.clan,
+      });
+
+      await vi.waitFor(() => expectJoinRequest(firstFrame));
 
       const request = wire.frames.findLast(
         (frame) => "type" in frame && frame.type === "session.join",
@@ -164,7 +202,7 @@ export const createRealtimeTest = () => {
         requestId: request.requestId,
         status: "success",
         data: {
-          connectionId: "test",
+          connectionId: "connection-1",
           organizationIds,
           accessPolicy,
           capabilities,

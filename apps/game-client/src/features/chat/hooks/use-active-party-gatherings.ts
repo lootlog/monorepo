@@ -15,6 +15,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { partyReadyRoomControllerActive } from "@lootlog/client/main";
 import { useSocket } from "@/contexts/socket-context";
 import { GatewayEvent } from "@/config/gateway";
+import type { PermissionsUpdatedPayload } from "@/lib/socket";
 import { useGameStore } from "@/store/game.store";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { useSession } from "@/hooks/auth/use-session";
@@ -29,6 +30,14 @@ const RECONCILE_THROTTLE_MS = 500;
 const decodeGatherings = Schema.decodeUnknownSync(
   Schema.Array(PartyGatheringSummarySchema),
 );
+
+// Discovery follows chat read access, the organizer's send permission, and
+// administration; changes to other areas cannot alter the visible gatherings.
+const GATHERING_ACCESS_AREAS = new Set([
+  "chat",
+  "notifications",
+  "organization",
+]);
 
 export function useActivePartyGatherings() {
   const [now, setNow] = useState(Date.now);
@@ -79,9 +88,21 @@ export function useActivePartyGatherings() {
       edges: ["trailing"],
     });
 
-    const permissionsChanged = () => {
+    const permissionsChanged = ({ changes }: PermissionsUpdatedPayload) => {
+      const relevant = changes?.filter((change) =>
+        change.areas.some((area) => GATHERING_ACCESS_AREAS.has(area)),
+      );
+
+      if (relevant?.length === 0) return;
       reconcile.cancel();
-      void queryClient.resetQueries({ queryKey: ACTIVE_GATHERINGS_QUERY_KEY });
+
+      // Revoked access must hide rooms at once; a grant keeps the current bar
+      // visible while discovery adds the newly readable rooms.
+      if (relevant?.every((change) => !change.restricted)) invalidate();
+      else
+        void queryClient.resetQueries({
+          queryKey: ACTIVE_GATHERINGS_QUERY_KEY,
+        });
     };
 
     const events = [
@@ -91,6 +112,12 @@ export function useActivePartyGatherings() {
       GatewayEvent.PARTY_GATHERING_CANCEL,
     ];
 
+    // Gateways with live gathering state push every committed change, so only
+    // older gateways need the legacy signals to trigger discovery reads.
+    const legacyReconcile = () => {
+      if (!socket.supportsGatheringState) reconcile();
+    };
+
     const newGathering = (payload: {
       type?: string;
       isGatheringParty?: boolean;
@@ -99,7 +126,7 @@ export function useActivePartyGatherings() {
         payload.type === "PARTY_GATHERING" ||
         payload.isGatheringParty === true
       )
-        reconcile();
+        legacyReconcile();
     };
 
     const gatheringUpdated = (update: PartyGatheringClientUpdate) => {
@@ -110,28 +137,22 @@ export function useActivePartyGatherings() {
       );
     };
 
-    // Older gateways still send only the personal projection. Reconcile those
-    // legacy updates, but do not refetch for roster pushes on the new protocol.
-    const personalRoomUpdated = () => {
-      if (!socket.supportsGatheringState) reconcile();
-    };
-
     socket.on(GatewayEvent.PARTY_GATHERING_STATE_UPDATE, gatheringUpdated);
-    socket.on(GatewayEvent.PARTY_READY_ROOM_UPDATE, personalRoomUpdated);
+    socket.on(GatewayEvent.PARTY_READY_ROOM_UPDATE, legacyReconcile);
     socket.on(GatewayEvent.NOTIFICATION, newGathering);
     socket.on(GatewayEvent.CHAT_MESSAGE, newGathering);
 
-    for (const event of events) socket.on(event, reconcile);
+    for (const event of events) socket.on(event, legacyReconcile);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
 
     return () => {
       reconcile.cancel();
       socket.off(GatewayEvent.PARTY_GATHERING_STATE_UPDATE, gatheringUpdated);
-      socket.off(GatewayEvent.PARTY_READY_ROOM_UPDATE, personalRoomUpdated);
+      socket.off(GatewayEvent.PARTY_READY_ROOM_UPDATE, legacyReconcile);
       socket.off(GatewayEvent.NOTIFICATION, newGathering);
       socket.off(GatewayEvent.CHAT_MESSAGE, newGathering);
 
-      for (const event of events) socket.off(event, reconcile);
+      for (const event of events) socket.off(event, legacyReconcile);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
     };
   }, [connected, joined, socket, queryClient, userId, world]);

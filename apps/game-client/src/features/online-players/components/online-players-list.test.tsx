@@ -427,7 +427,10 @@ describe("OnlinePlayersList", () => {
     useSettingsStore.setState({
       guildIdByCharId: { "": "guild-1", "10": "guild-1" },
     });
-    await render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
+    // The gateway session requires a character, so the list renders unjoined.
+    renderUi(<OnlinePlayersList viewMode="accounts" filtersVisible />, {
+      wrapper: harness.wrapper,
+    });
     fireEvent.change(screen.getByLabelText("Poziom od"), {
       target: { value: "80" },
     });

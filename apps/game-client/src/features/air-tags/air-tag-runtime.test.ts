@@ -3,17 +3,11 @@ import { createAirTagTest } from "./air-tag-test";
 import { airTagReceiveController } from "./air-tag-receive-controller";
 
 describe("AirTagRuntime", () => {
-  it("publishes presence before subscribing to the current map", async () => {
+  it("subscribes to the current map without republishing session presence", async () => {
     const test = createAirTagTest();
     onTestFinished(() => test.runtime.shutdown());
     test.runtime.configure({ connected: true, enabled: true, joined: true });
     expect(test.wire.frames).toEqual([
-      expect.objectContaining({
-        type: "presence.publish",
-        data: expect.objectContaining({
-          location: expect.objectContaining({ mapId: 12, map: "Torneg" }),
-        }),
-      }),
       expect.objectContaining({
         type: "air-tag.subscription",
         data: expect.objectContaining({ enabled: true, expectedMapId: 12 }),

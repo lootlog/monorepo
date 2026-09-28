@@ -28,6 +28,8 @@ import {
   type ChatMentionContext,
 } from "@/features/chat/chat-mentions.helpers";
 import type { AsyncResourceState } from "@/types/async-resource-state";
+import { applyCurrentChatAccess } from "../chat-access-policy";
+import { useRealtimeSnapshotReady } from "@/contexts/socket-context";
 
 type UseChatGuildDataOptions = {
   currentCharacterNick: string;
@@ -142,6 +144,7 @@ export const useChatGuildData = ({
   selectedGuildId,
 }: UseChatGuildDataOptions) => {
   const queryClient = useQueryClient();
+  const snapshotReady = useRealtimeSnapshotReady();
   const guildIds = getGuildIds(guilds);
   const guildIdsToLoad = getGuildIdsToLoad(guildIds, selectedGuildId);
 
@@ -165,13 +168,16 @@ export const useChatGuildData = ({
           const cachedMessagesAfterRequest =
             queryClient.getQueryData<ChatMessageType[]>(queryKey);
 
-          return reconcileChatMessageRefetch({
-            cachedMessagesAfterRequest,
-            cachedMessagesBeforeRequest,
-            serverMessages,
-          });
+          return applyCurrentChatAccess(
+            queryClient,
+            reconcileChatMessageRefetch({
+              cachedMessagesAfterRequest,
+              cachedMessagesBeforeRequest,
+              serverMessages,
+            }),
+          );
         },
-        enabled: Boolean(guildId),
+        enabled: Boolean(guildId) && snapshotReady,
         gcTime: CHAT_QUERY_GC_TIME_MS,
         staleTime: 5 * 60 * 1000,
       };
