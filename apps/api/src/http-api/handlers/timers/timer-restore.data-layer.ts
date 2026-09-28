@@ -1,6 +1,7 @@
 import { pruneTimerHistory } from "./timer-history-retention.js";
 import { canViewTimer, findActiveTimerEventHeroes } from "./timer-selection.js";
 import {
+  getTimerHistoryValues,
   getTimerRestoreSnapshot,
   getTimerResetRollbackSnapshot,
   getTimerHistorySnapshot,
@@ -233,22 +234,12 @@ export const makeRestoreTimer = (
             new TimersInvariantViolation({ code: "HISTORY_ACTOR_NOT_FOUND" }),
           );
         yield* transaction.insert(timerHistoryEntryTable).values({
+          ...getTimerHistoryValues(restored),
           guildId: access.guild.id,
           world: entry.world,
           timerKey: entry.timerKey,
-          npcId: restored.npcId,
-          npc: restored.npc,
           action: TimerHistoryAction.RESTORE,
           actorMemberId: actor.id,
-          minSpawnTime: restored.minSpawnTime,
-          maxSpawnTime: restored.maxSpawnTime,
-          latestRespBaseSeconds: restored.latestRespBaseSeconds,
-          latestRespawnRandomness: restored.latestRespawnRandomness,
-          wasReset: restored.wasReset,
-          windowOpenedAt: restored.windowOpenedAt,
-          timerCreatedById: restored.createdById,
-          timerActorCharacterSnapshotId: restored.actorCharacterSnapshotId,
-          timerActorCharacterLvl: restored.actorCharacterLvl,
         });
 
         yield* pruneTimerHistory(

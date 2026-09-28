@@ -15,6 +15,7 @@ const createGame = (overrides?: {
       maxHp: 100,
       name: "Hero",
       profession: "w",
+      stasis: false,
       x: 10,
       y: 20,
       ...overrides?.hero,

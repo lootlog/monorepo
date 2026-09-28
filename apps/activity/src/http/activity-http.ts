@@ -10,134 +10,94 @@ import {
   httpServerMetrics,
   httpServerRouteMetrics,
 } from "@lootlog/instrumentation";
-import { PgClient } from "@effect/sql-pg";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Permission,
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
-import { Context, Effect, Function, Layer, Schema } from "effect";
-import { statfs } from "node:fs/promises";
+import {
+  Context,
+  Effect,
+  Fiber,
+  Function,
+  Layer,
+  Option,
+  Schema,
+  Semaphore,
+} from "effect";
 import {
   HttpRouter,
   HttpServerRequest,
   HttpServerResponse,
 } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { SqlClient } from "effect/unstable/sql";
 import { ActivityRepository } from "#src/activities/activity-repository";
 import { ActivityConfig } from "#src/config/activity-config";
-import { ApiHttpClient } from "#src/http/api-http-client";
 import { ActivityApi } from "#src/http-api/activity-api";
+import type {
+  ReadyzControllerCheck200,
+  ReadyzControllerCheck503,
+} from "#src/http-api/contracts/health/schemas";
 import { BearerSecurityMiddleware } from "#src/http-api/contracts/shared";
 import type { ActivitiesControllerFindByGuildQuery } from "#src/http-api/contracts/guilds/schemas";
 import { Permissions } from "#src/activities/activity-permissions";
 
-type HealthEntry = {
-  readonly status: "up" | "down";
-  readonly message?: string;
-};
-
-export interface ActivityHealthValue {
-  readonly check: () => Effect.Effect<{
-    readonly status: "ok" | "error";
-    readonly info: Record<string, HealthEntry> | null;
-    readonly error: Record<string, HealthEntry> | null;
-    readonly details: Record<string, HealthEntry>;
-  }>;
+export interface ActivityReadinessValue {
+  readonly check: () => Effect.Effect<
+    ReadyzControllerCheck200 | ReadyzControllerCheck503
+  >;
 }
 
-export class ActivityHealth extends Context.Service<
-  ActivityHealth,
-  ActivityHealthValue
->()("@lootlog/activity/ActivityHealth") {
+export class ActivityReadiness extends Context.Service<
+  ActivityReadiness,
+  ActivityReadinessValue
+>()("@lootlog/activity/ActivityReadiness") {
   static readonly layer = Layer.effect(
-    ActivityHealth,
+    ActivityReadiness,
     Effect.gen(function* () {
-      const sql = yield* PgClient.PgClient;
-      const config = yield* ActivityConfig;
-      const apiHttpClient = yield* ApiHttpClient;
+      const sql = yield* SqlClient.SqlClient;
 
-      const checkOne = (name: string, check: () => Promise<boolean>) =>
-        Effect.tryPromise({ try: check, catch: (cause) => cause }).pipe(
-          Effect.timeout("3 seconds"),
-          Effect.catch(() => Effect.succeed(false)),
-          Effect.map(
-            (up) =>
-              [
-                name,
-                { status: up ? "up" : "down" } satisfies HealthEntry,
-              ] as const,
-          ),
-          Effect.withSpan(`health.${name}`, {
-            attributes: { adapter: name, retryCount: 0 },
-          }),
-        );
+      const scope = yield* Effect.scope;
+      const semaphore = yield* Semaphore.make(1);
 
-      const check = Effect.fn("HealthzController_check")(function* () {
-        const memory = process.memoryUsage();
+      // Drizzle's SELECT builder requires FROM; this probe must not depend on a table.
+      const probe = sql`SELECT 1`.pipe(
+        semaphore.withPermitsIfAvailable(1),
+        Effect.map(Option.isSome),
+      );
 
-        const entries = yield* Effect.all(
-          [
-            sql`SELECT 1`.pipe(
-              Effect.as(["database", { status: "up" }] as const),
-              Effect.catch(() =>
-                Effect.succeed(["database", { status: "down" }] as const),
-              ),
+      const check = () =>
+        Effect.acquireUseRelease(
+          Effect.forkIn(probe, scope),
+          (fiber) => Fiber.join(fiber).pipe(Effect.timeout("3 seconds")),
+          // PostgreSQL cancellation can outlast the response deadline. Keep its
+          // permit until cleanup finishes so subsequent probes cannot pile up.
+          (fiber) =>
+            Fiber.interrupt(fiber).pipe(
+              Effect.forkIn(scope, { startImmediately: true }),
+              Effect.asVoid,
             ),
-            apiHttpClient
-              .get(
-                "HealthzController_check.api-service",
-                new URL("/healthz", config.apiServiceUrl),
-              )
-              .pipe(
-                Effect.map(({ status }) => status >= 200 && status < 300),
-                Effect.catch(() => Effect.succeed(false)),
-                Effect.map(
-                  (up) =>
-                    [
-                      "api-service",
-                      { status: up ? "up" : "down" } satisfies HealthEntry,
-                    ] as const,
-                ),
-              ),
-            Effect.succeed([
-              "memory_heap",
-              { status: memory.heapUsed <= 150 * 1024 * 1024 ? "up" : "down" },
-            ] as const),
-            Effect.succeed([
-              "memory_rss",
-              { status: memory.rss <= 400 * 1024 * 1024 ? "up" : "down" },
-            ] as const),
-            checkOne("storage", async () => {
-              const stats = await statfs("/");
-
-              return 1 - Number(stats.bavail) / Number(stats.blocks) <= 0.9;
-            }),
-          ],
-          { concurrency: "unbounded" },
+        ).pipe(
+          Effect.catch(() => Effect.succeed(false)),
+          Effect.map((up) =>
+            up
+              ? {
+                  status: "ok" as const,
+                  info: { database: { status: "up" as const } },
+                  error: null,
+                  details: { database: { status: "up" as const } },
+                }
+              : {
+                  status: "error" as const,
+                  info: null,
+                  error: { database: { status: "down" as const } },
+                  details: { database: { status: "down" as const } },
+                },
+          ),
         );
 
-        const details = Object.fromEntries(entries);
-
-        const error = Object.fromEntries(
-          entries.filter(([, entry]) => entry.status === "down"),
-        );
-
-        const info = Object.fromEntries(
-          entries.filter(([, entry]) => entry.status === "up"),
-        );
-
-        return Object.keys(error).length === 0
-          ? { status: "ok" as const, info, error: null, details }
-          : {
-              status: "error" as const,
-              info: Object.keys(info).length > 0 ? info : null,
-              error,
-              details,
-            };
-      });
-
-      return ActivityHealth.of({ check });
+      return ActivityReadiness.of({ check });
     }),
   );
 }
@@ -261,16 +221,27 @@ const ActivityHandlers = Layer.mergeAll(
     ),
   ),
   HttpApiBuilder.group(ActivityApi, "health", (handlers) =>
-    handlers.handleRaw("HealthzControllerCheck", () =>
-      Effect.map(ActivityHealth, (health) => health.check()).pipe(
-        Effect.flatten,
-        Effect.map((result) =>
-          HttpServerResponse.jsonUnsafe(result, {
-            status: result.status === "ok" ? 200 : 503,
+    handlers
+      .handleRaw("HealthzControllerCheck", () =>
+        Effect.succeed(
+          HttpServerResponse.jsonUnsafe({
+            status: "ok",
+            info: { process: { status: "up" } },
+            error: null,
+            details: { process: { status: "up" } },
           }),
         ),
+      )
+      .handleRaw("ReadyzControllerCheck", () =>
+        Effect.gen(function* () {
+          const readiness = yield* ActivityReadiness;
+          const result = yield* readiness.check();
+
+          return HttpServerResponse.jsonUnsafe(result, {
+            status: result.status === "ok" ? 200 : 503,
+          });
+        }),
       ),
-    ),
   ),
   HttpApiBuilder.group(ActivityApi, "guilds", (handlers) =>
     handlers

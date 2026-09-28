@@ -1,4 +1,7 @@
-import { emptyStatusResponse } from "#src/shared/http/handler-response";
+import {
+  emptyStatusResponse,
+  reauthenticationRequiredResponse,
+} from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { Context, Effect, Layer, Schema } from "effect";
@@ -17,6 +20,7 @@ import {
   type CreateMapTemplate,
 } from "#src/map-templates/map-template.schema";
 import { LootlogApi } from "../../lootlog-api.js";
+import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 
 type StoredMapTemplate = {
   readonly id: string;
@@ -55,7 +59,10 @@ export class MapTemplatesAuthorization extends Context.Service<
     readonly requireCapability: (options: {
       readonly guildId: string;
       readonly capability: PermissionValue;
-    }) => Effect.Effect<{ readonly guildId: string }, MapTemplatesAccessDenied>;
+    }) => Effect.Effect<
+      { readonly guildId: string },
+      MapTemplatesAccessDenied | ReauthenticationRequired
+    >;
   }
 >()("@lootlog/api/http-api/map-templates/authorization") {}
 
@@ -232,7 +239,8 @@ export const deleteMapTemplate = Effect.fn("deleteMapTemplate")(function* (
 type MapTemplatesHttpFailure =
   | MapTemplateNotFound
   | MapTemplatesAccessDenied
-  | MapTemplatesPersistenceError;
+  | MapTemplatesPersistenceError
+  | ReauthenticationRequired;
 
 const toHttpResponse = <A, R>(
   effect: Effect.Effect<A, MapTemplatesHttpFailure, R>,
@@ -240,6 +248,7 @@ const toHttpResponse = <A, R>(
   Effect.catchTags(effect, {
     MapTemplateNotFound: emptyStatusResponse,
     MapTemplatesAccessDenied: emptyStatusResponse,
+    ReauthenticationRequired: reauthenticationRequiredResponse,
     MapTemplatesPersistenceError: (error) => Effect.die(error.cause),
   });
 
