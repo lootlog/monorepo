@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import {
   RealtimeClient,
   type BasicPresence,
@@ -242,3 +242,41 @@ it("treats the first access policy as the page's baseline and reports later revo
     expect.objectContaining({ accessPolicyChanges: undefined }),
   );
 });
+
+it.each([
+  { joins: 1, delay: 200, recover: false },
+  { joins: 1, delay: 5_000, recover: true },
+  { joins: 2, delay: 200, recover: true },
+])(
+  "asks listeners to recover after join $joins arriving $delay ms after connecting: $recover",
+  ({ joins, delay, recover }) => {
+    vi.useFakeTimers();
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
+    vi.spyOn(RealtimeClient.prototype, "connect").mockReturnValue(undefined);
+    vi.spyOn(RealtimeClient.prototype, "request").mockResolvedValue(undefined);
+    const subscribe = vi.spyOn(RealtimeClient.prototype, "subscribe");
+    const client = new GatewayClient();
+    const deliver = subscribe.mock.calls[0]?.[0];
+    const handler = vi.fn();
+    client.on(GatewayEvent.JOIN, handler);
+    client.connect();
+    vi.advanceTimersByTime(delay);
+
+    for (let join = 0; join < joins; join++)
+      deliver?.({
+        v: 1,
+        type: "session.joined",
+        data: {
+          connectionId: "connection-1",
+          organizationIds: ["organization-1"],
+          subscriptionScopes: [],
+        },
+      });
+
+    expect(handler).toHaveBeenLastCalledWith(
+      expect.objectContaining({ recover }),
+    );
+  },
+);

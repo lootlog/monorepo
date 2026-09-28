@@ -113,6 +113,10 @@ const serverEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
   "event.respawn-window-closed": GatewayEvent.EVENT_RESPAWN_WINDOW_CLOSED,
 };
 
+// Production joins complete 150–250 ms after the first connect. A slower first
+// join may follow events that the page's initial HTTP reads could not include.
+const FRESH_JOIN_WINDOW_MS = 2_000;
+
 export class GatewayClient {
   private readonly readable =
     import.meta.env.VITE_GATEWAY_FRAME_ENCODING === "json";
@@ -130,6 +134,8 @@ export class GatewayClient {
   private wasConnected = false;
   private accessPolicy: AccessPolicySnapshot | undefined;
   private hasAccessPolicyBaseline = false;
+  private hasJoined = false;
+  private firstConnectAt: number | undefined;
 
   constructor() {
     // GatewayProvider owns joins after current user and Organization data are ready.
@@ -152,6 +158,7 @@ export class GatewayClient {
   }
 
   connect(): void {
+    this.firstConnectAt ??= Date.now();
     this.realtime.connect();
   }
 
@@ -225,6 +232,15 @@ export class GatewayClient {
 
   private handleServerEvent(event: ServerEvent): void {
     if (event.type === "session.joined") {
+      // Listeners recover missed events unless this join subscribed right
+      // after the page's initial HTTP reads.
+      const recover =
+        this.hasJoined ||
+        this.firstConnectAt === undefined ||
+        Date.now() - this.firstConnectAt > FRESH_JOIN_WINDOW_MS;
+
+      this.hasJoined = true;
+
       const accessPolicyChanges = this.updateAccessPolicy(
         event.data.accessPolicy,
       );
@@ -243,6 +259,7 @@ export class GatewayClient {
         guildsCount: event.data.organizationIds.length,
         guildIds: [...event.data.organizationIds],
         accessPolicyChanges,
+        recover,
       });
 
       return;
