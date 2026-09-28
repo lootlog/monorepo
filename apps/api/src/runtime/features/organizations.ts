@@ -77,7 +77,10 @@ export const guildDiscordSyncLive = Layer.effect(
 );
 
 export const organizationContextLookup = Layer.unwrap(
-  Effect.map(ApiRedis, (redis) => {
+  Effect.gen(function* () {
+    const redis = yield* ApiRedis;
+    const { refresh } = yield* MemberServices;
+
     const attempt = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({ try: operation, catch: (error) => error });
 
@@ -85,9 +88,14 @@ export const organizationContextLookup = Layer.unwrap(
       get: (key) => attempt(() => redis.get(key)),
       set: (key, value, ttl) => attempt(() => redis.set(key, value, ttl)),
       del: (key) => attempt(() => redis.del(key)),
+      setIfAbsent: (key, value, ttl) =>
+        attempt(() => redis.setNX(key, value, ttl)),
     };
 
-    return OrganizationContextLookup.layerDatabase(cache);
+    return OrganizationContextLookup.layerDatabase(
+      cache,
+      refresh.queueMemberRefresh,
+    );
   }),
 ).pipe(Layer.provide(membersData));
 
