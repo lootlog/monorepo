@@ -3,6 +3,7 @@ import { and, asc, desc, eq, isNotNull, or } from "drizzle-orm";
 import { Effect, Layer, Schema } from "effect";
 import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import { Permission } from "@lootlog/schema/permissions";
+import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
@@ -116,7 +117,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
                       name,
                       avatar,
                       active,
-                      color: roles[0]?.color ?? null,
+                      color: getMemberDisplayRole(roles)?.color ?? null,
                     }),
                   ),
                 ),
@@ -162,7 +163,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
                     userId,
                     name,
                     avatar,
-                    color: roles[0]?.color ?? null,
+                    color: getMemberDisplayRole(roles)?.color ?? null,
                   }));
               }),
             ),
