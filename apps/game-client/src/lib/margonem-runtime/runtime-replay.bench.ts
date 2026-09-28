@@ -107,6 +107,7 @@ const game = Object.freeze({
     maxHp: 1,
     name: "Hero",
     profession: "w",
+    stasis: false,
     x: 1,
     y: 1,
   }),

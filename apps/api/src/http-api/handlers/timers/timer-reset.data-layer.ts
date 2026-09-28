@@ -1,3 +1,4 @@
+import { getTimerHistoryValues } from "./timer-restore-snapshot.js";
 import { pruneTimerHistory } from "./timer-history-retention.js";
 import {
   canViewTimer,
@@ -201,24 +202,16 @@ export const makeResetTimer = (
 
           if (!manual) {
             yield* transaction.insert(timerHistoryEntryTable).values({
+              ...getTimerHistoryValues(updated),
               guildId: access.guild.id,
               world: payload.world,
               timerKey: updated.timerKey,
-              npcId: updated.npcId,
-              npc: updated.npc,
               action: TimerHistoryAction.RESET,
               actorMemberId: member.id,
               actorCharacterSnapshotId: actorCharacter?.id,
               actorCharacterLvl: actor?.lvl,
               minSpawnTime,
               maxSpawnTime,
-              latestRespBaseSeconds: updated.latestRespBaseSeconds,
-              latestRespawnRandomness: updated.latestRespawnRandomness,
-              wasReset: updated.wasReset,
-              windowOpenedAt: updated.windowOpenedAt,
-              timerCreatedById: updated.createdById,
-              timerActorCharacterSnapshotId: updated.actorCharacterSnapshotId,
-              timerActorCharacterLvl: updated.actorCharacterLvl,
             });
 
             yield* pruneTimerHistory(
