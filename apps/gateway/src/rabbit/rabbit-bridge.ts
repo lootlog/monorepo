@@ -616,16 +616,17 @@ export class RabbitBridge {
         new Error("Gathering state federation rollout is incomplete"),
       );
 
-    let clientUpdate = update;
-
-    if (update.type === "UPSERT") {
-      const { organizerDiscordId: _, ...gathering } = update.gathering;
-
-      clientUpdate = {
-        type: "UPSERT",
-        gathering: { ...gathering, npc: data.npc, guildIds: [data.guildId] },
-      };
-    }
+    const clientUpdate: typeof update =
+      update.type === "UPSERT"
+        ? {
+            type: "UPSERT",
+            gathering: {
+              ...update.gathering,
+              npc: data.npc,
+              guildIds: [data.guildId],
+            },
+          }
+        : update;
 
     return Effect.tryPromise({
       try: () =>
