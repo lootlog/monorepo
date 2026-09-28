@@ -363,26 +363,20 @@ export const makeLootQueryPersistence = (
             commentCounts,
             mapPlayers,
           ]) => {
-            const byLoot = <Value extends { lootId: number }>(
-              values: ReadonlyArray<Value>,
-            ) => {
-              const result = new Map<number, Value[]>();
+            const itemsByLoot = Map.groupBy(items, ({ lootId }) => lootId);
+            const playersByLoot = Map.groupBy(players, ({ lootId }) => lootId);
 
-              for (const value of values) {
-                const group = result.get(value.lootId);
+            const mapPlayersByLoot = Map.groupBy(
+              mapPlayers,
+              ({ lootId }) => lootId,
+            );
 
-                if (group) group.push(value);
-                else result.set(value.lootId, [value]);
-              }
+            const npcsByLoot = Map.groupBy(npcs, ({ lootId }) => lootId);
 
-              return result;
-            };
-
-            const itemsByLoot = byLoot(items);
-            const playersByLoot = byLoot(players);
-            const mapPlayersByLoot = byLoot(mapPlayers);
-            const npcsByLoot = byLoot(npcs);
-            const submissionsByLoot = byLoot(submissions);
+            const submissionsByLoot = Map.groupBy(
+              submissions,
+              ({ lootId }) => lootId,
+            );
 
             const commentsByLoot = new Map(
               commentCounts.map(
