@@ -55,6 +55,8 @@ describe("Discord guild lifecycle against migrated PostgreSQL", () => {
         const db = yield* ApiDatabase;
 
         const lifecycle = makeGuildLifecycle(db, {
+          invalidateUserGuildPermissions: () => Effect.void,
+          publishMemberPolicyChanged: () => Effect.void,
           clearCacheKey: (key) => Effect.sync(() => clearedKeys.push(key)),
           clearCachePattern: (pattern) =>
             Effect.sync(() => clearedPatterns.push(pattern)),

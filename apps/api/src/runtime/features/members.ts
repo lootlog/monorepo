@@ -40,6 +40,7 @@ import {
   getMemberReadCacheScope,
   getPermissionsCacheKey,
   getUserLootlogConfigCacheScope,
+  getUserGuildPermissionsCacheScope,
 } from "#src/shared/cache";
 import { applicationLogger } from "#src/shared/application-logger";
 import { RabbitMessaging } from "@lootlog/messaging";
@@ -163,6 +164,7 @@ export const memberServicesLive = Layer.effect(
                 adapter(() =>
                   redis.invalidateScopes(
                     getUserLootlogConfigCacheScope(member.discordId),
+                    getUserGuildPermissionsCacheScope(member.discordId),
                   ),
                 ),
                 adapter(() =>
@@ -242,6 +244,22 @@ export const memberServicesLive = Layer.effect(
             invalidateMember: ({ discordId, guildId, userId }) =>
               Effect.all(
                 [
+                  adapter(() =>
+                    redis.del(getPermissionsCacheKey(userId, guildId)),
+                  ),
+                  adapter(() =>
+                    redis.invalidateScopes(
+                      getUserLootlogConfigCacheScope(discordId),
+                      getUserGuildPermissionsCacheScope(discordId),
+                    ),
+                  ),
+                  adapter(() =>
+                    redis.invalidateScopes(getMemberReadCacheScope(guildId)),
+                  ),
+                ],
+                { concurrency: "unbounded", discard: true },
+              ).pipe(
+                Effect.andThen(
                   rabbit.publish({
                     exchange: "default",
                     routingKey: RabbitRoutingKey.GUILDS_MEMBERS_UPDATE,
@@ -254,19 +272,7 @@ export const memberServicesLive = Layer.effect(
                       }),
                     ),
                   }),
-                  adapter(() =>
-                    redis.del(getPermissionsCacheKey(userId, guildId)),
-                  ),
-                  adapter(() =>
-                    redis.invalidateScopes(
-                      getUserLootlogConfigCacheScope(discordId),
-                    ),
-                  ),
-                  adapter(() =>
-                    redis.invalidateScopes(getMemberReadCacheScope(guildId)),
-                  ),
-                ],
-                { concurrency: "unbounded", discard: true },
+                ),
               ),
           },
         );
@@ -375,6 +381,7 @@ export const membersData = Layer.unwrap(
               promise(() =>
                 redis.invalidateScopes(
                   getUserLootlogConfigCacheScope(discordId),
+                  getUserGuildPermissionsCacheScope(discordId),
                 ),
               ),
               promise(() =>

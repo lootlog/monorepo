@@ -876,6 +876,54 @@ const normalizeLegacyKillHistoryDeprecation = (
   return withoutDeprecation;
 };
 
+const normalizeInternalPermissionFreshness = (
+  service: string,
+  operationKey: string,
+  operation: JsonValue,
+): JsonValue => {
+  // Verified by Gateway's permission-revocation.test.ts through API HTTP decoding:
+  // reconciliation opts out of the aggregate cache without changing ordinary reads.
+  if (
+    service !== "api" ||
+    operationKey !== "GET /internal/guilds/user-permissions"
+  )
+    return operation;
+
+  const expectedParameters: JsonValue[] = [
+    {
+      name: "discordId",
+      in: "query",
+      required: true,
+      schema: { type: "string" },
+    },
+    {
+      name: "userId",
+      in: "query",
+      required: true,
+      schema: { type: "string" },
+    },
+    {
+      name: "freshness",
+      in: "query",
+      required: false,
+      schema: { type: "string", enum: ["required"] },
+    },
+  ];
+
+  if (
+    !isJsonObject(operation) ||
+    JSON.stringify(
+      normalizeOpenApiRepresentation(operation.parameters ?? null),
+    ) !== JSON.stringify(normalizeOpenApiRepresentation(expectedParameters))
+  ) {
+    throw new Error(
+      `${operationKey} must retain its optional required-freshness query`,
+    );
+  }
+
+  return { ...operation, parameters: expectedParameters.slice(0, 2) };
+};
+
 export const normalizeAllowedChanges = (
   service: string,
   operationKey: string,
@@ -910,6 +958,12 @@ export const normalizeAllowedChanges = (
       normalized = removeResponseStatus(normalized, status);
     }
   }
+
+  normalized = normalizeInternalPermissionFreshness(
+    service,
+    operationKey,
+    normalized,
+  );
 
   if (service === "api" && operationKey === "GET /guilds/@me/manageable") {
     normalized = normalizeManageableOrganizationResponse(normalized, schemas);

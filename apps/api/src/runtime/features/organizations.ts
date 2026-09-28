@@ -1,4 +1,5 @@
 import { isObjectRecord } from "@lootlog/schema/records";
+import { getUserGuildPermissionsCacheScope } from "#src/shared/cache";
 import { makeJsonCodec } from "#src/redis/redis.service";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { makeDiscordBotClient } from "#src/discord-bot-client/discord-bot-client";
@@ -174,18 +175,10 @@ export const accountOrganizationOperationsLive = Layer.effect(
       ({ userId, discordId }) => discord.getUserGuilds(userId, discordId),
     );
 
-    const getUserGuildsWithPermissions = makeUserGuildPermissions(database, {
-      getJson: (key, schema) =>
-        Effect.tryPromise({
-          try: () => redis.getJson(key, makeJsonCodec(schema)),
-          catch: (error) => error,
-        }),
-      setJson: (key, value, ttl) =>
-        Effect.tryPromise({
-          try: () => redis.setJson(key, value, ttl),
-          catch: (error) => error,
-        }),
-    });
+    const getUserGuildsWithPermissions = makeUserGuildPermissions(
+      database,
+      redis,
+    );
 
     const getCurrentUserAccessibleGuilds = makeAccessibleGuilds(
       database,
@@ -285,12 +278,9 @@ export const internalGuildsData = Layer.unwrap(
 
     const cache: InternalGuildsCache = {
       get: (key) => cacheOperation(() => redis.get(key)),
-      getJson: (key, schema) =>
-        cacheOperation(() => redis.getJson(key, makeJsonCodec(schema))),
+      getOrSetJsonEffect: (options) => redis.getOrSetJsonEffect(options),
       set: (key, value, ttl) =>
         cacheOperation(() => redis.set(key, value, ttl)),
-      setJson: (key, value, ttl) =>
-        cacheOperation(() => redis.setJson(key, value, ttl)),
       del: (key) => cacheOperation(() => redis.del(key)).pipe(Effect.asVoid),
     };
 
@@ -305,6 +295,15 @@ export const rolesData = Layer.unwrap(
 
     return RolesData.layerDatabase(
       {
+        invalidateUserGuildPermissions: (discordId) =>
+          Effect.tryPromise({
+            try: () =>
+              redis.invalidateScopes(
+                getUserGuildPermissionsCacheScope(discordId),
+              ),
+            catch: (cause) =>
+              new OrganizationWorkspaceOperationError({ cause }),
+          }),
         deleteByPattern: (pattern) =>
           Effect.tryPromise({
             try: () => redis.deleteByPattern(pattern),

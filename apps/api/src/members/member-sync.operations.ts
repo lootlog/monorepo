@@ -67,7 +67,7 @@ export const makeMemberSync = (
         attemptedAt: new Date(yield* Clock.currentTimeMillis),
       });
 
-      if (options.deactivate && existing.active) {
+      if (options.deactivate) {
         yield* removal.notifyMemberRemoved({
           discordId: options.discordId,
           guildId: options.guildId,

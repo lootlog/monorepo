@@ -1,5 +1,5 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, eq, inArray, isNotNull, notInArray } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, notInArray, or } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { chunk } from "es-toolkit";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
@@ -40,9 +40,8 @@ export const makeMemberRemoval = (
     );
 
   const notifyMemberRemoved = (member: MemberRemovalNotificationTarget) =>
-    Effect.all(
-      [
-        ports.clearMemberCaches(member),
+    ports.clearMemberCaches(member).pipe(
+      Effect.andThen(
         member.globalUserId
           ? ports.publishMemberRemoved({
               discordId: member.discordId,
@@ -50,8 +49,7 @@ export const makeMemberRemoval = (
               globalUserId: member.globalUserId,
             })
           : Effect.void,
-      ],
-      { concurrency: "unbounded", discard: true },
+      ),
     );
 
   const notifyMembersRemoved = (
@@ -80,7 +78,10 @@ export const makeMemberRemoval = (
           and(
             eq(memberTable.userId, options.discordId),
             eq(memberTable.globalUserId, options.userId),
-            eq(memberTable.active, true),
+            or(
+              eq(memberTable.active, true),
+              eq(memberTable.lastDiscordStatus, options.status),
+            ),
             isNotNull(memberTable.globalUserId),
             options.activeDiscordGuildIds.length > 0
               ? notInArray(memberTable.guildId, [
@@ -92,27 +93,30 @@ export const makeMemberRemoval = (
     );
 
     if (missing.length === 0) return 0;
-    const ids = missing.map(({ id }) => id);
+    // The persisted reason retains targets for retry after invalidation or delivery fails.
+    const ids = missing.filter(({ active }) => active).map(({ id }) => id);
     const now = new Date(yield* Clock.currentTimeMillis);
-    yield* operation(
-      "members.deactivateMissing.transaction",
-      database.transaction((transaction) =>
-        Effect.gen(function* () {
-          yield* transaction
-            .update(memberTable)
-            .set({
-              active: false,
-              lastDiscordAttemptAt: now,
-              lastDiscordStatus: options.status,
-              updatedAt: now,
-            })
-            .where(inArray(memberTable.id, ids));
-          yield* transaction
-            .delete(memberToRoleTable)
-            .where(inArray(memberToRoleTable.A, ids));
-        }),
-      ),
-    );
+
+    if (ids.length > 0)
+      yield* operation(
+        "members.deactivateMissing.transaction",
+        database.transaction((transaction) =>
+          Effect.gen(function* () {
+            yield* transaction
+              .update(memberTable)
+              .set({
+                active: false,
+                lastDiscordAttemptAt: now,
+                lastDiscordStatus: options.status,
+                updatedAt: now,
+              })
+              .where(inArray(memberTable.id, ids));
+            yield* transaction
+              .delete(memberToRoleTable)
+              .where(inArray(memberToRoleTable.A, ids));
+          }),
+        ),
+      );
     yield* notifyMembersRemoved(
       missing.map((member) => ({
         discordId: member.userId,
@@ -121,7 +125,7 @@ export const makeMemberRemoval = (
       })),
     );
 
-    return missing.length;
+    return ids.length;
   });
 
   return {
