@@ -2,7 +2,10 @@ import { keysetNextCursor, takeKeysetPage } from "#src/shared/keyset-page";
 import { Logger } from "#src/shared/application-logger";
 import { Effect } from "effect";
 import type { eventMapCoverageGapTable } from "#src/database/drizzle/schema";
-import { clipToWindow } from "#src/events/monitoring/tracking-window";
+import {
+  clipToWindow,
+  clipToWindowSeconds,
+} from "#src/events/monitoring/tracking-window";
 import type { EventSummaryStore } from "#src/events/monitoring/event-summary.repository";
 
 type CoverageGapType = typeof eventMapCoverageGapTable.$inferSelect.gapType;
@@ -79,19 +82,12 @@ export const makeEventSummary = (repository: EventSummaryStore) => {
         const memberStatsMap = new Map<number, MemberStat>();
 
         for (const log of presenceLogs) {
-          const { start: clippedStart, end: clippedEnd } = clipToWindow({
+          const durationSeconds = clipToWindowSeconds({
             start: log.startedAt,
             end: log.endedAt,
             windowStart: windowOpenedAt,
             windowEnd: windowClosedAt,
           });
-
-          const durationMs = Math.max(
-            0,
-            clippedEnd.getTime() - clippedStart.getTime(),
-          );
-
-          const durationSeconds = Math.round(durationMs / 1000);
 
           let stat = memberStatsMap.get(log.memberId);
 
@@ -146,17 +142,12 @@ export const makeEventSummary = (repository: EventSummaryStore) => {
         for (const log of presenceLogs) {
           if (log.isAfk) continue;
 
-          const { start: clippedStart, end: clippedEnd } = clipToWindow({
+          const durationSeconds = clipToWindowSeconds({
             start: log.startedAt,
             end: log.endedAt,
             windowStart: windowOpenedAt,
             windowEnd: windowClosedAt,
           });
-
-          const durationSeconds = Math.max(
-            0,
-            Math.round((clippedEnd.getTime() - clippedStart.getTime()) / 1000),
-          );
 
           const stat = mapStatsMap.get(log.mapId);
 
