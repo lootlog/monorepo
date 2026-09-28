@@ -77,6 +77,10 @@ export class NpcsDeleteProcessor {
       return timerContext;
     };
 
+    // A character in stasis learns about kills late, so the deletion time is
+    // not the kill time. Margonem's own kill timer skips these deletions too.
+    if (game?.hero.stasis) return;
+
     deletedNpcs.forEach(({ data, deletion }) => {
       if (!data || !deletion.respBaseSeconds || data.weight < MIN_NPC_WT) {
         return;
