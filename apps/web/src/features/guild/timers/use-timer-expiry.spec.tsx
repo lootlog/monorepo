@@ -55,7 +55,12 @@ it("refreshes simultaneous expiries once, preserves scope, and handles a reset t
   const { rerender, unmount } = renderHook(
     ({ currentTimers }) => {
       recordRender();
-      useTimerExpiry(currentTimers, "one", "tempest");
+      useTimerExpiry(
+        currentTimers,
+        "one",
+        "tempest",
+        Date.parse("2026-09-05T12:00:00Z"),
+      );
     },
     {
       initialProps: { currentTimers: timers },
@@ -86,4 +91,50 @@ it("refreshes simultaneous expiries once, preserves scope, and handles a reset t
   unsubscribe();
   client.clear();
   expect(vi.getTimerCount()).toBe(0);
+});
+
+it("does not refetch timers that had already expired when the list was fetched", async () => {
+  vi.useFakeTimers();
+  vi.setSystemTime("2026-09-05T12:00:00Z");
+
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+  });
+
+  const queryKey = getTimersControllerGetTimersQueryKey(
+    { guildId: "one" },
+    { world: "tempest" },
+  );
+
+  const fetchTimers = vi.fn(async () => []);
+
+  const unsubscribe = new QueryObserver(client, {
+    queryKey,
+    queryFn: fetchTimers,
+    initialData: [],
+    staleTime: Infinity,
+  }).subscribe(() => undefined);
+
+  const { unmount } = renderHook(
+    () =>
+      useTimerExpiry(
+        [{ timerKey: "pinned", maxSpawnTime: "2026-09-05T11:55:00Z" }],
+        "one",
+        "tempest",
+        Date.parse("2026-09-05T12:00:00Z"),
+      ),
+    {
+      wrapper: ({ children }: PropsWithChildren) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
+    },
+  );
+
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(3000);
+  });
+  expect(fetchTimers).not.toHaveBeenCalled();
+  unmount();
+  unsubscribe();
+  client.clear();
 });
