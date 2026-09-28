@@ -291,7 +291,7 @@ test("unchanged Discord membership refreshes freshness without rewriting roles o
   }
 });
 
-test("role deltas retain common rows and profile-only changes invalidate views without a permission update", async () => {
+test("role deltas retain common rows and only visible profile changes invalidate views", async () => {
   const boundary = await createSyncBoundary();
 
   try {
@@ -328,6 +328,14 @@ test("role deltas retain common rows and profile-only changes invalidate views w
       banner: "new-banner",
     });
     expect(boundary.events).toEqual(["cache", "freshness"]);
+
+    boundary.events.length = 0;
+    boundary.state.member.banner = "changed-banner";
+    const bannerChanged = await boundary.refresh();
+
+    expect(bannerChanged.member?.banner).toBe("changed-banner");
+    expect(boundary.events).toEqual(["freshness"]);
+    expect(await boundary.pending()).toEqual([]);
   } finally {
     await boundary.dispose();
   }

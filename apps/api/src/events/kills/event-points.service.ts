@@ -23,6 +23,7 @@ import type { EventPointsStore } from "#src/events/kills/event-points.repository
 import {
   calculateTrackingDurationSeconds,
   clipIntervalToWindow,
+  clipToWindow,
   getTrackingWindowDurationSeconds,
 } from "#src/events/monitoring/tracking-window";
 
@@ -723,14 +724,14 @@ export const makeEventPoints = (
           continue;
         }
 
-        const effectiveStart =
-          since && log.startedAt < since ? since : log.startedAt;
+        const { start, end } = clipToWindow({
+          start: log.startedAt,
+          end: log.endedAt,
+          windowStart: since ?? log.startedAt,
+          windowEnd,
+        });
 
-        const endTime = log.endedAt
-          ? new Date(Math.min(log.endedAt.getTime(), windowEnd.getTime()))
-          : windowEnd;
-
-        const duration = endTime.getTime() - effectiveStart.getTime();
+        const duration = end.getTime() - start.getTime();
 
         if (duration > 0) {
           currentStats.totalTimeMs += duration;
@@ -795,14 +796,14 @@ export const makeEventPoints = (
 
           if (!stats) continue;
 
-          const effectiveStart =
-            since && log.startedAt < since ? since : log.startedAt;
+          const { start, end } = clipToWindow({
+            start: log.startedAt,
+            end: log.endedAt,
+            windowStart: since ?? log.startedAt,
+            windowEnd,
+          });
 
-          const endTime = log.endedAt
-            ? new Date(Math.min(log.endedAt.getTime(), windowEnd.getTime()))
-            : windowEnd;
-
-          const duration = endTime.getTime() - effectiveStart.getTime();
+          const duration = end.getTime() - start.getTime();
 
           if (duration > 0) {
             stats.presenceTimeMs += duration;
@@ -863,14 +864,14 @@ export const makeEventPoints = (
 
           if (!stats) continue;
 
-          const effectiveStart =
-            since && log.startedAt < since ? since : log.startedAt;
+          const { start, end } = clipToWindow({
+            start: log.startedAt,
+            end: log.endedAt,
+            windowStart: since ?? log.startedAt,
+            windowEnd,
+          });
 
-          const endTime = log.endedAt
-            ? new Date(Math.min(log.endedAt.getTime(), windowEnd.getTime()))
-            : windowEnd;
-
-          const duration = endTime.getTime() - effectiveStart.getTime();
+          const duration = end.getTime() - start.getTime();
 
           if (duration > 0) {
             stats.presenceTimeMs += duration;

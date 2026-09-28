@@ -102,6 +102,14 @@ graczy, a na głównej mapie znaczniki z nickiem graczy z wrogich klanów.
 Znacznik przesuwa się płynnie w tempie chodu postaci i blednie, gdy nikt z
 Lootloga nie widzi już gracza.
 
+Filtry timerów, w tym zakres poziomów, są zapisywane lokalnie w przeglądarce
+osobno dla każdej postaci i świata. Każdy Lootlog oraz widok zgrupowanych
+timerów mają własne filtry. Dotyczy to okna timerów i widoku pod torbą.
+Po zmianie postaci lub odświeżeniu gry wraca zapisany dla niej zakres.
+Dotychczasowe filtry przejmuje pierwsza postać, na której otworzysz timery
+po aktualizacji, dla oglądanego wtedy świata.
+Pozostałe postacie zaczynają od ustawień domyślnych.
+
 Timery możesz układać we własne listy, na przykład „E2 na event” albo
 „Herosi 100+”. Kliknij timer prawym przyciskiem myszy, wybierz **Listy** i
 zaznacz listę albo od razu utwórz nową. Jeden potwór może być na kilku
@@ -141,6 +149,17 @@ usunięciu. Jeśli pobranie historii się nie powiedzie, wybierz **Spróbuj pono
 
 Oddzielne uprawnienia `LOOTLOG_TIMERS_TITANS_READ` i
 `LOOTLOG_TIMERS_HEROES_READ` kontrolują dostęp do strategicznych kategorii.
+
+## Gracze online
+
+Lista graczy online zapamiętuje zakres poziomów i profesję osobno dla każdej
+Twojej postaci, organizacji i oglądanego świata w tej przeglądarce. Po zmianie
+postaci lub odświeżeniu gry wracają jej własne filtry. **Wyczyść filtry**
+przywraca pełny zakres poziomów i wszystkie profesje tylko w bieżącym widoku.
+
+Dotychczasowe filtry przejmuje pierwsza postać, na której otworzysz listę po
+aktualizacji, dla oglądanego wtedy świata. Pozostałe postacie i światy
+zaczynają od pełnej listy graczy.
 
 ## Wykrywanie NPC
 
