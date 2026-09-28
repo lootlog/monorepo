@@ -176,7 +176,9 @@ export const useTimersSocket = ({ socket, guilds }: Options) => {
         reconcile();
     };
 
-    const onJoin = (payload: PolicyUpdate & { guildIds: string[] }) => {
+    const onJoin = (
+      payload: PolicyUpdate & { guildIds: string[]; recover: boolean },
+    ) => {
       const joinedGuilds = new Set(payload.guildIds);
 
       if (
@@ -195,7 +197,7 @@ export const useTimersSocket = ({ socket, guilds }: Options) => {
       }
 
       // Join confirms the new subscription: HTTP recovers events missed offline.
-      reconcile();
+      if (payload.recover) reconcile();
     };
 
     const onCreate = (payload: TimerResponseDto) => update(payload, payload);
