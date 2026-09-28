@@ -70,7 +70,7 @@ export function GatheringRoster({
           </>
         )}
       </section>
-      <section aria-label={t("header.party")}>
+      <section aria-label={t("roster.partyLabel")}>
         <p className="ll:m-0 ll:px-[6px] ll:font-semibold ll:text-white/80">
           {observation
             ? t("roster.party", { count: observation.members.length })

@@ -1055,7 +1055,7 @@ it("updates every volunteer and the independent observed party for an observer w
   expect(within(volunteers).getByText("Waiting player (190m)")).toBeVisible();
   expect(within(volunteers).getByText("Joining player (190m)")).toBeVisible();
   expect(
-    within(screen.getByRole("region", { name: "Grupa:" })).getByText(
+    within(screen.getByRole("region", { name: "Grupa" })).getByText(
       "Observed leader",
     ),
   ).toBeVisible();
@@ -1091,7 +1091,7 @@ it("updates every volunteer and the independent observed party for an observer w
     ),
   ).toBeVisible();
   expect(
-    await within(screen.getByRole("region", { name: "Grupa:" })).findByText(
+    await within(screen.getByRole("region", { name: "Grupa" })).findByText(
       "Joining player (190m)",
     ),
   ).toBeVisible();
@@ -1125,7 +1125,7 @@ it("updates every volunteer and the independent observed party for an observer w
     ),
   ).toBeVisible();
   expect(
-    within(screen.getByRole("region", { name: "Grupa:" })).queryByText(
+    within(screen.getByRole("region", { name: "Grupa" })).queryByText(
       "Joining player (190m)",
     ),
   ).not.toBeInTheDocument();
@@ -1208,7 +1208,7 @@ it("shows a newer organization roster while the participant projection is still 
     screen.getByRole("button", { name: "Wycofaj zgłoszenie" }),
   ).toHaveAccessibleDescription("W grupie");
   expect(
-    within(screen.getByRole("region", { name: "Grupa:" })).queryByText(
+    within(screen.getByRole("region", { name: "Grupa" })).queryByText(
       "Party leader",
     ),
   ).not.toBeInTheDocument();

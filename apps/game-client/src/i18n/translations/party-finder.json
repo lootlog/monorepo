@@ -55,6 +55,7 @@
     "volunteersUnknown": "Lista chętnych niedostępna",
     "volunteersEmpty": "Brak zgłoszeń",
     "party": "Grupa ({{count}}/10)",
+    "partyLabel": "Grupa",
     "partyUnknown": "Skład grupy nieznany",
     "partyEmpty": "Brak grupy",
     "partyStale": "Skład grupy może być nieaktualny",
