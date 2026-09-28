@@ -24,6 +24,7 @@ import {
 } from "../internal/internal.handlers.js";
 import { makeUserGuildPermissions } from "./user-guild-permissions.data-layer.js";
 import { getUserGuildPermissionsCacheScope } from "#src/shared/cache";
+import { makeGuildLifecycle } from "#src/guilds/guild-lifecycle.operations";
 
 const identity = { userId: "user-a", discordId: "discord-a" };
 
@@ -216,6 +217,56 @@ describe("aggregate permission revocation", () => {
       expect(
         (await fixture.internalRead("required")).map(({ guild }) => guild.id),
       ).toEqual(["2"]);
+    } finally {
+      await fixture.dispose();
+    }
+  });
+
+  it("grants a first-time owner access immediately after activation and moves it with ownership", async () => {
+    const fixture = await createFixture();
+    const owner = { userId: "owner-user", discordId: "owner-discord" };
+
+    const lifecycle = makeGuildLifecycle(fixture.database, {
+      invalidateUserGuildPermissions: (discordId) =>
+        Effect.promise(() =>
+          fixture.redis.invalidateScopes(
+            getUserGuildPermissionsCacheScope(discordId),
+          ),
+        ),
+      clearCacheKey: () => Effect.void,
+      clearCachePattern: () => Effect.void,
+      deliverMemberChanges: () => Effect.void,
+    });
+
+    const guildIds = async (requestIdentity: ForwardAuthIdentityValue) =>
+      (await fixture.read(requestIdentity)).map(({ guild }) => guild.id).sort();
+
+    try {
+      // The owner opens Lootlog before adding the bot and caches no access.
+      expect(await guildIds(owner)).toEqual([]);
+
+      await fixture.run(
+        lifecycle.createGuild({
+          guildId: "3",
+          name: "New Organization",
+          icon: null,
+          ownerId: owner.discordId,
+          roles: [],
+        }),
+      );
+      expect(await guildIds(owner)).toEqual(["3"]);
+
+      expect(await guildIds(identity)).toEqual(["1", "2"]);
+      await fixture.run(
+        lifecycle.updateGuild({
+          guildId: "3",
+          name: "New Organization",
+          icon: null,
+          ownerId: identity.discordId,
+        }),
+      );
+      expect(await guildIds(owner)).toEqual([]);
+      expect(await guildIds(identity)).toEqual(["1", "2", "3"]);
     } finally {
       await fixture.dispose();
     }

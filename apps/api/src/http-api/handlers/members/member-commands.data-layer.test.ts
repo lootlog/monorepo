@@ -8,6 +8,7 @@ import {
 } from "../../../../test/organization-fixtures.js";
 import { guildTable, memberTable } from "#src/database/drizzle/schema";
 import { ErrorKey } from "#src/members/error-key";
+import { makeMemberDelivery } from "#src/members/member-delivery.operations";
 import { makeMemberStore } from "#src/members/member.store";
 import {
   applicationErrorStatusOrUndefined,
@@ -16,7 +17,7 @@ import {
 import { makeMembersDataLayer } from "./member-commands.data-layer.js";
 import { MembersData } from "./members.handlers.js";
 
-test("retrying manual deactivation repairs revocation delivery before returning the existing inactive-member error", async () => {
+test("manual deactivation delivers its revocation after cache and broker failures without republishing on retry", async () => {
   const boundary = await createDatabaseBoundary();
 
   try {
@@ -34,22 +35,28 @@ test("retrying manual deactivation repairs revocation delivery before returning 
     let failDelivery = false;
     const delivered: string[] = [];
 
+    const delivery = makeMemberDelivery(makeMemberStore(boundary.database), {
+      clearMemberCaches: () =>
+        failInvalidation
+          ? Effect.fail(new Error("cache unavailable"))
+          : Effect.void,
+      publishMemberRemoved: ({ globalUserId }) =>
+        failDelivery
+          ? Effect.fail(new Error("broker unavailable"))
+          : Effect.sync(() => {
+              delivered.push(globalUserId);
+            }),
+      invalidateMember: () => Effect.void,
+      publishMemberUpdated: () => Effect.void,
+    });
+
     const membersLayer = makeMembersDataLayer(
       {
         refreshGuildMember: () => Effect.die("Unexpected refresh"),
         recordStaleUse: () => Effect.void,
         enqueueBulkRefresh: () => Effect.void,
         publishRefreshJobUpdate: () => Effect.void,
-        clearMemberCaches: () =>
-          failInvalidation
-            ? Effect.fail(new Error("cache unavailable"))
-            : Effect.void,
-        publishMemberRemoved: ({ userId }) =>
-          failDelivery
-            ? Effect.fail(new Error("broker unavailable"))
-            : Effect.sync(() => {
-                delivered.push(userId);
-              }),
+        deliverMemberChanges: delivery.deliverAll,
       },
       RuntimeEnvironment.LOCAL,
     );
@@ -73,11 +80,14 @@ test("retrying manual deactivation repairs revocation delivery before returning 
     ).toBe(false);
     failInvalidation = false;
     failDelivery = true;
-    expect(await boundary.run(Effect.result(deactivate))).toMatchObject({
-      failure: { cause: { message: "broker unavailable" } },
-    });
+    await boundary.run(delivery.dispatchPending());
+    expect(delivered).toEqual([]);
     failDelivery = false;
+    await boundary.run(delivery.dispatchPending());
+    expect(delivered).toEqual(["user-1"]);
+
     const retried = await boundary.run(Effect.result(deactivate));
+    await boundary.run(delivery.dispatchPending());
     expect(delivered).toEqual(["user-1"]);
     expect(Result.isFailure(retried)).toBe(true);
 
