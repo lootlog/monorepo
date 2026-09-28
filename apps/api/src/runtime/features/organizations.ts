@@ -201,6 +201,9 @@ export const accountOrganizationOperationsLive = Layer.effect(
             try: () => redis.setJson(key, value, ttl),
             catch: (error) => error,
           }),
+        setIfAbsent: (key, value, ttl) =>
+          cacheAttempt(() => redis.setNX(key, value, ttl)),
+        deleteCached: (key) => cacheAttempt(() => redis.del(key)),
         queueRefresh: refresh.queueMemberRefresh,
       },
       config.environment,
