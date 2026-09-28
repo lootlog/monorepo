@@ -1,0 +1,1 @@
+CREATE INDEX "Guild_ownerId_idx" ON "Guild" ("ownerId");
