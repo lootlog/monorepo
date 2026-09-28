@@ -1,5 +1,8 @@
 import type { BoundaryDecoder } from "#src/shared/schema/json";
-import { emptyStatusResponse } from "#src/shared/http/handler-response";
+import {
+  emptyStatusResponse,
+  reauthenticationRequiredResponse,
+} from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
@@ -38,6 +41,7 @@ import {
 } from "#src/contracts/docs/schemas";
 
 import { LootlogApi } from "../../lootlog-api.js";
+import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 
 type Guild = typeof guildTable.$inferSelect;
 
@@ -104,7 +108,10 @@ export class DocsAuthorization extends Context.Service<
   {
     readonly requireGuild: (
       requirement: DocsAuthorizationRequirement,
-    ) => Effect.Effect<AuthorizedDocsCaller, DocsAccessDenied | DocsNotFound>;
+    ) => Effect.Effect<
+      AuthorizedDocsCaller,
+      DocsAccessDenied | DocsNotFound | ReauthenticationRequired
+    >;
   }
 >()("@lootlog/api/http-api/docs/authorization") {}
 
@@ -114,7 +121,10 @@ type DocsFailure =
   | DocsInvalidInput
   | DocsNotFound;
 
-type DocsHttpFailure = DocsAccessDenied | DocsFailure;
+type DocsHttpFailure =
+  | DocsAccessDenied
+  | DocsFailure
+  | ReauthenticationRequired;
 
 type DocsEffect<A> = Effect.Effect<A, DocsFailure>;
 
@@ -426,6 +436,7 @@ export const purgeDocument = (guildId: string, documentId: string) =>
 const toHttpResponse = <A, R>(effect: Effect.Effect<A, DocsHttpFailure, R>) =>
   Effect.catchTags(effect, {
     DocsAccessDenied: emptyStatusResponse,
+    ReauthenticationRequired: reauthenticationRequiredResponse,
     DocsConflict: emptyStatusResponse,
     DocsDataError: (error) => Effect.die(error.cause),
     DocsInvalidInput: emptyStatusResponse,

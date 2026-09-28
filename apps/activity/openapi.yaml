@@ -13,10 +13,7 @@ paths:
       parameters: []
       responses:
         "200":
-          description: |-
-            Service is healthy
-
-            The Health Check is successful
+          description: The Activity process is responding
           content:
             application/json:
               schema:
@@ -27,7 +24,7 @@ paths:
                     example: ok
                   info:
                     example:
-                      database:
+                      process:
                         status: up
                     nullable: true
                     type: object
@@ -39,7 +36,7 @@ paths:
                       required:
                         - status
                   error:
-                    example: {}
+                    example: null
                     nullable: true
                     type: object
                     additionalProperties:
@@ -59,7 +56,7 @@ paths:
                       required:
                         - status
                     example:
-                      database:
+                      process:
                         status: up
         "401":
           description: ""
@@ -94,11 +91,17 @@ paths:
                     type: string
                 required:
                   - message
-        "503":
-          description: |-
-            Service is unhealthy
-
-            The Health Check is not successful
+      description: Check that the Activity process and HTTP event loop respond without checking dependencies
+      summary: Liveness check
+  /readyz:
+    get:
+      tags:
+        - health
+      operationId: ReadyzController_check
+      parameters: []
+      responses:
+        "200":
+          description: PostgreSQL is available
           content:
             application/json:
               schema:
@@ -106,51 +109,130 @@ paths:
                 properties:
                   status:
                     type: string
-                    example: error
+                    enum:
+                      - ok
                   info:
-                    example:
+                    type: object
+                    properties:
                       database:
-                        status: up
-                    nullable: true
-                    type: object
-                    additionalProperties:
-                      type: object
-                      properties:
-                        status:
-                          type: string
-                      required:
-                        - status
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            enum:
+                              - up
+                        required:
+                          - status
+                    required:
+                      - database
                   error:
-                    example:
-                      redis:
-                        status: down
-                        message: Could not connect
-                    nullable: true
                     type: object
-                    additionalProperties:
-                      type: object
-                      properties:
-                        status:
-                          type: string
-                      required:
-                        - status
+                    nullable: true
+                    enum:
+                      - null
                   details:
                     type: object
-                    additionalProperties:
-                      type: object
-                      properties:
-                        status:
-                          type: string
-                      required:
-                        - status
-                    example:
+                    properties:
                       database:
-                        status: up
-                      redis:
-                        status: down
-                        message: Could not connect
-      description: Check the health status of the Activity service (database, API service, memory, disk)
-      summary: Health check
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            enum:
+                              - up
+                        required:
+                          - status
+                    required:
+                      - database
+                required:
+                  - status
+                  - info
+                  - error
+                  - details
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "503":
+          description: PostgreSQL is unavailable or timed out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - error
+                  info:
+                    type: object
+                    nullable: true
+                    enum:
+                      - null
+                  error:
+                    type: object
+                    properties:
+                      database:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            enum:
+                              - down
+                        required:
+                          - status
+                    required:
+                      - database
+                  details:
+                    type: object
+                    properties:
+                      database:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            enum:
+                              - down
+                        required:
+                          - status
+                    required:
+                      - database
+                required:
+                  - status
+                  - info
+                  - error
+                  - details
+      description: Check the Activity service's direct PostgreSQL dependency with a three-second timeout; no other service health endpoints are called
+      summary: Readiness check
   /guilds/{guildId}/activity-logs:
     get:
       tags:

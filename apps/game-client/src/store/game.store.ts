@@ -46,6 +46,7 @@ function areGameSnapshotsEqual(
     current.hero.maxHp === incoming.hero.maxHp &&
     current.hero.name === incoming.hero.name &&
     current.hero.profession === incoming.hero.profession &&
+    current.hero.stasis === incoming.hero.stasis &&
     current.hero.x === incoming.hero.x &&
     current.hero.y === incoming.hero.y &&
     areClansEqual(current.hero.clan, incoming.hero.clan)

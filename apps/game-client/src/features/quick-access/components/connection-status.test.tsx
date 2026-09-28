@@ -64,6 +64,7 @@ it("shows connecting, then memberships and heartbeat latency, and lets a dropped
         maxHp: 100,
         name: "Hero",
         profession: "w",
+        stasis: false,
         x: 1,
         y: 2,
       },
