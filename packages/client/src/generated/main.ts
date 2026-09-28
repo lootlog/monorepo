@@ -10314,7 +10314,15 @@ export type GuildsControllerRefreshGuildDiscordSync429 = HttpErrorResponse | {
 export type GuildsInternalControllerGetUserPermissionsParams = {
 discordId: string;
 userId: string;
+freshness?: GuildsInternalControllerGetUserPermissionsFreshness;
 };
+
+export type GuildsInternalControllerGetUserPermissionsFreshness = typeof GuildsInternalControllerGetUserPermissionsFreshness[keyof typeof GuildsInternalControllerGetUserPermissionsFreshness];
+
+
+export const GuildsInternalControllerGetUserPermissionsFreshness = {
+  required: 'required',
+} as const;
 
 export type GuildsInternalControllerGetUserPermissions401 = {
   message: string;

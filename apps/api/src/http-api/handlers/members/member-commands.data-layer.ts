@@ -245,9 +245,7 @@ export const makeMembersDataLayer = (
               }
 
               if (!stored.active) {
-                return yield* Effect.fail(
-                  new InvalidRequestError(ErrorKey.MEMBER_ALREADY_DEACTIVATED),
-                );
+                return { member: stored, changed: false };
               }
 
               const now = new Date(yield* Clock.currentTimeMillis);
@@ -276,28 +274,37 @@ export const makeMembersDataLayer = (
                 .delete(memberToRoleTable)
                 .where(eq(memberToRoleTable.A, stored.id));
 
-              return { ...updated, roles: [] };
+              return { member: { ...updated, roles: [] }, changed: true };
             }),
           )
           .pipe(
-            Effect.tap((member) =>
+            Effect.tap(({ member }) =>
               member.globalUserId
-                ? Effect.all(
-                    [
-                      ports.clearMemberCaches({
-                        discordId,
-                        guildId,
-                        userId: member.globalUserId,
-                      }),
-                      ports.publishMemberRemoved({
-                        discordId,
-                        guildId,
-                        userId: member.globalUserId,
-                      }),
-                    ],
-                    { concurrency: "unbounded" },
-                  )
+                ? ports
+                    .clearMemberCaches({
+                      discordId,
+                      guildId,
+                      userId: member.globalUserId,
+                    })
+                    .pipe(
+                      Effect.andThen(
+                        ports.publishMemberRemoved({
+                          discordId,
+                          guildId,
+                          userId: member.globalUserId,
+                        }),
+                      ),
+                    )
                 : Effect.void,
+            ),
+            Effect.flatMap(({ member, changed }) =>
+              changed
+                ? Effect.succeed(member)
+                : Effect.fail(
+                    new InvalidRequestError(
+                      ErrorKey.MEMBER_ALREADY_DEACTIVATED,
+                    ),
+                  ),
             ),
           );
 

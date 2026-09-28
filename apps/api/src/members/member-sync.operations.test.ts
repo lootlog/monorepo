@@ -3,8 +3,15 @@ import { GuildMemberFlags, type APIGuildMember } from "discord-api-types/v10";
 import { Effect } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
-import { createGuildFixture } from "../../test/organization-fixtures.js";
-import { guildTable, roleTable } from "#src/database/drizzle/schema";
+import {
+  createGuildFixture,
+  createMemberFixture,
+} from "../../test/organization-fixtures.js";
+import {
+  guildTable,
+  memberTable,
+  roleTable,
+} from "#src/database/drizzle/schema";
 import { applicationLogger } from "#src/shared/application-logger";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { makeMemberRemoval } from "./member-removal.operations.js";
@@ -51,9 +58,11 @@ test("member sync retries invalidation after a committed role change and clears 
 
     const removal = makeMemberRemoval(boundary.database, {
       clearMemberCaches: ({ guildId, discordId }) =>
-        Effect.sync(() => {
-          invalidated.push(`${guildId}:${discordId}`);
-        }),
+        failInvalidation
+          ? Effect.fail(new Error("cache unavailable"))
+          : Effect.sync(() => {
+              invalidated.push(`${guildId}:${discordId}`);
+            }),
       publishMemberRemoved: ({ globalUserId }) =>
         Effect.sync(() => {
           removed.push(globalUserId);
@@ -108,6 +117,13 @@ test("member sync retries invalidation after a committed role change and clears 
     discordMember = { ...discordMember, roles: ["role-1"] };
     await refresh();
     notFound = true;
+    failInvalidation = true;
+    await expect(refresh()).rejects.toThrow("cache unavailable");
+    expect(removed).toEqual([]);
+    expect(
+      (await boundary.run(store.findMember("discord-1", "guild-1")))?.active,
+    ).toBe(false);
+    failInvalidation = false;
     const deactivated = await refresh();
     expect(deactivated.status).toBe("NOT_FOUND");
     expect(deactivated.member?.active).toBe(false);
@@ -121,6 +137,67 @@ test("member sync retries invalidation after a committed role change and clears 
 
     expect(storedRemoval?.active).toBe(false);
     expect(storedRemoval?.roles).toEqual([]);
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+test("missing Discord membership retries invalidation and removal delivery after deactivation committed", async () => {
+  const boundary = await createDatabaseBoundary();
+
+  try {
+    await boundary.run(
+      boundary.database.insert(guildTable).values(createGuildFixture()),
+    );
+    await boundary.run(
+      boundary.database
+        .insert(memberTable)
+        .values(
+          createMemberFixture({ userId: "discord-1", globalUserId: "user-1" }),
+        ),
+    );
+    let failInvalidation = true;
+    let failDelivery = false;
+    const delivered: string[] = [];
+
+    const removal = makeMemberRemoval(boundary.database, {
+      clearMemberCaches: () =>
+        failInvalidation
+          ? Effect.fail(new Error("cache unavailable"))
+          : Effect.void,
+      publishMemberRemoved: ({ globalUserId }) =>
+        failDelivery
+          ? Effect.fail(new Error("broker unavailable"))
+          : Effect.sync(() => {
+              delivered.push(globalUserId);
+            }),
+    });
+
+    const removeMissing = () =>
+      boundary.run(
+        removal.deactivateMembersMissingFromDiscordGuilds({
+          discordId: "discord-1",
+          userId: "user-1",
+          activeDiscordGuildIds: [],
+          status: "GUILD_NOT_IN_DISCORD_LIST",
+        }),
+      );
+
+    await expect(removeMissing()).rejects.toThrow("cache unavailable");
+    expect(delivered).toEqual([]);
+    expect(
+      (
+        await boundary.run(
+          makeMemberStore(boundary.database).findMember("discord-1", "guild-1"),
+        )
+      )?.active,
+    ).toBe(false);
+    failInvalidation = false;
+    failDelivery = true;
+    await expect(removeMissing()).rejects.toThrow("broker unavailable");
+    failDelivery = false;
+    expect(await removeMissing()).toBe(0);
+    expect(delivered).toEqual(["user-1"]);
   } finally {
     await boundary.dispose();
   }

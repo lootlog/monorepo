@@ -1,7 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
-import { and, eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
@@ -16,6 +16,7 @@ import {
 } from "#src/database/drizzle/schema";
 import type {
   GuildCreated,
+  GuildMemberChanged,
   GuildDeleted,
   GuildRoleChanged,
   GuildRoleDeleted,
@@ -32,6 +33,12 @@ class GuildLifecycleFailure extends TaggedErrorClass<GuildLifecycleFailure>()(
 ) {}
 
 export interface GuildLifecyclePorts {
+  readonly invalidateUserGuildPermissions: (
+    discordId: string,
+  ) => Effect.Effect<unknown, unknown>;
+  readonly publishMemberPolicyChanged: (
+    member: typeof GuildMemberChanged.Type,
+  ) => Effect.Effect<unknown, unknown>;
   readonly clearCachePattern: (
     pattern: string,
   ) => Effect.Effect<unknown, unknown>;
@@ -65,6 +72,33 @@ export const makeGuildLifecycle = (
         attributes: { adapter: "api.database", retryCount: 0 },
       }),
     );
+
+  const notifyGuildPolicyChanged = Effect.fn("guildLifecycle.policyChanged")(
+    function* (guildId: string) {
+      // Include inactive members so replay repairs delivery after a committed removal.
+      const members = yield* database
+        .select({
+          discordId: memberTable.userId,
+          userId: memberTable.globalUserId,
+        })
+        .from(memberTable)
+        .where(eq(memberTable.guildId, guildId));
+
+      yield* Effect.forEach(
+        members,
+        ({ discordId }) => ports.invalidateUserGuildPermissions(discordId),
+        { concurrency: 4, discard: true },
+      );
+      yield* Effect.forEach(
+        members,
+        ({ discordId, userId }) =>
+          userId
+            ? ports.publishMemberPolicyChanged({ guildId, discordId, userId })
+            : Effect.void,
+        { concurrency: 4, discard: true },
+      );
+    },
+  );
 
   const createGuild = Effect.fn("guildLifecycle.create")(function* (
     data: GuildCreated,
@@ -230,7 +264,13 @@ export const makeGuildLifecycle = (
             .where(
               and(
                 eq(memberTable.guildId, data.guildId),
-                eq(memberTable.active, true),
+                or(
+                  eq(memberTable.active, true),
+                  eq(
+                    memberTable.lastDiscordStatus,
+                    MEMBER_LAST_DISCORD_STATUS.GUILD_DEACTIVATED,
+                  ),
+                ),
               ),
             );
 
@@ -335,6 +375,7 @@ export const makeGuildLifecycle = (
         }),
     );
     yield* ports.clearCachePattern(getPermissionsCachePattern(data.guildId));
+    yield* notifyGuildPolicyChanged(data.guildId);
   });
 
   const deleteRole = Effect.fn("guildLifecycle.role.delete")(function* (
@@ -349,6 +390,7 @@ export const makeGuildLifecycle = (
         ),
     );
     yield* ports.clearCachePattern(getPermissionsCachePattern(data.guildId));
+    yield* notifyGuildPolicyChanged(data.guildId);
   });
 
   return { createGuild, updateGuild, deleteGuild, upsertRole, deleteRole };

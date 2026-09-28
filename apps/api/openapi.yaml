@@ -2083,6 +2083,13 @@ paths:
           schema:
             type: string
           required: true
+        - name: freshness
+          in: query
+          schema:
+            type: string
+            enum:
+              - required
+          required: false
       security: []
       responses:
         "200":

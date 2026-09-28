@@ -388,11 +388,17 @@ export class RolesData extends Context.Service<
                   members,
                   (member) =>
                     member.userId
-                      ? events.memberPolicyChanged({
-                          guildId,
-                          discordId: member.discordId,
-                          userId: member.userId,
-                        })
+                      ? cache
+                          .invalidateUserGuildPermissions(member.discordId)
+                          .pipe(
+                            Effect.andThen(
+                              events.memberPolicyChanged({
+                                guildId,
+                                discordId: member.discordId,
+                                userId: member.userId,
+                              }),
+                            ),
+                          )
                       : Effect.void,
                   { concurrency: 4, discard: true },
                 );
@@ -417,6 +423,9 @@ export interface RolePolicyEvents {
 }
 
 export interface RolesCache {
+  readonly invalidateUserGuildPermissions: (
+    discordId: string,
+  ) => Effect.Effect<void, unknown>;
   readonly deleteByPattern: (pattern: string) => Effect.Effect<void, unknown>;
 }
 
