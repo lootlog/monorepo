@@ -180,6 +180,51 @@ const createParticipant = (
   updatedAt: timestamp,
 });
 
+// Observed IDs are authoritative; reported, registered, and previously
+// observed details fill each member's display fields in that priority.
+const observePartyMembers = (
+  aggregate: ReadyRoomAggregate,
+  memberIds: ReadonlySet<string>,
+  members: ReadonlyArray<PartyGatheringPartyMember> | undefined,
+): PartyGatheringPartyMember[] => {
+  const knownCharacters = new Map([
+    [
+      aggregate.organizerCharacter.characterId,
+      createGatheringCharacter(aggregate.organizerCharacter),
+    ],
+    ...Object.values(aggregate.participants).map(
+      ({ character }) =>
+        [character.characterId, createGatheringCharacter(character)] as const,
+    ),
+  ]);
+
+  const previousMembers =
+    aggregate.partyState?.status === "OBSERVED"
+      ? aggregate.partyState.members
+      : [];
+
+  const observedMembers = new Map(
+    (members ?? []).map((member) => [member.characterId, member]),
+  );
+
+  return [...memberIds].sort().map((characterId) => ({
+    ...previousMembers.find((member) => member.characterId === characterId),
+    ...knownCharacters.get(characterId),
+    ...observedMembers.get(characterId),
+    characterId,
+  }));
+};
+
+const isFreshObservation = (
+  aggregate: ReadyRoomAggregate,
+  partyMembers: ReadonlyArray<PartyGatheringPartyMember>,
+  now: number,
+) =>
+  aggregate.partyState?.status === "OBSERVED" &&
+  isEqual(aggregate.partyState.members, partyMembers) &&
+  now - Date.parse(aggregate.partyState.observedAt) <
+    PARTY_OBSERVATION_REFRESH_MS;
+
 export const makeReadyRoomDataLayer = (
   redis: ReadyRoomRedis,
   effects: ReadyRoomEffects,
@@ -546,6 +591,7 @@ export const makeReadyRoomDataLayer = (
         organizerCharacterId: string,
         memberCharacterIds: ReadonlyArray<string>,
         members: ReadonlyArray<PartyGatheringPartyMember> | undefined,
+        expectedRevision: number | undefined,
         attempt: number,
       ): Effect.Effect<unknown, unknown> =>
         Effect.gen(function* () {
@@ -561,41 +607,22 @@ export const makeReadyRoomDataLayer = (
             );
           }
 
+          if (
+            expectedRevision !== undefined &&
+            aggregate.revision !== expectedRevision
+          ) {
+            return yield* Effect.fail(
+              new ResourceConflictError({ code: "REVISION_CONFLICT" }),
+            );
+          }
+
           const memberIds = new Set(memberCharacterIds);
 
-          const knownCharacters = new Map([
-            [
-              aggregate.organizerCharacter.characterId,
-              createGatheringCharacter(aggregate.organizerCharacter),
-            ],
-            ...Object.values(aggregate.participants).map(
-              ({ character }) =>
-                [
-                  character.characterId,
-                  createGatheringCharacter(character),
-                ] as const,
-            ),
-          ]);
-
-          const previousMembers =
-            aggregate.partyState?.status === "OBSERVED"
-              ? aggregate.partyState.members
-              : [];
-
-          const observedMembers = new Map(
-            (members ?? []).map((member) => [member.characterId, member]),
+          const partyMembers = observePartyMembers(
+            aggregate,
+            memberIds,
+            members,
           );
-
-          const partyMembers: PartyGatheringPartyMember[] = [...memberIds]
-            .sort()
-            .map((characterId) => ({
-              ...previousMembers.find(
-                (member) => member.characterId === characterId,
-              ),
-              ...knownCharacters.get(characterId),
-              ...observedMembers.get(characterId),
-              characterId,
-            }));
 
           const participants = structuredClone(aggregate.participants);
           const updatedAt = new Date(clock()).toISOString();
@@ -613,13 +640,17 @@ export const makeReadyRoomDataLayer = (
             }
           }
 
+          // Only unversioned reports may skip an unchanged, fresh observation.
+          // A versioned report always advances the revision: after a client
+          // timeout, the retry can carry the same expectedRevision as the
+          // request still in flight, and skipping the bump would let that older
+          // roster overwrite the acknowledged one. Heartbeats are longer than
+          // the refresh window, so they would commit a new revision anyway.
           if (
+            expectedRevision === undefined &&
             changed.length === 0 &&
             aggregate.partyMemberCount === memberIds.size &&
-            isEqual(previousMembers, partyMembers) &&
-            aggregate.partyState?.status === "OBSERVED" &&
-            clock() - Date.parse(aggregate.partyState.observedAt) <
-              PARTY_OBSERVATION_REFRESH_MS
+            isFreshObservation(aggregate, partyMembers, clock())
           ) {
             return yield* projectionForViewer(aggregate, discordId);
           }
@@ -656,7 +687,8 @@ export const makeReadyRoomDataLayer = (
           }
 
           if (result.status === "conflict") {
-            return attempt + 1 >= MAX_CAS_ATTEMPTS
+            return expectedRevision !== undefined ||
+              attempt + 1 >= MAX_CAS_ATTEMPTS
               ? yield* Effect.fail(
                   new ResourceConflictError({ code: "REVISION_CONFLICT" }),
                 )
@@ -667,6 +699,7 @@ export const makeReadyRoomDataLayer = (
                   organizerCharacterId,
                   memberCharacterIds,
                   members,
+                  expectedRevision,
                   attempt + 1,
                 );
           }
@@ -1149,6 +1182,7 @@ export const makeReadyRoomDataLayer = (
               payload.organizerCharacterId,
               payload.memberCharacterIds,
               payload.members,
+              payload.expectedRevision,
               0,
             ),
           ),
