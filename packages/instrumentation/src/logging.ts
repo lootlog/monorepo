@@ -25,22 +25,35 @@ export const logSpanContext = new AsyncLocalStorage<
 export const currentLogSpan = () =>
   Fiber.getCurrent()?.cache.span ?? logSpanContext.getStore();
 
+// The HTTP server logs every response at Info, including 5xx responses and the
+// defect behind them. A 5xx response is logged at Error so it reaches error
+// alerts and filters; a 4xx response stays at Info.
+const withHttpServerErrorLevel = <Message>(
+  options: Logger.Options<Message>,
+): Logger.Options<Message> => {
+  const status = options.fiber.getRef(References.CurrentLogAnnotations)[
+    "http.status"
+  ];
+
+  return options.logLevel === "Info" && isHttpServerError(status)
+    ? { ...options, logLevel: "Error" }
+    : options;
+};
+
+// Keeps a runaway cause chain from producing an unbounded log line.
+const MAX_CAUSE_LENGTH = 8_192;
+
+const boundCause = (cause: string | undefined) =>
+  cause !== undefined && cause.length > MAX_CAUSE_LENGTH
+    ? `${cause.slice(0, MAX_CAUSE_LENGTH)}… [truncated ${cause.length - MAX_CAUSE_LENGTH} characters]`
+    : cause;
+
 export const makeLocalLogger = () => {
   const pretty = Logger.consolePretty();
 
-  return Logger.make((options) => {
-    const status = options.fiber.getRef(References.CurrentLogAnnotations)[
-      "http.status"
-    ];
-
-    return pretty.log({
-      ...options,
-      logLevel:
-        options.logLevel === "Info" && isHttpServerError(status)
-          ? "Error"
-          : options.logLevel,
-    });
-  });
+  return Logger.make((options) =>
+    pretty.log(withHttpServerErrorLevel(options)),
+  );
 };
 
 export const makeJsonLogger = (config: {
@@ -49,7 +62,8 @@ export const makeJsonLogger = (config: {
   readonly commitSha: string | undefined;
 }) =>
   Logger.withConsoleLog(
-    Logger.make((options) => {
+    Logger.make((rawOptions) => {
+      const options = withHttpServerErrorLevel(rawOptions);
       const entry = Logger.formatStructured.log(options);
 
       const parts: ReadonlyArray<unknown> = (
@@ -69,6 +83,7 @@ export const makeJsonLogger = (config: {
           })
           .join(" "),
         details: Formatter.format(entry.message),
+        cause: boundCause(entry.cause),
         level: options.logLevel.toLowerCase(),
         service: config.serviceName,
         environment: config.environment,

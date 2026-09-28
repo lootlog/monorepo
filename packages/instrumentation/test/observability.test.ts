@@ -96,6 +96,46 @@ describe("observability contract", () => {
     expect(output).not.toContain('"level":"info"');
   });
 
+  test("JSON HTTP 5xx lines are errors with a bounded cause while 4xx lines stay info", async () => {
+    const httpResponseLog = (status: number, effect: Effect.Effect<void>) =>
+      effect.pipe(
+        Effect.annotateLogs({
+          "http.method": "GET",
+          "http.url": "/guilds/guild-a/loots",
+          "http.status": status,
+        }),
+      );
+
+    await Effect.runPromise(
+      Effect.all([
+        httpResponseLog(
+          500,
+          Effect.log(
+            Cause.die(new Error(`member lookup failed ${"x".repeat(20_000)}`)),
+          ),
+        ),
+        httpResponseLog(404, Effect.log("Sent HTTP response")),
+      ]).pipe(Effect.provide(observability({}))),
+    );
+
+    const [failure, notFound] = logOutput.mock.calls.map(([line]) =>
+      Schema.decodeUnknownSync(
+        Schema.fromJsonString(
+          Schema.Struct({
+            level: Schema.String,
+            cause: Schema.optional(Schema.String),
+          }),
+        ),
+      )(line),
+    );
+
+    expect(failure?.level).toBe("error");
+    expect(failure?.cause).toContain("Error: member lookup failed");
+    expect(failure?.cause?.length).toBeLessThan(9_000);
+    expect(notFound?.level).toBe("info");
+    expect(notFound?.cause).toBeUndefined();
+  });
+
   test("exports seconds histograms and idle heartbeat with resource identity, only when metrics are enabled", async () => {
     const requests: Array<{ path: string; body: unknown }> = [];
 
