@@ -1,3 +1,4 @@
+import { normalizeBattleSearchText } from "./utils/normalize-battle-search-text";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { buildBattleLogVisibleText } from "./utils/battle-log-visible-text";
 import type {
@@ -21,7 +22,6 @@ import { useTranslation } from "react-i18next";
 import {
   getNextBattleLogSearchIndex,
   buildBattleLogRawSearchText,
-  normalizeBattleLogSearchText,
 } from "./utils/battle-log-search";
 import { getDisplayBattleEvents } from "./utils/raw-battle-events";
 
@@ -75,7 +75,7 @@ export const BattleLog: FC<BattleLogProps> = ({
     warriors.map((warrior) => [warrior.originalId, warrior]),
   );
 
-  const normalizedQuery = normalizeBattleLogSearchText(deferredQuery);
+  const normalizedQuery = normalizeBattleSearchText(deferredQuery);
   const hasSearch = normalizedQuery.length > 0;
 
   const searchEntries = hasSearch
@@ -94,10 +94,10 @@ export const BattleLog: FC<BattleLogProps> = ({
 
         return {
           turn,
-          rawText: normalizeBattleLogSearchText(
+          rawText: normalizeBattleSearchText(
             buildBattleLogRawSearchText({ event, attacker, defender, turn }),
           ),
-          visibleText: normalizeBattleLogSearchText(
+          visibleText: normalizeBattleSearchText(
             buildBattleLogVisibleText({ event, attacker, defender, turn, t }),
           ),
         };
