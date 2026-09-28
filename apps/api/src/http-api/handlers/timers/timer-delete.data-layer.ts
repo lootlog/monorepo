@@ -1,3 +1,4 @@
+import { getTimerHistoryValues } from "./timer-restore-snapshot.js";
 import { pruneTimerHistory } from "./timer-history-retention.js";
 import {
   timerNpcField,
@@ -137,22 +138,12 @@ export const makeDeleteTimer = (
           }
 
           yield* transaction.insert(timerHistoryEntryTable).values({
+            ...getTimerHistoryValues(timer),
             guildId: access.guild.id,
             world,
             timerKey: timer.timerKey,
-            npcId: timer.npcId,
-            npc: timer.npc,
             action: TimerHistoryAction.DELETE,
             actorMemberId,
-            minSpawnTime: timer.minSpawnTime,
-            maxSpawnTime: timer.maxSpawnTime,
-            latestRespBaseSeconds: timer.latestRespBaseSeconds,
-            latestRespawnRandomness: timer.latestRespawnRandomness,
-            wasReset: timer.wasReset,
-            windowOpenedAt: timer.windowOpenedAt,
-            timerCreatedById: timer.createdById,
-            timerActorCharacterSnapshotId: timer.actorCharacterSnapshotId,
-            timerActorCharacterLvl: timer.actorCharacterLvl,
           });
 
           yield* pruneTimerHistory(
