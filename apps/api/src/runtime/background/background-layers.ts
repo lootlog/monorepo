@@ -46,7 +46,7 @@ export const RabbitConsumers = Layer.effectDiscard(
     yield* runLootPublications.pipe(Effect.forkScoped);
     const readyRooms = yield* ReadyRoomData;
     const guildSync = yield* GuildDiscordSync;
-    const { removal } = yield* MemberServices;
+    const { memberDelivery } = yield* MemberServices;
     const { tracking } = yield* EventsServices;
 
     const { scheduler, matching, store, targets, delivery, rebuild } =
@@ -59,7 +59,7 @@ export const RabbitConsumers = Layer.effectDiscard(
       clearCachePattern: (pattern) =>
         adapter(() => redis.deleteByPattern(pattern)),
       clearCacheKey: (key) => adapter(() => redis.del(key)),
-      notifyMembersRemoved: (members) => removal.notifyMembersRemoved(members),
+      deliverMemberChanges: memberDelivery.deliverAll,
     });
 
     const notificationEvents = makeNotificationsEvents({
@@ -195,10 +195,10 @@ export const BullWorkers = Layer.effectDiscard(
     const config = yield* ApiRuntimeConfig;
     const rabbit = yield* RabbitMessaging;
 
-    const { refreshMember, scheduler, diagnostics, sync } =
+    const { refreshMember, scheduler, diagnostics, sync, memberDelivery } =
       yield* MemberServices;
 
-    yield* sync.dispatchPendingChanges().pipe(
+    yield* memberDelivery.dispatchPending().pipe(
       Effect.catch((error) =>
         Effect.logError("Member sync dispatch failed", error),
       ),

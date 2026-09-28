@@ -278,7 +278,7 @@ parents, and restricted parent deletions.
 
 ## Discord member synchronization
 
-`20260928201538_member_sync_hot_updates` removes
+`20260928224047_member_sync_hot_updates` removes
 `Member_userId_guildId_active_lastDiscordSyncAt_idx`. The stale-member query in
 `user-guild-list.data-layer.ts` already restricts one Discord user to known
 Organization ids. `Member_userId_guildId_key` bounds that query to at most one
@@ -305,26 +305,37 @@ rebalance. Successful no-op synchronization refreshes permission-cache freshness
 without publishing a change event.
 
 `MemberSyncDelivery` stores one pending delivery per member in the same
-transaction as the member and role changes. `permissionsChanged` remains true
-if any pending change requires permission invalidation. A failed invalidation
-or publication leaves the row available for retry. Delivery uses the committed
-member state and removes the row only after success. A process failure after
-publication but before deletion can publish the event again; consumers must
-continue to accept at-least-once delivery.
+transaction as the member and role changes. Every writer that deactivates a
+member queues it the same way: Discord synchronization, Organizations missing
+from the user's Discord guild list, manual deactivation and guild deletion.
+`permissionsChanged` remains true if any pending change requires permission
+invalidation, and each queued change increments `version`.
+
+Delivery first claims the row by setting `claimedUntil` 30 seconds ahead in one
+autocommitted statement. It then reads the committed member state and performs
+the Redis invalidation and RabbitMQ publication outside any database
+transaction, with a 10-second timeout. A successful delivery deletes the row
+only if `version` is unchanged; a change queued meanwhile keeps the row and is
+delivered next. A failed delivery releases its claim, and a claim left by a
+stopped process expires. A process failure after publication but before
+deletion can publish the event again; consumers must continue to accept
+at-least-once delivery.
 
 The `BullWorkers` background layer runs
-`makeMemberSync.dispatchPendingChanges` immediately on startup and waits five
-seconds between passes. Each pass handles at most 25 pending members through the same
-delivery callback used by synchronization. A cursor advances by `memberId` and
-cycles through the backlog so repeatedly failing rows cannot block later rows.
-Locked deliveries already in progress are skipped. Recovery does not require a
-new Discord sync or another request from the affected member.
+`makeMemberDelivery.dispatchPending` immediately on startup and waits five
+seconds between passes. Each pass handles at most 25 unclaimed pending members
+through the same delivery used after each write. A cursor advances by
+`memberId` and cycles through the backlog so repeatedly failing rows cannot
+block later rows. Recovery does not require a new Discord sync, a redelivered
+guild event or another request from the affected member.
 
 Apply the migration before deploying the API revision that uses
 `MemberSyncDelivery`. The transactional migrator uses ordinary `DROP INDEX`,
-which briefly blocks reads and writes to `Member`; choose a low-traffic window
-and an operational lock timeout. The index drop runs last so its lock is not
-held while the new table and foreign key are created. An application rollback
+which briefly blocks reads and writes to `Member`; choose a low-traffic window.
+The migration sets a five-second `lock_timeout`, so a busy `Member` table fails
+the whole migration instead of queuing application traffic behind it; retry it
+when traffic allows. The index drop runs last so its lock is not held while the
+new table and foreign key are created. An application rollback
 does not need to recreate the removed index. Older API revisions do not drain
 pending deliveries, so retain the table and a compatible dispatcher until the
 backlog is empty. Finish in-flight old-version syncs and retry their failed jobs

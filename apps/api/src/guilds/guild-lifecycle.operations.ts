@@ -22,6 +22,7 @@ import type {
   GuildUpdated,
 } from "@lootlog/protocol/rabbit/events";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
+import { queueMemberDeliveries } from "#src/members/member.store";
 import { DiscordGuildSyncStatus } from "@lootlog/schema/notifications";
 import { getPermissionsCachePattern } from "#src/shared/cache";
 import { getGuildCacheKey } from "#src/guilds/guild-configuration-cache";
@@ -36,12 +37,9 @@ export interface GuildLifecyclePorts {
     pattern: string,
   ) => Effect.Effect<unknown, unknown>;
   readonly clearCacheKey: (key: string) => Effect.Effect<unknown, unknown>;
-  readonly notifyMembersRemoved: (
-    members: ReadonlyArray<{
-      readonly discordId: string;
-      readonly guildId: string;
-      readonly globalUserId: string | null;
-    }>,
+  /** Delivers member changes queued in the `MemberSyncDelivery` outbox. */
+  readonly deliverMemberChanges: (
+    memberIds: ReadonlyArray<number>,
   ) => Effect.Effect<unknown, unknown>;
 }
 
@@ -220,27 +218,14 @@ export const makeGuildLifecycle = (
             .where(eq(guildTable.id, data.guildId))
             .limit(1);
 
-          const members = yield* transaction
-            .select({
-              discordId: memberTable.userId,
-              guildId: memberTable.guildId,
-              globalUserId: memberTable.globalUserId,
-            })
-            .from(memberTable)
-            .where(
-              and(
-                eq(memberTable.guildId, data.guildId),
-                eq(memberTable.active, true),
-              ),
-            );
-
           yield* transaction
             .delete(lootlogConfigNpcTable)
             .where(eq(lootlogConfigNpcTable.lootlogConfigId, data.guildId));
           yield* transaction
             .delete(lootlogConfigTable)
             .where(eq(lootlogConfigTable.id, data.guildId));
-          yield* transaction
+
+          const members = yield* transaction
             .update(memberTable)
             .set({
               active: false,
@@ -253,7 +238,13 @@ export const makeGuildLifecycle = (
                 eq(memberTable.guildId, data.guildId),
                 eq(memberTable.active, true),
               ),
-            );
+            )
+            .returning({ id: memberTable.id });
+
+          const memberIds = members.map(({ id }) => id);
+          // Redelivered deletions no longer see these members as active; the
+          // committed outbox rows keep their removal retryable.
+          yield* queueMemberDeliveries(transaction, memberIds, true);
           yield* transaction
             .delete(roleTable)
             .where(eq(roleTable.guildId, data.guildId));
@@ -264,13 +255,13 @@ export const makeGuildLifecycle = (
 
           return {
             vanityUrl: guildRows[0]?.vanityUrl ?? null,
-            members,
+            memberIds,
           };
         }),
       ),
     );
 
-    yield* ports.notifyMembersRemoved(deletion.members);
+    yield* ports.deliverMemberChanges(deletion.memberIds);
     yield* Effect.all(
       [
         ports.clearCachePattern(getPermissionsCachePattern(data.guildId)),

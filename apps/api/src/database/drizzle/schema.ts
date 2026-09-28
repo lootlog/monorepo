@@ -371,6 +371,8 @@ export const memberSyncDeliveryTable = pgTable("MemberSyncDelivery", {
     .primaryKey()
     .references(() => memberTable.id, { onDelete: "cascade" }),
   permissionsChanged: boolean("permissionsChanged").notNull(),
+  version: integer("version").default(1).notNull(),
+  claimedUntil: timestamp("claimedUntil", { mode: "date", precision: 3 }),
   createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
     .defaultNow()
     .notNull(),

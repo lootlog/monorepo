@@ -13,6 +13,8 @@ import {
 } from "#src/database/drizzle/schema";
 import { applicationLogger } from "#src/shared/application-logger";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { MEMBER_LAST_DISCORD_STATUS } from "./member-discord-status.js";
+import { makeMemberDelivery } from "./member-delivery.operations.js";
 import { makeMemberRemoval } from "./member-removal.operations.js";
 import { makeMemberStore } from "./member.store.js";
 import { makeMemberSync } from "./member-sync.operations.js";
@@ -55,7 +57,7 @@ test("member sync retries invalidation after a committed role change and clears 
     const removed: string[] = [];
     const store = makeMemberStore(boundary.database);
 
-    const removal = makeMemberRemoval(boundary.database, {
+    const delivery = makeMemberDelivery(store, {
       clearMemberCaches: ({ guildId, discordId }) =>
         Effect.sync(() => {
           invalidated.push(`${guildId}:${discordId}`);
@@ -64,15 +66,6 @@ test("member sync retries invalidation after a committed role change and clears 
         Effect.sync(() => {
           removed.push(globalUserId);
         }),
-    });
-
-    const sync = makeMemberSync(applicationLogger, store, removal, {
-      getGuildMember: () =>
-        notFound
-          ? Effect.fail(new ResourceNotFoundError("Member not found"))
-          : Effect.succeed(discordMember),
-      nextRefreshAt: () => Effect.succeed(null),
-      refreshPermissionCache: () => Effect.void,
       publishMemberUpdated: () => Effect.void,
       invalidateMember: ({ guildId, discordId }) =>
         failInvalidation
@@ -80,6 +73,15 @@ test("member sync retries invalidation after a committed role change and clears 
           : Effect.sync(() => {
               invalidated.push(`${guildId}:${discordId}`);
             }),
+    });
+
+    const sync = makeMemberSync(applicationLogger, store, delivery, {
+      getGuildMember: () =>
+        notFound
+          ? Effect.fail(new ResourceNotFoundError("Member not found"))
+          : Effect.succeed(discordMember),
+      nextRefreshAt: () => Effect.succeed(null),
+      refreshPermissionCache: () => Effect.void,
     });
 
     const refresh = () =>
@@ -139,6 +141,7 @@ type DiscordBoundaryState = {
   error: Error | undefined;
   failDelivery: boolean;
   failCache: boolean;
+  duringPublish: Effect.Effect<unknown, unknown> | undefined;
 };
 
 const createSyncBoundary = async () => {
@@ -193,6 +196,7 @@ const createSyncBoundary = async () => {
     error: undefined,
     failDelivery: false,
     failCache: false,
+    duringPublish: undefined,
   };
 
   const events: string[] = [];
@@ -205,51 +209,56 @@ const createSyncBoundary = async () => {
     });
 
   const publish = (event: string) =>
-    Effect.try(() => {
-      if (state.failDelivery) throw new Error("broker unavailable");
-      events.push(event);
-    });
+    Effect.suspend(() => {
+      const concurrentWork = state.duringPublish ?? Effect.void;
+      state.duringPublish = undefined;
 
-  const removal = makeMemberRemoval(boundary.database, {
-    clearMemberCaches: clearCaches,
-    publishMemberRemoved: () => publish("removed"),
-  });
-
-  const makeSync = () =>
-    makeMemberSync(
-      applicationLogger,
-      makeMemberStore(boundary.database),
-      removal,
-      {
-        getGuildMember: () =>
-          state.error ? Effect.fail(state.error) : Effect.succeed(state.member),
-        nextRefreshAt: () => Effect.succeed(null),
-        refreshPermissionCache: () =>
-          Effect.sync(() => {
-            events.push("freshness");
-          }),
-        invalidateMember: clearCaches,
-        publishMemberUpdated: () => publish("updated"),
-      },
+      return concurrentWork;
+    }).pipe(
+      Effect.andThen(() =>
+        Effect.try(() => {
+          if (state.failDelivery) throw new Error("broker unavailable");
+          events.push(event);
+        }),
+      ),
     );
 
-  const sync = makeSync();
+  // A fresh delivery models a restarted process with a new dispatcher cursor.
+  const makeDelivery = () =>
+    makeMemberDelivery(makeMemberStore(boundary.database), {
+      clearMemberCaches: clearCaches,
+      publishMemberRemoved: () => publish("removed"),
+      invalidateMember: clearCaches,
+      publishMemberUpdated: () => publish("updated"),
+    });
+
+  const delivery = makeDelivery();
+
+  const sync = makeMemberSync(applicationLogger, store, delivery, {
+    getGuildMember: () =>
+      state.error ? Effect.fail(state.error) : Effect.succeed(state.member),
+    nextRefreshAt: () => Effect.succeed(null),
+    refreshPermissionCache: () =>
+      Effect.sync(() => {
+        events.push("freshness");
+      }),
+  });
+
+  const syncMember = sync.syncMemberFromDiscord({
+    discordId: "discord-1",
+    guildId: "guild-1",
+    userId: "user-1",
+  });
 
   return {
     ...boundary,
     state,
     events,
     store,
-    makeSync,
-    sync,
-    refresh: () =>
-      boundary.run(
-        sync.syncMemberFromDiscord({
-          discordId: "discord-1",
-          guildId: "guild-1",
-          userId: "user-1",
-        }),
-      ),
+    makeDelivery,
+    removal: makeMemberRemoval(boundary.database, delivery),
+    syncMember,
+    refresh: () => boundary.run(syncMember),
     roleRows: () =>
       boundary.run(
         boundary.database
@@ -365,8 +374,7 @@ test("failed permission publication survives later profile changes and a restart
 
     boundary.events.length = 0;
     boundary.state.failDelivery = false;
-    const restarted = boundary.makeSync();
-    await boundary.run(restarted.dispatchPendingChanges());
+    await boundary.run(boundary.makeDelivery().dispatchPending());
     expect(boundary.events).toEqual(["cache", "updated"]);
     expect(await boundary.pending()).toEqual([]);
     boundary.events.length = 0;
@@ -398,7 +406,7 @@ test("removal retries without another Discord request and reactivation publishes
 
     boundary.events.length = 0;
     boundary.state.failDelivery = false;
-    await boundary.run(boundary.makeSync().dispatchPendingChanges());
+    await boundary.run(boundary.makeDelivery().dispatchPending());
     expect(boundary.events).toEqual(["cache", "removed"]);
     boundary.events.length = 0;
     await boundary.refresh();
@@ -462,7 +470,7 @@ test("cache failures delay permission publication until invalidation recovers", 
     ]);
 
     boundary.state.failCache = false;
-    await boundary.run(boundary.makeSync().dispatchPendingChanges());
+    await boundary.run(boundary.makeDelivery().dispatchPending());
     expect(boundary.events).toEqual(["cache", "updated"]);
     expect(await boundary.pending()).toEqual([]);
   } finally {
@@ -510,6 +518,85 @@ test("a rejected role write rolls back profile and role changes before any publi
       "role-3",
     ]);
     expect(boundary.events).toEqual(["cache", "updated", "freshness"]);
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+test("a guild missing from Discord still publishes removal after a cache failure without replaying it", async () => {
+  const boundary = await createSyncBoundary();
+
+  try {
+    await boundary.refresh();
+    boundary.events.length = 0;
+    boundary.state.failCache = true;
+
+    const deactivateMissing = () =>
+      boundary.run(
+        boundary.removal.deactivateMembersMissingFromDiscordGuilds({
+          discordId: "discord-1",
+          userId: "user-1",
+          activeDiscordGuildIds: ["other-guild"],
+          status: MEMBER_LAST_DISCORD_STATUS.GUILD_NOT_IN_DISCORD_LIST,
+        }),
+      );
+
+    await expect(deactivateMissing()).rejects.toThrow();
+    expect(
+      await boundary.run(
+        boundary.store.findMemberWithRoles("discord-1", "guild-1"),
+      ),
+    ).toMatchObject({ active: false, roles: [] });
+    expect(await boundary.pending()).toMatchObject([
+      { permissionsChanged: true },
+    ]);
+
+    // The retry no longer sees an active member; only the outbox remembers.
+    expect(await deactivateMissing()).toBe(0);
+    expect(boundary.events).toEqual([]);
+
+    boundary.state.failCache = false;
+    await boundary.run(boundary.makeDelivery().dispatchPending());
+    expect(boundary.events).toEqual(["cache", "removed"]);
+    expect(await boundary.pending()).toEqual([]);
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+test("a change queued while an earlier change is being published is delivered after it", async () => {
+  const boundary = await createSyncBoundary();
+
+  try {
+    await boundary.refresh();
+    boundary.events.length = 0;
+    boundary.state.member.roles = ["role-2"];
+    boundary.state.duringPublish = Effect.suspend(() => {
+      boundary.state.member.roles = ["role-3"];
+
+      return boundary.syncMember;
+    });
+
+    await boundary.refresh();
+
+    // The nested sync commits role-3 while role-2 is being published; its own
+    // delivery attempt finds the row claimed and leaves it to the first one.
+    expect(boundary.events).toEqual([
+      "cache",
+      "freshness",
+      "updated",
+      "cache",
+      "updated",
+      "freshness",
+    ]);
+    expect(await boundary.pending()).toEqual([]);
+    expect(
+      (
+        await boundary.run(
+          boundary.store.findMemberWithRoles("discord-1", "guild-1"),
+        )
+      )?.roles.map(({ id }) => id),
+    ).toEqual(["role-3"]);
   } finally {
     await boundary.dispose();
   }
