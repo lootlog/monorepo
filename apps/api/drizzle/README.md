@@ -217,3 +217,61 @@ GIN entry per inserted player snapshot; the copy received at most about 30,000
 loots per day during the sampled week. The migrator runs inside a transaction,
 so this is a plain `CREATE INDEX` holding a `SHARE` lock on `PlayerSnapshot`
 while it builds.
+
+## Organization lookup indexes
+
+`20260928183954_organization_lookup_indexes` adds `Role_guildId_idx` and
+`LootlogConfigNpc_lootlogConfigId_idx` for Organization role lists, NPC
+configuration reads, loot acceptance, and Organization deletion. It removes
+the redundant nonunique `Role_id_guildId_idx`, retaining `Role_id_guildId_key`
+and all existing constraints. Query results and HTTP contracts are unchanged.
+
+Run `bun run db:migrate:deploy` from `apps/api` during a low-traffic window.
+The runner executes pending migrations in a transaction, so it cannot use
+`CREATE INDEX CONCURRENTLY`. Each index build temporarily blocks writes to
+its table. Dropping the redundant index also blocks reads of `Role`; the drop
+runs last to avoid holding that stronger lock during the builds. Locks remain
+until the migration transaction commits. Older API revisions can use the new
+indexes, so an application rollback does not require reverting this migration.
+
+Before migration and again after a comparable period of normal traffic, collect
+the following counters from the API database in separate, fresh transactions:
+
+```sql
+SELECT relname, seq_scan, seq_tup_read, idx_scan, n_live_tup
+FROM pg_stat_user_tables
+WHERE schemaname = 'public'
+  AND relname IN ('Role', 'LootlogConfigNpc')
+ORDER BY relname;
+
+SELECT relname, indexrelname, idx_scan, idx_tup_read
+FROM pg_stat_user_indexes
+WHERE schemaname = 'public'
+  AND relname IN ('Role', 'LootlogConfigNpc')
+ORDER BY relname, indexrelname;
+```
+
+Compare counter deltas without resetting shared statistics. Selective lookups
+by `guildId` or `lootlogConfigId` should use the new indexes and stop repeatedly
+reading whole tables. Confirm with `EXPLAIN (ANALYZE, BUFFERS)` for the affected
+role and NPC configuration reads using representative Organization ids. A
+sequential scan remains valid for broad queries or very small tables, so a
+nonzero `seq_scan` delta alone does not establish a regression.
+
+Local verification used disposable PostgreSQL 17.10 with 770 synthetic
+Organizations, 15,400 roles, and 6,900 NPC configuration rows. Drizzle-generated
+queries returned identical ordered rows before and after migration. All three
+plans changed from sequential scans to scans of the new indexes. The following
+execution times are medians of five warm `EXPLAIN (ANALYZE, BUFFERS)` runs,
+not production latency estimates:
+
+| Lookup                                                   | Rows returned | Before / after, ms | Before / after shared buffer hits |
+| -------------------------------------------------------- | ------------- | ------------------ | --------------------------------- |
+| Roles in one Organization, ordered by position           | 20            | 0.537 / 0.014      | 266 / 4                           |
+| NPC configuration for one Organization, ordered by id    | 9             | 0.202 / 0.013      | 92 / 3                            |
+| NPC configuration for three Organizations, ordered by id | 27            | 0.385 / 0.021      | 92 / 9                            |
+
+The installed migrator applied the new migration to the populated database,
+recorded its exact SQL hash, and made no changes on a second run. Existing
+uniqueness and foreign-key checks still rejected duplicate roles, missing
+parents, and restricted parent deletions.
