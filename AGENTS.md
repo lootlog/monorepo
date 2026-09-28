@@ -214,7 +214,9 @@ Before calling a change complete, account for every applicable item:
   delivery, notifications, and metadata use the same source policy.
 - **Reverse states:** when a state can be entered, provide the applicable way to
   inspect and leave it.
-- **Documentation:** update user guides when shipped behavior changes.
+- **Documentation:** when shipped behavior changes, update the existing user
+  guide in `apps/docs` or integration guide in `apps/developer`. Do not create
+  new documentation files, READMEs, or ADRs unless the user asks.
 
 ## Implementation rules
 
