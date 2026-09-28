@@ -1,3 +1,4 @@
+import { topMemberDisplayRoles } from "#src/members/member-display-role";
 import {
   and,
   asc,
@@ -361,10 +362,7 @@ export const makeEventKillHistoryStore = (
         ...point,
         member: {
           ...point.member,
-          roles: roles
-            .filter((role) => role.memberId === point.memberId)
-            .slice(0, 1)
-            .map(({ position, color }) => ({ position, color })),
+          roles: topMemberDisplayRoles(roles, point.memberId),
         },
       })),
     };
