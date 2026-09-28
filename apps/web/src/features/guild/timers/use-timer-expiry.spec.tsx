@@ -55,7 +55,12 @@ it("refreshes simultaneous expiries once, preserves scope, and handles a reset t
   const { rerender, unmount } = renderHook(
     ({ currentTimers }) => {
       recordRender();
-      useTimerExpiry(currentTimers, "one", "tempest");
+      useTimerExpiry(
+        currentTimers,
+        "one",
+        "tempest",
+        Date.parse("2026-09-05T12:00:00Z"),
+      );
     },
     {
       initialProps: { currentTimers: timers },
@@ -87,3 +92,55 @@ it("refreshes simultaneous expiries once, preserves scope, and handles a reset t
   client.clear();
   expect(vi.getTimerCount()).toBe(0);
 });
+
+it.each([
+  { expiredAt: "2026-09-05T11:55:00Z", refetches: 0 },
+  { expiredAt: "2026-09-05T11:59:59Z", refetches: 1 },
+])(
+  "refetches a timer that expired at $expiredAt, before a response received at noon, $refetches times",
+  async ({ expiredAt, refetches }) => {
+    vi.useFakeTimers();
+    vi.setSystemTime("2026-09-05T12:00:00Z");
+
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+    });
+
+    const queryKey = getTimersControllerGetTimersQueryKey(
+      { guildId: "one" },
+      { world: "tempest" },
+    );
+
+    const fetchTimers = vi.fn(async () => []);
+
+    const unsubscribe = new QueryObserver(client, {
+      queryKey,
+      queryFn: fetchTimers,
+      initialData: [],
+      staleTime: Infinity,
+    }).subscribe(() => undefined);
+
+    const { unmount } = renderHook(
+      () =>
+        useTimerExpiry(
+          [{ timerKey: "expired", maxSpawnTime: expiredAt }],
+          "one",
+          "tempest",
+          Date.parse("2026-09-05T12:00:00Z"),
+        ),
+      {
+        wrapper: ({ children }: PropsWithChildren) => (
+          <QueryClientProvider client={client}>{children}</QueryClientProvider>
+        ),
+      },
+    );
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000);
+    });
+    expect(fetchTimers).toHaveBeenCalledTimes(refetches);
+    unmount();
+    unsubscribe();
+    client.clear();
+  },
+);

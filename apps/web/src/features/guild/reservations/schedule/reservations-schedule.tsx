@@ -175,9 +175,11 @@ export function ReservationsSchedule() {
     const rejoin = (payload: {
       status: "success" | "error";
       guildIds: string[];
+      recover: boolean;
     }) => {
       if (
         payload.status === "success" &&
+        payload.recover &&
         payload.guildIds.includes(organizationId)
       )
         void invalidateReservationQueries(queryClient, guildId, spotId);
