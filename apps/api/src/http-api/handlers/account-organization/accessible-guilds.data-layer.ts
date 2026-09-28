@@ -1,3 +1,4 @@
+import { readGuildOrderPreference } from "#src/guilds/guild-order-query";
 import { sortGuildsByPreference } from "#src/guilds/guild-order";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { hydrateMemberRoles } from "#src/members/member-role-hydration";
@@ -7,7 +8,7 @@ import { Clock, Effect, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { memberTable, userSettingsTable } from "#src/database/drizzle/schema";
+import { memberTable } from "#src/database/drizzle/schema";
 import { getMemberCacheSoftTtl } from "#src/members/member-cache";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/member-refresh-queue";
 import {
@@ -178,16 +179,12 @@ export const makeAccessibleGuilds = (
       "guild-access-background",
     );
 
-    const orderRows = yield* database
-      .select({ guildsOrder: userSettingsTable.guildsOrder })
-      .from(userSettingsTable)
-      .where(eq(userSettingsTable.userId, identity.userId))
-      .limit(1);
-
-    const result = sortGuildsByPreference(
-      summaries,
-      orderRows[0]?.guildsOrder ?? [],
+    const preferredIds = yield* readGuildOrderPreference(
+      database,
+      identity.userId,
     );
+
+    const result = sortGuildsByPreference(summaries, preferredIds);
 
     yield* ports.setCached(cacheKey, result, CACHE_TTL_SECONDS);
 
