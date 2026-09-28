@@ -1,3 +1,4 @@
+import { CapabilitySchema } from "@lootlog/schema/permissions";
 import {
   discordPermissionFields,
   DiscordGuildSyncStatus,
@@ -12,42 +13,6 @@ import {
 } from "@lootlog/schema/http-scalars";
 import { RESERVATION_TIME_GRANULARITY_OPTIONS } from "@lootlog/domain/reservations";
 import { ErrorKey } from "#src/guilds/error-key";
-
-const OrganizationCapability = Schema.Literals([
-  "OWNER",
-  "ADMIN",
-  "LOOTLOG_MANAGE",
-  "LOOTLOG_ACCESS",
-  "LOOTLOG_LOOTS_READ",
-  "LOOTLOG_LOOTS_WRITE",
-  "LOOTLOG_LOOTS_ARCHIVE",
-  "LOOTLOG_LOOTS_TITANS_READ",
-  "LOOTLOG_LOOTS_HEROES_READ",
-  "LOOTLOG_TIMERS_READ",
-  "LOOTLOG_TIMERS_WRITE",
-  "LOOTLOG_TIMERS_RESET",
-  "LOOTLOG_TIMERS_DELETE",
-  "LOOTLOG_TIMERS_TITANS_READ",
-  "LOOTLOG_TIMERS_HEROES_READ",
-  "LOOTLOG_RESERVATIONS_READ",
-  "LOOTLOG_RESERVATIONS_WRITE",
-  "LOOTLOG_MEMBERS_READ",
-  "LOOTLOG_ONLINE_PLAYERS_READ",
-  "LOOTLOG_PRESENCE_LOCATION_READ",
-  "LOOTLOG_CHAT_READ",
-  "LOOTLOG_CHAT_WRITE",
-  "LOOTLOG_CHAT_TITANS_READ",
-  "LOOTLOG_CHAT_HEROES_READ",
-  "LOOTLOG_NOTIFICATIONS_READ",
-  "LOOTLOG_NOTIFICATIONS_SEND",
-  "LOOTLOG_NOTIFICATIONS_TITANS_READ",
-  "LOOTLOG_NOTIFICATIONS_HEROES_READ",
-  "LOOTLOG_EVENTS_MANAGE",
-  "LOOTLOG_EVENTS_READ",
-  "LOOTLOG_EVENTS_WRITE",
-  "LOOTLOG_DOCS_READ",
-  "LOOTLOG_DOCS_WRITE",
-]);
 
 export type UserOrganizationSummary = typeof UserOrganizationSummary.Type;
 
@@ -75,7 +40,7 @@ export const OrganizationPermissionsResponse = Schema.Struct({
       id: Schema.String,
       lvlRangeFrom: FiniteNumber,
       lvlRangeTo: FiniteNumber,
-      permissions: Schema.Array(OrganizationCapability),
+      permissions: Schema.Array(CapabilitySchema),
     }),
   ),
 }).annotate({ identifier: "UserGuildPermissionsDto_Output" });
@@ -215,6 +180,4 @@ export const OrganizationWorldsResponse = Schema.Array(Schema.String);
 export type OrganizationCapabilitiesResponse =
   typeof OrganizationCapabilitiesResponse.Type;
 
-export const OrganizationCapabilitiesResponse = Schema.Array(
-  OrganizationCapability,
-);
+export const OrganizationCapabilitiesResponse = Schema.Array(CapabilitySchema);
