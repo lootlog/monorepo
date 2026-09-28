@@ -9,15 +9,19 @@ import {
 } from "@lootlog/client/transport";
 import {
   decodePartyReadyRoomProjection,
+  PARTY_OBSERVATION_HEARTBEAT_MS,
   type PartyReadyRoomProjection,
 } from "@lootlog/schema/party-ready-room";
+
+type ObservePartyBody = Parameters<
+  typeof partyReadyRoomControllerObserveParty
+>[1];
 
 export type ReadyRoomPartyObservation = {
   scope: string;
   notificationId: string;
-  body: Parameters<typeof partyReadyRoomControllerObserveParty>[1] & {
-    expectedRevision: number;
-  };
+  body: ObservePartyBody &
+    Required<Pick<ObservePartyBody, "expectedRevision" | "members">>;
 };
 
 type PendingObservation = {
@@ -25,6 +29,7 @@ type PendingObservation = {
   key: string;
   attempts: number;
   reported: boolean;
+  sentAt: number;
 };
 
 const RETRY_DELAYS_MS = [1_000, 2_000];
@@ -42,17 +47,21 @@ export function createReadyRoomPartyReporter(
   let waitingForReport = false;
   let disposed = false;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
+  let heartbeatTimer: ReturnType<typeof setTimeout> | undefined;
 
-  function clearRetry() {
+  function clearTimers() {
     clearTimeout(retryTimer);
     retryTimer = undefined;
+    clearTimeout(heartbeatTimer);
+    heartbeatTimer = undefined;
   }
 
   function refreshObservation() {
     const observation = readObservation();
 
+    // Display fields belong to the key; HP and the room revision do not.
     const key = observation
-      ? JSON.stringify([observation.scope, observation.body.memberCharacterIds])
+      ? JSON.stringify([observation.scope, observation.body.members])
       : null;
 
     if (pending?.key === key && observation) {
@@ -61,11 +70,35 @@ export function createReadyRoomPartyReporter(
       return;
     }
 
-    clearRetry();
+    clearTimers();
     pending =
       observation && key !== null
-        ? { observation, key, attempts: 0, reported: false }
+        ? { observation, key, attempts: 0, reported: false, sentAt: 0 }
         : null;
+  }
+
+  // Viewers mark an observation stale after a fixed age, so re-report an
+  // unchanged party a heartbeat after the last report was sent.
+  function scheduleHeartbeat(current: PendingObservation) {
+    clearTimeout(heartbeatTimer);
+    heartbeatTimer = setTimeout(
+      () => {
+        heartbeatTimer = undefined;
+
+        if (pending !== current) return;
+
+        current.attempts = 0;
+        current.reported = false;
+        flush();
+      },
+      Math.max(0, current.sentAt + PARTY_OBSERVATION_HEARTBEAT_MS - Date.now()),
+    );
+  }
+
+  // Responses for the same room scope are server truth and carry its newest
+  // revision, even when a newer roster has superseded the reported one.
+  function isCurrentScope(current: PendingObservation) {
+    return pending?.observation.scope === current.observation.scope;
   }
 
   async function report(current: PendingObservation) {
@@ -83,13 +116,15 @@ export function createReadyRoomPartyReporter(
         if (disposed) return;
         refreshObservation();
 
-        if (pending !== current) return;
+        if (!isCurrentScope(current)) return;
 
         mergeProjection(projection);
         refreshObservation();
 
         if (pending !== current) return;
       }
+
+      current.sentAt = Date.now();
 
       const projection = decodePartyReadyRoomProjection(
         await partyReadyRoomControllerObserveParty(
@@ -102,9 +137,13 @@ export function createReadyRoomPartyReporter(
       if (disposed) return;
       refreshObservation();
 
-      if (pending !== current) return;
+      if (!isCurrentScope(current)) return;
 
-      current.reported = true;
+      if (pending === current) {
+        current.reported = true;
+        scheduleHeartbeat(current);
+      }
+
       mergeProjection(projection);
     } catch (cause) {
       if (disposed) return;
@@ -119,11 +158,14 @@ export function createReadyRoomPartyReporter(
         getApiErrorStatus(cause) === 409 &&
         getApiErrorStringField(cause, "code") === "REVISION_CONFLICT";
 
-      if (
-        delay === undefined ||
-        (!revisionConflict && !isRetryableApiFailure(cause))
-      ) {
+      if (!revisionConflict && !isRetryableApiFailure(cause)) {
         current.attempts = RETRY_DELAYS_MS.length + 1;
+
+        return;
+      }
+
+      if (delay === undefined) {
+        scheduleHeartbeat(current);
 
         return;
       }
@@ -171,7 +213,7 @@ export function createReadyRoomPartyReporter(
     flush,
     dispose() {
       disposed = true;
-      clearRetry();
+      clearTimers();
     },
   };
 }

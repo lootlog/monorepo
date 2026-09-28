@@ -36,6 +36,10 @@ function readObservation(
   )
     return null;
 
+  const memberCharacterIds = [
+    ...new Set(members.map(({ characterId }) => characterId)),
+  ].sort();
+
   return {
     scope: JSON.stringify([
       room.notificationId,
@@ -49,9 +53,23 @@ function readObservation(
     notificationId: room.notificationId,
     body: {
       expectedRevision: room.revision,
-      memberCharacterIds: [
-        ...new Set(members.map(({ characterId }) => characterId)),
-      ].sort(),
+      memberCharacterIds,
+      members: memberCharacterIds.flatMap((characterId) => {
+        const member = members.find(
+          (entry) => entry.characterId === characterId,
+        );
+
+        return member
+          ? [
+              {
+                characterId,
+                nick: member.name,
+                icon: member.icon,
+                prof: member.profession ?? undefined,
+              },
+            ]
+          : [];
+      }),
       organizerAccountId: currentCharacter.accountId,
       organizerCharacterId: currentCharacter.characterId,
     },
