@@ -289,7 +289,7 @@ const migrateBinding = (binding: unknown): HotkeyBinding | null => {
 interface HotkeysState {
   bindings: Record<HotkeyAction, HotkeyBinding>;
   setBinding: (action: HotkeyAction, binding: HotkeyBinding) => boolean;
-  resetBinding: (action: HotkeyAction) => void;
+  resetBinding: (action: HotkeyAction) => boolean;
   resetAll: () => void;
   /** Replaces bindings from the settings documents without writing back. */
   applyBindings: (bindings: Record<HotkeyAction, HotkeyBinding>) => void;
@@ -329,14 +329,9 @@ export const useHotkeysStore = create<HotkeysState>()(
       resetBinding: (action) => {
         const config = HOTKEY_ACTIONS.find((c) => c.action === action);
 
-        if (!config) return;
-        set((state) => ({
-          bindings: {
-            ...state.bindings,
-            [action]: { ...config.defaultBinding },
-          },
-        }));
-        syncBindings(get().bindings);
+        if (!config) return false;
+
+        return get().setBinding(action, { ...config.defaultBinding });
       },
       resetAll: () => {
         set({ bindings: getDefaultBindings() });
