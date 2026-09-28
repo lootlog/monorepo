@@ -1,3 +1,7 @@
+import {
+  getCharacterFilterKey,
+  migrateCharacterFilters,
+} from "@/lib/character-filter-scope";
 import { decodeTimerSettings } from "./timer-settings-codec";
 import type {
   UpdateTimerSettingsPayload,
@@ -56,6 +60,8 @@ interface TimersState {
   hiddenDefaultColors: string[];
   customLists: Record<string, CustomTimerList>;
   timersFilters: Record<string, TimersFilters>;
+  legacyTimersFilters: Record<string, TimersFilters>;
+  initializeCharacterFilters: (scopeKey: string) => void;
   timerFiltersEnabled?: boolean;
   colorFiltersEnabled?: boolean;
   timerFiltersSearchText?: string;
@@ -64,7 +70,11 @@ interface TimersState {
   setGeneralConfig: (config: TimersGeneralConfig) => void;
   displayConfig: TimersDisplayConfig;
   setDisplayConfig: (config: TimersDisplayConfig) => void;
-  setTimersFilters: (guildId: string, filters: TimersFilters) => void;
+  setTimersFilters: (
+    scopeKey: string,
+    settingsKey: string,
+    filters: TimersFilters,
+  ) => void;
   setTimersSortOrder: (order: "asc" | "desc") => void;
   toggleTimerFiltersEnabled: () => void;
   toggleColorFiltersEnabled: () => void;
@@ -227,12 +237,27 @@ export const useTimersStore = create<TimersState>()(
         timerFiltersSearchText: "",
         timersSortOrder: "asc",
         timersFilters: {},
-        setTimersFilters: (guildId: string, filters: TimersFilters) => {
+        legacyTimersFilters: {},
+        initializeCharacterFilters: (scopeKey) => {
+          const { legacyTimersFilters, timersFilters } = get();
+
+          if (Object.keys(legacyTimersFilters).length === 0) return;
+          set({
+            timersFilters: {
+              ...migrateCharacterFilters(legacyTimersFilters, scopeKey),
+              ...timersFilters,
+            },
+            legacyTimersFilters: {},
+          });
+        },
+        setTimersFilters: (scopeKey, settingsKey, filters) => {
           setWithTimestamp((state) => ({
             timersFilters: {
+              ...migrateCharacterFilters(state.legacyTimersFilters, scopeKey),
               ...state.timersFilters,
-              [guildId]: filters,
+              [getCharacterFilterKey(scopeKey, settingsKey)]: filters,
             },
+            legacyTimersFilters: {},
           }));
         },
         setTimersSortOrder: (order: "asc" | "desc") => {
@@ -464,6 +489,7 @@ export const useTimersStore = create<TimersState>()(
         colorFiltersEnabled: state.colorFiltersEnabled,
         timersSortOrder: state.timersSortOrder,
         timersFilters: state.timersFilters,
+        legacyTimersFilters: state.legacyTimersFilters,
         generalConfig: state.generalConfig,
         displayConfig: state.displayConfig,
       }),
@@ -499,6 +525,8 @@ export const useTimersStore = create<TimersState>()(
             persisted.hiddenDefaultColors ?? currentState.hiddenDefaultColors,
           customLists: persisted.customLists ?? currentState.customLists,
           timersFilters: persisted.timersFilters ?? currentState.timersFilters,
+          legacyTimersFilters:
+            persisted.legacyTimersFilters ?? currentState.legacyTimersFilters,
           timerFiltersEnabled:
             persisted.timerFiltersEnabled ?? currentState.timerFiltersEnabled,
           colorFiltersEnabled:
@@ -507,7 +535,16 @@ export const useTimersStore = create<TimersState>()(
             persisted.timersSortOrder ?? currentState.timersSortOrder,
         };
       },
-      version: 6,
+      version: 7,
+      migrate: (persistedState) => {
+        const persisted = decodeTimerSettings(persistedState);
+
+        return {
+          ...persisted,
+          timersFilters: {},
+          legacyTimersFilters: persisted.timersFilters ?? {},
+        };
+      },
     },
   ),
 );

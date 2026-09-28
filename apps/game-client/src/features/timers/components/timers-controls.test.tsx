@@ -3,20 +3,27 @@ import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { NpcType } from "@/api/npcs.api";
+import { getCharacterFilterKey } from "@/lib/character-filter-scope";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { useTimersStore } from "@/store/timers.store";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import { createTimerHttpFixture } from "../timer-http-fixtures";
 import { TimersActions } from "./timers-actions";
 import { TimersFilters } from "./timers-filters";
 
+const scopeKey = JSON.stringify(["luvia", "202", "101", "luvia"]);
+
+const filtersKey = getCharacterFilterKey(scopeKey, "guild-1");
+
 const resetStore = () =>
   useTimersStore.setState(useTimersStore.getInitialState(), true);
 
 beforeEach(() => {
   resetStore();
+  setTestRuntimeGame();
   useTimersStore.setState({
     timersFilters: {
-      "guild-1": {
+      [filtersKey]: {
         minLvl: 10,
         maxLvl: 200,
         selectedNpcTypes: [NpcType.HERO],
@@ -44,7 +51,7 @@ afterEach(resetStore);
 describe("timers controls", () => {
   it("updates actual search, clamped level ranges, npc types, and color filters", async () => {
     const user = userEvent.setup();
-    render(<TimersFilters filtersKey="guild-1" />);
+    render(<TimersFilters filtersKey="guild-1" world="luvia" />);
     fireEvent.change(screen.getByPlaceholderText("Szukaj…"), {
       target: { value: "tan" },
     });
@@ -55,7 +62,7 @@ describe("timers controls", () => {
     fireEvent.change(screen.getByLabelText("Poziom do"), {
       target: { value: "999" },
     });
-    expect(useTimersStore.getState().timersFilters["guild-1"]).toMatchObject({
+    expect(useTimersStore.getState().timersFilters[filtersKey]).toMatchObject({
       minLvl: 0,
       maxLvl: 500,
     });
@@ -67,14 +74,14 @@ describe("timers controls", () => {
     fireEvent.change(screen.getByLabelText("Poziom do"), {
       target: { value: "100" },
     });
-    expect(useTimersStore.getState().timersFilters["guild-1"]).toMatchObject({
+    expect(useTimersStore.getState().timersFilters[filtersKey]).toMatchObject({
       minLvl: 100,
       maxLvl: 100,
     });
     await user.click(screen.getByRole("button", { name: "Typy potworów" }));
     await user.click(await screen.findByRole("button", { name: "Heros" }));
     expect(
-      useTimersStore.getState().timersFilters["guild-1"].selectedNpcTypes,
+      useTimersStore.getState().timersFilters[filtersKey].selectedNpcTypes,
     ).toEqual([]);
     await user.keyboard("{Escape}");
     const custom = screen.getAllByRole("button").at(-1);
@@ -84,14 +91,14 @@ describe("timers controls", () => {
     expect(await screen.findByText("Custom One")).toBeVisible();
     await user.click(custom);
     expect(
-      useTimersStore.getState().timersFilters["guild-1"].selectedColors,
+      useTimersStore.getState().timersFilters[filtersKey].selectedColors,
     ).toEqual(["red", "custom-1"]);
   });
 
   it("selects only one npc type by right-click or its visible button and preserves the other filters", async () => {
     const user = userEvent.setup();
-    useTimersStore.getState().setTimersFilters("guild-1", {
-      ...useTimersStore.getState().timersFilters["guild-1"],
+    useTimersStore.getState().setTimersFilters(scopeKey, "guild-1", {
+      ...useTimersStore.getState().timersFilters[filtersKey],
       selectedNpcTypes: [
         NpcType.ELITE2,
         NpcType.ELITE3,
@@ -99,13 +106,13 @@ describe("timers controls", () => {
         NpcType.TITAN,
       ],
     });
-    render(<TimersFilters filtersKey="guild-1" />);
+    render(<TimersFilters filtersKey="guild-1" world="luvia" />);
     await user.click(screen.getByRole("button", { name: "Typy potworów" }));
     const button = await screen.findByRole("button", { name: "Elita II" });
     const event = createEvent.contextMenu(button);
     fireEvent(button, event);
     expect(event.defaultPrevented).toBe(true);
-    expect(useTimersStore.getState().timersFilters["guild-1"]).toEqual({
+    expect(useTimersStore.getState().timersFilters[filtersKey]).toEqual({
       minLvl: 10,
       maxLvl: 200,
       selectedNpcTypes: [NpcType.ELITE2],
@@ -116,7 +123,7 @@ describe("timers controls", () => {
       screen.getByRole("button", { name: "Pokaż tylko: Tytan" }),
     );
     expect(
-      useTimersStore.getState().timersFilters["guild-1"].selectedNpcTypes,
+      useTimersStore.getState().timersFilters[filtersKey].selectedNpcTypes,
     ).toEqual([NpcType.TITAN]);
   });
 
@@ -128,13 +135,13 @@ describe("timers controls", () => {
         heroes: { id: "heroes", name: "Herosi", npcNames: ["Tanroth"] },
       },
     });
-    render(<TimersFilters filtersKey="guild-1" />);
+    render(<TimersFilters filtersKey="guild-1" world="luvia" />);
     await user.click(screen.getByRole("button", { name: "E2" }));
     const heroes = screen.getByRole("button", { name: "Herosi" });
     const event = createEvent.contextMenu(heroes);
     fireEvent(heroes, event);
     expect(event.defaultPrevented).toBe(true);
-    expect(useTimersStore.getState().timersFilters["guild-1"]).toEqual({
+    expect(useTimersStore.getState().timersFilters[filtersKey]).toEqual({
       minLvl: 10,
       maxLvl: 200,
       selectedNpcTypes: [NpcType.HERO],
@@ -143,11 +150,11 @@ describe("timers controls", () => {
     });
     await user.click(screen.getByRole("button", { name: "E2" }));
     expect(
-      useTimersStore.getState().timersFilters["guild-1"].selectedLists,
+      useTimersStore.getState().timersFilters[filtersKey].selectedLists,
     ).toEqual(["heroes", "e2"]);
     await user.click(screen.getByRole("button", { name: "Wszystkie" }));
     expect(
-      useTimersStore.getState().timersFilters["guild-1"].selectedLists,
+      useTimersStore.getState().timersFilters[filtersKey].selectedLists,
     ).toEqual([]);
   });
 

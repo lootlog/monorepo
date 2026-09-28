@@ -18,6 +18,7 @@ import { ConnectionStatusStrip } from "@/components/connection-status-strip";
 type TimersContentProps = {
   sortedTimers: TimerWithTimeLeft[];
   settingsKey: string;
+  world: string;
   hiddenTimers: string[];
   areFiltersActive: boolean;
   isGrouping: boolean;
@@ -42,6 +43,7 @@ type TimersContentProps = {
 export const TimersContent: FC<TimersContentProps> = ({
   sortedTimers,
   settingsKey,
+  world,
   hiddenTimers,
   areFiltersActive,
   isGrouping,
@@ -89,7 +91,7 @@ export const TimersContent: FC<TimersContentProps> = ({
           />
         )}
         {!compactView && timerFiltersEnabled && (
-          <TimersFilters filtersKey={settingsKey} />
+          <TimersFilters filtersKey={settingsKey} world={world} />
         )}
         <ConnectionStatusStrip
           className={toolbarStripBleedClassName}
