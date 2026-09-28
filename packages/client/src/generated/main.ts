@@ -6123,15 +6123,62 @@ export interface CreateVolunteerDto {
   character: CreateVolunteerDtoCharacter;
 }
 
+export type ActivePartyGatheringSummaryVolunteersItemPartyPresence = typeof ActivePartyGatheringSummaryVolunteersItemPartyPresence[keyof typeof ActivePartyGatheringSummaryVolunteersItemPartyPresence];
+
+
+export const ActivePartyGatheringSummaryVolunteersItemPartyPresence = {
+  OUTSIDE: 'OUTSIDE',
+  IN_PARTY: 'IN_PARTY',
+} as const;
+
+export type ActivePartyGatheringSummaryVolunteersItem = {
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /** @maxLength 255 */
+  nick: string;
+  /** @maxLength 2048 */
+  icon: string;
+  lvl: number;
+  /** @maxLength 100 */
+  prof: string;
+  partyPresence: ActivePartyGatheringSummaryVolunteersItemPartyPresence;
+};
+
+export type ActivePartyGatheringSummaryPartyState = {
+  status: 'UNKNOWN';
+} | {
+  status: 'OBSERVED';
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  observedAt: string;
+  /** @maxItems 20 */
+  members: {
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /** @maxLength 255 */
+  nick?: string;
+  /** @maxLength 2048 */
+  icon?: string;
+  lvl?: number;
+  /** @maxLength 100 */
+  prof?: string;
+}[];
+};
+
 export type ActivePartyGatheringSummaryNpc = {
   prof?: string;
   icon?: string;
-  type?: string;
   name: string;
   location: string;
-  lvl: number;
-  x?: number;
-  y?: number;
+  lvl: number | 'Infinity' | '-Infinity' | 'NaN';
+  type?: string;
+  x?: number | 'Infinity' | '-Infinity' | 'NaN';
+  y?: number | 'Infinity' | '-Infinity' | 'NaN';
 };
 
 export interface ActivePartyGatheringSummary {
@@ -6155,6 +6202,13 @@ export interface ActivePartyGatheringSummary {
      * @maximum 9007199254740991
      */
   partyMemberCount?: number;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  revision?: number;
+  volunteers?: ActivePartyGatheringSummaryVolunteersItem[];
+  partyState?: ActivePartyGatheringSummaryPartyState;
   guildIds: string[];
   world: string;
   description?: string;
@@ -6219,6 +6273,53 @@ export type PartyReadyRoomProjectionDtoOutputOrganizerCharacter = {
      */
   icon: string;
   clan?: PartyReadyRoomProjectionDtoOutputOrganizerCharacterClan;
+};
+
+export type PartyReadyRoomProjectionDtoOutputPartyState = {
+  status: 'UNKNOWN';
+} | {
+  status: 'OBSERVED';
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  observedAt: string;
+  /** @maxItems 20 */
+  members: {
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /** @maxLength 255 */
+  nick?: string;
+  /** @maxLength 2048 */
+  icon?: string;
+  lvl?: number;
+  /** @maxLength 100 */
+  prof?: string;
+}[];
+};
+
+export type PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence = typeof PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence[keyof typeof PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence];
+
+
+export const PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence = {
+  OUTSIDE: 'OUTSIDE',
+  IN_PARTY: 'IN_PARTY',
+} as const;
+
+export type PartyReadyRoomProjectionDtoOutputVolunteersItem = {
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /** @maxLength 255 */
+  nick: string;
+  /** @maxLength 2048 */
+  icon: string;
+  lvl: number;
+  /** @maxLength 100 */
+  prof: string;
+  partyPresence: PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence;
 };
 
 export type PartyReadyRoomProjectionDtoOutputStatus = typeof PartyReadyRoomProjectionDtoOutputStatus[keyof typeof PartyReadyRoomProjectionDtoOutputStatus];
@@ -6307,6 +6408,8 @@ export interface PartyReadyRoomProjectionDtoOutput {
      * @maximum 9007199254740991
      */
   partyMemberCount?: number;
+  partyState?: PartyReadyRoomProjectionDtoOutputPartyState;
+  volunteers?: PartyReadyRoomProjectionDtoOutputVolunteersItem[];
   status: PartyReadyRoomProjectionDtoOutputStatus;
   /**
      * @minimum 1
@@ -6509,6 +6612,53 @@ export type PartyReadyRoomClientUpdateDtoOutputProjectionOrganizerCharacter = {
   clan?: PartyReadyRoomClientUpdateDtoOutputProjectionOrganizerCharacterClan;
 };
 
+export type PartyReadyRoomClientUpdateDtoOutputProjectionPartyState = {
+  status: 'UNKNOWN';
+} | {
+  status: 'OBSERVED';
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  observedAt: string;
+  /** @maxItems 20 */
+  members: {
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /** @maxLength 255 */
+  nick?: string;
+  /** @maxLength 2048 */
+  icon?: string;
+  lvl?: number;
+  /** @maxLength 100 */
+  prof?: string;
+}[];
+};
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence = typeof PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence];
+
+
+export const PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence = {
+  OUTSIDE: 'OUTSIDE',
+  IN_PARTY: 'IN_PARTY',
+} as const;
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItem = {
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /** @maxLength 255 */
+  nick: string;
+  /** @maxLength 2048 */
+  icon: string;
+  lvl: number;
+  /** @maxLength 100 */
+  prof: string;
+  partyPresence: PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence;
+};
+
 export type PartyReadyRoomClientUpdateDtoOutputProjectionStatus = typeof PartyReadyRoomClientUpdateDtoOutputProjectionStatus[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionStatus];
 
 
@@ -6595,6 +6745,8 @@ export type PartyReadyRoomClientUpdateDtoOutputProjection = {
      * @maximum 9007199254740991
      */
   partyMemberCount?: number;
+  partyState?: PartyReadyRoomClientUpdateDtoOutputProjectionPartyState;
+  volunteers?: PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItem[];
   status: PartyReadyRoomClientUpdateDtoOutputProjectionStatus;
   /**
      * @minimum 1
@@ -6656,7 +6808,24 @@ export interface PartyReadyRoomInvitationTargetsDtoOutput {
   targets: PartyReadyRoomInvitationTargetsDtoOutputTargetsItem[];
 }
 
+export type PartyReadyRoomObservationDtoMembersItem = {
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /** @maxLength 255 */
+  nick?: string;
+  /** @maxLength 2048 */
+  icon?: string;
+  lvl?: number;
+  /** @maxLength 100 */
+  prof?: string;
+};
+
 export interface PartyReadyRoomObservationDto {
+  /** @maxItems 20 */
+  members?: PartyReadyRoomObservationDtoMembersItem[];
   /**
      * @maxItems 20
      * @items.minLength 1

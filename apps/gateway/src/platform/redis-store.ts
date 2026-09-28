@@ -1,5 +1,9 @@
 import { RedisScriptCache } from "@lootlog/database/redis-script";
 import type { LootVisibilityNpc } from "@lootlog/domain/loot-visibility";
+import {
+  PartyGatheringEventSourceSchema,
+  type PartyGatheringEventSource,
+} from "#src/realtime/npc-event-visibility";
 import { SubscriptionScope } from "@lootlog/protocol/realtime";
 import { Cause, Effect, Predicate, Queue, Schedule, Schema } from "effect";
 import * as Redis from "effect/unstable/persistence/Redis";
@@ -17,6 +21,7 @@ export interface FederatedRealtimeMessage {
   readonly id: string;
   readonly sourceInstanceId: string;
   readonly sourceNpcs?: ReadonlyArray<LootVisibilityNpc>;
+  readonly partyGatheringSource?: PartyGatheringEventSource;
   readonly scopeKey?: string;
   readonly scope?: typeof SubscriptionScope.Type;
   readonly scopes?: ReadonlyArray<typeof SubscriptionScope.Type>;
@@ -41,6 +46,7 @@ const FederatedRealtimeMessageJson = Schema.fromJsonString(
   Schema.Struct({
     id: Schema.String,
     sourceInstanceId: Schema.String,
+    partyGatheringSource: Schema.optional(PartyGatheringEventSourceSchema),
     sourceNpcs: Schema.optional(
       Schema.Array(
         Schema.Struct({

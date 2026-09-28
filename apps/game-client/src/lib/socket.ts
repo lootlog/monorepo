@@ -9,6 +9,7 @@ import {
 } from "@lootlog/protocol/realtime/codec";
 import type { AirTagMapThreatEvent } from "@lootlog/schema/air-tag";
 import {
+  REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
   REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
   REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
   REALTIME_BATTLE_PING_CAPABILITY,
@@ -132,6 +133,7 @@ const legacyEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
   "notification.sent": GatewayEvent.NOTIFICATION,
   "notification.volunteer": GatewayEvent.NOTIFICATIONS_VOLUNTEER,
   "member-refresh.updated": GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE,
+  "party-gathering.state-updated": GatewayEvent.PARTY_GATHERING_STATE_UPDATE,
   "party-gathering.updated": GatewayEvent.PARTY_GATHERING_SEND,
   "party-gathering.cancelled": GatewayEvent.PARTY_GATHERING_CANCEL,
   "party-ready-room.updated": GatewayEvent.PARTY_READY_ROOM_UPDATE,
@@ -196,6 +198,7 @@ export class AppSocket {
   private connectionStateValue: RealtimeConnectionState = "disconnected";
   private readonly connectionStateListeners = new Set<() => void>();
   private lastJoinData: GameSessionJoinData | null = null;
+  private gatheringStateSupported = false;
   private battlePingsSupported = false;
   private teamBattlePingsSupported = false;
   private airTagMapThreatsSupported = false;
@@ -222,6 +225,7 @@ export class AppSocket {
       if (state === "disconnected") {
         this.id = undefined;
         // The next connection may reach an older gateway.
+        this.gatheringStateSupported = false;
         this.battlePingsSupported = false;
         this.teamBattlePingsSupported = false;
         this.airTagMapThreatsSupported = false;
@@ -232,6 +236,10 @@ export class AppSocket {
         connected ? GatewayEvent.CONNECT : GatewayEvent.DISCONNECT,
       );
     });
+  }
+
+  get supportsGatheringState(): boolean {
+    return this.gatheringStateSupported;
   }
 
   get connected(): boolean {
@@ -374,6 +382,9 @@ export class AppSocket {
       ? response.capabilities
       : [];
 
+    this.gatheringStateSupported = capabilities.includes(
+      REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
+    );
     this.battlePingsSupported = capabilities.includes(
       REALTIME_BATTLE_PING_CAPABILITY,
     );

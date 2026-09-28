@@ -96,6 +96,7 @@ it("expires only the disconnected character's existing gathering or application 
   let conflictDelivered = false;
   const cancellations: unknown[] = [];
   const updates: unknown[] = [];
+  const gatheringUpdates: unknown[] = [];
 
   const redis: ReadyRoomRedis = {
     getJson: (key, schema) => {
@@ -152,6 +153,10 @@ it("expires only the disconnected character's existing gathering or application 
         Effect.sync(() => {
           updates.push(update);
         }),
+      publishGatheringUpdate: (event) =>
+        Effect.sync(() => {
+          gatheringUpdates.push(event);
+        }),
       publishCancellation: (event) =>
         Effect.sync(() => {
           cancellations.push(event);
@@ -191,6 +196,22 @@ it("expires only the disconnected character's existing gathering or application 
       "newer",
       "stranger",
     ]);
+    expect(gatheringUpdates).toEqual([
+      expect.objectContaining({
+        notificationId: "owned",
+        update: { type: "REMOVE", notificationId: "owned", revision: 2 },
+      }),
+      expect.objectContaining({
+        notificationId: "application",
+        update: {
+          type: "UPSERT",
+          gathering: expect.objectContaining({
+            notificationId: "application",
+            applicantCount: 1,
+          }),
+        },
+      }),
+    ]);
     expect(conflictDelivered).toBe(true);
     expect(rooms.at(-1)).toMatchObject({
       status: "ACTIVE",
@@ -199,10 +220,12 @@ it("expires only the disconnected character's existing gathering or application 
     });
     const afterFirstDelivery = structuredClone(rooms);
     const deliveredUpdates = updates.length;
+    const deliveredGatheringUpdates = gatheringUpdates.length;
     await Effect.runPromise(offline);
     expect(rooms).toEqual(afterFirstDelivery);
     expect(cancellations).toHaveLength(1);
     expect(updates).toHaveLength(deliveredUpdates);
+    expect(gatheringUpdates).toHaveLength(deliveredGatheringUpdates);
   } finally {
     await boundary.dispose();
   }

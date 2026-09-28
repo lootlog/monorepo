@@ -29,16 +29,13 @@ import { inviteCharacterToFriends } from "@/lib/margonem-runtime/adapters/charac
 type ReadyRoomParticipantItemProps = {
   room: PartyReadyRoomOrganizerProjection;
   participant: PartyReadyRoomParticipant;
+  inParty?: boolean;
 };
 
-/**
- * One applicant waiting outside the party, painted like an online player row:
- * inviting is the row's own action (the button or a double-click), the rest
- * sits in its context menu.
- */
 export function ReadyRoomParticipantItem({
   room,
   participant,
+  inParty,
 }: ReadyRoomParticipantItemProps) {
   const { t } = useTranslation(["partyFinder", "chat"]);
   const { applyUpdate } = useReadyRoomsCache();
@@ -108,14 +105,21 @@ export function ReadyRoomParticipantItem({
                 clanName={character.clan?.name}
               />
             </span>
-            <IconButton
-              label={t("actions.invite")}
-              disabled={!canInvite}
-              onClick={invite}
-              onDoubleClick={(event) => event.stopPropagation()}
-            >
-              <Plus aria-hidden="true" className="ll:text-green-300" />
-            </IconButton>
+            <span className="ll:flex ll:shrink-0 ll:items-center ll:gap-1">
+              {inParty !== undefined && (
+                <span className="ll:text-[10px] ll:font-normal ll:text-white/60">
+                  {t(inParty ? "roster.inParty" : "roster.outsideParty")}
+                </span>
+              )}
+              <IconButton
+                label={t("actions.invite")}
+                disabled={!canInvite}
+                onClick={invite}
+                onDoubleClick={(event) => event.stopPropagation()}
+              >
+                <Plus aria-hidden="true" className="ll:text-green-300" />
+              </IconButton>
+            </span>
           </ListRow>
         </span>
       </ContextMenuTrigger>
