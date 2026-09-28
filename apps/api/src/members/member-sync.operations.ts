@@ -12,7 +12,7 @@ import {
   getTransientMemberSyncStatus,
   MEMBER_DISCORD_SYNC_STATUS,
 } from "./member-discord-sync-status.js";
-import type { MemberRemoval } from "./member-removal.operations.js";
+import type { MemberDelivery } from "./member-delivery.operations.js";
 import type { MemberStore } from "./member.store.js";
 import type { MemberSyncResult } from "./member.types.js";
 
@@ -30,16 +30,6 @@ export interface MemberSyncPorts {
   readonly nextRefreshAt: (
     userId: string,
   ) => Effect.Effect<Date | null, unknown>;
-  readonly invalidateMember: (options: {
-    readonly discordId: string;
-    readonly guildId: string;
-    readonly userId: string;
-  }) => Effect.Effect<unknown, unknown>;
-  readonly publishMemberUpdated: (options: {
-    readonly discordId: string;
-    readonly guildId: string;
-    readonly userId: string;
-  }) => Effect.Effect<unknown, unknown>;
   readonly refreshPermissionCache: (options: {
     readonly guildId: string;
     readonly userId: string;
@@ -49,42 +39,9 @@ export interface MemberSyncPorts {
 export const makeMemberSync = (
   logger: Logger,
   store: MemberStore,
-  removal: MemberRemoval,
+  delivery: Pick<MemberDelivery, "deliver">,
   ports: MemberSyncPorts,
 ) => {
-  const deliverPendingChanges = (memberId: number, skipLocked = false) =>
-    store.deliverPendingChanges(
-      memberId,
-      (member, permissionsChanged) => {
-        if (!member.active) {
-          return removal.notifyMemberRemoved({
-            discordId: member.userId,
-            guildId: member.guildId,
-            globalUserId: member.globalUserId,
-          });
-        }
-
-        if (!member.globalUserId) return Effect.void;
-
-        const target = {
-          discordId: member.userId,
-          guildId: member.guildId,
-          userId: member.globalUserId,
-        };
-
-        return ports
-          .invalidateMember(target)
-          .pipe(
-            Effect.andThen(() =>
-              permissionsChanged
-                ? ports.publishMemberUpdated(target)
-                : Effect.void,
-            ),
-          );
-      },
-      skipLocked,
-    );
-
   const markAttempt = Effect.fn("members.sync.markAttempt")(
     function* (options: {
       readonly discordId: string;
@@ -102,7 +59,7 @@ export const makeMemberSync = (
         attemptedAt: new Date(yield* Clock.currentTimeMillis),
       });
 
-      if (member) yield* deliverPendingChanges(member.id);
+      if (member) yield* delivery.deliver(member.id);
 
       return member;
     },
@@ -135,7 +92,7 @@ export const makeMemberSync = (
       discordMember.roles,
     );
 
-    yield* deliverPendingChanges(member.id);
+    yield* delivery.deliver(member.id);
     yield* ports.refreshPermissionCache({
       guildId: discordMember.guildId,
       userId: discordMember.globalUserId,
@@ -267,29 +224,9 @@ export const makeMemberSync = (
     },
   );
 
-  let deliveryCursor = 0;
-
-  const dispatchPendingChanges = Effect.fn("members.sync.dispatchPending")(
-    function* () {
-      const pending = yield* store.findPendingMemberIds(deliveryCursor);
-
-      for (const { memberId } of pending) {
-        yield* deliverPendingChanges(memberId, true).pipe(
-          Effect.catch((error) =>
-            Effect.logError("Member sync delivery failed", error),
-          ),
-        );
-        deliveryCursor = memberId;
-      }
-
-      if (pending.length < 25) deliveryCursor = 0;
-    },
-  );
-
   return {
     syncMemberFromDiscord,
     createOrUpdateMember,
-    dispatchPendingChanges,
   };
 };
 

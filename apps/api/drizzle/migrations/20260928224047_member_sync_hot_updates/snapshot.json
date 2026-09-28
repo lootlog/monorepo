@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "2e004ddd-6f7e-4990-9bfa-8b66c08898f0",
+  "id": "09f93008-221b-4d6e-9e8d-5245d675482b",
   "prevIds": [
     "531df257-790d-47e3-99bb-9a0992498d48",
     "849489e5-64a6-42a5-9dd0-d4c318ae8ec1"
@@ -4390,6 +4390,32 @@
       "generated": null,
       "identity": null,
       "name": "permissionsChanged",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MemberSyncDelivery"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "1",
+      "generated": null,
+      "identity": null,
+      "name": "version",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MemberSyncDelivery"
+    },
+    {
+      "type": "timestamp(3)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "claimedUntil",
       "entityType": "columns",
       "schema": "public",
       "table": "MemberSyncDelivery"

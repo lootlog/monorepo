@@ -1,7 +1,18 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, asc, desc, eq, gt, inArray, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gt,
+  inArray,
+  isNull,
+  lte,
+  or,
+  sql,
+} from "drizzle-orm";
 import { Effect, Schema } from "effect";
-import { isEqual, pickBy } from "es-toolkit";
+import { chunk, isEqual, pickBy } from "es-toolkit";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { findActiveGuild } from "#src/guilds/active-guild-lookup";
 import {
@@ -26,6 +37,43 @@ class MemberStoreFailure extends TaggedErrorClass<MemberStoreFailure>()(
   "MemberStoreFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
+
+type Transaction = Parameters<
+  Parameters<ApiDatabaseValue["transaction"]>[0]
+>[0];
+
+/**
+ * Queues delivery of member changes in the transaction that commits them. A
+ * change queued while an older one is being delivered bumps `version`, so the
+ * in-flight delivery cannot delete it.
+ */
+export const queueMemberDeliveries = (
+  transaction: Transaction,
+  memberIds: ReadonlyArray<number>,
+  permissionsChanged: boolean,
+) =>
+  Effect.forEach(
+    // Sorted ids take row locks in one order across concurrent writers.
+    chunk(
+      memberIds.toSorted((left, right) => left - right),
+      1000,
+    ),
+    (batch) =>
+      transaction
+        .insert(memberSyncDeliveryTable)
+        .values(batch.map((memberId) => ({ memberId, permissionsChanged })))
+        .onConflictDoUpdate({
+          target: memberSyncDeliveryTable.memberId,
+          set: {
+            permissionsChanged: sql`${memberSyncDeliveryTable.permissionsChanged} or ${permissionsChanged}`,
+            version: sql`${memberSyncDeliveryTable.version} + 1`,
+          },
+        }),
+    { discard: true },
+  );
+
+// Longer than the delivery timeout, so an expired lease means the claimant died.
+const DELIVERY_LEASE = "30 seconds";
 
 export const makeMemberStore = (database: ApiDatabaseValue) => {
   const operation = <A>(name: string, effect: Effect.Effect<A, unknown>) =>
@@ -82,25 +130,6 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
         Effect.map((guild) => guild?.id ?? null),
       ),
     );
-
-  type Transaction = Parameters<
-    Parameters<ApiDatabaseValue["transaction"]>[0]
-  >[0];
-
-  const queueDelivery = (
-    transaction: Transaction,
-    memberId: number,
-    permissionsChanged: boolean,
-  ) =>
-    transaction
-      .insert(memberSyncDeliveryTable)
-      .values({ memberId, permissionsChanged })
-      .onConflictDoUpdate({
-        target: memberSyncDeliveryTable.memberId,
-        set: {
-          permissionsChanged: sql`${memberSyncDeliveryTable.permissionsChanged} or ${permissionsChanged}`,
-        },
-      });
 
   const upsertMemberWithRoles = (
     userId: string,
@@ -230,7 +259,11 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
           }
 
           if (readProjectionChanged)
-            yield* queueDelivery(transaction, member.id, permissionsChanged);
+            yield* queueMemberDeliveries(
+              transaction,
+              [member.id],
+              permissionsChanged,
+            );
 
           return { ...member, roles };
         }),
@@ -295,7 +328,8 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
               .where(eq(memberToRoleTable.A, member.id));
           }
 
-          if (changed) yield* queueDelivery(transaction, member.id, true);
+          if (changed)
+            yield* queueMemberDeliveries(transaction, [member.id], true);
 
           return {
             ...member,
@@ -307,37 +341,93 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
       ),
     );
 
-  const deliverPendingChanges = (
-    memberId: number,
-    deliver: (
-      member: typeof memberTable.$inferSelect,
-      permissionsChanged: boolean,
-    ) => Effect.Effect<unknown, unknown>,
-    skipLocked = false,
-  ) =>
+  const unclaimed = or(
+    isNull(memberSyncDeliveryTable.claimedUntil),
+    lte(memberSyncDeliveryTable.claimedUntil, sql`now()`),
+  );
+
+  /**
+   * Leases one pending delivery in a single autocommitted statement, so no
+   * transaction or row lock is held while the caller talks to Redis/RabbitMQ.
+   */
+  const claimDelivery = (memberId: number) =>
     operation(
-      "memberStore.deliverPendingChanges",
-      database.transaction((transaction) =>
-        Effect.gen(function* () {
-          const [pending] = yield* transaction
-            .select()
-            .from(memberSyncDeliveryTable)
-            .where(eq(memberSyncDeliveryTable.memberId, memberId))
-            .for("update", skipLocked ? { skipLocked: true } : undefined);
+      "memberStore.claimDelivery",
+      Effect.gen(function* () {
+        const [claim] = yield* database
+          .update(memberSyncDeliveryTable)
+          .set({
+            claimedUntil: sql`now() + ${DELIVERY_LEASE}::interval`,
+          })
+          .where(and(eq(memberSyncDeliveryTable.memberId, memberId), unclaimed))
+          .returning();
 
-          if (!pending) return;
+        if (!claim?.claimedUntil) return null;
 
-          const [member] = yield* transaction
-            .select()
-            .from(memberTable)
-            .where(eq(memberTable.id, memberId));
+        const [member] = yield* database
+          .select()
+          .from(memberTable)
+          .where(eq(memberTable.id, memberId));
 
-          if (member) yield* deliver(member, pending.permissionsChanged);
-          yield* transaction
-            .delete(memberSyncDeliveryTable)
-            .where(eq(memberSyncDeliveryTable.memberId, memberId));
-        }).pipe(Effect.timeout("10 seconds")),
-      ),
+        return {
+          memberId,
+          version: claim.version,
+          claimedUntil: claim.claimedUntil,
+          permissionsChanged: claim.permissionsChanged,
+          member: member ?? null,
+        };
+      }),
+    );
+
+  type DeliveryClaim = {
+    readonly memberId: number;
+    readonly version: number;
+    readonly claimedUntil: Date;
+  };
+
+  const ownClaim = (claim: DeliveryClaim) =>
+    and(
+      eq(memberSyncDeliveryTable.memberId, claim.memberId),
+      eq(memberSyncDeliveryTable.claimedUntil, claim.claimedUntil),
+    );
+
+  /** Makes a claimed delivery available to the next attempt. */
+  const releaseDelivery = (claim: DeliveryClaim) =>
+    operation(
+      "memberStore.releaseDelivery",
+      database
+        .update(memberSyncDeliveryTable)
+        .set({ claimedUntil: null })
+        .where(ownClaim(claim)),
+    );
+
+  /**
+   * Deletes the delivered version. Returns false and releases the claim when a
+   * newer change was queued during delivery, which then needs its own delivery.
+   */
+  const completeDelivery = (claim: DeliveryClaim) =>
+    operation(
+      "memberStore.completeDelivery",
+      Effect.gen(function* () {
+        const deleted = yield* database
+          .delete(memberSyncDeliveryTable)
+          .where(
+            and(
+              ownClaim(claim),
+              eq(memberSyncDeliveryTable.version, claim.version),
+            ),
+          )
+          .returning({ memberId: memberSyncDeliveryTable.memberId });
+
+        if (deleted.length > 0) return true;
+
+        yield* database
+          .update(memberSyncDeliveryTable)
+          .set({ claimedUntil: null })
+          .where(ownClaim(claim));
+
+        return false;
+      }),
     );
 
   const findPendingMemberIds = (afterMemberId: number) =>
@@ -346,7 +436,9 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
       database
         .select({ memberId: memberSyncDeliveryTable.memberId })
         .from(memberSyncDeliveryTable)
-        .where(gt(memberSyncDeliveryTable.memberId, afterMemberId))
+        .where(
+          and(gt(memberSyncDeliveryTable.memberId, afterMemberId), unclaimed),
+        )
         .orderBy(asc(memberSyncDeliveryTable.memberId))
         .limit(25),
     );
@@ -358,7 +450,9 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
     resolveActiveGuildId,
     upsertMemberWithRoles,
     markSyncAttempt,
-    deliverPendingChanges,
+    claimDelivery,
+    releaseDelivery,
+    completeDelivery,
   };
 };
 

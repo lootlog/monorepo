@@ -10,7 +10,7 @@ import {
   memberTable,
   roleTable,
 } from "#src/database/drizzle/schema";
-import { makeMemberRemoval } from "#src/members/member-removal.operations";
+import { makeMemberDelivery } from "#src/members/member-delivery.operations";
 import { makeMemberStore } from "#src/members/member.store";
 import { makeMemberSync } from "#src/members/member-sync.operations";
 import { applicationLogger } from "#src/shared/application-logger";
@@ -98,10 +98,23 @@ const createSyncFixture = async () => {
   const notifications: string[] = [];
   let permissionRefreshes = 0;
   let publicationFailure: Error | undefined;
+  let publication: Promise<void> | undefined;
 
-  const removal = makeMemberRemoval(database, {
+  const delivery = makeMemberDelivery(store, {
     clearMemberCaches: () => Effect.void,
     publishMemberRemoved: () => Effect.void,
+    invalidateMember: () => Effect.void,
+    publishMemberUpdated: () =>
+      Effect.suspend(() => {
+        if (publicationFailure) return Effect.fail(publicationFailure);
+
+        const pending = publication;
+
+        return Effect.promise(async () => {
+          await pending;
+          notifications.push("members.update");
+        });
+      }),
   });
 
   const sync = (roleIds: string[]) => {
@@ -120,21 +133,12 @@ const createSyncFixture = async () => {
       flags: GuildMemberFlags.CompletedOnboarding,
     };
 
-    const service = makeMemberSync(applicationLogger, store, removal, {
+    const service = makeMemberSync(applicationLogger, store, delivery, {
       getGuildMember: () => Effect.succeed(discordMember),
       nextRefreshAt: () => Effect.succeed(null),
       refreshPermissionCache: () =>
         Effect.sync(() => {
           permissionRefreshes += 1;
-        }),
-      invalidateMember: () => Effect.void,
-      publishMemberUpdated: () =>
-        Effect.suspend(() => {
-          if (publicationFailure) return Effect.fail(publicationFailure);
-
-          return Effect.sync(() => {
-            notifications.push("members.update");
-          });
         }),
     });
 
@@ -153,6 +157,16 @@ const createSyncFixture = async () => {
     permissionRefreshes: () => permissionRefreshes,
     failPublication: (failure: Error | undefined) => {
       publicationFailure = failure;
+    },
+    /** Holds every publication until the returned release is called. */
+    stallPublication: () => {
+      const { promise, resolve } = Promise.withResolvers<void>();
+      publication = promise;
+
+      return () => {
+        publication = undefined;
+        resolve();
+      };
     },
   };
 };
@@ -245,4 +259,65 @@ it("concurrent retries deliver a committed role change once after publication re
 
   await fixture.sync(changedRoles);
   expect(fixture.notifications).toEqual(["members.update"]);
+}, 15_000);
+
+it("a stalled publication holds no database lock and a change committed meanwhile is delivered", async () => {
+  const fixture = await createSyncFixture();
+  const originalRoles = fixture.roles.slice(0, 2);
+  await fixture.sync(originalRoles);
+  fixture.notifications.length = 0;
+  const release = fixture.stallPublication();
+  const stalled = fixture.sync(fixture.roles.slice(2));
+  const memberId = (await fixture.stored())?.id;
+
+  // Wait until the stalled sync has claimed its delivery.
+  for (let attempt = 0; attempt < 500; attempt++) {
+    const claimed = await client.query(
+      'SELECT 1 FROM "MemberSyncDelivery" WHERE "memberId" = $1 AND "claimedUntil" > now()',
+      [memberId],
+    );
+
+    if (claimed.rowCount === 1) break;
+    await Bun.sleep(10);
+  }
+
+  try {
+    // The previous delivery held its row lock and a pooled connection across
+    // the broker call, so these waited for the broker.
+    await client.query("BEGIN");
+    await client.query("SET LOCAL lock_timeout = '1s'");
+    await client.query(
+      'SELECT 1 FROM "MemberSyncDelivery" WHERE "memberId" = $1 FOR UPDATE',
+      [memberId],
+    );
+    await client.query('SELECT 1 FROM "Member" WHERE "id" = $1 FOR UPDATE', [
+      memberId,
+    ]);
+    await client.query("COMMIT");
+
+    const idle = await client.query(
+      `SELECT 1 FROM pg_stat_activity WHERE datname = current_database()
+        AND pid <> pg_backend_pid() AND state LIKE 'idle in transaction%'`,
+    );
+
+    expect(idle.rowCount).toBe(0);
+
+    await fixture.sync(originalRoles);
+  } finally {
+    release();
+  }
+
+  await stalled;
+  expect(fixture.notifications).toEqual(["members.update", "members.update"]);
+  expect(
+    (await fixture.stored())?.roles.map(({ id }) => id).toSorted(),
+  ).toEqual(originalRoles.toSorted());
+  expect(
+    (
+      await client.query(
+        'SELECT 1 FROM "MemberSyncDelivery" WHERE "memberId" = $1',
+        [memberId],
+      )
+    ).rowCount,
+  ).toBe(0);
 }, 15_000);
