@@ -4,7 +4,7 @@ Active gatherings are Redis v3 aggregates with a maximum lifetime of 30 minutes.
 Creation atomically adds the room to an expiry-scored index for every target
 Organization and world. Discovery reads these indexes, removes expired entries,
 and checks the current aggregate status and current membership, chat permissions,
-NPC tier, and role level range. It returns summaries without participant rosters
+NPC tier, and role level range. It returns visible character rosters without private account data
 or hidden Organization IDs. Cancellation leaves a short aggregate tombstone;
 discovery rejects it immediately even while its index entry remains.
 
@@ -26,9 +26,10 @@ Discovery summaries include nonnegative integer `applicantCount` and
 `inPartyCount` values derived from registered characters. Both exclude the
 organizer character, even if explicitly registered; `inPartyCount` includes only
 registered characters observed in the party, not unrelated party members.
-Only visible gatherings expose these totals, and participant projections remain
-private. Deploy this additive API response before the updated game client; the
-legacy counters require no persistence migration.
+Only visible gatherings expose these totals. Participant projections retain
+private ownership and action metadata; their additional volunteer roster carries
+only the same public character fields as discovery. Deploy the additive API
+response before the updated game client; legacy counters keep their meaning.
 
 The optional `partyMemberCount` reports the total deduplicated character IDs from
 an organizer observation, including the organizer and unregistered party members.
@@ -88,8 +89,9 @@ sequence above.
   and Organization indexes, deduplication, revision conflicts and cancellation.
 - `ready-room-visibility.test.ts` exercises membership, tier and level policy
   against the database boundary.
-- Handler tests assert that active summaries omit participant data; gateway
-  source-event tests assert the corresponding delivery restrictions.
+- Handler tests assert that active summaries expose volunteers and observations
+  without private participant ownership data; gateway source-event tests assert
+  the corresponding delivery restrictions.
 - Run `bun run client:generate` and review the additive OpenAPI/client changes.
   Run `bun run client:check` on the committed result; its generated-file check
   rejects any uncommitted generated outputs, even when regeneration is stable.
@@ -109,15 +111,79 @@ Deploy the API consumer before the gateway publisher; no HTTP contract changes
 are required. The timer starts when the gateway detects disconnection, so network
 failures can take longer to detect than an ordinary browser close.
 
+## Live volunteer and party state
+
+Discovery and personal projections include `volunteers` (character ID, nickname,
+icon, level, profession, and last observed party presence). Every registered
+character is present even when outside the party. The separate `partyState` is
+`UNKNOWN` until an organizer observation supplies actual member IDs, then
+`OBSERVED` with `observedAt` and all observed members, including non-volunteers.
+Withdrawing or removing an application changes the volunteer list, not the last
+observed game party. Resolving invitation targets does not prove membership.
+
+New clients may add `members` with available character display fields to the
+existing `memberCharacterIds` observation payload. The IDs remain authoritative;
+extra metadata cannot add a party member. Old clients can continue reporting IDs
+alone. Known organizer/volunteer details fill missing metadata; otherwise clients
+display an unnamed character. Room keys and schema version remain v3 and old
+aggregates decode with unknown party state. Do not infer their composition from a
+legacy count. Observed data becomes visibly stale after two minutes; clients use
+a local deadline without polling. The organizer's client re-reports an unchanged
+party one minute after its last report while its room is live. For requests
+without `expectedRevision`, the API commits an unchanged observation only when
+the stored one is at least 45 seconds old, so repeated legacy reports within
+that window do not create revisions. Versioned reports always commit (see
+below); each heartbeat publishes a renewed `observedAt` either way. The three
+durations live together in `@lootlog/schema/party-ready-room`.
+
+Every committed creation, application, departure, removal, observation, or
+cancellation publishes `guilds.party-gathering.updated` for each source
+Organization. Its full snapshot or monotonic removal is forwarded as
+`party-gathering.state-updated` only to sessions declaring
+`lootlog.party-gathering-state.v1`. Gateway chat-source visibility applies before
+delivery, including NPC tier/level filters and the existing organizer override.
+Routing metadata stays in the internal envelope; each public snapshot contains
+only visible Organization IDs and minimal roster data. Revision handling prevents
+an older snapshot from resurrecting a removed gathering. Reconnects fetch the
+existing active endpoint and reconcile concurrent events without periodic reads.
+
+Each Redis mutation atomically stores its latest aggregate in a publication
+outbox. The request attempts immediate delivery; a scoped API worker also drains
+pending entries at startup and every second. Each worker attempt leases the
+entry for 30 seconds; failure or interruption leaves it eligible for retry after
+that lease expires. Delivery
+to all source Organizations must succeed before acknowledgement. Acknowledgement
+checks the revision, so a concurrent newer update remains pending. New snapshots
+replace superseded pending revisions for the same gathering.
+
+Pending entries have no room TTL. Cancellation remains deliverable after its
+short room tombstone disappears, and an active snapshot that expires before
+delivery produces a removal. Rabbit message IDs distinguish the Organization,
+revision, and update type; duplicate delivery remains safe. The gateway applies
+current membership and source visibility on delivery. Publication failures are
+logged without roster data. Before removing this API worker during a rollback,
+drain the pending publication hash and due index; retain pending entries through
+broker outages instead of deleting them.
+
+Deploy the new gateway consumer/schema first, then drain old API writers before
+switching to the new API, and finally deploy the client. Old clients continue
+using the legacy counters and personal updates and do not receive the new event.
+Client parsers accept absent additive fields from old servers and show unknown
+roster/party state. During rollback, follow the drain and 30-minute lifetime
+procedure above: an old writer can discard observed party metadata.
+
 ## Bounded party observation recovery
 
 `POST /messaging/party-gathering/{notificationId}/party-observation` accepts an
 optional `expectedRevision`. When supplied, the API commits only against that
 exact room revision. A mismatched revision or a lost compare-and-set returns
 `409 REVISION_CONFLICT` without replaying the roster against newer state.
-A successful versioned observation advances the revision even when presence is
-unchanged, so an older request cannot later overwrite an acknowledged roster.
-Requests without the field retain the existing server-side conflict retries.
+A successful versioned observation advances the revision even when the roster
+is unchanged and was observed less than 45 seconds ago. After a client timeout,
+the retry may carry the same revision as a request still in flight; skipping the
+commit would leave that revision open for the older roster. Requests without the
+field retain the existing server-side conflict retries and the unchanged-report
+short-circuit.
 
 The game client bounds each observation and recovery read to five seconds. It
 retries transient failures, including revision conflicts, at most twice after
@@ -125,6 +191,11 @@ one and two seconds. Each retry first reads the current room revision and then
 reports the latest local roster, provided the room, Organizations, character,
 and connection context still match. A timed-out request may continue on the
 server; revision checks prevent it from overwriting a later accepted report.
+The one-minute heartbeat uses the same reporter, so it is bounded, latest-only,
+and retried the same way, and it also restarts reporting after a cycle that
+exhausted its retries. The client takes `expectedRevision` from the shared room
+cache, which every observation, recovery read, realtime update, and organizer
+mutation response refreshes.
 
 Deploy this API change to every writer before deploying the updated game client.
 Older API instances ignore the new field and cannot protect overlapping requests

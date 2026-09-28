@@ -1,6 +1,7 @@
 import { AccessPolicySnapshot, AccessPolicyChange } from "./access-policy.js";
 import { UserFeedItem } from "../feed.js";
 import { NonNegativeInt } from "@lootlog/schema/primitives";
+import { PartyGatheringClientUpdateSchema } from "@lootlog/schema/party-ready-room";
 import {
   AirTagMapThreatEventSchema,
   AirTagObservationBatchSchema,
@@ -31,6 +32,9 @@ export const REALTIME_FEED_CAPABILITY = "lootlog.feed.v1";
 
 export const REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY =
   "lootlog.notification-volunteer.v1";
+
+export const REALTIME_PARTY_GATHERING_STATE_CAPABILITY =
+  "lootlog.party-gathering-state.v1";
 
 export const REALTIME_SUBPROTOCOL = "lootlog.realtime.v1";
 
@@ -426,6 +430,13 @@ export const ServerEvent = Schema.Union([
   serverEvent("member-refresh.updated", OrganizationEvent),
   serverEvent("party-gathering.updated", OrganizationEvent),
   serverEvent("party-gathering.cancelled", OrganizationEvent),
+  serverEvent(
+    "party-gathering.state-updated",
+    Schema.Struct({
+      organizationId: Schema.NonEmptyString,
+      payload: PartyGatheringClientUpdateSchema,
+    }),
+  ),
   serverEvent("party-ready-room.updated", OrganizationEvent),
   serverEvent("map-ping.received", MapPingEventSchema),
   serverEvent("battle-ping.received", BattlePingEventSchema),

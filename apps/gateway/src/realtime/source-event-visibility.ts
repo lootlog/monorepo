@@ -8,7 +8,10 @@ import {
 import { Permission } from "@lootlog/schema/permissions";
 import { isBattleTeamPingType } from "@lootlog/schema/battle-ping";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
-import { prepareNpcSourceEvent } from "#src/realtime/npc-event-visibility";
+import {
+  prepareNpcSourceEvent,
+  type PartyGatheringEventSource,
+} from "#src/realtime/npc-event-visibility";
 import type { UserGuildData } from "#src/guilds/guild";
 import type { SessionData } from "#src/realtime/session";
 
@@ -78,6 +81,7 @@ export const findEventGuild = (
 export const prepareSourceEventVisibility = (
   event: Event,
   sourceNpcs: readonly LootVisibilityNpc[] = [],
+  gatheringSource?: PartyGatheringEventSource,
 ) => {
   const canReadApiKey = prepareApiKeyEventVisibility(event);
 
@@ -85,7 +89,7 @@ export const prepareSourceEventVisibility = (
     event.type === "battle-ping.received" &&
     isBattleTeamPingType(event.data.type);
 
-  const canReadNpc = prepareNpcSourceEvent(event);
+  const canReadNpc = prepareNpcSourceEvent(event, gatheringSource);
 
   const npcs =
     event.type === "loot.created" || event.type === "loot.share-updated"
@@ -97,6 +101,12 @@ export const prepareSourceEventVisibility = (
 
     if (event.type === "notification.volunteer")
       return session.supportsNotificationVolunteer === true;
+
+    if (
+      event.type === "party-gathering.state-updated" &&
+      !session.supportsPartyGatheringState
+    )
+      return false;
 
     // Older game clients close the socket on an event type they cannot decode.
     if (event.type === "battle-ping.received")

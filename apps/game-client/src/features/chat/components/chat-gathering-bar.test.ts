@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { ActivePartyGatheringSummary } from "@lootlog/client/main";
+import type { PartyGatheringSummary } from "@lootlog/schema/party-ready-room";
 import { selectFeaturedGathering } from "./chat-gathering-bar";
 
-const first: ActivePartyGatheringSummary = {
+const first: PartyGatheringSummary = {
   notificationId: "first",
   organizerName: "Hero",
   applicantCount: 0,

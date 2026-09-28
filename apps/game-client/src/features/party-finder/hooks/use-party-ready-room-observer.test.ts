@@ -1,8 +1,20 @@
 import { configureApiClients } from "@lootlog/client/transport";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
-import type { PartyReadyRoomOrganizerProjection } from "@lootlog/schema/party-ready-room";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  PARTY_OBSERVATION_FRESHNESS_MS,
+  PARTY_OBSERVATION_HEARTBEAT_MS,
+  type PartyReadyRoomOrganizerProjection,
+} from "@lootlog/schema/party-ready-room";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  onTestFinished,
+  vi,
+} from "vitest";
 import { usePartyReadyRoomObserver } from "@/features/party-finder/hooks/use-party-ready-room-observer";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { createElement, type ReactNode } from "react";
@@ -42,6 +54,14 @@ const member = (characterId: string): RuntimePartyMember => ({
   maxHp: 100,
   profession: "m",
 });
+
+const observedMembers = (...characterIds: string[]) =>
+  characterIds.map((characterId) => ({
+    characterId,
+    nick: characterId,
+    icon: "character.gif",
+    prof: "m",
+  }));
 
 const renderObserver = () =>
   renderHook(() => usePartyReadyRoomObserver(), {
@@ -158,6 +178,10 @@ describe("usePartyReadyRoomObserver", () => {
     expect(await request?.json()).toEqual({
       expectedRevision: 1,
       memberCharacterIds: ["10", "20"],
+      members: [
+        { characterId: "10", nick: "First", icon: "first.gif", prof: "w" },
+        { characterId: "20", nick: "Second", icon: "second.gif", prof: "m" },
+      ],
       organizerAccountId: "account",
       organizerCharacterId: "character",
     });
@@ -169,6 +193,114 @@ describe("usePartyReadyRoomObserver", () => {
         .setMembers([...members.toReversed(), ...members]),
     );
     expect(observeParty).toHaveBeenCalledTimes(2);
+    act(() =>
+      usePartyStore.getState().setMembers(
+        members.map((member) => ({
+          ...member,
+          currentHp: member.currentHp - 10,
+        })),
+      ),
+    );
+    expect(observeParty).toHaveBeenCalledTimes(2);
+  });
+
+  it("re-reports an unchanged party before viewers mark it stale, despite frequent party store updates", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
+
+    const member = {
+      characterId: "10",
+      name: "First",
+      icon: "first.gif",
+      isLeader: true,
+      currentHp: 100,
+      maxHp: 100,
+      profession: "w",
+      accountId: "1",
+    };
+
+    usePartyStore.getState().setMembers([member]);
+    renderObserver();
+    await waitFor(() => expect(observeParty).toHaveBeenCalledTimes(1));
+
+    // Party store updates such as HP changes arrive far more often than the
+    // heartbeat and must not keep postponing it.
+    let currentHp = member.currentHp;
+
+    const churn = window.setInterval(() => {
+      currentHp -= 1;
+      usePartyStore.getState().setMembers([{ ...member, currentHp }]);
+    }, 5_000);
+
+    onTestFinished(() => window.clearInterval(churn));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(PARTY_OBSERVATION_FRESHNESS_MS - 1);
+    });
+
+    expect(observeParty.mock.calls.length).toBeGreaterThan(1);
+
+    const bodies = await Promise.all(
+      observeParty.mock.calls.map(([request]) => request.json()),
+    );
+
+    expect(new Set(bodies.map((body) => JSON.stringify(body))).size).toBe(1);
+    expect(bodies[0]).toEqual({
+      expectedRevision: 1,
+      memberCharacterIds: ["10"],
+      members: [
+        { characterId: "10", nick: "First", icon: "first.gif", prof: "w" },
+      ],
+      organizerAccountId: "account",
+      organizerCharacterId: "character",
+    });
+  });
+
+  it("sends the heartbeat through the reporter a full interval after the last report, with the latest revision", async () => {
+    vi.useFakeTimers();
+    observeParty
+      .mockResolvedValueOnce(Response.json({ ...projection, revision: 2 }))
+      .mockResolvedValueOnce(Response.json({ ...projection, revision: 3 }))
+      .mockResolvedValueOnce(Response.json({ ...projection, revision: 4 }));
+    usePartyStore.getState().setMembers([]);
+    renderObserver();
+    await advanceTime(30_000);
+
+    act(() => usePartyStore.getState().setMembers([member("10")]));
+    await advanceTime(PARTY_OBSERVATION_HEARTBEAT_MS - 1);
+    expect(observeParty).toHaveBeenCalledTimes(2);
+
+    await advanceTime(1);
+    expect(observeParty).toHaveBeenCalledTimes(3);
+
+    const bodies = await Promise.all(
+      observeParty.mock.calls.map(([request]) => request.json()),
+    );
+
+    expect(bodies.map(({ expectedRevision }) => expectedRevision)).toEqual([
+      1, 2, 3,
+    ]);
+    expect(bodies[2]).toEqual({ ...bodies[1], expectedRevision: 3 });
+  });
+
+  it("restarts reporting on the heartbeat after a cycle exhausts its retries", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    observeParty
+      .mockResolvedValueOnce(Response.json({}, { status: 503 }))
+      .mockResolvedValueOnce(Response.json({}, { status: 503 }))
+      .mockResolvedValueOnce(Response.json({}, { status: 503 }));
+    usePartyStore.getState().setMembers([member("10")]);
+    renderObserver();
+    await advanceTime(3_000);
+    expect(observeParty).toHaveBeenCalledTimes(3);
+
+    await advanceTime(PARTY_OBSERVATION_HEARTBEAT_MS - 1);
+    expect(observeParty).toHaveBeenCalledTimes(3);
+
+    await advanceTime(1);
+    expect(observeParty).toHaveBeenCalledTimes(4);
   });
 
   it("waits for the runtime party snapshot and does not report reset state as an empty party", async () => {
@@ -184,6 +316,63 @@ describe("usePartyReadyRoomObserver", () => {
     act(() => usePartyStore.getState().setMembers([]));
     await waitFor(() => expect(observeParty).toHaveBeenCalledTimes(2));
   });
+
+  it.each([
+    {
+      field: "nickname",
+      update: { name: "Updated" },
+      expected: { nick: "Updated" },
+    },
+    {
+      field: "icon",
+      update: { icon: "updated.gif" },
+      expected: { icon: "updated.gif" },
+    },
+    {
+      field: "profession",
+      update: { profession: "m" },
+      expected: { prof: "m" },
+    },
+  ])(
+    "reports a changed $field for an unchanged party roster",
+    async ({ update, expected }) => {
+      const member = {
+        characterId: "10",
+        name: "First",
+        icon: "first.gif",
+        isLeader: true,
+        currentHp: 100,
+        maxHp: 100,
+        profession: "w",
+        accountId: "1",
+      };
+
+      usePartyStore.getState().setMembers([member]);
+      renderObserver();
+
+      await waitFor(() => expect(observeParty).toHaveBeenCalledTimes(1));
+      act(() =>
+        usePartyStore.getState().setMembers([{ ...member, ...update }]),
+      );
+
+      await waitFor(() => expect(observeParty).toHaveBeenCalledTimes(2));
+      expect(await observeParty.mock.calls[1]?.[0].json()).toEqual({
+        expectedRevision: 1,
+        memberCharacterIds: ["10"],
+        members: [
+          {
+            characterId: "10",
+            nick: "First",
+            icon: "first.gif",
+            prof: "w",
+            ...expected,
+          },
+        ],
+        organizerAccountId: "account",
+        organizerCharacterId: "character",
+      });
+    },
+  );
 
   it("does not report another character's party for the organizer", async () => {
     usePartyStore.getState().setMembers([]);
@@ -272,6 +461,7 @@ describe("usePartyReadyRoomObserver", () => {
     expect(await observeParty.mock.calls[2]?.[0].json()).toEqual({
       expectedRevision: 1,
       memberCharacterIds: [],
+      members: [],
       organizerAccountId: "account",
       organizerCharacterId: "character",
     });
@@ -290,7 +480,7 @@ describe("usePartyReadyRoomObserver", () => {
     expect(observeParty).toHaveBeenCalledTimes(3);
   });
 
-  it("serializes reports and coalesces roster changes without merging a superseded response", async () => {
+  it("serializes reports, coalesces roster changes, and carries a superseded response's revision", async () => {
     vi.useFakeTimers();
     const initialResponse = Promise.withResolvers<Response>();
     const latestResponse = Promise.withResolvers<Response>();
@@ -311,14 +501,15 @@ describe("usePartyReadyRoomObserver", () => {
     await advanceTime();
     expect(observeParty).toHaveBeenCalledTimes(2);
     expect(await observeParty.mock.calls[1]?.[0].json()).toEqual({
-      expectedRevision: 1,
+      expectedRevision: 50,
       memberCharacterIds: ["20"],
+      members: observedMembers("20"),
       organizerAccountId: "account",
       organizerCharacterId: "character",
     });
     expect(
       readSeededReadyRoomCache(queryClient).projections["room-1"]?.revision,
-    ).toBe(1);
+    ).toBe(50);
 
     latestResponse.resolve(Response.json({ ...projection, revision: 51 }));
     await advanceTime();
@@ -349,6 +540,7 @@ describe("usePartyReadyRoomObserver", () => {
     expect(await observeParty.mock.calls[1]?.[0].json()).toEqual({
       expectedRevision: 1,
       memberCharacterIds: ["20"],
+      members: observedMembers("20"),
       organizerAccountId: "account",
       organizerCharacterId: "character",
     });
@@ -403,6 +595,7 @@ describe("usePartyReadyRoomObserver", () => {
     expect(await observeParty.mock.calls[4]?.[0].json()).toEqual({
       expectedRevision: 3,
       memberCharacterIds: ["20"],
+      members: observedMembers("20"),
       organizerAccountId: "account",
       organizerCharacterId: "character",
     });
@@ -463,6 +656,7 @@ describe("usePartyReadyRoomObserver", () => {
     expect(await observeParty.mock.calls[1]?.[0].json()).toEqual({
       expectedRevision: 5,
       memberCharacterIds: [],
+      members: [],
       organizerAccountId: "account",
       organizerCharacterId: "character",
     });
@@ -489,6 +683,7 @@ describe("usePartyReadyRoomObserver", () => {
       expect(await observeParty.mock.calls[1]?.[0].json()).toEqual({
         expectedRevision: 1,
         memberCharacterIds: ["10"],
+        members: observedMembers("10"),
         organizerAccountId: "account",
         organizerCharacterId: "character",
       });
@@ -530,6 +725,7 @@ describe("usePartyReadyRoomObserver", () => {
       expect(await observeParty.mock.calls[1]?.[0].json()).toEqual({
         expectedRevision: 2,
         memberCharacterIds: [],
+        members: [],
         organizerAccountId: "account",
         organizerCharacterId: "character",
       });
@@ -596,32 +792,34 @@ describe("usePartyReadyRoomObserver", () => {
     ).toBe(1);
   });
 
-  it.each(["room", "roster"] as const)(
-    "discards a pending retry refresh after the %s changes",
-    async (change) => {
+  it.each([
+    {
+      change: "room",
+      outcome: "discards",
+      currentRoom: { ...projection, notificationId: "room-2", revision: 2 },
+      latestMembers: [],
+      expectedRevision: 2,
+    },
+    {
+      change: "roster",
+      outcome: "keeps the revision of",
+      currentRoom: projection,
+      latestMembers: [member("10")],
+      expectedRevision: 100,
+    },
+  ])(
+    "$outcome a pending retry refresh after the $change changes",
+    async ({ currentRoom, latestMembers, expectedRevision }) => {
       vi.useFakeTimers();
       vi.spyOn(console, "warn").mockImplementation(() => {});
-      const obsoleteRefresh = Promise.withResolvers<Response>();
-
-      const currentRoom = {
-        ...projection,
-        notificationId: change === "room" ? "room-2" : "room-1",
-        revision: change === "room" ? 2 : 1,
-      };
-
-      const latestMembers = change === "room" ? [] : [member("10")];
-
-      const settledRoom = {
-        ...currentRoom,
-        revision: currentRoom.revision + 1,
-      };
-
+      const pendingRefresh = Promise.withResolvers<Response>();
+      const settledRoom = { ...currentRoom, revision: expectedRevision + 1 };
       observeParty
         .mockResolvedValueOnce(
           Response.json({ code: "UNAVAILABLE" }, { status: 503 }),
         )
         .mockResolvedValueOnce(Response.json(settledRoom));
-      getProjection.mockImplementationOnce(() => obsoleteRefresh.promise);
+      getProjection.mockImplementationOnce(() => pendingRefresh.promise);
       usePartyStore.getState().setMembers([]);
       renderObserver();
 
@@ -634,19 +832,19 @@ describe("usePartyReadyRoomObserver", () => {
         });
         await advanceTime();
 
-        obsoleteRefresh.resolve(
-          Response.json({ ...projection, revision: 100 }),
-        );
+        pendingRefresh.resolve(Response.json({ ...projection, revision: 100 }));
         await advanceTime();
         expect(observeParty).toHaveBeenCalledTimes(2);
         expect(observeParty.mock.calls[1]?.[0].url).toBe(
           `https://api.test/messaging/party-gathering/${currentRoom.notificationId}/party-observation`,
         );
+
+        const latestIds = latestMembers.map(({ characterId }) => characterId);
+
         expect(await observeParty.mock.calls[1]?.[0].json()).toEqual({
-          expectedRevision: currentRoom.revision,
-          memberCharacterIds: latestMembers.map(
-            ({ characterId }) => characterId,
-          ),
+          expectedRevision,
+          memberCharacterIds: latestIds,
+          members: observedMembers(...latestIds),
           organizerAccountId: "account",
           organizerCharacterId: "character",
         });
@@ -654,7 +852,7 @@ describe("usePartyReadyRoomObserver", () => {
           [currentRoom.notificationId]: settledRoom,
         });
       } finally {
-        obsoleteRefresh.resolve(Response.json(projection));
+        pendingRefresh.resolve(Response.json(projection));
         await advanceTime();
       }
     },
@@ -721,6 +919,7 @@ describe("usePartyReadyRoomObserver", () => {
     expect(await observeParty.mock.calls[1]?.[0].json()).toEqual({
       expectedRevision: 1,
       memberCharacterIds: ["10"],
+      members: observedMembers("10"),
       organizerAccountId: "account",
       organizerCharacterId: "character",
     });

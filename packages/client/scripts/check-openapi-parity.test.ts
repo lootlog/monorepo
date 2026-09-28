@@ -1,5 +1,5 @@
 import { decodeOpenApiDocument, isJsonObject } from "./openapi-document.js";
-import { expect, test } from "bun:test";
+import { expect, setDefaultTimeout, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { parse } from "yaml";
 import {
@@ -9,6 +9,10 @@ import {
   normalizeValidationErrors,
   normalizeOpenApiRepresentation,
 } from "./check-openapi-parity.js";
+
+// Tests parse full service specifications; the API one alone is over 30,000
+// lines and exceeds bun's 5 s default under loaded CI runners.
+setDefaultTimeout(30_000);
 
 const httpErrorResponse = {
   content: {

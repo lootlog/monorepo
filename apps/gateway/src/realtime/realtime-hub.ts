@@ -41,7 +41,10 @@ import {
   canSubscribe,
 } from "#src/realtime/subscription-policy";
 import { SubscriptionLimitExceeded } from "#src/realtime/realtime-errors";
-import { isReadyRoomRemoval } from "#src/realtime/npc-event-visibility";
+import {
+  isReadyRoomRemoval,
+  type PartyGatheringEventSource,
+} from "#src/realtime/npc-event-visibility";
 import { toLegacyAirTagUpdates } from "#src/realtime/air-tag-legacy-updates";
 
 type Scope = typeof SubscriptionScope.Type;
@@ -62,7 +65,9 @@ const MAX_SCOPE_BYTES = 1_024;
  * event type and publish that type only once `clusterFederationVersion`
  * reaches it: a replica drops a frame its schema does not know.
  */
-export const FEDERATION_VERSION = 2;
+export const FEDERATION_VERSION = 3;
+
+export const PARTY_GATHERING_STATE_FEDERATION_VERSION = 3;
 
 const toBase64 = (bytes: Uint8Array): string =>
   Buffer.from(bytes).toString("base64");
@@ -304,6 +309,8 @@ export class RealtimeHub {
     options: {
       readonly recipientPlatform?: "web-app";
       readonly sourceNpcs?: ReadonlyArray<LootVisibilityNpc>;
+      readonly partyGatheringSource?: PartyGatheringEventSource;
+      readonly discordId?: string;
     } = {},
   ): Promise<void> {
     const { message, prepared } = this.createFederatedMessage({
@@ -477,6 +484,7 @@ export class RealtimeHub {
 
   private createFederatedMessage(options: {
     readonly sourceNpcs?: ReadonlyArray<LootVisibilityNpc>;
+    readonly partyGatheringSource?: PartyGatheringEventSource;
     readonly id?: string;
     readonly scopeKey?: string;
     readonly scope?: Scope;
@@ -500,6 +508,7 @@ export class RealtimeHub {
         id: options.id ?? crypto.randomUUID(),
         sourceInstanceId: this.instanceId,
         sourceNpcs: options.sourceNpcs,
+        partyGatheringSource: options.partyGatheringSource,
         scopeKey: options.scopeKey,
         scope: options.scope,
         scopes: options.scopes,
@@ -584,6 +593,7 @@ export class RealtimeHub {
     const canReadSource = prepareSourceEventVisibility(
       frame,
       message.sourceNpcs,
+      message.partyGatheringSource,
     );
 
     const organizationId = eventOrganizationId(frame);
@@ -683,8 +693,15 @@ export class RealtimeHub {
     }));
 
     return (socket) => {
+      const isGatheringOrganizer =
+        frame.type === "party-gathering.state-updated" &&
+        message.discordId === socket.data.discordId &&
+        message.partyGatheringSource?.organizerDiscordId ===
+          socket.data.discordId;
+
       if (
         scopeAudiences.length > 0 &&
+        !isGatheringOrganizer &&
         !scopeAudiences.some(
           ({ scope, audiences }) =>
             canSubscribe(socket.data, scope) &&
