@@ -17,6 +17,7 @@ import { Clock, Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
+  eventMapCoverageGapTable,
   eventMapTable,
   eventTable,
   type roleTable,
@@ -259,10 +260,13 @@ export const makeEventUpdate =
             }
 
             if (heroNpcs) {
+              // Hold the heroes until commit so a concurrent hero deletion
+              // waits instead of removing a hero this update adds maps to.
               const existingHeroes = yield* transaction
                 .select()
                 .from(eventHeroNpcTable)
-                .where(eq(eventHeroNpcTable.eventId, eventId));
+                .where(eq(eventHeroNpcTable.eventId, eventId))
+                .for("share");
 
               if (
                 filterHeroesByLevel(
@@ -331,21 +335,44 @@ export const makeEventUpdate =
                 );
               }
 
+              // Like the dedicated endpoints, a map added to an existing hero
+              // starts unassigned; maps of a new hero start without a gap.
+              const addedMaps = changes.newMaps.map((map) => ({
+                ...map,
+                id: randomUUID(),
+              }));
+
               const newMaps = [
-                ...changes.newMaps,
+                ...addedMaps,
                 ...newHeroes.flatMap((hero) =>
-                  hero.maps.map((map) => ({ heroNpcId: hero.id, ...map })),
+                  hero.maps.map((map) => ({
+                    ...map,
+                    id: randomUUID(),
+                    heroNpcId: hero.id,
+                  })),
                 ),
               ];
 
               if (newMaps.length > 0) {
                 yield* transaction.insert(eventMapTable).values(
                   newMaps.map((map) => ({
-                    id: randomUUID(),
+                    id: map.id,
                     heroNpcId: map.heroNpcId,
                     mapId: map.mapId,
                     mapName: map.mapName,
                     updatedAt: now,
+                  })),
+                );
+              }
+
+              if (addedMaps.length > 0) {
+                yield* transaction.insert(eventMapCoverageGapTable).values(
+                  addedMaps.map((map) => ({
+                    id: randomUUID(),
+                    mapId: map.id,
+                    heroNpcId: map.heroNpcId,
+                    gapType: "UNASSIGNED" as const,
+                    startedAt: now,
                   })),
                 );
               }
