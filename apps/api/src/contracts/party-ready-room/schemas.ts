@@ -3,7 +3,10 @@ import { GameCharacter } from "../game-character.schema.js";
 import * as Schema from "effect/Schema";
 import {
   PartyGatheringNpcSchema,
-  ActivePartyGatheringSummarySchema,
+  PartyGatheringPartyMemberSchema,
+  PartyGatheringPartyStateSchema,
+  PartyGatheringVolunteerSchema,
+  PartyGatheringSummarySchema,
   PARTY_READY_ROOM_PARTY_PRESENCE_STATES,
 } from "@lootlog/schema/party-ready-room";
 import {
@@ -35,6 +38,8 @@ const readyRoomFields = {
   minLvl: Schema.optionalKey(FiniteNumber),
   maxLvl: Schema.optionalKey(FiniteNumber),
   partyMemberCount: Schema.optionalKey(NonNegativeSafeInteger),
+  partyState: Schema.optionalKey(PartyGatheringPartyStateSchema),
+  volunteers: Schema.optionalKey(Schema.Array(PartyGatheringVolunteerSchema)),
   status: Schema.Literal("ACTIVE"),
   revision: PositiveSafeInteger,
   createdAt: DateTimeString,
@@ -187,6 +192,9 @@ export type PartyInvitationTargetsResponse =
   typeof PartyInvitationTargetsResponse.Type;
 
 export const ObservePartyRequest = Schema.Struct({
+  members: Schema.optionalKey(
+    Schema.Array(PartyGatheringPartyMemberSchema).check(Schema.isMaxLength(20)),
+  ),
   memberCharacterIds: Schema.Array(
     NonEmptyString.check(
       Schema.isMaxLength(255).annotate({
@@ -232,6 +240,10 @@ export const ActivePartyGatheringsQuery = Schema.Struct({
   world: NonEmptyString.check(Schema.isMaxLength(50)),
 });
 
+export const ActivePartyGatheringSummary = PartyGatheringSummarySchema.annotate(
+  { identifier: "ActivePartyGatheringSummary" },
+);
+
 export const ActivePartyGatheringsResponse = Schema.Array(
-  ActivePartyGatheringSummarySchema,
+  ActivePartyGatheringSummary,
 );

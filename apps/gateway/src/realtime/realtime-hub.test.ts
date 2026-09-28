@@ -2,6 +2,11 @@ import * as npcRouting from "@lootlog/domain/npc-routing";
 import * as realtimeCodec from "@lootlog/protocol/realtime/codec";
 import { createRabbitDelivery } from "../../test/rabbit-fixtures.js";
 import { Permission } from "@lootlog/schema/permissions";
+import type {
+  PartyGatheringSummary,
+  PartyGatheringUpdateEnvelope,
+  PartyGatheringVolunteer,
+} from "@lootlog/schema/party-ready-room";
 import { describe, expect, spyOn, test } from "bun:test";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import type {
@@ -16,6 +21,7 @@ import { getScopeKey, RealtimeHub } from "./realtime-hub.js";
 import { RabbitBridge, gatewayConsumerSpecs } from "#src/rabbit/rabbit-bridge";
 import type { SessionData } from "./session.js";
 import { SubscriptionLimitExceeded } from "./realtime-errors.js";
+import { canSubscribe } from "./subscription-policy.js";
 
 class FederationBus {
   readonly listeners: Array<(message: FederatedRealtimeMessage) => void> = [];
@@ -2054,6 +2060,405 @@ describe("RealtimeHub federation", () => {
   });
 });
 
+test("gathering rosters reach authorized observers across gateways without exposing hidden sources or legacy clients", async () => {
+  const bus = new FederationBus();
+  const local = new RealtimeHub(config, new FakeRedisStore(bus));
+  const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+  const sourceGuild = "organization-1";
+  const sharedGuild = "organization-2";
+
+  const readPermissions = [
+    Permission.LOOTLOG_CHAT_READ,
+    Permission.LOOTLOG_CHAT_HEROES_READ,
+  ];
+
+  const scenarios: Array<{
+    name: string;
+    allowed: boolean;
+    permissions?: Permission[];
+    minimumLevel?: number;
+    organizations?: string[];
+    supports?: boolean;
+    organizer?: boolean;
+    owner?: boolean;
+    apiKey?: boolean;
+    world?: string;
+  }> = [
+    { name: "observer", allowed: true },
+    {
+      name: "shared-observer",
+      allowed: true,
+      organizations: [sourceGuild, sharedGuild],
+    },
+    {
+      name: "organizer",
+      allowed: true,
+      organizer: true,
+      permissions: [
+        Permission.LOOTLOG_CHAT_READ,
+        Permission.LOOTLOG_NOTIFICATIONS_SEND,
+      ],
+    },
+    {
+      name: "sender-only-organizer",
+      allowed: true,
+      organizer: true,
+      permissions: [Permission.LOOTLOG_NOTIFICATIONS_SEND],
+    },
+    {
+      name: "revoked-organizer",
+      allowed: false,
+      organizer: true,
+      permissions: [],
+    },
+    {
+      name: "legacy-organizer",
+      allowed: false,
+      organizer: true,
+      supports: false,
+      permissions: [Permission.LOOTLOG_NOTIFICATIONS_SEND],
+    },
+    {
+      name: "api-key-organizer",
+      allowed: false,
+      organizer: true,
+      apiKey: true,
+      permissions: [Permission.LOOTLOG_NOTIFICATIONS_SEND],
+    },
+    { name: "owner", allowed: true, owner: true, permissions: [] },
+    { name: "administrator", allowed: true, permissions: [Permission.ADMIN] },
+    { name: "legacy", allowed: false, supports: false },
+    {
+      name: "hidden-tier",
+      allowed: false,
+      permissions: [Permission.LOOTLOG_CHAT_READ],
+    },
+    { name: "hidden-level", allowed: false, minimumLevel: 200 },
+    {
+      name: "other-organization",
+      allowed: false,
+      organizations: [sharedGuild],
+    },
+    { name: "other-world-subscription", allowed: false, world: "classic" },
+    { name: "api-key", allowed: false, apiKey: true },
+  ];
+
+  const targets = [local, remote].flatMap((hub, index) =>
+    scenarios.map((scenario) => {
+      const base = makeSession(`${index}-${scenario.name}`);
+      const discordId = scenario.organizer ? "organizer" : base.discordId;
+      const organizations = scenario.organizations ?? [sourceGuild];
+
+      const session: SessionData = {
+        ...base,
+        platform: "game",
+        discordId,
+        supportsPartyGatheringState: scenario.supports ?? true,
+        guilds: organizations.map((id) => ({
+          guild: {
+            id,
+            ownerId: scenario.owner ? discordId : "different-owner",
+          },
+          roles: [
+            {
+              id: "reader",
+              permissions: scenario.permissions ?? readPermissions,
+              lvlRangeFrom: scenario.minimumLevel ?? 0,
+              lvlRangeTo: 500,
+            },
+          ],
+        })),
+      };
+
+      if (scenario.apiKey) {
+        session.apiKeyAccess = {
+          keyId: "key",
+          organizationIds: organizations,
+          mode: "read",
+          personalData: true,
+          expiresAt: null,
+        };
+        session.apiKeyLeaseExpiresAt = Date.now() + 60_000;
+      }
+
+      const target = makeSocket(session);
+      hub.register(target.socket);
+
+      for (const organizationId of organizations) {
+        const scope = {
+          topic: "organization.chat",
+          organizationId,
+          world: scenario.world,
+        } as const;
+
+        if (canSubscribe(session, scope)) hub.subscribe(target.socket, scope);
+      }
+
+      return { ...target, scenario };
+    }),
+  );
+
+  const handlers = new Map<
+    string,
+    (delivery: RabbitDelivery) => Effect.Effect<void, unknown>
+  >();
+
+  const messaging: RabbitMessagingService = {
+    publish: () => Effect.void,
+    ack: () => Effect.void,
+    nack: () => Effect.void,
+    consume: (options, handler) =>
+      Effect.sync(() => {
+        handlers.set(options.queue, handler);
+
+        return { consumerTag: options.queue, cancel: Effect.void };
+      }),
+  };
+
+  const unexpected = () => {
+    throw new Error("Unexpected control call");
+  };
+
+  const bridge = new RabbitBridge(
+    messaging,
+    local,
+    { rebalanceAcrossInstances: unexpected },
+    { coverageForMap: unexpected },
+    { publish: unexpected },
+  );
+
+  const volunteer: PartyGatheringVolunteer = {
+    characterId: "volunteer",
+    nick: "Chętny",
+    icon: "player.gif",
+    lvl: 110,
+    prof: "w",
+    partyPresence: "OUTSIDE",
+  };
+
+  const partyMember = {
+    characterId: "member",
+    nick: "W grupie",
+    icon: "member.gif",
+    lvl: 115,
+    prof: "m",
+  };
+
+  const privateVolunteer = {
+    ...volunteer,
+    discordId: "private-volunteer",
+    accountId: "private-account",
+  };
+
+  const gathering = {
+    notificationId: "gathering",
+    organizerName: "Organizator",
+    organizerDiscordId: "organizer",
+    world: "tempest",
+    revision: 1,
+    guildIds: [sourceGuild, sharedGuild],
+    npc: { name: "Hero", location: "Map", lvl: 105, type: "HERO" },
+    createdAt: "2026-09-28T10:00:00Z",
+    expiresAt: "2026-09-28T11:00:00Z",
+    applicantCount: 1,
+    inPartyCount: 0,
+    partyMemberCount: 1,
+    volunteers: [privateVolunteer],
+    partyState: {
+      status: "OBSERVED",
+      observedAt: "2026-09-28T10:01:00Z",
+      members: [partyMember],
+    },
+  } satisfies PartyGatheringSummary;
+
+  const envelope: PartyGatheringUpdateEnvelope = {
+    guildId: sourceGuild,
+    guildIds: gathering.guildIds,
+    world: gathering.world,
+    notificationId: gathering.notificationId,
+    revision: gathering.revision,
+    organizerDiscordId: gathering.organizerDiscordId,
+    npc: gathering.npc,
+    update: { type: "UPSERT", gathering },
+  };
+
+  for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+  await Effect.runPromise(
+    Effect.scoped(
+      Effect.gen(function* () {
+        yield* bridge.start();
+        const handler = handlers.get("gateway-guilds-party-gathering-updated");
+
+        if (!handler) throw new Error("Missing gathering state consumer");
+
+        const deliver = (
+          payload: PartyGatheringUpdateEnvelope,
+          messageId: string,
+        ) =>
+          handler(
+            createRabbitDelivery(
+              RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED,
+              Buffer.from(JSON.stringify(payload)),
+              messageId,
+            ),
+          );
+
+        const rollout = yield* Effect.exit(
+          deliver(envelope, "gathering-created"),
+        );
+
+        expect(rollout._tag).toBe("Failure");
+        expect(targets.every((target) => target.sent.length === 0)).toBe(true);
+        local.clusterFederationVersion = 3;
+        remote.clusterFederationVersion = 3;
+        yield* deliver(envelope, "gathering-created");
+        yield* deliver(envelope, "gathering-created");
+
+        for (const target of targets) {
+          expect(target.sent).toHaveLength(target.scenario.allowed ? 1 : 0);
+
+          if (!target.scenario.allowed) continue;
+          expect(target.sent.map(decodeRealtimeFrame)).toMatchObject([
+            {
+              type: "party-gathering.state-updated",
+              data: {
+                organizationId: sourceGuild,
+                payload: {
+                  type: "UPSERT",
+                  gathering: {
+                    organizerDiscordId: "organizer",
+                    guildIds: [sourceGuild],
+                    volunteers: [volunteer],
+                    partyState: { members: [partyMember] },
+                  },
+                },
+              },
+            },
+          ]);
+          expect(
+            JSON.stringify(target.sent.map(decodeRealtimeFrame)),
+          ).not.toContain("private-");
+        }
+
+        yield* deliver(
+          { ...envelope, guildId: sharedGuild },
+          "gathering-created",
+        );
+
+        const sharedTargets = targets.filter(
+          (target) => target.scenario.name === "shared-observer",
+        );
+
+        for (const target of sharedTargets) {
+          expect(target.sent).toHaveLength(2);
+          expect(
+            decodeRealtimeFrame(target.sent[1] ?? new Uint8Array()),
+          ).toMatchObject({
+            data: {
+              organizationId: sharedGuild,
+              payload: { gathering: { guildIds: [sharedGuild] } },
+            },
+          });
+        }
+
+        const departure: PartyGatheringSummary = {
+          ...gathering,
+          revision: 2,
+          partyMemberCount: 0,
+          volunteers: [],
+          applicantCount: 0,
+          partyState: {
+            status: "OBSERVED",
+            observedAt: "2026-09-28T10:02:00Z",
+            members: [],
+          },
+        };
+
+        yield* deliver(
+          {
+            ...envelope,
+            revision: 2,
+            update: { type: "UPSERT", gathering: departure },
+          },
+          "gathering-departure",
+        );
+        yield* deliver(
+          {
+            ...envelope,
+            revision: 3,
+            update: {
+              type: "REMOVE",
+              notificationId: "gathering",
+              revision: 3,
+            },
+          },
+          "gathering-removed",
+        );
+
+        for (const target of targets.filter(
+          (target) => target.scenario.allowed,
+        )) {
+          const frames = target.sent.map(decodeRealtimeFrame);
+          expect(frames.slice(-2)).toMatchObject([
+            {
+              data: {
+                payload: {
+                  type: "UPSERT",
+                  gathering: {
+                    revision: 2,
+                    applicantCount: 0,
+                    volunteers: [],
+                    partyMemberCount: 0,
+                    partyState: { members: [] },
+                  },
+                },
+              },
+            },
+            {
+              data: {
+                payload: {
+                  type: "REMOVE",
+                  notificationId: "gathering",
+                  revision: 3,
+                },
+              },
+            },
+          ]);
+        }
+
+        for (const target of targets.filter(
+          (target) =>
+            !target.scenario.allowed &&
+            target.scenario.name !== "other-organization",
+        ))
+          expect(target.sent).toHaveLength(0);
+
+        const mismatched = yield* Effect.exit(
+          deliver(
+            { ...envelope, guildIds: [sharedGuild] },
+            "mismatched-source",
+          ),
+        );
+
+        expect(mismatched._tag).toBe("Failure");
+
+        for (const npc of [undefined, { ...gathering.npc, type: "COMMON" }]) {
+          const invalidSource = yield* Effect.exit(
+            deliver({ ...envelope, npc }, "hidden-source"),
+          );
+
+          expect(invalidSource._tag).toBe("Failure");
+        }
+
+        for (const target of targets.filter(
+          (target) => target.scenario.name === "hidden-tier",
+        ))
+          expect(target.sent).toHaveLength(0);
+      }),
+    ),
+  );
+});
+
 const npcDeliveryCases = (npcType: string, npcLevel: number, tier: string) =>
   [
     [
@@ -2628,108 +3033,4 @@ test("resolves timer routing once while preserving recipient authorization acros
   } finally {
     routing.mockRestore();
   }
-});
-
-test("active gathering summaries reach capable members without notifying old clients or revoked audiences", async () => {
-  const bus = new FederationBus();
-  const hub = new RealtimeHub(config, new FakeRedisStore(bus));
-
-  const scope = {
-    topic: "party.ready-room" as const,
-    organizationId: "organization-1",
-  };
-
-  const capable = makeSocket({
-    ...makeSession("active"),
-    supportsActivePartyGatherings: true,
-  });
-
-  const legacy = makeSocket(makeSession("legacy"));
-
-  const revoked = makeSocket({
-    ...makeSession("revoked"),
-    supportsActivePartyGatherings: true,
-  });
-
-  for (const target of [capable, legacy, revoked]) {
-    hub.register(target.socket);
-    hub.subscribe(target.socket, scope);
-  }
-
-  revoked.socket.data.guilds = [];
-
-  const payload = {
-    type: "UPSERT",
-    guildId: "organization-1",
-    revision: 1,
-    summary: {
-      notificationId: "room",
-      organizerName: "Organizer",
-      applicantCount: 0,
-      inPartyCount: 0,
-      guildIds: ["organization-1"],
-      world: "world",
-      createdAt: "2026-09-09T10:00:00.000Z",
-      expiresAt: "2026-09-09T10:30:00.000Z",
-    },
-  };
-
-  const handlers = new Map<
-    string,
-    (delivery: RabbitDelivery) => Effect.Effect<void, unknown>
-  >();
-
-  const messaging: RabbitMessagingService = {
-    publish: () => Effect.void,
-    ack: () => Effect.void,
-    nack: () => Effect.void,
-    consume: (options, handler) =>
-      Effect.sync(() => {
-        handlers.set(options.queue, handler);
-
-        return { consumerTag: options.queue, cancel: Effect.void };
-      }),
-  };
-
-  const unexpected = () => {
-    throw new Error("Unexpected control operation");
-  };
-
-  const bridge = new RabbitBridge(
-    messaging,
-    hub,
-    { rebalanceAcrossInstances: unexpected },
-    { coverageForMap: unexpected },
-    { publish: unexpected },
-  );
-
-  await Effect.runPromise(
-    Effect.scoped(
-      Effect.gen(function* () {
-        yield* bridge.start();
-
-        const handler = handlers.get(
-          "gateway-guilds-active-party-gathering-updated",
-        );
-
-        if (!handler) throw new Error("Active gathering consumer not started");
-        yield* handler(
-          createRabbitDelivery(
-            RabbitRoutingKey.GUILDS_ACTIVE_PARTY_GATHERING_UPDATED,
-            Buffer.from(JSON.stringify(payload)),
-          ),
-        );
-      }),
-    ),
-  );
-
-  expect(capable.sent.map((bytes) => decode(bytes))).toEqual([
-    {
-      v: 1,
-      type: "active-party-gathering.updated",
-      data: { organizationId: "organization-1", payload },
-    },
-  ]);
-  expect(legacy.sent).toEqual([]);
-  expect(revoked.sent).toEqual([]);
 });

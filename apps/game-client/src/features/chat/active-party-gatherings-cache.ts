@@ -1,153 +1,114 @@
 import type {
-  ActivePartyGatheringSummary,
-  ActivePartyGatheringUpdate,
+  PartyGatheringClientUpdate,
+  PartyGatheringSummary,
 } from "@lootlog/schema/party-ready-room";
-import { pruneByRecency } from "@/lib/prune-by-recency";
 
-type Removal = { revision: number; observedAt: number };
-
-export type ActiveGatheringsCache = {
-  snapshotAppliedAt: number | null;
-  orderingEpoch: number;
-  rooms: readonly ActivePartyGatheringSummary[];
-  removals: Record<string, Removal>;
+type GatheringVersion = {
+  revision: number;
+  expiresAt: number;
+  gathering?: PartyGatheringSummary;
+  terminal: boolean;
 };
 
-export const EMPTY_ACTIVE_GATHERINGS: ActiveGatheringsCache = {
-  snapshotAppliedAt: null,
-  orderingEpoch: 0,
-  rooms: [],
-  removals: {},
-};
+export type ActivePartyGatheringsCache = Record<string, GatheringVersion>;
 
-function mergeSummary(
-  cache: ActiveGatheringsCache,
-  summary: ActivePartyGatheringSummary,
-  mergeOrganizations = true,
-): ActiveGatheringsCache {
-  const revision = summary.revision ?? 0;
+const REMOVAL_RETENTION_MS = 30 * 60_000;
 
-  if ((cache.removals[summary.notificationId]?.revision ?? -1) >= revision)
-    return cache;
+export function applyGatheringUpdate(
+  cache: ActivePartyGatheringsCache,
+  update: PartyGatheringClientUpdate,
+): ActivePartyGatheringsCache {
+  const gathering = update.type === "UPSERT" ? update.gathering : undefined;
 
-  const current = cache.rooms.find(
-    (room) => room.notificationId === summary.notificationId,
-  );
+  const notificationId =
+    update.type === "UPSERT"
+      ? update.gathering.notificationId
+      : update.notificationId;
 
-  if ((current?.revision ?? -1) > revision) return cache;
+  const revision =
+    update.type === "UPSERT"
+      ? (update.gathering.revision ?? 0)
+      : update.revision;
 
-  // After eviction an unknown ID may be a cancelled room's delayed replay.
-  // Only an authoritative snapshot may introduce unknown rooms from then on.
-  if (mergeOrganizations && cache.orderingEpoch > 0 && !current)
-    return { ...cache, snapshotAppliedAt: null };
-
-  const guildIds = mergeOrganizations
-    ? [...new Set([...(current?.guildIds ?? []), ...summary.guildIds])]
-    : [...summary.guildIds];
-
-  const room = { ...summary, guildIds };
-
-  return {
-    ...cache,
-    rooms: current
-      ? cache.rooms.map((entry) =>
-          entry.notificationId === room.notificationId ? room : entry,
-        )
-      : [...cache.rooms, room].sort((first, second) =>
-          second.createdAt.localeCompare(first.createdAt),
-        ),
-  };
-}
-
-export function applyActiveGatheringUpdate(
-  cache: ActiveGatheringsCache,
-  update: ActivePartyGatheringUpdate,
-): ActiveGatheringsCache {
-  if (update.type === "UPSERT")
-    return mergeSummary(cache, {
-      ...update.summary,
-      revision: update.revision,
-    });
-
-  return removeActiveGathering(cache, update.notificationId, update.revision);
-}
-
-export function removeActiveGathering(
-  cache: ActiveGatheringsCache,
-  notificationId: string,
-  revision: number,
-): ActiveGatheringsCache {
-  const current = cache.rooms.find(
-    (room) => room.notificationId === notificationId,
-  );
+  const previous = cache[notificationId];
 
   if (
-    (current?.revision ?? -1) > revision ||
-    (cache.removals[notificationId]?.revision ?? -1) > revision
-  )
+    previous &&
+    (previous.revision > revision ||
+      (previous.revision === revision && previous.gathering === undefined))
+  ) {
     return cache;
-  const now = Date.now();
-
-  const removals = {
-    ...cache.removals,
-    [notificationId]: { revision, observedAt: now },
-  };
-
-  const { retained, evicted } = pruneByRecency({
-    entries: Object.entries(removals),
-    now,
-    cap: 512,
-    timestampOf: ([, removal]) => removal.observedAt,
-  });
-
-  return {
-    ...cache,
-    orderingEpoch: cache.orderingEpoch + (evicted.length > 0 ? 1 : 0),
-    snapshotAppliedAt: evicted.length > 0 ? null : cache.snapshotAppliedAt,
-    rooms: cache.rooms.filter((room) => room.notificationId !== notificationId),
-    removals: Object.fromEntries(retained),
-  };
-}
-
-/** A snapshot cannot replace newer events or erase rooms created while it was in flight. */
-export function applyActiveGatheringsSnapshot(
-  cache: ActiveGatheringsCache,
-  rooms: readonly ActivePartyGatheringSummary[],
-  baseline: ActiveGatheringsCache,
-): ActiveGatheringsCache {
-  // A removal made during the request must not be forgotten before it returns.
-  if (cache.orderingEpoch !== baseline.orderingEpoch)
-    return { ...cache, snapshotAppliedAt: null };
-
-  const ids = new Set(rooms.map((room) => room.notificationId));
-  let next = cache;
-
-  for (const room of cache.rooms) {
-    if (!ids.has(room.notificationId) && baseline.rooms.includes(room))
-      next = removeActiveGathering(
-        next,
-        room.notificationId,
-        room.revision ?? 0,
-      );
   }
 
-  const merged = rooms.reduce(
-    (current, room) => mergeSummary(current, room, false),
-    next,
+  const next = Object.fromEntries(
+    Object.entries(cache).filter(([, entry]) => entry.expiresAt > Date.now()),
   );
 
-  const byId = new Map(merged.rooms.map((room) => [room.notificationId, room]));
-
-  return {
-    ...merged,
-    snapshotAppliedAt: Date.now(),
-    rooms: [
-      ...merged.rooms.filter((room) => !ids.has(room.notificationId)),
-      ...rooms.flatMap((room) => {
-        const current = byId.get(room.notificationId);
-
-        return current ? [current] : [];
-      }),
-    ],
+  next[notificationId] = {
+    revision,
+    terminal: update.type === "REMOVE",
+    expiresAt: gathering
+      ? Date.parse(gathering.expiresAt)
+      : Math.max(previous?.expiresAt ?? 0, Date.now() + REMOVAL_RETENTION_MS),
+    gathering: gathering && {
+      ...gathering,
+      // A room may arrive through several authorized Organizations. Each push
+      // carries only the receiving Organization, even at the same revision.
+      guildIds: [
+        ...new Set([
+          ...(previous?.gathering?.guildIds ?? []),
+          ...gathering.guildIds,
+        ]),
+      ],
+    },
   };
+
+  return next;
+}
+
+export function reconcileGatherings(
+  current: ActivePartyGatheringsCache,
+  snapshot: readonly PartyGatheringSummary[],
+  baseline: ActivePartyGatheringsCache,
+): ActivePartyGatheringsCache {
+  const incomingIds = new Set(snapshot.map((room) => room.notificationId));
+  let next = { ...current };
+
+  for (const gathering of snapshot) {
+    const previous = next[gathering.notificationId];
+
+    // Absence in discovery may mean lost source access, whereas a REMOVE
+    // event terminates the room. Restored access can reveal the same revision.
+    if (
+      previous &&
+      !previous.gathering &&
+      !previous.terminal &&
+      previous.revision <= (gathering.revision ?? 0)
+    ) {
+      delete next[gathering.notificationId];
+    }
+
+    next = applyGatheringUpdate(next, { type: "UPSERT", gathering });
+    const merged = next[gathering.notificationId];
+
+    if (merged?.gathering) {
+      next[gathering.notificationId] = {
+        ...merged,
+        gathering: { ...merged.gathering, guildIds: gathering.guildIds },
+      };
+    }
+  }
+
+  for (const [notificationId, previous] of Object.entries(baseline)) {
+    if (!previous.gathering || incomingIds.has(notificationId)) continue;
+
+    if (current[notificationId] !== previous) continue;
+    next[notificationId] = {
+      revision: previous.revision,
+      expiresAt: previous.expiresAt,
+      terminal: false,
+    };
+  }
+
+  return next;
 }

@@ -11,7 +11,7 @@ import {
   REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_PING_CAPABILITY,
-  REALTIME_ACTIVE_PARTY_GATHERINGS_CAPABILITY,
+  REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
   REALTIME_TEAM_BATTLE_PING_CAPABILITY,
   type ClientCommand,
   type Response,
@@ -34,7 +34,11 @@ import type { AirTagService } from "#src/realtime/air-tag-service";
 import type { BattlePingService } from "#src/realtime/battle-ping-service";
 import type { MapPingService } from "#src/realtime/map-ping-service";
 import type { PresenceStore } from "#src/realtime/presence-store";
-import { getScopeKey, type RealtimeHub } from "#src/realtime/realtime-hub";
+import {
+  getScopeKey,
+  PARTY_GATHERING_STATE_FEDERATION_VERSION,
+  type RealtimeHub,
+} from "#src/realtime/realtime-hub";
 import {
   hasValidApiKeyLease,
   type GatewaySocket,
@@ -144,6 +148,7 @@ export class CommandHandler {
     private readonly hub: Pick<
       RealtimeHub,
       | "onPermissionRebalance"
+      | "clusterFederationVersion"
       | "sendResponse"
       | "sendEvent"
       | "replaceSubscriptions"
@@ -787,11 +792,15 @@ export class CommandHandler {
           subscriptionScopes: scopes,
           capabilities: [
             REALTIME_PING_CAPABILITY,
-            REALTIME_ACTIVE_PARTY_GATHERINGS_CAPABILITY,
             REALTIME_BATTLE_PING_CAPABILITY,
             REALTIME_TEAM_BATTLE_PING_CAPABILITY,
             REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
             REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
+            ...(!socket.data.apiKeyAccess &&
+            hub.clusterFederationVersion >=
+              PARTY_GATHERING_STATE_FEDERATION_VERSION
+              ? [REALTIME_PARTY_GATHERING_STATE_CAPABILITY]
+              : []),
           ],
         },
       } satisfies Event;

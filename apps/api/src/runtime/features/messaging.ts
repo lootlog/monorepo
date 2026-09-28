@@ -1,4 +1,3 @@
-import { makeJsonCodec } from "#src/redis/redis.service";
 import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Layer } from "effect";
@@ -8,6 +7,10 @@ import {
   type ReadyRoomEffects,
 } from "#src/http-api/handlers/party-ready-room/ready-room.data-layer";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
+import {
+  makeReadyRoomRedis,
+  makeGatheringUpdatePublisher,
+} from "#src/runtime/features/ready-room";
 
 export const messagingData = Layer.unwrap(
   Effect.gen(function* () {
@@ -17,15 +20,7 @@ export const messagingData = Layer.unwrap(
     const attempt = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({ try: operation, catch: (error) => error });
 
-    const readyRedis = {
-      getJson: (key, schema) =>
-        attempt(() => redis.getJson(key, makeJsonCodec(schema))),
-      eval: <A>(
-        script: string,
-        keys: ReadonlyArray<string>,
-        arguments_: ReadonlyArray<string | number>,
-      ) => attempt(() => redis.eval<A>(script, [...keys], [...arguments_])),
-    };
+    const readyRedis = makeReadyRoomRedis(redis);
 
     const publishReadyRoom: ReadyRoomEffects["publish"] = (envelope) =>
       rabbit
@@ -62,15 +57,7 @@ export const messagingData = Layer.unwrap(
             readyRedis,
             {
               publish: publishReadyRoom,
-              publishActive: (payload) =>
-                rabbit
-                  .publish({
-                    exchange: "default",
-                    routingKey:
-                      RabbitRoutingKey.GUILDS_ACTIVE_PARTY_GATHERING_UPDATED,
-                    content: new TextEncoder().encode(JSON.stringify(payload)),
-                  })
-                  .pipe(Effect.asVoid),
+              publishGatheringUpdate: makeGatheringUpdatePublisher(rabbit),
             },
             input,
           ),

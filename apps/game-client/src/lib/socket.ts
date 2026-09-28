@@ -1,5 +1,3 @@
-import { Option, Schema } from "effect";
-import { ActivePartyGatheringUpdateSchema } from "@lootlog/schema/party-ready-room";
 import { isString } from "es-toolkit";
 import {
   hasRealtimeCapabilities,
@@ -11,7 +9,7 @@ import {
 } from "@lootlog/protocol/realtime/codec";
 import type { AirTagMapThreatEvent } from "@lootlog/schema/air-tag";
 import {
-  REALTIME_ACTIVE_PARTY_GATHERINGS_CAPABILITY,
+  REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
   REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
   REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
   REALTIME_BATTLE_PING_CAPABILITY,
@@ -140,6 +138,7 @@ const legacyEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
   "notification.sent": GatewayEvent.NOTIFICATION,
   "notification.volunteer": GatewayEvent.NOTIFICATIONS_VOLUNTEER,
   "member-refresh.updated": GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE,
+  "party-gathering.state-updated": GatewayEvent.PARTY_GATHERING_STATE_UPDATE,
   "party-gathering.updated": GatewayEvent.PARTY_GATHERING_SEND,
   "party-gathering.cancelled": GatewayEvent.PARTY_GATHERING_CANCEL,
   "party-ready-room.updated": GatewayEvent.PARTY_READY_ROOM_UPDATE,
@@ -212,7 +211,7 @@ export class AppSocket {
     promise: Promise<JoinResult>;
     cancel: () => void;
   } | null = null;
-  private activePartyGatheringsSupported = false;
+  private gatheringStateSupported = false;
   private battlePingsSupported = false;
   private teamBattlePingsSupported = false;
   private airTagMapThreatsSupported = false;
@@ -244,8 +243,8 @@ export class AppSocket {
         this.joinAttempt?.cancel();
         this.joinAttempt = null;
         this.joinedOrganizationIds = [];
-        this.activePartyGatheringsSupported = false;
         // The next connection may reach an older gateway.
+        this.gatheringStateSupported = false;
         this.battlePingsSupported = false;
         this.teamBattlePingsSupported = false;
         this.airTagMapThreatsSupported = false;
@@ -256,6 +255,10 @@ export class AppSocket {
         connected ? GatewayEvent.CONNECT : GatewayEvent.DISCONNECT,
       );
     });
+  }
+
+  get supportsGatheringState(): boolean {
+    return this.gatheringStateSupported;
   }
 
   get connected(): boolean {
@@ -283,10 +286,6 @@ export class AppSocket {
 
   probeLatency(): void {
     this.realtime.probeLatency();
-  }
-
-  supportsActivePartyGatherings(): boolean {
-    return this.activePartyGatheringsSupported;
   }
 
   /** Whether the joined gateway accepts `battle-ping.send`; older gateways close the socket on it. */
@@ -493,8 +492,8 @@ export class AppSocket {
       ? response.capabilities
       : [];
 
-    this.activePartyGatheringsSupported = capabilities.includes(
-      REALTIME_ACTIVE_PARTY_GATHERINGS_CAPABILITY,
+    this.gatheringStateSupported = capabilities.includes(
+      REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
     );
     this.battlePingsSupported = capabilities.includes(
       REALTIME_BATTLE_PING_CAPABILITY,
@@ -784,20 +783,6 @@ export class AppSocket {
           payload,
         );
       }
-
-      return;
-    }
-
-    if (event.type === "active-party-gathering.updated") {
-      const update = Schema.decodeUnknownOption(
-        ActivePartyGatheringUpdateSchema,
-      )(event.data.payload);
-
-      if (Option.isSome(update))
-        this.listeners.emit(
-          GatewayEvent.ACTIVE_PARTY_GATHERING_UPDATE,
-          update.value,
-        );
 
       return;
     }

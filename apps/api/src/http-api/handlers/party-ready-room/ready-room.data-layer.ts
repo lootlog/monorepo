@@ -8,23 +8,29 @@ import {
 import { randomUUID } from "node:crypto";
 
 import { Effect, Layer } from "effect";
+import { isEqual } from "es-toolkit";
 import { Permission } from "@lootlog/schema/permissions";
 import { NOTIFICATION_SEND_PERMISSIONS } from "@lootlog/domain/npc-permissions";
-import type {
-  ActivePartyGatheringUpdate,
-  PartyGatheringNpc,
-  PartyReadyRoomCharacter,
-  PartyReadyRoomParticipant,
-  PartyReadyRoomUpdateEnvelope,
+import {
+  PARTY_OBSERVATION_REFRESH_MS,
+  type PartyGatheringNpc,
+  type PartyGatheringPartyMember,
+  type PartyGatheringUpdateEnvelope,
+  type PartyReadyRoomCharacter,
+  type PartyReadyRoomParticipant,
+  type PartyReadyRoomUpdateEnvelope,
 } from "@lootlog/schema/party-ready-room";
 import { ApiDatabase } from "#src/database/drizzle/database";
 
 import {
   createReadyRoomClientUpdate,
+  createGatheringCharacter,
+  createPartyGatheringSummary,
   createReadyRoomProjection,
   getReadyRoomActiveRecipientDiscordIds,
 } from "#src/messaging/ready-room/ready-room-projection";
 import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";
+import { makeReadyRoomPublicationOutbox } from "#src/messaging/ready-room/ready-room-publication-outbox";
 import {
   ResourceConflictError,
   PermissionDeniedError,
@@ -46,8 +52,8 @@ const ROOM_LIFETIME_MS = 30 * 60 * 1000;
 const MAX_CAS_ATTEMPTS = 4;
 
 export interface ReadyRoomEffects {
-  readonly publishActive: (
-    update: ActivePartyGatheringUpdate,
+  readonly publishGatheringUpdate: (
+    envelope: PartyGatheringUpdateEnvelope,
   ) => Effect.Effect<void, unknown>;
   readonly publishCancellation: (payload: {
     readonly notificationId: string;
@@ -73,92 +79,9 @@ export interface ReadyRoomEffects {
   ) => Effect.Effect<void, unknown>;
 }
 
-const activeGatheringSummary = (
-  room: ReadyRoomAggregate,
-  guildIds: readonly string[],
-) => {
-  const applicants = Object.values(room.participants).filter(
-    ({ character }) =>
-      character.accountId !== room.organizerCharacter.accountId ||
-      character.characterId !== room.organizerCharacter.characterId,
-  );
-
-  return {
-    revision: room.revision,
-    notificationId: room.notificationId,
-    organizerName: room.organizerCharacter.nick,
-    organizerDiscordId: room.organizerDiscordId,
-    organizerLvl: room.organizerCharacter.lvl,
-    organizerProf: room.organizerCharacter.prof,
-    applicantCount: applicants.length,
-    ...(room.partyMemberCount !== undefined && {
-      partyMemberCount: room.partyMemberCount,
-    }),
-    inPartyCount: applicants.filter(
-      ({ partyPresence }) => partyPresence === "IN_PARTY",
-    ).length,
-    guildIds,
-    world: room.world,
-    ...(room.description !== undefined && {
-      description: room.description,
-    }),
-    ...(room.minLvl !== undefined && { minLvl: room.minLvl }),
-    ...(room.maxLvl !== undefined && { maxLvl: room.maxLvl }),
-    ...(room.npc && {
-      npc: {
-        ...(room.npc.icon !== undefined && {
-          icon: room.npc.icon,
-        }),
-        ...(room.npc.type !== undefined && {
-          type: room.npc.type,
-        }),
-        ...(room.npc.prof !== undefined && {
-          prof: room.npc.prof,
-        }),
-        name: room.npc.name,
-        location: room.npc.location,
-        lvl: room.npc.lvl,
-        ...(room.npc.x !== undefined && { x: room.npc.x }),
-        ...(room.npc.y !== undefined && { y: room.npc.y }),
-      },
-    }),
-    createdAt: room.createdAt,
-    expiresAt: room.expiresAt,
-  };
-};
-
-const publishActiveGathering = (
-  effects: Pick<ReadyRoomEffects, "publishActive">,
-  room: ReadyRoomAggregate,
-) =>
-  Effect.forEach(
-    room.guildIds,
-    (guildId) =>
-      effects
-        .publishActive(
-          room.status === "ACTIVE"
-            ? {
-                type: "UPSERT",
-                guildId,
-                revision: room.revision,
-                summary: activeGatheringSummary(room, [guildId]),
-              }
-            : {
-                type: "REMOVE",
-                guildId,
-                notificationId: room.notificationId,
-                revision: room.revision,
-                organizerDiscordId: room.organizerDiscordId,
-                ...(room.npc && { npc: room.npc }),
-              },
-        )
-        .pipe(Effect.ignore),
-    { discard: true },
-  );
-
 export const createReadyRoomForNotification = (
   redis: ReadyRoomRedis,
-  effects: Pick<ReadyRoomEffects, "publish" | "publishActive">,
+  effects: Pick<ReadyRoomEffects, "publish" | "publishGatheringUpdate">,
   input: {
     readonly npc?: PartyGatheringNpc;
     readonly notificationId: string;
@@ -171,6 +94,12 @@ export const createReadyRoomForNotification = (
 ) => {
   const now = clock();
   const timestamp = new Date(now).toISOString();
+
+  const gatheringPublications = makeReadyRoomPublicationOutbox(
+    redis,
+    effects.publishGatheringUpdate,
+    clock,
+  );
 
   const aggregate: ReadyRoomAggregate = {
     schemaVersion: 3,
@@ -230,7 +159,7 @@ export const createReadyRoomForNotification = (
           .publish(envelope)
           .pipe(
             Effect.ignore,
-            Effect.andThen(publishActiveGathering(effects, result.aggregate)),
+            Effect.andThen(gatheringPublications.publish(result.aggregate)),
             Effect.as(result.aggregate),
           );
       }),
@@ -261,6 +190,12 @@ export const makeReadyRoomDataLayer = (
     ReadyRoomData,
     Effect.map(ApiDatabase, (database) => {
       const repository = makeReadyRoomRepository(redis, clock);
+
+      const gatheringPublications = makeReadyRoomPublicationOutbox(
+        redis,
+        effects.publishGatheringUpdate,
+        clock,
+      );
 
       const operation = <A, E>(effect: Effect.Effect<A, E>) =>
         effect.pipe(
@@ -305,7 +240,7 @@ export const makeReadyRoomDataLayer = (
               .pipe(Effect.ignore);
           },
           { discard: true },
-        ).pipe(Effect.andThen(publishActiveGathering(effects, aggregate)));
+        ).pipe(Effect.andThen(gatheringPublications.publish(aggregate)));
 
       const getLive = (notificationId: string) =>
         repository.get(notificationId).pipe(
@@ -488,8 +423,17 @@ export const makeReadyRoomDataLayer = (
             },
           };
 
+          if (
+            aggregate.partyState?.status === "OBSERVED" &&
+            aggregate.partyState.members.some(
+              (member) => member.characterId === character.characterId,
+            )
+          ) {
+            next.participants[participantId].partyPresence = "IN_PARTY";
+          }
+
           const recipients = yield* preparePublication(aggregate, [
-            aggregate.organizerDiscordId,
+            ...getReadyRoomActiveRecipientDiscordIds(aggregate),
             discordId,
           ]);
 
@@ -601,6 +545,7 @@ export const makeReadyRoomDataLayer = (
         organizerAccountId: string,
         organizerCharacterId: string,
         memberCharacterIds: ReadonlyArray<string>,
+        members: ReadonlyArray<PartyGatheringPartyMember> | undefined,
         attempt: number,
       ): Effect.Effect<unknown, unknown> =>
         Effect.gen(function* () {
@@ -617,6 +562,41 @@ export const makeReadyRoomDataLayer = (
           }
 
           const memberIds = new Set(memberCharacterIds);
+
+          const knownCharacters = new Map([
+            [
+              aggregate.organizerCharacter.characterId,
+              createGatheringCharacter(aggregate.organizerCharacter),
+            ],
+            ...Object.values(aggregate.participants).map(
+              ({ character }) =>
+                [
+                  character.characterId,
+                  createGatheringCharacter(character),
+                ] as const,
+            ),
+          ]);
+
+          const previousMembers =
+            aggregate.partyState?.status === "OBSERVED"
+              ? aggregate.partyState.members
+              : [];
+
+          const observedMembers = new Map(
+            (members ?? []).map((member) => [member.characterId, member]),
+          );
+
+          const partyMembers: PartyGatheringPartyMember[] = [...memberIds]
+            .sort()
+            .map((characterId) => ({
+              ...previousMembers.find(
+                (member) => member.characterId === characterId,
+              ),
+              ...knownCharacters.get(characterId),
+              ...observedMembers.get(characterId),
+              characterId,
+            }));
+
           const participants = structuredClone(aggregate.participants);
           const updatedAt = new Date(clock()).toISOString();
           const changed: string[] = [];
@@ -635,7 +615,11 @@ export const makeReadyRoomDataLayer = (
 
           if (
             changed.length === 0 &&
-            aggregate.partyMemberCount === memberIds.size
+            aggregate.partyMemberCount === memberIds.size &&
+            isEqual(previousMembers, partyMembers) &&
+            aggregate.partyState?.status === "OBSERVED" &&
+            clock() - Date.parse(aggregate.partyState.observedAt) <
+              PARTY_OBSERVATION_REFRESH_MS
           ) {
             return yield* projectionForViewer(aggregate, discordId);
           }
@@ -646,6 +630,11 @@ export const makeReadyRoomDataLayer = (
             updatedAt,
             participants,
             partyMemberCount: memberIds.size,
+            partyState: {
+              status: "OBSERVED",
+              observedAt: updatedAt,
+              members: partyMembers,
+            },
           };
 
           const recipients = yield* preparePublication(
@@ -677,6 +666,7 @@ export const makeReadyRoomDataLayer = (
                   organizerAccountId,
                   organizerCharacterId,
                   memberCharacterIds,
+                  members,
                   attempt + 1,
                 );
           }
@@ -944,7 +934,7 @@ export const makeReadyRoomDataLayer = (
 
                   if (visible.length === 0) return [];
 
-                  return [activeGatheringSummary(room, visible)];
+                  return [createPartyGatheringSummary(room, visible)];
                 })
                 .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
             }),
@@ -1144,6 +1134,7 @@ export const makeReadyRoomDataLayer = (
               payload.organizerAccountId,
               payload.organizerCharacterId,
               payload.memberCharacterIds,
+              payload.members,
               0,
             ),
           ),
