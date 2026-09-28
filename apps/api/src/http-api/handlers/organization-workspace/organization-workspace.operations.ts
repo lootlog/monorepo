@@ -15,6 +15,7 @@ import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import {
   pathString,
   statusCodeResponse,
+  reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
@@ -57,6 +58,7 @@ import {
   RoleResponse,
   type UpdateRolePermissionsRequest,
 } from "#src/contracts/roles/schemas";
+import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 
 export type OrganizationWorkspaceIdentity = {
   readonly userId: string;
@@ -86,7 +88,8 @@ export class OrganizationWorkspaceOperationError extends TaggedErrorClass<Organi
 
 type AccessFailure =
   | OrganizationWorkspaceAccessDenied
-  | OrganizationWorkspaceNotFound;
+  | OrganizationWorkspaceNotFound
+  | ReauthenticationRequired;
 
 export class OrganizationWorkspaceAuthorization extends Context.Service<
   OrganizationWorkspaceAuthorization,
@@ -491,13 +494,15 @@ const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
 type OrganizationWorkspaceFailure =
   | OrganizationWorkspaceAccessDenied
   | OrganizationWorkspaceNotFound
-  | OrganizationWorkspaceOperationError;
+  | OrganizationWorkspaceOperationError
+  | ReauthenticationRequired;
 
 export const toOrganizationWorkspaceHttpResponse = <A, R>(
   effect: Effect.Effect<A, OrganizationWorkspaceFailure, R>,
 ) =>
   Effect.catchTags(effect, {
     OrganizationWorkspaceAccessDenied: statusCodeResponse,
+    ReauthenticationRequired: reauthenticationRequiredResponse,
     OrganizationWorkspaceNotFound: statusCodeResponse,
     OrganizationWorkspaceOperationError: ({ cause }) => {
       if (Schema.is(ApplicationError)(cause)) {
@@ -523,6 +528,7 @@ export const toDeclaredOrganizationWorkspaceError = <A, R>(
       statuses.includes(error.status)
         ? Effect.fail(undefined)
         : Effect.die(error),
+    ReauthenticationRequired: reauthenticationRequiredResponse,
     OrganizationWorkspaceNotFound: (error) =>
       statuses.includes(error.status)
         ? Effect.fail(undefined)

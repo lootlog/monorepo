@@ -1,4 +1,7 @@
 import { describe, expect, it } from "bun:test";
+import { PgClient } from "@effect/sql-pg";
+import { Reactivity } from "effect/unstable/reactivity";
+import { SqlClient, SqlError } from "effect/unstable/sql";
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Layer, Redacted, Queue } from "effect";
 import { HttpRouter, HttpServer } from "effect/unstable/http";
@@ -13,9 +16,9 @@ import { ApiHttpClient, ApiHttpClientFailure } from "#src/http/api-http-client";
 import { OnlineRepository } from "#src/online/online-repository";
 import { Permissions } from "#src/activities/activity-permissions";
 import {
-  ActivityHealth,
+  ActivityReadiness,
   ActivityRoutes,
-  type ActivityHealthValue,
+  type ActivityReadinessValue,
 } from "./activity-http.js";
 
 const repository: ActivityRepositoryValue = {
@@ -34,9 +37,14 @@ const repository: ActivityRepositoryValue = {
   suggestClanNames: () => Effect.succeed(["Clan"]),
 };
 
-const health: ActivityHealthValue = {
+const readiness: ActivityReadinessValue = {
   check: () =>
-    Effect.succeed({ status: "ok", info: {}, error: null, details: {} }),
+    Effect.succeed({
+      status: "ok",
+      info: { database: { status: "up" } },
+      error: null,
+      details: { database: { status: "up" } },
+    }),
 };
 
 const unusedOnlineRepository = Layer.succeed(OnlineRepository, {
@@ -48,10 +56,13 @@ const unusedOnlineRepository = Layer.succeed(OnlineRepository, {
     Effect.die(new Error("Unexpected online pruning in activity route test")),
 });
 
-const makeBoundary = (capabilities: Permission[]) => {
+const makeBoundary = (
+  capabilities: Permission[],
+  readinessLayer = Layer.succeed(ActivityReadiness, readiness),
+) => {
   const routes = ActivityRoutes.pipe(
     Layer.provideMerge(Layer.succeed(ActivityRepository, repository)),
-    Layer.provideMerge(Layer.succeed(ActivityHealth, health)),
+    Layer.provideMerge(readinessLayer),
     Layer.provideMerge(
       Layer.succeed(
         Permissions,
@@ -237,7 +248,7 @@ for (const failure of ["status", "transport", "invalid-body"] as const) {
       ActivityRoutes.pipe(
         Layer.provideMerge(permissions),
         Layer.provideMerge(Layer.succeed(ActivityRepository, repository)),
-        Layer.provideMerge(Layer.succeed(ActivityHealth, health)),
+        Layer.provideMerge(Layer.succeed(ActivityReadiness, readiness)),
         Layer.provideMerge(unusedOnlineRepository),
         Layer.provide(HttpServer.layerServices),
       ),
@@ -329,3 +340,234 @@ it("restricts API keys after canonical organization resolution and before writes
     await boundary.dispose();
   }
 });
+
+const probeDatabaseLayer = (
+  query: Effect.Effect<ReadonlyArray<unknown>, SqlError.SqlError>,
+  connect: Effect.Effect<void, SqlError.SqlError> = Effect.void,
+) =>
+  Layer.effect(
+    SqlClient.SqlClient,
+    SqlClient.make({
+      compiler: PgClient.makeCompiler(),
+      spanAttributes: [],
+      acquirer: Effect.as(connect, {
+        execute: () => query,
+        executeRaw: () => Effect.die("Unexpected raw query"),
+        executeStream: () => {
+          throw new Error("Unexpected streaming query");
+        },
+        executeValues: () => Effect.die("Unexpected values query"),
+        executeValuesUnprepared: () =>
+          Effect.die("Unexpected unprepared query"),
+        executeUnprepared: () => Effect.die("Unexpected unprepared query"),
+      }),
+    }),
+  ).pipe(Layer.provide(Reactivity.layer));
+
+const liveResponse = {
+  status: "ok",
+  info: { process: { status: "up" } },
+  error: null,
+  details: { process: { status: "up" } },
+};
+
+const readyResponse = {
+  status: "ok",
+  info: { database: { status: "up" } },
+  error: null,
+  details: { database: { status: "up" } },
+};
+
+const unreadyResponse = {
+  status: "error",
+  info: null,
+  error: { database: { status: "down" } },
+  details: { database: { status: "down" } },
+};
+
+it("keeps liveness healthy during a database outage and recovers readiness without a restart", async () => {
+  let unavailable = true;
+  let queries = 0;
+
+  const database = probeDatabaseLayer(
+    Effect.suspend(() => {
+      queries++;
+
+      return unavailable
+        ? Effect.fail(
+            new SqlError.SqlError({
+              reason: new SqlError.ConnectionError({
+                cause: new Error("Database unavailable"),
+              }),
+            }),
+          )
+        : Effect.succeed([{ value: 1 }]);
+    }),
+  );
+
+  const boundary = makeBoundary(
+    [],
+    ActivityReadiness.layer.pipe(Layer.provide(database)),
+  );
+
+  try {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const live = await boundary.handler(
+        new Request("https://activity/healthz"),
+      );
+
+      expect(live.status).toBe(200);
+      expect(await live.json()).toEqual(liveResponse);
+    }
+
+    expect(queries).toBe(0);
+
+    const unready = await boundary.handler(
+      new Request("https://activity/readyz"),
+    );
+
+    expect(unready.status).toBe(503);
+    expect(await unready.json()).toEqual(unreadyResponse);
+
+    unavailable = false;
+
+    const ready = await boundary.handler(
+      new Request("https://activity/readyz"),
+    );
+
+    expect(ready.status).toBe(200);
+    expect(await ready.json()).toEqual(readyResponse);
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+for (const stalledOperation of ["connection", "query"] as const) {
+  it(`bounds a stalled database ${stalledOperation} without delaying liveness or retaining the pending probe`, async () => {
+    let stalled = true;
+    let pending = 0;
+    const started = Promise.withResolvers<void>();
+
+    const waitForDatabase = Effect.suspend(() => {
+      if (!stalled) return Effect.void;
+      pending++;
+      started.resolve();
+
+      return Effect.never.pipe(Effect.ensuring(Effect.sync(() => pending--)));
+    });
+
+    const database = probeDatabaseLayer(
+      stalledOperation === "query"
+        ? Effect.as(waitForDatabase, [{ value: 1 }])
+        : Effect.succeed([{ value: 1 }]),
+      stalledOperation === "connection" ? waitForDatabase : Effect.void,
+    );
+
+    const boundary = makeBoundary(
+      [],
+      ActivityReadiness.layer.pipe(Layer.provide(database)),
+    );
+
+    try {
+      const unready = boundary.handler(new Request("https://activity/readyz"));
+      await started.promise;
+
+      const live = await boundary.handler(
+        new Request("https://activity/healthz"),
+      );
+
+      expect(live.status).toBe(200);
+      expect(await live.json()).toEqual(liveResponse);
+      expect(pending).toBe(1);
+
+      const response = await unready;
+      expect(response.status).toBe(503);
+      expect(await response.json()).toEqual(unreadyResponse);
+      expect(pending).toBe(0);
+
+      stalled = false;
+
+      const ready = await boundary.handler(
+        new Request("https://activity/readyz"),
+      );
+
+      expect(ready.status).toBe(200);
+      expect(await ready.json()).toEqual(readyResponse);
+    } finally {
+      await boundary.dispose();
+    }
+  }, 5000);
+}
+
+it("answers readiness before slow PostgreSQL cancellation and rejects overlapping probes until cleanup completes", async () => {
+  const cleanupStarted = Promise.withResolvers<void>();
+  const releaseCleanup = Promise.withResolvers<void>();
+  const cleanupFinished = Promise.withResolvers<void>();
+  let queries = 0;
+
+  const database = probeDatabaseLayer(
+    Effect.suspend(() => {
+      queries++;
+
+      if (queries > 1) return Effect.succeed([{ value: 1 }]);
+
+      return Effect.never.pipe(
+        Effect.ensuring(
+          Effect.promise(() => {
+            cleanupStarted.resolve();
+
+            return releaseCleanup.promise;
+          }).pipe(Effect.andThen(Effect.sync(() => cleanupFinished.resolve()))),
+        ),
+      );
+    }),
+  );
+
+  const boundary = makeBoundary(
+    [],
+    ActivityReadiness.layer.pipe(Layer.provide(database)),
+  );
+
+  const watchdog = setTimeout(() => releaseCleanup.resolve(), 4500);
+
+  try {
+    const startedAt = performance.now();
+
+    const unready = await boundary.handler(
+      new Request("https://activity/readyz"),
+    );
+
+    expect(performance.now() - startedAt).toBeLessThan(4000);
+    expect(unready.status).toBe(503);
+    expect(await unready.json()).toEqual(unreadyResponse);
+    await cleanupStarted.promise;
+
+    const live = await boundary.handler(
+      new Request("https://activity/healthz"),
+    );
+
+    const busy = await boundary.handler(new Request("https://activity/readyz"));
+
+    expect(live.status).toBe(200);
+    expect(await live.json()).toEqual(liveResponse);
+    expect(busy.status).toBe(503);
+    expect(await busy.json()).toEqual(unreadyResponse);
+    expect(queries).toBe(1);
+
+    releaseCleanup.resolve();
+    await cleanupFinished.promise;
+    await Bun.sleep(0);
+
+    const ready = await boundary.handler(
+      new Request("https://activity/readyz"),
+    );
+
+    expect(ready.status).toBe(200);
+    expect(await ready.json()).toEqual(readyResponse);
+    expect(queries).toBe(2);
+  } finally {
+    clearTimeout(watchdog);
+    releaseCleanup.resolve();
+    await boundary.dispose();
+  }
+}, 6000);

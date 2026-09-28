@@ -1,5 +1,5 @@
 import { and, desc, eq, gte, isNotNull } from "drizzle-orm";
-import { Clock, Effect, Layer } from "effect";
+import { Clock, Effect, Layer, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { findActiveGuild } from "#src/guilds/active-guild-lookup";
 import {
@@ -25,10 +25,13 @@ import type {
   StoredMemberWithRoles,
 } from "#src/members/member.types";
 import {
+  ApplicationError,
+  ApplicationErrorKind,
   InvalidRequestError,
   ResourceConflictError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
+import { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 import { ErrorKey as GuildErrorKey } from "#src/guilds/error-key";
 import {
   MembersData,
@@ -75,6 +78,16 @@ export interface MemberCommandsPorts {
 const STALE_ACCESS_GRACE_MS = 6 * 60 * 60 * 1000;
 
 const failure = (cause: unknown) => new MembersOperationError({ cause });
+
+/** Only the caller's own Discord authorization can ask the caller to sign in again. */
+const callerFailure = (cause: unknown) =>
+  Schema.is(ApplicationError)(cause) &&
+  cause.kind === ApplicationErrorKind.AUTHENTICATION_REQUIRED
+    ? new ReauthenticationRequired({
+        code: cause.message,
+        requiresReauth: true,
+      })
+    : failure(cause);
 
 type MemberReadDatabase = Pick<typeof ApiDatabase.Service, "select">;
 
@@ -402,9 +415,12 @@ export const makeMembersDataLayer = (
           };
         });
 
-      const operation = <A>(effect: Effect.Effect<A, unknown>) =>
+      const operation = <A, E>(
+        effect: Effect.Effect<A, unknown>,
+        toError: (cause: unknown) => E,
+      ) =>
         effect.pipe(
-          Effect.mapError(failure),
+          Effect.mapError(toError),
           Effect.withSpan("members.data", {
             attributes: { adapter: "members", retryCount: 0 },
           }),
@@ -420,6 +436,7 @@ export const makeMembersDataLayer = (
               returnDeactivatedMember: false,
               throwOnMemberUnauthorized: true,
             }),
+            callerFailure,
           ),
         refreshMember: (guildId, discordId) =>
           operation(
@@ -453,11 +470,12 @@ export const makeMembersDataLayer = (
                 throwOnMemberUnauthorized: false,
               });
             }),
+            failure,
           ),
         deactivateMember: (guildId, discordId) =>
-          operation(deactivate(guildId, discordId)),
+          operation(deactivate(guildId, discordId), failure),
         refreshAllMembers: (guildId, discordId) =>
-          operation(createBulkRefresh(guildId, discordId)),
+          operation(createBulkRefresh(guildId, discordId), failure),
       });
     }),
   );

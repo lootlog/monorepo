@@ -1,4 +1,5 @@
 import { Effect, Predicate, Schema, SchemaIssue } from "effect";
+import { HttpServerResponse } from "effect/unstable/http";
 import { HttpApiMiddleware, HttpApiSchema } from "effect/unstable/httpapi";
 
 const RequestValidationError = Schema.Struct({
@@ -14,6 +15,7 @@ const RequestValidationError = Schema.Struct({
   .annotate({ identifier: "RequestValidationError" })
   .pipe(HttpApiSchema.status(400));
 
+// The declared error documents the 400 response in OpenAPI and generated clients.
 export class SchemaErrorResponse extends HttpApiMiddleware.Service<SchemaErrorResponse>()(
   "api/SchemaErrorResponse",
   { error: RequestValidationError },
@@ -38,9 +40,13 @@ export const SchemaErrorResponseLive =
       .map(({ path, message }) => `${path.join(".") || error.kind}: ${message}`)
       .join("; ");
 
-    return Effect.fail({
-      code: "VALIDATION_ERROR" as const,
+    const body: typeof RequestValidationError.Type = {
+      code: "VALIDATION_ERROR",
       message: `Invalid request: ${details}`,
       issues,
-    });
+    };
+
+    // A failure would be encoded by the first endpoint or middleware error
+    // schema that accepts it, so an open 401/403/404 schema could claim it.
+    return Effect.succeed(HttpServerResponse.jsonUnsafe(body, { status: 400 }));
   });

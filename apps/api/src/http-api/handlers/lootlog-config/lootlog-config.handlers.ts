@@ -1,6 +1,7 @@
 import {
   optionalPathString,
   statusCodeResponse,
+  reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
@@ -25,6 +26,7 @@ import {
   NpcLootlogConfigResponse,
   type UpdateNpcLootlogConfigRequest,
 } from "#src/contracts/lootlog-config/schemas";
+import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 
 export class LootlogConfigAccessDenied extends TaggedErrorClass<LootlogConfigAccessDenied>()(
   "LootlogConfigAccessDenied",
@@ -44,7 +46,7 @@ export class LootlogConfigAuthorization extends Context.Service<
       readonly capability: PermissionValue;
     }) => Effect.Effect<
       { readonly guildId: string },
-      LootlogConfigAccessDenied
+      LootlogConfigAccessDenied | ReauthenticationRequired
     >;
   }
 >()("@lootlog/api/http-api/lootlog-config/authorization") {}
@@ -181,13 +183,15 @@ export const updateLootlogConfigNpc = Effect.fn("updateLootlogConfigNpc")(
 
 type LootlogConfigHttpFailure =
   | LootlogConfigAccessDenied
-  | LootlogConfigOperationError;
+  | LootlogConfigOperationError
+  | ReauthenticationRequired;
 
 const orDieHttpFailure = <A, R>(
   effect: Effect.Effect<A, LootlogConfigHttpFailure, R>,
 ) =>
   Effect.catchTags(effect, {
     LootlogConfigAccessDenied: statusCodeResponse,
+    ReauthenticationRequired: reauthenticationRequiredResponse,
     LootlogConfigOperationError: (error) =>
       applicationErrorResponse(error.cause),
   });
