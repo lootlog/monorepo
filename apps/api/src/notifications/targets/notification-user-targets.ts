@@ -3,6 +3,7 @@ import {
   notificationRulesInApiKeyScope,
 } from "../notification-api-key-scope.js";
 import {
+  deleteNotificationTargetAndOrphanedRules,
   mapNotificationTarget,
   updateNotificationTarget,
 } from "#src/notifications/targets/notification-target-store";
@@ -358,26 +359,16 @@ export const makeNotificationUserTargets = (
       concurrency: "unbounded",
       discard: true,
     });
-    yield* database
-      .transaction((transaction) =>
-        Effect.gen(function* () {
-          yield* transaction
-            .delete(notificationTargetTable)
-            .where(eq(notificationTargetTable.id, targetId));
-
-          if (ruleIds.length > 0) {
-            yield* transaction
-              .delete(notificationRuleTable)
-              .where(inArray(notificationRuleTable.id, ruleIds));
-          }
-        }),
-      )
-      .pipe(
-        Effect.mapError(databaseFailure("notifications.userTargets.delete")),
-        Effect.withSpan("notifications.userTargets.delete.transaction", {
-          attributes: { adapter: "notifications.drizzle", retryCount: 0 },
-        }),
-      );
+    yield* deleteNotificationTargetAndOrphanedRules(
+      database,
+      targetId,
+      ruleIds,
+    ).pipe(
+      Effect.mapError(databaseFailure("notifications.userTargets.delete")),
+      Effect.withSpan("notifications.userTargets.delete.transaction", {
+        attributes: { adapter: "notifications.drizzle", retryCount: 0 },
+      }),
+    );
 
     return { success: true as const };
   });

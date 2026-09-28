@@ -2,6 +2,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
+  notificationRuleTable,
   notificationRuleTargetTable,
   notificationTargetTable,
 } from "#src/database/drizzle/schema";
@@ -79,3 +80,22 @@ export const updateNotificationTarget = Effect.fnUntraced(function* (
     )
     .returning();
 });
+
+export const deleteNotificationTargetAndOrphanedRules = (
+  database: typeof ApiDatabase.Service,
+  targetId: number,
+  orphanedRuleIds: readonly number[],
+) =>
+  database.transaction((transaction) =>
+    Effect.gen(function* () {
+      yield* transaction
+        .delete(notificationTargetTable)
+        .where(eq(notificationTargetTable.id, targetId));
+
+      if (orphanedRuleIds.length > 0) {
+        yield* transaction
+          .delete(notificationRuleTable)
+          .where(inArray(notificationRuleTable.id, orphanedRuleIds));
+      }
+    }),
+  );
