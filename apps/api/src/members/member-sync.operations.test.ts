@@ -46,6 +46,7 @@ test("member sync retries invalidation after a committed role change and clears 
     let notFound = false;
     let failInvalidation = false;
     const invalidated: string[] = [];
+    const readProjectionChanges: boolean[] = [];
     const removed: string[] = [];
     const store = makeMemberStore(boundary.database);
 
@@ -66,11 +67,12 @@ test("member sync retries invalidation after a committed role change and clears 
           ? Effect.fail(new ResourceNotFoundError("Member not found"))
           : Effect.succeed(discordMember),
       nextRefreshAt: () => Effect.succeed(null),
-      invalidateMember: ({ guildId, discordId }) =>
+      invalidateMember: ({ guildId, discordId, readProjectionChanged }) =>
         failInvalidation
           ? Effect.fail(new Error("cache unavailable"))
           : Effect.sync(() => {
               invalidated.push(`${guildId}:${discordId}`);
+              readProjectionChanges.push(readProjectionChanged);
             }),
     });
 
@@ -107,13 +109,18 @@ test("member sync retries invalidation after a committed role change and clears 
 
     discordMember = { ...discordMember, roles: ["role-1"] };
     await refresh();
+    await refresh();
+    discordMember = { ...discordMember, nick: "Renamed" };
+    await refresh();
+    // Guild member lists are evicted only for syncs that change what they show.
+    expect(readProjectionChanges).toEqual([true, false, true, false, true]);
     notFound = true;
     const deactivated = await refresh();
     expect(deactivated.status).toBe("NOT_FOUND");
     expect(deactivated.member?.active).toBe(false);
     expect(deactivated.member?.roles).toEqual([]);
     expect(removed).toEqual(["user-1"]);
-    expect(invalidated).toHaveLength(4);
+    expect(invalidated).toHaveLength(6);
 
     const storedRemoval = await boundary.run(
       store.findMemberWithRoles("discord-1", "guild-1"),

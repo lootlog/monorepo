@@ -1,6 +1,9 @@
 import type { makeUserGuildList } from "./user-guild-list.data-layer.js";
 import type { makeCurrentUserGuilds } from "./current-user-guilds.data-layer.js";
-import { statusCodeResponse } from "#src/shared/http/handler-response";
+import {
+  statusCodeResponse,
+  reauthenticationRequiredResponse,
+} from "#src/shared/http/handler-response";
 import {
   getGuildCacheKey,
   readGuildConfigurationCache,
@@ -49,6 +52,7 @@ import {
   type UpdateUserGameAccountPreferencesRequest,
   type UpdateUserPreferencesRequest,
 } from "#src/contracts/users/schemas";
+import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 
 export type AuthenticatedIdentity = {
   readonly userId: string;
@@ -83,7 +87,8 @@ export class AccountOrganizationOperationError extends TaggedErrorClass<AccountO
 
 type AuthorizationFailure =
   | AccountOrganizationAccessDenied
-  | AccountOrganizationNotFound;
+  | AccountOrganizationNotFound
+  | ReauthenticationRequired;
 
 export class AccountOrganizationAuthorization extends Context.Service<
   AccountOrganizationAuthorization,
@@ -387,13 +392,15 @@ const authorizeGuild = (
 type AccountOrganizationFailure =
   | AccountOrganizationAccessDenied
   | AccountOrganizationNotFound
-  | AccountOrganizationOperationError;
+  | AccountOrganizationOperationError
+  | ReauthenticationRequired;
 
 export const toAccountOrganizationHttpResponse = <A, R>(
   effect: Effect.Effect<A, AccountOrganizationFailure, R>,
 ) =>
   Effect.catchTags(effect, {
     AccountOrganizationAccessDenied: statusCodeResponse,
+    ReauthenticationRequired: reauthenticationRequiredResponse,
     AccountOrganizationNotFound: statusCodeResponse,
     AccountOrganizationOperationError: (error) => {
       const cause = error.cause;

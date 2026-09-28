@@ -137,6 +137,9 @@ export const useLiveLootList = () => {
     typeof createLootListReconciliation
   > | null>(null);
 
+  // A new filter, world or connection inherits an unfinished reconciliation.
+  const pendingReconciliationRef = useRef(false);
+
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
     null,
   );
@@ -250,8 +253,8 @@ export const useLiveLootList = () => {
     });
 
     reconciliationRef.current = reconciliation;
-    // Reconcile missed events on connection changes, including initial connect.
-    reconciliation.markDirty();
+
+    if (pendingReconciliationRef.current) reconciliation.markDirty();
 
     const onLootCreate = (payload: GuildLootCreatedEventV2) => {
       if (payload.guildId === currentGuildId) reconciliation.markDirty();
@@ -297,6 +300,7 @@ export const useLiveLootList = () => {
     const onJoin = (payload: {
       guildIds: string[];
       accessPolicyChanges?: readonly AccessPolicyChange[];
+      recover: boolean;
     }) => {
       const restricted = restrictedOrganizations(
         payload.accessPolicyChanges ?? [],
@@ -311,11 +315,12 @@ export const useLiveLootList = () => {
         restricted.push(currentGuildId);
       }
 
-      revalidateAccess(restricted);
+      // A join right after the page's initial fetch has nothing to recover.
+      if (restricted.length > 0 || payload.recover)
+        revalidateAccess(restricted);
     };
 
     const resume = () => reconciliation.resume();
-    socket.on(GatewayEvent.CONNECT, reconciliation.markDirty);
     socket.on(GatewayEvent.JOIN, onJoin);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, onPermissions);
     socket.on(GatewayEvent.LOOTS_CREATE, onLootCreate);
@@ -323,9 +328,9 @@ export const useLiveLootList = () => {
     document.addEventListener("visibilitychange", resume);
 
     return () => {
+      pendingReconciliationRef.current = reconciliation.isDirty();
       reconciliation.dispose();
       reconciliationRef.current = null;
-      socket.off(GatewayEvent.CONNECT, reconciliation.markDirty);
       socket.off(GatewayEvent.JOIN, onJoin);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, onPermissions);
       socket.off(GatewayEvent.LOOTS_CREATE, onLootCreate);

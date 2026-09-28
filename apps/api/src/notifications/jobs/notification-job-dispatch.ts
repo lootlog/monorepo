@@ -13,7 +13,7 @@ import {
   NotificationOwnerType,
   NotificationProvider,
 } from "#src/notifications/notification-enums";
-import type { JsonValue, JsonObject } from "#src/database/json";
+import { isJsonObject, type JsonValue } from "#src/database/json";
 
 export type NotificationDispatchJob = NotificationJobWithRelations;
 
@@ -77,11 +77,8 @@ const errorMessage = (cause: unknown) =>
     ? String(cause.message)
     : String(cause);
 
-const isPayloadObject = (value: JsonValue): value is JsonObject =>
-  value !== null && typeof value === "object" && !Array.isArray(value);
-
 const parseDispatchPayload = (value: JsonValue) => {
-  const payload = isPayloadObject(value) ? value : undefined;
+  const payload = isJsonObject(value) ? value : undefined;
 
   return {
     content: typeof payload?.content === "string" ? payload.content : undefined,

@@ -42,6 +42,17 @@ const colorFields = {
   backgroundColor: Schema.String,
 };
 
+const timerFilters = Schema.Record(
+  Schema.String,
+  Schema.Struct({
+    minLvl: Schema.Finite,
+    maxLvl: Schema.Finite,
+    selectedNpcTypes: Schema.mutable(Schema.Array(NpcTypeSchema)),
+    selectedColors: stringList,
+    selectedLists,
+  }),
+);
+
 const persistedTimerSettings = Schema.Struct({
   updatedAt: optionalOrUndefined(Schema.Finite),
   generalConfig: optionalOrUndefined(generalConfig),
@@ -75,18 +86,8 @@ const persistedTimerSettings = Schema.Struct({
       }),
     ),
   ),
-  timersFilters: optionalOrUndefined(
-    Schema.Record(
-      Schema.String,
-      Schema.Struct({
-        minLvl: Schema.Finite,
-        maxLvl: Schema.Finite,
-        selectedNpcTypes: Schema.mutable(Schema.Array(NpcTypeSchema)),
-        selectedColors: stringList,
-        selectedLists,
-      }),
-    ),
-  ),
+  timersFilters: optionalOrUndefined(timerFilters),
+  legacyTimersFilters: optionalOrUndefined(timerFilters),
   timerFiltersEnabled: optionalOrUndefined(Schema.Boolean),
   colorFiltersEnabled: optionalOrUndefined(Schema.Boolean),
   timersSortOrder: optionalOrUndefined(Schema.Literals(["asc", "desc"])),

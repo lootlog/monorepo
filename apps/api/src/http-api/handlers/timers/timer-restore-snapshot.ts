@@ -5,6 +5,22 @@ import {
 import type { timerTable } from "#src/database/drizzle/schema";
 import { isEqual } from "es-toolkit";
 
+export const getTimerHistoryValues = (
+  timer: typeof timerTable.$inferSelect,
+) => ({
+  npcId: timer.npcId,
+  npc: timer.npc,
+  minSpawnTime: timer.minSpawnTime,
+  maxSpawnTime: timer.maxSpawnTime,
+  latestRespBaseSeconds: timer.latestRespBaseSeconds,
+  latestRespawnRandomness: timer.latestRespawnRandomness,
+  wasReset: timer.wasReset,
+  windowOpenedAt: timer.windowOpenedAt,
+  timerCreatedById: timer.createdById,
+  timerActorCharacterSnapshotId: timer.actorCharacterSnapshotId,
+  timerActorCharacterLvl: timer.actorCharacterLvl,
+});
+
 export const getTimerHistorySnapshot = (entry: TimerHistoryEntry) => {
   if (
     entry.timerCreatedById === null ||

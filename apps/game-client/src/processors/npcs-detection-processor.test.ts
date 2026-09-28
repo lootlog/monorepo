@@ -115,6 +115,7 @@ const setInitialNpcs = (npcs: GameNpc[]) => {
       maxHp: 1,
       name: "Tester",
       profession: "w",
+      stasis: false,
       x: 1,
       y: 2,
     },

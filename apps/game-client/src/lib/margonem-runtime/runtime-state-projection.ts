@@ -143,6 +143,10 @@ function patchGame(
         getOptionalProperty(heroPatch, "prof"),
         current.hero.profession,
       ),
+      stasis:
+        heroPatch?.stasis === undefined
+          ? current.hero.stasis
+          : heroPatch.stasis === 1,
       x: valueOrCurrent(getOptionalProperty(heroPatch, "x"), current.hero.x),
       y: valueOrCurrent(getOptionalProperty(heroPatch, "y"), current.hero.y),
     }),

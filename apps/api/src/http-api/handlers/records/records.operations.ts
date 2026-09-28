@@ -5,7 +5,10 @@ import type {
   UserKillActivityQuery,
   UserKillActivityResponse,
 } from "#src/contracts/kills/analytics-schemas";
-import { statusCodeResponse } from "#src/shared/http/handler-response";
+import {
+  statusCodeResponse,
+  reauthenticationRequiredResponse,
+} from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
@@ -50,6 +53,7 @@ import type {
   LootShareResponse,
   UpdateLootShareRequest,
 } from "#src/contracts/loots/schemas";
+import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 
 type Guild = typeof guildTable.$inferSelect;
 
@@ -107,7 +111,7 @@ export class RecordsAuthorization extends Context.Service<
       readonly capability: PermissionValue;
     }) => Effect.Effect<
       AuthorizedGuildCaller,
-      RecordsAccessDenied | RecordsNotFound
+      RecordsAccessDenied | RecordsNotFound | ReauthenticationRequired
     >;
   }
 >()("@lootlog/api/http-api/records/authorization") {}
@@ -485,13 +489,15 @@ type HttpFailure =
   | RecordsAccessDenied
   | RecordsBadRequest
   | RecordsNotFound
-  | RecordsDataError;
+  | RecordsDataError
+  | ReauthenticationRequired;
 
 export const toRecordsHttpResponse = <A, R>(
   effect: Effect.Effect<A, HttpFailure, R>,
 ) =>
   Effect.catchTags(effect, {
     RecordsAccessDenied: statusCodeResponse,
+    ReauthenticationRequired: reauthenticationRequiredResponse,
     RecordsBadRequest: statusCodeResponse,
     RecordsNotFound: statusCodeResponse,
     RecordsDataError: (error) => applicationErrorResponse(error.cause),
