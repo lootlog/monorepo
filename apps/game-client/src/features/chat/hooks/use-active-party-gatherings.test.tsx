@@ -1,4 +1,6 @@
-import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import type { ServerEvent } from "@lootlog/client/realtime";
+import type { PartyGatheringSummary } from "@lootlog/schema/party-ready-room";
+import { getSocket } from "@/lib/socket";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
@@ -6,6 +8,8 @@ import {
   type ActivePartyGatheringSummary,
 } from "@lootlog/client/main";
 import { configureApiClients } from "@lootlog/client/transport";
+import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
+import { Permission } from "@lootlog/schema/permissions";
 import { createRealtimeTest } from "@/test/realtime-test";
 import { useActivePartyGatherings } from "./use-active-party-gatherings";
 
@@ -76,8 +80,10 @@ it("discovers gatherings without chat messages and preserves visible state durin
       ]),
     );
     const requestsAfterJoin = request.mock.calls.length;
+
+    expect(requestsAfterJoin).toBe(1);
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(30_000);
+      await vi.advanceTimersByTimeAsync(10 * 60_000);
     });
     expect(request).toHaveBeenCalledTimes(requestsAfterJoin);
     const genericRoom = { ...room, notificationId: "generic" };
@@ -158,6 +164,7 @@ it("discovers gatherings without chat messages and preserves visible state durin
     const npc = {
       id: 1,
       name: "Titan",
+      location: "Test map",
       wt: 100,
       lvl: 100,
       prof: "w",
@@ -247,8 +254,7 @@ it("discovers gatherings without chat messages and preserves visible state durin
   }
 });
 
-it("recovers missed facts on a bounded cadence despite continuous deltas and pauses recovery while hidden", async () => {
-  vi.useFakeTimers({ shouldAdvanceTime: true });
+it("patches observer rosters without HTTP and preserves pushes over delayed discovery", async () => {
   const harness = createRealtimeTest();
   harness.queryClient.setQueryData(
     getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
@@ -259,260 +265,267 @@ it("recovers missed facts on a bounded cadence despite continuous deltas and pau
     { guildsOrder: [], hiddenGuildIds: [] },
   );
 
-  const room: ActivePartyGatheringSummary = {
-    notificationId: "active",
-    organizerName: "Hero",
-    applicantCount: 0,
-    inPartyCount: 0,
-    guildIds: ["guild-1"],
-    world: "luvia",
-    createdAt: new Date().toISOString(),
-    expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
-    revision: 1,
-  };
-
-  const request = vi.fn(async () => Response.json([room]));
-
-  const restoreApi = configureApiClients({
-    main: {
-      baseUrl: "https://api.example.test",
-      fetch: async (input) => {
-        const url = new URL(
-          input instanceof Request ? input.url : String(input),
-        );
-
-        if (url.pathname === "/messaging/party-gathering/active")
-          return request();
-        throw new Error(`Unexpected HTTP request: ${url.pathname}`);
-      },
-    },
-  });
-
-  const { result, rerender, unmount } = renderHook(
-    ({ visible }) => useActivePartyGatherings({ visible }),
-    { wrapper: harness.wrapper, initialProps: { visible: true } },
-  );
-
-  const update = (revision: number) => ({
-    v: 1 as const,
-    type: "active-party-gathering.updated" as const,
-    data: {
-      organizationId: "guild-1",
-      payload: {
-        type: "UPSERT",
-        guildId: "guild-1",
-        revision,
-        summary: { ...room, revision, applicantCount: revision },
-      },
-    },
-  });
-
-  try {
-    act(() => harness.setSessionDiscordId("current-discord"));
-    harness.open();
-    await harness.join(["guild-1"], undefined, [
-      "lootlog.active-party-gatherings.v1",
-    ]);
-    await waitFor(() => expect(result.current.data).toHaveLength(1));
-    expect(request).toHaveBeenCalledTimes(1);
-    request.mockImplementation(async () => Response.json([]));
-
-    for (let revision = 2; revision < 8; revision++) {
-      // eslint-disable-next-line no-await-in-loop -- Delivery must precede each clock step to prove deltas cannot postpone recovery.
-      await harness.receive(update(revision));
-      // eslint-disable-next-line no-await-in-loop -- Advance between deliveries rather than dispatching the burst at one instant.
-      await act(async () => vi.advanceTimersByTimeAsync(10_000));
-    }
-
-    await act(async () => vi.advanceTimersByTimeAsync(6_100));
-    await waitFor(() => expect(result.current.data).toEqual([]));
-    expect(request).toHaveBeenCalledTimes(2);
-    request.mockImplementation(async () => Response.json({}, { status: 503 }));
-    await act(async () => vi.advanceTimersByTimeAsync(66_000));
-    await waitFor(() => expect(result.current.isStale).toBe(true));
-    await harness.receive(update(10));
-    expect(result.current.isStale).toBe(true);
-    request.mockImplementation(async () =>
-      Response.json([{ ...room, revision: 11 }]),
-    );
-    await act(async () => vi.advanceTimersByTimeAsync(66_000));
-    await waitFor(() => expect(result.current.isStale).toBe(false));
-    expect(result.current.data[0]?.revision).toBe(11);
-
-    rerender({ visible: false });
-    const beforeHidden = request.mock.calls.length;
-    await act(async () => vi.advanceTimersByTimeAsync(2 * 60_000));
-    expect(request).toHaveBeenCalledTimes(beforeHidden);
-    request.mockImplementation(async () => Response.json([]));
-    rerender({ visible: true });
-    await waitFor(() => expect(result.current.data).toEqual([]));
-    expect(request).toHaveBeenCalledTimes(beforeHidden + 1);
-  } finally {
-    unmount();
-    restoreApi();
-    vi.useRealTimers();
-  }
-});
-
-it("applies scoped active summaries without HTTP fanout and reconciles missed updates after reconnect", async () => {
-  const harness = createRealtimeTest();
-  harness.queryClient.setQueryData(
-    getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-    [{ id: "guild-1", name: "Guild" }],
-  );
-  harness.queryClient.setQueryData(
-    getUsersControllerGetUserPreferencesQueryKey(),
-    {
-      guildsOrder: [],
-      hiddenGuildIds: [],
-    },
-  );
-
   const room = {
-    notificationId: "active",
-    organizerName: "Hero",
-    organizerDiscordId: "organizer",
+    notificationId: "observed-room",
+    organizerName: "Organizer",
     applicantCount: 0,
     inPartyCount: 0,
     guildIds: ["guild-1"],
     world: "luvia",
+    revision: 1,
+    volunteers: [],
+    partyState: { status: "UNKNOWN" as const },
     createdAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
-    revision: 1,
   };
 
-  const request = vi.fn(async () => Response.json([room]));
+  const initial = Promise.withResolvers<Response>();
+  const request = vi.fn(() => initial.promise);
+
+  const policy = (permissions: Permission[]) =>
+    createAccessPolicySnapshot(
+      [
+        {
+          guild: { id: "guild-1", ownerId: "owner" },
+          roles: [{ permissions, lvlRangeFrom: 0, lvlRangeTo: 500 }],
+        },
+      ],
+      "observer",
+    );
 
   const restoreApi = configureApiClients({
-    main: {
-      baseUrl: "https://api.example.test",
-      fetch: async (input) => {
-        const url = new URL(
-          input instanceof Request ? input.url : String(input),
-        );
-
-        if (url.pathname === "/messaging/party-gathering/active")
-          return request();
-        throw new Error(`Unexpected HTTP request: ${url.pathname}`);
-      },
-    },
+    main: { baseUrl: "https://api.example.test", fetch: async () => request() },
   });
 
   const { result, unmount } = renderHook(useActivePartyGatherings, {
     wrapper: harness.wrapper,
   });
 
-  const capabilities = ["lootlog.active-party-gatherings.v1"];
-
-  const update = (revision: number, applicantCount: number) => ({
-    v: 1 as const,
-    type: "active-party-gathering.updated" as const,
-    data: {
-      organizationId: "guild-1",
-      payload: {
-        type: "UPSERT",
-        guildId: "guild-1",
-        revision,
-        summary: { ...room, revision, applicantCount },
-      },
-    },
-  });
-
   try {
-    act(() => harness.setSessionDiscordId("current-discord"));
+    act(() => harness.setSessionDiscordId("observer"));
     harness.open();
-    await harness.join(["guild-1"], undefined, capabilities);
-    await waitFor(() => expect(result.current.data).toHaveLength(1));
-    expect(request).toHaveBeenCalledTimes(1);
-    await harness.receive(update(3, 2), update(2, 1), update(3, 2));
-    await waitFor(() => expect(result.current.data[0]?.applicantCount).toBe(2));
+    await harness.join(["guild-1"], policy([Permission.LOOTLOG_CHAT_READ]), [
+      "lootlog.party-gathering-state.v1",
+    ]);
+    await waitFor(() => expect(request).toHaveBeenCalled());
+    const requestsAfterJoin = request.mock.calls.length;
+
+    expect(requestsAfterJoin).toBe(1);
+
+    const volunteer = {
+      characterId: "applicant",
+      nick: "Chętny",
+      icon: "hero.gif",
+      lvl: 100,
+      prof: "w",
+      partyPresence: "OUTSIDE" as const,
+    };
+
+    const event = (gathering: PartyGatheringSummary): ServerEvent => ({
+      v: 1 as const,
+      type: "party-gathering.state-updated" as const,
+      data: {
+        organizationId: "guild-1",
+        payload: { type: "UPSERT", gathering },
+      },
+    });
+
+    const volunteered = {
+      ...room,
+      revision: 2,
+      applicantCount: 1,
+      volunteers: [volunteer],
+    };
+
+    await harness.receive(event(volunteered));
+    await waitFor(() =>
+      expect(result.current.data[0]?.volunteers).toEqual([volunteer]),
+    );
+    await act(async () => {
+      initial.resolve(Response.json([room]));
+    });
+    await waitFor(() => expect(result.current.isFetching).toBe(false));
+    expect(result.current.data[0]?.revision).toBe(2);
+
+    const observed = {
+      ...volunteered,
+      revision: 3,
+      partyMemberCount: 1,
+      partyState: {
+        status: "OBSERVED" as const,
+        observedAt: new Date().toISOString(),
+        members: [{ characterId: "other", nick: "Spoza zbiórki" }],
+      },
+    };
+
+    await harness.receive(event(observed), event(volunteered), event(observed));
+    await waitFor(() =>
+      expect(result.current.data[0]?.partyState).toEqual(observed.partyState),
+    );
+    expect(result.current.data[0]?.volunteers).toEqual([volunteer]);
+
+    const departed = {
+      ...observed,
+      revision: 4,
+      partyMemberCount: 0,
+      partyState: { ...observed.partyState, members: [] },
+      volunteers: [],
+      applicantCount: 0,
+    };
+
+    await harness.receive(event(departed));
+    await waitFor(() =>
+      expect(result.current.data[0]?.partyState).toEqual(departed.partyState),
+    );
+    expect(result.current.data[0]?.volunteers).toEqual([]);
+    await harness.receive(
+      event({ ...departed, notificationId: "wrong-world", world: "other" }),
+    );
+    expect(result.current.data).toHaveLength(1);
+
+    // Live state already carries these changes, so legacy signals and a
+    // policy change outside gathering access must not reread or blank the bar.
     await harness.receive(
       {
         v: 1,
-        type: "chat.updated",
-        data: { organizationId: "guild-1", payload: { id: "chat" } },
+        type: "notification.sent",
+        data: {
+          organizationId: "guild-1",
+          payload: { notificationId: "next", isGatheringParty: true },
+        },
       },
       {
         v: 1,
-        type: "chat.deleted",
-        data: { organizationId: "guild-1", payload: { id: "chat" } },
+        type: "chat.updated",
+        data: {
+          organizationId: "guild-1",
+          payload: { messageId: "message", message: "Edited" },
+        },
+      },
+      {
+        v: 1,
+        type: "permissions.updated",
+        data: {
+          organizationIds: ["guild-1"],
+          subscriptionScopes: [],
+          accessPolicy: policy([
+            Permission.LOOTLOG_CHAT_READ,
+            Permission.LOOTLOG_TIMERS_READ,
+          ]),
+        },
       },
     );
-    expect(request).toHaveBeenCalledTimes(1);
-
-    const pending = Promise.withResolvers<Response>();
-    request.mockImplementationOnce(() => pending.promise);
-    let refresh: ReturnType<typeof result.current.refetch>;
-    act(() => {
-      refresh = result.current.refetch();
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 600));
     });
-    await waitFor(() => expect(request).toHaveBeenCalledTimes(2));
+    expect(result.current.data).toHaveLength(1);
+    expect(request).toHaveBeenCalledTimes(requestsAfterJoin);
+    const refresh = Promise.withResolvers<Response>();
+    request.mockImplementation(() => refresh.promise);
+    let pending: Promise<unknown> | undefined;
+    act(() => {
+      pending = result.current.refetch();
+    });
+    await waitFor(() =>
+      expect(request).toHaveBeenCalledTimes(requestsAfterJoin + 1),
+    );
     await harness.receive({
       v: 1,
-      type: "active-party-gathering.updated",
+      type: "party-gathering.state-updated",
       data: {
         organizationId: "guild-1",
         payload: {
           type: "REMOVE",
-          guildId: "guild-1",
           notificationId: room.notificationId,
-          revision: 4,
-          organizerDiscordId: "organizer",
+          revision: 5,
         },
       },
     });
-    await act(async () => {
-      pending.resolve(
-        Response.json([{ ...room, revision: 3, applicantCount: 2 }]),
-      );
-      await refresh;
-    });
-    await harness.receive(update(3, 2));
     await waitFor(() => expect(result.current.data).toEqual([]));
-    request.mockImplementation(async () =>
-      Response.json([{ ...room, notificationId: "missed-while-offline" }]),
-    );
-    act(() => harness.realtime.disconnect());
-    act(() => harness.realtime.connect());
-    harness.open();
-    await harness.join(["guild-1"], undefined, capabilities);
+    await act(async () => {
+      refresh.resolve(Response.json([departed]));
+      await pending;
+    });
+    await harness.receive(event(departed));
+    expect(result.current.data).toEqual([]);
+    expect(request).toHaveBeenCalledTimes(requestsAfterJoin + 1);
+
+    const requestsBeforeReconnect = request.mock.calls.length;
+
+    const restored = {
+      ...room,
+      notificationId: "created-while-offline",
+      revision: 1,
+    };
+
+    request.mockImplementation(async () => Response.json([restored]));
+    act(() => harness.wire.close());
+    act(() => {
+      getSocket().connect();
+      harness.wire.open();
+    });
+    await harness.join(["guild-1"], undefined, [
+      "lootlog.party-gathering-state.v1",
+    ]);
     await waitFor(() =>
       expect(result.current.data.map((entry) => entry.notificationId)).toEqual([
-        "missed-while-offline",
+        restored.notificationId,
       ]),
     );
-    expect(request).toHaveBeenCalledTimes(3);
-    request.mockImplementation(async () =>
-      Response.json([{ ...room, notificationId: "after-character-switch" }]),
-    );
+
+    expect(request).toHaveBeenCalledTimes(requestsBeforeReconnect + 1);
     act(() =>
-      setTestRuntimeGame({ hero: { accountId: "1", characterId: "2" } }),
+      harness.queryClient.setQueryData(
+        getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+        [
+          { id: "guild-1", name: "First" },
+          { id: "guild-2", name: "Second" },
+        ],
+      ),
     );
-    harness.open();
-    await harness.join(["guild-1"], undefined, capabilities);
-    await waitFor(() =>
-      expect(result.current.data.map((entry) => entry.notificationId)).toEqual([
-        "after-character-switch",
-      ]),
-    );
-    expect(request).toHaveBeenCalledTimes(4);
     request.mockImplementation(async () =>
-      Response.json({ message: "Unavailable" }, { status: 500 }),
+      Response.json([{ ...restored, guildIds: ["guild-1", "guild-2"] }]),
     );
     await act(async () => {
       await result.current.refetch();
     });
-    await waitFor(() => expect(result.current.isStale).toBe(true));
-    await harness.receive(update(6, 5));
     await waitFor(() =>
-      expect(
-        result.current.data.some((entry) => entry.notificationId === "active"),
-      ).toBe(true),
+      expect(result.current.data[0]?.guildIds).toEqual(["guild-1", "guild-2"]),
     );
-    expect(result.current.isStale).toBe(true);
-    expect(request).toHaveBeenCalledTimes(5);
-    act(() => harness.setSessionDiscordId(null));
+    const narrowed = { ...restored, guildIds: ["guild-2"] };
+    request.mockImplementation(async () => Response.json([narrowed]));
+    await act(async () => {
+      await result.current.refetch();
+    });
+    await waitFor(() =>
+      expect(result.current.data[0]?.guildIds).toEqual(["guild-2"]),
+    );
+    request.mockImplementation(async () => Response.json([]));
+    await act(async () => {
+      await result.current.refetch();
+    });
     await waitFor(() => expect(result.current.data).toEqual([]));
+    request.mockImplementation(async () => Response.json([narrowed]));
+    await act(async () => {
+      await result.current.refetch();
+    });
+    await waitFor(() =>
+      expect(result.current.data[0]?.notificationId).toBe(
+        restored.notificationId,
+      ),
+    );
+
+    const permissionRefresh = Promise.withResolvers<Response>();
+    request.mockImplementation(() => permissionRefresh.promise);
+    await harness.receive({
+      v: 1,
+      type: "permissions.updated",
+      data: { organizationIds: [], subscriptionScopes: [] },
+    });
+    await waitFor(() => expect(result.current.data).toEqual([]));
+    await act(async () => {
+      permissionRefresh.resolve(Response.json([]));
+    });
   } finally {
     unmount();
     restoreApi();

@@ -15,12 +15,12 @@ import { RabbitMessaging } from "@lootlog/messaging";
 import {
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_SESSION_HELLO_CAPABILITY,
-  REALTIME_ACTIVE_PARTY_GATHERINGS_CAPABILITY,
   REALTIME_TEAM_BATTLE_PING_CAPABILITY,
   REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
   REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
   REALTIME_FEED_CAPABILITY,
   REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
+  REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
   REALTIME_JSON_SUBPROTOCOL,
   REALTIME_SUBPROTOCOL,
 } from "@lootlog/protocol/realtime";
@@ -323,11 +323,11 @@ const negotiateCapabilities = (
     supportsSessionHello: offersGameCapability(
       REALTIME_SESSION_HELLO_CAPABILITY,
     ),
-    supportsActivePartyGatherings: offersGameCapability(
-      REALTIME_ACTIVE_PARTY_GATHERINGS_CAPABILITY,
-    ),
     supportsNotificationVolunteer: offersGameCapability(
       REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
+    ),
+    supportsPartyGatheringState: offersGameCapability(
+      REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
     ),
     supportsBattlePings: offersGameCapability(REALTIME_BATTLE_PING_CAPABILITY),
     supportsAirTagMapThreats: offersGameCapability(

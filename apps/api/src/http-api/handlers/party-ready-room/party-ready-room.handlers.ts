@@ -1,4 +1,3 @@
-import { ActivePartyGatheringSummarySchema } from "@lootlog/schema/party-ready-room";
 import type { GameCharacterOffline } from "@lootlog/protocol/rabbit/events";
 import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { applicationErrorResponse } from "../../application-error-response.js";
@@ -9,6 +8,7 @@ import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { DomainDateTime } from "#src/shared/schema/response-codecs";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
+  ActivePartyGatheringSummary,
   PartyReadyRoomResponse,
   PartyReadyRoomUpdateResponse,
   PartyInvitationTargetsResponse,
@@ -158,7 +158,7 @@ export const PartyReadyRoomUpdateDomainResponse = Schema.Struct({
 
 export const ActivePartyGatheringsDomainResponse = Schema.Array(
   Schema.Struct({
-    ...ActivePartyGatheringSummarySchema.fields,
+    ...ActivePartyGatheringSummary.fields,
     createdAt: DomainDateTime,
     expiresAt: DomainDateTime,
   }),

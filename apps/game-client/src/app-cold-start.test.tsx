@@ -20,7 +20,7 @@ import { useGlobalStore } from "@/store/global.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { markSettingsImportDone } from "@/features/settings/persistence/settings-import";
 import { MARGONEM_ACCOUNT_VALIDATE_URL } from "@/config/api";
-import { REALTIME_ACTIVE_PARTY_GATHERINGS_CAPABILITY } from "@lootlog/protocol/realtime";
+import { REALTIME_PARTY_GATHERING_STATE_CAPABILITY } from "@lootlog/protocol/realtime";
 import { SocketProvider } from "@/contexts/socket-context";
 
 vi.stubGlobal("Engine", createNativeRuntime());
@@ -200,7 +200,7 @@ it("starts an initialized character without repeating HTTP snapshots or joining 
             accessPolicy,
             capabilities: [
               "connection.ping",
-              REALTIME_ACTIVE_PARTY_GATHERINGS_CAPABILITY,
+              REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
             ],
           }
         : { presences: [] };

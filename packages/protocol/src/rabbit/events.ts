@@ -1,4 +1,3 @@
-import { ActivePartyGatheringUpdateSchema } from "@lootlog/schema/party-ready-room";
 import { UserFeedItem } from "../feed.js";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { DateTimeWithOffsetString } from "@lootlog/schema/http-scalars";
@@ -7,6 +6,7 @@ import {
   DiscordGuildSyncStatus,
 } from "@lootlog/schema/discord";
 import { NonNegativeInt } from "@lootlog/schema/primitives";
+import { PartyGatheringUpdateEnvelopeSchema } from "@lootlog/schema/party-ready-room";
 import { Schema } from "effect";
 import { RabbitRoutingKey } from "./topology.js";
 
@@ -376,6 +376,8 @@ const canonicalRabbitEventSchemas = {
   [RabbitRoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER]: NotificationVolunteer,
   [RabbitRoutingKey.GUILDS_PARTY_GATHERING]: OrganizationScopedEvent,
   [RabbitRoutingKey.GUILDS_PARTY_GATHERING_CANCEL]: OrganizationScopedEvent,
+  [RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED]:
+    PartyGatheringUpdateEnvelopeSchema,
   [RabbitRoutingKey.GUILDS_MEMBERS_REFRESH_JOB_UPDATE]: OrganizationScopedEvent,
   [RabbitRoutingKey.GUILDS_RESERVATIONS_CHANGED_V2]: ReservationChangedEventV2,
   [RabbitRoutingKey.NOTIFICATIONS_DELIVERY_RESULT]:
@@ -386,8 +388,6 @@ const canonicalRabbitEventSchemas = {
   [RabbitRoutingKey.PRESENCE_CHECK_REQUEST]: PresenceCheckRequested,
   [RabbitRoutingKey.PRESENCE_COVERAGE_CHECK]: PresenceCoverageChecked,
   [RabbitRoutingKey.USERS_PARTY_READY_ROOM_UPDATED]: PartyReadyRoomUpdated,
-  [RabbitRoutingKey.GUILDS_ACTIVE_PARTY_GATHERING_UPDATED]:
-    ActivePartyGatheringUpdateSchema,
 } as const;
 
 export type CanonicalRabbitEventRoutingKey =

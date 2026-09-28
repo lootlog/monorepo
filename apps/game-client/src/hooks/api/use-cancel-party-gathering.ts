@@ -1,6 +1,6 @@
 import {
-  removeActiveGathering,
-  type ActiveGatheringsCache,
+  applyGatheringUpdate,
+  type ActivePartyGatheringsCache,
 } from "@/features/chat/active-party-gatherings-cache";
 import { toast } from "sonner";
 import { ACTIVE_GATHERINGS_QUERY_KEY } from "@/features/chat/hooks/use-active-party-gatherings";
@@ -41,17 +41,22 @@ export const useCancelPartyGathering = () => {
 
       const update = decodePartyReadyRoomClientUpdate(response);
       applyUpdate(update);
-      queryClient.setQueriesData<ActiveGatheringsCache>(
+      queryClient.setQueriesData<ActivePartyGatheringsCache>(
         { queryKey: ACTIVE_GATHERINGS_QUERY_KEY },
         (cache) =>
-          cache && update.type === "REMOVE"
-            ? removeActiveGathering(
-                cache,
-                update.notificationId,
-                update.revision,
-              )
-            : cache,
+          cache &&
+          applyGatheringUpdate(cache, {
+            type: "REMOVE",
+            notificationId: ownedReadyRoom.notificationId,
+            revision:
+              update.type === "REMOVE"
+                ? update.revision
+                : ownedReadyRoom.revision,
+          }),
       );
+      void queryClient.invalidateQueries({
+        queryKey: ACTIVE_GATHERINGS_QUERY_KEY,
+      });
       await Promise.all(
         ownedReadyRoom.guildIds.map((guildId) =>
           queryClient.invalidateQueries({

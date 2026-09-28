@@ -1,25 +1,28 @@
 import { ChatGatheringJoinButton } from "./chat-gathering-join-button";
 import { ChatGatheringCardView } from "./chat-gathering-card-view";
 import { ChatOwnGatheringBar } from "./chat-own-gathering-bar";
-import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
-import { ChatGatheringCounters } from "./chat-gathering-counters";
+import type {
+  PartyReadyRoomProjection,
+  PartyGatheringSummary,
+} from "@lootlog/schema/party-ready-room";
+import { GatheringPartyCounter } from "@/components/common/gathering-party-counter";
+import { GatheringRoster } from "@/components/common/gathering-roster";
 import { ChatGatheringHideButton } from "./chat-gathering-hide-button";
 import { UserPlus, LoaderCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import type { ActivePartyGatheringSummary } from "@lootlog/client/main";
 
 type Props = {
-  candidates: ActivePartyGatheringSummary[];
-  target: ActivePartyGatheringSummary | null;
+  candidates: PartyGatheringSummary[];
+  target: PartyGatheringSummary | null;
   room: PartyReadyRoomProjection | null;
-  roomSummary?: ActivePartyGatheringSummary;
+  roomSummary?: PartyGatheringSummary;
   pending: boolean;
   stale: boolean;
   hasOwnGathering?: boolean;
-  onApply: (candidate: ActivePartyGatheringSummary) => void;
-  onHide: (candidate: ActivePartyGatheringSummary) => void;
+  onApply: (candidate: PartyGatheringSummary) => void;
+  onHide: (candidate: PartyGatheringSummary) => void;
 };
 
 export function ChatAvailableGatherings({
@@ -58,7 +61,7 @@ export function ChatAvailableGatherings({
       className="ll:min-w-0 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:first:border-t-0"
     >
       <div className={room.viewer === "ORGANIZER" ? "ll:px-1.5 ll:py-0.5" : ""}>
-        <ChatOwnGatheringBar room={room} summary={roomSummary} />
+        <ChatOwnGatheringBar room={room} summary={roomSummary} stale={stale} />
       </div>
     </li>
   );
@@ -91,8 +94,14 @@ export function ChatAvailableGatherings({
             <ChatGatheringCardView
               organizerDiscordId={candidate.organizerDiscordId}
               guildIds={candidate.guildIds}
-              counters=<ChatGatheringCounters
-                partyMemberCount={candidate.partyMemberCount}
+              counters=<GatheringPartyCounter
+                partyState={candidate.partyState}
+                stale={stale}
+              />
+              roster=<GatheringRoster
+                volunteers={candidate.volunteers}
+                partyState={candidate.partyState}
+                stale={stale}
               />
               details={{ ...candidate, action: candidateJoinButton }}
               menu=<ChatGatheringHideButton

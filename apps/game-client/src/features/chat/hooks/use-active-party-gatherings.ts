@@ -1,17 +1,21 @@
-import type { ActivePartyGatheringUpdate } from "@lootlog/schema/party-ready-room";
+import { Schema } from "effect";
 import {
-  applyActiveGatheringUpdate,
-  applyActiveGatheringsSnapshot,
-  EMPTY_ACTIVE_GATHERINGS,
-  type ActiveGatheringsCache,
-} from "../active-party-gatherings-cache";
+  type PartyGatheringClientUpdate,
+  PartyGatheringSummarySchema,
+} from "@lootlog/schema/party-ready-room";
+import {
+  applyGatheringUpdate,
+  reconcileGatherings,
+  type ActivePartyGatheringsCache,
+} from "@/features/chat/active-party-gatherings-cache";
 import { isApiError } from "@lootlog/client/transport";
 import { throttle } from "es-toolkit";
-import { useEffect, useEffectEvent, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { partyReadyRoomControllerActive } from "@lootlog/client/main";
 import { useSocket } from "@/contexts/socket-context";
 import { GatewayEvent } from "@/config/gateway";
+import type { PermissionsUpdatedPayload } from "@/lib/socket";
 import { useGameStore } from "@/store/game.store";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { useSession } from "@/hooks/auth/use-session";
@@ -23,69 +27,52 @@ export const ACTIVE_GATHERINGS_QUERY_KEY = ["active-party-gatherings"];
 // for each; the trailing edge fires after the last update, so none is missed.
 const RECONCILE_THROTTLE_MS = 500;
 
-export function useActivePartyGatherings({ visible = true } = {}) {
+const decodeGatherings = Schema.decodeUnknownSync(
+  Schema.Array(PartyGatheringSummarySchema),
+);
+
+// Discovery follows chat read access, the organizer's send permission, and
+// administration; changes to other areas cannot alter the visible gatherings.
+const GATHERING_ACCESS_AREAS = new Set([
+  "chat",
+  "notifications",
+  "organization",
+]);
+
+export function useActivePartyGatherings() {
   const [now, setNow] = useState(Date.now);
-  const [recoveryInterval] = useState(() => 60_000 + Math.random() * 6_000);
-  const accountId = useGameStore((state) => state.game?.hero.accountId);
-  const characterId = useGameStore((state) => state.game?.hero.characterId);
   const world = useGameStore((state) => state.game?.world ?? "");
   const { socket, connected, joined } = useSocket();
   const { data: session } = useSession();
   const { visibleGuilds, areVisibleGuildsResolved } = useLootlogGuilds();
   const queryClient = useQueryClient();
 
-  const queryKey = [
-    ...ACTIVE_GATHERINGS_QUERY_KEY,
-    session?.user?.id,
-    accountId,
-    characterId,
-    world,
-  ];
-
-  const readable = [
-    joined,
-    session?.user.id,
-    world,
-    areVisibleGuildsResolved,
-  ].every(Boolean);
+  const userId = session?.user?.id;
+  const queryKey = [...ACTIVE_GATHERINGS_QUERY_KEY, userId, world];
 
   const query = useQuery({
     queryKey,
     queryFn: async ({ signal }) => {
       const baseline =
-        queryClient.getQueryData<ActiveGatheringsCache>(queryKey) ??
-        EMPTY_ACTIVE_GATHERINGS;
+        queryClient.getQueryData<ActivePartyGatheringsCache>(queryKey) ?? {};
 
-      if (baseline.snapshotAppliedAt !== null)
-        queryClient.setQueryData<ActiveGatheringsCache>(queryKey, {
-          ...baseline,
-          snapshotAppliedAt: null,
-        });
-
-      const rooms = await partyReadyRoomControllerActive({ world }, { signal });
-
-      return applyActiveGatheringsSnapshot(
-        queryClient.getQueryData<ActiveGatheringsCache>(queryKey) ??
-          EMPTY_ACTIVE_GATHERINGS,
-        rooms,
-        baseline,
+      const snapshot = decodeGatherings(
+        await partyReadyRoomControllerActive({ world }, { signal }),
       );
+
+      const current =
+        queryClient.getQueryData<ActivePartyGatheringsCache>(queryKey) ?? {};
+
+      return reconcileGatherings(current, snapshot, baseline);
     },
-    enabled: readable && connected && visible,
+    enabled:
+      joined &&
+      connected &&
+      !!session?.user.id &&
+      !!world &&
+      areVisibleGuildsResolved,
     staleTime: 0,
   });
-
-  const recoverSnapshot = useEffectEvent(() => {
-    void query.refetch({ cancelRefetch: false });
-  });
-
-  useEffect(() => {
-    if (!readable || !connected || !visible) return;
-    // A fixed cadence cannot be postponed by frequent deltas updating the cache.
-    const timer = window.setInterval(recoverSnapshot, recoveryInterval);
-
-    return () => window.clearInterval(timer);
-  }, [readable, connected, visible, recoveryInterval]);
 
   // oxlint-disable-next-line react-doctor/effect-needs-cleanup -- Cleanup removes every listener with the same event and handler, including the events loop.
   useEffect(() => {
@@ -101,35 +88,35 @@ export function useActivePartyGatherings({ visible = true } = {}) {
       edges: ["trailing"],
     });
 
-    const permissionsChanged = () => {
-      reconcile.cancel();
-      void queryClient.resetQueries({ queryKey: ACTIVE_GATHERINGS_QUERY_KEY });
-    };
-
-    const updateActive = (update: ActivePartyGatheringUpdate) => {
-      if (update.type === "UPSERT" && update.summary.world !== world) return;
-      queryClient.setQueryData<ActiveGatheringsCache>(
-        [
-          ...ACTIVE_GATHERINGS_QUERY_KEY,
-          session?.user?.id,
-          accountId,
-          characterId,
-          world,
-        ],
-        (cache) =>
-          applyActiveGatheringUpdate(cache ?? EMPTY_ACTIVE_GATHERINGS, update),
+    const permissionsChanged = ({ changes }: PermissionsUpdatedPayload) => {
+      const relevant = changes?.filter((change) =>
+        change.areas.some((area) => GATHERING_ACCESS_AREAS.has(area)),
       );
-    };
 
-    socket.on(GatewayEvent.ACTIVE_PARTY_GATHERING_UPDATE, updateActive);
+      if (relevant?.length === 0) return;
+      reconcile.cancel();
+
+      // Revoked access must hide rooms at once; a grant keeps the current bar
+      // visible while discovery adds the newly readable rooms.
+      if (relevant?.every((change) => !change.restricted)) invalidate();
+      else
+        void queryClient.resetQueries({
+          queryKey: ACTIVE_GATHERINGS_QUERY_KEY,
+        });
+    };
 
     const events = [
       GatewayEvent.CHAT_MESSAGE_UPDATE,
       GatewayEvent.CHAT_MESSAGE_DELETE,
-      GatewayEvent.PARTY_READY_ROOM_UPDATE,
       GatewayEvent.PARTY_GATHERING_SEND,
       GatewayEvent.PARTY_GATHERING_CANCEL,
     ];
+
+    // Gateways with live gathering state push every committed change, so only
+    // older gateways need the legacy signals to trigger discovery reads.
+    const legacyReconcile = () => {
+      if (!socket.supportsGatheringState) reconcile();
+    };
 
     const newGathering = (payload: {
       type?: string;
@@ -139,42 +126,41 @@ export function useActivePartyGatherings({ visible = true } = {}) {
         payload.type === "PARTY_GATHERING" ||
         payload.isGatheringParty === true
       )
-        reconcile();
+        legacyReconcile();
     };
 
-    // Older gateways lack summaries; retain reconciliation until their rollout completes.
-    const legacy = !socket.supportsActivePartyGatherings();
+    const gatheringUpdated = (update: PartyGatheringClientUpdate) => {
+      if (update.type === "UPSERT" && update.gathering.world !== world) return;
+      queryClient.setQueryData<ActivePartyGatheringsCache>(
+        [...ACTIVE_GATHERINGS_QUERY_KEY, userId, world],
+        (cache) => applyGatheringUpdate(cache ?? {}, update),
+      );
+    };
 
-    if (legacy) socket.on(GatewayEvent.NOTIFICATION, newGathering);
+    socket.on(GatewayEvent.PARTY_GATHERING_STATE_UPDATE, gatheringUpdated);
+    socket.on(GatewayEvent.PARTY_READY_ROOM_UPDATE, legacyReconcile);
+    socket.on(GatewayEvent.NOTIFICATION, newGathering);
+    socket.on(GatewayEvent.CHAT_MESSAGE, newGathering);
 
-    if (legacy) socket.on(GatewayEvent.CHAT_MESSAGE, newGathering);
-
-    if (legacy) for (const event of events) socket.on(event, reconcile);
+    for (const event of events) socket.on(event, legacyReconcile);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
 
     return () => {
       reconcile.cancel();
-      socket.off(GatewayEvent.ACTIVE_PARTY_GATHERING_UPDATE, updateActive);
+      socket.off(GatewayEvent.PARTY_GATHERING_STATE_UPDATE, gatheringUpdated);
+      socket.off(GatewayEvent.PARTY_READY_ROOM_UPDATE, legacyReconcile);
       socket.off(GatewayEvent.NOTIFICATION, newGathering);
       socket.off(GatewayEvent.CHAT_MESSAGE, newGathering);
 
-      for (const event of events) socket.off(event, reconcile);
+      for (const event of events) socket.off(event, legacyReconcile);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
     };
-  }, [
-    connected,
-    joined,
-    socket,
-    queryClient,
-    session?.user?.id,
-    accountId,
-    characterId,
-    world,
-  ]);
+  }, [connected, joined, socket, queryClient, userId, world]);
   useEffect(() => {
     const nextExpiry = Math.min(
-      ...(query.data?.rooms ?? []).flatMap((room) => {
-        const expiry = Date.parse(room.expiresAt);
+      ...Object.values(query.data ?? {}).flatMap(({ gathering }) => {
+        if (!gathering) return [];
+        const expiry = Date.parse(gathering.expiresAt);
 
         return expiry > Date.now() ? [expiry] : [];
       }),
@@ -203,17 +189,20 @@ export function useActivePartyGatherings({ visible = true } = {}) {
     observedAt,
     world,
     visibleGuilds,
-    isStale: query.isError || !connected || !query.data?.snapshotAppliedAt,
+    isStale: query.isError || !connected,
     data:
-      readable && !accessDenied
-        ? (query.data?.rooms ?? [])
+      joined && areVisibleGuildsResolved && !accessDenied
+        ? Object.values(query.data ?? {})
+            .flatMap(({ gathering }) => (gathering ? [gathering] : []))
             .filter(
               (room) =>
                 room.world === world &&
                 Date.parse(room.expiresAt) > observedAt &&
                 room.guildIds.some((id) => enabledIds.has(id)),
             )
-            .map((room) => ({ ...room, guildIds: [...room.guildIds] }))
+            .sort((left, right) =>
+              right.createdAt.localeCompare(left.createdAt),
+            )
         : [],
   };
 }

@@ -132,7 +132,7 @@ it("shows and cancels an owned gathering after switching character and world wit
   client.clear();
 });
 
-it("lists only applicants still outside the party and counts them for inviting", () => {
+it("keeps joined volunteers visible while inviting only applicants outside the party", () => {
   setTestRuntimeGame({
     hero: {
       accountId: "organizer-account",
@@ -162,7 +162,7 @@ it("lists only applicants still outside the party and counts them for inviting",
   );
 
   expect(screen.getByText("waiting (190m)")).toBeInTheDocument();
-  expect(screen.queryByText("joined (190m)")).not.toBeInTheDocument();
+  expect(screen.getByText("joined (190m)")).toBeInTheDocument();
   expect(
     screen.getByRole("button", { name: "Zaproś wszystkich (1)" }),
   ).toBeInTheDocument();

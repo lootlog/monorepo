@@ -28,8 +28,8 @@ export interface SessionData extends AuthenticatedIdentity {
   readonly userAgent?: string;
   readonly supportsFeed?: boolean;
   readonly supportsSessionHello?: boolean;
-  readonly supportsActivePartyGatherings?: boolean;
   readonly supportsNotificationVolunteer?: boolean;
+  readonly supportsPartyGatheringState?: boolean;
   readonly supportsBattlePings?: boolean;
   readonly supportsTeamBattlePings?: boolean;
   readonly supportsAirTagMapThreats?: boolean;

@@ -22,7 +22,10 @@ import type {
 } from "@lootlog/protocol/realtime";
 import { Effect, Option, Schema, type Types, type Scope } from "effect";
 import type { CommandHandler } from "#src/realtime/command-handler";
-import type { RealtimeHub } from "#src/realtime/realtime-hub";
+import {
+  PARTY_GATHERING_STATE_FEDERATION_VERSION,
+  type RealtimeHub,
+} from "#src/realtime/realtime-hub";
 import type { PresenceStore } from "#src/realtime/presence-store";
 import type { CoveragePublisher } from "#src/rabbit/coverage-publisher";
 
@@ -53,12 +56,6 @@ const retryable = (
 });
 
 export const gatewayConsumerSpecs: ReadonlyArray<ConsumerSpec> = [
-  retryable(
-    "gateway-guilds-active-party-gathering-updated",
-    RabbitRoutingKey.GUILDS_ACTIVE_PARTY_GATHERING_UPDATED,
-    RabbitRoutingKey.GUILDS_ACTIVE_PARTY_GATHERING_UPDATED_RETRY,
-    RabbitRoutingKey.GUILDS_ACTIVE_PARTY_GATHERING_UPDATED_DLQ,
-  ),
   retryable(
     "gateway-guilds-kills-accepted-v1",
     RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1,
@@ -169,6 +166,12 @@ export const gatewayConsumerSpecs: ReadonlyArray<ConsumerSpec> = [
     RabbitRoutingKey.GUILDS_PARTY_GATHERING_DLQ,
     false,
   ),
+  retryable(
+    "gateway-guilds-party-gathering-updated",
+    RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED,
+    RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED_RETRY,
+    RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED_DLQ,
+  ),
   {
     queue: "gateway-guilds-party-gathering-cancel",
     routingKey: RabbitRoutingKey.GUILDS_PARTY_GATHERING_CANCEL,
@@ -271,9 +274,9 @@ const record = Schema.decodeUnknownSync(
   Schema.Record(Schema.String, Schema.Unknown),
 );
 
-type OrganizationEvent = Extract<
-  Event,
-  { data: { organizationId: string; payload: unknown } }
+type OrganizationEvent = Exclude<
+  Extract<Event, { data: { organizationId: string; payload: unknown } }>,
+  { type: "party-gathering.state-updated" }
 >;
 
 const organizationEvent = <Payload>(
@@ -548,6 +551,12 @@ export class RabbitBridge {
       );
     }
 
+    if (routingKey === RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED)
+      return this.publishGatheringUpdate(
+        decodeRabbitEventJson(routingKey, serializedPayload),
+        messageId,
+      );
+
     const payload = decodeRabbitEventJson(routingKey, serializedPayload);
     const data = record(payload);
 
@@ -572,6 +581,80 @@ export class RabbitBridge {
     return fromPromise(() =>
       this.hub.publishToScope(routed.scope, routed.event),
     );
+  }
+
+  private publishGatheringUpdate(
+    data: CanonicalRabbitEvent<
+      typeof RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED
+    >,
+    messageId?: string,
+  ): Effect.Effect<void, unknown> {
+    const update = data.update;
+
+    const validUpdate =
+      update.type === "REMOVE"
+        ? update.notificationId === data.notificationId &&
+          update.revision === data.revision
+        : update.gathering.notificationId === data.notificationId &&
+          update.gathering.world === data.world &&
+          update.gathering.revision === data.revision &&
+          update.gathering.guildIds.includes(data.guildId) &&
+          update.gathering.npc?.lvl === data.npc?.lvl &&
+          (update.gathering.npc?.type === undefined ||
+            update.gathering.npc.type === data.npc?.type);
+
+    if (!data.guildIds.includes(data.guildId) || !validUpdate)
+      return Effect.fail(
+        new Error("Gathering update does not match its source"),
+      );
+
+    if (
+      this.hub.clusterFederationVersion <
+      PARTY_GATHERING_STATE_FEDERATION_VERSION
+    )
+      return Effect.fail(
+        new Error("Gathering state federation rollout is incomplete"),
+      );
+
+    const clientUpdate: typeof update =
+      update.type === "UPSERT"
+        ? {
+            type: "UPSERT",
+            gathering: {
+              ...update.gathering,
+              npc: data.npc,
+              guildIds: [data.guildId],
+            },
+          }
+        : update;
+
+    return Effect.tryPromise({
+      try: () =>
+        this.hub.publishToScope(
+          {
+            topic: "organization.chat",
+            organizationId: data.guildId,
+            world: data.world,
+          },
+          {
+            v: 1,
+            type: "party-gathering.state-updated",
+            data: { organizationId: data.guildId, payload: clientUpdate },
+          },
+          messageId ?? `${data.notificationId}:${data.revision}`,
+          {
+            discordId: data.organizerDiscordId,
+            partyGatheringSource: {
+              guildId: data.guildId,
+              world: data.world,
+              notificationId: data.notificationId,
+              organizerDiscordId: data.organizerDiscordId,
+              npc: data.npc,
+            },
+          },
+        ),
+      catch: (cause) => cause,
+    });
   }
 
   private routeOrganizationEvent(
@@ -623,10 +706,6 @@ export class RabbitBridge {
       [RabbitRoutingKey.GUILDS_NOTIFICATIONS_SEND]: {
         topic: "organization.notifications",
         type: "notification.sent",
-      },
-      [RabbitRoutingKey.GUILDS_ACTIVE_PARTY_GATHERING_UPDATED]: {
-        topic: "party.ready-room",
-        type: "active-party-gathering.updated",
       },
       [RabbitRoutingKey.GUILDS_PARTY_GATHERING]: {
         topic: "organization.notifications",
