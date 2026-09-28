@@ -973,6 +973,28 @@ describe("API HTTP boundary", () => {
     expect(missingTemplate.status).toBe(404);
     expect(forbiddenHistory.status).toBe(403);
   });
+
+  it.each([
+    { path: "/map-templates", field: "name" },
+    { path: "/events", field: "name" },
+  ])(
+    "rejects an invalid POST $path payload as a validation error regardless of declared errors",
+    async ({ path, field }) => {
+      const response = await request(`/guilds/${authorizedGuildId}${path}`, {
+        method: "POST",
+        body: JSON.stringify({}),
+      });
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({
+        code: "VALIDATION_ERROR",
+        message: expect.stringContaining(field),
+        issues: expect.arrayContaining([
+          expect.objectContaining({ path: [field] }),
+        ]),
+      });
+    },
+  );
   it.each([
     { suffix: "/members", method: "GET" },
     { suffix: "/members/references", method: "GET" },
