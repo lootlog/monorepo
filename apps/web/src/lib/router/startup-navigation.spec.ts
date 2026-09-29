@@ -98,10 +98,12 @@ const createNavigation = ({
   userId = "user-1",
   permissions = [Capability.LOOTLOG_LOOTS_READ],
   organizationResponse,
+  personalPageLoader,
 }: {
   initialEntry?: string;
   userId?: string;
   permissions?: Capability[];
+  personalPageLoader?: () => Promise<void>;
   organizationResponse?: (
     path: string,
   ) => Response | Promise<Response> | undefined;
@@ -178,13 +180,24 @@ const createNavigation = ({
 
       if (!beforeLoad) throw new Error("Missing personal panel callback");
 
-      // SAFETY: This route has the production authentication context and
-      // destination location; only the generated route metadata differs.
-      return beforeLoad({
-        context: context.context,
-        location: context.location,
-        preload: context.preload,
-      } as Parameters<typeof beforeLoad>[0]);
+      // SAFETY: The callback consumes only the destination location.
+      return beforeLoad({ location: context.location } as Parameters<
+        typeof beforeLoad
+      >[0]);
+    },
+    onEnter: (match) => {
+      const onEnter = PersonalPanelRoute.options.onEnter;
+
+      if (!onEnter) throw new Error("Missing personal panel entry callback");
+      // SAFETY: The match has production authentication and route context.
+      onEnter(match as Parameters<typeof onEnter>[0]);
+    },
+    onStay: (match) => {
+      const onStay = PersonalPanelRoute.options.onStay;
+
+      if (!onStay) throw new Error("Missing personal panel stay callback");
+      // SAFETY: The match has production authentication and route context.
+      onStay(match as Parameters<typeof onStay>[0]);
     },
   });
 
@@ -196,6 +209,7 @@ const createNavigation = ({
   const settings = createRoute({
     getParentRoute: () => personalPanel,
     path: "settings/account",
+    loader: () => personalPageLoader?.(),
   });
 
   const organization = createRoute({
@@ -431,6 +445,34 @@ it("remembers the personal panel as the last visited space", async () => {
   await reopened.router.load();
   expect(reopened.router.state.location.pathname).toBe("/@me");
   expect(reopened.requestCount("/guilds/42")).toBe(0);
+});
+
+it("keeps the organization when a personal panel visit is superseded", async () => {
+  let finishLoad: () => void = () => {
+    throw new Error("Pending load was not initialized");
+  };
+
+  const personalPageLoader = vi.fn(
+    () => new Promise<void>((resolve) => (finishLoad = resolve)),
+  );
+
+  const { router } = createNavigation({
+    initialEntry: "/42",
+    personalPageLoader,
+  });
+
+  await router.load();
+
+  const supersededNavigation = router.navigate({
+    href: "/@me/settings/account",
+  });
+
+  await vi.waitFor(() => expect(personalPageLoader).toHaveBeenCalled());
+  await router.navigate({ href: "/battles/public-battle" });
+  finishLoad();
+  await supersededNavigation;
+  expect(router.state.location.pathname).toBe("/battles/public-battle");
+  expect(getLastOrganization("user-1")).toBe("42");
 });
 
 it.each([
