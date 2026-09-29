@@ -10,6 +10,7 @@ import type {
   SettingsScope,
 } from "@lootlog/schema/settings-documents";
 import { and, eq, inArray, or } from "drizzle-orm";
+import { uniqBy } from "es-toolkit";
 import {
   Cause,
   Clock,
@@ -29,6 +30,20 @@ import { applySettingsPatch, type JsonRecord } from "./settings-resolver.js";
 type SettingsOperation = PatchSettingsDocuments["operations"][number];
 
 type StoredSettingsDocument = typeof userSettingDocumentTable.$inferSelect;
+
+/** Identifies one document of a user; scope types and domains contain no `:`. */
+const getSettingsDocumentKey = (
+  domain: string,
+  scopeType: SettingsScope["type"],
+  scopeId: string,
+) => `${domain}:${scopeType}:${scopeId}`;
+
+export const getSettingsOperationKey = (operation: SettingsOperation) =>
+  getSettingsDocumentKey(
+    operation.domain,
+    operation.scope.type,
+    operation.scope.id,
+  );
 
 const getPostgresErrorCode = (error: unknown): string | undefined => {
   if (Cause.isCause(error)) return getPostgresErrorCode(Cause.squash(error));
@@ -98,64 +113,94 @@ export class SettingsDocumentsRepository extends Context.Service<
                 isolationLevel: "serializable",
               });
 
-              for (const operation of operations) {
-                yield* transaction
-                  .select({ id: userSettingDocumentTable.id })
-                  .from(userSettingDocumentTable)
-                  .where(
-                    and(
-                      eq(userSettingDocumentTable.userId, userId),
-                      eq(userSettingDocumentTable.domain, operation.domain),
-                      eq(
-                        userSettingDocumentTable.scopeType,
-                        operation.scope.type,
+              const lockedDocuments = yield* transaction
+                .select()
+                .from(userSettingDocumentTable)
+                .where(
+                  and(
+                    eq(userSettingDocumentTable.userId, userId),
+                    or(
+                      ...uniqBy(operations, getSettingsOperationKey).map(
+                        (operation) =>
+                          and(
+                            eq(
+                              userSettingDocumentTable.domain,
+                              operation.domain,
+                            ),
+                            eq(
+                              userSettingDocumentTable.scopeType,
+                              operation.scope.type,
+                            ),
+                            eq(
+                              userSettingDocumentTable.scopeId,
+                              operation.scope.id,
+                            ),
+                          ),
                       ),
-                      eq(userSettingDocumentTable.scopeId, operation.scope.id),
                     ),
-                  )
-                  .for("update");
-              }
+                  ),
+                )
+                // One lock order for every batch keeps concurrent batches from
+                // deadlocking on each other's rows.
+                .orderBy(
+                  userSettingDocumentTable.domain,
+                  userSettingDocumentTable.scopeType,
+                  userSettingDocumentTable.scopeId,
+                )
+                .for("update");
+
+              const storedDocuments = new Map(
+                lockedDocuments.map((document) => [
+                  getSettingsDocumentKey(
+                    document.domain,
+                    document.scopeType,
+                    document.scopeId,
+                  ),
+                  document,
+                ]),
+              );
+
+              // Patches to the same document apply in batch order, each over
+              // the result of the previous one.
+              const nextDocuments = new Map<
+                string,
+                {
+                  domain: SettingsDomain;
+                  scope: SettingsScope;
+                  stored: StoredSettingsDocument | undefined;
+                  overrides: JsonRecord;
+                }
+              >();
 
               for (const operation of operations) {
-                const currentRows = yield* transaction
-                  .select()
-                  .from(userSettingDocumentTable)
-                  .where(
-                    and(
-                      eq(userSettingDocumentTable.userId, userId),
-                      eq(userSettingDocumentTable.domain, operation.domain),
-                      eq(
-                        userSettingDocumentTable.scopeType,
-                        operation.scope.type,
-                      ),
-                      eq(userSettingDocumentTable.scopeId, operation.scope.id),
-                    ),
-                  )
-                  .limit(1);
-
-                const current = currentRows[0];
-                let nextOverrides: JsonRecord;
+                const key = getSettingsOperationKey(operation);
+                const stored = storedDocuments.get(key);
 
                 try {
                   // Bring the stored document to the catalog version before
                   // patching, so the row written below matches the version
                   // it is stamped with.
-                  const currentOverrides = Predicate.isObject(
-                    current?.overrides,
-                  )
-                    ? migrateSettingsDocument(
-                        operation.domain,
-                        decodeSettingsRecord(current.overrides),
-                        current.schemaVersion,
-                      )
-                    : {};
+                  const currentOverrides =
+                    nextDocuments.get(key)?.overrides ??
+                    (Predicate.isObject(stored?.overrides)
+                      ? migrateSettingsDocument(
+                          operation.domain,
+                          decodeSettingsRecord(stored.overrides),
+                          stored.schemaVersion,
+                        )
+                      : {});
 
-                  nextOverrides = applySettingsPatch({
+                  nextDocuments.set(key, {
                     domain: operation.domain,
                     scope: operation.scope,
-                    currentOverrides,
-                    set: operation.set,
-                    unset: operation.unset,
+                    stored,
+                    overrides: applySettingsPatch({
+                      domain: operation.domain,
+                      scope: operation.scope,
+                      currentOverrides,
+                      set: operation.set,
+                      unset: operation.unset,
+                    }),
                   });
                 } catch (error) {
                   return yield* new InvalidSettingsPatchError({
@@ -165,29 +210,37 @@ export class SettingsDocumentsRepository extends Context.Service<
                         : "Invalid settings operation",
                   });
                 }
+              }
 
-                if (Object.keys(nextOverrides).length === 0) {
-                  if (current) {
+              const updatedAt = new Date(yield* Clock.currentTimeMillis);
+
+              for (const {
+                domain,
+                scope,
+                stored,
+                overrides,
+              } of nextDocuments.values()) {
+                if (Object.keys(overrides).length === 0) {
+                  if (stored) {
                     yield* transaction
                       .delete(userSettingDocumentTable)
-                      .where(eq(userSettingDocumentTable.id, current.id));
+                      .where(eq(userSettingDocumentTable.id, stored.id));
                   }
 
                   continue;
                 }
 
                 const data = {
-                  overrides: nextOverrides,
-                  schemaVersion:
-                    SETTINGS_CATALOG[operation.domain].schemaVersion,
-                  updatedAt: new Date(yield* Clock.currentTimeMillis),
+                  overrides,
+                  schemaVersion: SETTINGS_CATALOG[domain].schemaVersion,
+                  updatedAt,
                 };
 
-                if (current) {
+                if (stored) {
                   yield* transaction
                     .update(userSettingDocumentTable)
                     .set(data)
-                    .where(eq(userSettingDocumentTable.id, current.id));
+                    .where(eq(userSettingDocumentTable.id, stored.id));
                   continue;
                 }
 
@@ -195,9 +248,9 @@ export class SettingsDocumentsRepository extends Context.Service<
                   .insert(userSettingDocumentTable)
                   .values({
                     userId,
-                    domain: operation.domain,
-                    scopeType: operation.scope.type,
-                    scopeId: operation.scope.id,
+                    domain,
+                    scopeType: scope.type,
+                    scopeId: scope.id,
                     ...data,
                   })
                   .onConflictDoUpdate({
@@ -292,7 +345,11 @@ export class SettingsDocumentsRepository extends Context.Service<
                   Effect.mapError(persistenceError),
                 ),
         applyOperations: (userId, operations) =>
-          applyOperationsAttempt(userId, operations, 0),
+          // An empty batch would build a lock predicate matching every
+          // document of the user.
+          operations.length === 0
+            ? Effect.void
+            : applyOperationsAttempt(userId, operations, 0),
       });
     }),
   );

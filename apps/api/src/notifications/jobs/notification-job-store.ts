@@ -188,10 +188,9 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
         }),
       );
 
-  const targetsForRule = (ruleId: number) =>
-    readNotificationRuleTargets(database, [ruleId]).pipe(
+  const findRuleTargets = (ruleIds: readonly number[]) =>
+    readNotificationRuleTargets(database, ruleIds).pipe(
       Effect.mapError(failure("notifications.jobStore.ruleTargets")),
-      Effect.map((targets) => targets.get(ruleId) ?? []),
     );
 
   const findRule = (ruleId: number) =>
@@ -205,7 +204,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       const rule = rows[0];
 
       if (!rule) return null;
-      const targets = yield* targetsForRule(ruleId);
+      const targets = (yield* findRuleTargets([ruleId])).get(ruleId) ?? [];
 
       return {
         ...rule,
@@ -300,6 +299,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
     findJob,
     findJobWithRelations,
     findRule,
+    findRuleTargets,
     findTimers,
     prune,
     recordDelivery,

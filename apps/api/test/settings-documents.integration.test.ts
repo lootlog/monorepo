@@ -118,3 +118,75 @@ it.each([false, true])(
     });
   },
 );
+
+it("applies a batch mixing stored, outdated, emptied, repeated and new documents", async () => {
+  const repository = await runtime.runPromise(SettingsDocumentsRepository);
+  const userId = crypto.randomUUID();
+  const scope = { type: "USER", id: userId } as const;
+
+  // The write trigger above requires serializable transactions.
+  await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
+  await client.query(
+    `INSERT INTO "UserSettingDocument" ("userId", "domain", "scopeType", "scopeId", "overrides", "schemaVersion", "updatedAt")
+      VALUES ($1, 'general', 'USER', $1, '{"guildsOrder":["original"]}', 1, now()),
+        ($1, 'appearance', 'USER', $1, '{"colorMode":"legacy","theme":"dark"}', 2, now()),
+        ($1, 'sounds', 'USER', $1, '{"pingsVolume":0.5}', 1, now())`,
+    [userId],
+  );
+  await client.query("COMMIT");
+
+  await runtime.runPromise(
+    repository.applyOperations(userId, [
+      {
+        domain: "appearance",
+        scope,
+        set: { chat: { fontScalePercent: 110 } },
+        unset: [],
+      },
+      {
+        domain: "general",
+        scope,
+        set: { allowWorldSelection: true },
+        unset: [],
+      },
+      { domain: "general", scope, set: { guildsOrder: ["second"] }, unset: [] },
+      { domain: "sounds", scope, set: {}, unset: ["pingsVolume"] },
+      {
+        domain: "timers",
+        scope,
+        set: { timerFiltersEnabled: false },
+        unset: [],
+      },
+    ]),
+  );
+
+  const documents = await runtime.runPromise(
+    repository.findDocuments(
+      userId,
+      ["appearance", "general", "sounds", "timers"],
+      [scope],
+    ),
+  );
+
+  expect(
+    Object.fromEntries(
+      documents.map((document) => [
+        document.domain,
+        {
+          overrides: document.overrides,
+          schemaVersion: document.schemaVersion,
+        },
+      ]),
+    ),
+  ).toEqual({
+    appearance: {
+      overrides: { theme: "dark", chat: { fontScalePercent: 110 } },
+      schemaVersion: 3,
+    },
+    general: {
+      overrides: { guildsOrder: ["second"], allowWorldSelection: true },
+      schemaVersion: 1,
+    },
+    timers: { overrides: { timerFiltersEnabled: false }, schemaVersion: 1 },
+  });
+});

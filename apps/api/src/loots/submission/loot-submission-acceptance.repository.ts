@@ -2,17 +2,21 @@ import {
   captureLootMapPlayers,
   mapPlayersToSnapshotInputs,
 } from "./loot-map-players.persistence.js";
+import {
+  resolveItemSnapshotIds,
+  resolveNpcSnapshotIds,
+} from "./loot-snapshot.persistence.js";
 import { resolvePlayerSnapshots } from "#src/shared/margonem/player-snapshot.persistence";
 import type { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { DependencyUnavailableError } from "#src/shared/http/http-errors";
 import { and, desc, eq, inArray, isNull, ne, or } from "drizzle-orm";
 import { Clock, Effect } from "effect";
+import { zip } from "es-toolkit";
 import { lootPublicationOutboxTable } from "#src/database/drizzle/loot-publication-outbox.schema";
 import type { LootPublication } from "./loot-publication-outbox.js";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
-  itemSnapshotTable,
   guildTable,
   lootItemTable,
   lootlogConfigNpcTable,
@@ -440,51 +444,21 @@ export const makeLootSubmissionAcceptancePersistence = (
           );
         }
 
-        for (const item of data.items) {
-          const inserted = yield* transaction
-            .insert(itemSnapshotTable)
-            .values({
-              itemId: item.itemId,
-              statsHash: item.statsHash,
-              name: item.name,
-              icon: item.icon,
-              lvl: item.lvl,
-              rarity: item.rarity,
-              itemType: item.itemType,
-              statRaw: item.statRaw,
-              statsSnapshot: item.statsSnapshot,
-            })
-            .onConflictDoNothing({
-              target: [itemSnapshotTable.itemId, itemSnapshotTable.statsHash],
-            })
-            .returning({ id: itemSnapshotTable.id });
+        // Snapshot tables are resolved in one order (items, players, NPCs) so
+        // overlapping concurrent loots cannot wait on each other's keys in reverse.
+        const itemSnapshotIds = yield* resolveItemSnapshotIds(
+          transaction,
+          data.items,
+        );
 
-          const existing = inserted[0]
-            ? inserted
-            : yield* transaction
-                .select({ id: itemSnapshotTable.id })
-                .from(itemSnapshotTable)
-                .where(
-                  and(
-                    eq(itemSnapshotTable.itemId, item.itemId),
-                    eq(itemSnapshotTable.statsHash, item.statsHash),
-                  ),
-                )
-                .limit(1);
-
-          const snapshot = existing[0];
-
-          if (!snapshot) {
-            return yield* Effect.fail(
-              new DependencyUnavailableError("Failed to resolve item snapshot"),
-            );
-          }
-
-          yield* transaction.insert(lootItemTable).values({
-            lootId: loot.id,
-            itemSnapshotId: snapshot.id,
-            hid: item.hid,
-          });
+        if (itemSnapshotIds.length > 0) {
+          yield* transaction.insert(lootItemTable).values(
+            zip(data.items, itemSnapshotIds).map(([item, itemSnapshotId]) => ({
+              lootId: loot.id,
+              itemSnapshotId,
+              hid: item.hid,
+            })),
+          );
         }
 
         // Resolve all characters in one sorted batch; overlapping participant/map
@@ -509,40 +483,18 @@ export const makeLootSubmissionAcceptancePersistence = (
           );
         }
 
-        for (const npc of data.npcs) {
-          const inserted = yield* transaction
-            .insert(npcSnapshotTable)
-            .values(npc)
-            .onConflictDoNothing({
-              target: [npcSnapshotTable.npcId, npcSnapshotTable.name],
-            })
-            .returning({ id: npcSnapshotTable.id });
+        const npcSnapshotIds = yield* resolveNpcSnapshotIds(
+          transaction,
+          data.npcs,
+        );
 
-          const existing = inserted[0]
-            ? inserted
-            : yield* transaction
-                .select({ id: npcSnapshotTable.id })
-                .from(npcSnapshotTable)
-                .where(
-                  and(
-                    eq(npcSnapshotTable.npcId, npc.npcId),
-                    eq(npcSnapshotTable.name, npc.name),
-                  ),
-                )
-                .limit(1);
-
-          const snapshot = existing[0];
-
-          if (!snapshot) {
-            return yield* Effect.fail(
-              new DependencyUnavailableError("Failed to resolve NPC snapshot"),
-            );
-          }
-
-          yield* transaction.insert(lootNpcTable).values({
-            lootId: loot.id,
-            npcSnapshotId: snapshot.id,
-          });
+        if (npcSnapshotIds.length > 0) {
+          yield* transaction.insert(lootNpcTable).values(
+            npcSnapshotIds.map((npcSnapshotId) => ({
+              lootId: loot.id,
+              npcSnapshotId,
+            })),
+          );
         }
 
         const records = yield* transaction

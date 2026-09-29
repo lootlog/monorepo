@@ -8,9 +8,9 @@ import {
   countDistinct,
   desc,
   eq,
+  exists,
   gte,
   inArray,
-  isNotNull,
   isNull,
   min,
   ne,
@@ -18,6 +18,7 @@ import {
   sql,
   type SQL,
 } from "drizzle-orm";
+import { QueryBuilder } from "drizzle-orm/pg-core";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   itemSnapshotTable as item,
@@ -137,23 +138,6 @@ export const buildLootStatsQueries = (
   const overview = needsNpcFilter
     ? overviewBase.innerJoin(validLoots, eq(validLoots.lootId, loot.id))
     : overviewBase.innerJoin(record, eq(record.lootId, loot.id)).where(scope);
-
-  const rarityBase = itemSource
-    .select({ rarity: item.rarity, count: count() })
-    .from(loot)
-    .innerJoin(lootItem, eq(lootItem.lootId, loot.id))
-    .innerJoin(item, eq(item.id, lootItem.itemSnapshotId))
-    .$dynamic();
-
-  const byRarity = (
-    needsNpcFilter
-      ? rarityBase
-          .innerJoin(validLoots, eq(validLoots.lootId, loot.id))
-          .where(isNotNull(item.rarity))
-      : rarityBase
-          .innerJoin(record, eq(record.lootId, loot.id))
-          .where(and(scope, isNotNull(item.rarity)))
-  ).groupBy(item.rarity);
 
   const truncUnit = {
     hour: sql`'hour'`,
@@ -279,8 +263,8 @@ export const buildLootStatsQueries = (
     .orderBy(desc(countDistinct(loot.id)))
     .limit(10);
 
+  // A semi-join keeps one row per loot item however many of the loot's NPCs qualify.
   const topItems = database
-    .with(rankedNpcs)
     .select({
       item_id: item.itemId,
       hid: min(lootItem.hid),
@@ -290,20 +274,27 @@ export const buildLootStatsQueries = (
       lvl: item.lvl,
       count: count(),
     })
-    .from(rankedNpcs)
-    .innerJoin(loot, eq(loot.id, rankedNpcs.lootId))
+    .from(loot)
+    .innerJoin(record, eq(record.lootId, loot.id))
     .innerJoin(lootItem, eq(lootItem.lootId, loot.id))
     .innerJoin(item, eq(item.id, lootItem.itemSnapshotId))
     .where(
       and(
-        eq(rankedNpcs.rank, 1),
+        scope,
         eq(item.rarity, "LEGENDARY"),
         notInArray(item.itemType, ["BLESS", "UPGRADE", "CONSUME"]),
+        exists(
+          new QueryBuilder()
+            .select({ id: lootNpc.id })
+            .from(lootNpc)
+            .innerJoin(npc, eq(npc.id, lootNpc.npcSnapshotId))
+            .where(and(eq(lootNpc.lootId, loot.id), eligibleNpc)),
+        ),
       ),
     )
     .groupBy(item.itemId, item.name, item.icon, item.rarity, item.lvl)
     .orderBy(desc(count()))
     .limit(10);
 
-  return { overview, byRarity, timeline, topNpcs, topContributors, topItems };
+  return { overview, timeline, topNpcs, topContributors, topItems };
 };

@@ -135,10 +135,10 @@ describe("loot statistics at the PostgreSQL boundary", () => {
             avg_item_level: "100.0000000000000000",
           },
         ]);
-        expect(result.byRarity).toEqual(
+        expect(result.timeline).toEqual(
           expect.arrayContaining([
-            { rarity: "LEGENDARY", count: 2 },
-            { rarity: "HEROIC", count: 1 },
+            expect.objectContaining({ rarity: "LEGENDARY", count: 2 }),
+            expect.objectContaining({ rarity: "HEROIC", count: 1 }),
           ]),
         );
         expect(result.timeline).toHaveLength(2);

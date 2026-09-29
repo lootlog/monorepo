@@ -49,30 +49,26 @@ export const makeNotificationsEvents = (options: {
 }) => {
   const handleTimerUpdated = Effect.fn("notifications.events.timerUpdated")(
     function* (event: TimerUpdatedEvent) {
-      const rules = yield* options.store.timerRules(event.guildId, event.world);
-      yield* Effect.forEach(
-        rules,
-        (rule) => {
-          if (!options.matching.matchesTimerRule(rule.filters, event.npcId)) {
-            return Effect.void;
-          }
-
-          return options.rebuild.rebuildTimer(rule.id, event).pipe(
-            Effect.result,
-            Effect.tap((result) =>
-              Result.isFailure(result)
-                ? Effect.sync(() =>
-                    options.logger.error(
-                      `Failed to rebuild timer jobs for rule ${rule.id}: ${causeMessage(result.failure)}`,
-                    ),
-                  )
-                : Effect.void,
-            ),
-            Effect.asVoid,
-          );
-        },
-        { concurrency: "unbounded", discard: true },
+      const rules = (yield* options.store.timerRules(
+        event.guildId,
+        event.world,
+      )).filter((rule) =>
+        options.matching.matchesTimerRule(rule.filters, event.npcId),
       );
+
+      const failures = yield* options.rebuild
+        .rebuildTimer(rules, event)
+        .pipe(
+          Effect.catch((cause) =>
+            Effect.succeed(rules.map((rule) => ({ ruleId: rule.id, cause }))),
+          ),
+        );
+
+      for (const { ruleId, cause } of failures) {
+        options.logger.error(
+          `Failed to rebuild timer jobs for rule ${ruleId}: ${causeMessage(cause)}`,
+        );
+      }
     },
   );
 

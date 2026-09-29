@@ -77,6 +77,7 @@ const makeOperations = (
       isLootVisible,
       fetchLootsByGuildId: () => Effect.die("Unexpected list read"),
       resolveLootItemByHid: () => Effect.die("Unexpected item read"),
+      summarizeLootsByNpcName: () => Effect.die("Unexpected summary read"),
     },
     persistence: {
       archive: () => Effect.succeed(true),

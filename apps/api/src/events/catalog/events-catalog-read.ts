@@ -4,15 +4,14 @@ import {
   getEffectiveCapabilities,
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
-import { and, asc, desc, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
+import { groupBy } from "es-toolkit";
 import { eventReadCacheEntry } from "#src/events/catalog/event-read-cache.service";
 import superjson from "superjson";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
-  eventMapLocationTable,
-  eventMapTable,
   eventTable,
   roleTable,
 } from "#src/database/drizzle/schema";
@@ -81,43 +80,7 @@ export const makeEventsCatalogRead = (
             .where(inArray(eventHeroNpcTable.eventId, eventIds)),
         );
 
-  const hydrateMaps = makeEventMapHydration(database, query);
-
-  const mapsWithMembers = (heroId: string, locationId?: string) =>
-    query(
-      "events.catalog.maps",
-      database
-        .select()
-        .from(eventMapTable)
-        .where(
-          and(
-            eq(eventMapTable.heroNpcId, heroId),
-            locationId ? eq(eventMapTable.locationId, locationId) : undefined,
-          ),
-        )
-        .orderBy(asc(eventMapTable.mapId)),
-    ).pipe(Effect.flatMap(hydrateMaps));
-
-  const locationsWithMaps = (heroId: string) =>
-    query(
-      "events.catalog.locations",
-      database
-        .select()
-        .from(eventMapLocationTable)
-        .where(eq(eventMapLocationTable.heroNpcId, heroId))
-        .orderBy(asc(eventMapLocationTable.order)),
-    ).pipe(
-      Effect.flatMap((locations) =>
-        Effect.forEach(
-          locations,
-          (location) =>
-            mapsWithMembers(heroId, location.id).pipe(
-              Effect.map((maps) => ({ ...location, maps })),
-            ),
-          { concurrency: "unbounded" },
-        ),
-      ),
-    );
+  const { heroMaps, heroMapLayouts } = makeEventMapHydration(database, query);
 
   const scopedEvent = (guildId: string, eventId: string) =>
     query(
@@ -191,14 +154,15 @@ export const makeEventsCatalogRead = (
 
       const heroes = yield* findHeroes([eventId]);
 
-      const heroNpcs = yield* Effect.forEach(
-        heroes,
-        (hero) =>
-          mapsWithMembers(hero.id).pipe(
-            Effect.map((maps) => ({ ...hero, maps })),
-          ),
-        { concurrency: "unbounded" },
+      const maps = groupBy(
+        yield* heroMaps(heroes.map(({ id }) => id)),
+        ({ heroNpcId }) => heroNpcId,
       );
+
+      const heroNpcs = heroes.map((hero) => ({
+        ...hero,
+        maps: maps[hero.id] ?? [],
+      }));
 
       return {
         ...event,
@@ -320,26 +284,12 @@ export const makeEventsCatalogRead = (
 
           const heroes = yield* findHeroes([eventId]);
 
-          const heroNpcs = yield* Effect.forEach(
-            heroes,
-            (hero) =>
-              Effect.all(
-                {
-                  locations: locationsWithMaps(hero.id),
-                  maps: mapsWithMembers(hero.id),
-                },
-                { concurrency: "unbounded" },
-              ).pipe(
-                Effect.map(({ locations, maps }) => ({
-                  ...hero,
-                  locations,
-                  maps: maps.filter(({ locationId }) => locationId === null),
-                })),
-              ),
-            { concurrency: "unbounded" },
-          );
+          const layoutOf = yield* heroMapLayouts(heroes.map(({ id }) => id));
 
-          return { id: event.id, heroNpcs };
+          return {
+            id: event.id,
+            heroNpcs: heroes.map((hero) => ({ ...hero, ...layoutOf(hero.id) })),
+          };
         }),
       ).pipe(Effect.map((event) => filterEvent(event, roles, accessPolicy))),
   };
