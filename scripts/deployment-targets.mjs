@@ -30,6 +30,14 @@ const integrationPackages = new Set([
   "@lootlog/messaging",
 ]);
 
+// Each of these test suites saturates a runner on its own, so CI checks each
+// package on a dedicated runner and the remaining packages on a shared one.
+const isolatedWorkspacePackages = [
+  "@lootlog/api",
+  "@lootlog/game-client",
+  "@lootlog/web",
+];
+
 const globalDockerInputs = new Set([
   ".github/deployment-targets.json",
   ".dockerignore",
@@ -46,6 +54,23 @@ const developmentPipelineInputs = new Set([
 
 const isWorkspaceManifest = (file) =>
   /^(?:apps|packages)\/[^/]+\/package\.json$/u.test(file);
+
+function createWorkspaceShards(packages) {
+  const shards = isolatedWorkspacePackages.flatMap((name) =>
+    packages.includes(name)
+      ? [{ id: name.replace("@lootlog/", ""), filters: [name] }]
+      : [],
+  );
+
+  if (packages.some((name) => !isolatedWorkspacePackages.includes(name))) {
+    shards.push({
+      id: "other",
+      filters: isolatedWorkspacePackages.map((name) => `!${name}`),
+    });
+  }
+
+  return shards;
+}
 
 function validateDockerTarget(target) {
   if (
@@ -277,6 +302,7 @@ export async function createDeploymentPlan(input) {
 
     return {
       packages,
+      workspaceShards: createWorkspaceShards(packages),
       integrationPackages: packages.filter((name) =>
         integrationPackages.has(name),
       ),

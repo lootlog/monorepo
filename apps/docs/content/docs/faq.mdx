@@ -47,17 +47,57 @@ przydatny przy zgłoszeniu problemu.
 1. Sprawdź, czy skrypt jest włączony w Tampermonkey.
 2. Odśwież kartę gry z pominięciem pamięci podręcznej.
 3. Upewnij się, że rozszerzenie może działać na stronie Margonem.
-4. Zezwól na wymagane pliki cookie stron trzecich.
+4. Komunikat **Nie udało się wczytać Lootloga** oznacza, że skrypt dodatku
+   nie dotarł z serwera Lootloga. Sprawdź połączenie i odśwież grę.
 5. Tymczasowo wyłącz inne skrypty i sprawdź konflikt.
 
 Pełna procedura znajduje się w [Instalacji](/docs/installation).
 
-### Logowanie przez Discord nie wraca do gry
+### Logowanie z gry nie działa
 
-Sprawdź blokadę wyskakujących okien i plików cookie, a następnie rozpocznij
-logowanie ponownie z interfejsu dodatku. Jeśli zamkniesz okno logowania,
-w miejscu paska szybkiego dostępu zostaje przycisk **Zaloguj się do Lootloga**,
-który otwiera je ponownie bez odświeżania gry.
+Dodatek korzysta z logowania na stronie Lootloga. W oknie
+**Logowanie do Lootloga** wybierz **Otwórz stronę Lootloga**, zaloguj się
+przez Discord i wróć do gry. Okno logowania mówi, co poszło nie tak:
+
+- **Nie udało się sprawdzić sesji Lootloga** — dodatek nie dostał odpowiedzi
+  od Lootloga. Sprawdź połączenie z internetem i po chwili wybierz
+  **Sprawdź sesję**.
+- **Dodatek nadal nie widzi Twojej sesji** — jesteś zalogowany na stronie,
+  ale przeglądarka nie wysyła pliku cookie Lootloga na stronę gry, bo
+  blokuje pliki cookie innych firm. Pod komunikatem dodatek pokazuje
+  wskazówkę dla twojej przeglądarki:
+  - Chrome, Edge i Opera: w pasku adresu kliknij ikonę oka lub ustawień strony
+    i zezwól na pliki cookie innych firm dla strony gry;
+  - Firefox: kliknij ikonę tarczy w pasku adresu i wyłącz wzmocnioną ochronę
+    przed śledzeniem dla strony gry;
+  - Safari: w ustawieniach prywatności wyłącz **Zapobiegaj śledzeniu między
+    witrynami**;
+  - Brave: kliknij ikonę lwa w pasku adresu i zezwól na pliki cookie innych
+    firm dla strony gry.
+
+  Po zmianie wybierz **Sprawdź sesję**.
+
+Gdy sesja wygaśnie albo wylogujesz się w trakcie gry, okna Lootloga pokazują
+pasek **Zaloguj się, aby dane były aktualne** z przyciskiem **Zaloguj się**,
+a ikona połączenia na pasku szybkiego dostępu zmienia się w ikonę logowania.
+
+### Na ekranie gry pojawił się komunikat Lootloga
+
+- **Lootlog nie może połączyć się z grą** — gra mogła zostać zaktualizowana
+  i dodatek nie rozpoznaje jej interfejsu. Wybierz **Przeładuj stronę**. Jeśli
+  komunikat wraca, zgłoś problem i dołącz tekst z przycisku
+  **Kopiuj informacje diagnostyczne**.
+- **Lootlog działa teraz w innej karcie** — rozszerzenie obsługuje jedną kartę
+  gry naraz. Przeładuj kartę, w której chcesz używać Lootloga.
+- **Rozszerzenie Lootlog zostało zaktualizowane lub wyłączone** — przeładuj
+  stronę gry, aby uruchomić aktualną wersję.
+- **Serwer Lootloga odrzucił połączenie tej postaci** — komunikat podaje
+  powód, na przykład utratę dostępu do Lootloga. Wybierz **Połącz ponownie**,
+  gdy przyczyna zniknie.
+- Okno **błędu dodatku** pojawia się, gdy interfejs Lootloga przestał działać.
+  **Przeładuj dodatek** uruchamia go ponownie bez odświeżania gry, a
+  **Kopiuj informacje diagnostyczne** kopiuje opis błędu do zgłoszenia. Po
+  zamknięciu okna przycisk w miejscu paska szybkiego dostępu otwiera je znowu.
 
 ## Dane i synchronizacja
 
@@ -143,6 +183,11 @@ gdy panel potwierdzi brak bota lub wymaganych uprawnień.
 Sprawdź, czy korzystasz z konta Discord należącego do serwera klanu. Jeśli
 klan nadal się nie pojawia, poproś administratora o potwierdzenie integracji.
 
+W grze okna timerów, czatu i graczy online pokazują wtedy komunikat
+**Nie należysz do żadnego Lootloga**. Lootloga tworzy administrator serwera
+Discord grupy, dodając do niego bota Lootlog. Pozostali członkowie proszą o to
+lidera; po dodaniu bota dostęp pojawia się sam.
+
 ### Nie widzę konkretnej sekcji
 
 Najczęściej brakuje wymaganej roli. Porównaj zakres z
@@ -163,4 +208,8 @@ Aktualny zakres przetwarzania danych i prawa użytkownika opisuje
   błędy z krokami odtworzenia.
 
 Nie publikuj tokenów, plików cookie ani danych logowania. Do zgłoszenia dodaj
-tylko informacje potrzebne do odtworzenia problemu.
+tylko informacje potrzebne do odtworzenia problemu. Przycisk
+**Kopiuj informacje diagnostyczne** w **Ustawienia → Informacje** kopiuje
+wersję dodatku, sposób instalacji, przeglądarkę, stan logowania i połączenia
+oraz ostatnie nieudane żądania. Nie zawiera tokenów, plików cookie, adresu
+e-mail ani treści żądań.

@@ -1,7 +1,7 @@
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { eventMapScope } from "#src/events/event-scope-query";
 import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
-import { makeEventMapHydration } from "#src/events/catalog/event-map-hydration";
+import { makeEventMapRead } from "#src/events/catalog/event-map-read";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, eq, isNull } from "drizzle-orm";
@@ -105,7 +105,7 @@ export const makeEventMapAssignments = (
         .limit(1),
     ).pipe(Effect.map((rows) => rows[0] ?? null));
 
-  const { hydrateMaps } = makeEventMapHydration(database, query);
+  const { hydrateMaps } = makeEventMapRead(database, query);
 
   const hydratedMap = (mapId: string) =>
     query(

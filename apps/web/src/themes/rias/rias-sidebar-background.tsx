@@ -1,4 +1,4 @@
-import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import * as m from "framer-motion/m";
 
 export const RiasSidebarBackground = () => {

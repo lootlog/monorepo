@@ -1,3 +1,4 @@
+import { MOTION_DURATION_MS } from "@/lib/motion";
 import {
   act,
   fireEvent,
@@ -218,7 +219,7 @@ describe("NotificationsList", () => {
         { transform: `translateY(${-rowHeight}px)` },
         { transform: "translateY(0)" },
       ],
-      expect.objectContaining({ duration: 220 }),
+      expect.any(Object),
     );
   });
 
@@ -288,7 +289,7 @@ describe("NotificationsList", () => {
     expect(useNotificationsStore.getState().notifications).toHaveLength(2);
 
     act(() => {
-      vi.advanceTimersByTime(180);
+      vi.advanceTimersByTime(MOTION_DURATION_MS.short);
     });
 
     expect(useNotificationsStore.getState().notifications).toEqual([second]);

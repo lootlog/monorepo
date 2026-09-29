@@ -133,7 +133,7 @@ export function ReadyRoomParticipantItem({
           </ContextMenuItem>
         ) : null}
         <ContextMenuItem
-          className="ll:text-red-300 ll:hover:bg-red-500/20 ll:data-[highlighted]:bg-red-500/20 ll:focus-visible:bg-red-500/20"
+          className="ll:text-destructive ll:hover:bg-destructive/15 ll:data-[highlighted]:bg-destructive/15 ll:focus-visible:bg-destructive/15"
           disabled={isRemoving}
           onClick={() => removeParticipant()}
         >

@@ -2,7 +2,8 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Flame, Mountain, Shield, Sword, Swords } from "lucide-react";
+import { Swords } from "lucide-react";
+import { NpcTypeIcon } from "@lootlog/ui/components/npc-type-icon";
 import { cn } from "cn";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { useTranslation } from "react-i18next";
@@ -15,33 +16,10 @@ import {
   type KillStatsPeriod,
 } from "@/features/kills/components/kill-stats-period-select";
 import { StatisticsQueryState } from "@/features/user/statistics/statistics-query-state";
-
-const categories = [
-  {
-    key: "ELITE2",
-    icon: Sword,
-    color: "text-blue-500",
-    surface: "bg-blue-500/10",
-  },
-  {
-    key: "HERO",
-    icon: Shield,
-    color: "text-amber-500",
-    surface: "bg-amber-500/10",
-  },
-  {
-    key: "COLOSSUS",
-    icon: Flame,
-    color: "text-cyan-500",
-    surface: "bg-cyan-500/10",
-  },
-  {
-    key: "TITAN",
-    icon: Mountain,
-    color: "text-red-500",
-    surface: "bg-red-500/10",
-  },
-] as const;
+import {
+  KILL_SUMMARY_NPC_CATEGORIES,
+  NPC_CATEGORY_APPEARANCE,
+} from "../npc-category-appearance";
 
 export function DashboardKillSummary() {
   const { t } = useTranslation();
@@ -134,7 +112,9 @@ export function DashboardKillSummary() {
           </div>
           {(query.isPending || query.data !== undefined) && (
             <dl className="grid grid-cols-2 gap-3 @min-[600px]/kill-summary:grid-cols-4">
-              {categories.map(({ key, icon: Icon, color, surface }) => {
+              {KILL_SUMMARY_NPC_CATEGORIES.map((key) => {
+                const { color, surface } = NPC_CATEGORY_APPEARANCE[key];
+
                 const value = query.data?.overview.killsByType[key] ?? 0;
 
                 return (
@@ -150,7 +130,7 @@ export function DashboardKillSummary() {
                           surface,
                         )}
                       >
-                        <Icon className="size-4" aria-hidden="true" />
+                        <NpcTypeIcon type={key} className="size-4" />
                       </span>
                       {t(`npcType.${key}`)}
                     </dt>

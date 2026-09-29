@@ -1,13 +1,15 @@
 /** Explicit supported HTTP inventory. Unknown operations are session-only. */
 export type PublicApiService = "main" | "activity" | "battlelog" | "search";
 
-type PublicApiOperation = {
+export type PublicApiOperation = {
   readonly service: PublicApiService;
   readonly method: string;
   readonly path: string;
   readonly operationId: string;
   readonly access: "read" | "write" | "session-only";
   readonly data: "organization" | "personal" | "mixed" | "public";
+  /** Parameters the Web app uses but the published SDK does not expose. */
+  readonly sessionOnlyParameters?: ReadonlyArray<string>;
 };
 
 export const PUBLIC_API_OPERATIONS = [
@@ -18,6 +20,13 @@ export const PUBLIC_API_OPERATIONS = [
     operationId: "UsersController_getUserFeed",
     access: "read",
     data: "mixed",
+    // Dashboard filters; exposing them would move the SDK call's request
+    // options behind a new query argument.
+    sessionOnlyParameters: [
+      "excludedGuildIds",
+      "excludedNpcCategories",
+      "withLootOnly",
+    ],
   },
   {
     service: "main",

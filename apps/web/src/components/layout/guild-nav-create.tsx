@@ -22,11 +22,12 @@ export const GuildNavCreate: FC = () => {
         render={
           <Button
             aria-label={t("ui.tooltips.createLootlog")}
-            className="size-11 0"
-            variant="secondary"
+            className="h-auto w-14 flex-col gap-1 px-1 py-1.5 text-xs leading-none has-[>svg]:px-1"
+            variant="ghost"
             onClick={() => dispatch({ type: "OPEN" })}
           >
-            <PlusCircleIcon />
+            <PlusCircleIcon aria-hidden="true" className="!size-6" />
+            {t("ui.sidebar.createLootlog")}
           </Button>
         }
       />

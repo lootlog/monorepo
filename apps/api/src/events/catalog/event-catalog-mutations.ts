@@ -1,7 +1,7 @@
 import { isObjectRecord } from "@lootlog/schema/records";
 import { eventHeroScope } from "#src/events/event-scope-query";
 import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
-import { makeEventMapHydration } from "./event-map-hydration.js";
+import { makeEventMapRead } from "./event-map-read.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import {
@@ -138,7 +138,7 @@ export const makeEventCatalogMutations = (
         .limit(1),
     ).pipe(Effect.map((rows) => rows[0]?.location ?? null));
 
-  const { hydrateMaps, heroMaps, heroMapLayouts } = makeEventMapHydration(
+  const { hydrateMaps, heroMaps, heroMapLayouts } = makeEventMapRead(
     database,
     query,
   );

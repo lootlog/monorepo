@@ -646,6 +646,42 @@ describe("RuntimeStateProjection", () => {
       expect(relationsOf("55")).toEqual([]);
     });
 
+    it("does not rewrite stored relations when the game repeats them", () => {
+      const projection = startProjection();
+      const setItem = vi.spyOn(localStorage, "setItem");
+
+      const socialWrites = () =>
+        setItem.mock.calls.filter(([key]) => key.includes("social-relations"))
+          .length;
+
+      const repeatedPacket = createEnvelope({
+        friends: [
+          "55",
+          "Friend",
+          "f.gif",
+          "1",
+          "0",
+          "m",
+          "Map",
+          "1",
+          "1",
+          "online",
+          "",
+        ],
+        clan_fr: [30, "Ally", 100, 5],
+        other: { "77": otherCreate(5, 30) },
+      });
+
+      projection.apply(repeatedPacket);
+      const writesAfterFirstPacket = socialWrites();
+      projection.apply(repeatedPacket);
+      projection.apply(repeatedPacket);
+
+      expect(writesAfterFirstPacket).toBeGreaterThan(0);
+      expect(socialWrites()).toBe(writesAfterFirstPacket);
+      setItem.mockRestore();
+    });
+
     it("treats every member of a clan met as allied as an ally on any map", () => {
       const projection = startProjection();
 

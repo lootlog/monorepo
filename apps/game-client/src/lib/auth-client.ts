@@ -21,9 +21,13 @@ export const authClient = createAuthClient({
 type SessionState = ReturnType<typeof authClient.useSession>;
 
 /** True only after the session request resolved without a signed-in User. */
+export const isSessionSignedOut = (
+  session: Pick<SessionState, "data" | "error" | "isPending">,
+): boolean => !session.isPending && !session.error && !session.data;
+
 export const isSignedOut = (): boolean => {
   // `value` reads the atom without mounting it, so this never starts a request.
   const session: SessionState = authClient.$store.atoms.session.value;
 
-  return !session.isPending && !session.error && !session.data;
+  return isSessionSignedOut(session);
 };

@@ -1,6 +1,6 @@
 ---
 title: Instalacja
-description: Zainstaluj dodatek Lootlog przez Tampermonkey i potwierdź, że działa w Margonem.
+description: Zainstaluj dodatek Lootlog przez Tampermonkey, zaloguj się i potwierdź, że działa w Margonem.
 ---
 
 Po tej instrukcji zobaczysz interfejs Lootlog w grze i zalogujesz się przez
@@ -15,8 +15,8 @@ Potrzebujesz:
 - menedżera skryptów
   [Tampermonkey](https://www.tampermonkey.net/);
 - konta Discord używanego do logowania;
-- włączonych plików cookie stron trzecich, jeżeli przeglądarka blokuje
-  komunikację logowania pomiędzy grą i Lootlog.
+- włączonych plików cookie innych firm dla lootlog.pl. Bez nich dodatek na
+  stronie gry nie widzi logowania.
 
 ## Zainstaluj dodatek
 
@@ -42,8 +42,17 @@ interfejsem gry.
 
 ### 5. Zaloguj się przez Discord
 
-W interfejsie Lootlog wybierz **Zaloguj się przez Discord**, zaloguj się na
-właściwe konto i zatwierdź autoryzację.
+Niezalogowany dodatek pokazuje w grze okno **Logowanie do Lootloga**. Wybierz
+**Otwórz stronę Lootloga**, zaloguj się na stronie przez Discord na właściwe
+konto i wróć do karty gry. Dodatek sam sprawdzi sesję; możesz też wybrać
+**Sprawdź sesję**.
+
+Jeśli po powrocie okno pisze, że dodatek nadal nie widzi sesji, przeglądarka
+blokuje pliki cookie innych firm. Okno pokazuje, co zmienić w twojej
+przeglądarce; szczegóły są w [Pomocy i FAQ](/docs/faq).
+
+Okno logowania zamknięte krzyżykiem otworzysz ponownie przyciskiem
+**Zaloguj się do Lootloga** przy pasku szybkiego dostępu.
 
 ## Sprawdź rezultat
 
@@ -63,11 +72,18 @@ Instalacja zakończyła się poprawnie, jeżeli:
 
 1. Sprawdź, czy skrypt jest włączony w Tampermonkey.
 2. Odśwież grę z pominięciem pamięci podręcznej.
-3. Zezwól na pliki cookie stron trzecich dla logowania.
+3. Jeśli w rogu gry pojawił się komunikat **Nie udało się wczytać Lootloga**,
+   skrypt dodatku nie dotarł z serwera Lootloga. Sprawdź połączenie i odśwież
+   grę.
 4. Tymczasowo wyłącz inne skrypty działające na stronie gry i sprawdź
    potencjalny konflikt.
 5. Jeśli problem pozostaje, opisz przeglądarkę i wykonane kroki na
-   [Discordzie](https://discord.gg/mPcczaeYMu).
+   [Discordzie](https://discord.gg/mPcczaeYMu). Gdy dodatek się uruchamia,
+   dołącz tekst z przycisku **Kopiuj informacje diagnostyczne** w
+   **Ustawienia → Informacje**.
+
+Problemy z samym logowaniem, na przykład komunikat o plikach cookie, opisuje
+[Pomoc i FAQ](/docs/faq) w sekcji **Logowanie z gry nie działa**.
 
 ## Następny krok
 

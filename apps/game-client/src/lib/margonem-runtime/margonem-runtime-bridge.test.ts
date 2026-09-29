@@ -1,6 +1,8 @@
+import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   MargonemRuntimeBridge,
+  margonemRuntimeBridge,
   type RuntimeFunction,
 } from "./margonem-runtime-bridge";
 import { SiRuntimeAdapter } from "./runtime-adapter";
@@ -20,6 +22,53 @@ describe("MargonemRuntimeBridge", () => {
     runtimeWindow.successData = originalSuccessData;
     testRuntimeWindow._g = originalRequest;
     testRuntimeWindow.Engine = originalEngine;
+  });
+
+  it("replaces the torn-down overlay with a reload notice when Margonem's packet handler never appears", async () => {
+    vi.useFakeTimers();
+
+    const hostWindow: Window & {
+      __lootlogGameClientRuntime?: { dispose: () => void };
+    } = window;
+
+    // Like the real runtime, teardown resets the bridge.
+    const dispose = vi.fn<() => void>(() => margonemRuntimeBridge.cleanup());
+    const writeText = vi.fn<Clipboard["writeText"]>().mockResolvedValue();
+    vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
+    hostWindow.__lootlogGameClientRuntime = { dispose };
+    runtimeWindow.successData = undefined;
+    testRuntimeWindow.Engine = undefined;
+
+    try {
+      margonemRuntimeBridge.install();
+      await vi.advanceTimersByTimeAsync(5_000);
+
+      expect(dispose).toHaveBeenCalledOnce();
+      const notice = screen.getByRole("alert");
+      expect(
+        within(notice).getByText("Lootlog nie może połączyć się z grą"),
+      ).toBeInTheDocument();
+      expect(
+        within(notice).getByRole("button", { name: "Przeładuj stronę" }),
+      ).toBeInTheDocument();
+
+      fireEvent.click(
+        within(notice).getByRole("button", {
+          name: "Kopiuj informacje diagnostyczne",
+        }),
+      );
+      await vi.waitFor(() => expect(writeText).toHaveBeenCalledOnce());
+      // The report describes the failure, not the reset bridge after teardown.
+      expect(writeText.mock.calls[0]?.[0]).toContain(
+        "reason=fatal:missing-inbound-seam",
+      );
+    } finally {
+      margonemRuntimeBridge.cleanup();
+      delete hostWindow.__lootlogGameClientRuntime;
+      document.getElementById("lootlog-runtime-notice")?.remove();
+      vi.unstubAllGlobals();
+      vi.useRealTimers();
+    }
   });
 
   it("observes an event only after Margonem returns without changing the call", () => {

@@ -1,4 +1,6 @@
 import { EmptyState } from "@/components/empty-state";
+import { NoLootlogEmptyState } from "@/components/no-lootlog-empty-state";
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -12,6 +14,11 @@ export const TimersEmptyState: FC<TimersEmptyStateProps> = ({
   onResetFilters,
 }) => {
   const { t } = useTranslation("timers");
+  const { hasNoGuilds } = useLootlogGuilds();
+
+  if (hasNoGuilds) {
+    return <NoLootlogEmptyState />;
+  }
 
   if (areFiltersActive) {
     return (
