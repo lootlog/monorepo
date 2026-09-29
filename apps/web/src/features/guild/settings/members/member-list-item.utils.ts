@@ -1,4 +1,3 @@
-import { cn } from "cn";
 import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";
 import { getMemberDiscordSyncPresentation } from "@/features/guild/settings/members/member-discord-sync.utils";
 import {
@@ -26,14 +25,6 @@ export type MemberListSortValue = {
   rolePosition: number;
   name: string;
 };
-
-export const getMemberListItemClassName = ({
-  isOnline,
-  isActive,
-}: {
-  isOnline: boolean;
-  isActive: boolean;
-}) => cn(isOnline && "border-emerald-500/50", !isActive && "opacity-50");
 
 export const getMemberOnlineSources = ({
   isOnlineOnWeb,

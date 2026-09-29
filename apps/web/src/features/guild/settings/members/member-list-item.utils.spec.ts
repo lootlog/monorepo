@@ -3,7 +3,6 @@ import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";
 import {
   compareMemberListSortValues,
   getMemberAccessState,
-  getMemberListItemClassName,
   getMemberOnlineSources,
   memberMatchesSearch,
   memberMatchesStatusFilter,
@@ -22,26 +21,6 @@ const createMember = (overrides: Partial<GuildMember> = {}): GuildMember => ({
 });
 
 describe("member list item utils", () => {
-  it("uses green border classes for online members", () => {
-    const className = getMemberListItemClassName({
-      isOnline: true,
-      isActive: true,
-    });
-
-    expect(className).toContain("border-emerald-500/50");
-    expect(className).not.toContain("opacity-50");
-  });
-
-  it("keeps inactive opacity without online border for offline members", () => {
-    const className = getMemberListItemClassName({
-      isOnline: false,
-      isActive: false,
-    });
-
-    expect(className).not.toContain("border-emerald-500/50");
-    expect(className).toContain("opacity-50");
-  });
-
   it("returns no online sources for offline members", () => {
     expect(
       getMemberOnlineSources({
