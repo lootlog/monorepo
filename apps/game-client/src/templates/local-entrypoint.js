@@ -14,6 +14,8 @@
 // @exclude    http*://forum.margonem.*/*
 // @exclude    http*://commons.margonem.*/*
 // @exclude    http*://dev-commons.margonem.*/*
+// @exclude    http*://serwery.margonem.*/*
+// @exclude    http*://pomoc.margonem.*/*
 // @connect    127.0.0.1
 // @grant      GM_xmlhttpRequest
 // ==/UserScript==

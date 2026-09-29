@@ -5,7 +5,7 @@ const version = "$GAME_CLIENT_VERSION$";
 // ==UserScript==
 // @name       @lootlog/game-client
 // @namespace  npm/vite-plugin-monkey
-// @version    1.0.2
+// @version    1.0.3
 // @author     Wildstylez & friends
 // @icon       https://vitejs.dev/logo.svg
 // @match      https://*.margonem.pl
@@ -18,6 +18,8 @@ const version = "$GAME_CLIENT_VERSION$";
 // @exclude    http*://forum.margonem.*/*
 // @exclude    http*://commons.margonem.*/*
 // @exclude    http*://dev-commons.margonem.*/*
+// @exclude    http*://serwery.margonem.*/*
+// @exclude    http*://pomoc.margonem.*/*
 // @grant      GM_addStyle
 // ==/UserScript==
 
