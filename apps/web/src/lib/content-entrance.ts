@@ -3,9 +3,20 @@ import { getPrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 /** The keyframe every loading placeholder reveals itself with after its delay. */
 const PLACEHOLDER_REVEAL_ANIMATION = "placeholder-in";
 
-const ENTRANCE_DURATION_MS = 240;
+const FADE_DURATION_MS = 240;
 
-const ENTRANCE_LIFT = "translateY(4px)";
+const LIFT = "translateY(8px)";
+
+const LIFT_DURATION_MS = 450;
+
+/** Ease-out cubic: the lift stays visible after the fade has mostly finished. */
+const LIFT_EASING = "cubic-bezier(0.33, 1, 0.68, 1)";
+
+/** How deep a page-sized block is searched for smaller blocks to lift. */
+const LIFT_SEARCH_DEPTH = 3;
+
+/** Tailwind's `fixed` in any variant, and the `table-fixed` false positive. */
+const FIXED_POSITION_SELECTOR = '[class*="fixed"]';
 
 const STAGGER_STEP_MS = 30;
 
@@ -91,36 +102,71 @@ const containsAny = (node: Node, elements: Set<Element>) => {
   return false;
 };
 
-/** Siblings entering together are staggered, but only the first few. */
+/**
+ * Siblings entering together are staggered, but only the first few. Each
+ * entering element fades, and it or the blocks inside it lift into place.
+ */
 const playEntrances = (siblingGroups: HTMLElement[][]) => {
   const easing = getComputedStyle(document.documentElement).getPropertyValue(
     "--ease-emphasized",
   );
 
-  // A transform makes the element the containing block of its fixed-position
-  // descendants, so page-sized content, which can hold floating action
-  // buttons and bars, only fades. Heights are read before any animation starts
-  // so the page lays out once.
   const liftLimit = window.innerHeight / 2;
 
+  // Every height is read before any animation starts so the page lays out once.
   const entrances = siblingGroups.flatMap((siblings) =>
     siblings.map((element, index) => ({
       element,
-      delay: Math.min(index, STAGGERED_SIBLINGS - 1) * STAGGER_STEP_MS,
-      lifts: element.getBoundingClientRect().height <= liftLimit,
+      delay: getStaggerDelay(index),
+      lifted: findLiftTargets(element, liftLimit, 0),
     })),
   );
 
-  for (const { element, delay, lifts } of entrances) {
-    const from: Keyframe = { offset: 0, opacity: 0 };
-
-    if (lifts) from.transform = ENTRANCE_LIFT;
-
-    element.animate([from], {
+  for (const { element, delay, lifted } of entrances) {
+    element.animate([{ offset: 0, opacity: 0 }], {
       delay,
-      duration: ENTRANCE_DURATION_MS,
+      duration: FADE_DURATION_MS,
       easing,
       fill: "backwards",
     });
+
+    lifted.forEach((target, index) => {
+      target.animate([{ offset: 0, transform: LIFT }], {
+        delay: delay + getStaggerDelay(index),
+        duration: LIFT_DURATION_MS,
+        easing: LIFT_EASING,
+        fill: "backwards",
+      });
+    });
   }
+};
+
+const getStaggerDelay = (index: number) =>
+  Math.min(index, STAGGERED_SIBLINGS - 1) * STAGGER_STEP_MS;
+
+/**
+ * A transform makes an element the containing block of its fixed-position
+ * descendants, so a block holding a floating button or bar never lifts as a
+ * whole, and neither does a page-sized block: the blocks inside them lift one
+ * by one instead, which also reads better than one large slab moving.
+ */
+const findLiftTargets = (
+  element: Element,
+  liftLimit: number,
+  depth: number,
+): Element[] => {
+  if (element.matches(`${FIXED_POSITION_SELECTOR}, .sr-only`)) return [];
+
+  if (
+    element.getBoundingClientRect().height <= liftLimit &&
+    !element.querySelector(FIXED_POSITION_SELECTOR)
+  ) {
+    return [element];
+  }
+
+  if (depth === LIFT_SEARCH_DEPTH) return [];
+
+  return [...element.children].flatMap((child) =>
+    findLiftTargets(child, liftLimit, depth + 1),
+  );
 };
