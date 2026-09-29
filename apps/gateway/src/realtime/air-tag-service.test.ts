@@ -87,6 +87,7 @@ describe("AirTagService legacy parity", () => {
           },
         ],
         removed: [],
+        remoteRecipients: true,
       }),
       [1, 0],
       [1, 0],
@@ -104,6 +105,7 @@ describe("AirTagService legacy parity", () => {
           observedAt: 300,
         })),
         removed: ["target"],
+        remoteRecipients: true,
       }),
     ];
 
@@ -111,6 +113,8 @@ describe("AirTagService legacy parity", () => {
 
     const hub = {
       clusterFederationVersion: 2,
+      instanceId: crypto.randomUUID(),
+      getLocalScopes: () => [],
       subscribe: (
         socket: GatewaySocket,
         scope: SessionData["subscriptions"] extends Map<string, infer T>
@@ -246,6 +250,8 @@ describe("AirTagService legacy parity", () => {
       },
       {
         clusterFederationVersion: 2,
+        instanceId: crypto.randomUUID(),
+        getLocalScopes: () => [],
         subscribe: () => {
           throw new Error("Unexpected subscribe");
         },
@@ -284,6 +290,7 @@ describe("AirTagService map threats", () => {
         targets: [],
         removed: [],
         threat: threatEvent,
+        remoteRecipients: true,
       }),
       JSON.stringify({ mapName: "Map", ...threatEvent, revision: 1_300 }),
     ];
@@ -309,6 +316,8 @@ describe("AirTagService map threats", () => {
       },
       {
         clusterFederationVersion: 2,
+        instanceId: crypto.randomUUID(),
+        getLocalScopes: () => [],
         subscribe: () => {},
         unsubscribe: () => {},
         publishToScopes: async (_scopes, event) => {

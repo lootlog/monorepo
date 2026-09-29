@@ -172,7 +172,10 @@ export class CommandHandler {
     private readonly battlePings: Pick<BattlePingService, "send">,
     private readonly airTags: Pick<
       AirTagService,
-      "updateSubscription" | "publishObservations" | "fetchMapThreats"
+      | "updateSubscription"
+      | "publishObservations"
+      | "fetchMapThreats"
+      | "registerInterest"
     >,
     private readonly joinAdmission: Pick<
       JoinAdmission,
@@ -668,6 +671,12 @@ export class CommandHandler {
                       cause,
                     }),
             }),
+          ),
+          // Other replicas publish air-tag updates only to registered followers.
+          Effect.tap(({ scope }) =>
+            scope.topic === "map.air-tags"
+              ? fromPromise(() => this.airTags.registerInterest(scope))
+              : Effect.void,
           ),
         );
       case "subscription.unsubscribe":

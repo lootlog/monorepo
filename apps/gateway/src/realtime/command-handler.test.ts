@@ -190,6 +190,8 @@ const setup = (
     Promise.reject(new Error("Unexpected air tag subscribe")),
   realtimeHub?: ConstructorParameters<typeof CommandHandler>[3],
   joinAdmission?: JoinAdmission,
+  registerInterest: AirTagService["registerInterest"] = () =>
+    Promise.reject(new Error("Unexpected air tag interest")),
 ) => {
   const guilds = new FakeGuildStore();
   const hub = new FakeHub();
@@ -212,6 +214,7 @@ const setup = (
         Promise.reject(new Error("Unexpected air tag observation")),
       fetchMapThreats: () =>
         Promise.reject(new Error("Unexpected map threat fetch")),
+      registerInterest,
     },
     joinAdmission,
   );
@@ -789,6 +792,8 @@ describe("CommandHandler session lifecycle", () => {
             Promise.reject(new Error("Unexpected air tag observation")),
           fetchMapThreats: () =>
             Promise.reject(new Error("Unexpected map threat fetch")),
+          registerInterest: () =>
+            Promise.reject(new Error("Unexpected air tag interest")),
         },
       );
 
@@ -1562,6 +1567,7 @@ describe("CommandHandler session lifecycle", () => {
         updateSubscription: () => Promise.reject(new Error("unused")),
         publishObservations: () => Promise.reject(new Error("unused")),
         fetchMapThreats: () => Promise.reject(new Error("unused")),
+        registerInterest: () => Promise.reject(new Error("unused")),
       },
     );
 
@@ -2124,6 +2130,49 @@ describe("CommandHandler session lifecycle", () => {
           retryable: true,
         },
       },
+    ]);
+  });
+
+  test("acknowledges a map.air-tags subscription only after other replicas can route to it", async () => {
+    const registered = Promise.withResolvers<void>();
+
+    const hub = new (class extends FakeHub {
+      override subscribe(): void {}
+    })();
+
+    const { handler } = setup(
+      undefined,
+      undefined,
+      hub,
+      undefined,
+      () => registered.promise,
+    );
+
+    const target = makeSocket();
+    target.socket.data.joined = true;
+    target.socket.data.guilds = [guild()];
+
+    const handled = Effect.runPromise(
+      handler.handle(
+        target.socket,
+        Buffer.from(
+          encode({
+            v: 1,
+            type: "subscription.subscribe",
+            requestId: "request-air-tags",
+            data: { topic: "map.air-tags", organizationId: "organization-1" },
+          }),
+        ),
+      ),
+    );
+
+    await Bun.sleep(1);
+    expect(hub.responses).toEqual([]);
+
+    registered.resolve();
+    await handled;
+    expect(hub.responses).toMatchObject([
+      { requestId: "request-air-tags", status: "success" },
     ]);
   });
 
