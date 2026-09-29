@@ -8,7 +8,6 @@ import {
 import { Fragment, type ComponentProps, type ReactNode } from "react";
 import { TableBody, TableCell, TableRow } from "@lootlog/ui/components/table";
 import { cn } from "cn";
-import { ROW_ENTRANCE_CLASS_NAME } from "@/components/ui/row-entrance";
 import type { coreTableFeatures } from "@/lib/tanstack-table-features";
 
 type TableRowProps = ComponentProps<typeof TableRow> & {
@@ -54,11 +53,7 @@ export const TanStackTableBody = <TData extends RowData>({
           <TableRow
             key={row.id}
             {...rowProps}
-            className={cn(
-              ROW_ENTRANCE_CLASS_NAME,
-              resolvedRowClassName,
-              rowProps?.className,
-            )}
+            className={cn(resolvedRowClassName, rowProps?.className)}
           >
             {row.getVisibleCells().map((cell) => {
               const resolvedCellClassName =
