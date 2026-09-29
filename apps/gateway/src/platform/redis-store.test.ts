@@ -12,7 +12,12 @@ test("federation backlog yields to timers while preserving order and isolating m
         };
 
         const redis = yield* Redis.make({
-          send: () => Effect.die("Unexpected Redis command"),
+          send: <A>(command: string) =>
+            command === "GET"
+              ? // SAFETY: the only GET reads the federation sequence counter,
+                // which is absent (null) before the first publication.
+                Effect.succeed(null as A)
+              : Effect.die("Unexpected Redis command"),
           subscribe: (_channel, onMessage) =>
             Effect.sync(() => {
               enqueue = onMessage;
@@ -86,7 +91,7 @@ test("federation backlog yields to timers while preserving order and isolating m
   );
 });
 
-test("a dropped subscriber reports the federation gap before draining its backlog", async () => {
+test("a dropped subscriber reports the interruption before delivering its whole backlog", async () => {
   await Effect.runPromise(
     Effect.scoped(
       Effect.gen(function* () {
@@ -99,7 +104,12 @@ test("a dropped subscriber reports the federation gap before draining its backlo
         };
 
         const redis = yield* Redis.make({
-          send: () => Effect.die("Unexpected Redis command"),
+          send: <A>(command: string) =>
+            command === "GET"
+              ? // SAFETY: the only GET reads the federation sequence counter,
+                // which is absent (null) before the first publication.
+                Effect.succeed(null as A)
+              : Effect.die("Unexpected Redis command"),
           subscribe: (_channel, onMessage) =>
             Effect.gen(function* () {
               const terminal = yield* Deferred.make<void, Redis.RedisError>();
@@ -140,8 +150,8 @@ test("a dropped subscriber reports the federation gap before draining its backlo
             () => {
               received++;
             },
-            (subscribed) => {
-              if (!subscribed) receivedAtLoss ??= received;
+            (state) => {
+              if (state === "interrupted") receivedAtLoss ??= received;
             },
           ),
         );
@@ -167,6 +177,16 @@ test("a dropped subscriber reports the federation gap before draining its backlo
           }
         });
         expect(receivedAtLoss).toBeLessThan(backlog);
+        // Sessions may outlive the interruption, so the backlog still reaches them.
+        yield* Effect.promise(async () => {
+          const deadline = Date.now() + 2000;
+
+          while (received < backlog) {
+            if (Date.now() > deadline)
+              throw new Error("Backlog was not delivered");
+            await Bun.sleep(1);
+          }
+        });
       }),
     ),
   );
