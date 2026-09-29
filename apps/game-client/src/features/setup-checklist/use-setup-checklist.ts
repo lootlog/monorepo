@@ -2,6 +2,7 @@ import { Schema } from "effect";
 import { useSocket } from "@/contexts/socket-context";
 import { getSetupChecklist } from "@/features/setup-checklist/setup-checklist-steps";
 import { useSession } from "@/hooks/auth/use-session";
+import { isSessionSignedOut } from "@/lib/auth-client";
 import { useLootlogCharactersConfig } from "@/hooks/api/use-lootlog-characters-config";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
@@ -17,7 +18,14 @@ const DISMISSED_KEY = storageKey("ll:setup-checklist-dismissed");
  */
 export const useSetupChecklist = () => {
   const session = useSession();
-  const signedIn = session.isPending ? undefined : Boolean(session.data);
+
+  // A failed session check is unknown, like one still in flight: asking the
+  // player to sign in would contradict the login window.
+  const signedIn = session.data
+    ? true
+    : isSessionSignedOut(session)
+      ? false
+      : undefined;
 
   const {
     guildsQuery: { data: guilds },

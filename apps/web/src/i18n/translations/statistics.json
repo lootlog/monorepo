@@ -99,6 +99,7 @@
     "description": "Po tych krokach łupy, timery i walki z gry będą trafiać tutaj same.",
     "guide": "Instrukcja",
     "dismiss": "Ukryj pierwsze kroki",
+    "restore": "Pokaż pierwsze kroki",
     "stepNumber": "Krok {{number}}: ",
     "status": {
       "current": "Następny krok",
