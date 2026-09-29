@@ -5,6 +5,7 @@ import type {
   RedisGatewayStore,
 } from "#src/platform/redis-store";
 import type { CommandIngress } from "#src/realtime/command-ingress";
+import type { JoinAdmission } from "#src/realtime/join-admission";
 import {
   FEDERATION_VERSION,
   type RealtimeHub,
@@ -39,6 +40,29 @@ for i = 1, #snapshots, 2 do
 end
 return {connections, sessions, count, federationVersion}
 `;
+
+// Same liveness rule as SAMPLE, without writing this replica's snapshot.
+const CLUSTER_FEDERATION_VERSION = `
+local time = redis.call('TIME')
+local now = tonumber(time[1]) * 1000 + math.floor(tonumber(time[2]) / 1000)
+local version = nil
+for _, raw in ipairs(redis.call('HVALS', KEYS[1])) do
+  local value = cjson.decode(raw)
+  if now - value.at < 30000 then
+    local current = tonumber(value.federationVersion) or 1
+    if version == nil or current < version then version = current end
+  end
+end
+return version or 1
+`;
+
+/** Lowest `FEDERATION_VERSION` among the replicas that sampled in the last 30 s. */
+export const readClusterFederationVersion = (
+  redis: Pick<RedisGatewayCommands, "eval">,
+) =>
+  Effect.tryPromise(() =>
+    redis.eval(CLUSTER_FEDERATION_VERSION, 1, SNAPSHOTS),
+  ).pipe(Effect.map(Schema.decodeUnknownSync(Schema.Number)));
 
 const decodeCounts = Schema.decodeUnknownSync(
   Schema.Tuple([Schema.Number, Schema.Number, Schema.Number, Schema.Number]),
@@ -80,6 +104,8 @@ const runtimeGauges = {
   bytes: Metric.gauge("lootlog_gateway_commands_retained_bytes"),
   rejected: Metric.gauge("lootlog_gateway_commands_rejected_total"),
   maxConnectionPending: Metric.gauge("lootlog_gateway_commands_connection_max"),
+  joinsActive: Metric.gauge("lootlog_gateway_joins_active"),
+  joinsRejected: Metric.gauge("lootlog_gateway_joins_rejected_total"),
   bufferedBytes: Metric.gauge("lootlog_gateway_sockets_buffered_bytes"),
   maxBufferedBytes: Metric.gauge("lootlog_gateway_socket_buffered_bytes_max"),
 };
@@ -94,6 +120,7 @@ export class GatewayRuntimeMetrics {
       "getLocalSockets" | "unavailableReason"
     >,
     private readonly ingress: Pick<CommandIngress, "getDiagnostics">,
+    private readonly joins: Pick<JoinAdmission, "getDiagnostics">,
   ) {}
 
   readonly sample = Effect.fnUntraced(function* (this: GatewayRuntimeMetrics) {
@@ -110,6 +137,7 @@ export class GatewayRuntimeMetrics {
       available: this.hub.unavailableReason() === undefined ? 1 : 0,
       ...this.redis.getDiagnostics(),
       ...this.ingress.getDiagnostics(),
+      ...this.joins.getDiagnostics(),
       bufferedBytes,
       maxBufferedBytes,
     };

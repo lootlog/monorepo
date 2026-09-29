@@ -722,6 +722,40 @@ describe("RealtimeClient", () => {
     client.disconnect();
   });
 
+  it("waits the delay a busy gateway asks for before reconnecting after a rejected join", async () => {
+    vi.useFakeTimers();
+    const sockets: TestWebSocket[] = [];
+
+    const client = new RealtimeClient({
+      url: "https://gateway.example.test",
+      reconnectBaseDelayMs: 1_000,
+      random: () => 0,
+      webSocketFactory: () => {
+        const socket = new TestWebSocket();
+        sockets.push(socket);
+
+        return socket;
+      },
+    });
+
+    client.connect();
+    socketAt(sockets, 0).open();
+    const joined = client.join(joinData).catch(() => undefined);
+    await rejectLastRequest(socketAt(sockets, 0), true, 3_000);
+    await joined;
+
+    await vi.advanceTimersByTimeAsync(2_999);
+    expect(sockets).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(sockets).toHaveLength(2);
+
+    // The delay applies to that rejection only.
+    socketAt(sockets, 1).close();
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(sockets).toHaveLength(3);
+    client.disconnect();
+  });
+
   it("preserves only configured frame and capability protocols on reconnect", async () => {
     vi.useFakeTimers();
     const sockets: TestWebSocket[] = [];

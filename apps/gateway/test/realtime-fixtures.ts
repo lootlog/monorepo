@@ -1,5 +1,8 @@
 import { Permission } from "@lootlog/schema/permissions";
-import type { FederatedRealtimeMessage } from "../src/platform/redis-store.js";
+import type {
+  FederatedRealtimeMessage,
+  FederationState,
+} from "../src/platform/redis-store.js";
 import type { RealtimeHub } from "../src/realtime/realtime-hub.js";
 import type { GatewaySocket, SessionData } from "../src/realtime/session.js";
 
@@ -16,9 +19,9 @@ export const subscribedFederationStore = {
   ...unusedFederationStore,
   subscribe: (
     _listener: (message: FederatedRealtimeMessage) => void,
-    onSubscriptionChange?: (subscribed: boolean) => void,
+    onStateChange?: (state: FederationState) => void,
   ) => {
-    onSubscriptionChange?.(true);
+    onStateChange?.("subscribed");
 
     return Promise.resolve();
   },
