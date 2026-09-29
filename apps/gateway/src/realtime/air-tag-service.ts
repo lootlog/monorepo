@@ -18,6 +18,8 @@ import {
   type AirTagSubscriptionAck,
   type AirTagScopeUpdateEvent,
 } from "@lootlog/schema/air-tag";
+import type { SubscriptionScope } from "@lootlog/protocol/realtime";
+import { chunk } from "es-toolkit";
 import { Effect, Metric, Schedule, Schema } from "effect";
 import { Logger } from "#src/platform/logger";
 import type {
@@ -48,6 +50,16 @@ const BROADCAST_INTERVAL_MS = 1_000;
 const INTEREST_REFRESH_MS = 30_000;
 
 const INTEREST_TTL_MS = 90_000;
+
+const INTEREST_BATCH_SIZE = 100;
+
+// Registrations expire on Redis time, the clock the merge script compares them with.
+const REGISTER_INTEREST_SCRIPT = `
+local time=redis.call("TIME")
+local expiresAt=(tonumber(time[1])*1000)+math.floor(tonumber(time[2])/1000)+tonumber(ARGV[2])
+for _,key in ipairs(KEYS) do redis.call("ZADD",key,expiresAt,ARGV[1]); redis.call("PEXPIRE",key,ARGV[2]) end
+return #KEYS
+`;
 
 const federatedUpdates = Metric.counter(
   "lootlog_gateway_air_tag_federated_updates_total",
@@ -298,10 +310,14 @@ if #sightings > 0 or state.pending == true or threatRemoved then
   redis.call("SET",KEYS[5],cjson.encode(state),"PX",threatTtl)
   if next(records) ~= nil then redis.call("PEXPIRE",KEYS[4],threatTtl) end
 end
--- Another replica follows this scope, so its sockets need the update through federation.
-redis.call("ZREMRANGEBYSCORE",KEYS[6],"-inf",now)
-local interested=redis.call("ZCARD",KEYS[6])
-if redis.call("ZSCORE",KEYS[6],instance) ~= false then interested=interested-1 end
+-- Another replica follows this map, or every map of the Organization, so its sockets need the update through federation.
+local function othersInterested(key)
+  redis.call("ZREMRANGEBYSCORE",key,"-inf",now)
+  local count=redis.call("ZCARD",key)
+  if redis.call("ZSCORE",key,instance) ~= false then count=count-1 end
+  return count
+end
+local interested=othersInterested(KEYS[6])+othersInterested(KEYS[7])
 return withArrays(cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,revision=metadata.revision,acceptedTargets=accepted,targets=updates,removed=removed,threat=threatResult,threatPendingMs=threatPendingMs,remoteRecipients=interested > 0}),{"targets","removed","enemies"})
 `;
 
@@ -435,7 +451,7 @@ const ThreatSnapshotJson = Schema.fromJsonString(
 type ScriptStore = {
   command: Pick<
     RedisGatewayStore["command"],
-    "get" | "sadd" | "smembers" | "expire" | "zadd"
+    "get" | "sadd" | "smembers" | "expire"
   > & {
     eval(
       ...args: Parameters<RedisGatewayStore["command"]["eval"]>
@@ -463,7 +479,7 @@ export class AirTagService {
       | "publishToScopes"
       | "clusterFederationVersion"
       | "instanceId"
-      | "getLocalLocatedScopes"
+      | "getLocalScopes"
     >,
   ) {}
 
@@ -981,7 +997,15 @@ export class AirTagService {
     }
   }
 
-  /** Keeps this replica registered for every located air-tag scope a local socket follows. */
+  /**
+   * Registers this replica for a `map.air-tags` subscription made outside
+   * `air-tag.subscription`, so later updates merged on other replicas reach it.
+   */
+  registerInterest(scope: SubscriptionScope): Promise<void> {
+    return this.register([this.interestKeyFor(scope)]);
+  }
+
+  /** Keeps this replica registered for every air-tag scope a local socket follows. */
   runInterestRefresh() {
     return Effect.tryPromise(() => this.refreshInterest()).pipe(
       Effect.catchCause((cause) =>
@@ -992,20 +1016,44 @@ export class AirTagService {
   }
 
   private async refreshInterest(): Promise<void> {
-    const expiresAt = Date.now() + INTEREST_TTL_MS;
+    const keys = new Set(
+      this.hub
+        .getLocalScopes("map.air-tags")
+        .map((scope) => this.interestKeyFor(scope)),
+    );
 
     await Promise.all(
-      this.hub.getLocalLocatedScopes("map.air-tags").map(async (scope) => {
-        const key = this.interestKey({
-          guildId: scope.organizationId ?? "",
-          world: scope.world ?? "",
-          mapId: scope.mapId ?? 0,
-        });
-
-        await this.redis.command.zadd(key, expiresAt, this.hub.instanceId);
-        await this.redis.command.expire(key, INTEREST_TTL_MS / 1_000);
-      }),
+      chunk([...keys], INTEREST_BATCH_SIZE).map((batch) =>
+        this.register(batch),
+      ),
     );
+  }
+
+  private async register(keys: ReadonlyArray<string>): Promise<void> {
+    await this.redis.command.eval(
+      REGISTER_INTEREST_SCRIPT,
+      keys.length,
+      ...keys,
+      this.hub.instanceId,
+      INTEREST_TTL_MS,
+    );
+  }
+
+  /** A scope without a world or map follows every map of its Organization. */
+  private interestKeyFor(scope: SubscriptionScope): string {
+    const organizationId = scope.organizationId ?? "";
+
+    return scope.world === undefined || scope.mapId === undefined
+      ? this.anyMapInterestKey(organizationId)
+      : this.interestKey({
+          guildId: organizationId,
+          world: scope.world,
+          mapId: scope.mapId,
+        });
+  }
+
+  private anyMapInterestKey(organizationId: string): string {
+    return `{air-tag:${organizationId}}:any-map:replicas`;
   }
 
   private interestKey(
@@ -1085,11 +1133,12 @@ export class AirTagService {
 
     const result = await this.redis.command.eval(
       MERGE_SCRIPT,
-      6,
+      7,
       ...this.keys(scope),
       `${hashTag}:threats`,
       `${hashTag}:threat-state`,
       this.interestKey(scope),
+      this.anyMapInterestKey(scope.guildId),
       crypto.randomUUID(),
       JSON.stringify(observations),
       TARGET_TTL_MS,

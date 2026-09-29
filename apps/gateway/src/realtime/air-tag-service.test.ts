@@ -56,7 +56,6 @@ const unusedSetCommands = {
   sadd: () => Promise.reject(new Error("Unexpected Redis write")),
   smembers: () => Promise.reject(new Error("Unexpected Redis read")),
   expire: () => Promise.reject(new Error("Unexpected Redis write")),
-  zadd: () => Promise.reject(new Error("Unexpected Redis write")),
 };
 
 describe("AirTagService legacy parity", () => {
@@ -115,7 +114,7 @@ describe("AirTagService legacy parity", () => {
     const hub = {
       clusterFederationVersion: 2,
       instanceId: crypto.randomUUID(),
-      getLocalLocatedScopes: () => [],
+      getLocalScopes: () => [],
       subscribe: (
         socket: GatewaySocket,
         scope: SessionData["subscriptions"] extends Map<string, infer T>
@@ -252,7 +251,7 @@ describe("AirTagService legacy parity", () => {
       {
         clusterFederationVersion: 2,
         instanceId: crypto.randomUUID(),
-        getLocalLocatedScopes: () => [],
+        getLocalScopes: () => [],
         subscribe: () => {
           throw new Error("Unexpected subscribe");
         },
@@ -305,7 +304,6 @@ describe("AirTagService map threats", () => {
           get: async () => null,
           sadd: async () => 1,
           expire: async () => 1,
-          zadd: async () => 1,
           smembers: async () => [],
           eval: async () => {
             const reply = evaluations.shift();
@@ -319,7 +317,7 @@ describe("AirTagService map threats", () => {
       {
         clusterFederationVersion: 2,
         instanceId: crypto.randomUUID(),
-        getLocalLocatedScopes: () => [],
+        getLocalScopes: () => [],
         subscribe: () => {},
         unsubscribe: () => {},
         publishToScopes: async (_scopes, event) => {

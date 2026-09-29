@@ -3441,6 +3441,32 @@ describe("realtime Dragonfly integration", () => {
       await reportSolo(4);
       await waitFor(() => soloUpdates(remoteWatcher) === 2);
       expect(channelUpdates).toHaveLength(2);
+
+      // A subscription without a world or map follows every map of its Organization.
+      const anyMapWatcher = makeSocket("any-map-watcher");
+
+      const anyMap = {
+        topic: "map.air-tags",
+        organizationId: "organization-1",
+      } as const;
+
+      moveAirTagSocket(anyMapWatcher.socket, { mapId: 12, map: "Elsewhere" });
+      moveAirTagSocket(soloObserver.socket, { mapId: 12, map: "Elsewhere" });
+      secondHub.register(anyMapWatcher.socket);
+      secondHub.subscribe(anyMapWatcher.socket, anyMap);
+      await recipientAirTags.registerInterest(anyMap);
+      await sourceAirTags.updateSubscription(soloObserver.socket, {
+        requestId: "solo-observer-elsewhere",
+        enabled: true,
+        expectedMapId: 12,
+      });
+      await expect(
+        sourceAirTags.publishObservations(soloObserver.socket, {
+          expectedMapId: 12,
+          observations: [{ ...observation, targetId: "elsewhere" }],
+        }),
+      ).resolves.toMatchObject({ status: "accepted" });
+      await waitFor(() => soloUpdates(anyMapWatcher) === 1);
       channelListener.close();
     } finally {
       await Promise.all([firstStore.close(), secondStore.close()]);

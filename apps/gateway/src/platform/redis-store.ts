@@ -168,8 +168,6 @@ export class RedisGatewayStore {
       srem: (key, ...members) =>
         run(redis.send("SREM", prefix(key), ...members)),
       smembers: (key) => run(redis.send("SMEMBERS", prefix(key))),
-      zadd: (key, score, member) =>
-        run(redis.send("ZADD", prefix(key), String(score), member)),
       mget: (keys) => run(redis.send("MGET", ...keys.map(prefix))),
       eval: <A>(
         script: string,
@@ -364,11 +362,6 @@ export interface RedisGatewayCommands {
   readonly sadd: (key: string, ...members: string[]) => Promise<number>;
   readonly srem: (key: string, ...members: string[]) => Promise<number>;
   readonly smembers: (key: string) => Promise<string[]>;
-  readonly zadd: (
-    key: string,
-    score: number,
-    member: string,
-  ) => Promise<number>;
   readonly mget: (keys: string[]) => Promise<Array<string | null>>;
   readonly eval: <A = unknown>(
     script: string,

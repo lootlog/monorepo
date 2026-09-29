@@ -500,8 +500,8 @@ export class RealtimeHub {
     );
   }
 
-  /** Scopes of `topic` with a world and map that a local socket subscribes to. */
-  getLocalLocatedScopes(topic: Scope["topic"]): Scope[] {
+  /** Distinct scopes of `topic` that a local socket subscribes to. */
+  getLocalScopes(topic: Scope["topic"]): Scope[] {
     const prefix = JSON.stringify([topic]).slice(0, -1);
     const scopes: Scope[] = [];
 
@@ -517,13 +517,12 @@ export class RealtimeHub {
         number | null,
       ];
 
-      if (organizationId === null || world === null || mapId === null) continue;
       scopes.push({
         topic,
-        organizationId,
+        ...(organizationId !== null && { organizationId }),
         ...(eventId !== null && { eventId }),
-        world,
-        mapId,
+        ...(world !== null && { world }),
+        ...(mapId !== null && { mapId }),
       });
     }
 
