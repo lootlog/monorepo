@@ -3,7 +3,6 @@ import { desc, sql } from "drizzle-orm";
 import {
   check,
   boolean,
-  foreignKey,
   index,
   integer,
   jsonb,
@@ -77,13 +76,6 @@ export const activities = pgTable(
     idempotencyKey: text().notNull(),
   },
   (table) => [
-    foreignKey({
-      name: "Activity_actorSnapshotId_fkey",
-      columns: [table.actorSnapshotId],
-      foreignColumns: [activityActorSnapshots.id],
-    })
-      .onDelete("set null")
-      .onUpdate("cascade"),
     primaryKey({ name: "Activity_pkey", columns: [table.id, table.createdAt] }),
     uniqueIndex("Activity_idempotencyKey_createdAt_key").on(
       table.idempotencyKey,
