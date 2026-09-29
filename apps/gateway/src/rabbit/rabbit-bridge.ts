@@ -270,20 +270,43 @@ const gatewayDeadLetterSpecs = gatewayConsumerSpecs.flatMap((spec) =>
     : [],
 );
 
-// Identifies a dead-lettered delivery without logging its payload or any
-// member's Discord ID.
-const decodeDeadLetterIdentifiers = Schema.decodeUnknownOption(
-  Schema.fromJsonString(
-    Schema.Struct({
-      guildId: Schema.optionalKey(Schema.String),
-      notificationId: Schema.optionalKey(Schema.String),
-      revision: Schema.optionalKey(Schema.Number),
-      update: Schema.optionalKey(
-        Schema.Struct({ type: Schema.optionalKey(Schema.String) }),
-      ),
-    }),
-  ),
+const decodeJsonRecord = Schema.decodeUnknownOption(
+  Schema.fromJsonString(Schema.Record(Schema.String, Schema.Unknown)),
 );
+
+const decodeRecord = Schema.decodeUnknownOption(
+  Schema.Record(Schema.String, Schema.Unknown),
+);
+
+const decodeString = Schema.decodeUnknownOption(Schema.String);
+
+const decodeNumber = Schema.decodeUnknownOption(Schema.Number);
+
+// Identifies a dead-lettered delivery without logging its payload or any
+// member's Discord ID. Each field decodes on its own, because a delivery that
+// failed validation is the likeliest one to reach the DLQ.
+const deadLetterIdentifiers = (content: Uint8Array) => {
+  const payload = decodeJsonRecord(new TextDecoder().decode(content));
+  const field = (key: string) => Option.map(payload, (data) => data[key]);
+
+  return {
+    guildId: Option.getOrUndefined(
+      Option.flatMap(field("guildId"), decodeString),
+    ),
+    notificationId: Option.getOrUndefined(
+      Option.flatMap(field("notificationId"), decodeString),
+    ),
+    revision: Option.getOrUndefined(
+      Option.flatMap(field("revision"), decodeNumber),
+    ),
+    updateType: Option.getOrUndefined(
+      field("update").pipe(
+        Option.flatMap(decodeRecord),
+        Option.flatMap((update) => decodeString(update.type)),
+      ),
+    ),
+  };
+};
 
 const record = Schema.decodeUnknownSync(
   Schema.Record(Schema.String, Schema.Unknown),
@@ -390,29 +413,17 @@ export class RabbitBridge {
             prefetch: 1,
             failurePolicy: { strategy: "requeue" },
           },
-          (delivery) => {
-            const identifiers = Option.getOrUndefined(
-              decodeDeadLetterIdentifiers(
-                new TextDecoder().decode(delivery.content),
-              ),
-            );
-
-            return Effect.logError(
-              "Gateway RabbitMQ delivery reached DLQ",
-            ).pipe(
+          (delivery) =>
+            Effect.logError("Gateway RabbitMQ delivery reached DLQ").pipe(
               Effect.annotateLogs({
                 queue: spec.queue,
                 routingKey: spec.routingKey,
                 messageId: delivery.properties.messageId,
                 retryCount:
                   delivery.properties.headers?.["x-lootlog-retry-count"] ?? 0,
-                guildId: identifiers?.guildId,
-                notificationId: identifiers?.notificationId,
-                revision: identifiers?.revision,
-                updateType: identifiers?.update?.type,
+                ...deadLetterIdentifiers(delivery.content),
               }),
-            );
-          },
+            ),
         );
 
         consumers.push(consumer);
