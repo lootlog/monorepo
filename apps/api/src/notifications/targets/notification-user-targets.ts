@@ -5,6 +5,8 @@ import {
 import {
   deleteNotificationTargetAndOrphanedRules,
   mapNotificationTarget,
+  readNotificationTargetRuleIds,
+  readSingleTargetNotificationRuleIds,
   updateNotificationTarget,
 } from "#src/notifications/targets/notification-target-store";
 import {
@@ -12,7 +14,7 @@ import {
   readNotificationTestUsage,
 } from "../jobs/notification-test-usage.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, count, desc, eq, inArray, isNotNull } from "drizzle-orm";
+import { and, desc, eq, isNotNull } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
@@ -325,24 +327,9 @@ export const makeNotificationUserTargets = (
 
   const orphanedRules = (targetId: number) =>
     Effect.gen(function* () {
-      const links = yield* database
-        .select({ ruleId: notificationRuleTargetTable.ruleId })
-        .from(notificationRuleTargetTable)
-        .where(eq(notificationRuleTargetTable.targetId, targetId));
+      const ruleIds = yield* readNotificationTargetRuleIds(database, targetId);
 
-      const ruleIds = links.map(({ ruleId }) => ruleId);
-
-      if (ruleIds.length === 0) return [];
-
-      const counts = yield* database
-        .select({ ruleId: notificationRuleTargetTable.ruleId, value: count() })
-        .from(notificationRuleTargetTable)
-        .where(inArray(notificationRuleTargetTable.ruleId, ruleIds))
-        .groupBy(notificationRuleTargetTable.ruleId);
-
-      return counts
-        .filter(({ value }) => value === 1)
-        .map(({ ruleId }) => ruleId);
+      return yield* readSingleTargetNotificationRuleIds(database, ruleIds);
     }).pipe(
       Effect.mapError(databaseFailure("notifications.userTargets.ruleUsage")),
     );

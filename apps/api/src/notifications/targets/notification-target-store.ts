@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, count, eq, inArray } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -79,6 +79,33 @@ export const updateNotificationTarget = Effect.fnUntraced(function* (
       ),
     )
     .returning();
+});
+
+export const readNotificationTargetRuleIds = Effect.fnUntraced(function* (
+  database: typeof ApiDatabase.Service,
+  targetId: number,
+) {
+  const links = yield* database
+    .select({ ruleId: notificationRuleTargetTable.ruleId })
+    .from(notificationRuleTargetTable)
+    .where(eq(notificationRuleTargetTable.targetId, targetId));
+
+  return links.map(({ ruleId }) => ruleId);
+});
+
+export const readSingleTargetNotificationRuleIds = Effect.fnUntraced(function* (
+  database: typeof ApiDatabase.Service,
+  ruleIds: readonly number[],
+) {
+  if (ruleIds.length === 0) return [];
+
+  const counts = yield* database
+    .select({ ruleId: notificationRuleTargetTable.ruleId, value: count() })
+    .from(notificationRuleTargetTable)
+    .where(inArray(notificationRuleTargetTable.ruleId, ruleIds))
+    .groupBy(notificationRuleTargetTable.ruleId);
+
+  return counts.filter(({ value }) => value === 1).map(({ ruleId }) => ruleId);
 });
 
 export const deleteNotificationTargetAndOrphanedRules = (

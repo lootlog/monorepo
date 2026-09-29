@@ -2,16 +2,15 @@ import { notificationChannelMetadata } from "#src/notifications/targets/notifica
 import {
   deleteNotificationTargetAndOrphanedRules,
   mapNotificationTarget,
+  readNotificationTargetRuleIds,
+  readSingleTargetNotificationRuleIds,
   updateNotificationTarget,
 } from "#src/notifications/targets/notification-target-store";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, count, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import {
-  notificationRuleTargetTable,
-  notificationTargetTable,
-} from "#src/database/drizzle/schema";
+import { notificationTargetTable } from "#src/database/drizzle/schema";
 import type {
   CreateNotificationTargetRequest,
   UpdateNotificationTargetRequest,
@@ -224,36 +223,19 @@ export const makeNotificationGuildTargets = (
 
   const removeById = Effect.fn("notifications.guildTargets.deleteById")(
     function* (targetId: number) {
-      const links = yield* database
-        .select({ ruleId: notificationRuleTargetTable.ruleId })
-        .from(notificationRuleTargetTable)
-        .where(eq(notificationRuleTargetTable.targetId, targetId))
-        .pipe(
-          Effect.mapError(databaseFailure("notifications.targets.ruleLinks")),
-        );
+      const ruleIds = yield* readNotificationTargetRuleIds(
+        database,
+        targetId,
+      ).pipe(
+        Effect.mapError(databaseFailure("notifications.targets.ruleLinks")),
+      );
 
-      const ruleIds = links.map(({ ruleId }) => ruleId);
-
-      const counts =
-        ruleIds.length === 0
-          ? []
-          : yield* database
-              .select({
-                ruleId: notificationRuleTargetTable.ruleId,
-                value: count(),
-              })
-              .from(notificationRuleTargetTable)
-              .where(inArray(notificationRuleTargetTable.ruleId, ruleIds))
-              .groupBy(notificationRuleTargetTable.ruleId)
-              .pipe(
-                Effect.mapError(
-                  databaseFailure("notifications.targets.ruleCounts"),
-                ),
-              );
-
-      const orphanedRuleIds = counts
-        .filter(({ value }) => value === 1)
-        .map(({ ruleId }) => ruleId);
+      const orphanedRuleIds = yield* readSingleTargetNotificationRuleIds(
+        database,
+        ruleIds,
+      ).pipe(
+        Effect.mapError(databaseFailure("notifications.targets.ruleCounts")),
+      );
 
       yield* jobs.cancel({ targetId });
       yield* Effect.forEach(
