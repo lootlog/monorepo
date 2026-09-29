@@ -36,7 +36,17 @@ export const DashboardOnboarding = () => {
     false,
   );
 
-  if (!steps || dismissed) return null;
+  if (!steps) return null;
+
+  if (dismissed)
+    return (
+      <div className="flex shrink-0 justify-end">
+        <Button variant="ghost" size="sm" onClick={() => setDismissed(false)}>
+          <ListChecks aria-hidden="true" />
+          {t("statistics.onboarding.restore")}
+        </Button>
+      </div>
+    );
 
   const buttonVariant = (status: OnboardingStepStatus) =>
     status === "current" ? "default" : "outline";

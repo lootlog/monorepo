@@ -32,16 +32,26 @@ const describeRealtime = (): string => {
     : "connected, not joined";
 };
 
-/** Host and path only: query strings may carry identifiers. */
+// Organization, resource and character ids all carry digits; route words
+// such as `timers` or `manual` do not.
+const IDENTIFIER_SEGMENT = /\d/u;
+
+/** A route template of the path, so a report never carries identifiers. */
+const redactPath = (path: string) =>
+  path
+    .split("/")
+    .map((segment) => (IDENTIFIER_SEGMENT.test(segment) ? ":id" : segment))
+    .join("/");
+
+/** Host and route template only: paths and query strings carry identifiers. */
 const describeEndpoint = (endpoint: string): string => {
   try {
     const url = new URL(endpoint, window.location.origin);
+    const path = redactPath(url.pathname);
 
-    return url.origin === window.location.origin
-      ? url.pathname
-      : `${url.host}${url.pathname}`;
+    return url.origin === window.location.origin ? path : `${url.host}${path}`;
   } catch {
-    return endpoint.split(/[?#]/, 1)[0] ?? "";
+    return redactPath(endpoint.split(/[?#]/, 1)[0] ?? "");
   }
 };
 
