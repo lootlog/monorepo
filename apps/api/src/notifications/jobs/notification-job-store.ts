@@ -1,8 +1,5 @@
 import { selectNotificationJobsWithRelations } from "./notification-job-query.js";
-import {
-  mapNotificationTarget,
-  readNotificationRuleTargets,
-} from "#src/notifications/targets/notification-target-store";
+import { readNotificationRuleTargets } from "#src/notifications/targets/notification-target-store";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
@@ -61,20 +58,6 @@ class NotificationJobStoreFailure extends TaggedErrorClass<NotificationJobStoreF
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
 
-const mapJob = (
-  job: typeof notificationJobTable.$inferSelect,
-): NotificationStoredJob => ({
-  ...job,
-  payloadSnapshot: job.payloadSnapshot,
-});
-
-const mapRule = (
-  rule: typeof notificationRuleTable.$inferSelect,
-): NotificationStoredRule => ({
-  ...rule,
-  filters: rule.filters,
-});
-
 export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
   const failure = (operation: string) => (cause: unknown) =>
     new NotificationJobStoreFailure({ operation, cause });
@@ -87,7 +70,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       .limit(1)
       .pipe(
         Effect.mapError(failure("notifications.jobStore.findJob")),
-        Effect.map((rows) => (rows[0] ? mapJob(rows[0]) : null)),
+        Effect.map((rows) => rows[0] ?? null),
       );
 
   const findJobWithRelations = (jobId: string) =>
@@ -101,9 +84,9 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
 
           return row
             ? {
-                ...mapJob(row.job),
-                rule: mapRule(row.rule),
-                target: mapNotificationTarget(row.target),
+                ...row.job,
+                rule: row.rule,
+                target: row.target,
               }
             : null;
         }),
@@ -225,7 +208,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       const targets = yield* targetsForRule(ruleId);
 
       return {
-        ...mapRule(rule),
+        ...rule,
         targets,
       } satisfies NotificationRuleWithTargets;
     }).pipe(Effect.mapError(failure("notifications.jobStore.findRule")));

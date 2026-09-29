@@ -60,7 +60,6 @@ export const makeNotificationEventStore = (database: ApiDatabaseValue) => {
           ...watchedItem,
           notificationRule: {
             ...rule,
-            filters: rule.filters,
             targets: targets.get(rule.id) ?? [],
           },
         }));
