@@ -3,8 +3,7 @@ import {
   getListPinnedEventsQueryKey,
   useListPinnedEvents,
 } from "@lootlog/client/main";
-import { AnimatePresence } from "framer-motion";
-import * as m from "framer-motion/m";
+import { CollapsePresence } from "@/components/common/collapse-presence";
 
 export const GuildPinnedEventsSection = ({
   guildId,
@@ -27,25 +26,12 @@ export const GuildPinnedEventsSection = ({
   const hasPinnedEvents = pinnedActiveEvents.length > 0;
 
   return (
-    <AnimatePresence initial={false}>
-      {!isPending && hasPinnedEvents && (
-        <m.div
-          key="pinned-events"
-          layout
-          initial={{ opacity: 0, scaleY: 0.96 }}
-          animate={{ opacity: 1, scaleY: 1 }}
-          exit={{ opacity: 0, scaleY: 0.96 }}
-          style={{ transformOrigin: "top" }}
-          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-          className="overflow-hidden"
-        >
-          <PinnedEventsBanner
-            events={pinnedActiveEvents}
-            guildId={guildId}
-            onNavigate={onNavigate}
-          />
-        </m.div>
-      )}
-    </AnimatePresence>
+    <CollapsePresence open={!isPending && hasPinnedEvents}>
+      <PinnedEventsBanner
+        events={pinnedActiveEvents}
+        guildId={guildId}
+        onNavigate={onNavigate}
+      />
+    </CollapsePresence>
   );
 };
