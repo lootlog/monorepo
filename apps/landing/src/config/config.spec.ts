@@ -21,7 +21,7 @@ describe("public landing configuration", () => {
 
   it("preserves the Better Auth callback path", () => {
     expect(createAuthCallbackUrl("https://lootlog.pl")).toBe(
-      "https://lootlog.pl/@me",
+      "https://lootlog.pl/signin",
     );
   });
 });
