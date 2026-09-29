@@ -1,8 +1,7 @@
 import { LootsList } from "@/features/guild/loots-list/components/loots-list/loots-list";
 import { LootsFiltersSidebar } from "@/features/guild/loots-list/components/loots-filters/loots-filters-sidebar";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
-import { AnimatePresence } from "framer-motion";
-import * as m from "framer-motion/m";
+import { CollapsePresence } from "@/components/common/collapse-presence";
 import { LootFiltersHeader } from "@/features/guild/loots-list/components/loots-filters/loot-filters-header";
 import { useState } from "react";
 import {
@@ -105,20 +104,13 @@ export const LootsListPage: React.FC = () => {
             <LootsList />
           </div>
 
-          <AnimatePresence initial={false}>
-            {!usesOverlayFilters && isFiltersOpen && (
-              <m.div
-                layout
-                initial={{ opacity: 0, x: 24 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 24 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden h-full"
-              >
-                <LootsFiltersSidebar />
-              </m.div>
-            )}
-          </AnimatePresence>
+          <CollapsePresence
+            open={!usesOverlayFilters && isFiltersOpen}
+            axis="horizontal"
+            className="h-full"
+          >
+            <LootsFiltersSidebar />
+          </CollapsePresence>
         </div>
       </div>
 
