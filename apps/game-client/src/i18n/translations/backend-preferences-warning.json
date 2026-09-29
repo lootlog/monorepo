@@ -3,7 +3,10 @@
     "title": "Zmiana ustawień"
   },
   "content": {
-    "title": "Ustawienia powiadomień i wykrywacza są teraz przechowywane tylko po stronie serwera.",
-    "description": "Poprzednie ustawienia zapisane lokalnie w tej przeglądarce nie zostały zachowane. Sprawdź aktualną konfigurację w ustawieniach."
+    "title": "Ustawienia powiadomień i wykrywacza są teraz zapisywane na Twoim koncie",
+    "description": "Poprzednie ustawienia zapisane lokalnie w tej przeglądarce nie zostały przeniesione. Sprawdź aktualną konfigurację w ustawieniach."
+  },
+  "actions": {
+    "review": "Sprawdź ustawienia"
   }
 }

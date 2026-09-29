@@ -23,10 +23,11 @@ export const InstallButton: FC = () => {
           <Button
             aria-label={t("ui.tooltips.installAddon")}
             variant="ghost"
-            className="size-11"
+            className="h-auto w-14 flex-col gap-1 px-1 py-1.5 text-xs leading-none has-[>svg]:px-1"
             onClick={() => dispatch({ type: "OPEN" })}
           >
-            <Blocks color="#3E8667" className="!size-6" />
+            <Blocks aria-hidden="true" color="#3E8667" className="!size-6" />
+            {t("ui.sidebar.installAddon")}
           </Button>
         }
       />

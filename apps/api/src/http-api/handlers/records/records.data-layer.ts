@@ -106,8 +106,8 @@ export const recordsDataLayer = (services: RecordsServices) =>
           mutableNpcTypes(query),
         ),
       ),
-    getUserFeed: (caller) =>
-      lootOperation("users.feed", services.userFeed(caller.discordId)),
+    getUserFeed: (caller, query) =>
+      lootOperation("users.feed", services.userFeed(caller.discordId, query)),
     getUserKillAnalytics: (caller, query) =>
       lootOperation(
         "KillsController_getUserKillAnalytics",

@@ -36,7 +36,7 @@ const selectionKey = (selection: TimerColorSelection) =>
 
 /** A row added or restored in this session slides into the list once. */
 const ENTERED_ROW_CLASS_NAME =
-  "ll:animate-in ll:fade-in-0 ll:slide-in-from-top-1 ll:duration-300 ll:ease-[cubic-bezier(0.2,0,0,1)]";
+  "ll:animate-in ll:fade-in-0 ll:slide-in-from-top-1 ll:duration-long ll:ease-enter";
 
 const getTimerColorEditData = (
   selection: TimerColorSelection,

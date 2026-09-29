@@ -27,7 +27,6 @@ describe("SettingsGuildPicker", () => {
         guilds={guilds}
         selectedGuildIds={["guild-1"]}
         onToggle={onToggle}
-        emptyStateLabel="Brak gildii."
       />,
     );
 

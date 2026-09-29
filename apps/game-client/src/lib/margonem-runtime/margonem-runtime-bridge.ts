@@ -1,4 +1,6 @@
 import type { GameEvent } from "@lootlog/margonem/game-events";
+import { createDiagnosticsReport } from "@/lib/diagnostics-report";
+import { showRuntimeFailureNotice } from "@/lib/runtime-failure-notice";
 import { parseRuntimeFacts } from "./runtime-event-parser";
 import {
   createRuntimeAdapter,
@@ -527,10 +529,26 @@ function scheduleActiveRuntimeTeardown(): void {
   const failedRuntime = runtimeWindow.__lootlogGameClientRuntime;
 
   if (!failedRuntime) return;
+  let diagnostics = "";
+
+  // Teardown resets the bridge and the overlay's stores, so the report is
+  // taken while they still describe the failure.
+  try {
+    diagnostics = createDiagnosticsReport({
+      bridgeHealth: margonemRuntimeBridge.getHealth(),
+      failure: "game bridge could not attach to Margonem's packet handler",
+    });
+  } catch {
+    // The notice and the teardown must not depend on the report.
+  }
 
   queueMicrotask(() => {
-    if (runtimeWindow.__lootlogGameClientRuntime === failedRuntime) {
+    if (runtimeWindow.__lootlogGameClientRuntime !== failedRuntime) return;
+
+    try {
       failedRuntime.dispose();
+    } finally {
+      showRuntimeFailureNotice("gameConnection", diagnostics);
     }
   });
 }

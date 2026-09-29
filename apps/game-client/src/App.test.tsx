@@ -203,6 +203,14 @@ describe("extension session lifecycle", () => {
         }
       },
     );
+    // A fresh page load starts with the session read still pending.
+    act(() =>
+      authClient.$store.atoms.session.set({
+        ...authClient.$store.atoms.session.get(),
+        data: null,
+        isPending: true,
+      }),
+    );
     act(() => authClient.$store.notify("$sessionSignal"));
     const view = render(<App />);
     await waitFor(() => expect(wires).toHaveLength(1));
@@ -230,15 +238,33 @@ describe("extension session lifecycle", () => {
     await waitFor(() => expect(wires[1]?.readyState).toBe(3));
     expect(privateState()).toEqual(clearedState);
     expect(wires).toHaveLength(2);
-    expect(screen.queryByRole("link")).toBeNull();
+    // A confirmed logout sends the player to sign in again on the website.
+    expect(
+      await screen.findByRole("link", { name: "Otwórz stronę Lootloga" }),
+    ).toBeInTheDocument();
     view.unmount();
   });
 
-  it("keeps the userscript overlay available without a session", () => {
+  it("keeps the userscript overlay available without a session, offers sign-in and stops its socket", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json(null));
+    const wires: RealtimeWire[] = [];
+    vi.stubGlobal(
+      "WebSocket",
+      class extends RealtimeWire {
+        constructor() {
+          super();
+          wires.push(this);
+        }
+      },
+    );
+    act(() => authClient.$store.notify("$sessionSignal"));
     const view = render(<App />);
     expect(useGameStore.getState().game?.hero.name).toBe("Tester");
-    expect(screen.queryByRole("link")).toBeNull();
+    await screen.findByRole("region", { name: "Logowanie do Lootloga" });
+    expect(useGameStore.getState().game?.hero.name).toBe("Tester");
+    await waitFor(() =>
+      expect(wires.every((wire) => wire.readyState === 3)).toBe(true),
+    );
     view.unmount();
   });
 });

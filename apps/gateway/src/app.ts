@@ -160,6 +160,7 @@ class GatewayApplication extends Context.Service<
             .pipe(Effect.asVoid),
       );
 
+      yield* presence.runDeltaFlush().pipe(Effect.forkScoped);
       yield* presence.runExpirySweep().pipe(Effect.forkScoped);
       yield* presence.runOfflineSweep().pipe(Effect.forkScoped);
       const activity = new ActivityPublisher(messaging, config);

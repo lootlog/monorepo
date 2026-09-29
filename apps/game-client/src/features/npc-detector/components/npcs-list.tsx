@@ -7,6 +7,7 @@ import {
   useNpcDetectorStore,
 } from "@/store/npc-detector.store";
 import { useSettingsStore } from "@/store/settings.store";
+import { useAnimationEffects } from "@/hooks/use-animation-effects";
 import { type FC, useLayoutEffect, useRef, useState } from "react";
 import type { DetectorSettings } from "@lootlog/schema/account-preferences";
 import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
@@ -70,9 +71,13 @@ export const NpcsList: FC<NpcsListProps> = ({
     })),
   );
 
+  // The setting alone drives countdowns, which step under reduced motion;
+  // movement also follows the operating system preference.
   const animationEffectsEnabled = useSettingsStore(
     (state) => state.animationEffectsEnabled,
   );
+
+  const motionEnabled = useAnimationEffects();
 
   const hasActivePartyGathering = useHasOwnedReadyRoom();
 
@@ -129,9 +134,9 @@ export const NpcsList: FC<NpcsListProps> = ({
     if (latestDetectionAnimationCycle === 0) return;
     scrollViewportRef.current?.scrollTo({
       top: 0,
-      behavior: animationEffectsEnabled ? "smooth" : "auto",
+      behavior: motionEnabled ? "smooth" : "auto",
     });
-  }, [animationEffectsEnabled, latestDetectionAnimationCycle]);
+  }, [motionEnabled, latestDetectionAnimationCycle]);
 
   const itemCount = npcs?.length ?? 0;
 
@@ -176,14 +181,14 @@ export const NpcsList: FC<NpcsListProps> = ({
     npcs,
     startIndex,
     endIndex,
-    animationEffectsEnabled,
+    animationEffectsEnabled: motionEnabled,
   });
 
   useNpcListRowLayoutAnimation({
     npcs,
     startIndex,
     endIndex,
-    animationEffectsEnabled,
+    animationEffectsEnabled: motionEnabled,
     listContentRef,
     rowStride: NPC_ROW_STRIDE_PX,
   });
@@ -245,7 +250,7 @@ export const NpcsList: FC<NpcsListProps> = ({
           <li
             key={`exiting-${npc.id}-${startedAt}`}
             aria-hidden="true"
-            className="ll:pointer-events-none ll:absolute ll:left-0 ll:w-full ll:animate-out ll:fade-out-0 ll:slide-out-to-right-3 ll:duration-200 ll:ease-in ll:transition-none"
+            className="ll:pointer-events-none ll:absolute ll:left-0 ll:w-full ll:animate-out ll:fade-out-0 ll:slide-out-to-right-3 ll:duration-short ll:ease-exit ll:transition-none"
             style={{
               height: NPC_ROW_HEIGHT_PX,
               top: NPC_LIST_PADDING_TOP_PX + index * NPC_ROW_STRIDE_PX,

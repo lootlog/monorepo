@@ -14,7 +14,7 @@ export function ReadyRoomExpiry({ expiresAt }: ReadyRoomExpiryProps) {
   const remainingMs = Date.parse(expiresAt) - now;
 
   return (
-    <span className="ll:shrink-0 ll:tabular-nums ll:text-white/65">
+    <span className="ll:shrink-0 ll:tabular-nums ll:text-muted-foreground">
       {remainingMs > 0
         ? t("header.expiresIn", {
             minutes: Math.ceil(remainingMs / MINUTE_MS),

@@ -1,3 +1,5 @@
+import { getPrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
+
 /**
  * Easing for a countdown ring or bar drained by a single Web Animation. A
  * ring's dash offset cannot run on the compositor, so the ring is repainted
@@ -6,6 +8,6 @@
  * per second.
  */
 export const getCountdownRingEasing = (remainingMs: number) =>
-  window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  getPrefersReducedMotion()
     ? `steps(${Math.max(1, Math.ceil(remainingMs / 1000))}, end)`
     : "linear";

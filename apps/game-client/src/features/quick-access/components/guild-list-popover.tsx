@@ -8,13 +8,20 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { QuickAccessButton } from "@/features/quick-access/components/quick-access-button";
-import { LOOTLOG_APP_URL } from "@/config/app";
-import { ExternalLink, Loader2, SquareArrowOutUpRight } from "lucide-react";
+import { useSetupChecklist } from "@/features/setup-checklist/use-setup-checklist";
+import { openLootlogApp } from "@/lib/open-lootlog-app";
+import {
+  ExternalLink,
+  ListChecks,
+  Loader2,
+  SquareArrowOutUpRight,
+} from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 export const GuildListPopover = () => {
   const { t } = useTranslation("quickAccess");
+  const { t: tCommon } = useTranslation("common");
   const [open, setOpen] = useState(false);
 
   const {
@@ -22,13 +29,22 @@ export const GuildListPopover = () => {
     orderedGuilds: guilds,
   } = useLootlogGuilds();
 
+  // A hidden checklist comes back here while there is still something to do.
+  const setup = useSetupChecklist();
+  const canShowSetup = setup.dismissed && setup.incomplete;
+
   const handleGuildClick = (guildId: string) => {
-    window.open(`${LOOTLOG_APP_URL}/${guildId}`, "_blank", "noopener");
+    openLootlogApp(`/${guildId}`);
     setOpen(false);
   };
 
   const handleDashboardClick = () => {
-    window.open(`${LOOTLOG_APP_URL}/@me`, "_blank", "noopener");
+    openLootlogApp();
+    setOpen(false);
+  };
+
+  const handleShowSetupClick = () => {
+    setup.setDismissed(false);
     setOpen(false);
   };
 
@@ -64,6 +80,21 @@ export const GuildListPopover = () => {
               <span>{t("guildPopover.dashboard")}</span>
               <ExternalLink className="ll:w-3 ll:h-3 ll:text-muted-foreground" />
             </Button>
+
+            {canShowSetup ? (
+              <Button
+                size="xs"
+                variant="menu"
+                className="ll:w-full ll:justify-between ll:h-auto"
+                onClick={handleShowSetupClick}
+              >
+                <span>{t("guildPopover.showSetup")}</span>
+                <ListChecks
+                  aria-hidden
+                  className="ll:w-3 ll:h-3 ll:text-muted-foreground"
+                />
+              </Button>
+            ) : null}
 
             {guilds.length > 0 && (
               <div className="ll:border-0 ll:border-t ll:border-gray-400/40" />
@@ -101,8 +132,13 @@ export const GuildListPopover = () => {
                 </div>
               </ScrollArea>
             ) : (
-              <div className="ll:px-2 ll:py-2 ll:text-center ll:text-xs ll:text-muted-foreground">
-                {t("guildPopover.emptyGuilds")}
+              <div className="ll:flex ll:flex-col ll:gap-0.5 ll:border-0 ll:border-t ll:border-gray-400/40 ll:px-2 ll:py-2 ll:text-xs">
+                <span className="ll:font-semibold ll:text-foreground/85">
+                  {tCommon("noLootlog.title")}
+                </span>
+                <span className="ll:text-[11px] ll:leading-4 ll:text-muted-foreground ll:text-pretty">
+                  {tCommon("noLootlog.description")}
+                </span>
               </div>
             )}
           </div>

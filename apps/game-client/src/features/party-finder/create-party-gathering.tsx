@@ -14,6 +14,7 @@ export const CreatePartyGathering = () => {
       id="create-party-gathering"
       title={t("window.createTitle")}
       onClose={() => setOpen("create-party-gathering", false)}
+      contentClassName="ll:-mx-1 ll:-mb-1"
       minHeight={180}
       minWidth={280}
     >

@@ -3,13 +3,13 @@ import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import {
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
-  useUserLootlogConfigControllerGetUserLootlogConfigByAccountId,
   userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig,
   type UserLootlogConfigAccountResponseDtoOutput,
 } from "@lootlog/client/main";
 import { SettingsCharacterPicker } from "@/features/settings/components/shared/settings-character-picker";
 import { useSaveMarks } from "@/features/settings/components/shared/use-save-marks";
 import { useCharacterList } from "@/hooks/api/use-character-list";
+import { useLootlogCharactersConfig } from "@/hooks/api/use-lootlog-characters-config";
 
 import { CatchingSettingsForm } from "@/features/settings/components/catching/catching-settings-form";
 import { reportSettingsSave } from "@/features/settings/persistence/settings-save-status.store";
@@ -30,18 +30,7 @@ export const CatchingSettings = () => {
 
   const { data: characterList } = useCharacterList();
 
-  const { data: lootlogCharactersConfig } =
-    useUserLootlogConfigControllerGetUserLootlogConfigByAccountId(
-      { accountId },
-      {
-        query: {
-          queryKey,
-          refetchOnMount: false,
-          refetchOnWindowFocus: false,
-          staleTime: 60_000,
-        },
-      },
-    );
+  const { data: lootlogCharactersConfig } = useLootlogCharactersConfig();
 
   const initialCharacterId = useGameStore(
     (state) => state.game?.hero.characterId ?? "",

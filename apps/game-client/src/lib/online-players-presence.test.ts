@@ -1,10 +1,14 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   applyPresenceUpdates,
   normalizePresence,
   requestServerPresence,
   type PlayerPresence,
 } from "./online-players-presence";
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 const createPresence = (
   discordId: string,
@@ -99,7 +103,8 @@ describe("online players presence", () => {
     );
   });
 
-  it("uses an acknowledgement timeout and retries once", async () => {
+  it("uses an acknowledgement timeout and retries once after a delay", async () => {
+    vi.useFakeTimers();
     const response = { status: "success" as const, players: {} };
 
     const emitWithAck = vi
@@ -115,9 +120,12 @@ describe("online players presence", () => {
       Parameters<typeof requestServerPresence>[0]["timeout"]
     >(() => ({ emitWithAck }));
 
-    await expect(
-      requestServerPresence({ timeout }, "guild-1", "tempest"),
-    ).resolves.toEqual(response);
+    const request = requestServerPresence({ timeout }, "guild-1", "tempest");
+
+    await vi.advanceTimersByTimeAsync(999);
+    expect(emitWithAck).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(2_001);
+    await expect(request).resolves.toEqual(response);
     expect(timeout).toHaveBeenCalledTimes(2);
     expect(timeout).toHaveBeenNthCalledWith(1, 5_000);
     expect(timeout).toHaveBeenNthCalledWith(2, 5_000);

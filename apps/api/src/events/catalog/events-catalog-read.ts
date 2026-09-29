@@ -1,4 +1,4 @@
-import { makeEventMapHydration } from "./event-map-hydration.js";
+import { makeEventMapRead } from "./event-map-read.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   getEffectiveCapabilities,
@@ -12,7 +12,6 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
   eventMapLocationTable,
-  eventMapTable,
   eventTable,
   roleTable,
 } from "#src/database/drizzle/schema";
@@ -81,22 +80,7 @@ export const makeEventsCatalogRead = (
             .where(inArray(eventHeroNpcTable.eventId, eventIds)),
         );
 
-  const hydrateMaps = makeEventMapHydration(database, query);
-
-  const mapsWithMembers = (heroId: string, locationId?: string) =>
-    query(
-      "events.catalog.maps",
-      database
-        .select()
-        .from(eventMapTable)
-        .where(
-          and(
-            eq(eventMapTable.heroNpcId, heroId),
-            locationId ? eq(eventMapTable.locationId, locationId) : undefined,
-          ),
-        )
-        .orderBy(asc(eventMapTable.mapId)),
-    ).pipe(Effect.flatMap(hydrateMaps));
+  const { mapsForHero } = makeEventMapRead(database, query);
 
   const locationsWithMaps = (heroId: string) =>
     query(
@@ -111,7 +95,7 @@ export const makeEventsCatalogRead = (
         Effect.forEach(
           locations,
           (location) =>
-            mapsWithMembers(heroId, location.id).pipe(
+            mapsForHero(heroId, location.id).pipe(
               Effect.map((maps) => ({ ...location, maps })),
             ),
           { concurrency: "unbounded" },
@@ -194,9 +178,7 @@ export const makeEventsCatalogRead = (
       const heroNpcs = yield* Effect.forEach(
         heroes,
         (hero) =>
-          mapsWithMembers(hero.id).pipe(
-            Effect.map((maps) => ({ ...hero, maps })),
-          ),
+          mapsForHero(hero.id).pipe(Effect.map((maps) => ({ ...hero, maps }))),
         { concurrency: "unbounded" },
       );
 
@@ -326,7 +308,7 @@ export const makeEventsCatalogRead = (
               Effect.all(
                 {
                   locations: locationsWithMaps(hero.id),
-                  maps: mapsWithMembers(hero.id),
+                  maps: mapsForHero(hero.id),
                 },
                 { concurrency: "unbounded" },
               ).pipe(
