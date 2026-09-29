@@ -15,22 +15,28 @@ export class FederationSequence {
   constructor(private readonly reorderWindowMs: number) {}
 
   /**
-   * Starts a subscription from the counter read after SUBSCRIBE. Returns
-   * whether continuity is already proven; otherwise the frames up to
-   * `published` must arrive within the reorder window.
+   * Starts a subscription from the counter read after SUBSCRIBE. `pending`
+   * means the frames up to `published` must arrive within the reorder window.
    */
-  resume(published: number, now: number): boolean {
-    // Nothing published before the first subscription can reach it. A counter
-    // below the last frame means Redis lost its data, and with it the channel.
-    if (this.contiguous === undefined || published < this.contiguous) {
+  resume(published: number, now: number): "intact" | "pending" | "lost" {
+    // Nothing published before the first subscription can reach it.
+    if (this.contiguous === undefined) {
       this.rebase(published);
 
-      return true;
+      return "intact";
+    }
+
+    // A counter below the last frame was reset with the Redis data. Frames
+    // numbered in the new epoch while this subscriber was away are unknown.
+    if (published < this.contiguous) {
+      this.rebase(published);
+
+      return "lost";
     }
 
     this.require(published, now);
 
-    return this.required === undefined;
+    return this.required === undefined ? "intact" : "pending";
   }
 
   /** Records a frame. Returns whether it closed the last open hole. */

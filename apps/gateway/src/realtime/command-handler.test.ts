@@ -1016,6 +1016,58 @@ describe("CommandHandler session lifecycle", () => {
     expect(requests).toBe(1);
   });
 
+  test("a join over capacity without a request ID closes the socket so the client retries", async () => {
+    const { handler, hub } = setup(
+      undefined,
+      undefined,
+      undefined,
+      new JoinAdmission({
+        ratePerSecond: 0,
+        burst: 0,
+        concurrent: 1,
+        retryAfterMs: { min: 1_000, max: 1_000 },
+      }),
+    );
+
+    const { socket, closes } = makeSocket();
+
+    await Effect.runPromise(
+      handler.handle(
+        socket,
+        Buffer.from(encode({ v: 1, type: "session.join", data: {} })),
+      ),
+    );
+
+    expect(closes).toEqual([1013]);
+    expect(hub.responses).toEqual([]);
+    expect(socket.data.joined).toBe(false);
+  });
+
+  test("a socket closing after a federation gap acts on no command", async () => {
+    const { handler, hub } = setup();
+    const { socket } = makeSocket();
+    socket.data.joined = true;
+    socket.data.closing = true;
+
+    await Effect.runPromise(
+      handler.handle(
+        socket,
+        Buffer.from(
+          encode({
+            v: 1,
+            type: "presence.heartbeat",
+            requestId: "heartbeat",
+            data: { sessionId: "presence-1" },
+          }),
+        ),
+      ),
+    );
+
+    expect(hub.responses).toMatchObject([
+      { requestId: "heartbeat", status: "error", error: { retryable: true } },
+    ]);
+  });
+
   test("supports deterministic rejoin and emits request/response plus joined events", async () => {
     const { handler, hub, activity } = setup();
     const { socket } = makeSocket();

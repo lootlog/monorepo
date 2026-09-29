@@ -23,7 +23,10 @@ import {
 } from "testcontainers";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import { RedisGatewayStore } from "#src/platform/redis-store";
-import { GatewayMetrics } from "#src/realtime/gateway-metrics";
+import {
+  GatewayMetrics,
+  readClusterFederationVersion,
+} from "#src/realtime/gateway-metrics";
 import { PRESENCE_EXPIRY_MS } from "@lootlog/protocol/realtime";
 import { PresenceStore } from "#src/realtime/presence-store";
 import { OnlineHistory } from "#src/realtime/online-history";
@@ -2423,6 +2426,8 @@ describe("realtime Dragonfly integration", () => {
     { cluster: "unsequenced", lostFrame: false, closed: true },
     { cluster: "sequenced", lostFrame: false, closed: false },
     { cluster: "sequenced", lostFrame: true, closed: true },
+    // The periodic sample still reports version 4 when an old replica starts.
+    { cluster: "rolling-back", lostFrame: false, closed: true },
   ] as const)(
     "a dropped federation subscription in an $cluster cluster closes sessions only when frames may be lost (lost frame: $lostFrame)",
     async ({ cluster, lostFrame, closed }) => {
@@ -2430,6 +2435,7 @@ describe("realtime Dragonfly integration", () => {
       const url = `redis://127.0.0.1:${redisPort}`;
       const control = ManagedRuntime.make(BunRedis.layer({ url }));
       const controlRedis = await control.runPromise(Redis.Redis);
+      const snapshots = `${configuration.redis.keyPrefix}:realtime:metrics:instances:v2`;
 
       const subscriberAddresses = async () =>
         new Set(
@@ -2465,11 +2471,17 @@ describe("realtime Dragonfly integration", () => {
           },
         );
 
-        const hub = new RealtimeHub(configuration, store);
+        const hub = new RealtimeHub(configuration, store, undefined, {
+          readClusterFederationVersion: () =>
+            readClusterFederationVersion(store.command),
+        });
 
-        if (cluster === "sequenced")
-          hub.clusterFederationVersion = SEQUENCED_FEDERATION_VERSION;
         await runtime.runPromise(hub.start());
+
+        if (cluster !== "unsequenced")
+          await runtime.runPromise(
+            new GatewayMetrics(store.command, hub).sample(),
+          );
 
         return hub;
       };
@@ -2538,6 +2550,26 @@ describe("realtime Dragonfly integration", () => {
         await publishKill(healthy);
         await waitFor(() => stale.frames.length === 1);
 
+        if (cluster === "rolling-back") {
+          expect(affected.clusterFederationVersion).toBe(
+            SEQUENCED_FEDERATION_VERSION,
+          );
+          await control.runPromise(
+            controlRedis.send(
+              "HSET",
+              snapshots,
+              "version-3-replica",
+              JSON.stringify({
+                at: Date.now(),
+                federationVersion: 3,
+                connections: 0,
+                sessions: 0,
+                players: [],
+              }),
+            ),
+          );
+        }
+
         // A frame numbered but never delivered stands for one published while
         // the subscriber was away.
         if (lostFrame)
@@ -2558,6 +2590,7 @@ describe("realtime Dragonfly integration", () => {
             { code: 1013, reason: "federation-unavailable" },
           ]);
           expect(affected.getLocalSockets()).toEqual([]);
+          expect(stale.socket.data.closing).toBe(true);
         }
 
         await waitFor(() => affected.unavailableReason() === undefined, 5_000);
@@ -2578,6 +2611,9 @@ describe("realtime Dragonfly integration", () => {
           await runtime.dispose();
         }
 
+        await control.runPromise(
+          controlRedis.send("HDEL", snapshots, "version-3-replica"),
+        );
         await control.dispose();
       }
     },
