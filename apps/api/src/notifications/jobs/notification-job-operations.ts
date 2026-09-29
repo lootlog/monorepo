@@ -96,10 +96,7 @@ export const makeNotificationJobOperations = (
                       rule.filters,
                     ),
             },
-            target: {
-              ...target,
-              metadata: target.metadata,
-            },
+            target,
           })),
         ),
       );

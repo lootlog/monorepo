@@ -10,13 +10,6 @@ import {
 import type { NotificationOwnerType } from "#src/notifications/notification-enums";
 import type { UpdateNotificationTargetRequest } from "#src/contracts/notifications/schemas";
 
-export const mapNotificationTarget = (
-  target: typeof notificationTargetTable.$inferSelect,
-) => ({
-  ...target,
-  metadata: target.metadata,
-});
-
 export const readNotificationRuleTargets = Effect.fnUntraced(function* (
   database: typeof ApiDatabase.Service,
   ruleIds: readonly number[],
@@ -25,7 +18,7 @@ export const readNotificationRuleTargets = Effect.fnUntraced(function* (
     number,
     Array<
       typeof notificationRuleTargetTable.$inferSelect & {
-        target: ReturnType<typeof mapNotificationTarget>;
+        target: typeof notificationTargetTable.$inferSelect;
       }
     >
   >();
@@ -46,7 +39,7 @@ export const readNotificationRuleTargets = Effect.fnUntraced(function* (
 
   for (const { link, target } of rows) {
     const targets = result.get(link.ruleId) ?? [];
-    targets.push({ ...link, target: mapNotificationTarget(target) });
+    targets.push({ ...link, target });
     result.set(link.ruleId, targets);
   }
 
