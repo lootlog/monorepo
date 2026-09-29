@@ -470,15 +470,14 @@
    * Loading placeholders stay invisible for the first moments so a response
    * that arrives quickly never flashes a skeleton or spinner. The keyframe has
    * no end state: it resolves to whatever the element's own animation shows.
+   * The web app fades content in only after this keyframe has started, so keep
+   * its name.
    */
   --animate-placeholder-in: placeholder-in 200ms var(--ease-emphasized) 150ms
     backwards;
   --animate-skeleton:
     pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite,
     placeholder-in 200ms var(--ease-emphasized) 150ms backwards;
-  /* Loaded content settles into place instead of snapping over a skeleton. */
-  --animate-content-in: content-in 240ms var(--ease-emphasized) backwards;
-
   /* Small confirmations (check marks, radio dots, status dots) pop into place. */
   --animate-pop-in: pop-in 200ms var(--ease-overshoot) backwards;
 
@@ -492,13 +491,6 @@
   @keyframes placeholder-in {
     from {
       opacity: 0;
-    }
-  }
-
-  @keyframes content-in {
-    from {
-      opacity: 0;
-      translate: 0 4px;
     }
   }
 }

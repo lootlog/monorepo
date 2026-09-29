@@ -96,7 +96,7 @@ async function renderPage(
 
 describe("EventCoordinationPage", () => {
   it("renders the loading state", async () => {
-    expect(await renderPage("loading")).toContain("animate-spin");
+    expect(await renderPage("loading")).toContain("common.loading");
   });
   it("renders the empty state", async () => {
     expect(await renderPage(createCoordination([]))).toContain(

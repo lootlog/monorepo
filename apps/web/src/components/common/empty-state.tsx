@@ -33,7 +33,7 @@ export const EmptyState = ({
     <Empty
       className={cn("min-h-64 border-0 bg-transparent px-6 py-12", className)}
     >
-      <EmptyHeader className="animate-content-in">
+      <EmptyHeader>
         <EmptyMedia variant="icon">
           <Icon />
         </EmptyMedia>

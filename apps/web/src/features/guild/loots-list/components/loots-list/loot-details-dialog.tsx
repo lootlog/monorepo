@@ -20,7 +20,6 @@ import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { LootDetailsActions } from "@/features/guild/loots-list/components/loots-list/loot-details-actions";
 import { AlertCircle, Calendar, MapPin, Package, Users, X } from "lucide-react";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import { useSelectedLoot } from "@/hooks/use-selected-loot";
 import { useLootFromCache } from "@/hooks/use-loot-from-cache";
 import { useIsOwner } from "@/hooks/context/use-is-owner";
@@ -35,6 +34,7 @@ import {
   useLootsControllerFetchLootById,
 } from "@lootlog/client/main";
 import { cn } from "cn";
+import { LoadingSlot } from "@/components/common/loading-slot";
 
 const ARCHIVE_LOOTS_PERMISSION = "LOOTLOG_LOOTS_ARCHIVE";
 
@@ -45,7 +45,7 @@ type TitleComponent = ComponentType<{
 
 const LoadingState: FC = () => (
   <div className="flex flex-1 items-center justify-center py-16">
-    <Spinner className="size-7 text-muted-foreground" />
+    <LoadingSlot size="small" />
   </div>
 );
 

@@ -2,7 +2,6 @@ import { TableBody, TableRow } from "@lootlog/ui/components/table";
 import { flexRender, type Table } from "@tanstack/react-table";
 import { cn } from "cn";
 import { Fragment } from "react";
-import { ROW_ENTRANCE_CLASS_NAME } from "@/components/ui/row-entrance";
 import type { coreTableFeatures } from "@/lib/tanstack-table-features";
 import type { OneVsOneStatsRow } from "./one-vs-one-stats-rows";
 
@@ -24,7 +23,6 @@ export const OneVsOneStatsTableBody = ({
         <TableRow
           key={row.id}
           className={cn(
-            ROW_ENTRANCE_CLASS_NAME,
             "border-b border-border/70",
             row.original.kind === "category" && "bg-muted/50",
             activeSearchKey === row.original.searchKey &&

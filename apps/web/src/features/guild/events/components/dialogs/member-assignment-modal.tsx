@@ -11,13 +11,13 @@ import { Label } from "@lootlog/ui/components/label";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Search, X, Users, UserPlus, AlertTriangle } from "lucide-react";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import { cn } from "cn";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useMembersControllerGetGuildMembers } from "@lootlog/client/main";
 import { SearchInput } from "@/components/ui/search-input";
 import { useAssignmentCountdown } from "../../hooks/utils/use-assignment-countdown";
+import { LoadingSlot } from "@/components/common/loading-slot";
 
 interface MemberAssignmentModalProps {
   open: boolean;
@@ -195,7 +195,7 @@ export const MemberAssignmentModal = ({
               <ScrollArea className="h-[220px] rounded-lg border relative">
                 {isLoading ? (
                   <div className="flex flex-col items-center justify-center h-full py-8">
-                    <Spinner className="size-6 text-primary mb-2" />
+                    <LoadingSlot size="small" className="mb-2" />
                     <p className="text-xs text-muted-foreground">
                       {t("common.loading")}
                     </p>
