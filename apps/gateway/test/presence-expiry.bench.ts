@@ -96,7 +96,6 @@ try {
       sadd: (...args) => measure(store.command.sadd(...args)),
       srem: (...args) => measure(store.command.srem(...args)),
       smembers: (...args) => measure(store.command.smembers(...args)),
-      zadd: (...args) => measure(store.command.zadd(...args)),
       mget: (keys) => measure(store.command.mget(keys), keys.length),
       eval: <A = unknown>(...args: Parameters<RedisGatewayCommands["eval"]>) =>
         measure(store.command.eval<A>(...args)),
