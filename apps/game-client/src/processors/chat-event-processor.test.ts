@@ -7,6 +7,9 @@ import type { GameEvent } from "@lootlog/margonem/game-events";
 
 const fetchImplementation = vi.fn<typeof globalThis.fetch>();
 
+const shareResponse = (share: Record<string, string[]>) =>
+  Response.json(share, { status: 200 });
+
 const createChatEvent = (message: string): GameEvent => ({
   chat: {
     channels: {
@@ -24,7 +27,9 @@ describe("ChatEventProcessor", () => {
 
   beforeEach(() => {
     fetchImplementation.mockReset();
-    fetchImplementation.mockResolvedValue(new Response(null, { status: 204 }));
+    fetchImplementation.mockImplementation(async () =>
+      shareResponse({ "127": ["bb"] }),
+    );
     restoreApi = configureApiClients({
       main: { baseUrl: "https://api.example.test", fetch: fetchImplementation },
     });
@@ -70,12 +75,25 @@ describe("ChatEventProcessor", () => {
     useLootStore.setState({ lastLootId: 55 });
     processor.handle(createChatEvent("Podział łupów: zwycięstwo"));
     useLootStore.getState().setLastLootId(99);
-    deferred.resolve(new Response(null, { status: 204 }));
+    deferred.resolve(shareResponse({ "127": ["bb"] }));
 
     await vi.waitFor(() =>
       expect(useLogsStore.getState().actions[0]?.status).toBe("success"),
     );
     expect(useLootStore.getState().lastLootId).toBe(99);
+  });
+
+  it("keeps tracked loot when the message confirms none of its items", async () => {
+    fetchImplementation.mockImplementation(async () => shareResponse({}));
+    useLootStore.setState({ lastLootId: 55 });
+    processor.handle(createChatEvent("Podział łupów: poprzednia walka"));
+
+    await vi.waitFor(() =>
+      expect(useLogsStore.getState().actions[0]?.status).toBe("success"),
+    );
+    // Let the processor's response handler run after the logged success.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(useLootStore.getState().lastLootId).toBe(55);
   });
 
   it("logs warning and retains tracked loot when update fails", async () => {

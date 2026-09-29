@@ -21,6 +21,7 @@ import {
 } from "#src/loots/loot-share-message";
 import { ErrorKey } from "#src/loots/error-key";
 import {
+  ApplicationError,
   InvalidRequestError,
   ResourceConflictError,
   PermissionDeniedError,
@@ -125,8 +126,12 @@ export const makeLootAllocationOperations = (options: {
 }) => {
   const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
-      Effect.mapError(
-        (cause) => new LootAllocationOperationError({ operation, cause }),
+      // Declared business failures keep their HTTP status; only unexpected
+      // causes become an internal operation error.
+      Effect.mapError((cause) =>
+        Schema.is(ApplicationError)(cause)
+          ? cause
+          : new LootAllocationOperationError({ operation, cause }),
       ),
       Effect.withSpan(operation, {
         attributes: { adapter: "loot-allocation", retryCount: 0 },
@@ -218,25 +223,36 @@ export const makeLootAllocationOperations = (options: {
 
         const allocation = resolveChatAllocation(parsed, players, items);
 
-        if (Object.keys(allocation).length === 0) {
-          return yield* Effect.fail(
-            new InvalidRequestError(ErrorKey.MISSING_LOOT_SHARE_ITEM_OR_PLAYER),
-          );
+        const sharedItemsCount = new Set(Object.values(allocation).flat()).size;
+
+        // Margonem omits items every player rejected, so a chat share may cover
+        // only some loot items, or none. With nothing to record, keep the
+        // current allocation instead of erasing it. The empty response tells
+        // the game client this message did not confirm the loot; it may belong
+        // to an older one.
+        if (sharedItemsCount === 0) {
+          options.logger.log({
+            level: "info",
+            message: "Chat loot share matched no loot items; allocation kept",
+            lootId: input.lootId,
+            totalItemsCount: items.length,
+          });
+
+          return {};
         }
 
         if (authorized.lootShareSource === LootShareSource.CHAT_MESSAGE) {
           yield* assertMatching(input.lootId, authorized.lootShare, allocation);
 
-          return {};
+          return allocation;
         }
 
-        if (Object.keys(allocation).length < items.length) {
+        if (sharedItemsCount < items.length) {
           options.logger.log({
-            level: "warn",
-            message:
-              "Loot share does not include all items, some items may not be shared",
+            level: "info",
+            message: "Chat loot share covers part of the loot items",
             lootId: input.lootId,
-            mappedItemsCount: Object.keys(allocation).length,
+            sharedItemsCount,
             totalItemsCount: items.length,
           });
         }
@@ -270,7 +286,7 @@ export const makeLootAllocationOperations = (options: {
 
           yield* assertMatching(input.lootId, state.lootShare, allocation);
 
-          return {};
+          return allocation;
         }
 
         const organizationIds = [
@@ -311,7 +327,7 @@ export const makeLootAllocationOperations = (options: {
           { concurrency: "unbounded", discard: true },
         );
 
-        return {};
+        return allocation;
       }),
     );
 
