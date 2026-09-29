@@ -93,5 +93,33 @@
     "showAll": "Pokaż wszystkie",
     "empty": "Nie masz jeszcze zapisanych walk.",
     "unknownOpponent": "Nieznany przeciwnik"
+  },
+  "onboarding": {
+    "title": "Pierwsze kroki",
+    "description": "Po tych krokach łupy, timery i walki z gry będą trafiać tutaj same.",
+    "guide": "Instrukcja",
+    "dismiss": "Ukryj pierwsze kroki",
+    "stepNumber": "Krok {{number}}: ",
+    "status": {
+      "current": "Następny krok",
+      "done": "Gotowe"
+    },
+    "steps": {
+      "installAddon": {
+        "title": "Zainstaluj dodatek do gry",
+        "description": "Dodatek zapisuje łupy, timery i walki podczas zwykłej gry. Instalujesz go jako skrypt Tampermonkey.",
+        "action": "Wybierz sposób instalacji"
+      },
+      "joinOrganization": {
+        "title": "Dołącz do Lootloga lub go utwórz",
+        "description": "Lootlog działa na serwerze Discord Twojej grupy. Bota Lootlog dodaje administrator serwera. Jeśli nie zarządzasz serwerem, poproś lidera o dodanie bota, a Lootlog pojawi się w panelu bocznym.",
+        "action": "Dodaj bota do serwera"
+      },
+      "catchingScope": {
+        "title": "Ustaw zakres zbierania",
+        "description": "W grze otwórz ustawienia Lootloga i w zakładce „Zakres zbierania” zaznacz Lootlogi, do których mają trafiać łupy i timery Twojej postaci.",
+        "action": "Przejdź do gry"
+      }
+    }
   }
 }
