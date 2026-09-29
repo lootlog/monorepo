@@ -1,4 +1,3 @@
-import { ROW_ENTRANCE_CLASS_NAME } from "@/components/ui/row-entrance";
 import {
   Table,
   TableBody,
@@ -162,7 +161,7 @@ export function ExpandableDataTable<TData extends Warrior>({
 
             return (
               <Fragment key={row.id}>
-                <TableRow className={cn("group/row", ROW_ENTRANCE_CLASS_NAME)}>
+                <TableRow className="group/row">
                   {row.getVisibleCells().map((cell, cellIndex) => (
                     <TableCell
                       key={cell.id}

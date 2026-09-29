@@ -1,4 +1,3 @@
-import { ROW_ENTRANCE_CLASS_NAME } from "@/components/ui/row-entrance";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
@@ -148,10 +147,7 @@ export const ActivityLogsTable = ({
           return (
             <TableRow
               key={virtualRow.key}
-              className={cn(
-                ROW_ENTRANCE_CLASS_NAME,
-                "h-14 border-b border-border hover:bg-muted/50",
-              )}
+              className="h-14 border-b border-border hover:bg-muted/50"
             >
               {row.getVisibleCells().map((cell) => (
                 <TableCell
