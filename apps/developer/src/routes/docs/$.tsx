@@ -23,6 +23,8 @@ const loadPage = createServerFn({ method: "GET" })
     return {
       path: page.path,
       title: page.data.title,
+      description: page.data.description,
+      url: page.url,
       pageTree: await source.serializePageTree(source.getPageTree()),
     };
   });
@@ -38,7 +40,21 @@ export const Route = createFileRoute("/docs/$")({
     return data;
   },
   head: ({ loaderData }) => ({
-    meta: [{ title: `${loaderData?.title ?? portalText.title} | Lootlog` }],
+    meta: [
+      { title: `${loaderData?.title ?? portalText.title} | Lootlog` },
+      {
+        name: "description",
+        content: loaderData?.description ?? portalText.description,
+      },
+    ],
+    links: loaderData
+      ? [
+          {
+            rel: "canonical",
+            href: `https://developer.lootlog.pl${loaderData.url}`,
+          },
+        ]
+      : [],
   }),
   component: Documentation,
 });

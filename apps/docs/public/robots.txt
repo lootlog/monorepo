@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /__tsr/
+
+Sitemap: https://docs.lootlog.pl/sitemap.xml

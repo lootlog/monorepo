@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as KeysRouteImport } from './routes/keys'
 import { Route as ReferenceRouteImport } from './routes/reference'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
 import { Route as DocsSplatRouteImport } from './routes/docs/$'
 import { Route as OpenapiServiceRouteImport } from './routes/openapi/$service'
@@ -29,6 +31,16 @@ const KeysRoute = KeysRouteImport.update({
 const ReferenceRoute = ReferenceRouteImport.update({
   id: '/reference',
   path: '/reference',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSearchRoute = ApiSearchRouteImport.update({
@@ -51,6 +63,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/keys': typeof KeysRoute
   '/reference': typeof ReferenceRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/search': typeof ApiSearchRoute
   '/docs/$': typeof DocsSplatRoute
   '/openapi/$service': typeof OpenapiServiceRoute
@@ -59,6 +73,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/keys': typeof KeysRoute
   '/reference': typeof ReferenceRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/search': typeof ApiSearchRoute
   '/docs/$': typeof DocsSplatRoute
   '/openapi/$service': typeof OpenapiServiceRoute
@@ -68,6 +84,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/keys': typeof KeysRoute
   '/reference': typeof ReferenceRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/search': typeof ApiSearchRoute
   '/docs/$': typeof DocsSplatRoute
   '/openapi/$service': typeof OpenapiServiceRoute
@@ -78,6 +96,8 @@ export interface FileRouteTypes {
     | '/'
     | '/keys'
     | '/reference'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/api/search'
     | '/docs/$'
     | '/openapi/$service'
@@ -86,6 +106,8 @@ export interface FileRouteTypes {
     | '/'
     | '/keys'
     | '/reference'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/api/search'
     | '/docs/$'
     | '/openapi/$service'
@@ -94,6 +116,8 @@ export interface FileRouteTypes {
     | '/'
     | '/keys'
     | '/reference'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/api/search'
     | '/docs/$'
     | '/openapi/$service'
@@ -103,6 +127,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   KeysRoute: typeof KeysRoute
   ReferenceRoute: typeof ReferenceRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiSearchRoute: typeof ApiSearchRoute
   DocsSplatRoute: typeof DocsSplatRoute
   OpenapiServiceRoute: typeof OpenapiServiceRoute
@@ -129,6 +155,20 @@ declare module '@tanstack/react-router' {
       path: '/reference'
       fullPath: '/reference'
       preLoaderRoute: typeof ReferenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/search': {
@@ -159,6 +199,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   KeysRoute: KeysRoute,
   ReferenceRoute: ReferenceRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiSearchRoute: ApiSearchRoute,
   DocsSplatRoute: DocsSplatRoute,
   OpenapiServiceRoute: OpenapiServiceRoute,

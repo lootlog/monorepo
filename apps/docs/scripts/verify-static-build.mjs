@@ -28,6 +28,39 @@ const contentFiles = (await readdir(contentDirectory))
   .filter((fileName) => fileName.endsWith(".mdx"))
   .sort();
 
+const sitemap = await readFile(
+  path.join(clientDirectory, "sitemap.xml"),
+  "utf8",
+);
+
+assert.match(
+  sitemap,
+  /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/u,
+);
+
+const sitemapLocations = Array.from(
+  sitemap.matchAll(/<loc>([^<]+)<\/loc>/gu),
+  (match) => match[1],
+).sort();
+
+const canonicalLocations = contentFiles
+  .map((fileName) => {
+    const slug = fileName.slice(0, -".mdx".length);
+
+    return `https://docs.lootlog.pl/${slug === "index" ? "docs" : `docs/${slug}`}`;
+  })
+  .sort();
+
+assert.deepEqual(
+  sitemapLocations,
+  canonicalLocations,
+  "sitemap must contain only canonical public guides",
+);
+
+const robots = await readFile(path.join(clientDirectory, "robots.txt"), "utf8");
+
+assert.match(robots, /^Sitemap: https:\/\/docs\.lootlog\.pl\/sitemap\.xml$/mu);
+
 await Promise.all(
   contentFiles.map(async (fileName) => {
     const slug = fileName.slice(0, -".mdx".length);
@@ -58,6 +91,12 @@ await Promise.all(
       `${routePath} lacks its visible description`,
     );
     assert.match(document, /class="[^"]*docs-body/u);
+    assert.ok(
+      document.includes(
+        `<link rel="canonical" href="https://docs.lootlog.pl/${routePath}"`,
+      ),
+      `${routePath} lacks its production canonical URL`,
+    );
     verifyGeneratedAssetReferences(document, "docs", routePath);
   }),
 );

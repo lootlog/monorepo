@@ -68,6 +68,12 @@ export const Route = createFileRoute("/docs/$")({
     }
 
     return {
+      links: [
+        {
+          rel: "canonical",
+          href: `https://docs.lootlog.pl/docs${loaderData.slugs.length ? `/${loaderData.slugs.join("/")}` : ""}`,
+        },
+      ],
       meta: [
         {
           title: `${loaderData.title} | ${docsTranslations.metadata.title}`,

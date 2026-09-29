@@ -26,6 +26,8 @@ describe("traffic splitter", () => {
     ["/brand/lootlog-mark.svg", environment.LANDING_ORIGIN],
     ["/screenshots/dashboard-current.png", environment.LANDING_ORIGIN],
     ["/favicon.ico", environment.LANDING_ORIGIN],
+    ["/robots.txt", environment.LANDING_ORIGIN],
+    ["/sitemap.xml", environment.LANDING_ORIGIN],
     ["/docs", environment.DOCS_ORIGIN],
     ["/docs/getting-started/", environment.DOCS_ORIGIN],
     ["/docs-assets/docs.js", environment.DOCS_ORIGIN],
@@ -51,6 +53,8 @@ describe("traffic splitter", () => {
 
   it.each([
     ["/landing-assets/app.css", productionEnvironment.LANDING_ORIGIN],
+    ["/robots.txt", productionEnvironment.LANDING_ORIGIN],
+    ["/sitemap.xml", productionEnvironment.LANDING_ORIGIN],
     ["/docs-assets/docs.js", productionEnvironment.DOCS_ORIGIN],
     ["/@me", productionEnvironment.WEB_ORIGIN],
   ])("routes production path %s to %s", async (path, expectedOrigin) => {
@@ -67,6 +71,49 @@ describe("traffic splitter", () => {
     expect(upstreamFetch.mock.calls[0]?.[0].url).toBe(
       new URL(path, expectedOrigin).href,
     );
+  });
+
+  it.each([
+    ["/docs", "GET"],
+    ["/docs/battle-panel/?source=search", "GET"],
+    ["/docs/installation", "HEAD"],
+  ])(
+    "redirects the production document %s to the docs subdomain",
+    async (path, method) => {
+      const upstreamFetch = vi.fn<UpstreamFetch>(() =>
+        Promise.resolve(new Response("documentation")),
+      );
+
+      const response = await routeRequest(
+        new Request(`https://lootlog.pl${path}`, { method }),
+        productionEnvironment,
+        upstreamFetch,
+      );
+
+      expect(response.status).toBe(308);
+      expect(response.headers.get("location")).toBe(
+        `https://docs.lootlog.pl${path}`,
+      );
+      expect(upstreamFetch).not.toHaveBeenCalled();
+    },
+  );
+
+  it("keeps documentation requests with a body on the upstream", async () => {
+    const upstreamFetch = vi.fn<UpstreamFetch>((request) =>
+      Promise.resolve(new Response(request.body)),
+    );
+
+    const response = await routeRequest(
+      new Request("https://lootlog.pl/docs/installation", {
+        method: "POST",
+        body: "payload",
+      }),
+      productionEnvironment,
+      upstreamFetch,
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe("payload");
   });
 
   it.each([
