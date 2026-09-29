@@ -681,7 +681,9 @@ export class RabbitBridge {
             type: "UPSERT",
             gathering: {
               ...update.gathering,
-              npc: data.npc,
+              // The frame schema rejects a present but undefined npc, which a
+              // gathering announced with a message instead of an NPC would carry.
+              ...(data.npc && { npc: data.npc }),
               guildIds: [data.guildId],
             },
           }
