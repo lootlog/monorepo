@@ -8,8 +8,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Separator } from "@lootlog/ui/components/separator";
-import { AnimatePresence } from "framer-motion";
-import * as m from "framer-motion/m";
+import { CollapsePresence } from "@/components/common/collapse-presence";
 import { X, Globe, Medal, Users, Award, ArrowRight } from "lucide-react";
 import { cn } from "cn";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
@@ -204,30 +203,21 @@ export const FiltersSidebar = ({
           </ScrollArea>
         </div>
 
-        <AnimatePresence>
-          {hasActiveFilters && (
-            <m.div
-              layout
-              initial={{ opacity: 0, scaleY: 0.96 }}
-              animate={{ opacity: 1, scaleY: 1 }}
-              exit={{ opacity: 0, scaleY: 0.96 }}
-              style={{ transformOrigin: "bottom" }}
-              className="border-t border-border px-4 overflow-hidden"
-            >
-              <div className="h-14 flex items-center w-full">
-                <Button
-                  onClick={handleClearFilters}
-                  variant="outline"
-                  className="w-full"
-                  size="sm"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  {t("loots.filtersPanel.quickFilters.clearButton")}
-                </Button>
-              </div>
-            </m.div>
-          )}
-        </AnimatePresence>
+        <CollapsePresence open={hasActiveFilters}>
+          <div className="border-t border-border px-4">
+            <div className="h-14 flex items-center w-full">
+              <Button
+                onClick={handleClearFilters}
+                variant="outline"
+                className="w-full"
+                size="sm"
+              >
+                <X className="h-4 w-4 mr-2" />
+                {t("loots.filtersPanel.quickFilters.clearButton")}
+              </Button>
+            </div>
+          </div>
+        </CollapsePresence>
       </div>
     </div>
   );
