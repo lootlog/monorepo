@@ -206,17 +206,22 @@ redis.call('SREM', KEYS[3], ARGV[3])
 return 1
 `;
 
+// One call refreshes every Organization of a session: KEYS 1-2 are the shared
+// indexes, then presence, metadata and Organization index per Organization.
 const REFRESH_PRESENCE = `
 -- presence:refresh
-redis.call('SET', KEYS[1], ARGV[1], 'EX', ARGV[2])
-redis.call('SET', KEYS[2], ARGV[3])
-if redis.call('SISMEMBER', KEYS[3], ARGV[4]) == 0 then
-  redis.call('SADD', KEYS[3], ARGV[4])
+for key = 3, #KEYS, 3 do
+  local arg = 5 + ((key - 3) / 3) * 3
+  redis.call('SET', KEYS[key], ARGV[1], 'EX', ARGV[2])
+  redis.call('SET', KEYS[key + 1], ARGV[3])
+  if redis.call('SISMEMBER', KEYS[key + 2], ARGV[arg]) == 0 then
+    redis.call('SADD', KEYS[key + 2], ARGV[arg])
+  end
+  if redis.call('SISMEMBER', KEYS[1], ARGV[arg + 1]) == 0 then
+    redis.call('SADD', KEYS[1], ARGV[arg + 1])
+  end
+  redis.call('ZADD', KEYS[2], ARGV[4], ARGV[arg + 2])
 end
-if redis.call('SISMEMBER', KEYS[4], ARGV[5]) == 0 then
-  redis.call('SADD', KEYS[4], ARGV[5])
-end
-redis.call('ZADD', KEYS[5], ARGV[7], ARGV[6])
 return 1
 `;
 
@@ -418,7 +423,7 @@ export class PresenceStore {
 
       for (const organizationId of selectedOrganizationIds) {
         yield* this.refresh(
-          organizationId,
+          [organizationId],
           presence,
           socket.data.discordId,
           true,
@@ -463,9 +468,11 @@ export class PresenceStore {
       const presence = { ...socket.data.presence, lastSeen: this.now() };
       this.hub.setPresence(socket, presence);
 
-      for (const organizationId of presence.organizationIds) {
-        yield* this.refresh(organizationId, presence, socket.data.discordId);
-      }
+      yield* this.refresh(
+        presence.organizationIds,
+        presence,
+        socket.data.discordId,
+      );
 
       yield* (
         this.onlineHistory?.observe(socket.data, presence.lastSeen) ??
@@ -1482,12 +1489,24 @@ export class PresenceStore {
   // Redis commands may settle after their Effect caller is interrupted. Writes
   // queue their delta when they settle, so every stored change is announced.
   private refresh(
-    organizationId: string,
+    organizationIds: ReadonlyArray<string>,
     presence: Basic | Precise,
     discordId: string,
     announce = false,
   ) {
-    const key = this.presenceKey(organizationId, presence.sessionId);
+    if (organizationIds.length === 0) return Effect.void;
+
+    const keys = organizationIds.flatMap((organizationId) => [
+      this.presenceKey(organizationId, presence.sessionId),
+      this.metadataKey(organizationId, presence.sessionId),
+      this.indexKey(organizationId),
+    ]);
+
+    const members = organizationIds.flatMap((organizationId) => [
+      this.presenceKey(organizationId, presence.sessionId),
+      organizationId,
+      JSON.stringify([organizationId, presence.sessionId]),
+    ]);
 
     // Metadata lastSeen survives TTL expiry; both indexes recover independently
     // after partial eviction as well as after complete Redis loss.
@@ -1495,12 +1514,10 @@ export class PresenceStore {
       this.redis.command
         .eval(
           REFRESH_PRESENCE,
-          5,
-          key,
-          this.metadataKey(organizationId, presence.sessionId),
-          this.indexKey(organizationId),
+          2 + keys.length,
           "presence:organizations",
           EXPIRY_DUE_INDEX,
+          ...keys,
           JSON.stringify(presence),
           REDIS_TTL_SECONDS,
           JSON.stringify({
@@ -1508,13 +1525,13 @@ export class PresenceStore {
             discordId,
             presence: withoutLocation(presence),
           }),
-          key,
-          organizationId,
-          JSON.stringify([organizationId, presence.sessionId]),
           presence.lastSeen + PRESENCE_EXPIRY_MS,
+          ...members,
         )
         .then(() => {
-          if (announce)
+          if (!announce) return;
+
+          for (const organizationId of organizationIds)
             this.queueChange(organizationId, { action: "upsert", presence });
         }),
     );

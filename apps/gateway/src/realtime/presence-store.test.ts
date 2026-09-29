@@ -44,7 +44,8 @@ class MemoryRedis {
   ): Promise<string | number> {
     const args = parameters.map(String);
 
-    if (_script.includes("-- presence:refresh")) return this.refresh(args);
+    if (_script.includes("-- presence:refresh"))
+      return this.refresh(args, _numberOfKeys);
 
     if (_script.includes("-- presence:expiry-organization"))
       return this.expiryOrganization(args);
@@ -263,19 +264,34 @@ class MemoryRedis {
     return 1;
   }
 
-  private async refresh(args: string[]): Promise<string | number> {
-    const key = args[0]!;
-    await this.set(key, args[5]!);
-    await this.set(args[1]!, args[7]!);
+  private async refresh(
+    args: string[],
+    numberOfKeys: number,
+  ): Promise<string | number> {
+    const [organizations, dueIndex] = args;
+    const values = args.slice(numberOfKeys);
 
-    if (!this.sets.get(args[2]!)?.has(args[8]!))
-      await this.sadd(args[2]!, args[8]!);
+    for (let key = 2; key < numberOfKeys; key += 3) {
+      const [presence, metadata, index] = args.slice(key, key + 3);
 
-    if (!this.sets.get(args[3]!)?.has(args[9]!))
-      await this.sadd(args[3]!, args[9]!);
-    const due = this.sortedSets.get(args[4]!) ?? new Map<string, number>();
-    due.set(args[10]!, Number(args[11]));
-    this.sortedSets.set(args[4]!, due);
+      const [member, organizationId, dueMember] = values.slice(
+        4 + key - 2,
+        4 + key + 1,
+      );
+
+      await this.set(presence!, values[0]!);
+      await this.set(metadata!, values[2]!);
+
+      if (!this.sets.get(index!)?.has(member!))
+        await this.sadd(index!, member!);
+
+      if (!this.sets.get(organizations!)?.has(organizationId!))
+        await this.sadd(organizations!, organizationId!);
+
+      const due = this.sortedSets.get(dueIndex!) ?? new Map<string, number>();
+      due.set(dueMember!, Number(values[3]));
+      this.sortedSets.set(dueIndex!, due);
+    }
 
     return 1;
   }

@@ -37,11 +37,7 @@ import type {
 import { AirTagService } from "#src/realtime/air-tag-service";
 import { MapPingService } from "#src/realtime/map-ping-service";
 import { BattlePingService } from "#src/realtime/battle-ping-service";
-import {
-  FEDERATION_VERSION,
-  RealtimeHub,
-  SEQUENCED_FEDERATION_VERSION,
-} from "#src/realtime/realtime-hub";
+import { FEDERATION_VERSION, RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 import { makeGuildStore } from "#src/guilds/guild-store";
 import { getUserGuildsCacheKey } from "#src/guilds/cache-keys";
@@ -155,6 +151,55 @@ const clanEnemyFields = ({
   lvl: number;
   prof: string;
 }) => ({ targetId, nickname, clan, lvl, prof });
+
+/** Waits until a new connection replaces the killed subscriber. */
+const waitForResubscription = async (
+  subscriberAddresses: () => Promise<ReadonlySet<string>>,
+  killed: string,
+  subscribed: number,
+): Promise<void> => {
+  const deadline = Date.now() + 5_000;
+
+  for (;;) {
+    const addresses = await subscriberAddresses();
+
+    // Dragonfly may list a killed connection until its thread closes it.
+    if (!addresses.has(killed) && addresses.size >= subscribed) return;
+
+    if (Date.now() >= deadline)
+      throw new Error("Timed out waiting for the federation subscriber");
+    await Bun.sleep(20);
+  }
+};
+
+/** Revision of a federated `air-tag.scope-updated` frame for `mapId`. */
+const federatedAirTagRevision = (
+  raw: string,
+  mapId: number,
+): number | undefined => {
+  // SAFETY: the Gateway publishes only JSON objects on its federation channel.
+  const { frame } = JSON.parse(raw) as { frame?: string };
+
+  if (!frame) return undefined;
+  const decoded = decodeRealtimeFrame(Buffer.from(frame, "base64"));
+
+  return "type" in decoded &&
+    decoded.type === "air-tag.scope-updated" &&
+    decoded.data.mapId === mapId
+    ? decoded.data.revision
+    : undefined;
+};
+
+const moveAirTagSocket = (
+  socket: GatewaySocket,
+  location: { mapId: number; map: string },
+) => {
+  const presence = socket.data.presence;
+
+  if (!presence) throw new Error("Missing air tag presence");
+  Object.assign(socket.data, { supportsAirTagScopeUpdates: true });
+  setSocketPresence(socket, { ...presence, location });
+};
 
 const eventsOfType = (frames: ReadonlyArray<Uint8Array>, type: string) => {
   const events: ReturnType<typeof decodeRealtimeFrame>[] = [];
@@ -2569,9 +2614,7 @@ describe("realtime Dragonfly integration", () => {
         await waitFor(() => stale.frames.length === 1);
 
         if (cluster === "rolling-back") {
-          expect(affected.clusterFederationVersion).toBe(
-            SEQUENCED_FEDERATION_VERSION,
-          );
+          expect(affected.clusterFederationVersion).toBe(FEDERATION_VERSION);
           await control.runPromise(
             controlRedis.send(
               "HSET",
@@ -2597,6 +2640,7 @@ describe("realtime Dragonfly integration", () => {
               `${configuration.redis.keyPrefix}:realtime:federation:v1:sequence`,
             ),
           );
+        const subscribed = (await subscriberAddresses()).size;
         await control.runPromise(
           controlRedis.send("CLIENT", "KILL", affectedSubscriber),
         );
@@ -2611,6 +2655,13 @@ describe("realtime Dragonfly integration", () => {
           expect(stale.socket.data.closing).toBe(true);
         }
 
+        // CLIENT KILL returns before the instance notices, and a frame published
+        // before it resubscribes is really lost: wait for the new subscriber.
+        await waitForResubscription(
+          subscriberAddresses,
+          affectedSubscriber,
+          subscribed,
+        );
         await waitFor(() => affected.unavailableReason() === undefined, 5_000);
         const current = connect(affected, "current");
         await publishKill(healthy);
@@ -3346,6 +3397,105 @@ describe("realtime Dragonfly integration", () => {
         status: "accepted",
         scopes: [{ targets: [{ targetId: "lurker" }] }],
       });
+
+      // Only another replica's sockets need an update through Redis.
+      const channelUpdates: number[] = [];
+      const channelListener = new RedisClient(`redis://127.0.0.1:${redisPort}`);
+
+      await channelListener.subscribe(firstStore.channel, (raw) => {
+        const revision = federatedAirTagRevision(raw, 11);
+
+        if (revision !== undefined) channelUpdates.push(revision);
+      });
+
+      const soloObserver = makeSocket("solo-observer");
+      const localWatcher = makeSocket("local-watcher");
+      const remoteWatcher = makeSocket("remote-watcher");
+
+      for (const target of [soloObserver, localWatcher, remoteWatcher])
+        moveAirTagSocket(target.socket, { mapId: 11, map: "Solo" });
+
+      firstHub.register(soloObserver.socket);
+      firstHub.register(localWatcher.socket);
+      secondHub.register(remoteWatcher.socket);
+
+      for (const target of [soloObserver, localWatcher])
+        await sourceAirTags.updateSubscription(target.socket, {
+          requestId: `${target.socket.data.connectionId}-subscription`,
+          enabled: true,
+          expectedMapId: 11,
+        });
+
+      const soloUpdates = (target: ReturnType<typeof makeSocket>) =>
+        eventsOfType(target.frames, "air-tag.scope-updated").length;
+
+      const reportSolo = (x: number) =>
+        expect(
+          sourceAirTags.publishObservations(soloObserver.socket, {
+            expectedMapId: 11,
+            observations: [{ ...observation, targetId: "solo", x }],
+          }),
+        ).resolves.toMatchObject({ status: "accepted" });
+
+      await reportSolo(1);
+      await waitFor(() => soloUpdates(localWatcher) === 1);
+      await Bun.sleep(100);
+      expect(channelUpdates).toHaveLength(0);
+
+      await recipientAirTags.updateSubscription(remoteWatcher.socket, {
+        requestId: "remote-watcher-subscription",
+        enabled: true,
+        expectedMapId: 11,
+      });
+      await reportSolo(2);
+      await waitFor(() => soloUpdates(remoteWatcher) === 1);
+      expect(soloUpdates(localWatcher)).toBe(2);
+      expect(channelUpdates).toHaveLength(1);
+
+      // A lapsed registration returns with the next refresh while a socket still follows the map.
+      await firstStore.command.del(
+        "{air-tag:organization-1:classic:11}:replicas",
+      );
+      await reportSolo(3);
+      await Bun.sleep(100);
+      expect(channelUpdates).toHaveLength(1);
+
+      const refresh = secondRuntime.runFork(
+        recipientAirTags.runInterestRefresh(),
+      );
+
+      await Bun.sleep(100);
+      await secondRuntime.runPromise(Fiber.interrupt(refresh));
+      await reportSolo(4);
+      await waitFor(() => soloUpdates(remoteWatcher) === 2);
+      expect(channelUpdates).toHaveLength(2);
+
+      // A subscription without a world or map follows every map of its Organization.
+      const anyMapWatcher = makeSocket("any-map-watcher");
+
+      const anyMap = {
+        topic: "map.air-tags",
+        organizationId: "organization-1",
+      } as const;
+
+      moveAirTagSocket(anyMapWatcher.socket, { mapId: 12, map: "Elsewhere" });
+      moveAirTagSocket(soloObserver.socket, { mapId: 12, map: "Elsewhere" });
+      secondHub.register(anyMapWatcher.socket);
+      secondHub.subscribe(anyMapWatcher.socket, anyMap);
+      await recipientAirTags.registerInterest(anyMap);
+      await sourceAirTags.updateSubscription(soloObserver.socket, {
+        requestId: "solo-observer-elsewhere",
+        enabled: true,
+        expectedMapId: 12,
+      });
+      await expect(
+        sourceAirTags.publishObservations(soloObserver.socket, {
+          expectedMapId: 12,
+          observations: [{ ...observation, targetId: "elsewhere" }],
+        }),
+      ).resolves.toMatchObject({ status: "accepted" });
+      await waitFor(() => soloUpdates(anyMapWatcher) === 1);
+      channelListener.close();
     } finally {
       await Promise.all([firstStore.close(), secondStore.close()]);
     }
