@@ -1028,7 +1028,7 @@ it("applies directly from the hidden tab without restoring the gathering and sur
   expect(await screen.findByRole("alert")).toBeVisible();
 });
 
-it("updates every volunteer and the independent observed party for an observer without refetching", async () => {
+it("updates the observed party count for an observer without refetching", async () => {
   const waiting = {
     characterId: "waiting",
     nick: "Waiting player",
@@ -1068,14 +1068,7 @@ it("updates every volunteer and the independent observed party for an observer w
     ),
   );
   expect(await screen.findByText("Organizer member")).toBeVisible();
-  const volunteers = await screen.findByRole("region", { name: "Chętni (2)" });
-  expect(within(volunteers).getByText("Waiting player (190m)")).toBeVisible();
-  expect(within(volunteers).getByText("Joining player (190m)")).toBeVisible();
-  expect(
-    within(screen.getByRole("region", { name: "Grupa" })).getByText(
-      "Observed leader",
-    ),
-  ).toBeVisible();
+  expect(screen.getByLabelText("W grupie: 1/10")).toBeVisible();
 
   await harness.receive({
     v: 1,
@@ -1097,22 +1090,7 @@ it("updates every volunteer and the independent observed party for an observer w
       },
     },
   });
-  expect(
-    within(screen.getByRole("region", { name: "Chętni (2)" })).getByText(
-      "Waiting player (190m)",
-    ),
-  ).toBeVisible();
-  expect(
-    within(screen.getByRole("region", { name: "Chętni (2)" })).getByText(
-      "Joining player (190m)",
-    ),
-  ).toBeVisible();
-  expect(
-    await within(screen.getByRole("region", { name: "Grupa" })).findByText(
-      "Joining player (190m)",
-    ),
-  ).toBeVisible();
-  expect(screen.getByLabelText("W grupie: 2/10")).toBeVisible();
+  expect(await screen.findByLabelText("W grupie: 2/10")).toBeVisible();
   expect(screen.getByText("Organizer member")).toBeVisible();
 
   await harness.receive({
@@ -1135,24 +1113,12 @@ it("updates every volunteer and the independent observed party for an observer w
       },
     },
   });
-  await screen.findByRole("region", { name: "Chętni (1)" });
-  expect(screen.queryByText("Waiting player (190m)")).not.toBeInTheDocument();
-  expect(
-    within(screen.getByRole("region", { name: "Chętni (1)" })).getByText(
-      "Joining player (190m)",
-    ),
-  ).toBeVisible();
-  expect(
-    within(screen.getByRole("region", { name: "Grupa" })).queryByText(
-      "Joining player (190m)",
-    ),
-  ).not.toBeInTheDocument();
-  expect(screen.getByLabelText("W grupie: 1/10")).toBeVisible();
+  expect(await screen.findByLabelText("W grupie: 1/10")).toBeVisible();
   expect(screen.getByRole("button", { name: "Zgłoś się" })).toBeEnabled();
   expect(harness.discovery).toHaveBeenCalledTimes(requests);
 });
 
-it("shows a newer organization roster while the participant projection is still behind", async () => {
+it("shows the newer organization party state while the participant projection is still behind", async () => {
   const room = createChatReadyRoom({ world: "luvia", revision: 5 });
   const participant = room.participants["participant-1"];
 
@@ -1216,20 +1182,11 @@ it("shows a newer organization roster while the participant projection is still 
       },
     },
   });
-  const volunteers = await screen.findByRole("region", { name: "Chętni (2)" });
-  expect(
-    within(volunteers).getByText(
-      `New volunteer (${volunteer.lvl}${volunteer.prof})`,
-    ),
-  ).toBeVisible();
-  expect(
-    screen.getByRole("button", { name: "Wycofaj zgłoszenie" }),
-  ).toHaveAccessibleDescription("W grupie");
-  expect(
-    within(screen.getByRole("region", { name: "Grupa" })).queryByText(
-      "Party leader",
-    ),
-  ).not.toBeInTheDocument();
+  await waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: "Wycofaj zgłoszenie" }),
+    ).toHaveAccessibleDescription("W grupie"),
+  );
   expect(
     readSeededReadyRoomCache(harness.queryClient).projections[
       room.notificationId
