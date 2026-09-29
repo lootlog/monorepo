@@ -1171,7 +1171,7 @@
         "anti-slop-effect/no-service-constructor-imports": [
           "error",
           {
-            "nonServiceImports": ["makeEventMapHydration"]
+            "nonServiceImports": ["makeEventMapRead"]
           }
         ]
       }
@@ -1182,7 +1182,7 @@
         "anti-slop-effect/no-service-constructor-imports": [
           "error",
           {
-            "nonServiceImports": ["makeEventMapHydration"]
+            "nonServiceImports": ["makeEventMapRead"]
           }
         ]
       }

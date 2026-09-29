@@ -2,7 +2,7 @@ import {
   memberDisplayRolesQuery,
   topMemberDisplayRoles,
 } from "#src/members/member-display-role";
-import { eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -11,14 +11,14 @@ import {
   memberTable,
 } from "#src/database/drizzle/schema";
 
-export const makeEventMapHydration = <Failure>(
+export const makeEventMapRead = <Failure>(
   database: typeof ApiDatabase.Service,
   query: <A, E>(
     operation: string,
     effect: Effect.Effect<A, E>,
   ) => Effect.Effect<A, Failure>,
 ) => {
-  return Effect.fnUntraced(function* (
+  const hydrateMaps = Effect.fnUntraced(function* (
     maps: Array<typeof eventMapTable.$inferSelect>,
   ) {
     if (maps.length === 0) return [];
@@ -60,4 +60,21 @@ export const makeEventMapHydration = <Failure>(
         })),
     }));
   });
+
+  const mapsForHero = (heroId: string, locationId?: string) =>
+    query(
+      "events.catalog.maps",
+      database
+        .select()
+        .from(eventMapTable)
+        .where(
+          and(
+            eq(eventMapTable.heroNpcId, heroId),
+            locationId ? eq(eventMapTable.locationId, locationId) : undefined,
+          ),
+        )
+        .orderBy(asc(eventMapTable.mapId)),
+    ).pipe(Effect.flatMap(hydrateMaps));
+
+  return { hydrateMaps, mapsForHero };
 };
