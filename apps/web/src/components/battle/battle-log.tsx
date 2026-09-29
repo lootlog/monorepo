@@ -1,4 +1,3 @@
-import { normalizeBattleSearchText } from "./utils/normalize-battle-search-text";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { buildBattleLogVisibleText } from "./utils/battle-log-visible-text";
 import type {
@@ -22,6 +21,7 @@ import { useTranslation } from "react-i18next";
 import {
   getNextBattleLogSearchIndex,
   buildBattleLogRawSearchText,
+  findBattleLogSearchMatches,
 } from "./utils/battle-log-search";
 import { getDisplayBattleEvents } from "./utils/raw-battle-events";
 
@@ -75,8 +75,7 @@ export const BattleLog: FC<BattleLogProps> = ({
     warriors.map((warrior) => [warrior.originalId, warrior]),
   );
 
-  const normalizedQuery = normalizeBattleSearchText(deferredQuery);
-  const hasSearch = normalizedQuery.length > 0;
+  const hasSearch = deferredQuery.trim().length > 0;
 
   const searchEntries = hasSearch
     ? events.map((event, eventIndex) => {
@@ -94,24 +93,27 @@ export const BattleLog: FC<BattleLogProps> = ({
 
         return {
           turn,
-          rawText: normalizeBattleSearchText(
-            buildBattleLogRawSearchText({ event, attacker, defender, turn }),
-          ),
-          visibleText: normalizeBattleSearchText(
-            buildBattleLogVisibleText({ event, attacker, defender, turn, t }),
-          ),
+          rawText: buildBattleLogRawSearchText({
+            event,
+            attacker,
+            defender,
+            turn,
+          }),
+          visibleText: buildBattleLogVisibleText({
+            event,
+            attacker,
+            defender,
+            turn,
+            t,
+          }),
         };
       })
     : [];
 
-  const deferredMatches = normalizedQuery
-    ? searchEntries.flatMap((entry) =>
-        entry.rawText.includes(normalizedQuery) ||
-        entry.visibleText.includes(normalizedQuery)
-          ? [entry.turn]
-          : [],
-      )
-    : [];
+  const deferredMatches = findBattleLogSearchMatches({
+    query: deferredQuery,
+    entries: searchEntries,
+  });
 
   const searchMatchTurns = deferredQuery === searchQuery ? deferredMatches : [];
 

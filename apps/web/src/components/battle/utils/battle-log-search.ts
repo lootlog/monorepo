@@ -10,10 +10,6 @@ export type BattleLogSearchEntry = {
   visibleText?: string;
 };
 
-export type BattleLogSearchMatch = {
-  turn: number;
-};
-
 export type BattleLogSearchDirection = "previous" | "next";
 
 const ACTION_SEARCH_LABELS = new Map([
@@ -133,35 +129,19 @@ export const findBattleLogSearchMatches = ({
 }: {
   query: string;
   entries: BattleLogSearchEntry[];
-}): BattleLogSearchMatch[] => {
+}): number[] => {
   const normalizedQuery = normalizeBattleSearchText(query);
 
   if (normalizedQuery.length === 0) {
     return [];
   }
 
-  const matchedTurns = new Set<number>();
-
-  entries.forEach((entry) => {
-    if (matchedTurns.has(entry.turn)) {
-      return;
-    }
-
-    const normalizedRawText = normalizeBattleSearchText(entry.rawText);
-
-    const normalizedVisibleText = normalizeBattleSearchText(
-      entry.visibleText ?? "",
-    );
-
-    if (
-      normalizedRawText.includes(normalizedQuery) ||
-      normalizedVisibleText.includes(normalizedQuery)
-    ) {
-      matchedTurns.add(entry.turn);
-    }
-  });
-
-  return Array.from(matchedTurns).map((turn) => ({ turn }));
+  return entries.flatMap((entry) =>
+    normalizeBattleSearchText(entry.rawText).includes(normalizedQuery) ||
+    normalizeBattleSearchText(entry.visibleText ?? "").includes(normalizedQuery)
+      ? [entry.turn]
+      : [],
+  );
 };
 
 export const getNextBattleLogSearchIndex = ({
