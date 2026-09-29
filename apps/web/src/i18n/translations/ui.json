@@ -55,7 +55,7 @@
           "script": "Otwórz skrypt Lootlog. Tampermonkey pokaże jego podgląd; wybierz „Zainstaluj”.",
           "reload": "Odśwież Margonem i zaloguj się przez Discord w oknie Lootloga."
         },
-        "cookies": "Jeśli przeglądarka blokuje pliki cookie stron trzecich, zaloguj się przez okno, które otworzy dodatek. Gdy to nie wystarczy, dodatek podpowie, co zmienić w ustawieniach przeglądarki.",
+        "cookies": "Zezwól na pliki cookie stron trzecich dla lootlog.pl. Bez nich dodatek w grze nie zobaczy logowania; jeśli przeglądarka je blokuje, dodatek podpowie, co zmienić.",
         "install": "Zainstaluj skrypt",
         "getTampermonkey": "Pobierz Tampermonkey"
       },

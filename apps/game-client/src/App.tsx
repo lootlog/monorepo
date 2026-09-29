@@ -8,6 +8,7 @@ import { AppContent } from "@/app-content";
 import { disposeSoundPlayback } from "@/lib/sound-playback";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LoginWindow } from "@/components/login-window";
+import { useLoginWebsiteStore } from "@/hooks/auth/use-login-state";
 import { isExtensionClient } from "@/lib/game-client-platform";
 import { authClient } from "@/lib/auth-client";
 import { useEffect, useState, type ReactNode } from "react";
@@ -19,6 +20,13 @@ function App() {
   const session = authClient.useSession();
   const extension = isExtensionClient();
   const userId = session.data?.user.id ?? null;
+
+  // A sign-in proves the cookie reaches this page, so a later sign-out (an
+  // expired session, say) must not be blamed on blocked cookies.
+  useEffect(() => {
+    if (userId !== null)
+      useLoginWebsiteStore.setState({ websiteOpened: false });
+  }, [userId]);
 
   const [activeUserId, setActiveUserId] = useState<string | null | undefined>(
     extension ? userId : undefined,

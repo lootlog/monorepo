@@ -29,26 +29,19 @@
     "windowTitle": "Logowanie do Lootloga",
     "signIn": "Zaloguj się",
     "openWebsite": "Otwórz stronę Lootloga",
-    "openPopup": "Otwórz okno logowania",
     "check": "Sprawdź sesję",
     "openLogin": "Zaloguj się do Lootloga",
     "states": {
       "checking": "Sprawdzanie sesji…",
-      "signedOut": "Zaloguj się przez Discord, aby połączyć dodatek z kontem Lootloga.",
-      "signedOutExtension": "Zaloguj się na stronie Lootloga, a następnie sprawdź sesję, aby uruchomić dodatek.",
+      "signedOut": "Zaloguj się na stronie Lootloga, a potem wróć do gry. Dodatek sam sprawdzi sesję.",
       "checkFailed": "Nie udało się sprawdzić sesji Lootloga. Sprawdź połączenie z internetem i spróbuj ponownie za chwilę.",
-      "awaitingPopup": "Dokończ logowanie w otwartym oknie Lootloga.",
-      "popupBlocked": "Przeglądarka zablokowała okno logowania. Otwórz je przyciskiem poniżej.",
-      "connecting": "Łączenie dodatku z kontem Lootloga…",
-      "handoffExpired": "Logowanie wygasło, zanim dotarło do gry. Spróbuj ponownie.",
-      "handoffFailed": "Nie udało się połączyć z usługą logowania Lootloga. Spróbuj ponownie.",
-      "cookiesBlocked": "Jesteś zalogowany w Lootlogu, ale przeglądarka nie pozwala zapisać sesji dodatku na stronie Margonem."
+      "cookiesBlocked": "Dodatek nadal nie widzi Twojej sesji. Jeśli jesteś już zalogowany na stronie Lootloga, przeglądarka blokuje pliki cookie innych firm dla lootlog.pl."
     },
     "cookieGuidance": {
-      "chrome": "Chrome, Edge lub Opera: kliknij ikonę oka albo ustawień strony w pasku adresu, zezwól na pliki cookie innych firm dla tej strony i kliknij „Zaloguj się” jeszcze raz.",
-      "firefox": "Firefox: kliknij ikonę tarczy w pasku adresu, wyłącz wzmocnioną ochronę przed śledzeniem dla tej strony i kliknij „Zaloguj się” jeszcze raz.",
-      "safari": "Safari: w Ustawieniach, w sekcji Prywatność, wyłącz „Zapobiegaj śledzeniu między witrynami” i kliknij „Zaloguj się” jeszcze raz.",
-      "brave": "Brave: kliknij ikonę lwa w pasku adresu, zezwól na pliki cookie innych firm dla tej strony i kliknij „Zaloguj się” jeszcze raz.",
+      "chrome": "Chrome, Edge lub Opera: kliknij ikonę oka albo ustawień strony w pasku adresu, zezwól na pliki cookie innych firm dla tej strony i kliknij „Sprawdź sesję”.",
+      "firefox": "Firefox: kliknij ikonę tarczy w pasku adresu, wyłącz wzmocnioną ochronę przed śledzeniem dla tej strony i kliknij „Sprawdź sesję”.",
+      "safari": "Safari: w Ustawieniach, w sekcji Prywatność, wyłącz „Zapobiegaj śledzeniu między witrynami” i kliknij „Sprawdź sesję”.",
+      "brave": "Brave: kliknij ikonę lwa w pasku adresu, zezwól na pliki cookie innych firm dla tej strony i kliknij „Sprawdź sesję”.",
       "helpLink": "Więcej pomocy z logowaniem"
     }
   },

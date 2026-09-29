@@ -1,31 +1,28 @@
-import type { LoginHandoff } from "@/hooks/auth/login-handoff";
-
 /**
  * What the login window tells the player.
  *
  * - `checkFailed`: the session request itself failed (network or a 5xx),
  *   so the client cannot tell whether the player is signed in.
- * - `cookiesBlocked`: the web app confirmed a signed-in User and the auth
- *   service accepted the handoff, yet this page still reads no session, so
- *   the browser refuses Lootlog's cookie even when partitioned.
+ * - `cookiesBlocked`: the player opened the website from the login window
+ *   and came back, yet the userscript still reads no session. The usual
+ *   cause is a browser that withholds Lootlog's cookie from the Margonem
+ *   page as a third-party cookie. The extension reads the session through
+ *   its background worker, so it never lands here.
  */
 export type LoginState =
   | "signedIn"
   | "checking"
   | "checkFailed"
   | "signedOut"
-  | "awaitingPopup"
-  | "popupBlocked"
-  | "connecting"
-  | "handoffExpired"
-  | "handoffFailed"
   | "cookiesBlocked";
 
 export const resolveLoginState = ({
-  handoff,
+  extension,
+  websiteOpened,
   session,
 }: {
-  handoff: LoginHandoff;
+  extension: boolean;
+  websiteOpened: boolean;
   session: {
     data: unknown;
     error: unknown;
@@ -35,21 +32,9 @@ export const resolveLoginState = ({
 }): LoginState => {
   if (session.data) return "signedIn";
 
-  if (handoff.status === "exchanging") return "connecting";
-
-  if (session.isPending || session.isRefetching)
-    return handoff.status === "exchanged" ? "connecting" : "checking";
+  if (session.isPending || session.isRefetching) return "checking";
 
   if (session.error) return "checkFailed";
 
-  switch (handoff.status) {
-    case "exchanged":
-      return "cookiesBlocked";
-    case "failed":
-      return handoff.reason === "expired" ? "handoffExpired" : "handoffFailed";
-    case "waiting":
-      return handoff.popupBlocked ? "popupBlocked" : "awaitingPopup";
-    case "idle":
-      return "signedOut";
-  }
+  return websiteOpened && !extension ? "cookiesBlocked" : "signedOut";
 };

@@ -16,7 +16,6 @@ import { betterAuthSchema } from "#src/database/drizzle.schema";
 import { AuthRedisStorage } from "#src/auth/storage/auth-redis-storage";
 import { resolveBetterAuthBaseURL } from "./better-auth-url.js";
 import { createDiscordAuthOptions } from "./discord-auth-options.js";
-import { gameClientHandoff } from "./game-client-handoff.js";
 
 const logBetterAuthEvent = (
   level: Parameters<
@@ -160,7 +159,6 @@ export const createLootlogAuth = ({
       }),
       bearer(),
       admin({ adminUserIds: [...config.adminAccountIds] }),
-      gameClientHandoff(),
     ],
   });
 };
