@@ -23,6 +23,15 @@ export const rememberOrganization = (userId: string, guildId: string) => {
   }
 };
 
+// Visiting the personal panel makes it the last space, so sign-in opens it.
+export const rememberPersonalPanel = (userId: string) => {
+  try {
+    localStorage.removeItem(storageKey(userId));
+  } catch {
+    // Remembering navigation is optional when browser storage is unavailable.
+  }
+};
+
 export const forgetLastOrganization = (userId: string, guildId: string) => {
   try {
     const key = storageKey(userId);

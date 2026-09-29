@@ -15,7 +15,7 @@ export const SignIn: React.FC = () => {
     signIn({
       callbackURL: search.redirect
         ? `${window.location.origin}${search.redirect}`
-        : `${window.location.origin}/@me`,
+        : `${window.location.origin}/signin`,
       errorCallbackURL: window.location.href,
     });
 

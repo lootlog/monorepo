@@ -44,6 +44,7 @@ export const Route = createFileRoute("/signin")({
       throw redirect({
         to: "/@me",
         replace: true,
+        state: { restoreFallback: true },
       });
     }
   },
