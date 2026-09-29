@@ -11,15 +11,14 @@ import { makeBattleAnalyticsCache } from "./battle-analytics-cache.service.js";
 import { makeBattleAnalyticsQuery } from "./battle-analytics-query.service.js";
 import { makeBattleAnalyticsRead } from "./battle-analytics-read.service.js";
 import { makeBattleCombatProfileRead } from "./battle-combat-profile-read.service.js";
-import { combatProfileCalculator } from "./combat-profile-calculator.service.js";
 import { makeBattleAnalytics } from "./battle-analytics.service.js";
-import { battleAnalyticsDomain as domain } from "./battle-analytics-domain.service.js";
-import { battleSummaryCalculator as summary } from "./battle-summary-calculator.service.js";
-import { headToHeadCalculator } from "./head-to-head-calculator.service.js";
-import { playerVsPlayerCalculator } from "./player-vs-player-calculator.service.js";
-import { abyssSeasonCalculator } from "./abyss-season-calculator.service.js";
 import type { BattleStatisticsQuery } from "./query-battle-statistics.js";
-import type { InflatedBattleWithWarriors } from "./battle-analytics.types.js";
+import {
+  legacyBattleAnalytics as legacy,
+  type InflatedBattleWithWarriors,
+} from "../../../test/legacy-battle-analytics.js";
+import { inflateBattleWarriorsInBattles } from "#src/battles/statistics/battle-warrior-stats";
+import { sortBy } from "es-toolkit";
 
 const runtime = ManagedRuntime.make(PgliteClient.layer({}));
 
@@ -58,7 +57,7 @@ const legacyHistory = (
     ratingDelta?: boolean;
   } = {},
 ) =>
-  domain.filterByOpponentLevel(
+  legacy.filterByOpponentLevel(
     fullHistory.filter(
       (battle) =>
         battle.type === "1v1" &&
@@ -186,7 +185,7 @@ beforeAll(async () => {
       );
   }
 
-  fullHistory = domain.inflateBattleRows(
+  fullHistory = inflateBattleWarriorsInBattles(
     await runtime.runPromise(
       db.query.battles.findMany({
         where: { userId: "owner" },
@@ -221,18 +220,13 @@ describe("SQL battle analytics parity", () => {
         await runtime.runPromise(
           reads.getStreak("owner", filtersQuery, characters),
         ),
-      ).toEqual(
-        summary.calculateCurrentStreak(
-          resolved.slice().reverse(),
-          characterSet,
-        ),
-      );
+      ).toEqual(legacy.currentStreak(resolved.slice().reverse(), characterSet));
       expect(
         await runtime.runPromise(
           reads.getDuration("owner", filtersQuery, characters),
         ),
       ).toEqual(
-        summary.calculateBattleDurationStats(
+        legacy.durationStats(
           resolved
             .slice()
             .sort((left, right) => left.duration - right.duration),
@@ -244,7 +238,7 @@ describe("SQL battle analytics parity", () => {
           reads.getPhGrowth("owner", filtersQuery, characters),
         ),
       ).toEqual(
-        summary.calculatePhGrowthTimeSeries(
+        legacy.phGrowth(
           legacyHistory(filtersQuery, { ph: true }),
           characterSet,
         ),
@@ -254,7 +248,7 @@ describe("SQL battle analytics parity", () => {
           reads.getRatingGrowth("owner", filtersQuery, characters),
         ),
       ).toEqual(
-        summary.calculateRatingGrowthTimeSeries(
+        legacy.ratingGrowth(
           legacyHistory(
             { ...filtersQuery, matchmaking: true },
             { rating: true, ratingDelta: true },
@@ -265,14 +259,20 @@ describe("SQL battle analytics parity", () => {
     it(`preserves opponent aggregates, latest snapshots and packed fallback for filter set ${index}`, async () => {
       const h2hQuery = { ...filtersQuery, matchmaking: true };
       expect(
-        await runtime.runPromise(
-          reads.getHeadToHead("owner", h2hQuery, characters),
+        sortBy(
+          await runtime.runPromise(
+            reads.getHeadToHead("owner", h2hQuery, characters),
+          ),
+          ["opponentId"],
         ),
       ).toEqual(
-        headToHeadCalculator.calculateRecords(
-          legacyHistory(h2hQuery, { hasFlee: false }).slice().reverse(),
-          characterSet,
-          h2hQuery,
+        sortBy(
+          legacy.headToHeadRecords(
+            legacyHistory(h2hQuery, { hasFlee: false }).slice().reverse(),
+            characterSet,
+            h2hQuery.matchmaking,
+          ),
+          ["opponentId"],
         ),
       );
       expect(
@@ -280,7 +280,7 @@ describe("SQL battle analytics parity", () => {
           reads.getRatingByOpponent("owner", filtersQuery, characters),
         ),
       ).toEqual(
-        summary.calculateRatingDeltaByOpponent(
+        legacy.ratingDeltaByOpponent(
           legacyHistory(
             { ...filtersQuery, matchmaking: true },
             { hasFlee: false, ratingDelta: true },
@@ -297,7 +297,7 @@ describe("SQL battle analytics parity", () => {
     expect(
       await runtime.runPromise(reads.getSeasons("owner", characters)),
     ).toEqual(
-      abyssSeasonCalculator.calculateSeasons(
+      legacy.seasons(
         fullHistory.filter((battle) => battle.matchmaking),
         characterSet,
       ),
@@ -312,7 +312,7 @@ describe("SQL battle analytics parity", () => {
         excludeBattleId: "battle-02",
       };
 
-      const expected = playerVsPlayerCalculator.calculateBattles(
+      const expected = legacy.playerVsPlayerBattles(
         legacyHistory(pvpQuery).slice().reverse(),
         characterSet,
         pvpQuery,
@@ -475,7 +475,7 @@ it("folds combat history across tied-date batches without losing packed fallback
     ph: true,
   });
 
-  const fullRows = domain.inflateBattleRows(
+  const fullRows: InflatedBattleWithWarriors[] = inflateBattleWarriorsInBattles(
     await runtime.runPromise(
       db.query.battles.findMany({
         where: { userId: "owner", world: "combat-test" },
@@ -486,8 +486,8 @@ it("folds combat history across tied-date batches without losing packed fallback
     ),
   );
 
-  const expected = combatProfileCalculator.calculate(
-    domain.filterByAnyOpponentLevel(
+  const expected = legacy.combatProfile(
+    legacy.filterByAnyOpponentLevel(
       fullRows,
       characterSet,
       filters.minLevel,
@@ -587,7 +587,7 @@ it("selects the recorder among multiple owned participants and uses character or
     ),
   );
 
-  const fullRows = domain.inflateBattleRows(
+  const fullRows: InflatedBattleWithWarriors[] = inflateBattleWarriorsInBattles(
     await runtime.runPromise(
       db.query.battles.findMany({
         where: { userId: "owner", world: "combat-selection" },
@@ -610,11 +610,9 @@ it("selects the recorder among multiple owned participants and uses character or
     { battleId: "selection-fallback", value: 10 },
     { battleId: "selection-recorder", value: 20 },
   ]);
+  expect(actual).toEqual(legacy.combatProfile(fullRows, characterSet));
   expect(actual).toEqual(
-    combatProfileCalculator.calculate(fullRows, characterSet),
-  );
-  expect(actual).toEqual(
-    combatProfileCalculator.calculate(
+    legacy.combatProfile(
       fullRows.map((battle) => ({
         ...battle,
         warriors: battle.warriors.slice().reverse(),
@@ -624,40 +622,132 @@ it("selects the recorder among multiple owned participants and uses character or
   );
 });
 
-it("keeps every opponent sort and aggregate filter consistent with the calculator", async () => {
-  const sortKeys = [
-    "wins",
-    "losses",
-    "totalBattles",
-    "winRate",
-    "lastBattleDate",
-    "totalRatingDelta",
-    "avgRatingDelta",
-  ] as const;
-
-  for (const sortBy of sortKeys) {
-    for (const sortOrder of ["asc", "desc"] as const) {
-      const filters = query({
-        matchmaking: true,
-        search: "Opponent",
-        minBattles: 2,
-        sortBy,
-        sortOrder,
-      });
-
-      expect(
-        await runtime.runPromise(
-          reads.getHeadToHead("owner", filters, characters),
+// Matchmaking head-to-head fixture after the flee, type and owner filters:
+// opponent-0 fought battles 0, 3, 6, 9 (three losses, battle 6 on neither
+// team, rating deltas 0/null/1/4); opponent-1 fought 1, 7, 10 (three wins,
+// deltas -4/2/5); opponent-2 fought 5, 8 (two wins, deltas 0/0). SQL returns
+// them by latest battle: opponent-1, opponent-0, opponent-2.
+it("filters and sorts opponent records, breaking ties by latest battle", async () => {
+  const headToHead = async (overrides: Partial<BattleStatisticsQuery>) =>
+    (
+      await runtime.runPromise(
+        reads.getHeadToHead(
+          "owner",
+          query({ matchmaking: true, ...overrides }),
+          characters,
         ),
-      ).toEqual(
-        headToHeadCalculator.calculateRecords(
-          legacyHistory(filters, { hasFlee: false }).slice().reverse(),
-          characterSet,
-          filters,
-        ),
-      );
-    }
+      )
+    ).map((record) => record.opponentId.replace("opponent-", ""));
+
+  const expectedOrders: Array<
+    [NonNullable<BattleStatisticsQuery["sortBy"]>, "asc" | "desc", string]
+  > = [
+    ["wins", "asc", "021"],
+    ["wins", "desc", "120"],
+    ["losses", "asc", "120"],
+    ["losses", "desc", "012"],
+    ["totalBattles", "asc", "210"],
+    ["totalBattles", "desc", "102"],
+    ["winRate", "asc", "012"],
+    ["winRate", "desc", "120"],
+    ["lastBattleDate", "asc", "201"],
+    ["lastBattleDate", "desc", "102"],
+    ["totalRatingDelta", "asc", "210"],
+    ["totalRatingDelta", "desc", "012"],
+    ["avgRatingDelta", "asc", "210"],
+    ["avgRatingDelta", "desc", "012"],
+  ];
+
+  for (const [sortBy, sortOrder, expected] of expectedOrders) {
+    expect({
+      sortBy,
+      sortOrder,
+      order: (await headToHead({ sortBy, sortOrder })).join(""),
+    }).toEqual({ sortBy, sortOrder, order: expected });
   }
+
+  expect(await headToHead({ search: "OPPONENT 1" })).toEqual(["1"]);
+  expect(await headToHead({ minBattles: 3 })).toEqual(["1", "0"]);
+  expect(await headToHead({ search: "opponent", minBattles: 4 })).toEqual([]);
+
+  const [record] = await runtime.runPromise(
+    reads.getHeadToHead(
+      "owner",
+      query({ matchmaking: true, search: "Opponent 9" }),
+      characters,
+    ),
+  );
+
+  expect(record).toMatchObject({
+    opponentId: "opponent-0",
+    opponentName: "Opponent 9",
+    opponentLvl: 99,
+    wins: 0,
+    losses: 3,
+    totalBattles: 3,
+    winRate: 0,
+    totalRatingDelta: 5,
+    avgRatingDelta: 2.5,
+    lastBattleResult: "lost",
+    lastBattleDate: "2024-03-10T00:00:00.000Z",
+  });
+
+  await runtime.runPromise(
+    db.insert(battles).values(
+      [
+        { id: "latest-older-win", day: 1, winningTeam: 1, losingTeam: 2 },
+        { id: "latest-newer-loss", day: 2, winningTeam: 2, losingTeam: 1 },
+      ].map(({ day, ...battle }) => ({
+        ...battle,
+        userId: "owner",
+        accountId: "account",
+        characterId: "hero-1",
+        world: "h2h-latest",
+        createdAt: new Date(Date.UTC(2025, 5, day)),
+        type: "1v1",
+        duration: 100,
+        winner: "Winner",
+        loser: "Loser",
+        matchmaking: true,
+        statistics: {},
+      })),
+    ),
+  );
+  await runtime.runPromise(
+    db.insert(battleWarriors).values(
+      ["latest-older-win", "latest-newer-loss"].flatMap((battleId) =>
+        [
+          { battleId, originalId: "hero-1", team: 1 },
+          { battleId, originalId: "latest-opponent", team: 2 },
+        ].map((warrior) => ({
+          ...warrior,
+          name: warrior.originalId,
+          icon: "",
+          lvl: 100,
+          prof: "w",
+          turns: 1,
+        })),
+      ),
+    ),
+  );
+
+  expect(
+    await runtime.runPromise(
+      reads.getHeadToHead(
+        "owner",
+        query({ matchmaking: true, world: "h2h-latest" }),
+        characters,
+      ),
+    ),
+  ).toMatchObject([
+    {
+      opponentId: "latest-opponent",
+      wins: 1,
+      losses: 1,
+      lastBattleResult: "lost",
+      lastBattleDate: "2025-06-02T00:00:00.000Z",
+    },
+  ]);
 });
 
 it("keeps PH-filtered rating responses separate from unfiltered cached responses", async () => {
@@ -670,7 +760,7 @@ it("keeps PH-filtered rating responses separate from unfiltered cached responses
         service.getRatingGrowthTimeSeries(filters, "owner"),
       ),
     ).toEqual(
-      summary.calculateRatingGrowthTimeSeries(
+      legacy.ratingGrowth(
         legacyHistory(
           { ...filters, matchmaking: true },
           { rating: true, ratingDelta: true },
@@ -682,7 +772,7 @@ it("keeps PH-filtered rating responses separate from unfiltered cached responses
         service.getRatingDeltaByOpponent(filters, "owner"),
       ),
     ).toEqual(
-      summary.calculateRatingDeltaByOpponent(
+      legacy.ratingDeltaByOpponent(
         legacyHistory(
           { ...filters, matchmaking: true },
           { hasFlee: false, ratingDelta: true },
@@ -726,4 +816,183 @@ it("returns empty PvP pages for oversized cursors without passing unrepresentabl
   );
 
   expect(all.battles).toHaveLength(4);
+});
+
+it("pages only 1v1 battles against the requested opponent inside the level range, with packed stat fallback", async () => {
+  // opponent-2 fought battle-02 (level 92), battle-05 (excluded), battle-08
+  // (level 98) and group battle-11 (level 101).
+  const pvpQuery = {
+    ...query({ minLevel: 93, maxLevel: 101 }),
+    opponentId: "opponent-2",
+    excludeBattleId: "battle-05",
+  };
+
+  expect(
+    await runtime.runPromise(
+      reads.getPlayerVsPlayerCount("owner", pvpQuery, characters),
+    ),
+  ).toBe(1);
+  // opponent-1 levels: battle-01 91, battle-04 94, battle-07 97, battle-10 100.
+  expect(
+    await runtime.runPromise(
+      reads.getPlayerVsPlayerCount(
+        "owner",
+        { ...query({ minLevel: 95, maxLevel: 99 }), opponentId: "opponent-1" },
+        characters,
+      ),
+    ),
+  ).toBe(1);
+  expect(
+    await runtime.runPromise(
+      reads.getPlayerVsPlayerPage("owner", pvpQuery, characters, {
+        offset: 0,
+        size: 20,
+      }),
+    ),
+  ).toMatchObject([
+    {
+      battleId: "battle-08",
+      createdAt: "2024-03-09T00:00:00.000Z",
+      winner: "Hero",
+      ratingDelta: 0,
+      userRating: 1480,
+      userWarrior: { name: "Hero", fireDamage: 28, woundDamageTaken: 3 },
+      opponentWarrior: {
+        name: "Opponent 8",
+        lvl: 98,
+        prof: "m",
+        fireDamage: 99,
+        frostDamage: 17,
+      },
+    },
+  ]);
+});
+
+it("keeps the strongest combat highlights, skips flees and admits battles with any opponent in the level range", async () => {
+  const combatBattles = [
+    {
+      id: "explicit-small-win",
+      day: 1,
+      won: true,
+      damage: 100,
+      taken: 500,
+      blocked: 20,
+      levels: [300],
+    },
+    {
+      id: "explicit-big-loss",
+      day: 2,
+      won: false,
+      damage: 300,
+      taken: 100,
+      blocked: 50,
+      levels: [300, 80],
+    },
+    {
+      id: "explicit-flee",
+      day: 3,
+      won: true,
+      damage: 999,
+      taken: 999,
+      blocked: 999,
+      levels: [300],
+      hasFlee: true,
+    },
+    {
+      id: "explicit-out-of-range",
+      day: 4,
+      won: true,
+      damage: 5000,
+      taken: 5000,
+      blocked: 5000,
+      levels: [80],
+    },
+  ];
+
+  await runtime.runPromise(
+    db.insert(battles).values(
+      combatBattles.map((battle) => ({
+        id: battle.id,
+        userId: "owner",
+        accountId: "account",
+        characterId: "hero-1",
+        world: "combat-explicit",
+        type: "group",
+        createdAt: new Date(Date.UTC(2025, 2, battle.day)),
+        duration: 100,
+        winner: "Winner",
+        loser: "Loser",
+        winningTeam: battle.won ? 1 : 2,
+        losingTeam: battle.won ? 2 : 1,
+        hasFlee: battle.hasFlee ?? false,
+        ratingDelta: 5,
+        statistics: {},
+      })),
+    ),
+  );
+  await runtime.runPromise(
+    db.insert(battleWarriors).values(
+      combatBattles.flatMap((battle) => [
+        {
+          battleId: battle.id,
+          originalId: "hero-1",
+          name: "Hero",
+          icon: "hero.gif",
+          lvl: 300,
+          prof: "w",
+          team: 1,
+          turns: 5,
+          ph: 10,
+          damageDealtAfterDefensive: battle.damage,
+          meleeDamage: battle.damage,
+          damageTaken: battle.taken,
+          blockedDamage: battle.blocked,
+        },
+        ...battle.levels.map((lvl, index) => ({
+          battleId: battle.id,
+          originalId: `explicit-opponent-${index}`,
+          name: "Enemy",
+          icon: "enemy.gif",
+          lvl,
+          prof: lvl === 300 ? "m" : "p",
+          team: 2,
+          turns: 5,
+        })),
+      ]),
+    ),
+  );
+
+  const profile = await runtime.runPromise(
+    makeBattleCombatProfileRead(
+      db,
+      makeBattleAnalyticsQuery(db),
+    ).getCombatProfile(
+      "owner",
+      query({ world: "combat-explicit", minLevel: 250, maxLevel: 350 }),
+      characters,
+    ),
+  );
+
+  expect(profile.summary).toMatchObject({
+    totalBattles: 2,
+    wins: 1,
+    losses: 1,
+    totalPH: 20,
+    totalRatingDelta: 10,
+  });
+  expect(
+    profile.highlights.map(({ battleId, type, value }) => ({
+      battleId,
+      type,
+      value,
+    })),
+  ).toEqual([
+    { battleId: "explicit-small-win", type: "biggestComeback", value: 500 },
+    { battleId: "explicit-big-loss", type: "biggestDamage", value: 300 },
+    { battleId: "explicit-big-loss", type: "biggestMitigation", value: 50 },
+  ]);
+  expect(profile.matchupByProfession).toEqual([
+    { prof: "m", wins: 1, losses: 1, totalBattles: 2, winRate: 50 },
+    { prof: "p", wins: 0, losses: 1, totalBattles: 1, winRate: 0 },
+  ]);
 });
