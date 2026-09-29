@@ -27,6 +27,7 @@ import { ConnectionStatusStrip } from "@/components/connection-status-strip";
 import { toolbarStripClassName } from "@/components/ui/toolbar-strip";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { EmptyState } from "@/components/empty-state";
+import { NoLootlogEmptyState } from "@/components/no-lootlog-empty-state";
 import type { LevelRange } from "@/components/level-range-filter";
 import {
   getCharacterFilterKey,
@@ -56,6 +57,7 @@ type InitialLoadInput = {
   guildId: string | undefined;
   guildsQuery: { error: unknown; isLoading: boolean };
   hasLoaded: boolean;
+  hasNoGuilds: boolean;
   initialLoading: boolean;
 };
 
@@ -71,6 +73,7 @@ const GATEWAY_OFFLINE = new Error("Realtime gateway is not connected");
  * Without an Organization there is no presence scope to fetch, so the only
  * thing that can load or fail is the Organization list itself. With a scope
  * but no gateway session nothing is requested, which the user must see too.
+ * A player in no Organization has nothing to load at all.
  */
 const resolveInitialLoad = ({
   disconnected,
@@ -78,9 +81,10 @@ const resolveInitialLoad = ({
   guildId,
   guildsQuery,
   hasLoaded,
+  hasNoGuilds,
   initialLoading,
 }: InitialLoadInput): InitialLoad => {
-  if (hasLoaded) {
+  if (hasLoaded || hasNoGuilds) {
     return { error: null, errorLabelKey: "states.loadError", loading: false };
   }
 
@@ -147,7 +151,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
     retry,
   } = usePlayersPresence(guildId, viewedWorld);
 
-  const { guildsQuery } = useLootlogGuilds();
+  const { guildsQuery, hasNoGuilds } = useLootlogGuilds();
 
   const initialLoad = resolveInitialLoad({
     disconnected,
@@ -155,6 +159,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
     guildId,
     guildsQuery,
     hasLoaded,
+    hasNoGuilds,
     initialLoading,
   });
 
@@ -248,7 +253,9 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
 
   let listContent: ReactNode;
 
-  if (accessState === "forbidden") {
+  if (hasNoGuilds) {
+    listContent = <NoLootlogEmptyState />;
+  } else if (accessState === "forbidden") {
     listContent = (
       <EmptyState
         description={t("emptyState.noAccessDescription")}

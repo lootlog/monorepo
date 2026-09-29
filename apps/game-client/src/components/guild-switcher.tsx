@@ -34,6 +34,7 @@ type GuildSwitcherProps = {
 type GuildSwitcherStatusInput = {
   arePreferencesFetched: boolean;
   arePreferencesLoading: boolean;
+  guildCount: number;
   hasGuilds: boolean;
   hasGuildsError: boolean;
   hasPreferences: boolean;
@@ -46,6 +47,7 @@ type GuildSwitcherStatusInput = {
 const getGuildSwitcherStatus = ({
   arePreferencesFetched,
   arePreferencesLoading,
+  guildCount,
   hasGuilds,
   hasGuildsError,
   hasPreferences,
@@ -54,6 +56,11 @@ const getGuildSwitcherStatus = ({
   isLoading,
   visibleGuildCount,
 }: GuildSwitcherStatusInput) => {
+  // Not a member of any Lootlog: nothing to pick and nothing hidden.
+  if (hasGuilds && isFetched && guildCount === 0) {
+    return "none" as const;
+  }
+
   const hasResolvedGuilds = hasGuilds && isFetched && arePreferencesFetched;
 
   if (hasResolvedGuilds && visibleGuildCount === 1) {
@@ -137,6 +144,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   const status = getGuildSwitcherStatus({
     arePreferencesFetched,
     arePreferencesLoading,
+    guildCount: guilds?.length ?? 0,
     hasGuilds: Boolean(guilds),
     hasGuildsError: Boolean(error),
     hasPreferences: Boolean(userPreferences),
@@ -194,7 +202,9 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   // own pill.
   const statusClassName = "ll:mt-0 ll:border-y-0";
 
-  if (status === "single") {
+  // A player outside every Lootlog learns how to join from the window's
+  // empty state, which has room to explain it.
+  if (status === "single" || status === "none") {
     return null;
   }
 

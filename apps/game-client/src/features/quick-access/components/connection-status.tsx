@@ -9,8 +9,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useSocket } from "@/contexts/socket-context";
+import { authClient, isSessionSignedOut } from "@/lib/auth-client";
+import { useWindowsStore } from "@/store/windows.store";
 import type { RealtimeConnectionStatus } from "@/lib/realtime-connection-status";
-import { LoaderCircle, Wifi, WifiOff } from "lucide-react";
+import { LoaderCircle, LogIn, Wifi, WifiOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 /** Shape and color both change per state, so the status never rests on color alone. */
@@ -27,6 +29,8 @@ const STATUS_ICON = {
   RealtimeConnectionStatus,
   { Icon: typeof Wifi; className: string }
 >;
+
+const SIGNED_OUT_ICON = { Icon: LogIn, className: "ll:text-yellow-400" };
 
 /** Refresh rate of the latency while the player is looking at it. */
 const LATENCY_PROBE_INTERVAL_MS = 2_000;
@@ -72,16 +76,28 @@ export const ConnectionStatus: FC = () => {
     guildsQuery: { data: guilds },
   } = useLootlogGuilds();
 
-  const online = status === "online";
-  const statusLabel = tCommon(`connection.${status}`);
-  const { Icon, className: iconClassName } = STATUS_ICON[status];
+  const session = authClient.useSession();
+  const openAndFocus = useWindowsStore((state) => state.openAndFocus);
+
+  // Signed out, the socket is not mounted at all, so its status means nothing.
+  const signedOut = isSessionSignedOut(session);
+  const online = !signedOut && status === "online";
+
+  const statusLabel = signedOut
+    ? tCommon("connection.signedOut")
+    : tCommon(`connection.${status}`);
+
+  const { Icon, className: iconClassName } = signedOut
+    ? SIGNED_OUT_ICON
+    : STATUS_ICON[status];
 
   const pingLabel =
     online && heartbeatLatencyMs !== null
       ? t("connection.heartbeatPing", { ping: heartbeatLatencyMs })
       : null;
 
-  const canReconnect = status === "reconnecting" || status === "unreachable";
+  const canReconnect =
+    !signedOut && (status === "reconnecting" || status === "unreachable");
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -133,6 +149,19 @@ export const ConnectionStatus: FC = () => {
               ))}
             </ul>
           </div>
+        ) : null}
+        {signedOut ? (
+          <Button
+            size="xs"
+            className="ll:w-full"
+            onClick={() => {
+              setOpen(false);
+              openAndFocus("extension-login");
+            }}
+          >
+            <LogIn aria-hidden="true" />
+            {tCommon("auth.signIn")}
+          </Button>
         ) : null}
         {canReconnect ? (
           <Button

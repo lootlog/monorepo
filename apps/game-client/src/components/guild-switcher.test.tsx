@@ -251,6 +251,19 @@ describe("GuildSwitcher", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("does not tell a player without any Lootlog that their Lootlogs are hidden", () => {
+    harness.queryClient.setQueryData(harness.guildsKey, []);
+    harness.setPreferences({ hiddenGuildIds: ["guild-1"] });
+
+    render(<GuildSwitcher allowAll value="all" />);
+
+    expect(
+      screen.queryByText("Wszystkie Lootlogi są ukryte"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
   it("shows a full-width settings notice when every guild is hidden", () => {
     harness.setPreferences({
       guildsOrder: [],
