@@ -13,16 +13,12 @@ import {
 } from "@lootlog/schema/http-scalars";
 import { RESERVATION_TIME_GRANULARITY_OPTIONS } from "@lootlog/domain/reservations";
 import { ErrorKey } from "#src/guilds/error-key";
+import { organizationSummaryFields } from "#src/contracts/shared";
 
 export type UserOrganizationSummary = typeof UserOrganizationSummary.Type;
 
 export const UserOrganizationSummary = Schema.Struct({
-  id: Schema.String,
-  name: Schema.String,
-  icon: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-  vanityUrl: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-  ownerId: Schema.String,
-  publicStatsCardEnabled: Schema.Boolean,
+  ...organizationSummaryFields,
   reservationMaxDurationMinutes: Schema.optionalKey(FiniteNumber),
   reservationMinDurationMinutes: Schema.optionalKey(FiniteNumber),
   reservationTimeGranularityMinutes: Schema.optionalKey(FiniteNumber),
