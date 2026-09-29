@@ -380,7 +380,7 @@ describe("Personal kill analytics authentication", () => {
       [
         Effect.asVoid(getUserKillAnalytics({ days: 7 })),
         Effect.asVoid(getUserKillActivity({})),
-        Effect.asVoid(getUserFeed()),
+        Effect.asVoid(getUserFeed({})),
       ].map(async (operation) => {
         const error = await Effect.runPromise(
           Effect.flip(

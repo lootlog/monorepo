@@ -1,4 +1,7 @@
-import { UserFeedResponse } from "#src/contracts/users/feed-schemas";
+import {
+  UserFeedQuery,
+  UserFeedResponse,
+} from "#src/contracts/users/feed-schemas";
 /** Endpoints owned by the users HTTP module. */
 import {
   HttpApiEndpoint,
@@ -19,6 +22,7 @@ import {
 
 export class UsersGroup extends HttpApiGroup.make("users").add(
   HttpApiEndpoint.get("UsersControllerGetUserFeed", "/users/@me/feed", {
+    query: UserFeedQuery,
     success: UserFeedResponse,
   })
     .middleware(BearerSecurityMiddleware)

@@ -11,13 +11,13 @@ export const Dashboard = () => {
   const { t } = useTranslation();
 
   return (
-    <ScrollArea className="h-full min-h-0 [&>[data-slot=scroll-area-viewport]>div]:h-full">
-      <div className="@container/dashboard flex min-h-full flex-col gap-3 p-3">
+    <ScrollArea className="h-full min-h-0">
+      <div className="@container/dashboard flex flex-col gap-3 p-3">
         <h1 className="sr-only">{t("statistics.dashboard")}</h1>
         <DashboardOnboarding />
         <DashboardKillSummary />
-        <div className="grid flex-1 gap-3 @3xl/dashboard:min-h-0 @3xl/dashboard:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] @3xl/dashboard:grid-rows-[minmax(36rem,1fr)]">
-          <div className="min-w-0 w-full self-start space-y-3 pb-3 @3xl/dashboard:col-start-2 @3xl/dashboard:row-start-1">
+        <div className="grid items-start gap-3 @3xl/dashboard:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <div className="min-w-0 w-full space-y-3 @3xl/dashboard:col-start-2 @3xl/dashboard:row-start-1">
             <DashboardActivity />
             <aside
               aria-labelledby="dashboard-my-reservations-title"
