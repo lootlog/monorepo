@@ -16,6 +16,7 @@ import {
   decodeMessage,
   MAX_PENDING_REQUESTS,
   REQUEST_TIMEOUT_MS,
+  type ExtensionClosedReason,
   type ExtensionRequest,
 } from "./protocol";
 
@@ -42,7 +43,7 @@ type RequestData = ExtensionRequest extends infer R
 
 export function createPageTransport(
   port: MessagePort,
-  onClosed: () => void,
+  onClosed: (reason: ExtensionClosedReason | undefined) => void,
 ): GameClientPlatform & { dispose: () => void } {
   const pending = new Map<string, Pending>();
   const events = new Set<(event: ServerEvent) => void>();
@@ -248,7 +249,7 @@ export function createPageTransport(
           return;
         case "closed":
           dispose();
-          onClosed();
+          onClosed(message.reason);
 
           return;
         case "state":
@@ -363,7 +364,7 @@ export function createPageTransport(
 }
 
 export function connectPageTransport(
-  onClosed: () => void,
+  onClosed: (reason: ExtensionClosedReason | undefined) => void,
 ): ReturnType<typeof createPageTransport> {
   const channel = new MessageChannel();
   const transport = createPageTransport(channel.port1, onClosed);

@@ -1,17 +1,8 @@
-import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
-import { getFixedT } from "@/i18n/get-fixed-t";
 
-let messageSent = false;
-
-export const useSession = () => {
-  const t = getFixedT("common");
-  const session = authClient.useSession();
-
-  if (!session.data && !session.isPending && !messageSent) {
-    messageSent = true;
-    toast.warning(t("auth.notLoggedIn"));
-  }
-
-  return session;
-};
+/**
+ * The Lootlog session for features. A missing or unreadable session is shown
+ * by the login window, which tells a failed check apart from a signed-out
+ * player, so features only read it.
+ */
+export const useSession = () => authClient.useSession();

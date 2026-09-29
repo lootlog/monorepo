@@ -1,10 +1,10 @@
-import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ToggleGroup } from "@/components/ui/toggle-group";
 import {
   SettingsPickerCard,
   settingsPickerGridClassName,
 } from "@/features/settings/components/shared/settings-picker-card";
+import { SettingsNoLootlogEmptyState } from "@/features/settings/components/shared/settings-no-lootlog-empty-state";
 import type { GuildIdentity as Guild } from "@/lib/api/generated-helpers";
 import { cn } from "cn";
 import { Check } from "lucide-react";
@@ -14,7 +14,6 @@ type SettingsGuildPickerProps = {
   guilds?: Guild[];
   selectedGuildIds: readonly string[];
   onToggle: (guildId: string) => void;
-  emptyStateLabel: string;
   "aria-label"?: string;
   className?: string;
   disabled?: boolean;
@@ -23,19 +22,19 @@ type SettingsGuildPickerProps = {
 /**
  * Multi-choice grid of server cards: avatar, name and a check mark on the
  * selected ones. Cards wrap to the available width, so the list never scrolls
- * sideways and every server is readable without a tooltip.
+ * sideways and every server is readable without a tooltip. Without any
+ * Lootlog it explains how to join one.
  */
 export const SettingsGuildPicker: FC<SettingsGuildPickerProps> = ({
   guilds,
   selectedGuildIds,
   onToggle,
-  emptyStateLabel,
   "aria-label": ariaLabel,
   className,
   disabled,
 }) => {
   if (!guilds || guilds.length === 0) {
-    return <SettingsEmptyState>{emptyStateLabel}</SettingsEmptyState>;
+    return <SettingsNoLootlogEmptyState />;
   }
 
   return (
@@ -93,7 +92,7 @@ export const SettingsGuildPickerItem: FC<SettingsGuildPickerItemProps> = ({
     trailing={
       <span
         aria-hidden
-        className="ll:flex ll:size-4 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-full ll:bg-primary ll:text-primary-foreground ll:scale-50 ll:opacity-0 ll:transition-[opacity,transform] ll:duration-200 ll:ease-[cubic-bezier(0.2,0,0,1)] ll:group-data-pressed/picker-card:scale-100 ll:group-data-pressed/picker-card:opacity-100"
+        className="ll:flex ll:size-4 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-full ll:bg-primary ll:text-primary-foreground ll:scale-50 ll:opacity-0 ll:transition-[opacity,transform] ll:duration-medium ll:ease-enter ll:group-data-pressed/picker-card:scale-100 ll:group-data-pressed/picker-card:opacity-100"
       >
         <Check className="ll:size-3" />
       </span>

@@ -55,6 +55,44 @@ describe("InformationSettingsTab", { timeout: 20_000 }, () => {
     ).not.toBeInTheDocument();
   });
 
+  it("copies one diagnostics bundle that keeps request secrets out", async () => {
+    const user = userEvent.setup();
+    const { useLogsStore } = await import("@/store/logs.store");
+    const logs = useLogsStore.getState();
+
+    const actionId = logs.appendAction({
+      actionType: "create_timer",
+      payload: { note: "private-payload" },
+    });
+
+    logs.appendRequest({
+      actionId,
+      method: "POST",
+      endpoint: "https://api.lootlog.test/timers?token=secret-token",
+      payload: { note: "private-payload" },
+      response: { message: "private-response" },
+      statusCode: 500,
+      status: "error",
+    });
+
+    const { InformationSettingsTab } =
+      await import("./information-settings-tab");
+
+    render(<InformationSettingsTab />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Kopiuj informacje diagnostyczne" }),
+    );
+
+    const report = await navigator.clipboard.readText();
+    expect(report).toContain("version: 1.0.1");
+    expect(report).toContain(`commit: ${commitSha}`);
+    expect(report).toContain("POST api.lootlog.test/timers -> 500");
+    expect(report).not.toContain("secret-token");
+    expect(report).not.toContain("private-payload");
+    expect(report).not.toContain("private-response");
+  });
+
   it("copies the commit sha to the clipboard", async () => {
     const user = userEvent.setup();
 

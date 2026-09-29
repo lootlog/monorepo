@@ -13,7 +13,43 @@
   "guildPopover": {
     "lootlogPage": "Strona Lootloga",
     "dashboard": "Dashboard",
-    "emptyGuilds": "Nie należysz do żadnego Lootloga."
+    "showSetup": "Pierwsze kroki"
+  },
+  "setup": {
+    "title": "Pierwsze kroki",
+    "progress": "{{done}} z {{total}}",
+    "remaining": "Pierwsze kroki, pozostało: {{count}}",
+    "listLabel": "Kroki konfiguracji",
+    "dismiss": "Ukryj listę",
+    "dismissHint": "Wrócisz do niej z menu „Strona Lootloga”.",
+    "status": {
+      "done": "Zrobione",
+      "todo": "Do zrobienia",
+      "pending": "Sprawdzanie…",
+      "blocked": "Najpierw poprzedni krok"
+    },
+    "steps": {
+      "sign-in": {
+        "label": "Zaloguj się do Lootloga",
+        "hint": "Dodatek łączy Twoją postać z kontem Discord.",
+        "action": "Zaloguj"
+      },
+      "join-lootlog": {
+        "label": "Dołącz do Lootloga swojej grupy",
+        "hint": "Poproś lidera o dostęp albo dodaj bota Lootloga do serwera Discord grupy.",
+        "action": "Otwórz stronę"
+      },
+      "catching": {
+        "label": "Wybierz Lootlogi dla tej postaci",
+        "hint": "Łupy i timery tej postaci trafią tylko do zaznaczonych Lootlogów.",
+        "action": "Wybierz"
+      },
+      "realtime": {
+        "label": "Połącz z serwerem",
+        "hint": "Bez połączenia timery i czat nie odświeżają się na bieżąco.",
+        "action": "Połącz"
+      }
+    }
   },
   "connection": {
     "heartbeatPing": "Opóźnienie połączenia: {{ping}} ms",
