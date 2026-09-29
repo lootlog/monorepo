@@ -44,7 +44,7 @@ describe("battle log search", () => {
       ],
     });
 
-    expect(matches).toEqual([{ turn: 12 }]);
+    expect(matches).toEqual([12]);
   });
 
   it("matches raw action keys and params", () => {
@@ -77,13 +77,13 @@ describe("battle log search", () => {
         query: "legbon_holytouch",
         entries: [{ turn: 18, rawText }],
       }),
-    ).toEqual([{ turn: 18 }]);
+    ).toEqual([18]);
     expect(
       findBattleLogSearchMatches({
         query: "5359",
         entries: [{ turn: 18, rawText }],
       }),
-    ).toEqual([{ turn: 18 }]);
+    ).toEqual([18]);
   });
 
   it.each(["Kląt", "Klątwa", "klatwa"])(
@@ -114,7 +114,7 @@ describe("battle log search", () => {
           query,
           entries: [{ turn: 21, rawText }],
         }),
-      ).toEqual([{ turn: 21 }]);
+      ).toEqual([21]);
     },
   );
 
@@ -155,7 +155,7 @@ describe("battle log search", () => {
         query,
         entries: [{ turn: 22, rawText }],
       }),
-    ).toEqual([{ turn: 22 }]);
+    ).toEqual([22]);
   });
 
   it.each(["Głę", "Głęboka", "Gleboka rana"])(
@@ -210,7 +210,7 @@ describe("battle log search", () => {
             },
           ],
         }),
-      ).toEqual([{ turn: 24 }, { turn: 25 }]);
+      ).toEqual([24, 25]);
     },
   );
 
@@ -249,7 +249,7 @@ describe("battle log search", () => {
             },
           ],
         }),
-      ).toEqual([{ turn: 27 }]);
+      ).toEqual([27]);
     },
   );
 
@@ -281,7 +281,7 @@ describe("battle log search", () => {
       ],
     });
 
-    expect(matches).toEqual([{ turn: 8 }]);
+    expect(matches).toEqual([8]);
   });
 
   it("cycles previous and next search navigation", () => {
