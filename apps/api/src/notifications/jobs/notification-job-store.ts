@@ -1,7 +1,7 @@
 import { selectNotificationJobsWithRelations } from "./notification-job-query.js";
 import { readNotificationRuleTargets } from "#src/notifications/targets/notification-target-store";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
@@ -188,29 +188,31 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
         }),
       );
 
-  const findRuleTargets = (ruleIds: readonly number[]) =>
-    readNotificationRuleTargets(database, ruleIds).pipe(
-      Effect.mapError(failure("notifications.jobStore.ruleTargets")),
-    );
-
-  const findRule = (ruleId: number) =>
+  const findRules = (ruleIds: readonly number[]) =>
     Effect.gen(function* () {
-      const rows = yield* database
+      if (ruleIds.length === 0) return [];
+
+      const rules = yield* database
         .select()
         .from(notificationRuleTable)
-        .where(eq(notificationRuleTable.id, ruleId))
-        .limit(1);
+        .where(inArray(notificationRuleTable.id, [...ruleIds]))
+        .orderBy(asc(notificationRuleTable.id));
 
-      const rule = rows[0];
+      if (rules.length === 0) return [];
 
-      if (!rule) return null;
-      const targets = (yield* findRuleTargets([ruleId])).get(ruleId) ?? [];
+      const targets = yield* readNotificationRuleTargets(
+        database,
+        rules.map(({ id }) => id),
+      );
 
-      return {
+      return rules.map((rule): NotificationRuleWithTargets => ({
         ...rule,
-        targets,
-      } satisfies NotificationRuleWithTargets;
-    }).pipe(Effect.mapError(failure("notifications.jobStore.findRule")));
+        targets: [...(targets.get(rule.id) ?? [])],
+      }));
+    }).pipe(Effect.mapError(failure("notifications.jobStore.findRules")));
+
+  const findRule = (ruleId: number) =>
+    findRules([ruleId]).pipe(Effect.map((rules) => rules[0] ?? null));
 
   const findTimers = (guildId: string, world: string | null) =>
     database
@@ -299,7 +301,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
     findJob,
     findJobWithRelations,
     findRule,
-    findRuleTargets,
+    findRules,
     findTimers,
     prune,
     recordDelivery,

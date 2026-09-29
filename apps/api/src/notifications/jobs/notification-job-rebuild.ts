@@ -40,13 +40,9 @@ export interface NotificationRebuildStore {
   readonly findRule: (
     ruleId: number,
   ) => Effect.Effect<RuleWithTargets | null, unknown, never>;
-  readonly ruleTargets: (
+  readonly findRules: (
     ruleIds: readonly number[],
-  ) => Effect.Effect<
-    ReadonlyMap<number, readonly RuleTarget[]>,
-    unknown,
-    never
-  >;
+  ) => Effect.Effect<readonly RuleWithTargets[], unknown, never>;
   readonly timers: (
     guildId: string,
     world: string | null,
@@ -191,29 +187,29 @@ export const makeNotificationJobRebuild = (
       );
   };
 
-  // Rebuilds one timer's jobs for every rule the caller matched to it. Rules
-  // share one target read and one permission lookup per owner; each rule's
-  // failure is reported without stopping the others.
+  // Rebuilds one timer's jobs for every rule the caller matched to it. The
+  // rules are re-read together, so a rule disabled or edited since the caller
+  // listed it is not rebuilt from its old row. Rules share one permission
+  // lookup per owner; each rule's failure is reported without stopping the
+  // others.
   const rebuildTimer = Effect.fn("notifications.jobs.rebuildTimer")(function* (
-    rules: readonly NotificationStoredRule[],
+    ruleIds: readonly number[],
     event: TimerUpdatedEvent,
   ) {
-    const schedulable = rules.filter(isSchedulableTimerRule);
+    if (ruleIds.length === 0) return [];
+
+    const schedulable = (yield* store.findRules(ruleIds))
+      .filter(isSchedulableTimerRule)
+      .filter((rule) => matchesTimerRule(rule.filters, event.npcId));
 
     if (schedulable.length === 0) return [];
-    const targets = yield* store.ruleTargets(schedulable.map(({ id }) => id));
     const permittedFor = yield* permittedByOwner(schedulable);
     const now = new Date(yield* Clock.currentTimeMillis);
 
     const [failures] = yield* Effect.partition(
       schedulable,
-      (stored) => {
-        const rule = {
-          ...stored,
-          targets: [...(targets.get(stored.id) ?? [])],
-        };
-
-        const schedule = timerSchedule(stored, event, now);
+      (rule) => {
+        const schedule = timerSchedule(rule, event, now);
 
         return Effect.gen(function* () {
           yield* scheduler.cancel({
