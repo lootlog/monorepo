@@ -4,7 +4,7 @@ interface JoinAdmissionLimits {
   /** Joins admitted at once after a quiet period. */
   readonly burst: number;
   /**
-   * Joins running at once. Kept below the 64 command slots so heartbeats of
+   * Joins running at once. Leaves 16 of the 64 command slots so heartbeats of
    * established sessions still run while a reconnect burst joins.
    */
   readonly concurrent: number;
@@ -12,11 +12,14 @@ interface JoinAdmissionLimits {
   readonly retryAfterMs: { readonly min: number; readonly max: number };
 }
 
+// A join served from the permission cache takes milliseconds, so the rate lets
+// a restarted replica readmit its sessions within seconds. The concurrency cap
+// is what bounds API load when the cache is cold.
 const defaultLimits = {
-  ratePerSecond: 100,
-  burst: 200,
-  concurrent: 32,
-  retryAfterMs: { min: 1_000, max: 5_000 },
+  ratePerSecond: 250,
+  burst: 1_000,
+  concurrent: 48,
+  retryAfterMs: { min: 500, max: 3_000 },
 } satisfies JoinAdmissionLimits;
 
 export type JoinAdmissionResult =
