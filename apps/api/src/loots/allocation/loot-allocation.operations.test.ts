@@ -136,7 +136,9 @@ describe("loot allocation Effect module", () => {
   it("records a chat share that covers only some loot items", async () => {
     const { confirm, writes, published } = setup(authorizedLoot);
 
-    expect(await confirm('Bob otrzymał ITEM#bb:"Item 2"')).toEqual({});
+    expect(await confirm('Bob otrzymał ITEM#bb:"Item 2"')).toEqual({
+      "127": ["bb"],
+    });
     expect(writes).toEqual([{ "127": ["bb"] }]);
     expect(published).toEqual([{ "127": ["bb"] }]);
   });
