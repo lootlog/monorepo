@@ -1,3 +1,4 @@
+import "@/boot-start";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
@@ -15,6 +16,8 @@ import {
   type GameClientPlatform,
 } from "@/lib/game-client-platform";
 import { resetExtensionLoginWindow } from "@/store/windows.store";
+import { markBootMilestone } from "@/lib/boot-timing";
+import { monitorLongFrames } from "@/lib/long-frame-monitor";
 
 const ROOT_Z_INDEX_BY_INTERFACE = {
   ni: 11,
@@ -90,6 +93,7 @@ function createRootElement(): HTMLDivElement {
 export function bootstrapGameClient(
   platform?: GameClientPlatform,
 ): GameClientRuntime {
+  markBootMilestone("bootstrap");
   const installation = platform ? "extension" : "userscript";
 
   const runtimeWindow: RuntimeWindow = window;
@@ -112,6 +116,7 @@ export function bootstrapGameClient(
   let rootElement: HTMLDivElement | undefined;
   let root: ReturnType<typeof ReactDOM.createRoot> | undefined;
   let teardownPublicApi: (() => void) | undefined;
+  let stopLongFrameMonitor: (() => void) | undefined;
   let runtime: GameClientRuntime | undefined;
   let disposed = false;
 
@@ -126,6 +131,7 @@ export function bootstrapGameClient(
     const steps = [
       () => root?.unmount(),
       () => teardownPublicApi?.(),
+      () => stopLongFrameMonitor?.(),
       disposeSoundPlayback,
       disposeSocket,
       resetTransientRuntimeState,
@@ -165,6 +171,8 @@ export function bootstrapGameClient(
     };
     runtimeWindow.__lootlogGameClientRuntime = runtime;
     teardownPublicApi = bootstrapPublicApi(queryClient);
+
+    if (import.meta.env.DEV) stopLongFrameMonitor = monitorLongFrames();
 
     if (installation === "extension") resetExtensionLoginWindow();
     root.render(

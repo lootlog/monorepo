@@ -27,6 +27,7 @@ import { useGameStore } from "@/store/game.store";
 import {
   createContext,
   useContext,
+  useDeferredValue,
   useEffect,
   useRef,
   useState,
@@ -139,7 +140,14 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   // player dismissed.
   const joinRejectionShown = useRef(false);
   const [guildIds, setJoinedGuilds] = useState<string[]>([]);
-  const gameInitialized = useGlobalStore((s) => s.gameState.gameInitialized);
+
+  // Deferred like the overlay in AppContent: both values share React's
+  // deferred lane, so the join is sent in the commit that mounts the feature
+  // trees and their listeners, not ahead of them.
+  const gameInitialized = useDeferredValue(
+    useGlobalStore((s) => s.gameState.gameInitialized),
+  );
+
   const setSocketState = useGlobalStore((s) => s.setSocketState);
 
   const characterIdentity = useGameStore((state) => {
