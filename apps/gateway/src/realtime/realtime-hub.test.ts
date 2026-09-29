@@ -2454,6 +2454,41 @@ test("gathering rosters reach authorized observers across gateways without expos
           (target) => target.scenario.name === "hidden-tier",
         ))
           expect(target.sent).toHaveLength(0);
+
+        // A gathering announced with a message instead of an NPC has no NPC.
+        const { npc: _gatheringNpc, ...messageGathering } = gathering;
+        const { npc: _envelopeNpc, ...messageEnvelope } = envelope;
+
+        yield* deliver(
+          {
+            ...messageEnvelope,
+            notificationId: "message-gathering",
+            update: {
+              type: "UPSERT",
+              gathering: {
+                ...messageGathering,
+                notificationId: "message-gathering",
+              },
+            },
+          },
+          "message-gathering-created",
+        );
+
+        const observers = targets.filter(
+          (target) => target.scenario.name === "observer",
+        );
+
+        expect(observers).toHaveLength(2);
+
+        for (const observer of observers)
+          expect(observer.sent.map(decodeRealtimeFrame).at(-1)).toMatchObject({
+            data: {
+              payload: {
+                type: "UPSERT",
+                gathering: { notificationId: "message-gathering" },
+              },
+            },
+          });
       }),
     ),
   );
