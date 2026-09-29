@@ -1,5 +1,8 @@
 import { lazy, Suspense, type CSSProperties } from "react";
-import { AppSidebar } from "@/components/layout/app-sidebar";
+import {
+  AppSidebar,
+  COMPACT_SIDEBAR_WIDTH,
+} from "@/components/layout/app-sidebar";
 import { GuildShell } from "@/components/layout/guild-shell";
 import { GuildSidebarNavPlaceholder } from "@/components/layout/guild-sidebar-nav-placeholder";
 import { GuildsSidebarNav } from "@/components/layout/guilds-sidebar-nav";
@@ -40,24 +43,27 @@ export const AppLayout = () => {
   const showGuildNav =
     !isUserRoute && guildRouteMatch?.loaderData !== undefined;
 
-  // A failed Organization route has no navigation to wait for, so the
-  // sidebar stays empty instead of pulsing a skeleton forever.
   const hasFailedGuildRoute =
     guildRouteMatch?.status === "error" ||
     guildRouteMatch?.status === "notFound";
 
-  const sidebarNavigation =
-    isStandaloneRoute || hasFailedGuildRoute ? null : isUserRoute ? (
-      <UserSidebarNav />
-    ) : showGuildNav ? (
-      <GuildsSidebarNav />
-    ) : (
-      <GuildSidebarNavPlaceholder />
-    );
+  // A failed Organization route has no navigation or server details to show,
+  // so the sidebar narrows to the server rail instead of an empty column.
+  const isCompactSidebar = isStandaloneRoute || hasFailedGuildRoute;
+
+  const sidebarNavigation = isCompactSidebar ? null : isUserRoute ? (
+    <UserSidebarNav />
+  ) : showGuildNav ? (
+    <GuildsSidebarNav />
+  ) : (
+    <GuildSidebarNavPlaceholder />
+  );
 
   const sidebarStyle:
     | (CSSProperties & { "--sidebar-width": string })
-    | undefined = isStandaloneRoute ? { "--sidebar-width": "4rem" } : undefined;
+    | undefined = isCompactSidebar
+    ? { "--sidebar-width": COMPACT_SIDEBAR_WIDTH }
+    : undefined;
 
   return (
     <div
@@ -77,10 +83,7 @@ export const AppLayout = () => {
         className="relative min-h-0 flex-1 md:overflow-hidden"
         style={sidebarStyle}
       >
-        <AppSidebar
-          compact={isStandaloneRoute}
-          navigation={sidebarNavigation}
-        />
+        <AppSidebar compact={isCompactSidebar} navigation={sidebarNavigation} />
         {isStandaloneRoute ? (
           <StandaloneShell>
             <Outlet />
