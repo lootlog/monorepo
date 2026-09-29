@@ -20,8 +20,11 @@ export const SpinnerOverrideProvider: FC<{
   );
 };
 
+/** The spinner a theme puts in place of the default one, if any. */
+export const useSpinnerOverride = () => useContext(SpinnerOverrideContext);
+
 export const Spinner: FC<SpinnerProps> = ({ className }) => {
-  const Override = useContext(SpinnerOverrideContext);
+  const Override = useSpinnerOverride();
 
   if (Override) {
     return <Override className={className} />;

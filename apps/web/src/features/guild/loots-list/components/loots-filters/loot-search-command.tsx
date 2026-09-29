@@ -9,7 +9,6 @@ import { ItemImage } from "@lootlog/ui/components/item-image";
 import { LootSearchResults } from "./loot-search-results";
 
 import { ItemRarity } from "@/lib/loots/loot-types";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import { AnimatePresence } from "framer-motion";
 import * as m from "framer-motion/m";
 import { Button } from "@lootlog/ui/components/button";
@@ -34,6 +33,7 @@ import {
   containerVariants,
   renderIf,
 } from "./loot-search-presentation";
+import { LoadingSlot } from "@/components/common/loading-slot";
 
 export const LootSearchCommand = (
   props: Parameters<typeof useLootSearchCommand>[0],
@@ -159,7 +159,7 @@ export const LootSearchCommand = (
               exit="exit"
               className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
             >
-              <Spinner className="size-6 text-primary" />
+              <LoadingSlot size="small" />
               <h3 className="mt-4 text-sm font-semibold text-foreground">
                 {t("loots.searchCommand.hidLoadingTitle")}
               </h3>
@@ -258,7 +258,7 @@ export const LootSearchCommand = (
               exit="exit"
               className="flex h-full flex-col items-center justify-center py-10 text-muted-foreground"
             >
-              <Spinner className="mb-3 size-6 text-primary" />
+              <LoadingSlot size="small" className="mb-3" />
               <span className="text-sm">
                 {t("loots.searchCommand.loading")}
               </span>
