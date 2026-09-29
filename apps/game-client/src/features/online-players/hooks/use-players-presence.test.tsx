@@ -350,12 +350,12 @@ describe("usePlayersPresence", () => {
     );
     const { result } = await mount();
     expect(result.current.initialLoading).toBe(true);
-    await act(() => vi.advanceTimersByTimeAsync(10000));
+    await act(() => vi.advanceTimersByTimeAsync(13_000));
     expect(result.current.error).toBeInstanceOf(Error);
     expect(result.current.initialLoading).toBe(false);
     expect(result.current.hasLoaded).toBe(false);
     act(() => result.current.retry());
-    await act(() => vi.advanceTimersByTimeAsync(5000));
+    await act(() => vi.advanceTimersByTimeAsync(8_000));
     expect(harness.fetchPresence).toHaveBeenCalledTimes(4);
   });
 

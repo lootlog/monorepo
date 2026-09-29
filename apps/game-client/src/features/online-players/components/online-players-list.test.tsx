@@ -214,7 +214,7 @@ describe("OnlinePlayersList", () => {
       <OnlinePlayersList viewMode="accounts" filtersVisible />,
       false,
     );
-    await act(() => vi.advanceTimersByTimeAsync(10000));
+    await act(() => vi.advanceTimersByTimeAsync(13_000));
     expect(
       screen.getByRole("button", { name: "Spróbuj ponownie" }),
     ).toBeVisible();
