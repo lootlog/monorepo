@@ -1,47 +1,7 @@
 import type { BattleStatisticsQuery } from "#src/battles/analytics/query-battle-statistics";
 import type { HeadToHeadRecord } from "#src/battles/analytics/battle-statistics-response";
-import { battleAnalyticsDomain as domain } from "#src/battles/analytics/battle-analytics-domain.service";
-import type {
-  BattleResult,
-  InflatedBattleWithWarriors,
-} from "#src/battles/analytics/battle-analytics.types";
 
 type HeadToHeadSortBy = NonNullable<BattleStatisticsQuery["sortBy"]>;
-
-type Warrior = InflatedBattleWithWarriors["warriors"][number];
-
-type OpponentStats = {
-  name: string;
-  icon: string;
-  prof: string;
-  lvl: number;
-  wins: number;
-  losses: number;
-  lastBattleDate: Date;
-  lastBattleResult: BattleResult;
-  lastBattleUserWarrior: Warrior;
-  lastBattleOpponentWarrior: Warrior;
-  totalRatingDelta: number;
-  battlesWithRating: number;
-};
-
-const ratingStats = (
-  stats: Pick<OpponentStats, "totalRatingDelta" | "battlesWithRating">,
-  matchmaking: boolean | undefined,
-) => {
-  if (!matchmaking) {
-    return { totalRatingDelta: undefined, avgRatingDelta: undefined };
-  }
-
-  return {
-    totalRatingDelta: stats.totalRatingDelta,
-    avgRatingDelta:
-      stats.battlesWithRating === 0
-        ? 0
-        : Math.round((stats.totalRatingDelta / stats.battlesWithRating) * 100) /
-          100,
-  };
-};
 
 const applyRecordFilters = (
   records: HeadToHeadRecord[],
@@ -106,100 +66,6 @@ const sortRecords = (
   });
 
   return records;
-};
-
-export const headToHeadCalculator = {
-  calculateRecords(
-    battles: InflatedBattleWithWarriors[],
-    characterIds: Set<string>,
-    query: BattleStatisticsQuery,
-  ): HeadToHeadRecord[] {
-    const opponents = new Map<string, OpponentStats>();
-
-    for (const battle of battles) {
-      const userWarrior = domain.findUserWarrior(battle, characterIds);
-      const opponentWarrior = domain.findOpponentWarrior(battle, characterIds);
-
-      if (!userWarrior || !opponentWarrior) continue;
-
-      const battleResult = domain.getBattleResultForUserWarrior(
-        battle,
-        userWarrior,
-      );
-
-      const existing = opponents.get(opponentWarrior.originalId);
-
-      const stats = existing ?? {
-        name: opponentWarrior.name,
-        icon: opponentWarrior.icon,
-        prof: opponentWarrior.prof,
-        lvl: opponentWarrior.lvl,
-        wins: 0,
-        losses: 0,
-        lastBattleDate: battle.createdAt,
-        lastBattleResult: battleResult,
-        lastBattleUserWarrior: userWarrior,
-        lastBattleOpponentWarrior: opponentWarrior,
-        totalRatingDelta: 0,
-        battlesWithRating: 0,
-      };
-
-      if (userWarrior.team === battle.winningTeam) stats.wins++;
-      else if (userWarrior.team === battle.losingTeam) stats.losses++;
-
-      if (query.matchmaking && battle.ratingDelta !== null) {
-        stats.totalRatingDelta += battle.ratingDelta;
-
-        if (battle.ratingDelta !== 0) stats.battlesWithRating++;
-      }
-
-      if (!existing || battle.createdAt > stats.lastBattleDate) {
-        Object.assign(stats, {
-          name: opponentWarrior.name,
-          icon: opponentWarrior.icon,
-          prof: opponentWarrior.prof,
-          lvl: opponentWarrior.lvl,
-          lastBattleDate: battle.createdAt,
-          lastBattleResult: battleResult,
-          lastBattleUserWarrior: userWarrior,
-          lastBattleOpponentWarrior: opponentWarrior,
-        });
-      }
-
-      opponents.set(opponentWarrior.originalId, stats);
-    }
-
-    const records = Array.from(opponents.entries()).map(
-      ([opponentId, stats]) => {
-        const totalBattles = stats.wins + stats.losses;
-        const rating = ratingStats(stats, query.matchmaking);
-
-        return {
-          opponentId,
-          opponentName: stats.name,
-          opponentIcon: stats.icon,
-          opponentProf: stats.prof,
-          opponentLvl: stats.lvl,
-          lastBattleResult: stats.lastBattleResult,
-          lastBattleUserWarrior: domain.mapPlayerVsPlayerWarrior(
-            stats.lastBattleUserWarrior,
-          ),
-          lastBattleOpponentWarrior: domain.mapPlayerVsPlayerWarrior(
-            stats.lastBattleOpponentWarrior,
-          ),
-          wins: stats.wins,
-          losses: stats.losses,
-          totalBattles,
-          winRate: totalBattles > 0 ? (stats.wins / totalBattles) * 100 : 0,
-          lastBattleDate: stats.lastBattleDate.toISOString(),
-          totalRatingDelta: rating.totalRatingDelta,
-          avgRatingDelta: rating.avgRatingDelta,
-        };
-      },
-    );
-
-    return filterAndSortHeadToHeadRecords(records, query);
-  },
 };
 
 export const filterAndSortHeadToHeadRecords = (

@@ -1,9 +1,9 @@
 import type { CombatProfile } from "#src/battles/analytics/battle-statistics-response";
-import { battleAnalyticsDomain as domain } from "#src/battles/analytics/battle-analytics-domain.service";
-import type { InflatedBattleWithWarriors } from "#src/battles/analytics/battle-analytics.types";
+import type { InflatedBattleWarrior } from "#src/battles/statistics/battle-warrior-stats";
+import type { Battle } from "#src/database/schema";
 
-export type CombatProfileWarrior = Pick<
-  InflatedBattleWithWarriors["warriors"][number],
+type CombatProfileWarrior = Pick<
+  InflatedBattleWarrior,
   | "team"
   | "ph"
   | "turns"
@@ -26,8 +26,8 @@ export type CombatProfileWarrior = Pick<
   | "spellsUsedMap"
 >;
 
-export type CombatProfileBattle = Pick<
-  InflatedBattleWithWarriors,
+type CombatProfileBattle = Pick<
+  Battle,
   | "id"
   | "createdAt"
   | "hasFlee"
@@ -43,28 +43,6 @@ export type CombatProfileBattle = Pick<
 type CombatProfileHighlight = CombatProfile["highlights"][number];
 
 export const combatProfileCalculator = (() => {
-  function calculate(
-    battles: InflatedBattleWithWarriors[],
-    characterIds: Set<string>,
-  ): CombatProfile {
-    const accumulator = createAccumulator();
-
-    for (const battle of battles) {
-      const userWarrior = domain.findUserWarrior(battle, characterIds);
-
-      if (!userWarrior) continue;
-      accumulator.add({
-        ...battle,
-        userWarrior,
-        opponents: battle.warriors.filter(
-          (warrior) => warrior.team !== userWarrior.team,
-        ),
-      });
-    }
-
-    return accumulator.result();
-  }
-
   function createAccumulator() {
     const damageMix = new Map<string, number>();
     const mitigationMix = new Map<string, number>();
@@ -202,14 +180,14 @@ export const combatProfileCalculator = (() => {
           totalBattles,
           wins,
           losses,
-          winRate: domain.roundMetric(winRate),
+          winRate: roundMetric(winRate),
           totalPH,
           totalRatingDelta,
-          avgTurns: domain.roundMetric(avgTurns),
+          avgTurns: roundMetric(avgTurns),
           avgDuration: Math.round(avgDuration),
-          damagePerTurn: domain.roundMetric(damagePerTurn),
-          mitigationRate: domain.roundMetric(mitigationRate),
-          controlRate: domain.roundMetric(controlRate),
+          damagePerTurn: roundMetric(damagePerTurn),
+          mitigationRate: roundMetric(mitigationRate),
+          controlRate: roundMetric(controlRate),
         },
         damageMix: getBreakdownEntries(damageMix),
         mitigationMix: getBreakdownEntries(mitigationMix),
@@ -218,7 +196,7 @@ export const combatProfileCalculator = (() => {
             ...spell,
             share:
               totalSpellCasts > 0
-                ? domain.roundMetric((spell.casts / totalSpellCasts) * 100)
+                ? roundMetric((spell.casts / totalSpellCasts) * 100)
                 : 0,
           }))
           .sort((left, right) => right.casts - left.casts)
@@ -234,9 +212,7 @@ export const combatProfileCalculator = (() => {
               totalBattles: professionTotalBattles,
               winRate:
                 professionTotalBattles > 0
-                  ? domain.roundMetric(
-                      (stats.wins / professionTotalBattles) * 100,
-                    )
+                  ? roundMetric((stats.wins / professionTotalBattles) * 100)
                   : 0,
             };
           })
@@ -339,7 +315,7 @@ export const combatProfileCalculator = (() => {
         key,
         label: key,
         value,
-        share: total > 0 ? domain.roundMetric((value / total) * 100) : 0,
+        share: total > 0 ? roundMetric((value / total) * 100) : 0,
       }))
       .sort((left, right) => right.value - left.value);
   }
@@ -356,5 +332,9 @@ export const combatProfileCalculator = (() => {
     }
   }
 
-  return { calculate, createAccumulator, getEmptyProfile };
+  function roundMetric(value: number): number {
+    return Math.round(value * 100) / 100;
+  }
+
+  return { createAccumulator, getEmptyProfile };
 })();
