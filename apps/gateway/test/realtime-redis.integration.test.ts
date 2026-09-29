@@ -152,6 +152,19 @@ const clanEnemyFields = ({
   prof: string;
 }) => ({ targetId, nickname, clan, lvl, prof });
 
+const waitForResubscription = async (
+  subscriberAddresses: () => Promise<ReadonlySet<string>>,
+  subscribed: number,
+): Promise<void> => {
+  const deadline = Date.now() + 5_000;
+
+  while ((await subscriberAddresses()).size < subscribed) {
+    if (Date.now() >= deadline)
+      throw new Error("Timed out waiting for the federation subscriber");
+    await Bun.sleep(20);
+  }
+};
+
 /** Revision of a federated `air-tag.scope-updated` frame for `mapId`. */
 const federatedAirTagRevision = (
   raw: string,
@@ -2620,6 +2633,7 @@ describe("realtime Dragonfly integration", () => {
               `${configuration.redis.keyPrefix}:realtime:federation:v1:sequence`,
             ),
           );
+        const subscribed = (await subscriberAddresses()).size;
         await control.runPromise(
           controlRedis.send("CLIENT", "KILL", affectedSubscriber),
         );
@@ -2634,6 +2648,9 @@ describe("realtime Dragonfly integration", () => {
           expect(stale.socket.data.closing).toBe(true);
         }
 
+        // CLIENT KILL returns before the instance notices, and a frame published
+        // before it resubscribes is really lost: wait for the new subscriber.
+        await waitForResubscription(subscriberAddresses, subscribed);
         await waitFor(() => affected.unavailableReason() === undefined, 5_000);
         const current = connect(affected, "current");
         await publishKill(healthy);
