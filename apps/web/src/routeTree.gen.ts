@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as InitRouteImport } from './routes/init'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as AuthenticatedGuildIdRouteImport } from './routes/_authenticated/$guildId'
@@ -86,6 +87,11 @@ import { Route as AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRouteI
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConnectRoute = ConnectRouteImport.update({
+  id: '/connect',
+  path: '/connect',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InitRoute = InitRouteImport.update({
@@ -524,6 +530,7 @@ const AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedRouteWithChildren
+  '/connect': typeof ConnectRoute
   '/init': typeof InitRoute
   '/signin': typeof SigninRoute
   '/$guildId': typeof AuthenticatedGuildIdRouteWithChildren
@@ -600,6 +607,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof AuthenticatedRouteWithChildren
+  '/connect': typeof ConnectRoute
   '/init': typeof InitRoute
   '/signin': typeof SigninRoute
   '/battles/$id': typeof BattlesIdRoute
@@ -666,6 +674,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/connect': typeof ConnectRoute
   '/init': typeof InitRoute
   '/signin': typeof SigninRoute
   '/_authenticated/$guildId': typeof AuthenticatedGuildIdRouteWithChildren
@@ -744,6 +753,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/connect'
     | '/init'
     | '/signin'
     | '/$guildId'
@@ -820,6 +830,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/connect'
     | '/init'
     | '/signin'
     | '/battles/$id'
@@ -885,6 +896,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_authenticated'
+    | '/connect'
     | '/init'
     | '/signin'
     | '/_authenticated/$guildId'
@@ -962,6 +974,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  ConnectRoute: typeof ConnectRoute
   InitRoute: typeof InitRoute
   SigninRoute: typeof SigninRoute
   BattlesIdRoute: typeof BattlesIdRoute
@@ -974,6 +987,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/connect': {
+      id: '/connect'
+      path: '/connect'
+      fullPath: '/connect'
+      preLoaderRoute: typeof ConnectRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/init': {
@@ -1818,6 +1838,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  ConnectRoute: ConnectRoute,
   InitRoute: InitRoute,
   SigninRoute: SigninRoute,
   BattlesIdRoute: BattlesIdRoute,
