@@ -10,7 +10,13 @@ type Upstream = "docs" | "landing" | "web";
 
 const landingDocuments = new Set(["/", "/privacy-policy", "/terms-of-service"]);
 
-const landingFiles = new Set(["/apple-icon.png", "/favicon.ico", "/icon.svg"]);
+const landingFiles = new Set([
+  "/apple-icon.png",
+  "/favicon.ico",
+  "/icon.svg",
+  "/robots.txt",
+  "/sitemap.xml",
+]);
 
 const credentialHeaders = ["authorization", "cookie", "proxy-authorization"];
 
@@ -265,6 +271,18 @@ export async function routeRequest(
   upstreamFetch: UpstreamFetch = fetch,
 ): Promise<Response> {
   const requestUrl = new URL(request.url);
+
+  if (
+    requestUrl.hostname === "lootlog.pl" &&
+    (request.method === "GET" || request.method === "HEAD") &&
+    isPathWithin(requestUrl.pathname, "/docs")
+  ) {
+    const canonicalUrl = new URL("https://docs.lootlog.pl");
+    canonicalUrl.pathname = requestUrl.pathname;
+    canonicalUrl.search = requestUrl.search;
+
+    return Response.redirect(canonicalUrl.href, 308);
+  }
 
   const ambiguousLegacyAssetReferer = getAmbiguousLegacyAssetReferer(
     request,

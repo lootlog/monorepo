@@ -39,6 +39,9 @@
     "title": "Częste pytania",
     "description": "Nie ma tu Twojego pytania? Zapytaj na Discordzie Lootloga.",
     "discord": "Dołącz do Discorda",
+    "guide1": "Zobacz panel walk Margonem i analizę PvP",
+    "guide3": "Jak skonfigurować darmowy lootlog klanowy",
+    "guide4": "Poznaj wspólne timery respów",
     "q1": "Gdzie znajdę analizę walk?",
     "a1": "W\u00a0Panelu walk w\u00a0aplikacji Lootloga. Po zainstalowaniu dodatku obsługiwane walki trafiają tam same\u00a0– z\u00a0przebiegiem i\u00a0statystykami starć.",
     "q2": "Czy za Lootloga można dostać bana?",
@@ -53,6 +56,7 @@
     "a6": "Na Discordzie Lootloga albo w\u00a0zgłoszeniu na GitHubie. Pull requesty też są mile widziane."
   },
   "proof": {
+    "guide": "Skonfiguruj lootlog klanowy",
     "title": "Łupy i\u00a0statystyki klanu bez przepisywania z\u00a0czatu.",
     "description": "Dodatek zapisuje obsługiwane walki i\u00a0łupy w\u00a0trakcie gry. W\u00a0panelu cały klan widzi historię dropów, aktywność członków i\u00a0statystyki bić.",
     "dashboard": {

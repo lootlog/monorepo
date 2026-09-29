@@ -1,8 +1,9 @@
-import { ChartColumn, Gem } from "lucide-react";
+import { ArrowUpRight, ChartColumn, Gem } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { LootIllustration } from "@/src/components/landing/loot-illustration";
 import { RankingIllustration } from "@/src/components/landing/ranking-illustration";
+import { links } from "@/src/config/links";
 
 const evidenceItems = [
   { key: "dashboard", icon: Gem, surface: "blue" },
@@ -28,6 +29,10 @@ export function ProductProof() {
         <p className="landing-lead mt-6 text-[var(--broadcast-text-muted)]">
           {t("landing.proof.description")}
         </p>
+        <a href={links.organizationGuide} className="landing-footer-link mt-3">
+          {t("landing.proof.guide")}
+          <ArrowUpRight className="size-4" aria-hidden="true" />
+        </a>
 
         <div className="mt-12 grid gap-6 sm:mt-16 sm:gap-8">
           {evidenceItems.map(({ key, icon: Icon, surface }) => {

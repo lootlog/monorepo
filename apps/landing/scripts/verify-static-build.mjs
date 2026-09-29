@@ -62,4 +62,33 @@ await Promise.all(
   ),
 );
 
+const sitemap = await readDocument("sitemap.xml");
+
+assert.match(
+  sitemap,
+  /<urlset[^>]+xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9"/u,
+);
+
+assert.deepEqual(
+  [...sitemap.matchAll(/<loc>(.*?)<\/loc>/gu)].map((match) => match[1]).sort(),
+  [
+    "https://lootlog.pl/",
+    "https://lootlog.pl/privacy-policy",
+    "https://lootlog.pl/terms-of-service",
+  ].sort(),
+  "Landing sitemap must list the canonical public pages",
+);
+
+const robots = await readDocument("robots.txt");
+
+assert.match(robots, /^User-agent: \*$/mu);
+
+for (const origin of [
+  "https://lootlog.pl",
+  "https://docs.lootlog.pl",
+  "https://developer.lootlog.pl",
+]) {
+  assert.ok(robots.includes(`Sitemap: ${origin}/sitemap.xml`));
+}
+
 process.stdout.write("Landing static artifact verified.\n");

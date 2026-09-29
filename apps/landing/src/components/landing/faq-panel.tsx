@@ -1,4 +1,6 @@
 import { useTranslation } from "react-i18next";
+import { ArrowUpRight } from "lucide-react";
+import { links } from "@/src/config/links";
 import {
   Accordion,
   AccordionItem,
@@ -6,7 +8,14 @@ import {
   AccordionContent,
 } from "@lootlog/ui/components/accordion";
 
-const faqKeys = ["1", "2", "3", "4", "5", "6"] as const;
+const faqItems = [
+  { key: "1", guide: links.battleGuide },
+  { key: "2" },
+  { key: "3", guide: links.organizationGuide },
+  { key: "4", guide: links.addonGuide },
+  { key: "5" },
+  { key: "6" },
+] as const;
 
 export function FaqPanel() {
   const { t } = useTranslation();
@@ -14,9 +23,9 @@ export function FaqPanel() {
   return (
     <div className="w-full">
       <Accordion defaultValue={["item-0"]} className="w-full space-y-3">
-        {faqKeys.map((key, index) => (
+        {faqItems.map((item, index) => (
           <AccordionItem
-            key={key}
+            key={item.key}
             value={`item-${index}`}
             className="border-0 rounded-[var(--broadcast-radius-card)] bg-[var(--broadcast-ink-soft)] px-5 sm:px-6"
           >
@@ -25,13 +34,19 @@ export function FaqPanel() {
                 <span className="mt-1 font-mono text-xs font-bold text-[var(--broadcast-cyan)]">
                   {String(index + 1).padStart(2, "0")}
                 </span>
-                <span>{t(`landing.faq.q${key}`)}</span>
+                <span>{t(`landing.faq.q${item.key}`)}</span>
               </span>
             </AccordionTrigger>
             <AccordionContent className="pb-6 pl-0 pr-4 sm:pl-9">
               <p className="max-w-[68ch] text-base leading-7 text-[var(--broadcast-text-muted)]">
-                {t(`landing.faq.a${key}`)}
+                {t(`landing.faq.a${item.key}`)}
               </p>
+              {"guide" in item && (
+                <a href={item.guide} className="landing-footer-link mt-3">
+                  {t(`landing.faq.guide${item.key}`)}
+                  <ArrowUpRight className="size-4" aria-hidden="true" />
+                </a>
+              )}
             </AccordionContent>
           </AccordionItem>
         ))}

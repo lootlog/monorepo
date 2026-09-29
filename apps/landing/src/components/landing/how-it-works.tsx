@@ -61,7 +61,7 @@ export function HowItWorks() {
           ))}
         </ol>
         <a
-          href={links.docs}
+          href={links.installationGuide}
           className="landing-action landing-action-solid mt-6 w-full sm:w-fit"
         >
           {t("landing.workflow.guide")}
