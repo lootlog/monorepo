@@ -117,7 +117,8 @@ export const notificationsServicesLive = Layer.effect(
 
     const rebuild = makeNotificationJobRebuild(
       {
-        findRule: (ruleId) => jobsStore.findRule(ruleId),
+        findRule: jobsStore.findRule,
+        findRules: jobsStore.findRules,
         timers: jobsStore.findTimers,
       },
       (filters, npcId) => matching.matchesTimerRule(filters, npcId),
