@@ -8,6 +8,7 @@ import {
   type ExtensionClosedReason,
 } from "@/extension/protocol";
 import { LOOTLOG_APP_URL } from "@/config/app";
+import { gamePageUrlPattern } from "../matches";
 
 export default defineBackground(() => {
   browser.action.onClicked.addListener(() => {
@@ -23,9 +24,7 @@ export default defineBackground(() => {
       sender.frameId !== 0 ||
       sender.tab?.id === undefined ||
       !sender.url ||
-      !/^https:\/\/(?!www\.|new\.|forum\.|commons\.|dev-commons\.)[^./]+\.margonem\.(pl|com)\//.test(
-        sender.url,
-      )
+      !gamePageUrlPattern.test(sender.url)
     ) {
       port.disconnect();
 
