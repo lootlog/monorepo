@@ -157,14 +157,11 @@ function SidebarProvider({
   );
 }
 
-const mobileStyle: CSSPropertiesWithVariables = {
-  "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-};
-
 function Sidebar({
   side = "left",
   variant = "sidebar",
   collapsible = "offcanvas",
+  mobileWidth = SIDEBAR_WIDTH_MOBILE,
   className,
   children,
   ...props
@@ -172,6 +169,8 @@ function Sidebar({
   side?: "left" | "right";
   variant?: "sidebar" | "floating" | "inset";
   collapsible?: "offcanvas" | "icon" | "none";
+  /** The mobile sheet renders in a portal, outside the provider's width. */
+  mobileWidth?: string;
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
@@ -191,6 +190,10 @@ function Sidebar({
   }
 
   if (isMobile) {
+    const mobileStyle: CSSPropertiesWithVariables = {
+      "--sidebar-width": mobileWidth,
+    };
+
     return (
       <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
         <SheetContent

@@ -7,6 +7,9 @@ import {
 } from "@lootlog/ui/components/sidebar";
 import type { ReactNode } from "react";
 
+/** Fits the server rail alone, without the navigation column. */
+export const COMPACT_SIDEBAR_WIDTH = "4rem";
+
 type AppSidebarProps = {
   navigation?: ReactNode;
   compact?: boolean;
@@ -19,7 +22,10 @@ export const AppSidebar = ({
   // The shell is a fixed-height column, so the desktop sidebar fills its row
   // instead of the viewport and starts below the announcement bar.
   return (
-    <Sidebar className="absolute h-auto border-r border-sidebar-border bg-sidebar">
+    <Sidebar
+      className="absolute h-auto border-r border-sidebar-border bg-sidebar"
+      mobileWidth={compact ? COMPACT_SIDEBAR_WIDTH : undefined}
+    >
       <SidebarContent className="h-full bg-sidebar">
         <div className="relative flex min-h-0 min-w-0 w-full flex-1 flex-row gap-0 text-sm">
           <GuildsSelector />
