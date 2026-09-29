@@ -7,6 +7,7 @@ import { runtimeEventPipeline } from "@/lib/margonem-runtime/runtime-event-pipel
 import { runtimeStateProjection } from "@/lib/margonem-runtime/runtime-state-projection";
 import { runtimeInteractionCoordinator } from "@/lib/margonem-runtime/runtime-interaction-coordinator";
 import { isMargonemRuntimeReady } from "@/lib/margonem-runtime/runtime-adapter";
+import { markBootMilestone } from "@/lib/boot-timing";
 
 export const useInit = () => {
   const setGameState = useGlobalStore((state) => state.setGameState);
@@ -28,6 +29,7 @@ export const useInit = () => {
       if (!runtimeStateProjection.bootstrap()) return false;
 
       initialized.current = true;
+      markBootMilestone("game-initialized");
       setGameState({
         gameInitialized: true,
       });
