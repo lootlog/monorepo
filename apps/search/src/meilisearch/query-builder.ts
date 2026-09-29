@@ -1,4 +1,5 @@
 import { Function, Option, Schema } from "effect";
+import type { SearchParams } from "meilisearch";
 
 export const getMeilisearchErrorCode = Function.compose(
   Schema.decodeUnknownOption(
@@ -30,4 +31,43 @@ export function buildMeilisearchSearchTermFilter(
   return {
     searchTerm: search ?? "",
   };
+}
+
+export function buildMeilisearchNameQuery({
+  ids,
+  limit,
+  search,
+  world,
+}: {
+  readonly ids?: number[];
+  readonly limit: number;
+  readonly search?: string | string[];
+  readonly world?: string;
+}) {
+  const { filter: searchFilter, searchTerm } = buildMeilisearchSearchTermFilter(
+    "name",
+    search,
+  );
+
+  const filters: string[] = [];
+
+  if (searchFilter) {
+    filters.push(searchFilter);
+  }
+
+  if (ids && ids.length > 0) {
+    filters.push(`id IN [${ids.join(", ")}]`);
+  }
+
+  if (world) {
+    filters.push(`world = "${world}"`);
+  }
+
+  const query: SearchParams = {
+    limit,
+    attributesToSearchOn: ["name"],
+    ...(filters.length > 0 && { filter: filters.join(" AND ") }),
+  };
+
+  return { searchTerm, query };
 }
