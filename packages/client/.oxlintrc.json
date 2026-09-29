@@ -28,7 +28,7 @@
         "anti-slop/no-reflect-apply": [
           "error",
           {
-            "boundaryFunctions": ["emit"]
+            "boundaryFunctions": ["emitToListener"]
           }
         ]
       }
