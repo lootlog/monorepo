@@ -49,18 +49,20 @@ export const makeNotificationsEvents = (options: {
 }) => {
   const handleTimerUpdated = Effect.fn("notifications.events.timerUpdated")(
     function* (event: TimerUpdatedEvent) {
-      const rules = (yield* options.store.timerRules(
+      const ruleIds = (yield* options.store.timerRules(
         event.guildId,
         event.world,
-      )).filter((rule) =>
-        options.matching.matchesTimerRule(rule.filters, event.npcId),
-      );
+      ))
+        .filter((rule) =>
+          options.matching.matchesTimerRule(rule.filters, event.npcId),
+        )
+        .map(({ id }) => id);
 
       const failures = yield* options.rebuild
-        .rebuildTimer(rules, event)
+        .rebuildTimer(ruleIds, event)
         .pipe(
           Effect.catch((cause) =>
-            Effect.succeed(rules.map((rule) => ({ ruleId: rule.id, cause }))),
+            Effect.succeed(ruleIds.map((ruleId) => ({ ruleId, cause }))),
           ),
         );
 

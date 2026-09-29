@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { asc } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { Effect } from "effect";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {
@@ -117,7 +117,7 @@ const seedTimerNotifications = async (options: {
     makeNotificationJobRebuild(
       {
         findRule: store.findRule,
-        ruleTargets: store.findRuleTargets,
+        findRules: store.findRules,
         timers: store.findTimers,
       },
       (filters, npcId) => matching.matchesTimerRule(filters, npcId),
@@ -202,7 +202,7 @@ describe("notification job rebuild", () => {
     const rebuild = makeNotificationJobRebuild(
       {
         findRule: () => Effect.succeed(null),
-        ruleTargets: () => Effect.die("target lookup must not run"),
+        findRules: () => Effect.die("rule lookup must not run"),
         timers: () => Effect.die("timer lookup must not run"),
       },
       () => true,
@@ -363,6 +363,43 @@ describe("notification job rebuild", () => {
           sourceEntityId: "guild-1:fobos:hero:102",
         },
       ]);
+      expect(fixture.enqueued).toEqual([]);
+    } finally {
+      await fixture.boundary.dispose();
+    }
+  });
+
+  it("does not rebuild a timer for a rule disabled after it was listed", async () => {
+    const now = Date.now();
+
+    const fixture = await seedTimerNotifications({
+      rules: [timerRule(7, [101])],
+      links: [{ ruleId: 7, targetId: 1 }],
+      now,
+    });
+
+    try {
+      await fixture.boundary.run(
+        fixture.database
+          .update(notificationRuleTable)
+          .set({ enabled: false })
+          .where(eq(notificationRuleTable.id, 7)),
+      );
+
+      const failures = await fixture.boundary.run(
+        fixture.makeRebuild(true).rebuildTimer([7], {
+          guildId: "guild-1",
+          world: "fobos",
+          npcId: 101,
+          timerKey: "hero:101",
+          minSpawnTime: new Date(now + 90 * minute),
+          maxSpawnTime: new Date(now + 120 * minute),
+          npc: { name: "NPC 101" },
+        }),
+      );
+
+      expect(failures).toEqual([]);
+      expect(await fixture.jobs()).toEqual([]);
       expect(fixture.enqueued).toEqual([]);
     } finally {
       await fixture.boundary.dispose();
