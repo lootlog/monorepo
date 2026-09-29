@@ -152,13 +152,20 @@ const clanEnemyFields = ({
   prof: string;
 }) => ({ targetId, nickname, clan, lvl, prof });
 
+/** Waits until a new connection replaces the killed subscriber. */
 const waitForResubscription = async (
   subscriberAddresses: () => Promise<ReadonlySet<string>>,
+  killed: string,
   subscribed: number,
 ): Promise<void> => {
   const deadline = Date.now() + 5_000;
 
-  while ((await subscriberAddresses()).size < subscribed) {
+  for (;;) {
+    const addresses = await subscriberAddresses();
+
+    // Dragonfly may list a killed connection until its thread closes it.
+    if (!addresses.has(killed) && addresses.size >= subscribed) return;
+
     if (Date.now() >= deadline)
       throw new Error("Timed out waiting for the federation subscriber");
     await Bun.sleep(20);
@@ -2650,7 +2657,11 @@ describe("realtime Dragonfly integration", () => {
 
         // CLIENT KILL returns before the instance notices, and a frame published
         // before it resubscribes is really lost: wait for the new subscriber.
-        await waitForResubscription(subscriberAddresses, subscribed);
+        await waitForResubscription(
+          subscriberAddresses,
+          affectedSubscriber,
+          subscribed,
+        );
         await waitFor(() => affected.unavailableReason() === undefined, 5_000);
         const current = connect(affected, "current");
         await publishKill(healthy);
