@@ -417,11 +417,6 @@ export const timerTable = pgTable(
       columns: [table["guildId"], table["world"], table["timerKey"]],
       name: "Timer_pkey",
     }),
-    index("Timer_guildId_world_timerKey_idx").on(
-      table["guildId"],
-      table["world"],
-      table["timerKey"],
-    ),
     index("Timer_npcId_guildId_idx").on(table["npcId"], table["guildId"]),
     index("Timer_guildId_maxSpawnTime_idx").on(
       table["guildId"],
