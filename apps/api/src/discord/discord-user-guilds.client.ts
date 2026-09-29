@@ -52,6 +52,11 @@ export interface CompleteUserGuildsResult {
    * the long-lived cache may miss a server the user has joined since.
    */
   fresh: boolean;
+  /**
+   * The list is older than the 15-minute max age and is being replaced in the
+   * background, so it must be presented as stale.
+   */
+  stale: boolean;
 }
 
 interface CompleteUserGuildsEntry {
@@ -67,7 +72,11 @@ export class DiscordUserGuildsClient {
   private readonly guildsCacheTtlLocal = 10;
   private readonly guildsCacheTtlProd = 300;
   private readonly completeGuildsLockTtl = 15000;
-  private readonly completeGuildsCacheTtlSeconds = 15 * 60;
+  private readonly completeGuildsMaxAgeMs = 15 * 60 * 1000;
+  // A list past the max age is still shown while one background request
+  // replaces it. The list only decides what is displayed; guild routes check
+  // access themselves, and only a fresh list may deactivate members.
+  private readonly completeGuildsStaleTtlSeconds = 24 * 60 * 60;
   private readonly completeGuildsFreshMaxAgeMs = 2000;
   private readonly completeGuildsWaitMs = 1500;
   private readonly completeGuildsPollMs = 100;
@@ -185,17 +194,36 @@ export class DiscordUserGuildsClient {
   }
 
   /**
-   * Returns the complete list fetched within the last 15 minutes, asking
-   * Discord only when none is cached.
+   * Returns the cached complete list. A list older than 15 minutes is returned
+   * at once while a background request replaces it; only a user with no list
+   * cached within the last day waits for Discord.
    */
-  getCachedCompleteUserGuilds(
+  async getCachedCompleteUserGuilds(
     userId: string,
     discordId: string,
   ): Promise<CompleteUserGuildsResult> {
-    return this.getCompleteUserGuilds(
-      { userId, discordId },
-      this.completeGuildsCacheTtlSeconds * 1000,
+    const identity = { userId, discordId };
+    const cacheKey = getCompleteUserGuildsCacheKey(identity);
+
+    const entry = await this.getCompleteUserGuildsEntry(
+      cacheKey,
+      this.completeGuildsStaleTtlSeconds * 1000,
     );
+
+    if (!entry) {
+      return this.toCompleteUserGuildsResult(
+        await this.fetchCompleteUserGuildsOnce(
+          identity,
+          this.completeGuildsMaxAgeMs,
+        ),
+      );
+    }
+
+    if (Date.now() - entry.fetchedAt > this.completeGuildsMaxAgeMs) {
+      void this.refreshStaleCompleteUserGuilds(identity, cacheKey);
+    }
+
+    return this.toCompleteUserGuildsResult(entry);
   }
 
   async clearUserGuildIdsCache(options: {
@@ -222,10 +250,44 @@ export class DiscordUserGuildsClient {
         maxAgeMs,
       )) ?? (await this.fetchCompleteUserGuildsOnce(identity, maxAgeMs));
 
+    return this.toCompleteUserGuildsResult(entry);
+  }
+
+  private toCompleteUserGuildsResult(
+    entry: CompleteUserGuildsEntry,
+  ): CompleteUserGuildsResult {
+    const age = Date.now() - entry.fetchedAt;
+
     return {
       guilds: entry.guilds,
-      fresh: Date.now() - entry.fetchedAt <= this.completeGuildsFreshMaxAgeMs,
+      fresh: age <= this.completeGuildsFreshMaxAgeMs,
+      stale: age > this.completeGuildsMaxAgeMs,
     };
+  }
+
+  private async refreshStaleCompleteUserGuilds(
+    identity: { userId: string; discordId: string },
+    cacheKey: string,
+  ): Promise<void> {
+    try {
+      await this.fetchCompleteUserGuildsOnce(
+        identity,
+        this.completeGuildsMaxAgeMs,
+      );
+    } catch (error: unknown) {
+      // Once Discord rejects the user's authorization, the next request must
+      // surface that instead of showing the old list for another day.
+      if (error instanceof AuthenticationRequiredError) {
+        await this.redisService.del(cacheKey).catch(() => undefined);
+      }
+
+      this.logger.log({
+        level: "debug",
+        message: "Background complete guild refresh failed",
+        userId: identity.userId,
+        error,
+      });
+    }
   }
 
   private async fetchCompleteUserGuildsOnce(
@@ -335,7 +397,7 @@ export class DiscordUserGuildsClient {
       await this.redisService.set(
         cacheKey,
         JSON.stringify(entry),
-        this.completeGuildsCacheTtlSeconds,
+        this.completeGuildsStaleTtlSeconds,
       );
 
       return entry;

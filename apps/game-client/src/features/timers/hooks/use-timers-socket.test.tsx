@@ -95,6 +95,52 @@ it("loads timers while the gateway is unreachable and catches up when the first 
   }
 });
 
+it("replaces a timer list still loading from the unreachable fallback when the first join succeeds", async () => {
+  const early = createTimerFixture();
+  const current = createTimerFixture({ ...early, wasReset: true });
+  const earlyResponse = Promise.withResolvers<Response>();
+
+  const fixture = createTimerHttpFixture(() =>
+    fixture.requests.length === 1
+      ? earlyResponse.promise
+      : Response.json([current]),
+  );
+
+  fixture.queryClient.removeQueries({ queryKey: queryKeys.allTimers() });
+  const gateway = createTimerRealtimeFixture();
+  const key = queryKeys.timers("luvia");
+
+  const view = render(
+    <QueryClientProvider client={fixture.queryClient}>
+      <SocketProvider>
+        <TimerListener readSnapshot />
+      </SocketProvider>
+    </QueryClientProvider>,
+  );
+
+  try {
+    act(() => gateway.wire.close());
+    await waitFor(() => expect(fixture.requests).toHaveLength(1));
+    act(() => {
+      getSocket().connect();
+      gateway.wire.open();
+    });
+    await gateway.join(["guild-1"]);
+    // The fallback snapshot may predate the subscription, so the join asks again.
+    await waitFor(() => expect(fixture.requests).toHaveLength(2));
+    earlyResponse.resolve(Response.json([early]));
+    await waitFor(() =>
+      expect(fixture.queryClient.getQueryData(key)).toEqual([
+        expect.objectContaining({ wasReset: true }),
+      ]),
+    );
+  } finally {
+    view.unmount();
+    gateway.cleanup();
+    fixture.cleanup();
+  }
+});
+
 it("updates world cache only while joined and subscribed, including listener cleanup", async () => {
   const fixture = createTimerHttpFixture();
   const gateway = createTimerRealtimeFixture();
