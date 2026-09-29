@@ -8,6 +8,7 @@ import {
   PositiveSafeInteger,
 } from "@lootlog/schema/http-scalars";
 import { ChatNpcLayoutSchema } from "@lootlog/schema/chat-appearance";
+import { organizationSummaryFields } from "#src/contracts/shared";
 
 const MutedPlayer = Schema.Struct({
   discordId: NonEmptyString,
@@ -182,12 +183,7 @@ export type CurrentOrganizationResponse =
   typeof CurrentOrganizationResponse.Type;
 
 export const CurrentOrganizationResponse = Schema.Struct({
-  id: Schema.String,
-  name: Schema.String,
-  icon: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-  vanityUrl: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-  ownerId: Schema.String,
-  publicStatsCardEnabled: Schema.Boolean,
+  ...organizationSummaryFields,
   hasLootlogAccess: Schema.Boolean,
   isAccessDataStale: Schema.Boolean,
 }).annotate({ identifier: "UserCurrentGuildResponseDto_Output" });
