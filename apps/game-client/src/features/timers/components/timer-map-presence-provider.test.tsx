@@ -3,6 +3,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import i18n from "i18next";
 import { expect, it, vi } from "vitest";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
+import { REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY } from "@lootlog/protocol/realtime";
 import { Permission } from "@lootlog/schema/permissions";
 import { NpcType } from "@/api/npcs.api";
 import {
@@ -258,5 +259,45 @@ it("counts an enemy seen through both organizations of a grouped timer once and 
       name: i18n.t("timers:tooltip.mapThreat", { count: 2 }),
     }),
   ).toBeVisible();
+  view.unmount();
+});
+
+it("fetches stored map threats once per connection while timer updates re-render the list, and again after a reconnect", async () => {
+  const harness = createOnlinePlayersTest();
+
+  const fetches = () =>
+    harness.wire.frames.filter(
+      (frame) => "type" in frame && frame.type === "air-tag.map-threats.fetch",
+    ).length;
+
+  harness.open();
+  await harness.join(["guild-1"], policy(["guild-1"]), [
+    REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
+  ]);
+
+  const list = (timers: TimerWithTimeLeft[]) => (
+    <harness.wrapper>
+      <TimerMapPresenceProvider timers={timers}>
+        {timers.map((entry, index) => (
+          <Threat key={index} timer={entry} />
+        ))}
+      </TimerMapPresenceProvider>
+    </harness.wrapper>
+  );
+
+  const view = render(list([timer()]));
+  await waitFor(() => expect(fetches()).toBe(1));
+
+  // Every realtime timer change projects a new list for the same scopes.
+  for (let update = 0; update < 5; update += 1)
+    view.rerender(list([timer(), timer()]));
+  // Let each replaced subscription's deferred release settle.
+  await Promise.resolve();
+  expect(fetches()).toBe(1);
+
+  await harness.join(["guild-1"], policy(["guild-1"]), [
+    REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
+  ]);
+  expect(fetches()).toBe(2);
   view.unmount();
 });
