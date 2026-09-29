@@ -1,8 +1,11 @@
 import { isString } from "effect/Predicate";
 import {
   PUBLIC_API_OPERATIONS,
+  type PublicApiOperation,
   type PublicApiService,
 } from "@lootlog/schema/public-api-policy";
+
+const OPERATIONS: ReadonlyArray<PublicApiOperation> = PUBLIC_API_OPERATIONS;
 
 import {
   type JsonValue,
@@ -16,7 +19,7 @@ export function projectOpenApi(input: JsonObject, service: PublicApiService) {
   if (!isObject(input.paths)) throw new TypeError("Invalid OpenAPI document");
   const paths: JsonObject = {};
 
-  for (const entry of PUBLIC_API_OPERATIONS) {
+  for (const entry of OPERATIONS) {
     if (entry.service !== service || entry.access === "session-only") continue;
     const item = input.paths[entry.path];
 
@@ -30,8 +33,19 @@ export function projectOpenApi(input: JsonObject, service: PublicApiService) {
       );
     const existing = paths[entry.path];
     const path: JsonObject = isObject(existing) ? { ...existing } : {};
+    const published = { ...operation };
+    const hidden = new Set(entry.sessionOnlyParameters);
+
+    if (Array.isArray(published.parameters))
+      published.parameters = published.parameters.filter(
+        (parameter) =>
+          !isObject(parameter) ||
+          !isString(parameter.name) ||
+          !hidden.has(parameter.name),
+      );
+
     path[entry.method.toLowerCase()] = {
-      ...operation,
+      ...published,
       security:
         (service === "main" && entry.path.startsWith("/public/")) ||
         (service === "battlelog" && entry.path.startsWith("/battles/public/"))

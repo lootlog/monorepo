@@ -1,5 +1,6 @@
 import type { UserFeedResponseDtoOutput } from "@lootlog/client/main";
 import {
+  ACTIVITY_FEED_LOOT_AFTER_KILL_MS,
   activityFeedNpcCategory,
   DEFAULT_ACTIVITY_FEED_SETTINGS,
   lootDistanceFromKill,
@@ -163,17 +164,25 @@ export function mergeFeedItems(
         right.id.localeCompare(left.id),
     );
 
-  // Hidden kills stay until twenty visible groups are newer, because their
-  // loot can still arrive and make them visible.
+  // A hidden kill stays only while its loot can still arrive and make it
+  // visible, so the loot-only feed never accumulates a day of kills.
   const kept = new Set<string>();
   let visible = 0;
 
   for (const group of groupFeedItems(sorted)) {
     if (visible >= FEED_LIMIT) break;
 
+    const shown = isGroupVisible(group, filters);
+
+    if (
+      !shown &&
+      Date.parse(group.occurredAt) < now - ACTIVITY_FEED_LOOT_AFTER_KILL_MS
+    )
+      continue;
+
     for (const id of group.entryIds) kept.add(id);
 
-    if (isGroupVisible(group, filters)) visible += 1;
+    if (shown) visible += 1;
   }
 
   return sorted.filter((item) => kept.has(item.id));

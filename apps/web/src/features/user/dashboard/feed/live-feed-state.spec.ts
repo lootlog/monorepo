@@ -239,7 +239,7 @@ it("attaches loot to the closest kill of its NPC and keeps late or unrelated loo
   ]);
 });
 
-it("keeps twenty loot events when newer kills without loot are hidden", () => {
+it("keeps twenty loot events and only the hidden kills that can still receive loot", () => {
   const kills = Array.from({ length: 25 }, (_, index) => ({
     ...feedKill,
     id: `kill:${index}`,
@@ -257,11 +257,20 @@ it("keeps twenty loot events when newer kills without loot are hidden", () => {
     ),
   );
 
-  const items = mergeFeedItems([...kills, ...loots], [], {
+  const expired = {
+    ...feedKill,
+    id: "kill:expired",
+    groupKey: "kill:expired",
+    npc: { ...feedKill.npc, id: 99 },
+    occurredAt: "2026-09-06T11:58:00Z",
+  };
+
+  const items = mergeFeedItems([...kills, expired, ...loots], [], {
     ...DEFAULT_ACTIVITY_FEED_SETTINGS,
     withLootOnly: true,
   });
 
   expect(items.filter(({ type }) => type === "loot")).toHaveLength(20);
   expect(items.filter(({ type }) => type === "kill")).toHaveLength(25);
+  expect(items.map(({ id }) => id)).not.toContain("kill:expired");
 });

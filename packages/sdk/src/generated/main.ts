@@ -9179,23 +9179,6 @@ export interface DocsMutationResponseDto {
   success: boolean;
 }
 
-export type UsersControllerGetUserFeedParams = {
-excludedGuildIds?: string[];
-excludedNpcCategories?: UsersControllerGetUserFeedExcludedNpcCategoriesItem[];
-withLootOnly?: boolean;
-};
-
-export type UsersControllerGetUserFeedExcludedNpcCategoriesItem = typeof UsersControllerGetUserFeedExcludedNpcCategoriesItem[keyof typeof UsersControllerGetUserFeedExcludedNpcCategoriesItem];
-
-
-export const UsersControllerGetUserFeedExcludedNpcCategoriesItem = {
-  ELITE2: 'ELITE2',
-  HERO: 'HERO',
-  COLOSSUS: 'COLOSSUS',
-  TITAN: 'TITAN',
-  OTHER: 'OTHER',
-} as const;
-
 export type UsersControllerGetUserFeed401 = ReauthenticationRequiredEncoded | {
   message: string;
 };
@@ -12505,35 +12488,20 @@ export type DocsControllerPurgeDocument429 = {
   message: string;
 };
 
-export const getUsersControllerGetUserFeedUrl = (params?: UsersControllerGetUserFeedParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getUsersControllerGetUserFeedUrl = () => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
-    const explodeParameters = ["excludedGuildIds","excludedNpcCategories"];
 
-    if (Array.isArray(value) && explodeParameters.includes(key)) {
-      value.forEach((v) => {
-        normalizedParams.append(key, v === null ? 'null' : String(v));
-      });
-      return;
-    }
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/users/@me/feed?${stringifiedParams}` : `/users/@me/feed`
+  return `/users/@me/feed`
 }
 
 /**
  * @summary Get recent activity across accessible Organizations
  */
-export const usersControllerGetUserFeed = async (params?: UsersControllerGetUserFeedParams, options?: Parameters<typeof mainFetch>[1]): Promise<UserFeedResponseDtoOutput> => {
+export const usersControllerGetUserFeed = async ( options?: Parameters<typeof mainFetch>[1]): Promise<UserFeedResponseDtoOutput> => {
 
-  return mainFetch<UserFeedResponseDtoOutput>(getUsersControllerGetUserFeedUrl(params),
+  return mainFetch<UserFeedResponseDtoOutput>(getUsersControllerGetUserFeedUrl(),
   {
     ...options,
     method: 'GET'
