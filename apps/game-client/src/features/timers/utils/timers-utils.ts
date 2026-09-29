@@ -67,10 +67,3 @@ export const getTimerTimeLeft = (
     minTimeLeft: getTimerEpoch(timer.minSpawnTime) - now,
   };
 };
-
-export const filterTimersByRemovalTime = (
-  timers: TimerWithTimeLeft[],
-  removeTimerAfterMs: number,
-): TimerWithTimeLeft[] => {
-  return timers.filter((t) => t.maxTimeLeft > -removeTimerAfterMs);
-};
