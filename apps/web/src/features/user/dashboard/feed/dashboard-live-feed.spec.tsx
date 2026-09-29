@@ -1,6 +1,18 @@
 import { createTestGateway } from "@/lib/testing/gateway";
 import { configureApiClients } from "@lootlog/client/transport";
-import { getUsersControllerGetCurrentUserAccessibleGuildsQueryKey } from "@lootlog/client/main";
+import {
+  getSettingsDocumentsControllerGetPreferencesQueryKey,
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
+  getUsersControllerGetUserPreferencesQueryKey,
+  type PatchSettingsDocumentsDto,
+  type SettingsDocumentsResponseDtoOutput,
+} from "@lootlog/client/main";
+import {
+  DEFAULT_ACTIVITY_FEED_SETTINGS,
+  parseActivityFeedSettings,
+  type ActivityFeedSettings,
+} from "@lootlog/domain/activity-feed";
+import { createUserPreferences } from "@/lib/testing/preferences";
 // @vitest-environment happy-dom
 import {
   act,
@@ -16,7 +28,6 @@ import {
   RouterProvider,
 } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Storage as MemoryStorage } from "happy-dom";
 import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
 import "@/i18n/config";
 import { DashboardLiveFeed } from "./dashboard-live-feed";
@@ -25,7 +36,64 @@ import { GatewayEvent } from "@/config/gateway";
 
 const mocks = {
   request: vi.fn<() => Promise<ReturnType<typeof feedResponse>>>(),
+  patches: vi.fn<(body: PatchSettingsDocumentsDto) => void>(),
 };
+
+let storedSettings: ActivityFeedSettings = DEFAULT_ACTIVITY_FEED_SETTINGS;
+
+let intersect: (visible: boolean) => void = () => undefined;
+
+const settingsDocuments = (): SettingsDocumentsResponseDtoOutput => ({
+  domains: {
+    general: {
+      effective: { activityFeed: storedSettings },
+      layers: [],
+      sources: {},
+      schemaVersion: 1,
+    },
+  },
+});
+
+async function respond(input: RequestInfo | URL, init?: RequestInit) {
+  const request =
+    input instanceof Request ? input : new Request(String(input), init);
+
+  if (new URL(request.url).pathname !== "/preferences")
+    return Response.json(await mocks.request());
+
+  const body: PatchSettingsDocumentsDto = await request.json();
+
+  mocks.patches(body);
+  storedSettings = parseActivityFeedSettings(
+    Object.assign(
+      { ...storedSettings },
+      ...body.operations.flatMap(({ set }) =>
+        Object.entries(set ?? {}).map(([path, value]) => ({
+          [path.replace("activityFeed.", "")]: value,
+        })),
+      ),
+    ),
+  );
+
+  return Response.json(settingsDocuments());
+}
+
+function seedAccount(queryClient: QueryClient) {
+  queryClient.setQueryData(
+    getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+    [{ id: feedKill.guild.id, name: feedKill.guild.name }],
+  );
+  queryClient.setQueryData(
+    getUsersControllerGetUserPreferencesQueryKey(),
+    createUserPreferences(),
+  );
+  queryClient.setQueryData(
+    getSettingsDocumentsControllerGetPreferencesQueryKey({
+      domains: "general",
+    }),
+    settingsDocuments(),
+  );
+}
 
 let gateway: ReturnType<typeof createTestGateway>;
 
@@ -81,12 +149,27 @@ beforeEach(() => {
     configureApiClients({
       main: {
         baseUrl: "https://api.test",
-        fetch: async () => Response.json(await mocks.request()),
+        fetch: respond,
       },
     }),
   );
   mocks.request.mockReset();
-  vi.stubGlobal("localStorage", new MemoryStorage());
+  mocks.patches.mockReset();
+  storedSettings = DEFAULT_ACTIVITY_FEED_SETTINGS;
+  vi.stubGlobal(
+    "IntersectionObserver",
+    class {
+      constructor(
+        callback: (entries: Array<{ isIntersecting: boolean }>) => void,
+      ) {
+        intersect = (visible) => callback([{ isIntersecting: visible }]);
+      }
+
+      observe() {}
+
+      disconnect() {}
+    },
+  );
 });
 
 afterEach(() => {
@@ -96,8 +179,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it("keeps focused visible rows and scroll position until the reader applies a grouped update", async () => {
-  vi.stubGlobal("localStorage", new MemoryStorage());
+it("keeps focused visible rows until the reader applies a grouped update and stores pause on the account", async () => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-09-06T12:01:00Z"));
   mocks.request
@@ -114,10 +196,7 @@ it("keeps focused visible rows and scroll position until the reader applies a gr
     defaultOptions: { queries: { staleTime: Infinity } },
   });
 
-  queryClient.setQueryData(
-    getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-    [{ id: feedKill.guild.id }],
-  );
+  seedAccount(queryClient);
   onTestFinished(() => queryClient.clear());
   const GatewayWrapper = gateway.wrapper;
   render(
@@ -130,14 +209,7 @@ it("keeps focused visible rows and scroll position until the reader applies a gr
   await act(() => vi.advanceTimersByTimeAsync(0));
   const link = screen.getByRole("link", { name: "Bicie: Heros" });
   link.focus();
-
-  const scroller = screen
-    .getByRole("region", { name: "Feed aktywności" })
-    .querySelector<HTMLElement>('[data-slot="scroll-area-viewport"]');
-
-  if (!scroller) throw new Error("Feed scroll region missing");
-  scroller.scrollTop = 120;
-  fireEvent.scroll(scroller);
+  act(() => intersect(false));
   act(() =>
     gateway.deliver({
       v: 1,
@@ -148,12 +220,22 @@ it("keeps focused visible rows and scroll position until the reader applies a gr
   await act(() => vi.advanceTimersByTimeAsync(1000));
   expect(screen.queryByText("×4")).toBeNull();
   expect(document.activeElement).toBe(link);
-  expect(scroller.scrollTop).toBe(120);
   expect(screen.queryByText("Aktualizacje wstrzymane")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Nowe zdarzenia" }));
   expect(screen.getByText("×4")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Wstrzymaj" }));
+  await act(() => vi.advanceTimersByTimeAsync(0));
   expect(screen.getByRole("button", { name: "Wznów" })).toBeTruthy();
+  expect(mocks.patches).toHaveBeenCalledWith({
+    operations: [
+      {
+        domain: "general",
+        scope: { type: "USER", id: "user-1" },
+        set: { "activityFeed.paused": true },
+        unset: [],
+      },
+    ],
+  });
   mocks.request.mockResolvedValue(feedResponse(4));
   fireEvent.click(screen.getByRole("button", { name: "Wznów" }));
   await act(() => vi.advanceTimersByTimeAsync(1000));
@@ -161,7 +243,6 @@ it("keeps focused visible rows and scroll position until the reader applies a gr
 });
 
 it("adds organization copies to one row and preserves that row during an HTTP refresh", async () => {
-  vi.stubGlobal("localStorage", new MemoryStorage());
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-09-06T12:01:00Z"));
   const response = feedResponse();
@@ -190,10 +271,7 @@ it("adds organization copies to one row and preserves that row during an HTTP re
     defaultOptions: { queries: { staleTime: Infinity } },
   });
 
-  queryClient.setQueryData(
-    getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-    [{ id: feedKill.guild.id }],
-  );
+  seedAccount(queryClient);
   onTestFinished(() => queryClient.clear());
   const GatewayWrapper = gateway.wrapper;
   render(
@@ -257,7 +335,6 @@ it("adds organization copies to one row and preserves that row during an HTTP re
 });
 
 it("keeps the same focused row throughout debounced permission revalidation", async () => {
-  vi.stubGlobal("localStorage", new MemoryStorage());
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-09-06T12:01:00Z"));
   let finish: (data: ReturnType<typeof feedResponse>) => void = () => undefined;
@@ -281,10 +358,7 @@ it("keeps the same focused row throughout debounced permission revalidation", as
     defaultOptions: { queries: { staleTime: Infinity } },
   });
 
-  queryClient.setQueryData(
-    getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-    [{ id: feedKill.guild.id }],
-  );
+  seedAccount(queryClient);
   onTestFinished(() => queryClient.clear());
   const GatewayWrapper = gateway.wrapper;
   render(

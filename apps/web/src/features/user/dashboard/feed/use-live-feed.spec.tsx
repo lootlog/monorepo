@@ -7,15 +7,16 @@ import {
 // @vitest-environment happy-dom
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Storage as MemoryStorage } from "happy-dom";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
 import { GatewayEvent } from "@/config/gateway";
+import { DEFAULT_ACTIVITY_FEED_SETTINGS } from "@lootlog/domain/activity-feed";
 import { useLiveFeed } from "./use-live-feed";
+import type { FeedFilters } from "./live-feed-state";
 import { feedResponse, feedKill } from "./live-feed-test-data";
 
 const mocks = {
-  request: vi.fn<() => Promise<ReturnType<typeof feedResponse>>>(),
+  request: vi.fn<(url: string) => Promise<ReturnType<typeof feedResponse>>>(),
 };
 
 let gateway: ReturnType<typeof createTestGateway>;
@@ -72,12 +73,16 @@ beforeEach(() => {
     configureApiClients({
       main: {
         baseUrl: "https://api.test",
-        fetch: async () => Response.json(await mocks.request()),
+        fetch: async (input) =>
+          Response.json(
+            await mocks.request(
+              input instanceof Request ? input.url : String(input),
+            ),
+          ),
       },
     }),
   );
   mocks.request.mockReset();
-  vi.stubGlobal("localStorage", new MemoryStorage());
 });
 
 afterEach(() => {
@@ -87,7 +92,10 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function renderFeed(organizationIds = [feedKill.guild.id]) {
+function renderFeed(
+  organizationIds = [feedKill.guild.id],
+  initial: { paused?: boolean; filters?: FeedFilters } = {},
+) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { staleTime: Infinity } },
   });
@@ -105,7 +113,28 @@ function renderFeed(organizationIds = [feedKill.guild.id]) {
     </GatewayWrapper>
   );
 
-  return { ...renderHook(() => useLiveFeed(), { wrapper }), queryClient };
+  let props = {
+    filters: initial.filters ?? DEFAULT_ACTIVITY_FEED_SETTINGS,
+    paused: initial.paused ?? false,
+    ready: true,
+  };
+
+  const rendered = renderHook((current) => useLiveFeed(current), {
+    wrapper,
+    initialProps: props,
+  });
+
+  const rerenderWith = (next: Partial<typeof props>) => {
+    props = { ...props, ...next };
+    act(() => rendered.rerender(props));
+  };
+
+  return {
+    ...rendered,
+    queryClient,
+    setPaused: (paused: boolean) => rerenderWith({ paused }),
+    setFilters: (filters: FeedFilters) => rerenderWith({ filters }),
+  };
 }
 
 function deferredResponse() {
@@ -192,19 +221,11 @@ it("ignores a pre-permission response that arrives after access was revoked", as
   expect(result.current.state.pending).toBeUndefined();
 });
 
-it("remembers pause across remounts while allowing the initial snapshot", async () => {
+it("loads the initial snapshot while the stored pause ignores live entries", async () => {
   mocks.request.mockResolvedValue(feedResponse());
-  const first = renderFeed();
+  const { result } = renderFeed(undefined, { paused: true });
   await act(() => vi.advanceTimersByTimeAsync(0));
-  act(() => first.result.current.setPaused(true));
-  expect(window.localStorage.getItem("lootlog:dashboard:feed-paused")).toBe(
-    "true",
-  );
-  first.unmount();
-  const next = renderFeed();
-  expect(next.result.current.paused).toBe(true);
-  await act(() => vi.advanceTimersByTimeAsync(0));
-  expect(next.result.current.state.items).toEqual(feedResponse().items);
+  expect(result.current.state.items).toEqual(feedResponse().items);
   act(() =>
     gateway.deliver({
       v: 1,
@@ -217,16 +238,78 @@ it("remembers pause across remounts while allowing the initial snapshot", async 
     }),
   );
   await act(() => vi.advanceTimersByTimeAsync(5000));
-  expect(mocks.request).toHaveBeenCalledTimes(2);
+  expect(result.current.state.items).toEqual(feedResponse().items);
+  expect(mocks.request).toHaveBeenCalledTimes(1);
+});
+
+it("replaces the list with the filtered history when filters change, even while paused", async () => {
+  const other = { id: "other", name: "Inny Lootlog", vanityUrl: null };
+  const otherKill = { ...feedKill, id: "kill:other", guild: other };
+  mocks.request
+    .mockResolvedValueOnce({
+      ...feedResponse(),
+      items: [...feedResponse().items, otherKill],
+    })
+    .mockResolvedValueOnce(feedResponse());
+
+  const { result, setFilters } = renderFeed([feedKill.guild.id, other.id], {
+    paused: true,
+  });
+
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  result.current.setAtTop(false);
+
+  const filters = {
+    ...DEFAULT_ACTIVITY_FEED_SETTINGS,
+    excludedGuildIds: [other.id],
+    excludedNpcCategories: ["TITAN" as const],
+  };
+
+  setFilters(filters);
+  expect(result.current.state.items?.map(({ id }) => id)).toEqual([
+    feedKill.id,
+  ]);
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  const url = new URL(mocks.request.mock.lastCall?.[0] ?? "");
+  expect(url.searchParams.getAll("excludedGuildIds")).toEqual([other.id]);
+  expect(url.searchParams.getAll("excludedNpcCategories")).toEqual(["TITAN"]);
+  expect(result.current.state.pending).toBeUndefined();
+});
+
+it("drops live entries from excluded Lootlogs", async () => {
+  mocks.request.mockResolvedValue(feedResponse());
+
+  const { result } = renderFeed(undefined, {
+    filters: {
+      ...DEFAULT_ACTIVITY_FEED_SETTINGS,
+      excludedGuildIds: ["other"],
+    },
+  });
+
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  act(() =>
+    gateway.deliver({
+      v: 1,
+      type: "feed.entry",
+      data: {
+        ...feedKill,
+        id: "kill:other",
+        guild: { id: "other", name: "Inny", vanityUrl: null },
+      },
+    }),
+  );
+  expect(result.current.state.items?.map(({ id }) => id)).toEqual([
+    feedKill.id,
+  ]);
 });
 
 it("ignores live entries while paused and fetches a fresh snapshot immediately on resume", async () => {
   mocks.request
     .mockResolvedValueOnce(feedResponse())
     .mockResolvedValueOnce(feedResponse(4));
-  const { result } = renderFeed();
+  const { result, setPaused } = renderFeed();
   await act(() => vi.advanceTimersByTimeAsync(0));
-  act(() => result.current.setPaused(true));
+  setPaused(true);
   act(() =>
     gateway.deliver({
       v: 1,
@@ -241,7 +324,7 @@ it("ignores live entries while paused and fetches a fresh snapshot immediately o
   await act(() => vi.advanceTimersByTimeAsync(5000));
   expect(mocks.request).toHaveBeenCalledTimes(1);
   expect(result.current.state.items).toEqual(feedResponse().items);
-  act(() => result.current.setPaused(false));
+  setPaused(false);
   await act(() => vi.advanceTimersByTimeAsync(0));
   expect(mocks.request).toHaveBeenCalledTimes(2);
   expect(result.current.state.items).toEqual(feedResponse(4).items);
@@ -254,11 +337,11 @@ it.each([GatewayEvent.JOIN])(
     mocks.request
       .mockResolvedValueOnce(feedResponse())
       .mockReturnValueOnce(response.promise);
-    const { result } = renderFeed();
+    const { result, setPaused } = renderFeed();
     await act(() => vi.advanceTimersByTimeAsync(0));
     await act(() => vi.advanceTimersByTimeAsync(0));
     const original = result.current.state.items;
-    act(() => result.current.setPaused(true));
+    setPaused(true);
     act(() => deliverLifecycleEvent(event));
     expect(result.current.state.items).toBe(original);
     await act(() => vi.advanceTimersByTimeAsync(0));
@@ -269,7 +352,6 @@ it.each([GatewayEvent.JOIN])(
     });
     expect(result.current.state.items).toEqual([]);
     expect(result.current.state.pending).toBeUndefined();
-    expect(result.current.paused).toBe(true);
   },
 );
 
@@ -278,10 +360,10 @@ it("finishes mandatory access revalidation when the user pauses during the reque
   mocks.request
     .mockResolvedValueOnce(feedResponse())
     .mockReturnValueOnce(response.promise);
-  const { result } = renderFeed();
+  const { result, setPaused } = renderFeed();
   await act(() => vi.advanceTimersByTimeAsync(0));
   act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED));
-  act(() => result.current.setPaused(true));
+  setPaused(true);
   expect(result.current.state.items).toEqual(feedResponse().items);
   await act(() => vi.advanceTimersByTimeAsync(5000));
   await act(async () => {
@@ -340,9 +422,9 @@ it("ignores an in-flight HTTP snapshot after pause and refreshes on resume", asy
         }),
     )
     .mockResolvedValueOnce(feedResponse(4));
-  const { result } = renderFeed();
+  const { result, setPaused } = renderFeed();
   await act(() => vi.advanceTimersByTimeAsync(0));
-  act(() => result.current.setPaused(true));
+  setPaused(true);
   await act(async () => {
     await vi.advanceTimersByTimeAsync(0);
     finish(feedResponse(3));
@@ -350,7 +432,7 @@ it("ignores an in-flight HTTP snapshot after pause and refreshes on resume", asy
   });
   expect(result.current.state.items ?? []).toEqual([]);
   expect(result.current.state.isFetching).toBe(false);
-  act(() => result.current.setPaused(false));
+  setPaused(false);
   await act(() => vi.advanceTimersByTimeAsync(0));
   expect(result.current.state.items).toEqual(feedResponse(4).items);
 });
@@ -494,7 +576,7 @@ it.each([false, true])(
     mocks.request
       .mockResolvedValueOnce(feedResponse())
       .mockRejectedValueOnce(new Error("offline"));
-    const { result, queryClient } = renderFeed();
+    const { result, queryClient, setPaused } = renderFeed();
     await act(() => vi.advanceTimersByTimeAsync(0));
     act(() => {
       result.current.setAtTop(false);
@@ -508,7 +590,7 @@ it.each([false, true])(
       });
     });
     expect(result.current.state.pending).toBeDefined();
-    act(() => result.current.setPaused(paused));
+    setPaused(paused);
     act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED));
     expect(result.current.state.items).toEqual(feedResponse().items);
     expect(result.current.state.pending).toBeUndefined();
@@ -722,10 +804,10 @@ it("shows an empty feed without waiting for a join when no Organizations are acc
 
 it("keeps an empty feed healthy on resume during an outage and loads history when an Organization becomes accessible", async () => {
   mocks.request.mockRejectedValue(new Error("offline"));
-  const { result, queryClient } = renderFeed([]);
+  const { result, queryClient, setPaused } = renderFeed([]);
   await act(() => vi.advanceTimersByTimeAsync(0));
-  act(() => result.current.setPaused(true));
-  act(() => result.current.setPaused(false));
+  setPaused(true);
+  setPaused(false);
   await act(() => vi.advanceTimersByTimeAsync(0));
   expect(result.current.state.items).toEqual([]);
   expect(result.current.state.isError).toBe(false);
