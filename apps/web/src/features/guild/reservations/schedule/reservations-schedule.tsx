@@ -27,7 +27,6 @@ import {
   EmptyTitle,
 } from "@lootlog/ui/components/empty";
 import { CalendarX2 } from "lucide-react";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import { GatewayEvent } from "@/config/gateway";
 import { ROUTES } from "@/config/routes";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
@@ -53,6 +52,7 @@ import {
 import { ScheduleHeader } from "./schedule-header";
 import type { ReservationRange } from "./types";
 import { useCompactScheduleLayout } from "./use-compact-schedule-layout";
+import { LoadingSlot } from "@/components/common/loading-slot";
 
 type ReservationChangedPayload =
   | ReservationChangedEventV2
@@ -290,7 +290,7 @@ export function ReservationsSchedule() {
 
       {reservationsQuery.isPending ? (
         <div className="flex flex-1 items-center justify-center" role="status">
-          <Spinner />
+          <LoadingSlot size="small" />
           <span className="sr-only">{t("common.loading")}</span>
         </div>
       ) : reservationsQuery.isError ? (

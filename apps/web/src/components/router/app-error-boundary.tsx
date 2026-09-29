@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { releaseStartupScreen } from "@/lib/startup-screen";
 
 type AppErrorBoundaryProps = {
   children: ReactNode;
@@ -23,6 +24,9 @@ export class AppErrorBoundary extends Component<
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught application error", error, errorInfo);
+    // The router never resolves after a crash, so the startup screen would
+    // hide the recovery actions.
+    releaseStartupScreen();
   }
 
   private reset = () => {

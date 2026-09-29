@@ -11,7 +11,7 @@ import type { EventHeroNpc } from "../../types/api";
 import { LootsListItem } from "@/features/guild/loots-list/components/loots-list/loots-list-item";
 import { LootDetailsDialog } from "@/features/guild/loots-list/components/loots-list/loot-details-dialog";
 import { EventScrollableTabsList } from "../shared/event-scrollable-tabs-list";
-import { Spinner } from "@lootlog/ui/components/spinner";
+import { LoadingSlot } from "@/components/common/loading-slot";
 
 interface EventHeroLootsProps {
   guildId: string;
@@ -93,7 +93,7 @@ export const EventHeroLoots = ({
 
         {isLoading ? (
           <div className="flex min-h-32 items-center justify-center">
-            <Spinner className="size-6" />
+            <LoadingSlot size="small" />
           </div>
         ) : !loots || loots.length === 0 ? (
           <div className="flex min-h-32 flex-col items-center justify-center py-6 text-muted-foreground">
