@@ -85,7 +85,11 @@ const cachedOwner = () =>
 describe("useOnlineCharacterOwners", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
+
+  // Polling in waitFor keeps running while the retry delay is skipped.
+  const skipRetryDelay = () => act(() => vi.advanceTimersByTimeAsync(3_000));
 
   it("reuses owners across Shift presses and refetches them once stale", async () => {
     const test = await setup();
@@ -157,6 +161,7 @@ describe("useOnlineCharacterOwners", () => {
   });
 
   it("retries transient acknowledgement failures and permits a fresh Shift activation", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     const test = await setup();
     test.activate(true);
     await waitFor(() => expect(test.requests()).toHaveLength(1));
@@ -165,6 +170,7 @@ describe("useOnlineCharacterOwners", () => {
       message: "Temporary service failure",
       retryable: true,
     });
+    await skipRetryDelay();
     await waitFor(() => expect(test.requests()).toHaveLength(2));
     test.respond(1, {
       code: "UNAVAILABLE",
@@ -187,6 +193,7 @@ describe("useOnlineCharacterOwners", () => {
   });
 
   it("retries a malformed success acknowledgement instead of reporting access denial", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     const test = await setup();
     test.activate(true);
     await waitFor(() => expect(test.requests()).toHaveLength(1));
@@ -201,6 +208,7 @@ describe("useOnlineCharacterOwners", () => {
         data: { presences: "invalid" },
       }),
     );
+    await skipRetryDelay();
     await waitFor(() => expect(test.requests()).toHaveLength(2));
     test.respond(1);
     await waitFor(() =>
