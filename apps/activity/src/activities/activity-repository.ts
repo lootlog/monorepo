@@ -538,11 +538,9 @@ export class ActivityRepository extends Context.Service<
         return [...byKey.values()].slice(0, limit);
       };
 
-      const suggestActorNames = Effect.fn("ActivityRepository.suggestActors")(
-        function* (guildId: string, search?: string, limit = 10) {
-          const n = normalize(limit);
-
-          const hasGuildActivity = db
+      const snapshotHasGuildActivity = (guildId: string) =>
+        exists(
+          db
             .select({ value: drizzleSql`1` })
             .from(activities)
             .where(
@@ -550,14 +548,19 @@ export class ActivityRepository extends Context.Service<
                 eq(activities.actorSnapshotId, activityActorSnapshots.id),
                 eq(activities.guildId, guildId),
               ),
-            );
+            ),
+        );
+
+      const suggestActorNames = Effect.fn("ActivityRepository.suggestActors")(
+        function* (guildId: string, search?: string, limit = 10) {
+          const n = normalize(limit);
 
           const rows = yield* db
             .select({ value: activityActorSnapshots.name })
             .from(activityActorSnapshots)
             .where(
               and(
-                exists(hasGuildActivity),
+                snapshotHasGuildActivity(guildId),
                 search?.trim()
                   ? ilike(activityActorSnapshots.name, `%${search.trim()}%`)
                   : undefined,
@@ -603,22 +606,12 @@ export class ActivityRepository extends Context.Service<
         function* (guildId: string, search?: string, limit = 10) {
           const n = normalize(limit);
 
-          const hasGuildActivity = db
-            .select({ value: drizzleSql`1` })
-            .from(activities)
-            .where(
-              and(
-                eq(activities.actorSnapshotId, activityActorSnapshots.id),
-                eq(activities.guildId, guildId),
-              ),
-            );
-
           const rows = yield* db
             .select({ value: activityActorSnapshots.clanName })
             .from(activityActorSnapshots)
             .where(
               and(
-                exists(hasGuildActivity),
+                snapshotHasGuildActivity(guildId),
                 ne(activityActorSnapshots.clanName, ""),
                 search?.trim()
                   ? ilike(activityActorSnapshots.clanName, `%${search.trim()}%`)
