@@ -1,13 +1,13 @@
 import { useState } from "react";
+import { Lock } from "lucide-react";
+import { cn } from "cn";
 import { toast } from "sonner";
 import { ConfirmPopover } from "@/components/confirm-popover";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { Button } from "@/components/ui/button";
 import { useWindowsStore } from "@/store/windows.store";
-import {
-  useOwnedReadyRoom,
-  useReadyRoomsSynchronized,
-} from "@/features/party-finder/hooks/use-ready-rooms";
+import { useOwnedReadyRoom } from "@/features/party-finder/hooks/use-ready-rooms";
+import { usePartyStore } from "@/store/party.store";
 import { useCancelPartyGathering } from "@/hooks/api/use-cancel-party-gathering";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTranslation } from "react-i18next";
@@ -16,8 +16,8 @@ import { useReadyRoomInvitations } from "@/features/party-finder/hooks/use-ready
 import { selectParticipantsOutsideParty } from "@/features/party-finder/ready-room-cache";
 import { ReadyRoomExpiry } from "@/features/party-finder/components/ready-room-expiry";
 import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
-import { GatheringRoster } from "@/components/common/gathering-roster";
-import { GatheringPartyCounter } from "@/components/common/gathering-party-counter";
+
+const PARTY_SIZE_LIMIT = 10;
 
 export const PartyFinder = () => {
   const { t } = useTranslation(["partyFinder", "chat"]);
@@ -27,7 +27,8 @@ export const PartyFinder = () => {
 
   const currentCharacterIdentity = getCurrentReadyRoomCharacterIdentity();
   const readyRoom = useOwnedReadyRoom();
-  const synchronized = useReadyRoomsSynchronized();
+  const partyMembers = usePartyStore((s) => s.members);
+  const partyFull = partyMembers.length >= PARTY_SIZE_LIMIT;
 
   const { mutate: cancelPartyGathering, isPending: isCancelling } =
     useCancelPartyGathering();
@@ -46,13 +47,6 @@ export const PartyFinder = () => {
 
   const waitingCount = selectParticipantsOutsideParty(readyRoom).length;
 
-  const volunteers =
-    readyRoom.volunteers ??
-    Object.values(readyRoom.participants).map((participant) => ({
-      ...participant.character,
-      partyPresence: participant.partyPresence,
-    }));
-
   return (
     <DraggableWindow
       isOpen={open}
@@ -69,10 +63,18 @@ export const PartyFinder = () => {
           {isOrganizerCharacter ? (
             <span className="ll:flex ll:items-center ll:gap-1">
               <span className="ll:text-white/65">{t("header.party")}</span>
-              <GatheringPartyCounter
-                partyState={readyRoom.partyState}
-                stale={!synchronized}
-              />
+              <span
+                className={cn(
+                  "ll:inline-flex ll:items-center ll:gap-1 ll:font-semibold ll:tabular-nums",
+                  partyFull ? "ll:text-red-400" : "ll:text-green-400",
+                )}
+              >
+                {partyFull ? (
+                  <Lock aria-hidden="true" className="ll:size-3" />
+                ) : null}
+                {partyMembers.length}/{PARTY_SIZE_LIMIT}
+                {partyFull ? <span>{t("header.partyFull")}</span> : null}
+              </span>
             </span>
           ) : (
             <span className="ll:min-w-0 ll:truncate ll:font-semibold ll:text-white">
@@ -82,15 +84,7 @@ export const PartyFinder = () => {
           <ReadyRoomExpiry expiresAt={readyRoom.expiresAt} />
         </div>
         <ScrollArea className="ll:flex-1">
-          <GatheringRoster
-            volunteers={volunteers}
-            partyState={readyRoom.partyState}
-            stale={!synchronized}
-            volunteerContent=<ReadyRoomParticipantsList
-              room={readyRoom}
-              stale={!synchronized}
-            />
-          />
+          <ReadyRoomParticipantsList room={readyRoom} />
         </ScrollArea>
         <div className="ll:shrink-0 ll:flex ll:gap-1 ll:px-[6px] ll:py-1.5 ll:border-t ll:border-white/10">
           {isOrganizerCharacter ? (

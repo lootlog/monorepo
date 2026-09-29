@@ -6,7 +6,6 @@ import type {
   PartyGatheringSummary,
 } from "@lootlog/schema/party-ready-room";
 import { GatheringPartyCounter } from "@/components/common/gathering-party-counter";
-import { GatheringRoster } from "@/components/common/gathering-roster";
 import { ChatGatheringHideButton } from "./chat-gathering-hide-button";
 import { UserPlus, LoaderCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
@@ -95,11 +94,6 @@ export function ChatAvailableGatherings({
               organizerDiscordId={candidate.organizerDiscordId}
               guildIds={candidate.guildIds}
               counters=<GatheringPartyCounter
-                partyState={candidate.partyState}
-                stale={stale}
-              />
-              roster=<GatheringRoster
-                volunteers={candidate.volunteers}
                 partyState={candidate.partyState}
                 stale={stale}
               />
