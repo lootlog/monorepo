@@ -1,4 +1,4 @@
-import { Effect, Stream } from "effect";
+import { Duration, Effect, Random, Schedule, Stream } from "effect";
 import { withScope, type HttpClient } from "effect/unstable/http/HttpClient";
 
 type FailureReason =
@@ -7,6 +7,18 @@ type FailureReason =
   | "status"
   | "timeout"
   | "transport";
+
+// Full jitter spreads retries from callers that failed together, such as a
+// reconnect burst against a slow dependency, instead of repeating the burst.
+const retryDelay = Schedule.exponential("100 millis").pipe(
+  Schedule.modifyDelay(({ duration }) =>
+    Random.next.pipe(
+      Effect.map((random) =>
+        Duration.millis(Math.min(2_000, Duration.toMillis(duration)) * random),
+      ),
+    ),
+  ),
+);
 
 /** Request policies remain explicit: raw callers own status interpretation. */
 export const boundedHttpGet = Effect.fnUntraced(function* <
@@ -110,6 +122,9 @@ export const boundedHttpGet = Effect.fnUntraced(function* <
   });
 
   return yield* attempt.pipe(
-    Effect.retry({ times: options.retries, while: (error) => error.retryable }),
+    Effect.retry({
+      schedule: Schedule.max([retryDelay, Schedule.recurs(options.retries)]),
+      while: (error) => error.retryable,
+    }),
   );
 });
