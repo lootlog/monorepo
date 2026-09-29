@@ -3,10 +3,14 @@ name: Continuous Integration
 on:
   pull_request:
     branches: [main]
+  # Main runs every workspace check once so pull requests start from its Turbo
+  # cache instead of an empty one.
+  push:
+    branches: [main]
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -19,6 +23,7 @@ jobs:
     outputs:
       base-sha: ${{ steps.plan.outputs.base_sha }}
       packages: ${{ steps.plan.outputs.packages }}
+      workspace-shards: ${{ steps.plan.outputs.workspace_shards }}
       integration-packages: ${{ steps.plan.outputs.integration_packages }}
       docker-targets: ${{ steps.plan.outputs.docker_targets }}
       run-client-check: ${{ steps.plan.outputs.run_client_check }}
@@ -35,10 +40,16 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.sha }}
         run: |
-          affected="$(bunx turbo@2.11.2 query affected --base "$BASE_SHA" --head "$HEAD_SHA" --packages)"
-          affected_packages="$(jq -c '[.data.affectedPackages.items[].name]' <<< "$affected")"
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            affected_packages="$(bunx turbo@2.11.2 ls --output=json | jq -c '[.packages.items[].name]')"
+            changed_files=""
+          else
+            affected="$(bunx turbo@2.11.2 query affected --base "$BASE_SHA" --head "$HEAD_SHA" --packages)"
+            affected_packages="$(jq -c '[.data.affectedPackages.items[].name]' <<< "$affected")"
+            changed_files="$(git diff --name-only -z "$BASE_SHA" "$HEAD_SHA")"
+          fi
           plan="$(
-            git diff --name-only -z "$BASE_SHA" "$HEAD_SHA" |
+            printf '%s' "$changed_files" |
               jq -Rsc --argjson affectedPackages "$affected_packages" \
                 '{mode: "ci", affectedPackages: $affectedPackages, changedFiles: (split("\u0000") | map(select(length > 0)))}' |
               bun scripts/deployment-targets.mjs
@@ -46,6 +57,7 @@ jobs:
           {
             echo "base_sha=$BASE_SHA"
             echo "packages=$(jq -c '.packages' <<< "$plan")"
+            echo "workspace_shards=$(jq -c '.workspaceShards' <<< "$plan")"
             echo "integration_packages=$(jq -c '.integrationPackages' <<< "$plan")"
             echo "docker_targets=$(jq -c '.dockerTargets' <<< "$plan")"
             echo "run_client_check=$(jq -r '.runClientCheck' <<< "$plan")"
@@ -55,6 +67,7 @@ jobs:
   repository:
     name: Repository checks
     needs: plan
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -69,27 +82,43 @@ jobs:
         uses: docker://rhysd/actionlint:1.7.12
 
   workspaces:
-    name: Affected workspace checks
+    name: Workspace checks (${{ matrix.id }})
     needs: plan
+    if: needs.plan.outputs.workspace-shards != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.workspace-shards) }}
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-bun
         with:
-          turbo-cache-scope: ci-workspaces
+          turbo-cache-scope: ci-workspaces-${{ matrix.id }}
+      # Turbo never evicts entries, so main saves only what this commit produced
+      # instead of growing the restored cache on every push.
+      - name: Start main's Turbo cache from this commit
+        if: github.event_name == 'push'
+        run: rm -rf .turbo
       - name: Lint, typecheck, test, end-to-end test and build
         env:
           TURBO_SCM_BASE: ${{ needs.plan.outputs.base-sha }}
           TURBO_SCM_HEAD: ${{ github.sha }}
-        run: bunx turbo run lint typecheck test test:e2e build --affected
+          FILTERS: ${{ toJSON(matrix.filters) }}
+        run: |
+          mapfile -t args < <(jq -r '.[] | "--filter=" + .' <<< "$FILTERS")
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            args+=(--affected)
+          fi
+          bunx turbo run lint typecheck test test:e2e build "${args[@]}"
 
   integration:
     name: Affected integration tests
     needs: plan
-    if: needs.plan.outputs.integration-packages != '[]'
+    if: github.event_name == 'pull_request' && needs.plan.outputs.integration-packages != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -114,7 +143,7 @@ jobs:
   generated-client:
     name: Generated API client
     needs: plan
-    if: needs.plan.outputs.run-client-check == 'true'
+    if: github.event_name == 'pull_request' && needs.plan.outputs.run-client-check == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -132,7 +161,7 @@ jobs:
   docker:
     name: Docker ${{ matrix.id }}
     needs: plan
-    if: needs.plan.outputs.docker-targets != '[]'
+    if: github.event_name == 'pull_request' && needs.plan.outputs.docker-targets != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
