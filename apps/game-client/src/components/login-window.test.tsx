@@ -8,7 +8,7 @@ import {
   configureGameClientPlatform,
   createGameRealtimeClient,
 } from "@/lib/game-client-platform";
-import { cancelLoginHandoff } from "@/hooks/auth/login-handoff";
+import { useLoginWebsiteStore } from "@/hooks/auth/use-login-state";
 import {
   resetExtensionLoginWindow,
   useWindowsStore,
@@ -17,9 +17,10 @@ import { useSettingsStore } from "@/store/settings.store";
 import { LOOTLOG_APP_URL } from "@/config/app";
 import { resolveDefaultWindowPosition } from "@/components/draggable-window/window-default-placement";
 
-const APP_ORIGIN = new URL(LOOTLOG_APP_URL).origin;
+const SIGNED_OUT = "Zaloguj się na stronie Lootloga, a potem wróć do gry";
 
-const SIGNED_OUT = "Zaloguj się przez Discord, aby połączyć dodatek";
+const COOKIES_BLOCKED =
+  /przeglądarka blokuje pliki cookie innych firm dla lootlog\.pl/u;
 
 const signedInSession = {
   user: {
@@ -53,26 +54,18 @@ const asExtension = () =>
     createRealtime: createGameRealtimeClient,
   });
 
-const requestUrl = (input: Parameters<typeof fetch>[0]) =>
-  input instanceof Request ? input.url : String(input);
-
-/** Opens the popup handoff and returns the state it sent to the web app. */
-const startHandoff = async (user: ReturnType<typeof userEvent.setup>) => {
-  // Any open window stands in for the popup; the client only polls `closed`.
-  const open = vi.spyOn(window, "open").mockReturnValue(window);
-
-  await user.click(screen.getByRole("button", { name: "Zaloguj się" }));
-  const url = new URL(String(open.mock.calls[0]?.[0]));
-
-  return { url, state: url.searchParams.get("state") ?? "" };
-};
-
-type HandoffMessage = { type: string; state: string; code: string };
-
-const postFromWebApp = (data: HandoffMessage, origin = APP_ORIGIN) =>
+/** Follows the website link and comes back to the game, as a player would. */
+const roundTripThroughWebsite = async (
+  user: ReturnType<typeof userEvent.setup>,
+) => {
+  const link = screen.getByRole("link", { name: "Otwórz stronę Lootloga" });
+  // jsdom cannot open the tab; only the click handler matters here.
+  link.addEventListener("click", (event) => event.preventDefault());
+  await user.click(link);
   act(() => {
-    window.dispatchEvent(new MessageEvent("message", { data, origin }));
+    window.dispatchEvent(new Event("focus"));
   });
+};
 
 let restorePlatform: (() => void) | undefined;
 
@@ -88,105 +81,34 @@ beforeEach(async () => {
 });
 
 afterEach(() => {
-  cancelLoginHandoff();
+  useLoginWebsiteStore.setState({ websiteOpened: false });
   restorePlatform?.();
   restorePlatform = undefined;
   vi.restoreAllMocks();
 });
 
 describe("login window", () => {
-  it("redeems only the web app's answer to its own popup and hides while signed in", async () => {
+  it("points at blocked cookies when the userscript still reads no session after the website, and hides once signed in", async () => {
     const user = userEvent.setup();
     renderLogin();
     await screen.findByText(new RegExp(SIGNED_OUT, "u"));
-    const { url, state } = await startHandoff(user);
+    expect(screen.queryByText(COOKIES_BLOCKED)).toBeNull();
 
-    expect(url.origin + url.pathname).toBe(`${APP_ORIGIN}/connect`);
-    expect(url.searchParams.get("origin")).toBe(window.location.origin);
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Dokończ logowanie w otwartym oknie Lootloga.",
-    );
+    await roundTripThroughWebsite(user);
 
-    const exchange = vi.mocked(fetch);
-    exchange.mockClear();
-
-    const message = {
-      type: "lootlog:game-client-handoff",
-      state,
-      code: "c0de",
-    };
-
-    postFromWebApp(message, "https://attacker.example");
-    postFromWebApp({ ...message, state: "another-request" });
-    expect(exchange).not.toHaveBeenCalled();
-
-    let signedIn = false;
-    exchange.mockImplementation(async (input) => {
-      if (requestUrl(input).endsWith("/idp/game-client/exchange")) {
-        signedIn = true;
-
-        return Response.json({ status: "connected" });
-      }
-
-      return Response.json(signedIn ? signedInSession : null);
-    });
-    postFromWebApp(message);
-
-    await waitFor(() => expect(screen.queryByRole("region")).toBeNull());
-    const [input, init] = exchange.mock.calls[0] ?? [];
-    expect(requestUrl(input ?? "")).toBe(
-      "http://localhost/api/auth/idp/game-client/exchange",
-    );
-    expect(init).toMatchObject({
-      method: "POST",
-      credentials: "include",
-      body: JSON.stringify({ code: "c0de" }),
-    });
-
-    // A later confirmed sign-out brings the window back with a fresh handoff.
-    signedIn = false;
-    act(() => authClient.$store.notify("$sessionSignal"));
-    await screen.findByText(new RegExp(SIGNED_OUT, "u"));
-  });
-
-  it("explains blocked cookies when an accepted handoff still yields no session", async () => {
-    const user = userEvent.setup();
-    renderLogin();
-    await screen.findByText(new RegExp(SIGNED_OUT, "u"));
-    const { state } = await startHandoff(user);
-    vi.mocked(fetch).mockImplementation(async (input) =>
-      Response.json(
-        requestUrl(input).endsWith("/game-client/exchange")
-          ? { status: "connected" }
-          : null,
-      ),
-    );
-
-    postFromWebApp({
-      type: "lootlog:game-client-handoff",
-      state,
-      code: "c0de",
-    });
-
-    await screen.findByText(
-      /przeglądarka nie pozwala zapisać sesji dodatku na stronie Margonem/u,
-    );
+    await screen.findByText(COOKIES_BLOCKED);
     expect(
       screen.getByRole("link", { name: "Więcej pomocy z logowaniem" }),
     ).toBeInTheDocument();
-  });
 
-  it("offers the popup as a link that keeps its opener when the browser blocks it", async () => {
-    const user = userEvent.setup();
-    renderLogin();
-    await screen.findByText(new RegExp(SIGNED_OUT, "u"));
-    vi.spyOn(window, "open").mockReturnValue(null);
+    vi.mocked(fetch).mockResolvedValue(Response.json(signedInSession));
+    await user.click(screen.getByRole("button", { name: "Sprawdź sesję" }));
+    await waitFor(() => expect(screen.queryByRole("region")).toBeNull());
 
-    await user.click(screen.getByRole("button", { name: "Zaloguj się" }));
-
-    const link = screen.getByRole("link", { name: "Otwórz okno logowania" });
-    expect(link).toHaveAttribute("rel", "opener");
-    expect(link.getAttribute("href")).toContain(`${APP_ORIGIN}/connect?`);
+    // A later confirmed sign-out brings the window back.
+    vi.mocked(fetch).mockResolvedValue(Response.json(null));
+    act(() => authClient.$store.notify("$sessionSignal"));
+    await screen.findByRole("region");
   });
 
   it("tells a failed session check apart from a missing session", async () => {
@@ -211,14 +133,20 @@ describe("login window", () => {
     );
   });
 
-  it("sends extension players to the website, where their first-party session works", async () => {
+  it("never blames cookies for an extension player, whose session does not need them", async () => {
     restorePlatform = asExtension();
+    const user = userEvent.setup();
     renderLogin();
 
-    await screen.findByText(/Zaloguj się na stronie Lootloga/u);
+    await screen.findByText(new RegExp(SIGNED_OUT, "u"));
     expect(
       screen.getByRole("link", { name: "Otwórz stronę Lootloga" }),
     ).toHaveAttribute("href", LOOTLOG_APP_URL);
+    await roundTripThroughWebsite(user);
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(SIGNED_OUT),
+    );
+    expect(screen.queryByText(COOKIES_BLOCKED)).toBeNull();
   });
 
   it("closes by keyboard, stays dismissed across remounts with a way back, and resets position on the next runtime", async () => {

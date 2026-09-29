@@ -155,7 +155,7 @@
     "accountSignedIn": "Zalogowano jako {{name}}",
     "accountSignedOut": "Niezalogowany",
     "accountError": "Nie udało się sprawdzić sesji",
-    "accountCookiesBlocked": "Przeglądarka blokuje sesję Lootloga",
+    "accountCookiesBlocked": "Przeglądarka może blokować sesję Lootloga",
     "accountSignedOutHint": "Zaloguj się, aby dodatek mógł korzystać z konta Lootloga. Jeśli coś blokuje logowanie, okno logowania podpowie, co zrobić.",
     "connectionLabel": "Połączenie z serwerem",
     "connectionConnected": "Połączono, Lootlogi: {{count}}",

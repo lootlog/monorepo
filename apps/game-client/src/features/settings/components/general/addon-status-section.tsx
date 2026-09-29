@@ -29,14 +29,9 @@ const CONNECTION_DOT_CLASS_NAME = {
 const ACCOUNT_VALUE_KEY = {
   signedIn: "settings.general.accountSignedIn",
   checking: "settings.general.accountChecking",
-  connecting: "settings.general.accountChecking",
   checkFailed: "settings.general.accountError",
   cookiesBlocked: "settings.general.accountCookiesBlocked",
   signedOut: "settings.general.accountSignedOut",
-  awaitingPopup: "settings.general.accountSignedOut",
-  popupBlocked: "settings.general.accountSignedOut",
-  handoffExpired: "settings.general.accountSignedOut",
-  handoffFailed: "settings.general.accountSignedOut",
 } as const satisfies Record<LoginState, string>;
 
 /**
@@ -69,7 +64,7 @@ export const AddonStatusSection: FC = () => {
     (guildId) => guilds?.find((guild) => guild.id === guildId)?.name ?? guildId,
   );
 
-  const checking = state === "checking" || state === "connecting";
+  const checking = state === "checking";
   const signedOut = !checking && !signedIn;
 
   const accountValue = t(ACCOUNT_VALUE_KEY[state], {

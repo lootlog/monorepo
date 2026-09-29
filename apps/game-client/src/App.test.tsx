@@ -238,7 +238,10 @@ describe("extension session lifecycle", () => {
     await waitFor(() => expect(wires[1]?.readyState).toBe(3));
     expect(privateState()).toEqual(clearedState);
     expect(wires).toHaveLength(2);
-    expect(screen.queryByRole("link")).toBeNull();
+    // A confirmed logout sends the player to sign in again on the website.
+    expect(
+      await screen.findByRole("link", { name: "Otwórz stronę Lootloga" }),
+    ).toBeInTheDocument();
     view.unmount();
   });
 
