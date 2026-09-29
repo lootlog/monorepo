@@ -28,10 +28,11 @@ runs:
       with:
         path: .turbo
         key: turbo-v2-${{ runner.os }}-${{ github.ref_name }}-${{ inputs.turbo-cache-scope }}-${{ github.sha }}
+        # Another scope's cache holds none of this job's tasks, so fall back
+        # only to the same scope on main.
         restore-keys: |
           turbo-v2-${{ runner.os }}-${{ github.ref_name }}-${{ inputs.turbo-cache-scope }}-
-          turbo-v2-${{ runner.os }}-${{ github.ref_name }}-
-          turbo-v2-${{ runner.os }}-main-
+          turbo-v2-${{ runner.os }}-main-${{ inputs.turbo-cache-scope }}-
 
     - name: Install dependencies
       shell: bash
