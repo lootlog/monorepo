@@ -136,6 +136,9 @@ const playEntrances = (siblingGroups: HTMLElement[][]) => {
         duration: LIFT_DURATION_MS,
         easing: LIFT_EASING,
         fill: "backwards",
+        // Adds to the element's own transform, such as the translateY that
+        // places a virtualized row, instead of replacing it.
+        composite: "add",
       });
     });
   }
