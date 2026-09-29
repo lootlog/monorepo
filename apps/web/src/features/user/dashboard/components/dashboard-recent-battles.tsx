@@ -12,6 +12,7 @@ import { SectionCard } from "@/components/common/section-card/section-card";
 import { StatisticsQueryState } from "@/features/user/statistics/statistics-query-state";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { DashboardRecentBattle } from "./dashboard-recent-battle";
+import { DASHBOARD_RECENT_BATTLES_PARAMS } from "./dashboard-recent-battles-params";
 
 export function DashboardRecentBattles() {
   const { t } = useTranslation();
@@ -25,7 +26,7 @@ export function DashboardRecentBattles() {
   const now = useMinuteTimestamp();
 
   const query = useBattlesControllerGetDashboardBattles(
-    { size: 5, sortOrder: "desc", includeTotal: false },
+    DASHBOARD_RECENT_BATTLES_PARAMS,
     { query: { staleTime: 60_000 } },
   );
 

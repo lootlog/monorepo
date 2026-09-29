@@ -1,23 +1,65 @@
 {
   "tooltips": {
-    "installAddon": "Zainstaluj dodatek",
-    "createLootlog": "Stwórz nowy lootlog",
+    "installAddon": "Instaluj dodatek do gry",
+    "createLootlog": "Dodaj Lootloga do serwera Discord",
     "refreshServers": "Odśwież listę serwerów"
+  },
+  "sidebar": {
+    "createLootlog": "Dodaj",
+    "installAddon": "Instaluj"
+  },
+  "externalLink": {
+    "newTab": " (otwiera się w nowej karcie)"
   },
   "actions": {
     "logout": "Wyloguj się",
-    "add": "Dodaj",
-    "installAddon": "Instaluj dodatek"
+    "add": "Dodaj"
   },
   "modals": {
     "createLootlog": {
-      "title": "Nowy lootlog",
-      "description": "Utwórz nowy lootlog dla swojego klanu. Jeśli nie widzisz tutaj swojego Discorda, nie masz uprawnień do dodawania bota na serwer lub dopiero założyłeś serwer Discord. Odczekaj proszę do 10 minut i spróbuj ponownie.",
-      "searchPlaceholder": "Szukaj serwera..."
+      "title": "Dodaj Lootloga do serwera",
+      "description": "Lootlog działa na serwerze Discord Twojej grupy. Wybierz serwer, na którym masz uprawnienie „Administrator”, i dodaj do niego bota Lootlog.",
+      "searchPlaceholder": "Szukaj serwera...",
+      "serversLabel": "Serwery Discord, którymi zarządzasz",
+      "addToServer": "Dodaj do serwera {{name}}",
+      "loadError": "Nie udało się pobrać Twoich serwerów Discord.",
+      "retry": "Spróbuj ponownie",
+      "notAdmin": {
+        "title": "Nie administrujesz serwerem?",
+        "description": "Bota może dodać tylko administrator serwera Discord. Poproś lidera o dodanie bota. Gdy to zrobi, Lootlog pojawi się w panelu bocznym; jeśli go nie widzisz, odśwież listę serwerów."
+      },
+      "empty": {
+        "title": "Nie administrujesz żadnym serwerem",
+        "description": "Na liście są tylko serwery, na których masz uprawnienie „Administrator”. Jeśli właśnie założyłeś serwer lub dostałeś uprawnienia, odczekaj do 10 minut i sprawdź ponownie.",
+        "action": "Sprawdź ponownie"
+      },
+      "emptySearch": {
+        "title": "Nie znaleziono serwera",
+        "description": "Zmień frazę wyszukiwania albo ją wyczyść."
+      }
     },
     "installAddon": {
       "title": "Instalacja dodatku",
-      "description": "Zainstaluj dodatek, aby korzystać z lootloga w grze."
+      "description": "Wybierz, jak uruchomić Lootloga w Margonem. Oba sposoby instalują ten sam dodatek.",
+      "recommended": "Polecane",
+      "extension": {
+        "title": "Rozszerzenie przeglądarki",
+        "description": "Nie wymaga Tampermonkey. Obsługuje Chrome, Edge i Firefox.",
+        "unavailable": "Rozszerzenie czeka na publikację w sklepach Chrome i Firefox. Do tego czasu zainstaluj skrypt."
+      },
+      "userscript": {
+        "title": "Skrypt Tampermonkey",
+        "description": "Działa w każdej przeglądarce z rozszerzeniem Tampermonkey.",
+        "steps": {
+          "tampermonkey": "Zainstaluj Tampermonkey z oficjalnego sklepu z rozszerzeniami swojej przeglądarki.",
+          "script": "Otwórz skrypt Lootlog. Tampermonkey pokaże jego podgląd; wybierz „Zainstaluj”.",
+          "reload": "Odśwież Margonem i zaloguj się przez Discord w oknie Lootloga."
+        },
+        "cookies": "Jeśli przeglądarka blokuje pliki cookie stron trzecich, zaloguj się przez okno, które otworzy dodatek. Gdy to nie wystarczy, dodatek podpowie, co zmienić w ustawieniach przeglądarki.",
+        "install": "Zainstaluj skrypt",
+        "getTampermonkey": "Pobierz Tampermonkey"
+      },
+      "docs": "Pełna instrukcja instalacji"
     }
   },
   "characterSelector": {
