@@ -56,6 +56,7 @@ const unusedSetCommands = {
   sadd: () => Promise.reject(new Error("Unexpected Redis write")),
   smembers: () => Promise.reject(new Error("Unexpected Redis read")),
   expire: () => Promise.reject(new Error("Unexpected Redis write")),
+  zadd: () => Promise.reject(new Error("Unexpected Redis write")),
 };
 
 describe("AirTagService legacy parity", () => {
@@ -87,6 +88,7 @@ describe("AirTagService legacy parity", () => {
           },
         ],
         removed: [],
+        remoteRecipients: true,
       }),
       [1, 0],
       [1, 0],
@@ -104,6 +106,7 @@ describe("AirTagService legacy parity", () => {
           observedAt: 300,
         })),
         removed: ["target"],
+        remoteRecipients: true,
       }),
     ];
 
@@ -111,6 +114,8 @@ describe("AirTagService legacy parity", () => {
 
     const hub = {
       clusterFederationVersion: 2,
+      instanceId: crypto.randomUUID(),
+      getLocalLocatedScopes: () => [],
       subscribe: (
         socket: GatewaySocket,
         scope: SessionData["subscriptions"] extends Map<string, infer T>
@@ -246,6 +251,8 @@ describe("AirTagService legacy parity", () => {
       },
       {
         clusterFederationVersion: 2,
+        instanceId: crypto.randomUUID(),
+        getLocalLocatedScopes: () => [],
         subscribe: () => {
           throw new Error("Unexpected subscribe");
         },
@@ -284,6 +291,7 @@ describe("AirTagService map threats", () => {
         targets: [],
         removed: [],
         threat: threatEvent,
+        remoteRecipients: true,
       }),
       JSON.stringify({ mapName: "Map", ...threatEvent, revision: 1_300 }),
     ];
@@ -297,6 +305,7 @@ describe("AirTagService map threats", () => {
           get: async () => null,
           sadd: async () => 1,
           expire: async () => 1,
+          zadd: async () => 1,
           smembers: async () => [],
           eval: async () => {
             const reply = evaluations.shift();
@@ -309,6 +318,8 @@ describe("AirTagService map threats", () => {
       },
       {
         clusterFederationVersion: 2,
+        instanceId: crypto.randomUUID(),
+        getLocalLocatedScopes: () => [],
         subscribe: () => {},
         unsubscribe: () => {},
         publishToScopes: async (_scopes, event) => {

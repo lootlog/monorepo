@@ -167,6 +167,7 @@ class GatewayApplication extends Context.Service<
       const mapPings = new MapPingService(redis, hub);
       const battlePings = new BattlePingService(redis, hub);
       const airTags = new AirTagService(redis, hub);
+      yield* airTags.runInterestRefresh().pipe(Effect.forkScoped);
       const guilds = makeGuildStore(config, redis, httpClient);
 
       const commands = new CommandHandler(

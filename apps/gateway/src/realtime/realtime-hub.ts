@@ -65,9 +65,12 @@ const MAX_SCOPE_BYTES = 1_024;
  * event type and publish that type only once `clusterFederationVersion`
  * reaches it: a replica drops a frame its schema does not know.
  */
-export const FEDERATION_VERSION = 3;
+export const FEDERATION_VERSION = 4;
 
 export const PARTY_GATHERING_STATE_FEDERATION_VERSION = 3;
+
+/** Replicas from this version register the air-tag scopes their sockets follow. */
+export const AIR_TAG_INTEREST_FEDERATION_VERSION = 4;
 
 const toBase64 = (bytes: Uint8Array): string =>
   Buffer.from(bytes).toString("base64");
@@ -340,18 +343,22 @@ export class RealtimeHub {
       /** Limits delivery to readers of this Organization's precise presence location. */
       readonly organizationId?: string;
       readonly presenceAudience?: "precise";
+      /** Skips Redis when the caller knows no other replica has a recipient. */
+      readonly localOnly?: boolean;
     } = {},
   ): Promise<void> {
     if (scopes.length === 0) return;
+    const { localOnly, ...recipients } = options;
 
     const { message, prepared } = this.createFederatedMessage({
       scopes,
       frame: event,
-      ...options,
+      ...recipients,
     });
 
     this.deliver(message, prepared);
-    await this.redis.publish(message);
+
+    if (!localOnly) await this.redis.publish(message);
   }
 
   async publishToUser(userId: string, event: Event): Promise<void> {
@@ -438,6 +445,36 @@ export class RealtimeHub {
         await this.redis.publish(message);
       }),
     );
+  }
+
+  /** Scopes of `topic` with a world and map that a local socket subscribes to. */
+  getLocalLocatedScopes(topic: Scope["topic"]): Scope[] {
+    const prefix = JSON.stringify([topic]).slice(0, -1);
+    const scopes: Scope[] = [];
+
+    for (const key of this.audiences.keys()) {
+      if (!key.startsWith(`${prefix},`)) continue;
+
+      // SAFETY: keys with this topic prefix come only from getScopeAudienceKey.
+      const [, organizationId, eventId, world, mapId] = JSON.parse(key) as [
+        string,
+        string | null,
+        string | null,
+        string | null,
+        number | null,
+      ];
+
+      if (organizationId === null || world === null || mapId === null) continue;
+      scopes.push({
+        topic,
+        organizationId,
+        ...(eventId !== null && { eventId }),
+        world,
+        mapId,
+      });
+    }
+
+    return scopes;
   }
 
   getLocalSockets(): ReadonlyArray<GatewaySocket> {

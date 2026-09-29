@@ -149,6 +149,35 @@ const clanEnemyFields = ({
   prof: string;
 }) => ({ targetId, nickname, clan, lvl, prof });
 
+/** Revision of a federated `air-tag.scope-updated` frame for `mapId`. */
+const federatedAirTagRevision = (
+  raw: string,
+  mapId: number,
+): number | undefined => {
+  // SAFETY: the Gateway publishes only JSON objects on its federation channel.
+  const { frame } = JSON.parse(raw) as { frame?: string };
+
+  if (!frame) return undefined;
+  const decoded = decodeRealtimeFrame(Buffer.from(frame, "base64"));
+
+  return "type" in decoded &&
+    decoded.type === "air-tag.scope-updated" &&
+    decoded.data.mapId === mapId
+    ? decoded.data.revision
+    : undefined;
+};
+
+const moveAirTagSocket = (
+  socket: GatewaySocket,
+  location: { mapId: number; map: string },
+) => {
+  const presence = socket.data.presence;
+
+  if (!presence) throw new Error("Missing air tag presence");
+  Object.assign(socket.data, { supportsAirTagScopeUpdates: true });
+  setSocketPresence(socket, { ...presence, location });
+};
+
 const eventsOfType = (frames: ReadonlyArray<Uint8Array>, type: string) => {
   const events: ReturnType<typeof decodeRealtimeFrame>[] = [];
 
@@ -3271,6 +3300,79 @@ describe("realtime Dragonfly integration", () => {
         status: "accepted",
         scopes: [{ targets: [{ targetId: "lurker" }] }],
       });
+
+      // Only another replica's sockets need an update through Redis.
+      const channelUpdates: number[] = [];
+      const channelListener = new RedisClient(`redis://127.0.0.1:${redisPort}`);
+
+      await channelListener.subscribe(firstStore.channel, (raw) => {
+        const revision = federatedAirTagRevision(raw, 11);
+
+        if (revision !== undefined) channelUpdates.push(revision);
+      });
+
+      const soloObserver = makeSocket("solo-observer");
+      const localWatcher = makeSocket("local-watcher");
+      const remoteWatcher = makeSocket("remote-watcher");
+
+      for (const target of [soloObserver, localWatcher, remoteWatcher])
+        moveAirTagSocket(target.socket, { mapId: 11, map: "Solo" });
+
+      firstHub.register(soloObserver.socket);
+      firstHub.register(localWatcher.socket);
+      secondHub.register(remoteWatcher.socket);
+
+      for (const target of [soloObserver, localWatcher])
+        await sourceAirTags.updateSubscription(target.socket, {
+          requestId: `${target.socket.data.connectionId}-subscription`,
+          enabled: true,
+          expectedMapId: 11,
+        });
+
+      const soloUpdates = (target: ReturnType<typeof makeSocket>) =>
+        eventsOfType(target.frames, "air-tag.scope-updated").length;
+
+      const reportSolo = (x: number) =>
+        expect(
+          sourceAirTags.publishObservations(soloObserver.socket, {
+            expectedMapId: 11,
+            observations: [{ ...observation, targetId: "solo", x }],
+          }),
+        ).resolves.toMatchObject({ status: "accepted" });
+
+      await reportSolo(1);
+      await waitFor(() => soloUpdates(localWatcher) === 1);
+      await Bun.sleep(100);
+      expect(channelUpdates).toHaveLength(0);
+
+      await recipientAirTags.updateSubscription(remoteWatcher.socket, {
+        requestId: "remote-watcher-subscription",
+        enabled: true,
+        expectedMapId: 11,
+      });
+      await reportSolo(2);
+      await waitFor(() => soloUpdates(remoteWatcher) === 1);
+      expect(soloUpdates(localWatcher)).toBe(2);
+      expect(channelUpdates).toHaveLength(1);
+
+      // A lapsed registration returns with the next refresh while a socket still follows the map.
+      await firstStore.command.del(
+        "{air-tag:organization-1:classic:11}:replicas",
+      );
+      await reportSolo(3);
+      await Bun.sleep(100);
+      expect(channelUpdates).toHaveLength(1);
+
+      const refresh = secondRuntime.runFork(
+        recipientAirTags.runInterestRefresh(),
+      );
+
+      await Bun.sleep(100);
+      await secondRuntime.runPromise(Fiber.interrupt(refresh));
+      await reportSolo(4);
+      await waitFor(() => soloUpdates(remoteWatcher) === 2);
+      expect(channelUpdates).toHaveLength(2);
+      channelListener.close();
     } finally {
       await Promise.all([firstStore.close(), secondStore.close()]);
     }
