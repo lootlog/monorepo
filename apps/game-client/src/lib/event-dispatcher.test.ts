@@ -211,7 +211,7 @@ it("sends loot distribution updates over HTTP and clears the pending loot only a
       fetch: (input, init) => {
         requests.push(new Request(input, init));
 
-        return Promise.resolve(Response.json({}));
+        return Promise.resolve(Response.json({ "127": ["bb"] }));
       },
     },
   });
