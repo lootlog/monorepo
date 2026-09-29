@@ -253,7 +253,14 @@ export class RedisGatewayStore {
         // Frames numbered up to the counter were published before this
         // subscription existed or are already queued for it.
         const published = yield* redis.send<string | null>("GET", sequenceKey);
-        resuming = !sequence.resume(Number(published ?? 0), performance.now());
+
+        const continuity = sequence.resume(
+          Number(published ?? 0),
+          performance.now(),
+        );
+
+        if (continuity === "lost") onStateChange("gap");
+        resuming = continuity === "pending";
 
         if (!resuming) resumed();
 

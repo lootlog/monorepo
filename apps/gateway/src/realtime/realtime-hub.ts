@@ -99,16 +99,21 @@ export const closeGradually = (
 
 interface FederationRecovery {
   /** How long sessions wait for a dropped subscription to prove it lost nothing. */
-  readonly graceMs: number;
+  readonly graceMs?: number;
   /** Spreads the closes when sessions did miss frames. */
-  readonly closeSpreadMs: number;
+  readonly closeSpreadMs?: number;
+  /**
+   * Reads the lowest `FEDERATION_VERSION` of the live replicas when a
+   * resubscription vouches for sessions. The periodic sample can predate a
+   * replica that started, or rolled back, during the gap.
+   */
+  readonly readClusterFederationVersion?: () => Effect.Effect<number, unknown>;
 }
 
-const defaultFederationRecovery: FederationRecovery = {
-  // Covers a 5 s Dragonfly stall plus the resubscribe backoff and reorder window.
-  graceMs: 15_000,
-  closeSpreadMs: 10_000,
-};
+// Covers a 5 s Dragonfly stall plus the resubscribe backoff and reorder window.
+const FEDERATION_GRACE_MS = 15_000;
+
+const FEDERATION_CLOSE_SPREAD_MS = 10_000;
 
 const toBase64 = (bytes: Uint8Array): string =>
   Buffer.from(bytes).toString("base64");
@@ -186,6 +191,8 @@ export class RealtimeHub {
   >();
   private federated = false;
   private federationGrace: ReturnType<typeof setTimeout> | undefined;
+  /** Discards a continuity check that a later interruption or gap overtook. */
+  private federationEpoch = 0;
   private draining = false;
   readonly instanceId = crypto.randomUUID();
   /** Lowest `FEDERATION_VERSION` among live replicas, kept by `GatewayMetrics`; 1 until known. */
@@ -195,7 +202,7 @@ export class RealtimeHub {
     private readonly config: Pick<GatewayConfiguration, "maxBackpressureBytes">,
     private readonly redis: RealtimeFederationStore,
     private readonly runBackground: BackgroundTaskRunner = unmanagedBackgroundTaskRunner,
-    private readonly federationRecovery: FederationRecovery = defaultFederationRecovery,
+    private readonly federationRecovery: FederationRecovery = {},
   ) {}
 
   start(): Effect.Effect<void, unknown> {
@@ -503,9 +510,39 @@ export class RealtimeHub {
   }
 
   private restoreFederation(): void {
-    clearTimeout(this.federationGrace);
-    this.federationGrace = undefined;
+    if (this.federationGrace === undefined) {
+      this.markFederated();
 
+      return;
+    }
+
+    // Sequence continuity covers only sequenced frames. Trust it only when
+    // every live replica numbers its frames, read now rather than sampled.
+    const epoch = this.federationEpoch;
+
+    const read =
+      this.federationRecovery.readClusterFederationVersion?.() ??
+      Effect.succeed(this.clusterFederationVersion);
+
+    this.runBackground(
+      "realtime.federation.verify",
+      read.pipe(
+        Effect.orElseSucceed(() => 1),
+        Effect.map((version) => {
+          if (epoch !== this.federationEpoch) return;
+          this.clusterFederationVersion = version;
+
+          if (version < SEQUENCED_FEDERATION_VERSION)
+            this.closeAfterFederationGap();
+          clearTimeout(this.federationGrace);
+          this.federationGrace = undefined;
+          this.markFederated();
+        }),
+      ),
+    );
+  }
+
+  private markFederated(): void {
     if (this.federated) return;
     this.federated = true;
     this.logger.info("Realtime federation subscribed", {
@@ -516,6 +553,8 @@ export class RealtimeHub {
   // Readiness is withdrawn at once, so no new session joins during the gap.
   // Established sessions wait for the resubscription to prove it lost no frame.
   private interruptFederation(): void {
+    this.federationEpoch++;
+
     if (!this.federated) return;
     this.federated = false;
 
@@ -532,7 +571,7 @@ export class RealtimeHub {
     });
     this.federationGrace = setTimeout(
       () => this.closeAfterFederationGap(),
-      this.federationRecovery.graceMs,
+      this.federationRecovery.graceMs ?? FEDERATION_GRACE_MS,
     );
     this.federationGrace.unref?.();
   }
@@ -540,6 +579,7 @@ export class RealtimeHub {
   // Frames lost in the gap may include permission rebalances. Rejoining
   // re-reads Organization access and lets clients refetch current state.
   private closeAfterFederationGap(): void {
+    this.federationEpoch++;
     clearTimeout(this.federationGrace);
     this.federationGrace = undefined;
     const sockets = this.getLocalSockets();
@@ -552,12 +592,19 @@ export class RealtimeHub {
       },
     );
 
-    // Detach at once: a session must not receive frames after a gap.
-    for (const socket of sockets) this.detach(socket);
+    // A session must neither receive frames nor act on authority that a lost
+    // frame may have revoked while it waits for its close.
+    for (const socket of sockets) {
+      socket.data.closing = true;
+      this.detach(socket);
+    }
+
     this.runBackground(
       "realtime.federation.close",
-      closeGradually(sockets, this.federationRecovery.closeSpreadMs, (socket) =>
-        socket.close(1013, "realtime federation unavailable"),
+      closeGradually(
+        sockets,
+        this.federationRecovery.closeSpreadMs ?? FEDERATION_CLOSE_SPREAD_MS,
+        (socket) => socket.close(1013, "realtime federation unavailable"),
       ),
     );
   }

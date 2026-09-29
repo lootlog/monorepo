@@ -330,6 +330,9 @@ export class CommandHandler {
                 failure.retryAfterMs,
               ),
             );
+          // A join without a request ID would wait for session.joined forever.
+          else if (error instanceof JoinCapacityExceeded)
+            socket.close(1013, "gateway is busy");
         });
       }),
       Effect.asVoid,
@@ -552,6 +555,15 @@ export class CommandHandler {
   ): Effect.Effect<unknown, CommandFailure> {
     if (!hasValidApiKeyLease(socket.data))
       return Effect.fail(new OrganizationAccessDenied());
+
+    // Its authority may predate a lost revocation until the socket closes.
+    if (socket.data.closing)
+      return Effect.fail(
+        new RealtimeDependencyError({
+          operation: command.type,
+          cause: "session is closing",
+        }),
+      );
 
     if (
       socket.data.apiKeyAccess &&

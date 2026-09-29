@@ -41,6 +41,29 @@ end
 return {connections, sessions, count, federationVersion}
 `;
 
+// Same liveness rule as SAMPLE, without writing this replica's snapshot.
+const CLUSTER_FEDERATION_VERSION = `
+local time = redis.call('TIME')
+local now = tonumber(time[1]) * 1000 + math.floor(tonumber(time[2]) / 1000)
+local version = nil
+for _, raw in ipairs(redis.call('HVALS', KEYS[1])) do
+  local value = cjson.decode(raw)
+  if now - value.at < 30000 then
+    local current = tonumber(value.federationVersion) or 1
+    if version == nil or current < version then version = current end
+  end
+end
+return version or 1
+`;
+
+/** Lowest `FEDERATION_VERSION` among the replicas that sampled in the last 30 s. */
+export const readClusterFederationVersion = (
+  redis: Pick<RedisGatewayCommands, "eval">,
+) =>
+  Effect.tryPromise(() =>
+    redis.eval(CLUSTER_FEDERATION_VERSION, 1, SNAPSHOTS),
+  ).pipe(Effect.map(Schema.decodeUnknownSync(Schema.Number)));
+
 const decodeCounts = Schema.decodeUnknownSync(
   Schema.Tuple([Schema.Number, Schema.Number, Schema.Number, Schema.Number]),
 );
