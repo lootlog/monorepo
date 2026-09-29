@@ -2,22 +2,22 @@
 import * as Schema from "effect/Schema";
 import { FiniteNumber } from "@lootlog/schema/http-scalars";
 
+export const ItemHit = Schema.Struct({
+  id: FiniteNumber,
+  name: Schema.String,
+  icon: Schema.String,
+  stat: Schema.String.annotate({ default: "" }),
+  lvl: FiniteNumber,
+  rarity: Schema.Union([Schema.String, Schema.Null]),
+  type: Schema.Union([Schema.String, Schema.Null]),
+  worlds: Schema.Array(Schema.String).annotate({ default: [] }),
+}).annotate({ description: "Item search hit" });
+
 export type SearchItemsResponseDto_Output =
   typeof SearchItemsResponseDto_Output.Type;
 
 export const SearchItemsResponseDto_Output = Schema.Struct({
-  hits: Schema.Array(
-    Schema.Struct({
-      id: FiniteNumber,
-      name: Schema.String,
-      icon: Schema.String,
-      stat: Schema.String.annotate({ default: "" }),
-      lvl: FiniteNumber,
-      rarity: Schema.Union([Schema.String, Schema.Null]),
-      type: Schema.Union([Schema.String, Schema.Null]),
-      worlds: Schema.Array(Schema.String).annotate({ default: [] }),
-    }).annotate({ description: "Item search hit" }),
-  ),
+  hits: Schema.Array(ItemHit),
   estimatedTotalHits: FiniteNumber,
   facetDistribution: Schema.Record(
     Schema.String,
