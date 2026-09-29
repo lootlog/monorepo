@@ -18,14 +18,17 @@ import {
   type AirTagSubscriptionAck,
   type AirTagScopeUpdateEvent,
 } from "@lootlog/schema/air-tag";
-import { Schema } from "effect";
+import { Effect, Metric, Schedule, Schema } from "effect";
 import { Logger } from "#src/platform/logger";
 import type {
   RedisGatewayStore,
   RedisScriptReply,
 } from "#src/platform/redis-store";
 import { toLegacyAirTagUpdates } from "#src/realtime/air-tag-legacy-updates";
-import type { RealtimeHub } from "#src/realtime/realtime-hub";
+import {
+  AIR_TAG_INTEREST_FEDERATION_VERSION,
+  type RealtimeHub,
+} from "#src/realtime/realtime-hub";
 import type { AirTagScope, GatewaySocket } from "#src/realtime/session";
 import {
   canReadPreciseLocation,
@@ -39,6 +42,17 @@ const IDLE_TTL_SECONDS = 20;
 const MAX_TARGETS = 100;
 
 const BROADCAST_INTERVAL_MS = 1_000;
+
+// A replica re-registers the scopes its sockets follow; a registration outlives
+// two missed refreshes, and a stale one only costs an unneeded publication.
+const INTEREST_REFRESH_MS = 30_000;
+
+const INTEREST_TTL_MS = 90_000;
+
+const federatedUpdates = Metric.counter(
+  "lootlog_gateway_air_tag_federated_updates_total",
+  { incremental: true },
+);
 
 // A still enemy is sighted at most 6.25 s apart; re-reporting a sighting this old keeps its
 // age under `AIR_TAG_MAP_THREAT_FRESH_MS` on recipients.
@@ -144,6 +158,7 @@ local threatsAllowed=ARGV[12] == "1"
 local mapName=ARGV[13]
 local observer=ARGV[14]
 local departures=cjson.decode(ARGV[15])
+local instance=ARGV[16]
 local raw=redis.call("GET",KEYS[3])
 local metadata
 if raw == false then
@@ -283,7 +298,11 @@ if #sightings > 0 or state.pending == true or threatRemoved then
   redis.call("SET",KEYS[5],cjson.encode(state),"PX",threatTtl)
   if next(records) ~= nil then redis.call("PEXPIRE",KEYS[4],threatTtl) end
 end
-return withArrays(cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,revision=metadata.revision,acceptedTargets=accepted,targets=updates,removed=removed,threat=threatResult,threatPendingMs=threatPendingMs}),{"targets","removed","enemies"})
+-- Another replica follows this scope, so its sockets need the update through federation.
+redis.call("ZREMRANGEBYSCORE",KEYS[6],"-inf",now)
+local interested=redis.call("ZCARD",KEYS[6])
+if redis.call("ZSCORE",KEYS[6],instance) ~= false then interested=interested-1 end
+return withArrays(cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,revision=metadata.revision,acceptedTargets=accepted,targets=updates,removed=removed,threat=threatResult,threatPendingMs=threatPendingMs,remoteRecipients=interested > 0}),{"targets","removed","enemies"})
 `;
 
 const SNAPSHOT_SCRIPT = `
@@ -296,6 +315,8 @@ local function public(target)
   return result
 end
 local now=nowMs(); local idle=tonumber(ARGV[2]); local raw=redis.call("GET",KEYS[3]); local metadata
+-- Registered with the snapshot: an update merged later sees this replica, one merged earlier is in the snapshot.
+redis.call("ZADD",KEYS[4],now+tonumber(ARGV[4]),ARGV[3]); redis.call("PEXPIRE",KEYS[4],ARGV[4])
 if raw == false then redis.call("DEL",KEYS[1],KEYS[2]); metadata={epochId=ARGV[1],epochStartedAt=now,revision=0} else metadata=cjson.decode(raw) end
 local expired=redis.call("ZRANGEBYSCORE",KEYS[2],"-inf",now)
 if #expired > 0 then redis.call("HDEL",KEYS[1],unpack(expired)); redis.call("ZREM",KEYS[2],unpack(expired)) end
@@ -354,6 +375,7 @@ interface MergeResult {
   removed: string[];
   threat?: { revision: number; enemies: AirTagMapThreatEnemy[] };
   threatPendingMs?: number;
+  remoteRecipients: boolean;
 }
 
 interface ObservationBatch {
@@ -377,6 +399,7 @@ const MergeResultJson = Schema.fromJsonString(
       }),
     ),
     threatPendingMs: Schema.optionalKey(Schema.Number),
+    remoteRecipients: Schema.Boolean,
   }),
 );
 
@@ -412,7 +435,7 @@ const ThreatSnapshotJson = Schema.fromJsonString(
 type ScriptStore = {
   command: Pick<
     RedisGatewayStore["command"],
-    "get" | "sadd" | "smembers" | "expire"
+    "get" | "sadd" | "smembers" | "expire" | "zadd"
   > & {
     eval(
       ...args: Parameters<RedisGatewayStore["command"]["eval"]>
@@ -439,6 +462,8 @@ export class AirTagService {
       | "unsubscribe"
       | "publishToScopes"
       | "clusterFederationVersion"
+      | "instanceId"
+      | "getLocalLocatedScopes"
     >,
   ) {}
 
@@ -625,16 +650,21 @@ export class AirTagService {
 
       if (result.targets.length === 0 && result.removed.length === 0) continue;
 
-      await this.publishScopeUpdate(scope, socket.data.connectionId, {
-        guildId: scope.guildId,
-        world: scope.world,
-        mapId: scope.mapId,
-        epochId: result.epochId,
-        epochStartedAt: result.epochStartedAt,
-        revision: result.revision,
-        targets: result.targets,
-        removedTargetIds: result.removed,
-      });
+      await this.publishScopeUpdate(
+        scope,
+        socket.data.connectionId,
+        result.remoteRecipients,
+        {
+          guildId: scope.guildId,
+          world: scope.world,
+          mapId: scope.mapId,
+          epochId: result.epochId,
+          epochStartedAt: result.epochStartedAt,
+          revision: result.revision,
+          targets: result.targets,
+          removedTargetIds: result.removed,
+        },
+      );
     }
 
     return {
@@ -653,14 +683,29 @@ export class AirTagService {
   private async publishScopeUpdate(
     scope: AirTagScope,
     excludeConnectionId: string,
+    remoteRecipients: boolean,
     event: AirTagScopeUpdateEvent,
   ): Promise<void> {
+    const localOnly =
+      !remoteRecipients &&
+      this.hub.clusterFederationVersion >= AIR_TAG_INTEREST_FEDERATION_VERSION;
+
     const options = {
       excludeConnectionId,
       recipientPlatform: "game",
       recipientWorld: scope.world,
       recipientMapId: scope.mapId,
+      localOnly,
     } as const;
+
+    Effect.runSync(
+      Metric.update(
+        Metric.withAttributes(federatedUpdates, {
+          outcome: localOnly ? "skipped" : "published",
+        }),
+        1,
+      ),
+    );
 
     const frame = {
       v: 1,
@@ -936,6 +981,39 @@ export class AirTagService {
     }
   }
 
+  /** Keeps this replica registered for every located air-tag scope a local socket follows. */
+  runInterestRefresh() {
+    return Effect.tryPromise(() => this.refreshInterest()).pipe(
+      Effect.catchCause((cause) =>
+        Effect.logWarning("Air tag interest refresh failed", cause),
+      ),
+      Effect.repeat(Schedule.spaced(INTEREST_REFRESH_MS)),
+    );
+  }
+
+  private async refreshInterest(): Promise<void> {
+    const expiresAt = Date.now() + INTEREST_TTL_MS;
+
+    await Promise.all(
+      this.hub.getLocalLocatedScopes("map.air-tags").map(async (scope) => {
+        const key = this.interestKey({
+          guildId: scope.organizationId ?? "",
+          world: scope.world ?? "",
+          mapId: scope.mapId ?? 0,
+        });
+
+        await this.redis.command.zadd(key, expiresAt, this.hub.instanceId);
+        await this.redis.command.expire(key, INTEREST_TTL_MS / 1_000);
+      }),
+    );
+  }
+
+  private interestKey(
+    scope: Pick<AirTagScope, "guildId" | "world" | "mapId">,
+  ): string {
+    return `${this.hashTag(scope)}:replicas`;
+  }
+
   private threatMapsKey(guildId: string, world: string): string {
     return `air-tag:threat-maps:${guildId}:${world}`;
   }
@@ -1007,10 +1085,11 @@ export class AirTagService {
 
     const result = await this.redis.command.eval(
       MERGE_SCRIPT,
-      5,
+      6,
       ...this.keys(scope),
       `${hashTag}:threats`,
       `${hashTag}:threat-state`,
+      this.interestKey(scope),
       crypto.randomUUID(),
       JSON.stringify(observations),
       TARGET_TTL_MS,
@@ -1026,6 +1105,7 @@ export class AirTagService {
       mapName,
       observer,
       JSON.stringify(departures),
+      this.hub.instanceId,
     );
 
     const { threat, ...parsed } = Schema.decodeUnknownSync(MergeResultJson)(
@@ -1045,10 +1125,13 @@ export class AirTagService {
   private async loadSnapshot(scope: AirTagScope): Promise<AirTagScopeSnapshot> {
     const result = await this.redis.command.eval(
       SNAPSHOT_SCRIPT,
-      3,
+      4,
       ...this.keys(scope),
+      this.interestKey(scope),
       crypto.randomUUID(),
       IDLE_TTL_SECONDS,
+      this.hub.instanceId,
+      INTEREST_TTL_MS,
     );
 
     const snapshot = Schema.decodeUnknownSync(SnapshotResultJson)(
