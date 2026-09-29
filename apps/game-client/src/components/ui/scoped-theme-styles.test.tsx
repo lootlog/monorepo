@@ -1,6 +1,5 @@
 import "@/index.css";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { Tile } from "@/components/ui/tile";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { afterEach, describe, expect, it } from "vitest";
 import { Input } from "./input";
@@ -19,14 +18,6 @@ const renderInsideLootlogRoot = (element: React.ReactElement) => {
 describe("scoped theme styles", () => {
   afterEach(() => {
     document.getElementById("lootlog-root")?.remove();
-  });
-
-  it("preserves rounded timer tiles", () => {
-    renderInsideLootlogRoot(<Tile>Timer</Tile>);
-
-    expect(["6px", "calc(10px * 0.6)"]).toContain(
-      getComputedStyle(screen.getByText("Timer")).borderRadius,
-    );
   });
 
   it("preserves the purple focus ring on inputs", () => {

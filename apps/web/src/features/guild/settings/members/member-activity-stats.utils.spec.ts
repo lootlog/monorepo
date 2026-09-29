@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  mapMemberActivityStatsByDiscordIdAndSource,
-  mapMemberActivityStatsByDiscordId,
-} from "./member-activity-stats.utils";
+import { mapMemberActivityStatsByDiscordIdAndSource } from "./member-activity-stats.utils";
 import type { MemberActivityStats } from "./member-activity-stats-api";
 
 const buildStats = (
@@ -20,16 +17,6 @@ const buildStats = (
 });
 
 describe("member activity stats utils", () => {
-  it("maps stats by Discord ID", () => {
-    const mapped = mapMemberActivityStatsByDiscordId([
-      buildStats({ discordId: "discord-1" }),
-      buildStats({ discordId: "discord-2", visitCount: 5 }),
-    ]);
-
-    expect(mapped.get("discord-1")?.visitCount).toBe(1);
-    expect(mapped.get("discord-2")?.visitCount).toBe(5);
-  });
-
   it("maps web and game stats by Discord ID without overwriting sources", () => {
     const mapped = mapMemberActivityStatsByDiscordIdAndSource([
       buildStats({

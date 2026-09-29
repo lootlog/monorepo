@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createRuntimeAdapter,
-  getMargonemInterface,
   isMargonemRuntimeReady,
   NiRuntimeAdapter,
   normalizeNpc,
@@ -239,11 +238,9 @@ describe("runtime adapter selection", () => {
   it("selects NI when Engine exists and SI otherwise", () => {
     vi.stubGlobal("Engine", {});
     expect(createRuntimeAdapter()).toBeInstanceOf(NiRuntimeAdapter);
-    expect(getMargonemInterface()).toBe("ni");
 
     vi.stubGlobal("Engine", undefined);
     expect(createRuntimeAdapter()).toBeInstanceOf(SiRuntimeAdapter);
-    expect(getMargonemInterface()).toBe("si");
   });
 
   it("rejects reads from unavailable runtimes with TypeError", () => {

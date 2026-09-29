@@ -272,7 +272,7 @@ describe("projectTimerList", () => {
     expect(staleSelection.timers).toHaveLength(3);
   });
 
-  it("keeps configured expired Timers and sorts pinned and expired Timers compatibly", () => {
+  it("keeps recently and configured expired Timers and sorts pinned and expired Timers compatibly", () => {
     const epoch = new Date("2099-04-22T10:00:00.000Z").getTime();
 
     const result = projectTimerList(
@@ -299,6 +299,11 @@ describe("projectTimerList", () => {
             npc: { ...createTimer().npc, name: "Always visible" },
           }),
           createTimer({
+            timerKey: "recently-expired",
+            maxSpawnTime: "2099-04-22T09:59:50.000Z",
+            npc: { ...createTimer().npc, name: "Recently expired" },
+          }),
+          createTimer({
             timerKey: "pinned",
             maxSpawnTime: "2099-04-22T10:03:00.000Z",
             npc: { ...createTimer().npc, name: "Pinned" },
@@ -314,6 +319,7 @@ describe("projectTimerList", () => {
 
     expect(result.timers.map((timer) => timer.npc.name)).toEqual([
       "Pinned",
+      "Recently expired",
       "Active",
       "Always visible",
     ]);

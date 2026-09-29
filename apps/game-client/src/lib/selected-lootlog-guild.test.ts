@@ -1,4 +1,3 @@
-import { orderGuilds as orderLootlogGuilds } from "@lootlog/domain/guild-preferences";
 import { describe, expect, it } from "vitest";
 import type { GuildIdentity } from "@/lib/api/generated-helpers";
 import {
@@ -13,16 +12,6 @@ const guilds: GuildIdentity[] = [
 ];
 
 describe("Lootlog guild visibility", () => {
-  it("orders known guilds first and appends newly available guilds", () => {
-    expect(
-      orderLootlogGuilds(guilds, [
-        "guild-2",
-        "guild-unavailable",
-        "guild-1",
-      ]).map((guild) => guild.id),
-    ).toEqual(["guild-2", "guild-1", "guild-3"]);
-  });
-
   it("removes hidden guilds after applying the saved order", () => {
     expect(
       getVisibleLootlogGuilds(

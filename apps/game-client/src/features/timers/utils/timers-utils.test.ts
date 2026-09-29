@@ -1,12 +1,7 @@
 import { NpcType } from "@/api/npcs.api";
 import type { Timer } from "@/api/timers.api";
 import { describe, expect, it } from "vitest";
-import {
-  filterTimersByRemovalTime,
-  getTimerTimeLeft,
-  isManualTimer,
-  type TimerWithTimeLeft,
-} from "./timers-utils";
+import { getTimerTimeLeft, isManualTimer } from "./timers-utils";
 
 const createTimer = (overrides: Partial<Timer> = {}): Timer => ({
   guildId: "guild-1",
@@ -53,15 +48,6 @@ describe("timers-utils", () => {
       maxTimeLeft: -30_000,
       minTimeLeft: -30_000,
     });
-  });
-
-  it("filters Timers after the removal delay", () => {
-    const timers: TimerWithTimeLeft[] = [
-      { ...createTimer(), maxTimeLeft: -29_999, minTimeLeft: -29_999 },
-      { ...createTimer(), maxTimeLeft: -30_000, minTimeLeft: -30_000 },
-    ];
-
-    expect(filterTimersByRemovalTime(timers, 30_000)).toEqual([timers[0]]);
   });
 
   it("recognizes manual Timers", () => {
