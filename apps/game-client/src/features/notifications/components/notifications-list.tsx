@@ -1,3 +1,5 @@
+import { MOTION_DURATION_MS, MOTION_EASING } from "@/lib/motion";
+import { useAnimationEffects } from "@/hooks/use-animation-effects";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SingleNotification } from "@/features/notifications/components/single-notification";
@@ -43,10 +45,6 @@ const EMPTY_NOTIFICATIONS: StoredNotification[] = [];
 const EMPTY_NOTIFICATION_SETTINGS: Partial<NotificationsSettings> = {};
 
 const INITIAL_BULK_RENDER_COUNT = 2;
-
-const MANUAL_EXIT_ANIMATION_DURATION_MS = 180;
-
-const ROW_LAYOUT_ANIMATION_DURATION_MS = 220;
 
 export const NotificationsList: FC<NotificationsListProps> = ({
   notifications,
@@ -105,9 +103,13 @@ export const NotificationsList: FC<NotificationsListProps> = ({
     })),
   );
 
+  // The setting alone drives the auto-hide countdown, which steps under
+  // reduced motion; movement also follows the operating system preference.
   const animationEffectsEnabled = useSettingsStore(
     (state) => state.animationEffectsEnabled,
   );
+
+  const motionEnabled = useAnimationEffects();
 
   const shouldStageBulkRender =
     notificationsCount > INITIAL_BULK_RENDER_COUNT &&
@@ -147,7 +149,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
       const previousTop = previousRowTops.get(listKey);
 
       if (
-        !animationEffectsEnabled ||
+        !motionEnabled ||
         previousTop === undefined ||
         previousTop === top ||
         top >= viewportBottom ||
@@ -162,14 +164,14 @@ export const NotificationsList: FC<NotificationsListProps> = ({
           { transform: "translateY(0)" },
         ],
         {
-          duration: ROW_LAYOUT_ANIMATION_DURATION_MS,
-          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+          duration: MOTION_DURATION_MS.medium,
+          easing: MOTION_EASING.enter,
         },
       );
     }
 
     previousRowTopsRef.current = nextRowTops;
-  }, [animationEffectsEnabled, renderedListKeys]);
+  }, [motionEnabled, renderedListKeys]);
 
   useEffect(() => {
     if (latestNotificationAnimationCycle === 0) return;
@@ -266,7 +268,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
   };
 
   const handleRemoveNotification = (notificationId: string) => {
-    if (!animationEffectsEnabled) {
+    if (!motionEnabled) {
       removeNotification(notificationId);
 
       return;
@@ -291,7 +293,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
 
         return nextIds;
       });
-    }, MANUAL_EXIT_ANIMATION_DURATION_MS);
+    }, MOTION_DURATION_MS.short);
 
     manualRemovalTimeoutsRef.current.set(notificationId, timeoutId);
   };
@@ -337,11 +339,11 @@ export const NotificationsList: FC<NotificationsListProps> = ({
         {renderedNotifications.map((notification) => {
           let animationClassName = "ll:w-full";
 
-          if (animationEffectsEnabled) {
+          if (motionEnabled) {
             animationClassName = manuallyLeavingNotificationIds.has(
               notification.notificationId,
             )
-              ? "ll:pointer-events-none ll:w-full ll:animate-out ll:fade-out-0 ll:slide-out-to-right-3 ll:duration-180 ll:ease-in"
+              ? "ll:pointer-events-none ll:w-full ll:animate-out ll:fade-out-0 ll:slide-out-to-right-3 ll:duration-short ll:ease-exit"
               : "ll-row-enter ll:w-full";
           }
 

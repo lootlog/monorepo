@@ -1,3 +1,4 @@
+import { MOTION_DURATION_MS, MOTION_EASING } from "@/lib/motion";
 import { CharacterTile } from "@/components/character-tile";
 import { ListRow } from "@/components/list-row";
 import { ListRowArrival } from "@/components/list-row-arrival";
@@ -43,9 +44,6 @@ import type {
 } from "@lootlog/schema/user-preferences";
 import type { NotificationSettings } from "@lootlog/schema/account-preferences";
 import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
-
-/** The row fades out this long before the cleanup sweep removes it. */
-const AUTO_HIDE_EXIT_DURATION_MS = 200;
 
 type AutoHideHoldSource = "focus" | "menu" | "pointer";
 
@@ -315,9 +313,9 @@ export const SingleNotification = memo(function SingleNotification({
         { opacity: 0, transform: "translateX(12px)" },
       ],
       {
-        delay: Math.max(0, clampedRemainingMs - AUTO_HIDE_EXIT_DURATION_MS),
-        duration: Math.min(AUTO_HIDE_EXIT_DURATION_MS, clampedRemainingMs),
-        easing: "ease-in",
+        delay: Math.max(0, clampedRemainingMs - MOTION_DURATION_MS.medium),
+        duration: Math.min(MOTION_DURATION_MS.medium, clampedRemainingMs),
+        easing: MOTION_EASING.exit,
         fill: "forwards",
       },
     );

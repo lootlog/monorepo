@@ -7,10 +7,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { LOOTLOG_APP_URL } from "@/config/app";
 import { useSocket } from "@/contexts/socket-context";
-import { useSession } from "@/hooks/auth/use-session";
+import type { LoginState } from "@/hooks/auth/login-state";
+import { useLoginState } from "@/hooks/auth/use-login-state";
 import type { RealtimeConnectionStatus } from "@/lib/realtime-connection-status";
+import { useWindowsStore } from "@/store/windows.store";
 import { cn } from "cn";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -25,20 +26,31 @@ const CONNECTION_DOT_CLASS_NAME = {
   unreachable: "ll:bg-red-400",
 } satisfies Record<RealtimeConnectionStatus, string>;
 
+const ACCOUNT_VALUE_KEY = {
+  signedIn: "settings.general.accountSignedIn",
+  checking: "settings.general.accountChecking",
+  checkFailed: "settings.general.accountError",
+  cookiesBlocked: "settings.general.accountCookiesBlocked",
+  signedOut: "settings.general.accountSignedOut",
+} as const satisfies Record<LoginState, string>;
+
 /**
  * Read-only health of the addon: who is signed in and whether the realtime
  * gateway delivers this player's Lootlogs. The account row never shows the
- * e-mail; the sign-out hint covers both a missing login and blocked
- * third-party cookies, since the client cannot tell them apart.
+ * e-mail; signing in happens in the login window, which also explains a
+ * failed check or blocked cookies.
  */
 export const AddonStatusSection: FC = () => {
   const { t } = useTranslation();
   const { t: tCommon } = useTranslation("common");
-  const session = useSession();
+  const { state, session } = useLoginState();
+  const openAndFocus = useWindowsStore((windows) => windows.openAndFocus);
   const { joinedGuilds, status: connection } = useSocket();
+  const signedIn = state === "signedIn";
 
-  const connectionLabel =
-    connection === "online"
+  const connectionLabel = !signedIn
+    ? tCommon("connection.signedOut")
+    : connection === "online"
       ? t("settings.general.connectionConnected", {
           count: joinedGuilds.length,
         })
@@ -52,18 +64,12 @@ export const AddonStatusSection: FC = () => {
     (guildId) => guilds?.find((guild) => guild.id === guildId)?.name ?? guildId,
   );
 
-  const checking = session.isPending || session.isRefetching;
-  const signedOut = !checking && !session.data;
+  const checking = state === "checking";
+  const signedOut = !checking && !signedIn;
 
-  const accountValue = checking
-    ? t("settings.general.accountChecking")
-    : session.data
-      ? t("settings.general.accountSignedIn", {
-          name: session.data.user.name,
-        })
-      : session.error
-        ? t("settings.general.accountError")
-        : t("settings.general.accountSignedOut");
+  const accountValue = t(ACCOUNT_VALUE_KEY[state], {
+    name: session.data?.user.name,
+  });
 
   return (
     <SettingsSection title={t("settings.general.statusTitle")}>
@@ -91,11 +97,7 @@ export const AddonStatusSection: FC = () => {
             <Button
               size="xs"
               variant="outline"
-              render=<a
-                href={LOOTLOG_APP_URL}
-                target="_blank"
-                rel="noreferrer noopener"
-              />
+              onClick={() => openAndFocus("extension-login")}
             >
               {tCommon("auth.signIn")}
             </Button>
@@ -106,7 +108,7 @@ export const AddonStatusSection: FC = () => {
                 void session.refetch();
               }}
             >
-              {tCommon("auth.extensionCheck")}
+              {tCommon("auth.check")}
             </Button>
           </>
         ) : null}
@@ -123,7 +125,9 @@ export const AddonStatusSection: FC = () => {
               aria-hidden
               className={cn(
                 "ll:size-2 ll:shrink-0 ll:rounded-full",
-                CONNECTION_DOT_CLASS_NAME[connection],
+                signedIn
+                  ? CONNECTION_DOT_CLASS_NAME[connection]
+                  : "ll:bg-gray-400",
               )}
             />
             <span className="ll:truncate">{connectionLabel}</span>

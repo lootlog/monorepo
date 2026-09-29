@@ -1,5 +1,5 @@
 import { useTimerFilters } from "@/features/timers/hooks/use-timer-filters";
-import { useState } from "react";
+import { useDeferredValue, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import type { Timer } from "@/api/timers.api";
@@ -155,6 +155,10 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     timers,
   });
 
+  // Typing updates the search box at once; the grid re-filters in an
+  // interruptible render that the next keystroke can abandon.
+  const deferredSearchText = useDeferredValue(searchText);
+
   const { areFiltersActive, timers: sortedTimers } = useTimerListProjection({
     context: {
       guildId: guildId ?? "",
@@ -164,7 +168,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     filters: {
       maxLvl: filters.maxLvl,
       minLvl: filters.minLvl,
-      searchText,
+      searchText: deferredSearchText,
       selectedColors: filters.selectedColors,
       selectedLists: filters.selectedLists,
       selectedNpcTypes: filters.selectedNpcTypes,

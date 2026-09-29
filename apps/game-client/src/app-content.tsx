@@ -1,5 +1,7 @@
 import { useChatQuickActions } from "@/features/chat/hooks/use-chat-quick-actions";
 import { AnimationEffectsRootClass } from "@/components/animation-effects-root-class";
+import { OverlayBootMarks } from "@/components/overlay-boot-marks";
+import { useDeferredValue } from "react";
 import { BackendPreferencesWarning } from "@/features/backend-preferences-warning/backend-preferences-warning";
 import { CatchingWhitelistWarning } from "@/features/catching-whitelist-warning/catching-whitelist-warning";
 import { Chat } from "@/features/chat/chat";
@@ -54,14 +56,20 @@ export const AppContent = () => {
     Boolean(state.gameState.gameInitialized),
   );
 
+  // The flag flips inside the game's handling of a server packet. Deferring
+  // the overlay moves its first render out of that task and makes it
+  // interruptible, so the game keeps its frames while the windows render.
+  const overlayVisible = useDeferredValue(gameInitialized);
+
   // The Toaster stays mounted while the game loads, so feedback raised before
   // then (such as a missing session) is not dropped. Its @lootlog/ui wrapper
   // uses the dark theme that ThemeProvider applies to the whole overlay.
   return (
     <>
       <Toaster />
-      {gameInitialized ? (
+      {overlayVisible ? (
         <>
+          <OverlayBootMarks />
           <AnimationEffectsRootClass />
           <Timers />
           <Settings />

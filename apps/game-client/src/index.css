@@ -56,6 +56,21 @@
   display: none;
 }
 
+/*
+ * Motion tokens (`ll:ease-enter`, `ll:duration-medium`, and the matching
+ * `--ll-*` variables). Entrances decelerate into place; exits accelerate away
+ * and run shorter than the entrance they undo. Web Animations take the same
+ * values from src/lib/motion.ts.
+ */
+@theme {
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ease-overshoot: cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  --transition-duration-short: 130ms;
+  --transition-duration-medium: 190ms;
+  --transition-duration-long: 260ms;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -211,14 +226,16 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
 
 #lootlog-root [data-ll-draggable-window] > .ll-window-enter,
 #lootlog-root [data-ll-command-overlay] > .ll-window-enter {
-  animation: ll-window-enter 190ms cubic-bezier(0.16, 1, 0.3, 1) both !important;
+  animation: ll-window-enter var(--ll-transition-duration-medium)
+    var(--ll-ease-enter) both !important;
   transform-origin: center;
   will-change: opacity, transform;
 }
 
 #lootlog-root [data-ll-draggable-window] > .ll-window-exit,
 #lootlog-root [data-ll-command-overlay] > .ll-window-exit {
-  animation: ll-window-exit 130ms cubic-bezier(0.4, 0, 1, 1) both !important;
+  animation: ll-window-exit var(--ll-transition-duration-short)
+    var(--ll-ease-exit) both !important;
   transform-origin: center;
   will-change: opacity, transform;
 }
@@ -259,11 +276,13 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
 }
 
 .ll-status-strip-enter {
-  animation: ll-status-strip-enter 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: ll-status-strip-enter var(--ll-transition-duration-medium)
+    var(--ll-ease-enter) both;
 }
 
 .ll-status-strip-exit {
-  animation: ll-status-strip-exit 160ms cubic-bezier(0.4, 0, 1, 1) both;
+  animation: ll-status-strip-exit var(--ll-transition-duration-short)
+    var(--ll-ease-exit) both;
 }
 
 /* Short elastic scale bump: a value or icon acknowledging a change. */
@@ -284,12 +303,12 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
 }
 
 #lootlog-root .ll-count-bump {
-  animation: ll-bump 340ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: ll-bump 340ms var(--ll-ease-enter) both;
   transform-origin: right center;
 }
 
 #lootlog-root .ll-settings-bump {
-  animation: ll-bump 340ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: ll-bump 340ms var(--ll-ease-enter) both;
   transform-origin: center;
 }
 
@@ -355,11 +374,13 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
 }
 
 #lootlog-root .ll-row-enter {
-  animation: ll-row-enter 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: ll-row-enter var(--ll-transition-duration-long)
+    var(--ll-ease-enter) both;
 }
 
 #lootlog-root .ll-row-settle {
-  animation: ll-row-settle 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: ll-row-settle var(--ll-transition-duration-long)
+    var(--ll-ease-enter) both;
 }
 
 #lootlog-root .ll-row-arrival-tint {
@@ -367,7 +388,7 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
 }
 
 #lootlog-root .ll-row-arrival-sheen {
-  animation: ll-row-arrival-sheen 680ms cubic-bezier(0.4, 0, 0.2, 1) 80ms both;
+  animation: ll-row-arrival-sheen 680ms var(--ll-ease-in-out) 80ms both;
 }
 
 /* Battle pings: an icon pops onto the warrior and a request for the hero
@@ -396,7 +417,8 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
 }
 
 .ll-battle-ping-pop {
-  animation: ll-battle-ping-pop 170ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  animation: ll-battle-ping-pop var(--ll-transition-duration-medium)
+    var(--ll-ease-overshoot) both;
 }
 
 .ll-battle-ping-radiate {

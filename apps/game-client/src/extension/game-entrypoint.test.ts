@@ -1,3 +1,4 @@
+import { screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ReactDOM from "react-dom/client";
 import entrypoint from "../../extension/entrypoints/game.content";
@@ -7,7 +8,7 @@ import entrypoint from "../../extension/entrypoints/game.content";
 const start = entrypoint.main as () => void;
 
 import { bootstrapGameClient, type GameClientRuntime } from "@/bootstrap";
-import { encodeMessage } from "./protocol";
+import { encodeMessage, type ExtensionClosedReason } from "./protocol";
 
 const runtimeWindow: Window & {
   __lootlogGameClientRuntime?: GameClientRuntime;
@@ -33,11 +34,13 @@ const channel = () => {
   return latest;
 };
 
-const closeBackground = () => {
+const closeBackground = (reason?: ExtensionClosedReason) => {
   const port = channel().port1;
   port.onmessage?.call(
     port,
-    new MessageEvent("message", { data: encodeMessage({ type: "closed" }) }),
+    new MessageEvent("message", {
+      data: encodeMessage({ type: "closed", reason }),
+    }),
   );
 };
 
@@ -52,6 +55,7 @@ afterEach(() => {
   window.dispatchEvent(new Event("pagehide"));
   runtimeWindow.__lootlogGameClientRuntime?.dispose();
   delete runtimeWindow.__lootlogGameClientRuntime;
+  document.getElementById("lootlog-runtime-notice")?.remove();
 
   for (const current of channels.splice(0)) {
     current.port1.close();
@@ -105,6 +109,36 @@ describe("extension game entrypoint cleanup", () => {
     expect(channel().closePort).toHaveBeenCalledOnce();
     expect(runtime.state).toBe("disposed");
     expect(window.lootlogGameClientApi).toBeUndefined();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("explains why a running overlay closed when another tab takes over", () => {
+    start();
+    const runtime = runtimeWindow.__lootlogGameClientRuntime;
+
+    if (!runtime) throw new Error("Runtime not started");
+    closeBackground("replaced");
+
+    expect(runtime.state).toBe("disposed");
+    expect(document.getElementById("lootlog-root")).toBeNull();
+    const notice = screen.getByRole("alert");
+    expect(
+      within(notice).getByText("Lootlog działa teraz w innej karcie"),
+    ).toBeInTheDocument();
+    expect(
+      within(notice).getByRole("button", { name: "Przeładuj stronę" }),
+    ).toBeInTheDocument();
+  });
+
+  it("tells the player to reload after the extension is updated", () => {
+    start();
+    closeBackground("invalidated");
+
+    expect(
+      within(screen.getByRole("alert")).getByText(
+        "Rozszerzenie Lootlog zostało zaktualizowane lub wyłączone",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("releases transport despite runtime cleanup failure and never cleans twice", () => {
@@ -132,7 +166,9 @@ describe("extension game entrypoint cleanup", () => {
   });
 
   it("handles a channel closing before connect returns without starting a runtime", () => {
-    vi.spyOn(window, "postMessage").mockImplementationOnce(closeBackground);
+    vi.spyOn(window, "postMessage").mockImplementationOnce(() =>
+      closeBackground(),
+    );
     const createRoot = vi.spyOn(ReactDOM, "createRoot");
     expect(start).not.toThrow();
     expect(createRoot).not.toHaveBeenCalled();
