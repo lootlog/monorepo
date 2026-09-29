@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   applyMemberWebPresenceUpdate,
-  getMemberWebSessionCount,
   isMemberOnlineOnWeb,
   mapMemberWebPresenceByDiscordId,
 } from "@/lib/web-presence";
@@ -36,14 +35,5 @@ describe("member web presence utils", () => {
 
     expect(isMemberOnlineOnWeb(added, "discord-1")).toBe(true);
     expect(isMemberOnlineOnWeb(updated, "discord-1")).toBe(false);
-  });
-
-  it("counts active web sessions from live presence", () => {
-    const mapped = mapMemberWebPresenceByDiscordId({
-      "discord-1": [{ sessionId: "session-1" }, { sessionId: "session-2" }],
-    });
-
-    expect(getMemberWebSessionCount(mapped, "discord-1")).toBe(2);
-    expect(getMemberWebSessionCount(mapped, "discord-2")).toBe(0);
   });
 });

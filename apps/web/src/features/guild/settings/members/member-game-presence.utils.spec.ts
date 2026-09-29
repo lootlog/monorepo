@@ -4,12 +4,9 @@ import {
 } from "@/lib/game-presence";
 import { describe, expect, it } from "vitest";
 import {
-  getMemberGameSessionCount,
   isMemberGamePresenceVerified,
-  getMemberOnlineSources,
   isMemberOnlineInGame,
 } from "./member-game-presence.utils";
-import { mapMemberWebPresenceByDiscordId } from "@/lib/web-presence";
 import type { PlayerPresence } from "@/lib/gateway-client";
 
 const buildPresence = (overrides: Partial<PlayerPresence>): PlayerPresence => ({
@@ -98,59 +95,5 @@ describe("member game presence utils", () => {
     expect(isMemberGamePresenceVerified(mapped, "discord-1")).toBe(true);
     expect(isMemberGamePresenceVerified(mapped, "discord-2")).toBe(false);
     expect(isMemberGamePresenceVerified(undefined, "discord-1")).toBe(false);
-  });
-
-  it("counts active game sessions", () => {
-    const mapped = mapMemberGamePresenceByDiscordId({
-      "discord-1": [
-        buildPresence({ sessionId: "session-1" }),
-        buildPresence({ sessionId: "session-2" }),
-      ],
-      "discord-2": [buildPresence({ sessionId: "session-3" })],
-    });
-
-    expect(getMemberGameSessionCount(undefined, "discord-1")).toBe(0);
-    expect(getMemberGameSessionCount(mapped, "discord-1")).toBe(2);
-    expect(getMemberGameSessionCount(mapped, "discord-2")).toBe(1);
-    expect(getMemberGameSessionCount(mapped, "discord-3")).toBe(0);
-  });
-
-  it("combines web and game online sources", () => {
-    const gamePresence = mapMemberGamePresenceByDiscordId({
-      "discord-1": [buildPresence({ sessionId: "session-1" })],
-    });
-
-    const webPresence = mapMemberWebPresenceByDiscordId({
-      "discord-1": [{ sessionId: "web-session-1" }],
-    });
-
-    expect(
-      getMemberOnlineSources({
-        webPresenceByDiscordId: undefined,
-        gamePresenceByDiscordId: undefined,
-        discordId: "discord-1",
-      }),
-    ).toEqual({ web: false, game: false, online: false });
-    expect(
-      getMemberOnlineSources({
-        webPresenceByDiscordId: webPresence,
-        gamePresenceByDiscordId: undefined,
-        discordId: "discord-1",
-      }),
-    ).toEqual({ web: true, game: false, online: true });
-    expect(
-      getMemberOnlineSources({
-        webPresenceByDiscordId: undefined,
-        gamePresenceByDiscordId: gamePresence,
-        discordId: "discord-1",
-      }),
-    ).toEqual({ web: false, game: true, online: true });
-    expect(
-      getMemberOnlineSources({
-        webPresenceByDiscordId: webPresence,
-        gamePresenceByDiscordId: gamePresence,
-        discordId: "discord-1",
-      }),
-    ).toEqual({ web: true, game: true, online: true });
   });
 });

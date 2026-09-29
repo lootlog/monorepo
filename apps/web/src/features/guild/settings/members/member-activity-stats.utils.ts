@@ -18,17 +18,3 @@ export const mapMemberActivityStatsByDiscordIdAndSource = (
 
   return statsByDiscordId;
 };
-
-export const mapMemberActivityStatsByDiscordId = (
-  stats: MemberActivityStats[] | undefined,
-) => {
-  const statsByDiscordId = new Map<string, MemberActivityStats>();
-
-  for (const item of stats ?? []) {
-    if (item.source === "WEB_APP") {
-      statsByDiscordId.set(item.discordId, item);
-    }
-  }
-
-  return statsByDiscordId;
-};
