@@ -23,6 +23,23 @@ describe("NPC timer permissions", () => {
     ).toBe(false);
   });
 
+  it("grants base timer access only inside the role level range", () => {
+    expect(
+      canViewNpcTimer(npc(), [role([Permission.LOOTLOG_TIMERS_READ], 50, 150)]),
+    ).toBe(true);
+    expect(
+      canViewNpcTimer(npc(), [role([Permission.LOOTLOG_TIMERS_READ], 1, 99)]),
+    ).toBe(false);
+  });
+
+  it("does not grant titan timers through the base timer permission", () => {
+    expect(
+      canViewNpcTimer(npc({ type: "TITAN" }), [
+        role([Permission.LOOTLOG_TIMERS_READ]),
+      ]),
+    ).toBe(false);
+  });
+
   it("requires permission and level range on the same role", () => {
     expect(
       canViewNpcTimer(npc({ lvl: 300, type: "TITAN" }), [
@@ -38,10 +55,13 @@ describe("NPC timer permissions", () => {
         role([Permission.LOOTLOG_TIMERS_TITANS_READ], 250, 350),
       ]),
     ).toBe(true);
-    expect(
-      canViewNpcTimer(npc({ lvl: 150, type: "EVENT_HERO" }), [
-        role([Permission.LOOTLOG_TIMERS_HEROES_READ], 100, 200),
-      ]),
-    ).toBe(true);
+
+    for (const type of ["HERO", "EVENT_HERO"] as const) {
+      expect(
+        canViewNpcTimer(npc({ lvl: 150, type }), [
+          role([Permission.LOOTLOG_TIMERS_HEROES_READ], 100, 200),
+        ]),
+      ).toBe(true);
+    }
   });
 });
