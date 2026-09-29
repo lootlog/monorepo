@@ -12,6 +12,7 @@ import {
   type BackgroundTaskRunner,
   yieldToEventLoop,
 } from "./background-tasks.js";
+import { FederationSequence } from "./federation-sequence.js";
 
 type RedisGatewayConfig = Omit<GatewayConfiguration["redis"], "password"> & {
   readonly password: string;
@@ -19,6 +20,8 @@ type RedisGatewayConfig = Omit<GatewayConfiguration["redis"], "password"> & {
 
 export interface FederatedRealtimeMessage {
   readonly id: string;
+  /** Position in the federation stream; replicas before version 4 omit it. */
+  readonly sequence?: number;
   readonly sourceInstanceId: string;
   readonly sourceNpcs?: ReadonlyArray<LootVisibilityNpc>;
   readonly partyGatheringSource?: PartyGatheringEventSource;
@@ -45,6 +48,7 @@ export interface FederatedRealtimeMessage {
 const FederatedRealtimeMessageJson = Schema.fromJsonString(
   Schema.Struct({
     id: Schema.String,
+    sequence: Schema.optional(Schema.Number),
     sourceInstanceId: Schema.String,
     partyGatheringSource: Schema.optional(PartyGatheringEventSourceSchema),
     sourceNpcs: Schema.optional(
@@ -82,9 +86,30 @@ const decodeFederatedRealtimeMessage = Schema.decodeUnknownSync(
   FederatedRealtimeMessageJson,
 );
 
+const FEDERATION_SEQUENCE_KEY = "realtime:federation:v1:sequence";
+
+// Numbering and publication are one step, so a number exists only for a frame
+// Redis published. Older replicas ignore the added field.
+const publishSequencedScript = `
+local sequence = redis.call("INCR", KEYS[1])
+redis.call("PUBLISH", ARGV[1], '{"sequence":' .. sequence .. ',' .. string.sub(ARGV[2], 2))
+return sequence
+`;
+
+/** How long a hole in the federation sequence may wait for a reordered frame. */
+const FEDERATION_REORDER_WINDOW_MS = 1_000;
+
+/**
+ * `interrupted`: the subscription dropped and frames may be missing.
+ * `subscribed`: every sequenced frame since the last report arrived.
+ * `gap`: sequenced frames were lost; sessions that expected them are stale.
+ */
+export type FederationState = "subscribed" | "interrupted" | "gap";
+
 export class RedisGatewayStore {
   readonly command: RedisGatewayCommands;
   readonly channel: string;
+  private readonly sequenceKey: string;
   private readonly subscriptionQueues = new Set<
     Queue.Dequeue<Redis.RedisMessage, Redis.RedisError>
   >();
@@ -162,6 +187,7 @@ export class RedisGatewayStore {
       flushdb: () => run(redis.send("FLUSHDB")),
     };
     this.channel = `${config.keyPrefix}:realtime:federation:v1`;
+    this.sequenceKey = prefix(FEDERATION_SEQUENCE_KEY);
   }
 
   async connect(): Promise<void> {
@@ -176,8 +202,12 @@ export class RedisGatewayStore {
     this.pendingPublications++;
 
     try {
-      await this.runCommand(
-        this.redis.send("PUBLISH", this.channel, JSON.stringify(message)),
+      await this.command.eval(
+        publishSequencedScript,
+        1,
+        FEDERATION_SEQUENCE_KEY,
+        this.channel,
+        JSON.stringify(message),
       );
     } finally {
       this.pendingPublications--;
@@ -185,12 +215,13 @@ export class RedisGatewayStore {
   }
 
   /**
-   * Pub/Sub has no replay: `onSubscriptionChange(false)` reports that frames
-   * published until the next `onSubscriptionChange(true)` may have been lost.
+   * Pub/Sub has no replay. Sequence numbers show whether a dropped
+   * subscription lost frames, so `onStateChange` reports the gap only when it
+   * lost some. See {@link FederationState}.
    */
   async subscribe(
     listener: (message: FederatedRealtimeMessage) => void,
-    onSubscriptionChange: (subscribed: boolean) => void = () => undefined,
+    onStateChange: (state: FederationState) => void = () => undefined,
   ): Promise<void> {
     let markReady: () => void = () => undefined;
 
@@ -200,7 +231,16 @@ export class RedisGatewayStore {
 
     const redis = this.redis;
     const channel = this.channel;
+    const sequenceKey = this.sequenceKey;
     const subscriptionQueues = this.subscriptionQueues;
+    const sequence = new FederationSequence(FEDERATION_REORDER_WINDOW_MS);
+    let resuming = false;
+
+    const resumed = () => {
+      resuming = false;
+      onStateChange("subscribed");
+      markReady();
+    };
 
     const consume = Effect.scoped(
       Effect.gen(function* () {
@@ -211,10 +251,35 @@ export class RedisGatewayStore {
             subscriptionQueues.delete(messages);
           }),
         );
-        yield* Effect.sync(() => {
-          onSubscriptionChange(true);
-          markReady();
-        });
+
+        // Frames numbered up to the counter were published before this
+        // subscription existed or are already queued for it.
+        const published = yield* redis.send<string | null>("GET", sequenceKey);
+
+        const continuity = sequence.resume(
+          Number(published ?? 0),
+          performance.now(),
+        );
+
+        if (continuity === "lost") onStateChange("gap");
+        resuming = continuity === "pending";
+
+        if (!resuming) resumed();
+
+        yield* Effect.sleep("250 millis").pipe(
+          Effect.andThen(
+            Effect.sync(() => {
+              if (!sequence.expired(performance.now())) return;
+              onStateChange("gap");
+
+              if (resuming) resumed();
+            }),
+          ),
+          Effect.forever,
+          Effect.forkScoped,
+        );
+
+        let reportedLoss = false;
         let batchStarted = performance.now();
         let batchSize = 0;
 
@@ -222,14 +287,22 @@ export class RedisGatewayStore {
           const { message: raw } = yield* Queue.take(messages);
 
           // A dropped subscriber leaves its backlog readable until it drains.
-          // Report the gap now; local sockets close, so the backlog has no audience.
-          if (!Predicate.isTagged(messages.state, "Open"))
-            return yield* new Redis.RedisError({
-              cause: "Redis federation subscriber disconnected",
-            });
+          // Report the interruption now so resubscription starts, but keep
+          // delivering the backlog: sessions may survive the interruption.
+          if (!reportedLoss && !Predicate.isTagged(messages.state, "Open")) {
+            reportedLoss = true;
+            onStateChange("interrupted");
+          }
 
           try {
             const message = decodeFederatedRealtimeMessage(raw);
+
+            if (
+              message.sequence !== undefined &&
+              sequence.observe(message.sequence, performance.now()) &&
+              resuming
+            )
+              resumed();
 
             if (
               message.frame !== undefined ||
@@ -257,7 +330,7 @@ export class RedisGatewayStore {
       Effect.tapCause((cause) =>
         Cause.hasInterruptsOnly(cause)
           ? Effect.void
-          : Effect.sync(() => onSubscriptionChange(false)),
+          : Effect.sync(() => onStateChange("interrupted")),
       ),
       Effect.retry(
         Schedule.min([

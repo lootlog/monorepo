@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
-import { Effect, Layer, Result } from "effect";
+import { Effect, Fiber, Layer, Random, Result } from "effect";
 import { FetchHttpClient, HttpClient } from "effect/unstable/http";
+import { TestClock } from "effect/testing";
 import { boundedHttpGet } from "../src/bounded-http-get.js";
 
 const run = (
@@ -117,6 +118,70 @@ test.each([
     });
   },
 );
+
+test("waits a growing backoff between retries instead of repeating a failed burst immediately", async () => {
+  let calls = 0;
+
+  const settle = Effect.promise(
+    () => new Promise((resolve) => setTimeout(resolve, 20)),
+  );
+
+  const callsAfter = await Effect.runPromise(
+    Effect.gen(function* () {
+      const client = yield* HttpClient.HttpClient;
+
+      const request = yield* boundedHttpGet({
+        client,
+        url: "https://example.invalid",
+        response: "successful",
+        retries: 2,
+        timeoutMilliseconds: 3000,
+        operationId: "test",
+        adapter: "test",
+        failure: (reason, retryable, status) => ({ reason, retryable, status }),
+        decode: () => undefined,
+      }).pipe(Effect.result, Effect.forkChild);
+
+      const observed: number[] = [];
+
+      for (const advance of [0, 90, 10, 180, 20]) {
+        yield* TestClock.adjust(advance);
+        yield* settle;
+        observed.push(calls);
+      }
+
+      yield* Fiber.join(request);
+
+      return observed;
+    }).pipe(
+      Effect.provideService(Random.Random, {
+        nextDoubleUnsafe: () => 0.999,
+        nextIntUnsafe: () => 0,
+      }),
+      Effect.provide(TestClock.layer()),
+      Effect.provide(
+        FetchHttpClient.layer.pipe(
+          Layer.provide(
+            Layer.succeed(
+              FetchHttpClient.Fetch,
+              Object.assign(
+                () => {
+                  calls++;
+
+                  return Promise.resolve(new Response(null, { status: 503 }));
+                },
+                { preconnect: globalThis.fetch.preconnect },
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  // The delays are 100 ms and 200 ms scaled by the random factor.
+  expect(callsAfter).toEqual([1, 1, 2, 2, 3]);
+});
 
 test("raw policy returns non-success responses without retrying", async () => {
   let calls = 0;
