@@ -250,6 +250,47 @@ describe("ActivityRepository", () => {
     },
   );
 
+  it("limits actor and clan suggestions to snapshots used by the Organization", async () => {
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const repository = yield* ActivityRepository;
+
+        for (const [guildId, names] of [
+          ["suggestions-a", ["Only A", "Shared"]],
+          ["suggestions-b", ["Only B", "Shared"]],
+        ] as const) {
+          for (const name of names) {
+            const activity = gameActivity(`${guildId}-${name}`);
+
+            yield* repository.create({
+              ...activity,
+              guildId,
+              actorSnapshot: {
+                ...activity.actorSnapshot,
+                name: `Actor ${name}`,
+                clanName: `Clan ${name}`,
+              },
+            });
+          }
+        }
+
+        for (const [guildId, suffix] of [
+          ["suggestions-a", "A"],
+          ["suggestions-b", "B"],
+        ] as const) {
+          const actors = yield* repository.suggestActorNames(guildId, "Actor");
+          const clans = yield* repository.suggestClanNames(guildId, "Clan");
+
+          expect(actors.sort()).toEqual([
+            `Actor Only ${suffix}`,
+            "Actor Shared",
+          ]);
+          expect(clans.sort()).toEqual([`Clan Only ${suffix}`, "Clan Shared"]);
+        }
+      }).pipe(Effect.provide(repositoryLayer())),
+    );
+  });
+
   it("persists a redelivered activity exactly once", async () => {
     const activity = {
       userId: "user-1",
