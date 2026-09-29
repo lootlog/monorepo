@@ -12,11 +12,14 @@
 /*
  * Below `md` the document scrolls, so the frame is as tall as the page. A
  * fixed layer keeps the wallpaper at screen size instead of stretching it;
- * iOS does not support `background-attachment: fixed`.
+ * iOS does not support `background-attachment: fixed`. The isolated frame
+ * paints above the shell rows before it, such as the theme announcement, so
+ * the clip keeps the viewport-sized layer inside the frame.
  */
 @media (max-width: 767px) {
   .app-content-frame {
     isolation: isolate;
+    clip-path: inset(0);
     background-image: none;
   }
 
