@@ -32,6 +32,7 @@ import type { MargonemProofVerifier } from "#src/auth/margonem-proof";
 import type { ActivityPublisher } from "#src/rabbit/activity-publisher";
 import type { AirTagService } from "#src/realtime/air-tag-service";
 import type { BattlePingService } from "#src/realtime/battle-ping-service";
+import { JoinAdmission } from "#src/realtime/join-admission";
 import type { MapPingService } from "#src/realtime/map-ping-service";
 import type { PresenceStore } from "#src/realtime/presence-store";
 import {
@@ -48,6 +49,7 @@ import {
   commandFailureDetails,
   GameCharacterRequired,
   isCommandFailure,
+  JoinCapacityExceeded,
   NoAuthorizedOrganizations,
   OrganizationAccessDenied,
   RealtimeDependencyError,
@@ -107,12 +109,18 @@ const errorResponse = (
   code: string,
   message: string,
   retryable = false,
-): RealtimeResponse => ({
-  v: 1,
-  requestId,
-  status: "error",
-  error: { code, message, retryable },
-});
+  retryAfterMs?: number,
+): RealtimeResponse => {
+  const error = { code, message, retryable };
+
+  // MessagePack encodes an undefined field as nil, which the schema rejects.
+  return {
+    v: 1,
+    requestId,
+    status: "error",
+    error: retryAfterMs === undefined ? error : { ...error, retryAfterMs },
+  };
+};
 
 const invalidLegacyPayloadResponse = Function.compose(
   Schema.decodeUnknownOption(
@@ -166,6 +174,10 @@ export class CommandHandler {
       AirTagService,
       "updateSubscription" | "publishObservations" | "fetchMapThreats"
     >,
+    private readonly joinAdmission: Pick<
+      JoinAdmission,
+      "tryAcquire"
+    > = new JoinAdmission(),
   ) {
     this.hub.onPermissionRebalance((discordId, userId) =>
       this.enforceRebalance(discordId, userId),
@@ -315,8 +327,12 @@ export class CommandHandler {
                 "COMMAND_REJECTED",
                 failure.message,
                 failure.retryable,
+                failure.retryAfterMs,
               ),
             );
+          // A join without a request ID would wait for session.joined forever.
+          else if (error instanceof JoinCapacityExceeded)
+            socket.close(1013, "gateway is busy");
         });
       }),
       Effect.asVoid,
@@ -540,6 +556,15 @@ export class CommandHandler {
     if (!hasValidApiKeyLease(socket.data))
       return Effect.fail(new OrganizationAccessDenied());
 
+    // Its authority may predate a lost revocation until the socket closes.
+    if (socket.data.closing)
+      return Effect.fail(
+        new RealtimeDependencyError({
+          operation: command.type,
+          cause: "session is closing",
+        }),
+      );
+
     if (
       socket.data.apiKeyAccess &&
       ![
@@ -562,8 +587,21 @@ export class CommandHandler {
     const requireJoined = this.requireJoined(socket);
 
     switch (command.type) {
-      case "session.join":
-        return this.join(socket, command.data);
+      case "session.join": {
+        const admission = this.joinAdmission.tryAcquire();
+
+        if (!admission.admitted)
+          return Effect.fail(
+            new JoinCapacityExceeded({
+              retryAfterMs: admission.retryAfterMs,
+            }),
+          );
+
+        return this.join(socket, command.data).pipe(
+          Effect.ensuring(Effect.sync(admission.release)),
+        );
+      }
+
       case "presence.heartbeat":
         return requireJoined.pipe(
           Effect.andThen(

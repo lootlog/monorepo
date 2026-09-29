@@ -81,7 +81,20 @@ export function usePartyReadyRoomObserver(): void {
   const ownedReadyRoom = useOwnedReadyRoom();
   const readyRoomsSynchronized = useReadyRoomsSynchronized();
   const { connected, joined } = useGlobalStore((state) => state.socketState);
-  const partyMembers = usePartyStore((state) => state.members);
+  // Members' HP changes every battle turn but is not reported. Selecting only
+  // the reported fields keeps those ticks from re-rendering the app root.
+
+  const reportedPartyMembers = usePartyStore((state) =>
+    JSON.stringify(
+      state.members.map(({ characterId, name, icon, profession }) => [
+        characterId,
+        name,
+        icon,
+        profession,
+      ]),
+    ),
+  );
+
   const partyStatus = usePartyStore((state) => state.status);
   const accountId = useGameStore((state) => state.game?.hero.accountId);
   const characterId = useGameStore((state) => state.game?.hero.characterId);
@@ -111,7 +124,7 @@ export function usePartyReadyRoomObserver(): void {
   }, [
     queryClient,
     ownedReadyRoom,
-    partyMembers,
+    reportedPartyMembers,
     partyStatus,
     connected,
     joined,

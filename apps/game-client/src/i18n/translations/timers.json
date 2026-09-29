@@ -50,7 +50,7 @@
     "filteredTitle": "Żaden timer nie pasuje do filtrów",
     "showAll": "Pokaż wszystkie",
     "noneTitle": "Nie ma jeszcze timerów",
-    "noneDescription": "Timer pojawi się, gdy ktoś z Lootloga pokona elitę II, herosa lub tytana."
+    "noneDescription": "Timer pojawi się, gdy Ty lub ktoś z Twojego Lootloga pokona elitę II, herosa lub tytana."
   },
   "states": {
     "loading": "Ładowanie timerów",

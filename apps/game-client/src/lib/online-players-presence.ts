@@ -1,6 +1,7 @@
 import type { PublicOnlinePlayerPresence } from "@lootlog/game-client-api";
 import type { OrganizationAccessPolicy } from "@lootlog/protocol/realtime/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
+import { delay, randomInt } from "es-toolkit";
 import { GatewayEvent } from "@/config/gateway";
 
 export type PlayerPresenceResponse = Record<string, PlayerPresence[]>;
@@ -242,6 +243,12 @@ export const normalizePresenceResponse = (
 
 export const ONLINE_PLAYERS_PRESENCE_ACK_TIMEOUT_MS = 5_000;
 
+// A timed-out fetch usually means a saturated gateway. Spread the retries so a
+// burst of joining clients does not return at the same moment.
+const PRESENCE_RETRY_MIN_DELAY_MS = 1_000;
+
+const PRESENCE_RETRY_MAX_DELAY_MS = 3_000;
+
 type PresenceAckSocket = {
   timeout: (timeoutMs: number) => {
     emitWithAck: (
@@ -267,6 +274,10 @@ export const requestServerPresence = async (
   try {
     return await requestPresence();
   } catch {
+    await delay(
+      randomInt(PRESENCE_RETRY_MIN_DELAY_MS, PRESENCE_RETRY_MAX_DELAY_MS),
+    );
+
     return requestPresence();
   }
 };

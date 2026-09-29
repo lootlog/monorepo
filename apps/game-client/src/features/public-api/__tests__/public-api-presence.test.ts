@@ -212,7 +212,7 @@ describe("Public API presence over the realtime transport", () => {
       expect(getApi().getOnlinePlayers(scope)).rejects.toThrow(
         /timeout|timed out/i,
       ),
-      vi.advanceTimersByTimeAsync(10000),
+      vi.advanceTimersByTimeAsync(13_000),
     ]);
     expect(harness.fetchPresence).toHaveBeenCalledTimes(2);
   });
@@ -260,7 +260,7 @@ describe("Public API presence over the realtime transport", () => {
       expect(source.isMapOccupied("Ithan")).toBe(true);
 
       if (outcome === "timeout") {
-        await vi.advanceTimersByTimeAsync(10000);
+        await vi.advanceTimersByTimeAsync(13_000);
       } else {
         pending.resolve(createPresenceSnapshot());
       }

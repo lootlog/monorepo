@@ -96,6 +96,10 @@ the latency is on screen instead of on a fixed fast interval.
 
 Mark data as stale when the connection is lost. The SDK restores subscriptions after reconnecting; fetch the current state over HTTP at that point. Do not assume you will receive every event from the outage.
 
+A busy gateway rejects `session.join` with a retryable error that carries
+`retryAfterMs`. Wait at least that long before you reconnect or join again. The
+SDK applies this delay to its next reconnect.
+
 If you register `setReconnectHandler`, it replaces the default session restore.
 The handler still runs when a synchronous connection-state observer starts a
 join. Coordinate these callbacks so one owns the join, and use the handler for

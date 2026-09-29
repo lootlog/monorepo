@@ -2,8 +2,8 @@ import { indexChangedDocuments } from "#src/meilisearch/index-changed-documents"
 import { NpcTypeEnum, NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { Effect, Predicate, Schema } from "effect";
 import { partition, uniqBy } from "es-toolkit";
-import type { Meilisearch, SearchParams } from "meilisearch";
-import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/query-builder";
+import type { Meilisearch } from "meilisearch";
+import { buildMeilisearchNameQuery } from "#src/meilisearch/query-builder";
 import {
   attemptMeilisearch,
   type SearchOperationFailure,
@@ -61,28 +61,12 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
   }: NpcSearchQuery) {
     const index = meilisearch.index<RawNpcHit>(NPCS_INDEX);
 
-    const { filter: searchFilter, searchTerm } =
-      buildMeilisearchSearchTermFilter("name", search);
-
-    const filters: string[] = [];
-
-    if (searchFilter) {
-      filters.push(searchFilter);
-    }
-
-    if (ids && ids.length > 0) {
-      filters.push(`id IN [${ids.join(", ")}]`);
-    }
-
-    if (world) {
-      filters.push(`world = "${world}"`);
-    }
-
-    const query: SearchParams = {
+    const { searchTerm, query } = buildMeilisearchNameQuery({
+      ids,
       limit,
-      attributesToSearchOn: ["name"],
-      ...(filters.length > 0 && { filter: filters.join(" AND ") }),
-    };
+      search,
+      world,
+    });
 
     return yield* attemptMeilisearch("search.npcs", () =>
       index.search(searchTerm, query),

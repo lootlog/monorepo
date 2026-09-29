@@ -2,6 +2,7 @@
   "extends": ["//"],
   "tasks": {
     "build": {
+      "dependsOn": ["$TURBO_EXTENDS$", "typecheck"],
       "env": ["GAME_CLIENT_URL"]
     },
     "build:extension": {

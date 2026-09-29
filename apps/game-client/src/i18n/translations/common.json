@@ -26,14 +26,24 @@
     "clearSearch": "Wyczyść wyszukiwanie"
   },
   "auth": {
-    "extensionChecking": "Sprawdzanie sesji…",
-    "extensionDescription": "Zaloguj się na stronie Lootloga, a następnie sprawdź sesję, aby uruchomić dodatek.",
-    "extensionCheck": "Sprawdź sesję",
-    "extensionTitle": "Logowanie do Lootloga",
-    "extensionError": "Nie udało się sprawdzić sesji Lootloga. Spróbuj ponownie.",
-    "signIn": "Zaloguj się w Lootlogu",
-    "notLoggedIn": "Nie jesteś zalogowany. Zaloguj się, aby uruchomić dodatek.",
-    "openLogin": "Zaloguj się do Lootloga"
+    "windowTitle": "Logowanie do Lootloga",
+    "signIn": "Zaloguj się",
+    "openWebsite": "Otwórz stronę Lootloga",
+    "check": "Sprawdź sesję",
+    "openLogin": "Zaloguj się do Lootloga",
+    "states": {
+      "checking": "Sprawdzanie sesji…",
+      "signedOut": "Zaloguj się na stronie Lootloga, a potem wróć do gry. Dodatek sam sprawdzi sesję.",
+      "checkFailed": "Nie udało się sprawdzić sesji Lootloga. Sprawdź połączenie z internetem i spróbuj ponownie za chwilę.",
+      "cookiesBlocked": "Dodatek nadal nie widzi Twojej sesji. Jeśli jesteś już zalogowany na stronie Lootloga, przeglądarka blokuje pliki cookie innych firm dla lootlog.pl."
+    },
+    "cookieGuidance": {
+      "chrome": "Chrome, Edge lub Opera: kliknij ikonę oka albo ustawień strony w pasku adresu, zezwól na pliki cookie innych firm dla tej strony i kliknij „Sprawdź sesję”.",
+      "firefox": "Firefox: kliknij ikonę tarczy w pasku adresu, wyłącz wzmocnioną ochronę przed śledzeniem dla tej strony i kliknij „Sprawdź sesję”.",
+      "safari": "Safari: w Ustawieniach, w sekcji Prywatność, wyłącz „Zapobiegaj śledzeniu między witrynami” i kliknij „Sprawdź sesję”.",
+      "brave": "Brave: kliknij ikonę lwa w pasku adresu, zezwól na pliki cookie innych firm dla tej strony i kliknij „Sprawdź sesję”.",
+      "helpLink": "Więcej pomocy z logowaniem"
+    }
   },
   "errors": {
     "missingLocation": "Nie wysłano danych: nie udało się odczytać nazwy mapy z gry.",
@@ -74,6 +84,11 @@
     "hidden": "Ukryto {{name}} w grze",
     "hideError": "Nie udało się ukryć Lootloga."
   },
+  "noLootlog": {
+    "title": "Nie należysz do żadnego Lootloga",
+    "description": "Lootlog działa na serwerze Discord Twojej grupy. Poproś lidera o dostęp albo dodaj bota Lootloga do swojego serwera.",
+    "action": "Otwórz stronę Lootloga"
+  },
   "characterTooltip": {
     "owner": {
       "title": "Gra jako:",
@@ -105,7 +120,8 @@
     "online": "Połączono z serwerem",
     "connecting": "Łączenie z serwerem…",
     "reconnecting": "Połączenie przerwane, ponowne łączenie…",
-    "unreachable": "Nie można połączyć z serwerem, ponawianie…"
+    "unreachable": "Nie można połączyć z serwerem, ponawianie…",
+    "signedOut": "Zaloguj się, aby dane były aktualne"
   },
   "filters": {
     "minLevel": "Poziom od",
@@ -114,5 +130,40 @@
   "guildTargets": {
     "label": "Wyślij do",
     "triggerLabel": "Wyślij do: {{names}}"
+  },
+  "diagnostics": {
+    "copy": "Kopiuj informacje diagnostyczne",
+    "copied": "Skopiowano informacje diagnostyczne",
+    "copyFailed": "Nie udało się skopiować"
+  },
+  "runtimeNotice": {
+    "reload": "Przeładuj stronę",
+    "dismiss": "Zamknij komunikat",
+    "gameConnection": {
+      "title": "Lootlog nie może połączyć się z grą",
+      "description": "Gra mogła zostać zaktualizowana. Przeładuj stronę, a jeśli problem się powtarza, zgłoś go razem z informacjami diagnostycznymi."
+    },
+    "extensionReplaced": {
+      "title": "Lootlog działa teraz w innej karcie",
+      "description": "Rozszerzenie łączy się tylko z jedną kartą gry naraz. Przeładuj tę stronę, aby wrócić do Lootloga tutaj."
+    },
+    "extensionInvalidated": {
+      "title": "Rozszerzenie Lootlog zostało zaktualizowane lub wyłączone",
+      "description": "Przeładuj stronę gry, aby uruchomić aktualną wersję dodatku."
+    },
+    "extensionUnavailable": {
+      "title": "Utracono połączenie z rozszerzeniem Lootlog",
+      "description": "Przeładuj stronę gry. Jeśli problem się powtarza, sprawdź, czy rozszerzenie jest włączone."
+    }
+  },
+  "realtimeJoin": {
+    "rejected": "Serwer Lootloga odrzucił połączenie tej postaci",
+    "reconnect": "Połącz ponownie",
+    "reasons": {
+      "organizationAccessDenied": "Nie masz już dostępu do tego Lootloga.",
+      "characterRequired": "Połączenie wymaga zalogowanej postaci w grze.",
+      "subscriptionLimit": "Przekroczono limit subskrypcji tego połączenia.",
+      "unknown": "Powód: {{reason}}"
+    }
   }
 }

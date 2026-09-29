@@ -1,9 +1,12 @@
 {
   "window": {
-    "title": "Uwaga!"
+    "title": "Zakres zbierania"
   },
   "content": {
-    "title": "Nie masz wybranych Lootlogów do zbierania danych",
-    "description": "Przejdź do ustawień i w zakładce „Zakres zbierania” wybierz Lootlogi, do których chcesz dodawać łupy i timery."
+    "title": "Ta postać nie zbiera danych do żadnego Lootloga",
+    "description": "Wybierz Lootlogi, do których mają trafiać łupy i timery tej postaci."
+  },
+  "actions": {
+    "chooseLootlogs": "Wybierz Lootlogi"
   }
 }

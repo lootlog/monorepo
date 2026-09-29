@@ -10,6 +10,7 @@ import type {
   RedisGatewayStore,
   RedisScriptReply,
 } from "#src/platform/redis-store";
+import { SingleFlight } from "#src/platform/single-flight";
 
 const UserGuildsJson = Schema.fromJsonString(
   Schema.Array(UserGuildPermissionsDtoSchema),
@@ -126,8 +127,9 @@ export const makeGuildStore = (
     return yield* boundedHttpGet({
       client: httpClient,
       url,
-      timeoutMilliseconds: 10000,
-      retries: 3,
+      // Bounds how long one join can hold a command slot on a slow API.
+      timeoutMilliseconds: 5000,
+      retries: 2,
       operationId: "GuildStore_fetchUserGuilds",
       adapter: "api-user-permissions",
       response: "successful",
@@ -152,43 +154,13 @@ export const makeGuildStore = (
       })),
     );
 
-  const loadUserGuilds = Effect.fn("GuildStore_getUserGuilds")(function* (
+  const fetchAndCommit = Effect.fn("GuildStore_fetchAndCommit")(function* (
     options: GetUserGuildsOptions,
+    cacheKey: string,
+    revision: string,
     readOptions?: { readonly freshness: "required" },
   ) {
-    const cacheKey = getUserGuildsCacheKey(options.discordId, options.userId);
-    const { entry: cached, revision } = yield* readCache(cacheKey);
-    const now = yield* Clock.currentTimeMillis;
-
-    if (
-      readOptions?.freshness !== "required" &&
-      cached &&
-      "guilds" in cached &&
-      now - cached.cachedAt <= CACHE_TTL.USER_GUILDS * 1_000
-    ) {
-      return [...cached.guilds];
-    }
-
-    const result = yield* fetchGuilds(options, readOptions).pipe(Effect.result);
-
-    if (Result.isFailure(result)) {
-      if (readOptions?.freshness === "required")
-        return yield* Effect.fail(result.failure);
-
-      const { entry: fallback } = yield* readCache(cacheKey);
-      const fallbackAt = yield* Clock.currentTimeMillis;
-
-      if (
-        fallback &&
-        "guilds" in fallback &&
-        fallbackAt - fallback.cachedAt <= CACHE_TTL.MAX_STALE_CACHE_AGE * 1_000
-      ) {
-        return [...fallback.guilds];
-      }
-
-      return yield* Effect.fail(result.failure);
-    }
-
+    const guilds = yield* fetchGuilds(options, readOptions);
     const cachedAt = yield* Clock.currentTimeMillis;
 
     const committed = yield* cacheCommand(() =>
@@ -197,7 +169,7 @@ export const makeGuildStore = (
         1,
         cacheKey,
         revision,
-        JSON.stringify({ guilds: result.success, cachedAt, revision }),
+        JSON.stringify({ guilds, cachedAt, revision }),
         CACHE_TTL.MAX_STALE_CACHE_AGE,
       ),
     );
@@ -205,7 +177,79 @@ export const makeGuildStore = (
     if (committed !== 1)
       return yield* Effect.fail(failure("invalidated", { retryable: true }));
 
-    return result.success;
+    return guilds;
+  });
+
+  // A reconnect burst sends every socket of a user through one API request.
+  // The revision is part of the key: a read that observed an invalidation
+  // never waits for a request started before it.
+  const pendingFetches = new SingleFlight<
+    string,
+    UserGuildData[],
+    GuildStoreFailure
+  >();
+
+  const sharedFetch = (
+    options: GetUserGuildsOptions,
+    cacheKey: string,
+    revision: string,
+  ) =>
+    pendingFetches.run(
+      `${cacheKey}\n${revision}`,
+      fetchAndCommit(options, cacheKey, revision),
+    );
+
+  const loadUserGuilds = Effect.fn("GuildStore_getUserGuilds")(function* (
+    options: GetUserGuildsOptions,
+    readOptions?: { readonly freshness: "required" },
+  ) {
+    const cacheKey = getUserGuildsCacheKey(options.discordId, options.userId);
+    const { entry: cached, revision } = yield* readCache(cacheKey);
+
+    // Revocation must never join a request that started before it.
+    if (readOptions?.freshness === "required")
+      return yield* fetchAndCommit(options, cacheKey, revision, readOptions);
+
+    const now = yield* Clock.currentTimeMillis;
+
+    if (cached && "guilds" in cached) {
+      const age = now - cached.cachedAt;
+
+      if (age <= CACHE_TTL.USER_GUILDS * 1_000) return [...cached.guilds];
+
+      // A slow or failing API must not hold joins that already have a
+      // projection nobody invalidated. Refresh it for the next join.
+      if (age <= CACHE_TTL.MAX_STALE_CACHE_AGE * 1_000) {
+        yield* sharedFetch(options, cacheKey, revision).pipe(
+          Effect.catch((error) =>
+            Effect.logWarning("Background permission refresh failed", error),
+          ),
+          Effect.forkDetach,
+        );
+
+        return [...cached.guilds];
+      }
+    }
+
+    const result = yield* sharedFetch(options, cacheKey, revision).pipe(
+      Effect.result,
+    );
+
+    if (Result.isSuccess(result)) return result.success;
+
+    // Another gateway may have filled the projection while this request failed.
+    const { entry: fallback } = yield* readCache(cacheKey);
+    const fallbackAt = yield* Clock.currentTimeMillis;
+
+    if (
+      fallback &&
+      "guilds" in fallback &&
+      fallbackAt - fallback.cachedAt <= CACHE_TTL.MAX_STALE_CACHE_AGE * 1_000
+    ) {
+      return [...fallback.guilds];
+    }
+
+    return yield* Effect.fail(result.failure);
   });
 
   return {

@@ -1,8 +1,8 @@
 import { indexChangedDocuments } from "#src/meilisearch/index-changed-documents";
 import { Effect } from "effect";
 import { partition } from "es-toolkit";
-import type { Meilisearch, SearchParams } from "meilisearch";
-import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/query-builder";
+import type { Meilisearch } from "meilisearch";
+import { buildMeilisearchNameQuery } from "#src/meilisearch/query-builder";
 import {
   attemptMeilisearch,
   type SearchOperationFailure,
@@ -65,24 +65,11 @@ export const makePlayersModule = (
   }: PlayerSearchQuery) {
     const index = meilisearch.index<PlayerHit>(PLAYERS_INDEX);
 
-    const { filter: searchFilter, searchTerm } =
-      buildMeilisearchSearchTermFilter("name", search);
-
-    const filters: string[] = [];
-
-    if (searchFilter) {
-      filters.push(searchFilter);
-    }
-
-    if (world) {
-      filters.push(`world = "${world}"`);
-    }
-
-    const query: SearchParams = {
+    const { searchTerm, query } = buildMeilisearchNameQuery({
       limit,
-      attributesToSearchOn: ["name"],
-      ...(filters.length > 0 && { filter: filters.join(" AND ") }),
-    };
+      search,
+      world,
+    });
 
     return yield* attemptMeilisearch("search.players", () =>
       index.search(searchTerm, query),

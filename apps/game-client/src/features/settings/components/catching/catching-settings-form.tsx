@@ -5,12 +5,7 @@ import { SettingsGuildPicker } from "@/features/settings/components/shared/setti
 import { type FC, type ReactNode, useEffect, useRef } from "react";
 import { useUpdateLootlogCharactersConfig } from "@/hooks/api/use-update-lootlog-characters-config";
 import { useTranslation } from "react-i18next";
-import {
-  getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
-  useUserLootlogConfigControllerGetUserLootlogConfigByAccountId,
-} from "@lootlog/client/main";
-
-import { useGameStore } from "@/store/game.store";
+import { useLootlogCharactersConfig } from "@/hooks/api/use-lootlog-characters-config";
 
 type CatchingSettingsFormProps = {
   characterId: string;
@@ -34,27 +29,10 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   onSaveStateChange,
 }) => {
   const { t } = useTranslation();
-  const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
-
-  const queryKey =
-    getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
-      accountId,
-    });
-
   const { orderedGuilds: guilds } = useLootlogGuilds();
 
   const { data: lootlogCharactersConfig, isPending: isLootlogConfigLoading } =
-    useUserLootlogConfigControllerGetUserLootlogConfigByAccountId(
-      { accountId },
-      {
-        query: {
-          queryKey,
-          refetchOnMount: false,
-          refetchOnWindowFocus: false,
-          staleTime: 60_000,
-        },
-      },
-    );
+    useLootlogCharactersConfig();
 
   const {
     mutateFromCurrent: updateLootlogCharacterConfig,
@@ -127,7 +105,6 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
           selectedGuildIds={selectedGuildIds}
           disabled={isInteractionDisabled}
           onToggle={handleGuildToggle}
-          emptyStateLabel={t("settings.catching.form.emptyGuilds")}
         />
       </div>
     </SettingsSection>

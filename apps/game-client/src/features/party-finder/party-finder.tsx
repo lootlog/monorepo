@@ -4,7 +4,12 @@ import { cn } from "cn";
 import { toast } from "sonner";
 import { ConfirmPopover } from "@/components/confirm-popover";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
+import { WindowFooter } from "@/components/draggable-window/window-footer";
 import { Button } from "@/components/ui/button";
+import {
+  toolbarStripClassName,
+  toolbarStripRowClassName,
+} from "@/components/ui/toolbar-strip";
 import { useWindowsStore } from "@/store/windows.store";
 import { useOwnedReadyRoom } from "@/features/party-finder/hooks/use-ready-rooms";
 import { usePartyStore } from "@/store/party.store";
@@ -59,14 +64,22 @@ export const PartyFinder = () => {
       minWidth={242}
     >
       <div className="ll:flex ll:flex-col ll:h-full">
-        <div className="ll:shrink-0 ll:flex ll:items-center ll:justify-between ll:gap-2 ll:px-[6px] ll:py-1 ll:text-[11px] ll:border-b ll:border-white/10">
+        <div
+          className={cn(
+            toolbarStripClassName,
+            toolbarStripRowClassName,
+            "ll:-mt-px ll:shrink-0 ll:items-center ll:justify-between ll:gap-2 ll:px-1.5 ll:text-[11px]",
+          )}
+        >
           {isOrganizerCharacter ? (
             <span className="ll:flex ll:items-center ll:gap-1">
-              <span className="ll:text-white/65">{t("header.party")}</span>
+              <span className="ll:text-muted-foreground">
+                {t("header.party")}
+              </span>
               <span
                 className={cn(
                   "ll:inline-flex ll:items-center ll:gap-1 ll:font-semibold ll:tabular-nums",
-                  partyFull ? "ll:text-red-400" : "ll:text-green-400",
+                  partyFull ? "ll:text-destructive" : "ll:text-foreground",
                 )}
               >
                 {partyFull ? (
@@ -77,7 +90,7 @@ export const PartyFinder = () => {
               </span>
             </span>
           ) : (
-            <span className="ll:min-w-0 ll:truncate ll:font-semibold ll:text-white">
+            <span className="ll:min-w-0 ll:truncate ll:font-semibold ll:text-foreground">
               {readyRoom.organizerCharacter.nick} · {readyRoom.world}
             </span>
           )}
@@ -86,7 +99,7 @@ export const PartyFinder = () => {
         <ScrollArea className="ll:flex-1">
           <ReadyRoomParticipantsList room={readyRoom} />
         </ScrollArea>
-        <div className="ll:shrink-0 ll:flex ll:gap-1 ll:px-[6px] ll:py-1.5 ll:border-t ll:border-white/10">
+        <WindowFooter rowClassName="ll:gap-1 ll:px-1.5">
           {isOrganizerCharacter ? (
             <Button
               size="xs"
@@ -126,7 +139,7 @@ export const PartyFinder = () => {
               </Button>
             }
           />
-        </div>
+        </WindowFooter>
       </div>
     </DraggableWindow>
   );

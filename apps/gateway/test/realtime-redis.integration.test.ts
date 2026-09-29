@@ -23,7 +23,10 @@ import {
 } from "testcontainers";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import { RedisGatewayStore } from "#src/platform/redis-store";
-import { GatewayMetrics } from "#src/realtime/gateway-metrics";
+import {
+  GatewayMetrics,
+  readClusterFederationVersion,
+} from "#src/realtime/gateway-metrics";
 import { PRESENCE_EXPIRY_MS } from "@lootlog/protocol/realtime";
 import { PresenceStore } from "#src/realtime/presence-store";
 import { OnlineHistory } from "#src/realtime/online-history";
@@ -34,7 +37,11 @@ import type {
 import { AirTagService } from "#src/realtime/air-tag-service";
 import { MapPingService } from "#src/realtime/map-ping-service";
 import { BattlePingService } from "#src/realtime/battle-ping-service";
-import { FEDERATION_VERSION, RealtimeHub } from "#src/realtime/realtime-hub";
+import {
+  FEDERATION_VERSION,
+  RealtimeHub,
+  SEQUENCED_FEDERATION_VERSION,
+} from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 import { makeGuildStore } from "#src/guilds/guild-store";
 import { getUserGuildsCacheKey } from "#src/guilds/cache-keys";
@@ -161,8 +168,11 @@ const eventsOfType = (frames: ReadonlyArray<Uint8Array>, type: string) => {
   return events;
 };
 
-const waitFor = async (predicate: () => boolean): Promise<void> => {
-  const deadline = Date.now() + 2_000;
+const waitFor = async (
+  predicate: () => boolean,
+  timeoutMs = 2_000,
+): Promise<void> => {
+  const deadline = Date.now() + timeoutMs;
 
   while (!predicate()) {
     if (Date.now() >= deadline)
@@ -377,19 +387,19 @@ describe("realtime Dragonfly integration", () => {
           httpClientFromResponses(() => Effect.succeed(Response.json([]))),
         );
 
-        const obsolete = Effect.runPromise(
-          firstStore.getUserGuilds(options).pipe(Effect.flip),
-        );
+        const first = Effect.runPromise(firstStore.getUserGuilds(options));
 
         await started.promise;
         await Effect.runPromise(secondStore.invalidate(options));
         await Effect.runPromise(secondStore.getUserGuilds(options));
         response.resolve(Response.json(guilds));
 
-        await expect(obsolete).resolves.toMatchObject({
-          reason: "invalidated",
-          retryable: true,
-        });
+        // A projection read before the invalidation carries the authority of a
+        // session that joined then; a join that waited gets current access.
+        // The obsolete response itself is never accepted.
+        await expect(first).resolves.toEqual(
+          cacheState === "populated" ? guilds : [],
+        );
         await expect(
           Effect.runPromise(firstStore.getUserGuilds(options)),
         ).resolves.toEqual([]);
@@ -603,6 +613,7 @@ describe("realtime Dragonfly integration", () => {
           location: moved,
         }),
       );
+      await Effect.runPromise(presence.flushDeltas());
 
       const updated = await Effect.runPromise(
         presence.snapshot(precise, "organization-1"),
@@ -611,6 +622,7 @@ describe("realtime Dragonfly integration", () => {
       expect(updated.presences[0]).toMatchObject({ location: moved });
       expect(updated.revision).toBeGreaterThan(preciseSnapshot.revision);
       await Effect.runPromise(presence.disconnect(source.data));
+      await Effect.runPromise(presence.flushDeltas());
 
       const disconnected = await Effect.runPromise(
         presence.snapshot(precise, "organization-1"),
@@ -866,8 +878,8 @@ describe("realtime Dragonfly integration", () => {
       BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
     );
 
-    const reconnectPublished = Promise.withResolvers<void>();
-    const resumePublication = Promise.withResolvers<void>();
+    const reconnectStored = Promise.withResolvers<void>();
+    const resumeReconnect = Promise.withResolvers<void>();
     let reconnecting: Promise<unknown> | undefined;
 
     try {
@@ -888,7 +900,7 @@ describe("realtime Dragonfly integration", () => {
       );
 
       let now = Date.now();
-      let pausePublication = false;
+      let pauseReconnect = false;
       const events: GameCharacterOffline[] = [];
       let afterFirstClaim: (() => Promise<void>) | undefined;
 
@@ -910,6 +922,16 @@ describe("realtime Dragonfly integration", () => {
 
           return result;
         },
+        // Reconnect cancellation starts by listing the character's departures.
+        smembers: async (key: string) => {
+          if (pauseReconnect && key.startsWith("presence:offline:character:")) {
+            pauseReconnect = false;
+            reconnectStored.resolve();
+            await resumeReconnect.promise;
+          }
+
+          return store.command.smembers(key);
+        },
       };
 
       const presence = new PresenceStore(
@@ -917,12 +939,7 @@ describe("realtime Dragonfly integration", () => {
         {
           instanceId: crypto.randomUUID(),
           setPresence: setSocketPresence,
-          publishPresence: async () => {
-            if (!pausePublication) return;
-            reconnectPublished.resolve();
-            await resumePublication.promise;
-          },
-          publishToScope: async () => {},
+          publishPresence: async () => {},
         },
         () => now,
         undefined,
@@ -969,16 +986,16 @@ describe("realtime Dragonfly integration", () => {
         ),
       );
       afterFirstClaim = async () => {
-        pausePublication = true;
+        pauseReconnect = true;
         reconnecting = Effect.runPromise(
           presence.publish(second, { organizationIds: [] }),
         );
-        await reconnectPublished.promise;
+        await reconnectStored.promise;
         expect(
           await store.command.get("presence:organization-1:group-second"),
         ).not.toBeNull();
-        // Publication is still blocked, so the final reconnect cancellation has
-        // not removed this exact pending value yet.
+        // Cancellation is still blocked, so the reconnect has not removed this
+        // exact pending value yet.
         expect(await store.command.get(secondKey)).not.toBeNull();
       };
 
@@ -991,7 +1008,7 @@ describe("realtime Dragonfly integration", () => {
         [],
       );
     } finally {
-      resumePublication.resolve();
+      resumeReconnect.resolve();
       await reconnecting;
       await runtime.dispose();
     }
@@ -1052,7 +1069,6 @@ describe("realtime Dragonfly integration", () => {
           instanceId: crypto.randomUUID(),
           setPresence: setSocketPresence,
           publishPresence: async () => {},
-          publishToScope: async () => {},
         },
         () => now,
         undefined,
@@ -1433,11 +1449,21 @@ describe("realtime Dragonfly integration", () => {
         const makeHub = () => ({
           instanceId: crypto.randomUUID(),
           setPresence: setSocketPresence,
-          publishPresence: async () => {},
-          publishToScope: async () => {
-            removed.push(game.data.connectionId);
+          publishPresence: async (
+            ...[, event]: Parameters<RealtimeHub["publishPresence"]>
+          ) => {
+            if (
+              event.type === "presence.delta" &&
+              event.data.changes.some(({ action }) => action === "remove")
+            )
+              removed.push(game.data.connectionId);
           },
         });
+
+        const flushBoth = () =>
+          Effect.runPromise(
+            Effect.all([first.flushDeltas(), second.flushDeltas()]),
+          );
 
         const publishOffline = (event: GameCharacterOffline) =>
           Effect.sync(() => void events.push(event));
@@ -1482,6 +1508,7 @@ describe("realtime Dragonfly integration", () => {
         );
 
         await Effect.runPromise(first.publish(game, { organizationIds: [] }));
+        await flushBoth();
         now += PRESENCE_EXPIRY_MS;
         let refreshed = false;
         refreshBeforeRemoval = async () => {
@@ -1522,6 +1549,7 @@ describe("realtime Dragonfly integration", () => {
         await Effect.runPromise(second.sweepExpired());
         now += 10_000;
         await Effect.runPromise(second.sweepOffline());
+        await flushBoth();
         expect(refreshed).toBe(true);
         expect(removed).toEqual([]);
         expect(events).toEqual([]);
@@ -1544,6 +1572,7 @@ describe("realtime Dragonfly integration", () => {
         await Effect.runPromise(second.sweepExpired());
         await Effect.runPromise(first.sweepExpired());
         await Effect.runPromise(first.sweepOffline());
+        await flushBoth();
         expect(await firstStore.command.get(key)).toBeNull();
         expect(await firstStore.command.get(metadataKey)).toBeNull();
         expect(removed).toHaveLength(1);
@@ -1673,7 +1702,6 @@ describe("realtime Dragonfly integration", () => {
             instanceId: crypto.randomUUID(),
             setPresence: setSocketPresence,
             publishPresence: async () => {},
-            publishToScope: async () => {},
           },
           () => now,
           undefined,
@@ -2412,137 +2440,202 @@ describe("realtime Dragonfly integration", () => {
     );
   });
 
-  test("a lost federation subscription closes local sockets until the instance resubscribes", async () => {
-    const configuration = makeConfiguration();
-    const url = `redis://127.0.0.1:${redisPort}`;
-    const control = ManagedRuntime.make(BunRedis.layer({ url }));
-    const controlRedis = await control.runPromise(Redis.Redis);
+  test.each([
+    { cluster: "unsequenced", lostFrame: false, closed: true },
+    { cluster: "sequenced", lostFrame: false, closed: false },
+    { cluster: "sequenced", lostFrame: true, closed: true },
+    // The periodic sample still reports version 4 when an old replica starts.
+    { cluster: "rolling-back", lostFrame: false, closed: true },
+  ] as const)(
+    "a dropped federation subscription in an $cluster cluster closes sessions only when frames may be lost (lost frame: $lostFrame)",
+    async ({ cluster, lostFrame, closed }) => {
+      const configuration = makeConfiguration();
+      const url = `redis://127.0.0.1:${redisPort}`;
+      const control = ManagedRuntime.make(BunRedis.layer({ url }));
+      const controlRedis = await control.runPromise(Redis.Redis);
+      const snapshots = `${configuration.redis.keyPrefix}:realtime:metrics:instances:v2`;
 
-    const subscriberAddresses = async () =>
-      new Set(
-        (await control.runPromise(controlRedis.send<string>("CLIENT", "LIST")))
-          .split("\n")
-          .filter((client) => /\bflags=P\b/.test(client))
-          .flatMap((client) => client.match(/\baddr=(\S+)/)?.[1] ?? []),
-      );
+      const subscriberAddresses = async () =>
+        new Set(
+          (
+            await control.runPromise(
+              controlRedis.send<string>("CLIENT", "LIST"),
+            )
+          )
+            .split("\n")
+            .filter((client) => /\bflags=P\b/.test(client))
+            .flatMap((client) => client.match(/\baddr=(\S+)/)?.[1] ?? []),
+        );
 
-    const instances: Array<{
-      readonly runtime: ManagedRuntime.ManagedRuntime<Redis.Redis, never>;
-      readonly fibers: Array<Fiber.Fiber<void, unknown>>;
-    }> = [];
+      const instances: Array<{
+        readonly runtime: ManagedRuntime.ManagedRuntime<Redis.Redis, never>;
+        readonly fibers: Array<Fiber.Fiber<void, unknown>>;
+      }> = [];
 
-    const startInstance = async () => {
-      const runtime = ManagedRuntime.make(BunRedis.layer({ url }));
-      const fibers: Array<Fiber.Fiber<void, unknown>> = [];
-      instances.push({ runtime, fibers });
+      const startInstance = async () => {
+        const runtime = ManagedRuntime.make(BunRedis.layer({ url }));
+        const fibers: Array<Fiber.Fiber<void, unknown>> = [];
+        instances.push({ runtime, fibers });
 
-      const store = new RedisGatewayStore(
-        await runtime.runPromise(Redis.Redis),
-        {
-          ...configuration.redis,
-          password: Redacted.value(configuration.redis.password),
-        },
-        (effect) => runtime.runPromise(effect),
-        (_label, effect) => {
-          fibers.push(runtime.runFork(effect));
-        },
-      );
+        const store = new RedisGatewayStore(
+          await runtime.runPromise(Redis.Redis),
+          {
+            ...configuration.redis,
+            password: Redacted.value(configuration.redis.password),
+          },
+          (effect) => runtime.runPromise(effect),
+          (_label, effect) => {
+            fibers.push(runtime.runFork(effect));
+          },
+        );
 
-      const hub = new RealtimeHub(configuration, store);
-      await runtime.runPromise(hub.start());
+        const hub = new RealtimeHub(configuration, store, undefined, {
+          readClusterFederationVersion: () =>
+            readClusterFederationVersion(store.command),
+        });
 
-      return hub;
-    };
+        await runtime.runPromise(hub.start());
 
-    const scope = {
-      topic: "organization.loots",
-      organizationId: "organization-1",
-    } as const;
+        if (cluster !== "unsequenced")
+          await runtime.runPromise(
+            new GatewayMetrics(store.command, hub).sample(),
+          );
 
-    const connect = (hub: RealtimeHub, connectionId: string) => {
-      const target = makeSocket(connectionId);
-      const closes: Array<{ code?: number; reason?: string }> = [];
-      Object.assign(target.socket.data, {
-        platform: "web-app",
-        supportsFeed: true,
-      });
-      target.socket.data.guilds = [
-        {
-          guild: { id: "organization-1", ownerId: "other-owner" },
-          roles: [
-            {
-              id: "feed-role",
-              lvlRangeFrom: 0,
-              lvlRangeTo: 500,
-              permissions: [
-                Permission.LOOTLOG_LOOTS_READ,
-                Permission.LOOTLOG_LOOTS_HEROES_READ,
-              ],
-            },
-          ],
-        },
-      ];
-      target.socket.close = (code?: number) => {
-        closes.push({ code, reason: hub.unavailableReason() });
+        return hub;
       };
 
-      hub.register(target.socket);
-      hub.subscribe(target.socket, scope);
+      const scope = {
+        topic: "organization.loots",
+        organizationId: "organization-1",
+      } as const;
 
-      return { ...target, closes };
-    };
+      const connect = (hub: RealtimeHub, connectionId: string) => {
+        const target = makeSocket(connectionId);
+        const closes: Array<{ code?: number; reason?: string }> = [];
+        Object.assign(target.socket.data, {
+          platform: "web-app",
+          supportsFeed: true,
+        });
+        target.socket.data.guilds = [
+          {
+            guild: { id: "organization-1", ownerId: "other-owner" },
+            roles: [
+              {
+                id: "feed-role",
+                lvlRangeFrom: 0,
+                lvlRangeTo: 500,
+                permissions: [
+                  Permission.LOOTLOG_LOOTS_READ,
+                  Permission.LOOTLOG_LOOTS_HEROES_READ,
+                ],
+              },
+            ],
+          },
+        ];
+        target.socket.close = (code?: number) => {
+          closes.push({ code, reason: hub.unavailableReason() });
+        };
 
-    const publishKill = (hub: RealtimeHub) =>
-      hub.publishToScope(
-        scope,
-        { v: 1, type: "kills.changed", data: { guildId: "organization-1" } },
-        crypto.randomUUID(),
-        {
-          recipientPlatform: "web-app",
-          sourceNpcs: [{ level: 100, type: "HERO" }],
-        },
-      );
+        hub.register(target.socket);
+        hub.subscribe(target.socket, scope);
 
-    try {
-      const before = await subscriberAddresses();
-      const affected = await startInstance();
+        return { ...target, closes };
+      };
 
-      const [affectedSubscriber] = [...(await subscriberAddresses())].filter(
-        (address) => !before.has(address),
-      );
+      const publishKill = (hub: RealtimeHub) =>
+        hub.publishToScope(
+          scope,
+          { v: 1, type: "kills.changed", data: { guildId: "organization-1" } },
+          crypto.randomUUID(),
+          {
+            recipientPlatform: "web-app",
+            sourceNpcs: [{ level: 100, type: "HERO" }],
+          },
+        );
 
-      if (!affectedSubscriber)
-        throw new Error("Affected subscriber connection not found");
-      const healthy = await startInstance();
-      const stale = connect(affected, "stale");
-      await publishKill(healthy);
-      await waitFor(() => stale.frames.length === 1);
+      try {
+        const before = await subscriberAddresses();
+        const affected = await startInstance();
 
-      await control.runPromise(
-        controlRedis.send("CLIENT", "KILL", affectedSubscriber),
-      );
-      await waitFor(() => stale.closes.length === 1);
-      // Readiness was withdrawn before the socket closed, so no session was admitted into the gap.
-      expect(stale.closes).toEqual([
-        { code: 1013, reason: "federation-unavailable" },
-      ]);
-      expect(affected.getLocalSockets()).toEqual([]);
+        const [affectedSubscriber] = [...(await subscriberAddresses())].filter(
+          (address) => !before.has(address),
+        );
 
-      await waitFor(() => affected.unavailableReason() === undefined);
-      const current = connect(affected, "current");
-      await publishKill(healthy);
-      await waitFor(() => current.frames.length === 1);
-      expect(stale.frames).toHaveLength(1);
-      expect(stale.closes).toHaveLength(1);
-    } finally {
-      for (const { runtime, fibers } of instances) {
-        await Effect.runPromise(Fiber.interruptAll(fibers));
-        await runtime.dispose();
+        if (!affectedSubscriber)
+          throw new Error("Affected subscriber connection not found");
+        const healthy = await startInstance();
+        const stale = connect(affected, "stale");
+        await publishKill(healthy);
+        await waitFor(() => stale.frames.length === 1);
+
+        if (cluster === "rolling-back") {
+          expect(affected.clusterFederationVersion).toBe(
+            SEQUENCED_FEDERATION_VERSION,
+          );
+          await control.runPromise(
+            controlRedis.send(
+              "HSET",
+              snapshots,
+              "version-3-replica",
+              JSON.stringify({
+                at: Date.now(),
+                federationVersion: 3,
+                connections: 0,
+                sessions: 0,
+                players: [],
+              }),
+            ),
+          );
+        }
+
+        // A frame numbered but never delivered stands for one published while
+        // the subscriber was away.
+        if (lostFrame)
+          await control.runPromise(
+            controlRedis.send(
+              "INCR",
+              `${configuration.redis.keyPrefix}:realtime:federation:v1:sequence`,
+            ),
+          );
+        await control.runPromise(
+          controlRedis.send("CLIENT", "KILL", affectedSubscriber),
+        );
+
+        if (closed) {
+          await waitFor(() => stale.closes.length === 1, 5_000);
+          // Readiness was withdrawn before the socket closed, so no session was admitted into the gap.
+          expect(stale.closes).toEqual([
+            { code: 1013, reason: "federation-unavailable" },
+          ]);
+          expect(affected.getLocalSockets()).toEqual([]);
+          expect(stale.socket.data.closing).toBe(true);
+        }
+
+        await waitFor(() => affected.unavailableReason() === undefined, 5_000);
+        const current = connect(affected, "current");
+        await publishKill(healthy);
+        await waitFor(() => current.frames.length === 1);
+
+        if (closed) {
+          expect(stale.frames).toHaveLength(1);
+          expect(stale.closes).toHaveLength(1);
+        } else {
+          await waitFor(() => stale.frames.length === 2);
+          expect(stale.closes).toEqual([]);
+        }
+      } finally {
+        for (const { runtime, fibers } of instances) {
+          await Effect.runPromise(Fiber.interruptAll(fibers));
+          await runtime.dispose();
+        }
+
+        await control.runPromise(
+          controlRedis.send("HDEL", snapshots, "version-3-replica"),
+        );
+        await control.dispose();
       }
-
-      await control.dispose();
-    }
-  });
+    },
+  );
 
   test("Dragonfly federates two Gateway instances and preserves map/air contracts", async () => {
     const configuration = makeConfiguration();

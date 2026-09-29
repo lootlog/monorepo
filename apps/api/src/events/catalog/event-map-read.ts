@@ -22,7 +22,7 @@ type EventMapLocationRow = typeof eventMapLocationTable.$inferSelect;
  * number of statements regardless of how many heroes, locations, or maps
  * it covers.
  */
-export const makeEventMapHydration = <Failure>(
+export const makeEventMapRead = <Failure>(
   database: typeof ApiDatabase.Service,
   query: <A, E>(
     operation: string,

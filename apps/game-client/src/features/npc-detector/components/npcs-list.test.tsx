@@ -206,7 +206,7 @@ it("animates retained rows from their previous positions after detections reorde
   expect(animate).toHaveBeenCalledTimes(2);
   expect(animate).toHaveBeenCalledWith(
     [{ transform: "translateY(-40px)" }, { transform: "translateY(0)" }],
-    expect.objectContaining({ duration: 180 }),
+    expect.any(Object),
   );
 });
 

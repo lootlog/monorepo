@@ -1,4 +1,4 @@
-import { makeEventMapHydration } from "./event-map-hydration.js";
+import { makeEventMapRead } from "./event-map-read.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   getEffectiveCapabilities,
@@ -80,7 +80,7 @@ export const makeEventsCatalogRead = (
             .where(inArray(eventHeroNpcTable.eventId, eventIds)),
         );
 
-  const { heroMaps, heroMapLayouts } = makeEventMapHydration(database, query);
+  const { heroMaps, heroMapLayouts } = makeEventMapRead(database, query);
 
   const scopedEvent = (guildId: string, eventId: string) =>
     query(

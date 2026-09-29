@@ -20,6 +20,7 @@ import {
   type PublishedPresence,
   type ServerEvent,
 } from "@lootlog/protocol/realtime";
+import { chunk } from "es-toolkit";
 import { SingleFlight } from "#src/platform/single-flight";
 import { yieldToEventLoop } from "#src/platform/background-tasks";
 import type { RedisGatewayStore } from "#src/platform/redis-store";
@@ -58,6 +59,38 @@ type Published = typeof PublishedPresence.Type;
 type Snapshot = typeof PresenceSnapshot.Type;
 
 type Event = typeof ServerEvent.Type;
+
+type Change =
+  | { readonly action: "upsert"; readonly presence: Basic | Precise }
+  | {
+      readonly action: "remove";
+      readonly userId: string;
+      readonly discordId: string;
+      readonly sessionId: string;
+    };
+
+type CachedSnapshot = {
+  readonly revision: number;
+  readonly readAt: number;
+  readonly presences: ReadonlyArray<Basic | Precise>;
+};
+
+// Changes coalesce per Organization, so a burst of N joins costs one revision
+// and one frame per recipient per interval instead of N of each.
+const DELTA_FLUSH_INTERVAL_MS = 250;
+
+// Keeps a burst's frames far below the socket backpressure limit.
+const MAX_DELTA_CHANGES = 100;
+
+const DELTA_FLUSH_CONCURRENCY = 16;
+
+// A cached snapshot is served only while its revision is current, so every
+// change missing from it reaches the viewer as a later delta. The age bound
+// keeps heartbeat-refreshed lastSeen values from drifting.
+const SNAPSHOT_MAX_AGE_MS = 1_000;
+
+const changedSession = (change: Change): string =>
+  change.action === "upsert" ? change.presence.sessionId : change.sessionId;
 
 type OfflineRecord = {
   readonly key: string;
@@ -292,9 +325,13 @@ const withoutLocation = (presence: Basic | Precise): Basic => {
 export class PresenceStore {
   private readonly pendingSnapshots = new SingleFlight<
     string,
-    Array<Basic | Precise>,
+    CachedSnapshot,
     unknown
   >();
+
+  private readonly snapshots = new Map<string, CachedSnapshot>();
+
+  private readonly pendingDeltas = new Map<string, Map<string, Change>>();
 
   constructor(
     private readonly redis: {
@@ -313,7 +350,7 @@ export class PresenceStore {
     },
     private readonly hub: Pick<
       RealtimeHub,
-      "instanceId" | "setPresence" | "publishPresence" | "publishToScope"
+      "instanceId" | "setPresence" | "publishPresence"
     >,
     private readonly now: () => number = Date.now,
     private readonly coverage?: Pick<CoveragePublisher, "publish">,
@@ -380,8 +417,12 @@ export class PresenceStore {
       }
 
       for (const organizationId of selectedOrganizationIds) {
-        yield* this.refresh(organizationId, presence, socket.data.discordId);
-        yield* this.broadcastUpsert(organizationId, presence);
+        yield* this.refresh(
+          organizationId,
+          presence,
+          socket.data.discordId,
+          true,
+        );
         yield* this.publishCoverageChange(
           socket.data.discordId,
           organizationId,
@@ -957,7 +998,9 @@ export class PresenceStore {
     world?: string,
   ): Effect.Effect<Snapshot, PresenceFailure> {
     return Effect.gen({ self: this }, function* () {
-      const presences = yield* this.readSnapshotOrganization(organizationId);
+      const { revision, presences } =
+        yield* this.readSnapshotOrganization(organizationId);
+
       const includeLocation = canReadPreciseLocation(viewer, organizationId);
 
       const filtered = presences
@@ -973,7 +1016,7 @@ export class PresenceStore {
       return {
         organizationId,
         world,
-        revision: yield* this.getRevision(organizationId),
+        revision,
         presences: filtered,
       };
     }).pipe(
@@ -1253,11 +1296,9 @@ export class PresenceStore {
       ...departure.keys,
     ];
 
-    const removed = yield* this.mutateOrganization(
-      candidate.organizationId,
-      "presence.expiry-remove",
-      () =>
-        this.redis.command.eval<number>(
+    const removed = yield* fromPromise("presence.expiry-remove", () =>
+      this.redis.command
+        .eval<number>(
           REMOVE_EXPIRED_PRESENCE,
           keys.length,
           ...keys,
@@ -1269,18 +1310,22 @@ export class PresenceStore {
           this.presenceKey(candidate.organizationId, candidate.sessionId),
           EXPIRY_LEASE_MS,
           ...departure.args,
-        ),
+        )
+        .then((removed) => {
+          if (removed && metadata)
+            this.queueChange(candidate.organizationId, {
+              action: "remove",
+              userId: metadata.userId,
+              discordId: metadata.discordId,
+              sessionId: candidate.sessionId,
+            });
+
+          return removed;
+        }),
     );
 
     if (!removed) return 0;
 
-    if (metadata)
-      yield* this.broadcastRemove(
-        candidate.organizationId,
-        metadata.userId,
-        candidate.sessionId,
-        metadata.discordId,
-      );
     yield* this.pruneOrganization(candidate.organizationId);
 
     return 1;
@@ -1434,36 +1479,44 @@ export class PresenceStore {
     });
   }
 
+  // Redis commands may settle after their Effect caller is interrupted. Writes
+  // queue their delta when they settle, so every stored change is announced.
   private refresh(
     organizationId: string,
     presence: Basic | Precise,
     discordId: string,
+    announce = false,
   ) {
     const key = this.presenceKey(organizationId, presence.sessionId);
 
     // Metadata lastSeen survives TTL expiry; both indexes recover independently
     // after partial eviction as well as after complete Redis loss.
-    return this.mutateOrganization(organizationId, "presence.refresh", () =>
-      this.redis.command.eval(
-        REFRESH_PRESENCE,
-        5,
-        key,
-        this.metadataKey(organizationId, presence.sessionId),
-        this.indexKey(organizationId),
-        "presence:organizations",
-        EXPIRY_DUE_INDEX,
-        JSON.stringify(presence),
-        REDIS_TTL_SECONDS,
-        JSON.stringify({
-          userId: presence.userId,
-          discordId,
-          presence: withoutLocation(presence),
+    return fromPromise("presence.refresh", () =>
+      this.redis.command
+        .eval(
+          REFRESH_PRESENCE,
+          5,
+          key,
+          this.metadataKey(organizationId, presence.sessionId),
+          this.indexKey(organizationId),
+          "presence:organizations",
+          EXPIRY_DUE_INDEX,
+          JSON.stringify(presence),
+          REDIS_TTL_SECONDS,
+          JSON.stringify({
+            userId: presence.userId,
+            discordId,
+            presence: withoutLocation(presence),
+          }),
+          key,
+          organizationId,
+          JSON.stringify([organizationId, presence.sessionId]),
+          presence.lastSeen + PRESENCE_EXPIRY_MS,
+        )
+        .then(() => {
+          if (announce)
+            this.queueChange(organizationId, { action: "upsert", presence });
         }),
-        key,
-        organizationId,
-        JSON.stringify([organizationId, presence.sessionId]),
-        presence.lastSeen + PRESENCE_EXPIRY_MS,
-      ),
     );
   }
 
@@ -1475,59 +1528,101 @@ export class PresenceStore {
   ): Effect.Effect<void, unknown> {
     return Effect.gen({ self: this }, function* () {
       const key = this.presenceKey(organizationId, sessionId);
-      yield* this.mutateOrganization(organizationId, "presence.remove", () =>
-        this.redis.command.eval(
-          REMOVE_PRESENCE,
-          4,
-          key,
-          this.metadataKey(organizationId, sessionId),
-          this.indexKey(organizationId),
-          EXPIRY_DUE_INDEX,
-          key,
-          JSON.stringify([organizationId, sessionId]),
-        ),
-      );
-      yield* this.broadcastRemove(organizationId, userId, sessionId, discordId);
-    });
-  }
-
-  private broadcastRemove(
-    organizationId: string,
-    userId: string,
-    sessionId: string,
-    discordId: string,
-  ): Effect.Effect<void, unknown> {
-    return Effect.gen({ self: this }, function* () {
-      const revision = yield* this.nextRevision(organizationId);
-
-      const event = {
-        v: 1,
-        type: "presence.delta",
-        sequence: revision,
-        data: {
-          organizationId,
-          revision,
-          changes: [{ action: "remove", userId, discordId, sessionId }],
-        },
-      } satisfies Event;
-
-      yield* fromPromise("presence.publish-remove", () =>
-        this.hub.publishToScope(
-          { topic: "organization.presence", organizationId },
-          event,
-        ),
+      yield* fromPromise("presence.remove", () =>
+        this.redis.command
+          .eval(
+            REMOVE_PRESENCE,
+            4,
+            key,
+            this.metadataKey(organizationId, sessionId),
+            this.indexKey(organizationId),
+            EXPIRY_DUE_INDEX,
+            key,
+            JSON.stringify([organizationId, sessionId]),
+          )
+          .then(() => {
+            this.queueChange(organizationId, {
+              action: "remove",
+              userId,
+              discordId,
+              sessionId,
+            });
+          }),
       );
     });
   }
 
-  private broadcastUpsert(
+  private queueChange(organizationId: string, change: Change): void {
+    const changes = this.pendingDeltas.get(organizationId) ?? new Map();
+    const sessionId = changedSession(change);
+
+    // A session's latest change supersedes its earlier ones in the batch.
+    changes.delete(sessionId);
+    changes.set(sessionId, change);
+    this.pendingDeltas.set(organizationId, changes);
+  }
+
+  runDeltaFlush() {
+    return this.flushDeltas().pipe(
+      Effect.repeat(Schedule.spaced(DELTA_FLUSH_INTERVAL_MS)),
+      // Queued removals exist nowhere else; deliver them before Redis closes.
+      Effect.ensuring(
+        this.flushDeltas().pipe(Effect.timeout("1 second"), Effect.ignore),
+      ),
+    );
+  }
+
+  flushDeltas(): Effect.Effect<void> {
+    return Effect.suspend(() => {
+      const batches = [...this.pendingDeltas];
+      this.pendingDeltas.clear();
+
+      for (const [organizationId, snapshot] of this.snapshots) {
+        if (this.now() - snapshot.readAt >= SNAPSHOT_MAX_AGE_MS)
+          this.snapshots.delete(organizationId);
+      }
+
+      const unpublished = new Set(
+        batches.flatMap(([organizationId, changes]) =>
+          chunk([...changes.values()], MAX_DELTA_CHANGES).map(
+            (changes) => [organizationId, changes] as const,
+          ),
+        ),
+      );
+
+      return Effect.forEach(
+        [...unpublished],
+        (batch) =>
+          this.publishDelta(...batch).pipe(
+            Effect.tap(() => Effect.sync(() => unpublished.delete(batch))),
+            Effect.catch((error) =>
+              Effect.logError(
+                "Presence delta publication failed; retrying",
+                error,
+              ),
+            ),
+          ),
+        { concurrency: DELTA_FLUSH_CONCURRENCY, discard: true },
+      ).pipe(
+        // Failed and interrupted batches, including those never started,
+        // return to the queue for the next flush.
+        Effect.ensuring(
+          Effect.sync(() => {
+            for (const batch of unpublished) this.requeueChanges(...batch);
+          }),
+        ),
+      );
+    });
+  }
+
+  private publishDelta(
     organizationId: string,
-    presence: Basic | Precise,
+    changes: ReadonlyArray<Change>,
   ): Effect.Effect<void, unknown> {
     return Effect.gen({ self: this }, function* () {
       const revision = yield* this.nextRevision(organizationId);
 
-      const makeEvent = (value: Basic | Precise) =>
+      const makeEvent = (includeLocation: boolean) =>
         ({
           v: 1,
           type: "presence.delta",
@@ -1535,21 +1630,31 @@ export class PresenceStore {
           data: {
             organizationId,
             revision,
-            changes: [
-              {
-                action: "upsert",
-                presence: { ...value, organizationIds: [organizationId] },
-              },
-            ],
+            changes: changes.map((change) =>
+              change.action === "upsert"
+                ? {
+                    action: "upsert",
+                    presence: {
+                      ...(includeLocation
+                        ? change.presence
+                        : withoutLocation(change.presence)),
+                      organizationIds: [organizationId],
+                    },
+                  }
+                : change,
+            ),
           },
         }) satisfies Event;
 
-      const basicEvent = makeEvent(withoutLocation(presence));
+      const basicEvent = makeEvent(false);
 
-      const preciseEvent =
-        "location" in presence ? makeEvent(presence) : basicEvent;
+      const preciseEvent = changes.some(
+        (change) => change.action === "upsert" && "location" in change.presence,
+      )
+        ? makeEvent(true)
+        : basicEvent;
 
-      yield* fromPromise("presence.publish-upsert", () =>
+      yield* fromPromise("presence.publish-delta", () =>
         this.hub.publishPresence(
           { topic: "organization.presence", organizationId },
           basicEvent,
@@ -1559,14 +1664,52 @@ export class PresenceStore {
     });
   }
 
+  // Changes queued since the failed flush are newer and keep precedence.
+  private requeueChanges(
+    organizationId: string,
+    changes: ReadonlyArray<Change>,
+  ): void {
+    const newer = this.pendingDeltas.get(organizationId);
+    this.pendingDeltas.delete(organizationId);
+
+    for (const change of [...changes, ...(newer?.values() ?? [])])
+      this.queueChange(organizationId, change);
+  }
+
   private readSnapshotOrganization(
     organizationId: string,
-  ): Effect.Effect<Array<Basic | Precise>, unknown> {
-    // Offline decisions and coverage require their own fresh read.
-    return this.pendingSnapshots.run(
-      organizationId,
-      this.readOrganization(organizationId).pipe(Effect.timeout("10 seconds")),
-    );
+  ): Effect.Effect<CachedSnapshot, unknown> {
+    return Effect.gen({ self: this }, function* () {
+      // Read the revision first: every change absent from the rows read after
+      // it increments the revision later and reaches viewers as a delta.
+      const revision = yield* this.getRevision(organizationId);
+      const cached = this.snapshots.get(organizationId);
+
+      if (
+        cached?.revision === revision &&
+        this.now() - cached.readAt < SNAPSHOT_MAX_AGE_MS
+      )
+        return cached;
+
+      const readAt = this.now();
+
+      // Offline decisions and coverage require their own fresh read.
+      return yield* this.pendingSnapshots.run(
+        JSON.stringify([organizationId, revision]),
+        this.readOrganization(organizationId).pipe(
+          Effect.timeout("10 seconds"),
+          Effect.map((presences) => {
+            const snapshot = { revision, readAt, presences };
+            const current = this.snapshots.get(organizationId);
+
+            if (!current || current.readAt <= readAt)
+              this.snapshots.set(organizationId, snapshot);
+
+            return snapshot;
+          }),
+        ),
+      );
+    });
   }
 
   private readOrganization(
@@ -1613,23 +1756,8 @@ export class PresenceStore {
   }
 
   private nextRevision(organizationId: string): Effect.Effect<number, unknown> {
-    return this.mutateOrganization(
-      organizationId,
-      "presence.next-revision",
-      () => this.redis.command.incr(`presence:revision:${organizationId}`),
-    );
-  }
-
-  private mutateOrganization<A>(
-    organizationId: string,
-    operation: string,
-    evaluate: () => Promise<A>,
-  ): Effect.Effect<A, RealtimeStoreError> {
-    // Redis commands may settle after their Effect caller is interrupted.
-    return fromPromise(operation, () =>
-      evaluate().finally(() => {
-        this.pendingSnapshots.invalidate(organizationId);
-      }),
+    return fromPromise("presence.next-revision", () =>
+      this.redis.command.incr(`presence:revision:${organizationId}`),
     );
   }
 

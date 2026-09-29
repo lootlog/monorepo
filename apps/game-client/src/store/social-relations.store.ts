@@ -1,6 +1,8 @@
 import { Option, Schema } from "effect";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { isEqual } from "es-toolkit";
+import { createChangedOnlyStorage } from "./changed-only-storage";
 import { storageKey } from "@/lib/storage-key";
 import { withFallback } from "@/lib/stored-value-schema";
 
@@ -238,38 +240,47 @@ export const useSocialRelationsStore = create<SocialRelationsState>()(
           const social =
             state.characters[characterScope] ?? EMPTY_CHARACTER_SOCIAL;
 
+          const ids = toCharacterIds(characterIds);
+
+          // The game resends whole lists; an unchanged one keeps the state.
+          if (isEqual(social[list], ids)) return state;
+
           return {
             characters: {
               ...state.characters,
               [characterScope]: Object.freeze({
                 ...social,
-                [list]: toCharacterIds(characterIds),
+                [list]: ids,
               }),
             },
           };
         }),
       replaceClanDiplomacy: (clanScope, relation, clanIds) =>
         set((state) => {
-          const kept = Object.entries(
-            state.clans[clanScope] ?? EMPTY_CLAN_DIPLOMACY,
-          ).filter(([, current]) => current !== relation);
+          const current = state.clans[clanScope] ?? EMPTY_CLAN_DIPLOMACY;
+
+          const kept = Object.entries(current).filter(
+            ([, currentRelation]) => currentRelation !== relation,
+          );
+
+          const diplomacy = Object.fromEntries([
+            ...kept,
+            ...clanIds.flatMap((id) => (id ? [[id, relation]] : [])),
+          ]);
+
+          if (isEqual(current, diplomacy)) return state;
 
           return {
             clans: {
               ...state.clans,
-              [clanScope]: Object.freeze(
-                Object.fromEntries([
-                  ...kept,
-                  ...clanIds.flatMap((id) => (id ? [[id, relation]] : [])),
-                ]),
-              ),
+              [clanScope]: Object.freeze(diplomacy),
             },
           };
         }),
     }),
     {
       name: storageKey("ll:social-relations:state"),
-      storage: createJSONStorage(() => localStorage),
+      storage: createChangedOnlyStorage(createJSONStorage(() => localStorage)),
       partialize: (state) => ({
         characters: state.characters,
         clans: state.clans,

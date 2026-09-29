@@ -1,9 +1,14 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ExtensionLogin } from "./extension-login";
+import { LoginWindow } from "./login-window";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { authClient } from "@/lib/auth-client";
+import {
+  configureGameClientPlatform,
+  createGameRealtimeClient,
+} from "@/lib/game-client-platform";
+import { useLoginWebsiteStore } from "@/hooks/auth/use-login-state";
 import {
   resetExtensionLoginWindow,
   useWindowsStore,
@@ -12,12 +17,57 @@ import { useSettingsStore } from "@/store/settings.store";
 import { LOOTLOG_APP_URL } from "@/config/app";
 import { resolveDefaultWindowPosition } from "@/components/draggable-window/window-default-placement";
 
+const SIGNED_OUT = "Zaloguj się na stronie Lootloga, a potem wróć do gry";
+
+const COOKIES_BLOCKED =
+  /przeglądarka blokuje pliki cookie innych firm dla lootlog\.pl/u;
+
+const signedInSession = {
+  user: {
+    id: "user",
+    name: "Player",
+    email: "player@example.test",
+    emailVerified: false,
+    discordId: "123",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  session: {
+    id: "session",
+    userId: "user",
+    expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+};
+
 const renderLogin = () =>
   render(
     <TooltipProvider>
-      <ExtensionLogin />
+      <LoginWindow />
     </TooltipProvider>,
   );
+
+const asExtension = () =>
+  configureGameClientPlatform({
+    fetch: (input, init) => globalThis.fetch(input, init),
+    createRealtime: createGameRealtimeClient,
+  });
+
+/** Follows the website link and comes back to the game, as a player would. */
+const roundTripThroughWebsite = async (
+  user: ReturnType<typeof userEvent.setup>,
+) => {
+  const link = screen.getByRole("link", { name: "Otwórz stronę Lootloga" });
+  // jsdom cannot open the tab; only the click handler matters here.
+  link.addEventListener("click", (event) => event.preventDefault());
+  await user.click(link);
+  act(() => {
+    window.dispatchEvent(new Event("focus"));
+  });
+};
+
+let restorePlatform: (() => void) | undefined;
 
 beforeEach(async () => {
   resetExtensionLoginWindow();
@@ -30,53 +80,77 @@ beforeEach(async () => {
   });
 });
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  useLoginWebsiteStore.setState({ websiteOpened: false });
+  restorePlatform?.();
+  restorePlatform = undefined;
+  vi.restoreAllMocks();
+});
 
-describe("extension login window", () => {
-  it("offers website login, blocks duplicate checks and distinguishes errors from a missing session", async () => {
+describe("login window", () => {
+  it("points at blocked cookies when the userscript still reads no session after the website, and hides once signed in", async () => {
     const user = userEvent.setup();
     renderLogin();
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Sprawdź sesję" }),
-      ).toBeEnabled(),
-    );
-    expect(screen.getByRole("link")).toHaveAttribute("href", LOOTLOG_APP_URL);
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Zaloguj się na stronie Lootloga",
-    );
+    await screen.findByText(new RegExp(SIGNED_OUT, "u"));
+    expect(screen.queryByText(COOKIES_BLOCKED)).toBeNull();
 
-    let complete: (response: Response) => void = () => {};
+    await roundTripThroughWebsite(user);
 
-    vi.mocked(fetch).mockImplementation(
-      () =>
-        new Promise<Response>((resolve) => {
-          complete = resolve;
-        }),
-    );
-    await user.click(screen.getByRole("button", { name: "Sprawdź sesję" }));
+    await screen.findByText(COOKIES_BLOCKED);
     expect(
-      screen.getByRole("button", { name: "Sprawdzanie sesji…" }),
-    ).toBeDisabled();
-    act(() => {
-      complete(Response.json({ message: "Unavailable" }, { status: 503 }));
-    });
-    await screen.findByText(
-      "Nie udało się sprawdzić sesji Lootloga. Spróbuj ponownie.",
+      screen.getByRole("link", { name: "Więcej pomocy z logowaniem" }),
+    ).toBeInTheDocument();
+
+    vi.mocked(fetch).mockResolvedValue(Response.json(signedInSession));
+    await user.click(screen.getByRole("button", { name: "Sprawdź sesję" }));
+    await waitFor(() => expect(screen.queryByRole("region")).toBeNull());
+
+    // A later confirmed sign-out brings the window back.
+    vi.mocked(fetch).mockResolvedValue(Response.json(null));
+    act(() => authClient.$store.notify("$sessionSignal"));
+    await screen.findByRole("region");
+  });
+
+  it("tells a failed session check apart from a missing session", async () => {
+    const user = userEvent.setup();
+    renderLogin();
+    await screen.findByText(new RegExp(SIGNED_OUT, "u"));
+    vi.mocked(fetch).mockResolvedValue(
+      Response.json({ message: "Unavailable" }, { status: 503 }),
     );
 
-    vi.mocked(fetch).mockImplementation(() =>
-      Promise.resolve(Response.json(null)),
-    );
     await user.click(screen.getByRole("button", { name: "Sprawdź sesję" }));
+
     await waitFor(() =>
       expect(screen.getByRole("status")).toHaveTextContent(
-        "Zaloguj się na stronie Lootloga",
+        "Nie udało się sprawdzić sesji Lootloga",
       ),
+    );
+    vi.mocked(fetch).mockResolvedValue(Response.json(null));
+    await user.click(screen.getByRole("button", { name: "Sprawdź sesję" }));
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(SIGNED_OUT),
     );
   });
 
+  it("never blames cookies for an extension player, whose session does not need them", async () => {
+    restorePlatform = asExtension();
+    const user = userEvent.setup();
+    renderLogin();
+
+    await screen.findByText(new RegExp(SIGNED_OUT, "u"));
+    expect(
+      screen.getByRole("link", { name: "Otwórz stronę Lootloga" }),
+    ).toHaveAttribute("href", LOOTLOG_APP_URL);
+    await roundTripThroughWebsite(user);
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(SIGNED_OUT),
+    );
+    expect(screen.queryByText(COOKIES_BLOCKED)).toBeNull();
+  });
+
   it("closes by keyboard, stays dismissed across remounts with a way back, and resets position on the next runtime", async () => {
+    restorePlatform = asExtension();
     const user = userEvent.setup();
     const view = renderLogin();
     const close = screen.getByRole("button", { name: "Zamknij okno" });
@@ -128,9 +202,16 @@ describe("extension login window", () => {
     resetExtensionLoginWindow();
     const next = renderLogin();
     expect(screen.getByRole("region")).toBeInTheDocument();
+
+    const loginPosition = resolveDefaultWindowPosition(
+      "extension-login",
+      (id) => useWindowsStore.getState()[id].size,
+      { width: window.innerWidth, height: window.innerHeight },
+    );
+
     expect(next.container.querySelector("#ll-extension-login")).toHaveStyle({
-      left: `${Math.round((window.innerWidth - 360) / 2)}px`,
-      top: `${Math.round((window.innerHeight - 180) / 2)}px`,
+      left: `${loginPosition.x}px`,
+      top: `${loginPosition.y}px`,
     });
   });
 
