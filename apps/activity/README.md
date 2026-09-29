@@ -48,6 +48,14 @@ The migration uses transactional index drops with a two-second lock timeout. A b
 
 Application rollback preserves data and query results with either layout, but the old retention query loses its `endedAt` access path. Before rolling back Activity, restore `UserOnlineInterval_endedAt_idx` on `("endedAt")` and `UserOnlineInterval_userId_endedAt_idx` on `("userId", "endedAt")` using `CREATE INDEX CONCURRENTLY` outside a transaction. Index restoration can use additional disk and CPU; inspect and remove an invalid index before retrying a failed concurrent build. If the optimized Activity version is deployed again, remove the restored indexes after deployment; the journaled migration will not run twice.
 
+### Activity retention without writer stalls
+
+`20260929142405_activity_retention_lock_timeout` keeps the seven-day Organization activity window and changes how expired chunks are dropped. Dropping a chunk needs ACCESS EXCLUSIVE on that chunk, and the removed `Activity_actorSnapshotId_fkey` also required it on `ActivityActorSnapshot`, which every activity write reads. While a long reader held either table, the built-in retention policy waited for its full five-minute runtime; its queued lock blocked every later activity read and write until it was killed, and retention never completed.
+
+The migration drops the foreign key and replaces the built-in policy with the hourly `activity_retention` job, which calls `drop_chunks` with a one-second lock timeout. A busy chunk fails the run with `55P03` and leaves the expired rows for the next attempt. Snapshots are never deleted; activity reads already left-join them. The migration itself uses a two-second lock timeout on `Activity`, its chunks and `ActivityActorSnapshot`; retry it after a conflicting long transaction finishes.
+
+A failing job is visible in `timescaledb_information.job_stats` and `job_history`; repeated failures mean a long transaction is reading expired activity. Rolling the application back needs no schema change. To restore the previous database behavior, delete the job, run `add_retention_policy('"Activity"', INTERVAL '7 days')`, and add the foreign key `NOT VALID` so existing chunks are not scanned.
+
 ## Migration and rollout
 
 1. Deploy migrations `drizzle/migrations/20260906084000_user_online_history/migration.sql` and `drizzle/migrations/20260906084001_online_history_16_week_retention/migration.sql` using `bun run --cwd apps/activity db:migrate:deploy` in the approved deployment environment. The migration command uses the Drizzle journal and executes only pending SQL files. The second migration physically deletes expired online history and trims crossing intervals; this retention reduction is irreversible. Existing seven-day Timescale activity retention remains unchanged.
