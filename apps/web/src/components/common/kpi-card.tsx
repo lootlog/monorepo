@@ -39,13 +39,13 @@ export const KpiCard = ({
         <>
           <div
             className={cn(
-              "animate-content-in truncate text-2xl font-semibold leading-7 tabular-nums",
+              "truncate text-2xl font-semibold leading-7 tabular-nums",
               valueClassName,
             )}
           >
             {value}
           </div>
-          <div className="min-h-4 animate-content-in truncate text-xs text-muted-foreground">
+          <div className="min-h-4 truncate text-xs text-muted-foreground">
             {detail}
           </div>
         </>
