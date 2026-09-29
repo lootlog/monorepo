@@ -227,7 +227,9 @@ export const makeLootAllocationOperations = (options: {
 
         // Margonem omits items every player rejected, so a chat share may cover
         // only some loot items, or none. With nothing to record, keep the
-        // current allocation instead of erasing it.
+        // current allocation instead of erasing it. The empty response tells
+        // the game client this message did not confirm the loot; it may belong
+        // to an older one.
         if (sharedItemsCount === 0) {
           options.logger.log({
             level: "info",
@@ -242,7 +244,7 @@ export const makeLootAllocationOperations = (options: {
         if (authorized.lootShareSource === LootShareSource.CHAT_MESSAGE) {
           yield* assertMatching(input.lootId, authorized.lootShare, allocation);
 
-          return {};
+          return allocation;
         }
 
         if (sharedItemsCount < items.length) {
@@ -284,7 +286,7 @@ export const makeLootAllocationOperations = (options: {
 
           yield* assertMatching(input.lootId, state.lootShare, allocation);
 
-          return {};
+          return allocation;
         }
 
         const organizationIds = [
@@ -325,7 +327,7 @@ export const makeLootAllocationOperations = (options: {
           { concurrency: "unbounded", discard: true },
         );
 
-        return {};
+        return allocation;
       }),
     );
 
