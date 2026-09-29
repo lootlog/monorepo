@@ -1,4 +1,5 @@
 import { describe, expect, it, mock } from "bun:test";
+import { DelayedError } from "bullmq";
 import { Effect, Fiber, Result } from "effect";
 import { TestClock } from "effect/testing";
 import { makeMemberRefreshProcessor } from "./member-refresh.processor.js";
@@ -12,6 +13,9 @@ const job = {
     guildId: "guild-1",
     reason: "MANUAL",
   },
+  moveToDelayed: mock((_timestamp: number, _token?: string) =>
+    Promise.resolve(),
+  ),
 };
 
 const makeDependencies = () => ({
@@ -50,20 +54,32 @@ const makeDependencies = () => ({
 });
 
 describe("member refresh processor", () => {
-  it("retries a locked user without syncing or releasing another owner's lock", async () => {
+  it("delays a job whose user is locked by another guild job without failing it", async () => {
     const dependencies = makeDependencies();
+    const now = Date.UTC(2026, 8, 4, 12);
+    const lockedJob = { ...job, moveToDelayed: mock(job.moveToDelayed) };
     dependencies.scheduler.acquireUserRefreshLock.mockReturnValue(
       Effect.succeed(false),
     );
 
-    const result = await Effect.runPromise(
-      Effect.result(makeMemberRefreshProcessor(dependencies)(job)),
-    );
+    const result = await Effect.gen(function* () {
+      yield* TestClock.setTime(now);
 
-    expect(Result.isFailure(result)).toBe(true);
-    expect(result).toMatchObject({
-      failure: new Error("MEMBER_REFRESH_LOCKED"),
-    });
+      return yield* Effect.result(
+        makeMemberRefreshProcessor(dependencies)(lockedJob, "worker-token"),
+      );
+    }).pipe(Effect.provide(TestClock.layer()), Effect.runPromise);
+
+    // BullMQ keeps a job it was told to delay only when the processor rejects
+    // with DelayedError; any other error moves it to failed.
+    expect(result).toMatchObject({ failure: expect.any(DelayedError) });
+    expect(lockedJob.moveToDelayed).toHaveBeenCalledTimes(1);
+    const [delayedUntil, token] = lockedJob.moveToDelayed.mock.calls[0]!;
+    expect(token).toBe("worker-token");
+    expect(delayedUntil).toBeGreaterThan(now);
+    expect(
+      dependencies.diagnostics.recordMemberRefreshMetric.mock.calls,
+    ).toEqual([[{ outcome: "delayed", reason: "MEMBER_REFRESH_LOCKED" }]]);
     expect(dependencies.sync.syncMemberFromDiscord).not.toHaveBeenCalled();
     expect(
       dependencies.scheduler.releaseUserRefreshLock,

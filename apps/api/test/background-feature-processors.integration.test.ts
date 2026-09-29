@@ -1,6 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it } from "bun:test";
+import { Queue, Worker } from "bullmq";
 import { asc, eq, sql } from "drizzle-orm";
-import { Effect, ManagedRuntime, Result } from "effect";
+import { Effect, ManagedRuntime, Redacted, Result } from "effect";
 import { TestClock } from "effect/testing";
 import { MessagingError, type RabbitMessaging } from "@lootlog/messaging";
 import {
@@ -15,7 +16,10 @@ import {
   timerTable,
 } from "../src/database/drizzle/schema.js";
 import { makeMemberBulkRefreshProcessor } from "../src/members/member-bulk-refresh.processor.js";
+import { MEMBER_REFRESH_PRIORITY } from "../src/members/member-refresh-queue.js";
+import { makeMemberRefreshProcessor } from "../src/members/member-refresh.processor.js";
 import { makeReservationsCleanup } from "../src/reservations/reservations-cleanup.js";
+import { redisUrl } from "../src/runtime/infrastructure/api-redis.js";
 import { makeTimersCleanup } from "../src/timers/timers-cleanup.js";
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
@@ -233,6 +237,107 @@ describe("background feature processors against migrated PostgreSQL", () => {
       },
     ]);
   });
+
+  it("keeps a member refresh queued while another guild job holds the user lock, without spending an attempt", async () => {
+    const connection = {
+      url: redisUrl({
+        username: process.env.REDIS_USERNAME ?? "",
+        password: Redacted.make(process.env.REDIS_PASSWORD ?? ""),
+        host: process.env.REDIS_HOST ?? "localhost",
+        port: Number(process.env.REDIS_PORT),
+      }),
+    };
+
+    const queueName = `member-refresh-${crypto.randomUUID()}`;
+    const queue = new Queue(queueName, { connection, prefix: "{bull}" });
+    let lockOwner: string | null = "job:other-guild";
+    const outcomes: string[] = [];
+    const synced: string[] = [];
+
+    const processRefresh = makeMemberRefreshProcessor({
+      scheduler: {
+        acquireUserRefreshLock: (_userId, owner) =>
+          Effect.sync(() => {
+            if (lockOwner) return false;
+            lockOwner = owner;
+
+            return true;
+          }),
+        getNextRefreshAt: () => Effect.succeed(null),
+        extendUserRefreshLock: () => Effect.void,
+        releaseUserRefreshLock: (_userId, owner) =>
+          Effect.sync(() => {
+            if (lockOwner === owner) lockOwner = null;
+          }),
+      },
+      diagnostics: {
+        recordMemberRefreshMetric: async ({ outcome }) => {
+          outcomes.push(outcome);
+        },
+        recordMemberRefreshLatency: async () => {},
+      },
+      sync: {
+        syncMemberFromDiscord: ({ guildId: syncedGuildId }) =>
+          Effect.sync(() => {
+            synced.push(syncedGuildId);
+
+            return { member: null, status: "SUCCESS", nextRefreshAt: null };
+          }),
+      },
+    });
+
+    const worker = new Worker(
+      queueName,
+      (job, token) => Effect.runPromise(processRefresh(job, token)),
+      { connection, prefix: "{bull}" },
+    );
+
+    const failures: unknown[] = [];
+    worker.on("failed", (_job, error) => failures.push(error));
+
+    const completed = new Promise((resolve) =>
+      worker.once("completed", resolve),
+    );
+
+    try {
+      // One attempt: a contended job that spent it would end in failed.
+      const job = await queue.add(
+        "member-refresh",
+        {
+          userId: "user-1",
+          discordId: "discord-1",
+          guildId: "guild-2",
+          reason: "guild-access-background",
+        },
+        { priority: MEMBER_REFRESH_PRIORITY.BACKGROUND, attempts: 1 },
+      );
+
+      let state = await job.getState();
+
+      while (!["delayed", "failed", "completed"].includes(state)) {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        state = await job.getState();
+      }
+
+      expect(state).toBe("delayed");
+      lockOwner = null;
+      await completed;
+
+      const finished = await queue.getJob(job.id ?? "");
+      expect(await finished?.getState()).toBe("completed");
+      expect(finished?.opts.priority).toBe(MEMBER_REFRESH_PRIORITY.BACKGROUND);
+    } finally {
+      await worker.close();
+      await queue.obliterate({ force: true });
+      await queue.close();
+    }
+
+    expect(failures).toEqual([]);
+    expect(synced).toEqual(["guild-2"]);
+    expect(outcomes).toContain("delayed");
+    expect(outcomes).toContain("processed");
+    expect(outcomes).not.toContain("failed");
+  }, 15_000);
 
   it("marks failed bulk work in the database and keeps the failure observable to the worker", async () => {
     const failure = new MessagingError({

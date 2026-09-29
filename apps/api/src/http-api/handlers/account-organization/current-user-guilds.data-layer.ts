@@ -33,7 +33,8 @@ export interface CurrentUserGuildPorts {
   }) => Effect.Effect<unknown, unknown>;
   /**
    * Serves the list from a cache unless `refresh` is set. `fresh` is false for
-   * a cached list, which may miss a server the user has joined since.
+   * a cached list, which may miss a server the user has joined since. `stale`
+   * marks a list past its max age that is shown while it is replaced.
    */
   readonly discordGuilds: (
     identity: AuthenticatedIdentity,
@@ -42,6 +43,7 @@ export interface CurrentUserGuildPorts {
     {
       readonly guilds: ReadonlyArray<RESTAPIPartialCurrentUserGuild>;
       readonly fresh: boolean;
+      readonly stale: boolean;
     },
     unknown
   >;
@@ -254,8 +256,11 @@ export const makeCurrentUserGuilds = (
               role.permissions.includes(Permission.LOOTLOG_ACCESS),
             )),
         ),
+        // A list past its max age may still show a departed Organization
+        // or miss a new one, so every entry from it is reported stale.
         isAccessDataStale: Boolean(
-          !owner && (!lastSync || lastSync.getTime() < staleThreshold),
+          discordGuilds.stale ||
+          (!owner && (!lastSync || lastSync.getTime() < staleThreshold)),
         ),
       };
     });
