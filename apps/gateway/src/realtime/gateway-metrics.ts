@@ -5,6 +5,7 @@ import type {
   RedisGatewayStore,
 } from "#src/platform/redis-store";
 import type { CommandIngress } from "#src/realtime/command-ingress";
+import type { JoinAdmission } from "#src/realtime/join-admission";
 import {
   FEDERATION_VERSION,
   type RealtimeHub,
@@ -80,6 +81,8 @@ const runtimeGauges = {
   bytes: Metric.gauge("lootlog_gateway_commands_retained_bytes"),
   rejected: Metric.gauge("lootlog_gateway_commands_rejected_total"),
   maxConnectionPending: Metric.gauge("lootlog_gateway_commands_connection_max"),
+  joinsActive: Metric.gauge("lootlog_gateway_joins_active"),
+  joinsRejected: Metric.gauge("lootlog_gateway_joins_rejected_total"),
   bufferedBytes: Metric.gauge("lootlog_gateway_sockets_buffered_bytes"),
   maxBufferedBytes: Metric.gauge("lootlog_gateway_socket_buffered_bytes_max"),
 };
@@ -94,6 +97,7 @@ export class GatewayRuntimeMetrics {
       "getLocalSockets" | "unavailableReason"
     >,
     private readonly ingress: Pick<CommandIngress, "getDiagnostics">,
+    private readonly joins: Pick<JoinAdmission, "getDiagnostics">,
   ) {}
 
   readonly sample = Effect.fnUntraced(function* (this: GatewayRuntimeMetrics) {
@@ -110,6 +114,7 @@ export class GatewayRuntimeMetrics {
       available: this.hub.unavailableReason() === undefined ? 1 : 0,
       ...this.redis.getDiagnostics(),
       ...this.ingress.getDiagnostics(),
+      ...this.joins.getDiagnostics(),
       bufferedBytes,
       maxBufferedBytes,
     };

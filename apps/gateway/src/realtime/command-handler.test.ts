@@ -13,6 +13,7 @@ import { TestClock } from "effect/testing";
 import { createGatewayWebSocket } from "#src/app";
 import { CommandHandler } from "./command-handler.js";
 import { CommandIngress } from "./command-ingress.js";
+import { JoinAdmission } from "./join-admission.js";
 import { canReadSourceEvent } from "./source-event-visibility.js";
 import {
   decodeServerEvent,
@@ -188,6 +189,7 @@ const setup = (
   updateSubscription: AirTagService["updateSubscription"] = () =>
     Promise.reject(new Error("Unexpected air tag subscribe")),
   realtimeHub?: ConstructorParameters<typeof CommandHandler>[3],
+  joinAdmission?: JoinAdmission,
 ) => {
   const guilds = new FakeGuildStore();
   const hub = new FakeHub();
@@ -211,6 +213,7 @@ const setup = (
       fetchMapThreats: () =>
         Promise.reject(new Error("Unexpected map threat fetch")),
     },
+    joinAdmission,
   );
 
   return { handler, guilds, hub, activity, presence };
@@ -923,6 +926,94 @@ describe("CommandHandler session lifecycle", () => {
     expect(hub.responses).toContainEqual(
       expect.objectContaining({ requestId: "request-1", status: "success" }),
     );
+  });
+
+  test("joins over replica capacity get a retry delay without reading permissions", async () => {
+    const gate = Promise.withResolvers<void>();
+    let requests = 0;
+    let now = 0;
+
+    const store = makeGuildStore(
+      { apiUrl: "http://api.local" },
+      makeGuildStoreRedis({ discordId: "discord-1", userId: "user-1" }).store,
+      httpClientFromResponses(() =>
+        Effect.promise(async () => {
+          requests++;
+          await gate.promise;
+
+          return Response.json([guild()]);
+        }),
+      ),
+    );
+
+    const { handler, hub } = setup(
+      store,
+      undefined,
+      undefined,
+      new JoinAdmission(
+        {
+          ratePerSecond: 1,
+          burst: 2,
+          concurrent: 1,
+          retryAfterMs: { min: 1_000, max: 5_000 },
+        },
+        () => now,
+        () => 0.5,
+      ),
+    );
+
+    const join = (requestId: string) => {
+      const { socket } = makeSocket();
+
+      return handler.handle(
+        socket,
+        Buffer.from(
+          encode({ v: 1, type: "session.join", requestId, data: {} }),
+        ),
+      );
+    };
+
+    const running = Effect.runPromise(join("running"));
+
+    while (requests === 0) await Bun.sleep(1);
+    // A second join waits for the running one instead of adding API load.
+    await Effect.runPromise(join("concurrent"));
+    gate.resolve();
+    await running;
+    await Effect.runPromise(join("admitted"));
+    // The burst is spent; a token refills after one second.
+    await Effect.runPromise(join("drained"));
+    now = 1_000;
+    await Effect.runPromise(join("refilled"));
+
+    expect(
+      hub.responses.map((response) =>
+        Predicate.hasProperty(response, "error")
+          ? { error: response.error }
+          : "joined",
+      ),
+    ).toEqual([
+      {
+        error: {
+          code: "COMMAND_REJECTED",
+          message: "gateway is busy",
+          retryable: true,
+          retryAfterMs: 3_000,
+        },
+      },
+      "joined",
+      "joined",
+      {
+        error: {
+          code: "COMMAND_REJECTED",
+          message: "gateway is busy",
+          retryable: true,
+          retryAfterMs: 3_000,
+        },
+      },
+      "joined",
+    ]);
+    expect(requests).toBe(1);
   });
 
   test("supports deterministic rejoin and emits request/response plus joined events", async () => {

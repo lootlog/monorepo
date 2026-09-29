@@ -57,11 +57,12 @@ import { ActivityPublisher } from "#src/rabbit/activity-publisher";
 import { CoveragePublisher } from "#src/rabbit/coverage-publisher";
 import { CommandHandler } from "#src/realtime/command-handler";
 import { CommandIngress } from "#src/realtime/command-ingress";
+import { JoinAdmission } from "#src/realtime/join-admission";
 import { AirTagService } from "#src/realtime/air-tag-service";
 import { MapPingService } from "#src/realtime/map-ping-service";
 import { BattlePingService } from "#src/realtime/battle-ping-service";
 import { PresenceStore } from "#src/realtime/presence-store";
-import { RealtimeHub } from "#src/realtime/realtime-hub";
+import { closeGradually, RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 
 export interface GatewayApplicationService {
@@ -167,6 +168,7 @@ class GatewayApplication extends Context.Service<
       const battlePings = new BattlePingService(redis, hub);
       const airTags = new AirTagService(redis, hub);
       const guilds = makeGuildStore(config, redis, httpClient);
+      const joinAdmission = new JoinAdmission();
 
       const commands = new CommandHandler(
         guilds,
@@ -177,6 +179,7 @@ class GatewayApplication extends Context.Service<
         mapPings,
         battlePings,
         airTags,
+        joinAdmission,
       );
 
       const ingress = new CommandIngress(
@@ -215,7 +218,7 @@ class GatewayApplication extends Context.Service<
         runBackground,
       );
 
-      yield* new GatewayRuntimeMetrics(redis, hub, ingress)
+      yield* new GatewayRuntimeMetrics(redis, hub, ingress, joinAdmission)
         .run()
         .pipe(Effect.forkScoped);
 
@@ -590,8 +593,6 @@ const localDrainTiming: DrainTiming = {
   cleanup: "2 seconds",
 };
 
-const DRAIN_BATCH_INTERVAL = Duration.millis(100);
-
 /** Moves every local session to another replica before the server stops. */
 export const drainGateway = (
   application: Pick<GatewayApplicationService, "hub" | "ingress">,
@@ -606,26 +607,11 @@ export const drainGateway = (
     );
     yield* Effect.sleep(timing.endpointRemoval);
 
-    const sockets = application.hub.getLocalSockets();
-
-    const batchSize = Math.max(
-      1,
-      Math.ceil(
-        sockets.length /
-          Math.max(
-            1,
-            Duration.toMillis(timing.closeSpread) /
-              Duration.toMillis(DRAIN_BATCH_INTERVAL),
-          ),
-      ),
+    yield* closeGradually(
+      application.hub.getLocalSockets(),
+      Duration.toMillis(timing.closeSpread),
+      (socket) => socket.close(1012, "gateway restarting"),
     );
-
-    for (let index = 0; index < sockets.length; index += batchSize) {
-      if (index > 0) yield* Effect.sleep(DRAIN_BATCH_INTERVAL);
-
-      for (const socket of sockets.slice(index, index + batchSize))
-        socket.close(1012, "gateway restarting");
-    }
 
     const cleaned = yield* Effect.sleep("50 millis").pipe(
       Effect.repeat({

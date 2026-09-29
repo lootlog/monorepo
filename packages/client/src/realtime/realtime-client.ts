@@ -160,6 +160,7 @@ export class RealtimeClient {
     readonly promise: Promise<unknown>;
   } | null = null;
   private reconnectAttempt = 0;
+  private reconnectNotBeforeMs = 0;
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
   private heartbeatTimeout: ReturnType<typeof setTimeout> | null = null;
   private presenceSessionId: string | null = null;
@@ -479,6 +480,10 @@ export class RealtimeClient {
           this.clearReconnect();
         }
 
+        // A busy gateway spreads rejoins with the delay it asked for.
+        if (error instanceof RealtimeRequestError && error.retryable)
+          this.reconnectNotBeforeMs = error.retryAfterMs ?? 0;
+
         socket.close(
           REALTIME_CLIENT_CLOSE_CODES.sessionJoinFailed,
           "session join failed",
@@ -569,7 +574,12 @@ export class RealtimeClient {
       this.reconnectBaseDelayMs * 2 ** (this.reconnectAttempt - 1),
     );
 
-    const jittered = Math.round(exponential * (0.5 + this.random()));
+    const jittered = Math.max(
+      Math.round(exponential * (0.5 + this.random())),
+      this.reconnectNotBeforeMs,
+    );
+
+    this.reconnectNotBeforeMs = 0;
     this.setState("reconnecting");
     this.reconnectTimeout = setTimeout(
       () => this.open("reconnecting"),
