@@ -17,6 +17,7 @@ import { portalText as t } from "~/lib/translations";
 
 export const Route = createFileRoute("/keys")({
   ssr: false,
+  head: () => ({ meta: [{ name: "robots", content: "noindex, follow" }] }),
   component: KeysPage,
 });
 

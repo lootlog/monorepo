@@ -27,6 +27,15 @@ const configuration = {
 
 export const Route = createFileRoute("/reference")({
   ssr: false,
+  head: () => ({
+    meta: [
+      { title: `${t.reference} | Lootlog` },
+      { name: "description", content: t.referenceDescription },
+    ],
+    links: [
+      { rel: "canonical", href: "https://developer.lootlog.pl/reference" },
+    ],
+  }),
   component: ReferencePage,
 });
 

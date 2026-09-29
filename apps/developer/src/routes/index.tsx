@@ -1,7 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { portalText as t } from "~/lib/translations";
 
-export const Route = createFileRoute("/")({ component: Overview });
+export const Route = createFileRoute("/")({
+  head: () => ({
+    links: [{ rel: "canonical", href: "https://developer.lootlog.pl/" }],
+  }),
+  component: Overview,
+});
 
 const steps = [
   {
