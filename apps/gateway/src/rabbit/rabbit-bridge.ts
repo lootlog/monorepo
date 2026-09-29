@@ -270,6 +270,21 @@ const gatewayDeadLetterSpecs = gatewayConsumerSpecs.flatMap((spec) =>
     : [],
 );
 
+// Identifies a dead-lettered delivery without logging its payload or any
+// member's Discord ID.
+const decodeDeadLetterIdentifiers = Schema.decodeUnknownOption(
+  Schema.fromJsonString(
+    Schema.Struct({
+      guildId: Schema.optionalKey(Schema.String),
+      notificationId: Schema.optionalKey(Schema.String),
+      revision: Schema.optionalKey(Schema.Number),
+      update: Schema.optionalKey(
+        Schema.Struct({ type: Schema.optionalKey(Schema.String) }),
+      ),
+    }),
+  ),
+);
+
 const record = Schema.decodeUnknownSync(
   Schema.Record(Schema.String, Schema.Unknown),
 );
@@ -286,6 +301,45 @@ const organizationEvent = <Payload>(
 ): OrganizationEvent & {
   data: { organizationId: string; payload: Payload };
 } => ({ v: 1, type, data: { organizationId, payload } });
+
+type GatheringUpdateEnvelope = CanonicalRabbitEvent<
+  typeof RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED
+>;
+
+// Names the first envelope field the update disagrees with, never its value.
+const gatheringUpdateMismatch = (
+  data: GatheringUpdateEnvelope,
+): string | undefined => {
+  const update = data.update;
+
+  if (!data.guildIds.includes(data.guildId)) return "guildIds";
+
+  if (update.type === "REMOVE") {
+    if (update.notificationId !== data.notificationId) return "notificationId";
+
+    return update.revision === data.revision ? undefined : "revision";
+  }
+
+  const gathering = update.gathering;
+
+  if (gathering.notificationId !== data.notificationId) return "notificationId";
+
+  if (gathering.world !== data.world) return "world";
+
+  if (gathering.revision !== data.revision) return "revision";
+
+  if (!gathering.guildIds.includes(data.guildId)) return "gathering.guildIds";
+
+  if (gathering.npc?.lvl !== data.npc?.lvl) return "npc.lvl";
+
+  if (
+    gathering.npc?.type !== undefined &&
+    gathering.npc.type !== data.npc?.type
+  )
+    return "npc.type";
+
+  return undefined;
+};
 
 export class RabbitBridge {
   private consumers: RabbitConsumer[] = [];
@@ -336,15 +390,29 @@ export class RabbitBridge {
             prefetch: 1,
             failurePolicy: { strategy: "requeue" },
           },
-          (delivery) =>
-            Effect.logError("Gateway RabbitMQ delivery reached DLQ").pipe(
+          (delivery) => {
+            const identifiers = Option.getOrUndefined(
+              decodeDeadLetterIdentifiers(
+                new TextDecoder().decode(delivery.content),
+              ),
+            );
+
+            return Effect.logError(
+              "Gateway RabbitMQ delivery reached DLQ",
+            ).pipe(
               Effect.annotateLogs({
                 queue: spec.queue,
                 routingKey: spec.routingKey,
+                messageId: delivery.properties.messageId,
                 retryCount:
                   delivery.properties.headers?.["x-lootlog-retry-count"] ?? 0,
+                guildId: identifiers?.guildId,
+                notificationId: identifiers?.notificationId,
+                revision: identifiers?.revision,
+                updateType: identifiers?.update?.type,
               }),
-            ),
+            );
+          },
         );
 
         consumers.push(consumer);
@@ -584,28 +652,17 @@ export class RabbitBridge {
   }
 
   private publishGatheringUpdate(
-    data: CanonicalRabbitEvent<
-      typeof RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED
-    >,
+    data: GatheringUpdateEnvelope,
     messageId?: string,
   ): Effect.Effect<void, unknown> {
     const update = data.update;
+    const mismatch = gatheringUpdateMismatch(data);
 
-    const validUpdate =
-      update.type === "REMOVE"
-        ? update.notificationId === data.notificationId &&
-          update.revision === data.revision
-        : update.gathering.notificationId === data.notificationId &&
-          update.gathering.world === data.world &&
-          update.gathering.revision === data.revision &&
-          update.gathering.guildIds.includes(data.guildId) &&
-          update.gathering.npc?.lvl === data.npc?.lvl &&
-          (update.gathering.npc?.type === undefined ||
-            update.gathering.npc.type === data.npc?.type);
-
-    if (!data.guildIds.includes(data.guildId) || !validUpdate)
+    if (mismatch)
       return Effect.fail(
-        new Error("Gathering update does not match its source"),
+        new Error(
+          `Gathering update does not match its source: ${mismatch} differs`,
+        ),
       );
 
     if (
@@ -613,7 +670,9 @@ export class RabbitBridge {
       PARTY_GATHERING_STATE_FEDERATION_VERSION
     )
       return Effect.fail(
-        new Error("Gathering state federation rollout is incomplete"),
+        new Error(
+          `Gathering state federation rollout is incomplete: cluster version ${this.hub.clusterFederationVersion}, required ${PARTY_GATHERING_STATE_FEDERATION_VERSION}`,
+        ),
       );
 
     const clientUpdate: typeof update =

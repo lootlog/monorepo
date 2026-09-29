@@ -1,7 +1,7 @@
 import { describe, expect, mock, test } from "bun:test";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { ConsumeMessage, Options } from "amqplib";
-import { Deferred, Effect, Fiber } from "effect";
+import { Cause, Deferred, Effect, Fiber, Logger, References } from "effect";
 import {
   RabbitMessaging,
   UnprocessableDelivery,
@@ -241,6 +241,20 @@ describe("RabbitMessaging", () => {
   test("routes failures through retry and then the dead-letter exchange", async () => {
     const { channel, ack, publish, dispatch } = makeChannel();
 
+    const logs: Array<{
+      readonly logLevel: string;
+      readonly cause: string;
+      readonly annotations: unknown;
+    }> = [];
+
+    const logger = Logger.make(({ logLevel, cause, fiber }) => {
+      logs.push({
+        logLevel,
+        cause: Cause.pretty(cause),
+        annotations: fiber.getRef(References.CurrentLogAnnotations),
+      });
+    });
+
     await runWithChannel(
       channel,
       Effect.gen(function* () {
@@ -255,7 +269,7 @@ describe("RabbitMessaging", () => {
               deadLetterRoutingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE_DLQ,
             },
           },
-          () => Effect.fail("failed"),
+          () => Effect.fail(new Error("update does not match its source")),
         );
 
         dispatch(makeMessage());
@@ -265,8 +279,27 @@ describe("RabbitMessaging", () => {
         exhausted.properties.headers = { "x-lootlog-retry-count": 1 };
         dispatch(exhausted);
         yield* Effect.sleep(1);
-      }),
+      }).pipe(Effect.provide(Logger.layer([logger]))),
     );
+
+    // The broker keeps only the payload, so the log is the only record of why.
+    expect(logs).toMatchObject([
+      {
+        logLevel: "Warn",
+        cause: expect.stringContaining("update does not match its source"),
+        annotations: {
+          queue: "test-queue",
+          messageId: "message-1",
+          retryCount: 0,
+          disposition: "retry",
+        },
+      },
+      {
+        logLevel: "Error",
+        cause: expect.stringContaining("update does not match its source"),
+        annotations: { retryCount: 1, disposition: "dead-letter" },
+      },
+    ]);
 
     expect(publish.mock.calls[0]?.[0]).toBe("retry");
     expect(publish.mock.calls[0]?.[1]).toBe("guilds.loots.create.retry");
