@@ -252,6 +252,14 @@ const isGuildNotFoundError = (cause: unknown) =>
   cause instanceof DiscordAPIError &&
   [10_004, 50_001].includes(Number(cause.code));
 
+const roleSnapshot = (role: Role): GuildCreated["roles"][number] => ({
+  id: role.id,
+  name: role.name,
+  color: role.color,
+  admin: (role.permissions.bitfield & 0x8n) === 0x8n,
+  position: role.position,
+});
+
 export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
   const logger = new AppLogger("DiscordSync");
   const guildLocks = new Map<string, Semaphore.Semaphore>();
@@ -510,13 +518,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
         name: guild.name,
         icon: guild.iconURL(),
         ownerId: guild.ownerId,
-        roles: roles.map((role) => ({
-          id: role.id,
-          name: role.name,
-          color: role.color,
-          admin: (role.permissions.bitfield & 0x8n) === 0x8n,
-          position: role.position,
-        })),
+        roles: roles.map(roleSnapshot),
       } satisfies GuildCreated);
     }).pipe(
       Effect.mapError((cause) =>
@@ -579,11 +581,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
 
   const rolePayload = (role: Role): GuildRoleChanged => ({
     guildId: role.guild.id,
-    id: role.id,
-    name: role.name,
-    color: role.color,
-    position: role.position,
-    admin: (role.permissions.bitfield & 0x8n) === 0x8n,
+    ...roleSnapshot(role),
   });
 
   const handleGuildRoleCreate = (role: Role) =>
