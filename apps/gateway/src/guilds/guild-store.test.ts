@@ -3,6 +3,7 @@ import { makeGuildStoreRedis } from "../../test/guild-store-fixtures.js";
 import { describe, expect, mock, test } from "bun:test";
 import { Effect, Fiber } from "effect";
 import { TestClock } from "effect/testing";
+import { getUserGuildsCacheKey } from "./cache-keys.js";
 import { makeGuildStore } from "./guild-store.js";
 
 const config = { apiUrl: "http://api.local" };
@@ -91,7 +92,7 @@ describe("Gateway guild store", () => {
     expect(get).toHaveBeenCalledTimes(1);
   });
 
-  test.each([null, Date.now() - 301_000])(
+  test.each([null, Date.now() - 901_000])(
     "reports a retryable API outage instead of an empty membership with cache timestamp %s",
     async (cachedAt) => {
       const redis = makeGuildStoreRedis(
@@ -114,12 +115,12 @@ describe("Gateway guild store", () => {
         status: 503,
         retryable: true,
       });
-      expect(get).toHaveBeenCalledTimes(4);
+      expect(get).toHaveBeenCalledTimes(3);
       expect(redis.commits).toEqual([]);
     },
   );
 
-  test("uses a bounded stale projection during an outage without renewing its age", async () => {
+  test("serves a bounded stale projection during an outage without renewing its age", async () => {
     const stale = JSON.stringify({ guilds, cachedAt: Date.now() - 90_000 });
     const redis = makeGuildStoreRedis(options, stale);
 
@@ -172,7 +173,7 @@ describe("Gateway guild store", () => {
     await expect(
       Effect.runPromise(store.getUserGuilds(options)),
     ).resolves.toEqual([]);
-    expect(get).toHaveBeenCalledTimes(5);
+    expect(get).toHaveBeenCalledTimes(4);
   });
 
   test("invalidation blocks cached grants during an API outage", async () => {
@@ -208,10 +209,7 @@ describe("Gateway guild store", () => {
   });
 
   test("a failed in-flight request cannot fall back to permissions invalidated by another instance", async () => {
-    const redis = makeGuildStoreRedis(
-      options,
-      JSON.stringify({ guilds, cachedAt: Date.now() - 120_000 }),
-    );
+    const redis = makeGuildStoreRedis(options);
 
     const started = Promise.withResolvers<void>();
     const response = Promise.withResolvers<Response>();
@@ -233,6 +231,11 @@ describe("Gateway guild store", () => {
     );
 
     await started.promise;
+    // Another gateway fills the projection, then a revocation invalidates it.
+    await redis.store.command.set(
+      getUserGuildsCacheKey(options.discordId, options.userId),
+      JSON.stringify({ guilds, cachedAt: Date.now() }),
+    );
     await Effect.runPromise(store.invalidate(options));
     response.resolve(httpResponse(404, {}));
 
@@ -314,19 +317,10 @@ describe("Gateway guild store", () => {
     },
   );
 
-  test("propagates interruption to the permissions request", async () => {
+  test("concurrent joins of one user share a single permissions request", async () => {
     const redis = makeGuildStoreRedis(options);
-    let interrupted = false;
-
-    const get = mock(() =>
-      Effect.never.pipe(
-        Effect.onInterrupt(() =>
-          Effect.sync(() => {
-            interrupted = true;
-          }),
-        ),
-      ),
-    );
+    const response = Promise.withResolvers<Response>();
+    const get = mock(() => Effect.promise(() => response.promise));
 
     const store = makeGuildStore(
       config,
@@ -334,12 +328,80 @@ describe("Gateway guild store", () => {
       httpClientFromResponses(get),
     );
 
-    const fiber = Effect.runFork(store.getUserGuilds(options));
+    const joins = Promise.all(
+      Array.from({ length: 5 }, () =>
+        Effect.runPromise(store.getUserGuilds(options)),
+      ),
+    );
 
-    while (get.mock.calls.length === 0) await Promise.resolve();
+    while (get.mock.calls.length === 0)
+      await new Promise((resolve) => setTimeout(resolve, 1));
+    response.resolve(httpResponse(200, guilds));
 
-    await Effect.runPromise(Fiber.interrupt(fiber));
+    await expect(joins).resolves.toEqual(Array(5).fill(guilds));
+    expect(get).toHaveBeenCalledTimes(1);
+    expect(redis.commits).toHaveLength(1);
+  });
 
-    expect(interrupted).toBe(true);
+  test("a join that observed an invalidation does not wait for an older request", async () => {
+    const redis = makeGuildStoreRedis(options);
+    const obsolete = Promise.withResolvers<Response>();
+    let calls = 0;
+
+    const store = makeGuildStore(
+      config,
+      redis.store,
+      httpClientFromResponses(() => {
+        calls += 1;
+
+        return calls === 1
+          ? Effect.promise(() => obsolete.promise)
+          : Effect.succeed(httpResponse(200, []));
+      }),
+    );
+
+    const first = Effect.runPromise(store.getUserGuilds(options));
+
+    while (calls === 0) await new Promise((resolve) => setTimeout(resolve, 1));
+    await Effect.runPromise(store.invalidate(options));
+
+    await expect(
+      Effect.runPromise(store.getUserGuilds(options)),
+    ).resolves.toEqual([]);
+
+    // The fenced response is discarded; the first join gets current access.
+    obsolete.resolve(httpResponse(200, guilds));
+    await expect(first).resolves.toEqual([]);
+    expect(calls).toBe(2);
+  });
+
+  test("serves an aged projection immediately and refreshes it for the next join", async () => {
+    const redis = makeGuildStoreRedis(
+      options,
+      JSON.stringify({ guilds, cachedAt: Date.now() - 90_000 }),
+    );
+
+    const response = Promise.withResolvers<Response>();
+    const get = mock(() => Effect.promise(() => response.promise));
+
+    const store = makeGuildStore(
+      config,
+      redis.store,
+      httpClientFromResponses(get),
+    );
+
+    await expect(
+      Effect.runPromise(store.getUserGuilds(options)),
+    ).resolves.toEqual(guilds);
+
+    response.resolve(httpResponse(200, []));
+
+    while (redis.commits.length === 0)
+      await new Promise((resolve) => setTimeout(resolve, 1));
+
+    await expect(
+      Effect.runPromise(store.getUserGuilds(options)),
+    ).resolves.toEqual([]);
+    expect(get).toHaveBeenCalledTimes(1);
   });
 });
