@@ -27,6 +27,7 @@ import {
 } from "#src/kills/guild-kill-activity";
 import { makeKillCreation } from "#src/kills/kill-creation";
 import { applicationLogger } from "#src/shared/application-logger";
+import type { UserFeedQuery } from "#src/contracts/users/feed-schemas";
 
 const client = new Client({ connectionString: requireIsolatedTestDatabase() });
 
@@ -104,6 +105,30 @@ const kill = (
     occurredAt: recent,
     ...overrides,
   });
+
+const insertLoot = async (
+  guildId: string,
+  npc: { npcId: number; type: string },
+  recordedAt: Date,
+) => {
+  const [loot] = Schema.decodeUnknownSync(
+    Schema.Array(Schema.Struct({ id: Schema.Number })),
+  )(
+    (
+      await client.query(
+        `WITH loot AS (INSERT INTO "Loot" ("uniqueId",world,source,location,"updatedAt") VALUES ($1,'tempest','FIGHT','map',now()) RETURNING id),
+        npc AS (INSERT INTO "NpcSnapshot" ("npcId",name,type,lvl,prof) VALUES ($2,$1,$3::"NpcType",100,'WARRIOR') RETURNING id),
+        linked AS (INSERT INTO "LootNpc" ("lootId","npcSnapshotId") SELECT loot.id, npc.id FROM loot, npc)
+        INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt") SELECT id,$4,$5,now() FROM loot RETURNING "lootId" AS id`,
+        [randomUUID(), npc.npcId, npc.type, guildId, recordedAt],
+      )
+    ).rows,
+  );
+
+  if (!loot) throw new Error("Missing loot");
+
+  return loot.id;
+};
 
 describe("personal Organization activity feed", () => {
   beforeAll(async () => {
@@ -311,6 +336,63 @@ describe("personal Organization activity feed", () => {
       [loot.id],
     );
     expect((await run(makeUserFeed(database)(owner))).items).toEqual([]);
+  });
+  it("links a loot to its NPC kill, filters linked groups together and counts each pair once", async () => {
+    const { guild, owner } = await seed();
+    const lootAt = (offset: number) => new Date(recent.getTime() + offset);
+    await run(kill(guild.id, { npcId: 7, npcType: "HERO" }));
+
+    const linkedLoot = await insertLoot(
+      guild.id,
+      { npcId: 7, type: "HERO" },
+      lootAt(5000),
+    );
+
+    const lateLoot = await insertLoot(
+      guild.id,
+      { npcId: 7, type: "HERO" },
+      lootAt(10 * 60000),
+    );
+
+    await run(kill(guild.id, { npcId: 9, npcType: "ELITE2" }));
+
+    const feed = (query: UserFeedQuery = {}) =>
+      run(makeUserFeed(database)(owner, query)).then(({ items }) =>
+        items.map((item) =>
+          item.type === "kill" ? `kill:${item.npc.id}` : `loot:${item.lootId}`,
+        ),
+      );
+
+    expect(await feed({ withLootOnly: true })).toEqual(
+      expect.arrayContaining([
+        "kill:7",
+        `loot:${linkedLoot}`,
+        `loot:${lateLoot}`,
+      ]),
+    );
+    expect(await feed({ withLootOnly: true })).not.toContain("kill:9");
+    expect(await feed({ excludedNpcCategories: ["HERO"] })).toEqual(["kill:9"]);
+    expect(await feed({ excludedGuildIds: [guild.id] })).toEqual([]);
+
+    const busy = await seed();
+
+    for (let npcId = 100; npcId < 121; npcId += 1) {
+      await run(
+        kill(busy.guild.id, {
+          npcId,
+          occurredAt: new Date(recent.getTime() + npcId * 1000),
+        }),
+      );
+      await insertLoot(
+        busy.guild.id,
+        { npcId, type: "ELITE2" },
+        new Date(recent.getTime() + npcId * 1000 + 3000),
+      );
+    }
+
+    const pairs = await run(makeUserFeed(database)(busy.owner));
+    expect(pairs.items).toHaveLength(40);
+    expect(new Set(pairs.items.map((item) => item.npc?.id))).not.toContain(100);
   });
   it("publishes the same versioned group as HTTP with all source visibility metadata", async () => {
     const { guild, owner } = await seed();
@@ -576,7 +658,16 @@ describe("personal Organization activity feed", () => {
       `INSERT INTO "GuildKillActivity" (id,"guildId",world,"npcId","npcName","npcType","npcLvl","occurredAt") SELECT $1||n,CASE WHEN n<=90000 THEN $2 ELSE $3 END,'tempest',n%200,'NPC',CASE WHEN n%2=0 THEN 'ELITE2'::"NpcType" ELSE 'HERO'::"NpcType" END,100,now()-(n%86400)*interval '1 second' FROM generate_series(1,270000)n`,
       [randomUUID(), guild.id, other.guild.id],
     );
-    await client.query(`ANALYZE "GuildKillActivity"`);
+    await client.query(
+      `WITH npcs AS (INSERT INTO "NpcSnapshot" ("npcId",name,type,lvl) SELECT n,'NPC '||n||$2,CASE WHEN n%2=0 THEN 'ELITE2'::"NpcType" ELSE 'HERO'::"NpcType" END,100 FROM generate_series(0,199)n RETURNING id,"npcId"),
+      loots AS (INSERT INTO "Loot" ("uniqueId",world,source,location,"updatedAt") SELECT $2||n,'tempest','FIGHT','map',now() FROM generate_series(1,30000)n RETURNING id),
+      linked AS (INSERT INTO "LootNpc" ("lootId","npcSnapshotId") SELECT loots.id, npcs.id FROM loots JOIN npcs ON npcs."npcId"=loots.id%200)
+      INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt") SELECT id,$1,now()-(id%86400)*interval '1 second',now() FROM loots`,
+      [guild.id, randomUUID()],
+    );
+    await client.query(
+      `ANALYZE "GuildKillActivity"; ANALYZE "OrganizationLootRecord"; ANALYZE "LootNpc"; ANALYZE "NpcSnapshot"`,
+    );
 
     const query = buildUserFeedQuery(
       [{ guild, roles: [role] }],
@@ -607,15 +698,13 @@ describe("personal Organization activity feed", () => {
     );
 
     process.stdout.write(
-      `feed fixture270krows,90kscoped executionms ${explain?.["Execution Time"]}, storage ${JSON.stringify(storage.rows)}\n`,
+      `feed fixture270krows,90kscoped,30kloots executionms ${explain?.["Execution Time"]}, storage ${JSON.stringify(storage.rows)}\n`,
     );
     const feed = await run(makeUserFeed(database)(reader));
-    expect(feed.items).toHaveLength(20);
-    expect(
-      feed.items.every(
-        (item) => item.type === "kill" && item.npc.type === "ELITE2",
-      ),
-    ).toBe(true);
-    expect(JSON.stringify(feed).length).toBeLessThan(18000);
+    // Twenty groups, each at most one kill and its linked loot.
+    expect(feed.items.length).toBeGreaterThanOrEqual(20);
+    expect(feed.items.length).toBeLessThanOrEqual(40);
+    expect(feed.items.every((item) => item.npc?.type === "ELITE2")).toBe(true);
+    expect(JSON.stringify(feed).length).toBeLessThan(60000);
   }, 60_000);
 });
