@@ -77,6 +77,7 @@ export class MapThreatSource {
   private readonly mapListeners = new Map<string, Set<Listener>>();
   private timer: ReturnType<typeof setTimeout> | null = null;
   private references = 0;
+  private active = false;
   private fetchId = 0;
   private readable = false;
   private releaseMembers: (() => void) | null = null;
@@ -100,7 +101,8 @@ export class MapThreatSource {
   retain = (): (() => void) => {
     this.references += 1;
 
-    if (this.references === 1) this.start();
+    // A subscription replaced in the same commit keeps the running source and its snapshot.
+    if (!this.active) this.start();
     let retained = true;
 
     return () => {
@@ -145,6 +147,7 @@ export class MapThreatSource {
   }
 
   private start(): void {
+    this.active = true;
     this.socket.on(GatewayEvent.AIR_TAG_MAP_THREAT_UPDATE, this.apply);
     this.socket.on(GatewayEvent.PERMISSIONS_UPDATED, this.handleAccessChange);
     this.socket.on(GatewayEvent.JOIN, this.handleJoin);
@@ -158,6 +161,8 @@ export class MapThreatSource {
   }
 
   private stop(): void {
+    if (!this.active) return;
+    this.active = false;
     this.socket.off(GatewayEvent.AIR_TAG_MAP_THREAT_UPDATE, this.apply);
     this.socket.off(GatewayEvent.PERMISSIONS_UPDATED, this.handleAccessChange);
     this.socket.off(GatewayEvent.JOIN, this.handleJoin);
