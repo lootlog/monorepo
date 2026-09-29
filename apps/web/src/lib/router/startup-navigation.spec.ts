@@ -7,7 +7,6 @@ import {
   getLastOrganization,
   rememberOrganization,
 } from "@/lib/last-organization";
-import { createInitialNavigation } from "@/lib/router/initial-navigation";
 import { useAuthRecoveryStore } from "@/store/auth-recovery.store";
 import {
   getGuildsControllerGetGuildByIdQueryKey,
@@ -24,11 +23,10 @@ import {
   createRouter,
 } from "@tanstack/react-router";
 import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
-import { Route as RootRoute } from "../../routes/__root";
 import { Route as AuthenticatedRoute } from "../../routes/_authenticated";
 import { Route as OrganizationRoute } from "../../routes/_authenticated/$guildId";
 import { Route as OrganizationIndexRoute } from "../../routes/_authenticated/$guildId/index";
-import { Route as DashboardRoute } from "../../routes/_authenticated/@me/index";
+import { Route as PersonalPanelRoute } from "../../routes/_authenticated/@me";
 import { Route as SigninRoute } from "../../routes/signin";
 
 const authFetch = vi.hoisted(() => {
@@ -96,7 +94,7 @@ const memberFor = (
 });
 
 const createNavigation = ({
-  initialEntry = "/@me",
+  initialEntry = "/signin",
   userId = "user-1",
   permissions = [Capability.LOOTLOG_LOOTS_READ],
   organizationResponse,
@@ -154,9 +152,7 @@ const createNavigation = ({
 
   onTestFinished(restoreClient);
 
-  const root = createRootRouteWithContext<RouterContext>()({
-    beforeLoad: RootRoute.options.beforeLoad,
-  });
+  const root = createRootRouteWithContext<RouterContext>()();
 
   const authenticated = createRoute({
     getParentRoute: () => root,
@@ -174,27 +170,32 @@ const createNavigation = ({
     },
   });
 
-  const dashboard = createRoute({
+  const personalPanel = createRoute({
     getParentRoute: () => authenticated,
     path: "@me",
     beforeLoad: (context) => {
-      const beforeLoad = DashboardRoute.options.beforeLoad;
+      const beforeLoad = PersonalPanelRoute.options.beforeLoad;
 
-      if (!beforeLoad) throw new Error("Missing dashboard callback");
+      if (!beforeLoad) throw new Error("Missing personal panel callback");
 
-      // SAFETY: This route has the production authentication/root contexts;
-      // only the generated file route's parent/path metadata differs.
+      // SAFETY: This route has the production authentication context and
+      // destination location; only the generated route metadata differs.
       return beforeLoad({
         context: context.context,
+        location: context.location,
         preload: context.preload,
-        abortController: context.abortController,
       } as Parameters<typeof beforeLoad>[0]);
     },
   });
 
+  const dashboard = createRoute({
+    getParentRoute: () => personalPanel,
+    path: "/",
+  });
+
   const settings = createRoute({
-    getParentRoute: () => authenticated,
-    path: "@me/settings/account",
+    getParentRoute: () => personalPanel,
+    path: "settings/account",
   });
 
   const organization = createRoute({
@@ -275,26 +276,21 @@ const createNavigation = ({
     path: "battles/$battleId",
   });
 
-  const initialNavigation = createInitialNavigation();
-
   const router = createRouter({
     routeTree: root.addChildren([
       authenticated.addChildren([
-        dashboard,
-        settings,
+        personalPanel.addChildren([dashboard, settings]),
         organization.addChildren([index, timers]),
       ]),
       signin,
       invite,
       battle,
     ]),
-    context: { queryClient, initialNavigation },
+    context: { queryClient },
     history: createMemoryHistory({ initialEntries: [initialEntry] }),
     defaultPendingMs: 0,
     defaultPendingMinMs: 0,
   });
-
-  onTestFinished(initialNavigation.track(router));
 
   const requestCount = (path: string) =>
     apiFetch.mock.calls.filter(([input]) => {
@@ -307,9 +303,8 @@ const createNavigation = ({
 };
 
 it("remembers the last committed organization and restores it without fetching it twice", async () => {
-  const firstVisit = createNavigation();
+  const firstVisit = createNavigation({ initialEntry: "/42" });
   await firstVisit.router.load();
-  await firstVisit.router.navigate({ href: "/42" });
   await firstVisit.router.navigate({ href: "/43" });
   expect(getLastOrganization("user-1")).toBe("43");
 
@@ -346,50 +341,10 @@ it("restores the saved organization when the initial session lookup succeeds on 
   expect(router.state.matches.some((match) => match.status === "error")).toBe(
     true,
   );
-  expect(router.state.location.pathname).toBe("/@me");
+  expect(router.state.location.pathname).toBe("/signin");
 
   await router.invalidate();
   expect(router.state.location.pathname).toBe("/42");
-});
-
-it("does not restore the saved organization when leaving a failed initial page for the dashboard", async () => {
-  rememberOrganization("user-1", "42");
-
-  const { router, requestCount } = createNavigation({
-    initialEntry: "/43/timers",
-  });
-
-  authFetch.mockRejectedValueOnce(new TypeError("Failed to fetch"));
-
-  await router.load();
-  expect(router.state.matches.some((match) => match.status === "error")).toBe(
-    true,
-  );
-
-  await router.navigate({ href: "/@me" });
-  expect(router.state.location.pathname).toBe("/@me");
-  expect(requestCount("/guilds/42")).toBe(0);
-});
-
-it("keeps the dashboard after its completed startup fallback is revalidated", async () => {
-  rememberOrganization("user-1", "42");
-  let unavailable = true;
-
-  const { router, requestCount } = createNavigation({
-    organizationResponse: (path) =>
-      path === "/guilds/42" && unavailable
-        ? Response.json({ message: "Unavailable" }, { status: 503 })
-        : undefined,
-  });
-
-  await router.load();
-  expect(router.state.location.pathname).toBe("/@me");
-
-  unavailable = false;
-  await router.invalidate();
-  expect(router.state.location.pathname).toBe("/@me");
-  expect(requestCount("/guilds/42")).toBe(1);
-  expect(getLastOrganization("user-1")).toBe("42");
 });
 
 it("persists the canonical organization ID when visiting a vanity URL", async () => {
@@ -405,17 +360,10 @@ it("does not let link preloading change the remembered organization", async () =
   const { router } = createNavigation({ initialEntry: "/42" });
   await router.load();
   await router.preloadRoute({ to: "/$guildId", params: { guildId: "43" } });
+  await router.preloadRoute({ to: "/@me" });
   expect(getLastOrganization("user-1")).toBe("42");
   await router.navigate({ href: "/43" });
   expect(getLastOrganization("user-1")).toBe("43");
-});
-
-it("still restores the initial dashboard after an earlier route preload", async () => {
-  rememberOrganization("user-1", "42");
-  const { router } = createNavigation();
-  await router.preloadRoute({ to: "/$guildId", params: { guildId: "43" } });
-  await router.load();
-  expect(router.state.location.pathname).toBe("/42");
 });
 
 it("keeps a canceled organization load from overwriting the last completed visit", async () => {
@@ -436,10 +384,10 @@ it("keeps a canceled organization load from overwriting the last completed visit
   await router.load();
   const canceledNavigation = router.navigate({ href: "/43" });
   await vi.waitFor(() => expect(requestCount("/guilds/43")).toBe(1));
-  await router.navigate({ href: "/@me" });
+  await router.navigate({ href: "/42/timers" });
   finishRequest(Response.json(guildFor("43")));
   await canceledNavigation;
-  expect(router.state.location.pathname).toBe("/@me");
+  expect(router.state.location.pathname).toBe("/42/timers");
   expect(getLastOrganization("user-1")).toBe("42");
 });
 
@@ -460,31 +408,30 @@ it("keeps the previous organization after a denied visit", async () => {
   expect(getLastOrganization("user-1")).toBe("42");
 });
 
-it("allows a manual dashboard visit after startup restoration", async () => {
-  rememberOrganization("user-1", "42");
-  const { router } = createNavigation();
-  await router.load();
-  await router.navigate({ href: "/@me" });
-  expect(router.state.location.pathname).toBe("/@me");
-});
-
 it.each([
-  "/43/timers",
+  "/@me",
   "/@me/settings/account",
+  "/43/timers",
   "/battles/public-battle",
   "/init",
-])(
-  "preserves the direct destination %s and later allows opening the dashboard",
-  async (initialEntry) => {
-    rememberOrganization("user-1", "42");
-    const { router, requestCount } = createNavigation({ initialEntry });
-    await router.load();
-    expect(router.state.location.pathname).toBe(initialEntry);
-    expect(requestCount("/guilds/42")).toBe(0);
-    await router.navigate({ href: "/@me" });
-    expect(router.state.location.pathname).toBe("/@me");
-  },
-);
+])("opens or reloads the direct destination %s", async (initialEntry) => {
+  rememberOrganization("user-1", "42");
+  const { router, requestCount } = createNavigation({ initialEntry });
+  await router.load();
+  expect(router.state.location.pathname).toBe(initialEntry);
+  expect(requestCount("/guilds/42")).toBe(0);
+});
+
+it("remembers the personal panel as the last visited space", async () => {
+  const organizationVisit = createNavigation({ initialEntry: "/42" });
+  await organizationVisit.router.load();
+  await organizationVisit.router.navigate({ href: "/@me/settings/account" });
+
+  const reopened = createNavigation();
+  await reopened.router.load();
+  expect(reopened.router.state.location.pathname).toBe("/@me");
+  expect(reopened.requestCount("/guilds/42")).toBe(0);
+});
 
 it.each([
   ["/signin", "/42"],
@@ -583,18 +530,12 @@ it("restores an owner's organization even without an active membership record", 
   expect(router.state.location.pathname).toBe("/42");
 });
 
-it.each([
-  [401, "/@me"],
-  [403, "/@me"],
-  [401, "/signin"],
-  [403, "/signin"],
-])(
-  "preserves the remembered organization during HTTP %s session recovery from %s",
-  async (status, initialEntry) => {
+it.each([401, 403])(
+  "preserves the remembered organization during HTTP %s session recovery",
+  async (status) => {
     rememberOrganization("user-1", "42");
 
     const { router } = createNavigation({
-      initialEntry,
       organizationResponse: (path) =>
         path === "/guilds/42"
           ? Response.json(
