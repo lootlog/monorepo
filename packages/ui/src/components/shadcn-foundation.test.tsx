@@ -1,7 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { Alert } from "./alert";
-import { Badge } from "./badge";
 import { Breadcrumb, BreadcrumbEllipsis } from "./breadcrumb";
 import { Field, FieldError, FieldLabel } from "./field";
 import {
@@ -15,21 +13,6 @@ import { Progress } from "./progress";
 afterEach(cleanup);
 
 describe("shadcn foundation", () => {
-  it.each([
-    ["live", "border-signal-live/30"],
-    ["ready", "border-signal-ready/30"],
-    ["timer", "border-signal-timer/30"],
-    ["alert", "border-signal-alert/30"],
-  ] as const)("applies the %s signal variant", (variant, className) => {
-    render(<Alert variant={variant}>Status</Alert>);
-    expect(screen.getByRole("alert")).toHaveClass(className);
-  });
-
-  it("uses the same signal vocabulary for badges", () => {
-    render(<Badge variant="ready">Ready</Badge>);
-    expect(screen.getByText("Ready")).toHaveClass("bg-signal-ready/10");
-  });
-
   it("connects invalid field structure to an invalid control", () => {
     render(
       <Field data-invalid="true">

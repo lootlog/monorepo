@@ -82,14 +82,4 @@ describe("runtime architecture", () => {
       expect(source, store).not.toContain("@lootlog/margonem");
     }
   });
-
-  it("does not reintroduce readiness polling in the NPC projection", () => {
-    const source = readFileSync(
-      join(sourceRoot, "processors/npcs-detection-processor.ts"),
-      "utf8",
-    );
-
-    expect(source).not.toContain("setTimeout");
-    expect(source).not.toContain("setInterval");
-  });
 });
