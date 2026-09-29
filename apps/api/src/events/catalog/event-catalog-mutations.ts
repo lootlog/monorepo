@@ -6,7 +6,6 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import {
   and,
-  asc,
   desc,
   eq,
   inArray,
@@ -139,7 +138,10 @@ export const makeEventCatalogMutations = (
         .limit(1),
     ).pipe(Effect.map((rows) => rows[0]?.location ?? null));
 
-  const { hydrateMaps, mapsForHero } = makeEventMapRead(database, query);
+  const { hydrateMaps, heroMaps, heroMapLayouts } = makeEventMapRead(
+    database,
+    query,
+  );
 
   return {
     addHero: (
@@ -241,7 +243,7 @@ export const makeEventCatalogMutations = (
         const hero = heroes[0];
         yield* invalidate(guild.id, eventId);
 
-        return hero ? { ...hero, maps: yield* mapsForHero(heroId) } : null;
+        return hero ? { ...hero, maps: yield* heroMaps([heroId]) } : null;
       }).pipe(Effect.withSpan("EventsAssignmentController_addHero")),
 
     updateHero: (
@@ -400,20 +402,9 @@ export const makeEventCatalogMutations = (
             new ResourceNotFoundError("Hero not found"),
           );
 
-        const locations = yield* query(
-          "events.catalog.locations",
-          database
-            .select()
-            .from(eventMapLocationTable)
-            .where(eq(eventMapLocationTable.heroNpcId, heroId))
-            .orderBy(asc(eventMapLocationTable.order)),
-        );
+        const layoutOf = yield* heroMapLayouts([heroId]);
 
-        return yield* Effect.forEach(locations, (location) =>
-          mapsForHero(heroId, location.id).pipe(
-            Effect.map((maps) => ({ ...location, maps })),
-          ),
-        );
+        return layoutOf(heroId).locations;
       }).pipe(Effect.withSpan("EventsAssignmentController_getLocations")),
 
     createLocation: (
@@ -533,7 +524,7 @@ export const makeEventCatalogMutations = (
         yield* invalidate(guild.id, eventId);
 
         return rows[0]
-          ? { ...rows[0], maps: yield* mapsForHero(heroId, locationId) }
+          ? { ...rows[0], maps: yield* heroMaps([heroId], locationId) }
           : null;
       }).pipe(Effect.withSpan("EventsAssignmentController_updateLocation")),
 

@@ -976,7 +976,7 @@ describe("Read cache Dragonfly integration", () => {
         Effect.runPromise(service.getLootStatsEffect(organization, policy, []));
 
       const responses = await Promise.all(Array.from({ length: 8 }, request));
-      expect(queries).toBe(6);
+      expect(queries).toBe(5);
       expect(await cache.scan(`loot-stats:${organization}:*`)).toEqual([]);
 
       const firstGenerationKeys = await cache.scan(
@@ -992,7 +992,7 @@ describe("Read cache Dragonfly integration", () => {
       ).toBe(true);
       await cache.invalidateScopes(`loot-stats:${organization}`);
       await request();
-      expect(queries).toBe(12);
+      expect(queries).toBe(10);
 
       const nextGenerationKeys = await cache.scan(
         `read-cache:v1:*:loot-stats:${organization}:*`,

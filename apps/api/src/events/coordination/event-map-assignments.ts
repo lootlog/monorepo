@@ -1,10 +1,7 @@
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
-import {
-  memberDisplayRolesQuery,
-  topMemberDisplayRoles,
-} from "#src/members/member-display-role";
 import { eventMapScope } from "#src/events/event-scope-query";
 import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
+import { makeEventMapRead } from "#src/events/catalog/event-map-read";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, eq, isNull } from "drizzle-orm";
@@ -108,35 +105,7 @@ export const makeEventMapAssignments = (
         .limit(1),
     ).pipe(Effect.map((rows) => rows[0] ?? null));
 
-  const assignedMembers = (mapId: string) =>
-    Effect.gen(function* () {
-      const assignments = yield* query(
-        "events.assignments.members",
-        database
-          .select({ member: memberTable })
-          .from(eventMapToMemberTable)
-          .innerJoin(memberTable, eq(memberTable.id, eventMapToMemberTable.B))
-          .where(eq(eventMapToMemberTable.A, mapId)),
-      );
-
-      const memberIds = assignments.map(({ member }) => member.id);
-
-      const roles =
-        memberIds.length === 0
-          ? []
-          : yield* query(
-              "events.assignments.roles",
-              memberDisplayRolesQuery(database, memberIds),
-            );
-
-      return assignments.map(({ member }) => ({
-        id: member.id,
-        name: member.name,
-        avatar: member.avatar,
-        userId: member.userId,
-        roles: topMemberDisplayRoles(roles, member.id),
-      }));
-    });
+  const { hydrateMaps } = makeEventMapRead(database, query);
 
   const hydratedMap = (mapId: string) =>
     query(
@@ -147,16 +116,8 @@ export const makeEventMapAssignments = (
         .where(eq(eventMapTable.id, mapId))
         .limit(1),
     ).pipe(
-      Effect.flatMap((rows) =>
-        rows[0]
-          ? assignedMembers(mapId).pipe(
-              Effect.map((members) => ({
-                ...rows[0],
-                assignedMembers: members,
-              })),
-            )
-          : Effect.succeed(null),
-      ),
+      Effect.flatMap(hydrateMaps),
+      Effect.map((maps) => maps[0] ?? null),
     );
 
   const closeGap = (
@@ -260,10 +221,10 @@ export const makeEventMapAssignments = (
 
         if (!scoped)
           return yield* Effect.fail(new ResourceNotFoundError("Map not found"));
-        const members = yield* assignedMembers(mapId);
+        const [current] = yield* hydrateMaps([scoped.map]);
+        const members = current.assignedMembers;
 
-        if (members.some(({ id }) => id === memberId))
-          return yield* hydratedMap(mapId);
+        if (members.some(({ id }) => id === memberId)) return current;
 
         const memberRows = yield* query(
           "events.assignments.member",

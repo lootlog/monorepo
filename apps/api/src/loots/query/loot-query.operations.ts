@@ -14,6 +14,7 @@ import {
 } from "#src/loots/query/loot-snapshot-mappers";
 import { DEFAULT_PAGE_LIMIT } from "#src/loots/config/pagination";
 import type { LootQueryPersistence } from "#src/loots/query/loot-query.persistence";
+import type { LootQueryFilters } from "#src/loots/query/loot-query-filter";
 
 type Guild = typeof guildTable.$inferSelect;
 
@@ -22,6 +23,10 @@ type Role = typeof roleTable.$inferSelect;
 type LootQueryRecord = Effect.Success<
   ReturnType<LootQueryPersistence["findMany"]>
 >[number];
+
+export type LootNpcNameSummary = Effect.Success<
+  ReturnType<LootQueryPersistence["summarizeByNpcName"]>
+>;
 
 export class LootQueryError extends TaggedErrorClass<LootQueryError>()(
   "LootQueryError",
@@ -55,6 +60,12 @@ export interface LootQueryOperations {
     roles: Role[],
     options: { readonly hid: string; readonly world?: string },
   ) => QueryEffect<LootItemDto | null>;
+  readonly summarizeLootsByNpcName: (
+    guild: Guild,
+    permissions: Permission[],
+    roles: Role[],
+    filters: LootQueryFilters,
+  ) => QueryEffect<LootNpcNameSummary>;
 }
 
 const mapLoot = (guildId: string, loot: LootQueryRecord): LootQueryResult => ({
@@ -188,5 +199,16 @@ export const makeLootQueryOperations = (
         }),
       ).pipe(Effect.map((item) => (item ? mapItem(item) : null)));
     },
+
+    summarizeLootsByNpcName: (guild, permissions, roles, filters) =>
+      attempt(
+        "loots.query.npcSummary",
+        persistence.summarizeByNpcName({
+          guildId: guild.id,
+          permissions,
+          roles,
+          filters,
+        }),
+      ),
   };
 };
