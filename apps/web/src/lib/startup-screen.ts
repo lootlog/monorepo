@@ -24,9 +24,26 @@ export const releaseStartupScreen = () => {
     fill: "forwards",
   };
 
-  screen.firstElementChild?.animate([{ transform: "scale(1.08)" }], timing);
+  const slot = screen.firstElementChild;
+
+  // A start that resolved within the reveal delay never showed the slot, and
+  // the delay would otherwise run out during the fade.
+  if (slot && isStillHidden(slot)) {
+    slot.remove();
+  } else {
+    slot?.animate([{ transform: "scale(1.08)" }], timing);
+  }
+
   screen.animate([{ opacity: 0 }], timing).onfinish = () => screen.remove();
 };
+
+const isStillHidden = (slot: Element) =>
+  slot.getAnimations().some((animation) => {
+    const { delay = 0, localTime = null } =
+      animation.effect?.getComputedTiming() ?? {};
+
+    return Number(localTime ?? Number.POSITIVE_INFINITY) < delay;
+  });
 
 /** The first resolved navigation has rendered a page, its skeleton or its error. */
 export const releaseStartupScreenOnFirstResolve = (
