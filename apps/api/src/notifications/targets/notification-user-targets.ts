@@ -4,7 +4,6 @@ import {
 } from "../notification-api-key-scope.js";
 import {
   deleteNotificationTargetAndOrphanedRules,
-  mapNotificationTarget,
   readNotificationTargetRuleIds,
   readSingleTargetNotificationRuleIds,
   updateNotificationTarget,
@@ -170,7 +169,7 @@ export const makeNotificationUserTargets = (
     const usage = yield* recentUsage(targets.map(({ id }) => id));
 
     return targets.map((target) => ({
-      ...mapNotificationTarget(target),
+      ...target,
       testTrigger: getNotificationTestUsageResponse(
         usage.get(target.id) ?? [],
         TEST_LIMIT,
@@ -301,7 +300,7 @@ export const makeNotificationUserTargets = (
         }),
       );
 
-    return mapNotificationTarget(target);
+    return target;
   });
 
   const update = Effect.fn("notifications.userTargets.update")(function* (
@@ -322,7 +321,7 @@ export const makeNotificationUserTargets = (
       Effect.mapError(databaseFailure("notifications.userTargets.update")),
     );
 
-    return rows[0] ? mapNotificationTarget(rows[0]) : null;
+    return rows[0] ?? null;
   });
 
   const orphanedRules = (targetId: number) =>

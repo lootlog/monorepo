@@ -1,7 +1,6 @@
 import { notificationChannelMetadata } from "#src/notifications/targets/notification-channel-metadata";
 import {
   deleteNotificationTargetAndOrphanedRules,
-  mapNotificationTarget,
   readNotificationTargetRuleIds,
   readSingleTargetNotificationRuleIds,
   updateNotificationTarget,
@@ -111,7 +110,7 @@ export const makeNotificationGuildTargets = (
       )
       .pipe(Effect.mapError(databaseFailure("notifications.targets.list")));
 
-    return rows.map(mapNotificationTarget);
+    return rows;
   });
 
   const create = Effect.fn("notifications.guildTargets.create")(function* (
@@ -198,7 +197,7 @@ export const makeNotificationGuildTargets = (
       );
     }
 
-    return mapNotificationTarget(target);
+    return target;
   });
 
   const update = Effect.fn("notifications.guildTargets.update")(function* (
@@ -218,7 +217,7 @@ export const makeNotificationGuildTargets = (
 
     if (data.active === false) yield* jobs.cancel({ targetId });
 
-    return rows[0] ? mapNotificationTarget(rows[0]) : null;
+    return rows[0] ?? null;
   });
 
   const removeById = Effect.fn("notifications.guildTargets.deleteById")(
