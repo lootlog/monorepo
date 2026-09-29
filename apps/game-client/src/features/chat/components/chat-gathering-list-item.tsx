@@ -4,7 +4,6 @@ import type { PartyGatheringSummary } from "@lootlog/schema/party-ready-room";
 import { Button } from "@/components/ui/button";
 import { ChatGatheringHeader } from "./chat-gathering-header";
 import { GatheringPartyCounter } from "@/components/common/gathering-party-counter";
-import { GatheringRoster } from "@/components/common/gathering-roster";
 import { ChatGatheringDetails } from "./chat-gathering-details";
 
 export function ChatGatheringListItem({
@@ -41,11 +40,6 @@ export function ChatGatheringListItem({
         />
       </div>
       <ChatGatheringDetails {...gathering} />
-      <GatheringRoster
-        volunteers={gathering.volunteers}
-        partyState={gathering.partyState}
-        stale={stale}
-      />
       <div className="ll:mt-1 ll:flex ll:items-center ll:justify-between ll:gap-2">
         {hidden ? (
           <Button
