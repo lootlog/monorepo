@@ -28,7 +28,7 @@ export default defineConfig({
         enabled: true,
         prerender: {
           enabled: true,
-          crawlLinks: true,
+          crawlLinks: false,
         },
       },
       pages: [
@@ -38,6 +38,7 @@ export default defineConfig({
       ],
       prerender: {
         failOnError: true,
+        crawlLinks: false,
       },
       sitemap: {
         enabled: false,

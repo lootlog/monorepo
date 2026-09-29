@@ -41,7 +41,7 @@ export function ClosingCta() {
               variant="outline"
               className="landing-action landing-action-outline"
               render={
-                <a href={links.docs}>
+                <a href={links.installationGuide}>
                   {t("landing.closingCta.guide")}
                   <ArrowUpRight className="size-4" />
                 </a>

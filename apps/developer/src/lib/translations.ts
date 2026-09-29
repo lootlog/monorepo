@@ -58,6 +58,8 @@ export const portalText = {
   description:
     "Lootlog API documentation and tools for integration developers.",
   reference: "API Reference",
+  referenceDescription:
+    "Explore Lootlog HTTP endpoints, authentication, request parameters, and response schemas for server integrations.",
   keys: "API Keys",
   docs: "Docs",
   loading: "Loading…",
