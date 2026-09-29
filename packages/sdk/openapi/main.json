@@ -15,7 +15,39 @@
       "get": {
         "tags": ["users"],
         "operationId": "UsersController_getUserFeed",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "excludedGuildIds",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "required": false
+          },
+          {
+            "name": "excludedNpcCategories",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["ELITE2", "HERO", "COLOSSUS", "TITAN", "OTHER"]
+              }
+            },
+            "required": false
+          },
+          {
+            "name": "withLootOnly",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "required": false
+          }
+        ],
         "security": [
           {
             "apiKey": []

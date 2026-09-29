@@ -14,6 +14,35 @@ import { parse } from "yaml";
 
 const BASELINE_SHA = "633f8f0157cca04ef2b609ba0e2f1903b1c28949";
 
+// Optional reader filters for the Web dashboard feed; omitted filters keep the
+// previous response, so API key callers are unaffected.
+const USER_FEED_PARAMETERS: JsonValue[] = [
+  {
+    name: "excludedGuildIds",
+    in: "query",
+    schema: { type: "array", items: { type: "string" } },
+    required: false,
+  },
+  {
+    name: "excludedNpcCategories",
+    in: "query",
+    schema: {
+      type: "array",
+      items: {
+        type: "string",
+        enum: ["ELITE2", "HERO", "COLOSSUS", "TITAN", "OTHER"],
+      },
+    },
+    required: false,
+  },
+  {
+    name: "withLootOnly",
+    in: "query",
+    schema: { type: "boolean" },
+    required: false,
+  },
+];
+
 const HTTP_METHODS = new Set([
   "delete",
   "get",
@@ -1382,7 +1411,7 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
       },
       "GET /users/@me/feed": {
         operationId: "UsersController_getUserFeed",
-        parameters: [],
+        parameters: USER_FEED_PARAMETERS,
         security: [{ bearer: [] }],
         responses: {
           "200": {

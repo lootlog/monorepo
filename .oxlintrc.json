@@ -81,6 +81,17 @@
       }
     },
     {
+      "files": ["packages/domain/src/activity-feed.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["parseActivityFeedSettings"]
+          }
+        ]
+      }
+    },
+    {
       "files": ["packages/protocol/src/rabbit/activity-signature.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [
