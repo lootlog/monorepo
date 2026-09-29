@@ -9,7 +9,7 @@ import {
   PING_TONES,
   getPingPresentation,
 } from "./ping-presentation";
-import { usePingPulse } from "./use-ping-pulse";
+import { useAnimationEffects } from "@/hooks/use-animation-effects";
 
 /** Portals each warrior's battle pings into that warrior's game element. */
 export const BattlePingMarkers = () => {
@@ -18,7 +18,7 @@ export const BattlePingMarkers = () => {
     battlePingStore.getSnapshot,
   );
 
-  const pulse = usePingPulse();
+  const pulse = useAnimationEffects();
 
   const quickFightCalled = [...marks.values()].some(
     (mark) => mark.type === BATTLE_QUICK_FIGHT_TYPE,

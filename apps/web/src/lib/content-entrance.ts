@@ -1,4 +1,4 @@
-import { getPrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { getPrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 
 /** The keyframe every loading placeholder reveals itself with after its delay. */
 const PLACEHOLDER_REVEAL_ANIMATION = "placeholder-in";

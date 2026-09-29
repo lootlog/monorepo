@@ -2,7 +2,7 @@ import { Accordion as BaseAccordion } from "@base-ui/react/accordion";
 import { ChevronDown } from "lucide-react";
 import * as React from "react";
 import { cn } from "cn";
-import { useSettingsStore } from "@/store/settings.store";
+import { useAnimationEffects } from "@/hooks/use-animation-effects";
 
 type SingleAccordionProps = Omit<
   BaseAccordion.Root.Props<string>,
@@ -105,9 +105,7 @@ const AccordionContent = React.forwardRef<
   HTMLDivElement,
   BaseAccordion.Panel.Props
 >(({ className, children, ...props }, ref) => {
-  const animationEffectsEnabled = useSettingsStore(
-    (state) => state.animationEffectsEnabled,
-  );
+  const animationEffectsEnabled = useAnimationEffects();
 
   return (
     <BaseAccordion.Panel

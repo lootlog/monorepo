@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSettingsStore } from "@/store/settings.store";
+import { useAnimationEffects } from "@/hooks/use-animation-effects";
 
 const WINDOW_EXIT_RETENTION_MS = 180;
 
@@ -44,9 +44,7 @@ const resolveWindowPresenceInput = (
 };
 
 export const useWindowPresence = (isOpen: boolean) => {
-  const animationEffectsEnabled = useSettingsStore(
-    (state) => state.animationEffectsEnabled,
-  );
+  const animationEffectsEnabled = useAnimationEffects();
 
   const [presenceState, setPresenceState] = useState<WindowPresenceState>({
     animationEffectsEnabled,

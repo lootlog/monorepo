@@ -1,4 +1,4 @@
-import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import { useState, type FC } from "react";
 import { Lottie } from "lottie-react";
 import { cn } from "cn";

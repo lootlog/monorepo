@@ -1,15 +1,13 @@
 import { Collapsible as BaseCollapsible } from "@base-ui/react/collapsible";
 import * as React from "react";
 import { cn } from "cn";
-import { useSettingsStore } from "@/store/settings.store";
+import { useAnimationEffects } from "@/hooks/use-animation-effects";
 
 const CollapsibleContent = React.forwardRef<
   HTMLDivElement,
   BaseCollapsible.Panel.Props
 >(({ className, children, ...props }, ref) => {
-  const animationEffectsEnabled = useSettingsStore(
-    (state) => state.animationEffectsEnabled,
-  );
+  const animationEffectsEnabled = useAnimationEffects();
 
   return (
     <BaseCollapsible.Panel

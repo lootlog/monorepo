@@ -1,5 +1,5 @@
 import { useEffect, type RefObject } from "react";
-import { getPrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { getPrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 
 export function useBattleStatsSearchScroll({
   viewportRef,
