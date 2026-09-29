@@ -603,6 +603,7 @@ describe("realtime Dragonfly integration", () => {
           location: moved,
         }),
       );
+      await Effect.runPromise(presence.flushDeltas());
 
       const updated = await Effect.runPromise(
         presence.snapshot(precise, "organization-1"),
@@ -611,6 +612,7 @@ describe("realtime Dragonfly integration", () => {
       expect(updated.presences[0]).toMatchObject({ location: moved });
       expect(updated.revision).toBeGreaterThan(preciseSnapshot.revision);
       await Effect.runPromise(presence.disconnect(source.data));
+      await Effect.runPromise(presence.flushDeltas());
 
       const disconnected = await Effect.runPromise(
         presence.snapshot(precise, "organization-1"),
@@ -866,8 +868,8 @@ describe("realtime Dragonfly integration", () => {
       BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
     );
 
-    const reconnectPublished = Promise.withResolvers<void>();
-    const resumePublication = Promise.withResolvers<void>();
+    const reconnectStored = Promise.withResolvers<void>();
+    const resumeReconnect = Promise.withResolvers<void>();
     let reconnecting: Promise<unknown> | undefined;
 
     try {
@@ -888,7 +890,7 @@ describe("realtime Dragonfly integration", () => {
       );
 
       let now = Date.now();
-      let pausePublication = false;
+      let pauseReconnect = false;
       const events: GameCharacterOffline[] = [];
       let afterFirstClaim: (() => Promise<void>) | undefined;
 
@@ -910,6 +912,16 @@ describe("realtime Dragonfly integration", () => {
 
           return result;
         },
+        // Reconnect cancellation starts by listing the character's departures.
+        smembers: async (key: string) => {
+          if (pauseReconnect && key.startsWith("presence:offline:character:")) {
+            pauseReconnect = false;
+            reconnectStored.resolve();
+            await resumeReconnect.promise;
+          }
+
+          return store.command.smembers(key);
+        },
       };
 
       const presence = new PresenceStore(
@@ -917,12 +929,7 @@ describe("realtime Dragonfly integration", () => {
         {
           instanceId: crypto.randomUUID(),
           setPresence: setSocketPresence,
-          publishPresence: async () => {
-            if (!pausePublication) return;
-            reconnectPublished.resolve();
-            await resumePublication.promise;
-          },
-          publishToScope: async () => {},
+          publishPresence: async () => {},
         },
         () => now,
         undefined,
@@ -969,16 +976,16 @@ describe("realtime Dragonfly integration", () => {
         ),
       );
       afterFirstClaim = async () => {
-        pausePublication = true;
+        pauseReconnect = true;
         reconnecting = Effect.runPromise(
           presence.publish(second, { organizationIds: [] }),
         );
-        await reconnectPublished.promise;
+        await reconnectStored.promise;
         expect(
           await store.command.get("presence:organization-1:group-second"),
         ).not.toBeNull();
-        // Publication is still blocked, so the final reconnect cancellation has
-        // not removed this exact pending value yet.
+        // Cancellation is still blocked, so the reconnect has not removed this
+        // exact pending value yet.
         expect(await store.command.get(secondKey)).not.toBeNull();
       };
 
@@ -991,7 +998,7 @@ describe("realtime Dragonfly integration", () => {
         [],
       );
     } finally {
-      resumePublication.resolve();
+      resumeReconnect.resolve();
       await reconnecting;
       await runtime.dispose();
     }
@@ -1052,7 +1059,6 @@ describe("realtime Dragonfly integration", () => {
           instanceId: crypto.randomUUID(),
           setPresence: setSocketPresence,
           publishPresence: async () => {},
-          publishToScope: async () => {},
         },
         () => now,
         undefined,
@@ -1433,11 +1439,21 @@ describe("realtime Dragonfly integration", () => {
         const makeHub = () => ({
           instanceId: crypto.randomUUID(),
           setPresence: setSocketPresence,
-          publishPresence: async () => {},
-          publishToScope: async () => {
-            removed.push(game.data.connectionId);
+          publishPresence: async (
+            ...[, event]: Parameters<RealtimeHub["publishPresence"]>
+          ) => {
+            if (
+              event.type === "presence.delta" &&
+              event.data.changes.some(({ action }) => action === "remove")
+            )
+              removed.push(game.data.connectionId);
           },
         });
+
+        const flushBoth = () =>
+          Effect.runPromise(
+            Effect.all([first.flushDeltas(), second.flushDeltas()]),
+          );
 
         const publishOffline = (event: GameCharacterOffline) =>
           Effect.sync(() => void events.push(event));
@@ -1482,6 +1498,7 @@ describe("realtime Dragonfly integration", () => {
         );
 
         await Effect.runPromise(first.publish(game, { organizationIds: [] }));
+        await flushBoth();
         now += PRESENCE_EXPIRY_MS;
         let refreshed = false;
         refreshBeforeRemoval = async () => {
@@ -1522,6 +1539,7 @@ describe("realtime Dragonfly integration", () => {
         await Effect.runPromise(second.sweepExpired());
         now += 10_000;
         await Effect.runPromise(second.sweepOffline());
+        await flushBoth();
         expect(refreshed).toBe(true);
         expect(removed).toEqual([]);
         expect(events).toEqual([]);
@@ -1544,6 +1562,7 @@ describe("realtime Dragonfly integration", () => {
         await Effect.runPromise(second.sweepExpired());
         await Effect.runPromise(first.sweepExpired());
         await Effect.runPromise(first.sweepOffline());
+        await flushBoth();
         expect(await firstStore.command.get(key)).toBeNull();
         expect(await firstStore.command.get(metadataKey)).toBeNull();
         expect(removed).toHaveLength(1);
@@ -1673,7 +1692,6 @@ describe("realtime Dragonfly integration", () => {
             instanceId: crypto.randomUUID(),
             setPresence: setSocketPresence,
             publishPresence: async () => {},
-            publishToScope: async () => {},
           },
           () => now,
           undefined,

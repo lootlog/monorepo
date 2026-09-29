@@ -6,6 +6,7 @@
   "sideEffects": false,
   "exports": {
     "./access-policy": "./src/access-policy.ts",
+    "./activity-feed": "./src/activity-feed.ts",
     "./account-preferences": "./src/account-preferences.ts",
     "./air-tag": "./src/air-tag.ts",
     "./chat-message-permissions": "./src/chat-message-permissions.ts",

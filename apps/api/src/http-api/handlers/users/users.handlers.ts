@@ -20,8 +20,8 @@ export const UsersHandlers = HttpApiBuilder.group(
   "users",
   (handlers) =>
     handlers
-      .handle("UsersControllerGetUserFeed", () =>
-        toRecordsHttpResponse(getUserFeed()),
+      .handle("UsersControllerGetUserFeed", ({ query }) =>
+        toRecordsHttpResponse(getUserFeed(query)),
       )
       .handle("UsersControllerDeleteAccount", deleteCurrentAccountHttpResponse)
       .handle("UsersControllerGetUserPreferences", () =>

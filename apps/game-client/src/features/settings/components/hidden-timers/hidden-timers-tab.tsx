@@ -1,4 +1,3 @@
-import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
@@ -8,6 +7,7 @@ import { useTimersStore } from "@/store/timers.store";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
+import { SettingsNoLootlogEmptyState } from "@/features/settings/components/shared/settings-no-lootlog-empty-state";
 
 export const HiddenTimersTab = () => {
   const { generalConfig } = useTimersStore();
@@ -51,9 +51,7 @@ export const HiddenTimersTab = () => {
               />
             </SettingsRow>
           ) : (
-            <SettingsEmptyState>
-              {t("settings.hiddenTimers.emptyGuilds")}
-            </SettingsEmptyState>
+            <SettingsNoLootlogEmptyState />
           )}
         </SettingsSection>
       ) : null}

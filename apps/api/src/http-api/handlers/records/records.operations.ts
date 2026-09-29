@@ -1,4 +1,7 @@
-import type { UserFeedResponse } from "#src/contracts/users/feed-schemas";
+import type {
+  UserFeedQuery,
+  UserFeedResponse,
+} from "#src/contracts/users/feed-schemas";
 import type {
   UserKillAnalyticsQuery,
   UserKillAnalyticsResponse,
@@ -131,6 +134,7 @@ export class RecordsData extends Context.Service<
     ) => DataEffect<GuildKillStatsResponse>;
     readonly getUserFeed: (
       caller: AuthenticatedCaller,
+      query: UserFeedQuery,
     ) => DataEffect<UserFeedResponse>;
     readonly getUserKillAnalytics: (
       caller: AuthenticatedCaller,
@@ -521,8 +525,10 @@ export const getUserKillActivity = Effect.fn("kills.getUserKillActivity")(
   },
 );
 
-export const getUserFeed = Effect.fn("users.feed")(function* () {
+export const getUserFeed = Effect.fn("users.feed")(function* (
+  query: UserFeedQuery,
+) {
   const caller = yield* requireCaller;
 
-  return yield* data((service) => service.getUserFeed(caller));
+  return yield* data((service) => service.getUserFeed(caller, query));
 });

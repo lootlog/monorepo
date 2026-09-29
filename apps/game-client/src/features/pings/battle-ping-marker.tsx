@@ -6,7 +6,7 @@ import { BattlePingIcon } from "./battle-ping-icon";
 import type { BattlePingMark, BattlePingTarget } from "./battle-ping-store";
 import { glowBattleWarrior } from "./battle-warriors";
 import { PING_TONES, getPingPresentation } from "./ping-presentation";
-import { usePingPulse } from "./use-ping-pulse";
+import { useAnimationEffects } from "@/hooks/use-animation-effects";
 
 /** Picks out the warrior of the history entry under the pointer. */
 const HIGHLIGHT_GLOW = "#ffffff";
@@ -31,7 +31,7 @@ export const BattlePingMarker: FC<BattlePingMarkerProps> = ({
     (state) => state.animationEffectsEnabled,
   );
 
-  const pulse = usePingPulse();
+  const pulse = useAnimationEffects();
 
   const attack = getPingPresentation("attack");
   const markPresentation = mark ? getPingPresentation(mark.type) : null;

@@ -1,3 +1,4 @@
+import { MOTION_DURATION_MS, MOTION_EASING } from "@/lib/motion";
 import { useLayoutEffect, useRef, useState, type RefObject } from "react";
 import type { GameNpcWithLocation } from "@/store/npc-detector.store";
 
@@ -68,8 +69,8 @@ export function useNpcListRowLayoutAnimation({
             { transform: "translateY(0)" },
           ],
           {
-            duration: 180,
-            easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+            duration: MOTION_DURATION_MS.medium,
+            easing: MOTION_EASING.enter,
           },
         );
 

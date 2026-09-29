@@ -615,6 +615,11 @@ const MANIFEST = [
             id: "build-information",
             labelKey: "settings.information.title",
           },
+          {
+            id: "diagnostics-report",
+            labelKey: "settings.information.diagnosticsTitle",
+            aliases: ["diagnostyka", "zgłoś błąd", "wsparcie", "błąd"],
+          },
         ],
       },
     ],

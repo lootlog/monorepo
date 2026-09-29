@@ -5,10 +5,6 @@ import { Deferred, Effect } from "effect";
 export class SingleFlight<Key, Value, Error> {
   private readonly pending = new Map<Key, Deferred.Deferred<Value, Error>>();
 
-  invalidate(key: Key): void {
-    this.pending.delete(key);
-  }
-
   run(
     key: Key,
     producer: Effect.Effect<Value, Error>,

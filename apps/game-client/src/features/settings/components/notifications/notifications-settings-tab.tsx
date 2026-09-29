@@ -175,7 +175,6 @@ export const NotificationsSettingsTab = () => {
             aria-label={t("settings.notifications.serversPickerLabel")}
             guilds={guilds}
             selectedGuildIds={guildIds}
-            emptyStateLabel={t("settings.notifications.emptyGuilds")}
             onToggle={toggleGuild}
             className="ll:w-full"
           />

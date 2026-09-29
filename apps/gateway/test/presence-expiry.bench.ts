@@ -108,7 +108,6 @@ try {
         {
           instanceId: crypto.randomUUID(),
           publishPresence: () => Promise.resolve(),
-          publishToScope: () => Promise.resolve(),
           setPresence: (socket, presence) => {
             socket.data.presence = presence;
           },

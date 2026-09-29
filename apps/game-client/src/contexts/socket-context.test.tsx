@@ -1,4 +1,12 @@
-import { act, render, renderHook, waitFor } from "@testing-library/react";
+import {
+  act,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { Toaster } from "@lootlog/ui/components/sonner";
+import { toast } from "sonner";
 import { describe, expect, it, vi } from "vitest";
 import { GatewayEvent } from "@/config/gateway";
 import { useGameStore } from "@/store/game.store";
@@ -337,6 +345,67 @@ describe("SocketProvider", () => {
       }
     },
   );
+
+  const refuseJoin = async (
+    test: ReturnType<typeof setup>,
+    message: string,
+  ) => {
+    render(<Toaster />);
+    act(() =>
+      useGlobalStore.setState({ gameState: { gameInitialized: true } }),
+    );
+    let requestId: string | undefined;
+    await waitFor(() => {
+      const request = test.wire.frames.find(
+        (frame) => "type" in frame && frame.type === "session.join",
+      );
+
+      if (!request || !("requestId" in request) || !request.requestId)
+        throw new Error("Waiting for join request");
+      requestId = request.requestId;
+    });
+
+    if (!requestId) throw new Error("Expected join request");
+    const refusedRequestId = requestId;
+    await act(() =>
+      test.wire.receive({
+        v: 1,
+        requestId: refusedRequestId,
+        status: "error",
+        error: { code: "COMMAND_REJECTED", message, retryable: false },
+      }),
+    );
+    // A refusal closes the socket until the player reconnects.
+    await waitFor(() =>
+      expect(useGlobalStore.getState().socketState.connected).toBe(false),
+    );
+  };
+
+  it("tells the player why the gateway refused the session and offers a reconnect", async () => {
+    const test = setup();
+    await refuseJoin(test, "organization access denied");
+
+    expect(
+      await screen.findByText(
+        "Serwer Lootloga odrzucił połączenie tej postaci",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Nie masz już dostępu do tego Lootloga."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Połącz ponownie" }),
+    ).toBeInTheDocument();
+  });
+
+  it("does not report a user without an Organization as a connection failure", async () => {
+    const warning = vi.spyOn(toast, "warning");
+    const test = setup();
+    await refuseJoin(test, "no authorized organizations");
+
+    expect(warning).not.toHaveBeenCalled();
+    warning.mockRestore();
+  });
 
   it("clears joined state after the transport disconnects", async () => {
     const test = setup();

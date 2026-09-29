@@ -51,10 +51,25 @@ export const decodeExtensionRequest = Schema.decodeUnknownSync(
   { onExcessProperty: "error" },
 );
 
+/**
+ * Why the extension let go of a game tab: another tab took over, the extension
+ * was updated, reloaded or disabled, or its background could not be reached.
+ */
+const ExtensionClosedReasonSchema = Schema.Literals([
+  "replaced",
+  "invalidated",
+  "unavailable",
+]);
+
+export type ExtensionClosedReason = typeof ExtensionClosedReasonSchema.Type;
+
 const ExtensionMessageSchema = Schema.Union([
   Schema.Struct({ type: Schema.Literal("ready") }),
   Schema.Struct({ type: Schema.Literal("reset") }),
-  Schema.Struct({ type: Schema.Literal("closed") }),
+  Schema.Struct({
+    type: Schema.Literal("closed"),
+    reason: Schema.optional(ExtensionClosedReasonSchema),
+  }),
   Schema.Struct({ type: Schema.Literal("result"), id, data: Schema.Unknown }),
   Schema.Struct({
     type: Schema.Literal("error"),

@@ -10023,6 +10023,23 @@ export type NotificationJobPayloadSnapshotResponseDto = {[key: string]: unknown}
   testTriggeredAt?: string | null;
 } | null) | null;
 
+export type UsersControllerGetUserFeedParams = {
+excludedGuildIds?: string[];
+excludedNpcCategories?: UsersControllerGetUserFeedExcludedNpcCategoriesItem[];
+withLootOnly?: boolean;
+};
+
+export type UsersControllerGetUserFeedExcludedNpcCategoriesItem = typeof UsersControllerGetUserFeedExcludedNpcCategoriesItem[keyof typeof UsersControllerGetUserFeedExcludedNpcCategoriesItem];
+
+
+export const UsersControllerGetUserFeedExcludedNpcCategoriesItem = {
+  ELITE2: 'ELITE2',
+  HERO: 'HERO',
+  COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
+  OTHER: 'OTHER',
+} as const;
+
 export type UsersControllerGetUserFeed401 = ReauthenticationRequiredEncoded | {
   message: string;
 };
@@ -13686,20 +13703,35 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
-export const getUsersControllerGetUserFeedUrl = () => {
+export const getUsersControllerGetUserFeedUrl = (params?: UsersControllerGetUserFeedParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["excludedGuildIds","excludedNpcCategories"];
 
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
-  return `/users/@me/feed`
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/users/@me/feed?${stringifiedParams}` : `/users/@me/feed`
 }
 
 /**
  * @summary Get recent activity across accessible Organizations
  */
-export const usersControllerGetUserFeed = async ( options?: Parameters<typeof mainFetch>[1]): Promise<UserFeedResponseDtoOutput> => {
+export const usersControllerGetUserFeed = async (params?: UsersControllerGetUserFeedParams, options?: Parameters<typeof mainFetch>[1]): Promise<UserFeedResponseDtoOutput> => {
 
-  return mainFetch<UserFeedResponseDtoOutput>(getUsersControllerGetUserFeedUrl(),
+  return mainFetch<UserFeedResponseDtoOutput>(getUsersControllerGetUserFeedUrl(params),
   {
     ...options,
     method: 'GET'
@@ -13712,23 +13744,23 @@ export const usersControllerGetUserFeed = async ( options?: Parameters<typeof ma
 
 
 
-export const getUsersControllerGetUserFeedQueryKey = () => {
+export const getUsersControllerGetUserFeedQueryKey = (params?: UsersControllerGetUserFeedParams,) => {
     return [
-    `/users/@me/feed`
+    `/users/@me/feed`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getUsersControllerGetUserFeedQueryOptions = <TData = Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError = ErrorType<RequestValidationError | UsersControllerGetUserFeed401 | UsersControllerGetUserFeed403 | UsersControllerGetUserFeed429>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getUsersControllerGetUserFeedQueryOptions = <TData = Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError = ErrorType<RequestValidationError | UsersControllerGetUserFeed401 | UsersControllerGetUserFeed403 | UsersControllerGetUserFeed429>>(params?: UsersControllerGetUserFeedParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getUsersControllerGetUserFeedQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getUsersControllerGetUserFeedQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersControllerGetUserFeed>>> = ({ signal }) => usersControllerGetUserFeed({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersControllerGetUserFeed>>> = ({ signal }) => usersControllerGetUserFeed(params, { signal, ...requestOptions });
 
 
 
@@ -13742,7 +13774,7 @@ export type UsersControllerGetUserFeedQueryError = ErrorType<RequestValidationEr
 
 
 export function useUsersControllerGetUserFeed<TData = Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError = ErrorType<RequestValidationError | UsersControllerGetUserFeed401 | UsersControllerGetUserFeed403 | UsersControllerGetUserFeed429>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError, TData>> & Pick<
+ params: undefined |  UsersControllerGetUserFeedParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof usersControllerGetUserFeed>>,
           TError,
@@ -13752,7 +13784,7 @@ export function useUsersControllerGetUserFeed<TData = Awaited<ReturnType<typeof 
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useUsersControllerGetUserFeed<TData = Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError = ErrorType<RequestValidationError | UsersControllerGetUserFeed401 | UsersControllerGetUserFeed403 | UsersControllerGetUserFeed429>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError, TData>> & Pick<
+ params?: UsersControllerGetUserFeedParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof usersControllerGetUserFeed>>,
           TError,
@@ -13762,7 +13794,7 @@ export function useUsersControllerGetUserFeed<TData = Awaited<ReturnType<typeof 
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useUsersControllerGetUserFeed<TData = Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError = ErrorType<RequestValidationError | UsersControllerGetUserFeed401 | UsersControllerGetUserFeed403 | UsersControllerGetUserFeed429>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ params?: UsersControllerGetUserFeedParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -13770,11 +13802,11 @@ export function useUsersControllerGetUserFeed<TData = Awaited<ReturnType<typeof 
  */
 
 export function useUsersControllerGetUserFeed<TData = Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError = ErrorType<RequestValidationError | UsersControllerGetUserFeed401 | UsersControllerGetUserFeed403 | UsersControllerGetUserFeed429>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ params?: UsersControllerGetUserFeedParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getUsersControllerGetUserFeedQueryOptions(options)
+  const queryOptions = getUsersControllerGetUserFeedQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -13785,11 +13817,11 @@ export function useUsersControllerGetUserFeed<TData = Awaited<ReturnType<typeof 
  * @summary Get recent activity across accessible Organizations
  */
 export const prefetchUsersControllerGetUserFeedQuery = async <TData = Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError = ErrorType<RequestValidationError | UsersControllerGetUserFeed401 | UsersControllerGetUserFeed403 | UsersControllerGetUserFeed429>>(
- queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ queryClient: QueryClient, params?: UsersControllerGetUserFeedParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
 
-  const queryOptions = getUsersControllerGetUserFeedQueryOptions(options)
+  const queryOptions = getUsersControllerGetUserFeedQueryOptions(params,options)
 
   await queryClient.prefetchQuery(queryOptions);
 
@@ -13800,10 +13832,10 @@ export const prefetchUsersControllerGetUserFeedQuery = async <TData = Awaited<Re
  * @summary Invalidates the {@link useUsersControllerGetUserFeed} query
  */
 export const invalidateUsersControllerGetUserFeed = async (
- queryClient: QueryClient,  options?: InvalidateOptions
+ queryClient: QueryClient, params?: UsersControllerGetUserFeedParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
 
-  await queryClient.invalidateQueries({ queryKey: getUsersControllerGetUserFeedQueryKey() }, options);
+  await queryClient.invalidateQueries({ queryKey: getUsersControllerGetUserFeedQueryKey(params) }, options);
 
   return queryClient;
 }
@@ -13813,8 +13845,8 @@ export const invalidateUsersControllerGetUserFeed = async (
  */
 export const useSetUsersControllerGetUserFeedQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof usersControllerGetUserFeed>> | undefined | ((old: Awaited<ReturnType<typeof usersControllerGetUserFeed>> | undefined) => Awaited<ReturnType<typeof usersControllerGetUserFeed>> | undefined), $exactMatch: boolean = true) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof usersControllerGetUserFeed>>>({ exact: $exactMatch, queryKey: getUsersControllerGetUserFeedQueryKey() }, updater);
+  return (params: UsersControllerGetUserFeedParams | undefined,updater: Awaited<ReturnType<typeof usersControllerGetUserFeed>> | undefined | ((old: Awaited<ReturnType<typeof usersControllerGetUserFeed>> | undefined) => Awaited<ReturnType<typeof usersControllerGetUserFeed>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof usersControllerGetUserFeed>>>({ exact: $exactMatch, queryKey: getUsersControllerGetUserFeedQueryKey(params) }, updater);
   };
 }
 
@@ -13823,8 +13855,8 @@ export const useSetUsersControllerGetUserFeedQueryData = () => {
  */
 export const useGetUsersControllerGetUserFeedQueryData = () => {
   const queryClient = useQueryClient();
-  return () =>
-    queryClient.getQueryData<Awaited<ReturnType<typeof usersControllerGetUserFeed>>>(getUsersControllerGetUserFeedQueryKey());
+  return (params?: UsersControllerGetUserFeedParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof usersControllerGetUserFeed>>>(getUsersControllerGetUserFeedQueryKey(params));
 }
 
 

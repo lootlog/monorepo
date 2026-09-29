@@ -42,6 +42,7 @@ import { useHiddenNpcTypes } from "@/features/chat/hooks/use-hidden-npc-types";
 import { AsyncContent } from "@/components/async-content";
 import { ChatConnectionStatus } from "./components/chat-connection-status";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
+import { NoLootlogEmptyState } from "@/components/no-lootlog-empty-state";
 import {
   getChatUnreadSummary,
   getChatUnreadSummaryByGuildId,
@@ -152,6 +153,7 @@ export const ChatView = ({
   const {
     areVisibleGuildsResolved,
     guildsQuery,
+    hasNoGuilds,
     preferencesQuery: preferences,
     visibleGuilds: resolvedVisibleGuilds,
   } = useLootlogGuilds();
@@ -419,38 +421,45 @@ export const ChatView = ({
               onRetry={retryChatData}
               retryLabel={t("actions.retry", { ns: "common" })}
             >
-              <ChatMessageList
-                key={positionKey}
-                appearance={chatAppearance}
-                npcTypeColors={npcTypeColors}
-                ariaLabel={t("window.title")}
-                emptyStateTitle={t(`emptyState.${effectiveFilter}.title`)}
-                emptyStateDescription={t(
-                  `emptyState.${effectiveFilter}.description`,
-                )}
-                guildNamesById={guildNamesById}
-                membersByGuildId={membersByGuildId}
-                mentionContextsByGuildId={mentionContextsByGuildId}
-                onReplyToMessage={handleReplyToMessage}
-                onDeleteMessage={handleDeleteMessage}
-                deletingMessageIds={deletingMessageIds}
-                renderables={currentRenderableMessages}
-                selectedGuildId={effectiveSelectedGuildId}
-                isActive={isOpen}
-                unreadIds={unread.ids}
-                onMessagesSeen={(ids) =>
-                  setReadState((current) =>
-                    markChatMessagesRead(
-                      current,
-                      getVisibleChatMessageAliases(selectedMessageGroups, ids),
-                    ),
-                  )
-                }
-                position={getPosition(positionKey)}
-                onPositionChange={(position) => {
-                  savePosition(positionKey, position);
-                }}
-              />
+              {hasNoGuilds ? (
+                <NoLootlogEmptyState />
+              ) : (
+                <ChatMessageList
+                  key={positionKey}
+                  appearance={chatAppearance}
+                  npcTypeColors={npcTypeColors}
+                  ariaLabel={t("window.title")}
+                  emptyStateTitle={t(`emptyState.${effectiveFilter}.title`)}
+                  emptyStateDescription={t(
+                    `emptyState.${effectiveFilter}.description`,
+                  )}
+                  guildNamesById={guildNamesById}
+                  membersByGuildId={membersByGuildId}
+                  mentionContextsByGuildId={mentionContextsByGuildId}
+                  onReplyToMessage={handleReplyToMessage}
+                  onDeleteMessage={handleDeleteMessage}
+                  deletingMessageIds={deletingMessageIds}
+                  renderables={currentRenderableMessages}
+                  selectedGuildId={effectiveSelectedGuildId}
+                  isActive={isOpen}
+                  unreadIds={unread.ids}
+                  onMessagesSeen={(ids) =>
+                    setReadState((current) =>
+                      markChatMessagesRead(
+                        current,
+                        getVisibleChatMessageAliases(
+                          selectedMessageGroups,
+                          ids,
+                        ),
+                      ),
+                    )
+                  }
+                  position={getPosition(positionKey)}
+                  onPositionChange={(position) => {
+                    savePosition(positionKey, position);
+                  }}
+                />
+              )}
             </AsyncContent>
           </div>
           <ChatComposeArea

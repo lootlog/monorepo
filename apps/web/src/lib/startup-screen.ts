@@ -1,5 +1,5 @@
 import type { AnyRouter } from "@tanstack/react-router";
-import { getPrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { getPrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 
 const STARTUP_SCREEN_ID = "startup-screen";
 
