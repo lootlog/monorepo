@@ -393,26 +393,30 @@ export const makeAutoTimer = (
 
           const now = new Date(yield* Clock.currentTimeMillis);
 
+          const timerUpdate = {
+            createdById: member.id,
+            ...window,
+            latestRespBaseSeconds: payload.respBaseSeconds,
+            latestRespawnRandomness:
+              payload.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS,
+            wasReset: false,
+            npc,
+            windowOpenedAt: now,
+            actorCharacterSnapshotId: actorCharacter?.id ?? null,
+            actorCharacterLvl: payload.actorCharacter?.lvl ?? null,
+            deletedAt: null,
+            updatedAt: now,
+          };
+
           const timerRows = yield* transaction
             .insert(timerTable)
             .values({
-              createdById: member.id,
+              ...timerUpdate,
               guildId,
               world: payload.world,
               npcId: payload.npc.id,
               timerKey,
-              ...window,
-              latestRespBaseSeconds: payload.respBaseSeconds,
-              latestRespawnRandomness:
-                payload.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS,
-              wasReset: false,
-              npc,
-              windowOpenedAt: now,
-              actorCharacterSnapshotId: actorCharacter?.id ?? null,
-              actorCharacterLvl: payload.actorCharacter?.lvl ?? null,
-              deletedAt: null,
               createdAt: now,
-              updatedAt: now,
             })
             .onConflictDoUpdate({
               target: [
@@ -420,20 +424,7 @@ export const makeAutoTimer = (
                 timerTable.world,
                 timerTable.timerKey,
               ],
-              set: {
-                createdById: member.id,
-                ...window,
-                latestRespBaseSeconds: payload.respBaseSeconds,
-                latestRespawnRandomness:
-                  payload.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS,
-                wasReset: false,
-                npc,
-                windowOpenedAt: now,
-                actorCharacterSnapshotId: actorCharacter?.id ?? null,
-                actorCharacterLvl: payload.actorCharacter?.lvl ?? null,
-                deletedAt: null,
-                updatedAt: now,
-              },
+              set: timerUpdate,
             })
             .returning();
 
