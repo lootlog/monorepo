@@ -480,10 +480,15 @@ class MemoryRedis {
   }
 }
 
+type PresenceEvent = Parameters<RealtimeHub["publishPresence"]>[1];
+
 class RecordingHub {
   readonly instanceId = "00000000-0000-4000-8000-000000000001";
-  readonly presenceEvents: unknown[] = [];
-  readonly events: unknown[] = [];
+
+  readonly presenceEvents: Array<{
+    readonly basic: PresenceEvent;
+    readonly precise: PresenceEvent;
+  }> = [];
 
   setPresence(socket: GatewaySocket, presence: SessionData["presence"]): void {
     socket.data.presence = presence;
@@ -496,14 +501,16 @@ class RecordingHub {
   ): Promise<void> {
     this.presenceEvents.push({ basic, precise });
   }
-
-  async publishToScope(
-    _scope: Parameters<RealtimeHub["publishToScope"]>[0],
-    event: Parameters<RealtimeHub["publishToScope"]>[1],
-  ): Promise<void> {
-    this.events.push(event);
-  }
 }
+
+const deltaChanges = (hub: RecordingHub, action: "upsert" | "remove") =>
+  hub.presenceEvents.flatMap(({ basic }) =>
+    basic.type === "presence.delta"
+      ? basic.data.changes.filter((change) => change.action === action)
+      : [],
+  );
+
+const flush = (store: PresenceStore) => Effect.runPromise(store.flushDeltas());
 
 class RecordingCoverage {
   readonly events: Array<{
@@ -557,171 +564,246 @@ const secondGuild = (permissions: Permission[]) => ({
 });
 
 describe("PresenceStore", () => {
-  test("invalidates snapshots when a Redis write settles after its caller was cancelled", async () => {
-    let now = 10_000;
-    const redis = new MemoryRedis();
-
-    const store = new PresenceStore(
-      { command: redis },
-      new RecordingHub(),
-      () => now,
-    );
-
-    const viewer = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
-    const publisher = socket(viewer);
-    const key = "presence:organization-1:session-1";
-    await Effect.runPromise(
-      store.publish(publisher, { organizationIds: ["organization-1"] }),
-    );
-    redis.values.set(
-      key,
-      JSON.stringify({ ...viewer.presence, discordId: undefined }),
-    );
-    const writeStarted = Promise.withResolvers<string>();
-    const writeGate = Promise.withResolvers<string | null>();
-    const metadataStarted = Promise.withResolvers<void>();
-    const metadataGate = Promise.withResolvers<void>();
-    const originalSet = redis.set.bind(redis);
-    const originalGet = redis.get.bind(redis);
-    spyOn(redis, "set").mockImplementation((target, value, ...options) => {
-      if (target === key) {
-        writeStarted.resolve(value);
-
-        return writeGate.promise;
-      }
-
-      return originalSet(target, value, ...options);
-    });
-    spyOn(redis, "get").mockImplementation(async (target) => {
-      if (target.startsWith("presence:metadata:")) {
-        metadataStarted.resolve();
-        await metadataGate.promise;
-      }
-
-      return originalGet(target);
-    });
-    const controller = new AbortController();
-    now = 11_000;
-
-    const publication = Effect.runPromiseExit(
-      store.publish(publisher, {
-        organizationIds: ["organization-1"],
-        isAfk: true,
-      }),
-      { signal: controller.signal },
-    );
-
-    try {
-      const updated = await writeStarted.promise;
-      controller.abort();
-      expect(Exit.isFailure(await publication)).toBe(true);
-      const first = Effect.runPromise(store.snapshot(viewer, "organization-1"));
-      await metadataStarted.promise;
-      redis.values.set(key, updated);
-      writeGate.resolve("OK");
-      await writeGate.promise;
-      // The atomic refresh settles after its metadata and index updates too.
-      await Bun.sleep(0);
-      const later = Effect.runPromise(store.snapshot(viewer, "organization-1"));
-      metadataGate.resolve();
-      await first;
-      const snapshot = await later;
-      expect(snapshot.presences[0]?.lastSeen).toBe(11_000);
-      expect(snapshot.presences[0]?.isAfk).toBe(true);
-      expect(snapshot.revision).toBe(1);
-    } finally {
-      controller.abort();
-      writeGate.resolve("OK");
-      metadataGate.resolve();
-      await publication;
-    }
-  });
-
-  test.each(["publish", "disconnect", "heartbeat", "expiry without metadata"])(
-    "does not join a pre-mutation snapshot after %s completes",
+  test.each(["publish", "disconnect"])(
+    "follows a snapshot shared across a %s with a newer delta, then reads again",
     async (mutation) => {
       let now = 10_000;
       const redis = new MemoryRedis();
-
-      const store = new PresenceStore(
-        { command: redis },
-        new RecordingHub(),
-        () => now,
-      );
-
+      const hub = new RecordingHub();
+      const store = new PresenceStore({ command: redis }, hub, () => now);
       const viewer = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
       const publisher = socket(viewer);
       await Effect.runPromise(
         store.publish(publisher, { organizationIds: ["organization-1"] }),
       );
-      redis.values.set(
-        "presence:organization-1:session-1",
-        JSON.stringify({ ...viewer.presence, discordId: undefined }),
-      );
-      const metadataStarted = Promise.withResolvers<void>();
-      const metadataGate = Promise.withResolvers<void>();
-      const originalGet = redis.get.bind(redis);
-      let blockMetadata = true;
-      spyOn(redis, "get").mockImplementation(async (key) => {
-        if (blockMetadata && key.startsWith("presence:metadata:")) {
-          blockMetadata = false;
-          metadataStarted.resolve();
-          await metadataGate.promise;
-        }
+      await flush(store);
+      const started = Promise.withResolvers<void>();
+      const gate = Promise.withResolvers<void>();
+      const originalMget = redis.mget.bind(redis);
+      spyOn(redis, "mget").mockImplementationOnce(async (keys) => {
+        const values = await originalMget(keys);
+        started.resolve();
+        await gate.promise;
 
-        return originalGet(key);
+        return values;
       });
       const first = Effect.runPromise(store.snapshot(viewer, "organization-1"));
+      await started.promise;
+      now = 11_000;
 
-      try {
-        await metadataStarted.promise;
-        now = 11_000;
-
-        if (mutation === "publish") {
-          await Effect.runPromise(
-            store.publish(publisher, {
-              organizationIds: ["organization-1"],
-              isAfk: true,
-            }),
-          );
-        } else if (mutation === "heartbeat") {
-          await Effect.runPromise(
-            store.heartbeat(publisher, viewer.connectionId),
-          );
-        } else if (mutation === "expiry without metadata") {
-          now = 10_000 + PRESENCE_EXPIRY_MS;
-          redis.values.delete("presence:metadata:organization-1:session-1");
-          await Effect.runPromise(store.sweepExpired());
-        } else {
-          await Effect.runPromise(store.disconnect(viewer));
-        }
-
-        const later = Effect.runPromise(
-          store.snapshot(viewer, "organization-1"),
+      if (mutation === "publish") {
+        await Effect.runPromise(
+          store.publish(publisher, {
+            organizationIds: ["organization-1"],
+            isAfk: true,
+          }),
         );
-
-        metadataGate.resolve();
-        await first;
-        const result = await later;
-        expect(result.revision).toBe(
-          mutation === "publish" || mutation === "disconnect" ? 2 : 1,
-        );
-
-        if (
-          mutation === "disconnect" ||
-          mutation === "expiry without metadata"
-        ) {
-          expect(result.presences).toEqual([]);
-        } else {
-          expect(result.presences[0]?.lastSeen).toBe(11_000);
-          expect(result.presences[0]?.isAfk).toBe(mutation === "publish");
-        }
-      } finally {
-        metadataGate.resolve();
-        await first;
+      } else {
+        await Effect.runPromise(store.disconnect(viewer));
       }
+
+      // The change is stored but not yet announced, so the revision is unchanged.
+      const joined = Effect.runPromise(
+        store.snapshot(viewer, "organization-1"),
+      );
+
+      gate.resolve();
+
+      for (const snapshot of await Promise.all([first, joined]))
+        expect(snapshot).toMatchObject({
+          revision: 1,
+          presences: [{ isAfk: false }],
+        });
+
+      await flush(store);
+
+      expect(hub.presenceEvents.at(-1)?.basic).toMatchObject({
+        data: {
+          revision: 2,
+          changes: [{ action: mutation === "publish" ? "upsert" : "remove" }],
+        },
+      });
+
+      const after = await Effect.runPromise(
+        store.snapshot(viewer, "organization-1"),
+      );
+
+      expect(after.revision).toBe(2);
+      expect(after.presences).toEqual(
+        mutation === "publish"
+          ? [expect.objectContaining({ isAfk: true })]
+          : [],
+      );
     },
   );
+
+  test("a join burst costs one revision per flush and keeps snapshot reads flat", async () => {
+    const redis = new MemoryRedis();
+    const hub = new RecordingHub();
+    const store = new PresenceStore({ command: redis }, hub, () => 10_000);
+    const viewer = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+    const mget = spyOn(redis, "mget");
+    const incr = spyOn(redis, "incr");
+
+    const join = async (index: number) => {
+      const joining = socket({
+        ...viewer,
+        connectionId: `session-${index}`,
+        userId: `user-${index}`,
+        discordId: `discord-${index}`,
+      });
+
+      await Effect.runPromise(store.publish(joining, { organizationIds: [] }));
+      // Every joining client fetches the Organization snapshot.
+      await Effect.runPromise(store.snapshot(joining.data, "organization-1"));
+    };
+
+    for (let index = 0; index < 1_000; index++) {
+      await join(index);
+
+      if (index % 100 === 99) await flush(store);
+    }
+
+    expect(incr).toHaveBeenCalledTimes(10);
+    expect(hub.presenceEvents).toHaveLength(10);
+    expect(deltaChanges(hub, "upsert")).toHaveLength(1_000);
+    expect(mget).toHaveBeenCalledTimes(10);
+
+    hub.presenceEvents.length = 0;
+
+    for (let index = 1_000; index < 1_250; index++) await join(index);
+    await flush(store);
+
+    expect(
+      hub.presenceEvents.map(({ basic }) =>
+        basic.type === "presence.delta"
+          ? [basic.data.revision, basic.data.changes.length]
+          : [],
+      ),
+    ).toEqual([
+      [11, 100],
+      [12, 100],
+      [13, 50],
+    ]);
+  });
+
+  test("a session's latest change in a batch supersedes its earlier ones", async () => {
+    const hub = new RecordingHub();
+
+    const store = new PresenceStore(
+      { command: new MemoryRedis() },
+      hub,
+      () => 10_000,
+    );
+
+    const publisher = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
+    await Effect.runPromise(store.publish(publisher, { organizationIds: [] }));
+    await Effect.runPromise(
+      store.publish(publisher, { organizationIds: [], isAfk: true }),
+    );
+    await flush(store);
+    expect(deltaChanges(hub, "upsert")).toMatchObject([
+      { presence: { sessionId: "session-1", isAfk: true } },
+    ]);
+
+    hub.presenceEvents.length = 0;
+    await Effect.runPromise(
+      store.publish(publisher, { organizationIds: [], isAfk: false }),
+    );
+    await Effect.runPromise(store.disconnect(publisher.data));
+    await flush(store);
+    expect(hub.presenceEvents).toHaveLength(1);
+    expect(deltaChanges(hub, "upsert")).toEqual([]);
+    expect(deltaChanges(hub, "remove")).toMatchObject([
+      { sessionId: "session-1" },
+    ]);
+  });
+
+  test("retries a failed delta without overriding a newer change", async () => {
+    const hub = new RecordingHub();
+
+    const store = new PresenceStore(
+      { command: new MemoryRedis() },
+      hub,
+      () => 10_000,
+    );
+
+    const first = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
+
+    const second = socket({
+      ...session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+      connectionId: "session-2",
+    });
+
+    await Effect.runPromise(store.publish(first, { organizationIds: [] }));
+    await Effect.runPromise(store.publish(second, { organizationIds: [] }));
+    spyOn(hub, "publishPresence").mockImplementationOnce(async () => {
+      // A departure queued while the failed flush is in flight is newer.
+      await Effect.runPromise(store.disconnect(second.data));
+      throw new Error("Redis publish failed");
+    });
+
+    await flush(store);
+    expect(hub.presenceEvents).toEqual([]);
+
+    await flush(store);
+    expect(hub.presenceEvents).toHaveLength(1);
+    expect(deltaChanges(hub, "upsert")).toMatchObject([
+      { presence: { sessionId: "session-1" } },
+    ]);
+    expect(deltaChanges(hub, "remove")).toMatchObject([
+      { sessionId: "session-2" },
+    ]);
+  });
+
+  test("an interrupted flush keeps every unpublished change queued", async () => {
+    const hub = new RecordingHub();
+
+    const store = new PresenceStore(
+      { command: new MemoryRedis() },
+      hub,
+      () => 10_000,
+    );
+
+    for (let index = 0; index < 250; index++)
+      await Effect.runPromise(
+        store.publish(
+          socket({
+            ...session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+            connectionId: `session-${index}`,
+          }),
+          { organizationIds: [] },
+        ),
+      );
+
+    const started = Promise.withResolvers<void>();
+
+    spyOn(hub, "publishPresence").mockImplementationOnce(() => {
+      started.resolve();
+
+      return new Promise(() => {});
+    });
+
+    const controller = new AbortController();
+
+    const flushing = Effect.runPromiseExit(store.flushDeltas(), {
+      signal: controller.signal,
+    });
+
+    await started.promise;
+    controller.abort();
+    await flushing;
+    await flush(store);
+
+    // Batches settling during the interruption may repeat; none may be lost.
+    const delivered = new Set(
+      deltaChanges(hub, "upsert").map((change) =>
+        change.action === "upsert" ? change.presence.sessionId : undefined,
+      ),
+    );
+
+    expect(delivered.size).toBe(250);
+  });
 
   test.each(["success", "failure"])(
     "an old snapshot's %s cannot evict the replacement shared read",
@@ -739,6 +821,7 @@ describe("PresenceStore", () => {
       await Effect.runPromise(
         store.publish(publisher, { organizationIds: ["organization-1"] }),
       );
+      await flush(store);
       redis.values.set(
         "presence:organization-1:session-1",
         JSON.stringify({ ...viewer.presence, discordId: undefined }),
@@ -781,6 +864,7 @@ describe("PresenceStore", () => {
             isAfk: true,
           }),
         );
+        await flush(store);
 
         const replacement = Effect.runPromise(
           store.snapshot(viewer, "organization-1"),
@@ -827,6 +911,7 @@ describe("PresenceStore", () => {
       await Effect.runPromise(
         store.publish(socket(viewer), { organizationIds: ["organization-1"] }),
       );
+      await flush(store);
       redis.values.set(
         "presence:organization-1:session-1",
         JSON.stringify({ ...viewer.presence, discordId: undefined }),
@@ -970,7 +1055,7 @@ describe("PresenceStore", () => {
     expect(smembers).toHaveBeenCalledTimes(2);
     expect(mget).toHaveBeenCalledTimes(2);
     await Effect.runPromise(store.snapshot(basic, "organization-1"));
-    expect(mget).toHaveBeenCalledTimes(3);
+    expect(mget).toHaveBeenCalledTimes(2);
   });
 
   test.each(["initiator", "follower"])(
@@ -1028,7 +1113,7 @@ describe("PresenceStore", () => {
 
       expect(mget).toHaveBeenCalledTimes(1);
       await Effect.runPromise(store.snapshot(viewer, "organization-1"));
-      expect(mget).toHaveBeenCalledTimes(2);
+      expect(mget).toHaveBeenCalledTimes(1);
     },
   );
 
@@ -1047,6 +1132,7 @@ describe("PresenceStore", () => {
       await Effect.runPromise(
         store.publish(socket(viewer), { organizationIds: ["organization-1"] }),
       );
+      await flush(store);
       const gate = Promise.withResolvers<void>();
 
       const failing = spyOn(redis, operation).mockImplementation(async () => {
@@ -1115,6 +1201,11 @@ describe("PresenceStore", () => {
 
     await started.promise;
     viewer.guilds = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]).guilds;
+    gate.resolve();
+
+    for (const snapshot of await snapshots)
+      expect(snapshot.presences[0]).not.toHaveProperty("location");
+
     await Effect.runPromise(
       store.publish(publisher, {
         organizationIds: ["organization-1"],
@@ -1122,13 +1213,10 @@ describe("PresenceStore", () => {
         isAfk: true,
       }),
     );
-    gate.resolve();
-
-    for (const snapshot of await snapshots) {
-      expect(snapshot.presences[0]?.isAfk).toBe(true);
-      expect(snapshot.presences[0]).not.toHaveProperty("location");
-      expect(snapshot.revision).toBe(2);
-    }
+    await flush(store);
+    expect(
+      await Effect.runPromise(store.snapshot(viewer, "organization-1")),
+    ).toMatchObject({ revision: 1, presences: [{ isAfk: true }] });
 
     now += PRESENCE_EXPIRY_MS;
     expect(
@@ -1138,11 +1226,13 @@ describe("PresenceStore", () => {
     await Effect.runPromise(
       store.publish(publisher, { organizationIds: ["organization-1"] }),
     );
+    await flush(store);
     expect(
       (await Effect.runPromise(store.snapshot(viewer, "organization-1")))
         .presences,
     ).toHaveLength(1);
     await Effect.runPromise(store.disconnect(publisher.data));
+    await flush(store);
     expect(
       (await Effect.runPromise(store.snapshot(viewer, "organization-1")))
         .presences,
@@ -1245,6 +1335,7 @@ describe("PresenceStore", () => {
     expect("location" in (basic.presences[0] ?? {})).toBe(false);
     expect(precise.presences[0]).toHaveProperty("location.mapId", 42);
     expect(precise.presences[0]?.organizationIds).toEqual(["organization-1"]);
+    await flush(store);
     expect(hub.presenceEvents).toHaveLength(1);
   });
 
@@ -1258,8 +1349,10 @@ describe("PresenceStore", () => {
         organizationIds: ["organization-1"],
       }),
     );
+    await flush(store);
     now = 61_001;
     await Effect.runPromise(store.sweepExpired());
+    await flush(store);
 
     const snapshot = await Effect.runPromise(
       store.snapshot(
@@ -1270,9 +1363,10 @@ describe("PresenceStore", () => {
 
     expect(snapshot.presences).toEqual([]);
     expect(snapshot.revision).toBe(2);
-    expect(hub.events).toHaveLength(1);
-    expect(hub.events[0]).toMatchObject({
+    expect(hub.presenceEvents).toHaveLength(2);
+    expect(hub.presenceEvents[1]?.basic).toMatchObject({
       data: {
+        revision: 2,
         changes: [
           { action: "remove", userId: "user-1", discordId: "discord-1" },
         ],
@@ -1300,21 +1394,26 @@ describe("PresenceStore", () => {
       );
     }
 
+    await flush(store);
+    hub.presenceEvents.length = 0;
     const mget = spyOn(redis, "mget");
     await Effect.runPromise(store.sweepExpired());
+    await flush(store);
     expect(mget).not.toHaveBeenCalled();
-    expect(hub.events).toEqual([]);
+    expect(hub.presenceEvents).toEqual([]);
 
     now += PRESENCE_EXPIRY_MS;
     await Effect.runPromise(store.sweepExpired());
+    await flush(store);
     expect(mget.mock.calls.every(([keys]) => keys.length <= 200)).toBe(true);
-    expect(hub.events).toHaveLength(205);
+    expect(deltaChanges(hub, "remove")).toHaveLength(205);
     expect(
       (await Effect.runPromise(store.snapshot(viewer, "organization-1")))
         .presences,
     ).toEqual([]);
     await Effect.runPromise(store.sweepExpired());
-    expect(hub.events).toHaveLength(205);
+    await flush(store);
+    expect(deltaChanges(hub, "remove")).toHaveLength(205);
   });
 
   test("a heartbeat after expiry capture keeps the session and suppresses a remove delta", async () => {
@@ -1324,6 +1423,7 @@ describe("PresenceStore", () => {
     const store = new PresenceStore({ command: redis }, hub, () => now);
     const game = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
     await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    await flush(store);
     now += PRESENCE_EXPIRY_MS;
     const evaluate = redis.eval.bind(redis);
     let refreshed = false;
@@ -1340,7 +1440,8 @@ describe("PresenceStore", () => {
       },
     );
     await Effect.runPromise(store.sweepExpired());
-    expect(hub.events).toEqual([]);
+    await flush(store);
+    expect(deltaChanges(hub, "remove")).toEqual([]);
     expect(
       (await Effect.runPromise(store.snapshot(game.data, "organization-1")))
         .presences,
@@ -1354,6 +1455,7 @@ describe("PresenceStore", () => {
     const store = new PresenceStore({ command: redis }, hub, () => now);
     const game = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
     await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    await flush(store);
     const oldDue = new Map(redis.sortedSets.get("presence:expiry:due"));
     now += PRESENCE_EXPIRY_MS - 1_000;
     await Effect.runPromise(store.heartbeat(game, game.data.connectionId));
@@ -1361,13 +1463,15 @@ describe("PresenceStore", () => {
     redis.values.delete("presence:organization-1:session-1");
     now += 1_000;
     await Effect.runPromise(store.sweepExpired());
-    expect(hub.events).toEqual([]);
+    await flush(store);
+    expect(deltaChanges(hub, "remove")).toEqual([]);
     expect(
       await redis.get("presence:metadata:organization-1:session-1"),
     ).not.toBeNull();
     now += PRESENCE_EXPIRY_MS;
     await Effect.runPromise(store.sweepExpired());
-    expect(hub.events).toHaveLength(1);
+    await flush(store);
+    expect(deltaChanges(hub, "remove")).toHaveLength(1);
     expect(
       await redis.get("presence:metadata:organization-1:session-1"),
     ).toBeNull();
@@ -1468,6 +1572,7 @@ describe("PresenceStore", () => {
         });
       }
 
+      await flush(store);
       expect(hub.presenceEvents).toHaveLength(2);
       expect(
         await Effect.runPromise(
@@ -1492,6 +1597,7 @@ describe("PresenceStore", () => {
       }),
     );
     await Effect.runPromise(store.heartbeat(publisher, "session-1"));
+    await flush(store);
     expect(publisher.data.presence?.organizationIds).toEqual([
       "organization-1",
       "organization-2",
@@ -1649,10 +1755,12 @@ describe("PresenceStore", () => {
     await Effect.runPromise(
       store.publish(publisher, { organizationIds: ["organization-1"] }),
     );
+    await flush(store);
     hub.presenceEvents.length = 0;
 
     now = 20_000;
     await Effect.runPromise(store.heartbeat(publisher, "session-1"));
+    await flush(store);
 
     expect(hub.presenceEvents).toEqual([]);
     await expect(
