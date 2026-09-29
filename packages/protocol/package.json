@@ -6,6 +6,7 @@
   "sideEffects": false,
   "exports": {
     "./feed": "./src/feed.ts",
+    "./game-client-handoff": "./src/game-client-handoff.ts",
     "./loot-summary": "./src/loot-summary.ts",
     "./http/service-auth": "./src/http/service-auth.ts",
     "./openapi": "./src/openapi/sanitize.ts",
