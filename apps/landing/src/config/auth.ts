@@ -5,7 +5,7 @@ export function resolveAuthServiceUrl(configuredUrl?: string): string {
 }
 
 export function createAuthCallbackUrl(origin: string): string {
-  return `${origin}/@me`;
+  return `${origin}/signin`;
 }
 
 export const AUTH_SERVICE_URL = resolveAuthServiceUrl(

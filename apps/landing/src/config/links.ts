@@ -4,5 +4,5 @@ export const links = {
   github: "https://github.com/lootlog/monorepo",
   discord: "https://discord.gg/mPcczaeYMu",
   support: "https://buycoffee.to/lootlog",
-  dashboard: "/@me",
+  dashboard: "/signin",
 } as const;

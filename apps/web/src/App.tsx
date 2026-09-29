@@ -11,13 +11,11 @@ import { AppErrorBoundary } from "@/components/router/app-error-boundary";
 import { RouteErrorState } from "@/components/router/route-error-state";
 import { RouteRetryButton } from "@/components/router/route-retry-button";
 import { ROUTES } from "@/config/routes";
-import { createInitialNavigation } from "@/lib/router/initial-navigation";
 import { releaseStartupScreenOnFirstResolve } from "@/lib/startup-screen";
 
 export interface RouterContext {
   queryClient: QueryClient;
   session?: SessionData | null;
-  initialNavigation: ReturnType<typeof createInitialNavigation>;
 }
 
 const parseSearchValue = (values: string[]) => {
@@ -87,14 +85,11 @@ const stringifySearch = (
   return serializedSearch ? `?${serializedSearch}` : "";
 };
 
-const initialNavigation = createInitialNavigation();
-
 const router = createRouter({
   routeTree,
   context: {
     queryClient,
     session: undefined,
-    initialNavigation,
   },
   parseSearch,
   stringifySearch,
@@ -111,13 +106,15 @@ const router = createRouter({
   scrollRestoration: true,
 });
 
-initialNavigation.track(router);
-
 releaseStartupScreenOnFirstResolve(router);
 
 declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
+  }
+
+  interface HistoryState {
+    restoreFallback?: boolean;
   }
 }
 
