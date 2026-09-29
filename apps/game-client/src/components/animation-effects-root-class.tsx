@@ -1,12 +1,10 @@
-import { useSettingsStore } from "@/store/settings.store";
+import { useAnimationEffects } from "@/hooks/use-animation-effects";
 import { useEffect } from "react";
 
 const REDUCED_MOTION_CLASS_NAME = "ll-reduced-motion";
 
 export const AnimationEffectsRootClass = () => {
-  const animationEffectsEnabled = useSettingsStore(
-    (state) => state.animationEffectsEnabled,
-  );
+  const animationEffectsEnabled = useAnimationEffects();
 
   useEffect(() => {
     const root = document.getElementById("lootlog-root");

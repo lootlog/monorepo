@@ -73,7 +73,7 @@ export const ServerOrderList: FC<ServerOrderListProps> = ({
               key={guild.id}
               {...sortable.getRowProps(guild.id)}
               className={cn(
-                "ll:relative ll:transition-transform ll:duration-150 ll:ease-[cubic-bezier(0.2,0,0,1)]",
+                "ll:relative ll:transition-transform ll:duration-short ll:ease-enter",
                 isDragging && "ll:z-10 ll:transition-none",
               )}
             >

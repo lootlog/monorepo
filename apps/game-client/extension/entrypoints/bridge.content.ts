@@ -7,6 +7,7 @@ import {
   decodeExtensionMessage,
   decodeMessage,
   encodeMessage,
+  type ExtensionClosedReason,
 } from "@/extension/protocol";
 
 export default defineContentScript({
@@ -19,7 +20,7 @@ export default defineContentScript({
       !/^[^.]+\.margonem\.(pl|com)$/.test(location.hostname)
     )
       return;
-    let cleanup: (() => void) | undefined;
+    let cleanup: ((reason?: ExtensionClosedReason) => void) | undefined;
     ctx.addEventListener(
       window,
       "message",
@@ -70,7 +71,9 @@ export default defineContentScript({
               retry = setTimeout(connect, 1000);
             });
           } catch {
-            page.postMessage(encodeMessage({ type: "closed" }));
+            page.postMessage(
+              encodeMessage({ type: "closed", reason: "unavailable" }),
+            );
           }
         };
 
@@ -103,16 +106,16 @@ export default defineContentScript({
 
         page.start();
         connect();
-        cleanup = () => {
+        cleanup = (reason) => {
           stopped = true;
           clearTimeout(retry);
-          page.postMessage(encodeMessage({ type: "closed" }));
+          page.postMessage(encodeMessage({ type: "closed", reason }));
           page.close();
           background?.disconnect();
         };
       },
     );
     ctx.addEventListener(window, "pagehide", () => cleanup?.());
-    ctx.onInvalidated(() => cleanup?.());
+    ctx.onInvalidated(() => cleanup?.("invalidated"));
   },
 });

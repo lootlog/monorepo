@@ -59,7 +59,6 @@
     "visibleCount": "{{visibleCount}} z {{totalCount}}",
     "loading": "Ładowanie Lootlogów…",
     "loadError": "Nie udało się pobrać listy Lootlogów.",
-    "noGuilds": "Nie masz jeszcze dostępu do żadnego Lootloga.",
     "noResults": "Żaden Lootlog nie pasuje do filtrów.",
     "order": {
       "handleLabel": "Przenieś {{name}} (pozycja {{position}} z {{count}})",
@@ -156,7 +155,8 @@
     "accountSignedIn": "Zalogowano jako {{name}}",
     "accountSignedOut": "Niezalogowany",
     "accountError": "Nie udało się sprawdzić sesji",
-    "accountSignedOutHint": "Zaloguj się na stronie Lootloga i sprawdź sesję. Jeśli po zalogowaniu nadal widzisz ten komunikat, zezwól w przeglądarce na ciasteczka innych firm dla lootlog.pl.",
+    "accountCookiesBlocked": "Przeglądarka może blokować sesję Lootloga",
+    "accountSignedOutHint": "Zaloguj się, aby dodatek mógł korzystać z konta Lootloga. Jeśli coś blokuje logowanie, okno logowania podpowie, co zrobić.",
     "connectionLabel": "Połączenie z serwerem",
     "connectionConnected": "Połączono, Lootlogi: {{count}}",
     "windowsTitle": "Okna",
@@ -188,7 +188,9 @@
     "notAvailable": "Brak danych",
     "copy": "Kopiuj {{label}}",
     "copied": "Skopiowano",
-    "copyFailed": "Nie udało się skopiować"
+    "copyFailed": "Nie udało się skopiować",
+    "diagnosticsTitle": "Informacje diagnostyczne",
+    "diagnosticsDescription": "Dołącz je do zgłoszenia błędu. Zawierają wersję, sposób instalacji, przeglądarkę, stan sesji i połączeń oraz ostatnie nieudane żądania – bez haseł, tokenów, ciasteczek i adresu e-mail."
   },
   "airTags": {
     "seenSeconds": "widziany {{seconds}} s temu",
@@ -268,7 +270,6 @@
     "autoHideLabel": "Znika po",
     "autoHideDescription": "Po ilu sekundach powiadomienie samo zniknie. 0 = zostaje, aż je zamkniesz.",
     "serversTitle": "Z których Lootlogów",
-    "emptyGuilds": "Nie należysz do żadnego Lootloga.",
     "rulesTitle": "Co pokazywać",
     "serversDescription": "Jeden wybór dla wszystkich typów powiadomień. Dostajesz tylko powiadomienia z zaznaczonych Lootlogów; kliknij Lootlog, aby ją włączyć lub wyłączyć.",
     "rulesDescription": "Każdy wiersz to jeden typ powiadomienia. Włącz „Pokazuj”, a potem dobierz pozostałe opcje. Najedź na nagłówek kolumny, aby zobaczyć wyjaśnienie.",
@@ -322,7 +323,6 @@
       "guildSelectionLabel": "Lootlogi",
       "selectedCount": "{{selected}} z {{total}}",
       "guildPickerLabel": "Lootlogi: {{name}}",
-      "noGuildsAvailable": "Nie należysz do żadnego Lootloga.",
       "deleteRuleLabel": "Usuń regułę {{name}}",
       "noGuildsBadge": "Nic nie wysyła – zaznacz Lootlog"
     },
@@ -433,15 +433,13 @@
       "serversTitle": "Do których Lootlogów",
       "serversLabel": "Lootlogi",
       "serversDescription": "Łupy i timery tej postaci trafiają tylko do zaznaczonych Lootlogów; kliknij Lootlog, aby ją włączyć lub wyłączyć.",
-      "activeCount": "{{selectedCount}} z {{totalCount}}",
-      "emptyGuilds": "Brak Lootlogów do skonfigurowania dla tej postaci."
+      "activeCount": "{{selectedCount}} z {{totalCount}}"
     }
   },
   "hiddenTimers": {
     "description": "Przywracaj ukryte timery i zarządzaj listą ukrytych wpisów.",
     "scopeTitle": "Zakres listy",
     "ungroupedDescription": "Wybierz Lootlog, dla którego chcesz zobaczyć ukryte timery.",
-    "emptyGuilds": "Nie należysz do żadnego Lootloga.",
     "listTitle": "Ukryte timery",
     "emptyState": "Nie masz ukrytych timerów. Timer ukryjesz prawym przyciskiem myszy w oknie timerów.",
     "guildLabel": "Lootlog"

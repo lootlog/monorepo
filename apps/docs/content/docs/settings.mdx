@@ -100,9 +100,14 @@ w interfejsie nie wyłącza wysyłania obecności.
 ## Okna Lootlog w grze
 
 - Przy pierwszym uruchomieniu pasek szybkiego dostępu, timery i czat stoją jeden
-  pod drugim w prawym górnym rogu mapy, a wykrywacz i powiadomienia pojawiają
-  się w jej lewym górnym rogu. Nie zasłaniają pasków gry ani siebie nawzajem.
-  Okna otwierane na żądanie, na przykład ustawienia, pojawiają się na środku.
+  pod drugim w prawym górnym rogu mapy. Okna, które otwierają się same
+  (wykrywacz, powiadomienia i pingi walki), ustawiają się jedno pod drugim w
+  lewym górnym rogu. Gracze online i okna zbiórek stają obok paska szybkiego
+  dostępu. Żadne z nich nie zasłania postaci na środku mapy ani kolumny
+  ekwipunku; na małym ekranie mogą zajść na kolumnę czatu gry.
+- Okna logowania, ostrzeżeń, błędu i ustawień pojawiają się na środku, nad
+  postacią. Gdy otworzy się kilka naraz, każde kolejne jest lekko przesunięte,
+  więc widać paski tytułu wszystkich.
 - Okno zostaje tam, gdzie je przeciągniesz. Gdy okno przeglądarki jest mniejsze,
   Lootlog pokazuje okno przy krawędzi ekranu, także zablokowane, a po
   powiększeniu przeglądarki okno wraca na zapisane miejsce.
@@ -146,7 +151,9 @@ stanu: połączono, łączenie lub brak połączenia. Kliknięcie ikony pokazuje
 ping w milisekundach (czas odpowiedzi serwera Lootlog na ostatni pomiar
 połączenia) i połączone Lootlogi. Ping pojawia się po pierwszym pomiarze
 i znika po utracie połączenia. Gdy połączenia nie ma, przycisk
-**Połącz ponownie** łączy od razu, bez czekania na kolejną próbę.
+**Połącz ponownie** łączy od razu, bez czekania na kolejną próbę. Bez
+zalogowania ikona zmienia się w ikonę logowania, a okienko pokazuje przycisk
+**Zaloguj się**.
 Czat, timery i gracze online pokazują pasek z informacją, gdy połączenie jest
 zerwane lub trwa ponowne łączenie, więc widać, że dane mogą być nieaktualne.
 
@@ -195,6 +202,10 @@ i suwak z odczytem, który zapisuje wartość po puszczeniu.
   kosza przy wpisie. Wyciszenia działają obecnie na powiadomienia.
 - **Diagnostyka → Logi** prezentuje akcje jako tabelę z filtrami w pasku nad
   nią; kliknięcie wiersza rozwija dane akcji, szczegóły i żądania API.
+- **Informacje** pokazuje wersję dodatku i ma przycisk
+  **Kopiuj informacje diagnostyczne**, który kopiuje jeden tekst do zgłoszenia
+  problemu: wersję, sposób instalacji, przeglądarkę, stan logowania i
+  połączenia oraz ostatnie nieudane żądania, bez tokenów i plików cookie.
 - **Sterowanie → Skróty klawiszowe** pokazują skrót jako klawisz; ikona
   przywracania pojawia się tylko przy zmienionych skrótach. Jeśli domyślny
   skrót jest już zajęty przez inną akcję, przywracanie zachowa obecne

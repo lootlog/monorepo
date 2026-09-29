@@ -6,6 +6,7 @@ import { SettingsToolbar } from "@/components/settings/settings-toolbar";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ServerOrderList } from "@/features/settings/components/servers/server-order-list";
+import { SettingsNoLootlogEmptyState } from "@/features/settings/components/shared/settings-no-lootlog-empty-state";
 import { useUpdateUserPreferences } from "@/hooks/api/use-user-preferences";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { filterGuildsByVisibility } from "@lootlog/domain/guild-preferences";
@@ -82,9 +83,7 @@ export const ServerVisibilitySettingsTab = () => {
         }}
       >
         {orderedGuilds.length === 0 ? (
-          <SettingsEmptyState>
-            {t("settings.servers.noGuilds")}
-          </SettingsEmptyState>
+          <SettingsNoLootlogEmptyState />
         ) : (
           <SettingsSection
             controlId="server-visibility"

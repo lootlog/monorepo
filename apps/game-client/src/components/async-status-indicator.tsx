@@ -1,5 +1,5 @@
 import { AlertCircle, Loader2, RotateCcw, WifiOff } from "lucide-react";
-import type { FC } from "react";
+import type { FC, ReactNode } from "react";
 import { cn } from "cn";
 import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
 import { IconButton } from "@/components/ui/icon-button";
@@ -11,6 +11,8 @@ type AsyncStatusIndicatorProps = {
   label: string;
   onRetry?: () => void;
   retryLabel?: string;
+  /** Replaces the retry icon when the action is not a retry, e.g. sign in. */
+  retryIcon?: ReactNode;
   className?: string;
   /**
    * `strip` renders a full-width toolbar strip that stacks with the other
@@ -27,6 +29,7 @@ export const AsyncStatusIndicator: FC<AsyncStatusIndicatorProps> = ({
   label,
   onRetry,
   retryLabel,
+  retryIcon = <RotateCcw aria-hidden className="ll:size-3" />,
   className,
   layout = "inline",
 }) => {
@@ -72,7 +75,7 @@ export const AsyncStatusIndicator: FC<AsyncStatusIndicatorProps> = ({
           className="ll:-my-1.5 ll:-mr-1.5"
           onClick={onRetry}
         >
-          <RotateCcw aria-hidden className="ll:size-3" />
+          {retryIcon}
         </IconButton>
       ) : null}
     </div>

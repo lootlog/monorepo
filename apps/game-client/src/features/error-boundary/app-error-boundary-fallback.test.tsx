@@ -4,11 +4,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useWindowsStore } from "@/store/windows.store";
 import { AppErrorBoundaryFallback } from "./app-error-boundary-fallback";
-import {
-  APP_ERROR_WINDOW_DEFAULT_HEIGHT,
-  APP_ERROR_WINDOW_ID,
-  APP_ERROR_WINDOW_WIDTH,
-} from "./error-boundary.constants";
+import { APP_ERROR_WINDOW_ID } from "./error-boundary.constants";
 
 const mockClipboardWriteText = vi.fn<Clipboard["writeText"]>();
 
@@ -62,7 +58,7 @@ describe("AppErrorBoundaryFallback", () => {
     }));
   });
 
-  it("renders a centered draggable window with error details", () => {
+  it("renders a draggable window with error details", () => {
     const error = new Error("Exploded view");
     error.name = "RenderError";
     error.stack = "RenderError: Exploded view\n    at Crash";
@@ -78,18 +74,14 @@ describe("AppErrorBoundaryFallback", () => {
       `[data-ll-draggable-window="${APP_ERROR_WINDOW_ID}"]`,
     );
 
-    expect(screen.getByText("Błąd aplikacji")).toBeInTheDocument();
+    expect(screen.getByText("Błąd Lootloga")).toBeInTheDocument();
     expect(screen.getByText("RenderError")).toBeInTheDocument();
     expect(screen.getByText("Exploded view")).toBeInTheDocument();
     expect(screen.getByText(/RenderError: Exploded view/)).toBeInTheDocument();
     expect(windowElement).not.toBeNull();
-    expect(windowElement).toHaveStyle({
-      left: `${Math.round((1280 - APP_ERROR_WINDOW_WIDTH) / 2)}px`,
-      top: `${Math.round((720 - APP_ERROR_WINDOW_DEFAULT_HEIGHT) / 2)}px`,
-    });
   });
 
-  it("copies the full error payload to clipboard", async () => {
+  it("copies the diagnostics together with the full error payload", async () => {
     mockClipboardWriteText.mockResolvedValue(undefined);
     const error = new Error("Copy this failure");
     error.name = "CopyError";
@@ -102,7 +94,9 @@ describe("AppErrorBoundaryFallback", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Kopiuj błąd" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Kopiuj informacje diagnostyczne" }),
+    );
 
     await waitFor(() => {
       expect(mockClipboardWriteText).toHaveBeenCalledTimes(1);
@@ -114,27 +108,59 @@ describe("AppErrorBoundaryFallback", () => {
     expect(mockClipboardWriteText.mock.calls[0][0]).toContain(
       "Treść błędu: Copy this failure",
     );
+    expect(mockClipboardWriteText.mock.calls[0][0]).toContain("game bridge:");
     expect(
-      screen.getByRole("button", { name: "Skopiowano" }),
+      screen.getByRole("button", {
+        name: "Skopiowano informacje diagnostyczne",
+      }),
     ).toBeInTheDocument();
   });
 
-  it("hides the fallback window when closed", async () => {
+  it("offers a way back to the error window after it is closed", async () => {
     const user = userEvent.setup();
-    const error = new Error("Close me");
 
     render(
       <AppErrorBoundaryFallback
-        error={error}
+        error={new Error("Close me")}
         resetErrorBoundary={vi.fn<() => void>()}
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: "Zamknij" }));
+    await user.click(screen.getByRole("button", { name: "Zamknij okno" }));
+    await waitFor(() =>
+      expect(screen.queryByText("Close me")).not.toBeInTheDocument(),
+    );
 
-    expect(
-      screen.queryByRole("button", { name: "Kopiuj błąd" }),
-    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Błąd Lootloga" }));
+    expect(await screen.findByText("Close me")).toBeInTheDocument();
+  });
+
+  it("remounts the interface when the player reloads the addon", async () => {
+    const user = userEvent.setup();
+
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+
+    let shouldThrow = true;
+
+    const Flaky = () => {
+      if (shouldThrow) throw new Error("Transient failure");
+
+      return <p>Interface restored</p>;
+    };
+
+    render(
+      <ErrorBoundary FallbackComponent={AppErrorBoundaryFallback}>
+        <Flaky />
+      </ErrorBoundary>,
+    );
+
+    shouldThrow = false;
+    await user.click(screen.getByRole("button", { name: "Przeładuj dodatek" }));
+
+    expect(await screen.findByText("Interface restored")).toBeInTheDocument();
+    consoleError.mockRestore();
   });
 
   it("renders from ErrorBoundary when a child throws", () => {

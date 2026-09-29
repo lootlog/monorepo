@@ -3,10 +3,11 @@ import type { WindowId } from "@/store/windows.store";
 
 /**
  * Margonem's interface frames the map with 60px bars at the top and bottom, a
- * 245px chat column on the left and a 251px equipment column on the right, and
- * opens its own windows in the middle. Default placements sit just inside the
- * map corners so they cover open map instead of game HUD. Smaller or
- * differently arranged layouts are handled by the display clamp.
+ * 245px chat column on the left and a 251px equipment column on the right.
+ * The camera follows the hero, so the hero stands at the middle of the map,
+ * which is the middle of the viewport. Default placements keep to open map,
+ * off the game HUD and off the hero. Smaller or differently arranged layouts
+ * are handled by the display clamp.
  */
 const GAME_TOP_BAR_HEIGHT = 60;
 
@@ -18,188 +19,255 @@ const GAME_RIGHT_COLUMN_WIDTH = 251;
 
 const WINDOW_GAP = 8;
 
-const MAP_TOP = GAME_TOP_BAR_HEIGHT + WINDOW_GAP;
+/** The hero and the tiles around it stay visible: four tiles wide, 4.5 tall. */
+const HERO_CLEARANCE: WindowSize = { width: 128, height: 144 };
 
-type SizeOf = (id: WindowId) => WindowSize;
+/** Keeps prompts that can open together from sitting exactly on each other. */
+const PROMPT_CASCADE_OFFSET = 24;
+
+type Zone = "pinned" | "alerts" | "tools" | "prompts";
 
 /**
- * Windows open from the start stack down the map's top-right corner. The chat
- * moves beside the timers when the column would reach the bottom bar.
+ * - `pinned`: open from the start, stacked down the map's top-right corner.
+ * - `alerts`: open on their own when something happens in the game, stacked
+ *   down the map's top-left corner.
+ * - `tools`: opened by the player, stacked beside the pinned windows.
+ * - `prompts`: dialogs that need an answer, centered horizontally just above
+ *   the hero, or centered when too tall for that; a prompt that can open
+ *   while another is up takes the next cascade step.
  */
-const resolveRightColumnPosition = (
-  id: "quick-access" | "timers" | "chat",
-  sizeOf: SizeOf,
+type WindowSlot =
+  | { zone: "pinned" | "alerts" | "tools" }
+  | { zone: "prompts"; cascadeStep: number };
+
+/**
+ * Every window's slot, with each zone's windows in stacking order: an earlier
+ * window keeps its place and later ones fit around it.
+ */
+const WINDOW_SLOTS: Record<WindowId, WindowSlot> = {
+  "quick-access": { zone: "pinned" },
+  timers: { zone: "pinned" },
+  chat: { zone: "pinned" },
+  "npc-detector": { zone: "alerts" },
+  notifications: { zone: "alerts" },
+  "battle-pings": { zone: "alerts" },
+  "online-players": { zone: "tools" },
+  "party-finder": { zone: "tools" },
+  "create-party-gathering": { zone: "tools" },
+  // The login and error screens replace the game UI, so nothing opens beside them.
+  "extension-login": { zone: "prompts", cascadeStep: 0 },
+  "app-error": { zone: "prompts", cascadeStep: 0 },
+  settings: { zone: "prompts", cascadeStep: 0 },
+  "backend-preferences-warning": { zone: "prompts", cascadeStep: 1 },
+  "catching-whitelist-warning": { zone: "prompts", cascadeStep: 2 },
+  // The quick chat overlay places itself; it never uses this position.
+  command: { zone: "prompts", cascadeStep: 0 },
+};
+
+type StackZone = Exclude<Zone, "prompts">;
+
+// SAFETY: WINDOW_SLOTS is a Record<WindowId, WindowSlot> literal, so its own
+// keys are exactly the window ids.
+const STACKED_WINDOWS = (Object.keys(WINDOW_SLOTS) as WindowId[]).flatMap(
+  (id) => {
+    const { zone } = WINDOW_SLOTS[id];
+
+    return zone === "prompts" ? [] : [{ id, zone }];
+  },
+);
+
+/**
+ * A stacked window fills its column from the anchor corner downwards, then
+ * starts the next column towards the middle. It never covers `avoid` zones;
+ * it also stays clear of `preferClearOf` and of the hero while there is room.
+ */
+const STACK_ZONES: Record<
+  StackZone,
+  {
+    anchor: "left" | "right";
+    avoid: readonly StackZone[];
+    preferClearOf: readonly StackZone[];
+    clearOfHero: boolean;
+  }
+> = {
+  // Clears the hero from 1280px up; on narrower maps the column keeps its
+  // shape under the quick access bar instead of scattering.
+  pinned: {
+    anchor: "right",
+    avoid: ["pinned"],
+    preferClearOf: [],
+    clearOfHero: false,
+  },
+  alerts: {
+    anchor: "left",
+    avoid: ["pinned", "alerts"],
+    preferClearOf: [],
+    clearOfHero: true,
+  },
+  // A tool the player opens may cover an alert on a small screen, but never
+  // the windows open from the start or another tool.
+  tools: {
+    anchor: "right",
+    avoid: ["pinned", "tools"],
+    preferClearOf: ["alerts"],
+    clearOfHero: true,
+  },
+};
+
+type Rect = WindowPosition & WindowSize;
+
+type PlacedRect = Rect & { zone: StackZone };
+
+type WindowLayoutSizes = (id: WindowId) => WindowSize;
+
+const overlaps = (first: Rect, second: Rect) =>
+  first.x < second.x + second.width &&
+  second.x < first.x + first.width &&
+  first.y < second.y + second.height &&
+  second.y < first.y + first.height;
+
+const resolveMapBounds = (viewport: WindowSize) => ({
+  left: GAME_LEFT_COLUMN_WIDTH + WINDOW_GAP,
+  right: viewport.width - GAME_RIGHT_COLUMN_WIDTH - WINDOW_GAP,
+  top: GAME_TOP_BAR_HEIGHT + WINDOW_GAP,
+  bottom: viewport.height - GAME_BOTTOM_BAR_HEIGHT - WINDOW_GAP,
+});
+
+const resolveHeroClearance = (viewport: WindowSize): Rect => ({
+  x: Math.round((viewport.width - HERO_CLEARANCE.width) / 2),
+  y: Math.round((viewport.height - HERO_CLEARANCE.height) / 2),
+  ...HERO_CLEARANCE,
+});
+
+type Bounds = { left: number; right: number; top: number; bottom: number };
+
+/**
+ * The first free spot for a stacked window: column by column from the anchor
+ * corner, top to bottom, against the edges of the windows already placed.
+ * Keeping the hero visible outranks keeping the game's chat column visible;
+ * when nothing fits, the window takes the map corner.
+ */
+const placeInStack = (
+  zone: StackZone,
+  size: WindowSize,
+  placed: readonly PlacedRect[],
   viewport: WindowSize,
 ): WindowPosition => {
-  const right = viewport.width - GAME_RIGHT_COLUMN_WIDTH - WINDOW_GAP;
-  const quickAccess = sizeOf("quick-access");
+  const { anchor, avoid, preferClearOf, clearOfHero } = STACK_ZONES[zone];
+  const map = resolveMapBounds(viewport);
+  // The game's chat column is the only HUD a default window may cover; the
+  // equipment column and the bars stay reachable.
+  const mapAndChat = { ...map, left: 0 };
+  // Only a map too short for the stack pushes a window over the bottom bar.
+  const mapChatAndBottomBar = { ...mapAndChat, bottom: viewport.height };
+  const hero = resolveHeroClearance(viewport);
 
-  if (id === "quick-access") {
-    return { x: right - quickAccess.width, y: MAP_TOP };
-  }
+  const columns =
+    anchor === "right"
+      ? [
+          map.right - size.width,
+          ...placed.map((rect) => rect.x - WINDOW_GAP - size.width),
+        ].sort((first, second) => second - first)
+      : [
+          map.left,
+          mapAndChat.left,
+          ...placed.map((rect) => rect.x + rect.width + WINDOW_GAP),
+        ].sort((first, second) => first - second);
 
-  const timers = sizeOf("timers");
+  const rows = [
+    map.top,
+    ...placed.map((rect) => rect.y + rect.height + WINDOW_GAP),
+  ].sort((first, second) => first - second);
 
-  const timersPosition = {
-    x: right - timers.width,
-    y: MAP_TOP + quickAccess.height + WINDOW_GAP,
-  };
+  const findFreeSpot = (
+    bounds: Bounds,
+    clearOf: readonly StackZone[],
+    keepHeroVisible: boolean,
+  ) =>
+    columns
+      .flatMap((x) => rows.map((y) => ({ x, y, ...size })))
+      .find(
+        (rect) =>
+          rect.x >= bounds.left &&
+          rect.x + rect.width <= bounds.right &&
+          rect.y >= bounds.top &&
+          rect.y + rect.height <= bounds.bottom &&
+          !(keepHeroVisible && overlaps(rect, hero)) &&
+          !placed.some(
+            (other) => clearOf.includes(other.zone) && overlaps(rect, other),
+          ),
+      );
 
-  if (id === "timers") return timersPosition;
+  const spot =
+    findFreeSpot(map, [...avoid, ...preferClearOf], clearOfHero) ??
+    findFreeSpot(map, avoid, clearOfHero) ??
+    findFreeSpot(mapAndChat, avoid, clearOfHero) ??
+    findFreeSpot(map, avoid, false) ??
+    findFreeSpot(mapAndChat, avoid, false) ??
+    findFreeSpot(mapChatAndBottomBar, avoid, false);
 
-  const chat = sizeOf("chat");
-  const chatTop = timersPosition.y + timers.height + WINDOW_GAP;
-  const mapBottom = viewport.height - GAME_BOTTOM_BAR_HEIGHT - WINDOW_GAP;
-
-  if (chatTop + chat.height <= mapBottom) {
-    return { x: right - chat.width, y: chatTop };
-  }
+  if (spot) return { x: spot.x, y: spot.y };
 
   return {
-    x: timersPosition.x - WINDOW_GAP - chat.width,
-    y: timersPosition.y,
+    x: anchor === "right" ? map.right - size.width : map.left,
+    y: map.top,
   };
 };
 
-const RIGHT_COLUMN_WINDOWS = ["quick-access", "timers", "chat"] as const;
-
-const overlaps = (
-  position: WindowPosition,
+const placePrompt = (
+  cascadeStep: number,
   size: WindowSize,
-  other: WindowPosition & WindowSize,
-) =>
-  position.x < other.x + other.width &&
-  other.x < position.x + size.width &&
-  position.y < other.y + other.height &&
-  other.y < position.y + size.height;
-
-/**
- * On narrow maps the two corner stacks meet. A left-corner window then slides
- * left until it clears the right column, over the game's chat column if it
- * must, and moves down past the right column only when the viewport is too
- * narrow for that.
- */
-const clearOfRightColumn = (
-  position: WindowPosition,
-  size: WindowSize,
-  sizeOf: SizeOf,
   viewport: WindowSize,
 ): WindowPosition => {
-  const rightColumn = RIGHT_COLUMN_WINDOWS.map((id) => ({
-    ...resolveRightColumnPosition(id, sizeOf, viewport),
-    ...sizeOf(id),
-  }));
+  const map = resolveMapBounds(viewport);
+  const hero = resolveHeroClearance(viewport);
+  const offset = cascadeStep * PROMPT_CASCADE_OFFSET;
 
-  const findBlocker = (candidate: WindowPosition) =>
-    rightColumn.find((rect) => overlaps(candidate, size, rect));
+  const aboveHero = hero.y - WINDOW_GAP - size.height - offset;
 
-  const blocker = findBlocker(position);
-
-  if (!blocker) return position;
-
-  const beside = {
-    x: blocker.x - WINDOW_GAP - size.width,
-    y: position.y,
+  // Later steps cascade up and right above the hero, down and right when the
+  // prompt is too tall to clear it and sits centered instead.
+  return {
+    x: Math.round((viewport.width - size.width) / 2) + offset,
+    y:
+      aboveHero >= map.top
+        ? aboveHero
+        : Math.round((viewport.height - size.height) / 2) + offset,
   };
-
-  if (beside.x >= 0 && !findBlocker(beside)) return beside;
-
-  let below = position;
-  let belowBlocker = findBlocker(below);
-
-  while (belowBlocker) {
-    below = {
-      x: position.x,
-      y: belowBlocker.y + belowBlocker.height + WINDOW_GAP,
-    };
-    belowBlocker = findBlocker(below);
-  }
-
-  return below;
-};
-
-/**
- * Windows that open on their own when something happens in the game stack
- * down the map's top-left corner, away from the windows open from the start.
- */
-const resolveLeftColumnPosition = (
-  id: "npc-detector" | "notifications",
-  sizeOf: SizeOf,
-  viewport: WindowSize,
-): WindowPosition => {
-  const left = GAME_LEFT_COLUMN_WIDTH + WINDOW_GAP;
-
-  const detector = clearOfRightColumn(
-    { x: left, y: MAP_TOP },
-    sizeOf("npc-detector"),
-    sizeOf,
-    viewport,
-  );
-
-  if (id === "npc-detector") return detector;
-
-  // Both grow with their content up to the stored size, so stacking on that
-  // upper bound keeps them apart at any fill level.
-  return clearOfRightColumn(
-    {
-      x: left,
-      y: detector.y + sizeOf("npc-detector").height + WINDOW_GAP,
-    },
-    sizeOf("notifications"),
-    sizeOf,
-    viewport,
-  );
-};
-
-/**
- * The battle ping window opens with a fight, so it sits in the map's
- * bottom-left corner, clear of the corner stacks at the top where the fight's
- * enemies stand.
- */
-const resolveBattlePingsPosition = (
-  sizeOf: SizeOf,
-  viewport: WindowSize,
-): WindowPosition => {
-  const size = sizeOf("battle-pings");
-
-  return clearOfRightColumn(
-    {
-      x: GAME_LEFT_COLUMN_WIDTH + WINDOW_GAP,
-      y: viewport.height - GAME_BOTTOM_BAR_HEIGHT - WINDOW_GAP - size.height,
-    },
-    size,
-    sizeOf,
-    viewport,
-  );
 };
 
 /**
  * Where a window sits until the player moves it, recomputed from the current
- * viewport so edge-anchored windows follow browser resizes. Windows the player
- * opens on demand (settings, command palette, prompts) start centered.
+ * viewport so the layout follows browser resizes. The layout depends only on
+ * window sizes, never on which windows are open, so a window always opens in
+ * the same place and never jumps when another one opens or closes.
  */
 export const resolveDefaultWindowPosition = (
   id: WindowId,
-  sizeOf: SizeOf,
+  sizeOf: WindowLayoutSizes,
   viewport: WindowSize,
 ): WindowPosition => {
-  switch (id) {
-    case "quick-access":
-    case "timers":
-    case "chat":
-      return resolveRightColumnPosition(id, sizeOf, viewport);
-    case "npc-detector":
-    case "notifications":
-      return resolveLeftColumnPosition(id, sizeOf, viewport);
-    case "battle-pings":
-      return resolveBattlePingsPosition(sizeOf, viewport);
-    default: {
-      const size = sizeOf(id);
+  const slot = WINDOW_SLOTS[id];
 
-      return {
-        x: Math.max(0, Math.round((viewport.width - size.width) / 2)),
-        y: Math.max(0, Math.round((viewport.height - size.height) / 2)),
-      };
-    }
+  if (slot.zone === "prompts") {
+    return placePrompt(slot.cascadeStep, sizeOf(id), viewport);
   }
+
+  const placed: PlacedRect[] = [];
+
+  // Windows stacked earlier keep their place whatever comes after them.
+  for (const earlier of STACKED_WINDOWS.slice(
+    0,
+    STACKED_WINDOWS.findIndex((stacked) => stacked.id === id),
+  )) {
+    const size = sizeOf(earlier.id);
+
+    placed.push({
+      ...placeInStack(earlier.zone, size, placed, viewport),
+      ...size,
+      zone: earlier.zone,
+    });
+  }
+
+  return placeInStack(slot.zone, sizeOf(id), placed, viewport);
 };

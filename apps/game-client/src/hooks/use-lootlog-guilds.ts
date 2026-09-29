@@ -8,6 +8,7 @@ import { useAccessibleGuilds } from "@/hooks/api/use-accessible-guilds";
  * in the game client. `orderedGuilds` follows the order the user set in
  * settings and still includes hidden Lootlogs, so configuration screens can
  * reach them; `visibleGuilds` drops the hidden ones for in-game switchers.
+ * `hasNoGuilds` tells "not a member yet" apart from "every Lootlog hidden".
  */
 export const useLootlogGuilds = () => {
   const guildsQuery = useAccessibleGuilds();
@@ -28,6 +29,8 @@ export const useLootlogGuilds = () => {
   return {
     areVisibleGuildsResolved:
       guildsQuery.data !== undefined && preferencesQuery.data !== undefined,
+    /** The list loaded and the user is not a member of any Lootlog. */
+    hasNoGuilds: guildsQuery.data?.length === 0,
     guildsQuery,
     preferencesQuery,
     orderedGuilds,

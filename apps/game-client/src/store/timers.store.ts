@@ -13,13 +13,8 @@ import type {
 } from "@lootlog/schema/timer-settings";
 import { NpcType } from "@/api/npcs.api";
 import { create } from "zustand";
-import {
-  persist,
-  createJSONStorage,
-  type PersistStorage,
-  type StorageValue,
-} from "zustand/middleware";
-import { shallow } from "zustand/vanilla/shallow";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { createChangedOnlyStorage } from "./changed-only-storage";
 import { storageKey } from "@/lib/storage-key";
 import {
   syncCustomList,
@@ -124,41 +119,6 @@ export const DEFAULT_TIMERS_FILTERS: TimersFilters = {
   selectedColors: [],
   selectedLists: [],
 };
-
-// persist rewrites storage after every set, even when only transient state
-// outside partialize changed (the search box writes on each keystroke). Skip
-// writes whose persisted fields are all unchanged; the payload format is
-// unchanged, so existing stored settings load as before.
-function createChangedOnlyStorage<State>(
-  storage: PersistStorage<State> | undefined,
-): PersistStorage<State> | undefined {
-  if (!storage) return storage;
-
-  let lastWritten: StorageValue<State> | null = null;
-
-  return {
-    getItem: (name) => storage.getItem(name),
-    setItem: (name, value) => {
-      if (
-        lastWritten !== null &&
-        lastWritten.version === value.version &&
-        shallow(lastWritten.state, value.state)
-      ) {
-        return;
-      }
-
-      const result = storage.setItem(name, value);
-      lastWritten = value;
-
-      return result;
-    },
-    removeItem: (name) => {
-      lastWritten = null;
-
-      return storage.removeItem(name);
-    },
-  };
-}
 
 const updateTimestamp =
   (set: (partial: (state: TimersState) => Partial<TimersState>) => void) =>

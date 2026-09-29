@@ -17,6 +17,7 @@ import {
   type MemberSummaryResponseDtoOutput,
   type UserPreferencesResponseDtoOutput,
 } from "@lootlog/client/main";
+import { createTestGuild } from "@/test/guild-preferences-test";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { useSettingsStore } from "@/store/settings.store";
 import {
@@ -85,7 +86,7 @@ describe("OnlinePlayersList", () => {
     );
     harness.queryClient.setQueryData(
       getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-      [],
+      [createTestGuild("guild-1", "Alpha"), createTestGuild("guild-2", "Beta")],
     );
     harness.queryClient.setQueryData(
       getUsersControllerGetUserPreferencesQueryKey(),
@@ -234,12 +235,10 @@ describe("OnlinePlayersList", () => {
       createPresenceSnapshot([person(name, 123, "w", "10", "discord-1", map)]),
     );
 
-    const { container } = await render(
-      <OnlinePlayersList viewMode="accounts" filtersVisible />,
-    );
+    await render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
 
     const playerName = await screen.findByText(`${name} (123w)`);
-    const viewport = container.querySelector("[data-ll-scroll-area-viewport]");
+    const viewport = playerName.closest("[data-ll-scroll-area-viewport]");
     expect(viewport?.firstElementChild).toHaveStyle({
       width: "100%",
       minWidth: 0,

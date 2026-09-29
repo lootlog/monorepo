@@ -7,7 +7,8 @@ import { AppErrorBoundaryFallback } from "@/features/error-boundary/app-error-bo
 import { AppContent } from "@/app-content";
 import { disposeSoundPlayback } from "@/lib/sound-playback";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ExtensionLogin } from "@/components/extension-login";
+import { LoginWindow } from "@/components/login-window";
+import { useLoginWebsiteStore } from "@/hooks/auth/use-login-state";
 import { isExtensionClient } from "@/lib/game-client-platform";
 import { authClient } from "@/lib/auth-client";
 import { useEffect, useState, type ReactNode } from "react";
@@ -20,6 +21,13 @@ function App() {
   const extension = isExtensionClient();
   const userId = session.data?.user.id ?? null;
 
+  // A sign-in proves the cookie reaches this page, so a later sign-out (an
+  // expired session, say) must not be blamed on blocked cookies.
+  useEffect(() => {
+    if (userId !== null)
+      useLoginWebsiteStore.setState({ websiteOpened: false });
+  }, [userId]);
+
   const [activeUserId, setActiveUserId] = useState<string | null | undefined>(
     extension ? userId : undefined,
   );
@@ -28,13 +36,14 @@ function App() {
   useEffect(() => {
     if (
       session.isPending ||
+      session.isRefetching ||
       session.error ||
-      activeUserId === userId ||
-      (activeUserId === undefined && userId === null)
+      activeUserId === userId
     )
       return;
 
-    // The first userscript session belongs to the tree already starting up.
+    // The first userscript session belongs to the tree already starting up. A
+    // confirmed missing one unmounts its socket until the player signs in.
     if (activeUserId !== undefined) {
       disposeSocket();
       disposeSoundPlayback();
@@ -46,7 +55,14 @@ function App() {
     // The new tree must wait until the old tree unmounts and its external socket/cache are cleared.
     // eslint-disable-next-line react/set-state-in-effect
     setActiveUserId(userId);
-  }, [extension, session.isPending, session.error, activeUserId, userId]);
+  }, [
+    extension,
+    session.isPending,
+    session.isRefetching,
+    session.error,
+    activeUserId,
+    userId,
+  ]);
 
   const confirmedUserId =
     session.isPending || session.error ? activeUserId : userId;
@@ -71,13 +87,23 @@ function App() {
 
   if (connectGame) content = <SocketProvider>{content}</SocketProvider>;
 
-  if (!showGame) content = extension ? <ExtensionLogin /> : null;
+  if (!showGame) content = extension ? <LoginWindow /> : null;
+
+  // The userscript keeps its overlay while signed out, with the login window on
+  // top. A failed recheck of an active session does not interrupt play.
+  const showUserscriptLogin =
+    !extension &&
+    showGame &&
+    !session.isPending &&
+    userId === null &&
+    (!session.error || !activeUserId);
 
   return (
     <ThemeProvider>
       <TooltipProvider>
         <QueryClientProvider client={queryClient}>
           {content}
+          {showUserscriptLogin ? <LoginWindow /> : null}
         </QueryClientProvider>
       </TooltipProvider>
     </ThemeProvider>

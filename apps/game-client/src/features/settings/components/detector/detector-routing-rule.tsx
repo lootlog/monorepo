@@ -188,7 +188,6 @@ export const DetectorRoutingRule: FC<DetectorRoutingRuleProps> = ({
             aria-label={t("settings.detector.routing.guildPickerLabel", {
               name: label,
             })}
-            emptyStateLabel={t("settings.detector.routing.noGuildsAvailable")}
             guilds={guilds}
             onToggle={onToggleGuild}
             selectedGuildIds={selectedGuildIds}

@@ -5,6 +5,7 @@ import { ConnectionStatus } from "@/features/quick-access/components/connection-
 import { QuickAccessCollapseButton } from "@/features/quick-access/components/quick-access-collapse-button";
 import { QuickAccessCollapsedBar } from "@/features/quick-access/components/quick-access-collapsed-bar";
 import { GuildListPopover } from "@/features/quick-access/components/guild-list-popover";
+import { SetupChecklistButton } from "@/features/setup-checklist/components/setup-checklist-button";
 import {
   QuickAccessWindowButton,
   type QuickAccessWindowButtonProps,
@@ -115,6 +116,7 @@ export const QuickAccess = () => {
         orientation="horizontal"
       >
         <div className="ll:flex ll:h-full ll:w-max ll:min-w-full ll:items-center ll:gap-0.5 ll:px-0.5">
+          <SetupChecklistButton />
           {buttons.map((button) => (
             <QuickAccessWindowButton key={button.windowId} {...button} />
           ))}
