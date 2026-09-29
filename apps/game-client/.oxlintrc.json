@@ -393,10 +393,7 @@
           "error",
           {
             "allowInTypeGuards": true,
-            "boundaryFunctions": [
-              "createRuntimeAdapter",
-              "getMargonemInterface"
-            ]
+            "boundaryFunctions": ["createRuntimeAdapter"]
           }
         ]
       }

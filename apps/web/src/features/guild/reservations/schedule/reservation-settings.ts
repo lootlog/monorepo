@@ -54,12 +54,6 @@ const alignDateToStep = (
   return alignedDate;
 };
 
-export const snapMinutesToStep = (minutes: number, stepMinutes: number) =>
-  Math.floor(minutes / stepMinutes) * stepMinutes;
-
-export const getDurationMinutes = (fromDate: Date, toDate: Date) =>
-  Math.round((toDate.getTime() - fromDate.getTime()) / 60_000);
-
 export const getReservationEarliestStartDate = (now = new Date()) =>
   new Date(now.getTime() - RESERVATION_START_GRACE_MS);
 

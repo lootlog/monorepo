@@ -1,5 +1,4 @@
 import "@/index.css";
-import { Tile } from "@/components/ui/tile";
 import { Input } from "@/components/ui/input";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -32,7 +31,7 @@ describe("UnderBagTimers", () => {
     if (!lootlogRoot) throw new Error("Expected Lootlog root");
     render(
       <UnderBagTimers>
-        <Tile>TimersInPortal</Tile>
+        <span className="ll:rounded-sm">TimersInPortal</span>
       </UnderBagTimers>,
       { container: lootlogRoot },
     );
