@@ -9,7 +9,6 @@ type Props = {
   control: ReactNode;
   counters: ReactNode;
   menu?: ReactNode;
-  roster?: ReactNode;
   joined?: boolean;
 };
 
@@ -20,7 +19,6 @@ export function ChatGatheringCardView({
   control,
   counters,
   menu,
-  roster,
   joined = false,
 }: Props) {
   return (
@@ -46,7 +44,6 @@ export function ChatGatheringCardView({
       <div className="ll:mt-[-2px]">
         <ChatGatheringDetails {...details} />
       </div>
-      {roster}
     </div>
   );
 }
