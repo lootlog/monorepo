@@ -1,7 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
-
-const services = ["activity", "auth", "battlelog", "main", "search"] as const;
+import { clientServices } from "./client-services";
 
 const generatedRoot = resolve("src/generated");
 
@@ -27,7 +26,7 @@ const fixRequestOptionsType = (source: string, filePath: string): string => {
 };
 
 export const fixGeneratedOutput = (): void => {
-  for (const service of services) {
+  for (const service of Object.keys(clientServices)) {
     const filePath = join(generatedRoot, `${service}.ts`);
     const source = readFileSync(filePath, "utf8");
     const fixedSource = `${fixRequestOptionsType(source, filePath).trimEnd()}\n`;
