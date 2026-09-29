@@ -637,6 +637,44 @@ describe("PresenceStore", () => {
     },
   );
 
+  test("announces a write that settles after its caller was interrupted", async () => {
+    const redis = new MemoryRedis();
+    const hub = new RecordingHub();
+    const store = new PresenceStore({ command: redis }, hub, () => 10_000);
+    const publisher = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
+    await Effect.runPromise(store.publish(publisher, { organizationIds: [] }));
+    await flush(store);
+    hub.presenceEvents.length = 0;
+    const started = Promise.withResolvers<void>();
+    const gate = Promise.withResolvers<void>();
+    const evaluate = redis.eval.bind(redis);
+
+    spyOn(redis, "eval").mockImplementationOnce(async (...parameters) => {
+      started.resolve();
+      await gate.promise;
+
+      return evaluate(...parameters);
+    });
+
+    const controller = new AbortController();
+
+    const publication = Effect.runPromiseExit(
+      store.publish(publisher, { organizationIds: [], isAfk: true }),
+      { signal: controller.signal },
+    );
+
+    await started.promise;
+    controller.abort();
+    expect(Exit.isFailure(await publication)).toBe(true);
+    gate.resolve();
+    await Bun.sleep(0);
+    await flush(store);
+
+    expect(deltaChanges(hub, "upsert")).toMatchObject([
+      { presence: { sessionId: "session-1", isAfk: true } },
+    ]);
+  });
+
   test("a join burst costs one revision per flush and keeps snapshot reads flat", async () => {
     const redis = new MemoryRedis();
     const hub = new RecordingHub();

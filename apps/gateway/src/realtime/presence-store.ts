@@ -417,8 +417,12 @@ export class PresenceStore {
       }
 
       for (const organizationId of selectedOrganizationIds) {
-        yield* this.refresh(organizationId, presence, socket.data.discordId);
-        this.queueChange(organizationId, { action: "upsert", presence });
+        yield* this.refresh(
+          organizationId,
+          presence,
+          socket.data.discordId,
+          true,
+        );
         yield* this.publishCoverageChange(
           socket.data.discordId,
           organizationId,
@@ -1293,30 +1297,35 @@ export class PresenceStore {
     ];
 
     const removed = yield* fromPromise("presence.expiry-remove", () =>
-      this.redis.command.eval<number>(
-        REMOVE_EXPIRED_PRESENCE,
-        keys.length,
-        ...keys,
-        token,
-        candidate.value ?? "",
-        candidate.metadataValue ?? "",
-        JSON.stringify([candidate.organizationId, candidate.sessionId]),
-        this.now(),
-        this.presenceKey(candidate.organizationId, candidate.sessionId),
-        EXPIRY_LEASE_MS,
-        ...departure.args,
-      ),
+      this.redis.command
+        .eval<number>(
+          REMOVE_EXPIRED_PRESENCE,
+          keys.length,
+          ...keys,
+          token,
+          candidate.value ?? "",
+          candidate.metadataValue ?? "",
+          JSON.stringify([candidate.organizationId, candidate.sessionId]),
+          this.now(),
+          this.presenceKey(candidate.organizationId, candidate.sessionId),
+          EXPIRY_LEASE_MS,
+          ...departure.args,
+        )
+        .then((removed) => {
+          if (removed && metadata)
+            this.queueChange(candidate.organizationId, {
+              action: "remove",
+              userId: metadata.userId,
+              discordId: metadata.discordId,
+              sessionId: candidate.sessionId,
+            });
+
+          return removed;
+        }),
     );
 
     if (!removed) return 0;
 
-    if (metadata)
-      this.queueChange(candidate.organizationId, {
-        action: "remove",
-        userId: metadata.userId,
-        discordId: metadata.discordId,
-        sessionId: candidate.sessionId,
-      });
     yield* this.pruneOrganization(candidate.organizationId);
 
     return 1;
@@ -1470,36 +1479,44 @@ export class PresenceStore {
     });
   }
 
+  // Redis commands may settle after their Effect caller is interrupted. Writes
+  // queue their delta when they settle, so every stored change is announced.
   private refresh(
     organizationId: string,
     presence: Basic | Precise,
     discordId: string,
+    announce = false,
   ) {
     const key = this.presenceKey(organizationId, presence.sessionId);
 
     // Metadata lastSeen survives TTL expiry; both indexes recover independently
     // after partial eviction as well as after complete Redis loss.
     return fromPromise("presence.refresh", () =>
-      this.redis.command.eval(
-        REFRESH_PRESENCE,
-        5,
-        key,
-        this.metadataKey(organizationId, presence.sessionId),
-        this.indexKey(organizationId),
-        "presence:organizations",
-        EXPIRY_DUE_INDEX,
-        JSON.stringify(presence),
-        REDIS_TTL_SECONDS,
-        JSON.stringify({
-          userId: presence.userId,
-          discordId,
-          presence: withoutLocation(presence),
+      this.redis.command
+        .eval(
+          REFRESH_PRESENCE,
+          5,
+          key,
+          this.metadataKey(organizationId, presence.sessionId),
+          this.indexKey(organizationId),
+          "presence:organizations",
+          EXPIRY_DUE_INDEX,
+          JSON.stringify(presence),
+          REDIS_TTL_SECONDS,
+          JSON.stringify({
+            userId: presence.userId,
+            discordId,
+            presence: withoutLocation(presence),
+          }),
+          key,
+          organizationId,
+          JSON.stringify([organizationId, presence.sessionId]),
+          presence.lastSeen + PRESENCE_EXPIRY_MS,
+        )
+        .then(() => {
+          if (announce)
+            this.queueChange(organizationId, { action: "upsert", presence });
         }),
-        key,
-        organizationId,
-        JSON.stringify([organizationId, presence.sessionId]),
-        presence.lastSeen + PRESENCE_EXPIRY_MS,
-      ),
     );
   }
 
@@ -1512,23 +1529,26 @@ export class PresenceStore {
     return Effect.gen({ self: this }, function* () {
       const key = this.presenceKey(organizationId, sessionId);
       yield* fromPromise("presence.remove", () =>
-        this.redis.command.eval(
-          REMOVE_PRESENCE,
-          4,
-          key,
-          this.metadataKey(organizationId, sessionId),
-          this.indexKey(organizationId),
-          EXPIRY_DUE_INDEX,
-          key,
-          JSON.stringify([organizationId, sessionId]),
-        ),
+        this.redis.command
+          .eval(
+            REMOVE_PRESENCE,
+            4,
+            key,
+            this.metadataKey(organizationId, sessionId),
+            this.indexKey(organizationId),
+            EXPIRY_DUE_INDEX,
+            key,
+            JSON.stringify([organizationId, sessionId]),
+          )
+          .then(() => {
+            this.queueChange(organizationId, {
+              action: "remove",
+              userId,
+              discordId,
+              sessionId,
+            });
+          }),
       );
-      this.queueChange(organizationId, {
-        action: "remove",
-        userId,
-        discordId,
-        sessionId,
-      });
     });
   }
 
