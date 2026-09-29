@@ -15,6 +15,8 @@ import { useUserPreferences } from "@/hooks/api/user/use-user-preferences";
 
 const params = { domains: "general" };
 
+const MUTATION_KEY = ["activityFeedSettings"];
+
 const readSettings = (data: SettingsDocumentsResponseDtoOutput | undefined) =>
   parseActivityFeedSettings(data?.domains.general?.effective.activityFeed);
 
@@ -49,8 +51,13 @@ export function useActivityFeedSettings() {
     query: { staleTime: 60_000, retry: false },
   });
 
+  // A queued change applies its optimistic value before earlier saves answer,
+  // so only the last pending save may replace the cached settings.
+  const isLastSave = () =>
+    queryClient.isMutating({ mutationKey: MUTATION_KEY }) <= 1;
+
   const mutation = useMutation({
-    mutationKey: ["activityFeedSettings"],
+    mutationKey: MUTATION_KEY,
     scope: { id: "activity-feed-settings" },
     mutationFn: (patch: Partial<ActivityFeedSettings>) => {
       if (!preferences) throw new Error("User preferences are not loaded");
@@ -86,11 +93,13 @@ export function useActivityFeedSettings() {
       return { previous };
     },
     onError: (_error, _patch, context) => {
-      if (context?.previous)
+      if (context?.previous && isLastSave())
         queryClient.setQueryData(queryKey, context.previous);
       toast.error(t("statistics.feedSettingsError"));
     },
-    onSuccess: (data) => queryClient.setQueryData(queryKey, data),
+    onSuccess: (data) => {
+      if (isLastSave()) queryClient.setQueryData(queryKey, data);
+    },
   });
 
   return {
