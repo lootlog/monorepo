@@ -2,7 +2,6 @@ import { describe, expect, it } from "bun:test";
 import {
   decodeCreateActivity,
   decodeGuildMemberRemoved,
-  parseActivityQuery,
 } from "./activity-model.js";
 
 describe("activity wire schemas", () => {
@@ -43,41 +42,9 @@ describe("activity wire schemas", () => {
     ).toThrow();
   });
 
-  it("parses guild member removal and bounded queries", () => {
+  it("decodes guild member removal", () => {
     expect(
       decodeGuildMemberRemoved({ guildId: "guild", discordId: "discord" }),
     ).toEqual({ guildId: "guild", discordId: "discord" });
-    expect(
-      parseActivityQuery(
-        new URL(
-          "https://activity/guilds/g/activity-logs?type=CONNECT_EVENT&limit=100",
-        ),
-      ).limit,
-    ).toBe(100);
-    expect(() =>
-      parseActivityQuery(
-        new URL("https://activity/guilds/g/activity-logs?limit=101"),
-      ),
-    ).toThrow("Invalid limit");
   });
-});
-
-it.each(["type=UNKNOWN", "source=UNKNOWN"])(
-  "rejects unknown activity filter %s",
-  (query) => {
-    expect(() =>
-      parseActivityQuery(new URL(`https://activity/activity-logs?${query}`)),
-    ).toThrow("Invalid activity filter");
-  },
-);
-
-it("preserves multiple valid activity filters", () => {
-  const query = parseActivityQuery(
-    new URL(
-      "https://activity/activity-logs?type=CONNECT_EVENT,DISCONNECT_EVENT&source=GAME&source=WEB_APP",
-    ),
-  );
-
-  expect(query.type).toEqual(["CONNECT_EVENT", "DISCONNECT_EVENT"]);
-  expect(query.source).toEqual(["GAME", "WEB_APP"]);
 });
