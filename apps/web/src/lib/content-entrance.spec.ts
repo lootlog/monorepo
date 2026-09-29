@@ -50,6 +50,14 @@ describe("content entrance", () => {
     vi.unstubAllGlobals();
   });
 
+  const animatedProperties = () =>
+    animate.mock.calls.map(([keyframes], index) => [
+      animate.mock.contexts[index],
+      Array.isArray(keyframes)
+        ? Object.keys(keyframes[0] ?? {}).find((key) => key !== "offset")
+        : undefined,
+    ]);
+
   it("fades in content that replaces a placeholder the player saw", async () => {
     const { placeholder, section } = mountSection();
     const content = document.createElement("article");
@@ -58,8 +66,30 @@ describe("content entrance", () => {
     placeholder.replaceWith(content);
     await flushMutations();
 
-    expect(animate.mock.contexts).toEqual([content]);
+    expect(animatedProperties()).toEqual([
+      [content, "opacity"],
+      [content, "transform"],
+    ]);
     expect(section.contains(content)).toBe(true);
+  });
+
+  it("lifts the blocks beside a floating button, never the button's container", async () => {
+    const { placeholder } = mountSection();
+    const content = document.createElement("article");
+    const floatingButton = document.createElement("button");
+
+    const list = document.createElement("ul");
+
+    floatingButton.className = "fixed bottom-4 right-4";
+    content.append(list, floatingButton);
+    revealPlaceholder(placeholder);
+    placeholder.replaceWith(content);
+    await flushMutations();
+
+    expect(animatedProperties()).toEqual([
+      [content, "opacity"],
+      [list, "transform"],
+    ]);
   });
 
   it("shows content at once when its placeholder never became visible", async () => {
