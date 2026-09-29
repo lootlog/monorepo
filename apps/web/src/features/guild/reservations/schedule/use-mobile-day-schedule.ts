@@ -1,7 +1,7 @@
 import { animate, useMotionValue } from "framer-motion";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import { LABEL_COLUMN_WIDTH, MIN_ROW_HEIGHT } from "./constants";
 import {
   getDaySwipeDirection,

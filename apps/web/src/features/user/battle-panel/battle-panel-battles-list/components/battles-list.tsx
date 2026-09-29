@@ -6,7 +6,7 @@ import type {
 import { BattlesTable } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-table";
 import { cn } from "cn";
 import { useRef, type ReactNode } from "react";
-import { getPrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { getPrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import { useResetScrollTop } from "@/hooks/utils/use-virtual-infinite-scroll";
 import type { FilterChip } from "@/components/common/filter-chip-list";
 

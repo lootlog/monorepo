@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { AnimatePresence } from "framer-motion";
 import * as m from "framer-motion/m";
 import { cn } from "cn";
-import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 
 type CollapseAxis = "vertical" | "horizontal";
 

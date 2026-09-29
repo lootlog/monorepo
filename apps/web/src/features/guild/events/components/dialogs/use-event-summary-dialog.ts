@@ -3,7 +3,7 @@ import {
   useShowEventWrapped,
 } from "@lootlog/client/main";
 import { useEffect, useRef, useState } from "react";
-import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import { useTranslation } from "react-i18next";
 import { buildWrappedDeck } from "./event-summary/build-wrapped-slides";
 import { useWrappedAutoplay } from "./event-summary/use-wrapped-autoplay";

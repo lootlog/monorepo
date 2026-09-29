@@ -4,7 +4,7 @@ import { Trophy, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
 import * as m from "framer-motion/m";
 import { useTranslation } from "react-i18next";
 import type { Event } from "@/features/guild/events/types/api";
-import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import { CollapsePresence } from "@/components/common/collapse-presence";
 import { EventTimersList } from "./event-timers-list";
 
