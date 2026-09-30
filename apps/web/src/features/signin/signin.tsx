@@ -6,6 +6,16 @@ import { useSearch } from "@tanstack/react-router";
 import { useDiscordSignIn } from "@/hooks/auth/use-discord-sign-in";
 import { useTranslation } from "react-i18next";
 
+// Better Auth redirects OAuth callback failures to errorCallbackURL?error=<code>.
+const callbackErrorMessages = new Map([
+  ["email_not_found", "auth.signin.callbackErrors.emailMissing"],
+  ["access_denied", "auth.signin.callbackErrors.cancelled"],
+  ["state_mismatch", "auth.signin.callbackErrors.expired"],
+  ["state_invalid", "auth.signin.callbackErrors.expired"],
+  ["invalid_code", "auth.signin.callbackErrors.expired"],
+  ["account_not_linked", "auth.signin.callbackErrors.accountConflict"],
+]);
+
 export const SignIn: React.FC = () => {
   const search = useSearch({ from: "/signin" });
   const { signIn, isPending, hasError } = useDiscordSignIn();
@@ -33,7 +43,8 @@ export const SignIn: React.FC = () => {
                   {t(
                     hasError
                       ? "auth.signin.failed"
-                      : "auth.signin.callbackFailed",
+                      : (callbackErrorMessages.get(search.error ?? "") ??
+                          "auth.signin.callbackFailed"),
                   )}
                 </AlertDescription>
               </Alert>
