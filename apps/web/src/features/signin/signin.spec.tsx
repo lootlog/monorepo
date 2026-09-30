@@ -28,7 +28,7 @@ const { Route } = await import("../../routes/signin");
 
 await initializeTestTranslations();
 
-const renderSignIn = async () => {
+const renderSignIn = async (error = "state_mismatch") => {
   const root = createRootRoute();
 
   const signin = createRoute({
@@ -41,9 +41,7 @@ const renderSignIn = async () => {
   const router = createRouter({
     routeTree: root.addChildren([signin]),
     history: createMemoryHistory({
-      initialEntries: [
-        "/signin?error=state_security_mismatch&redirect=%2F%40me",
-      ],
+      initialEntries: [`/signin?error=${error}&redirect=%2F%40me`],
     }),
   });
 
@@ -65,9 +63,28 @@ afterEach(() => {
 describe("SignIn OAuth recovery", () => {
   it("shows a callback failure without automatically restarting OAuth", async () => {
     await renderSignIn();
-    expect(screen.getByText("auth.signin.callbackFailed")).toBeTruthy();
+    expect(screen.getByRole("alert").textContent).toBe(
+      "auth.signin.callbackErrors.expired",
+    );
     expect(signInFetch).not.toHaveBeenCalled();
   });
+
+  it("tells a player without a Discord email how to fix the account", async () => {
+    await renderSignIn("email_not_found");
+    expect(screen.getByRole("alert").textContent).toBe(
+      "auth.signin.callbackErrors.emailMissing",
+    );
+  });
+
+  it.each(["unable_to_create_user", "constructor"])(
+    "falls back to the generic callback failure for the unmapped code %s",
+    async (error) => {
+      await renderSignIn(error);
+      expect(screen.getByRole("alert").textContent).toBe(
+        "auth.signin.callbackFailed",
+      );
+    },
+  );
 
   it("starts one OAuth flow after an explicit retry", async () => {
     await renderSignIn();
