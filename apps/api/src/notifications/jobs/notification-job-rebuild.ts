@@ -17,6 +17,7 @@ import {
   NotificationTriggerType,
 } from "#src/notifications/notification-enums";
 import type { JsonValue } from "#src/database/json";
+import { notificationMatchingPolicy } from "#src/notifications/rules/notification-matching.service";
 import {
   timerNpcIdentity,
   type TimerNpcIdentity,
@@ -298,8 +299,31 @@ export const makeNotificationJobRebuild = (
 
     if (eligible.length === 0) return;
 
-    const timers = (yield* store.timers(rule.guildId, rule.world)).filter(
-      (timer) => matchesTimerRule(rule.filters, timerNpcIdentity(timer)),
+    const organizationTimers = yield* store.timers(rule.guildId, rule.world);
+
+    const unmatched = notificationMatchingPolicy.unmatchedTimerSelections(
+      rule.filters,
+      organizationTimers.map(timerNpcIdentity),
+    );
+
+    // Once per rule rebuild, never per timer event: a saved selection that
+    // matches no timer in the rule's Organization and world schedules nothing.
+    if (unmatched.npcIds.length > 0 || unmatched.templateIds.length > 0) {
+      yield* Effect.logWarning(
+        "Notification rule NPC selections match no timer",
+      ).pipe(
+        Effect.annotateLogs({
+          guildId: rule.guildId,
+          ruleId: rule.id,
+          world: rule.world ?? "all",
+          unmatchedNpcIds: unmatched.npcIds.join(","),
+          unmatchedTemplateIds: unmatched.templateIds.join(","),
+        }),
+      );
+    }
+
+    const timers = organizationTimers.filter((timer) =>
+      matchesTimerRule(rule.filters, timerNpcIdentity(timer)),
     );
 
     if (timers.length === 0) return;

@@ -953,6 +953,84 @@ const normalizeInternalPermissionFreshness = (
   return { ...operation, parameters: expectedParameters.slice(0, 2) };
 };
 
+const TIMER_NPC_SEARCH_ID_PARAMETERS = ["npcIds", "templateIds"];
+
+const TIMER_NPC_SEARCH_CHANGED_PARAMETERS = [
+  "search",
+  "world",
+  ...TIMER_NPC_SEARCH_ID_PARAMETERS,
+];
+
+const normalizeTimerNpcSearchQuery = (
+  service: string,
+  operationKey: string,
+  operation: JsonValue,
+): JsonValue => {
+  // Verified by api/src/http-api/handlers/timers/timer-search.data-layer.test.ts
+  // and the timer NPC search case in api/test/http-boundary.e2e-spec.ts:
+  // `search` and `world` became optional and id lookups were added; callers
+  // that send both keep their request shape.
+  if (
+    service !== "api" ||
+    operationKey !== "GET /guilds/{guildId}/timers/npcs/search" ||
+    !isJsonObject(operation) ||
+    !isJsonArray(operation.parameters)
+  )
+    return operation;
+
+  const parameters = operation.parameters.filter(isJsonObject);
+
+  const idParameters = parameters.filter((parameter) =>
+    TIMER_NPC_SEARCH_ID_PARAMETERS.some((name) => parameter.name === name),
+  );
+
+  const expectedChangedParameters: JsonValue[] = [
+    ...["search", "world"].map((name) => ({
+      name,
+      in: "query",
+      required: false,
+      schema: { type: "string", minLength: 1 },
+    })),
+    ...TIMER_NPC_SEARCH_ID_PARAMETERS.map((name) => ({
+      name,
+      in: "query",
+      required: false,
+      schema: {
+        type: "array",
+        items: {
+          type: "integer",
+          minimum: 1,
+          maximum: name === "npcIds" ? 2_147_483_647 : Number.MAX_SAFE_INTEGER,
+        },
+      },
+    })),
+  ];
+
+  const changedParameters = parameters.filter((parameter) =>
+    TIMER_NPC_SEARCH_CHANGED_PARAMETERS.some((name) => parameter.name === name),
+  );
+
+  if (
+    JSON.stringify(normalizeOpenApiRepresentation(changedParameters)) !==
+    JSON.stringify(normalizeOpenApiRepresentation(expectedChangedParameters))
+  ) {
+    throw new Error(
+      `${operationKey} must keep search and world optional and accept npcIds and templateIds arrays`,
+    );
+  }
+
+  return {
+    ...operation,
+    parameters: parameters
+      .filter((parameter) => !idParameters.includes(parameter))
+      .map((parameter) =>
+        parameter.name === "search" || parameter.name === "world"
+          ? { ...parameter, required: true }
+          : parameter,
+      ),
+  };
+};
+
 const ACTIVITY_LEGACY_HEALTH_DETAILS: JsonValue = {
   type: "object",
   additionalProperties: {
@@ -1054,6 +1132,7 @@ export const normalizeAllowedChanges = (
     normalized,
   );
   normalized = normalizeActivityLiveness(service, operationKey, normalized);
+  normalized = normalizeTimerNpcSearchQuery(service, operationKey, normalized);
 
   if (service === "api" && operationKey === "GET /guilds/@me/manageable") {
     normalized = normalizeManageableOrganizationResponse(normalized, schemas);

@@ -394,7 +394,7 @@ describe("Timers HttpApi handlers", () => {
 
     const error = await Effect.runPromise(
       Effect.flip(
-        searchTimerNpcs("guild-b", "Aldous", "boss").pipe(
+        searchTimerNpcs("guild-b", { world: "Aldous", search: "boss" }).pipe(
           Effect.provide(layer),
         ),
       ),

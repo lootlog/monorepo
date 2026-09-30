@@ -1,4 +1,6 @@
 import { MultiSelect } from "@/components/ui/multi-select";
+import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
+import { AlertTriangle } from "lucide-react";
 import {
   FormControl,
   FormField,
@@ -32,6 +34,8 @@ type Props = Pick<
   | "setNpcSearch"
   | "searchedNpcQuery"
   | "npcSearchError"
+  | "isAllWorlds"
+  | "hasAllWorldTimerNpcSelection"
 >;
 
 export const NotificationNpcFields = ({
@@ -47,6 +51,8 @@ export const NotificationNpcFields = ({
   setNpcSearch,
   searchedNpcQuery,
   npcSearchError,
+  isAllWorlds,
+  hasAllWorldTimerNpcSelection,
 }: Props) => (
   <>
     {!isScheduledMessage ? (
@@ -190,11 +196,26 @@ export const NotificationNpcFields = ({
                     emptyMessage={t("settings.notifications.empty.npcs")}
                   />
                 />
+                <p className="text-xs text-muted-foreground">
+                  {t(
+                    isAllWorlds
+                      ? "settings.notifications.npcSelection.allWorldsHint"
+                      : "settings.notifications.npcSelection.worldHint",
+                  )}
+                </p>
                 <FormMessage />
               </FormItem>
             )}
           />
         )}
+        {hasAllWorldTimerNpcSelection ? (
+          <Alert variant="alert">
+            <AlertTriangle />
+            <AlertDescription>
+              {t("settings.notifications.npcSelection.allWorldsTimerWarning")}
+            </AlertDescription>
+          </Alert>
+        ) : null}
       </>
     ) : null}
   </>

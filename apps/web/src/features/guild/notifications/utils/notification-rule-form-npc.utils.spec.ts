@@ -3,7 +3,7 @@ import {
   buildNotificationRuleNpcFilterPayload,
   getNotificationRuleNpcIdsForSubmit,
   parseManualNotificationRuleNpcIds,
-  toNotificationRuleNpcSelection,
+  toTimerNpcSearchSelection,
 } from "./notification-rule-form-npc.utils";
 import { getGuildNotificationRuleNpcIds } from "./notification-settings.utils";
 
@@ -57,22 +57,16 @@ describe("notificationRuleFormNpcUtils", () => {
     });
   });
 
-  it("sends a template search hit as a template id and restores it when the rule is reopened", () => {
+  it("sends a timer with a template as every spawn, one without as its own id, and restores both when the rule is reopened", () => {
     const selections = [
-      toNotificationRuleNpcSelection({
-        id: 257_636,
-        identityNamespace: "template",
-      }),
-      toNotificationRuleNpcSelection({
-        id: 313_103,
-        identityNamespace: "runtime",
-      }),
-    ];
+      toTimerNpcSearchSelection({ npcId: 313_103, templateId: 257_636 }, false),
+      toTimerNpcSearchSelection({ npcId: 313_104, templateId: null }, false),
+    ].filter((selection) => selection !== null);
 
     const payload = buildNotificationRuleNpcFilterPayload(selections);
 
     expect(payload).toStrictEqual({
-      npcIds: [313_103],
+      npcIds: [313_104],
       npcTemplateIds: [257_636],
     });
     expect(
@@ -81,6 +75,12 @@ describe("notificationRuleFormNpcUtils", () => {
     expect(
       parseManualNotificationRuleNpcIds(selections.join("\n")).ids,
     ).toStrictEqual(selections);
+  });
+
+  it("does not narrow an all-world rule to a timer without a template", () => {
+    expect(
+      toTimerNpcSearchSelection({ npcId: 313_104, templateId: null }, true),
+    ).toBeNull();
   });
 
   it("builds a multi npc payload when many ids are selected", () => {

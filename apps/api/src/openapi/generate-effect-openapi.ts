@@ -58,6 +58,16 @@ const queryParameterSchemas = new Map<string, JsonObject>(
       maximum: 50,
       default: 10,
     },
+    "TimersController_searchNpcsWithTimerData:npcIds": {
+      type: "array",
+      items: integerSchema(1, 2_147_483_647),
+      description: "Return timers whose runtime NPC id is in this list.",
+    },
+    "TimersController_searchNpcsWithTimerData:templateIds": {
+      type: "array",
+      items: integerSchema(1, Number.MAX_SAFE_INTEGER),
+      description: "Return timers observed with a template id in this list.",
+    },
     "LootsController_fetchLootsByGuildId:limit": integerSchema(1, 100),
     "LootsController_fetchLootsByGuildId:cursor": integerSchema(
       Number.MIN_SAFE_INTEGER,

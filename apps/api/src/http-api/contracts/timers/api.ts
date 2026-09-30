@@ -77,7 +77,7 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
     .annotate(OpenApi.Summary, "Search NPCs with timer data")
     .annotate(
       OpenApi.Description,
-      "Search for NPCs that have been timed in this guild/world, returning their latest respawn configuration",
+      "Search the Organization's timed NPCs by name, runtime NPC id or template id, returning their latest respawn configuration. Results omit timers the caller's roles cannot view and cover every Organization world when `world` is omitted.",
     ),
   HttpApiEndpoint.post("TimersControllerCreateAutoTimer", "/timers/auto", {
     payload: CreateAutoTimerRequest,
