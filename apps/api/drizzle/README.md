@@ -576,17 +576,18 @@ text in a payload.
 The game client derives it once per page in the runtime adapter
 (`resolveGameVersion`) from the page hostname: the edition domain itself or
 any subdomain of it. A new world needs no list entry. Lookalike and unknown
-hosts resolve to null and are never treated as Polish. NI and SI share the
-adapter, so both interfaces and every installation method report the same
-value. The character list uses the same value to pick the edition's public
+hosts resolve to null and are never treated as Polish. NI and SI are served
+from the same world URL and differ only by the `interface` cookie, so the
+hostname gives both interfaces, and every installation method, the same value. The character list uses the same value to pick the edition's public
 API; on an unrecognized host it reads only the game's own cached list.
 
 Evidence from the source snapshot described below: `core/Communication.js:376-395`
 builds the WebSocket URL as `<world>.margonem.<page TLD>`, `core/HelpersTS.ts:92-101`
 reads the edition from `__build.lang` and compares it with `CFG.LANG` (`pl`,
-`en`), and `checkOldBrowser.js:27-30` pairs `pl` with the `margonem.pl` cookie
-domain. The snapshot does not cover SI or establish that no other edition
-domain exists; an unlisted domain stays unknown until verified.
+`en`), and `checkOldBrowser.js:27-30` switches a `pl` player to SI by setting
+the `interface` cookie for the `margonem.pl` domain rather than changing the
+URL. The snapshot does not establish that no other edition domain exists; an
+unlisted domain stays unknown until verified.
 
 `POST /loots` accepts an optional nullable `gameVersion`. The API validates the
 value but cannot verify it: requests reach it through the browser extension or
