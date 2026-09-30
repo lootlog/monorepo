@@ -1766,6 +1766,7 @@ export interface SearchTimersNpcResponseDtoOutput {
      */
   templateId: number | null;
   timerKey: string;
+  world: string;
   name: string;
   lvl: number;
   type: SearchTimersNpcResponseDtoOutputType;
@@ -10732,13 +10733,27 @@ export type TimersControllerSearchNpcsWithTimerDataPathParameters = {
  }
 export type TimersControllerSearchNpcsWithTimerDataParams = {
 /**
+ * Case-insensitive substring of the NPC name.
  * @minLength 1
  */
-search: string;
+search?: string;
 /**
+ * World to search. When omitted, every world of the Organization is searched.
  * @minLength 1
  */
-world: string;
+world?: string;
+/**
+ * Return timers whose runtime NPC id is in this list.
+ * @items.minimum 1
+ * @items.maximum 2147483647
+ */
+npcIds?: number[];
+/**
+ * Return timers observed with a template id in this list.
+ * @items.minimum 1
+ * @items.maximum 9007199254740991
+ */
+templateIds?: number[];
 /**
  * @minimum 1
  * @maximum 50
@@ -18508,10 +18523,18 @@ export const useGetTimersControllerGetTimersQueryData = () => {
 
 
 export const getTimersControllerSearchNpcsWithTimerDataUrl = ({ guildId }: TimersControllerSearchNpcsWithTimerDataPathParameters,
-    params: TimersControllerSearchNpcsWithTimerDataParams,) => {
+    params?: TimersControllerSearchNpcsWithTimerDataParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["npcIds","templateIds"];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
 
     if (value !== undefined) {
       normalizedParams.append(key, value === null ? 'null' : String(value))
@@ -18524,11 +18547,11 @@ export const getTimersControllerSearchNpcsWithTimerDataUrl = ({ guildId }: Timer
 }
 
 /**
- * Search for NPCs that have been timed in this guild/world, returning their latest respawn configuration
+ * Search the Organization's timed NPCs by name, runtime NPC id or template id, returning their latest respawn configuration. Results omit timers the caller's roles cannot view and cover every Organization world when `world` is omitted.
  * @summary Search NPCs with timer data
  */
 export const timersControllerSearchNpcsWithTimerData = async ({ guildId }: TimersControllerSearchNpcsWithTimerDataPathParameters,
-    params: TimersControllerSearchNpcsWithTimerDataParams, options?: Parameters<typeof mainFetch>[1]): Promise<SearchTimersNpcResponseDtoOutput[]> => {
+    params?: TimersControllerSearchNpcsWithTimerDataParams, options?: Parameters<typeof mainFetch>[1]): Promise<SearchTimersNpcResponseDtoOutput[]> => {
 
   return mainFetch<SearchTimersNpcResponseDtoOutput[]>(getTimersControllerSearchNpcsWithTimerDataUrl({ guildId },params),
   {
@@ -18552,7 +18575,7 @@ export const getTimersControllerSearchNpcsWithTimerDataQueryKey = ({ guildId }: 
 
 
 export const getTimersControllerSearchNpcsWithTimerDataQueryOptions = <TData = Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError = ErrorType<RequestValidationError | TimersControllerSearchNpcsWithTimerData401 | TimersControllerSearchNpcsWithTimerData403 | TimersControllerSearchNpcsWithTimerData429>>({ guildId }: TimersControllerSearchNpcsWithTimerDataPathParameters,
-    params: TimersControllerSearchNpcsWithTimerDataParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+    params?: TimersControllerSearchNpcsWithTimerDataParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -18576,7 +18599,7 @@ export type TimersControllerSearchNpcsWithTimerDataQueryError = ErrorType<Reques
 
 export function useTimersControllerSearchNpcsWithTimerData<TData = Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError = ErrorType<RequestValidationError | TimersControllerSearchNpcsWithTimerData401 | TimersControllerSearchNpcsWithTimerData403 | TimersControllerSearchNpcsWithTimerData429>>(
  pathParams: TimersControllerSearchNpcsWithTimerDataPathParameters,
-    params: TimersControllerSearchNpcsWithTimerDataParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError, TData>> & Pick<
+    params: undefined |  TimersControllerSearchNpcsWithTimerDataParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>,
           TError,
@@ -18587,7 +18610,7 @@ export function useTimersControllerSearchNpcsWithTimerData<TData = Awaited<Retur
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useTimersControllerSearchNpcsWithTimerData<TData = Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError = ErrorType<RequestValidationError | TimersControllerSearchNpcsWithTimerData401 | TimersControllerSearchNpcsWithTimerData403 | TimersControllerSearchNpcsWithTimerData429>>(
  pathParams: TimersControllerSearchNpcsWithTimerDataPathParameters,
-    params: TimersControllerSearchNpcsWithTimerDataParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError, TData>> & Pick<
+    params?: TimersControllerSearchNpcsWithTimerDataParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>,
           TError,
@@ -18598,7 +18621,7 @@ export function useTimersControllerSearchNpcsWithTimerData<TData = Awaited<Retur
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useTimersControllerSearchNpcsWithTimerData<TData = Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError = ErrorType<RequestValidationError | TimersControllerSearchNpcsWithTimerData401 | TimersControllerSearchNpcsWithTimerData403 | TimersControllerSearchNpcsWithTimerData429>>(
  pathParams: TimersControllerSearchNpcsWithTimerDataPathParameters,
-    params: TimersControllerSearchNpcsWithTimerDataParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+    params?: TimersControllerSearchNpcsWithTimerDataParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -18607,7 +18630,7 @@ export function useTimersControllerSearchNpcsWithTimerData<TData = Awaited<Retur
 
 export function useTimersControllerSearchNpcsWithTimerData<TData = Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError = ErrorType<RequestValidationError | TimersControllerSearchNpcsWithTimerData401 | TimersControllerSearchNpcsWithTimerData403 | TimersControllerSearchNpcsWithTimerData429>>(
  { guildId }: TimersControllerSearchNpcsWithTimerDataPathParameters,
-    params: TimersControllerSearchNpcsWithTimerDataParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+    params?: TimersControllerSearchNpcsWithTimerDataParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -18623,7 +18646,7 @@ export function useTimersControllerSearchNpcsWithTimerData<TData = Awaited<Retur
  */
 export const prefetchTimersControllerSearchNpcsWithTimerDataQuery = async <TData = Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError = ErrorType<RequestValidationError | TimersControllerSearchNpcsWithTimerData401 | TimersControllerSearchNpcsWithTimerData403 | TimersControllerSearchNpcsWithTimerData429>>(
  queryClient: QueryClient, { guildId }: TimersControllerSearchNpcsWithTimerDataPathParameters,
-    params: TimersControllerSearchNpcsWithTimerDataParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+    params?: TimersControllerSearchNpcsWithTimerDataParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
 
@@ -18639,7 +18662,7 @@ export const prefetchTimersControllerSearchNpcsWithTimerDataQuery = async <TData
  */
 export const invalidateTimersControllerSearchNpcsWithTimerData = async (
  queryClient: QueryClient, { guildId }: TimersControllerSearchNpcsWithTimerDataPathParameters,
-    params: TimersControllerSearchNpcsWithTimerDataParams, options?: InvalidateOptions
+    params?: TimersControllerSearchNpcsWithTimerDataParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
 
   await queryClient.invalidateQueries({ queryKey: getTimersControllerSearchNpcsWithTimerDataQueryKey({ guildId },params) }, options);
@@ -18664,7 +18687,7 @@ export const useSetTimersControllerSearchNpcsWithTimerDataQueryData = () => {
 export const useGetTimersControllerSearchNpcsWithTimerDataQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: TimersControllerSearchNpcsWithTimerDataPathParameters,
-    params: TimersControllerSearchNpcsWithTimerDataParams,) =>
+    params?: TimersControllerSearchNpcsWithTimerDataParams,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>>(getTimersControllerSearchNpcsWithTimerDataQueryKey({ guildId },params));
 }
 

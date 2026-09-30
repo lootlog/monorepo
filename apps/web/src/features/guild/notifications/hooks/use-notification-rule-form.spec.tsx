@@ -5,9 +5,9 @@ import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { configureApiClients } from "@lootlog/client/transport";
-import { getNpcsControllerGetNpcsQueryKey } from "@lootlog/client/search";
 import {
   getNotificationsGuildControllerGetGuildRulesQueryKey,
+  getTimersControllerSearchNpcsWithTimerDataQueryKey,
   type NotificationRuleResponseDto,
 } from "@lootlog/client/main";
 import {
@@ -55,6 +55,39 @@ const scheduledRule = {
   targets: [],
 } satisfies NotificationRuleResponseDto;
 
+const timers = [
+  { npcId: 100, templateId: 900, world: "Aldous", name: "Kic" },
+  { npcId: 300, templateId: 900, world: "Berufs", name: "Kic" },
+  { npcId: 250, templateId: null, world: "Aldous", name: "Kic bez szablonu" },
+].map((timer) => ({
+  ...timer,
+  timerKey: `${timer.npcId}:${timer.name}`,
+  type: "ELITE2",
+  lvl: 60,
+  prof: "",
+  location: "",
+  wt: 0,
+  icon: "",
+  latestRespBaseSeconds: 3600,
+  latestRespawnRandomness: 0,
+}));
+
+const searchTimers = (url: URL) => {
+  const numbers = (key: string) => url.searchParams.getAll(key).map(Number);
+  const world = url.searchParams.get("world");
+  const search = url.searchParams.get("search")?.toLowerCase();
+
+  return timers.filter(
+    (timer) =>
+      (!world || timer.world === world) &&
+      (!search || timer.name.toLowerCase().includes(search)) &&
+      (search !== undefined ||
+        numbers("npcIds").includes(timer.npcId) ||
+        (timer.templateId !== null &&
+          numbers("templateIds").includes(timer.templateId))),
+  );
+};
+
 const renderEditedRule = async (
   overrides: Partial<NotificationRuleResponseDto> = {},
 ) => {
@@ -86,6 +119,10 @@ const renderEditedRule = async (
 
           if (url.pathname.endsWith("/rules")) {
             return Response.json({ items: rules });
+          }
+
+          if (url.pathname.endsWith("/timers/npcs/search")) {
+            return Response.json(searchTimers(url));
           }
 
           return Response.json([]);
@@ -281,19 +318,18 @@ it("lets a recovered NPC search replace a failed selected-label lookup", async (
     search: { baseUrl: "https://search.test" },
   });
 
-  const npc = { id: 2, name: "Smok", type: "HERO" };
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: string | URL | Request) => {
       const url = new URL(input instanceof Request ? input.url : input);
 
-      if (url.pathname === "/npcs") {
-        if (url.searchParams.get("search") === "smok") {
-          return Response.json([npc]);
+      if (url.pathname.endsWith("/timers/npcs/search")) {
+        if (url.searchParams.get("search") === "kic") {
+          return Response.json(searchTimers(url));
         }
 
         return Response.json(
-          { _tag: "SearchUnavailable", message: "Search unavailable" },
+          { _tag: "ServiceUnavailable", message: "Search unavailable" },
           { status: 503 },
         );
       }
@@ -329,20 +365,20 @@ it("lets a recovered NPC search replace a failed selected-label lookup", async (
     );
     expect(result.current.npcSearchError).toBe("common.searchUnavailable");
 
-    act(() => result.current.setNpcSearch("smok"));
+    act(() => result.current.setNpcSearch("kic"));
     await waitFor(() =>
       expect(result.current.searchedNpcQuery.isSuccess).toBe(true),
     );
     expect(
       client.getQueryState(
-        getNpcsControllerGetNpcsQueryKey({
-          ids: [1],
-          world: undefined,
-        }),
+        getTimersControllerSearchNpcsWithTimerDataQueryKey(
+          { guildId: "test-org" },
+          { npcIds: [1], templateIds: [], world: undefined, limit: 50 },
+        ),
       )?.status,
     ).toBe("error");
-    expect(result.current.npcOptions).toEqual([
-      { value: "2", label: "Smok npcType.HERO (#2)" },
+    expect(result.current.npcOptions.map(({ value }) => value)).toEqual([
+      "template:900",
     ]);
     expect(result.current.npcSearchError).toBeUndefined();
 
@@ -360,4 +396,89 @@ it("lets a recovered NPC search replace a failed selected-label lookup", async (
     client.clear();
     restore();
   }
+});
+
+it("reopens timer NPC selections, keeps unmatched ids removable and only narrows to one spawn on a chosen world", async () => {
+  const { result, requests } = await renderEditedRule({
+    triggerType: "TIMER_BEFORE_SPAWN",
+    scheduleStrategy: "SPAWN_WINDOW_RELATIVE",
+    scheduleAnchor: "MIN_SPAWN",
+    scheduleOffsetMinutes: 5,
+    scheduledAt: null,
+    filters: { npcTemplateIds: [900], npcIds: [555] },
+  });
+
+  const optionValues = () =>
+    result.current.npcOptions.map(({ value }) => value);
+
+  const optionLabels = () =>
+    Object.fromEntries(
+      result.current.npcOptions.map(({ value, label }) => [value, label]),
+    );
+
+  await waitFor(() =>
+    expect(optionLabels()).toEqual({
+      "template:900": "settings.notifications.npcOption.template",
+      "555": "settings.notifications.npcOption.unmatched",
+    }),
+  );
+  expect(result.current.form.getValues("npcIds")).toEqual([
+    "555",
+    "template:900",
+  ]);
+  expect(result.current.hasAllWorldTimerNpcSelection).toBe(true);
+
+  act(() => {
+    result.current.form.setValue("npcIds", ["template:900"]);
+    result.current.setNpcSearch("kic");
+  });
+  await waitFor(() =>
+    expect(result.current.searchedNpcQuery.isSuccess).toBe(true),
+  );
+  expect(optionValues()).toEqual(["template:900"]);
+  expect(result.current.hasAllWorldTimerNpcSelection).toBe(false);
+
+  act(() => result.current.form.setValue("world", "Aldous"));
+  await waitFor(() => expect(optionValues()).toEqual(["template:900", "250"]));
+
+  act(() => {
+    result.current.form.setValue("npcIds", ["template:900", "250"]);
+    result.current.form.setValue("targetIds", ["9"]);
+  });
+  await act(() =>
+    result.current.form.handleSubmit(result.current.handleSubmit)(),
+  );
+
+  expect(requests).toHaveLength(1);
+  expect(await requests[0]?.json()).toMatchObject({
+    world: "Aldous",
+    npcIds: [250],
+    npcTemplateIds: [900],
+  });
+});
+
+it("saves an all-world rule after removing its unmatched selection", async () => {
+  const { result, requests } = await renderEditedRule({
+    triggerType: "TIMER_BEFORE_SPAWN",
+    scheduleStrategy: "SPAWN_WINDOW_RELATIVE",
+    scheduleAnchor: "MIN_SPAWN",
+    scheduleOffsetMinutes: 5,
+    scheduledAt: null,
+    filters: { npcTemplateIds: [900], npcIds: [555] },
+  });
+
+  act(() => {
+    result.current.form.setValue("npcIds", ["template:900"]);
+    result.current.form.setValue("targetIds", ["9"]);
+  });
+  await act(() =>
+    result.current.form.handleSubmit(result.current.handleSubmit)(),
+  );
+
+  expect(requests).toHaveLength(1);
+
+  const payload = await requests[0]?.json();
+
+  expect(payload).toMatchObject({ npcIds: [], npcTemplateIds: [900] });
+  expect(payload).not.toHaveProperty("world");
 });
