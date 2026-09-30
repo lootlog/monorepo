@@ -32,6 +32,10 @@ export const NpcHitDto_Output = Schema.Struct({
   ]),
   margonemType: FiniteNumber,
   world: Schema.String,
+  gameVersion: Schema.NullOr(Schema.Literals(["en", "pl"])).annotate({
+    description:
+      "Margonem edition of the observation: `pl` for margonem.pl, `en` for margonem.com; null when unknown. Equal ids in different editions are unrelated.",
+  }),
 }).annotate({ description: "NPC search hit", identifier: "NpcHitDto_Output" });
 
 export type NpcsControllerGetNpcsQuery = typeof NpcsControllerGetNpcsQuery.Type;

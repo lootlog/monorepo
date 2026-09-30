@@ -4,6 +4,7 @@ import type { GameHero } from "@lootlog/margonem/hero";
 import type { GameMap } from "@lootlog/margonem/map";
 import type { GameNpc } from "@lootlog/margonem/npcs";
 import type { OtherHandle } from "@lootlog/margonem/others";
+import { GameVersion } from "@lootlog/schema/game-version";
 import type {
   RuntimeGameSnapshot,
   RuntimeInterface,
@@ -50,6 +51,27 @@ export interface MargonemRuntimeAdapter {
   getParty(): readonly RuntimePartyMember[];
   getStateSnapshot(): RuntimeStateSnapshot;
   isReady(): boolean;
+}
+
+const GAME_VERSION_DOMAINS: ReadonlyArray<readonly [string, GameVersion]> = [
+  ["margonem.pl", GameVersion.PL],
+  ["margonem.com", GameVersion.EN],
+];
+
+/**
+ * Margonem serves each edition from its own domain and every world as a
+ * subdomain of it; the game builds its WebSocket URL from the page's TLD. A
+ * new world therefore needs no list entry, while a lookalike or unknown host
+ * resolves to null instead of an edition.
+ */
+export function resolveGameVersion(hostname: string): GameVersion | null {
+  const host = hostname.toLowerCase().replace(/\.$/, "");
+
+  for (const [domain, version] of GAME_VERSION_DOMAINS) {
+    if (host === domain || host.endsWith(`.${domain}`)) return version;
+  }
+
+  return null;
 }
 
 type RuntimeOtherData = {
@@ -112,6 +134,10 @@ function normalizeOther(other: RuntimeOtherWrapper): RuntimeOther | null {
 
 abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {
   abstract readonly interface: RuntimeInterface;
+  // The host cannot change without a page load, so it is parsed once.
+  private readonly gameVersion = resolveGameVersion(
+    getRuntimeWindow().location.hostname,
+  );
   protected abstract getRawGame(): {
     hero: GameHero;
     map: GameMap;
@@ -155,6 +181,7 @@ abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {
         name: map.name,
         visibility: map.visibility,
       }),
+      gameVersion: this.gameVersion,
       world,
     });
   }

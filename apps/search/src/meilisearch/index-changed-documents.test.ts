@@ -110,6 +110,7 @@ test("delayed and retried NPC observations preserve accepted revisions and catal
     expect(hits[0]).toEqual({
       ...legacy,
       identityNamespace: "legacy",
+      gameVersion: null,
       lvl: reworked.lvl,
       icon: reworked.icon,
       type: reworked.type,

@@ -151,6 +151,7 @@ function patchGame(
       x: valueOrCurrent(getOptionalProperty(heroPatch, "x"), current.hero.x),
       y: valueOrCurrent(getOptionalProperty(heroPatch, "y"), current.hero.y),
     }),
+    gameVersion: current.gameVersion,
     interface: current.interface,
     map,
     world: current.world,

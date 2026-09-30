@@ -2886,6 +2886,18 @@ export type CreateLootDtoPlayersItem = {
   hpp?: number;
 };
 
+/**
+ * Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Null or absent when unknown; the API stores it as unknown and never assumes an edition. Declared by the client and not verified by the API.
+ * @nullable
+ */
+export type CreateLootDtoGameVersion = typeof CreateLootDtoGameVersion[keyof typeof CreateLootDtoGameVersion] | null;
+
+
+export const CreateLootDtoGameVersion = {
+  en: 'en',
+  pl: 'pl',
+} as const;
+
 export type CreateLootDtoSource = typeof CreateLootDtoSource[keyof typeof CreateLootDtoSource];
 
 
@@ -2909,6 +2921,11 @@ export interface CreateLootDto {
   players: CreateLootDtoPlayersItem[];
   /** @minLength 1 */
   world: string;
+  /**
+     * Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Null or absent when unknown; the API stores it as unknown and never assumes an edition. Declared by the client and not verified by the API.
+     * @nullable
+     */
+  gameVersion?: CreateLootDtoGameVersion;
   source: CreateLootDtoSource;
   /** @minLength 1 */
   location: string;

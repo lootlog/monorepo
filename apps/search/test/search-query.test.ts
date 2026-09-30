@@ -93,8 +93,13 @@ test("individual endpoints preserve text search and repeated exact-name filters 
   try {
     for (const [index, term, expected] of [
       ["players", "cash", player],
-      // Documents indexed before identity namespaces are served as legacy.
-      ["npcs", "tanro", { ...npc, identityNamespace: "legacy" }],
+      // Documents indexed before identity namespaces are served as legacy,
+      // and those indexed before game versions as unknown.
+      [
+        "npcs",
+        "tanro",
+        { ...npc, identityNamespace: "legacy", gameVersion: null },
+      ],
     ] as const) {
       const individual = await boundary.handler(
         new Request(`http://localhost/${index}?search=${term}&world=luvia`),

@@ -111,6 +111,7 @@ const game = Object.freeze({
     x: 1,
     y: 1,
   }),
+  gameVersion: "pl",
   interface: "si" as const,
   map: Object.freeze({ id: 1, name: "Benchmark", visibility: 30 }),
   world: "benchmark",

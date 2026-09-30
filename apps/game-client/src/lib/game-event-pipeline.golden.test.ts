@@ -294,6 +294,7 @@ function resetPipelineState(): void {
       x: 1,
       y: 2,
     },
+    gameVersion: "pl",
     interface: "ni",
     map: { id: 13, name: "Nithal", visibility: 30 },
     world: "luvia",

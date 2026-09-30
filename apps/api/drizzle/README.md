@@ -430,7 +430,7 @@ history entry without changing the accepted loot or its NPC observation.
 
 `createNpcSnapshotHash` in `packages/database/src/snapshot-hash.ts` identifies a
 revision by its identity namespace, world, supplied NPC id, name, derived NPC
-type, level, icon, profession, weight, and Margonem type. Missing and null
+type, level, icon, profession, weight, Margonem type, and a known game version. Missing and null
 optional attributes are equivalent; empty strings and zero remain distinct
 values. The name participates in revision identity, so a rename creates a new
 revision. Returning to an identical observation reuses its existing revision.
@@ -447,8 +447,7 @@ Deployed clients that send only the overloaded `id` keep `legacy`: normal battle
 loot may have supplied a template id, while fallback and dialog loot may have
 supplied a runtime id. Equal numbers in different namespaces are unrelated, and
 no mapping between them is inferred. World separates new observations across
-worlds without claiming a game-version identifier; game-version provenance
-remains the work of [LOO-35](https://linear.app/lootlog/issue/LOO-35).
+worlds; the game version, described below, separates Margonem editions.
 
 `20260930102644_loot_npc_runtime_id` adds the nullable `LootNpc.runtimeNpcId`,
 the looted spawn reported beside the catalog identity. Adding a nullable column
@@ -565,3 +564,58 @@ identity. They do not establish historical runtime/template mappings. Lootlog's
 bridge already keeps runtime `id` and `templateId` separately in
 `apps/game-client/src/lib/margonem-runtime/runtime-adapter.ts`; this snapshot
 migration leaves that boundary and the existing client transport unchanged.
+
+## Margonem game version
+
+`GameVersion` from `@lootlog/schema/game-version` names the Margonem edition
+that produced an observation: `pl` for `*.margonem.pl`, `en` for
+`*.margonem.com`. `world` scopes gameplay and stays independent of it. The
+edition namespaces catalog identities; it does not prove the language of every
+text in a payload.
+
+The game client derives it once per page in the runtime adapter
+(`resolveGameVersion`) from the page hostname: the edition domain itself or
+any subdomain of it. A new world needs no list entry. Lookalike and unknown
+hosts resolve to null and are never treated as Polish. NI and SI share the
+adapter, so both interfaces and every installation method report the same
+value. The character list uses the same value to pick the edition's public
+API; on an unrecognized host it reads only the game's own cached list.
+
+Evidence from the source snapshot described below: `core/Communication.js:376-395`
+builds the WebSocket URL as `<world>.margonem.<page TLD>`, `core/HelpersTS.ts:92-101`
+reads the edition from `__build.lang` and compares it with `CFG.LANG` (`pl`,
+`en`), and `checkOldBrowser.js:27-30` pairs `pl` with the `margonem.pl` cookie
+domain. The snapshot does not cover SI or establish that no other edition
+domain exists; an unlisted domain stays unknown until verified.
+
+`POST /loots` accepts an optional nullable `gameVersion`. The API validates the
+value but cannot verify it: requests reach it through the browser extension or
+userscript transport, not from the game page's origin. It is provenance, not an
+Organization authorization input. Absent and null values are stored as null.
+
+`20260930143511_loot_game_version` creates the `GameVersion` enum and adds the
+nullable `Loot.gameVersion` and `NpcSnapshot.gameVersion`. Adding nullable
+columns without a default changes only the catalog. Existing rows stay null,
+which keeps them identifiable as unknown for the repair in
+[LOO-38](https://linear.app/lootlog/issue/LOO-38); the migration does not infer
+an edition from the world name.
+
+- The loot `uniqueId` still hashes item hids and world, so a retry, or the same
+  loot submitted by an older and a newer client, resolves to one loot. The first
+  accepted game version is kept; a later submission never changes it.
+- NPC revisions of different editions never share a row. An observation without
+  a game version keeps the hash that older clients produce, so it reuses
+  existing revisions instead of duplicating them.
+- NPC search publications carry `gameVersion`. Search adds it to the document,
+  prefixes the catalog key with it when known, and returns it as a nullable
+  field on NPC hits. Older search revisions ignore the field.
+- Item snapshots and the item search document stay keyed by item id and stat
+  hash; their per-edition isolation belongs to
+  [LOO-36](https://linear.app/lootlog/issue/LOO-36). The loot's game version
+  identifies the edition of its items meanwhile.
+- Timers remain keyed by Organization, world and runtime NPC id and do not
+  store a game version. An Organization represents one faction, so its timers
+  come from one edition.
+
+Deploy the migration, then search, then the API, then the game client. An API
+rollback keeps accepting new clients because older revisions ignore the field.

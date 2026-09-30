@@ -1,4 +1,5 @@
 import type { GameEvent } from "@lootlog/margonem/game-events";
+import type { GameVersion } from "@lootlog/schema/game-version";
 
 export type RuntimeStatus = "uninitialized" | "ready";
 
@@ -52,6 +53,8 @@ export type RuntimeHero = Readonly<{
 }>;
 
 export type RuntimeGameSnapshot = Readonly<{
+  /** Null when the page host is not a recognized Margonem edition domain. */
+  gameVersion: GameVersion | null;
   hero: RuntimeHero;
   interface: RuntimeInterface;
   map: RuntimeMap;

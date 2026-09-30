@@ -18,8 +18,9 @@ import type { NpcHit } from "./npc-hit.js";
 
 type RawNpcHit = Omit<
   NpcHit,
-  "identityNamespace" | "margonemType" | "prof" | "type"
+  "gameVersion" | "identityNamespace" | "margonemType" | "prof" | "type"
 > & {
+  gameVersion?: NpcHit["gameVersion"];
   identityNamespace?: NpcIdentityNamespace;
   margonemType?: number | null;
   prof?: string | null;
@@ -54,6 +55,7 @@ const normalizeNpcHit = (npc: RawNpcHit): NpcHit => {
     lvl: npc.lvl,
     wt: npc.wt,
     world: npc.world,
+    gameVersion: npc.gameVersion ?? null,
     prof,
     margonemType,
     type,
@@ -62,20 +64,26 @@ const normalizeNpcHit = (npc: RawNpcHit): NpcHit => {
 
 type IndexNpc = IndexNpcsCommand["npcs"][number];
 
-// Legacy keys keep their deployed format; equal ids in another namespace are
-// a different NPC and must not share a catalog group.
+// Legacy keys keep their deployed format; equal ids in another namespace or
+// game version are a different NPC and must not share a catalog group.
 export const npcCatalogKey = (
   npc: Pick<
     RawNpcHit,
-    "id" | "identityNamespace" | "margonemType" | "type" | "world"
+    | "gameVersion"
+    | "id"
+    | "identityNamespace"
+    | "margonemType"
+    | "type"
+    | "world"
   >,
 ) => {
   const key = `${npc.id}_${resolveMargonemType(npc)}_${npc.world}`;
   const namespace = npc.identityNamespace ?? NpcIdentityNamespace.LEGACY;
 
-  return namespace === NpcIdentityNamespace.LEGACY
-    ? key
-    : `${namespace}_${key}`;
+  const namespaced =
+    namespace === NpcIdentityNamespace.LEGACY ? key : `${namespace}_${key}`;
+
+  return npc.gameVersion ? `${npc.gameVersion}_${namespaced}` : namespaced;
 };
 
 // A template id selects every spawn of the monster; prefer it when name and

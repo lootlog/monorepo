@@ -188,6 +188,7 @@ export class LootEventProcessor {
 
     const payload = {
       world: game.world,
+      gameVersion: game.gameVersion,
       source: LOOT_SOURCE_BY_EVENT_SOURCE[loot.source],
       location: map.name,
       npcs,
@@ -367,6 +368,7 @@ export class LootEventProcessor {
 
     const payload = {
       world: game.world,
+      gameVersion: game.gameVersion,
       source: LOOT_SOURCE_BY_EVENT_SOURCE[loot.source],
       location: mapName,
       loots,
