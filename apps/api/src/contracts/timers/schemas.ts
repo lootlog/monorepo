@@ -236,6 +236,18 @@ export const TimerOrganizationPath = Schema.Struct({
   guildId: Schema.String.annotate({ examples: ["guild_123"] }),
 });
 
+// Bounded by the Timer.npcId integer column, so larger ids fail validation
+// instead of the query.
+const MAX_TIMER_NPC_ID = 2_147_483_647;
+
+const TimerNpcId = Schema.Number.check(
+  Schema.isInt().annotate({ expected: "an integer" }),
+).check(
+  Schema.isBetween({ minimum: 1, maximum: MAX_TIMER_NPC_ID }).annotate({
+    expected: `a value between 1 and ${MAX_TIMER_NPC_ID}`,
+  }),
+);
+
 export type TimerNpcSearchQuery = typeof TimerNpcSearchQuery.Type;
 
 export const TimerNpcSearchQuery = Schema.Struct({
@@ -251,7 +263,7 @@ export const TimerNpcSearchQuery = Schema.Struct({
     }),
   ),
   npcIds: Schema.optionalKey(
-    Schema.Array(PositiveSafeInteger).annotate({
+    Schema.Array(TimerNpcId).annotate({
       description: "Return timers whose runtime NPC id is in this list.",
     }),
   ),

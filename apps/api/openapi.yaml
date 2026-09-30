@@ -2690,7 +2690,7 @@ paths:
             items:
               type: integer
               minimum: 1
-              maximum: 9007199254740991
+              maximum: 2147483647
             description: Return timers whose runtime NPC id is in this list.
           required: false
         - name: templateIds

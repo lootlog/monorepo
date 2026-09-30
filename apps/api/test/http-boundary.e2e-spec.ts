@@ -610,6 +610,7 @@ describe("API HTTP boundary", () => {
     ]);
 
     expect((await search(`world=${world}`)).status).toBe(400);
+    expect((await search("npcIds=2147483648")).status).toBe(400);
   });
 
   it("enforces Organization access for events and notifications", async () => {

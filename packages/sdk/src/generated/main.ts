@@ -9721,7 +9721,7 @@ world?: string;
 /**
  * Return timers whose runtime NPC id is in this list.
  * @items.minimum 1
- * @items.maximum 9007199254740991
+ * @items.maximum 2147483647
  */
 npcIds?: number[];
 /**

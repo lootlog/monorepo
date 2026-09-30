@@ -955,6 +955,12 @@ const normalizeInternalPermissionFreshness = (
 
 const TIMER_NPC_SEARCH_ID_PARAMETERS = ["npcIds", "templateIds"];
 
+const TIMER_NPC_SEARCH_CHANGED_PARAMETERS = [
+  "search",
+  "world",
+  ...TIMER_NPC_SEARCH_ID_PARAMETERS,
+];
+
 const normalizeTimerNpcSearchQuery = (
   service: string,
   operationKey: string,
@@ -978,8 +984,14 @@ const normalizeTimerNpcSearchQuery = (
     TIMER_NPC_SEARCH_ID_PARAMETERS.some((name) => parameter.name === name),
   );
 
-  const expectedIdParameters: JsonValue[] = TIMER_NPC_SEARCH_ID_PARAMETERS.map(
-    (name) => ({
+  const expectedChangedParameters: JsonValue[] = [
+    ...["search", "world"].map((name) => ({
+      name,
+      in: "query",
+      required: false,
+      schema: { type: "string", minLength: 1 },
+    })),
+    ...TIMER_NPC_SEARCH_ID_PARAMETERS.map((name) => ({
       name,
       in: "query",
       required: false,
@@ -988,18 +1000,22 @@ const normalizeTimerNpcSearchQuery = (
         items: {
           type: "integer",
           minimum: 1,
-          maximum: Number.MAX_SAFE_INTEGER,
+          maximum: name === "npcIds" ? 2_147_483_647 : Number.MAX_SAFE_INTEGER,
         },
       },
-    }),
+    })),
+  ];
+
+  const changedParameters = parameters.filter((parameter) =>
+    TIMER_NPC_SEARCH_CHANGED_PARAMETERS.some((name) => parameter.name === name),
   );
 
   if (
-    JSON.stringify(normalizeOpenApiRepresentation(idParameters)) !==
-    JSON.stringify(normalizeOpenApiRepresentation(expectedIdParameters))
+    JSON.stringify(normalizeOpenApiRepresentation(changedParameters)) !==
+    JSON.stringify(normalizeOpenApiRepresentation(expectedChangedParameters))
   ) {
     throw new Error(
-      `${operationKey} must accept optional npcIds and templateIds arrays`,
+      `${operationKey} must keep search and world optional and accept npcIds and templateIds arrays`,
     );
   }
 
