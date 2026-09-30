@@ -678,6 +678,13 @@ keyed by item id alone.
 
 ## Legacy association repair
 
+> [!WARNING]
+> Do not run the repair command against production until
+> [LOO-250](https://linear.app/lootlog/issue/LOO-250) has shipped. It creates
+> one NPC revision per world; LOO-250 moves NPC revisions to one per game
+> edition and adapts this command and its manifest. Deploying the migration and
+> the code is safe: the tables stay empty and nothing runs by itself.
+
 Rows written before immutable NPC and item revisions can point at the wrong
 revision. A legacy `NpcSnapshot` kept the first level seen for an id and name,
 so later kills of a reworked NPC, and loots whose client started sending the
