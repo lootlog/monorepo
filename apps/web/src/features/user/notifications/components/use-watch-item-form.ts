@@ -1,3 +1,4 @@
+import { uniqBy } from "es-toolkit";
 import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -135,7 +136,13 @@ export function useWatchItemForm({
     },
   });
 
-  const itemSearchResults = itemSearchQuery.data?.hits ?? [];
+  // A watch covers the item id; hits for its other names or editions add
+  // nothing, and the most relevant one names it as the player searched.
+  const itemSearchResults = uniqBy(
+    itemSearchQuery.data?.hits ?? [],
+    (hit) => hit.id,
+  );
+
   const isItemsLoading = itemSearchQuery.isFetching;
 
   const resolvedItemId = isManualEntry

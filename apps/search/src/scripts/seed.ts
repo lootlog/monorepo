@@ -2,12 +2,12 @@
  * Rebuilds the Meilisearch indexes from the API database.
  *
  * Each index is rebuilt in a shadow index (`<name>_rebuild`) that receives the
- * service settings, retained NPC revisions, and player and item snapshots,
- * loaded in one query per entity and pushed in large batches. Batches are
- * enqueued without waiting, so Meilisearch merges them into a few indexing
- * runs; the script waits once, then swaps the shadow indexes into place in a
- * single atomic task, so searches never see a half-built index. The three
- * entities run concurrently.
+ * service settings, retained NPC revisions, player snapshots, and one item
+ * document per edition, item id and name, loaded in one query per entity and
+ * pushed in large batches. Batches are enqueued without waiting, so
+ * Meilisearch merges them into a few indexing runs; the script waits once,
+ * then swaps the shadow indexes into place in a single atomic task, so
+ * searches never see a half-built index. The three entities run concurrently.
  *
  * The queue consumer keeps writing to the live indexes while this runs;
  * events consumed during the rebuild are replaced by the database state read
@@ -33,6 +33,7 @@ import { getMeilisearchErrorCode } from "#src/meilisearch/query-builder";
 import { NPCS_INDEX } from "#src/npcs/search-index";
 import { PLAYERS_INDEX } from "#src/players/search-index";
 import { toPlayerDocument } from "#src/players/players.service";
+import { buildItemSeedQuery } from "./item-seed-query.js";
 import { buildNpcSeedQuery, toNpcSeedDocument } from "./npc-seed-query.js";
 
 const DOCUMENTS_PER_BATCH = 10_000;
@@ -70,17 +71,6 @@ type PlayerRow = {
   prof: string | null;
   icon: string | null;
   lvl: number | null;
-};
-
-type ItemRow = {
-  itemId: number;
-  name: string;
-  icon: string;
-  statRaw: string;
-  lvl: number | null;
-  rarity: string | null;
-  itemType: string | null;
-  worlds: string[];
 };
 
 const formatDuration = (startedAt: number) =>
@@ -263,52 +253,10 @@ const seedPlayers = async () => {
 const seedItems = async () => {
   const startedAt = performance.now();
 
-  // One document per item id: its newest snapshot plus every world it dropped
-  // in. Loot rows reduce to distinct (snapshot, world) pairs first.
-  const rows = await sql<ItemRow[]>`
-    WITH snapshot_worlds AS (
-      SELECT li."itemSnapshotId", l."world"
-      FROM "LootItem" li
-      INNER JOIN "Loot" l ON l."id" = li."lootId"
-      GROUP BY li."itemSnapshotId", l."world"
-    ),
-    latest_items AS (
-      SELECT DISTINCT ON (item_s."itemId")
-        item_s."itemId",
-        item_s."name",
-        item_s."icon",
-        item_s."statRaw",
-        item_s."lvl",
-        item_s."rarity",
-        item_s."itemType"
-      FROM "ItemSnapshot" item_s
-      WHERE EXISTS (
-        SELECT 1 FROM snapshot_worlds sw WHERE sw."itemSnapshotId" = item_s."id"
-      )
-      ORDER BY item_s."itemId", item_s."createdAt" DESC, item_s."id" DESC
-    ),
-    item_worlds AS (
-      SELECT item_s."itemId", ARRAY_AGG(DISTINCT sw."world") AS "worlds"
-      FROM snapshot_worlds sw
-      INNER JOIN "ItemSnapshot" item_s ON item_s."id" = sw."itemSnapshotId"
-      GROUP BY item_s."itemId"
-    )
-    SELECT latest_items.*, item_worlds."worlds"
-    FROM latest_items
-    INNER JOIN item_worlds ON item_worlds."itemId" = latest_items."itemId"
-  `;
+  const rows = await buildItemSeedQuery(database);
 
   const documents = toItemDocuments(
-    rows.map((item) => ({
-      id: item.itemId,
-      name: item.name,
-      icon: item.icon,
-      stat: item.statRaw,
-      lvl: item.lvl ?? 0,
-      rarity: item.rarity,
-      type: item.itemType,
-      worlds: item.worlds,
-    })),
+    rows.map((item) => ({ ...item, lvl: item.lvl ?? 0 })),
   );
 
   await indexDocuments(ITEMS_INDEX, documents, formatDuration(startedAt));

@@ -1,5 +1,7 @@
 import { getItemTypeByCl } from "@lootlog/domain/item-type";
+import { parseItemStats, splitItemStat } from "@lootlog/database/item-stat";
 import {
+  createItemSnapshotHash,
   createItemStatsHash,
   createNpcSnapshotHash,
   createPlayerSnapshotHash,
@@ -237,20 +239,11 @@ async function seedGuilds(count: number) {
   return createdGuilds;
 }
 
-const parseItemStats = (stats: string): Record<string, string> =>
-  Object.fromEntries(
-    stats
-      .split(";")
-      .map((entry) => entry.split("="))
-      .filter((entry): entry is [string, string] =>
-        Boolean(entry[0] && entry[1]),
-      ),
-  );
-
 type MainTransaction = Parameters<
   Parameters<typeof mainDatabase.transaction>[0]
 >[0];
 
+/** Resolves the revision of a seeded item, which has no game version. */
 async function findOrCreateItemSnapshot(
   transaction: MainTransaction,
   item: {
@@ -261,25 +254,36 @@ async function findOrCreateItemSnapshot(
     cl: number;
     rarity: "UNIQUE" | "HEROIC" | "LEGENDARY" | "UPGRADED";
   },
+  revisionStat: string,
 ) {
-  const statsHash = createItemStatsHash(item.stat);
-  const parsedStats = parseItemStats(item.stat);
+  const itemType = getItemTypeByCl(item.cl);
+  const parsedStats = parseItemStats(revisionStat);
+
+  const snapshotHash = createItemSnapshotHash({
+    gameVersion: null,
+    itemId: item.id,
+    name: item.name,
+    icon: item.icon,
+    itemType,
+    stat: revisionStat,
+  });
 
   const inserted = await transaction
     .insert(itemSnapshotTable)
     .values({
       itemId: item.id,
-      statsHash,
+      statsHash: createItemStatsHash(revisionStat),
+      snapshotHash,
       name: item.name,
       icon: item.icon,
       lvl: parsedStats["lvl"] ? Number(parsedStats["lvl"]) : 0,
       rarity: item.rarity,
-      itemType: getItemTypeByCl(item.cl),
-      statRaw: item.stat,
+      itemType,
+      statRaw: revisionStat,
       statsSnapshot: parsedStats,
     })
     .onConflictDoNothing({
-      target: [itemSnapshotTable.itemId, itemSnapshotTable.statsHash],
+      target: [itemSnapshotTable.itemId, itemSnapshotTable.snapshotHash],
     })
     .returning({ id: itemSnapshotTable.id });
 
@@ -291,7 +295,7 @@ async function findOrCreateItemSnapshot(
     .where(
       and(
         eq(itemSnapshotTable.itemId, item.id),
-        eq(itemSnapshotTable.statsHash, statsHash),
+        eq(itemSnapshotTable.snapshotHash, snapshotHash),
       ),
     )
     .limit(1);
@@ -414,11 +418,19 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
       if (!insertedLoot) throw new Error("Loot insert did not return a row");
 
       for (const item of loot.loots) {
-        const snapshot = await findOrCreateItemSnapshot(transaction, item);
+        const { revision, instance } = splitItemStat(item.stat);
+
+        const snapshot = await findOrCreateItemSnapshot(
+          transaction,
+          item,
+          revision,
+        );
+
         await transaction.insert(lootItemTable).values({
           lootId: insertedLoot.id,
           itemSnapshotId: snapshot.id,
           hid: item.hid,
+          instanceStat: instance,
         });
       }
 

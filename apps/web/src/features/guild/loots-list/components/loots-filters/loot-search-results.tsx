@@ -44,8 +44,8 @@ export const LootSearchResults = ({
       <CommandGroup heading={t("loots.searchCommand.npcs")}>
         {npcResults.map((npc) => (
           <CommandItem
-            key={`npc-${npc.id}`}
-            value={`npc-${npc.id}`}
+            key={`npc-${npc.name}`}
+            value={`npc-${npc.name}`}
             onSelect={() => handleSelectNpc(npc)}
             className="h-14 min-h-14 rounded-lg px-3 py-1.5"
           >
@@ -73,8 +73,8 @@ export const LootSearchResults = ({
       <CommandGroup heading={t("loots.searchCommand.items")}>
         {itemResults.map((item) => (
           <CommandItem
-            key={`item-${item.id}`}
-            value={`item-${item.id}`}
+            key={`item-${item.name}`}
+            value={`item-${item.name}`}
             onSelect={() => handleSelectItem(item)}
             className="h-14 min-h-14 rounded-lg px-3 py-1.5"
           >

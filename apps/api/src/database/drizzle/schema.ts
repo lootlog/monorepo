@@ -499,7 +499,13 @@ export const itemSnapshotTable = pgTable(
   {
     id: serial("id").notNull().primaryKey(),
     itemId: integer("itemId").notNull(),
+    gameVersion: gameVersionEnum("gameVersion"),
+    // Hash of the revision stats alone; revisions of one item that differ only
+    // in presentation or edition share it.
     statsHash: text("statsHash").notNull(),
+    // Revision identity from createItemSnapshotHash. Null on rows accepted
+    // before revisions, whose name and icon came from the first writer (LOO-38).
+    snapshotHash: text("snapshotHash"),
     name: text("name").notNull(),
     icon: text("icon").notNull(),
     lvl: integer("lvl"),
@@ -512,9 +518,9 @@ export const itemSnapshotTable = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex("ItemSnapshot_itemId_statsHash_key").on(
+    uniqueIndex("ItemSnapshot_itemId_snapshotHash_key").on(
       table["itemId"],
-      table["statsHash"],
+      table["snapshotHash"],
     ),
     index("ItemSnapshot_name_idx").on(table["name"]),
     index("ItemSnapshot_rarity_lvl_idx").on(table["rarity"], table["lvl"]),
@@ -528,6 +534,9 @@ export const lootItemTable = pgTable(
     lootId: integer("lootId").notNull(),
     itemSnapshotId: integer("itemSnapshotId").notNull(),
     hid: text("hid").notNull(),
+    // Per-instance stats (ITEM_INSTANCE_STAT_KEYS) of this looted item; null
+    // when it had none or was accepted before they were stored here.
+    instanceStat: text("instanceStat"),
   },
   (table) => [
     index("LootItem_lootId_itemSnapshotId_idx").on(
