@@ -1,10 +1,10 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { notificationJobTable } from "#src/database/drizzle/schema";
-import type { JsonValue } from "#src/database/json";
+import type { JsonObject, JsonValue } from "#src/database/json";
 import {
   NotificationJobKind,
   NotificationJobStatus,
@@ -38,6 +38,18 @@ export interface NotificationJobInput {
   };
   readonly jobKind: NotificationJobKind;
   readonly scheduledFor: Date;
+  /**
+   * When a scheduled occurrence was due, if it was due before it could be
+   * planned and `scheduledFor` moved it to now. It keys the job, so planning
+   * the same past-due occurrence again cannot send it a second time.
+   */
+  readonly occurrenceAt?: Date;
+  /**
+   * Payload fields that identify a past-due occurrence. A sent job of the
+   * same rule, target and source whose payload contains them is that
+   * occurrence under an earlier key, so it is not created again.
+   */
+  readonly occurrence?: JsonObject;
   readonly sourceEntityType?: string;
   readonly sourceEntityId?: string;
   readonly sourceEventId?: string;
@@ -66,7 +78,7 @@ export const notificationJobIdempotencyKey = (options: NotificationJobInput) =>
         options.target.id,
         options.sourceEntityType ?? "unknown",
         options.sourceEntityId ?? "unknown",
-        options.scheduledFor.toISOString(),
+        (options.occurrenceAt ?? options.scheduledFor).toISOString(),
       ].join(":")
     : [
         options.jobKind === NotificationJobKind.TEST ? "test" : "instant",
@@ -145,9 +157,46 @@ export const makeNotificationJobScheduler = (
       .pipe(Effect.mapError(failure("notifications.scheduler.cancelRows")));
   });
 
+  // A past-due occurrence already sent or being sent under an earlier key,
+  // such as one keyed by its moved time before `occurrenceAt` existed.
+  const alreadyDelivered = (options: NotificationJobInput) =>
+    options.occurrence &&
+    options.occurrenceAt &&
+    options.occurrenceAt < options.scheduledFor &&
+    options.sourceEntityType &&
+    options.sourceEntityId
+      ? database
+          .select({ id: notificationJobTable.id })
+          .from(notificationJobTable)
+          .where(
+            and(
+              eq(notificationJobTable.ruleId, options.notificationRule.id),
+              eq(notificationJobTable.targetId, options.target.id),
+              eq(
+                notificationJobTable.sourceEntityType,
+                options.sourceEntityType,
+              ),
+              eq(notificationJobTable.sourceEntityId, options.sourceEntityId),
+              // Drizzle has no jsonb containment operator.
+              sql`${notificationJobTable.payloadSnapshot} @> ${JSON.stringify(options.occurrence)}::jsonb`,
+              inArray(notificationJobTable.status, [
+                NotificationJobStatus.SENT,
+                NotificationJobStatus.PROCESSING,
+              ]),
+            ),
+          )
+          .limit(1)
+          .pipe(
+            Effect.map((rows) => rows.length > 0),
+            Effect.mapError(failure("notifications.scheduler.findDelivered")),
+          )
+      : Effect.succeed(false);
+
   const create = Effect.fn("notifications.scheduler.create")(function* (
     options: NotificationJobInput,
   ) {
+    if (yield* alreadyDelivered(options)) return null;
+
     const idempotencyKey = notificationJobIdempotencyKey(options);
     const now = new Date(yield* Clock.currentTimeMillis);
 

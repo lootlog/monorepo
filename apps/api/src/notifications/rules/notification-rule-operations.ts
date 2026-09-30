@@ -4,7 +4,14 @@ import {
   notificationRulesInApiKeyScope,
   requireNotificationRuleApiKeyScope,
 } from "../notification-api-key-scope.js";
-import { parseNotificationFilters } from "./notification-matching.service.js";
+import {
+  notificationMatchingPolicy,
+  parseNotificationFilters,
+} from "./notification-matching.service.js";
+import {
+  readUnresolvedSelections,
+  resolveUnresolvedSelections,
+} from "./notification-unresolved-selections.js";
 import {
   getNotificationTestUsageResponse,
   NOTIFICATION_TEST_WINDOW_MS,
@@ -31,6 +38,7 @@ import { Error as NotificationError } from "#src/notifications/error";
 import {
   NotificationJobKind,
   NotificationOwnerType,
+  NotificationTriggerType,
   type NotificationOwnerType as NotificationOwnerTypeValue,
 } from "#src/notifications/notification-enums";
 import {
@@ -122,6 +130,11 @@ export const makeNotificationRuleOperations = (
         ruleIds,
       );
 
+      const unresolvedByRule = yield* readUnresolvedSelections(
+        database,
+        ruleIds,
+      );
+
       return ruleRows.map((rule) => ({
         ...rule,
         filters:
@@ -131,6 +144,7 @@ export const makeNotificationRuleOperations = (
                 rule.filters,
               ),
         targets: targetsByRule.get(rule.id) ?? [],
+        unresolvedSelections: unresolvedByRule.get(rule.id) ?? [],
       }));
     }).pipe(
       Effect.mapError(
@@ -496,6 +510,15 @@ export const makeNotificationRuleOperations = (
             updatedAt: new Date(yield* Clock.currentTimeMillis),
           })
           .where(eq(notificationRuleTable.id, ruleId));
+
+        yield* resolveUnresolvedSelections(
+          transaction,
+          ruleId,
+          "npc",
+          values.triggerType === NotificationTriggerType.TIMER_BEFORE_SPAWN
+            ? notificationMatchingPolicy.timerSelections(values.filters).npcIds
+            : [],
+        );
 
         if (targetIds) {
           yield* transaction

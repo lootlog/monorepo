@@ -1,3 +1,4 @@
+import { getLootStatsCacheScope } from "#src/shared/cache";
 import {
   getEffectiveCapabilities,
   type AccessPolicy,
@@ -52,7 +53,8 @@ export class LootStatsService {
     return Effect.all(
       uniqueGuildIds.map((guildId) =>
         Effect.tryPromise({
-          try: () => this.redis.invalidateScopes(`loot-stats:${guildId}`),
+          try: () =>
+            this.redis.invalidateScopes(getLootStatsCacheScope(guildId)),
           catch: (cause) => cause,
         }).pipe(
           Effect.catch((error) =>
@@ -147,7 +149,7 @@ export class LootStatsService {
     return this.redis
       .getOrSetJsonEffect({
         key: cacheKey,
-        scopes: [`loot-stats:${guildId}`],
+        scopes: [getLootStatsCacheScope(guildId)],
         ttlSeconds: CACHE_TTL_SECONDS,
         codec: makeJsonCodec(LootStatsResponseSchema),
         factory: load,

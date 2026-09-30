@@ -1488,6 +1488,52 @@ export const watchedItemTable = pgTable(
   ],
 );
 
+// A saved selection that no longer identifies what its rule matches, recorded
+// by the LOO-38 repair. The rule keeps its filters unchanged until a member
+// reselects or removes the selection; nothing is remapped automatically.
+export const notificationRuleUnresolvedSelectionTable = pgTable(
+  "NotificationRuleUnresolvedSelection",
+  {
+    id: serial("id").notNull().primaryKey(),
+    ruleId: integer("ruleId").notNull(),
+    // `npc` for a timer rule's npcId/npcIds entry, `item` for a watched item.
+    kind: text("kind").$type<"npc" | "item">().notNull(),
+    selectedId: integer("selectedId").notNull(),
+    selectedName: text("selectedName"),
+    reason: text("reason")
+      .$type<
+        | "legacyCatalogId"
+        | "unknownId"
+        | "nameFromOtherEdition"
+        | "nameWithoutSnapshot"
+      >()
+      .notNull(),
+    suggestedId: integer("suggestedId"),
+    suggestedName: text("suggestedName"),
+    repairRunId: text("repairRunId"),
+    repairEntryId: text("repairEntryId"),
+    createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex(
+      "NotificationRuleUnresolvedSelection_ruleId_kind_selectedId_key",
+    ).on(table["ruleId"], table["kind"], table["selectedId"]),
+    check(
+      "NotificationRuleUnresolvedSelection_kind_check",
+      sql`${table["kind"]} in ('npc', 'item')`,
+    ),
+    foreignKey({
+      columns: [table["ruleId"]],
+      foreignColumns: [notificationRuleTable["id"]],
+      name: "NotificationRuleUnresolvedSelection_ruleId_fkey",
+    })
+      .onDelete("cascade")
+      .onUpdate("cascade"),
+  ],
+);
+
 export const discordGuildChannelSnapshotTable = pgTable(
   "DiscordGuildChannelSnapshot",
   {

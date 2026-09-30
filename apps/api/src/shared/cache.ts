@@ -82,7 +82,17 @@ export function getEventWrappedCacheKey(
 
 export function getEventWrappedCachePattern(
   guildId: string,
-  eventId: string,
+  eventId = "*",
 ): string {
   return `${EVENT_WRAPPED_CACHE_KEY_PREFIX}:${guildId}:${eventId}:*`;
+}
+
+/** Read-cache generation scope of an Organization's loot list pages. */
+export function getLootListCacheScope(guildId: string): string {
+  return `loots:list:${guildId}`;
+}
+
+/** Read-cache generation scope of an Organization's loot statistics. */
+export function getLootStatsCacheScope(guildId: string): string {
+  return `loot-stats:${guildId}`;
 }
