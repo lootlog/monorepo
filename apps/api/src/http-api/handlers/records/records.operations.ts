@@ -1,11 +1,17 @@
-import type { UserFeedResponse } from "#src/contracts/users/feed-schemas";
+import type {
+  UserFeedQuery,
+  UserFeedResponse,
+} from "#src/contracts/users/feed-schemas";
 import type {
   UserKillAnalyticsQuery,
   UserKillAnalyticsResponse,
   UserKillActivityQuery,
   UserKillActivityResponse,
 } from "#src/contracts/kills/analytics-schemas";
-import { statusCodeResponse } from "#src/shared/http/handler-response";
+import {
+  statusCodeResponse,
+  reauthenticationRequiredResponse,
+} from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
@@ -50,6 +56,7 @@ import type {
   LootShareResponse,
   UpdateLootShareRequest,
 } from "#src/contracts/loots/schemas";
+import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 
 type Guild = typeof guildTable.$inferSelect;
 
@@ -107,7 +114,7 @@ export class RecordsAuthorization extends Context.Service<
       readonly capability: PermissionValue;
     }) => Effect.Effect<
       AuthorizedGuildCaller,
-      RecordsAccessDenied | RecordsNotFound
+      RecordsAccessDenied | RecordsNotFound | ReauthenticationRequired
     >;
   }
 >()("@lootlog/api/http-api/records/authorization") {}
@@ -127,6 +134,7 @@ export class RecordsData extends Context.Service<
     ) => DataEffect<GuildKillStatsResponse>;
     readonly getUserFeed: (
       caller: AuthenticatedCaller,
+      query: UserFeedQuery,
     ) => DataEffect<UserFeedResponse>;
     readonly getUserKillAnalytics: (
       caller: AuthenticatedCaller,
@@ -485,13 +493,15 @@ type HttpFailure =
   | RecordsAccessDenied
   | RecordsBadRequest
   | RecordsNotFound
-  | RecordsDataError;
+  | RecordsDataError
+  | ReauthenticationRequired;
 
 export const toRecordsHttpResponse = <A, R>(
   effect: Effect.Effect<A, HttpFailure, R>,
 ) =>
   Effect.catchTags(effect, {
     RecordsAccessDenied: statusCodeResponse,
+    ReauthenticationRequired: reauthenticationRequiredResponse,
     RecordsBadRequest: statusCodeResponse,
     RecordsNotFound: statusCodeResponse,
     RecordsDataError: (error) => applicationErrorResponse(error.cause),
@@ -515,8 +525,10 @@ export const getUserKillActivity = Effect.fn("kills.getUserKillActivity")(
   },
 );
 
-export const getUserFeed = Effect.fn("users.feed")(function* () {
+export const getUserFeed = Effect.fn("users.feed")(function* (
+  query: UserFeedQuery,
+) {
   const caller = yield* requireCaller;
 
-  return yield* data((service) => service.getUserFeed(caller));
+  return yield* data((service) => service.getUserFeed(caller, query));
 });

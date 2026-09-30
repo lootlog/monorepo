@@ -1,19 +1,53 @@
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { cn } from "cn";
 import { useEffect, useState, type FC } from "react";
+import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useSocket } from "@/contexts/socket-context";
+import { authClient, isSessionSignedOut } from "@/lib/auth-client";
+import { useWindowsStore } from "@/store/windows.store";
+import type { RealtimeConnectionStatus } from "@/lib/realtime-connection-status";
+import { LoaderCircle, LogIn, Wifi, WifiOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-/** Gateway connection dot for the quick access title bar; lists joined guilds on hover. */
+/** Shape and color both change per state, so the status never rests on color alone. */
+const STATUS_ICON = {
+  online: { Icon: Wifi, className: "ll:text-green-400" },
+  connecting: {
+    Icon: LoaderCircle,
+    className:
+      "ll:text-yellow-400 ll:animate-spin ll:motion-reduce:animate-none",
+  },
+  reconnecting: { Icon: WifiOff, className: "ll:text-red-400" },
+  unreachable: { Icon: WifiOff, className: "ll:text-red-400" },
+} as const satisfies Record<
+  RealtimeConnectionStatus,
+  { Icon: typeof Wifi; className: string }
+>;
+
+const SIGNED_OUT_ICON = { Icon: LogIn, className: "ll:text-yellow-400" };
+
+/** Refresh rate of the latency while the player is looking at it. */
+const LATENCY_PROBE_INTERVAL_MS = 2_000;
+
+/**
+ * Gateway connection state for the quick access title bar. The tooltip names
+ * the state and latency; the popover also lists the joined organizations and,
+ * while the connection is down, lets the player retry now instead of waiting
+ * for the next backoff.
+ */
 export const ConnectionStatus: FC = () => {
   const { t } = useTranslation("quickAccess");
   const { t: tCommon } = useTranslation("common");
   const { socket, joinedGuilds, status } = useSocket();
+  const [open, setOpen] = useState(false);
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const latencyVisible = open || tooltipOpen;
 
   const [heartbeatLatencyMs, setHeartbeatLatencyMs] = useState<number | null>(
     null,
@@ -24,66 +58,122 @@ export const ConnectionStatus: FC = () => {
     [socket],
   );
 
+  // Heartbeats refresh the latency every 25 seconds; probe faster only while
+  // the tooltip or popover shows it.
+  useEffect(() => {
+    if (!socket || !latencyVisible) return;
+    socket.probeLatency();
+
+    const interval = setInterval(
+      () => socket.probeLatency(),
+      LATENCY_PROBE_INTERVAL_MS,
+    );
+
+    return () => clearInterval(interval);
+  }, [socket, latencyVisible]);
+
   const {
     guildsQuery: { data: guilds },
   } = useLootlogGuilds();
 
-  const online = status === "online";
-  const statusLabel = tCommon(`connection.${status}`);
+  const session = authClient.useSession();
+  const openAndFocus = useWindowsStore((state) => state.openAndFocus);
+
+  // Signed out, the socket is not mounted at all, so its status means nothing.
+  const signedOut = isSessionSignedOut(session);
+  const online = !signedOut && status === "online";
+
+  const statusLabel = signedOut
+    ? tCommon("connection.signedOut")
+    : tCommon(`connection.${status}`);
+
+  const { Icon, className: iconClassName } = signedOut
+    ? SIGNED_OUT_ICON
+    : STATUS_ICON[status];
+
+  const pingLabel =
+    online && heartbeatLatencyMs !== null
+      ? t("connection.heartbeatPing", { ping: heartbeatLatencyMs })
+      : null;
+
+  const canReconnect =
+    !signedOut && (status === "reconnecting" || status === "unreachable");
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          data-ll-draggable="false"
-          aria-label={[
-            statusLabel,
-            online && heartbeatLatencyMs !== null
-              ? t("connection.heartbeatPing", { ping: heartbeatLatencyMs })
-              : null,
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          className="ll-custom-cursor-pointer ll:inline-flex ll:h-5 ll:min-w-5 ll:gap-1 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:p-0 ll:transition-colors ll:motion-reduce:transition-none ll:hover:bg-white/10 ll:focus-visible:outline-2 ll:focus-visible:outline-ring"
-        >
-          <span
-            aria-hidden="true"
-            className={cn(
-              "ll:size-2 ll:rounded-full ll:transition-colors ll:duration-300 ll:motion-reduce:transition-none",
-              {
-                "ll:bg-green-400 ll:shadow-[0_0_5px_rgba(74,222,128,0.7)]":
-                  online,
-                "ll:bg-yellow-400 ll:shadow-[0_0_5px_rgba(250,204,21,0.6)]":
-                  status === "connecting",
-                "ll:bg-red-400 ll:shadow-[0_0_5px_rgba(248,113,113,0.7)]":
-                  status === "reconnecting" || status === "unreachable",
-              },
-            )}
-          />
-          {online && heartbeatLatencyMs !== null && (
-            <span className="ll:text-[10px] ll:tabular-nums" aria-hidden="true">
-              {t("connection.ping", { ping: heartbeatLatencyMs })}
-            </span>
-          )}
-        </button>
-      </TooltipTrigger>
-      <TooltipContent>
-        {online && joinedGuilds.length > 0 ? (
-          <div className="ll:flex ll:flex-col ll:gap-1">
-            <div className="ll:font-semibold">{statusLabel}</div>
-            <div className="ll:flex ll:flex-col ll:gap-0.5 ll:text-muted-foreground">
-              {joinedGuilds.map((g) => (
-                <div key={g}>
-                  {guilds?.find((guild) => guild.id === g)?.name || g}
-                </div>
-              ))}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <IconButton
+          label={[statusLabel, pingLabel].filter(Boolean).join(" ")}
+          onTooltipOpenChange={setTooltipOpen}
+          tooltip={
+            <div className="ll:flex ll:flex-col">
+              <span>{statusLabel}</span>
+              {pingLabel ? (
+                <span className="ll:text-muted-foreground ll:tabular-nums">
+                  {pingLabel}
+                </span>
+              ) : null}
             </div>
+          }
+        >
+          <Icon aria-hidden="true" className={iconClassName} />
+        </IconButton>
+      </PopoverTrigger>
+      <PopoverContent
+        className="ll:flex ll:w-56 ll:flex-col ll:gap-2 ll:text-xs"
+        align="end"
+        side="bottom"
+      >
+        <div className="ll:flex ll:items-center ll:gap-2 ll:font-semibold">
+          <Icon
+            size={14}
+            aria-hidden="true"
+            className={cn("ll:shrink-0", iconClassName)}
+          />
+          <span>{statusLabel}</span>
+        </div>
+        {pingLabel ? (
+          <div className="ll:text-muted-foreground">{pingLabel}</div>
+        ) : null}
+        {online && joinedGuilds.length > 0 ? (
+          <div className="ll:flex ll:flex-col ll:gap-0.5">
+            <div className="ll:text-muted-foreground">
+              {t("connection.organizations")}
+            </div>
+            <ul className="ll:m-0 ll:flex ll:list-none ll:flex-col ll:gap-0.5 ll:p-0">
+              {joinedGuilds.map((guildId) => (
+                <li key={guildId} className="ll:truncate">
+                  {guilds?.find((guild) => guild.id === guildId)?.name ||
+                    guildId}
+                </li>
+              ))}
+            </ul>
           </div>
-        ) : (
-          <div>{statusLabel}</div>
-        )}
-      </TooltipContent>
-    </Tooltip>
+        ) : null}
+        {signedOut ? (
+          <Button
+            size="xs"
+            className="ll:w-full"
+            onClick={() => {
+              setOpen(false);
+              openAndFocus("extension-login");
+            }}
+          >
+            <LogIn aria-hidden="true" />
+            {tCommon("auth.signIn")}
+          </Button>
+        ) : null}
+        {canReconnect ? (
+          <Button
+            size="xs"
+            variant="secondary"
+            className="ll:w-full"
+            onClick={() => socket?.connect()}
+          >
+            {t("connection.reconnect")}
+          </Button>
+        ) : null}
+      </PopoverContent>
+    </Popover>
   );
 };

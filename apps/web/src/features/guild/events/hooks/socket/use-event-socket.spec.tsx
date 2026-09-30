@@ -144,64 +144,6 @@ describe("useEventSocket", () => {
     },
   );
 
-  it("invalidates route-scoped maps after socket rooms are rebalanced", () => {
-    const { gateway, queryClient } = setup();
-    queryClient.setQueryData(mapsKey, { heroNpcs: [] });
-
-    act(() =>
-      gateway.deliver({
-        v: 1,
-        type: "permissions.updated",
-        data: { organizationIds: [], subscriptionScopes: [] },
-      }),
-    );
-
-    expect(queryClient.getQueryState(mapsKey)?.isInvalidated).toBe(true);
-  });
-
-  it("reconciles only the current event after a successful session join", () => {
-    const { gateway, queryClient } = setup();
-    const eventPath = "/guilds/guild-alias/events/event-1";
-
-    const eventKeys = [
-      "",
-      "/coordination",
-      "/maps",
-      "/ranking",
-      "/kills",
-      "/timers",
-      "/heroes/hero-1/active-gaps",
-      "/heroes/hero-1/respawn-config",
-    ].map((suffix) => [`${eventPath}${suffix}`]);
-
-    const unrelatedKeys = [
-      ["/guilds/guild-alias/events"],
-      ["/guilds/guild-alias/events/event-12/maps"],
-      ["/guilds/other-guild/events/event-1/maps"],
-    ];
-
-    for (const key of [...eventKeys, ...unrelatedKeys])
-      queryClient.setQueryData(key, {});
-
-    act(() =>
-      gateway.deliver({
-        v: 1,
-        type: "session.joined",
-        data: {
-          connectionId: "reconnected",
-          organizationIds: ["guild-1"],
-          subscriptionScopes: [],
-        },
-      }),
-    );
-
-    for (const key of eventKeys)
-      expect(queryClient.getQueryState(key)?.isInvalidated).toBe(true);
-
-    for (const key of unrelatedKeys)
-      expect(queryClient.getQueryState(key)?.isInvalidated).toBe(false);
-  });
-
   it("replaces an older coordination refresh when another event arrives", async () => {
     const { gateway, queryClient } = setup();
     queryClient.setQueryData(coordinationKey, { heroes: ["initial"] });
@@ -256,6 +198,52 @@ describe("useEventSocket", () => {
     expect(queryClient.getQueryData(coordinationKey)).toEqual({
       heroes: ["newest"],
     });
+  });
+
+  it("refreshes member-history and detail points after another member edits the ranking", async () => {
+    const { gateway, queryClient } = setup();
+
+    const eventPath = "/guilds/guild-alias/events/event-1";
+
+    const affectedKeys = [
+      [`${eventPath}/kill-history`, { memberId: "member-1" }],
+      [`${eventPath}/heroes/hero-1/kills/kill-1`],
+      [`${eventPath}/ranking`],
+    ];
+
+    const unrelatedKeys = [
+      ["/guilds/guild-alias/events/event-2/kill-history"],
+      ["/guilds/other-guild/events/event-1/kill-history"],
+      coordinationKey,
+    ];
+
+    for (const queryKey of [...affectedKeys, ...unrelatedKeys]) {
+      queryClient.setQueryData(queryKey, { points: 2 });
+
+      const observer = new QueryObserver(queryClient, {
+        queryKey,
+        queryFn: async () => ({ points: 7 }),
+      });
+
+      onTestFinished(observer.subscribe(() => {}));
+    }
+
+    await act(async () =>
+      gateway.deliver({
+        v: 1,
+        type: "event.ranking-updated",
+        data: {
+          organizationId: "guild-1",
+          payload: { guildId: "guild-1", eventId: "event-1" },
+        },
+      }),
+    );
+
+    for (const queryKey of affectedKeys)
+      expect(queryClient.getQueryData(queryKey)).toEqual({ points: 7 });
+
+    for (const queryKey of unrelatedKeys)
+      expect(queryClient.getQueryData(queryKey)).toEqual({ points: 2 });
   });
 
   it("fetches coordination once for a realtime change and stops listening after unmount", async () => {

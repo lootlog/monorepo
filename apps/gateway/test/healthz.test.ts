@@ -19,10 +19,13 @@ const auth = makeGatewayAuth({
   allowedExtensionOrigins: new Set(),
 });
 
+const hub = { unavailableReason: () => undefined };
+
 const application = {
   config: { websocketPath: "/ws", environment: "test" },
   runPromise: Effect.runPromise,
   auth,
+  hub,
 };
 
 const server = { upgrade: () => false };
@@ -238,6 +241,59 @@ describe("gateway HTTP boundary", () => {
     expect(await response?.json()).toEqual({ status: "ok" });
   });
 
+  test("withdraws readiness and refuses upgrades while liveness stays up", async () => {
+    let reason: "draining" | "federation-unavailable" | undefined =
+      "federation-unavailable";
+
+    let upgraded = false;
+
+    const fetch = createGatewayFetch({
+      ...application,
+      hub: { unavailableReason: () => reason },
+    });
+
+    const request = (path: string) =>
+      fetch(
+        new Request(`https://gateway.example${path}`, {
+          headers: {
+            origin: "https://classic.margonem.pl",
+            "x-auth-user-id": "user-1",
+            "x-auth-discord-id": "discord-1",
+          },
+        }),
+        {
+          upgrade: () => {
+            upgraded = true;
+
+            return true;
+          },
+        },
+      );
+
+    expect((await request("/healthz"))?.status).toBe(200);
+    const unready = await request("/readyz");
+    expect(unready?.status).toBe(503);
+    expect(await unready?.json()).toEqual({
+      status: "unavailable",
+      reason: "federation-unavailable",
+    });
+    expect((await request("/ws"))?.status).toBe(503);
+    expect(upgraded).toBe(false);
+
+    reason = "draining";
+    expect(await (await request("/readyz"))?.json()).toEqual({
+      status: "unavailable",
+      reason: "draining",
+    });
+
+    reason = undefined;
+    const ready = await request("/readyz");
+    expect(ready?.status).toBe(200);
+    expect(await ready?.json()).toEqual({ status: "ready" });
+    expect(await request("/ws")).toBeUndefined();
+    expect(upgraded).toBe(true);
+  });
+
   test("rejects credentials in websocket URLs before upgrade", async () => {
     const response = await createGatewayFetch(application)(
       new Request("https://gateway.example/ws?ticket=secret"),
@@ -269,19 +325,34 @@ describe("gateway HTTP boundary", () => {
   });
 
   test.each([
-    [false, false],
-    [true, false],
-    [false, true],
-    [true, true],
+    [false, false, false, false, false, false],
+    [true, false, false, false, false, false],
+    [false, true, false, false, false, false],
+    [false, false, true, false, false, false],
+    [false, false, false, true, false, false],
+    [false, false, false, false, true, false],
+    [false, false, false, false, false, true],
+    [true, true, true, true, true, true],
   ])(
-    "negotiates feed (%s) and volunteer (%s) opt-in while echoing only the wire protocol",
-    async (supportsFeed, supportsNotificationVolunteer) => {
+    "negotiates feed (%s), volunteer (%s), battle ping (%s), team ping (%s), gathering state (%s) and session hello (%s) opt-in while echoing only the wire protocol",
+    async (
+      supportsFeed,
+      supportsNotificationVolunteer,
+      supportsBattlePings,
+      supportsTeamBattlePings,
+      supportsPartyGatheringState,
+      supportsSessionHello,
+    ) => {
       let upgradeOptions:
         | {
             readonly headers?: HeadersInit;
             readonly data: {
               readonly supportsFeed?: boolean;
               readonly supportsNotificationVolunteer?: boolean;
+              readonly supportsBattlePings?: boolean;
+              readonly supportsTeamBattlePings?: boolean;
+              readonly supportsPartyGatheringState?: boolean;
+              readonly supportsSessionHello?: boolean;
             };
           }
         | undefined;
@@ -290,6 +361,7 @@ describe("gateway HTTP boundary", () => {
         config: { websocketPath: "/ws", environment: "test" },
         runPromise: Effect.runPromise,
         auth,
+        hub,
       };
 
       const request = new Request("https://gateway.example/ws", {
@@ -297,7 +369,7 @@ describe("gateway HTTP boundary", () => {
           origin: "https://classic.margonem.pl",
           "x-auth-user-id": "user-1",
           "x-auth-discord-id": "discord-1",
-          "sec-websocket-protocol": `lootlog.realtime.v1${supportsFeed ? ", lootlog.feed.v1" : ""}${supportsNotificationVolunteer ? ", lootlog.notification-volunteer.v1" : ""}`,
+          "sec-websocket-protocol": `lootlog.realtime.v1${supportsFeed ? ", lootlog.feed.v1" : ""}${supportsNotificationVolunteer ? ", lootlog.notification-volunteer.v1" : ""}${supportsBattlePings ? ", lootlog.battle-ping.v1" : ""}${supportsTeamBattlePings ? ", lootlog.battle-ping.team.v1" : ""}${supportsPartyGatheringState ? ", lootlog.party-gathering-state.v1" : ""}${supportsSessionHello ? ", lootlog.session-hello.v1" : ""}`,
         },
       });
 
@@ -318,6 +390,18 @@ describe("gateway HTTP boundary", () => {
       expect(upgradeOptions?.data.supportsNotificationVolunteer).toBe(
         supportsNotificationVolunteer,
       );
+      expect(upgradeOptions?.data.supportsBattlePings).toBe(
+        supportsBattlePings,
+      );
+      expect(upgradeOptions?.data.supportsTeamBattlePings).toBe(
+        supportsTeamBattlePings,
+      );
+      expect(upgradeOptions?.data.supportsPartyGatheringState).toBe(
+        supportsPartyGatheringState,
+      );
+      expect(upgradeOptions?.data.supportsSessionHello).toBe(
+        supportsSessionHello,
+      );
       expect(upgradeOptions?.headers).toEqual({
         "sec-websocket-protocol": "lootlog.realtime.v1",
       });
@@ -336,6 +420,7 @@ describe("gateway HTTP boundary", () => {
       config: { websocketPath: "/ws", environment: "local" },
       runPromise: Effect.runPromise,
       auth,
+      hub,
     };
 
     const request = new Request("https://gateway.example/ws", {
@@ -370,6 +455,8 @@ test("server API key upgrades allow absent Origin while preserving session and a
   const fetch = createGatewayFetch({ ...application, auth: keyAuth });
 
   const headers = {
+    "sec-websocket-protocol":
+      "lootlog.realtime.v1, lootlog.party-gathering-state.v1",
     "x-auth-user-id": "u",
     "x-auth-discord-id": "d",
     "x-auth-api-key-access": JSON.stringify({
@@ -389,6 +476,7 @@ test("server API key upgrades allow absent Origin while preserving session and a
         expect(options.data.platform).toBe("web-app");
         expect(options.data.apiKeyAccess?.organizationIds).toEqual(["123"]);
         expect(options.data.supportsNotificationVolunteer).toBe(false);
+        expect(options.data.supportsPartyGatheringState).toBe(false);
 
         return true;
       },

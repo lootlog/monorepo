@@ -71,21 +71,19 @@ describe("SoundsSettingsTab", () => {
     expect(screen.getAllByRole("textbox", { name: "Heros" })).toHaveLength(2);
   });
 
-  it("hides map ping sound settings on the old interface", () => {
+  it("hides ping sound settings on the old interface", () => {
     setTestRuntimeGame({ interface: "si" });
     render();
 
     expect(
-      screen.queryByRole("slider", { name: "Pingi na mapie" }),
+      screen.queryByRole("slider", { name: "Pingi" }),
     ).not.toBeInTheDocument();
   });
 
-  it("shows map ping sound settings on the new interface", () => {
+  it("shows ping sound settings on the new interface", () => {
     render();
 
-    expect(
-      screen.getByRole("slider", { name: "Pingi na mapie" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("slider", { name: "Pingi" })).toBeInTheDocument();
   });
 
   it("mutes every add-on sound from the master volume row", async () => {
@@ -137,7 +135,7 @@ describe("SoundsSettingsTab", () => {
     const input = screen.getByRole("textbox", { name: "Komunikaty" });
     await user.type(input, "not a url");
 
-    expect(screen.getByText("Nieprawidłowy URL")).toBeInTheDocument();
+    expect(screen.getByText("Nieprawidłowy adres URL")).toBeInTheDocument();
     expect(input).toHaveAttribute("aria-invalid", "true");
     await new Promise((resolve) => setTimeout(resolve, 350));
     expect(patchRequest).not.toHaveBeenCalled();

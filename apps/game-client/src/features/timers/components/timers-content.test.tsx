@@ -67,6 +67,7 @@ const mountContent = (
     <QueryClientProvider client={fixture.queryClient}>
       <div onPointerDown={onPointerDown}>
         <TimersContent
+          world="luvia"
           sortedTimers={[]}
           settingsKey="guild-1"
           hiddenTimers={[]}
@@ -120,7 +121,7 @@ it("renders real controls and timer tiles while retaining scroll and window drag
   };
 
   const { onPointerDown } = mountContent({ sortedTimers: [timer] });
-  expect(screen.getByPlaceholderText("Szukaj...")).toBeVisible();
+  expect(screen.getByPlaceholderText("Szukaj…")).toBeVisible();
   expect(screen.getByRole("combobox")).toHaveTextContent(/luvia/i);
   const label = screen.getByText(/\[H\] Tanroth/);
   expect(label).toBeVisible();
@@ -148,7 +149,7 @@ it("offers filter recovery in compact mode without the regular toolbar", async (
   });
 
   expect(screen.getByText("Żaden timer nie pasuje do filtrów")).toBeVisible();
-  expect(screen.queryByPlaceholderText("Szukaj...")).not.toBeInTheDocument();
+  expect(screen.queryByPlaceholderText("Szukaj…")).not.toBeInTheDocument();
   expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Pokaż wszystkie" }));
   expect(onResetFilters).toHaveBeenCalledOnce();

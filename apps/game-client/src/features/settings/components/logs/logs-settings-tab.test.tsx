@@ -346,14 +346,14 @@ describe("LogsSettingsTab", () => {
 
     await user.click(screen.getByText("/loots"));
 
-    expect(screen.getByText("Payload")).toBeInTheDocument();
+    expect(screen.getByText("Wysłane dane")).toBeInTheDocument();
     expect(screen.getByText("Odpowiedź")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Kopiuj request" }));
+    await user.click(screen.getByRole("button", { name: "Kopiuj żądanie" }));
 
     await waitFor(() => {
       expect(toastMocks.success).toHaveBeenCalledWith(
-        "Request skopiowany do schowka",
+        "Żądanie skopiowane do schowka",
       );
     });
     expect(screen.getByText("Odpowiedź")).toBeInTheDocument();

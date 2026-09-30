@@ -23,7 +23,7 @@ export const UserRouteError = ({ error, reset }: ErrorComponentProps) => {
   return (
     <RouteErrorState
       status={normalizedStatus}
-      description={getRouteErrorMessage(error)}
+      details={getRouteErrorMessage(error)}
       primaryAction=<RouteRetryButton onRetry={handleRetry} />
       secondaryAction={
         <Button

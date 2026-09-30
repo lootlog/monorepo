@@ -37,24 +37,35 @@ W zależności od dostępnej konfiguracji możesz zmienić:
 - widoczność wybranych kategorii;
 - kolory lub sposób porządkowania timerów.
 
-Po zmianie ustawień wywołaj bezpieczne powiadomienie testowe lub obserwuj
-najbliższy timer, aby potwierdzić rezultat.
+W dodatku do gry własny dźwięk wykrywacza ustawisz w **Dźwięki → Wykrywacz**.
+Wklej bezpośredni adres pliku MP3, WAV lub OGG przy odpowiednim typie NPC
+i naciśnij **Odtwórz dźwięk**. Puste pole przywraca dźwięk domyślny.
+Adresy w sekcji **Powiadomienia** dotyczą osobno okna powiadomień.
+
+Podgląd pozwala sprawdzić plik także przy wyciszonych alertach. Żeby usłyszeć go
+przy pojawieniu się NPC, włącz **Dźwięk** dla tego typu w ustawieniach wykrywacza,
+wyłącz wyciszenie i ustaw głośność główną oraz wykrywacza powyżej zera.
+Po chwilowym błędzie pobrania pliku odtwarzacz ponowi jego ładowanie przy
+następnym odtworzeniu.
+
+Jeśli zapis ustawień zakończy się błędem, użyj **Ponów**. Ponowienie
+zachowuje także zmiany wprowadzone podczas oczekiwania na poprzedni zapis;
+dla tego samego ustawienia obowiązuje ostatnia wybrana wartość.
 
 W aktualnym wyglądzie kolory standardowe timerów w dodatku do gry mają
 wyrównaną jasność, więc żaden nie przytłacza pozostałych; własne i zmienione
 kolory wyglądają tak, jak je ustawisz. Cały tekst kafelka zmienia kolor wraz
 z odliczaniem: po minimalnym czasie odrodzenia jest pomarańczowy, a po
-maksymalnym czerwony. Co drugi rząd listy jest odrobinę
-jaśniejszy, więc sąsiednie timery w tym samym kolorze łatwo od siebie odróżnić.
-Gdy timery układają się w kilka kolumn, każdy kafelek ma przy lewej krawędzi
-pasek w swoim kolorze, który oddziela go od sąsiada. W jednej kolumnie kolor
-pokazuje samo tło wiersza. Timery pozostawione na liście po upływie ustawionego
-czasu do ukrycia zachowują swój kolor, ale są ciemniejsze.
+maksymalnym czerwony. Lekki cień oddziela tekst od tła kafelka. Gdy timery
+układają się w kilka kolumn, każdy kafelek ma przy lewej krawędzi pasek
+w swoim kolorze, który oddziela go od sąsiada. W jednej kolumnie kolor pokazuje samo tło wiersza, a kolejne wiersze
+oddziela cienka, jasna linia. Timery pozostawione na liście po upływie
+ustawionego czasu do ukrycia zachowują swój kolor, ale są ciemniejsze.
 
 W dodatku do gry w **Ustawienia → Timery → Wygląd** możesz włączyć
-**Wygląd legacy**. Opcja jest domyślnie wyłączona. Przywraca poprzednie kolory,
+**Poprzedni wygląd**. Opcja jest domyślnie wyłączona. Przywraca poprzednie kolory,
 obramowania, odstępy, wypełnienia i kolorowanie tekstu timerów,
-bez naprzemiennie jaśniejszych rzędów i przyciemniania wygasłych kafelków.
+bez przyciemniania wygasłych kafelków.
 Działa od razu w oknie timerów i pod torbą, także w trybie kompaktowym. Wybór
 zapisuje się na koncie; przypisane i własne kolory pozostają zachowane. Aby
 wrócić do aktualnego wyglądu, wyłącz ten sam przełącznik.
@@ -67,12 +78,13 @@ częstą przyczyną braku wpisów w oczekiwanym panelu.
 
 ### Lootlogi: widoczność i kolejność
 
+W grze każda organizacja, do której należysz, nazywa się Lootlogiem.
 Zakładka **Lootlogi** w oknie ustawień w grze pokazuje wszystkie Lootlogi, do
 których masz dostęp, jeden pod drugim. Kliknięcie kafelka włącza lub wyłącza
 jego widoczność: ukryte Lootlogi znikają z przełączników w grze, ale
 powiadomienia i przetwarzanie w tle działają dalej.
 
-Uchwyt przed kafelkiem pozwala przeciągnąć Lootloga w górę lub w dół i tak
+Uchwyt przed kafelkiem pozwala przeciągnąć Lootlog w górę lub w dół i tak
 ustawić kolejność, w jakiej Lootlogi pojawiają się w przełącznikach w grze. Ten
 sam uchwyt obsługują strzałki góra/dół oraz Home/End na klawiaturze. Kolejność
 zmienisz tylko przy pustym wyszukiwaniu i filtrze „Wszystkie”. Kolejność i
@@ -82,14 +94,68 @@ widoczność są zapisywane na koncie Lootlog.
 
 Publikowanie obecności w grze jest tymczasowo zawsze włączone dla wszystkich
 organizacji, do których masz dostęp. Przełączniki publikowania są ukryte, a
-wcześniej zapisany wybór organizacji nie ogranicza publikacji. Ukrycie serwera
+wcześniej zapisany wybór organizacji nie ogranicza publikacji. Ukrycie organizacji
 w interfejsie nie wyłącza wysyłania obecności.
+
+## Okna Lootlog w grze
+
+- Przy pierwszym uruchomieniu pasek szybkiego dostępu, timery i czat stoją jeden
+  pod drugim w prawym górnym rogu mapy. Okna, które otwierają się same
+  (wykrywacz, powiadomienia i pingi walki), ustawiają się jedno pod drugim w
+  lewym górnym rogu. Gracze online i okna zbiórek stają obok paska szybkiego
+  dostępu. Żadne z nich nie zasłania postaci na środku mapy ani kolumny
+  ekwipunku; na małym ekranie mogą zajść na kolumnę czatu gry.
+- Okna logowania, ostrzeżeń, błędu i ustawień pojawiają się na środku, nad
+  postacią. Gdy otworzy się kilka naraz, każde kolejne jest lekko przesunięte,
+  więc widać paski tytułu wszystkich.
+- Okno zostaje tam, gdzie je przeciągniesz. Gdy okno przeglądarki jest mniejsze,
+  Lootlog pokazuje okno przy krawędzi ekranu, także zablokowane, a po
+  powiększeniu przeglądarki okno wraca na zapisane miejsce.
+- Przycisk **Przywróć** w sekcji **Okna** (kategoria **Ogólne**) ustawia okna
+  z powrotem w domyślnych miejscach i rozmiarach, przywraca domyślne krycie,
+  odblokowuje je i rozwija pasek szybkiego dostępu.
+- Przycisk **Zwiń pasek** obok stanu połączenia zwija pasek szybkiego dostępu
+  do małej pastylki z ikoną połączenia i przyciskiem **Rozwiń pasek**. Skróty
+  klawiszowe okien działają dalej. Zwinięty pasek przeciągasz za uchwyt po
+  lewej, a krycie i blokadę zmieniasz po rozwinięciu. Pasek pamięta, czy jest
+  zwinięty, i po rozwinięciu wraca do swojego rozmiaru.
+- Timery pod torbą pokazujesz i chowasz tak samo jak okno timerów: kafelkiem
+  **Timery** na pasku szybkiego dostępu albo skrótem.
+- Okno otwarte przyciskiem, skrótem lub poleceniem przejmuje fokus klawiatury,
+  a po zamknięciu oddaje go tam, gdzie był. Okna, które otwierają się same
+  (wykrywacz, powiadomienia), nie przejmują fokusu, więc dalej piszesz
+  i sterujesz postacią.
+- Zamknięcie wykrywacza lub powiadomień usuwa wszystkie jego wpisy. Okno
+  otworzy się samo przy następnym wykryciu lub powiadomieniu. Gdy na liście
+  jest kilka wpisów, każdy możesz zamknąć osobno jego przyciskiem.
+- Powiadomienie, które ukrywa się samo, ma u dołu pasek odliczania. Odliczanie
+  stoi, dopóki wskazujesz powiadomienie kursorem, masz na nim fokus klawiatury
+  albo otwarte menu wyciszania.
+- Kolejne zgłoszenia tego samego NPC na tym samym świecie, np. z automatycznego
+  wysyłania, trafiają do istniejącego powiadomienia. Wpis zostaje na swoim
+  miejscu i pokazuje pierwszego zgłaszającego, licznik (np. x3) podaje liczbę
+  zgłoszeń, a czas do automatycznego ukrycia liczy się od nowa. Dźwięk gra tylko
+  przy pierwszym zgłoszeniu. Po zamknięciu wpisu następne zgłoszenie tworzy
+  nowe powiadomienie. Zbiórki na NPC zawsze mają osobny wpis.
+- `Escape` zamyka okno Lootlog, w którym jest fokus, i nie trafia wtedy do gry.
+- Przycisk krycia w pasku tytułu przełącza pięć poziomów tła, a podpowiedź
+  pokazuje bieżący. Na trzech najjaśniejszych poziomach tekst ma ciemny obrys,
+  żeby był czytelny na każdym tle gry.
+- Uchwyt w prawym dolnym rogu zmienia rozmiar okna. Na uchwycie strzałki
+  zmieniają rozmiar o 1 piksel, a z `Shift` o 10 pikseli.
 
 ## Okno ustawień w grze
 
-Obok kropki stanu połączenia na pasku szybkiego dostępu widzisz ping w
-milisekundach. To czas odpowiedzi serwera Lootlog na ostatni heartbeat.
-Wartość pojawia się po pierwszym pomiarze i znika po utracie połączenia.
+Ikona stanu połączenia na pasku szybkiego dostępu zmienia kształt zależnie od
+stanu: połączono, łączenie lub brak połączenia. Kliknięcie ikony pokazuje stan,
+ping w milisekundach (czas odpowiedzi serwera Lootlog na ostatni pomiar
+połączenia) i połączone Lootlogi. Ping pojawia się po pierwszym pomiarze
+i znika po utracie połączenia. Gdy połączenia nie ma, przycisk
+**Połącz ponownie** łączy od razu, bez czekania na kolejną próbę. Bez
+zalogowania ikona zmienia się w ikonę logowania, a okienko pokazuje przycisk
+**Zaloguj się**.
+Czat, timery i gracze online pokazują pasek z informacją, gdy połączenie jest
+zerwane lub trwa ponowne łączenie, więc widać, że dane mogą być nieaktualne.
 
 Okno ustawień w kliencie gry otwierasz z paska szybkiego dostępu lub skrótem
 klawiszowym przypisanym do akcji „Ustawienia”. Ustawienia są zapisywane na
@@ -126,7 +192,7 @@ i suwak z odczytem, który zapisuje wartość po puszczeniu.
   wcześniej różne typy miały różne Lootlogi, po aktualizacji wybór obejmuje
   ich sumę.
 - **Powiadomienia → Wykrywacz** ma pod tabelą sekcję **Gdzie wysyłać
-  powiadomienia** z regułami wysyłki na Lootlogi. Każda reguła jest zawsze
+  powiadomienia** z regułami wysyłki do Lootlogów. Każda reguła jest zawsze
   rozwinięta: ustawiasz zakres poziomu potwora, świat (puste
   = każdy świat, przycisk wstawia świat, na którym grasz) i Lootlogi. Stopka
   reguły opisuje słowami, co reguła wyśle; gdy nie zaznaczysz żadnego
@@ -135,10 +201,17 @@ i suwak z odczytem, który zapisuje wartość po puszczeniu.
   sekcja ma własne pole wyszukiwania nad listą, a wyciszenie usuwasz ikoną
   kosza przy wpisie. Wyciszenia działają obecnie na powiadomienia.
 - **Diagnostyka → Logi** prezentuje akcje jako tabelę z filtrami w pasku nad
-  nią; kliknięcie wiersza rozwija payload, szczegóły i żądania API.
+  nią; kliknięcie wiersza rozwija dane akcji, szczegóły i żądania API.
+- **Informacje** pokazuje wersję dodatku i ma przycisk
+  **Kopiuj informacje diagnostyczne**, który kopiuje jeden tekst do zgłoszenia
+  problemu: wersję, sposób instalacji, przeglądarkę, stan logowania i
+  połączenia oraz ostatnie nieudane żądania, bez tokenów i plików cookie.
 - **Sterowanie → Skróty klawiszowe** pokazują skrót jako klawisz; ikona
-  przywracania pojawia się tylko przy zmienionych skrótach, a „Przywróć
-  domyślne” jest w pasku nad listą.
+  przywracania pojawia się tylko przy zmienionych skrótach. Jeśli domyślny
+  skrót jest już zajęty przez inną akcję, przywracanie zachowa obecne
+  przypisanie i pokaże komunikat o konflikcie. Wybierz inny skrót albo
+  zmień przypisanie drugiej akcji i ponów przywracanie. Przycisk
+  „Przywróć” w sekcji **Domyślne skróty** przywraca wszystkie przypisania naraz.
 
 ### Zapisywanie zmian
 

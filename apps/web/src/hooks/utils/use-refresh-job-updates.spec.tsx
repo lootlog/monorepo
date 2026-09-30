@@ -15,7 +15,11 @@ it("delivers only updates for the current organization and stops after unmount",
 
   const { rerender, unmount } = renderHook(
     ({ guildId }) =>
-      useRefreshJobUpdates(guildId, (update) => received.push(update.guildId)),
+      useRefreshJobUpdates(
+        guildId,
+        (update) => received.push(update.guildId),
+        () => {},
+      ),
     { initialProps: { guildId: "first" }, wrapper: gateway.wrapper },
   );
 

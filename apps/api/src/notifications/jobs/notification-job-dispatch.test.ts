@@ -29,6 +29,7 @@ import { makeNotificationJobStore } from "#src/notifications/jobs/notification-j
 import { canDispatchLootNotification } from "#src/notifications/notification-loot-source-visibility";
 import {
   makeNotificationJobDispatch,
+  NotificationJobDispatchFailure,
   type NotificationDispatchJob,
   type NotificationDispatchStore,
 } from "#src/notifications/jobs/notification-job-dispatch";
@@ -167,8 +168,12 @@ describe("notification job dispatch", () => {
         find: store.findJobWithRelations,
         update: store.updateJob,
         claim: store.claimJob,
+        failClaim: store.failClaim,
         block: store.blockJob,
       };
+
+      const firstAttempt = { retrying: false, finalAttempt: false };
+      const retry = { retrying: true, finalAttempt: false };
 
       const dispatch = makeNotificationJobDispatch(
         dispatchStore,
@@ -186,12 +191,12 @@ describe("notification job dispatch", () => {
                 return yield* Effect.fail(new Error("broker unavailable"));
             }),
         },
-        { enqueue: () => Effect.void },
+        () => Effect.void,
         () => undefined,
       );
 
-      await run(dispatch("job-1"));
-      await run(dispatch("job-2"));
+      await run(dispatch("job-1", firstAttempt));
+      await run(dispatch("job-2", firstAttempt));
       expect(attempts).toEqual(["job-1"]);
       expect(await run(store.findJob("job-2"))).toMatchObject({
         status: "BLOCKED",
@@ -205,7 +210,9 @@ describe("notification job dispatch", () => {
           .where(eq(roleTable.id, "reader")),
       );
       brokerUnavailable = true;
-      await run(dispatch("job-2"));
+      await expect(run(dispatch("job-2", firstAttempt))).rejects.toBeInstanceOf(
+        NotificationJobDispatchFailure,
+      );
       expect(await run(store.findJob("job-2"))).toMatchObject({
         status: "PENDING",
         attemptCount: 1,
@@ -217,7 +224,7 @@ describe("notification job dispatch", () => {
           .where(eq(roleTable.id, "reader")),
       );
       brokerUnavailable = false;
-      await run(dispatch("job-2"));
+      await run(dispatch("job-2", retry));
       expect(attempts).toEqual(["job-1", "job-2"]);
       expect(await run(store.findJob("job-2"))).toMatchObject({
         status: "BLOCKED",
@@ -239,7 +246,7 @@ describe("notification job dispatch", () => {
         await run(
           store.updateJob("job-2", { status: "PENDING", sourceEntityId }),
         );
-        await run(dispatch("job-2"));
+        await run(dispatch("job-2", firstAttempt));
         expect(await run(store.findJob("job-2"))).toMatchObject({
           status: "BLOCKED",
           attemptCount: 1,
@@ -254,8 +261,8 @@ describe("notification job dispatch", () => {
           .set({ active: false })
           .where(eq(memberTable.id, 1)),
       );
-      await run(dispatch("job-1"));
-      await run(dispatch("job-2"));
+      await run(dispatch("job-1", retry));
+      await run(dispatch("job-2", retry));
       expect(await run(store.findJob("job-1"))).toMatchObject({
         status: "SENT",
       });
@@ -288,11 +295,11 @@ describe("notification job dispatch", () => {
               }),
           },
           { publish: () => Effect.die("Revoked source must not publish") },
-          { enqueue: () => Effect.void },
+          () => Effect.void,
           () => undefined,
         );
 
-        const dispatching = run(delayedDispatch("job-2"));
+        const dispatching = run(delayedDispatch("job-2", firstAttempt));
 
         try {
           await started.promise;
@@ -337,6 +344,7 @@ describe("notification job dispatch", () => {
 
             return true;
           }),
+        failClaim: () => Effect.die("blocked jobs cannot fail a claim"),
       },
       {
         hasRequiredGuildPermissions: () => Effect.succeed(true),
@@ -348,11 +356,13 @@ describe("notification job dispatch", () => {
             published = true;
           }),
       },
-      { enqueue: () => Effect.void },
+      () => Effect.void,
       () => undefined,
     );
 
-    await Effect.runPromise(dispatch("job-1"));
+    await Effect.runPromise(
+      dispatch("job-1", { retrying: false, finalAttempt: false }),
+    );
 
     expect(updates).toEqual([
       {
@@ -365,44 +375,28 @@ describe("notification job dispatch", () => {
     expect(published).toBeFalse();
   });
 
-  it("returns a claimed job to pending and enqueues the established retry", async () => {
-    const updates: Array<Parameters<NotificationDispatchStore["update"]>[1]> =
-      [];
-
-    const enqueued: Array<[string, number]> = [];
-
+  it("keeps a delivered job final when a queued retry finds its target disabled", async () => {
     const dispatch = makeNotificationJobDispatch(
       {
-        find: () => Effect.succeed(job(true)),
-        update: (_jobId, values) =>
-          Effect.sync(() => {
-            updates.push(values);
-          }),
-        claim: () => Effect.succeed(true),
-        block: () => Effect.die("Unexpected blocked job"),
+        find: () => Effect.succeed({ ...job(false), status: "SENT" }),
+        update: () => Effect.die("delivery must remain final"),
+        claim: () => Effect.die("delivered jobs cannot be claimed again"),
+        failClaim: () => Effect.die("delivered jobs cannot fail"),
+        block: () => Effect.die("delivered jobs cannot be blocked"),
       },
       {
         hasRequiredGuildPermissions: () => Effect.succeed(true),
-        canReadLootSource: () => Effect.succeed(true),
+        canReadLootSource: () => Effect.die("delivered jobs are not rechecked"),
       },
-      { publish: () => Effect.fail(new Error("broker unavailable")) },
       {
-        enqueue: (jobId, delay) =>
-          Effect.sync(() => {
-            enqueued.push([jobId, delay]);
-          }),
+        publish: () => Effect.die("delivered jobs must not be published again"),
       },
+      () => Effect.void,
       () => undefined,
     );
 
-    await Effect.runPromise(dispatch("job-1"));
-
-    expect(updates).toEqual([
-      {
-        status: NotificationJobStatus.PENDING,
-        lastError: "AMQP publish failed: broker unavailable",
-      },
-    ]);
-    expect(enqueued).toEqual([["job-1", 30_000]]);
+    await Effect.runPromise(
+      dispatch("job-1", { retrying: true, finalAttempt: false }),
+    );
   });
 });

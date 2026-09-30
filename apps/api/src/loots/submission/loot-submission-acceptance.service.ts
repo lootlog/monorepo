@@ -1,7 +1,7 @@
 import type { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
 import { createItemStatsHash } from "@lootlog/database/snapshot-hash";
 import { Effect, Schema } from "effect";
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import { getNpcTypeByWt, MIN_LOOT_NPC_WT } from "@lootlog/domain/npc-type";
 import type {
   GuildLootCreatedEventV2,
   GuildLootEventNpc,
@@ -14,10 +14,7 @@ import {
 import { createHash } from "node:crypto";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
-import {
-  LootShareSourceEnum as LootShareSource,
-  ProfessionEnum as Profession,
-} from "@lootlog/schema/loot";
+import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
 import type {
@@ -29,8 +26,9 @@ import type {
   CreateLootResponse,
 } from "#src/contracts/loots/schemas";
 import { ErrorKey } from "#src/loots/error-key";
-import { getItemTypeByCl } from "#src/shared/margonem/item-type";
+import { getItemTypeByCl } from "@lootlog/domain/item-type";
 import { getProfByShortname } from "@lootlog/domain/profession";
+import { parseRequiredProfessions } from "#src/loots/required-professions";
 import {
   LootPublicationPayload,
   type LootPublication,
@@ -91,6 +89,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   constructor(
     private readonly repository: LootSubmissionAcceptancePersistence,
     private readonly lock: LootSubmissionLock,
+    private readonly signalPublications: Effect.Effect<void>,
   ) {}
 
   accept(options: {
@@ -183,7 +182,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
             : new InvalidRequestError(ErrorKey.NPC_WT_TOO_LOW),
       });
 
-      if (npcData.primary.wt < 10) {
+      if (npcData.primary.wt < MIN_LOOT_NPC_WT) {
         return yield* Effect.fail(
           new InvalidRequestError(ErrorKey.NPC_WT_TOO_LOW),
         );
@@ -373,6 +372,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
               players: mapPlayersSnapshot,
             },
       );
+      yield* this.signalPublications;
     });
   }
 
@@ -395,7 +395,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         options.primaryNpcType,
       );
 
-      return yield* this.repository.createNewLoot(
+      const lootId = yield* this.repository.createNewLoot(
         {
           mapPlayersSnapshot: options.mapPlayersSnapshot,
           uniqueId: options.uniqueId,
@@ -414,6 +414,10 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         },
         options.publications,
       );
+
+      yield* this.signalPublications;
+
+      return lootId;
     });
   }
 
@@ -633,14 +637,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         ? undefined
         : Schema.decodeUnknownSync(ItemRaritySchema)(rawRarity);
 
-    const requiredProf = parsedStats["reqp"];
-
-    const prof = requiredProf
-      ? requiredProf
-          .split("")
-          .map((id) => getProfByShortname(id))
-          .filter((prof) => prof !== undefined)
-      : Object.values(Profession);
+    const prof = parseRequiredProfessions(parsedStats["reqp"]);
 
     return { lvl, rarity, prof, type: getItemTypeByCl(item.cl) };
   }
@@ -825,5 +822,10 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
 export const makeLootSubmissionAcceptance = (
   repository: LootSubmissionAcceptancePersistence,
   lock: LootSubmissionLock,
+  signalPublications: Effect.Effect<void>,
 ): LootSubmissionAcceptance =>
-  new LootSubmissionAcceptanceImplementation(repository, lock);
+  new LootSubmissionAcceptanceImplementation(
+    repository,
+    lock,
+    signalPublications,
+  );

@@ -40,6 +40,7 @@ export type RuntimeHero = Readonly<{
   maxHp: number;
   name: string;
   profession: string;
+  stasis: boolean;
   x: number;
   y: number;
 }>;
@@ -71,18 +72,7 @@ export type RuntimePartyMember = Readonly<{
   profession: string | null;
 }>;
 
-export type RuntimeFriend = Readonly<{
-  characterId: string;
-  icon: string;
-  level: number;
-  location: string;
-  name: string;
-  profession: string;
-  status: string;
-}>;
-
 export type RuntimeStateSnapshot = Readonly<{
-  friends: readonly RuntimeFriend[];
   game: RuntimeGameSnapshot;
   npcs: readonly RuntimeNpc[];
   others: Readonly<Record<string, RuntimeOther>>;
@@ -107,7 +97,8 @@ export type RuntimeFact = Readonly<{
     | "npc-delete"
     | "npc-upsert"
     | "other"
-    | "party";
+    | "party"
+    | "reload";
   event: GameEvent;
 }>;
 

@@ -178,6 +178,33 @@ export const canReadChatMessage = (
   return canReadPolicyNpc(organization, "chat", { type, lvl: message.npc.lvl });
 };
 
+const filterChatMessages = (
+  messages: ChatMessage[],
+  policy: AccessPolicySnapshot,
+) => {
+  const organizations = new Map(
+    policy.organizations.map((organization) => [
+      organization.organizationId,
+      organization,
+    ]),
+  );
+
+  const visible = messages.filter((message) =>
+    canReadChatMessage(organizations.get(message.guildId), message),
+  );
+
+  return visible.length === messages.length ? messages : visible;
+};
+
+export const applyCurrentChatAccess = (
+  queryClient: QueryClient,
+  messages: ChatMessage[],
+) => {
+  const policy = getState(queryClient).policy;
+
+  return policy ? filterChatMessages(messages, policy) : messages;
+};
+
 const retainReadableRefreshes = (
   state: ChatPolicyState,
   restrictedGuilds: ReadonlySet<string>,
@@ -248,10 +275,22 @@ export const applyChatAccessPolicy = (
   );
 
   const affected = (query: Query) => affectedQueries.has(query);
+
+  const preserveInitialRequest = (query: Query) => {
+    if (!initial) return false;
+    const guildId = getChatMessagesQueryGuildId(query);
+    const organization = guildId ? organizations.get(guildId) : undefined;
+
+    return (
+      organization !== undefined && canReadPolicyNpc(organization, "chat", null)
+    );
+  };
+
   const interruptedUnloadedGuilds: string[] = [];
 
   for (const query of affectedQueries) {
     if (
+      preserveInitialRequest(query) ||
       query.state.data !== undefined ||
       query.state.fetchStatus !== "fetching"
     )
@@ -266,19 +305,16 @@ export const applyChatAccessPolicy = (
   }
 
   // Cancellation reverts synchronously; prune after it so late responses cannot restore revoked rows.
-  void queryClient.cancelQueries({ predicate: affected });
-  queryClient.setQueriesData<ChatMessage[]>(
-    { predicate: affected },
-    (messages) => {
-      if (!messages) return [];
+  void queryClient.cancelQueries({
+    predicate: (query) => affected(query) && !preserveInitialRequest(query),
+  });
 
-      const visible = messages.filter((message) =>
-        canReadChatMessage(organizations.get(message.guildId), message),
-      );
+  for (const query of affectedQueries)
+    queryClient.setQueryData<ChatMessage[]>(query.queryKey, (messages) => {
+      if (!messages) return preserveInitialRequest(query) ? messages : [];
 
-      return visible.length === messages.length ? messages : visible;
-    },
-  );
+      return filterChatMessages(messages, policy);
+    });
 
   retainReadableRefreshes(state, restrictedGuilds, organizations);
 

@@ -1,10 +1,13 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, expect, it } from "vitest";
 import { configureApiClients } from "@lootlog/client/transport";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import {
+  createReadyRoomParticipant,
   readSeededReadyRoomCache,
+  readyRoomOrganizerFixture,
   seedReadyRoomCache,
 } from "@/test/ready-room-fixtures";
 import { useWindowsStore } from "@/store/windows.store";
@@ -31,7 +34,7 @@ it("does not expose management to a participant with a previously open window", 
     </QueryClientProvider>,
   );
 
-  expect(screen.queryByText("Party finder")).not.toBeInTheDocument();
+  expect(screen.queryByText("Twoja zbiórka")).not.toBeInTheDocument();
   client.clear();
 });
 
@@ -99,8 +102,21 @@ it("shows and cancels an owned gathering after switching character and world wit
   expect(
     screen.queryByRole("button", { name: /Zaproś wszystkich/i }),
   ).not.toBeInTheDocument();
-  fireEvent.click(
-    screen.getByRole("button", { name: /Zakończ|Anuluj|Rozwiąż/i }),
+
+  const user = userEvent.setup();
+
+  const cancelGathering = screen.getByRole("button", {
+    name: /Zakończ|Anuluj|Rozwiąż/i,
+  });
+
+  await user.click(cancelGathering);
+  await user.keyboard("{Escape}");
+  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  await user.click(cancelGathering);
+  await user.click(
+    within(screen.getByRole("alertdialog")).getByRole("button", {
+      name: "Anuluj zbiórkę",
+    }),
   );
   await waitFor(() => expect(requests).toHaveLength(1));
   const request = requests[0];
@@ -113,5 +129,42 @@ it("shows and cancels an owned gathering after switching character and world wit
   await waitFor(() =>
     expect(readSeededReadyRoomCache(client).projections).toEqual({}),
   );
+  client.clear();
+});
+
+it("lists only applicants still outside the party and counts them for inviting", () => {
+  setTestRuntimeGame({
+    hero: {
+      accountId: "organizer-account",
+      characterId: "organizer-character",
+    },
+  });
+  useWindowsStore.getState().setOpen("party-finder", true);
+  const client = new QueryClient();
+
+  seedReadyRoomCache(client, [
+    {
+      ...readyRoomOrganizerFixture,
+      participants: {
+        waiting: createReadyRoomParticipant("waiting", "waiting-character"),
+        joined: {
+          ...createReadyRoomParticipant("joined", "joined-character"),
+          partyPresence: "IN_PARTY",
+        },
+      },
+    },
+  ]);
+
+  render(
+    <QueryClientProvider client={client}>
+      <PartyFinder />
+    </QueryClientProvider>,
+  );
+
+  expect(screen.getByText("waiting (190m)")).toBeInTheDocument();
+  expect(screen.queryByText("joined (190m)")).not.toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "Zaproś wszystkich (1)" }),
+  ).toBeInTheDocument();
   client.clear();
 });

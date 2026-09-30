@@ -19,6 +19,8 @@ const NULLABLE_JSON_SCHEMA_NAMES = [
   "SoundSettingsResponseDto__schema0",
   "EventMutationResponseDto__schema0",
   "EventOverviewResponseDto__schema0",
+  "KillHistoryBonusBreakdown",
+  // TODO(kill-history-legacy): Remove these two components when retiring the legacy list schemas.
   "EventKillHistoryResponseDto__schema0",
   "EventMemberKillHistoryResponseDto__schema0",
   "KillDetailResponseDto__schema0",

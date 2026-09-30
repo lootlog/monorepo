@@ -1,3 +1,4 @@
+import type { EventKillHistory } from "#src/events/history/event-kill-history";
 import { Context, Layer } from "effect";
 import type { EventsCatalog } from "#src/events/catalog/events-catalog.operations";
 import type { EventsAssignment } from "#src/events/coordination/events-assignment.operations";
@@ -6,6 +7,7 @@ import type { EventsPins } from "#src/events/pins/events-pins.operations";
 import type { EventsRanking } from "#src/events/ranking/events-ranking.operations";
 
 export interface EventDataOperations {
+  readonly history: EventKillHistory;
   readonly assignment: EventsAssignment;
   readonly catalog: EventsCatalog;
   readonly monitoring: EventsMonitoring;

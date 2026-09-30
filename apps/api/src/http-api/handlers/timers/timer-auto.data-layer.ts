@@ -1,8 +1,10 @@
+import { getTimerHistoryValues } from "./timer-restore-snapshot.js";
+import { pruneTimerHistory } from "./timer-history-retention.js";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { upsertActorCharacter } from "./timer-actor-snapshot.js";
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, gt, gte, inArray, isNull, lte, or } from "drizzle-orm";
-import { Clock, Effect, Result, Schema } from "effect";
+import { and, desc, eq, gt, gte, isNull, lte, or } from "drizzle-orm";
+import { Clock, Effect, Predicate, Result, Schema } from "effect";
 import { partition } from "es-toolkit";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
@@ -46,6 +48,19 @@ import {
 } from "#src/timers/timer-projection";
 
 const DEDUP_TTL_SECONDS = 30;
+
+const publishTimerEvents = Effect.fnUntraced(function* (
+  realtime: Effect.Effect<unknown, unknown>,
+  notifications: Effect.Effect<unknown, unknown>,
+) {
+  // Wait for both confirms even when one delivery fails.
+  const results = yield* Effect.all([realtime, notifications], {
+    concurrency: 2,
+    mode: "result",
+  });
+
+  for (const result of results) yield* Effect.fromResult(result);
+});
 
 const RELEASE_DEDUP_LOCK_SCRIPT = `
 if redis.call("get", KEYS[1]) == ARGV[1] then
@@ -248,6 +263,35 @@ const badRequest = (message: ErrorKey, rejectedGuilds: unknown[]) =>
     rejectedGuilds,
   });
 
+const findRecentlyCreatedTimer = Effect.fnUntraced(function* (
+  database: Pick<typeof ApiDatabase.Service, "select">,
+  timer: typeof timerTable.$inferSelect | null,
+  startedAt: Date,
+) {
+  if (!timer) return null;
+
+  const dedupSince = new Date(startedAt.getTime() - DEDUP_TTL_SECONDS * 1000);
+
+  // The transaction can commit before Redis records its result. Only the
+  // CREATE history written by an automatic submission identifies it: event
+  // respawn windows, resets, deletes, and restores also move the timer row.
+  const recentCreates = yield* database
+    .select({ id: timerHistoryEntryTable.id })
+    .from(timerHistoryEntryTable)
+    .where(
+      and(
+        eq(timerHistoryEntryTable.guildId, timer.guildId),
+        eq(timerHistoryEntryTable.world, timer.world),
+        eq(timerHistoryEntryTable.timerKey, timer.timerKey),
+        eq(timerHistoryEntryTable.action, TimerHistoryAction.CREATE),
+        gte(timerHistoryEntryTable.createdAt, dedupSince),
+      ),
+    )
+    .limit(1);
+
+  return recentCreates.length > 0 ? timer : null;
+});
+
 export const makeAutoTimer = (
   database: typeof ApiDatabase.Service,
   ports: AutoTimerPorts,
@@ -299,12 +343,6 @@ export const makeAutoTimer = (
               }),
             );
 
-          const actorCharacter = yield* upsertActorCharacter(
-            transaction,
-            payload.world,
-            payload.actorCharacter,
-          );
-
           const existingRows = yield* transaction
             .select()
             .from(timerTable)
@@ -318,6 +356,23 @@ export const makeAutoTimer = (
             .limit(1);
 
           let previousTimer = existingRows[0] ?? null;
+
+          const completedTimer = yield* findRecentlyCreatedTimer(
+            transaction,
+            previousTimer,
+            startedAt,
+          );
+
+          if (completedTimer) {
+            return { _tag: "Duplicate" as const, projection: completedTimer };
+          }
+
+          const actorCharacter = yield* upsertActorCharacter(
+            transaction,
+            payload.world,
+            payload.actorCharacter,
+          );
+
           let migratedSyntheticNpcId: number | null = null;
           let migratedSyntheticTimerKey: string | null = null;
 
@@ -338,26 +393,30 @@ export const makeAutoTimer = (
 
           const now = new Date(yield* Clock.currentTimeMillis);
 
+          const timerUpdate = {
+            createdById: member.id,
+            ...window,
+            latestRespBaseSeconds: payload.respBaseSeconds,
+            latestRespawnRandomness:
+              payload.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS,
+            wasReset: false,
+            npc,
+            windowOpenedAt: now,
+            actorCharacterSnapshotId: actorCharacter?.id ?? null,
+            actorCharacterLvl: payload.actorCharacter?.lvl ?? null,
+            deletedAt: null,
+            updatedAt: now,
+          };
+
           const timerRows = yield* transaction
             .insert(timerTable)
             .values({
-              createdById: member.id,
+              ...timerUpdate,
               guildId,
               world: payload.world,
               npcId: payload.npc.id,
               timerKey,
-              ...window,
-              latestRespBaseSeconds: payload.respBaseSeconds,
-              latestRespawnRandomness:
-                payload.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS,
-              wasReset: false,
-              npc,
-              windowOpenedAt: now,
-              actorCharacterSnapshotId: actorCharacter?.id ?? null,
-              actorCharacterLvl: payload.actorCharacter?.lvl ?? null,
-              deletedAt: null,
               createdAt: now,
-              updatedAt: now,
             })
             .onConflictDoUpdate({
               target: [
@@ -365,20 +424,7 @@ export const makeAutoTimer = (
                 timerTable.world,
                 timerTable.timerKey,
               ],
-              set: {
-                createdById: member.id,
-                ...window,
-                latestRespBaseSeconds: payload.respBaseSeconds,
-                latestRespawnRandomness:
-                  payload.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS,
-                wasReset: false,
-                npc,
-                windowOpenedAt: now,
-                actorCharacterSnapshotId: actorCharacter?.id ?? null,
-                actorCharacterLvl: payload.actorCharacter?.lvl ?? null,
-                deletedAt: null,
-                updatedAt: now,
-              },
+              set: timerUpdate,
             })
             .returning();
 
@@ -389,6 +435,7 @@ export const makeAutoTimer = (
               new TimersInvariantViolation({ code: "AUTO_UPSERT_NO_ROW" }),
             );
           yield* transaction.insert(timerHistoryEntryTable).values({
+            ...getTimerHistoryValues(timer),
             guildId,
             world: payload.world,
             timerKey,
@@ -400,41 +447,17 @@ export const makeAutoTimer = (
             actorCharacterLvl: payload.actorCharacter?.lvl,
             minSpawnTime: window.minSpawnTime,
             maxSpawnTime: window.maxSpawnTime,
-            latestRespBaseSeconds: timer.latestRespBaseSeconds,
-            latestRespawnRandomness: timer.latestRespawnRandomness,
-            wasReset: timer.wasReset,
-            windowOpenedAt: timer.windowOpenedAt,
-            timerCreatedById: timer.createdById,
-            timerActorCharacterSnapshotId: timer.actorCharacterSnapshotId,
-            timerActorCharacterLvl: timer.actorCharacterLvl,
           });
 
-          const stale = yield* transaction
-            .select({ id: timerHistoryEntryTable.id })
-            .from(timerHistoryEntryTable)
-            .where(
-              and(
-                eq(timerHistoryEntryTable.guildId, guildId),
-                eq(timerHistoryEntryTable.world, payload.world),
-                eq(timerHistoryEntryTable.timerKey, timerKey),
-              ),
-            )
-            .orderBy(
-              desc(timerHistoryEntryTable.createdAt),
-              desc(timerHistoryEntryTable.id),
-            )
-            .offset(5);
-
-          if (stale.length > 0) {
-            yield* transaction.delete(timerHistoryEntryTable).where(
-              inArray(
-                timerHistoryEntryTable.id,
-                stale.map(({ id }) => id),
-              ),
-            );
-          }
+          yield* pruneTimerHistory(
+            transaction,
+            guildId,
+            payload.world,
+            timerKey,
+          );
 
           return {
+            _tag: "Created" as const,
             projection: { ...timer, member, actorCharacter },
             previousTimer,
             migratedSyntheticNpcId,
@@ -456,7 +479,6 @@ export const makeAutoTimer = (
       if (cached) return yield* projectionFromCache(cached);
       const token = randomUUID();
       let acquired = yield* ports.setNx(dedupLockKey, token, DEDUP_TTL_SECONDS);
-      const waitedForOwner = !acquired;
 
       if (!acquired) {
         for (let attempt = 0; attempt < 100; attempt += 1) {
@@ -485,27 +507,11 @@ export const makeAutoTimer = (
           if (cachedAfterLock)
             return yield* projectionFromCache(cachedAfterLock);
 
-          if (waitedForOwner) {
-            const completedRows = yield* database
-              .select()
-              .from(timerTable)
-              .where(
-                and(
-                  eq(timerTable.guildId, guildId),
-                  eq(timerTable.world, payload.world),
-                  eq(timerTable.timerKey, timerKey),
-                  gte(timerTable.updatedAt, startedAt),
-                ),
-              )
-              .limit(1);
-
-            const completed = completedRows[0];
-
-            if (completed) return mapTimerResponse(completed);
-          }
-
           const result = yield* persist;
           const response = mapTimerResponse(result.projection);
+
+          if (Predicate.isTagged(result, "Duplicate")) return response;
+
           yield* ports.set(
             dedupKey,
             JSON.stringify(result.projection),
@@ -525,20 +531,21 @@ export const makeAutoTimer = (
               },
             };
 
-            yield* ports.publish(
-              RabbitRoutingKey.GUILDS_TIMERS_DELETE,
-              deletion,
-            );
-            yield* ports.publish(
-              RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED,
-              deletion,
+            yield* publishTimerEvents(
+              ports.publish(RabbitRoutingKey.GUILDS_TIMERS_DELETE, deletion),
+              ports.publish(
+                RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED,
+                deletion,
+              ),
             );
           }
 
-          yield* ports.publish(RabbitRoutingKey.GUILDS_TIMERS_UPDATE, response);
-          yield* ports.publish(
-            RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
-            response,
+          yield* publishTimerEvents(
+            ports.publish(RabbitRoutingKey.GUILDS_TIMERS_UPDATE, response),
+            ports.publish(
+              RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
+              response,
+            ),
           );
           yield* ports
             .enqueueEventHeroCheck({
@@ -642,11 +649,17 @@ export const makeAutoTimer = (
 
     const submittedGuilds: Array<{ guildId: string; guildName: string }> = [];
 
-    for (const { guild } of targets) {
-      const result = yield* Effect.result(
-        writeGuildTimer(identity, guild.id, payload),
-      );
+    const outcomes = yield* Effect.forEach(
+      targets,
+      ({ guild }) =>
+        writeGuildTimer(identity, guild.id, payload).pipe(
+          Effect.result,
+          Effect.map((result) => ({ guild, result })),
+        ),
+      { concurrency: 3 },
+    );
 
+    for (const { guild, result } of outcomes) {
       if (Result.isSuccess(result)) {
         submittedGuilds.push({ guildId: guild.id, guildName: guild.name });
       } else {

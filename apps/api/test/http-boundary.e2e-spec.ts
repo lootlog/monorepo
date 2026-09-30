@@ -17,8 +17,13 @@ import { BunRedis, BunHttpServer } from "@effect/platform-bun";
 import { Effect, Layer, ManagedRuntime, Schema } from "effect";
 import { FetchHttpClient, HttpRouter } from "effect/unstable/http";
 import { Redis } from "effect/unstable/persistence";
-import { getFreshCompleteUserGuildsHandoffKey } from "#src/discord/discord-cache.util";
+import {
+  getCompleteUserGuildsCacheKey,
+  getGuildMemberCacheKeys,
+} from "#src/discord/discord-cache.util";
+import { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 import { RedisService } from "#src/redis/redis.service";
+import { getPermissionsCacheKey } from "#src/shared/cache";
 import { LootlogApiRouter } from "../src/runtime/application/http-routes.js";
 import { ApiRedis } from "../src/runtime/infrastructure/api-redis.js";
 import { ApiRuntimeConfig } from "../src/runtime/infrastructure/api-runtime-config.js";
@@ -30,6 +35,10 @@ import {
 } from "../src/database/drizzle/database.js";
 import {
   guildTable,
+  eventTable,
+  eventHeroNpcTable,
+  eventHeroKillTable,
+  eventKillPointTable,
   itemSnapshotTable,
   notificationTargetTable,
   watchedItemTable,
@@ -328,16 +337,54 @@ describe("API HTTP boundary", () => {
     },
   );
 
-  it("returns watched item snapshots after create, quick-add and retry", async () => {
+  it("serves the Organization list from a cached Discord guild list without deactivating members", async () => {
     await redis.set(
-      getFreshCompleteUserGuildsHandoffKey(caller),
+      getCompleteUserGuildsCacheKey(caller),
       JSON.stringify({
         guilds: [{ id: authorizedGuildId, name: "Authorized Organization" }],
-        fresh: true,
-        complete: true,
+        fetchedAt: Date.now() - 10 * 60_000,
       }),
       60,
     );
+
+    const cached = await request("/users/@me/guilds");
+
+    expect(cached.status).toBe(200);
+    expect(await cached.json()).toEqual([
+      expect.objectContaining({
+        id: authorizedGuildId,
+        isAccessDataStale: false,
+      }),
+    ]);
+    expect(
+      await databaseRuntime.runPromise(
+        database
+          .select({ active: memberTable.active })
+          .from(memberTable)
+          .where(eq(memberTable.guildId, forbiddenGuildId)),
+      ),
+    ).toEqual([{ active: true }]);
+
+    // Discord is unreachable here, so a refresh that skips the cached list fails.
+    const refreshed = await request("/users/@me/guilds/refresh", {
+      method: "POST",
+    });
+
+    expect(refreshed.status).toBe(500);
+  });
+
+  it("returns watched item snapshots after create, quick-add and retry", async () => {
+    // Watched items accept only a Discord guild list fetched within seconds.
+    const seedDiscordGuilds = () =>
+      redis.set(
+        getCompleteUserGuildsCacheKey(caller),
+        JSON.stringify({
+          guilds: [{ id: authorizedGuildId, name: "Authorized Organization" }],
+          fetchedAt: Date.now(),
+        }),
+        60,
+      );
+
     const itemId = 990001;
     await databaseRuntime.runPromise(
       Effect.gen(function* () {
@@ -373,6 +420,9 @@ describe("API HTTP boundary", () => {
         { name: "Watched item", icon: "item.png" },
       ],
     ] as const) {
+      // eslint-disable-next-line no-await-in-loop -- Each mutation depends on the previous persisted state.
+      await seedDiscordGuilds();
+
       // eslint-disable-next-line no-await-in-loop -- Each mutation depends on the previous persisted state.
       const response = await request(
         `/users/@me/notifications/watched-items${path}`,
@@ -531,6 +581,284 @@ describe("API HTTP boundary", () => {
     ]);
   });
 
+  const seedKillHistory = async () => {
+    const highKill = "eeeeeeee-1111-4111-8111-111111111111";
+    const newestLowKill = "ffffffff-1111-4111-8111-111111111111";
+    const oldestLowKill = "aaaaaaaa-1111-4111-8111-111111111111";
+    const foreignKill = "dddddddd-1111-4111-8111-111111111111";
+    const now = new Date();
+
+    const members = await databaseRuntime.runPromise(
+      database
+        .select({ id: memberTable.id })
+        .from(memberTable)
+        .where(eq(memberTable.guildId, authorizedGuildId)),
+    );
+
+    const memberId = members[0]?.id;
+
+    if (memberId === undefined) throw new Error("Expected authorized member");
+    await databaseRuntime.runPromise(
+      Effect.gen(function* () {
+        yield* database.insert(eventTable).values([
+          {
+            id: "history",
+            guildId: authorizedGuildId,
+            name: "History",
+            world,
+            updatedAt: now,
+          },
+          {
+            id: "foreign-history",
+            guildId: forbiddenGuildId,
+            name: "Foreign history",
+            world,
+            updatedAt: now,
+          },
+        ]);
+        yield* database.insert(eventHeroNpcTable).values([
+          {
+            id: "low-hero",
+            eventId: "history",
+            npcName: "Low hero",
+            npcLvl: 50,
+          },
+          {
+            id: "high-hero",
+            eventId: "history",
+            npcName: "High hero",
+            npcLvl: 300,
+          },
+          {
+            id: "foreign-hero",
+            eventId: "foreign-history",
+            npcName: "Foreign hero",
+            npcLvl: 50,
+          },
+        ]);
+        yield* database.insert(eventHeroKillTable).values(
+          [
+            {
+              id: highKill,
+              heroNpcId: "high-hero",
+              killedAt: new Date("2026-09-27T12:00:00Z"),
+            },
+            {
+              id: newestLowKill,
+              heroNpcId: "low-hero",
+              killedAt: new Date("2026-09-27T11:00:00Z"),
+            },
+            {
+              id: oldestLowKill,
+              heroNpcId: "low-hero",
+              killedAt: new Date("2026-09-27T10:00:00Z"),
+            },
+            {
+              id: foreignKill,
+              heroNpcId: "foreign-hero",
+              killedAt: new Date("2026-09-27T13:00:00Z"),
+            },
+          ].map((kill) => ({
+            ...kill,
+            minSpawnTimeAtKill: new Date("2026-09-27T09:00:00Z"),
+            maxSpawnTimeAtKill: new Date("2026-09-27T14:00:00Z"),
+          })),
+        );
+        yield* database.insert(eventKillPointTable).values(
+          [highKill, newestLowKill, oldestLowKill].map((killId) => ({
+            id: `point-${killId}`,
+            killId,
+            memberId,
+            basePoints: 1,
+            points: 4.25,
+            timeOnMapSeconds: 60,
+            afkPercentage: 0,
+            wasPresent: false,
+          })),
+        );
+      }),
+    );
+
+    return { memberId, highKill, newestLowKill, oldestLowKill, foreignKill };
+  };
+
+  it("serves scoped kill summaries and compatible legacy pages through the deployed HTTP contracts", async () => {
+    const { memberId, highKill, newestLowKill, oldestLowKill, foreignKill } =
+      await seedKillHistory();
+
+    const base = `/guilds/${authorizedGuildId}/events/history`;
+    const first = await request(`${base}/kill-history?limit=1`);
+    expect(first.status).toBe(200);
+    const firstPage = await first.json();
+    expect(firstPage).toMatchObject({
+      kind: "event",
+      data: [{ id: highKill, participantCount: 1 }],
+    });
+    expect(firstPage.data[0]).not.toHaveProperty("points");
+
+    const continuation = await request(
+      `${base}/kill-history?limit=2&cursor=${encodeURIComponent(firstPage.nextCursor)}`,
+    );
+
+    expect(continuation.status).toBe(200);
+    expect(await continuation.json()).toMatchObject({
+      data: [{ id: newestLowKill }, { id: oldestLowKill }],
+      nextCursor: null,
+    });
+
+    const member = await request(
+      `${base}/kill-history?memberId=${memberId}&heroId=low-hero`,
+    );
+
+    expect(member.status).toBe(200);
+    expect(await member.json()).toMatchObject({
+      kind: "member",
+      member: { id: memberId },
+      data: [
+        { id: newestLowKill, memberPoint: { points: 4.25 } },
+        { id: oldestLowKill },
+      ],
+    });
+    const legacy = await request(`${base}/kills?limit=1`);
+    expect(legacy.status).toBe(200);
+    expect(await legacy.json()).toMatchObject({
+      data: [{ id: highKill, points: [{ wasPresent: false }] }],
+      nextCursor: highKill,
+    });
+
+    for (const path of [
+      "kills",
+      "heroes/low-hero/kills",
+      `members/${memberId}/kills`,
+    ]) {
+      expect(
+        (await request(`${base}/${path}?cursor=${foreignKill}`)).status,
+      ).toBe(400);
+    }
+
+    for (const query of [
+      "limit=0",
+      "limit=101",
+      "limit=1.5",
+      "cursor=invalid",
+      `cursor=${encodeURIComponent(firstPage.nextCursor)}&heroId=low-hero`,
+    ]) {
+      expect((await request(`${base}/kill-history?${query}`)).status).toBe(400);
+    }
+
+    expect(
+      (await request(`${base}/heroes/low-hero/kills/${foreignKill}`)).status,
+    ).toBe(404);
+    expect(
+      (await request(`${base}/heroes/low-hero/kills/${foreignKill}/timeline`))
+        .status,
+    ).toBe(404);
+  });
+
+  it("rechecks history access after cache warmup, level changes and permission loss", async () => {
+    const { highKill, newestLowKill, oldestLowKill } = await seedKillHistory();
+    const base = `/guilds/${authorizedGuildId}/events/history`;
+    expect(await (await request(`${base}/kill-history`)).json()).toMatchObject({
+      data: [{ id: highKill }, { id: newestLowKill }, { id: oldestLowKill }],
+    });
+
+    const setAccess = async (permissions: Permission[], maximum: number) => {
+      await databaseRuntime.runPromise(
+        database
+          .update(roleTable)
+          .set({ permissions, lvlRangeFrom: 1, lvlRangeTo: maximum })
+          .where(eq(roleTable.id, "timer-maintainer")),
+      );
+      await redis.del(getPermissionsCacheKey(caller.userId, authorizedGuildId));
+    };
+
+    await setAccess([Permission.LOOTLOG_EVENTS_READ], 100);
+    expect(await (await request(`${base}/kill-history`)).json()).toMatchObject({
+      data: [{ id: newestLowKill }, { id: oldestLowKill }],
+    });
+    expect(
+      (await request(`${base}/kill-history?heroId=high-hero`)).status,
+    ).toBe(404);
+    expect((await request(`${base}/kills?cursor=${highKill}`)).status).toBe(
+      400,
+    );
+    expect(
+      (await request(`${base}/heroes/high-hero/kills/${highKill}`)).status,
+    ).toBe(404);
+    expect(
+      (await request(`${base}/heroes/high-hero/kills/${highKill}/timeline`))
+        .status,
+    ).toBe(404);
+    await setAccess([Permission.LOOTLOG_EVENTS_READ], 20);
+    expect(await (await request(`${base}/kill-history`)).json()).toMatchObject({
+      data: [],
+      nextCursor: null,
+    });
+    await setAccess([], 100);
+    expect((await request(`${base}/kill-history`)).status).toBe(403);
+  });
+
+  it("keeps read-only API key kill history inside its Organization scope", async () => {
+    const { newestLowKill, oldestLowKill } = await seedKillHistory();
+    const keyGuildId = "123456789012345678";
+    const otherKeyGuildId = "987654321098765432";
+    await databaseRuntime.runPromise(
+      Effect.gen(function* () {
+        yield* database
+          .update(guildTable)
+          .set({ id: keyGuildId })
+          .where(eq(guildTable.id, authorizedGuildId));
+        yield* database
+          .update(guildTable)
+          .set({ id: otherKeyGuildId })
+          .where(eq(guildTable.id, forbiddenGuildId));
+      }),
+    );
+
+    const apiKeyHeaders = (organizationIds: string[]) => ({
+      "x-auth-api-key-access": JSON.stringify({
+        keyId: "history-key",
+        organizationIds,
+        mode: "read",
+        personalData: false,
+        expiresAt: null,
+      }),
+    });
+
+    const allowed = await request(
+      `/guilds/${keyGuildId}/events/history/kill-history?heroId=low-hero`,
+      { headers: apiKeyHeaders([keyGuildId]) },
+    );
+
+    expect(allowed.status).toBe(200);
+    expect(await allowed.json()).toMatchObject({
+      data: [{ id: newestLowKill }, { id: oldestLowKill }],
+    });
+    expect(
+      (
+        await request(`/guilds/${keyGuildId}/events/history/kill-history`, {
+          headers: apiKeyHeaders([otherKeyGuildId]),
+        })
+      ).status,
+    ).toBe(403);
+    expect(
+      (
+        await request(
+          `/guilds/${keyGuildId}/events/foreign-history/kill-history`,
+          { headers: apiKeyHeaders([keyGuildId]) },
+        )
+      ).status,
+    ).toBe(404);
+    expect(
+      (
+        await request(
+          `/guilds/${otherKeyGuildId}/events/foreign-history/kill-history`,
+          { headers: apiKeyHeaders([keyGuildId]) },
+        )
+      ).status,
+    ).toBe(403);
+  });
+
   it("resolves canonical and current alias loot routes while rejecting a stale alias", async () => {
     const initialAlias = await request(`/guilds/${authorizedGuildId}/config`, {
       method: "PATCH",
@@ -649,6 +977,94 @@ describe("API HTTP boundary", () => {
     expect(missingTemplate.status).toBe(404);
     expect(forbiddenHistory.status).toBe(403);
   });
+
+  it("asks the caller to sign in again when Discord rejects their member refresh", async () => {
+    await databaseRuntime.runPromise(
+      database
+        .update(memberTable)
+        .set({ lastDiscordSyncAt: new Date(Date.now() - 24 * 60 * 60 * 1000) })
+        .where(eq(memberTable.guildId, authorizedGuildId)),
+    );
+    await redis.set(
+      getGuildMemberCacheKeys({ guildId: authorizedGuildId, ...caller })
+        .unauthorized,
+      "1",
+      60,
+    );
+
+    // Each route declares different own errors (empty 404, none, open 403);
+    // none of them may claim the failure. Sequential: a concurrent refresh
+    // would wait on the per-user lock.
+    for (const path of [
+      "/members/@me",
+      "/events",
+      `/timers/missing-timer/history?world=${world}`,
+    ]) {
+      const response = await request(`/guilds/${authorizedGuildId}${path}`);
+
+      expect(response.status).toBe(401);
+      expect(await response.json()).toEqual(
+        Schema.encodeSync(ReauthenticationRequired)(
+          new ReauthenticationRequired({
+            code: "DISCORD_UNAUTHORIZED",
+            requiresReauth: true,
+          }),
+        ),
+      );
+    }
+  });
+
+  it("keeps an admin signed in when another member's Discord authorization fails", async () => {
+    const other = { userId: "user-2", discordId: "discord-2" };
+
+    await databaseRuntime.runPromise(
+      database.insert(memberTable).values({
+        userId: other.discordId,
+        globalUserId: other.userId,
+        guildId: authorizedGuildId,
+        name: "Member with expired Discord authorization",
+        lastDiscordSyncAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        updatedAt: new Date(),
+      }),
+    );
+    await redis.set(
+      getGuildMemberCacheKeys({ guildId: authorizedGuildId, ...other })
+        .unauthorized,
+      "1",
+      60,
+    );
+
+    const response = await request(
+      `/guilds/${authorizedGuildId}/members/${other.discordId}/refresh`,
+      { method: "POST" },
+    );
+
+    expect(response.status).not.toBe(401);
+    expect(response.status).toBeLessThan(500);
+  });
+
+  it.each([
+    { path: "/map-templates", field: "name" },
+    { path: "/events", field: "name" },
+  ])(
+    "rejects an invalid POST $path payload as a validation error regardless of declared errors",
+    async ({ path, field }) => {
+      const response = await request(`/guilds/${authorizedGuildId}${path}`, {
+        method: "POST",
+        body: JSON.stringify({}),
+      });
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({
+        code: "VALIDATION_ERROR",
+        message: expect.stringContaining(field),
+        issues: expect.arrayContaining([
+          expect.objectContaining({ path: [field] }),
+        ]),
+      });
+    },
+  );
+
   it.each([
     { suffix: "/members", method: "GET" },
     { suffix: "/members/references", method: "GET" },

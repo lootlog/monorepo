@@ -3,6 +3,7 @@ import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuTrigger,
+  openContextMenuOnKeyDown,
 } from "@/components/ui/context-menu";
 import {
   Tooltip,
@@ -20,9 +21,13 @@ import { TimerContextMenuContent } from "./timer-context-menu-content";
 import { TimerTooltip } from "./timer-tooltip";
 import { TimerLiveTile } from "./timer-live-tile";
 import { REQUIRED_DELETE_PERMISSIONS } from "../constants/required-delete-permissions";
-import { useGameStore } from "@/store/game.store";
 import { REQUIRED_RESET_PERMISSIONS } from "@/features/timers/constants/required-reset-permissions";
 import { useShallow } from "zustand/react/shallow";
+import { TimerMapPlayersAdornment } from "./timer-map-players-adornment";
+import {
+  useTimerMapPresence,
+  useTimerMapThreat,
+} from "./timer-map-presence-provider";
 
 type SingleTimerProps = {
   guildIds: string[];
@@ -31,7 +36,6 @@ type SingleTimerProps = {
   timer: TimerWithTimeLeft;
   settingsKey: string;
   isHidden?: boolean;
-  isAlternateRow?: boolean;
   showColorStripe?: boolean;
 };
 
@@ -42,11 +46,8 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   timer,
   settingsKey,
   isHidden = false,
-  isAlternateRow = false,
   showColorStripe = true,
 }) => {
-  const world = useGameStore((state) => state.game?.world ?? "unknown");
-
   const {
     customColors,
     defaultColorNames,
@@ -82,7 +83,10 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     handleToggleAlwaysVisibleExpiredTimer,
     handleRestartTimer,
     handleDeleteTimer,
-  } = useTimerActions(timer, settingsKey, world, guildIds, timersGrouping);
+    isRestartingTimer,
+    isDeletingTimer,
+    beginRestartAttempt,
+  } = useTimerActions(timer, settingsKey, guildIds, timersGrouping);
 
   const {
     isPending,
@@ -95,11 +99,18 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     countdownMode,
   } = useTimerDisplay(timer);
 
+  const occupancy = useTimerMapPresence(timer);
+  const threat = useTimerMapThreat(timer);
+
   return (
     <Tooltip>
       <ContextMenu>
         <TooltipTrigger asChild>
-          <ContextMenuTrigger className="ll:h-full">
+          <ContextMenuTrigger
+            tabIndex={0}
+            onKeyDown={openContextMenuOnKeyDown}
+            className="ll:h-full ll:rounded-[2px] ll:outline-none ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring"
+          >
             <div
               className={cn("ll:relative ll:h-full", {
                 "ll:opacity-50": isHidden,
@@ -118,16 +129,19 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                 displayMode={displayConfig.singleTimerDisplayMode}
                 fontSize={displayConfig.fontSize}
                 isPending={isPending}
-                isAlternateRow={isAlternateRow}
                 label={`${resetIndicator}${shortname} ${timer.npc.name} ${npcDetails}`}
                 countdownMode={countdownMode}
                 timer={timer}
+                timeAdornment=<TimerMapPlayersAdornment
+                  occupancy={occupancy}
+                  threat={threat}
+                />
               />
             </div>
           </ContextMenuTrigger>
         </TooltipTrigger>
 
-        <ContextMenuContent className="ll:w-40 ll:flex ll:flex-col">
+        <ContextMenuContent className="ll:w-48 ll:flex ll:flex-col">
           <TimerContextMenuContent
             timer={timer}
             isPending={isPending}
@@ -135,6 +149,8 @@ export const SingleTimer: FC<SingleTimerProps> = ({
             isHidden={isHidden}
             canDelete={canDelete}
             canReset={canReset}
+            actionPending={isRestartingTimer || isDeletingTimer}
+            guildNamesById={guildNamesById}
             timersGrouping={timersGrouping}
             selectedColor={selectedColor}
             customColors={customColors}
@@ -154,13 +170,19 @@ export const SingleTimer: FC<SingleTimerProps> = ({
               handleToggleAlwaysVisibleExpiredTimer
             }
             onReset={handleRestartTimer}
+            onResetBegin={beginRestartAttempt}
             onDelete={handleDeleteTimer}
           />
         </ContextMenuContent>
       </ContextMenu>
 
       <TooltipContent className="ll:w-64 ll:max-w-64">
-        <TimerTooltip timer={timer} guildNamesById={guildNamesById} />
+        <TimerTooltip
+          timer={timer}
+          guildNamesById={guildNamesById}
+          occupancy={occupancy}
+          threat={threat}
+        />
       </TooltipContent>
     </Tooltip>
   );

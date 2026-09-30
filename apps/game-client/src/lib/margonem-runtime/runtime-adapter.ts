@@ -13,8 +13,6 @@ import type {
   RuntimeStateSnapshot,
 } from "./runtime.types";
 
-export type MargonemInterface = RuntimeInterface;
-
 type RuntimeAdapterWindow = Window & {
   Engine?: Engine;
   g?: Game;
@@ -41,7 +39,7 @@ function requireLegacyGame(): Game {
 }
 
 export interface MargonemRuntimeAdapter {
-  readonly interface: MargonemInterface;
+  readonly interface: RuntimeInterface;
   getAllNpcs(): readonly RuntimeNpc[];
   getAllOthers(): Readonly<Record<string, RuntimeOther>>;
   getAllOtherHandles(): Readonly<Record<string, OtherHandle>>;
@@ -107,7 +105,7 @@ function normalizeOther(other: RuntimeOtherWrapper): RuntimeOther | null {
 }
 
 abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {
-  abstract readonly interface: MargonemInterface;
+  abstract readonly interface: RuntimeInterface;
   protected abstract getRawGame(): {
     hero: GameHero;
     map: GameMap;
@@ -141,6 +139,7 @@ abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {
         maxHp: hero.warrior_stats?.maxhp ?? 0,
         name: hero.nick,
         profession: hero.prof,
+        stasis: hero.stasis === 1,
         x: hero.x,
         y: hero.y,
       }),
@@ -196,7 +195,6 @@ abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {
 
   getStateSnapshot(): RuntimeStateSnapshot {
     return Object.freeze({
-      friends: Object.freeze([]),
       game: this.getGameSnapshot(),
       npcs: this.getAllNpcs(),
       others: this.getAllOthers(),
@@ -308,10 +306,6 @@ export function createRuntimeAdapter(): MargonemRuntimeAdapter {
   return typeof getRuntimeWindow().Engine === "object"
     ? new NiRuntimeAdapter()
     : new SiRuntimeAdapter();
-}
-
-export function getMargonemInterface(): MargonemInterface {
-  return typeof getRuntimeWindow().Engine === "object" ? "ni" : "si";
 }
 
 export function isMargonemRuntimeReady(): boolean {

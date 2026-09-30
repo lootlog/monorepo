@@ -1,3 +1,4 @@
+import { WindowFooter } from "@/components/draggable-window/window-footer";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -17,7 +18,8 @@ import {
 import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestions";
 import { getNpcTypeNames } from "@/constants/margonem";
 import { cn } from "cn";
-import { TimerFormFieldError } from "./timer-form-field-error";
+import { FormFieldError } from "@/components/form-field-error";
+import { formFieldLabelClassName } from "@/components/ui/form-field";
 import {
   useAddTimerForm,
   MAX_NPC_NAME_LENGTH,
@@ -37,9 +39,6 @@ const MANUAL_TIMER_NPC_TYPE_TRANSLATION_KEYS = {
 } as const satisfies Record<(typeof MANUAL_TIMER_NPC_TYPES)[number], string>;
 
 const getFieldErrorMessage = (error?: { message?: string }) => error?.message;
-
-const fieldLabelClassName =
-  "ll:mb-0.5 ll:block ll:text-[11px] ll:font-medium ll:text-gray-300";
 
 /** Makes the type select sit in line with the text inputs around it. */
 const selectFieldClassName =
@@ -108,7 +107,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
       >
         <div className="ll:flex ll:w-full ll:flex-col ll:gap-2 ll:px-3 ll:py-2">
           <div className="ll:relative ll:w-full">
-            <Label htmlFor="npcSearch" className={fieldLabelClassName}>
+            <Label htmlFor="npcSearch" className={formFieldLabelClassName}>
               {t("addForm.searchNpcLabel")}
             </Label>
             <Input
@@ -152,9 +151,9 @@ export function AddTimerForm(props: AddTimerFormProps) {
               selectedIndex={selectedIndex}
               keyExtractor={(npc) => npc.npcId}
               renderItem={(npc, _index, isSelected) => {
-                const longname =
-                  getNpcTypeNames(npc.type)?.longname ??
-                  t("addForm.mobFallback");
+                const longname = getNpcTypeNames(npc.type)
+                  ? t(`common:npcTypes.${npc.type.toLowerCase()}`)
+                  : t("addForm.mobFallback");
 
                 const npcDetails =
                   npc.lvl > 0 && npc.prof
@@ -183,7 +182,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
           </div>
 
           <div className="ll:w-full">
-            <Label htmlFor="name" className={fieldLabelClassName}>
+            <Label htmlFor="name" className={formFieldLabelClassName}>
               {t("addForm.nameLabel")}
             </Label>
             <Input
@@ -197,12 +196,12 @@ export function AddTimerForm(props: AddTimerFormProps) {
                 nameField.onChange(event);
               }}
             />
-            <TimerFormFieldError message={getFieldErrorMessage(errors.name)} />
+            <FormFieldError message={getFieldErrorMessage(errors.name)} />
           </div>
 
           <div className="ll:grid ll:w-full ll:grid-cols-2 ll:gap-2">
             <div className="ll:min-w-0">
-              <Label htmlFor="lvl" className={fieldLabelClassName}>
+              <Label htmlFor="lvl" className={formFieldLabelClassName}>
                 {t("addForm.lvlLabel")}
               </Label>
               <Input
@@ -216,10 +215,10 @@ export function AddTimerForm(props: AddTimerFormProps) {
                 placeholder={t("addForm.lvlPlaceholder")}
                 {...register("lvl")}
               />
-              <TimerFormFieldError message={getFieldErrorMessage(errors.lvl)} />
+              <FormFieldError message={getFieldErrorMessage(errors.lvl)} />
             </div>
             <div className="ll:min-w-0">
-              <Label htmlFor="npcType" className={fieldLabelClassName}>
+              <Label htmlFor="npcType" className={formFieldLabelClassName}>
                 {t("addForm.typeLabel")}
               </Label>
               <Select
@@ -255,7 +254,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
 
           <div className="ll:grid ll:w-full ll:grid-cols-2 ll:gap-2">
             <div className="ll:min-w-0">
-              <Label htmlFor="minDuration" className={fieldLabelClassName}>
+              <Label htmlFor="minDuration" className={formFieldLabelClassName}>
                 {t("addForm.minDurationLabel")}
               </Label>
               <Input
@@ -265,12 +264,12 @@ export function AddTimerForm(props: AddTimerFormProps) {
                 disabled={customDatesEnabled}
                 {...register("minDuration")}
               />
-              <TimerFormFieldError
+              <FormFieldError
                 message={getFieldErrorMessage(errors.minDuration)}
               />
             </div>
             <div className="ll:min-w-0">
-              <Label htmlFor="maxDuration" className={fieldLabelClassName}>
+              <Label htmlFor="maxDuration" className={formFieldLabelClassName}>
                 {t("addForm.maxDurationLabel")}
               </Label>
               <Input
@@ -280,7 +279,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
                 disabled={customDatesEnabled}
                 {...register("maxDuration")}
               />
-              <TimerFormFieldError
+              <FormFieldError
                 message={getFieldErrorMessage(errors.maxDuration)}
               />
             </div>
@@ -303,7 +302,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
           {customDatesEnabled && (
             <div className="ll:flex ll:w-full ll:flex-col ll:gap-2">
               <div className="ll:w-full">
-                <Label htmlFor="startDate" className={fieldLabelClassName}>
+                <Label htmlFor="startDate" className={formFieldLabelClassName}>
                   {t("addForm.startDateLabel")}
                 </Label>
                 <Input
@@ -312,12 +311,12 @@ export function AddTimerForm(props: AddTimerFormProps) {
                   {...register("startDate")}
                   className="ll:text-xs"
                 />
-                <TimerFormFieldError
+                <FormFieldError
                   message={getFieldErrorMessage(errors.startDate)}
                 />
               </div>
               <div className="ll:w-full">
-                <Label htmlFor="endDate" className={fieldLabelClassName}>
+                <Label htmlFor="endDate" className={formFieldLabelClassName}>
                   {t("addForm.endDateLabel")}
                 </Label>
                 <Input
@@ -326,7 +325,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
                   {...register("endDate")}
                   className="ll:text-xs"
                 />
-                <TimerFormFieldError
+                <FormFieldError
                   message={getFieldErrorMessage(errors.endDate)}
                 />
               </div>
@@ -345,7 +344,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
         </div>
       </ScrollArea>
 
-      <div className="ll:flex ll:shrink-0 ll:items-center ll:justify-end ll:gap-1 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:px-3 ll:py-1.5">
+      <WindowFooter rowClassName="ll:justify-end ll:gap-1 ll:px-3">
         <Button
           type="button"
           size="xs"
@@ -364,7 +363,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
         >
           {t("addForm.submit")}
         </Button>
-      </div>
+      </WindowFooter>
     </form>
   );
 }

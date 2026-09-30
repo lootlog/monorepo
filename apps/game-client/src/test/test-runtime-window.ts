@@ -12,7 +12,6 @@ export type TestRuntimeWindow = Window & {
   Engine?: TestRuntimeEngine;
   _g?: (command: string, ...args: unknown[]) => unknown;
   getCookie?: (name: string) => string | null | undefined;
-  message?: (text: string) => void;
 };
 
 export const testRuntimeWindow: TestRuntimeWindow = window;
@@ -26,6 +25,7 @@ const DEFAULT_TEST_HERO: RuntimeHero = {
   maxHp: 100,
   name: "Tester",
   profession: "w",
+  stasis: false,
   x: 1,
   y: 2,
 };

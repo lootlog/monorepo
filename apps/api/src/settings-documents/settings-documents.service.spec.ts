@@ -312,6 +312,31 @@ describe("settings documents Effect module", () => {
     expect(repository.applyOperations).not.toHaveBeenCalled();
   });
 
+  it("authorizes a response context guild that differs from the patched guild", async () => {
+    const repository = createRepository();
+    repository.hasActiveGuildMembership.mockImplementation((_userId, guildId) =>
+      Effect.succeed(guildId === "guild-1"),
+    );
+    const service = makeSettingsDocuments(repository);
+
+    await expect(
+      Effect.runPromise(
+        service.patchPreferences("user-1", {
+          operations: [
+            {
+              domain: "timers",
+              scope: { type: "GUILD", id: "guild-1" },
+              set: { timerFiltersEnabled: false },
+              unset: [],
+            },
+          ],
+          context: { guildId: "guild-2" },
+        }),
+      ),
+    ).rejects.toThrow("Guild settings are not accessible");
+    expect(repository.applyOperations).not.toHaveBeenCalled();
+  });
+
   it("sorts a patch batch before delegating the serializable transaction", async () => {
     const repository = createRepository();
     const service = makeSettingsDocuments(repository);

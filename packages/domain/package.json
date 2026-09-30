@@ -6,12 +6,15 @@
   "sideEffects": false,
   "exports": {
     "./access-policy": "./src/access-policy.ts",
+    "./activity-feed": "./src/activity-feed.ts",
     "./account-preferences": "./src/account-preferences.ts",
     "./air-tag": "./src/air-tag.ts",
     "./chat-message-permissions": "./src/chat-message-permissions.ts",
     "./chat-appearance": "./src/chat-appearance.ts",
     "./event-hero-visibility": "./src/event-hero-visibility.ts",
+    "./item-type": "./src/item-type.ts",
     "./loot-visibility": "./src/loot-visibility.ts",
+    "./member-display-role": "./src/member-display-role.ts",
     "./npc-appearance": "./src/npc-appearance.ts",
     "./npc-permissions": "./src/npc-permissions.ts",
     "./npc-routing": "./src/npc-routing.ts",
@@ -35,7 +38,8 @@
   "dependencies": {
     "@lootlog/datetime": "workspace:*",
     "@lootlog/schema": "workspace:*",
-    "effect": "catalog:"
+    "effect": "catalog:",
+    "es-toolkit": "catalog:"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",

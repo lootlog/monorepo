@@ -40,6 +40,7 @@ export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
     closable,
     disableTitle,
     draggableContent,
+    collapsed,
     contentClassName,
     animationPhase,
     onWindowAnimationEnd,
@@ -51,7 +52,7 @@ export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
     allowsHorizontalResize,
     allowsVerticalResize,
     isAdjustingMaxHeight,
-    cssMaxContentHeight,
+    contentMaxHeight,
     previewBoundaryOffset,
     previewShadeOffset,
     style,
@@ -66,14 +67,21 @@ export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
     onPointerDown,
     onPointerDownCapture,
     handleLockToggle,
+    handleKeyDown,
+    titleId,
     zIndex,
   } = useDraggableWindowFrame(props);
 
   return (
-    // oxlint-disable-next-line react-doctor/click-events-have-key-events, react-doctor/no-static-element-interactions -- This container only stops click bubbling into Margonem; child controls own keyboard actions.
+    // Non-modal: the game stays usable while a window is open. The container
+    // takes focus when the player opens the window and closes it on Escape.
     <div
+      role="dialog"
+      aria-labelledby={disableTitle ? undefined : titleId}
+      aria-label={disableTitle ? title : undefined}
       aria-hidden={animationPhase === "exit" ? true : undefined}
-      className="ll:pointer-events-auto ll:absolute"
+      tabIndex={-1}
+      className="ll:pointer-events-auto ll:absolute ll:outline-none"
       ref={draggableRef}
       data-ll-draggable-window={id}
       style={{
@@ -92,16 +100,22 @@ export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
       onPointerDown={disableTitle ? onPointerDown : undefined}
       onWheel={(e) => e.stopPropagation()}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
       id={`ll-${id}`}
     >
       <div
         className={cn(
-          "ll:w-full ll:h-full ll:overflow-hidden ll:rounded-lg ll:shadow-[2px_2px_3px_3px_rgba(12,13,13,0.4)] ll:border ll:border-white/50 ll:p-1 ll:relative ll:text-white ll:flex ll:flex-col",
+          "ll:w-full ll:h-full ll:overflow-hidden ll:rounded-lg ll:shadow-[2px_2px_3px_3px_rgba(12,13,13,0.4)] ll:border ll:border-white/50 ll:relative ll:text-white ll:flex ll:flex-col",
+          collapsed ? "ll:p-0.5" : "ll:p-1",
           {
             "ll-window-preparing": animationPhase === "preparing",
             "ll-window-enter": animationPhase === "enter",
             "ll-window-exit": animationPhase === "exit",
-            "ll:bg-black/0": opacity === 1,
+            // Light backgrounds cannot give white text enough contrast over
+            // bright game art, so the three lightest levels outline the text.
+            "ll:[text-shadow:0_0_2px_rgb(0_0_0),0_1px_2px_rgb(0_0_0)]":
+              opacity <= 3,
+            "ll:bg-black/15": opacity === 1,
             "ll:bg-black/25": opacity === 2,
             "ll:bg-black/50": opacity === 3,
             "ll:bg-black/75": opacity === 4,
@@ -127,6 +141,7 @@ export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
           <div ref={titleBarRef}>
             <WindowTitleBar
               title={title}
+              titleId={titleId}
               actions={actions}
               closable={closable}
               opacity={opacity}
@@ -144,7 +159,7 @@ export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
             "ll:flex-1 ll:overflow-hidden ll:cursor-auto ll:relative",
             contentClassName,
           )}
-          style={{ maxHeight: cssMaxContentHeight }}
+          style={{ maxHeight: contentMaxHeight }}
           onPointerDown={
             draggableContent
               ? onPointerDown
@@ -175,20 +190,23 @@ export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
           )}
           {children}
         </div>
-        {(allowsHorizontalResize || allowsVerticalResize) && !isLocked && (
-          <WindowResizeHandle
-            minWidth={minWidth}
-            minHeight={minHeight}
-            maxWidth={maxWidth}
-            maxHeight={maxHeight}
-            allowHorizontalResize={allowsHorizontalResize}
-            allowVerticalResize={allowsVerticalResize}
-            onResize={handleResize}
-            onResizeStart={handleResizeStart}
-            onResizeEnd={handleResizeEnd}
-          />
-        )}
       </div>
+      {/* Outside the clipped body so its hit area can straddle the corner
+          instead of covering window content. */}
+      {(allowsHorizontalResize || allowsVerticalResize) && !isLocked && (
+        <WindowResizeHandle
+          minWidth={minWidth}
+          minHeight={minHeight}
+          maxWidth={maxWidth}
+          maxHeight={maxHeight}
+          allowHorizontalResize={allowsHorizontalResize}
+          allowVerticalResize={allowsVerticalResize}
+          onResize={handleResize}
+          onResizeStart={handleResizeStart}
+          onResizeEnd={handleResizeEnd}
+          hidden={animationPhase === "preparing" || animationPhase === "exit"}
+        />
+      )}
     </div>
   );
 }

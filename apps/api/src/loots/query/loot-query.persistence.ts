@@ -5,7 +5,19 @@ import {
   mapNpc,
 } from "#src/loots/query/loot-snapshot-mappers";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, asc, count, desc, eq, ilike, inArray, isNull } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  isNull,
+  max,
+  sql,
+  sum,
+} from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -161,6 +173,13 @@ export const makeLootQueryPersistence = (
     },
   );
 
+  const activeOrganizationRecord = (guildId: string) =>
+    and(
+      eq(organizationLootRecordTable.lootId, lootTable.id),
+      eq(organizationLootRecordTable.guildId, guildId),
+      isNull(organizationLootRecordTable.archivedAt),
+    );
+
   const findIds = (options: {
     readonly guildId: string;
     readonly permissions: ReadonlyArray<string>;
@@ -179,11 +198,7 @@ export const makeLootQueryPersistence = (
                 .from(lootTable)
                 .innerJoin(
                   organizationLootRecordTable,
-                  and(
-                    eq(organizationLootRecordTable.lootId, lootTable.id),
-                    eq(organizationLootRecordTable.guildId, options.guildId),
-                    isNull(organizationLootRecordTable.archivedAt),
-                  ),
+                  activeOrganizationRecord(options.guildId),
                 )
                 .where(
                   and(
@@ -199,6 +214,98 @@ export const makeLootQueryPersistence = (
                 .pipe(Effect.map((rows) => rows.map(({ id }) => id))),
             ),
       ),
+    );
+
+  const countRarity = (
+    rarity: NonNullable<typeof itemSnapshotTable.$inferSelect.rarity>,
+  ) =>
+    sql<number>`count(*) filter (where ${eq(itemSnapshotTable.rarity, rarity)})`.mapWith(
+      Number,
+    );
+
+  /**
+   * Summarizes every loot the list would return for these filters, without
+   * paging or hydrating them. Each row is one NPC name: `encounters` counts
+   * the loot NPC rows with that name, and each rarity total adds a loot's
+   * items once per such row. `lootCount` counts matching loots once.
+   */
+  const summarizeByNpcName = (options: {
+    readonly guildId: string;
+    readonly permissions: ReadonlyArray<string>;
+    readonly roles: ReadonlyArray<LootQueryVisibilityRole>;
+    readonly filters: LootQueryFilters;
+  }) =>
+    resolveQueryFilters(options.filters).pipe(
+      Effect.flatMap((filters) => {
+        if (filters.search && lootSearchMatchesNothing(filters.search))
+          return Effect.succeed({ lootCount: 0, npcs: [] });
+
+        // The window count runs after GROUP BY, so it counts matching loots.
+        // Evaluating visibility once here keeps the count and the NPC rows on
+        // the same snapshot.
+        const lootRarities = database
+          .select({
+            lootId: lootTable.id,
+            unique: countRarity("UNIQUE").as("unique_items"),
+            heroic: countRarity("HEROIC").as("heroic_items"),
+            legendary: countRarity("LEGENDARY").as("legendary_items"),
+            lootCount: sql<number>`count(*) over ()`.as("loot_count"),
+          })
+          .from(lootTable)
+          .innerJoin(
+            organizationLootRecordTable,
+            activeOrganizationRecord(options.guildId),
+          )
+          .leftJoin(lootItemTable, eq(lootItemTable.lootId, lootTable.id))
+          .leftJoin(
+            itemSnapshotTable,
+            eq(itemSnapshotTable.id, lootItemTable.itemSnapshotId),
+          )
+          .where(
+            and(
+              ...buildLootQueryConditions(
+                filters,
+                options.permissions,
+                options.roles,
+              ),
+            ),
+          )
+          .groupBy(lootTable.id)
+          .as("loot_rarities");
+
+        // The left joins keep a loot without NPC rows in the result so the
+        // loot count survives even then; its row has no NPC name.
+        return protect(
+          "loots.query.npc-summary",
+          database
+            .select({
+              name: npcSnapshotTable.name,
+              encounters: count(lootNpcTable.id),
+              unique: sum(lootRarities.unique).mapWith(Number),
+              heroic: sum(lootRarities.heroic).mapWith(Number),
+              legendary: sum(lootRarities.legendary).mapWith(Number),
+              lootCount: max(lootRarities.lootCount).mapWith(Number),
+            })
+            .from(lootRarities)
+            .leftJoin(
+              lootNpcTable,
+              eq(lootNpcTable.lootId, lootRarities.lootId),
+            )
+            .leftJoin(
+              npcSnapshotTable,
+              eq(npcSnapshotTable.id, lootNpcTable.npcSnapshotId),
+            )
+            .groupBy(npcSnapshotTable.name)
+            .pipe(
+              Effect.map((rows) => ({
+                lootCount: rows[0]?.lootCount ?? 0,
+                npcs: rows.flatMap(({ name, lootCount: _lootCount, ...row }) =>
+                  name === null ? [] : [{ name, ...row }],
+                ),
+              })),
+            ),
+        );
+      }),
     );
 
   const selectLoots = (ids: ReadonlyArray<number>) =>
@@ -363,26 +470,20 @@ export const makeLootQueryPersistence = (
             commentCounts,
             mapPlayers,
           ]) => {
-            const byLoot = <Value extends { lootId: number }>(
-              values: ReadonlyArray<Value>,
-            ) => {
-              const result = new Map<number, Value[]>();
+            const itemsByLoot = Map.groupBy(items, ({ lootId }) => lootId);
+            const playersByLoot = Map.groupBy(players, ({ lootId }) => lootId);
 
-              for (const value of values) {
-                const group = result.get(value.lootId);
+            const mapPlayersByLoot = Map.groupBy(
+              mapPlayers,
+              ({ lootId }) => lootId,
+            );
 
-                if (group) group.push(value);
-                else result.set(value.lootId, [value]);
-              }
+            const npcsByLoot = Map.groupBy(npcs, ({ lootId }) => lootId);
 
-              return result;
-            };
-
-            const itemsByLoot = byLoot(items);
-            const playersByLoot = byLoot(players);
-            const mapPlayersByLoot = byLoot(mapPlayers);
-            const npcsByLoot = byLoot(npcs);
-            const submissionsByLoot = byLoot(submissions);
+            const submissionsByLoot = Map.groupBy(
+              submissions,
+              ({ lootId }) => lootId,
+            );
 
             const commentsByLoot = new Map(
               commentCounts.map(
@@ -518,6 +619,7 @@ export const makeLootQueryPersistence = (
     findMany,
     findOne,
     resolveItemByHid,
+    summarizeByNpcName,
   } as const;
 };
 

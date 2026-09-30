@@ -1,4 +1,5 @@
-import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { CopyDiagnosticsButton } from "@/components/copy-diagnostics-button";
+import { IconButton } from "@/components/ui/icon-button";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
@@ -8,6 +9,8 @@ import {
   COMMIT_SHA,
   GAME_CLIENT_PACKAGE_VERSION,
 } from "@/config/app";
+import { createDiagnosticsReport } from "@/lib/diagnostics-report";
+import { margonemRuntimeBridge } from "@/lib/margonem-runtime/margonem-runtime-bridge";
 import { Copy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -79,17 +82,32 @@ export const InformationSettingsTab = () => {
               {row.value}
             </span>
             {copyValue ? (
-              <SettingsIconButton
+              <IconButton
                 label={t("settings.information.copy", { label: row.label })}
                 onClick={() => {
                   void copyToClipboard(copyValue);
                 }}
               >
                 <Copy aria-hidden />
-              </SettingsIconButton>
+              </IconButton>
             ) : null}
           </SettingsRow>
         ))}
+      </SettingsSection>
+      <SettingsSection
+        controlId="diagnostics-report"
+        title={t("settings.information.diagnosticsTitle")}
+        description={t("settings.information.diagnosticsDescription")}
+      >
+        <div>
+          <CopyDiagnosticsButton
+            getReport={() =>
+              createDiagnosticsReport({
+                bridgeHealth: margonemRuntimeBridge.getHealth(),
+              })
+            }
+          />
+        </div>
       </SettingsSection>
     </SettingsTabLayout>
   );

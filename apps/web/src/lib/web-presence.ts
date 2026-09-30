@@ -72,8 +72,3 @@ export const isMemberOnlineOnWeb = (
   presenceByDiscordId: MemberWebPresenceByDiscordId | undefined,
   discordId: string,
 ) => (presenceByDiscordId?.get(discordId)?.size ?? 0) > 0;
-
-export const getMemberWebSessionCount = (
-  presenceByDiscordId: MemberWebPresenceByDiscordId | undefined,
-  discordId: string,
-) => presenceByDiscordId?.get(discordId)?.size ?? 0;

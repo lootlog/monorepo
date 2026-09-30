@@ -12,7 +12,7 @@ import {
   getTransientMemberSyncStatus,
   MEMBER_DISCORD_SYNC_STATUS,
 } from "./member-discord-sync-status.js";
-import type { MemberRemoval } from "./member-removal.operations.js";
+import type { MemberDelivery } from "./member-delivery.operations.js";
 import type { MemberStore } from "./member.store.js";
 import type { MemberSyncResult } from "./member.types.js";
 
@@ -30,8 +30,7 @@ export interface MemberSyncPorts {
   readonly nextRefreshAt: (
     userId: string,
   ) => Effect.Effect<Date | null, unknown>;
-  readonly invalidateMember: (options: {
-    readonly discordId: string;
+  readonly refreshPermissionCache: (options: {
     readonly guildId: string;
     readonly userId: string;
   }) => Effect.Effect<unknown, unknown>;
@@ -40,7 +39,7 @@ export interface MemberSyncPorts {
 export const makeMemberSync = (
   logger: Logger,
   store: MemberStore,
-  removal: MemberRemoval,
+  delivery: Pick<MemberDelivery, "deliver">,
   ports: MemberSyncPorts,
 ) => {
   const markAttempt = Effect.fn("members.sync.markAttempt")(
@@ -51,13 +50,6 @@ export const makeMemberSync = (
       readonly deactivate?: boolean;
       readonly markSynced?: boolean;
     }) {
-      const existing = yield* store.findMember(
-        options.discordId,
-        options.guildId,
-      );
-
-      if (!existing) return null;
-
       const member = yield* store.markSyncAttempt({
         userId: options.discordId,
         guildId: options.guildId,
@@ -67,13 +59,7 @@ export const makeMemberSync = (
         attemptedAt: new Date(yield* Clock.currentTimeMillis),
       });
 
-      if (options.deactivate && existing.active) {
-        yield* removal.notifyMemberRemoved({
-          discordId: options.discordId,
-          guildId: options.guildId,
-          globalUserId: existing.globalUserId,
-        });
-      }
+      if (member) yield* delivery.deliver(member.id);
 
       return member;
     },
@@ -87,17 +73,12 @@ export const makeMemberSync = (
   ) {
     const syncTimestamp = new Date(yield* Clock.currentTimeMillis);
 
-    const existingRoleIds = yield* store.findExistingRoleIds(
-      discordMember.roles,
-      discordMember.guildId,
-    );
-
     const member = yield* store.upsertMemberWithRoles(
       discordMember.user.id,
       discordMember.guildId,
       {
-        avatar: discordMember.avatar ?? discordMember.user.avatar,
-        banner: discordMember.banner,
+        avatar: discordMember.avatar ?? discordMember.user.avatar ?? null,
+        banner: discordMember.banner ?? null,
         name:
           discordMember.nick ??
           discordMember.user.global_name ??
@@ -108,13 +89,11 @@ export const makeMemberSync = (
         lastDiscordSyncAt: syncTimestamp,
         lastDiscordStatus: MEMBER_DISCORD_SYNC_STATUS.SUCCESS,
       },
-      existingRoleIds,
+      discordMember.roles,
     );
 
-    // Even unchanged roles need fresh permission-cache sync timestamps and must
-    // retry invalidation if the previous attempt committed but cache clearing failed.
-    yield* ports.invalidateMember({
-      discordId: discordMember.user.id,
+    yield* delivery.deliver(member.id);
+    yield* ports.refreshPermissionCache({
       guildId: discordMember.guildId,
       userId: discordMember.globalUserId,
     });
@@ -245,7 +224,10 @@ export const makeMemberSync = (
     },
   );
 
-  return { syncMemberFromDiscord, createOrUpdateMember };
+  return {
+    syncMemberFromDiscord,
+    createOrUpdateMember,
+  };
 };
 
 export type MemberSync = ReturnType<typeof makeMemberSync>;

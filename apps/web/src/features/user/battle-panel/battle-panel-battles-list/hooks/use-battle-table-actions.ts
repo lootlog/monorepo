@@ -1,14 +1,10 @@
+import { createBattleVisibilityInvalidations } from "../../battle-visibility-queries";
 import { BATTLELOG_PUBLIC_URL } from "@/config/addon";
 import { useBattleSharing } from "@/features/user/battle-panel/battle-panel-single-battle/hooks/use-battle-sharing";
 import type { Battle } from "@/lib/api/battlelog-types";
 import {
-  invalidateBattlesControllerGetBattle,
-  invalidateBattlesControllerGetDashboardBattles,
   useBattlesControllerDeleteBattle,
   useBattlesControllerUpdateBattle,
-  invalidatePublicBattlesControllerGetPublicBattle,
-  invalidatePublicBattlesControllerGetPublicBattleRaw,
-  invalidatePublicBattlesControllerGetPublicBattleTimeline,
 } from "@lootlog/client/battlelog";
 
 import { useQueryClient } from "@tanstack/react-query";
@@ -64,29 +60,6 @@ export const useBattleTableActions = ({
   const isBulkBusy = pendingOperation !== null;
   const isRowActionBusy = isPending || isBulkBusy;
 
-  const invalidateBattleVisibilityQueries = async (battleIds: string[]) => {
-    const invalidationPromises: Promise<unknown>[] = [
-      invalidateBattlesControllerGetDashboardBattles(queryClient),
-    ];
-
-    for (const battleId of battleIds) {
-      invalidationPromises.push(
-        invalidateBattlesControllerGetBattle(queryClient, { battleId }),
-        invalidatePublicBattlesControllerGetPublicBattle(queryClient, {
-          battleId,
-        }),
-        invalidatePublicBattlesControllerGetPublicBattleRaw(queryClient, {
-          battleId,
-        }),
-        invalidatePublicBattlesControllerGetPublicBattleTimeline(queryClient, {
-          battleId,
-        }),
-      );
-    }
-
-    await Promise.all(invalidationPromises);
-  };
-
   const shareSelectedBattles = async () => {
     if (selectedBattles.length === 0) {
       return;
@@ -105,8 +78,11 @@ export const useBattleTableActions = ({
       );
 
       if (privateBattles.length > 0) {
-        await invalidateBattleVisibilityQueries(
-          privateBattles.map((battle) => battle.id),
+        await Promise.all(
+          createBattleVisibilityInvalidations(
+            queryClient,
+            privateBattles.map((battle) => battle.id),
+          ),
         );
       }
 
@@ -169,8 +145,11 @@ export const useBattleTableActions = ({
         ),
       );
 
-      await invalidateBattleVisibilityQueries(
-        selectedBattles.map((battle) => battle.id),
+      await Promise.all(
+        createBattleVisibilityInvalidations(
+          queryClient,
+          selectedBattles.map((battle) => battle.id),
+        ),
       );
       results.forEach((result, index) => {
         const battle = selectedBattles[index];
@@ -211,7 +190,11 @@ export const useBattleTableActions = ({
       await deleteBattleAsync({
         pathParams: { battleId: singleDeleteBattle.id },
       });
-      await invalidateBattleVisibilityQueries([singleDeleteBattle.id]);
+      await Promise.all(
+        createBattleVisibilityInvalidations(queryClient, [
+          singleDeleteBattle.id,
+        ]),
+      );
       toast.success(t("battlePanel.toasts.battleDeleted"), { duration: 3000 });
       removeBattleFromSelection(singleDeleteBattle.id);
       setSingleDeleteBattle(null);

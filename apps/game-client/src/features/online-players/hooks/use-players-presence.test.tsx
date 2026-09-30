@@ -350,12 +350,12 @@ describe("usePlayersPresence", () => {
     );
     const { result } = await mount();
     expect(result.current.initialLoading).toBe(true);
-    await act(() => vi.advanceTimersByTimeAsync(10000));
+    await act(() => vi.advanceTimersByTimeAsync(13_000));
     expect(result.current.error).toBeInstanceOf(Error);
     expect(result.current.initialLoading).toBe(false);
     expect(result.current.hasLoaded).toBe(false);
     act(() => result.current.retry());
-    await act(() => vi.advanceTimersByTimeAsync(5000));
+    await act(() => vi.advanceTimersByTimeAsync(8_000));
     expect(harness.fetchPresence).toHaveBeenCalledTimes(4);
   });
 
@@ -504,7 +504,15 @@ describe("usePlayersPresence", () => {
       permissionEvent(policy([Permission.LOOTLOG_ONLINE_PLAYERS_READ])),
     );
     act(() => frame?.(16));
-    expect(result.current.onlinePlayers).toEqual({});
+    expect(result.current.onlinePlayers["discord-1"]?.[0]?.player?.name).toBe(
+      "Hero",
+    );
+    expect(
+      result.current.onlinePlayers["discord-1"]?.[0]?.mapName,
+    ).toBeUndefined();
+    expect(
+      result.current.onlinePlayers["discord-1"]?.[0]?.player?.location,
+    ).toBeUndefined();
     await harness.receive(delta(createOnlinePresence()));
     act(() => frame?.(24));
     expect(result.current.onlinePlayers["discord-1"]?.[0]?.player?.name).toBe(

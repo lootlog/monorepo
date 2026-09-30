@@ -25,6 +25,7 @@ describe("API client transport", () => {
     restoreConfiguration = undefined;
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    vi.useRealTimers();
   });
 
   it("uses configured service defaults and lets request options override them", async () => {
@@ -253,6 +254,144 @@ describe("API client transport", () => {
         url: "https://api.example.test/healthz",
       }),
     );
+  });
+
+  it("times out a stalled request, aborts its transport and reports one failure", async () => {
+    vi.useFakeTimers();
+    const onError = vi.fn();
+    let finish: ((response: Response) => void) | undefined;
+
+    const fetchImplementation = vi.fn<TestFetch>(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+
+    const client = createApiClient("main", {
+      baseUrl: "https://api.example.test",
+      fetch: fetchImplementation,
+      onError,
+      timeoutMs: 8_000,
+    });
+
+    const result = client
+      .post("/timers/auto", { world: "tempest" })
+      .catch((error: ApiError) => error);
+
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(8_000);
+    expect(await result).toMatchObject({
+      name: "ApiError",
+      cause: expect.objectContaining({ name: "TimeoutError" }),
+      method: "POST",
+      url: "https://api.example.test/timers/auto",
+    });
+    expect(fetchImplementation.mock.calls[0]?.[1]?.signal?.aborted).toBe(true);
+    expect(onError).toHaveBeenCalledTimes(1);
+    finish?.(Response.json({ saved: true }));
+    await Promise.resolve();
+    expect(onError).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the deadline active while a response body is stalled", async () => {
+    vi.useFakeTimers();
+    let finish: (() => void) | undefined;
+
+    const response = new Response(
+      new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode('{"saved":'));
+          finish = () => controller.close();
+        },
+      }),
+      { headers: { "content-type": "application/json" } },
+    );
+
+    const fetchImplementation = vi.fn<TestFetch>().mockResolvedValue(response);
+
+    const client = createApiClient("main", {
+      baseUrl: "https://api.example.test",
+      fetch: fetchImplementation,
+      timeoutMs: 8_000,
+    });
+
+    const result = client
+      .post("/timers/auto", {})
+      .catch((error: ApiError) => error);
+
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(response.bodyUsed).toBe(true);
+    await vi.advanceTimersByTimeAsync(8_000);
+    expect(await result).toMatchObject({
+      cause: expect.objectContaining({ name: "TimeoutError" }),
+    });
+    expect(fetchImplementation.mock.calls[0]?.[1]?.signal?.aborted).toBe(true);
+    finish?.();
+  });
+
+  it.each(["before", "during"])(
+    "preserves caller cancellation %s a request with a timeout",
+    async (when) => {
+      vi.useFakeTimers();
+      const controller = new AbortController();
+      const reason = new DOMException("Caller cancelled", "AbortError");
+      const fetchImplementation = vi.fn<TestFetch>(() => new Promise(() => {}));
+
+      const client = createApiClient("main", {
+        baseUrl: "https://api.example.test",
+        fetch: fetchImplementation,
+        timeoutMs: 8_000,
+      });
+
+      if (when === "before") controller.abort(reason);
+
+      const result = client
+        .get("/timers", { signal: controller.signal })
+        .catch((error: ApiError) => error);
+
+      await Promise.resolve();
+      controller.abort(reason);
+      expect(await result).toMatchObject({ cause: reason });
+
+      if (when === "before") expect(fetchImplementation).not.toHaveBeenCalled();
+      else
+        expect(fetchImplementation.mock.calls[0]?.[1]?.signal?.reason).toBe(
+          reason,
+        );
+    },
+  );
+
+  it("cleans up deadlines and caller listeners once a request succeeds", async () => {
+    vi.useFakeTimers();
+    const controller = new AbortController();
+    const onError = vi.fn();
+
+    const fetchImplementation = vi
+      .fn<TestFetch>()
+      .mockResolvedValue(Response.json({ saved: true }));
+
+    const client = createApiClient("main", {
+      baseUrl: "https://api.example.test",
+      fetch: fetchImplementation,
+      timeoutMs: 8_000,
+      onError,
+    });
+
+    await expect(
+      client.post(
+        "/timers/auto",
+        {},
+        {
+          signal: controller.signal,
+        },
+      ),
+    ).resolves.toEqual({ saved: true });
+    controller.abort();
+    await vi.advanceTimersByTimeAsync(8_000);
+    expect(fetchImplementation.mock.calls[0]?.[1]?.signal?.aborted).toBe(false);
+    expect(onError).not.toHaveBeenCalled();
   });
 
   it("serializes JSON request bodies without replacing caller headers", async () => {

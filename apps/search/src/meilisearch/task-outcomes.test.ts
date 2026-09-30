@@ -1,4 +1,4 @@
-import { expect, spyOn, test } from "bun:test";
+import { expect, test } from "bun:test";
 import { Effect } from "effect";
 import { Meilisearch } from "meilisearch";
 import { makePlayersModule } from "../players/players.service.js";
@@ -92,11 +92,30 @@ test("indexing observes successful task completion before returning", async () =
   ]);
 });
 
-test("task polling uses a bounded timeout and a slower interval", async () => {
-  const client = clientWithTask("succeeded", []);
-  const task = client.index("players").addDocuments([player]);
-  const wait = spyOn(task, "waitTask");
+test("an enqueued index write becomes available promptly after processing", async () => {
+  let taskReads = 0;
 
-  await Effect.runPromise(completeMeilisearchTask("test.index", () => task));
-  expect(wait).toHaveBeenCalledWith({ interval: 15_000, timeout: 60_000 });
-});
+  const client = new Meilisearch({
+    host: "http://search.invalid",
+    httpClient: (input) => {
+      if (new URL(String(input)).pathname === "/tasks/1") {
+        taskReads += 1;
+
+        return Promise.resolve({
+          uid: 1,
+          status: taskReads === 1 ? "enqueued" : "succeeded",
+        });
+      }
+
+      return Promise.resolve({ taskUid: 1, status: "enqueued" });
+    },
+  });
+
+  const completed = await Effect.runPromise(
+    completeMeilisearchTask("test.index", () =>
+      client.index("players").addDocuments([player]),
+    ),
+  );
+
+  expect(completed.status).toBe("succeeded");
+}, 2_000);

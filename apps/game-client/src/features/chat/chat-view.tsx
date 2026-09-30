@@ -2,6 +2,7 @@ import { ChatFilterSwitcher } from "./components/chat-filter-switcher";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { ChatViewHeader } from "./components/chat-view-header";
 import { ChatComposeArea } from "./components/chat-compose-area";
@@ -41,6 +42,7 @@ import { useHiddenNpcTypes } from "@/features/chat/hooks/use-hidden-npc-types";
 import { AsyncContent } from "@/components/async-content";
 import { ChatConnectionStatus } from "./components/chat-connection-status";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
+import { NoLootlogEmptyState } from "@/components/no-lootlog-empty-state";
 import {
   getChatUnreadSummary,
   getChatUnreadSummaryByGuildId,
@@ -151,6 +153,7 @@ export const ChatView = ({
   const {
     areVisibleGuildsResolved,
     guildsQuery,
+    hasNoGuilds,
     preferencesQuery: preferences,
     visibleGuilds: resolvedVisibleGuilds,
   } = useLootlogGuilds();
@@ -347,6 +350,9 @@ export const ChatView = ({
             old ? removeChatMessage(old, pathParams.messageId) : old,
         });
       },
+      onError: () => {
+        toast.error(t("errors.deleteFailed"));
+      },
       onSettled: (_response, _error, { pathParams }) => {
         setDeletingMessageIds((current) => {
           if (!current.has(pathParams.messageId)) return current;
@@ -415,38 +421,45 @@ export const ChatView = ({
               onRetry={retryChatData}
               retryLabel={t("actions.retry", { ns: "common" })}
             >
-              <ChatMessageList
-                key={positionKey}
-                appearance={chatAppearance}
-                npcTypeColors={npcTypeColors}
-                ariaLabel={t("window.title")}
-                emptyStateTitle={t(`emptyState.${effectiveFilter}.title`)}
-                emptyStateDescription={t(
-                  `emptyState.${effectiveFilter}.description`,
-                )}
-                guildNamesById={guildNamesById}
-                membersByGuildId={membersByGuildId}
-                mentionContextsByGuildId={mentionContextsByGuildId}
-                onReplyToMessage={handleReplyToMessage}
-                onDeleteMessage={handleDeleteMessage}
-                deletingMessageIds={deletingMessageIds}
-                renderables={currentRenderableMessages}
-                selectedGuildId={effectiveSelectedGuildId}
-                isActive={isOpen}
-                unreadIds={unread.ids}
-                onMessagesSeen={(ids) =>
-                  setReadState((current) =>
-                    markChatMessagesRead(
-                      current,
-                      getVisibleChatMessageAliases(selectedMessageGroups, ids),
-                    ),
-                  )
-                }
-                position={getPosition(positionKey)}
-                onPositionChange={(position) => {
-                  savePosition(positionKey, position);
-                }}
-              />
+              {hasNoGuilds ? (
+                <NoLootlogEmptyState />
+              ) : (
+                <ChatMessageList
+                  key={positionKey}
+                  appearance={chatAppearance}
+                  npcTypeColors={npcTypeColors}
+                  ariaLabel={t("window.title")}
+                  emptyStateTitle={t(`emptyState.${effectiveFilter}.title`)}
+                  emptyStateDescription={t(
+                    `emptyState.${effectiveFilter}.description`,
+                  )}
+                  guildNamesById={guildNamesById}
+                  membersByGuildId={membersByGuildId}
+                  mentionContextsByGuildId={mentionContextsByGuildId}
+                  onReplyToMessage={handleReplyToMessage}
+                  onDeleteMessage={handleDeleteMessage}
+                  deletingMessageIds={deletingMessageIds}
+                  renderables={currentRenderableMessages}
+                  selectedGuildId={effectiveSelectedGuildId}
+                  isActive={isOpen}
+                  unreadIds={unread.ids}
+                  onMessagesSeen={(ids) =>
+                    setReadState((current) =>
+                      markChatMessagesRead(
+                        current,
+                        getVisibleChatMessageAliases(
+                          selectedMessageGroups,
+                          ids,
+                        ),
+                      ),
+                    )
+                  }
+                  position={getPosition(positionKey)}
+                  onPositionChange={(position) => {
+                    savePosition(positionKey, position);
+                  }}
+                />
+              )}
             </AsyncContent>
           </div>
           <ChatComposeArea

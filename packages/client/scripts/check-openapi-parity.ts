@@ -14,6 +14,35 @@ import { parse } from "yaml";
 
 const BASELINE_SHA = "633f8f0157cca04ef2b609ba0e2f1903b1c28949";
 
+// Optional reader filters for the Web dashboard feed; omitted filters keep the
+// previous response, so API key callers are unaffected.
+const USER_FEED_PARAMETERS: JsonValue[] = [
+  {
+    name: "excludedGuildIds",
+    in: "query",
+    schema: { type: "array", items: { type: "string" } },
+    required: false,
+  },
+  {
+    name: "excludedNpcCategories",
+    in: "query",
+    schema: {
+      type: "array",
+      items: {
+        type: "string",
+        enum: ["ELITE2", "HERO", "COLOSSUS", "TITAN", "OTHER"],
+      },
+    },
+    required: false,
+  },
+  {
+    name: "withLootOnly",
+    in: "query",
+    schema: { type: "boolean" },
+    required: false,
+  },
+];
+
 const HTTP_METHODS = new Set([
   "delete",
   "get",
@@ -29,6 +58,14 @@ const GUILD_METADATA_ERROR_OPERATIONS = new Set([
   "GET /guilds/{guildId}",
   "GET /guilds/{guildId}/permissions",
 ]);
+
+// TODO(kill-history-legacy): Replace these status/deprecation allowances with verified removal expectations.
+// Do not relax parity for unrelated endpoints; see apps/api/src/events/history/README.md.
+const LEGACY_KILL_HISTORY_OPERATIONS = [
+  "GET /guilds/{guildId}/events/{eventId}/kills",
+  "GET /guilds/{guildId}/events/{eventId}/members/{memberId}/kills",
+  "GET /guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills",
+];
 
 const ORGANIZATION_NOT_FOUND_OPERATIONS = new Set([
   "GET /guilds/{guildId}/members",
@@ -311,13 +348,15 @@ const API_ERROR_RESPONSE_MIGRATIONS = [
       "PATCH /guilds/{guildId}/events/{eventId}/ranking/{rankingId}",
       "GET /guilds/{guildId}/events/{eventId}/timers",
       "GET /guilds/{guildId}/events/{eventId}/hero-stats",
-      "GET /guilds/{guildId}/events/{eventId}/kills",
-      "GET /guilds/{guildId}/events/{eventId}/members/{memberId}/kills",
-      "GET /guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills",
       "GET /guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills/{killId}",
       "PATCH /guilds/{guildId}/events/{eventId}/kills/{killId}/points/{killPointId}",
       "GET /guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills/{killId}/timeline",
     ],
+  },
+  {
+    restore: ["404"],
+    add: ["400"],
+    operations: LEGACY_KILL_HISTORY_OPERATIONS,
   },
   {
     restore: ["404"],
@@ -845,6 +884,135 @@ const normalizeServiceAuthentication = (
   return normalized;
 };
 
+const normalizeLegacyKillHistoryDeprecation = (
+  service: string,
+  operationKey: string,
+  operation: JsonValue,
+): JsonValue => {
+  if (
+    service !== "api" ||
+    !LEGACY_KILL_HISTORY_OPERATIONS.includes(operationKey)
+  )
+    return operation;
+
+  // Verified by http-boundary.e2e-spec.ts: the UUID list contracts remain
+  // available, with explicit invalid-cursor errors and a replacement endpoint.
+  if (!isJsonObject(operation) || operation["deprecated"] !== true)
+    throw new Error(`${operationKey} must remain deprecated`);
+
+  const { deprecated: _deprecated, ...withoutDeprecation } = operation;
+
+  return withoutDeprecation;
+};
+
+const normalizeInternalPermissionFreshness = (
+  service: string,
+  operationKey: string,
+  operation: JsonValue,
+): JsonValue => {
+  // Verified by Gateway's permission-revocation.test.ts through API HTTP decoding:
+  // reconciliation opts out of the aggregate cache without changing ordinary reads.
+  if (
+    service !== "api" ||
+    operationKey !== "GET /internal/guilds/user-permissions"
+  )
+    return operation;
+
+  const expectedParameters: JsonValue[] = [
+    {
+      name: "discordId",
+      in: "query",
+      required: true,
+      schema: { type: "string" },
+    },
+    {
+      name: "userId",
+      in: "query",
+      required: true,
+      schema: { type: "string" },
+    },
+    {
+      name: "freshness",
+      in: "query",
+      required: false,
+      schema: { type: "string", enum: ["required"] },
+    },
+  ];
+
+  if (
+    !isJsonObject(operation) ||
+    JSON.stringify(
+      normalizeOpenApiRepresentation(operation.parameters ?? null),
+    ) !== JSON.stringify(normalizeOpenApiRepresentation(expectedParameters))
+  ) {
+    throw new Error(
+      `${operationKey} must retain its optional required-freshness query`,
+    );
+  }
+
+  return { ...operation, parameters: expectedParameters.slice(0, 2) };
+};
+
+const ACTIVITY_LEGACY_HEALTH_DETAILS: JsonValue = {
+  type: "object",
+  additionalProperties: {
+    type: "object",
+    properties: { status: { type: "string" } },
+    required: ["status"],
+  },
+};
+
+const ACTIVITY_LEGACY_HEALTH_SCHEMA: JsonValue = {
+  type: "object",
+  properties: {
+    status: { type: "string" },
+    info: { ...ACTIVITY_LEGACY_HEALTH_DETAILS, nullable: true },
+    error: { ...ACTIVITY_LEGACY_HEALTH_DETAILS, nullable: true },
+    details: ACTIVITY_LEGACY_HEALTH_DETAILS,
+  },
+};
+
+// LOO-218: activity-http.test.ts verifies that failed or stalled dependencies
+// leave process liveness at 200; database failure is exposed only by /readyz.
+const normalizeActivityLiveness = (
+  service: string,
+  operationKey: string,
+  operation: JsonValue,
+): JsonValue => {
+  if (service !== "activity" || operationKey !== "GET /healthz")
+    return operation;
+
+  assertErrorResponse(
+    operation,
+    "GET /healthz",
+    "200",
+    "HealthzControllerCheck200",
+    ACTIVITY_LEGACY_HEALTH_SCHEMA,
+  );
+
+  if (
+    !isJsonObject(operation) ||
+    !isJsonObject(operation.responses) ||
+    operation.responses["503"] !== undefined ||
+    operation.summary !== "Liveness check"
+  ) {
+    throw new Error("Activity liveness must not declare dependency failure");
+  }
+
+  return {
+    ...operation,
+    summary: "Health check",
+    responses: {
+      ...operation.responses,
+      "503": {
+        content: {
+          "application/json": { schema: ACTIVITY_LEGACY_HEALTH_SCHEMA },
+        },
+      },
+    },
+  };
+};
+
 export const normalizeAllowedChanges = (
   service: string,
   operationKey: string,
@@ -855,6 +1023,12 @@ export const normalizeAllowedChanges = (
     service,
     operationKey,
     operation,
+  );
+
+  normalized = normalizeLegacyKillHistoryDeprecation(
+    service,
+    operationKey,
+    normalized,
   );
 
   if (service === "auth" && operationKey === "GET /auth/verify") {
@@ -873,6 +1047,13 @@ export const normalizeAllowedChanges = (
       normalized = removeResponseStatus(normalized, status);
     }
   }
+
+  normalized = normalizeInternalPermissionFreshness(
+    service,
+    operationKey,
+    normalized,
+  );
+  normalized = normalizeActivityLiveness(service, operationKey, normalized);
 
   if (service === "api" && operationKey === "GET /guilds/@me/manageable") {
     normalized = normalizeManageableOrganizationResponse(normalized, schemas);
@@ -981,16 +1162,125 @@ const differencePaths = (
   return differences;
 };
 
-// Intentional private additions verified against real persistence and authorization tests:
+// Verified against PostgreSQL by http-boundary.e2e-spec.ts.
+const KILL_HISTORY_ADDITION: JsonValue = {
+  operationId: "listEventKillHistory",
+  parameters: [
+    ...["eventId", "guildId"].map((name) => ({
+      name,
+      in: "path",
+      required: true,
+      schema: { type: "string" },
+    })),
+    {
+      name: "cursor",
+      in: "query",
+      required: false,
+      schema: { type: "string", minLength: 1, maxLength: 4096 },
+    },
+    {
+      name: "heroId",
+      in: "query",
+      required: false,
+      schema: { type: "string", minLength: 1 },
+    },
+    {
+      name: "limit",
+      in: "query",
+      required: false,
+      schema: { type: "string", pattern: "^(?:[1-9]\\d?|100)$" },
+    },
+    {
+      name: "memberId",
+      in: "query",
+      required: false,
+      schema: { type: "string", pattern: "^[1-9]\\d*$" },
+    },
+  ],
+  security: [{ bearer: [] }],
+  responses: {
+    "200": {
+      content: {
+        "application/json": {
+          schema: { $ref: "#/components/schemas/KillHistoryResponse" },
+        },
+      },
+    },
+    "400": {
+      content: {
+        "application/json": {
+          schema: { $ref: "#/components/schemas/HttpErrorResponse" },
+        },
+      },
+    },
+    "404": {
+      content: {
+        "application/json": {
+          schema: { $ref: "#/components/schemas/HttpErrorResponse" },
+        },
+      },
+    },
+  },
+};
+
+const activityReadinessDatabase = (status: "up" | "down"): JsonValue => ({
+  type: "object",
+  properties: {
+    database: {
+      type: "object",
+      properties: { status: { type: "string", enum: [status] } },
+      required: ["status"],
+    },
+  },
+  required: ["database"],
+});
+
+// Verified through the real HTTP encoder and SQL transport in activity-http.test.ts.
+const ACTIVITY_READINESS_ADDITION: JsonValue = {
+  operationId: "ReadyzController_check",
+  parameters: [],
+  responses: Object.fromEntries(
+    ["200", "503"].map((status) => {
+      const database = activityReadinessDatabase(
+        status === "200" ? "up" : "down",
+      );
+
+      const nullValue = { type: "object", nullable: true, enum: [null] };
+
+      return [
+        status,
+        {
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  status: {
+                    type: "string",
+                    enum: [status === "200" ? "ok" : "error"],
+                  },
+                  info: status === "200" ? database : nullValue,
+                  error: status === "200" ? nullValue : database,
+                  details: database,
+                },
+                required: ["status", "info", "error", "details"],
+              },
+            },
+          },
+        },
+      ];
+    }),
+  ),
+};
+
+// Intentional additions verified against HTTP, persistence and authorization tests:
 // activity/src/online/online-repository.integration.test.ts;
 // api/test/kill-analytics.integration.test.ts, user-feed.integration.test.ts and records.operations.test.ts.
-const PERSONAL_ANALYTICS_ADDITIONS = new Map<
-  string,
-  Partial<Record<string, JsonValue>>
->(
+const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
   Object.entries({
     auth: authApiAdditions,
     activity: {
+      "GET /readyz": ACTIVITY_READINESS_ADDITION,
       "GET /users/@me/activity/online": {
         operationId: "UsersActivityController_getOnline",
         parameters: ["from", "to"].map((name) => ({
@@ -1026,6 +1316,8 @@ const PERSONAL_ANALYTICS_ADDITIONS = new Map<
       },
     },
     api: {
+      "GET /guilds/{guildId}/events/{eventId}/kill-history":
+        KILL_HISTORY_ADDITION,
       // Verified by ready-room-visibility.test.ts and ready-room-cas.integration.test.ts.
       "GET /messaging/party-gathering/active": {
         operationId: "PartyReadyRoomController_active",
@@ -1096,9 +1388,30 @@ const PERSONAL_ANALYTICS_ADDITIONS = new Map<
           },
         },
       },
+      // Verified by http-boundary.e2e-spec.ts: refresh skips the cached
+      // Discord guild list.
+      "POST /users/@me/guilds/refresh": {
+        operationId: "UsersController_refreshCurrentUserGuilds",
+        parameters: [],
+        security: [{ bearer: [] }],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    $ref: "#/components/schemas/UserCurrentGuildResponseDto_Output",
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
       "GET /users/@me/feed": {
         operationId: "UsersController_getUserFeed",
-        parameters: [],
+        parameters: USER_FEED_PARAMETERS,
         security: [{ bearer: [] }],
         responses: {
           "200": {
@@ -1168,24 +1481,26 @@ const PERSONAL_ANALYTICS_ADDITIONS = new Map<
   } satisfies Record<string, Record<string, JsonValue>>),
 );
 
-export const assertVerifiedPersonalAddition = (
+export const assertVerifiedAddition = (
   service: string,
   operationKey: string,
   operation: JsonValue | undefined,
 ): void => {
-  const expected = PERSONAL_ANALYTICS_ADDITIONS.get(service)?.[operationKey];
+  const expected = VERIFIED_ADDITIONS.get(service)?.[operationKey];
 
   if (!expected || !isJsonObject(operation)) {
-    throw new Error(
-      `Unverified personal API addition: ${service} ${operationKey}`,
-    );
+    throw new Error(`Unverified API addition: ${service} ${operationKey}`);
   }
 
   const keyNormalized =
     service === "auth"
       ? operation
       : normalizeApiKeyErrors(
-          service === "api" ? normalizeValidationErrors(operation) : operation,
+          service === "api"
+            ? normalizeReauthenticationErrors(
+                normalizeValidationErrors(operation),
+              )
+            : operation,
           expected,
         );
 
@@ -1197,7 +1512,7 @@ export const assertVerifiedPersonalAddition = (
     JSON.stringify(normalizeOpenApiRepresentation(expected))
   ) {
     throw new Error(
-      `Verified personal API contract changed: ${service} ${operationKey}`,
+      `Verified API contract changed: ${service} ${operationKey}`,
     );
   }
 };
@@ -1285,12 +1600,16 @@ export const normalizeApiKeyErrors = (
   return { ...operation, responses };
 };
 
-// Verified by the real endpoint validation cases in the API schema-error-response tests.
-// Remove only the new validation alternative; retain every existing 400 contract.
-export const normalizeValidationErrors = (operation: JsonValue): JsonValue => {
+// Removes one middleware error alternative from a status while retaining every
+// existing contract for that status.
+const withoutErrorAlternative = (
+  operation: JsonValue,
+  status: string,
+  ref: string,
+): JsonValue => {
   if (!isJsonObject(operation) || !isJsonObject(operation.responses))
     return operation;
-  const response = operation.responses["400"];
+  const response = operation.responses[status];
 
   if (!isJsonObject(response) || !isJsonObject(response.content))
     return operation;
@@ -1306,16 +1625,16 @@ export const normalizeValidationErrors = (operation: JsonValue): JsonValue => {
     (alternative) =>
       !isJsonObject(alternative) ||
       Object.keys(alternative).length !== 1 ||
-      alternative.$ref !== "#/components/schemas/RequestValidationError",
+      alternative.$ref !== ref,
   );
 
   if (remaining.length === alternatives.length) return operation;
   const responses = { ...operation.responses };
 
   if (remaining.length === 0) {
-    delete responses["400"];
+    delete responses[status];
   } else {
-    responses["400"] = {
+    responses[status] = {
       ...response,
       content: {
         ...response.content,
@@ -1332,6 +1651,27 @@ export const normalizeValidationErrors = (operation: JsonValue): JsonValue => {
 
   return { ...operation, responses };
 };
+
+// Verified by the real endpoint validation cases in the API schema-error-response tests.
+// Remove only the new validation alternative; retain every existing 400 contract.
+export const normalizeValidationErrors = (operation: JsonValue): JsonValue =>
+  withoutErrorAlternative(
+    operation,
+    "400",
+    "#/components/schemas/RequestValidationError",
+  );
+
+// Verified by the reauthentication cases in the API HTTP boundary e2e spec.
+// Remove only the bearer middleware's 401 alternative; retain every existing
+// 401 contract.
+export const normalizeReauthenticationErrors = (
+  operation: JsonValue,
+): JsonValue =>
+  withoutErrorAlternative(
+    operation,
+    "401",
+    "#/components/schemas/ReauthenticationRequiredEncoded",
+  );
 
 if (import.meta.main) {
   const changedOperations: string[] = [];
@@ -1354,7 +1694,9 @@ if (import.meta.main) {
           key,
           normalizeApiKeyErrors(
             service.current === "api"
-              ? normalizeValidationErrors(operation)
+              ? normalizeReauthenticationErrors(
+                  normalizeValidationErrors(operation),
+                )
               : operation,
             beforeKeys.get(key),
           ),
@@ -1366,7 +1708,7 @@ if (import.meta.main) {
     const removals = [...baseline.keys()].filter((key) => !current.has(key));
 
     const expectedAdditions = Object.keys(
-      PERSONAL_ANALYTICS_ADDITIONS.get(service.current) ?? {},
+      VERIFIED_ADDITIONS.get(service.current) ?? {},
     );
 
     if (
@@ -1379,7 +1721,7 @@ if (import.meta.main) {
     }
 
     for (const key of additions) {
-      assertVerifiedPersonalAddition(service.current, key, current.get(key));
+      assertVerifiedAddition(service.current, key, current.get(key));
     }
 
     // User editing and the unused Organization loot count endpoint were removed.
@@ -1435,6 +1777,6 @@ if (import.meta.main) {
   }
 
   process.stdout.write(
-    "OpenAPI parity passed: 243 baseline operations plus verified private analytics additions\n",
+    "OpenAPI parity passed: 243 baseline operations plus verified additions\n",
   );
 }

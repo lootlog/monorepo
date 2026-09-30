@@ -1,5 +1,5 @@
 import { and, desc, eq, gte, isNotNull } from "drizzle-orm";
-import { Clock, Effect, Layer } from "effect";
+import { Clock, Effect, Layer, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { findActiveGuild } from "#src/guilds/active-guild-lookup";
 import {
@@ -16,6 +16,7 @@ import {
 } from "#src/members/member-cache";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/member-refresh-queue";
+import { queueMemberDeliveries } from "#src/members/member.store";
 import { ErrorKey } from "#src/members/error-key";
 import { isTransientMemberSyncStatus } from "#src/members/member-discord-sync-status";
 import type {
@@ -25,10 +26,13 @@ import type {
   StoredMemberWithRoles,
 } from "#src/members/member.types";
 import {
+  ApplicationError,
+  ApplicationErrorKind,
   InvalidRequestError,
   ResourceConflictError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
+import { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 import { ErrorKey as GuildErrorKey } from "#src/guilds/error-key";
 import {
   MembersData,
@@ -48,16 +52,10 @@ export interface MemberCommandsPorts {
   readonly recordStaleUse: (
     reason: MemberRefreshAttempt["status"],
   ) => Effect.Effect<unknown, unknown>;
-  readonly clearMemberCaches: (options: {
-    readonly discordId: string;
-    readonly guildId: string;
-    readonly userId: string;
-  }) => Effect.Effect<unknown, unknown>;
-  readonly publishMemberRemoved: (options: {
-    readonly discordId: string;
-    readonly guildId: string;
-    readonly userId: string;
-  }) => Effect.Effect<unknown, unknown>;
+  /** Delivers member changes queued in the `MemberSyncDelivery` outbox. */
+  readonly deliverMemberChanges: (
+    memberIds: ReadonlyArray<number>,
+  ) => Effect.Effect<unknown, unknown>;
   readonly enqueueBulkRefresh: (
     data: MemberBulkRefreshJobData,
   ) => Effect.Effect<unknown, unknown>;
@@ -75,6 +73,16 @@ export interface MemberCommandsPorts {
 const STALE_ACCESS_GRACE_MS = 6 * 60 * 60 * 1000;
 
 const failure = (cause: unknown) => new MembersOperationError({ cause });
+
+/** Only the caller's own Discord authorization can ask the caller to sign in again. */
+const callerFailure = (cause: unknown) =>
+  Schema.is(ApplicationError)(cause) &&
+  cause.kind === ApplicationErrorKind.AUTHENTICATION_REQUIRED
+    ? new ReauthenticationRequired({
+        code: cause.message,
+        requiresReauth: true,
+      })
+    : failure(cause);
 
 type MemberReadDatabase = Pick<typeof ApiDatabase.Service, "select">;
 
@@ -275,30 +283,15 @@ export const makeMembersDataLayer = (
               yield* transaction
                 .delete(memberToRoleTable)
                 .where(eq(memberToRoleTable.A, stored.id));
+              // A retry sees the member as deactivated, so the committed
+              // outbox row is what keeps its removal retryable.
+              yield* queueMemberDeliveries(transaction, [stored.id], true);
 
               return { ...updated, roles: [] };
             }),
           )
           .pipe(
-            Effect.tap((member) =>
-              member.globalUserId
-                ? Effect.all(
-                    [
-                      ports.clearMemberCaches({
-                        discordId,
-                        guildId,
-                        userId: member.globalUserId,
-                      }),
-                      ports.publishMemberRemoved({
-                        discordId,
-                        guildId,
-                        userId: member.globalUserId,
-                      }),
-                    ],
-                    { concurrency: "unbounded" },
-                  )
-                : Effect.void,
-            ),
+            Effect.tap((member) => ports.deliverMemberChanges([member.id])),
           );
 
       const createBulkRefresh = (guildId: string, requestedBy: string) =>
@@ -402,9 +395,12 @@ export const makeMembersDataLayer = (
           };
         });
 
-      const operation = <A>(effect: Effect.Effect<A, unknown>) =>
+      const operation = <A, E>(
+        effect: Effect.Effect<A, unknown>,
+        toError: (cause: unknown) => E,
+      ) =>
         effect.pipe(
-          Effect.mapError(failure),
+          Effect.mapError(toError),
           Effect.withSpan("members.data", {
             attributes: { adapter: "members", retryCount: 0 },
           }),
@@ -420,6 +416,7 @@ export const makeMembersDataLayer = (
               returnDeactivatedMember: false,
               throwOnMemberUnauthorized: true,
             }),
+            callerFailure,
           ),
         refreshMember: (guildId, discordId) =>
           operation(
@@ -453,11 +450,12 @@ export const makeMembersDataLayer = (
                 throwOnMemberUnauthorized: false,
               });
             }),
+            failure,
           ),
         deactivateMember: (guildId, discordId) =>
-          operation(deactivate(guildId, discordId)),
+          operation(deactivate(guildId, discordId), failure),
         refreshAllMembers: (guildId, discordId) =>
-          operation(createBulkRefresh(guildId, discordId)),
+          operation(createBulkRefresh(guildId, discordId), failure),
       });
     }),
   );

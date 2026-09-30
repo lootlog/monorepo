@@ -1,10 +1,9 @@
 import { useAuthScopes } from "@/hooks/api/use-auth-scopes";
-import { authClient } from "@/lib/auth-client";
+import { useDiscordSignIn } from "@/hooks/auth/use-discord-sign-in";
 import { useAuthRecoveryStore } from "@/store/auth-recovery.store";
 import { isReauthenticationError } from "@/lib/api-reauthentication";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import { LoaderCircle } from "lucide-react";
-import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AuthenticationRecovery } from "./authentication-recovery";
 
@@ -23,41 +22,31 @@ export const AuthenticationGuard = ({ children }: Props) => {
   } = useAuthScopes();
 
   const authFailure = useAuthRecoveryStore((state) => state.failure);
-  const reauthenticationAttempt = useRef<Promise<unknown> | null>(null);
-  const [reauthenticationPending, setReauthenticationPending] = useState(false);
+
+  const {
+    signIn,
+    isPending: reauthenticationPending,
+    hasError: hasSignInError,
+  } = useDiscordSignIn();
+
   const { t } = useTranslation();
 
   const hasRequiredScopes = DISCORD_AUTH_SCOPES.every((scope) =>
     scopes?.includes(scope),
   );
 
-  const handleLoginAction = async () => {
-    if (reauthenticationAttempt.current) {
-      return;
-    }
-
-    setReauthenticationPending(true);
+  const handleLoginAction = () => {
     const errorCallbackURL = new URL("/signin", window.location.origin);
     errorCallbackURL.searchParams.set(
       "redirect",
       `${window.location.pathname}${window.location.search}${window.location.hash}`,
     );
 
-    const attempt = authClient.signIn.social({
-      provider: "discord",
+    return signIn({
       callbackURL: window.location.href,
       errorCallbackURL: errorCallbackURL.toString(),
       scopes: DISCORD_AUTH_SCOPES,
     });
-
-    reauthenticationAttempt.current = attempt;
-
-    try {
-      await attempt;
-    } catch {
-      reauthenticationAttempt.current = null;
-      setReauthenticationPending(false);
-    }
   };
 
   if (isPending && !authFailure) {
@@ -81,6 +70,7 @@ export const AuthenticationGuard = ({ children }: Props) => {
   if (requiresReauthentication) {
     return (
       <AuthenticationRecovery
+        actionError={hasSignInError ? t("auth.signin.failed") : undefined}
         actionPending={reauthenticationPending}
         mode="reauth"
         onAction={() => void handleLoginAction()}

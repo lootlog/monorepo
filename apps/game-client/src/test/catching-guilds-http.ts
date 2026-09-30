@@ -4,17 +4,21 @@ import type {
   UserLootlogPlayersCatchingGuildsResponseDtoOutput,
 } from "@lootlog/client/main";
 import { onTestFinished, vi } from "vitest";
-import { z } from "zod";
+import { Schema } from "effect";
 
-const requestSchema = z.object({
-  players: z.array(
-    z.object({
-      userId: z.string(),
-      accountId: z.string(),
-      characterId: z.string(),
-    }),
-  ),
-}) satisfies z.ZodType<UserLootlogPlayersCatchingGuildsRequestDto>;
+const decodeRequest = Schema.decodeUnknownSync(
+  Schema.Struct({
+    players: Schema.mutable(
+      Schema.Array(
+        Schema.Struct({
+          userId: Schema.String,
+          accountId: Schema.String,
+          characterId: Schema.String,
+        }),
+      ),
+    ),
+  }),
+);
 
 export function createCatchingGuildsHttp() {
   const endpoint =
@@ -37,7 +41,7 @@ export function createCatchingGuildsHttp() {
           )
         )
           return Response.json(null);
-        const body = requestSchema.parse(await request.json());
+        const body = decodeRequest(await request.json());
 
         return Response.json(await endpoint(body, { signal: request.signal }));
       },

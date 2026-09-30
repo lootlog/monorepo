@@ -1,5 +1,5 @@
 import { clamp, intersection, uniq } from "es-toolkit";
-import { toggleAvailableGuild } from "@/features/settings/components/shared/settings-guild-picker";
+import { toggleAvailableGuild } from "@/lib/selected-lootlog-guild";
 import { readCurrentSettingsDocuments } from "@/features/settings/persistence/settings-patch-client";
 import {
   getGameAccountPreferences,

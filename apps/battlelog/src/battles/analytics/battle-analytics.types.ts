@@ -1,16 +1,3 @@
-import type { InflatedBattleWarrior } from "#src/battles/statistics/battle-warrior-stats";
-import type { Battle, BattleWarrior } from "#src/database/schema";
-
-export type StoredBattleWithWarriors = Omit<Battle, "statistics"> & {
-  warriors: BattleWarrior[];
-};
-
-export type InflatedBattleWithWarriors = Omit<Battle, "statistics"> & {
-  warriors: InflatedBattleWarrior[];
-};
-
-export type BattleResult = "flee" | "lost" | "won";
-
 export type DateRangeQuery = {
   period?: string;
   startDate?: string;

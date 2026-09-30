@@ -19,6 +19,7 @@ import { ChevronDown, Info, MapPin, Pencil } from "lucide-react";
 import { cn } from "cn";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
+import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
 import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";
 import { aggregateMapData } from "../../utils/aggregate-map-data";
 import { formatDurationHuman } from "../../utils/format-duration";
@@ -109,7 +110,7 @@ export const KillParticipantRow = ({
   );
 
   const roleCssColor = getCustomRoleCssColor(
-    participant.member.roles?.[0]?.color,
+    getMemberDisplayRole(participant.member.roles)?.color,
   );
 
   const memberLinkParams =

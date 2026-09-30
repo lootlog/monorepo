@@ -10,6 +10,7 @@ import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
 import type { Permission } from "@lootlog/schema/permissions";
 import { lootTable, type roleTable } from "#src/database/drizzle/schema";
 import { createHash } from "node:crypto";
+import { mapValues, sum } from "es-toolkit";
 import { Effect, Schema } from "effect";
 import { createLootAccessFingerprint } from "@lootlog/domain/loot-visibility";
 import {
@@ -117,16 +118,14 @@ export class LootStatsService {
 
         const [
           overview,
-          byRarity,
-          timeline,
+          { byRarity, timeline },
           topNpcs,
           topContributors,
           topItems,
         ] = yield* Effect.all(
           [
             this.getOverview(queries.overview),
-            this.getByRarity(queries.byRarity),
-            this.getTimeline(queries.timeline),
+            this.getRarityTimeline(queries.timeline),
             this.getTopNpcs(queries.topNpcs),
             this.getTopContributors(queries.topContributors),
             this.getTopLegendaryItems(queries.topItems),
@@ -232,39 +231,18 @@ export class LootStatsService {
     );
   }
 
-  private getByRarity(
-    query: ReturnType<typeof buildLootStatsQueries>["byRarity"],
-  ) {
-    return runLootStatsQuery("loot-stats.by-rarity", query).pipe(
-      Effect.map((result): Partial<Record<ItemRarity, RarityStats>> => {
-        const total = result.reduce((sum, row) => sum + Number(row.count), 0);
-        const byRarity: Partial<Record<ItemRarity, RarityStats>> = {};
-
-        for (const row of result) {
-          const count = Number(row.count);
-
-          if (row.rarity === null) continue;
-          byRarity[row.rarity] = {
-            count,
-            percentage:
-              total > 0 ? Math.round((count / total) * 100 * 10) / 10 : 0,
-          };
-        }
-
-        return byRarity;
-      }),
-    );
-  }
-
-  private getTimeline(
+  private getRarityTimeline(
     query: ReturnType<typeof buildLootStatsQueries>["timeline"],
   ) {
     return runLootStatsQuery("loot-stats.timeline", query).pipe(
-      Effect.map((result): TimelinePoint[] => {
+      Effect.map((result) => {
         const timelineMap = new Map<
           string,
           { total: number; byRarity: Partial<Record<ItemRarity, number>> }
         >();
+
+        // Rarity totals cover the same loot items as the timeline, excluding items without a rarity.
+        const rarityCounts: Partial<Record<ItemRarity, number>> = {};
 
         for (const row of result) {
           const date = row.date.toISOString();
@@ -275,16 +253,28 @@ export class LootStatsService {
           if (row.rarity) {
             entry.byRarity[row.rarity] =
               (entry.byRarity[row.rarity] ?? 0) + count;
+            rarityCounts[row.rarity] = (rarityCounts[row.rarity] ?? 0) + count;
           }
 
           timelineMap.set(date, entry);
         }
 
-        return Array.from(timelineMap.entries()).map(([date, data]) => ({
-          date,
-          total: data.total,
-          byRarity: data.byRarity,
+        const rarityTotal = sum(Object.values(rarityCounts));
+
+        const byRarity = mapValues(rarityCounts, (count): RarityStats => ({
+          count,
+          percentage: Math.round((count / rarityTotal) * 100 * 10) / 10,
         }));
+
+        const timeline = Array.from(timelineMap.entries()).map(
+          ([date, data]): TimelinePoint => ({
+            date,
+            total: data.total,
+            byRarity: data.byRarity,
+          }),
+        );
+
+        return { byRarity, timeline };
       }),
     );
   }

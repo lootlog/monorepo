@@ -1,6 +1,12 @@
 import * as npcRouting from "@lootlog/domain/npc-routing";
+import * as realtimeCodec from "@lootlog/protocol/realtime/codec";
 import { createRabbitDelivery } from "../../test/rabbit-fixtures.js";
 import { Permission } from "@lootlog/schema/permissions";
+import type {
+  PartyGatheringSummary,
+  PartyGatheringUpdateEnvelope,
+  PartyGatheringVolunteer,
+} from "@lootlog/schema/party-ready-room";
 import { describe, expect, spyOn, test } from "bun:test";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import type {
@@ -15,6 +21,7 @@ import { getScopeKey, RealtimeHub } from "./realtime-hub.js";
 import { RabbitBridge, gatewayConsumerSpecs } from "#src/rabbit/rabbit-bridge";
 import type { SessionData } from "./session.js";
 import { SubscriptionLimitExceeded } from "./realtime-errors.js";
+import { canSubscribe } from "./subscription-policy.js";
 
 class FederationBus {
   readonly listeners: Array<(message: FederatedRealtimeMessage) => void> = [];
@@ -39,7 +46,6 @@ class FakeRedisStore {
 
 const config = {
   maxBackpressureBytes: 1_024,
-  maxBackpressureStrikes: 3,
 };
 
 const makeSession = (connectionId: string): SessionData => ({
@@ -48,11 +54,45 @@ const makeSession = (connectionId: string): SessionData => ({
   connectionId,
   platform: "web-app",
   joined: true,
-  guilds: [],
+  guilds: ["organization-1", "organization-2"].map((id) => ({
+    guild: { id, ownerId: `discord-${connectionId}` },
+    roles: [
+      {
+        id: "admin",
+        permissions: [Permission.ADMIN],
+        lvlRangeFrom: 0,
+        lvlRangeTo: 500,
+      },
+    ],
+  })),
   subscriptions: new Map(),
   airTagScopes: [],
   confidence: "reported",
-  backpressureStrikes: 0,
+});
+
+const makeGamePresence = (
+  session: SessionData,
+  world = "tempest",
+  mapId = 1,
+): NonNullable<SessionData["presence"]> => ({
+  userId: session.userId,
+  sessionId: session.connectionId,
+  organizationIds: session.guilds.map(({ guild }) => guild.id),
+  platform: "game",
+  status: "online",
+  confidence: "reported",
+  isAfk: false,
+  lastSeen: 1,
+  character: {
+    world,
+    name: "Player",
+    lvl: 200,
+    characterId: "123",
+    accountId: "456",
+    prof: "w",
+    icon: "icon",
+  },
+  location: { mapId, map: `Map ${mapId}` },
 });
 
 const makeSocket = (data: SessionData, bufferedAmount = 0) => {
@@ -76,6 +116,566 @@ const makeSocket = (data: SessionData, bufferedAmount = 0) => {
 };
 
 describe("RealtimeHub federation", () => {
+  test.each([
+    ["organization.chat", "chat.cleared"],
+    ["organization.reservations", "reservation.created"],
+    ["organization.notifications", "party-gathering.updated"],
+    ["event.coordination", "event.ranking-updated"],
+  ] as const)(
+    "rechecks %s grants for stale audiences on every instance",
+    async (topic, type) => {
+      const bus = new FederationBus();
+      const local = new RealtimeHub(config, new FakeRedisStore(bus));
+      const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+      const scope = { topic, organizationId: "organization-1" };
+
+      const targets = [local, remote].map((hub, index) => {
+        const target = makeSocket(makeSession(`revoked-${index}`));
+        hub.register(target.socket);
+        hub.subscribe(target.socket, scope);
+
+        return target;
+      });
+
+      for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+
+      const event = {
+        v: 1,
+        type,
+        data: { organizationId: scope.organizationId, payload: {} },
+      } as const;
+
+      await local.publishToScope(scope, event);
+
+      for (const target of targets) {
+        expect(target.sent).toHaveLength(1);
+        target.socket.data.guilds = [
+          { guild: { id: scope.organizationId, ownerId: "owner" }, roles: [] },
+        ];
+      }
+
+      await local.publishToScope(scope, event);
+
+      for (const target of targets) {
+        expect(target.socket.data.subscriptions.size).toBe(1);
+        expect(target.sent).toHaveLength(1);
+      }
+    },
+  );
+
+  test("blocks revoked Organization payloads on direct user, Discord and snapshot delivery", async () => {
+    const bus = new FederationBus();
+    const local = new RealtimeHub(config, new FakeRedisStore(bus));
+    const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+
+    const targets = [local, remote].map((hub, index) => {
+      const target = makeSocket({
+        ...makeSession(`direct-${index}`),
+        userId: "shared-user",
+        discordId: "shared-discord",
+      });
+
+      hub.register(target.socket);
+
+      return target;
+    });
+
+    for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+
+    const event = {
+      v: 1,
+      type: "reservation.created",
+      data: { organizationId: "organization-1", payload: {} },
+    } as const;
+
+    const sharedReservation = {
+      v: 1,
+      type: "reservation.changed",
+      data: {
+        version: 2,
+        action: "updated",
+        sourceGuildId: "shared-source",
+        audienceGuildIds: ["organization-1"],
+        reservationId: 1,
+        spotId: null,
+      },
+    } as const;
+
+    await local.publishToUser("shared-user", event);
+    await local.publishToDiscord("shared-discord", event);
+    await local.publishToUser("shared-user", sharedReservation);
+    await local.publishToDiscord("shared-discord", sharedReservation);
+
+    for (const target of targets) {
+      expect(target.sent).toHaveLength(4);
+      target.socket.data.guilds = [];
+    }
+
+    await local.publishToUser("shared-user", event);
+    await local.publishToDiscord("shared-discord", event);
+    await local.publishToUser("shared-user", sharedReservation);
+    await local.publishToDiscord("shared-discord", sharedReservation);
+
+    for (const [index, hub] of [local, remote].entries()) {
+      const target = targets[index];
+
+      if (!target) throw new Error("Missing direct recipient");
+      expect(
+        hub.sendEvent(target.socket, {
+          v: 1,
+          type: "presence.snapshot",
+          data: {
+            organizationId: "organization-1",
+            revision: 1,
+            presences: [],
+          },
+        }),
+      ).toBe(false);
+      expect(target.sent).toHaveLength(4);
+    }
+  });
+
+  test.each([false, true])(
+    "delivers shared map pings only through an authorized matching Organization with location filtering: %s",
+    async (filterLocation) => {
+      const bus = new FederationBus();
+      const local = new RealtimeHub(config, new FakeRedisStore(bus));
+      const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+
+      const scopes = ["organization-1", "organization-2"].map(
+        (organizationId) => ({ topic: "map.pings", organizationId }) as const,
+      );
+
+      const scenarios = [
+        { id: "first", subscribed: [0], allowed: [0], delivered: true },
+        { id: "second", subscribed: [1], allowed: [1], delivered: true },
+        { id: "both", subscribed: [0, 1], allowed: [0, 1], delivered: true },
+        { id: "revoked", subscribed: [0, 1], allowed: [], delivered: false },
+        { id: "wrong-scope", subscribed: [0], allowed: [1], delivered: false },
+        {
+          id: "unsubscribed",
+          subscribed: [],
+          allowed: [0, 1],
+          delivered: false,
+        },
+        {
+          id: "web",
+          subscribed: [0, 1],
+          allowed: [0, 1],
+          delivered: !filterLocation,
+        },
+        {
+          id: "other-world",
+          subscribed: [0, 1],
+          allowed: [0, 1],
+          delivered: !filterLocation,
+        },
+        {
+          id: "other-map",
+          subscribed: [0, 1],
+          allowed: [0, 1],
+          delivered: !filterLocation,
+        },
+        {
+          id: "limited-key",
+          subscribed: [0, 1],
+          allowed: [0, 1],
+          keyScope: [0],
+          delivered: false,
+        },
+        {
+          id: "shared-key",
+          subscribed: [0, 1],
+          allowed: [0, 1],
+          keyScope: [0, 1],
+          delivered: true,
+        },
+      ];
+
+      const targets = [local, remote].flatMap((hub, index) =>
+        scenarios.map((scenario) => {
+          const session: SessionData = {
+            ...makeSession(`ping-${index}-${scenario.id}`),
+            platform: scenario.id === "web" ? "web-app" : "game",
+          };
+
+          session.presence = makeGamePresence(
+            session,
+            scenario.id === "other-world" ? "other-world" : "tempest",
+            scenario.id === "other-map" ? 2 : 1,
+          );
+          const target = makeSocket(session);
+          target.socket.data.guilds = target.socket.data.guilds.filter(
+            (_, guildIndex) => scenario.allowed.includes(guildIndex),
+          );
+
+          if (scenario.keyScope) {
+            target.socket.data.apiKeyAccess = {
+              keyId: scenario.id,
+              organizationIds: scenario.keyScope.map(
+                (guildIndex) => `organization-${guildIndex + 1}`,
+              ),
+              mode: "read",
+              personalData: false,
+              expiresAt: null,
+            };
+            target.socket.data.apiKeyLeaseExpiresAt = Date.now() + 60_000;
+          }
+
+          hub.register(target.socket);
+
+          for (const scopeIndex of scenario.subscribed) {
+            const scope = scopes[scopeIndex];
+
+            if (!scope) throw new Error("Missing ping scope");
+            hub.subscribe(target.socket, scope);
+          }
+
+          return { ...target, delivered: scenario.delivered };
+        }),
+      );
+
+      for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+
+      const ping = {
+        v: 1,
+        type: "map-ping.received",
+        data: {
+          pingId: "ping",
+          world: "tempest",
+          mapId: 1,
+          type: "attention",
+          x: 10,
+          y: 20,
+          sender: { characterId: "character", name: "Player" },
+          createdAt: 1,
+        },
+      } as const;
+
+      await local.publishToScopes(
+        scopes,
+        ping,
+        filterLocation
+          ? {
+              recipientPlatform: "game",
+              recipientWorld: "tempest",
+              recipientMapId: 1,
+            }
+          : {},
+      );
+
+      for (const target of targets) {
+        await local.publishToUser(target.socket.data.userId, ping);
+        expect(local.sendEvent(target.socket, ping)).toBe(false);
+        expect(target.sent).toHaveLength(target.delivered ? 1 : 0);
+      }
+    },
+  );
+
+  test.each(["wildcard", "exact"] as const)(
+    "keeps %s map-ping recipients current through presence, access and connection changes on both gateways",
+    async (subscription) => {
+      const bus = new FederationBus();
+      const local = new RealtimeHub(config, new FakeRedisStore(bus));
+      const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+      const organizationIds = ["organization-1", "organization-2"];
+
+      const targets = [local, remote].map((hub, index) => {
+        const session: SessionData = {
+          ...makeSession(`ping-lifecycle-${index}`),
+          platform: "game",
+        };
+
+        const target = makeSocket(session);
+        hub.setPresence(target.socket, makeGamePresence(session));
+        hub.register(target.socket);
+
+        return { hub, target };
+      });
+
+      for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+
+      const subscribeAt = (world: string, mapId: number) => {
+        for (const { hub, target } of targets) {
+          hub.replaceSubscriptions(
+            target.socket,
+            organizationIds.map((organizationId) => {
+              const scope = { topic: "map.pings", organizationId } as const;
+
+              return subscription === "exact"
+                ? { ...scope, world, mapId }
+                : scope;
+            }),
+          );
+        }
+      };
+
+      const publish = async (
+        world: string,
+        mapId: number,
+        expected: boolean,
+        excludeConnectionId?: string,
+      ) => {
+        const before = targets.map(({ target }) => target.sent.length);
+        await local.publishToScopes(
+          organizationIds.map((organizationId) => ({
+            topic: "map.pings",
+            organizationId,
+            world,
+            mapId,
+          })),
+          {
+            v: 1,
+            type: "map-ping.received",
+            data: {
+              pingId: crypto.randomUUID(),
+              world,
+              mapId,
+              type: "attention",
+              x: 10,
+              y: 20,
+              sender: { characterId: "123", name: "Player" },
+              createdAt: 1,
+            },
+          },
+          {
+            recipientPlatform: "game",
+            recipientWorld: world,
+            recipientMapId: mapId,
+            excludeConnectionId,
+          },
+        );
+
+        for (const [index, { target }] of targets.entries()) {
+          const delivered =
+            expected && target.socket.data.connectionId !== excludeConnectionId;
+
+          expect(target.sent.length - (before[index] ?? 0)).toBe(
+            delivered ? 1 : 0,
+          );
+        }
+      };
+
+      subscribeAt("tempest", 1);
+      await publish("tempest", 1, true);
+      await publish(
+        "tempest",
+        1,
+        true,
+        targets[0]?.target.socket.data.connectionId,
+      );
+
+      for (const { hub, target } of targets)
+        hub.setPresence(
+          target.socket,
+          makeGamePresence(target.socket.data, "tempest", 2),
+        );
+      await publish("tempest", 1, false);
+      await publish("tempest", 2, subscription === "wildcard");
+      subscribeAt("tempest", 2);
+      await publish("tempest", 2, true);
+
+      for (const { hub, target } of targets)
+        hub.setPresence(
+          target.socket,
+          makeGamePresence(target.socket.data, "other-world", 2),
+        );
+      await publish("tempest", 2, false);
+      subscribeAt("other-world", 2);
+      await publish("other-world", 2, true);
+
+      for (const missing of ["location", "character", "presence"] as const) {
+        for (const { hub, target } of targets) {
+          const presence = makeGamePresence(
+            target.socket.data,
+            "other-world",
+            2,
+          );
+
+          hub.setPresence(
+            target.socket,
+            missing === "presence"
+              ? undefined
+              : { ...presence, [missing]: undefined },
+          );
+        }
+
+        await publish("other-world", 2, false);
+
+        for (const { hub, target } of targets)
+          hub.setPresence(
+            target.socket,
+            makeGamePresence(target.socket.data, "other-world", 2),
+          );
+        await publish("other-world", 2, true);
+      }
+
+      for (const { target } of targets) target.socket.data.guilds = [];
+      await publish("other-world", 2, false);
+
+      for (const { hub, target } of targets) {
+        target.socket.data.guilds = makeSession(
+          target.socket.data.connectionId,
+        ).guilds;
+        hub.replaceSubscriptions(target.socket, []);
+      }
+
+      await publish("other-world", 2, false);
+      subscribeAt("other-world", 2);
+      await publish("other-world", 2, true);
+
+      const replaced = targets.map(({ target }) => target);
+      const replacedCounts = replaced.map((target) => target.sent.length);
+
+      for (const entry of targets) {
+        const previous = entry.target.socket;
+        entry.target = makeSocket({
+          ...previous.data,
+          subscriptions: new Map(previous.data.subscriptions),
+          presence: makeGamePresence(previous.data, "other-world", 3),
+        });
+        entry.hub.register(entry.target.socket);
+        entry.hub.detach(previous);
+        entry.hub.setPresence(
+          previous,
+          makeGamePresence(previous.data, "other-world", 2),
+        );
+      }
+
+      await publish("other-world", 2, false);
+      subscribeAt("other-world", 3);
+      await publish("other-world", 3, true);
+      expect(replaced.map((target) => target.sent.length)).toEqual(
+        replacedCounts,
+      );
+
+      for (const { hub, target } of targets) {
+        hub.reconnectUser(
+          target.socket.data.discordId,
+          target.socket.data.userId,
+        );
+        hub.setPresence(
+          target.socket,
+          makeGamePresence(target.socket.data, "other-world", 3),
+        );
+      }
+
+      await publish("other-world", 3, false);
+
+      for (const entry of targets) {
+        entry.target = makeSocket({
+          ...entry.target.socket.data,
+          connectionId: `${entry.target.socket.data.connectionId}-reconnected`,
+        });
+        entry.hub.register(entry.target.socket);
+      }
+
+      await publish("other-world", 3, true);
+    },
+  );
+
+  test.each([
+    { type: "attack", team: false },
+    { type: "quick-fight", team: true },
+  ] as const)(
+    "delivers $type battle pings only to listed characters that decode them on every instance",
+    async ({ type, team }) => {
+      const bus = new FederationBus();
+      const local = new RealtimeHub(config, new FakeRedisStore(bus));
+      const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+
+      const scope = {
+        topic: "map.pings",
+        organizationId: "organization-1",
+        world: "tempest",
+        mapId: 1,
+      } as const;
+
+      const scenarios = [
+        { id: "listed", characterId: "100", battle: true, teamPings: true },
+        { id: "bystander", characterId: "200", battle: true, teamPings: true },
+        // An older game client closes the socket on an event it cannot decode.
+        { id: "legacy", characterId: "100", battle: false, teamPings: false },
+        { id: "no-team", characterId: "100", battle: true, teamPings: false },
+      ].map((scenario) => ({
+        ...scenario,
+        delivered:
+          scenario.characterId === "100" &&
+          scenario.battle &&
+          (!team || scenario.teamPings),
+      }));
+
+      const targets = [local, remote].flatMap((hub, index) =>
+        scenarios.map((scenario) => {
+          const base = makeSession(`battle-${index}-${scenario.id}`);
+
+          const session: SessionData = {
+            ...base,
+            platform: "game",
+            supportsBattlePings: scenario.battle,
+            supportsTeamBattlePings: scenario.teamPings,
+            presence: {
+              userId: base.userId,
+              sessionId: `presence-${base.connectionId}`,
+              organizationIds: ["organization-1"],
+              platform: "game",
+              status: "online",
+              confidence: "verified",
+              isAfk: false,
+              lastSeen: 1,
+              character: {
+                world: scope.world,
+                name: `Hero-${scenario.characterId}`,
+                lvl: 100,
+                icon: "icon",
+                characterId: scenario.characterId,
+                accountId: `account-${scenario.characterId}`,
+                prof: "w",
+              },
+              location: { mapId: scope.mapId, map: "Map", x: 1, y: 1 },
+            },
+          };
+
+          const target = makeSocket(session);
+          hub.register(target.socket);
+          hub.subscribe(target.socket, scope);
+
+          return { ...target, delivered: scenario.delivered };
+        }),
+      );
+
+      for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+
+      const ping = {
+        v: 1,
+        type: "battle-ping.received",
+        data: {
+          pingId: "ping",
+          world: scope.world,
+          mapId: scope.mapId,
+          type,
+          warriorId: team ? 300 : -5,
+          sender: { characterId: "300", name: "Sender" },
+          createdAt: 1,
+        },
+      } as const;
+
+      await local.publishToScopes([scope], ping, {
+        recipientPlatform: "game",
+        recipientWorld: scope.world,
+        recipientMapId: scope.mapId,
+        recipientCharacterIds: ["100"],
+      });
+
+      for (const target of targets) {
+        // Without a routing scope a ping has no Organization to authorize it.
+        await local.publishToUser(target.socket.data.userId, ping);
+        expect(local.sendEvent(target.socket, ping)).toBe(false);
+        expect(target.sent).toHaveLength(target.delivered ? 1 : 0);
+      }
+    },
+  );
+
   test("filters hero events from RabbitMQ on local and federated connections after role changes", async () => {
     const bus = new FederationBus();
     const local = new RealtimeHub(config, new FakeRedisStore(bus));
@@ -1230,7 +1830,7 @@ describe("RealtimeHub federation", () => {
       decodeRealtimeFrame(targets[0]?.sent[0] ?? new Uint8Array()),
     ).toEqual(event);
     expect(targets[2]?.sent).toEqual([]);
-    expect(targets[2]?.socket.data.backpressureStrikes).toBe(1);
+    expect(targets[2]?.closes).toEqual([1013]);
     expect(targets[3]?.sent).toEqual([]);
   });
 
@@ -1287,6 +1887,42 @@ describe("RealtimeHub federation", () => {
     expect(received).toEqual(["discord-1:user-1"]);
   });
 
+  test("delivers a ready-room removal to a recipient who lost its Organization", async () => {
+    const bus = new FederationBus();
+    const first = new RealtimeHub(config, new FakeRedisStore(bus));
+    const second = new RealtimeHub(config, new FakeRedisStore(bus));
+
+    for (const hub of [first, second]) await Effect.runPromise(hub.start());
+    const target = makeSocket(makeSession("former-member"));
+
+    second.register(target.socket);
+
+    for (const payload of [
+      { type: "UPSERT", projection: { guildIds: ["organization-3"] } },
+      {
+        schemaVersion: 3,
+        type: "REMOVE",
+        notificationId: "room-1",
+        revision: 2,
+      },
+    ]) {
+      await first.publishToDiscord(target.socket.data.discordId, {
+        v: 1,
+        type: "party-ready-room.updated",
+        data: { organizationId: "organization-3", payload },
+      });
+    }
+
+    expect(
+      target.sent.map((bytes) => decodeRealtimeFrame(bytes)),
+    ).toMatchObject([
+      {
+        type: "party-ready-room.updated",
+        data: { payload: { type: "REMOVE" } },
+      },
+    ]);
+  });
+
   test("delivers a federated event once to an exact logical subscription", async () => {
     const bus = new FederationBus();
     const first = new RealtimeHub(config, new FakeRedisStore(bus));
@@ -1315,7 +1951,7 @@ describe("RealtimeHub federation", () => {
     ).toHaveProperty("type", "chat.cleared");
   });
 
-  test("closes a persistently slow consumer with bounded backpressure", async () => {
+  test("closes on the first dropped event and never resumes a session with a delivery gap", async () => {
     const bus = new FederationBus();
 
     const hub = new RealtimeHub(
@@ -1331,6 +1967,8 @@ describe("RealtimeHub federation", () => {
     } as const;
 
     const target = makeSocket(makeSession("slow"), 10);
+    let bufferedAmount = 10;
+    target.socket.getBufferedAmount = () => bufferedAmount;
     target.socket.data.subscriptions.set(getScopeKey(scope), scope);
     hub.register(target.socket);
 
@@ -1341,11 +1979,519 @@ describe("RealtimeHub federation", () => {
     } as const;
 
     await hub.publishToScope(scope, event);
+    expect(target.closes).toEqual([1013]);
+    bufferedAmount = 0;
     await hub.publishToScope(scope, event);
     await hub.publishToScope(scope, event);
     expect(target.sent).toHaveLength(0);
     expect(target.closes).toEqual([1013]);
   });
+
+  test("skips federation decoding without a local audience and validates frames once recipients subscribe", async () => {
+    const bus = new FederationBus();
+    const redis = new FakeRedisStore(bus);
+    const hub = new RealtimeHub(config, redis);
+    await Effect.runPromise(hub.start());
+    const target = makeSocket(makeSession("target"));
+    hub.register(target.socket);
+
+    const scope = {
+      topic: "organization.chat",
+      organizationId: "organization-1",
+    } as const;
+
+    const event = {
+      v: 1,
+      type: "chat.cleared",
+      data: { organizationId: scope.organizationId, payload: {} },
+    } as const;
+
+    const message = {
+      id: "no-audience",
+      sourceInstanceId: "remote",
+      scope,
+      frame: Buffer.from(encode(event)).toString("base64"),
+    };
+
+    const decodeFrame = spyOn(realtimeCodec, "tryDecodeRealtimeFrame");
+
+    try {
+      await redis.publish(message);
+      expect(decodeFrame).not.toHaveBeenCalled();
+      expect(target.sent).toEqual([]);
+      hub.subscribe(target.socket, scope);
+      // Already observed publications must not be replayed after joining.
+      await redis.publish(message);
+      expect(target.sent).toEqual([]);
+      await redis.publish({ ...message, id: "subscribed" });
+      expect(decodeFrame).toHaveBeenCalledTimes(1);
+      expect(target.sent.map(decodeRealtimeFrame)).toEqual([event]);
+      await redis.publish({ ...message, id: "malformed", frame: "AA==" });
+      expect(target.sent).toHaveLength(1);
+    } finally {
+      decodeFrame.mockRestore();
+    }
+  });
+
+  test("accepts queued frames but closes a session when Bun drops a frame below the buffer threshold", () => {
+    const hub = new RealtimeHub(
+      config,
+      new FakeRedisStore(new FederationBus()),
+    );
+
+    const target = makeSocket(makeSession("transport-backpressure"));
+    let result = -1;
+    target.socket.send = () => result;
+
+    const event = {
+      v: 1,
+      type: "chat.cleared",
+      data: { organizationId: "organization-1", payload: {} },
+    } as const;
+
+    expect(hub.sendEvent(target.socket, event)).toBe(true);
+    expect(target.closes).toEqual([]);
+    result = 0;
+    expect(hub.sendEvent(target.socket, event)).toBe(false);
+    expect(target.closes).toEqual([1013]);
+    result = 100;
+    expect(hub.sendEvent(target.socket, event)).toBe(false);
+    expect(target.closes).toEqual([1013]);
+  });
+});
+
+test("gathering rosters reach authorized observers across gateways without exposing hidden sources or legacy clients", async () => {
+  const bus = new FederationBus();
+  const local = new RealtimeHub(config, new FakeRedisStore(bus));
+  const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+  const sourceGuild = "organization-1";
+  const sharedGuild = "organization-2";
+
+  const readPermissions = [
+    Permission.LOOTLOG_CHAT_READ,
+    Permission.LOOTLOG_CHAT_HEROES_READ,
+  ];
+
+  const scenarios: Array<{
+    name: string;
+    allowed: boolean;
+    permissions?: Permission[];
+    minimumLevel?: number;
+    organizations?: string[];
+    supports?: boolean;
+    organizer?: boolean;
+    owner?: boolean;
+    apiKey?: boolean;
+    world?: string;
+  }> = [
+    { name: "observer", allowed: true },
+    {
+      name: "shared-observer",
+      allowed: true,
+      organizations: [sourceGuild, sharedGuild],
+    },
+    {
+      name: "organizer",
+      allowed: true,
+      organizer: true,
+      permissions: [
+        Permission.LOOTLOG_CHAT_READ,
+        Permission.LOOTLOG_NOTIFICATIONS_SEND,
+      ],
+    },
+    {
+      name: "sender-only-organizer",
+      allowed: true,
+      organizer: true,
+      permissions: [Permission.LOOTLOG_NOTIFICATIONS_SEND],
+    },
+    {
+      name: "revoked-organizer",
+      allowed: false,
+      organizer: true,
+      permissions: [],
+    },
+    {
+      name: "legacy-organizer",
+      allowed: false,
+      organizer: true,
+      supports: false,
+      permissions: [Permission.LOOTLOG_NOTIFICATIONS_SEND],
+    },
+    {
+      name: "api-key-organizer",
+      allowed: false,
+      organizer: true,
+      apiKey: true,
+      permissions: [Permission.LOOTLOG_NOTIFICATIONS_SEND],
+    },
+    { name: "owner", allowed: true, owner: true, permissions: [] },
+    { name: "administrator", allowed: true, permissions: [Permission.ADMIN] },
+    { name: "legacy", allowed: false, supports: false },
+    {
+      name: "hidden-tier",
+      allowed: false,
+      permissions: [Permission.LOOTLOG_CHAT_READ],
+    },
+    { name: "hidden-level", allowed: false, minimumLevel: 200 },
+    {
+      name: "other-organization",
+      allowed: false,
+      organizations: [sharedGuild],
+    },
+    { name: "other-world-subscription", allowed: false, world: "classic" },
+    { name: "api-key", allowed: false, apiKey: true },
+  ];
+
+  const targets = [local, remote].flatMap((hub, index) =>
+    scenarios.map((scenario) => {
+      const base = makeSession(`${index}-${scenario.name}`);
+      const discordId = scenario.organizer ? "organizer" : base.discordId;
+      const organizations = scenario.organizations ?? [sourceGuild];
+
+      const session: SessionData = {
+        ...base,
+        platform: "game",
+        discordId,
+        supportsPartyGatheringState: scenario.supports ?? true,
+        guilds: organizations.map((id) => ({
+          guild: {
+            id,
+            ownerId: scenario.owner ? discordId : "different-owner",
+          },
+          roles: [
+            {
+              id: "reader",
+              permissions: scenario.permissions ?? readPermissions,
+              lvlRangeFrom: scenario.minimumLevel ?? 0,
+              lvlRangeTo: 500,
+            },
+          ],
+        })),
+      };
+
+      if (scenario.apiKey) {
+        session.apiKeyAccess = {
+          keyId: "key",
+          organizationIds: organizations,
+          mode: "read",
+          personalData: true,
+          expiresAt: null,
+        };
+        session.apiKeyLeaseExpiresAt = Date.now() + 60_000;
+      }
+
+      const target = makeSocket(session);
+      hub.register(target.socket);
+
+      for (const organizationId of organizations) {
+        const scope = {
+          topic: "organization.chat",
+          organizationId,
+          world: scenario.world,
+        } as const;
+
+        if (canSubscribe(session, scope)) hub.subscribe(target.socket, scope);
+      }
+
+      return { ...target, scenario };
+    }),
+  );
+
+  const handlers = new Map<
+    string,
+    (delivery: RabbitDelivery) => Effect.Effect<void, unknown>
+  >();
+
+  const messaging: RabbitMessagingService = {
+    publish: () => Effect.void,
+    ack: () => Effect.void,
+    nack: () => Effect.void,
+    consume: (options, handler) =>
+      Effect.sync(() => {
+        handlers.set(options.queue, handler);
+
+        return { consumerTag: options.queue, cancel: Effect.void };
+      }),
+  };
+
+  const unexpected = () => {
+    throw new Error("Unexpected control call");
+  };
+
+  const bridge = new RabbitBridge(
+    messaging,
+    local,
+    { rebalanceAcrossInstances: unexpected },
+    { coverageForMap: unexpected },
+    { publish: unexpected },
+  );
+
+  const volunteer: PartyGatheringVolunteer = {
+    characterId: "volunteer",
+    nick: "Chętny",
+    icon: "player.gif",
+    lvl: 110,
+    prof: "w",
+    partyPresence: "OUTSIDE",
+  };
+
+  const partyMember = {
+    characterId: "member",
+    nick: "W grupie",
+    icon: "member.gif",
+    lvl: 115,
+    prof: "m",
+  };
+
+  const privateVolunteer = {
+    ...volunteer,
+    discordId: "private-volunteer",
+    accountId: "private-account",
+  };
+
+  const gathering = {
+    notificationId: "gathering",
+    organizerName: "Organizator",
+    organizerDiscordId: "organizer",
+    world: "tempest",
+    revision: 1,
+    guildIds: [sourceGuild, sharedGuild],
+    npc: { name: "Hero", location: "Map", lvl: 105, type: "HERO" },
+    createdAt: "2026-09-28T10:00:00Z",
+    expiresAt: "2026-09-28T11:00:00Z",
+    applicantCount: 1,
+    inPartyCount: 0,
+    partyMemberCount: 1,
+    volunteers: [privateVolunteer],
+    partyState: {
+      status: "OBSERVED",
+      observedAt: "2026-09-28T10:01:00Z",
+      members: [partyMember],
+    },
+  } satisfies PartyGatheringSummary;
+
+  const envelope: PartyGatheringUpdateEnvelope = {
+    guildId: sourceGuild,
+    guildIds: gathering.guildIds,
+    world: gathering.world,
+    notificationId: gathering.notificationId,
+    revision: gathering.revision,
+    organizerDiscordId: gathering.organizerDiscordId,
+    npc: gathering.npc,
+    update: { type: "UPSERT", gathering },
+  };
+
+  for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+  await Effect.runPromise(
+    Effect.scoped(
+      Effect.gen(function* () {
+        yield* bridge.start();
+        const handler = handlers.get("gateway-guilds-party-gathering-updated");
+
+        if (!handler) throw new Error("Missing gathering state consumer");
+
+        const deliver = (
+          payload: PartyGatheringUpdateEnvelope,
+          messageId: string,
+        ) =>
+          handler(
+            createRabbitDelivery(
+              RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED,
+              Buffer.from(JSON.stringify(payload)),
+              messageId,
+            ),
+          );
+
+        const rollout = yield* Effect.exit(
+          deliver(envelope, "gathering-created"),
+        );
+
+        expect(rollout._tag).toBe("Failure");
+        expect(targets.every((target) => target.sent.length === 0)).toBe(true);
+        local.clusterFederationVersion = 3;
+        remote.clusterFederationVersion = 3;
+        yield* deliver(envelope, "gathering-created");
+        yield* deliver(envelope, "gathering-created");
+
+        for (const target of targets) {
+          expect(target.sent).toHaveLength(target.scenario.allowed ? 1 : 0);
+
+          if (!target.scenario.allowed) continue;
+          expect(target.sent.map(decodeRealtimeFrame)).toMatchObject([
+            {
+              type: "party-gathering.state-updated",
+              data: {
+                organizationId: sourceGuild,
+                payload: {
+                  type: "UPSERT",
+                  gathering: {
+                    organizerDiscordId: "organizer",
+                    guildIds: [sourceGuild],
+                    volunteers: [volunteer],
+                    partyState: { members: [partyMember] },
+                  },
+                },
+              },
+            },
+          ]);
+          expect(
+            JSON.stringify(target.sent.map(decodeRealtimeFrame)),
+          ).not.toContain("private-");
+        }
+
+        yield* deliver(
+          { ...envelope, guildId: sharedGuild },
+          "gathering-created",
+        );
+
+        const sharedTargets = targets.filter(
+          (target) => target.scenario.name === "shared-observer",
+        );
+
+        for (const target of sharedTargets) {
+          expect(target.sent).toHaveLength(2);
+          expect(
+            decodeRealtimeFrame(target.sent[1] ?? new Uint8Array()),
+          ).toMatchObject({
+            data: {
+              organizationId: sharedGuild,
+              payload: { gathering: { guildIds: [sharedGuild] } },
+            },
+          });
+        }
+
+        const departure: PartyGatheringSummary = {
+          ...gathering,
+          revision: 2,
+          partyMemberCount: 0,
+          volunteers: [],
+          applicantCount: 0,
+          partyState: {
+            status: "OBSERVED",
+            observedAt: "2026-09-28T10:02:00Z",
+            members: [],
+          },
+        };
+
+        yield* deliver(
+          {
+            ...envelope,
+            revision: 2,
+            update: { type: "UPSERT", gathering: departure },
+          },
+          "gathering-departure",
+        );
+        yield* deliver(
+          {
+            ...envelope,
+            revision: 3,
+            update: {
+              type: "REMOVE",
+              notificationId: "gathering",
+              revision: 3,
+            },
+          },
+          "gathering-removed",
+        );
+
+        for (const target of targets.filter(
+          (target) => target.scenario.allowed,
+        )) {
+          const frames = target.sent.map(decodeRealtimeFrame);
+          expect(frames.slice(-2)).toMatchObject([
+            {
+              data: {
+                payload: {
+                  type: "UPSERT",
+                  gathering: {
+                    revision: 2,
+                    applicantCount: 0,
+                    volunteers: [],
+                    partyMemberCount: 0,
+                    partyState: { members: [] },
+                  },
+                },
+              },
+            },
+            {
+              data: {
+                payload: {
+                  type: "REMOVE",
+                  notificationId: "gathering",
+                  revision: 3,
+                },
+              },
+            },
+          ]);
+        }
+
+        for (const target of targets.filter(
+          (target) =>
+            !target.scenario.allowed &&
+            target.scenario.name !== "other-organization",
+        ))
+          expect(target.sent).toHaveLength(0);
+
+        const mismatched = yield* Effect.exit(
+          deliver(
+            { ...envelope, guildIds: [sharedGuild] },
+            "mismatched-source",
+          ),
+        );
+
+        expect(mismatched._tag).toBe("Failure");
+
+        for (const npc of [undefined, { ...gathering.npc, type: "COMMON" }]) {
+          const invalidSource = yield* Effect.exit(
+            deliver({ ...envelope, npc }, "hidden-source"),
+          );
+
+          expect(invalidSource._tag).toBe("Failure");
+        }
+
+        for (const target of targets.filter(
+          (target) => target.scenario.name === "hidden-tier",
+        ))
+          expect(target.sent).toHaveLength(0);
+
+        // A gathering announced with a message instead of an NPC has no NPC.
+        const { npc: _gatheringNpc, ...messageGathering } = gathering;
+        const { npc: _envelopeNpc, ...messageEnvelope } = envelope;
+
+        yield* deliver(
+          {
+            ...messageEnvelope,
+            notificationId: "message-gathering",
+            update: {
+              type: "UPSERT",
+              gathering: {
+                ...messageGathering,
+                notificationId: "message-gathering",
+              },
+            },
+          },
+          "message-gathering-created",
+        );
+
+        const observers = targets.filter(
+          (target) => target.scenario.name === "observer",
+        );
+
+        expect(observers).toHaveLength(2);
+
+        for (const observer of observers)
+          expect(observer.sent.map(decodeRealtimeFrame).at(-1)).toMatchObject({
+            data: {
+              payload: {
+                type: "UPSERT",
+                gathering: { notificationId: "message-gathering" },
+              },
+            },
+          });
+      }),
+    ),
+  );
 });
 
 const npcDeliveryCases = (npcType: string, npcLevel: number, tier: string) =>

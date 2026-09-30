@@ -1,5 +1,5 @@
 import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
-import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { IconButton } from "@/components/ui/icon-button";
 import { SettingsList } from "@/components/settings/settings-list";
 import { SettingsListRow } from "@/components/settings/settings-list-row";
 import { SettingsSection } from "@/components/settings/settings-section";
@@ -67,8 +67,8 @@ export const MutedPlayersSettingsTab = () => {
                 }
                 title={player.name}
               >
-                <SettingsIconButton
-                  variant="destructive"
+                <IconButton
+                  variant="quiet-destructive"
                   label={t("settings.mutes.removeLabel", { name: player.name })}
                   disabled={isActionsDisabled}
                   onClick={() =>
@@ -81,7 +81,7 @@ export const MutedPlayersSettingsTab = () => {
                   }
                 >
                   <Trash2 />
-                </SettingsIconButton>
+                </IconButton>
               </SettingsListRow>
             ))}
           </SettingsList>

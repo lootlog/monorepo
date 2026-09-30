@@ -8,6 +8,7 @@ import {
 import { useBattlePanelStore } from "@/store/battle-panel.store";
 import { createBattleTest, createBattleWarrior } from "./battle-test-fixtures";
 import { BattleEventProcessor } from "./battle-event-processor";
+import { EventDispatcher } from "@/lib/event-dispatcher";
 
 const pvpStart = (moves = ["start"]): GameEvent => ({
   f: {
@@ -91,6 +92,28 @@ it("submits actual mapped PvP events with stable identity and clears finished st
   expect(useBattleStore.getState().battleState).toBe("idle");
   expect(useBattleStore.getState().events).toEqual([]);
   expect(useBattleStore.getState().lastBattleHash).toMatch(/^[a-f0-9]{64}$/);
+});
+
+it("stops capturing once an NPC joins and never submits that battle", async () => {
+  const fixture = createBattleTest();
+  const processor = new BattleEventProcessor();
+  await processor.handle(pvpStart());
+  expect(useBattleStore.getState().getCaptureSnapshot().events).toHaveLength(1);
+
+  await processor.handle({
+    f: { m: ["npc-joins"], w: { "-100": createBattleWarrior(-100) } },
+  });
+  await processor.handle({ f: { m: ["later-turn"] } });
+
+  expect(useBattleStore.getState().getCaptureSnapshot()).toMatchObject({
+    bytes: 0,
+    events: [],
+    turns: [],
+  });
+
+  await processor.handle(end);
+  expect(fixture.battles()).toHaveLength(0);
+  expect(fixture.kills()).toHaveLength(1);
 });
 
 it("does not submit a one-team battle", async () => {
@@ -249,6 +272,8 @@ it("publishes final warriors before digest completion", async () => {
   });
 
   expect(useBattleStore.getState().battleWarriors["-100"]?.hpp).toBe(0);
+  expect(useBattleStore.getState().battleState).toBe("idle");
+  expect(useBattleStore.getState().events).toEqual([]);
   expect(fixture.kills()).toHaveLength(0);
   await digest.release();
   await finalization;
@@ -272,7 +297,7 @@ it("submits one immutable snapshot while digest computation is pending", async (
   });
 });
 
-it("does not overwrite a new battle when previous asynchronous finalization completes", async () => {
+it("submits a completed kill without overwriting the next battle", async () => {
   const fixture = createBattleTest();
   const processor = new BattleEventProcessor();
   await processor.handle({
@@ -287,7 +312,107 @@ it("does not overwrite a new battle when previous asynchronous finalization comp
   expect(useBattleStore.getState().events).toMatchObject([
     { f: { m: ["new"] } },
   ]);
-  expect(fixture.kills()).toHaveLength(0);
+  expect(fixture.kills()).toHaveLength(1);
+  expect(await fixture.kills()[0]?.json()).toMatchObject({ npc: { id: -100 } });
+});
+
+it("submits both PvP battles when the dispatcher receives consecutive fights without waiting", async () => {
+  const fixture = createBattleTest();
+  const dispatcher = new EventDispatcher();
+  dispatcher.handleEvent(pvpStart(["first"]));
+  dispatcher.handleEvent(end);
+  dispatcher.handleEvent(pvpStart(["second"]));
+  dispatcher.handleEvent(end);
+
+  expect(useBattleStore.getState().battleState).toBe("idle");
+  expect(useBattleStore.getState().events).toEqual([]);
+  await waitFor(() => expect(fixture.battles()).toHaveLength(2));
+
+  const payloads = await Promise.all(
+    fixture.battles().map((request) => request.json()),
+  );
+
+  expect(payloads).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        events: [
+          expect.objectContaining({
+            f: expect.objectContaining({ m: ["first"] }),
+          }),
+          expect.objectContaining({
+            f: expect.objectContaining({ m: ["end"] }),
+          }),
+        ],
+      }),
+      expect.objectContaining({
+        events: [
+          expect.objectContaining({
+            f: expect.objectContaining({ m: ["second"] }),
+          }),
+          expect.objectContaining({
+            f: expect.objectContaining({ m: ["end"] }),
+          }),
+        ],
+      }),
+    ]),
+  );
+});
+
+it("deduplicates a compact replay while the original PvP submission is still hashing", async () => {
+  const fixture = createBattleTest();
+  const processor = new BattleEventProcessor();
+  await processor.handle(pvpStart());
+  const digest = deferNextDigest();
+  const finalization = processor.handle(end);
+  await processor.handle({
+    f: { ...pvpStart().f, endBattle: 1, m: ["start", "end"] },
+  });
+  await digest.release();
+  await finalization;
+
+  expect(fixture.battles()).toHaveLength(1);
+  expect(useBattleStore.getState().battleState).toBe("idle");
+  expect(useBattleStore.getState().events).toEqual([]);
+});
+
+it("submits a completed PvP capture after a subsequent NPC battle has finished", async () => {
+  const fixture = createBattleTest();
+  const processor = new BattleEventProcessor();
+  await processor.handle(pvpStart());
+  const digest = deferNextDigest();
+  const finalization = processor.handle(end);
+  await processor.handle({
+    f: { init: "1", w: { "-100": createBattleWarrior(-100) } },
+  });
+  await processor.handle(end);
+  expect(fixture.kills()).toHaveLength(1);
+
+  await digest.release();
+  await finalization;
+  expect(fixture.battles()).toHaveLength(1);
+  expect(await fixture.battles()[0]?.json()).toMatchObject({
+    events: [{ f: { m: ["start"] } }, { f: { m: ["end"] } }],
+  });
+  expect(useBattleStore.getState().battleState).toBe("idle");
+  expect(useBattleStore.getState().battleWarriors["-100"]?.name).toBe("Boss");
+  expect(useBattleStore.getState().events).toEqual([]);
+});
+
+it("releases completed state after a digest failure and allows its compact replay to recover", async () => {
+  const fixture = createBattleTest();
+  const processor = new BattleEventProcessor();
+  await processor.handle(pvpStart());
+  vi.spyOn(crypto.subtle, "digest").mockRejectedValueOnce(
+    new Error("digest failed"),
+  );
+  await expect(processor.handle(end)).rejects.toThrow("digest failed");
+
+  expect(useBattleStore.getState().battleState).toBe("idle");
+  expect(useBattleStore.getState().events).toEqual([]);
+  await processor.handle({
+    f: { ...pvpStart().f, endBattle: 1, m: ["start", "end"] },
+  });
+  expect(fixture.battles()).toHaveLength(1);
 });
 
 it.each(["battle", "kill"] as const)(

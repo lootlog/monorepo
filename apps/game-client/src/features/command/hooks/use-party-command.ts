@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { useGameStore } from "@/store/game.store";
 import { getCreatePartyGatheringErrorMessage } from "@/features/party-finder/get-create-party-gathering-error-message";
 import { usePartyGatheringOrchestration } from "@/features/party-finder/hooks/use-party-gathering-orchestration";
@@ -19,11 +20,9 @@ export const usePartyCommand = () => {
         description,
       });
     } catch (error) {
-      showRuntimeMessage(getCreatePartyGatheringErrorMessage(error));
+      toast.error(getCreatePartyGatheringErrorMessage(error));
     }
   };
 
   return { handlePartyCommand };
 };
-
-import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

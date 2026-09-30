@@ -1,5 +1,23 @@
 import { Slider as SliderPrimitive } from "@base-ui/react/slider";
 import { cn } from "cn";
+import type { FocusEvent, KeyboardEvent } from "react";
+
+/**
+ * Base UI focuses a visually hidden range input inside each thumb. The thumb
+ * mirrors the input's `:focus-visible` as `data-focus-visible` so its ring
+ * needs no `:has()` rule, which the game client stylesheet must avoid. A key
+ * press always counts as keyboard focus: Base UI then restores
+ * `:focus-visible` on the input without reporting a new focus event.
+ */
+const markThumbFocusVisible = (
+  event: FocusEvent<HTMLElement> | KeyboardEvent<HTMLElement>,
+  visible: boolean,
+) => {
+  event.currentTarget.parentElement?.toggleAttribute(
+    "data-focus-visible",
+    visible,
+  );
+};
 
 function Slider<Value extends number | readonly number[]>({
   "aria-label": ariaLabel,
@@ -45,7 +63,15 @@ function Slider<Value extends number | readonly number[]>({
             aria-label={ariaLabel}
             data-slot="slider-thumb"
             key={index}
-            className="ll:relative ll:block ll:size-3 ll:shrink-0 ll:rounded-full ll:border ll:border-ring ll:bg-white ll:ring-ring/50 ll:transition-[color,box-shadow] ll:select-none ll:after:absolute ll:after:-inset-2 ll:hover:ring-3 ll:has-[:focus-visible]:ring-3 ll:has-[:focus-visible]:outline-hidden ll:active:ring-3 ll:disabled:pointer-events-none ll:disabled:opacity-50 ll:motion-reduce:transition-none ll-custom-cursor-pointer"
+            onFocus={(event) =>
+              markThumbFocusVisible(
+                event,
+                event.currentTarget.matches(":focus-visible"),
+              )
+            }
+            onKeyDown={(event) => markThumbFocusVisible(event, true)}
+            onBlur={(event) => markThumbFocusVisible(event, false)}
+            className="ll:relative ll:block ll:size-3 ll:shrink-0 ll:rounded-full ll:border ll:border-ring ll:bg-white ll:ring-ring/50 ll:transition-[color,box-shadow] ll:select-none ll:after:absolute ll:after:-inset-2 ll:hover:ring-3 ll:data-focus-visible:ring-3 ll:data-focus-visible:outline-hidden ll:active:ring-3 ll:disabled:pointer-events-none ll:disabled:opacity-50 ll:motion-reduce:transition-none ll-custom-cursor-pointer"
           />
         ))}
       </SliderPrimitive.Control>

@@ -11,19 +11,19 @@ import {
   enqueueReadyRoomInvitations,
 } from "@/features/party-finder/ready-room-invitation-coordinator";
 import {
-  createMapPingPressIdentity,
-  isSameMapPingPressIdentity,
-  type MapPingPressIdentity,
-} from "@/features/map-pings/map-ping-interaction-controller";
+  createPingPressIdentity,
+  isSamePingPressIdentity,
+  type PingPressIdentity,
+} from "@/features/pings/ping-interaction-controller";
 
 type HotkeyEvent = KeyboardEvent | MouseEvent;
 
 type UseHotkeysOptions = {
   onChatHelp?: () => void;
   onChatPosition?: () => void;
-  onMapPingCancel?: () => void;
-  onMapPingEnd?: (event: HotkeyEvent) => void;
-  onMapPingStart?: (event: HotkeyEvent) => boolean;
+  onPingCancel?: () => void;
+  onPingEnd?: (event: HotkeyEvent) => void;
+  onPingStart?: (event: HotkeyEvent) => boolean;
 };
 
 const ACTION_TO_WINDOW = new Map<string, WindowId>([
@@ -71,16 +71,19 @@ const hotkeyScopes = new Map<string, HotkeyActionConfig["scope"]>(
   HOTKEY_ACTIONS.map(({ action, scope }) => [action, scope]),
 );
 
-export const useHotkeys = ({
-  onChatHelp,
-  onChatPosition,
-  onMapPingCancel,
-  onMapPingEnd,
-  onMapPingStart,
-}: UseHotkeysOptions = {}) => {
+export const useHotkeys = (handlers: UseHotkeysOptions = {}) => {
+  // Callers pass fresh callbacks on every render. The listeners read the
+  // latest ones through a ref, so a re-render mid-press does not reinstall
+  // them and cancel a held ping.
+  const handlersRef = useRef(handlers);
+
+  useEffect(() => {
+    handlersRef.current = handlers;
+  });
+
   const toggleOpen = useWindowsStore((state) => state.toggleOpen);
   const bindings = useHotkeysStore((s) => s.bindings);
-  const activeMapPingIdentityRef = useRef<MapPingPressIdentity | null>(null);
+  const activePingIdentityRef = useRef<PingPressIdentity | null>(null);
 
   const handledMouseRef = useRef<{
     button: number;
@@ -109,13 +112,13 @@ export const useHotkeys = ({
       }, 1_000);
     };
 
-    const cancelActiveMapPing = () => {
-      if (!activeMapPingIdentityRef.current) {
+    const cancelActivePing = () => {
+      if (!activePingIdentityRef.current) {
         return false;
       }
 
-      activeMapPingIdentityRef.current = null;
-      onMapPingCancel?.();
+      activePingIdentityRef.current = null;
+      handlersRef.current.onPingCancel?.();
 
       return true;
     };
@@ -123,11 +126,10 @@ export const useHotkeys = ({
     const quickActions = new Map<string, () => void>([
       [
         "create-party-gathering",
-        () =>
-          useWindowsStore.getState().setOpen("create-party-gathering", true),
+        () => useWindowsStore.getState().openAndFocus("create-party-gathering"),
       ],
-      ["chat-position", () => onChatPosition?.()],
-      ["chat-help", () => onChatHelp?.()],
+      ["chat-position", () => handlersRef.current.onChatPosition?.()],
+      ["chat-help", () => handlersRef.current.onChatHelp?.()],
       [
         "join-party-gathering",
         () => window.dispatchEvent(new Event("lootlog:join-visible-gathering")),
@@ -152,7 +154,7 @@ export const useHotkeys = ({
         const windowId = ACTION_TO_WINDOW.get(action);
 
         if (windowId) {
-          toggleOpen(windowId, true);
+          toggleOpen(windowId);
 
           return true;
         }
@@ -167,17 +169,16 @@ export const useHotkeys = ({
 
         if (action === "map-ping") {
           if (event instanceof KeyboardEvent && event.repeat) {
-            return activeMapPingIdentityRef.current !== null;
+            return activePingIdentityRef.current !== null;
           }
 
-          const handled = onMapPingStart?.(event) ?? false;
+          const handled = handlersRef.current.onPingStart?.(event) ?? false;
 
           if (handled) {
-            activeMapPingIdentityRef.current =
-              createMapPingPressIdentity(event);
+            activePingIdentityRef.current = createPingPressIdentity(event);
           }
 
-          return handled || activeMapPingIdentityRef.current !== null;
+          return handled || activePingIdentityRef.current !== null;
         }
 
         return false;
@@ -186,9 +187,24 @@ export const useHotkeys = ({
       return false;
     };
 
+    // Margonem reads keys from a bubbling document listener and ignores
+    // modifiers, so Shift+S would also walk the hero south. This listener runs
+    // in the window capture phase and keeps a key it handles from the game.
+    const consumeKey = (event: KeyboardEvent) => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+
+    // The settings recorder listens later in the same capture phase; while it
+    // records, the key is the new binding, not a hotkey.
+    const isRecordingBinding = () =>
+      useHotkeysStore.getState().recordingAction !== null;
+
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && cancelActiveMapPing()) {
-        event.preventDefault();
+      if (isRecordingBinding()) return;
+
+      if (event.key === "Escape" && cancelActivePing()) {
+        consumeKey(event);
 
         return;
       }
@@ -196,30 +212,29 @@ export const useHotkeys = ({
       if (isEditableElementActive()) return;
 
       if (executeAction(event)) {
-        event.preventDefault();
+        consumeKey(event);
       }
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
-      const activeIdentity = activeMapPingIdentityRef.current;
+      const activeIdentity = activePingIdentityRef.current;
 
       if (
         !activeIdentity ||
         activeIdentity.kind !== "keyboard" ||
-        !isSameMapPingPressIdentity(
-          activeIdentity,
-          createMapPingPressIdentity(event),
-        )
+        !isSamePingPressIdentity(activeIdentity, createPingPressIdentity(event))
       ) {
         return;
       }
 
-      activeMapPingIdentityRef.current = null;
-      onMapPingEnd?.(event);
+      activePingIdentityRef.current = null;
+      handlersRef.current.onPingEnd?.(event);
       event.preventDefault();
     };
 
     const handleMouseDown = (event: MouseEvent) => {
+      if (isRecordingBinding()) return;
+
       const matchingAction = Object.entries(bindings).find(
         ([action, binding]) =>
           binding.type === "mouse" &&
@@ -244,21 +259,18 @@ export const useHotkeys = ({
     };
 
     const handleMouseUp = (event: MouseEvent) => {
-      const activeIdentity = activeMapPingIdentityRef.current;
+      const activeIdentity = activePingIdentityRef.current;
 
       if (
         !activeIdentity ||
         activeIdentity.kind !== "mouse" ||
-        !isSameMapPingPressIdentity(
-          activeIdentity,
-          createMapPingPressIdentity(event),
-        )
+        !isSamePingPressIdentity(activeIdentity, createPingPressIdentity(event))
       ) {
         return;
       }
 
-      activeMapPingIdentityRef.current = null;
-      onMapPingEnd?.(event);
+      activePingIdentityRef.current = null;
+      handlersRef.current.onPingEnd?.(event);
       event.preventDefault();
       rememberHandledMouse(event);
     };
@@ -277,36 +289,30 @@ export const useHotkeys = ({
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("keydown", handleKeyDown, true);
+    // Focused editors stop key events from bubbling; a held ping must still
+    // end on its release.
+    window.addEventListener("keyup", handleKeyUp, true);
     window.addEventListener("mousedown", handleMouseDown);
     window.addEventListener("mouseup", handleMouseUp);
     window.addEventListener("auxclick", suppressHandledMouseEvent);
-    window.addEventListener("blur", cancelActiveMapPing);
+    window.addEventListener("blur", cancelActivePing);
 
     return () => {
-      cancelActiveMapPing();
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
+      cancelActivePing();
+      window.removeEventListener("keydown", handleKeyDown, true);
+      window.removeEventListener("keyup", handleKeyUp, true);
       window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mouseup", handleMouseUp);
       window.removeEventListener("auxclick", suppressHandledMouseEvent);
-      window.removeEventListener("blur", cancelActiveMapPing);
+      window.removeEventListener("blur", cancelActivePing);
 
       if (handledMouseTimeoutRef.current !== null) {
         window.clearTimeout(handledMouseTimeoutRef.current);
         handledMouseTimeoutRef.current = null;
       }
     };
-  }, [
-    bindings,
-    onChatHelp,
-    onChatPosition,
-    onMapPingCancel,
-    onMapPingEnd,
-    onMapPingStart,
-    toggleOpen,
-  ]);
+  }, [bindings, toggleOpen]);
 
   return null;
 };

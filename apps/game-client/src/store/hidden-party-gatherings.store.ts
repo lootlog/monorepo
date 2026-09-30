@@ -1,20 +1,21 @@
-import { z } from "zod";
+import { Option, Schema } from "effect";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
+import { withFallback } from "@/lib/stored-value-schema";
 
 type HiddenPartyGatherings = Record<string, Record<string, number>>;
 
-const persistedHiddenGatheringsSchema = z
-  .object({
-    hiddenByScope: z
-      .record(
-        z.string(),
-        z.record(z.string(), z.number().int().catch(0)).catch({}),
-      )
-      .catch({}),
-  })
-  .catch({ hiddenByScope: {} });
+const decodePersistedHiddenGatherings = Schema.decodeUnknownOption(
+  Schema.Struct({
+    hiddenByScope: Schema.Record(
+      Schema.String,
+      Schema.Record(Schema.String, Schema.Int.pipe(withFallback(0))).pipe(
+        withFallback({}),
+      ),
+    ).pipe(withFallback({})),
+  }),
+);
 
 type HiddenPartyGatheringsState = {
   hiddenByScope: HiddenPartyGatherings;
@@ -125,7 +126,10 @@ export const useHiddenPartyGatheringsStore =
         merge: (persisted, current) => ({
           ...current,
           hiddenByScope: activeHiddenGatherings(
-            persistedHiddenGatheringsSchema.parse(persisted).hiddenByScope,
+            Option.match(decodePersistedHiddenGatherings(persisted), {
+              onNone: () => ({}),
+              onSome: (decoded) => decoded.hiddenByScope,
+            }),
             Date.now(),
           ),
         }),

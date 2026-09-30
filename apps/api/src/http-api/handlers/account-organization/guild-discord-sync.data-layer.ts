@@ -1,3 +1,4 @@
+import { notificationChannelMetadata } from "#src/notifications/targets/notification-channel-metadata";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import {
@@ -92,6 +93,27 @@ const syncStateWrite = (guildId: string, state: DiscordGuildSyncState) => {
   return { now, lastSuccessAt, values, guildId };
 };
 
+const channelSnapshotValues = (channel: DiscordGuildChannelSnapshot) => ({
+  name: channel.name,
+  channelType: channel.channelType,
+  parentId: channel.parentId,
+  position: channel.position,
+  active: channel.active,
+  canView: channel.canView,
+  canSend: channel.canSend,
+  hasRequiredPermissions: channel.hasRequiredPermissions,
+  requiredPermissions: [...channel.requiredPermissions],
+  grantedPermissions: [...channel.grantedPermissions],
+  missingPermissions: [...channel.missingPermissions],
+  lastSyncedAt: new Date(channel.lastSyncedAt),
+});
+
+const notificationTargetValues = (channel: DiscordGuildChannelSnapshot) => ({
+  canSend: channel.hasRequiredPermissions,
+  lastSyncedAt: new Date(channel.lastSyncedAt),
+  metadata: notificationChannelMetadata(channel),
+});
+
 const reconcile = (
   database: typeof ApiDatabase.Service,
   guildId: string,
@@ -118,18 +140,7 @@ const reconcile = (
         const values = {
           guildId,
           channelId: channel.channelId,
-          name: channel.name,
-          channelType: channel.channelType,
-          parentId: channel.parentId,
-          position: channel.position,
-          active: channel.active,
-          canView: channel.canView,
-          canSend: channel.canSend,
-          hasRequiredPermissions: channel.hasRequiredPermissions,
-          requiredPermissions: [...channel.requiredPermissions],
-          grantedPermissions: [...channel.grantedPermissions],
-          missingPermissions: [...channel.missingPermissions],
-          lastSyncedAt: new Date(channel.lastSyncedAt),
+          ...channelSnapshotValues(channel),
           updatedAt: now,
         };
 
@@ -147,15 +158,7 @@ const reconcile = (
           transaction
             .update(notificationTargetTable)
             .set({
-              canSend: channel.hasRequiredPermissions,
-              lastSyncedAt: new Date(channel.lastSyncedAt),
-              metadata: {
-                channelType: channel.channelType,
-                requiredPermissions: channel.requiredPermissions,
-                grantedPermissions: channel.grantedPermissions,
-                missingPermissions: channel.missingPermissions,
-                hasRequiredPermissions: channel.hasRequiredPermissions,
-              },
+              ...notificationTargetValues(channel),
               updatedAt: now,
             })
             .where(
@@ -339,12 +342,9 @@ export const makeGuildDiscordSyncData = (
       (yield* Clock.currentTimeMillis) - current.updatedAt.getTime() >
         ports.staleAfterMs;
 
+    // Age alone is not an error; keep only an error Discord actually reported.
     return stale
-      ? {
-          ...current,
-          status: DiscordGuildSyncStatus.STALE,
-          lastError: current.lastError ?? "Discord sync status is stale",
-        }
+      ? { ...current, status: DiscordGuildSyncStatus.STALE }
       : current;
   });
 
@@ -385,18 +385,7 @@ export const makeGuildDiscordSyncData = (
           .values({
             guildId: event.guildId,
             channelId: event.channel.channelId,
-            name: event.channel.name,
-            channelType: event.channel.channelType,
-            parentId: event.channel.parentId,
-            position: event.channel.position,
-            active: event.channel.active,
-            canView: event.channel.canView,
-            canSend: event.channel.canSend,
-            hasRequiredPermissions: event.channel.hasRequiredPermissions,
-            requiredPermissions: [...event.channel.requiredPermissions],
-            grantedPermissions: [...event.channel.grantedPermissions],
-            missingPermissions: [...event.channel.missingPermissions],
-            lastSyncedAt: new Date(event.channel.lastSyncedAt),
+            ...channelSnapshotValues(event.channel),
             createdAt: new Date(),
             updatedAt: new Date(),
           })
@@ -406,18 +395,7 @@ export const makeGuildDiscordSyncData = (
               discordGuildChannelSnapshotTable.channelId,
             ],
             set: {
-              name: event.channel.name,
-              channelType: event.channel.channelType,
-              parentId: event.channel.parentId,
-              position: event.channel.position,
-              active: event.channel.active,
-              canView: event.channel.canView,
-              canSend: event.channel.canSend,
-              hasRequiredPermissions: event.channel.hasRequiredPermissions,
-              requiredPermissions: [...event.channel.requiredPermissions],
-              grantedPermissions: [...event.channel.grantedPermissions],
-              missingPermissions: [...event.channel.missingPermissions],
-              lastSyncedAt: new Date(event.channel.lastSyncedAt),
+              ...channelSnapshotValues(event.channel),
               updatedAt: new Date(),
             },
           })
@@ -426,16 +404,7 @@ export const makeGuildDiscordSyncData = (
               transaction
                 .update(notificationTargetTable)
                 .set({
-                  canSend: event.channel.hasRequiredPermissions,
-                  lastSyncedAt: new Date(event.channel.lastSyncedAt),
-                  metadata: {
-                    channelType: event.channel.channelType,
-                    requiredPermissions: event.channel.requiredPermissions,
-                    grantedPermissions: event.channel.grantedPermissions,
-                    missingPermissions: event.channel.missingPermissions,
-                    hasRequiredPermissions:
-                      event.channel.hasRequiredPermissions,
-                  },
+                  ...notificationTargetValues(event.channel),
                   updatedAt: new Date(),
                 })
                 .where(

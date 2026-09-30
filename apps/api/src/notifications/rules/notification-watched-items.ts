@@ -1,10 +1,11 @@
+import { readNotificationRuleTargets } from "#src/notifications/targets/notification-target-store";
 import {
   notificationApiKeyOrganizations,
   notificationRulesInApiKeyScope,
   requireNotificationRuleApiKeyScope,
 } from "../notification-api-key-scope.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, count, desc, eq, inArray, or } from "drizzle-orm";
+import { and, count, desc, eq, or } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { pickGuildByIdOrVanityUrl } from "#src/guilds/active-guild-lookup";
@@ -65,38 +66,6 @@ export const makeNotificationWatchedItems = (
 ) => {
   const databaseFailure = (operation: string) => (cause: unknown) =>
     new NotificationWatchedItemFailure({ operation, cause });
-
-  const targetsForRules = (ruleIds: number[]) =>
-    Effect.gen(function* () {
-      if (ruleIds.length === 0) return new Map<number, unknown[]>();
-
-      const rows = yield* database
-        .select({
-          link: notificationRuleTargetTable,
-          target: notificationTargetTable,
-        })
-        .from(notificationRuleTargetTable)
-        .innerJoin(
-          notificationTargetTable,
-          eq(notificationRuleTargetTable.targetId, notificationTargetTable.id),
-        )
-        .where(inArray(notificationRuleTargetTable.ruleId, ruleIds));
-
-      const result = new Map<number, unknown[]>();
-
-      for (const { link, target } of rows) {
-        const values = result.get(link.ruleId) ?? [];
-        values.push({
-          ...link,
-          target: { ...target, metadata: target.metadata },
-        });
-        result.set(link.ruleId, values);
-      }
-
-      return result;
-    }).pipe(
-      Effect.mapError(databaseFailure("notifications.watchedItems.targets")),
-    );
 
   const mapRule = (
     rule: typeof notificationRuleTable.$inferSelect,
@@ -177,7 +146,10 @@ export const makeNotificationWatchedItems = (
     }>,
   ) {
     const ruleIds = rows.flatMap(({ rule }) => (rule ? [rule.id] : []));
-    const targets = yield* targetsForRules(ruleIds);
+
+    const targets = yield* readNotificationRuleTargets(database, ruleIds).pipe(
+      Effect.mapError(databaseFailure("notifications.watchedItems.targets")),
+    );
 
     const pairs = [
       ...new Map(

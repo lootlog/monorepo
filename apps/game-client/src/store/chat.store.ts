@@ -1,5 +1,5 @@
 import { isObjectRecord } from "@lootlog/schema/records";
-import { z } from "zod";
+import { Option, Schema } from "effect";
 import { useGameStore } from "@/store/game.store";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
@@ -7,6 +7,10 @@ import { storageKey } from "@/lib/storage-key";
 import type { MessageType } from "@/api/chat.api";
 
 const STORAGE_KEY = storageKey("ll:chat:state");
+
+const decodeLegacySelectedGuild = Schema.decodeUnknownOption(
+  Schema.fromJsonString(Schema.String),
+);
 
 export type ChatFilter = "all" | "normal" | "npc" | "party" | "reports";
 
@@ -25,8 +29,9 @@ interface ChatState {
   toggleIntegratedMode: () => void;
   isNotificationEnabled: boolean;
   toggleNotificationEnabled: () => void;
-  selectedInputGuildIds: string[];
-  setSelectedInputGuildIds: (guildIds: string[]) => void;
+  /** The Lootlog the console sends to; unset follows the character's Lootlog. */
+  commandGuildId: string | null;
+  setCommandGuildId: (guildId: string) => void;
   chatFilter: ChatFilter;
   setChatFilter: (filter: ChatFilter) => void;
   filtersVisible: boolean;
@@ -58,12 +63,8 @@ export const useChatStore = create<ChatState>()(
           isNotificationEnabled: !state.isNotificationEnabled,
         }));
       },
-      selectedInputGuildIds: [],
-      setSelectedInputGuildIds: (guildIds) => {
-        set(() => ({
-          selectedInputGuildIds: guildIds,
-        }));
-      },
+      commandGuildId: null,
+      setCommandGuildId: (guildId) => set({ commandGuildId: guildId }),
       chatFilter: "all",
       setChatFilter: (filter) => {
         set(() => ({ chatFilter: filter }));
@@ -138,7 +139,7 @@ export const useChatStore = create<ChatState>()(
         selectedGuildByCharacter: state.selectedGuildByCharacter,
         isIntegratedMode: state.isIntegratedMode,
         isNotificationEnabled: state.isNotificationEnabled,
-        selectedInputGuildIds: state.selectedInputGuildIds,
+        commandGuildId: state.commandGuildId,
         chatFilter: state.chatFilter,
         filtersVisible: state.filtersVisible,
       }),
@@ -169,14 +170,13 @@ export const getSelectedChatGuildId = (
 
   // Preserve the existing per-character selector preference on first use.
   try {
-    return z
-      .string()
-      .parse(
-        JSON.parse(
-          localStorage.getItem(storageKey(`ll:chat:selected-guild:${key}`)) ??
-            '""',
-        ),
-      );
+    return Option.getOrElse(
+      decodeLegacySelectedGuild(
+        localStorage.getItem(storageKey(`ll:chat:selected-guild:${key}`)) ??
+          '""',
+      ),
+      () => "",
+    );
   } catch {
     return "";
   }

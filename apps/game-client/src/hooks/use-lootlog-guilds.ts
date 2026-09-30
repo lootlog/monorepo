@@ -1,25 +1,17 @@
 import { orderGuilds as orderLootlogGuilds } from "@lootlog/domain/guild-preferences";
 import { useUserPreferences } from "@/hooks/api/use-user-preferences";
 import { getVisibleLootlogGuilds } from "@/lib/selected-lootlog-guild";
-import {
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
-  useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@lootlog/client/main";
+import { useAccessibleGuilds } from "@/hooks/api/use-accessible-guilds";
 
 /**
  * The one reader of the user's Lootlogs for every list, picker and name lookup
  * in the game client. `orderedGuilds` follows the order the user set in
  * settings and still includes hidden Lootlogs, so configuration screens can
  * reach them; `visibleGuilds` drops the hidden ones for in-game switchers.
+ * `hasNoGuilds` tells "not a member yet" apart from "every Lootlog hidden".
  */
 export const useLootlogGuilds = () => {
-  const guildsQuery = useUsersControllerGetCurrentUserAccessibleGuilds({
-    query: {
-      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-      refetchOnMount: false,
-      staleTime: 1000 * 60 * 5,
-    },
-  });
+  const guildsQuery = useAccessibleGuilds();
 
   const preferencesQuery = useUserPreferences();
 
@@ -37,6 +29,8 @@ export const useLootlogGuilds = () => {
   return {
     areVisibleGuildsResolved:
       guildsQuery.data !== undefined && preferencesQuery.data !== undefined,
+    /** The list loaded and the user is not a member of any Lootlog. */
+    hasNoGuilds: guildsQuery.data?.length === 0,
     guildsQuery,
     preferencesQuery,
     orderedGuilds,

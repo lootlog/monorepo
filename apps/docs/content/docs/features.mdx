@@ -58,7 +58,92 @@ Najczęściej używane kategorie to:
 - **Elita II**.
 
 Jeżeli znasz czas odrodzenia z innego źródła, osoba z odpowiednim
-uprawnieniem może dodać timer ręcznie.
+uprawnieniem może dodać timer ręcznie. Jeśli serwer odrzuci timer, formularz
+zostaje otwarty z wpisanymi danymi, a komunikat informuje o błędzie.
+Resetowanie i usunięcie timera wymagają potwierdzenia. Okienko pokazuje nazwę
+potwora i Lootlog, którego dotyczy zmiana. Przy grupowaniu usunięcie dotyczy
+wybranego Lootloga, a reset obejmuje Lootlogi reprezentowane przez timer.
+
+Po wybraniu innego świata w oknie timerów ręczne dodawanie, resetowanie i
+usuwanie dotyczą wyświetlanego świata. Timery na świecie, na którym grasz,
+pozostają bez zmian. Dotyczy to również widoku pod torbą.
+
+Przed czasem timera, oddzielone kropką, widać liczby graczy na jego mapie.
+Zielona liczba to osoby z tego Lootloga, także Twoja postać. Czerwona liczba to
+gracze z wrogiego klanu, których ktoś z Lootloga widział na tej mapie w
+ostatnich 10 sekundach; później blednie, a po 30 sekundach znika. Liczba jest
+pomarańczowa, gdy wszyscy gracze z danej grupy są AFK. Członkowie Twojego
+Lootloga nigdy nie są liczeni jako wrogowie.
+
+Po najechaniu na timer zobaczysz obie listy: nick, poziom, profesję i klan
+każdego gracza z oznaczeniem AFK, a przy wrogach także to, ile sekund temu ich
+widziano. Liczby wymagają uprawnień do odczytu obecności i lokalizacji. Nie
+pojawiają się przy herosach ani timerach bez mapy. Po utracie połączenia
+znikają do czasu pobrania aktualnych danych.
+
+Gdy ktoś z Lootloga zobaczy, że wróg opuszcza mapę, na przykład wylogowuje się
+albo przechodzi przejściem, a nikt inny z Lootloga go już nie widzi, wróg
+znika od razu: z ikony, podpowiedzi timera, mapy i sekcji **Widziani przez
+Lootloga**. Wróg, który tylko schował się we mgle wojny, może nadal być na
+mapie, dlatego blednie i znika po czasie, tak jak wyżej.
+
+Wrogów zgłaszają osoby z włączonymi AirTagami (**Ustawienia → Eksperymentalne**,
+tylko nowy interfejs gry) i zweryfikowanym kontem Margonem. Widzi ich każdy z
+uprawnieniami do odczytu obecności i lokalizacji, także w starym interfejsie i
+na timerach innego świata. Wystarczy, że jedna osoba widzi gracza jako wroga
+swojego klanu. Profesję wroga widać tylko wtedy, gdy zgłosił go zaktualizowany
+dodatek.
+
+Z włączonymi AirTagami okno **Gracze na mapie** pokazuje pod listą gry sekcję
+**Widziani przez Lootloga**. Są w niej wrogowie z Twojej mapy, których
+zobaczyli inni członkowie Lootloga, a których Ty nie widzisz. Gdy wróg wejdzie
+w Twój zasięg, przechodzi na zwykłą listę gry. Kliknięcie wiersza zaczyna
+prywatną wiadomość.
+
+Na mapie i minimapie AirTagi pokazują tylko graczy, których gra nie wyświetla,
+czyli tych poza Twoim zasięgiem widzenia. Postać w zasięgu rysuje sama gra, więc
+znaczniki Lootloga nie nakładają się na nią. Na minimapie widać kropki takich
+graczy, a na głównej mapie znaczniki z nickiem graczy z wrogich klanów.
+Znacznik przesuwa się płynnie w tempie chodu postaci i blednie, gdy nikt z
+Lootloga nie widzi już gracza.
+
+Filtry timerów, w tym zakres poziomów, są zapisywane lokalnie w przeglądarce
+osobno dla każdej postaci i świata. Każdy Lootlog oraz widok zgrupowanych
+timerów mają własne filtry. Dotyczy to okna timerów i widoku pod torbą.
+Po zmianie postaci lub odświeżeniu gry wraca zapisany dla niej zakres.
+Dotychczasowe filtry przejmuje pierwsza postać, na której otworzysz timery
+po aktualizacji, dla oglądanego wtedy świata.
+Pozostałe postacie zaczynają od ustawień domyślnych.
+
+Timery możesz układać we własne listy, na przykład „E2 na event” albo
+„Herosi 100+”. Kliknij timer prawym przyciskiem myszy, wybierz **Listy** i
+zaznacz listę albo od razu utwórz nową. Jeden potwór może być na kilku
+listach. Gdy masz co najmniej jedną listę, pod filtrami okna timerów pojawia
+się rząd przycisków z nazwami list. Kliknięcie włącza lub wyłącza listę, a
+zaznaczone listy pokazują tylko swoje timery. Kliknięcie prawym przyciskiem
+myszy pokazuje tylko tę jedną listę. Nazwy list zmienisz, a listy i
+przypisane do nich timery usuniesz w **Ustawienia → Timery → Listy**. Listy
+są zapisywane na Twoim koncie i działają na każdym urządzeniu, na którym
+jesteś zalogowany.
+
+Skasowany timer potwora możesz odzyskać przez **Historię timerów** na pasku okna.
+Przy wpisie usunięcia wybierz **Przywróć timer**. Potrzebujesz uprawnienia do
+dodawania timerów i dostępu do danego potwora. Przywrócenie zachowuje zapisany
+czas odrodzenia, nie rozpoczyna odliczania od nowa i nie zastępuje aktywnego
+timera. Wygasły timer podlega zwykłym ustawieniom widoczności.
+
+Ostatnie odświeżenie timera potwora możesz cofnąć w historii akcją
+**Cofnij odświeżenie**. Przycisk pojawia się, gdy historia zawiera poprzedni
+stan timera i masz do niego dostęp oraz uprawnienie do dodawania timerów.
+Cofnięcie przywraca zapisany stan sprzed odświeżenia, w tym czas odrodzenia.
+Jeśli ktoś w międzyczasie zmienił timer, cofnięcie zostanie odrzucone.
+Timerów należących do aktywnego eventu nie można przywracać ani cofać ich
+odświeżenia.
+
+Historia pokazuje ostatnie 10 zdarzeń Lootloga; dla pojedynczego timera
+wyświetla 5 ostatnich wpisów. Aby z niej skorzystać, wyłącz grupowanie i
+wybierz Lootlog. Timery ręczne nie mają historii i nie można ich odzyskać po
+usunięciu. Jeśli pobranie historii się nie powiedzie, wybierz **Spróbuj ponownie**.
 
 | Działanie           | Wymagane uprawnienie    |
 | ------------------- | ----------------------- |
@@ -70,14 +155,103 @@ uprawnieniem może dodać timer ręcznie.
 Oddzielne uprawnienia `LOOTLOG_TIMERS_TITANS_READ` i
 `LOOTLOG_TIMERS_HEROES_READ` kontrolują dostęp do strategicznych kategorii.
 
+## Gracze online
+
+Lista graczy online zapamiętuje zakres poziomów i profesję osobno dla każdej
+Twojej postaci, organizacji i oglądanego świata w tej przeglądarce. Po zmianie
+postaci lub odświeżeniu gry wracają jej własne filtry. **Wyczyść filtry**
+przywraca pełny zakres poziomów i wszystkie profesje tylko w bieżącym widoku.
+
+Dotychczasowe filtry przejmuje pierwsza postać, na której otworzysz listę po
+aktualizacji, dla oglądanego wtedy świata. Pozostałe postacie i światy
+zaczynają od pełnej listy graczy.
+
 ## Wykrywanie NPC
 
 Wykrywacz analizuje bieżącą mapę i prezentuje rozpoznane potwory wraz z
 dostępnymi informacjami, na przykład nazwą, poziomem, typem i pozycją.
 Filtry pomagają ograniczyć listę do interesujących poziomów lub kategorii.
+Zamknięcie okna wykrywacza tylko je ukrywa; lista zostaje do czasu jej
+wyczyszczenia (zobacz [Okna Lootlog w grze](/docs/settings#okna-lootlog-w-grze)).
 
 Jeżeli widok jest zbyt obciążający podczas gry, wyłącz niepotrzebne filtry lub
 sam moduł i sprawdź, czy wydajność się poprawiła.
+
+## Pingi
+
+Pingi działają w nowym interfejsie gry i są domyślnie włączone. Wyłączysz je
+w **Ustawienia → Pingi**, osobno na mapie i w walce. Domyślny skrót to
+środkowy przycisk myszy; zmienisz go w **Sterowanie → Skróty klawiszowe**
+(akcja „Ping”).
+
+Przytrzymaj skrót nad mapą albo wojownikiem. Wokół kursora pojawi się koło
+z opcjami. Pchnij mysz w stronę opcji i puść przycisk; nie musisz czekać, aż
+koło się otworzy. Liczy się tylko kierunek, więc kursor może wyjechać poza
+koło. `Escape` anuluje ping.
+
+### Na mapie
+
+Krótkie kliknięcie albo puszczenie przycisku na środku koła wysyła **Uwaga**.
+Na obwodzie koła są **Wróg** (u góry), **Idę** i **Grupa**. Ping widzą
+członkowie Twojej organizacji na tej samej mapie, także na Podręcznej mapie.
+
+Nad potworem środek koła i krótkie kliknięcie wysyłają **Bij ten cel**. Potwór
+zaczyna świecić na czerwono, a nad jego nazwą pojawia się znacznik z imieniem
+wskazującego; po kilku sekundach znika. Znika też od razu, gdy potwór
+zginie. Gdy dodatek nie zna tego potwora, znacznik stoi na jego kafelku.
+
+Nad innym graczem środek koła i krótkie kliknięcie wysyłają **Wróg**. Gracz
+zaczyna świecić na czerwono, a znacznik z imieniem wskazującego idzie za nim
+przez kilka sekund, także na Podręcznej mapie. Gdy gracz opuści mapę,
+znacznik znika. Na obwodzie koła są wtedy **Uwaga**, **Idę** i **Grupa**;
+te pingi zaznaczają kafelek, nie gracza.
+
+### W walce
+
+Pingi w walce działają w walce turowej. Walka automatyczna nie pokazuje
+wojowników, więc nie da się ich wtedy pingować. Środek koła w walce jest pusty:
+puszczenie na nim przycisku anuluje ping.
+
+- **Wróg:** krótkie kliknięcie wskazuje go drużynie jako cel do bicia.
+  Wspólny cel świeci na czerwono, stoi w czerwonym pierścieniu i ma w rogu
+  ikonę mieczy. Zostaje, dopóki ktoś nie wskaże innego celu, cel nie zginie
+  albo walka się nie skończy. Po przytrzymaniu wybierzesz też **Uwaga** albo
+  **Nie bij**.
+- **Sojusznik:** przytrzymaj skrót i wybierz prośbę. Opcje zależą od profesji
+  sojusznika.
+- **Twoja postać:** przytrzymaj skrót i wybierz **Potrzebuję leczenia**.
+
+| Profesja       | Prośby                               |
+| -------------- | ------------------------------------ |
+| Mag            | Atmo, Szadź, Leczenie                |
+| Tropiciel      | Aura SA, Leczenie, Emanująca strzała |
+| Paladyn        | Aura ochrony, Fala leczenia, Wyzyw   |
+| Wojownik       | Wyzyw                                |
+| Łowca          | Piętno, Oczyszczenie                 |
+| Tancerz ostrzy | Furia, Jad                           |
+
+Na polu walki ping to sama ikona w prawym górnym rogu postaci, żeby nie
+zasłaniała walki. **Uwaga** i **Nie bij** znikają po 3 sekundach, prośby po
+4 sekundach. Pierścień wokół ikony pokazuje, ile czasu jej zostało. Prośbę
+skierowaną do Ciebie wyróżnia złota ramka i wyższy dźwięk.
+
+Kto co wysłał, zobaczysz w oknie **Pingi w walce**. Otwiera się samo przy
+pierwszym pingu w walce. Na górze jest wspólny cel, niżej pingi z tej walki:
+co, od kogo, do kogo i ile sekund temu. Wyszarzone są pingi, których nie ma
+już na polu walki, a złote tło mają prośby do Ciebie. Po najechaniu na wiersz
+podświetla się na biało postać, której dotyczy. Zamknięte okno otworzy się
+znowu w następnej walce. Po walce okno znika, a lista się czyści.
+
+Ping na przycisk **Szybka walka** prosi o szybką walkę wszystkich graczy
+z Twojej drużyny w tej walce. U każdego z nich przycisk zaczyna świecić na
+złoto, a przy Twojej postaci pojawia się ikona **Szybka walka**; po kilku
+sekundach znika.
+
+Pingi w walce widzą tylko gracze z Twojej drużyny w tej walce, którzy należą
+do Twojej organizacji.
+
+Zbyt częste pingi są chwilowo blokowane; dodatek pokaże wtedy, ile sekund
+poczekać.
 
 ## Sprawdź rezultat
 

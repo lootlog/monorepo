@@ -4,7 +4,13 @@ import { ImmediateIntersectionObserver } from "@/lib/testing/intersection-observ
 
 import { initializeTestTranslations } from "@/lib/testing/i18n";
 import type { ReactNode } from "react";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createHeroKill as createKill } from "@/lib/testing/event-kill";
 import { EventKillsTable } from "./event-kills-table";
@@ -24,6 +30,7 @@ describe("EventKillsTable", () => {
   const defaultProps = {
     eventId: "event-1",
     fetchNextPage: vi.fn(),
+    onRetry: vi.fn(),
     guildId: "guild-1",
     hasError: false,
     hasNextPage: false,
@@ -130,6 +137,45 @@ describe("EventKillsTable", () => {
     ).toBeNull();
   });
 
+  it("watches the loader row against the screen when the document scrolls the page", () => {
+    const nativeMatchMedia = window.matchMedia.bind(window);
+    vi.stubGlobal("matchMedia", (query: string) => {
+      const result = nativeMatchMedia(query);
+      Object.defineProperty(result, "matches", {
+        value: query === "(max-width: 767px)",
+      });
+
+      return result;
+    });
+
+    const observerOptions = vi.fn();
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        constructor(
+          _callback: IntersectionObserverCallback,
+          options?: IntersectionObserverInit,
+        ) {
+          observerOptions(options);
+        }
+
+        observe() {}
+
+        disconnect() {}
+      },
+    );
+
+    renderTable(
+      <EventKillsTable {...defaultProps} kills={[createKill()]} hasNextPage />,
+    );
+
+    // The page viewport only grows with the list here, so it would always
+    // contain the loader row and every page would load at once.
+    expect(observerOptions).toHaveBeenCalledWith(
+      expect.objectContaining({ root: null }),
+    );
+  });
+
   it("renders preview rows without infinite-scroll behavior or a terminal row", () => {
     const observer = vi.fn();
     vi.stubGlobal("IntersectionObserver", observer);
@@ -137,6 +183,7 @@ describe("EventKillsTable", () => {
     renderTable(
       <EventKillsTable
         variant="preview"
+        onRetry={vi.fn()}
         eventId="event-1"
         guildId="guild-1"
         hasError={false}
@@ -153,6 +200,7 @@ describe("EventKillsTable", () => {
 
   it("preserves rows and disables observation after a pagination error", () => {
     const observer = vi.fn();
+    const retry = vi.fn();
     vi.stubGlobal("IntersectionObserver", observer);
 
     renderTable(
@@ -161,12 +209,17 @@ describe("EventKillsTable", () => {
         kills={[createKill()]}
         hasError
         hasNextPage
+        onRetry={retry}
       />,
     );
 
     expect(screen.getAllByText("Zorin").length).toBeGreaterThan(0);
     expect(screen.getByText("events.error")).toBeTruthy();
     expect(observer).not.toHaveBeenCalled();
+    fireEvent.click(
+      screen.getByRole("button", { name: "common.actions.retry" }),
+    );
+    expect(retry).toHaveBeenCalledOnce();
   });
 
   it("resets the scroll position after the hero filter changes", () => {
@@ -190,6 +243,8 @@ describe("EventKillsTable", () => {
       />,
     );
 
-    expect(scrollElement.scrollTo).toHaveBeenLastCalledWith(0, 0);
+    expect(scrollElement.scrollTo).toHaveBeenLastCalledWith(
+      expect.objectContaining({ top: 0 }),
+    );
   });
 });

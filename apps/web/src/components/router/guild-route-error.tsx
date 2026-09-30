@@ -2,6 +2,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { useNavigate, type ErrorComponentProps } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
+  getRouteErrorMessage,
   getRouteErrorStatus,
   normalizeRouteErrorStatus,
 } from "@/lib/router/route-errors";
@@ -31,6 +32,7 @@ export const GuildRouteError = ({ error, reset }: ErrorComponentProps) => {
     return (
       <RouteErrorState
         status={status}
+        details={getRouteErrorMessage(error)}
         title={
           status === 403
             ? t("common.routeErrors.guildForbidden.title")
@@ -49,6 +51,7 @@ export const GuildRouteError = ({ error, reset }: ErrorComponentProps) => {
   return (
     <RouteErrorState
       status={status}
+      details={getRouteErrorMessage(error)}
       primaryAction=<RouteRetryButton onRetry={handleRetry} />
       secondaryAction={goToDashboard}
     />

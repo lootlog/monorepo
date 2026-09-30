@@ -44,6 +44,16 @@ export class ApiKeyLeases {
 
     if (!keyIds.length) return Effect.void;
     const { config, client, refreshUser, now } = this;
+    const pendingPermissions = new Set<GatewaySocket>();
+    let refreshingPermissions = false;
+
+    const closeUnavailablePermissions = (sockets: Iterable<GatewaySocket>) => {
+      for (const socket of sockets) {
+        socket.data.apiKeyLeaseExpiresAt = 0;
+        socket.close(1013, "Organization permissions temporarily unavailable");
+        pendingPermissions.delete(socket);
+      }
+    };
 
     const closeAll = () => {
       for (const sockets of groups.values())
@@ -98,7 +108,10 @@ export class ApiKeyLeases {
           if (status.valid) valid.set(status.keyId, status);
       }
 
-      const users = new Map<string, string>();
+      const users = new Map<
+        string,
+        { userId: string; discordId: string; sockets: GatewaySocket[] }
+      >();
 
       for (const [keyId, sockets] of groups) {
         const status = valid.get(keyId);
@@ -116,35 +129,59 @@ export class ApiKeyLeases {
           }
 
           socket.data.apiKeyAccess = status.access;
-          users.set(status.userId, status.discordId);
+
+          const identity = JSON.stringify([status.userId, status.discordId]);
+
+          const user = users.get(identity) ?? {
+            userId: status.userId,
+            discordId: status.discordId,
+            sockets: [],
+          };
+
+          user.sockets.push(socket);
+          users.set(identity, user);
+          pendingPermissions.add(socket);
         }
       }
 
+      refreshingPermissions = true;
       yield* Effect.forEach(
-        users,
-        ([userId, discordId]) => refreshUser(discordId, userId),
+        users.values(),
+        ({ userId, discordId, sockets }) =>
+          Effect.gen(function* () {
+            yield* refreshUser(discordId, userId);
+
+            for (const socket of sockets) {
+              if (
+                !hasValidApiKeyLease(socket.data, now()) ||
+                now() >= checkedAt + API_KEY_LEASE_MS
+              ) {
+                socket.data.apiKeyLeaseExpiresAt = 0;
+                socket.close(1008, "API key authorization expired");
+              } else {
+                socket.data.apiKeyLeaseExpiresAt = checkedAt + API_KEY_LEASE_MS;
+              }
+
+              pendingPermissions.delete(socket);
+            }
+          }).pipe(
+            Effect.catchCause(() =>
+              Effect.sync(() => closeUnavailablePermissions(sockets)),
+            ),
+          ),
         { concurrency: 8, discard: true },
       );
-
-      for (const [keyId, sockets] of groups) {
-        if (!valid.has(keyId)) continue;
-
-        for (const socket of sockets) {
-          if (
-            !hasValidApiKeyLease(socket.data, now()) ||
-            now() >= checkedAt + API_KEY_LEASE_MS
-          ) {
-            socket.data.apiKeyLeaseExpiresAt = 0;
-            socket.close(1008, "API key authorization expired");
-            continue;
-          }
-
-          socket.data.apiKeyLeaseExpiresAt = checkedAt + API_KEY_LEASE_MS;
-        }
-      }
     }).pipe(
       Effect.timeout("15 seconds"),
-      Effect.catchCause(() => Effect.sync(closeAll)),
+      Effect.catchCause(() =>
+        Effect.sync(() => {
+          if (refreshingPermissions) {
+            closeUnavailablePermissions(pendingPermissions);
+          } else {
+            closeAll();
+          }
+        }),
+      ),
     );
   }
 

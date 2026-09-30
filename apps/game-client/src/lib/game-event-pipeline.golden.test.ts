@@ -1,12 +1,11 @@
-import { z } from "zod";
+import { Schema } from "effect";
 import { configureApiClients } from "@lootlog/client/transport";
 import { airTagObservationController } from "@/features/air-tags/air-tag-observation-controller";
 import { airTagRuntime } from "@/features/air-tags/air-tag-runtime";
-import { mapPingController } from "@/features/map-pings/map-ping-controller";
-import { mapPingInteractionController } from "@/features/map-pings/map-ping-interaction-controller";
+import { mapPingController } from "@/features/pings/map-ping-controller";
+import { pingInteractionController } from "@/features/pings/ping-interaction-controller";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import { useBattlePanelStore } from "@/store/battle-panel.store";
-import { useFriendsStore } from "@/store/friends.store";
 import { useBattleStore } from "@/store/game-store/battle.store";
 import { useDialogStore } from "@/store/game-store/dialog.store";
 import { useLootStore } from "@/store/game-store/loot.store";
@@ -19,11 +18,12 @@ import {
 } from "./margonem-runtime/margonem-runtime-bridge";
 import { runtimeEventPipeline } from "./margonem-runtime/runtime-event-pipeline";
 import { useGameStore } from "@/store/game.store";
+import { useSocialRelationsStore } from "@/store/social-relations.store";
 import { useNpcsStore } from "@/store/npcs.store";
 import { useOthersStore } from "@/store/others.store";
 
 const effects = {
-  cancelMapPingInteraction: vi.spyOn(mapPingInteractionController, "cancel"),
+  cancelMapPingInteraction: vi.spyOn(pingInteractionController, "cancel"),
   clearMapPings: vi.spyOn(mapPingController, "clear"),
   handleAirTagMapChange: vi.spyOn(airTagRuntime, "handleMapChange"),
   observeOtherPlayers: vi.spyOn(airTagObservationController, "handle"),
@@ -60,18 +60,20 @@ async function captureHttp(
 const requestsFor = (path: string) =>
   requests.filter((request) => request.path === path);
 
-const submittedBattleSchema = z.object({
-  events: z.array(
-    z.object({
-      f: z
-        .object({
-          m: z.array(z.string()).optional(),
-          w: z.record(z.string(), z.unknown()).optional(),
-        })
-        .optional(),
-    }),
-  ),
-});
+const decodeSubmittedBattle = Schema.decodeUnknownSync(
+  Schema.Struct({
+    events: Schema.Array(
+      Schema.Struct({
+        f: Schema.optional(
+          Schema.Struct({
+            m: Schema.optional(Schema.Array(Schema.String)),
+            w: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
+          }),
+        ),
+      }),
+    ),
+  }),
+);
 
 const pipelineWindow: Window & { successData?: RuntimeFunction } = window;
 
@@ -262,7 +264,7 @@ function resetPipelineState(): void {
   });
   useBattlePanelStore.setState({ isBattleCollectionEnabled: true });
   useDialogStore.getState().clearNpcContext();
-  useFriendsStore.setState({ friends: [], friendsMax: 0 });
+  useSocialRelationsStore.setState({ characters: {}, clans: {} });
   useGlobalStore.setState({
     socketState: { connected: false, joined: false, joinedGuilds: [] },
   });
@@ -288,6 +290,7 @@ function resetPipelineState(): void {
       maxHp: 1,
       name: "Hero",
       profession: "w",
+      stasis: false,
       x: 1,
       y: 2,
     },
@@ -339,8 +342,7 @@ function replayAndSnapshot(payload: unknown) {
       mapPingClears: effects.clearMapPings.mock.calls.length,
       otherObservations: effects.observeOtherPlayers.mock.calls,
     },
-    friends: useFriendsStore.getState().friends,
-    friendsMax: useFriendsStore.getState().friendsMax,
+    friends: useSocialRelationsStore.getState().characters,
     lastLootId: useLootStore.getState().lastLootId,
     party: usePartyStore.getState().members,
     result,
@@ -389,18 +391,9 @@ describe("game event pipeline golden replay", () => {
         mapPingClears: 1,
         otherObservations: [[{}]],
       },
-      friends: [
-        {
-          characterId: "55",
-          icon: "friend.gif",
-          level: 300,
-          location: "Nithal",
-          name: "Friend",
-          profession: "m",
-          status: "online",
-        },
-      ],
-      friendsMax: 25,
+      friends: {
+        '["luvia","67890","12345"]': { enemies: {}, friends: { "55": true } },
+      },
       lastLootId: null,
       party: [
         {
@@ -495,6 +488,8 @@ describe("game event pipeline golden replay", () => {
         ],
       }),
     );
+
+    await vi.waitFor(() => expect(requestsFor("/kills")).toHaveLength(1));
 
     dispatcher.cleanup();
   });
@@ -706,7 +701,7 @@ describe("game event pipeline golden replay", () => {
 
     await vi.waitFor(() => expect(requestsFor("/battles")).toHaveLength(1));
 
-    const submittedBattle = submittedBattleSchema.parse(
+    const submittedBattle = decodeSubmittedBattle(
       requestsFor("/battles")[0]?.body,
     );
 

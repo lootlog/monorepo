@@ -93,11 +93,37 @@ it("bounds mounted rows for five hundred NPCs and mounts rows reached by scrolli
   expect(screen.getAllByRole("listitem").length).toBeLessThanOrEqual(20);
   expect(screen.getByText("NPC 0")).toBeVisible();
   expect(screen.queryByText("NPC 100")).not.toBeInTheDocument();
-  viewport.scrollTop = 100 * 54;
+  viewport.scrollTop = 100 * 40;
   fireEvent.scroll(viewport);
   expect(screen.getByText("NPC 100")).toBeVisible();
   expect(screen.queryByText("NPC 0")).not.toBeInTheDocument();
   expect(screen.getAllByRole("listitem").length).toBeLessThanOrEqual(20);
+});
+
+it("leaves the only shown detection to the window's close button when routing hides the others", () => {
+  useNpcDetectorStore.setState({ npcs: [createNpc(1), createNpc(2)] });
+  const queryClient = new QueryClient();
+
+  const view = render(
+    <QueryClientProvider client={queryClient}>
+      <NpcsList
+        detectorSettings={defaultDetectorSettings}
+        npcs={[createNpc(1)]}
+      />
+    </QueryClientProvider>,
+  );
+
+  onTestFinished(() => {
+    view.unmount();
+    queryClient.clear();
+  });
+
+  // Removing it would empty the window while it stays open with hidden
+  // detections still stored.
+  expect(screen.getByText("NPC 1")).toBeVisible();
+  expect(
+    screen.queryByRole("button", { name: "Usuń potwora z listy" }),
+  ).not.toBeInTheDocument();
 });
 
 it("does not replay entry animation when virtualization remounts an existing row", () => {
@@ -106,11 +132,14 @@ it("does not replay entry animation when virtualization remounts an existing row
     true,
   );
 
-  viewport.scrollTop = 100 * 54;
+  viewport.scrollTop = 100 * 40;
   fireEvent.scroll(viewport);
-  expect(screen.getByText("NPC 100").closest("li")).not.toHaveClass(
-    "ll-npc-list-enter",
-  );
+  expect(
+    screen
+      .getByText("NPC 100")
+      .closest("li")
+      ?.querySelector("[data-ll-row-arrival]"),
+  ).toBeNull();
 });
 
 it("animates retained rows from their previous positions after detections reorder the list", () => {
@@ -176,8 +205,8 @@ it("animates retained rows from their previous positions after detections reorde
   );
   expect(animate).toHaveBeenCalledTimes(2);
   expect(animate).toHaveBeenCalledWith(
-    [{ transform: "translateY(-54px)" }, { transform: "translateY(0)" }],
-    expect.objectContaining({ duration: 180 }),
+    [{ transform: "translateY(-40px)" }, { transform: "translateY(0)" }],
+    expect.any(Object),
   );
 });
 
@@ -205,7 +234,7 @@ it("expires cooldowns and detection animations while their row is offscreen", ()
     })),
   );
 
-  viewport.scrollTop = 100 * 54;
+  viewport.scrollTop = 100 * 40;
   fireEvent.scroll(viewport);
   expect(screen.queryByText("NPC 0")).not.toBeInTheDocument();
   act(() => vi.advanceTimersByTime(5500));
@@ -242,7 +271,8 @@ it("commits a notification cooldown once per second, not on a polling clock", ()
     },
   );
 
-  const cooldownButton = screen.getByRole("button", { name: "5" });
+  const cooldownButton = screen.getByRole("button", { name: "Wysłano" });
+  expect(cooldownButton).toHaveTextContent("5");
   updateCommits = 0;
 
   for (let second = 0; second < 4; second += 1) {
@@ -279,8 +309,10 @@ it("restarts the countdown when the same NPC is notified again mid-cooldown", ()
     },
   );
 
+  const cooldownButton = screen.getByRole("button", { name: "Wysłano" });
+
   act(() => vi.advanceTimersByTime(3000));
-  expect(screen.getByRole("button", { name: "2" })).toBeInTheDocument();
+  expect(cooldownButton).toHaveTextContent("2");
 
   act(() =>
     useNpcDetectorStore
@@ -288,7 +320,9 @@ it("restarts the countdown when the same NPC is notified again mid-cooldown", ()
       .setNpcStates([{ npcId: 1, npc: { notificationSentAt: Date.now() } }]),
   );
 
-  expect(screen.getByRole("button", { name: "5" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Wysłano" })).toHaveTextContent(
+    "5",
+  );
 
   act(() => vi.advanceTimersByTime(5000));
   expect(

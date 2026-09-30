@@ -29,6 +29,7 @@ const EventOverviewScoringState = JsonValue.annotate({
   identifier: "EventOverviewResponseDto__schema0",
 });
 
+// TODO(kill-history-legacy): Remove these two list-only JSON components with the legacy responses.
 const KillHistoryBonusBreakdown = JsonValue.annotate({
   identifier: "EventKillHistoryResponseDto__schema0",
 });
@@ -222,6 +223,7 @@ const ParticipationConfirmation = Schema.Struct({
   heroNpc: EventHeroSummary,
 });
 
+// TODO(kill-history-legacy): Remove this map schema with KillParticipation; detail defines its own shape.
 const EventMapParticipation = Schema.Struct({
   mapId: Schema.String,
   mapName: Schema.String,
@@ -655,6 +657,8 @@ export const EventHeroStatsResponse = Schema.Struct({
   killCount: FiniteNumber,
 }).annotate({ identifier: "EventHeroStatsResponseDto" });
 
+// TODO(kill-history-legacy): Remove KillParticipation and both legacy history responses below.
+// Keep EventKillDetailResponse, EventParticipant and EventHeroSummary; see events/history/README.md.
 const KillParticipation = Schema.Struct({
   id: Schema.String,
   memberId: FiniteNumber,
@@ -1088,6 +1092,8 @@ export type EventHeroStatsListResponse = typeof EventHeroStatsListResponse.Type;
 
 export const EventHeroStatsListResponse = Schema.Array(EventHeroStatsResponse);
 
+// TODO(kill-history-legacy): Remove EventKillHistoryQuery, EventMemberPath and HeroKillHistoryQuery.
+// EventHeroKillPath below remains the detail/timeline contract.
 export type EventKillHistoryQuery = typeof EventKillHistoryQuery.Type;
 
 export const EventKillHistoryQuery = Schema.Struct({

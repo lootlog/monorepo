@@ -1,4 +1,4 @@
-import { toggleAvailableGuild } from "@/features/settings/components/shared/settings-guild-picker";
+import { toggleAvailableGuild } from "@/lib/selected-lootlog-guild";
 import { useUpdateGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";

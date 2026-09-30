@@ -13,7 +13,7 @@ import { makeLootQueryPersistence } from "#src/loots/query/loot-query.persistenc
 import type { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
 import { createHash, randomInt, randomUUID } from "node:crypto";
-import { and, count, eq, inArray, sql } from "drizzle-orm";
+import { and, arrayOverlaps, count, eq, inArray, sql } from "drizzle-orm";
 import { Effect, ManagedRuntime, Schema } from "effect";
 import { MessagingError, type PublishOptions } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -26,8 +26,10 @@ import {
   memberTable,
   userCharactersLootlogSettingsTable,
   lootTable,
-  lootPlayerTable,
+  lootItemTable,
   lootNpcTable,
+  lootPlayerTable,
+  itemSnapshotTable,
   npcSnapshotTable,
   lootMapPlayerTable,
   playerSnapshotTable,
@@ -138,12 +140,13 @@ describe("durable loot publications", () => {
     return { id, request: { discordId: id, submission } };
   };
 
-  const acceptance = () =>
+  const acceptance = (signalPublications: Effect.Effect<void> = Effect.void) =>
     makeLootSubmissionAcceptance(
       makeLootSubmissionAcceptancePersistence(database),
       {
         withLock: (_resource, _ttl, _options, effect) => effect,
       },
+      signalPublications,
     );
 
   const pending = (lootId: number) =>
@@ -631,7 +634,7 @@ describe("durable loot publications", () => {
   });
 
   it.each([1, 2])(
-    "accepts concurrent loots with opposite participants and the same map roster (round %j)",
+    "accepts concurrent loots with opposite participants, overlapping item and NPC snapshots, and the same map roster (round %j)",
     async () => {
       const first = await seed(true);
       const second = await seed(true);
@@ -653,35 +656,40 @@ describe("durable loot publications", () => {
         icon: "player-b.png",
       };
 
+      const [baseItem] = first.request.submission.loots;
+      const [baseNpc] = first.request.submission.npcs;
+
+      if (!baseItem || !baseNpc) throw new Error("Expected seeded loot");
+
+      const itemX = { ...baseItem, id: randomInt(10_000_000, 20_000_000) };
+      const itemY = { ...baseItem, id: itemX.id + 1 };
+
+      const npcP = {
+        ...baseNpc,
+        id: randomInt(10_000_000, 20_000_000),
+        name: randomUUID(),
+      };
+
+      const npcQ = { ...npcP, id: npcP.id + 1 };
+
+      // Opposite orders and repeated identical items make both loots contend
+      // for the same snapshot keys while each instance keeps its own link.
+      const items = (...templates: Array<typeof itemX>) =>
+        templates.map((item) => ({ ...item, hid: randomUUID() }));
+
       first.request.submission = {
         ...first.request.submission,
         world,
-        npcs: first.request.submission.npcs.map((npc) => ({
-          ...npc,
-          id: randomInt(1, 1_000_000),
-          name: randomUUID(),
-        })),
-        loots: first.request.submission.loots.map((item) => ({
-          ...item,
-          id: randomInt(1, 1_000_000),
-          name: randomUUID(),
-        })),
+        npcs: [npcP, npcQ],
+        loots: items(itemX, itemX, itemY),
         players: [{ ...playerA, id: playerA.characterId, prof: "w", lvl: 80 }],
         mapPlayersSnapshot: [playerA, playerB],
       };
       second.request.submission = {
         ...second.request.submission,
         world,
-        npcs: second.request.submission.npcs.map((npc) => ({
-          ...npc,
-          id: randomInt(1_000_001, 2_000_000),
-          name: randomUUID(),
-        })),
-        loots: second.request.submission.loots.map((item) => ({
-          ...item,
-          id: randomInt(1_000_001, 2_000_000),
-          name: randomUUID(),
-        })),
+        npcs: [npcQ, npcP],
+        loots: items(itemY, itemX, itemY),
         players: [{ ...playerB, id: playerB.characterId, prof: "m", lvl: 80 }],
         mapPlayersSnapshot: [playerB, playerA],
       };
@@ -707,6 +715,70 @@ describe("durable loot publications", () => {
       );
 
       expect(snapshots).toHaveLength(2);
+
+      const itemSnapshots = await runtime.runPromise(
+        database
+          .select({
+            id: itemSnapshotTable.id,
+            itemId: itemSnapshotTable.itemId,
+          })
+          .from(itemSnapshotTable)
+          .where(inArray(itemSnapshotTable.itemId, [itemX.id, itemY.id])),
+      );
+
+      const npcSnapshots = await runtime.runPromise(
+        database
+          .select({ id: npcSnapshotTable.id, npcId: npcSnapshotTable.npcId })
+          .from(npcSnapshotTable)
+          .where(inArray(npcSnapshotTable.npcId, [npcP.id, npcQ.id])),
+      );
+
+      expect(itemSnapshots).toHaveLength(2);
+      expect(npcSnapshots).toHaveLength(2);
+
+      const itemSnapshotId = new Map(
+        itemSnapshots.map((snapshot) => [snapshot.itemId, snapshot.id]),
+      );
+
+      const npcSnapshotId = new Map(
+        npcSnapshots.map((snapshot) => [snapshot.npcId, snapshot.id]),
+      );
+
+      for (const [request, result] of [
+        [first.request, firstResult],
+        [second.request, secondResult],
+      ] as const) {
+        const lootItems = await runtime.runPromise(
+          database
+            .select({
+              hid: lootItemTable.hid,
+              itemSnapshotId: lootItemTable.itemSnapshotId,
+            })
+            .from(lootItemTable)
+            .where(eq(lootItemTable.lootId, result.id))
+            .orderBy(lootItemTable.id),
+        );
+
+        const lootNpcs = await runtime.runPromise(
+          database
+            .select({ npcSnapshotId: lootNpcTable.npcSnapshotId })
+            .from(lootNpcTable)
+            .where(eq(lootNpcTable.lootId, result.id))
+            .orderBy(lootNpcTable.id),
+        );
+
+        expect(lootItems).toEqual(
+          request.submission.loots.map((item) => ({
+            hid: item.hid,
+            itemSnapshotId: itemSnapshotId.get(item.id),
+          })),
+        );
+        expect(lootNpcs).toEqual(
+          request.submission.npcs.map((npc) => ({
+            npcSnapshotId: npcSnapshotId.get(npc.id),
+          })),
+        );
+      }
 
       const snapshotA = snapshots.find(
         (player) => player.characterId === playerA.characterId,
@@ -1210,6 +1282,11 @@ describe("durable loot publications", () => {
 
   it("rolls back the durable loot when persisting its publication intent fails", async () => {
     const { request } = await seed();
+    let signals = 0;
+
+    const signal = Effect.sync(() => {
+      signals += 1;
+    });
 
     const before = await runtime.runPromise(
       database.select({ value: count() }).from(lootTable),
@@ -1228,10 +1305,11 @@ describe("durable loot publications", () => {
 
     try {
       const result = await runtime.runPromise(
-        Effect.exit(acceptance().accept(request)),
+        Effect.exit(acceptance(signal).accept(request)),
       );
 
       expect(result._tag).toBe("Failure");
+      expect(signals).toBe(0);
       expect(
         await runtime.runPromise(
           database.select({ value: count() }).from(lootTable),
@@ -1247,6 +1325,50 @@ describe("durable loot publications", () => {
         database.execute(sql`DROP FUNCTION reject_test_loot_publication()`),
       );
     }
+  });
+
+  it("signals committed new and appended Organization publications before acceptance returns", async () => {
+    const first = await seed();
+    const second = await seed();
+    const observations: string[][] = [];
+
+    const signal = database
+      .select({ organizationIds: lootPublicationOutboxTable.organizationIds })
+      .from(lootPublicationOutboxTable)
+      .where(
+        arrayOverlaps(lootPublicationOutboxTable.organizationIds, [
+          first.id,
+          second.id,
+        ]),
+      )
+      .pipe(
+        Effect.tap((rows) =>
+          Effect.sync(() => {
+            observations.push([
+              ...new Set(rows.flatMap((row) => row.organizationIds)),
+            ]);
+          }),
+        ),
+        Effect.asVoid,
+        Effect.orDie,
+      );
+
+    const accepted = await runtime.runPromise(
+      acceptance(signal).accept(first.request),
+    );
+
+    snapshotTestLootIds.push(accepted.id);
+    expect(observations).toEqual([[first.id]]);
+    await runtime.runPromise(acceptance(signal).accept(first.request));
+    expect(observations).toEqual([[first.id]]);
+
+    await runtime.runPromise(
+      acceptance(signal).accept({
+        discordId: second.id,
+        submission: first.request.submission,
+      }),
+    );
+    expect(observations[1]?.sort()).toEqual([first.id, second.id].sort());
   });
 
   it("reuses the pending notification job when queueing failed after its database commit", async () => {

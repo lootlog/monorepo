@@ -3,6 +3,7 @@ import {
   lootsControllerUpdateLoot,
   type CreateLootDto,
   type CreateLootResponseDtoOutput,
+  type LootShareResponseDto,
   type UpdateLootDto,
 } from "@lootlog/client/main";
 import {
@@ -67,11 +68,11 @@ export async function createLoot(
   return response;
 }
 
-export async function updateLoot({
+export function updateLoot({
   id,
   ...rest
-}: UpdateLootDto & { id: number }): Promise<void> {
-  await runSingleLoggedAction({
+}: UpdateLootDto & { id: number }): Promise<LootShareResponseDto> {
+  return runSingleLoggedAction({
     actionType: "update_loot",
     actionPayload: { id, ...rest },
     request: {

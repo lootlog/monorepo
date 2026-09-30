@@ -84,9 +84,16 @@ export function useOtherCatchingGuildGlow(): void {
     lootlogOtherGlowManager.install();
 
     return () => {
-      lootlogOtherGlowManager.cleanup();
+      lootlogOtherGlowManager.uninstall();
     };
   }, [active]);
+
+  useEffect(
+    () => () => {
+      lootlogOtherGlowManager.cleanup();
+    },
+    [],
+  );
 
   useEffect(() => {
     lootlogOtherGlowManager.setNativeGlowSuppressed(active);

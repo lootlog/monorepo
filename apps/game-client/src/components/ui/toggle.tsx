@@ -12,10 +12,10 @@ const toggleVariants = cva(
           "ll:border ll:border-input ll:bg-transparent ll:hover:bg-muted",
       },
       size: {
-        default:
-          "ll:h-8 ll:min-w-8 ll:px-2.5 ll:has-data-[icon=inline-end]:pr-2 ll:has-data-[icon=inline-start]:pl-2",
-        sm: "ll:h-7 ll:min-w-7 ll:rounded-sm ll:px-2 ll:text-xs ll:has-data-[icon=inline-end]:pr-1.5 ll:has-data-[icon=inline-start]:pl-1.5 ll:[&_svg:not([class*=size-])]:size-3.5",
-        lg: "ll:h-9 ll:min-w-9 ll:px-2.5 ll:has-data-[icon=inline-end]:pr-2 ll:has-data-[icon=inline-start]:pl-2",
+        default: "ll:h-8 ll:min-w-8 ll:px-2.5",
+        sm: "ll:h-7 ll:min-w-7 ll:rounded-sm ll:px-2 ll:text-xs ll:[&_svg:not([class*=size-])]:size-3.5",
+        xs: "ll:h-6 ll:min-w-6 ll:px-1.5 ll:text-xs ll:[&_svg:not([class*=size-])]:size-3",
+        lg: "ll:h-9 ll:min-w-9 ll:px-2.5",
       },
     },
     defaultVariants: {

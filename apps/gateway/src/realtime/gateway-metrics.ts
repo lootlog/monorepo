@@ -5,7 +5,11 @@ import type {
   RedisGatewayStore,
 } from "#src/platform/redis-store";
 import type { CommandIngress } from "#src/realtime/command-ingress";
-import type { RealtimeHub } from "#src/realtime/realtime-hub";
+import type { JoinAdmission } from "#src/realtime/join-admission";
+import {
+  FEDERATION_VERSION,
+  type RealtimeHub,
+} from "#src/realtime/realtime-hub";
 
 const SNAPSHOTS = "realtime:metrics:instances:v2";
 
@@ -18,6 +22,7 @@ redis.call('HSET', KEYS[1], ARGV[1], cjson.encode(snapshot))
 redis.call('EXPIRE', KEYS[1], 60)
 local snapshots = redis.call('HGETALL', KEYS[1])
 local connections, sessions, count = 0, 0, 0
+local federationVersion = math.huge
 local players = {}
 for i = 1, #snapshots, 2 do
   local value = cjson.decode(snapshots[i + 1])
@@ -26,16 +31,41 @@ for i = 1, #snapshots, 2 do
   else
     connections = connections + value.connections
     sessions = sessions + value.sessions
+    -- Replicas that predate the field decode version 1 frames only.
+    federationVersion = math.min(federationVersion, tonumber(value.federationVersion) or 1)
     for _, player in ipairs(value.players) do
       if not players[player] then players[player] = true; count = count + 1 end
     end
   end
 end
-return {connections, sessions, count}
+return {connections, sessions, count, federationVersion}
 `;
 
+// Same liveness rule as SAMPLE, without writing this replica's snapshot.
+const CLUSTER_FEDERATION_VERSION = `
+local time = redis.call('TIME')
+local now = tonumber(time[1]) * 1000 + math.floor(tonumber(time[2]) / 1000)
+local version = nil
+for _, raw in ipairs(redis.call('HVALS', KEYS[1])) do
+  local value = cjson.decode(raw)
+  if now - value.at < 30000 then
+    local current = tonumber(value.federationVersion) or 1
+    if version == nil or current < version then version = current end
+  end
+end
+return version or 1
+`;
+
+/** Lowest `FEDERATION_VERSION` among the replicas that sampled in the last 30 s. */
+export const readClusterFederationVersion = (
+  redis: Pick<RedisGatewayCommands, "eval">,
+) =>
+  Effect.tryPromise(() =>
+    redis.eval(CLUSTER_FEDERATION_VERSION, 1, SNAPSHOTS),
+  ).pipe(Effect.map(Schema.decodeUnknownSync(Schema.Number)));
+
 const decodeCounts = Schema.decodeUnknownSync(
-  Schema.Tuple([Schema.Number, Schema.Number, Schema.Number]),
+  Schema.Tuple([Schema.Number, Schema.Number, Schema.Number, Schema.Number]),
 );
 
 const observedAt = Metric.gauge("lootlog_gateway_cluster_observed_at_seconds", {
@@ -56,6 +86,10 @@ const uniquePlayers = Metric.gauge("lootlog_gateway_cluster_unique_players", {
 });
 
 const runtimeGauges = {
+  available: Metric.gauge("lootlog_gateway_available", {
+    description:
+      "1 while subscribed to realtime federation and not draining; readiness follows it",
+  }),
   federationQueued: Metric.gauge("lootlog_gateway_federation_queued"),
   pendingCommands: Metric.gauge("lootlog_gateway_redis_pending"),
   pendingPublications: Metric.gauge("lootlog_gateway_publications_pending"),
@@ -70,6 +104,8 @@ const runtimeGauges = {
   bytes: Metric.gauge("lootlog_gateway_commands_retained_bytes"),
   rejected: Metric.gauge("lootlog_gateway_commands_rejected_total"),
   maxConnectionPending: Metric.gauge("lootlog_gateway_commands_connection_max"),
+  joinsActive: Metric.gauge("lootlog_gateway_joins_active"),
+  joinsRejected: Metric.gauge("lootlog_gateway_joins_rejected_total"),
   bufferedBytes: Metric.gauge("lootlog_gateway_sockets_buffered_bytes"),
   maxBufferedBytes: Metric.gauge("lootlog_gateway_socket_buffered_bytes_max"),
 };
@@ -79,8 +115,12 @@ const runtimeGauges = {
 export class GatewayRuntimeMetrics {
   constructor(
     private readonly redis: Pick<RedisGatewayStore, "getDiagnostics">,
-    private readonly hub: Pick<RealtimeHub, "getLocalSockets">,
+    private readonly hub: Pick<
+      RealtimeHub,
+      "getLocalSockets" | "unavailableReason"
+    >,
     private readonly ingress: Pick<CommandIngress, "getDiagnostics">,
+    private readonly joins: Pick<JoinAdmission, "getDiagnostics">,
   ) {}
 
   readonly sample = Effect.fnUntraced(function* (this: GatewayRuntimeMetrics) {
@@ -94,8 +134,10 @@ export class GatewayRuntimeMetrics {
     }
 
     const values = {
+      available: this.hub.unavailableReason() === undefined ? 1 : 0,
       ...this.redis.getDiagnostics(),
       ...this.ingress.getDiagnostics(),
+      ...this.joins.getDiagnostics(),
       bufferedBytes,
       maxBufferedBytes,
     };
@@ -118,7 +160,10 @@ export class GatewayRuntimeMetrics {
 export class GatewayMetrics {
   constructor(
     private readonly redis: Pick<RedisGatewayCommands, "eval">,
-    private readonly hub: Pick<RealtimeHub, "instanceId" | "getLocalSockets">,
+    private readonly hub: Pick<
+      RealtimeHub,
+      "instanceId" | "getLocalSockets" | "clusterFederationVersion"
+    >,
     private readonly now: () => number = Date.now,
   ) {}
 
@@ -152,11 +197,16 @@ export class GatewayMetrics {
           connections: sockets.length,
           sessions,
           players: [...players],
+          federationVersion: FEDERATION_VERSION,
         }),
       ),
     );
 
-    const [connectionCount, sessionCount, playerCount] = decodeCounts(counts);
+    const [connectionCount, sessionCount, playerCount, federationVersion] =
+      decodeCounts(counts);
+
+    // Each replica samples every 10 s, so a starting older replica is seen within that.
+    this.hub.clusterFederationVersion = federationVersion;
     yield* Metric.update(connections, connectionCount);
     yield* Metric.update(gameSessions, sessionCount);
     yield* Metric.update(uniquePlayers, playerCount);

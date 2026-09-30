@@ -14,7 +14,7 @@ describe("timer settings controls", () => {
     const user = userEvent.setup();
     const original = useTimersStore.getState().displayConfig;
     render(<TimersSettingsAppearance />);
-    const toggle = screen.getByRole("switch", { name: "Wygląd legacy" });
+    const toggle = screen.getByRole("switch", { name: "Poprzedni wygląd" });
     expect(toggle).not.toBeChecked();
     toggle.focus();
     await user.keyboard(" ");

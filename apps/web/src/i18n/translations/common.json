@@ -93,7 +93,21 @@
     "settingsNpcs": "Ustawienia potworów i NPC"
   },
   "greeting": "Cześć, {{name}}!",
+  "init": {
+    "missingGuild": {
+      "title": "Nie wskazano serwera Discord",
+      "description": "W tym adresie brakuje identyfikatora serwera Discord. Przejdź do panelu, aby wybrać organizację lub ponownie dodać bota."
+    },
+    "failed": {
+      "title": "Nie udało się przygotować organizacji",
+      "description": "Nie udało się sprawdzić serwera Discord. Jeśli bot został właśnie dodany, poczekaj chwilę i spróbuj ponownie."
+    },
+    "offline": {
+      "description": "Brak połączenia z siecią. Połącz się z internetem i spróbuj ponownie."
+    }
+  },
   "routeErrors": {
+    "details": "Szczegóły techniczne",
     "guildShellTitle": "Nawigacja gildii",
     "code": "Kod błędu: {{status}}",
     "guildForbidden": {
@@ -103,7 +117,6 @@
     "actions": {
       "retry": "Spróbuj ponownie",
       "goToDashboard": "Przejdź do dashboardu",
-      "goToInit": "Przejdź do startu",
       "goToSignIn": "Przejdź do logowania"
     },
     "global": {

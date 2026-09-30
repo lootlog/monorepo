@@ -130,6 +130,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe("virtual battle log", () => {
@@ -157,6 +158,51 @@ describe("virtual battle log", () => {
     expect(
       view.container.querySelectorAll("[data-battle-turn]").length,
     ).toBeLessThan(40);
+  });
+
+  it("follows the document when it scrolls the page below md", async () => {
+    const nativeMatchMedia = window.matchMedia.bind(window);
+    vi.stubGlobal("matchMedia", (query: string) => {
+      const result = nativeMatchMedia(query);
+      Object.defineProperty(result, "matches", {
+        value: query === "(max-width: 767px)",
+      });
+
+      return result;
+    });
+    // The page viewport grows with the log here, so only the window bounds it.
+    vi.mocked(HTMLElement.prototype.getBoundingClientRect).mockImplementation(
+      function (this: HTMLElement) {
+        const translation = Number.parseFloat(
+          this.style.transform.match(/translateY\(([-\d.]+)px\)/)?.[1] ?? "0",
+        );
+
+        const top = (this.tagName === "LI" ? translation : 0) - window.scrollY;
+
+        return new DOMRect(0, top, 800, this.tagName === "LI" ? 72 : 72_000);
+      },
+    );
+
+    const view = render(<Fixture />);
+    await waitFor(() =>
+      expect(
+        view.container.querySelector('[data-battle-turn="1"]'),
+      ).not.toBeNull(),
+    );
+    act(() => {
+      window.scrollTo(0, 36_000);
+      fireEvent.scroll(window);
+    });
+    await waitFor(() =>
+      expect(
+        view.container.querySelector('[data-battle-turn="501"]'),
+      ).not.toBeNull(),
+    );
+    expect(view.container.querySelector('[data-battle-turn="1"]')).toBeNull();
+    expect(
+      view.container.querySelectorAll("[data-battle-turn]").length,
+    ).toBeLessThan(40);
+    window.scrollTo(0, 0);
   });
 
   it("positions and highlights a distant search result", async () => {

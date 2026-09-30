@@ -103,6 +103,73 @@ describe("RedisService", () => {
     expect(client.del).toHaveBeenNthCalledWith(2, "lootlog:timer:c");
   });
 
+  it("scans past empty pages and preserves Redis key order and duplicates", async () => {
+    const client = createRedisClient();
+    client.scan
+      .mockResolvedValueOnce(["12", ["lootlog:timer:a"]])
+      .mockResolvedValueOnce(["24", []])
+      .mockResolvedValueOnce(["0", ["lootlog:timer:a", "lootlog:timer:b"]]);
+    const service = createRedisService(client);
+
+    await expect(service.scan("timer:*")).resolves.toEqual([
+      "timer:a",
+      "timer:a",
+      "timer:b",
+    ]);
+    expect(client.scan.mock.calls.map(([cursor]) => cursor)).toEqual([
+      "0",
+      "12",
+      "24",
+    ]);
+  });
+
+  it("finishes bounded deletions before scanning the next page", async () => {
+    const client = createRedisClient();
+
+    const remainingKeys = new Set([
+      "lootlog:timer:a",
+      "lootlog:timer:b",
+      "lootlog:timer:c",
+    ]);
+
+    client.scan
+      .mockResolvedValueOnce(["12", [...remainingKeys]])
+      .mockImplementationOnce(async () => {
+        expect(remainingKeys.size).toBe(0);
+
+        return ["24", []];
+      })
+      .mockResolvedValueOnce(["0", ["lootlog:timer:d"]]);
+    client.del.mockImplementation(async (...keys) => {
+      await Promise.resolve();
+      expect(keys.length).toBeLessThanOrEqual(2);
+
+      for (const key of keys) remainingKeys.delete(key);
+
+      return keys.length;
+    });
+    const service = createRedisService(client);
+
+    await expect(service.deleteByPattern("timer:*", 2)).resolves.toBe(4);
+    expect(client.del.mock.calls).toEqual([
+      ["lootlog:timer:a", "lootlog:timer:b"],
+      ["lootlog:timer:c"],
+      ["lootlog:timer:d"],
+    ]);
+  });
+
+  it("stops scanning when deleting a page fails", async () => {
+    const client = createRedisClient();
+    client.scan.mockResolvedValueOnce(["12", ["lootlog:timer:a"]]);
+    client.del.mockRejectedValueOnce(new Error("Redis disconnected"));
+    const service = createRedisService(client);
+
+    await expect(service.deleteByPattern("timer:*")).rejects.toThrow(
+      "Redis disconnected",
+    );
+    expect(client.scan).toHaveBeenCalledTimes(1);
+  });
+
   it.each(["member-read:organization", "user-lootlog-config:user"])(
     "invalidates %s with bounded work and no keyspace scan",
     async (scope) => {

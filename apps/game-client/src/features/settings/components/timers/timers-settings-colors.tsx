@@ -1,5 +1,5 @@
 import type { CustomTimerColor } from "@lootlog/schema/timer-settings";
-import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { IconButton } from "@/components/ui/icon-button";
 import { SettingsList } from "@/components/settings/settings-list";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
@@ -36,7 +36,7 @@ const selectionKey = (selection: TimerColorSelection) =>
 
 /** A row added or restored in this session slides into the list once. */
 const ENTERED_ROW_CLASS_NAME =
-  "ll:animate-in ll:fade-in-0 ll:slide-in-from-top-1 ll:duration-300 ll:ease-[cubic-bezier(0.2,0,0,1)]";
+  "ll:animate-in ll:fade-in-0 ll:slide-in-from-top-1 ll:duration-long ll:ease-enter";
 
 const getTimerColorEditData = (
   selection: TimerColorSelection,
@@ -281,9 +281,9 @@ export const TimersSettingsColors: FC = () => {
             onOpenChange={(open) => setOpenPopover(open ? "add" : null)}
           >
             <PopoverTrigger asChild>
-              <SettingsIconButton label={t("settings.timers.colors.addTitle")}>
+              <IconButton label={t("settings.timers.colors.addTitle")}>
                 <Plus />
-              </SettingsIconButton>
+              </IconButton>
             </PopoverTrigger>
             <PopoverContent
               role="dialog"

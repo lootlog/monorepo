@@ -2,7 +2,10 @@ import { describe, expect, test } from "bun:test";
 import { Effect, Predicate } from "effect";
 import { Meilisearch, type SearchParams } from "meilisearch";
 import { makeItemsModule } from "#src/items/items.service";
-import { configureMeilisearchIndexes } from "#src/meilisearch/meilisearch-indexes.service";
+import {
+  configureMeilisearchIndexes,
+  searchIndexSettings,
+} from "#src/meilisearch/meilisearch-indexes.service";
 import type { NpcHit } from "#src/npcs/npc-hit";
 import { makeNpcsModule } from "#src/npcs/npcs.service";
 import { makePlayersModule } from "#src/players/players.service";
@@ -22,11 +25,31 @@ const makeClient = (index: (name: string) => object): Meilisearch => {
 };
 
 describe("Search Effect modules", () => {
-  test("builds bounded player and NPC filters", async () => {
+  test("builds bounded filters on filterable attributes only", async () => {
     const searches: Array<{ term: string; options: SearchParams }> = [];
 
-    const client = makeClient(() => ({
+    const client = makeClient((name) => ({
       search: (term: string, options: SearchParams) => {
+        // Meilisearch rejects a filter on an attribute the index does not list.
+        const filterable =
+          new Map(Object.entries(searchIndexSettings)).get(name)
+            ?.filterableAttributes ?? [];
+
+        const attributes = [
+          ...String(options.filter ?? "").matchAll(
+            /(\w+) (?:IN|=|!=|>=|<=|>|<) /g,
+          ),
+        ].map(([, attribute]) => attribute ?? "");
+
+        const rejected = attributes.find(
+          (attribute) => !filterable.some((entry) => entry === attribute),
+        );
+
+        if (rejected)
+          return Promise.reject(
+            new Error(`Attribute \`${rejected}\` is not filterable`),
+          );
+
         searches.push({ term, options });
 
         return Promise.resolve({ hits: [] });
@@ -48,6 +71,13 @@ describe("Search Effect modules", () => {
         world: "berufs",
       }),
     );
+    await Effect.runPromise(
+      makeItemsModule(client, silentLogger).getItems({
+        limit: 10,
+        search: "Sword",
+        world: "berufs",
+      }),
+    );
 
     expect(searches).toEqual([
       {
@@ -60,6 +90,12 @@ describe("Search Effect modules", () => {
         term: "Hero",
         options: expect.objectContaining({
           filter: 'id IN [1, 2] AND world = "berufs"',
+        }),
+      },
+      {
+        term: "Sword",
+        options: expect.objectContaining({
+          filter: '(worlds = "berufs" OR world = "berufs")',
         }),
       },
     ]);

@@ -1,3 +1,5 @@
+import { readGuildOrderPreference } from "#src/guilds/guild-order-query";
+import { sortGuildsByPreference } from "#src/guilds/guild-order";
 import {
   AcceptedReservationShareBoundary,
   CreatedReservationShareInvitationBoundary,
@@ -10,9 +12,11 @@ import {
 } from "./organization-workspace-response.schema.js";
 import type { GuildMemberChanged } from "@lootlog/protocol/rabbit/events";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
+import { selectActiveRoleHolders } from "#src/members/member-role-holders";
 import {
   pathString,
   statusCodeResponse,
+  reauthenticationRequiredResponse,
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
@@ -27,11 +31,8 @@ import { and, asc, desc, eq, gte, inArray, lt, or } from "drizzle-orm";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
-  memberTable,
-  memberToRoleTable,
   reservationTable,
   roleTable,
-  userSettingsTable,
 } from "#src/database/drizzle/schema";
 import { presentReservation } from "#src/reservations/reservation-presentation";
 import {
@@ -56,6 +57,7 @@ import {
   RoleResponse,
   type UpdateRolePermissionsRequest,
 } from "#src/contracts/roles/schemas";
+import type { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 
 export type OrganizationWorkspaceIdentity = {
   readonly userId: string;
@@ -85,7 +87,8 @@ export class OrganizationWorkspaceOperationError extends TaggedErrorClass<Organi
 
 type AccessFailure =
   | OrganizationWorkspaceAccessDenied
-  | OrganizationWorkspaceNotFound;
+  | OrganizationWorkspaceNotFound
+  | ReauthenticationRequired;
 
 export class OrganizationWorkspaceAuthorization extends Context.Service<
   OrganizationWorkspaceAuthorization,
@@ -143,38 +146,24 @@ export class MyReservationsData extends Context.Service<
       MyReservationsData.of({
         listMine: ({ userId, discordId }, query) =>
           Effect.gen(function* () {
-            const [guildRows, preferenceRows] = yield* Effect.all(
+            const [guildRows, preferredIds] = yield* Effect.all(
               [
                 selectAccessibleGuilds(database, discordId).pipe(
                   Effect.map((rows) =>
                     rows.map(({ guild }) => ({ id: guild.id })),
                   ),
                 ),
-                database
-                  .select({ guildsOrder: userSettingsTable.guildsOrder })
-                  .from(userSettingsTable)
-                  .where(eq(userSettingsTable.userId, userId))
-                  .limit(1),
+                readGuildOrderPreference(database, userId),
               ],
               { concurrency: "unbounded" },
             );
 
             if (guildRows.length === 0) return { items: [] };
 
-            const guildOrder = new Map(
-              (preferenceRows[0]?.guildsOrder ?? []).map((id, index) => [
-                id,
-                index,
-              ]),
-            );
-
-            const guildIds = guildRows
-              .map(({ id }) => id)
-              .sort(
-                (left, right) =>
-                  (guildOrder.get(left) ?? Number.MAX_SAFE_INTEGER) -
-                  (guildOrder.get(right) ?? Number.MAX_SAFE_INTEGER),
-              );
+            const guildIds = sortGuildsByPreference(
+              guildRows,
+              preferredIds,
+            ).map(({ id }) => id);
 
             const now = new Date(yield* Clock.currentTimeMillis);
 
@@ -379,33 +368,27 @@ export class RolesData extends Context.Service<
                   getPermissionsCachePattern(guildId),
                 );
 
-                const members = yield* database
-                  .select({
-                    discordId: memberTable.userId,
-                    userId: memberTable.globalUserId,
-                  })
-                  .from(memberTable)
-                  .innerJoin(
-                    memberToRoleTable,
-                    eq(memberToRoleTable.A, memberTable.id),
-                  )
-                  .where(
-                    and(
-                      eq(memberTable.guildId, guildId),
-                      eq(memberTable.active, true),
-                      eq(memberToRoleTable.B, roleId),
-                    ),
-                  );
+                const members = yield* selectActiveRoleHolders(
+                  database,
+                  guildId,
+                  roleId,
+                );
 
                 yield* Effect.forEach(
                   members,
                   (member) =>
                     member.userId
-                      ? events.memberPolicyChanged({
-                          guildId,
-                          discordId: member.discordId,
-                          userId: member.userId,
-                        })
+                      ? cache
+                          .invalidateUserGuildPermissions(member.discordId)
+                          .pipe(
+                            Effect.andThen(
+                              events.memberPolicyChanged({
+                                guildId,
+                                discordId: member.discordId,
+                                userId: member.userId,
+                              }),
+                            ),
+                          )
                       : Effect.void,
                   { concurrency: 4, discard: true },
                 );
@@ -430,6 +413,9 @@ export interface RolePolicyEvents {
 }
 
 export interface RolesCache {
+  readonly invalidateUserGuildPermissions: (
+    discordId: string,
+  ) => Effect.Effect<void, unknown>;
   readonly deleteByPattern: (pattern: string) => Effect.Effect<void, unknown>;
 }
 
@@ -504,13 +490,15 @@ const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
 type OrganizationWorkspaceFailure =
   | OrganizationWorkspaceAccessDenied
   | OrganizationWorkspaceNotFound
-  | OrganizationWorkspaceOperationError;
+  | OrganizationWorkspaceOperationError
+  | ReauthenticationRequired;
 
 export const toOrganizationWorkspaceHttpResponse = <A, R>(
   effect: Effect.Effect<A, OrganizationWorkspaceFailure, R>,
 ) =>
   Effect.catchTags(effect, {
     OrganizationWorkspaceAccessDenied: statusCodeResponse,
+    ReauthenticationRequired: reauthenticationRequiredResponse,
     OrganizationWorkspaceNotFound: statusCodeResponse,
     OrganizationWorkspaceOperationError: ({ cause }) => {
       if (Schema.is(ApplicationError)(cause)) {
@@ -536,6 +524,7 @@ export const toDeclaredOrganizationWorkspaceError = <A, R>(
       statuses.includes(error.status)
         ? Effect.fail(undefined)
         : Effect.die(error),
+    ReauthenticationRequired: reauthenticationRequiredResponse,
     OrganizationWorkspaceNotFound: (error) =>
       statuses.includes(error.status)
         ? Effect.fail(undefined)

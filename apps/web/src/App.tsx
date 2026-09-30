@@ -6,11 +6,12 @@ import { routeTree } from "./routeTree.gen";
 import { queryClient } from "@/lib/query-client";
 import type { QueryClient } from "@tanstack/react-query";
 import type { SessionData } from "@/hooks/auth/use-session";
-import { RouteSectionLoading } from "@/components/ui/route-section-loading";
+import { PageSkeleton } from "@/components/common/page-skeleton";
 import { AppErrorBoundary } from "@/components/router/app-error-boundary";
 import { RouteErrorState } from "@/components/router/route-error-state";
 import { RouteRetryButton } from "@/components/router/route-retry-button";
 import { ROUTES } from "@/config/routes";
+import { releaseStartupScreenOnFirstResolve } from "@/lib/startup-screen";
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -92,22 +93,28 @@ const router = createRouter({
   },
   parseSearch,
   stringifySearch,
-  defaultPendingComponent: RouteSectionLoading,
+  defaultPendingComponent: PageSkeleton,
   defaultPreload: "intent",
   // A click answers within a frame or two with the target page's skeleton.
   // Placeholders reveal themselves late (`animate-skeleton`), so a fast
   // response still never flashes one and no minimum pending time is needed.
   // The router renders whatever has resolved when this timer fires, so it
   // stays above zero: parent layouts with cached data need a tick to settle,
-  // otherwise their default spinner wins over the page's own skeleton.
+  // otherwise their generic skeleton wins over the page's own.
   defaultPendingMs: 50,
   defaultPendingMinMs: 0,
   scrollRestoration: true,
 });
 
+releaseStartupScreenOnFirstResolve(router);
+
 declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
+  }
+
+  interface HistoryState {
+    restoreFallback?: boolean;
   }
 }
 

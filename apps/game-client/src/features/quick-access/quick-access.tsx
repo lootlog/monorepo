@@ -2,72 +2,99 @@ import { DraggableWindow } from "@/components/draggable-window/draggable-window"
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toolbarStripDividerClassName } from "@/components/ui/toolbar-strip";
 import { ConnectionStatus } from "@/features/quick-access/components/connection-status";
+import { QuickAccessCollapseButton } from "@/features/quick-access/components/quick-access-collapse-button";
+import { QuickAccessCollapsedBar } from "@/features/quick-access/components/quick-access-collapsed-bar";
 import { GuildListPopover } from "@/features/quick-access/components/guild-list-popover";
+import { SetupChecklistButton } from "@/features/setup-checklist/components/setup-checklist-button";
 import {
   QuickAccessWindowButton,
   type QuickAccessWindowButtonProps,
 } from "@/features/quick-access/components/quick-access-window-button";
 import { useWindowsStore } from "@/store/windows.store";
 import {
+  MessageSquareText,
   MessagesSquare,
   Settings,
   Swords,
-  Terminal,
   Timer,
   Users,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-const ICON_SIZE = 16;
+const ICON_CLASS_NAME = "ll:size-4";
 
 /**
  * Lootlog's "start bar": one tile per window, lit while that window is open.
  * Players tuck it under Margonem's top bar, so the default height stays at
- * one row of tiles and only the width grows with the tile count.
+ * one row of tiles and only the width grows with the tile count. Collapsed,
+ * only the connection state and the expand button remain.
  */
 export const QuickAccess = () => {
   const { t } = useTranslation("quickAccess");
   const open = useWindowsStore((state) => state["quick-access"].open);
+
+  const collapsed = useWindowsStore(
+    (state) => state["quick-access"].collapsed ?? false,
+  );
+
   const setOpen = useWindowsStore((state) => state.setOpen);
 
   const buttons: QuickAccessWindowButtonProps[] = [
     {
       windowId: "create-party-gathering",
       label: t("buttons.partyFinder"),
-      icon: <Swords size={ICON_SIZE} aria-hidden="true" />,
+      icon: <Swords aria-hidden="true" className={ICON_CLASS_NAME} />,
       hotkeyAction: "create-party-gathering",
     },
     {
       windowId: "timers",
       label: t("buttons.timers"),
-      icon: <Timer size={ICON_SIZE} aria-hidden="true" />,
+      icon: <Timer aria-hidden="true" className={ICON_CLASS_NAME} />,
       hotkeyAction: "toggle-timers",
     },
     {
       windowId: "online-players",
       label: t("buttons.onlinePlayers"),
-      icon: <Users size={ICON_SIZE} aria-hidden="true" />,
+      icon: <Users aria-hidden="true" className={ICON_CLASS_NAME} />,
       hotkeyAction: "toggle-online-players",
     },
     {
       windowId: "chat",
       label: t("buttons.chat"),
-      icon: <MessagesSquare size={ICON_SIZE} aria-hidden="true" />,
+      icon: <MessagesSquare aria-hidden="true" className={ICON_CLASS_NAME} />,
       hotkeyAction: "toggle-chat",
     },
     {
       windowId: "command",
       label: t("buttons.command"),
-      icon: <Terminal size={ICON_SIZE} aria-hidden="true" />,
+      icon: (
+        <MessageSquareText aria-hidden="true" className={ICON_CLASS_NAME} />
+      ),
       hotkeyAction: "toggle-command",
     },
     {
       windowId: "settings",
       label: t("buttons.settings"),
-      icon: <Settings size={ICON_SIZE} aria-hidden="true" />,
+      icon: <Settings aria-hidden="true" className={ICON_CLASS_NAME} />,
       hotkeyAction: "toggle-settings",
     },
   ];
+
+  if (collapsed) {
+    return (
+      <DraggableWindow
+        isOpen={open}
+        id="quick-access"
+        title={t("window.title")}
+        closable={false}
+        collapsed
+        disableTitle
+        draggableContent
+      >
+        <QuickAccessCollapsedBar />
+      </DraggableWindow>
+    );
+  }
 
   return (
     <DraggableWindow
@@ -78,7 +105,10 @@ export const QuickAccess = () => {
       minWidth={250}
       onClose={() => setOpen("quick-access", false)}
       closable={false}
-      actions=<ConnectionStatus />
+      actions=<>
+        <ConnectionStatus />
+        <QuickAccessCollapseButton collapsed={false} />
+      </>
     >
       <ScrollArea
         className="ll:h-full ll:w-full"
@@ -86,6 +116,7 @@ export const QuickAccess = () => {
         orientation="horizontal"
       >
         <div className="ll:flex ll:h-full ll:w-max ll:min-w-full ll:items-center ll:gap-0.5 ll:px-0.5">
+          <SetupChecklistButton />
           {buttons.map((button) => (
             <QuickAccessWindowButton key={button.windowId} {...button} />
           ))}

@@ -1,8 +1,9 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
+import { uniq } from "es-toolkit";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   discordGuildSyncStateTable,
@@ -22,6 +23,8 @@ import type {
   GuildUpdated,
 } from "@lootlog/protocol/rabbit/events";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
+import { selectActiveRoleHolders } from "#src/members/member-role-holders";
+import { queueMemberDeliveries } from "#src/members/member.store";
 import { DiscordGuildSyncStatus } from "@lootlog/schema/notifications";
 import { getPermissionsCachePattern } from "#src/shared/cache";
 import { getGuildCacheKey } from "#src/guilds/guild-configuration-cache";
@@ -32,18 +35,20 @@ class GuildLifecycleFailure extends TaggedErrorClass<GuildLifecycleFailure>()(
 ) {}
 
 export interface GuildLifecyclePorts {
+  readonly invalidateUserGuildPermissions: (
+    discordId: string,
+  ) => Effect.Effect<unknown, unknown>;
   readonly clearCachePattern: (
     pattern: string,
   ) => Effect.Effect<unknown, unknown>;
   readonly clearCacheKey: (key: string) => Effect.Effect<unknown, unknown>;
-  readonly notifyMembersRemoved: (
-    members: ReadonlyArray<{
-      readonly discordId: string;
-      readonly guildId: string;
-      readonly globalUserId: string | null;
-    }>,
+  /** Delivers member changes queued in the `MemberSyncDelivery` outbox. */
+  readonly deliverMemberChanges: (
+    memberIds: ReadonlyArray<number>,
   ) => Effect.Effect<unknown, unknown>;
 }
+
+type Transaction = Parameters<typeof queueMemberDeliveries>[0];
 
 const adminPermissions = (admin: boolean): Permission[] =>
   admin
@@ -66,6 +71,59 @@ export const makeGuildLifecycle = (
       }),
     );
 
+  // Owner access comes from the Organization row rather than a member role, so
+  // no member write invalidates it. Owners who are active members also queue a
+  // Gateway rebalance with the ownership change.
+  const queueOwnerRebalance = (
+    transaction: Transaction,
+    guildId: string,
+    ownerIds: ReadonlyArray<string>,
+  ) =>
+    Effect.gen(function* () {
+      if (ownerIds.length === 0) return [];
+
+      const members = yield* transaction
+        .select({ id: memberTable.id })
+        .from(memberTable)
+        .where(
+          and(
+            eq(memberTable.guildId, guildId),
+            eq(memberTable.active, true),
+            inArray(memberTable.userId, [...ownerIds]),
+          ),
+        );
+
+      const memberIds = members.map(({ id }) => id);
+      yield* queueMemberDeliveries(transaction, memberIds, true);
+
+      return memberIds;
+    });
+
+  // The outbox makes a redelivered role event unnecessary for a change whose
+  // invalidation or publication failed after commit.
+  const queueRoleHolders = (
+    transaction: Transaction,
+    role: { readonly id: string; readonly guildId: string },
+  ) =>
+    Effect.gen(function* () {
+      const holders = yield* selectActiveRoleHolders(
+        transaction,
+        role.guildId,
+        role.id,
+      );
+
+      const memberIds = holders.map(({ id }) => id);
+      yield* queueMemberDeliveries(transaction, memberIds, true);
+
+      return memberIds;
+    });
+
+  const invalidateOwners = (ownerIds: ReadonlyArray<string>) =>
+    Effect.forEach(uniq(ownerIds), ports.invalidateUserGuildPermissions, {
+      concurrency: "unbounded",
+      discard: true,
+    });
+
   const createGuild = Effect.fn("guildLifecycle.create")(function* (
     data: GuildCreated,
   ) {
@@ -75,6 +133,15 @@ export const makeGuildLifecycle = (
       "guildLifecycle.create.transaction",
       database.transaction((transaction) =>
         Effect.gen(function* () {
+          const previousRows = yield* transaction
+            .select({ ownerId: guildTable.ownerId, active: guildTable.active })
+            .from(guildTable)
+            .where(eq(guildTable.id, data.guildId))
+            .limit(1)
+            .for("update");
+
+          const previous = previousRows[0];
+
           const guildRows = yield* transaction
             .insert(guildTable)
             .values({
@@ -158,39 +225,84 @@ export const makeGuildLifecycle = (
               set: { status: DiscordGuildSyncStatus.STALE, updatedAt: now },
             });
 
-          return result;
+          const owners = uniq([
+            data.ownerId,
+            ...(previous ? [previous.ownerId] : []),
+          ]);
+
+          // Discord replays creation for known guilds; only activation or an
+          // ownership transfer changes what an owner member may access.
+          const ownerMemberIds =
+            !previous?.active || previous.ownerId !== data.ownerId
+              ? yield* queueOwnerRebalance(transaction, data.guildId, owners)
+              : [];
+
+          return { guild: result, owners, ownerMemberIds };
         }),
       ),
     );
 
-    return guild;
+    // An owner who opened Lootlog before adding the bot has a cached projection
+    // without this Organization.
+    yield* invalidateOwners(guild.owners);
+    yield* ports.deliverMemberChanges(guild.ownerMemberIds);
+
+    return guild.guild;
   });
 
   const updateGuild = Effect.fn("guildLifecycle.update")(function* (
     data: GuildUpdated,
   ) {
-    const oldGuild = yield* operation(
-      "guildLifecycle.update.read",
-      database
-        .select({ vanityUrl: guildTable.vanityUrl })
-        .from(guildTable)
-        .where(eq(guildTable.id, data.guildId))
-        .limit(1)
-        .pipe(Effect.map((rows) => rows[0] ?? null)),
+    const now = new Date(yield* Clock.currentTimeMillis);
+
+    const update = yield* operation(
+      "guildLifecycle.update.transaction",
+      database.transaction((transaction) =>
+        Effect.gen(function* () {
+          const rows = yield* transaction
+            .select({
+              vanityUrl: guildTable.vanityUrl,
+              ownerId: guildTable.ownerId,
+            })
+            .from(guildTable)
+            .where(eq(guildTable.id, data.guildId))
+            .limit(1)
+            .for("update");
+
+          const oldGuild = rows[0] ?? null;
+
+          yield* transaction
+            .update(guildTable)
+            .set({
+              name: data.name,
+              icon: data.icon,
+              ownerId: data.ownerId,
+              updatedAt: now,
+            })
+            .where(eq(guildTable.id, data.guildId));
+
+          const transferredFrom =
+            oldGuild && oldGuild.ownerId !== data.ownerId
+              ? [oldGuild.ownerId]
+              : [];
+
+          return {
+            oldGuild,
+            owners: [data.ownerId, ...transferredFrom],
+            ownerMemberIds:
+              transferredFrom.length > 0
+                ? yield* queueOwnerRebalance(transaction, data.guildId, [
+                    data.ownerId,
+                    ...transferredFrom,
+                  ])
+                : [],
+          };
+        }),
+      ),
     );
 
-    yield* operation(
-      "guildLifecycle.update.write",
-      database
-        .update(guildTable)
-        .set({
-          name: data.name,
-          icon: data.icon,
-          ownerId: data.ownerId,
-          updatedAt: new Date(yield* Clock.currentTimeMillis),
-        })
-        .where(eq(guildTable.id, data.guildId)),
-    );
+    const { oldGuild } = update;
+
     yield* Effect.all(
       [
         ports.clearCachePattern(getPermissionsCachePattern(data.guildId)),
@@ -201,6 +313,8 @@ export const makeGuildLifecycle = (
       ],
       { concurrency: "unbounded", discard: true },
     );
+    yield* invalidateOwners(update.owners);
+    yield* ports.deliverMemberChanges(update.ownerMemberIds);
 
     return oldGuild?.vanityUrl ?? null;
   });
@@ -215,24 +329,13 @@ export const makeGuildLifecycle = (
       database.transaction((transaction) =>
         Effect.gen(function* () {
           const guildRows = yield* transaction
-            .select({ vanityUrl: guildTable.vanityUrl })
+            .select({
+              vanityUrl: guildTable.vanityUrl,
+              ownerId: guildTable.ownerId,
+            })
             .from(guildTable)
             .where(eq(guildTable.id, data.guildId))
             .limit(1);
-
-          const members = yield* transaction
-            .select({
-              discordId: memberTable.userId,
-              guildId: memberTable.guildId,
-              globalUserId: memberTable.globalUserId,
-            })
-            .from(memberTable)
-            .where(
-              and(
-                eq(memberTable.guildId, data.guildId),
-                eq(memberTable.active, true),
-              ),
-            );
 
           yield* transaction
             .delete(lootlogConfigNpcTable)
@@ -240,7 +343,8 @@ export const makeGuildLifecycle = (
           yield* transaction
             .delete(lootlogConfigTable)
             .where(eq(lootlogConfigTable.id, data.guildId));
-          yield* transaction
+
+          const members = yield* transaction
             .update(memberTable)
             .set({
               active: false,
@@ -253,7 +357,13 @@ export const makeGuildLifecycle = (
                 eq(memberTable.guildId, data.guildId),
                 eq(memberTable.active, true),
               ),
-            );
+            )
+            .returning({ id: memberTable.id });
+
+          const memberIds = members.map(({ id }) => id);
+          // Redelivered deletions no longer see these members as active; the
+          // committed outbox rows keep their removal retryable.
+          yield* queueMemberDeliveries(transaction, memberIds, true);
           yield* transaction
             .delete(roleTable)
             .where(eq(roleTable.guildId, data.guildId));
@@ -264,13 +374,15 @@ export const makeGuildLifecycle = (
 
           return {
             vanityUrl: guildRows[0]?.vanityUrl ?? null,
-            members,
+            ownerId: guildRows[0]?.ownerId ?? null,
+            memberIds,
           };
         }),
       ),
     );
 
-    yield* ports.notifyMembersRemoved(deletion.members);
+    yield* ports.deliverMemberChanges(deletion.memberIds);
+    yield* invalidateOwners(deletion.ownerId ? [deletion.ownerId] : []);
     yield* Effect.all(
       [
         ports.clearCachePattern(getPermissionsCachePattern(data.guildId)),
@@ -315,40 +427,86 @@ export const makeGuildLifecycle = (
     };
 
     if (existingAdmin !== data.admin) roleUpdate.permissions = permissions;
-    yield* operation(
-      "guildLifecycle.role.upsert.write",
-      database
-        .insert(roleTable)
-        .values({
-          id: data.id,
-          guildId: data.guildId,
-          name: data.name,
-          color: data.color,
-          position: data.position,
-          permissions,
-          createdAt: now,
-          updatedAt: now,
-        })
-        .onConflictDoUpdate({
-          target: roleTable.id,
-          set: roleUpdate,
+
+    // Name, color, and position edits leave every permission projection
+    // unchanged. A new role has no holders; member sync queues assignments.
+    const permissionsChanged =
+      existing !== null && existingAdmin !== data.admin;
+
+    const holderIds = yield* operation(
+      "guildLifecycle.role.upsert.transaction",
+      database.transaction((transaction) =>
+        Effect.gen(function* () {
+          yield* transaction
+            .insert(roleTable)
+            .values({
+              id: data.id,
+              guildId: data.guildId,
+              name: data.name,
+              color: data.color,
+              position: data.position,
+              permissions,
+              createdAt: now,
+              updatedAt: now,
+            })
+            .onConflictDoUpdate({
+              target: roleTable.id,
+              set: roleUpdate,
+            });
+
+          if (!permissionsChanged) return [];
+
+          return yield* queueRoleHolders(transaction, data);
         }),
+      ),
     );
+
     yield* ports.clearCachePattern(getPermissionsCachePattern(data.guildId));
+    yield* ports.deliverMemberChanges(holderIds);
   });
 
   const deleteRole = Effect.fn("guildLifecycle.role.delete")(function* (
     data: GuildRoleDeleted,
   ) {
-    yield* operation(
-      "guildLifecycle.role.delete.write",
-      database
-        .delete(roleTable)
-        .where(
-          and(eq(roleTable.id, data.id), eq(roleTable.guildId, data.guildId)),
-        ),
+    const holderIds = yield* operation(
+      "guildLifecycle.role.delete.transaction",
+      database.transaction((transaction) =>
+        Effect.gen(function* () {
+          const roles = yield* transaction
+            .select({ permissions: roleTable.permissions })
+            .from(roleTable)
+            .where(
+              and(
+                eq(roleTable.id, data.id),
+                eq(roleTable.guildId, data.guildId),
+              ),
+            )
+            .limit(1)
+            .for("update");
+
+          // Projections omit roles without permissions, so deleting one
+          // changes nothing. Assignments cascade, so queue holders first.
+          const holders =
+            (roles[0]?.permissions.length ?? 0) > 0
+              ? yield* queueRoleHolders(transaction, data)
+              : [];
+
+          yield* transaction
+            .delete(roleTable)
+            .where(
+              and(
+                eq(roleTable.id, data.id),
+                eq(roleTable.guildId, data.guildId),
+              ),
+            );
+
+          return holders;
+        }),
+      ),
     );
+
     yield* ports.clearCachePattern(getPermissionsCachePattern(data.guildId));
+    yield* ports.deliverMemberChanges(holderIds);
   });
 
   return { createGuild, updateGuild, deleteGuild, upsertRole, deleteRole };

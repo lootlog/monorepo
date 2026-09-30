@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { Effect, Scope } from "effect";
+import { Deferred, Effect, Scope } from "effect";
 import { Redis } from "effect/unstable/persistence";
 import { RedisGatewayStore } from "./redis-store.js";
 
@@ -12,7 +12,12 @@ test("federation backlog yields to timers while preserving order and isolating m
         };
 
         const redis = yield* Redis.make({
-          send: () => Effect.die("Unexpected Redis command"),
+          send: <A>(command: string) =>
+            command === "GET"
+              ? // SAFETY: the only GET reads the federation sequence counter,
+                // which is absent (null) before the first publication.
+                Effect.succeed(null as A)
+              : Effect.die("Unexpected Redis command"),
           subscribe: (_channel, onMessage) =>
             Effect.sync(() => {
               enqueue = onMessage;
@@ -81,6 +86,107 @@ test("federation backlog yields to timers while preserving order and isolating m
           Array.from({ length: 256 }, (_, index) => String(index)),
         );
         expect(countAtTimer).toBeLessThan(256);
+      }),
+    ),
+  );
+});
+
+test("a dropped subscriber reports the interruption before delivering its whole backlog", async () => {
+  await Effect.runPromise(
+    Effect.scoped(
+      Effect.gen(function* () {
+        let enqueue: (message: Redis.RedisMessage) => void = () => {
+          throw new Error("not subscribed");
+        };
+
+        let disconnect: () => void = () => {
+          throw new Error("not subscribed");
+        };
+
+        const redis = yield* Redis.make({
+          send: <A>(command: string) =>
+            command === "GET"
+              ? // SAFETY: the only GET reads the federation sequence counter,
+                // which is absent (null) before the first publication.
+                Effect.succeed(null as A)
+              : Effect.die("Unexpected Redis command"),
+          subscribe: (_channel, onMessage) =>
+            Effect.gen(function* () {
+              const terminal = yield* Deferred.make<void, Redis.RedisError>();
+              enqueue = onMessage;
+              disconnect = () =>
+                Deferred.doneUnsafe(
+                  terminal,
+                  new Redis.RedisError({ cause: "connection closed" }),
+                );
+
+              return Deferred.await(terminal);
+            }),
+        });
+
+        const scope = yield* Effect.scope;
+
+        const store = new RedisGatewayStore(
+          redis,
+          {
+            host: "unused",
+            port: 6379,
+            username: "",
+            password: "",
+            keyPrefix: "test",
+          },
+          Effect.runPromise,
+          (_label, task) => {
+            Effect.runFork(task.pipe(Effect.forkIn(scope)));
+          },
+        );
+
+        const backlog = 4_096;
+        let received = 0;
+        let receivedAtLoss: number | undefined;
+
+        yield* Effect.promise(() =>
+          store.subscribe(
+            () => {
+              received++;
+            },
+            (state) => {
+              if (state === "interrupted") receivedAtLoss ??= received;
+            },
+          ),
+        );
+
+        for (let index = 0; index < backlog; index++)
+          enqueue({
+            channel: store.channel,
+            message: JSON.stringify({
+              id: String(index),
+              sourceInstanceId: "other",
+              frame: "test",
+            }),
+          });
+        disconnect();
+
+        yield* Effect.promise(async () => {
+          const deadline = Date.now() + 2000;
+
+          while (receivedAtLoss === undefined) {
+            if (Date.now() > deadline)
+              throw new Error("Subscriber loss was not reported");
+            await Bun.sleep(1);
+          }
+        });
+        expect(receivedAtLoss).toBeLessThan(backlog);
+        // Sessions may outlive the interruption, so the backlog still reaches them.
+        yield* Effect.promise(async () => {
+          const deadline = Date.now() + 2000;
+
+          while (received < backlog) {
+            if (Date.now() > deadline)
+              throw new Error("Backlog was not delivered");
+            await Bun.sleep(1);
+          }
+        });
       }),
     ),
   );

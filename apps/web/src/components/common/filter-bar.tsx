@@ -3,7 +3,8 @@ import { TableFilterToolbar } from "@/components/ui/table-filter-toolbar";
 import type { ReactNode } from "react";
 
 type FilterBarProps = {
-  ariaLabel: string;
+  /** Names the group of filters; a skeleton standing in for one has none. */
+  ariaLabel?: string;
   children: ReactNode;
 };
 
@@ -11,7 +12,7 @@ export const FilterBar = ({ ariaLabel, children }: FilterBarProps) => {
   return (
     <SectionCard className="shrink-0 overflow-hidden">
       <TableFilterToolbar
-        role="group"
+        role={ariaLabel ? "group" : undefined}
         aria-label={ariaLabel}
         className="border-b-0"
       >

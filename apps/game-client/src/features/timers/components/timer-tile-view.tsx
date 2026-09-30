@@ -1,5 +1,5 @@
 import { cn } from "cn";
-import type { CSSProperties, FC } from "react";
+import type { CSSProperties, FC, ReactNode } from "react";
 import { ListRow, veilColor } from "@/components/list-row";
 import type { TimerColorPaint } from "@/features/timers/constants/timer-colors";
 
@@ -13,11 +13,12 @@ export type TimerTileViewProps = {
   hasPassedRedThreshold?: boolean;
   isExpired?: boolean;
   id?: string;
-  isAlternateRow?: boolean;
   isMinSpawnTime?: boolean;
   isPending?: boolean;
   label: string;
   timeLabel: string;
+  /** Rendered inline before the time, such as the map presence icon. */
+  timeAdornment?: ReactNode;
 };
 
 /** An expired tile keeps its colour, darkened. */
@@ -50,6 +51,9 @@ const resolveTextColor = (
   return "ll:text-white";
 };
 
+/** Separates the text from a tile fill of the same hue. */
+const TEXT_OUTLINE = "ll:[text-shadow:0_1px_2px_rgb(0_0_0/0.7)]";
+
 export const TimerTileView: FC<TimerTileViewProps> = ({
   paint,
   legacyAppearance = false,
@@ -59,11 +63,11 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
   hasPassedRedThreshold = false,
   isExpired = false,
   id,
-  isAlternateRow = false,
   isMinSpawnTime = false,
   isPending = false,
   label,
   timeLabel,
+  timeAdornment,
 }) => {
   const textColorClassName = resolveTextColor(
     legacyAppearance,
@@ -88,6 +92,7 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
           "ll:tabular-nums": !legacyAppearance,
         })}
       >
+        {timeAdornment}
         {timeLabel}
       </span>
     </>
@@ -98,7 +103,7 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
       <span
         id={id}
         className={cn(
-          "ll-custom-cursor-pointer ll:flex ll:h-full ll:w-full ll:min-w-0 ll:items-center ll:rounded-[2px] ll:border ll:border-solid ll:border-[var(--ll-timer-accent)] ll:bg-[var(--ll-timer-fill)] ll:px-1 ll:py-0.5 ll:transition-colors ll:hover:bg-[var(--ll-timer-hover-fill)] ll:motion-reduce:transition-none",
+          "ll-custom-cursor-pointer ll:@container/timer-tile ll:flex ll:h-full ll:w-full ll:min-w-0 ll:items-center ll:rounded-[2px] ll:border ll:border-solid ll:border-[var(--ll-timer-accent)] ll:bg-[var(--ll-timer-fill)] ll:px-1 ll:py-0.5 ll:transition-colors ll:hover:bg-[var(--ll-timer-hover-fill)] ll:motion-reduce:transition-none",
           textColorClassName,
           {
             "ll:flex-col ll:items-center ll:px-0 ll:leading-[1.05]":
@@ -127,15 +132,19 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
     <ListRow
       id={id}
       fill={isExpired ? veilColor(paint.fill, EXPIRED_VEIL) : paint.fill}
-      isAlternateRow={isAlternateRow}
-      className={cn("ll:h-full ll:py-[4px]", textColorClassName, {
-        "ll:border-0 ll:border-l-[3px] ll:border-solid ll:border-l-[var(--ll-timer-accent)] ll:px-[5px]":
-          showColorStripe,
-        "ll:flex-col ll:items-stretch ll:gap-0 ll:leading-[1.15]":
-          displayMode === "column",
-        "ll:justify-between": displayMode === "row",
-        "ll:opacity-60 ll:blur-[0.5px]": isPending,
-      })}
+      className={cn(
+        "ll:@container/timer-tile ll:h-full ll:py-[4px]",
+        textColorClassName,
+        TEXT_OUTLINE,
+        {
+          "ll:border-0 ll:border-l-[3px] ll:border-solid ll:border-l-[var(--ll-timer-accent)] ll:px-[5px]":
+            showColorStripe,
+          "ll:flex-col ll:items-stretch ll:gap-0 ll:leading-[1.15]":
+            displayMode === "column",
+          "ll:justify-between": displayMode === "row",
+          "ll:opacity-60 ll:blur-[0.5px]": isPending,
+        },
+      )}
       // SAFETY: CSSProperties has no index signature for custom properties;
       // "--ll-timer-accent" is consumed by the stripe class.
       style={

@@ -33,6 +33,16 @@ export type OtherCreate = {
   sex?: boolean;
 };
 
-export type OtherEntry = OtherMovement | OtherDelete | OtherCreate;
+/**
+ * Partial update of changed fields. Any `stasis` other than 1 ends stasis, and
+ * so does movement, which never carries `stasis`.
+ */
+export type OtherUpdate = Partial<Omit<OtherCreate, "action">>;
+
+export type OtherEntry =
+  | OtherMovement
+  | OtherDelete
+  | OtherUpdate
+  | OtherCreate;
 
 export type Other = Record<string, OtherEntry>;

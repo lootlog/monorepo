@@ -18,6 +18,7 @@ const patchesFor = (domain: "timers" | "appearance") =>
 
 const userScope = { type: "USER", id: "user" } as const;
 
+import { getCharacterFilterKey } from "@/lib/character-filter-scope";
 import { NpcType } from "@/api/npcs.api";
 import { TIMERS_STORAGE_KEY, useTimersStore } from "./timers.store";
 
@@ -32,7 +33,9 @@ const resetTimersStore = () => {
     defaultColorNames: {},
     overriddenDefaultColors: {},
     hiddenDefaultColors: [],
+    customLists: {},
     timersFilters: {},
+    legacyTimersFilters: {},
     timerFiltersEnabled: false,
     colorFiltersEnabled: false,
     timerFiltersSearchText: "",
@@ -195,11 +198,12 @@ describe("timers.store", () => {
     vi.advanceTimersByTime(500);
     store.setTimersSortOrder("desc");
     vi.advanceTimersByTime(500);
-    store.setTimersFilters("global", {
+    store.setTimersFilters("character", "global", {
       minLvl: 50,
       maxLvl: 150,
       selectedNpcTypes: [NpcType.HERO],
       selectedColors: ["custom-1"],
+      selectedLists: [],
     });
     vi.advanceTimersByTime(500);
 
@@ -208,7 +212,7 @@ describe("timers.store", () => {
       displayConfig: nextDisplayConfig,
       timersSortOrder: "desc",
       timersFilters: {
-        global: {
+        [getCharacterFilterKey("character", "global")]: {
           minLvl: 50,
           maxLvl: 150,
           selectedNpcTypes: [NpcType.HERO],
@@ -357,6 +361,44 @@ describe("timers.store", () => {
     });
   });
 
+  it("writes only the edited timer list so a stale copy of another list cannot restore it", () => {
+    const e2 = { id: "e2", name: "E2", npcNames: ["Kic"] };
+    const heroes = { id: "heroes", name: "Herosi", npcNames: ["Tanroth"] };
+
+    // Another device may already have deleted "heroes"; this device still
+    // holds it and must not write it back while editing "e2".
+    useTimersStore.setState({ customLists: { e2, heroes } });
+
+    const store = useTimersStore.getState();
+    store.renameCustomList("e2", "E2 event");
+    store.setTimerListMembership("e2", "Tanroth", true);
+    vi.advanceTimersByTime(500);
+
+    const renamed = { ...e2, name: "E2 event", npcNames: ["Kic", "Tanroth"] };
+
+    const lastWrite = () => {
+      const operation = patchesFor("timers").at(-1);
+
+      return { set: operation?.set, unset: operation?.unset };
+    };
+
+    expect(lastWrite()).toEqual({
+      set: { customLists: { e2: renamed } },
+      unset: [],
+    });
+
+    store.setTimerListMembership("heroes", "Kic", true);
+    store.deleteCustomList("heroes");
+    vi.advanceTimersByTime(500);
+
+    expect(useTimersStore.getState().customLists).toEqual({ e2: renamed });
+    // An edit followed by a delete in one save window sends only the delete.
+    expect(lastWrite()).toEqual({
+      set: {},
+      unset: ["customLists.heroes"],
+    });
+  });
+
   it("unsets colour map entries removed while other entries remain", () => {
     useTimersStore.setState({
       customColors: {
@@ -420,6 +462,29 @@ describe("timers.store", () => {
     ]);
   });
 
+  it("does not rewrite stored settings while typing a search", () => {
+    const setItem = vi.spyOn(window.localStorage, "setItem");
+    const store = useTimersStore.getState();
+
+    const timerWrites = () =>
+      setItem.mock.calls.filter(([key]) => key === TIMERS_STORAGE_KEY);
+
+    store.setTimerFiltersSearchText("t");
+    setItem.mockClear();
+    store.setTimerFiltersSearchText("ta");
+    store.setTimerFiltersSearchText("tan");
+
+    expect(timerWrites()).toHaveLength(0);
+
+    store.setTimersSortOrder("desc");
+
+    expect(timerWrites()).toHaveLength(1);
+    expect(
+      JSON.parse(window.localStorage.getItem(TIMERS_STORAGE_KEY) ?? "null")
+        .state.timersSortOrder,
+    ).toBe("desc");
+  });
+
   it("persists only the partialized timer state", () => {
     const store = useTimersStore.getState();
     store.setGeneralConfig({
@@ -437,7 +502,7 @@ describe("timers.store", () => {
       window.localStorage.getItem(TIMERS_STORAGE_KEY) ?? "null",
     );
 
-    expect(persistedState.version).toBe(6);
+    expect(persistedState.version).toBe(7);
     expect(persistedState.state.generalConfig).toEqual({
       removeTimerAfterMs: 60000,
       timersGrouping: true,

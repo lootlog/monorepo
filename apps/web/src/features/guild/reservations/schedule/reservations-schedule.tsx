@@ -27,7 +27,6 @@ import {
   EmptyTitle,
 } from "@lootlog/ui/components/empty";
 import { CalendarX2 } from "lucide-react";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import { GatewayEvent } from "@/config/gateway";
 import { ROUTES } from "@/config/routes";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
@@ -53,6 +52,7 @@ import {
 import { ScheduleHeader } from "./schedule-header";
 import type { ReservationRange } from "./types";
 import { useCompactScheduleLayout } from "./use-compact-schedule-layout";
+import { LoadingSlot } from "@/components/common/loading-slot";
 
 type ReservationChangedPayload =
   | ReservationChangedEventV2
@@ -175,9 +175,11 @@ export function ReservationsSchedule() {
     const rejoin = (payload: {
       status: "success" | "error";
       guildIds: string[];
+      recover: boolean;
     }) => {
       if (
         payload.status === "success" &&
+        payload.recover &&
         payload.guildIds.includes(organizationId)
       )
         void invalidateReservationQueries(queryClient, guildId, spotId);
@@ -263,7 +265,7 @@ export function ReservationsSchedule() {
   return (
     <div
       ref={containerRef}
-      className="relative flex h-full min-h-0 flex-col overflow-hidden"
+      className="relative flex h-full min-h-0 flex-col overflow-hidden max-md:overflow-clip"
     >
       <ScheduleHeader
         spotName={spotName}
@@ -288,7 +290,7 @@ export function ReservationsSchedule() {
 
       {reservationsQuery.isPending ? (
         <div className="flex flex-1 items-center justify-center" role="status">
-          <Spinner />
+          <LoadingSlot size="small" />
           <span className="sr-only">{t("common.loading")}</span>
         </div>
       ) : reservationsQuery.isError ? (

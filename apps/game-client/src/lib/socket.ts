@@ -1,17 +1,26 @@
 import { isString } from "es-toolkit";
 import {
+  hasRealtimeCapabilities,
   isMapPingAcknowledgement,
   isAirTagSubscriptionAcknowledgement,
   isAirTagObservationAcknowledgement,
+  isAirTagMapThreatsFetchResponse,
   isPresenceFetchResult,
 } from "@lootlog/protocol/realtime/codec";
-import type {
-  AirTagSubscriptionCommand,
-  AirTagObservationCommand,
-  AirTagSubscriptionAck,
-  AirTagObservationAck,
-  MapPingCommand,
-  MapPingAckSchema,
+import type { AirTagMapThreatEvent } from "@lootlog/schema/air-tag";
+import {
+  REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
+  REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
+  REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
+  REALTIME_BATTLE_PING_CAPABILITY,
+  REALTIME_TEAM_BATTLE_PING_CAPABILITY,
+  type AirTagSubscriptionCommand,
+  type AirTagObservationCommand,
+  type AirTagSubscriptionAck,
+  type AirTagObservationAck,
+  type BattlePingCommand,
+  type MapPingCommand,
+  type MapPingAckSchema,
 } from "@lootlog/protocol/realtime";
 import type { PlayerPresenceAckPayload } from "@/lib/online-players-presence";
 import {
@@ -27,10 +36,7 @@ import {
   type PresenceWithLocation,
   type ServerEvent,
 } from "@lootlog/client/realtime";
-import {
-  requestMargonemAccountProof,
-  type MargonemAccountProof,
-} from "@/lib/margonem-account-proof";
+import { requestMargonemAccountProof } from "@/lib/margonem-account-proof";
 import { getGameClientPlatform } from "@/lib/game-client-platform";
 
 import {
@@ -65,10 +71,19 @@ export interface GameSessionJoinData {
   };
 }
 
+export const getGameSessionIdentity = (
+  data: Pick<
+    GameSessionJoinData,
+    "world" | "accountId" | "characterId" | "clan"
+  >,
+): string =>
+  JSON.stringify([data.world, data.accountId, data.characterId, data.clan?.id]);
+
 interface JoinResult {
   readonly connectionId: string;
   readonly organizationIds: string[];
   readonly accessPolicy?: AccessPolicySnapshot;
+  readonly capabilities?: readonly string[];
 }
 
 const isJoinResult = (value: unknown): value is JoinResult =>
@@ -123,11 +138,15 @@ const legacyEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
   "notification.sent": GatewayEvent.NOTIFICATION,
   "notification.volunteer": GatewayEvent.NOTIFICATIONS_VOLUNTEER,
   "member-refresh.updated": GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE,
+  "party-gathering.state-updated": GatewayEvent.PARTY_GATHERING_STATE_UPDATE,
   "party-gathering.updated": GatewayEvent.PARTY_GATHERING_SEND,
   "party-gathering.cancelled": GatewayEvent.PARTY_GATHERING_CANCEL,
   "party-ready-room.updated": GatewayEvent.PARTY_READY_ROOM_UPDATE,
   "map-ping.received": GatewayEvent.MAP_PING_RECEIVE,
+  "battle-ping.received": GatewayEvent.BATTLE_PING_RECEIVE,
   "air-tag.updated": GatewayEvent.AIR_TAG_UPDATE,
+  "air-tag.scope-updated": GatewayEvent.AIR_TAG_SCOPE_UPDATE,
+  "air-tag.map-threat-updated": GatewayEvent.AIR_TAG_MAP_THREAT_UPDATE,
   "event.map-status-updated": GatewayEvent.EVENT_MAP_STATUS_UPDATE,
   "event.hero-killed": GatewayEvent.EVENT_HERO_KILLED,
   "event.ranking-updated": GatewayEvent.EVENT_RANKING_UPDATE,
@@ -144,6 +163,7 @@ type SocketCommandPayloads = {
     readonly world?: string;
   };
   [GatewayEvent.MAP_PING_SEND]: typeof MapPingCommand.fields.data.Type;
+  [GatewayEvent.BATTLE_PING_SEND]: typeof BattlePingCommand.fields.data.Type;
   [GatewayEvent.AIR_TAG_SUBSCRIPTION]: typeof AirTagSubscriptionCommand.fields.data.Type;
   [GatewayEvent.AIR_TAG_OBSERVATION]: typeof AirTagObservationCommand.fields.data.Type;
 };
@@ -151,6 +171,7 @@ type SocketCommandPayloads = {
 type SocketCommandResponses = {
   [GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH]: PlayerPresenceAckPayload;
   [GatewayEvent.MAP_PING_SEND]: typeof MapPingAckSchema.Type;
+  [GatewayEvent.BATTLE_PING_SEND]: typeof MapPingAckSchema.Type;
   [GatewayEvent.AIR_TAG_SUBSCRIPTION]: typeof AirTagSubscriptionAck.Type;
   [GatewayEvent.AIR_TAG_OBSERVATION]: typeof AirTagObservationAck.Type;
 };
@@ -182,6 +203,19 @@ export class AppSocket {
   private connectionStateValue: RealtimeConnectionState = "disconnected";
   private readonly connectionStateListeners = new Set<() => void>();
   private lastJoinData: GameSessionJoinData | null = null;
+  private connectionGeneration = 0;
+  private joinRevision = 0;
+  private hello = Promise.withResolvers<string | undefined>();
+  private joinAttempt: {
+    key: string;
+    promise: Promise<JoinResult>;
+    cancel: () => void;
+  } | null = null;
+  private gatheringStateSupported = false;
+  private battlePingsSupported = false;
+  private teamBattlePingsSupported = false;
+  private airTagMapThreatsSupported = false;
+  private airTagDeparturesSupported = false;
   id: string | undefined;
 
   constructor() {
@@ -201,11 +235,30 @@ export class AppSocket {
       if (connected === this.wasConnected) return;
       this.wasConnected = connected;
 
-      if (state === "disconnected") this.id = undefined;
+      if (state === "disconnected") {
+        this.id = undefined;
+        this.connectionGeneration += 1;
+        this.hello.resolve(undefined);
+        this.hello = Promise.withResolvers<string | undefined>();
+        this.joinAttempt?.cancel();
+        this.joinAttempt = null;
+        this.joinedOrganizationIds = [];
+        // The next connection may reach an older gateway.
+        this.gatheringStateSupported = false;
+        this.battlePingsSupported = false;
+        this.teamBattlePingsSupported = false;
+        this.airTagMapThreatsSupported = false;
+        this.airTagDeparturesSupported = false;
+      }
+
       this.listeners.emit(
         connected ? GatewayEvent.CONNECT : GatewayEvent.DISCONNECT,
       );
     });
+  }
+
+  get supportsGatheringState(): boolean {
+    return this.gatheringStateSupported;
   }
 
   get connected(): boolean {
@@ -229,6 +282,43 @@ export class AppSocket {
     listener: (latencyMs: number | null) => void,
   ): () => void {
     return this.realtime.subscribeHeartbeatLatency(listener);
+  }
+
+  probeLatency(): void {
+    this.realtime.probeLatency();
+  }
+
+  /** Whether the joined gateway accepts `battle-ping.send`; older gateways close the socket on it. */
+  supportsBattlePings(): boolean {
+    return this.battlePingsSupported;
+  }
+
+  /** Whether the joined gateway accepts team battle pings such as `quick-fight`. */
+  supportsTeamBattlePings(): boolean {
+    return this.teamBattlePingsSupported;
+  }
+
+  /** Whether the joined gateway accepts AirTag departures; older gateways reject a batch without observations. */
+  supportsAirTagDepartures(): boolean {
+    return this.airTagDeparturesSupported;
+  }
+
+  /** Current map threats, or null when the joined gateway predates `air-tag.map-threats.fetch`. */
+  async fetchAirTagMapThreats(
+    organizationId: string,
+    world: string,
+  ): Promise<readonly AirTagMapThreatEvent[] | null> {
+    if (!this.airTagMapThreatsSupported) return null;
+
+    const response = await this.realtime.request("air-tag.map-threats.fetch", {
+      organizationId,
+      world,
+    });
+
+    if (!isAirTagMapThreatsFetchResponse(response))
+      throw new Error("Invalid air-tag.map-threats.fetch response");
+
+    return response.threats;
   }
 
   getAccessPolicy(): AccessPolicySnapshot | undefined {
@@ -278,17 +368,71 @@ export class AppSocket {
     return this;
   }
 
-  async join(
-    data: GameSessionJoinData,
-    margonemAccountProof?: MargonemAccountProof,
-  ): Promise<JoinResult> {
-    if (this.lastJoinData && this.lastJoinData.accountId !== data.accountId) {
+  join(data: GameSessionJoinData): Promise<JoinResult> {
+    const key = JSON.stringify(data);
+
+    if (this.joinAttempt?.key === key) return this.joinAttempt.promise;
+
+    if (this.lastJoinData && this.lastJoinData.accountId !== data.accountId)
       this.currentAccessPolicy = undefined;
-    }
 
+    if (
+      this.lastJoinData &&
+      (this.lastJoinData.accountId !== data.accountId ||
+        this.lastJoinData.characterId !== data.characterId ||
+        this.lastJoinData.world !== data.world)
+    )
+      this.lastIsAfk = false;
     this.lastJoinData = data;
+    this.joinAttempt?.cancel();
+    const controller = new AbortController();
+    const revision = ++this.joinRevision;
 
-    const response = await this.realtime.join({
+    const promise = this.joinSession(
+      data,
+      this.connectionGeneration,
+      revision,
+      controller.signal,
+    );
+
+    this.joinAttempt = { key, promise, cancel: () => controller.abort() };
+    void promise.catch(() => {
+      if (this.joinAttempt?.promise === promise) this.joinAttempt = null;
+    });
+
+    return promise;
+  }
+
+  private async joinSession(
+    data: GameSessionJoinData,
+    generation: number,
+    revision: number,
+    signal: AbortSignal,
+  ): Promise<JoinResult> {
+    const ensureCurrent = () => {
+      if (
+        this.disposed ||
+        !this.connected ||
+        this.connectionGeneration !== generation ||
+        this.joinRevision !== revision
+      )
+        throw new Error("Realtime session changed before join completed");
+    };
+
+    ensureCurrent();
+    let helloTimeout: ReturnType<typeof setTimeout> | undefined;
+
+    let connectionId = await Promise.race([
+      this.hello.promise,
+      new Promise<undefined>((resolve) => {
+        // Older gateways expose their connection ID only after the first join.
+        helloTimeout = setTimeout(() => resolve(undefined), 1_000);
+      }),
+    ]).finally(() => clearTimeout(helloTimeout));
+
+    ensureCurrent();
+
+    const session = {
       world: data.world,
       character: {
         world: data.world,
@@ -300,36 +444,76 @@ export class AppSocket {
         prof: data.prof,
         clan: data.clan,
       },
-      margonemAccountProof,
-    });
+    };
 
-    if (!isJoinResult(response))
-      throw new Error("Invalid session.join response");
+    let response: JoinResult | undefined;
+
+    if (!connectionId) {
+      const reported = await this.realtime.join(session);
+      ensureCurrent();
+
+      if (!isJoinResult(reported))
+        throw new Error("Invalid session.join response");
+      response = reported;
+      connectionId = reported.connectionId;
+    }
+
+    const proofController = new AbortController();
+    const proofTimeout = setTimeout(() => proofController.abort(), 5_000);
+
+    const margonemAccountProof = await requestMargonemAccountProof({
+      socketId: connectionId,
+      accountId: data.accountId,
+      characterId: data.characterId,
+      clanId: data.clan?.id,
+      signal: AbortSignal.any([signal, proofController.signal]),
+    })
+      .catch(() => undefined)
+      .finally(() => clearTimeout(proofTimeout));
+
+    ensureCurrent();
+
+    if (!response || margonemAccountProof) {
+      const joined = await this.realtime.join({
+        ...session,
+        margonemAccountProof,
+      });
+
+      ensureCurrent();
+
+      if (!isJoinResult(joined))
+        throw new Error("Invalid session.join response");
+      response = joined;
+    }
+
     this.id = response.connectionId;
+
+    const capabilities = hasRealtimeCapabilities(response)
+      ? response.capabilities
+      : [];
+
+    this.gatheringStateSupported = capabilities.includes(
+      REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
+    );
+    this.battlePingsSupported = capabilities.includes(
+      REALTIME_BATTLE_PING_CAPABILITY,
+    );
+    this.teamBattlePingsSupported = capabilities.includes(
+      REALTIME_TEAM_BATTLE_PING_CAPABILITY,
+    );
+    this.airTagMapThreatsSupported = capabilities.includes(
+      REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
+    );
+    this.airTagDeparturesSupported = capabilities.includes(
+      REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
+    );
     this.joinedOrganizationIds = [...response.organizationIds];
 
     if (response.accessPolicy) this.applyAccessPolicy(response.accessPolicy);
 
-    if (margonemAccountProof) {
-      this.dispatchJoin(response);
+    this.dispatchJoin(response, data);
 
-      return response;
-    }
-
-    const proof = await requestMargonemAccountProof({
-      socketId: response.connectionId,
-      accountId: data.accountId,
-      characterId: data.characterId,
-      clanId: data.clan?.id,
-    }).catch(() => undefined);
-
-    if (!proof) {
-      this.dispatchJoin(response);
-
-      return response;
-    }
-
-    return this.join(data, proof);
+    return response;
   }
 
   emit<Event extends GatewayEvent>(
@@ -488,6 +672,17 @@ export class AppSocket {
       return response;
     }
 
+    if (event === GatewayEvent.BATTLE_PING_SEND) {
+      if (!payload) throw new Error("Missing battle-ping.send payload");
+      const response = await this.realtime.request("battle-ping.send", payload);
+
+      // Battle pings share the map ping acknowledgement contract.
+      if (!isMapPingAcknowledgement(response))
+        throw new Error("Invalid battle-ping.send response");
+
+      return response;
+    }
+
     if (event === GatewayEvent.AIR_TAG_SUBSCRIPTION) {
       if (!payload) throw new Error("Missing air-tag.subscription payload");
       const data = payload;
@@ -522,6 +717,13 @@ export class AppSocket {
   }
 
   private handleServerEvent(event: ServerEvent): void {
+    if (event.type === "session.hello") {
+      this.id = event.data.connectionId;
+      this.hello.resolve(event.data.connectionId);
+
+      return;
+    }
+
     if (event.type === "session.joined") {
       this.id = event.data.connectionId;
       this.joinedOrganizationIds = [...event.data.organizationIds];
@@ -589,7 +791,10 @@ export class AppSocket {
 
     if (legacyEvent) {
       const payload =
-        event.type === "map-ping.received" || event.type === "air-tag.updated"
+        event.type === "map-ping.received" ||
+        event.type === "battle-ping.received" ||
+        event.type === "air-tag.updated" ||
+        event.type === "air-tag.map-threat-updated"
           ? event.data
           : unwrapOrganizationEvent(event);
 
@@ -617,7 +822,7 @@ export class AppSocket {
     } satisfies PermissionsUpdatedPayload);
   }
 
-  private dispatchJoin(result: JoinResult): void {
+  private dispatchJoin(result: JoinResult, data: GameSessionJoinData): void {
     if (!result.accessPolicy) {
       this.currentAccessPolicy = undefined;
       this.listeners.emit(GatewayEvent.PERMISSIONS_UPDATED, {
@@ -627,6 +832,7 @@ export class AppSocket {
 
     this.listeners.emit(GatewayEvent.JOIN, {
       status: "success",
+      characterIdentity: getGameSessionIdentity(data),
       guildsCount: result.organizationIds.length,
       guildIds: [...result.organizationIds],
     });

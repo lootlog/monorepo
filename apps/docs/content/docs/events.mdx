@@ -35,6 +35,10 @@ Osoba z `LOOTLOG_EVENTS_WRITE` może przypisać siebie do dostępnej mapy.
 Zarządzający z `LOOTLOG_EVENTS_MANAGE` może również porządkować przydziały
 pozostałych uczestników.
 
+Przycisk przypisania odblokowuje się po zakończeniu odliczania. Możesz go użyć
+od razu, bez odświeżania strony. Po końcu okna odrodzenia nowe przypisania są
+zablokowane.
+
 Przed zmianą przypisania upewnij się, że nie usuwasz aktywnego członka bez
 uzgodnienia.
 
@@ -52,6 +56,14 @@ rankingu uczestników.
 Zmiany przypisań, zabójstwa i okna odrodzenia odświeżają widok eventu oraz
 panel koordynacji u pozostałych członków. Po przywróceniu połączenia panel
 pobiera aktualny stan, również gdy organizacja używa własnego adresu URL.
+
+Okno ręcznego otwierania respawnu za każdym otwarciem proponuje aktualny czas
+i koniec za trzy godziny. Przy kolejnym zamykaniu opcja utworzenia nowego okna
+jest ponownie wyłączona. Po błędzie zapisu wpisane dane pozostają do ponowienia.
+
+W zaawansowanych regułach punktacji wszystkie widoczne pola liczbowe muszą mieć
+poprawną wartość. Puste pole pokazuje błąd i blokuje zapis; nie usuwa warunku
+ani reguły. Aby usunąć warunek, użyj jego przycisku usuwania.
 
 Punkty są wyświetlane z dokładnością do dwóch miejsc po przecinku, bez końcowych
 zer, np. `1.5` zamiast `1.50`. Format wyświetlania nie zmienia naliczonych punktów.
@@ -75,6 +87,27 @@ lokacje i przypisania. Uprawnienie do zarządzania eventem nie daje dostępu do
 herosów poza tym zakresem. Nie można zmieniać ich map ani okien odrodzenia.
 Usunięcie całego eventu lub zastąpienie listy herosów wymaga widoczności wszystkich
 jego herosów. Administrator ma dostęp do wszystkich poziomów.
+
+## Historia zabójstw
+
+Historia eventu pokazuje najnowsze zabójstwa jako pierwsze. Możesz zawęzić ją
+do herosa albo przejść do historii wybranego członka. Zmiana filtra rozpoczyna
+listę od początku. Kolejne strony zachowują kolejność również wtedy, gdy kilka
+zabójstw zapisano w tej samej chwili.
+
+Liczba uczestników obejmuje osoby, dla których zapisano rozliczenie punktów,
+także jeśli nie były obecne przy samym zabójstwie. Otwórz szczegóły wpisu,
+aby zobaczyć punkty, czas śledzenia i oś czasu. Późne zamknięcie okna nie
+wydłuża czasu naliczania poza koniec respawnu.
+
+Jeśli pobranie historii się nie powiedzie, użyj ponowienia. Błąd pobierania
+kolejnej strony nie usuwa już widocznych wpisów. W szczegółach możesz osobno
+ponowić pobranie osi czasu i powiązanych łupów.
+
+Historia i szczegóły pokazują tylko herosów dostępnych dla Twoich ról. Po
+zmianie uprawnień panel usuwa wcześniejsze dane i pobiera dozwolony zakres
+ponownie. Nowe zabójstwa, korekty punktów i przywrócenie połączenia odświeżają
+historię.
 
 ## Sprawdź rezultat
 

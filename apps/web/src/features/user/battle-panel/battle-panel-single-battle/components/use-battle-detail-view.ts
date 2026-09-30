@@ -11,11 +11,17 @@ import {
 } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-log-scroll-active-turn";
 import { getBattlePanelSelectedTurn } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-panel-single-battle-state";
 import { useStatsCustomization } from "@/hooks/use-stats-customization";
+import {
+  getPageScroller,
+  useDocumentScrollListener,
+  usePageScrollsDocument,
+} from "@/hooks/utils/use-page-scroll";
 import type { Battle, RawBattle } from "@/lib/api/battlelog-types";
 import type { BattleTimelineResponseDtoOutput } from "@lootlog/client/battlelog";
 import { useQueryStates } from "nuqs";
 import {
   useEffect,
+  useEffectEvent,
   useLayoutEffect,
   useRef,
   useState,
@@ -62,6 +68,7 @@ export function useBattleDetailView({
   );
 
   const isWide = useMediaQuery(BATTLE_DETAIL_WIDE_MEDIA_QUERY);
+  const scrollsDocument = usePageScrollsDocument();
   const is1v1 = battle?.type === "1v1";
   const isGroup = battle !== undefined && !is1v1;
   const scrollViewportRef = useRef<HTMLDivElement>(null);
@@ -129,6 +136,14 @@ export function useBattleDetailView({
     setScrollTargetRequestId((requestId) => requestId + 1);
   }, [battleId, queryState.turn]);
 
+  // Only a new battle starts from the top; crossing `md` keeps the place.
+  const scrollPageToTop = useEffectEvent(() =>
+    getPageScroller(scrollViewportRef.current, scrollsDocument)?.scrollTo({
+      top: 0,
+      left: 0,
+    }),
+  );
+
   useLayoutEffect(() => {
     cancelScrollAnimationFrame();
 
@@ -143,10 +158,7 @@ export function useBattleDetailView({
         ? panelsColumnViewportRef.current
         : null;
 
-    scrollViewportRef.current?.scrollTo({
-      top: 0,
-      left: 0,
-    });
+    scrollPageToTop();
     scrollViewportRef.current
       ?.querySelectorAll<HTMLElement>(SCROLL_AREA_VIEWPORT_SELECTOR)
       .forEach((scrollViewport) => {
@@ -240,13 +252,16 @@ export function useBattleDetailView({
       return;
     }
 
-    const viewportElement = logScrollViewportRef.current;
+    const scroller = getPageScroller(
+      logScrollViewportRef.current,
+      scrollsDocument,
+    );
 
-    if (!battleLogWrapperRef.current || !viewportElement) {
+    if (!battleLogWrapperRef.current || !scroller) {
       return;
     }
 
-    const viewportRect = viewportElement.getBoundingClientRect();
+    const visibleBand = scroller.getVisibleBand();
 
     const toolbarRect = battleLogWrapperRef.current
       .querySelector("[data-battle-log-toolbar]")
@@ -255,8 +270,8 @@ export function useBattleDetailView({
     // The log's search bar pins itself over the top rows of the scroller.
     const occlusionBottom =
       toolbarRect &&
-      toolbarRect.bottom > viewportRect.top &&
-      toolbarRect.top < viewportRect.bottom
+      toolbarRect.bottom > visibleBand.top &&
+      toolbarRect.top < visibleBand.bottom
         ? toolbarRect.bottom
         : null;
 
@@ -284,8 +299,8 @@ export function useBattleDetailView({
 
     const activeTurn = getBattleLogScrollActiveTurn({
       turnPositions,
-      viewportTop: viewportRect.top,
-      viewportBottom: viewportRect.bottom,
+      viewportTop: visibleBand.top,
+      viewportBottom: visibleBand.bottom,
       occlusionBottom,
     });
 
@@ -314,6 +329,8 @@ export function useBattleDetailView({
       updateSelectedTurnFromScroll,
     );
   };
+
+  useDocumentScrollListener(handleBattleScroll);
 
   return {
     scrollViewportRef,

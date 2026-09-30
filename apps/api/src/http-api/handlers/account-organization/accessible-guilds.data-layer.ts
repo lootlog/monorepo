@@ -1,3 +1,5 @@
+import { readGuildOrderPreference } from "#src/guilds/guild-order-query";
+import { sortGuildsByPreference } from "#src/guilds/guild-order";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { hydrateMemberRoles } from "#src/members/member-role-hydration";
 import { apiKeyCacheSuffix } from "#src/runtime/auth/organization-scope";
@@ -6,7 +8,7 @@ import { Clock, Effect, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { memberTable, userSettingsTable } from "#src/database/drizzle/schema";
+import { memberTable } from "#src/database/drizzle/schema";
 import { getMemberCacheSoftTtl } from "#src/members/member-cache";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/member-refresh-queue";
 import {
@@ -15,17 +17,6 @@ import {
 } from "./account-organization.operations.js";
 
 const CACHE_TTL_SECONDS = 30;
-
-export type GuildSummary = {
-  readonly id: string;
-  readonly name: string;
-  readonly icon: string | null;
-  readonly vanityUrl: string | null;
-  readonly ownerId: string;
-  readonly publicStatsCardEnabled: boolean;
-  readonly hasLootlogAccess: boolean;
-  readonly isAccessDataStale: boolean;
-};
 
 export const GuildSummaryCacheSchema = Schema.mutable(
   Schema.Array(
@@ -42,6 +33,8 @@ export const GuildSummaryCacheSchema = Schema.mutable(
   ),
 );
 
+export type GuildSummary = (typeof GuildSummaryCacheSchema.Type)[number];
+
 export interface AccessibleGuildPorts {
   readonly getCached: (
     key: string,
@@ -51,6 +44,12 @@ export interface AccessibleGuildPorts {
     value: GuildSummary[],
     ttlSeconds: number,
   ) => Effect.Effect<unknown, unknown>;
+  readonly setIfAbsent: (
+    key: string,
+    value: string,
+    ttlSeconds: number,
+  ) => Effect.Effect<boolean, unknown>;
+  readonly deleteCached: (key: string) => Effect.Effect<unknown, unknown>;
   readonly queueRefresh: (options: {
     readonly discordId: string;
     readonly guildId: string;
@@ -65,6 +64,13 @@ export const makeAccessibleGuilds = (
   ports: AccessibleGuildPorts,
   environment: RuntimeEnvironment,
 ) => {
+  // A refresh that succeeds keeps the member fresh for one soft TTL, and the
+  // queued job retries on its own, so one background enqueue per window is
+  // enough; later requests would only repeat BullMQ round trips.
+  const refreshMarkerTtlSeconds = Math.ceil(
+    getMemberCacheSoftTtl(environment) / 1000,
+  );
+
   const queue = (
     identity: AuthenticatedIdentity,
     guildIds: ReadonlyArray<string>,
@@ -72,15 +78,32 @@ export const makeAccessibleGuilds = (
   ) =>
     Effect.forEach(
       guildIds,
-      (guildId) =>
-        ports
-          .queueRefresh({
-            ...identity,
-            guildId,
-            priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
-            reason,
-          })
-          .pipe(Effect.ignore),
+      (guildId) => {
+        const markerKey = `member:refresh:background:${identity.userId}:${guildId}`;
+
+        // Release a claimed marker whenever the enqueue does not succeed,
+        // including interruption, so another read can queue the refresh.
+        return Effect.uninterruptibleMask((restore) =>
+          ports.setIfAbsent(markerKey, "1", refreshMarkerTtlSeconds).pipe(
+            Effect.flatMap((claimed) =>
+              claimed
+                ? restore(
+                    ports.queueRefresh({
+                      ...identity,
+                      guildId,
+                      priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
+                      reason,
+                    }),
+                  ).pipe(
+                    Effect.onError(() =>
+                      ports.deleteCached(markerKey).pipe(Effect.ignore),
+                    ),
+                  )
+                : Effect.void,
+            ),
+          ),
+        ).pipe(Effect.ignore);
+      },
       { concurrency: "unbounded", discard: true },
     );
 
@@ -177,21 +200,12 @@ export const makeAccessibleGuilds = (
       "guild-access-background",
     );
 
-    const orderRows = yield* database
-      .select({ guildsOrder: userSettingsTable.guildsOrder })
-      .from(userSettingsTable)
-      .where(eq(userSettingsTable.userId, identity.userId))
-      .limit(1);
-
-    const order = new Map(
-      (orderRows[0]?.guildsOrder ?? []).map((id, index) => [id, index]),
+    const preferredIds = yield* readGuildOrderPreference(
+      database,
+      identity.userId,
     );
 
-    const result = [...summaries].sort(
-      (left, right) =>
-        (order.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
-        (order.get(right.id) ?? Number.MAX_SAFE_INTEGER),
-    );
+    const result = sortGuildsByPreference(summaries, preferredIds);
 
     yield* ports.setCached(cacheKey, result, CACHE_TTL_SECONDS);
 

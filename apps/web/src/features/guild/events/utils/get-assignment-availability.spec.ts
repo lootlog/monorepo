@@ -16,7 +16,7 @@ describe("getAssignmentAvailability", () => {
       }),
     ).toEqual({
       allowed: false,
-      enabledAt: new Date("2026-07-28T12:55:00.000Z"),
+      enabledAt: Date.parse("2026-07-28T12:55:00.000Z"),
       reason: "TOO_EARLY",
     });
   });

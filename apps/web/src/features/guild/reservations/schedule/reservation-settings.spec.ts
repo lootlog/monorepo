@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   clampReservationEndDate,
-  getDurationMinutes,
   isReservationStartSelectable,
-  snapMinutesToStep,
   validateReservationDateRange,
 } from "./reservation-settings";
 
@@ -17,20 +15,6 @@ describe("reservation settings helpers", () => {
   };
 
   const now = new Date(2026, 0, 1, 12, 0, 0, 0);
-
-  it("snaps minutes down to the configured step", () => {
-    expect(snapMinutesToStep(37, 15)).toBe(30);
-    expect(snapMinutesToStep(59, 5)).toBe(55);
-  });
-
-  it("returns duration in minutes", () => {
-    expect(
-      getDurationMinutes(
-        new Date("2026-01-01T10:00:00.000Z"),
-        new Date("2026-01-01T11:45:00.000Z"),
-      ),
-    ).toBe(105);
-  });
 
   it("accepts a valid reservation date range", () => {
     expect(

@@ -3,6 +3,7 @@ import {
   type InputSize,
   type InputVariant,
 } from "@/components/ui/input";
+import { IconButton } from "@/components/ui/icon-button";
 import { cn } from "cn";
 import { Search, X } from "lucide-react";
 import { forwardRef, type ComponentProps } from "react";
@@ -16,15 +17,15 @@ type SearchInputProps = Omit<
   size?: InputSize;
   /** `borderless` embeds the field in a flat toolbar strip. */
   variant?: Extract<InputVariant, "filled" | "borderless">;
-  /** Renders a clear button while the value is non-empty. */
-  onClear?: () => void;
-  clearLabel?: string;
+  /** Empties the field from the clear button shown while it has a value. */
+  onClear: () => void;
+  clearLabel: string;
   className?: string;
 };
 
 /**
- * Search field: filled input with a leading search icon and an optional clear
- * button. Every search box in the client shares this look.
+ * Search field: filled input with a leading search icon and a clear button.
+ * Every search box in the client shares this look and behavior.
  */
 export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
   function SearchInput(
@@ -39,7 +40,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     },
     ref,
   ) {
-    const showClear = Boolean(onClear) && value.length > 0;
+    const showClear = value.length > 0;
 
     return (
       <div className={cn("ll:relative ll:min-w-0 ll:flex-1", className)}>
@@ -56,18 +57,17 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           value={value}
           autoComplete="off"
           spellCheck={false}
-          className={cn("ll:ps-6", showClear ? "ll:pe-6" : "ll:pe-2")}
+          className={cn("ll:ps-6", showClear ? "ll:pe-7" : "ll:pe-2")}
           {...props}
         />
         {showClear ? (
-          <button
-            type="button"
-            aria-label={clearLabel}
+          <IconButton
+            label={clearLabel}
             onClick={onClear}
-            className="ll-custom-cursor-pointer ll:absolute ll:end-1 ll:top-1/2 ll:flex ll:size-5 ll:-translate-y-1/2 ll:items-center ll:justify-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:p-0 ll:text-muted-foreground ll:transition-[color,scale] ll:duration-150 ll:ease-out ll:hover:text-foreground ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:active:scale-[0.96]"
+            className="ll:absolute ll:end-0.5 ll:top-1/2 ll:-translate-y-1/2"
           >
-            <X className="ll:size-3.5" strokeWidth={1.5} aria-hidden="true" />
-          </button>
+            <X strokeWidth={1.5} aria-hidden="true" />
+          </IconButton>
         ) : null}
       </div>
     );

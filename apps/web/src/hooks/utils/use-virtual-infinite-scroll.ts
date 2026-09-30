@@ -1,4 +1,8 @@
-import { useEffect, type RefObject } from "react";
+import { useEffect, useRef } from "react";
+import {
+  getPageScroller,
+  usePageScrollsDocument,
+} from "@/hooks/utils/use-page-scroll";
 
 type VirtualItemLike = {
   index: number;
@@ -14,8 +18,11 @@ type UseVirtualInfiniteScrollOptions = {
 };
 
 type UseResetScrollTopOptions = {
-  resetKey: string;
-  scrollElementRef: RefObject<HTMLElement | null>;
+  behavior?: ScrollBehavior;
+  enabled?: boolean;
+  /** The page's scroll viewport. */
+  getScrollElement: () => HTMLElement | null;
+  resetKey: string | undefined;
 };
 
 export const useVirtualInfiniteScroll = ({
@@ -54,11 +61,28 @@ export const useVirtualInfiniteScroll = ({
   ]);
 };
 
+/**
+ * Returns the page to its top when `resetKey` changes, such as when filters
+ * replace the list. Mounting leaves the position to scroll restoration.
+ */
 export const useResetScrollTop = ({
+  behavior,
+  enabled = true,
+  getScrollElement,
   resetKey,
-  scrollElementRef,
 }: UseResetScrollTopOptions) => {
+  const scrollsDocument = usePageScrollsDocument();
+  const appliedResetKey = useRef(resetKey);
+
   useEffect(() => {
-    scrollElementRef.current?.scrollTo(0, 0);
-  }, [resetKey, scrollElementRef]);
+    if (appliedResetKey.current === resetKey) return;
+    appliedResetKey.current = resetKey;
+
+    if (!enabled) return;
+    getPageScroller(getScrollElement(), scrollsDocument)?.scrollTo({
+      top: 0,
+      left: 0,
+      behavior,
+    });
+  }, [behavior, enabled, getScrollElement, resetKey, scrollsDocument]);
 };

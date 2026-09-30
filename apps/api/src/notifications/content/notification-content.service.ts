@@ -22,33 +22,12 @@ import {
   ruleTestWithoutWorld,
 } from "#src/notifications/content/notification-messages";
 import { formatDiscordRelativeTimestamp } from "#src/notifications/content/discord-timestamp";
-
-const DbNotificationScheduleAnchor = {
-  MAX_SPAWN: "MAX_SPAWN",
-  MIN_SPAWN: "MIN_SPAWN",
-} as const;
-
-type DbNotificationScheduleAnchor =
-  (typeof DbNotificationScheduleAnchor)[keyof typeof DbNotificationScheduleAnchor];
-
-type DbNotificationScheduleStrategy =
-  | "FIXED_DATETIME"
-  | "SPAWN_WINDOW_RELATIVE";
-
-const DbNotificationTargetType = { CHANNEL: "CHANNEL", DM: "DM" } as const;
-
-type DbNotificationTargetType =
-  (typeof DbNotificationTargetType)[keyof typeof DbNotificationTargetType];
-
-const DbNotificationTriggerType = {
-  NPC_SPAWNED: "NPC_SPAWNED",
-  SCHEDULED_MESSAGE: "SCHEDULED_MESSAGE",
-  TIMER_BEFORE_SPAWN: "TIMER_BEFORE_SPAWN",
-  WATCHED_ITEM_DROPPED: "WATCHED_ITEM_DROPPED",
-} as const;
-
-type DbNotificationTriggerType =
-  (typeof DbNotificationTriggerType)[keyof typeof DbNotificationTriggerType];
+import {
+  NotificationScheduleAnchor,
+  type NotificationScheduleStrategy,
+  NotificationTargetType,
+  NotificationTriggerType,
+} from "#src/notifications/notification-enums";
 
 type AllowedMention = "roles" | "users" | "everyone";
 
@@ -83,14 +62,14 @@ class NotificationContent {
     notificationRule: {
       id: number;
       name: string | null;
-      triggerType: DbNotificationTriggerType;
-      scheduleStrategy: DbNotificationScheduleStrategy | null;
-      scheduleAnchor: DbNotificationScheduleAnchor | null;
+      triggerType: NotificationTriggerType;
+      scheduleStrategy: NotificationScheduleStrategy | null;
+      scheduleAnchor: NotificationScheduleAnchor | null;
       scheduleOffsetMinutes: number | null;
       contentTemplate?: string | null;
     };
     target: {
-      targetType: DbNotificationTargetType;
+      targetType: NotificationTargetType;
     };
     npcId: number;
     npcName: string | null;
@@ -106,7 +85,7 @@ class NotificationContent {
       world: params.world,
       scheduleAnchor:
         params.notificationRule.scheduleAnchor ??
-        DbNotificationScheduleAnchor.MIN_SPAWN,
+        NotificationScheduleAnchor.MIN_SPAWN,
       scheduleOffsetMinutes: params.notificationRule.scheduleOffsetMinutes ?? 0,
     });
 
@@ -154,11 +133,11 @@ class NotificationContent {
     notificationRule: {
       id: number;
       name: string | null;
-      triggerType: DbNotificationTriggerType;
+      triggerType: NotificationTriggerType;
       contentTemplate?: string | null;
     };
     target: {
-      targetType: DbNotificationTargetType;
+      targetType: NotificationTargetType;
     };
     scheduledFor: Date;
   }) {
@@ -202,15 +181,15 @@ class NotificationContent {
       guildId: string | null;
       name: string | null;
       world: string | null;
-      triggerType: DbNotificationTriggerType;
+      triggerType: NotificationTriggerType;
       filters: JsonValue | null;
-      scheduleStrategy: DbNotificationScheduleStrategy | null;
-      scheduleAnchor: DbNotificationScheduleAnchor | null;
+      scheduleStrategy: NotificationScheduleStrategy | null;
+      scheduleAnchor: NotificationScheduleAnchor | null;
       scheduleOffsetMinutes: number | null;
       contentTemplate: string | null;
     };
     scheduledFor: Date;
-    targetType: DbNotificationTargetType;
+    targetType: NotificationTargetType;
   }) {
     return {
       title: GENERIC_NOTIFICATION_TITLE,
@@ -239,9 +218,9 @@ class NotificationContent {
    */
   buildAllowedMentionsForTarget(
     content: string,
-    targetType: DbNotificationTargetType,
+    targetType: NotificationTargetType,
   ) {
-    if (targetType === DbNotificationTargetType.DM) {
+    if (targetType === NotificationTargetType.DM) {
       return undefined;
     }
 
@@ -309,12 +288,12 @@ class NotificationContent {
     npcName: string | null;
     npcId: number;
     world: string;
-    scheduleAnchor: DbNotificationScheduleAnchor;
+    scheduleAnchor: NotificationScheduleAnchor;
     scheduleOffsetMinutes: number;
   }) {
     const npcLabel = params.npcName ?? `NPC #${params.npcId}`;
 
-    if (params.scheduleAnchor === DbNotificationScheduleAnchor.MAX_SPAWN) {
+    if (params.scheduleAnchor === NotificationScheduleAnchor.MAX_SPAWN) {
       if (params.scheduleOffsetMinutes === 0) {
         return timerMaxSpawnReached(npcLabel, params.world);
       }
@@ -339,14 +318,14 @@ class NotificationContent {
 
   private buildRuleTestNotificationMessage(params: {
     ruleName: string | null;
-    triggerType: DbNotificationTriggerType;
+    triggerType: NotificationTriggerType;
     world: string | null;
   }) {
     const ruleLabel = params.ruleName?.trim().length
       ? params.ruleName.trim()
-      : params.triggerType === DbNotificationTriggerType.TIMER_BEFORE_SPAWN
+      : params.triggerType === NotificationTriggerType.TIMER_BEFORE_SPAWN
         ? TIMER_BEFORE_SPAWN_LABEL
-        : params.triggerType === DbNotificationTriggerType.SCHEDULED_MESSAGE
+        : params.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE
           ? SCHEDULED_MESSAGE_DEFAULT_NAME
           : GENERIC_NOTIFICATION_TITLE;
 

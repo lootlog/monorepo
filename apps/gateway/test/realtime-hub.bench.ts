@@ -37,7 +37,6 @@ const config = {
   allowedWebOrigins: new Set<string>(),
   allowedExtensionOrigins: new Set<string>(),
   maxBackpressureBytes: 1_048_576,
-  maxBackpressureStrikes: 3,
 } satisfies GatewayConfiguration;
 
 const redis = { ...unusedFederationStore, publish: () => Promise.resolve() };
@@ -104,6 +103,7 @@ for (const scenario of [
   "map.pings.wildcard",
 ] as const) {
   let deliveries = 0;
+  let recipientCandidates = 0;
   // Registry background writes are outside this routing/codec benchmark.
   const hub = new RealtimeHub(config, redis, () => {});
 
@@ -133,15 +133,25 @@ for (const scenario of [
       discordId: `discord-${index}`,
       platform: "game",
       joined: true,
-      guilds: [],
+      guilds: [
+        {
+          guild: { id: organizationId, ownerId: `discord-${index}` },
+          roles: [],
+        },
+      ],
       airTagScopes: [],
       confidence: "reported",
-      backpressureStrikes: 0,
       subscriptions: new Map(
         scopes.map((scope) => [getScopeKey(scope), scope]),
       ),
       presence: {
         ...presence,
+        // Each candidate's recipient filter reads its world once; setup reads are reset below.
+        get character() {
+          recipientCandidates++;
+
+          return presence.character;
+        },
         location: { mapId: index % 100, map: `Map ${index % 100}` },
       },
     };
@@ -189,6 +199,7 @@ for (const scenario of [
 
   for (let index = 0; index < warmupPublications; index++) await publish();
   deliveries = 0;
+  recipientCandidates = 0;
   const started = performance.now();
   const cpuStarted = process.cpuUsage();
 
@@ -201,6 +212,9 @@ for (const scenario of [
   );
 
   assert.equal(deliveries, recipients * publications);
+
+  if (scenario !== "presence")
+    assert.equal(recipientCandidates, recipients * publications);
   console.log(
     JSON.stringify({
       scenario,
@@ -211,6 +225,12 @@ for (const scenario of [
       cpuMs: (cpu.user + cpu.system) / 1_000,
       publicationsPerSecond: Math.round(publications / (wallMs / 1_000)),
       deliveries,
+      recipientCandidates:
+        scenario === "presence" ? undefined : recipientCandidates,
+      candidatesPerPublication:
+        scenario === "presence"
+          ? undefined
+          : recipientCandidates / publications,
     }),
   );
 }

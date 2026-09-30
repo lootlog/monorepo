@@ -1,10 +1,12 @@
-import type { GameEvent } from "@lootlog/margonem/game-events";
+import type { GameEvent, OtherCreate } from "@lootlog/margonem/game-events";
+import { renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useFriendsStore } from "@/store/friends.store";
+import { usePlayerRelations } from "@/hooks/use-player-relations";
 import { useGameStore } from "@/store/game.store";
 import { useNpcsStore } from "@/store/npcs.store";
 import { useOthersStore } from "@/store/others.store";
 import { usePartyStore } from "@/store/party.store";
+import { useSocialRelationsStore } from "@/store/social-relations.store";
 import {
   NiRuntimeAdapter,
   SiRuntimeAdapter,
@@ -28,6 +30,7 @@ const game = Object.freeze({
     maxHp: 100,
     name: "Hero",
     profession: "w",
+    stasis: false,
     x: 1,
     y: 2,
   }),
@@ -64,7 +67,6 @@ function createAdapter() {
     getOtherHandle: vi.fn<MargonemRuntimeAdapter["getOtherHandle"]>(),
     getParty: vi.fn<MargonemRuntimeAdapter["getParty"]>(() => []),
     getStateSnapshot: vi.fn<MargonemRuntimeAdapter["getStateSnapshot"]>(() => ({
-      friends: [],
       game,
       npcs: [npc],
       others: {},
@@ -97,7 +99,6 @@ describe("RuntimeStateProjection", () => {
     useNpcsStore.getState().clearNpcs();
     useOthersStore.getState().clearOthers();
     usePartyStore.getState().clearParty();
-    useFriendsStore.getState().clearFriends();
     runtimeOtherHandles.clear();
   });
 
@@ -524,7 +525,8 @@ describe("RuntimeStateProjection", () => {
     const captured = projection.captureIngress(envelope);
     projection.apply(captured);
 
-    expect(captured.ingress.game).toBe(useGameStore.getState().game);
+    expect(captured.ingress.game?.hero.stasis).toBe(false);
+    expect(useGameStore.getState().game?.hero.stasis).toBe(true);
     expect(captured.ingress.npcsById[501]).toEqual(npc);
     expect(useNpcsStore.getState().getNpc(501)).toBeUndefined();
     expect(adapter.getGameSnapshot).not.toHaveBeenCalled();
@@ -555,5 +557,206 @@ describe("RuntimeStateProjection", () => {
     expect(useNpcsStore.getState().status).toBe("uninitialized");
     expect(useOthersStore.getState().status).toBe("uninitialized");
     expect(runtimeOtherHandles.getAll()).toEqual({});
+  });
+
+  describe("social relations", () => {
+    const clanGame = Object.freeze({
+      ...game,
+      hero: Object.freeze({
+        ...game.hero,
+        clan: Object.freeze({ id: 10, name: "Own", rank: 1 }),
+      }),
+    }) satisfies RuntimeGameSnapshot;
+
+    const otherCreate = (relation: number, clanId?: number): OtherCreate => {
+      const entry: OtherCreate = {
+        action: "CREATE",
+        account: 3,
+        nick: "Met",
+        icon: "met.gif",
+        x: 1,
+        y: 1,
+        dir: 0,
+        stasis: 0,
+        stasis_incoming_seconds: 0,
+        rights: 0,
+        lvl: 100,
+        oplvl: 0,
+        prof: "m",
+        attr: 0,
+        is_blessed: 0,
+        relation,
+      };
+
+      if (clanId !== undefined) entry.clan = { id: clanId, name: "Other" };
+
+      return entry;
+    };
+
+    const startProjection = () => {
+      const adapter = createAdapter();
+      adapter.getStateSnapshot.mockReturnValue({
+        game: clanGame,
+        npcs: [],
+        others: {},
+        party: [],
+      });
+      const projection = new RuntimeStateProjection({ adapter });
+      projection.bootstrap();
+
+      return projection;
+    };
+
+    const relationsOf = (characterId: string, clanId?: number) =>
+      renderHook(() => usePlayerRelations({ characterId, clanId })).result
+        .current;
+
+    beforeEach(() => {
+      useSocialRelationsStore.setState({ characters: {}, clans: {} });
+    });
+
+    it("keeps the friends list for the character that received it", () => {
+      const projection = startProjection();
+
+      projection.apply(
+        createEnvelope({
+          friends: [
+            "55",
+            "Friend",
+            "f.gif",
+            "1",
+            "0",
+            "m",
+            "Map",
+            "1",
+            "1",
+            "online",
+            "",
+          ],
+        }),
+      );
+
+      expect(relationsOf("55")).toEqual(["friend"]);
+
+      useGameStore.getState().replaceGame({
+        ...clanGame,
+        hero: { ...clanGame.hero, characterId: "other-hero" },
+      });
+
+      expect(relationsOf("55")).toEqual([]);
+    });
+
+    it("does not rewrite stored relations when the game repeats them", () => {
+      const projection = startProjection();
+      const setItem = vi.spyOn(localStorage, "setItem");
+
+      const socialWrites = () =>
+        setItem.mock.calls.filter(([key]) => key.includes("social-relations"))
+          .length;
+
+      const repeatedPacket = createEnvelope({
+        friends: [
+          "55",
+          "Friend",
+          "f.gif",
+          "1",
+          "0",
+          "m",
+          "Map",
+          "1",
+          "1",
+          "online",
+          "",
+        ],
+        clan_fr: [30, "Ally", 100, 5],
+        other: { "77": otherCreate(5, 30) },
+      });
+
+      projection.apply(repeatedPacket);
+      const writesAfterFirstPacket = socialWrites();
+      projection.apply(repeatedPacket);
+      projection.apply(repeatedPacket);
+
+      expect(writesAfterFirstPacket).toBeGreaterThan(0);
+      expect(socialWrites()).toBe(writesAfterFirstPacket);
+      setItem.mockRestore();
+    });
+
+    it("treats every member of a clan met as allied as an ally on any map", () => {
+      const projection = startProjection();
+
+      projection.apply(createEnvelope({ other: { "77": otherCreate(5, 30) } }));
+
+      expect(relationsOf("elsewhere", 30)).toEqual(["clan-ally"]);
+    });
+
+    it("forgets a remembered ally and friend once the map reports no relation", () => {
+      const projection = startProjection();
+
+      projection.apply(
+        createEnvelope({
+          friends: [
+            "77",
+            "Met",
+            "f.gif",
+            "1",
+            "0",
+            "m",
+            "Map",
+            "1",
+            "1",
+            "online",
+            "",
+          ],
+          clan_fr: [30, "Other", 100, 5],
+        }),
+      );
+      projection.apply(createEnvelope({ other: { "77": otherCreate(1, 30) } }));
+
+      expect(relationsOf("77", 30)).toEqual([]);
+      expect(relationsOf("elsewhere", 30)).toEqual([]);
+    });
+
+    it("replaces allied clans from diplomacy without dropping enemy clans", () => {
+      const projection = startProjection();
+
+      projection.apply(
+        createEnvelope({
+          clan_fr: [30, "Old ally", 100, 5],
+          clan_en: [40, "Foe", 100, 5, 0, 0],
+        }),
+      );
+      projection.apply(createEnvelope({ clan_fr: [31, "New ally", 100, 5] }));
+
+      expect(relationsOf("a", 30)).toEqual([]);
+      expect(relationsOf("b", 31)).toEqual(["clan-ally"]);
+      expect(relationsOf("c", 40)).toEqual(["clan-enemy"]);
+    });
+
+    it("learns from players already on the map when Lootlog starts", () => {
+      const adapter = createAdapter();
+      adapter.getStateSnapshot.mockReturnValue({
+        game: clanGame,
+        npcs: [],
+        others: {},
+        party: [],
+      });
+      adapter.getAllOtherHandles.mockReturnValue({
+        "88": {
+          d: {
+            account: 4,
+            icon: "x.gif",
+            id: "88",
+            lvl: 1,
+            nick: "Present",
+            prof: "w",
+            relation: 2,
+          },
+        },
+      });
+      new RuntimeStateProjection({ adapter }).bootstrap();
+
+      expect(relationsOf("88")).toEqual(["friend"]);
+    });
   });
 });

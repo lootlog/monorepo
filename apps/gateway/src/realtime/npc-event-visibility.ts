@@ -13,6 +13,7 @@ import {
 } from "@lootlog/schema/npc-routing";
 import { Permission } from "@lootlog/schema/permissions";
 import { NonNegativeInt } from "@lootlog/schema/primitives";
+import { PartyGatheringUpdateEnvelopeSchema } from "@lootlog/schema/party-ready-room";
 import { canViewEventHero } from "@lootlog/domain/event-hero-visibility";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
 import { Function, Option, Predicate, Schema } from "effect";
@@ -20,6 +21,18 @@ import type { UserGuildData } from "#src/guilds/guild";
 import type { SessionData } from "#src/realtime/session";
 
 type Event = typeof ServerEvent.Type;
+
+export const PartyGatheringEventSourceSchema = Schema.Struct({
+  guildId: PartyGatheringUpdateEnvelopeSchema.fields.guildId,
+  organizerDiscordId:
+    PartyGatheringUpdateEnvelopeSchema.fields.organizerDiscordId,
+  npc: PartyGatheringUpdateEnvelopeSchema.fields.npc,
+  world: PartyGatheringUpdateEnvelopeSchema.fields.world,
+  notificationId: PartyGatheringUpdateEnvelopeSchema.fields.notificationId,
+});
+
+export type PartyGatheringEventSource =
+  typeof PartyGatheringEventSourceSchema.Type;
 
 type NpcEvent = Extract<
   Event,
@@ -225,13 +238,19 @@ const canReadEventHeroSource = (
   );
 };
 
+// A removal carries only the room identity, so it must reach former members too.
+export const isReadyRoomRemoval = (event: Event): boolean =>
+  event.type === "party-ready-room.updated" &&
+  Predicate.isObject(event.data.payload) &&
+  event.data.payload.type === "REMOVE";
+
 const isUnscopedReadyRoomUpdate = (event: Event): boolean => {
   if (event.type !== "party-ready-room.updated") return false;
   const payload = event.data.payload;
 
   if (!Predicate.isObject(payload)) return false;
 
-  if (payload.type === "REMOVE") return true;
+  if (isReadyRoomRemoval(event)) return true;
 
   return (
     Predicate.isObject(payload.projection) &&
@@ -239,12 +258,52 @@ const isUnscopedReadyRoomUpdate = (event: Event): boolean => {
   );
 };
 
+const prepareGatheringSourceEvent = (
+  event: Extract<Event, { type: "party-gathering.state-updated" }>,
+  gatheringSource?: PartyGatheringEventSource,
+): ((session: SessionData, guild: UserGuildData | undefined) => boolean) => {
+  if (!gatheringSource || gatheringSource.guildId !== event.data.organizationId)
+    return () => false;
+
+  const update = event.data.payload;
+
+  const validSource =
+    update.type === "REMOVE"
+      ? update.notificationId === gatheringSource.notificationId
+      : update.gathering.notificationId === gatheringSource.notificationId &&
+        update.gathering.world === gatheringSource.world &&
+        update.gathering.guildIds.length === 1 &&
+        update.gathering.guildIds[0] === gatheringSource.guildId;
+
+  const routing =
+    gatheringSource.npc === undefined
+      ? { tier: "base" as const }
+      : npcRouting(gatheringSource.npc);
+
+  return (session, guild) => {
+    if (!guild || !validSource || !routing) return false;
+
+    return (
+      isOrganizationAdministrator(session, guild) ||
+      canManageOwnPartyGathering(
+        guild.roles,
+        gatheringSource.organizerDiscordId,
+        session.discordId,
+      ) ||
+      canReadNpcFeatureSource(guild.roles, "chat", routing)
+    );
+  };
+};
+
 export const prepareNpcSourceEvent = (
   event: Event,
+  gatheringSource?: PartyGatheringEventSource,
 ): ((session: SessionData, guild: UserGuildData | undefined) => boolean) => {
   if (isUnscopedReadyRoomUpdate(event)) return () => true;
 
   switch (event.type) {
+    case "party-gathering.state-updated":
+      return prepareGatheringSourceEvent(event, gatheringSource);
     case "member-refresh.updated":
       return (session, guild) => isOrganizationAdministrator(session, guild);
     case "event.map-status-updated":

@@ -5,22 +5,9 @@ import { Label } from "@lootlog/ui/components/label";
 import { Button } from "@lootlog/ui/components/button";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Input } from "@lootlog/ui/components/input";
-import type { Period } from "@/features/user/battle-panel/battle-panel-search";
+import type { StatisticsFiltersProps } from "./statistics-filters";
 import { useTranslation } from "react-i18next";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
-
-type StatisticsFiltersMobileProps = {
-  characterId?: string;
-  period: Period;
-  minLevel?: number;
-  maxLevel?: number;
-  ph?: boolean;
-  onCharacterChange: (characterId: string | undefined) => void;
-  onPeriodChange: (period: Period) => void;
-  onMinLevelChange: (minLevel: number | undefined) => void;
-  onMaxLevelChange: (maxLevel: number | undefined) => void;
-  onPhChange: (ph: boolean) => void;
-};
 
 export const StatisticsFiltersMobile = ({
   characterId,
@@ -33,7 +20,7 @@ export const StatisticsFiltersMobile = ({
   onMinLevelChange,
   onMaxLevelChange,
   onPhChange,
-}: StatisticsFiltersMobileProps) => {
+}: StatisticsFiltersProps) => {
   const { t } = useTranslation();
 
   return (

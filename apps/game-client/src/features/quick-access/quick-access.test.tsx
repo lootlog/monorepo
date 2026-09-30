@@ -1,4 +1,5 @@
 import { act, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
@@ -37,6 +38,7 @@ describe("QuickAccess", () => {
       "quick-access": {
         ...state["quick-access"],
         open: true,
+        collapsed: false,
       },
       currentWindowFocus: undefined,
       windowFocusHistory: [],
@@ -119,6 +121,45 @@ describe("QuickAccess", () => {
     expect(
       screen.queryByRole("button", { name: "Aktywne zbieranie grupy" }),
     ).not.toBeInTheDocument();
+    expect(quickAccessWindow?.style.width).toBe("340px");
+    expect(quickAccessWindow?.style.height).toBe("84px");
+  });
+
+  it("collapses to the connection state and expands back to the saved size", async () => {
+    const user = userEvent.setup();
+    useWindowsStore
+      .getState()
+      .setSize("quick-access", { width: 340, height: 84 });
+    const fixture = createGuildPreferencesTest();
+
+    render(
+      <QueryClientProvider client={fixture.queryClient}>
+        <QuickAccess />
+      </QueryClientProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Zwiń pasek" }));
+
+    expect(
+      screen.queryByRole("button", { name: "Timery" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Rozwiń pasek" })).toHaveFocus();
+    expect(
+      document.querySelector("[data-ll-window-resize-handle]"),
+    ).not.toBeInTheDocument();
+    // The collapsed bar must not overwrite the size the bar expands back to.
+    expect(useWindowsStore.getState()["quick-access"]).toMatchObject({
+      collapsed: true,
+      size: { width: 340, height: 84 },
+    });
+
+    await user.click(screen.getByRole("button", { name: "Rozwiń pasek" }));
+
+    const quickAccessWindow = document.querySelector<HTMLElement>(
+      '[data-ll-draggable-window="quick-access"]',
+    );
+
+    expect(screen.getByRole("button", { name: "Timery" })).toBeInTheDocument();
     expect(quickAccessWindow?.style.width).toBe("340px");
     expect(quickAccessWindow?.style.height).toBe("84px");
   });

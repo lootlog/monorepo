@@ -11,10 +11,20 @@ import {
   ApiDatabase,
   ApiDatabaseLive,
 } from "../src/database/drizzle/database.js";
-import { guildTable, roleTable } from "../src/database/drizzle/schema.js";
+import {
+  guildTable,
+  memberTable,
+  roleTable,
+} from "../src/database/drizzle/schema.js";
 import { makeGuildLifecycle } from "../src/guilds/guild-lifecycle.operations.js";
+import { makeMemberDelivery } from "../src/members/member-delivery.operations.js";
+import { makeMemberStore } from "../src/members/member.store.js";
 import { getGuildCacheKey } from "../src/guilds/guild-configuration-cache.js";
 import { getPermissionsCachePattern } from "../src/shared/cache.js";
+import {
+  createGuildFixture,
+  createMemberFixture,
+} from "./organization-fixtures.js";
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
 
@@ -55,10 +65,11 @@ describe("Discord guild lifecycle against migrated PostgreSQL", () => {
         const db = yield* ApiDatabase;
 
         const lifecycle = makeGuildLifecycle(db, {
+          invalidateUserGuildPermissions: () => Effect.void,
           clearCacheKey: (key) => Effect.sync(() => clearedKeys.push(key)),
           clearCachePattern: (pattern) =>
             Effect.sync(() => clearedPatterns.push(pattern)),
-          notifyMembersRemoved: () => Effect.void,
+          deliverMemberChanges: () => Effect.void,
         });
 
         const created = decodeCreated({
@@ -145,5 +156,56 @@ describe("Discord guild lifecycle against migrated PostgreSQL", () => {
     expect(clearedPatterns).toEqual(
       Array.from({ length: 6 }, () => getPermissionsCachePattern(guildId)),
     );
+  });
+
+  it("publishes member removals from a deleted guild after cache invalidation recovers", async () => {
+    const removed: string[] = [];
+    let cacheAvailable = false;
+
+    await runtime.runPromise(
+      Effect.gen(function* () {
+        const db = yield* ApiDatabase;
+        yield* db
+          .insert(guildTable)
+          .values(createGuildFixture({ id: guildId }));
+
+        // Later suites insert members through the sequence, so skip the fixture id.
+        const { id: _id, ...member } = createMemberFixture({
+          guildId,
+          userId: "discord-1",
+          globalUserId: "user-1",
+        });
+
+        yield* db.insert(memberTable).values(member);
+
+        const delivery = makeMemberDelivery(makeMemberStore(db), {
+          clearMemberCaches: () =>
+            cacheAvailable
+              ? Effect.void
+              : Effect.fail(new Error("cache unavailable")),
+          publishMemberRemoved: ({ globalUserId }) =>
+            Effect.sync(() => removed.push(globalUserId)),
+          invalidateMember: () => Effect.void,
+          publishMemberUpdated: () => Effect.void,
+        });
+
+        const lifecycle = makeGuildLifecycle(db, {
+          invalidateUserGuildPermissions: () => Effect.void,
+          clearCacheKey: () => Effect.void,
+          clearCachePattern: () => Effect.void,
+          deliverMemberChanges: delivery.deliverAll,
+        });
+
+        yield* Effect.flip(lifecycle.deleteGuild({ guildId }));
+        // The redelivered event no longer finds an active member to remove.
+        yield* lifecycle.deleteGuild({ guildId });
+        expect(removed).toEqual([]);
+
+        cacheAvailable = true;
+        yield* delivery.dispatchPending();
+      }),
+    );
+
+    expect(removed).toEqual(["user-1"]);
   });
 });

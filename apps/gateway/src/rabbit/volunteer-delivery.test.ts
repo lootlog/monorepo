@@ -33,7 +33,6 @@ describe("volunteer delivery", () => {
     const hub = new RealtimeHub(
       {
         maxBackpressureBytes: 1024,
-        maxBackpressureStrikes: 3,
       },
       { ...unusedFederationStore, publish: () => Promise.resolve() },
       () => {},
@@ -57,7 +56,6 @@ describe("volunteer delivery", () => {
           subscriptions: new Map(),
           airTagScopes: [],
           confidence: "reported",
-          backpressureStrikes: 0,
         };
 
         hub.register({

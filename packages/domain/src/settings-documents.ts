@@ -1,11 +1,17 @@
 import { Schema, Predicate } from "effect";
 import { isSettingsRecord } from "./settings-paths.js";
 import {
+  ActivityFeedNpcCategorySchema,
+  DEFAULT_ACTIVITY_FEED_SETTINGS,
+  type ActivityFeedNpcCategory,
+} from "./activity-feed.js";
+import {
   CHAT_APPEARANCE_READABLE_PRESET,
   CHAT_FONT_SCALE_MAX_PERCENT,
   CHAT_FONT_SCALE_MIN_PERCENT,
   CHAT_MESSAGE_GAP_MAX_PX,
   CHAT_MESSAGE_GAP_MIN_PX,
+  CHAT_NPC_LAYOUTS,
 } from "@lootlog/schema/chat-appearance";
 import {
   DEFAULT_NPC_TYPE_COLORS,
@@ -14,6 +20,7 @@ import {
 import { NpcTypeSchema, type NpcTypeEnum } from "@lootlog/schema/npc-type";
 import type {
   AirTagPreferences,
+  BattlePingPreferences,
   DetectorSettings,
   MapPingPreferences,
   NotificationsSettings,
@@ -100,6 +107,10 @@ const isStringArray = Schema.is(Schema.Array(Schema.String));
 
 const isNpcTypeArray = Schema.is(Schema.Array(NpcTypeSchema));
 
+const isActivityFeedNpcCategoryArray = Schema.is(
+  Schema.Array(ActivityFeedNpcCategorySchema),
+);
+
 const isNumberInRange = (minimum: number, maximum: number) =>
   Schema.is(Schema.Finite.check(Schema.isBetween({ minimum, maximum })));
 
@@ -182,6 +193,29 @@ export const SETTINGS_CATALOG = {
     fields: {
       guildsOrder: field<string[]>([], userScopes, isStringArray),
       allowWorldSelection: field(false, userScopes, isBoolean),
+      // Exclusions keep newly joined Lootlogs and new NPC groups visible.
+      "activityFeed.excludedGuildIds": field<readonly string[]>(
+        DEFAULT_ACTIVITY_FEED_SETTINGS.excludedGuildIds,
+        userScopes,
+        isStringArray,
+      ),
+      "activityFeed.excludedNpcCategories": field<
+        readonly ActivityFeedNpcCategory[]
+      >(
+        DEFAULT_ACTIVITY_FEED_SETTINGS.excludedNpcCategories,
+        userScopes,
+        isActivityFeedNpcCategoryArray,
+      ),
+      "activityFeed.withLootOnly": field(
+        DEFAULT_ACTIVITY_FEED_SETTINGS.withLootOnly,
+        userScopes,
+        isBoolean,
+      ),
+      "activityFeed.paused": field(
+        DEFAULT_ACTIVITY_FEED_SETTINGS.paused,
+        userScopes,
+        isBoolean,
+      ),
     },
   },
   appearance: {
@@ -201,7 +235,7 @@ export const SETTINGS_CATALOG = {
       "chat.npcLayout": field(
         CHAT_APPEARANCE_READABLE_PRESET.npcLayout,
         userScopes,
-        isOneOf(["tile", "inline"]),
+        isOneOf(CHAT_NPC_LAYOUTS),
       ),
       "chat.fontScalePercent": field(
         CHAT_APPEARANCE_READABLE_PRESET.fontScalePercent,
@@ -327,6 +361,7 @@ export const SETTINGS_CATALOG = {
       alwaysVisibleExpiredTimers: field({}, guildScopes, Predicate.isObject),
       timerFiltersEnabled: field(true, guildScopes, isBoolean),
       colorFiltersEnabled: field(false, guildScopes, isBoolean),
+      customLists: field({}, guildScopes, Predicate.isObject),
       timersSortOrder: field("asc", guildScopes, isOneOf(["asc", "desc"])),
       syncEnabled: field(true, guildScopes, isBoolean),
       hiddenTimers: field<string[]>([], guildScopes, isStringArray),
@@ -338,6 +373,11 @@ export const SETTINGS_CATALOG = {
     migrations: [],
     fields: {
       pings: field<Partial<MapPingPreferences>>(
+        {},
+        accountScopes,
+        isEnabledFlagRecord,
+      ),
+      battlePings: field<Partial<BattlePingPreferences>>(
         {},
         accountScopes,
         isEnabledFlagRecord,

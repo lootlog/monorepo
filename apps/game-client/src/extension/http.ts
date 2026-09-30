@@ -1,15 +1,22 @@
 import { isPlainObject } from "es-toolkit";
-import { z } from "zod";
+import { Schema } from "effect";
 import { API_URL, AUTH_API_URL, BATTLELOG_API_URL } from "@/config/api";
 
-const requestSchema = z.strictObject({
-  url: z.string().max(8192),
-  method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]),
-  headers: z.record(z.string(), z.string().max(1024)),
-  body: z.string().optional(),
+const requestSchema = Schema.Struct({
+  url: Schema.String.check(Schema.isMaxLength(8192)),
+  method: Schema.Literals(["GET", "POST", "PUT", "PATCH", "DELETE"]),
+  headers: Schema.Record(
+    Schema.String,
+    Schema.String.check(Schema.isMaxLength(1024)),
+  ),
+  body: Schema.optional(Schema.String),
 });
 
-export type ExtensionHttpRequest = z.infer<typeof requestSchema>;
+export type ExtensionHttpRequest = typeof requestSchema.Type;
+
+const decodeRequest = Schema.decodeUnknownSync(requestSchema, {
+  onExcessProperty: "error",
+});
 
 export type ExtensionHttpResponse = {
   status: number;
@@ -145,7 +152,7 @@ export async function executeExtensionHttp(
   signal: AbortSignal,
   fetchImplementation: typeof globalThis.fetch = globalThis.fetch,
 ): Promise<ExtensionHttpResponse> {
-  const request = requestSchema.parse(input);
+  const request = decodeRequest(input);
   const url = new URL(request.url);
   const isSession = validateOperation(url, request);
   const headers = new Headers();

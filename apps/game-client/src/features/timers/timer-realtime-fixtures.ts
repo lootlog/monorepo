@@ -1,14 +1,23 @@
 import { stubMargonemAccountFetch } from "@/test/margonem-account-fetch";
 import { act } from "@testing-library/react";
+import { GatewayEvent } from "@/config/gateway";
 import { RealtimeClient } from "@lootlog/client/realtime";
 import { vi } from "vitest";
 import { configureGameClientPlatform } from "@/lib/game-client-platform";
 import { disposeSocket, getSocket } from "@/lib/socket";
 import { RealtimeWire } from "@/test/realtime-wire";
 import type { AccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import { useGameStore } from "@/store/game.store";
 
 export const createTimerRealtimeFixture = () => {
   disposeSocket();
+
+  if (!useGameStore.getState().game)
+    setTestRuntimeGame({
+      world: "luvia",
+      hero: { accountId: "2", characterId: "1" },
+    });
   const wire = new RealtimeWire();
 
   const externalFetch = stubMargonemAccountFetch();
@@ -27,25 +36,24 @@ export const createTimerRealtimeFixture = () => {
     organizationIds: string[],
     accessPolicy?: AccessPolicySnapshot,
   ) => {
-    const pending = getSocket().join(
-      {
-        world: "luvia",
-        name: "Hero",
-        lvl: 100,
-        icon: "hero.gif",
-        prof: "w",
-        characterId: "1",
-        accountId: "2",
-      },
-      {
-        userId: "2",
-        characterId: "1",
-        token: "test-proof",
-        ts: 1,
-        validatedString: "test",
-        signatureBase64: "test",
-      },
-    );
+    const game = useGameStore.getState().game;
+
+    if (!game) throw new Error("Expected a runtime character before joining");
+    wire.receive({
+      v: 1,
+      type: "session.hello",
+      data: { connectionId: "connection-1" },
+    });
+
+    const pending = getSocket().join({
+      world: game.world,
+      name: game.hero.name,
+      lvl: game.hero.level,
+      icon: game.hero.icon,
+      prof: game.hero.profession,
+      characterId: game.hero.characterId,
+      accountId: game.hero.accountId,
+    });
 
     await acknowledgeJoin(organizationIds, accessPolicy);
     await pending;
@@ -57,8 +65,16 @@ export const createTimerRealtimeFixture = () => {
     organizationIds: string[],
     accessPolicy?: AccessPolicySnapshot,
   ) => {
+    wire.receive({
+      v: 1,
+      type: "session.hello",
+      data: { connectionId: "connection-1" },
+    });
     await vi.waitFor(() => expectJoinRequest());
-    await act(() => {
+    const joined = Promise.withResolvers<void>();
+    const handleJoin = () => joined.resolve();
+    getSocket().on(GatewayEvent.JOIN, handleJoin);
+    await act(async () => {
       for (const frame of wire.frames) {
         if (
           !("type" in frame) ||
@@ -72,10 +88,18 @@ export const createTimerRealtimeFixture = () => {
           v: 1,
           requestId: frame.requestId,
           status: "success",
-          data: { connectionId: "connection-1", organizationIds, accessPolicy },
+          data: {
+            connectionId: "connection-1",
+            organizationIds,
+            accessPolicy,
+            capabilities: ["connection.ping"],
+          },
         });
       }
+
+      await joined.promise;
     });
+    getSocket().off(GatewayEvent.JOIN, handleJoin);
   };
 
   const expectJoinRequest = () => {

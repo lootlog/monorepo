@@ -66,7 +66,7 @@ describe("ServerVisibilitySettingsTab", () => {
     expect(screen.queryByText("Alpha")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Wszystkie" }));
-    fireEvent.change(screen.getByPlaceholderText("Szukaj..."), {
+    fireEvent.change(screen.getByPlaceholderText("Szukaj…"), {
       target: { value: "gamma" },
     });
     expect(screen.getByText("Gamma")).toBeInTheDocument();
@@ -150,6 +150,7 @@ describe("ServerVisibilitySettingsTab", () => {
         maxHp: 100,
         name: "Hero",
         profession: "w",
+        stasis: false,
         x: 1,
         y: 2,
       },
@@ -166,7 +167,7 @@ describe("ServerVisibilitySettingsTab", () => {
 
     expect(
       screen.queryByRole("button", {
-        name: "Publikuj obecność w organizacji Alpha",
+        name: "Publikuj obecność w Lootlogu Alpha",
       }),
     ).not.toBeInTheDocument();
     expect(useSettingsStore.getState().presenceOrganizationIdsByCharId).toEqual(

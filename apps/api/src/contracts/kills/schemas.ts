@@ -11,6 +11,15 @@ import {
 } from "@lootlog/schema/http-scalars";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 
+export const KillStatsPeriodSchema = Schema.Literals([
+  "all",
+  "24h",
+  "3d",
+  "7d",
+  "14d",
+  "30d",
+]);
+
 const KillCountsByNpcType = Schema.Struct({
   COMMON: Schema.optionalKey(FiniteNumber),
   ELITE: Schema.optionalKey(FiniteNumber),
@@ -237,9 +246,7 @@ export const GuildKillStatsQuery = Schema.Struct({
   minLvl: Schema.optionalKey(LevelFilter),
   maxLvl: Schema.optionalKey(LevelFilter),
   world: Schema.optionalKey(Schema.String),
-  period: Schema.optionalKey(
-    Schema.Literals(["all", "24h", "3d", "7d", "14d", "30d"]),
-  ),
+  period: Schema.optionalKey(KillStatsPeriodSchema),
 }).check(
   Schema.makeFilter((data) =>
     data.minLvl === undefined ||
@@ -257,9 +264,7 @@ export const UserKillStatsQuery = Schema.Struct({
   npcType: Schema.optionalKey(NpcTypeSchema),
   world: Schema.optionalKey(Schema.String),
   topNpcsLimit: Schema.optionalKey(PositiveSafeInteger),
-  period: Schema.optionalKey(
-    Schema.Literals(["all", "24h", "3d", "7d", "14d", "30d"]),
-  ),
+  period: Schema.optionalKey(KillStatsPeriodSchema),
 });
 
 export type UserNpcKillsQuery = typeof UserNpcKillsQuery.Type;
@@ -274,9 +279,7 @@ export const UserNpcKillsQuery = Schema.Struct({
   sortBy: Schema.optionalKey(Schema.Literals(["kills", "level"])),
   minLvl: Schema.optionalKey(LevelFilter),
   maxLvl: Schema.optionalKey(LevelFilter),
-  period: Schema.optionalKey(
-    Schema.Literals(["all", "24h", "3d", "7d", "14d", "30d"]),
-  ),
+  period: Schema.optionalKey(KillStatsPeriodSchema),
 }).check(
   Schema.makeFilter((data) =>
     data.minLvl === undefined ||
@@ -306,9 +309,7 @@ export type NpcKillersQuery = typeof NpcKillersQuery.Type;
 export const NpcKillersQuery = Schema.Struct({
   limit: Schema.optionalKey(PageSize),
   world: Schema.optionalKey(Schema.String),
-  period: Schema.optionalKey(
-    Schema.Literals(["all", "24h", "3d", "7d", "14d", "30d"]),
-  ),
+  period: Schema.optionalKey(KillStatsPeriodSchema),
 });
 
 export type MemberKillsPath = typeof MemberKillsPath.Type;
@@ -328,7 +329,5 @@ export const MemberKillsQuery = Schema.Struct({
   search: Schema.optionalKey(Schema.String),
   limit: Schema.optionalKey(PageSize),
   cursor: Schema.optionalKey(NonNegativeSafeInteger),
-  period: Schema.optionalKey(
-    Schema.Literals(["all", "24h", "3d", "7d", "14d", "30d"]),
-  ),
+  period: Schema.optionalKey(KillStatsPeriodSchema),
 });

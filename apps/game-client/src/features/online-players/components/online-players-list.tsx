@@ -1,4 +1,3 @@
-import { clamp } from "es-toolkit";
 import { GuildSwitcher } from "@/components/guild-switcher";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { WorldSelector } from "@/components/world-selector";
@@ -12,13 +11,11 @@ import { useSettingsStore } from "@/store/settings.store";
 import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query";
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
 import { mapGuildMembersByUserId } from "@/lib/api/generated-helpers";
-import { useState, type ChangeEvent, type FC, type ReactNode } from "react";
+import { useEffect, useState, type FC, type ReactNode } from "react";
 import { useGameStore } from "@/store/game.store";
 import { useTranslation } from "react-i18next";
 import {
   DEFAULT_ONLINE_PLAYERS_FILTERS,
-  MIN_ONLINE_PLAYER_LEVEL,
-  MAX_ONLINE_PLAYER_LEVEL,
   getFilteredAccountEntries,
   getFilteredMemberEntries,
   type ProfessionFilterValue,
@@ -30,6 +27,12 @@ import { ConnectionStatusStrip } from "@/components/connection-status-strip";
 import { toolbarStripClassName } from "@/components/ui/toolbar-strip";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { EmptyState } from "@/components/empty-state";
+import { NoLootlogEmptyState } from "@/components/no-lootlog-empty-state";
+import type { LevelRange } from "@/components/level-range-filter";
+import {
+  getCharacterFilterKey,
+  getCharacterFilterScopeKey,
+} from "@/lib/character-filter-scope";
 
 type OnlinePlayersListProps = {
   viewMode: OnlinePlayersViewMode;
@@ -54,6 +57,7 @@ type InitialLoadInput = {
   guildId: string | undefined;
   guildsQuery: { error: unknown; isLoading: boolean };
   hasLoaded: boolean;
+  hasNoGuilds: boolean;
   initialLoading: boolean;
 };
 
@@ -69,6 +73,7 @@ const GATEWAY_OFFLINE = new Error("Realtime gateway is not connected");
  * Without an Organization there is no presence scope to fetch, so the only
  * thing that can load or fail is the Organization list itself. With a scope
  * but no gateway session nothing is requested, which the user must see too.
+ * A player in no Organization has nothing to load at all.
  */
 const resolveInitialLoad = ({
   disconnected,
@@ -76,9 +81,10 @@ const resolveInitialLoad = ({
   guildId,
   guildsQuery,
   hasLoaded,
+  hasNoGuilds,
   initialLoading,
 }: InitialLoadInput): InitialLoad => {
-  if (hasLoaded) {
+  if (hasLoaded || hasNoGuilds) {
     return { error: null, errorLabelKey: "states.loadError", loading: false };
   }
 
@@ -128,6 +134,11 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
 
   const guildId = guildIdByCharId[characterId];
   const world = guildId ? worldByGuildId[guildId] : undefined;
+  const viewedWorld = world ?? defaultWorld;
+
+  const filterScope = useGameStore((state) =>
+    getCharacterFilterScopeKey(state.game, viewedWorld),
+  );
 
   const {
     accessState,
@@ -138,9 +149,9 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
     onlinePlayers,
     refreshing,
     retry,
-  } = usePlayersPresence(guildId, world ?? defaultWorld);
+  } = usePlayersPresence(guildId, viewedWorld);
 
-  const { guildsQuery } = useLootlogGuilds();
+  const { guildsQuery, hasNoGuilds } = useLootlogGuilds();
 
   const initialLoad = resolveInitialLoad({
     disconnected,
@@ -148,6 +159,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
     guildId,
     guildsQuery,
     hasLoaded,
+    hasNoGuilds,
     initialLoading,
   });
 
@@ -156,9 +168,19 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
     void guildsQuery.refetch();
   };
 
-  const filtersByGuildId = useOnlinePlayersStore(
-    (state) => state.filtersByGuildId,
+  const filtersByScope = useOnlinePlayersStore((state) => state.filtersByScope);
+
+  const legacyFiltersByGuildId = useOnlinePlayersStore(
+    (state) => state.legacyFiltersByGuildId,
   );
+
+  const initializeCharacterFilters = useOnlinePlayersStore(
+    (state) => state.initializeCharacterFilters,
+  );
+
+  useEffect(() => {
+    if (filterScope) initializeCharacterFilters(filterScope);
+  }, [filterScope, legacyFiltersByGuildId, initializeCharacterFilters]);
 
   const setFilters = useOnlinePlayersStore((state) => state.setFilters);
 
@@ -174,56 +196,25 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filters = guildId
-    ? (filtersByGuildId[guildId] ?? DEFAULT_ONLINE_PLAYERS_FILTERS)
-    : DEFAULT_ONLINE_PLAYERS_FILTERS;
+  const filters =
+    guildId && filterScope
+      ? (filtersByScope[getCharacterFilterKey(filterScope, guildId)] ??
+        legacyFiltersByGuildId[guildId] ??
+        DEFAULT_ONLINE_PLAYERS_FILTERS)
+      : DEFAULT_ONLINE_PLAYERS_FILTERS;
 
   const areFiltersActive = areOnlinePlayerFiltersActive(searchQuery, filters);
 
-  const handleMinLvlChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (!guildId) return;
+  const handleLevelRangeChange = (range: LevelRange) => {
+    if (!guildId || !filterScope) return;
 
-    const numericValue = Number(event.target.value);
-
-    if (Number.isNaN(numericValue)) return;
-
-    const minLvl = clamp(
-      numericValue,
-      MIN_ONLINE_PLAYER_LEVEL,
-      MAX_ONLINE_PLAYER_LEVEL,
-    );
-
-    setFilters(guildId, {
-      ...filters,
-      minLvl,
-      maxLvl: minLvl > filters.maxLvl ? minLvl : filters.maxLvl,
-    });
-  };
-
-  const handleMaxLvlChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (!guildId) return;
-
-    const numericValue = Number(event.target.value);
-
-    if (Number.isNaN(numericValue)) return;
-
-    const maxLvl = clamp(
-      numericValue,
-      MIN_ONLINE_PLAYER_LEVEL,
-      MAX_ONLINE_PLAYER_LEVEL,
-    );
-
-    setFilters(guildId, {
-      ...filters,
-      minLvl: maxLvl < filters.minLvl ? maxLvl : filters.minLvl,
-      maxLvl,
-    });
+    setFilters(filterScope, guildId, { ...filters, ...range });
   };
 
   const handleProfessionChange = (profession: ProfessionFilterValue) => {
-    if (!guildId) return;
+    if (!guildId || !filterScope) return;
 
-    setFilters(guildId, {
+    setFilters(filterScope, guildId, {
       ...filters,
       selectedProfession: profession,
     });
@@ -232,9 +223,9 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
   const handleResetFilters = () => {
     setSearchQuery("");
 
-    if (!guildId) return;
+    if (!guildId || !filterScope) return;
 
-    setFilters(guildId, { ...DEFAULT_ONLINE_PLAYERS_FILTERS });
+    setFilters(filterScope, guildId, { ...DEFAULT_ONLINE_PLAYERS_FILTERS });
   };
 
   const missingMemberIds = guildMembers
@@ -262,7 +253,9 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
 
   let listContent: ReactNode;
 
-  if (accessState === "forbidden") {
+  if (hasNoGuilds) {
+    listContent = <NoLootlogEmptyState />;
+  } else if (accessState === "forbidden") {
     listContent = (
       <EmptyState
         description={t("emptyState.noAccessDescription")}
@@ -280,12 +273,11 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
     listContent =
       onlinePlayersList.length > 0 ? (
         <ScrollArea className="ll:h-full ll:w-full">
-          {onlinePlayersList.map(([discordId, presences], index) => (
+          {onlinePlayersList.map(([discordId, presences]) => (
             <OnlinePlayersListEntry
               key={discordId}
               presences={presences}
               guildMember={guildMembers?.[discordId]}
-              isAlternateRow={index % 2 === 1}
             />
           ))}
         </ScrollArea>
@@ -305,12 +297,11 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
     listContent =
       onlineAccountsList.length > 0 ? (
         <ScrollArea className="ll:h-full ll:w-full">
-          {onlineAccountsList.map(({ discordId, presence }, index) => (
+          {onlineAccountsList.map(({ discordId, presence }) => (
             <OnlinePlayersAccountListEntry
               key={`${presence.player?.accountId}-${presence.player?.characterId}`}
               presence={presence}
               guildMember={guildMembers?.[discordId]}
-              isAlternateRow={index % 2 === 1}
             />
           ))}
         </ScrollArea>
@@ -336,9 +327,8 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
             <OnlinePlayersFilters
               searchQuery={searchQuery}
               filters={filters}
-              onSearchChange={(event) => setSearchQuery(event.target.value)}
-              onMinLvlChange={handleMinLvlChange}
-              onMaxLvlChange={handleMaxLvlChange}
+              onSearchChange={setSearchQuery}
+              onLevelRangeChange={handleLevelRangeChange}
               onProfessionChange={handleProfessionChange}
             />
           </>

@@ -11,8 +11,10 @@ import type { RuntimeNpc } from "@/lib/margonem-runtime/runtime.types";
 import { useNpcsStore } from "@/store/npcs.store";
 import { useGameStore } from "@/store/game.store";
 import { NpcType } from "@/api/npcs.api";
-import { getNpcIconFromEvent } from "@/utils/game/events/get-npc-icon-from-event";
-import { getNpcTplFromEvent } from "@/utils/game/events/get-npc-tpl-from-event";
+import {
+  type EventNpcTemplatesById,
+  getNpcTplFromEvent,
+} from "@/utils/game/events/get-npc-tpl-from-event";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import {
   isDetectorNpcType,
@@ -223,12 +225,22 @@ export class NpcsDetectionProcessor {
     const updatedNpcs: { npcId: number; npc: Partial<GameNpcWithLocation> }[] =
       [];
 
+    // Index the packet's templates and icons once instead of scanning them
+    // per NPC. A later duplicate id wins, as in Margonem's own managers.
+    const templatesById: EventNpcTemplatesById = new Map(
+      event.npc_tpls?.map((template) => [template.id, template]),
+    );
+
+    const iconsById: ReadonlyMap<number, string> = new Map(
+      event.icons?.map((icon) => [icon.id, icon.icon]),
+    );
+
     const npcs =
       event.npcs?.reduce<GameNpcWithLocation[]>((acc, npc) => {
         const runtimeNpc = useNpcsStore.getState().getNpc(npc.id);
 
         const tpl =
-          getNpcTplFromEvent(event, npc.tpl) ??
+          getNpcTplFromEvent(templatesById, npc.tpl) ??
           (runtimeNpc
             ? {
                 icon: runtimeNpc.icon,
@@ -252,7 +264,7 @@ export class NpcsDetectionProcessor {
           npcType,
           tpl.lvl,
           context,
-          event,
+          iconsById,
         );
 
         if (!processedSettings) return acc;
@@ -378,7 +390,7 @@ export class NpcsDetectionProcessor {
     npcType: DetectorNpcType,
     npcLevel: number,
     context: DetectionProcessingContext,
-    event?: GameEvent,
+    iconsById: ReadonlyMap<number, string>,
   ): ProcessedNpcSettings | null {
     const { detectorSettings } = context;
     const settings = detectorSettings[npcType];
@@ -386,7 +398,7 @@ export class NpcsDetectionProcessor {
     if (!settings?.detect) return null;
 
     const icon =
-      (event ? getNpcIconFromEvent(event, npc.icon.id) : undefined) ??
+      iconsById.get(npc.icon.id) ??
       useNpcsStore.getState().getNpc(npc.id)?.icon ??
       "";
 

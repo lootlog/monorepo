@@ -7,6 +7,10 @@ import { MemberStatusBadge } from "@/features/guild/settings/members/member-stat
 import type { MemberWebPresenceByDiscordId } from "@/lib/web-presence";
 import type { GuildMember } from "@/features/guild/settings/members/members.types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
+import {
+  getVirtualListPadding,
+  usePageVirtualizer,
+} from "@/hooks/utils/use-page-scroll";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import {
   Avatar,
@@ -21,8 +25,7 @@ import {
 } from "@lootlog/ui/components/table";
 import { useNavigate } from "@tanstack/react-router";
 import { useTable } from "@tanstack/react-table";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import { useRef, useState, type RefObject } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getMemberDisplayData } from "./member-display-data";
 import { MemberTableRow } from "./member-table-row";
@@ -36,7 +39,7 @@ export type MembersTableProps = {
   members: GuildMember[];
   guildOwnerId: string | undefined;
   activityStatsByDiscordIdAndSource: MemberActivityStatsByDiscordId;
-  scrollElementRef: RefObject<HTMLDivElement | null>;
+  scrollElement: HTMLDivElement | null;
   isMobile: boolean;
   canManageMembers: boolean;
   memberGamePresenceByDiscordId: Parameters<typeof isMemberOnlineInGame>[0];
@@ -53,13 +56,15 @@ export const MembersTable = ({
   members,
   guildOwnerId,
   activityStatsByDiscordIdAndSource,
-  scrollElementRef,
+  scrollElement,
   isMobile,
   canManageMembers,
   memberGamePresenceByDiscordId,
   memberWebPresenceByDiscordId,
   guildId,
 }: MembersTableProps) => {
+  "use no memo"; // Reads a virtualizer that mutates in place; see usePageVirtualizer.
+
   const { t } = useTranslation();
   const navigate = useNavigate();
   const tableRef = useRef<HTMLTableElement>(null);
@@ -106,22 +111,21 @@ export const MembersTable = ({
 
   const rowEstimateSize = isMobile ? 88 : 64;
 
-  const rowVirtualizer = useVirtualizer({
+  const rowVirtualizer = usePageVirtualizer<HTMLElement>({
     count: members.length,
+    scrollElement,
     getItemKey: (index) => members[index]?.id ?? `member-${index}`,
-    getScrollElement: () => scrollElementRef.current,
     estimateSize: () => rowEstimateSize,
     overscan: 8,
   });
 
   const virtualRows = rowVirtualizer.getVirtualItems();
-  const topPadding = virtualRows[0]?.start ?? 0;
-  const lastVirtualRow = virtualRows[virtualRows.length - 1];
 
-  const bottomPadding =
-    virtualRows.length > 0
-      ? rowVirtualizer.getTotalSize() - (lastVirtualRow?.end ?? 0)
-      : 0;
+  const { top: topPadding, bottom: bottomPadding } = getVirtualListPadding(
+    virtualRows,
+    rowVirtualizer.getTotalSize(),
+    rowVirtualizer.options.scrollMargin,
+  );
 
   if (isMobile) {
     return (

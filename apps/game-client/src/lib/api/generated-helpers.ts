@@ -221,10 +221,12 @@ export const buildCurrentCharacterPayload = ():
   };
 };
 
-export const buildCurrentTimerActorCharacterPayload = () => {
-  const hero = useGameStore.getState().game?.hero;
+export const buildCurrentTimerActorCharacterPayload = (world: string) => {
+  const game = useGameStore.getState().game;
 
-  if (!hero) return undefined;
+  if (!game || game.world !== world) return undefined;
+
+  const { hero } = game;
 
   return {
     accountId: hero.accountId,

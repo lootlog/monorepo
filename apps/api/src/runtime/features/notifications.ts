@@ -1,5 +1,8 @@
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { NOTIFICATIONS_DISPATCH_QUEUE } from "#src/notifications/jobs/dispatch-queue";
+import {
+  NOTIFICATIONS_DISPATCH_QUEUE,
+  NOTIFICATION_DISPATCH_JOB_OPTIONS,
+} from "#src/notifications/jobs/dispatch-queue";
 import { NOTIFICATIONS_HISTORY_RETENTION_LIMIT } from "#src/notifications/jobs/history";
 import { Error as NotificationError } from "#src/notifications/error";
 import { makeNotificationContent } from "#src/notifications/content/notification-content.service";
@@ -15,6 +18,7 @@ import {
 } from "#src/notifications/targets/notification-guild-targets";
 import { makeNotificationJobDispatch } from "#src/notifications/jobs/notification-job-dispatch";
 import { canDispatchLootNotification } from "#src/notifications/notification-loot-source-visibility";
+import { makeNotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
 import { makeNotificationJobOperations } from "#src/notifications/jobs/notification-job-operations";
 import {
   makeNotificationJobRebuild,
@@ -103,10 +107,9 @@ export const notificationsServicesLive = Layer.effect(
               jobId,
               { notificationJobId: jobId },
               {
+                ...NOTIFICATION_DISPATCH_JOB_OPTIONS,
                 jobId,
                 delay,
-                removeOnComplete: true,
-                removeOnFail: true,
               },
             ),
           catch: (cause) => cause,
@@ -115,7 +118,8 @@ export const notificationsServicesLive = Layer.effect(
 
     const rebuild = makeNotificationJobRebuild(
       {
-        findRule: (ruleId) => jobsStore.findRule(ruleId),
+        findRule: jobsStore.findRule,
+        findRules: jobsStore.findRules,
         timers: jobsStore.findTimers,
       },
       (filters, npcId) => matching.matchesTimerRule(filters, npcId),
@@ -128,11 +132,37 @@ export const notificationsServicesLive = Layer.effect(
       notificationScheduler,
     );
 
+    const recurrence = makeNotificationJobRecurrence(
+      {
+        findRule: jobsStore.findRule,
+        cycleStatuses: jobsStore.cycleStatuses,
+        advance: jobsStore.advanceRule,
+      },
+      guildSync.hasRequiredGuildPermissions,
+      {
+        scheduledMessage: (options) =>
+          content.buildScheduledMessagePayload(options),
+      },
+      notificationScheduler,
+    );
+
+    const finalize = makeNotificationJobFinalization(
+      ({ ownerType, ownerId }) =>
+        jobsStore.prune(
+          ownerType,
+          ownerId,
+          ["SENT", "FAILED", "CANCELED"],
+          NOTIFICATIONS_HISTORY_RETENTION_LIMIT,
+        ),
+      recurrence,
+    );
+
     const dispatch = makeNotificationJobDispatch(
       {
         find: jobsStore.findJobWithRelations,
         update: jobsStore.updateJob,
         claim: jobsStore.claimJob,
+        failClaim: jobsStore.failClaim,
         block: jobsStore.blockJob,
       },
       {
@@ -150,38 +180,17 @@ export const notificationsServicesLive = Layer.effect(
             })
             .pipe(Effect.asVoid),
       },
-      notificationScheduler,
+      finalize,
       (value) => content.parseAllowedMentions(value),
-    );
-
-    const recurrence = makeNotificationJobRecurrence(
-      {
-        findRule: jobsStore.findRule,
-        cycleStatuses: jobsStore.cycleStatuses,
-        advance: jobsStore.advanceRule,
-      },
-      guildSync.hasRequiredGuildPermissions,
-      {
-        scheduledMessage: (options) =>
-          content.buildScheduledMessagePayload(options),
-      },
-      notificationScheduler,
     );
 
     const delivery = makeNotificationDeliveryResult(
       {
         find: jobsStore.findJob,
         record: jobsStore.recordDelivery,
-        prune: ({ ownerType, ownerId }) =>
-          jobsStore.prune(
-            ownerType,
-            ownerId,
-            ["SENT", "FAILED", "CANCELED"],
-            NOTIFICATIONS_HISTORY_RETENTION_LIMIT,
-          ),
       },
       notificationScheduler,
-      recurrence,
+      finalize,
     );
 
     const targets = makeNotificationGuildTargets(

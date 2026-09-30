@@ -1,14 +1,13 @@
+import type { GuildSummary } from "./accessible-guilds.data-layer.js";
+import { readGuildOrderPreference } from "#src/guilds/guild-order-query";
+import { sortGuildsByPreference } from "#src/guilds/guild-order";
 import { and, eq, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
 import type { RESTAPIPartialCurrentUserGuild } from "discord-api-types/v10";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import {
-  guildTable,
-  memberTable,
-  userSettingsTable,
-} from "#src/database/drizzle/schema";
+import { guildTable, memberTable } from "#src/database/drizzle/schema";
 import { getMemberCacheSoftTtl } from "#src/members/member-cache";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/member-refresh-queue";
 import {
@@ -18,25 +17,10 @@ import {
 
 const SYNC_THROTTLE_TTL_SECONDS = 600;
 
-type PlainGuild = {
-  readonly id: string;
-  readonly name: string;
-  readonly icon: string | null;
-  readonly vanityUrl: string | null;
-  readonly ownerId: string;
-  readonly publicStatsCardEnabled: boolean;
-};
-
 export interface UserGuildListPorts {
-  readonly accessible: (identity: AuthenticatedIdentity) => Effect.Effect<
-    ReadonlyArray<
-      PlainGuild & {
-        readonly hasLootlogAccess: boolean;
-        readonly isAccessDataStale: boolean;
-      }
-    >,
-    unknown
-  >;
+  readonly accessible: (
+    identity: AuthenticatedIdentity,
+  ) => Effect.Effect<ReadonlyArray<GuildSummary>, unknown>;
   readonly deactivateMissing: (options: {
     readonly discordId: string;
     readonly userId: string;
@@ -158,21 +142,12 @@ export const makeUserGuildList = (
         ),
       );
 
-    const orderRows = yield* database
-      .select({ guildsOrder: userSettingsTable.guildsOrder })
-      .from(userSettingsTable)
-      .where(eq(userSettingsTable.userId, identity.userId))
-      .limit(1);
-
-    const order = new Map(
-      (orderRows[0]?.guildsOrder ?? []).map((id, index) => [id, index]),
+    const preferredIds = yield* readGuildOrderPreference(
+      database,
+      identity.userId,
     );
 
-    const result = [...guilds].sort(
-      (left, right) =>
-        (order.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
-        (order.get(right.id) ?? Number.MAX_SAFE_INTEGER),
-    );
+    const result = sortGuildsByPreference(guilds, preferredIds);
 
     yield* queueStale(identity, result);
 

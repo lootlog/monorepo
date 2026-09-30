@@ -3,7 +3,7 @@ import type { HotkeyBinding } from "@/store/hotkeys.store";
 import { cn } from "cn";
 import { RotateCcw } from "lucide-react";
 import type { FC } from "react";
-import { SettingsIconButton } from "./settings-icon-button";
+import { IconButton } from "@/components/ui/icon-button";
 
 type SettingsKeybindFieldProps = {
   binding: HotkeyBinding;
@@ -47,9 +47,9 @@ export const SettingsKeybindField: FC<SettingsKeybindFieldProps> = ({
   >
     <span className="ll:flex ll:size-6 ll:shrink-0 ll:items-center ll:justify-center">
       {modified ? (
-        <SettingsIconButton label={resetLabel} onClick={onReset}>
+        <IconButton label={resetLabel} onClick={onReset}>
           <RotateCcw aria-hidden />
-        </SettingsIconButton>
+        </IconButton>
       ) : null}
     </span>
     <button
@@ -77,7 +77,7 @@ export const SettingsKeybindField: FC<SettingsKeybindFieldProps> = ({
           binding={binding}
           className={cn(
             assignedAt !== undefined &&
-              "ll:animate-in ll:fade-in-0 ll:zoom-in-75 ll:duration-200 ll:ease-[cubic-bezier(0.2,0,0,1)]",
+              "ll:animate-in ll:fade-in-0 ll:zoom-in-75 ll:duration-medium ll:ease-enter",
           )}
           kbdClassName="ll:h-4 ll:bg-white/10 ll:text-foreground ll:shadow-[inset_0_-1px_0_rgba(0,0,0,0.4)]"
         />

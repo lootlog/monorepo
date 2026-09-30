@@ -10,7 +10,9 @@ import {
   guildTable,
   itemSnapshotTable,
   lootItemTable,
+  lootNpcTable,
   lootTable,
+  npcSnapshotTable,
   organizationLootRecordTable,
 } from "../src/database/drizzle/schema.js";
 import { buildLootStatsQueries } from "../src/loots/query/loot-stats-query.js";
@@ -65,7 +67,21 @@ describe("loot statistics date parameter compatibility", () => {
                 })
                 .returning();
 
-              if (!loot || !item) throw new Error("Missing date fixture");
+              const [npc] = yield* transaction
+                .insert(npcSnapshotTable)
+                .values({
+                  npcId: 1,
+                  name: crypto.randomUUID(),
+                  type: "HERO",
+                  lvl: 100,
+                })
+                .returning();
+
+              if (!loot || !item || !npc)
+                throw new Error("Missing date fixture");
+              yield* transaction
+                .insert(lootNpcTable)
+                .values({ lootId: loot.id, npcSnapshotId: npc.id });
               yield* transaction
                 .insert(organizationLootRecordTable)
                 .values({ guildId, lootId: loot.id, updatedAt: new Date() });
@@ -89,6 +105,7 @@ describe("loot statistics date parameter compatibility", () => {
 
               const current = yield* queries.overview;
               const scopedTimeline = yield* queries.timeline;
+              const scopedTopItems = yield* queries.topItems;
 
               const timeline = yield* buildLootStatsQueries(transaction, {
                 guildId,
@@ -100,6 +117,7 @@ describe("loot statistics date parameter compatibility", () => {
               expect(legacy[0]?.count).toBe(expected);
               expect(current[0]?.total_loots).toBe(expected);
               expect(scopedTimeline).toHaveLength(expected);
+              expect(scopedTopItems).toHaveLength(expected);
               expect(timeline[0]?.date).toBeInstanceOf(Date);
               expect(timeline[0]?.date.toISOString()).toBe(
                 "2026-01-01T00:00:00.000Z",

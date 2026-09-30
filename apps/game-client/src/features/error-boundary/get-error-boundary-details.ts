@@ -1,7 +1,9 @@
 import { isObjectRecord } from "@lootlog/schema/records";
-import { z } from "zod";
+import { Option, Schema } from "effect";
 
-const ErrorTextSchema = z.string().trim().min(1);
+const decodeErrorText = Schema.decodeUnknownOption(
+  Schema.Trim.check(Schema.isNonEmpty()),
+);
 
 type ErrorBoundaryDetails = {
   name: string;
@@ -24,18 +26,17 @@ function getErrorProperty(
   key: "name" | "message" | "stack",
 ): string | undefined {
   if (!isObjectRecord(cause)) return undefined;
-  const parsed = ErrorTextSchema.safeParse(cause[key]);
 
-  return parsed.success ? parsed.data : undefined;
+  return Option.getOrUndefined(decodeErrorText(cause[key]));
 }
 
 function stringifyUnknownError(
   cause: unknown,
   fallbackMessage: string,
 ): string {
-  const parsed = ErrorTextSchema.safeParse(cause);
+  const text = decodeErrorText(cause);
 
-  if (parsed.success) return parsed.data;
+  if (Option.isSome(text)) return text.value;
 
   if (!isObjectRecord(cause)) return fallbackMessage;
 

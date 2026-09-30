@@ -32,7 +32,7 @@ const renderResizeHandle = ({
   });
 
   const { container } = render(
-    <div data-testid="window-root">
+    <div data-testid="window-root" data-ll-draggable-window="">
       <div>
         <WindowResizeHandle
           minWidth={120}

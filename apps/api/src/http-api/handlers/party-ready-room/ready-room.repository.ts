@@ -11,6 +11,7 @@ import {
   TERMINATE_READY_ROOM_SCRIPT,
 } from "#src/messaging/ready-room/ready-room-redis-scripts";
 import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";
+import { READY_ROOM_PUBLICATION_KEYS } from "#src/messaging/ready-room/ready-room-publication-outbox";
 
 export type CreateReadyRoomResult =
   | { readonly status: "created"; readonly aggregate: ReadyRoomAggregate }
@@ -260,6 +261,7 @@ export const makeReadyRoomRepository = (
             (id) =>
               `party-ready-room:v3:discovery:${encodeURIComponent(id)}:${encodeURIComponent(aggregate.world)}`,
           ),
+          ...READY_ROOM_PUBLICATION_KEYS,
         ],
         [
           ROOM_PREFIX,
@@ -286,7 +288,7 @@ export const makeReadyRoomRepository = (
       return redis
         .eval(
           COMMIT_READY_ROOM_SCRIPT,
-          [roomKey(next.notificationId)],
+          [roomKey(next.notificationId), ...READY_ROOM_PUBLICATION_KEYS],
           [JSON.stringify(expected), JSON.stringify(next), ttl],
         )
         .pipe(
@@ -312,6 +314,7 @@ export const makeReadyRoomRepository = (
           roomKey(next.notificationId),
           userKey(participant.discordId),
           characterKey(next.world, participant.character.characterId),
+          ...READY_ROOM_PUBLICATION_KEYS,
         ],
         [
           JSON.stringify(expected),
@@ -362,6 +365,7 @@ export const makeReadyRoomRepository = (
             roomKey(next.notificationId),
             userKey(participant.discordId),
             characterKey(next.world, participant.character.characterId),
+            ...READY_ROOM_PUBLICATION_KEYS,
           ],
           [
             JSON.stringify(expected),
@@ -405,6 +409,7 @@ export const makeReadyRoomRepository = (
               expected.organizerCharacter.characterId,
             ),
             ...participantKeys,
+            ...READY_ROOM_PUBLICATION_KEYS,
           ],
           [
             JSON.stringify(expected),

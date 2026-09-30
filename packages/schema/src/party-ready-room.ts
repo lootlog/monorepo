@@ -1,5 +1,11 @@
 import { Schema } from "effect";
-import { NonNegativeSafeInteger } from "./http-scalars.js";
+import {
+  DateTimeString,
+  FiniteNumber,
+  NonEmptyString,
+  NonNegativeSafeInteger,
+  PositiveSafeInteger,
+} from "./http-scalars.js";
 
 const PARTY_READY_ROOM_STATUSES = ["ACTIVE", "CANCELLED"] as const;
 
@@ -49,6 +55,8 @@ export interface PartyReadyRoomProjectionBase {
   minLvl?: number;
   maxLvl?: number;
   partyMemberCount?: number;
+  partyState?: PartyGatheringPartyState;
+  volunteers?: ReadonlyArray<PartyGatheringVolunteer>;
   status: "ACTIVE";
   revision: number;
   createdAt: string;
@@ -116,6 +124,122 @@ export const PartyGatheringNpcSchema = Schema.Struct({
 
 export type PartyGatheringNpc = typeof PartyGatheringNpcSchema.Type;
 
+export const PartyGatheringCharacterSchema = Schema.Struct({
+  characterId: NonEmptyString.check(Schema.isMaxLength(255)),
+  nick: Schema.String.check(Schema.isMaxLength(255)),
+  icon: Schema.String.check(Schema.isMaxLength(2048)),
+  lvl: FiniteNumber,
+  prof: Schema.String.check(Schema.isMaxLength(100)),
+});
+
+export type PartyGatheringCharacter = typeof PartyGatheringCharacterSchema.Type;
+
+export const PartyGatheringPartyMemberSchema = Schema.Struct({
+  characterId: PartyGatheringCharacterSchema.fields.characterId,
+  nick: Schema.optionalKey(PartyGatheringCharacterSchema.fields.nick),
+  icon: Schema.optionalKey(PartyGatheringCharacterSchema.fields.icon),
+  lvl: Schema.optionalKey(PartyGatheringCharacterSchema.fields.lvl),
+  prof: Schema.optionalKey(PartyGatheringCharacterSchema.fields.prof),
+});
+
+export type PartyGatheringPartyMember =
+  typeof PartyGatheringPartyMemberSchema.Type;
+
+export const PartyGatheringPartyStateSchema = Schema.Union([
+  Schema.Struct({ status: Schema.Literal("UNKNOWN") }),
+  Schema.Struct({
+    status: Schema.Literal("OBSERVED"),
+    observedAt: DateTimeString,
+    members: Schema.Array(PartyGatheringPartyMemberSchema).check(
+      Schema.isMaxLength(20),
+    ),
+  }),
+]);
+
+export type PartyGatheringPartyState =
+  typeof PartyGatheringPartyStateSchema.Type;
+
+// Viewers show an observed party as stale once `observedAt` is this old.
+export const PARTY_OBSERVATION_FRESHNESS_MS = 2 * 60_000;
+
+// The organizer's client re-reports an unchanged party this often so that
+// viewers keep receiving a fresh `observedAt` well before it goes stale.
+export const PARTY_OBSERVATION_HEARTBEAT_MS = 60_000;
+
+// The API commits an unchanged observation only once it is at least this old.
+// It stays below the heartbeat interval so every heartbeat refreshes viewers,
+// while repeated reports (reconnects, remounts) do not publish a new revision.
+export const PARTY_OBSERVATION_REFRESH_MS = 45_000;
+
+export const PartyGatheringVolunteerSchema = Schema.Struct({
+  ...PartyGatheringCharacterSchema.fields,
+  partyPresence: Schema.Literals(PARTY_READY_ROOM_PARTY_PRESENCE_STATES),
+});
+
+export type PartyGatheringVolunteer = typeof PartyGatheringVolunteerSchema.Type;
+
+export const PartyGatheringSummarySchema = Schema.Struct({
+  notificationId: Schema.String,
+  organizerName: Schema.String,
+  organizerDiscordId: Schema.optionalKey(Schema.String),
+  organizerLvl: Schema.optionalKey(FiniteNumber),
+  organizerProf: Schema.optionalKey(Schema.String),
+  applicantCount: NonNegativeSafeInteger,
+  inPartyCount: NonNegativeSafeInteger,
+  partyMemberCount: Schema.optionalKey(NonNegativeSafeInteger),
+  revision: Schema.optionalKey(PositiveSafeInteger),
+  volunteers: Schema.optionalKey(Schema.Array(PartyGatheringVolunteerSchema)),
+  partyState: Schema.optionalKey(PartyGatheringPartyStateSchema),
+  guildIds: Schema.Array(Schema.String),
+  world: Schema.String,
+  description: Schema.optionalKey(Schema.String),
+  minLvl: Schema.optionalKey(FiniteNumber),
+  maxLvl: Schema.optionalKey(FiniteNumber),
+  npc: Schema.optionalKey(
+    Schema.Struct({
+      ...PartyGatheringNpcSchema.fields,
+      type: Schema.optionalKey(Schema.String),
+    }),
+  ),
+  createdAt: DateTimeString,
+  expiresAt: DateTimeString,
+});
+
+export type PartyGatheringSummary = typeof PartyGatheringSummarySchema.Type;
+
+export const PartyGatheringClientUpdateSchema = Schema.Union([
+  Schema.Struct({
+    type: Schema.Literal("UPSERT"),
+    gathering: PartyGatheringSummarySchema,
+  }),
+  Schema.Struct({
+    type: Schema.Literal("REMOVE"),
+    notificationId: Schema.String,
+    revision: PositiveSafeInteger,
+  }),
+]);
+
+export type PartyGatheringClientUpdate =
+  typeof PartyGatheringClientUpdateSchema.Type;
+
+export const PartyGatheringUpdateEnvelopeSchema = Schema.Struct({
+  guildId: Schema.String,
+  guildIds: Schema.Array(Schema.String),
+  organizerDiscordId: Schema.String,
+  npc: Schema.optionalKey(PartyGatheringNpcSchema),
+  world: Schema.String,
+  notificationId: Schema.String,
+  revision: PositiveSafeInteger,
+  update: PartyGatheringClientUpdateSchema,
+});
+
+export type PartyGatheringUpdateEnvelope =
+  typeof PartyGatheringUpdateEnvelopeSchema.Type;
+
+export const decodePartyGatheringClientUpdate = Schema.decodeUnknownSync(
+  PartyGatheringClientUpdateSchema,
+);
+
 export const PartyReadyRoomAggregateSchema = Schema.Struct({
   schemaVersion: Schema.Literal(3),
   npc: Schema.optionalKey(PartyGatheringNpcSchema),
@@ -128,6 +252,7 @@ export const PartyReadyRoomAggregateSchema = Schema.Struct({
   minLvl: Schema.optionalKey(Schema.Number),
   maxLvl: Schema.optionalKey(Schema.Number),
   partyMemberCount: Schema.optionalKey(NonNegativeSafeInteger),
+  partyState: Schema.optionalKey(PartyGatheringPartyStateSchema),
   status: Schema.Literals(PARTY_READY_ROOM_STATUSES),
   revision: Schema.Number,
   createdAt: Schema.String,
@@ -137,6 +262,7 @@ export const PartyReadyRoomAggregateSchema = Schema.Struct({
 });
 
 const activeProjectionFields = {
+  volunteers: Schema.optionalKey(Schema.Array(PartyGatheringVolunteerSchema)),
   ...PartyReadyRoomAggregateSchema.fields,
   participants: Schema.Record(
     Schema.String,

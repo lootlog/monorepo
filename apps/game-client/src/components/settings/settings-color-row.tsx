@@ -1,4 +1,4 @@
-import { SettingsColorSwatch } from "./settings-color-swatch";
+import { ColorSwatch } from "@/components/ui/color-swatch";
 import { SettingsListRow } from "./settings-list-row";
 import type { FC, ReactNode } from "react";
 
@@ -41,10 +41,7 @@ export const SettingsColorRow: FC<SettingsColorRowProps> = ({
 }) => {
   const content = (
     <>
-      <SettingsColorSwatch
-        borderColor={borderColor}
-        backgroundColor={backgroundColor}
-      />
+      <ColorSwatch color={borderColor} fill={backgroundColor} />
       <span className="ll:min-w-0 ll:flex-1 ll:truncate">
         {name}
         {meta ? (

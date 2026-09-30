@@ -13,9 +13,17 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
+    <link rel="stylesheet" href="/src/loot-slot.css" />
     <script type="module" src="/src/themes/bootstrap.ts"></script>
   </head>
-  <body class="overflow-hidden">
+  <body>
+    <div id="startup-screen" class="startup-screen" aria-hidden="true">
+      <div class="loot-slot">
+        <span class="loot-slot__rim"
+          ><span></span><span></span><span></span
+        ></span>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

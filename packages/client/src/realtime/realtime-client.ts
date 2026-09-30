@@ -3,6 +3,7 @@ import {
   isServerEventFrame,
   PRESENCE_HEARTBEAT_INTERVAL_MS,
   PRESENCE_EXPIRY_MS,
+  REALTIME_PING_CAPABILITY,
   REALTIME_PROTOCOL_VERSION,
   REALTIME_CLIENT_CLOSE_CODES,
   type ClientCommand,
@@ -11,6 +12,7 @@ import {
 } from "@lootlog/protocol/realtime";
 import {
   encodeRealtimeFrame,
+  hasRealtimeCapabilities,
   tryDecodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
 import { Result } from "effect";
@@ -158,10 +160,13 @@ export class RealtimeClient {
     readonly promise: Promise<unknown>;
   } | null = null;
   private reconnectAttempt = 0;
+  private reconnectNotBeforeMs = 0;
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
   private heartbeatTimeout: ReturnType<typeof setTimeout> | null = null;
   private presenceSessionId: string | null = null;
   private presenceRefreshedAt = 0;
+  private pingSupported = false;
+  private latencyProbeInFlight = false;
   private manuallyClosed = false;
   private messageChain = Promise.resolve();
   private rejoinHandler: (() => Promise<void>) | null = null;
@@ -196,6 +201,7 @@ export class RealtimeClient {
     this.manuallyClosed = true;
     this.clearReconnect();
     this.clearHeartbeat();
+    this.pingSupported = false;
     this.rejectPending(new Error("Realtime client disconnected"));
     const activeSocket = this.socket;
     this.socket = null;
@@ -225,6 +231,32 @@ export class RealtimeClient {
     listener(this.heartbeatLatencyMs);
 
     return () => this.heartbeatLatencyListeners.delete(listener);
+  }
+
+  /**
+   * Measures the round trip now instead of at the next heartbeat. A gateway
+   * that does not advertise `connection.ping` keeps the heartbeat measurement.
+   */
+  probeLatency(): void {
+    if (
+      !this.pingSupported ||
+      this.stateValue !== "ready" ||
+      this.latencyProbeInFlight
+    )
+      return;
+    const socket = this.socket;
+    const startedAt = performance.now();
+    this.latencyProbeInFlight = true;
+    void this.request("connection.ping", {})
+      .then(() => {
+        if (this.socket === socket)
+          this.setHeartbeatLatency(Math.round(performance.now() - startedAt));
+      })
+      // Heartbeats own liveness; a lost probe leaves the last measurement.
+      .catch(() => {})
+      .finally(() => {
+        this.latencyProbeInFlight = false;
+      });
   }
 
   private setHeartbeatLatency(latencyMs: number | null): void {
@@ -368,7 +400,7 @@ export class RealtimeClient {
     });
     socket.addEventListener("message", (event) => {
       this.messageChain = this.messageChain
-        .then(() => this.handleMessage(event.data))
+        .then(() => this.handleMessage(event.data, socket))
         .catch(() =>
           socket.close(
             REALTIME_CLIENT_CLOSE_CODES.malformedFrame,
@@ -380,6 +412,7 @@ export class RealtimeClient {
       if (this.socket !== socket) return;
       this.socket = null;
       this.clearHeartbeat();
+      this.pingSupported = false;
       this.rejectPending(new Error("Realtime connection closed"));
       this.setState("disconnected");
 
@@ -426,6 +459,9 @@ export class RealtimeClient {
       const result = await joined;
 
       if (this.socket !== socket) return result;
+      this.pingSupported =
+        hasRealtimeCapabilities(result) &&
+        result.capabilities.includes(REALTIME_PING_CAPABILITY);
       await Promise.all(
         [...this.subscriptions.values()].map((scope) =>
           this.request("subscription.subscribe", scope),
@@ -444,6 +480,10 @@ export class RealtimeClient {
           this.clearReconnect();
         }
 
+        // A busy gateway spreads rejoins with the delay it asked for.
+        if (error instanceof RealtimeRequestError && error.retryable)
+          this.reconnectNotBeforeMs = error.retryAfterMs ?? 0;
+
         socket.close(
           REALTIME_CLIENT_CLOSE_CODES.sessionJoinFailed,
           "session join failed",
@@ -456,8 +496,14 @@ export class RealtimeClient {
     }
   }
 
-  private async handleMessage(data: unknown): Promise<void> {
+  private async handleMessage(
+    data: unknown,
+    socket: RealtimeWebSocket,
+  ): Promise<void> {
+    if (this.socket !== socket) return;
     const frame = await this.decodeFrame(data);
+
+    if (this.socket !== socket) return;
 
     if ("status" in frame) {
       const pending = this.pending.get(frame.requestId);
@@ -528,7 +574,12 @@ export class RealtimeClient {
       this.reconnectBaseDelayMs * 2 ** (this.reconnectAttempt - 1),
     );
 
-    const jittered = Math.round(exponential * (0.5 + this.random()));
+    const jittered = Math.max(
+      Math.round(exponential * (0.5 + this.random())),
+      this.reconnectNotBeforeMs,
+    );
+
+    this.reconnectNotBeforeMs = 0;
     this.setState("reconnecting");
     this.reconnectTimeout = setTimeout(
       () => this.open("reconnecting"),

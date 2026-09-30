@@ -1,5 +1,5 @@
 import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
-import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { IconButton } from "@/components/ui/icon-button";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
@@ -160,12 +160,12 @@ export function SoundsSettingsTab() {
           onVolumeCommit={(value) => commitVolume("pings", value)}
           onMuteToggle={() => toggleMuted("pings")}
           actions={
-            <SettingsIconButton
+            <IconButton
               label={t("common:actions.playSound")}
               onClick={() => playSoundTest("pings", "mapPing")}
             >
               <Play aria-hidden />
-            </SettingsIconButton>
+            </IconButton>
           }
         />
       ) : null}

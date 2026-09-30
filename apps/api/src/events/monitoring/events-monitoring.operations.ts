@@ -9,7 +9,6 @@ import {
   OpenRespawnWindowRequest,
 } from "#src/contracts/events/schemas";
 import type { EventCoordination } from "#src/events/coordination/event-coordination.service";
-import type { EventKills } from "#src/events/kills/event-kill.service";
 import type { EventRespawn } from "#src/events/respawn/event-respawn.service";
 import type { EventPresenceStats } from "#src/events/monitoring/event-presence-stats";
 import { Effect } from "effect";
@@ -19,7 +18,6 @@ import type { EventRespawnCommands } from "#src/events/respawn/event-respawn-com
 
 export const makeEventsMonitoring = (
   coordination: EventCoordination,
-  kills: EventKills,
   presenceStats: EventPresenceStats,
   respawn: EventRespawn,
   eventAccess: EventAccess,
@@ -38,32 +36,6 @@ export const makeEventsMonitoring = (
       roles,
       accessPolicy,
     );
-  },
-
-  getKillTimelineData(
-    guildData: { id: string },
-    eventId: string,
-    heroId: string,
-    killId: string,
-    roles: Role[] = [],
-    accessPolicy: AccessPolicy,
-  ) {
-    return Effect.gen(function* () {
-      yield* eventAccess.getHero(
-        guildData.id,
-        eventId,
-        heroId,
-        roles,
-        accessPolicy,
-      );
-
-      return yield* kills.getKillTimelineData(
-        guildData.id,
-        eventId,
-        heroId,
-        killId,
-      );
-    }).pipe(Effect.withSpan("EventsMonitoring.getKillTimelineData"));
   },
 
   getHeroCoverageGaps(

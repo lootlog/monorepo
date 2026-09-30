@@ -1,10 +1,32 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import type { UserFeedResponseDtoOutput } from "@lootlog/client/main";
+import { DEFAULT_ACTIVITY_FEED_SETTINGS } from "@lootlog/domain/activity-feed";
 import { feedKill } from "./live-feed-test-data";
 import {
   groupFeedItems,
   initialLiveFeedState,
   liveFeedReducer,
+  mergeFeedItems,
 } from "./live-feed-state";
+
+const lootAt = (
+  id: number,
+  occurredAt: string,
+  npc: typeof feedKill.npc = feedKill.npc,
+) =>
+  ({
+    id: `loot:${id}`,
+    groupKey: `loot:${id}`,
+    type: "loot",
+    version: 1,
+    occurredAt,
+    world: feedKill.world,
+    guild: feedKill.guild,
+    npc,
+    lootId: id,
+    additionalItemsCount: 0,
+    items: [],
+  }) satisfies UserFeedResponseDtoOutput["items"][number];
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -115,7 +137,7 @@ it("groups copies of one source event and keeps all its organizations within the
   const groups = groupFeedItems(state.items ?? []);
   expect(groups).toHaveLength(1);
   expect(groups[0]?.organizations).toHaveLength(25);
-  expect(groups[0]?.item.type === "kill" && groups[0].item.count).toBe(1);
+  expect(groups[0]?.kill?.count).toBe(1);
 });
 
 it("does not group unrelated kills in the same minute and removes organizations on snapshot replacement", () => {
@@ -183,4 +205,72 @@ it("animates only new websocket groups, including several arriving during an HTT
     item: { ...httpItem, version: 2 },
   });
   expect(state.animatedKeys).not.toContain("http");
+});
+
+it("attaches loot to the closest kill of its NPC and keeps late or unrelated loot separate", () => {
+  const earlier = {
+    ...feedKill,
+    id: "kill:earlier",
+    groupKey: "kill:earlier",
+    occurredAt: "2026-09-06T11:59:00Z",
+  };
+
+  const groups = groupFeedItems([
+    lootAt(3, "2026-09-06T12:10:00Z"),
+    lootAt(4, "2026-09-06T12:00:03Z", { ...feedKill.npc, id: 2 }),
+    lootAt(1, "2026-09-06T12:00:05Z"),
+    { ...feedKill, groupKey: "kill:current" },
+    lootAt(2, "2026-09-06T11:59:50Z"),
+    earlier,
+  ]);
+
+  const byKey = new Map(groups.map((group) => [group.key, group]));
+  expect(byKey.get("kill:current")?.loots.map(({ lootId }) => lootId)).toEqual([
+    1, 2,
+  ]);
+  expect(byKey.get("kill:earlier")?.loots).toEqual([]);
+  expect(byKey.get("loot:3")?.kill).toBeUndefined();
+  expect(byKey.get("loot:4")?.kill).toBeUndefined();
+  expect(groups.map(({ key }) => key)).toEqual([
+    "loot:3",
+    "kill:current",
+    "loot:4",
+    "kill:earlier",
+  ]);
+});
+
+it("keeps twenty loot events and only the hidden kills that can still receive loot", () => {
+  const kills = Array.from({ length: 25 }, (_, index) => ({
+    ...feedKill,
+    id: `kill:${index}`,
+    groupKey: `kill:${index}`,
+    npc: { ...feedKill.npc, id: 100 + index },
+    occurredAt: new Date(
+      Date.parse("2026-09-06T12:00:30Z") + index * 1000,
+    ).toISOString(),
+  }));
+
+  const loots = Array.from({ length: 22 }, (_, index) =>
+    lootAt(
+      index + 1,
+      new Date(Date.parse("2026-09-06T11:00:00Z") + index * 1000).toISOString(),
+    ),
+  );
+
+  const expired = {
+    ...feedKill,
+    id: "kill:expired",
+    groupKey: "kill:expired",
+    npc: { ...feedKill.npc, id: 99 },
+    occurredAt: "2026-09-06T11:58:00Z",
+  };
+
+  const items = mergeFeedItems([...kills, expired, ...loots], [], {
+    ...DEFAULT_ACTIVITY_FEED_SETTINGS,
+    withLootOnly: true,
+  });
+
+  expect(items.filter(({ type }) => type === "loot")).toHaveLength(20);
+  expect(items.filter(({ type }) => type === "kill")).toHaveLength(25);
+  expect(items.map(({ id }) => id)).not.toContain("kill:expired");
 });

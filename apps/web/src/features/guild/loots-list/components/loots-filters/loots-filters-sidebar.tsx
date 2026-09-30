@@ -12,8 +12,7 @@ import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "cn";
-import { AnimatePresence } from "framer-motion";
-import * as m from "framer-motion/m";
+import { CollapsePresence } from "@/components/common/collapse-presence";
 import { Bookmark, Plus, X } from "lucide-react";
 import { LootDirectSearchNotice } from "./loot-direct-search-notice";
 import { LootItemFilters } from "./loot-item-filters";
@@ -259,30 +258,21 @@ export const LootsFiltersSidebar = (
             </ScrollArea>
           </div>
 
-          <AnimatePresence>
-            {hasActiveFilters && (
-              <m.div
-                layout
-                initial={{ opacity: 0, scaleY: 0.96 }}
-                animate={{ opacity: 1, scaleY: 1 }}
-                exit={{ opacity: 0, scaleY: 0.96 }}
-                style={{ transformOrigin: "bottom" }}
-                className="overflow-hidden border-t border-border bg-background/95 px-3"
-              >
-                <div className="flex h-14 w-full items-center">
-                  <Button
-                    onClick={clearFilters}
-                    variant="outline"
-                    className="w-full"
-                    size="sm"
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    {t("loots.filtersPanel.quickFilters.clearButton")}
-                  </Button>
-                </div>
-              </m.div>
-            )}
-          </AnimatePresence>
+          <CollapsePresence open={hasActiveFilters}>
+            <div className="border-t border-border bg-background/95 px-3">
+              <div className="flex h-14 w-full items-center">
+                <Button
+                  onClick={clearFilters}
+                  variant="outline"
+                  className="w-full"
+                  size="sm"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  {t("loots.filtersPanel.quickFilters.clearButton")}
+                </Button>
+              </div>
+            </div>
+          </CollapsePresence>
         </div>
       </div>
     </>

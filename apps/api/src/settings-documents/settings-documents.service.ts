@@ -13,8 +13,10 @@ import {
   SettingsScope,
   SettingsScopeType,
 } from "@lootlog/schema/settings-documents";
+import { differenceBy, uniqBy } from "es-toolkit";
 import { Effect, Schema, Predicate } from "effect";
 import {
+  getSettingsOperationKey,
   InvalidSettingsPatchError,
   type SettingsDocumentsRepositoryService,
   SettingsPersistenceError,
@@ -129,9 +131,7 @@ const getContextFromOperations = (
   };
 };
 
-const getOperationKey = (
-  operation: PatchSettingsDocuments["operations"][number],
-) => `${operation.domain}:${operation.scope.type}:${operation.scope.id}`;
+const getScopeKey = (scope: SettingsScope) => `${scope.type}:${scope.id}`;
 
 const validateOperationUniqueness = (
   operations: PatchSettingsDocuments["operations"],
@@ -141,7 +141,7 @@ const validateOperationUniqueness = (
     const scopeIds = new Map<SettingsScopeType, string>();
 
     for (const operation of operations) {
-      const operationKey = getOperationKey(operation);
+      const operationKey = getSettingsOperationKey(operation);
 
       if (operationKeys.has(operationKey)) {
         return yield* requestError(
@@ -327,8 +327,15 @@ export const makeSettingsDocuments = (
   ) =>
     Effect.gen(function* () {
       yield* validateOperationUniqueness(payload.operations);
-      const scopes = payload.operations.map((operation) => operation.scope);
-      yield* validateScopes(repository, userId, scopes);
+
+      // A batch repeats its scopes across domains; each scope is authorized
+      // once per request.
+      const operationScopes = uniqBy(
+        payload.operations.map((operation) => operation.scope),
+        getScopeKey,
+      );
+
+      yield* validateScopes(repository, userId, operationScopes);
 
       const operationsContext = getContextFromOperations(payload.operations);
 
@@ -346,10 +353,16 @@ export const makeSettingsDocuments = (
         : operationsContext;
 
       const responseScopes = yield* getContextScopes(userId, responseContext);
-      yield* validateScopes(repository, userId, responseScopes);
+      yield* validateScopes(
+        repository,
+        userId,
+        differenceBy(responseScopes, operationScopes, getScopeKey),
+      );
 
       const sortedOperations = [...payload.operations].sort((left, right) =>
-        getOperationKey(left).localeCompare(getOperationKey(right)),
+        getSettingsOperationKey(left).localeCompare(
+          getSettingsOperationKey(right),
+        ),
       );
 
       yield* repository

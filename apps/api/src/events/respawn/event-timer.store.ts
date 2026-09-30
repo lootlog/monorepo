@@ -1,12 +1,9 @@
+import { selectTimersWithActors } from "#src/timers/timer-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import {
-  memberTable,
-  playerSnapshotTable,
-  timerTable,
-} from "#src/database/drizzle/schema";
+import { timerTable } from "#src/database/drizzle/schema";
 
 type TimerWrite = Omit<
   typeof timerTable.$inferInsert,
@@ -41,18 +38,7 @@ export const makeEventTimerStore = (database: ApiDatabaseValue) => {
   const findTimer = (guildId: string, world: string, timerKey: string) =>
     operation(
       "eventTimerStore.find",
-      database
-        .select({
-          timer: timerTable,
-          member: memberTable,
-          actorCharacter: playerSnapshotTable,
-        })
-        .from(timerTable)
-        .leftJoin(memberTable, eq(memberTable.id, timerTable.createdById))
-        .leftJoin(
-          playerSnapshotTable,
-          eq(playerSnapshotTable.id, timerTable.actorCharacterSnapshotId),
-        )
+      selectTimersWithActors(database)
         .where(identity(guildId, world, timerKey))
         .pipe(
           Effect.map((rows) => {

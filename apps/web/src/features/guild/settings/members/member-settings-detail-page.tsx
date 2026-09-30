@@ -1,3 +1,4 @@
+import { useMemberActivity } from "@/features/guild/settings/members/use-member-activity";
 import { PageHeader } from "@/components/common/page-header";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -6,7 +7,6 @@ import {
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, UserRoundX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -21,12 +21,8 @@ import {
   type MemberResponseDto as GuildMember,
 } from "@lootlog/client/main";
 
-import { memberActivityStatsQueryOptions } from "@/features/guild/settings/members/member-activity-stats-api";
-import { mapMemberActivityStatsByDiscordIdAndSource } from "@/features/guild/settings/members/member-activity-stats.utils";
 import { isMemberOnlineInGame } from "@/features/guild/settings/members/member-game-presence.utils";
 import { isMemberOnlineOnWeb } from "@/lib/web-presence";
-import { useMemberGamePresence } from "@/features/guild/settings/members/use-member-game-presence";
-import { useMemberWebPresence } from "@/features/guild/settings/members/use-member-web-presence";
 import { MemberData } from "@/features/guild/settings/members/components/member-data";
 import { RefreshStatusProvider } from "@/features/guild/settings/members/contexts/refresh-status-provider";
 import { MemberSyncButton } from "@/features/guild/settings/members/components/member-sync-button";
@@ -51,15 +47,11 @@ const MemberSettingsDetailPageContent = () => {
   const { data: accessPolicy } = useGuildPermissions();
   const resolvedGuildId = guild?.id ?? undefined;
 
-  const { data: memberActivityStats } = useQuery(
-    memberActivityStatsQueryOptions(resolvedGuildId),
-  );
-
-  const memberGamePresenceByDiscordId = useMemberGamePresence(resolvedGuildId);
-  const memberWebPresenceByDiscordId = useMemberWebPresence(resolvedGuildId);
-
-  const memberActivityStatsByDiscordIdAndSource =
-    mapMemberActivityStatsByDiscordIdAndSource(memberActivityStats);
+  const {
+    memberGamePresenceByDiscordId,
+    memberWebPresenceByDiscordId,
+    memberActivityStatsByDiscordIdAndSource,
+  } = useMemberActivity(resolvedGuildId);
 
   const queryMember =
     members?.find((member) => String(member.id) === memberId) ?? null;

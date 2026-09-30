@@ -3,7 +3,6 @@ import { SectionCardContent } from "@/components/common/section-card/section-car
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 
 import {
   Form,
@@ -20,28 +19,16 @@ import { useTranslation } from "react-i18next";
 import { Input } from "@lootlog/ui/components/input";
 
 import { toast } from "sonner";
-import { Permission } from "@lootlog/schema/permissions";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@lootlog/ui/components/accordion";
-import {
-  KeyRound,
-  Shield,
-  Package,
-  Clock,
-  CalendarCheck,
-  FileText,
-  MessageCircle,
-  Bell,
-  Settings,
-  Trophy,
-  Users,
-} from "lucide-react";
+import { Settings } from "lucide-react";
 import { cn } from "cn";
 
+import { PERMISSION_CATEGORIES } from "../constants/permission-categories";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useQueryClient } from "@tanstack/react-query";
@@ -50,156 +37,17 @@ import {
   useRolesControllerUpdateGuildRole,
   type RoleResponseDtoOutput as GuildRole,
 } from "@lootlog/client/main";
-
-const PERMISSION_GROUPS = [
-  {
-    groupKey: "access",
-    icon: KeyRound,
-    color: "text-emerald-500",
-    bgColor: "bg-emerald-500/10",
-    permissions: [Permission.LOOTLOG_ACCESS],
-  },
-  {
-    groupKey: "admin",
-    icon: Shield,
-    color: "text-red-500",
-    bgColor: "bg-red-500/10",
-    permissions: [Permission.ADMIN, Permission.LOOTLOG_MANAGE],
-  },
-  {
-    groupKey: "loots",
-    icon: Package,
-    color: "text-amber-500",
-    bgColor: "bg-amber-500/10",
-    permissions: [
-      Permission.LOOTLOG_LOOTS_READ,
-      Permission.LOOTLOG_LOOTS_WRITE,
-      Permission.LOOTLOG_LOOTS_ARCHIVE,
-      Permission.LOOTLOG_LOOTS_TITANS_READ,
-      Permission.LOOTLOG_LOOTS_HEROES_READ,
-    ],
-  },
-  {
-    groupKey: "timers",
-    icon: Clock,
-    color: "text-blue-500",
-    bgColor: "bg-blue-500/10",
-    permissions: [
-      Permission.LOOTLOG_TIMERS_READ,
-      Permission.LOOTLOG_TIMERS_WRITE,
-      Permission.LOOTLOG_TIMERS_RESET,
-      Permission.LOOTLOG_TIMERS_DELETE,
-      Permission.LOOTLOG_TIMERS_TITANS_READ,
-      Permission.LOOTLOG_TIMERS_HEROES_READ,
-    ],
-  },
-  {
-    groupKey: "reservations",
-    icon: CalendarCheck,
-    color: "text-purple-500",
-    bgColor: "bg-purple-500/10",
-    permissions: [
-      Permission.LOOTLOG_RESERVATIONS_READ,
-      Permission.LOOTLOG_RESERVATIONS_WRITE,
-    ],
-  },
-  {
-    groupKey: "docs",
-    icon: FileText,
-    color: "text-indigo-500",
-    bgColor: "bg-indigo-500/10",
-    permissions: [Permission.LOOTLOG_DOCS_READ, Permission.LOOTLOG_DOCS_WRITE],
-  },
-  {
-    groupKey: "members",
-    icon: Users,
-    color: "text-cyan-500",
-    bgColor: "bg-cyan-500/10",
-    permissions: [
-      Permission.LOOTLOG_MEMBERS_READ,
-      Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-    ],
-  },
-
-  {
-    groupKey: "chat",
-    icon: MessageCircle,
-    color: "text-green-500",
-    bgColor: "bg-green-500/10",
-    permissions: [
-      Permission.LOOTLOG_CHAT_READ,
-      Permission.LOOTLOG_CHAT_WRITE,
-      Permission.LOOTLOG_CHAT_TITANS_READ,
-      Permission.LOOTLOG_CHAT_HEROES_READ,
-    ],
-  },
-  {
-    groupKey: "notifications",
-    icon: Bell,
-    color: "text-orange-500",
-    bgColor: "bg-orange-500/10",
-    permissions: [
-      Permission.LOOTLOG_NOTIFICATIONS_READ,
-      Permission.LOOTLOG_NOTIFICATIONS_SEND,
-      Permission.LOOTLOG_NOTIFICATIONS_TITANS_READ,
-      Permission.LOOTLOG_NOTIFICATIONS_HEROES_READ,
-    ],
-  },
-  {
-    groupKey: "events",
-    icon: Trophy,
-    color: "text-fuchsia-500",
-    bgColor: "bg-fuchsia-500/10",
-    permissions: [
-      Permission.LOOTLOG_EVENTS_READ,
-      Permission.LOOTLOG_EVENTS_WRITE,
-      Permission.LOOTLOG_EVENTS_MANAGE,
-    ],
-  },
-];
+import {
+  createRolesFormSchema,
+  type RolesFormInput,
+} from "./roles-form.schema";
 
 // Flatten for form schema and submission
-const PERMISSIONS = PERMISSION_GROUPS.flatMap((group) => group.permissions);
+const PERMISSIONS = PERMISSION_CATEGORIES.flatMap((group) => group.permissions);
 
 const DEFAULT_LVL_RANGE_FROM = "0";
 
 const DEFAULT_LVL_RANGE_TO = "500";
-
-const formSchema = z.object({
-  lvlRangeFrom: z
-    .string()
-    .min(0)
-    .max(500)
-    .transform((val) => {
-      const num = Number(val);
-
-      if (Number.isNaN(num)) return DEFAULT_LVL_RANGE_FROM;
-
-      if (num > 500) return DEFAULT_LVL_RANGE_TO;
-
-      if (num < 0) return DEFAULT_LVL_RANGE_FROM;
-
-      return String(num);
-    }),
-  lvlRangeTo: z
-    .string()
-    .min(0)
-    .max(500)
-    .transform((val) => {
-      const num = Number(val);
-
-      if (Number.isNaN(num)) return DEFAULT_LVL_RANGE_FROM;
-
-      if (num > 500) return DEFAULT_LVL_RANGE_TO;
-
-      if (num < 0) return DEFAULT_LVL_RANGE_FROM;
-
-      return String(num);
-    }),
-  permissions: z.partialRecord(z.enum(Permission), z.boolean()),
-});
-
-type FormSchemaType = z.infer<typeof formSchema>;
 
 type RolesFormProps = {
   role: GuildRole;
@@ -214,8 +62,8 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
 
   const { t } = useTranslation();
 
-  const form = useForm<FormSchemaType>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<RolesFormInput>({
+    resolver: zodResolver(createRolesFormSchema(t), undefined, { raw: true }),
     defaultValues: {
       lvlRangeFrom: role.lvlRangeFrom?.toString() ?? DEFAULT_LVL_RANGE_FROM,
       lvlRangeTo: role.lvlRangeTo?.toString() ?? DEFAULT_LVL_RANGE_TO,
@@ -242,7 +90,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role]);
 
-  function onSubmit(values: FormSchemaType) {
+  function onSubmit(values: RolesFormInput) {
     if (isPending) return;
 
     updateGuildRole(
@@ -289,6 +137,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className="w-full mx-auto pb-24"
+        noValidate
       >
         <SectionCard>
           <SectionCardHeader
@@ -306,6 +155,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                     <FormControl
                       render=<Input
                         placeholder={DEFAULT_LVL_RANGE_FROM}
+                        aria-label={t("settings.roles.levelRangeFrom")}
                         type="number"
                         max={500}
                         min={0}
@@ -313,7 +163,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                         {...field}
                       />
                     />
-                    <FormMessage />
+                    <FormMessage role="alert" />
                   </FormItem>
                 )}
               />
@@ -326,6 +176,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                     <FormControl
                       render=<Input
                         placeholder={DEFAULT_LVL_RANGE_TO}
+                        aria-label={t("settings.roles.levelRangeTo")}
                         type="number"
                         max={500}
                         min={0}
@@ -333,7 +184,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                         {...field}
                       />
                     />
-                    <FormMessage />
+                    <FormMessage role="alert" />
                   </FormItem>
                 )}
               />
@@ -344,10 +195,10 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
         <div className="space-y-3 pt-3">
           <Accordion
             multiple
-            defaultValue={PERMISSION_GROUPS.map((g) => g.groupKey)}
+            defaultValue={PERMISSION_CATEGORIES.map((g) => g.groupKey)}
             className="space-y-3"
           >
-            {PERMISSION_GROUPS.map((group) => {
+            {PERMISSION_CATEGORIES.map((group) => {
               const IconComponent = group.icon;
 
               const enabledCount = group.permissions.filter((p) =>

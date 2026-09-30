@@ -15,6 +15,7 @@ export type InternalUserPermissionsQuery =
 export const InternalUserPermissionsQuery = Schema.Struct({
   discordId: Schema.String,
   userId: Schema.String,
+  freshness: Schema.optionalKey(Schema.Literal("required")),
 });
 
 export type InternalUserPermissionsResponse =

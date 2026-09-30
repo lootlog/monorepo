@@ -3,10 +3,11 @@ import { defineContentScript } from "wxt/utils/define-content-script";
 import { browser } from "wxt/browser";
 import {
   EXTENSION_CHANNEL,
-  ExtensionRequestSchema,
-  ExtensionMessageSchema,
+  decodeExtensionRequest,
+  decodeExtensionMessage,
   decodeMessage,
   encodeMessage,
+  type ExtensionClosedReason,
 } from "@/extension/protocol";
 
 export default defineContentScript({
@@ -19,7 +20,7 @@ export default defineContentScript({
       !/^[^.]+\.margonem\.(pl|com)$/.test(location.hostname)
     )
       return;
-    let cleanup: (() => void) | undefined;
+    let cleanup: ((reason?: ExtensionClosedReason) => void) | undefined;
     ctx.addEventListener(
       window,
       "message",
@@ -53,9 +54,7 @@ export default defineContentScript({
             ) {
               if (stopped || background !== port) return;
 
-              const parsed = ExtensionMessageSchema.parse(
-                decodeMessage(message),
-              );
+              const parsed = decodeExtensionMessage(decodeMessage(message));
 
               page.postMessage(encodeMessage(parsed));
 
@@ -72,7 +71,9 @@ export default defineContentScript({
               retry = setTimeout(connect, 1000);
             });
           } catch {
-            page.postMessage(encodeMessage({ type: "closed" }));
+            page.postMessage(
+              encodeMessage({ type: "closed", reason: "unavailable" }),
+            );
           }
         };
 
@@ -81,9 +82,7 @@ export default defineContentScript({
           if (stopped) return;
 
           try {
-            const request = ExtensionRequestSchema.parse(
-              decodeMessage(message.data),
-            );
+            const request = decodeExtensionRequest(decodeMessage(message.data));
 
             if (request.type === "release") {
               cleanup?.();
@@ -107,16 +106,16 @@ export default defineContentScript({
 
         page.start();
         connect();
-        cleanup = () => {
+        cleanup = (reason) => {
           stopped = true;
           clearTimeout(retry);
-          page.postMessage(encodeMessage({ type: "closed" }));
+          page.postMessage(encodeMessage({ type: "closed", reason }));
           page.close();
           background?.disconnect();
         };
       },
     );
     ctx.addEventListener(window, "pagehide", () => cleanup?.());
-    ctx.onInvalidated(() => cleanup?.());
+    ctx.onInvalidated(() => cleanup?.("invalidated"));
   },
 });

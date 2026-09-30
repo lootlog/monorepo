@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  getNotificationReportCount,
   type NotificationPresentation,
   type NotificationWithServers,
   useNotificationsStore,
@@ -175,6 +176,8 @@ describe("notifications.store", () => {
             npc: createNpc(500),
           }),
           listKey: "notification-1",
+          recentReportIds: ["notification-1"],
+          reportCountByGuildId: {},
           receivedAtMs: 1,
         },
         {
@@ -183,6 +186,8 @@ describe("notifications.store", () => {
             message: "Hej",
           }),
           listKey: "notification-2",
+          recentReportIds: ["notification-2"],
+          reportCountByGuildId: {},
           receivedAtMs: 2,
         },
       ],
@@ -235,12 +240,16 @@ describe("notifications.store", () => {
         world,
       }),
       listKey: notificationId,
+      recentReportIds: [notificationId],
+      reportCountByGuildId: {},
       receivedAtMs: 1,
     });
 
     const keptMessage = {
       ...createNotification({ notificationId: "message-1" }),
       listKey: "message-1",
+      recentReportIds: ["message-1"],
+      reportCountByGuildId: {},
       receivedAtMs: 1,
     };
 
@@ -325,35 +334,164 @@ describe("notifications.store", () => {
     ]);
   });
 
-  it("merges npc notifications by npc id and world", () => {
-    presentNotification(
-      createNotification({
-        notificationId: "notification-1",
-        message: undefined,
-        servers: ["guild-1"],
-        npc: createNpc(500),
-      }),
-    );
+  it("groups repeated npc reports under the first sender without moving the row", () => {
+    const presentNpcReport = (
+      notificationId: string,
+      overrides?: Partial<NotificationWithServers>,
+    ) =>
+      useNotificationsStore.getState().presentNotifications([
+        {
+          notification: createNotification({
+            notificationId,
+            discordId: `discord-${notificationId}`,
+            message: undefined,
+            npc: createNpc(500),
+            ...overrides,
+          }),
+        },
+      ]);
 
-    const initialListKey =
-      useNotificationsStore.getState().notifications[0]?.listKey;
+    presentNpcReport("report-1", { guildId: "guild-1", servers: ["guild-1"] });
+    presentNotification(createNotification({ notificationId: "message-1" }));
 
-    presentNotification(
-      createNotification({
-        notificationId: "notification-2",
-        message: undefined,
+    const cycleBeforeRepeats =
+      useNotificationsStore.getState().latestNotificationAnimationCycle;
+
+    const repeatedReports = [
+      presentNpcReport("report-2", {
+        guildId: "guild-2",
         servers: ["guild-2"],
-        npc: createNpc(500),
       }),
-    );
+      // The same report delivered through another guild is not a new report.
+      presentNpcReport("report-2", {
+        guildId: "guild-3",
+        servers: ["guild-3"],
+      }),
+      presentNpcReport("report-3", {
+        guildId: "guild-1",
+        servers: ["guild-1"],
+      }),
+    ];
 
-    expect(useNotificationsStore.getState().notifications).toEqual([
+    const { notifications, latestNotificationAnimationCycle } =
+      useNotificationsStore.getState();
+
+    expect(repeatedReports.map((added) => added.size)).toEqual([0, 0, 0]);
+    expect(latestNotificationAnimationCycle).toBe(cycleBeforeRepeats);
+    expect(notifications).toEqual([
+      expect.objectContaining({ notificationId: "message-1" }),
       expect.objectContaining({
-        notificationId: "notification-2",
-        listKey: initialListKey,
-        servers: ["guild-1", "guild-2"],
+        listKey: "report-1",
+        notificationId: "report-1",
+        discordId: "discord-report-1",
+        reportCountByGuildId: { "guild-1": 2, "guild-2": 1 },
+        servers: ["guild-1", "guild-2", "guild-3"],
       }),
     ]);
+    expect(getNotificationReportCount(notifications[1]!)).toBe(3);
+  });
+
+  it("counts every report of a long-lived row while remembering only recent ids", () => {
+    const presentNpcReport = (notificationId: string) =>
+      useNotificationsStore.getState().presentNotifications([
+        {
+          notification: createNotification({
+            notificationId,
+            message: undefined,
+            npc: createNpc(500),
+          }),
+        },
+      ]);
+
+    for (let index = 1; index <= 500; index += 1) {
+      presentNpcReport(`report-${index}`);
+    }
+
+    // The latest report delivered again through another Organization.
+    presentNpcReport("report-500");
+
+    const [row] = useNotificationsStore.getState().notifications;
+
+    expect(getNotificationReportCount(row!)).toBe(500);
+    expect(row?.recentReportIds.length).toBeLessThan(50);
+    expect(row?.recentReportIds.at(-1)).toBe("report-500");
+  });
+
+  it("keeps npc reports apart across worlds and from party gathering reports", () => {
+    presentNotification(
+      createNotification({
+        notificationId: "report-1",
+        message: undefined,
+        npc: createNpc(500),
+      }),
+    );
+    presentNotification(
+      createNotification({
+        notificationId: "report-other-world",
+        message: undefined,
+        npc: createNpc(500),
+        world: "gefion",
+      }),
+    );
+    presentNotification(
+      createNotification({
+        notificationId: "gathering-1",
+        message: undefined,
+        npc: createNpc(500),
+        isGatheringParty: true,
+      }),
+    );
+
+    expect(
+      useNotificationsStore.getState().notifications.map((notification) => ({
+        notificationId: notification.notificationId,
+        count: getNotificationReportCount(notification),
+      })),
+    ).toEqual([
+      { notificationId: "gathering-1", count: 1 },
+      { notificationId: "report-other-world", count: 1 },
+      { notificationId: "report-1", count: 1 },
+    ]);
+  });
+
+  it("refills the countdown of a grouped row and keeps a paused one paused", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-17T10:00:00.000Z"));
+
+    const presentNpcReport = (notificationId: string, npcId: number) =>
+      useNotificationsStore.getState().presentNotifications([
+        {
+          notification: createNotification({
+            notificationId,
+            message: undefined,
+            npc: createNpc(npcId),
+          }),
+          autoHideDurationMs: 10_000,
+        },
+      ]);
+
+    presentNpcReport("running-1", 500);
+    presentNpcReport("paused-1", 600);
+    useNotificationsStore.getState().pauseNotificationAutoHide("paused-1");
+
+    vi.setSystemTime(new Date("2026-04-17T10:00:08.000Z"));
+    presentNpcReport("running-2", 500);
+    presentNpcReport("paused-2", 600);
+
+    expect(
+      useNotificationsStore.getState().notificationAutoHideByListKey,
+    ).toEqual({
+      "running-1": {
+        deadlineMs: Date.now() + 10_000,
+        pausedRemainingMs: null,
+        durationMs: 10_000,
+      },
+      "paused-1": {
+        deadlineMs: null,
+        pausedRemainingMs: 10_000,
+        durationMs: 10_000,
+      },
+    });
   });
 
   it("does not merge party gathering notifications by world or guild", () => {
@@ -467,9 +605,9 @@ describe("notifications.store", () => {
         listKey: "npc-other-world",
         notificationId: "npc-other-world",
       },
-      { listKey: "npc-1", notificationId: "npc-2" },
-      { listKey: "message-1", notificationId: "message-1" },
+      { listKey: "npc-1", notificationId: "npc-1" },
       { listKey: "message-2", notificationId: "message-2" },
+      { listKey: "message-1", notificationId: "message-1" },
     ]);
     expect(
       notifications.find(({ listKey }) => listKey === "message-1"),
@@ -481,6 +619,7 @@ describe("notifications.store", () => {
     );
     expect(notifications.find(({ listKey }) => listKey === "npc-1")).toEqual(
       expect.objectContaining({
+        recentReportIds: ["npc-1", "npc-2"],
         servers: ["guild-1", "guild-2", "guild-3"],
       }),
     );
@@ -503,6 +642,8 @@ describe("notifications.store", () => {
             notificationId: "notification-1",
           }),
           listKey: "notification-1",
+          recentReportIds: ["notification-1"],
+          reportCountByGuildId: {},
           receivedAtMs: 1,
         },
       ],
@@ -529,11 +670,15 @@ describe("notifications.store", () => {
         {
           ...createNotification({ notificationId: "notification-1" }),
           listKey: "notification-1",
+          recentReportIds: ["notification-1"],
+          reportCountByGuildId: {},
           receivedAtMs: 1,
         },
         {
           ...createNotification({ notificationId: "notification-2" }),
           listKey: "notification-2",
+          recentReportIds: ["notification-2"],
+          reportCountByGuildId: {},
           receivedAtMs: 2,
         },
       ],
@@ -615,6 +760,28 @@ describe("notifications.store", () => {
     expect(useNotificationsStore.getState()).toBe(stateBefore);
     expect(listener).not.toHaveBeenCalled();
     unsubscribe();
+  });
+
+  it("pauses a countdown that started before its category settings loaded", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-17T10:00:00.000Z"));
+
+    const listKey = "notification-1";
+
+    // No stored state: the sweep expires this row from its arrival time, so
+    // a hover or an open mute menu must still hold it on screen.
+    useNotificationsStore.getState().pauseNotificationAutoHide(listKey, {
+      deadlineMs: Date.now() + 4000,
+      durationMs: 5000,
+    });
+
+    expect(
+      useNotificationsStore.getState().notificationAutoHideByListKey[listKey],
+    ).toEqual({
+      deadlineMs: null,
+      pausedRemainingMs: 4000,
+      durationMs: 5000,
+    });
   });
 
   it("manages notification auto-hide lifecycle", () => {

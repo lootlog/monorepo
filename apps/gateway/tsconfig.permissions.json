@@ -1,0 +1,10 @@
+{
+  "extends": "../api/tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "../..",
+    "noEmit": true,
+    "lib": ["ES2024", "DOM", "DOM.Iterable"]
+  },
+  "include": ["test/permission-revocation.test.ts"],
+  "exclude": []
+}

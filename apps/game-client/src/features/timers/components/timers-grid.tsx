@@ -12,6 +12,8 @@ import {
 import { useQueries } from "@tanstack/react-query";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { TimerClockProvider } from "./timer-clock-provider";
+import { TimerMapPresenceProvider } from "./timer-map-presence-provider";
+import { getTimerGroupingKey } from "../timer-list-projection";
 
 type TimersGridProps = {
   timers: TimerWithTimeLeft[];
@@ -22,10 +24,9 @@ type TimersGridProps = {
 };
 
 /**
- * Mirrors `repeat(auto-fit, minmax(minColumnWidth, 1fr))` without a gap, so
- * row parity computed here matches the rows the browser lays out. `auto-fit`
- * collapses tracks no tile fills, so a short list lays out fewer columns
- * than fit the width.
+ * Mirrors `repeat(auto-fit, minmax(minColumnWidth, 1fr))` without a gap.
+ * `auto-fit` collapses tracks no tile fills, so a short list lays out fewer
+ * columns than fit the width.
  */
 const countGridColumns = (
   gridWidth: number,
@@ -38,7 +39,7 @@ const useGridWidth = () => {
   const [gridWidth, setGridWidth] = useState(0);
 
   // Measured before the first paint: until the observer reports, the grid
-  // would render as one column, without stripes and with the wrong row parity.
+  // would render as one column, without stripes.
   useLayoutEffect(() => {
     const grid = gridRef.current;
 
@@ -113,36 +114,40 @@ export const TimersGrid: FC<TimersGridProps> = ({
   const showColorStripe = columnCount > 1;
 
   return (
-    <TimerClockProvider>
-      <span
-        ref={gridRef}
-        className={cn(
-          "ll:grid ll:w-full ll:pb-1",
-          legacyAppearance && "ll:gap-0.5",
-        )}
-        style={{
-          gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${minColumnWidth}px), 1fr))`,
-        }}
-      >
-        {timers.map((timer, index) => {
-          const isHidden = hiddenTimerNames.has(timer.npc.name);
-          const isAlternateRow = Math.floor(index / columnCount) % 2 === 1;
+    <TimerMapPresenceProvider timers={timers}>
+      <TimerClockProvider>
+        <span
+          ref={gridRef}
+          className={cn(
+            "ll:grid ll:w-full ll:pb-1",
+            legacyAppearance && "ll:gap-0.5",
+          )}
+          style={{
+            gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${minColumnWidth}px), 1fr))`,
+          }}
+        >
+          {timers.map((timer) => {
+            const isHidden = hiddenTimerNames.has(timer.npc.name);
 
-          return (
-            <SingleTimer
-              key={`${timer.timerKey}-${timer.guildId}`}
-              guildIds={guildIds}
-              guildNamesById={guildNamesById}
-              accessPolicy={accessPoliciesByGuildId[timer.guildId]}
-              timer={timer}
-              settingsKey={settingsKey}
-              isHidden={isHidden}
-              isAlternateRow={!legacyAppearance && isAlternateRow}
-              showColorStripe={showColorStripe}
-            />
-          );
-        })}
-      </span>
-    </TimerClockProvider>
+            return (
+              <SingleTimer
+                key={
+                  timer.mergedGuildIds
+                    ? `${timer.world}-${getTimerGroupingKey(timer)}`
+                    : `${timer.world}-${timer.guildId}-${timer.timerKey}`
+                }
+                guildIds={guildIds}
+                guildNamesById={guildNamesById}
+                accessPolicy={accessPoliciesByGuildId[timer.guildId]}
+                timer={timer}
+                settingsKey={settingsKey}
+                isHidden={isHidden}
+                showColorStripe={showColorStripe}
+              />
+            );
+          })}
+        </span>
+      </TimerClockProvider>
+    </TimerMapPresenceProvider>
   );
 };

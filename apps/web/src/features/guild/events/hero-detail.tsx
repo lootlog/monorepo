@@ -319,6 +319,7 @@ export const HeroDetail = () => {
           onAssign={handleAssignFromModal}
           onUnassign={handleUnassignFromModal}
           disabled={!assignmentAllowed}
+          enabledAt={assignmentEnabledAt}
           disabledMessage={assignmentDisabledMessage}
         />
       )}

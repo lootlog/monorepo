@@ -1,13 +1,12 @@
 import { selectNotificationJobsWithRelations } from "./notification-job-query.js";
-import { mapNotificationTarget } from "#src/notifications/targets/notification-target-store";
+import { readNotificationRuleTargets } from "#src/notifications/targets/notification-target-store";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   notificationJobTable,
   notificationRuleTable,
-  notificationRuleTargetTable,
   notificationTargetTable,
   timerTable,
 } from "#src/database/drizzle/schema";
@@ -59,20 +58,6 @@ class NotificationJobStoreFailure extends TaggedErrorClass<NotificationJobStoreF
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
 
-const mapJob = (
-  job: typeof notificationJobTable.$inferSelect,
-): NotificationStoredJob => ({
-  ...job,
-  payloadSnapshot: job.payloadSnapshot,
-});
-
-const mapRule = (
-  rule: typeof notificationRuleTable.$inferSelect,
-): NotificationStoredRule => ({
-  ...rule,
-  filters: rule.filters,
-});
-
 export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
   const failure = (operation: string) => (cause: unknown) =>
     new NotificationJobStoreFailure({ operation, cause });
@@ -85,7 +70,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       .limit(1)
       .pipe(
         Effect.mapError(failure("notifications.jobStore.findJob")),
-        Effect.map((rows) => (rows[0] ? mapJob(rows[0]) : null)),
+        Effect.map((rows) => rows[0] ?? null),
       );
 
   const findJobWithRelations = (jobId: string) =>
@@ -99,9 +84,9 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
 
           return row
             ? {
-                ...mapJob(row.job),
-                rule: mapRule(row.rule),
-                target: mapNotificationTarget(row.target),
+                ...row.job,
+                rule: row.rule,
+                target: row.target,
               }
             : null;
         }),
@@ -117,7 +102,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       .where(eq(notificationJobTable.id, jobId))
       .pipe(Effect.mapError(failure("notifications.jobStore.update")));
 
-  const claimJob = (jobId: string) =>
+  const claimJob = (jobId: string, retrying = false) =>
     database
       .update(notificationJobTable)
       .set({
@@ -129,7 +114,12 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       .where(
         and(
           eq(notificationJobTable.id, jobId),
-          inArray(notificationJobTable.status, ["PENDING", "BLOCKED"]),
+          inArray(
+            notificationJobTable.status,
+            retrying
+              ? ["PENDING", "BLOCKED", "PROCESSING"]
+              : ["PENDING", "BLOCKED"],
+          ),
         ),
       )
       .returning({ id: notificationJobTable.id })
@@ -138,7 +128,33 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
         Effect.map((rows) => rows.length > 0),
       );
 
-  const blockJob = (jobId: string, reason: string) =>
+  const failClaim = (
+    jobId: string,
+    attemptCount: number,
+    values: Pick<
+      typeof notificationJobTable.$inferInsert,
+      "status" | "lastError" | "processedAt"
+    >,
+  ) =>
+    database
+      .update(notificationJobTable)
+      .set({ ...values, updatedAt: new Date() })
+      .where(
+        and(
+          eq(notificationJobTable.id, jobId),
+          inArray(notificationJobTable.status, ["PROCESSING", "PENDING"]),
+          eq(notificationJobTable.attemptCount, attemptCount),
+        ),
+      )
+      .returning({ id: notificationJobTable.id })
+      .pipe(
+        Effect.mapError(failure("notifications.jobStore.failClaim")),
+        Effect.map((rows) => rows.length > 0),
+      );
+
+  // A queued retry may block a job its failed attempt left PROCESSING, as it
+  // may claim it; a first attempt never overrides another worker's claim.
+  const blockJob = (jobId: string, reason: string, retrying = false) =>
     database
       .update(notificationJobTable)
       .set({
@@ -150,7 +166,12 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       .where(
         and(
           eq(notificationJobTable.id, jobId),
-          inArray(notificationJobTable.status, ["PENDING", "BLOCKED"]),
+          inArray(
+            notificationJobTable.status,
+            retrying
+              ? ["PENDING", "BLOCKED", "PROCESSING"]
+              : ["PENDING", "BLOCKED"],
+          ),
         ),
       )
       .pipe(Effect.mapError(failure("notifications.jobStore.block")));
@@ -191,46 +212,31 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
         }),
       );
 
-  const targetsForRule = (ruleId: number) =>
-    database
-      .select({
-        link: notificationRuleTargetTable,
-        target: notificationTargetTable,
-      })
-      .from(notificationRuleTargetTable)
-      .innerJoin(
-        notificationTargetTable,
-        eq(notificationRuleTargetTable.targetId, notificationTargetTable.id),
-      )
-      .where(eq(notificationRuleTargetTable.ruleId, ruleId))
-      .pipe(
-        Effect.mapError(failure("notifications.jobStore.ruleTargets")),
-        Effect.map((rows) =>
-          rows.map(({ link, target }) => ({
-            ...link,
-            target: mapNotificationTarget(target),
-          })),
-        ),
-      );
-
-  const findRule = (ruleId: number) =>
+  const findRules = (ruleIds: readonly number[]) =>
     Effect.gen(function* () {
-      const rows = yield* database
+      if (ruleIds.length === 0) return [];
+
+      const rules = yield* database
         .select()
         .from(notificationRuleTable)
-        .where(eq(notificationRuleTable.id, ruleId))
-        .limit(1);
+        .where(inArray(notificationRuleTable.id, [...ruleIds]))
+        .orderBy(asc(notificationRuleTable.id));
 
-      const rule = rows[0];
+      if (rules.length === 0) return [];
 
-      if (!rule) return null;
-      const targets = yield* targetsForRule(ruleId);
+      const targets = yield* readNotificationRuleTargets(
+        database,
+        rules.map(({ id }) => id),
+      );
 
-      return {
-        ...mapRule(rule),
-        targets,
-      } satisfies NotificationRuleWithTargets;
-    }).pipe(Effect.mapError(failure("notifications.jobStore.findRule")));
+      return rules.map((rule): NotificationRuleWithTargets => ({
+        ...rule,
+        targets: [...(targets.get(rule.id) ?? [])],
+      }));
+    }).pipe(Effect.mapError(failure("notifications.jobStore.findRules")));
+
+  const findRule = (ruleId: number) =>
+    findRules([ruleId]).pipe(Effect.map((rules) => rules[0] ?? null));
 
   const findTimers = (guildId: string, world: string | null) =>
     database
@@ -316,9 +322,11 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
     blockJob,
     claimJob,
     cycleStatuses,
+    failClaim,
     findJob,
     findJobWithRelations,
     findRule,
+    findRules,
     findTimers,
     prune,
     recordDelivery,

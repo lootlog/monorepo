@@ -283,6 +283,7 @@ export const guildTable = pgTable(
     ),
     uniqueIndex("Guild_vanityUrl_key").on(table["vanityUrl"]),
     index("Guild_vanityUrl_idx").on(table["vanityUrl"]),
+    index("Guild_ownerId_idx").on(table["ownerId"]),
   ],
 );
 
@@ -307,7 +308,7 @@ export const roleTable = pgTable(
   },
   (table) => [
     uniqueIndex("Role_id_guildId_key").on(table["id"], table["guildId"]),
-    index("Role_id_guildId_idx").on(table["id"], table["guildId"]),
+    index("Role_guildId_idx").on(table["guildId"]),
     foreignKey({
       columns: [table["guildId"]],
       foreignColumns: [guildTable["id"]],
@@ -350,12 +351,6 @@ export const memberTable = pgTable(
       table["guildId"],
     ),
     index("Member_id_guildId_idx").on(table["id"], table["guildId"]),
-    index("Member_userId_guildId_active_lastDiscordSyncAt_idx").on(
-      table["userId"],
-      table["guildId"],
-      table["active"],
-      table["lastDiscordSyncAt"],
-    ),
     index("Member_globalUserId_guildId_active_idx").on(
       table["globalUserId"],
       table["guildId"],
@@ -370,6 +365,18 @@ export const memberTable = pgTable(
       .onUpdate("cascade"),
   ],
 );
+
+export const memberSyncDeliveryTable = pgTable("MemberSyncDelivery", {
+  memberId: integer("memberId")
+    .primaryKey()
+    .references(() => memberTable.id, { onDelete: "cascade" }),
+  permissionsChanged: boolean("permissionsChanged").notNull(),
+  version: integer("version").default(1).notNull(),
+  claimedUntil: timestamp("claimedUntil", { mode: "date", precision: 3 }),
+  createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
+    .defaultNow()
+    .notNull(),
+});
 
 export const timerTable = pgTable(
   "Timer",
@@ -410,11 +417,6 @@ export const timerTable = pgTable(
       columns: [table["guildId"], table["world"], table["timerKey"]],
       name: "Timer_pkey",
     }),
-    index("Timer_guildId_world_timerKey_idx").on(
-      table["guildId"],
-      table["world"],
-      table["timerKey"],
-    ),
     index("Timer_npcId_guildId_idx").on(table["npcId"], table["guildId"]),
     index("Timer_guildId_maxSpawnTime_idx").on(
       table["guildId"],
@@ -922,6 +924,7 @@ export const lootlogConfigNpcTable = pgTable(
     updatedAt: timestamp("updatedAt", { mode: "date", precision: 3 }).notNull(),
   },
   (table) => [
+    index("LootlogConfigNpc_lootlogConfigId_idx").on(table["lootlogConfigId"]),
     foreignKey({
       columns: [table["lootlogConfigId"]],
       foreignColumns: [lootlogConfigTable["id"]],
@@ -2012,12 +2015,16 @@ export const eventHeroKillTable = pgTable(
     isManualClose: boolean("isManualClose").default(false).notNull(),
   },
   (table) => [
-    index("EventHeroKill_heroNpcId_idx").on(table["heroNpcId"]),
-    index("EventHeroKill_heroNpcId_killedAt_idx").on(
+    // Match ORDER BY DESC's null ordering so PostgreSQL can seek without sorting.
+    index("EventHeroKill_heroNpcId_killedAt_id_idx").on(
       table["heroNpcId"],
-      table["killedAt"],
+      table["killedAt"].desc().nullsFirst(),
+      table["id"].desc().nullsFirst(),
     ),
-    index("EventHeroKill_killedAt_idx").on(table["killedAt"]),
+    index("EventHeroKill_killedAt_id_idx").on(
+      table["killedAt"].desc().nullsFirst(),
+      table["id"].desc().nullsFirst(),
+    ),
     foreignKey({
       columns: [table["heroNpcId"]],
       foreignColumns: [eventHeroNpcTable["id"]],
@@ -2071,7 +2078,10 @@ export const eventKillPointTable = pgTable(
       table["killId"],
       table["memberId"],
     ),
-    index("EventKillPoint_memberId_idx").on(table["memberId"]),
+    index("EventKillPoint_memberId_killId_idx").on(
+      table["memberId"],
+      table["killId"],
+    ),
     index("EventKillPoint_memberId_confirmationDeadlineAt_confirmedAt_idx").on(
       table["memberId"],
       table["confirmationDeadlineAt"],

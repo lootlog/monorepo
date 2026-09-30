@@ -1,13 +1,18 @@
 import { RedisScriptCache } from "@lootlog/database/redis-script";
 import type { LootVisibilityNpc } from "@lootlog/domain/loot-visibility";
+import {
+  PartyGatheringEventSourceSchema,
+  type PartyGatheringEventSource,
+} from "#src/realtime/npc-event-visibility";
 import { SubscriptionScope } from "@lootlog/protocol/realtime";
-import { Effect, Queue, Schedule, Schema } from "effect";
+import { Cause, Effect, Predicate, Queue, Schedule, Schema } from "effect";
 import * as Redis from "effect/unstable/persistence/Redis";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import {
   type BackgroundTaskRunner,
   yieldToEventLoop,
 } from "./background-tasks.js";
+import { FederationSequence } from "./federation-sequence.js";
 
 type RedisGatewayConfig = Omit<GatewayConfiguration["redis"], "password"> & {
   readonly password: string;
@@ -15,8 +20,11 @@ type RedisGatewayConfig = Omit<GatewayConfiguration["redis"], "password"> & {
 
 export interface FederatedRealtimeMessage {
   readonly id: string;
+  /** Position in the federation stream; replicas before version 4 omit it. */
+  readonly sequence?: number;
   readonly sourceInstanceId: string;
   readonly sourceNpcs?: ReadonlyArray<LootVisibilityNpc>;
+  readonly partyGatheringSource?: PartyGatheringEventSource;
   readonly scopeKey?: string;
   readonly scope?: typeof SubscriptionScope.Type;
   readonly scopes?: ReadonlyArray<typeof SubscriptionScope.Type>;
@@ -26,6 +34,7 @@ export interface FederatedRealtimeMessage {
   readonly recipientPlatform?: "game" | "web-app";
   readonly recipientWorld?: string;
   readonly recipientMapId?: number;
+  readonly recipientCharacterIds?: ReadonlyArray<string>;
   readonly presenceAudience?: "basic" | "precise";
   readonly organizationId?: string;
   readonly frame?: string;
@@ -39,7 +48,9 @@ export interface FederatedRealtimeMessage {
 const FederatedRealtimeMessageJson = Schema.fromJsonString(
   Schema.Struct({
     id: Schema.String,
+    sequence: Schema.optional(Schema.Number),
     sourceInstanceId: Schema.String,
+    partyGatheringSource: Schema.optional(PartyGatheringEventSourceSchema),
     sourceNpcs: Schema.optional(
       Schema.Array(
         Schema.Struct({
@@ -57,6 +68,7 @@ const FederatedRealtimeMessageJson = Schema.fromJsonString(
     recipientPlatform: Schema.optional(Schema.Literals(["game", "web-app"])),
     recipientWorld: Schema.optional(Schema.String),
     recipientMapId: Schema.optional(Schema.Number),
+    recipientCharacterIds: Schema.optional(Schema.Array(Schema.String)),
     presenceAudience: Schema.optional(Schema.Literals(["basic", "precise"])),
     organizationId: Schema.optional(Schema.String),
     frame: Schema.optional(Schema.String),
@@ -74,9 +86,30 @@ const decodeFederatedRealtimeMessage = Schema.decodeUnknownSync(
   FederatedRealtimeMessageJson,
 );
 
+const FEDERATION_SEQUENCE_KEY = "realtime:federation:v1:sequence";
+
+// Numbering and publication are one step, so a number exists only for a frame
+// Redis published. Older replicas ignore the added field.
+const publishSequencedScript = `
+local sequence = redis.call("INCR", KEYS[1])
+redis.call("PUBLISH", ARGV[1], '{"sequence":' .. sequence .. ',' .. string.sub(ARGV[2], 2))
+return sequence
+`;
+
+/** How long a hole in the federation sequence may wait for a reordered frame. */
+const FEDERATION_REORDER_WINDOW_MS = 1_000;
+
+/**
+ * `interrupted`: the subscription dropped and frames may be missing.
+ * `subscribed`: every sequenced frame since the last report arrived.
+ * `gap`: sequenced frames were lost; sessions that expected them are stale.
+ */
+export type FederationState = "subscribed" | "interrupted" | "gap";
+
 export class RedisGatewayStore {
   readonly command: RedisGatewayCommands;
   readonly channel: string;
+  private readonly sequenceKey: string;
   private readonly subscriptionQueues = new Set<
     Queue.Dequeue<Redis.RedisMessage, Redis.RedisError>
   >();
@@ -152,6 +185,7 @@ export class RedisGatewayStore {
       flushdb: () => run(redis.send("FLUSHDB")),
     };
     this.channel = `${config.keyPrefix}:realtime:federation:v1`;
+    this.sequenceKey = prefix(FEDERATION_SEQUENCE_KEY);
   }
 
   async connect(): Promise<void> {
@@ -166,16 +200,26 @@ export class RedisGatewayStore {
     this.pendingPublications++;
 
     try {
-      await this.runCommand(
-        this.redis.send("PUBLISH", this.channel, JSON.stringify(message)),
+      await this.command.eval(
+        publishSequencedScript,
+        1,
+        FEDERATION_SEQUENCE_KEY,
+        this.channel,
+        JSON.stringify(message),
       );
     } finally {
       this.pendingPublications--;
     }
   }
 
+  /**
+   * Pub/Sub has no replay. Sequence numbers show whether a dropped
+   * subscription lost frames, so `onStateChange` reports the gap only when it
+   * lost some. See {@link FederationState}.
+   */
   async subscribe(
     listener: (message: FederatedRealtimeMessage) => void,
+    onStateChange: (state: FederationState) => void = () => undefined,
   ): Promise<void> {
     let markReady: () => void = () => undefined;
 
@@ -185,7 +229,16 @@ export class RedisGatewayStore {
 
     const redis = this.redis;
     const channel = this.channel;
+    const sequenceKey = this.sequenceKey;
     const subscriptionQueues = this.subscriptionQueues;
+    const sequence = new FederationSequence(FEDERATION_REORDER_WINDOW_MS);
+    let resuming = false;
+
+    const resumed = () => {
+      resuming = false;
+      onStateChange("subscribed");
+      markReady();
+    };
 
     const consume = Effect.scoped(
       Effect.gen(function* () {
@@ -196,15 +249,58 @@ export class RedisGatewayStore {
             subscriptionQueues.delete(messages);
           }),
         );
-        yield* Effect.sync(markReady);
+
+        // Frames numbered up to the counter were published before this
+        // subscription existed or are already queued for it.
+        const published = yield* redis.send<string | null>("GET", sequenceKey);
+
+        const continuity = sequence.resume(
+          Number(published ?? 0),
+          performance.now(),
+        );
+
+        if (continuity === "lost") onStateChange("gap");
+        resuming = continuity === "pending";
+
+        if (!resuming) resumed();
+
+        yield* Effect.sleep("250 millis").pipe(
+          Effect.andThen(
+            Effect.sync(() => {
+              if (!sequence.expired(performance.now())) return;
+              onStateChange("gap");
+
+              if (resuming) resumed();
+            }),
+          ),
+          Effect.forever,
+          Effect.forkScoped,
+        );
+
+        let reportedLoss = false;
         let batchStarted = performance.now();
         let batchSize = 0;
 
         while (true) {
           const { message: raw } = yield* Queue.take(messages);
 
+          // A dropped subscriber leaves its backlog readable until it drains.
+          // Report the interruption now so resubscription starts, but keep
+          // delivering the backlog: sessions may survive the interruption.
+          if (!reportedLoss && !Predicate.isTagged(messages.state, "Open")) {
+            reportedLoss = true;
+            onStateChange("interrupted");
+          }
+
           try {
             const message = decodeFederatedRealtimeMessage(raw);
+
+            if (
+              message.sequence !== undefined &&
+              sequence.observe(message.sequence, performance.now()) &&
+              resuming
+            )
+              resumed();
 
             if (
               message.frame !== undefined ||
@@ -228,6 +324,12 @@ export class RedisGatewayStore {
         }
       }),
     ).pipe(
+      Effect.catchDefect((defect) => Effect.fail(defect)),
+      Effect.tapCause((cause) =>
+        Cause.hasInterruptsOnly(cause)
+          ? Effect.void
+          : Effect.sync(() => onStateChange("interrupted")),
+      ),
       Effect.retry(
         Schedule.min([
           Schedule.exponential("100 millis").pipe(Schedule.jittered),

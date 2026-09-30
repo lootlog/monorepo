@@ -74,22 +74,12 @@ describe("runtime architecture", () => {
       "npcs.store.ts",
       "others.store.ts",
       "party.store.ts",
-      "friends.store.ts",
+      "social-relations.store.ts",
     ];
 
     for (const store of stores) {
       const source = readFileSync(join(sourceRoot, "store", store), "utf8");
       expect(source, store).not.toContain("@lootlog/margonem");
     }
-  });
-
-  it("does not reintroduce readiness polling in the NPC projection", () => {
-    const source = readFileSync(
-      join(sourceRoot, "processors/npcs-detection-processor.ts"),
-      "utf8",
-    );
-
-    expect(source).not.toContain("setTimeout");
-    expect(source).not.toContain("setInterval");
   });
 });

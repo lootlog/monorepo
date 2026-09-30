@@ -1,6 +1,7 @@
+import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import { type FC, useRef } from "react";
-import { getRuntimeUiScale } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
+import { measureWindowViewport } from "@/hooks/ui/window-viewport";
 import {
   cancelWindowResizeSession,
   createWindowResizeSession,
@@ -16,10 +17,41 @@ const KEYBOARD_RESIZE_DELTAS = new Map([
   ["ArrowDown", { x: 0, y: 1 }],
 ]);
 
-const getScaledViewportSize = (scale: number) => ({
-  width: (window.visualViewport?.width ?? window.innerWidth) * scale,
-  height: (window.visualViewport?.height ?? window.innerHeight) * scale,
-});
+type WindowSize = { width: number; height: number };
+
+/** Resize previews re-render the window, so pointer moves apply at most once per frame. */
+const createFrameCoalescer = (apply: (size: WindowSize) => void) => {
+  let pendingSize: WindowSize | null = null;
+  let frameId: number | null = null;
+
+  const flush = () => {
+    if (frameId !== null) {
+      window.cancelAnimationFrame(frameId);
+      frameId = null;
+    }
+
+    const size = pendingSize;
+    pendingSize = null;
+
+    if (size) apply(size);
+  };
+
+  const queue = (size: WindowSize) => {
+    pendingSize = size;
+
+    if (frameId !== null) return;
+
+    frameId = window.requestAnimationFrame(() => {
+      frameId = null;
+      flush();
+    });
+  };
+
+  return { flush, queue };
+};
+
+const getWindowElement = (handle: Element) =>
+  handle.closest<HTMLElement>("[data-ll-draggable-window]");
 
 const getResizeCursor = ({
   allowHorizontalResize,
@@ -65,6 +97,8 @@ interface WindowResizeHandleProps {
   onResize: (size: { width: number; height: number }) => void;
   onResizeStart: () => void;
   onResizeEnd: () => void;
+  /** Hides the handle while the window body is not yet or no longer shown. */
+  hidden?: boolean;
 }
 
 export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
@@ -77,6 +111,7 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
   onResize,
   onResizeStart,
   onResizeEnd,
+  hidden = false,
 }) => {
   const { t } = useTranslation("common");
   const keyboardResizing = useRef(false);
@@ -97,19 +132,19 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
 
     const startX = e.clientX;
     const startY = e.clientY;
-
-    const startWidth =
-      e.currentTarget.parentElement?.parentElement?.offsetWidth ?? minWidth;
-
-    const startHeight =
-      e.currentTarget.parentElement?.parentElement?.offsetHeight ?? minHeight;
+    const windowElement = getWindowElement(e.currentTarget);
+    const startWidth = windowElement?.offsetWidth ?? minWidth;
+    const startHeight = windowElement?.offsetHeight ?? minHeight;
 
     // Measured once per session: viewport reads force the game document to
     // lay out, which is too expensive to repeat on every mouse move.
-    const scale = getRuntimeUiScale();
+    const {
+      scale,
+      width: scaledViewportWidth,
+      height: scaledViewportHeight,
+    } = measureWindowViewport();
 
-    const { width: scaledViewportWidth, height: scaledViewportHeight } =
-      getScaledViewportSize(scale);
+    const resizeFrame = createFrameCoalescer(onResize);
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!isWindowResizeSessionActive(sessionId)) return;
@@ -130,7 +165,7 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
           )
         : startHeight;
 
-      onResize({ width: newWidth, height: newHeight });
+      resizeFrame.queue({ width: newWidth, height: newHeight });
     };
 
     const cleanupMouseListeners = () => {
@@ -140,6 +175,7 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
 
     const finishMouseResize = () => {
       finishWindowResizeSession(sessionId, finishMouseResize);
+      resizeFrame.flush();
       onResizeEnd();
       cleanupMouseListeners();
     };
@@ -167,17 +203,17 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
     activeTouchIdRef.current = touch.identifier;
     const startX = touch.pageX - window.scrollX;
     const startY = touch.pageY - window.scrollY;
+    const windowElement = getWindowElement(e.currentTarget);
+    const startWidth = windowElement?.offsetWidth ?? minWidth;
+    const startHeight = windowElement?.offsetHeight ?? minHeight;
 
-    const startWidth =
-      e.currentTarget.parentElement?.parentElement?.offsetWidth ?? minWidth;
+    const {
+      scale,
+      width: scaledViewportWidth,
+      height: scaledViewportHeight,
+    } = measureWindowViewport();
 
-    const startHeight =
-      e.currentTarget.parentElement?.parentElement?.offsetHeight ?? minHeight;
-
-    const scale = getRuntimeUiScale();
-
-    const { width: scaledViewportWidth, height: scaledViewportHeight } =
-      getScaledViewportSize(scale);
+    const resizeFrame = createFrameCoalescer(onResize);
 
     const handleTouchMove = (e: TouchEvent) => {
       if (!isWindowResizeSessionActive(sessionId)) return;
@@ -209,7 +245,7 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
           )
         : startHeight;
 
-      onResize({ width: newWidth, height: newHeight });
+      resizeFrame.queue({ width: newWidth, height: newHeight });
     };
 
     const cleanupTouchListeners = () => {
@@ -223,6 +259,7 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
     const finishTouchResize = () => {
       activeTouchIdRef.current = null;
       finishWindowResizeSession(sessionId, finishTouchResize);
+      resizeFrame.flush();
       onResizeEnd();
       cleanupTouchListeners();
     };
@@ -272,12 +309,11 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
       onResizeStart();
     }
 
-    const root = event.currentTarget.parentElement?.parentElement;
+    const root = getWindowElement(event.currentTarget);
     const width = root?.offsetWidth ?? minWidth;
     const height = root?.offsetHeight ?? minHeight;
     const step = event.shiftKey ? 10 : 1;
-    const scale = getRuntimeUiScale();
-    const viewport = getScaledViewportSize(scale);
+    const viewport = measureWindowViewport();
     onResize({
       width: horizontal
         ? Math.max(
@@ -300,6 +336,9 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
     onResizeEnd();
   };
 
+  // A 16px target centered 2px inside the window corner, so it covers the
+  // border and padding rather than content. The grip shows faintly at rest
+  // and brightens on hover and keyboard focus.
   return (
     <button
       type="button"
@@ -308,15 +347,17 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
       onKeyUp={finishKeyboardResize}
       onBlur={finishKeyboardResize}
       data-ll-window-resize-handle=""
-      className="ll:absolute ll:bottom-0 ll:right-0 ll:w-3 ll:h-3 ll:bg-transparent ll:border-0 ll:p-0 ll:focus-visible:outline-2 ll:focus-visible:outline-ring touch-none"
+      data-ll-draggable="false"
+      className={cn(
+        "ll:absolute ll:-right-1.5 ll:-bottom-1.5 ll:size-4 ll:rounded-sm ll:border-0 ll:p-0 ll:text-white ll:opacity-40 ll:transition-opacity ll:motion-reduce:transition-none ll:hover:opacity-90 ll:focus-visible:opacity-90 ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:touch-none",
+        hidden && "ll:invisible",
+      )}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
       style={{
         background:
-          "linear-gradient(-45deg, transparent 40%, rgba(255,255,255,0.3) 50%, transparent 60%)",
-        clipPath: "polygon(100% 0, 100% 100%, 0 100%)",
+          "linear-gradient(-45deg, transparent 0 34%, currentColor 34% 42%, transparent 42% 56%, currentColor 56% 64%, transparent 64%) no-repeat right 7px bottom 7px / 8px 8px",
         cursor,
-        touchAction: "none",
       }}
     />
   );

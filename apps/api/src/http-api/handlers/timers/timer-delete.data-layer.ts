@@ -1,3 +1,5 @@
+import { getTimerHistoryValues } from "./timer-restore-snapshot.js";
+import { pruneTimerHistory } from "./timer-history-retention.js";
 import {
   timerNpcField,
   type TimerPublishedEvent,
@@ -8,7 +10,7 @@ import {
   findActiveTimerEventHeroes,
   timerIdentifierCondition,
 } from "./timer-selection.js";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -67,7 +69,7 @@ export const makeDeleteTimer = (
           access.guild.id,
           world,
           timerIdentifier,
-        );
+        ).for("update");
 
         if (timers.some((timer) => !canViewTimer(access, timer))) {
           return yield* Effect.fail(
@@ -99,7 +101,7 @@ export const makeDeleteTimer = (
           transaction,
           access.guild.id,
           world,
-          timer,
+          [timer],
           now,
         );
 
@@ -136,48 +138,20 @@ export const makeDeleteTimer = (
           }
 
           yield* transaction.insert(timerHistoryEntryTable).values({
+            ...getTimerHistoryValues(timer),
             guildId: access.guild.id,
             world,
             timerKey: timer.timerKey,
-            npcId: timer.npcId,
-            npc: timer.npc,
             action: TimerHistoryAction.DELETE,
             actorMemberId,
-            minSpawnTime: timer.minSpawnTime,
-            maxSpawnTime: timer.maxSpawnTime,
-            latestRespBaseSeconds: timer.latestRespBaseSeconds,
-            latestRespawnRandomness: timer.latestRespawnRandomness,
-            wasReset: timer.wasReset,
-            windowOpenedAt: timer.windowOpenedAt,
-            timerCreatedById: timer.createdById,
-            timerActorCharacterSnapshotId: timer.actorCharacterSnapshotId,
-            timerActorCharacterLvl: timer.actorCharacterLvl,
           });
 
-          const staleHistory = yield* transaction
-            .select({ id: timerHistoryEntryTable.id })
-            .from(timerHistoryEntryTable)
-            .where(
-              and(
-                eq(timerHistoryEntryTable.guildId, access.guild.id),
-                eq(timerHistoryEntryTable.world, world),
-                eq(timerHistoryEntryTable.timerKey, timer.timerKey),
-              ),
-            )
-            .orderBy(
-              desc(timerHistoryEntryTable.createdAt),
-              desc(timerHistoryEntryTable.id),
-            )
-            .offset(5);
-
-          if (staleHistory.length > 0) {
-            yield* transaction.delete(timerHistoryEntryTable).where(
-              inArray(
-                timerHistoryEntryTable.id,
-                staleHistory.map(({ id }) => id),
-              ),
-            );
-          }
+          yield* pruneTimerHistory(
+            transaction,
+            access.guild.id,
+            world,
+            timer.timerKey,
+          );
 
           const updated = yield* transaction
             .update(timerTable)

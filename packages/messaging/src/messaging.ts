@@ -19,6 +19,7 @@ import {
   FiberSet,
   Layer,
   Metric,
+  Option,
   Schedule,
   Schema,
   Semaphore,
@@ -42,6 +43,18 @@ export class MessagingError extends TaggedErrorClass<MessagingError>()(
     cause: Schema.Defect(),
   },
 ) {}
+
+/**
+ * Fails a delivery that can never succeed, such as a payload that does not
+ * decode. Retry and dead-letter policies send it straight to the dead-letter
+ * queue; nack and requeue policies reject it without requeueing.
+ */
+export class UnprocessableDelivery extends TaggedErrorClass<UnprocessableDelivery>()(
+  "UnprocessableDelivery",
+  { cause: Schema.Defect() },
+) {}
+
+const isUnprocessableDelivery = Schema.is(UnprocessableDelivery);
 
 class RabbitConnectionFailure extends Context.Service<
   RabbitConnectionFailure,
@@ -155,7 +168,6 @@ export interface RabbitChannel {
   ) => void;
   readonly prefetch: ConfirmChannel["prefetch"];
   readonly publish: ConfirmChannel["publish"];
-  readonly waitForConfirms: ConfirmChannel["waitForConfirms"];
 }
 
 export interface RabbitMessagingService {
@@ -210,14 +222,61 @@ const readRetryCount = (message: ConsumeMessage): number => {
   return isRetryCount(value) ? value : 0;
 };
 
+interface ForwardedFailure<Disposition extends "retry" | "dead-letter"> {
+  readonly disposition: Disposition;
+  readonly exchange: RabbitExchangeName;
+  readonly routingKey: RabbitRoutingKeyName;
+}
+
+type FailureRoute =
+  | { readonly disposition: "reject" }
+  | { readonly disposition: "requeue" }
+  | ForwardedFailure<"retry">
+  | ForwardedFailure<"dead-letter">;
+
+const failureRoute = (
+  policy: FailurePolicy,
+  unprocessable: boolean,
+  currentRetryCount: number,
+): FailureRoute => {
+  switch (policy.strategy) {
+    case "nack":
+      return { disposition: "reject" };
+    case "requeue":
+      return unprocessable
+        ? { disposition: "reject" }
+        : { disposition: "requeue" };
+    case "retry":
+      if (!unprocessable && currentRetryCount < policy.maxRetries) {
+        return {
+          disposition: "retry",
+          exchange: RabbitExchange.RETRY,
+          routingKey: policy.retryRoutingKey,
+        };
+      }
+
+      return {
+        disposition: "dead-letter",
+        exchange: RabbitExchange.DEAD_LETTER,
+        routingKey: policy.deadLetterRoutingKey,
+      };
+    case "dead-letter":
+      return {
+        disposition: "dead-letter",
+        exchange: RabbitExchange.DEAD_LETTER,
+        routingKey: policy.deadLetterRoutingKey,
+      };
+  }
+};
+
 const makeService = (
   channel: RabbitChannel,
   consumerCancelled: (queue: string) => void,
 ): RabbitMessagingService => {
   const publish = Effect.fn("RabbitMessaging.publish")(
     (options: PublishOptions) =>
-      Effect.tryPromise({
-        try: async () => {
+      Effect.callback<void, MessagingError>((resume) => {
+        try {
           channel.publish(
             options.exchange ?? RabbitExchange.DEFAULT,
             options.routingKey,
@@ -228,10 +287,14 @@ const makeService = (
               messageId: options.messageId,
               persistent: options.persistent ?? true,
             },
+            (cause: unknown) =>
+              resume(
+                cause ? Effect.fail(error("publish", cause)) : Effect.void,
+              ),
           );
-          await channel.waitForConfirms();
-        },
-        catch: (cause) => error("publish", cause),
+        } catch (cause) {
+          resume(Effect.fail(error("publish", cause)));
+        }
       }),
   );
 
@@ -250,34 +313,18 @@ const makeService = (
       catch: (cause) => error("nack", cause),
     });
 
-  const routeFailure = (
+  const settleFailure = (
     delivery: RabbitDelivery,
-    policy: FailurePolicy,
+    route: FailureRoute,
+    currentRetryCount: number,
   ): Effect.Effect<void, MessagingError> => {
-    if (policy.strategy === "nack") {
-      return nack(delivery, { requeue: false });
+    if (route.disposition === "reject" || route.disposition === "requeue") {
+      return nack(delivery, { requeue: route.disposition === "requeue" });
     }
-
-    if (policy.strategy === "requeue") {
-      return nack(delivery, { requeue: true });
-    }
-
-    const currentRetryCount = readRetryCount(delivery.raw);
-
-    const shouldRetry =
-      policy.strategy === "retry" && currentRetryCount < policy.maxRetries;
-
-    const exchange = shouldRetry
-      ? RabbitExchange.RETRY
-      : RabbitExchange.DEAD_LETTER;
-
-    const routingKey = shouldRetry
-      ? policy.retryRoutingKey
-      : policy.deadLetterRoutingKey;
 
     return publish({
-      exchange,
-      routingKey,
+      exchange: route.exchange,
+      routingKey: route.routingKey,
       content: delivery.content,
       contentType: delivery.properties.contentType ?? undefined,
       messageId: delivery.properties.messageId ?? undefined,
@@ -295,6 +342,39 @@ const makeService = (
           Effect.andThen(Effect.fail(publishError)),
         ),
       ),
+    );
+  };
+
+  // The broker keeps only the payload, so the handler's cause is logged before
+  // the delivery is settled; a retried or dead-lettered failure stays diagnosable.
+  const routeFailure = (
+    queue: string,
+    delivery: RabbitDelivery,
+    policy: FailurePolicy,
+    cause: Cause.Cause<unknown>,
+  ): Effect.Effect<void, MessagingError> => {
+    const currentRetryCount = readRetryCount(delivery.raw);
+
+    const route = failureRoute(
+      policy,
+      Option.exists(Cause.findErrorOption(cause), isUnprocessableDelivery),
+      currentRetryCount,
+    );
+
+    const log =
+      route.disposition === "retry" || route.disposition === "requeue"
+        ? Effect.logWarning
+        : Effect.logError;
+
+    return log("RabbitMQ delivery handler failed", cause).pipe(
+      Effect.annotateLogs({
+        queue,
+        routingKey: delivery.routingKey,
+        messageId: delivery.properties.messageId,
+        retryCount: currentRetryCount,
+        disposition: route.disposition,
+      }),
+      Effect.andThen(settleFailure(delivery, route, currentRetryCount)),
     );
   };
 
@@ -362,11 +442,25 @@ const makeService = (
                     onFailure: (cause) =>
                       Cause.hasInterruptsOnly(cause)
                         ? Effect.interrupt
-                        : routeFailure(delivery, options.failurePolicy),
+                        : routeFailure(
+                            options.queue,
+                            delivery,
+                            options.failurePolicy,
+                            cause,
+                          ),
                     onSuccess: () => ack(delivery),
                   }),
                   Effect.catch((error) =>
-                    Effect.logError("RabbitMQ delivery handling failed", error),
+                    Effect.logError(
+                      "RabbitMQ delivery handling failed",
+                      error,
+                    ).pipe(
+                      Effect.annotateLogs({
+                        queue: options.queue,
+                        routingKey: delivery.routingKey,
+                        messageId: delivery.properties.messageId,
+                      }),
+                    ),
                   ),
                 ),
               );

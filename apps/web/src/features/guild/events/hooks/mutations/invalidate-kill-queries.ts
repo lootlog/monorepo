@@ -17,6 +17,8 @@ const getEventMembersPathPrefix = (guildId: string, eventId: string) =>
 const getEventHeroesPathPrefix = (guildId: string, eventId: string) =>
   `/guilds/${guildId}/events/${eventId}/heroes/`;
 
+// TODO(kill-history-legacy): Remove only the old event/member/hero list matches after retirement.
+// Keep /kill-history and /heroes/:heroId/kills/:killId (including /timeline).
 const isEventKillQuery = (query: Query, guildId: string, eventId: string) => {
   const path = z.string().safeParse(query.queryKey[0]).data;
 
@@ -24,7 +26,10 @@ const isEventKillQuery = (query: Query, guildId: string, eventId: string) => {
     return false;
   }
 
-  if (path === getEventKillsPath(guildId, eventId)) {
+  if (
+    path === getEventKillsPath(guildId, eventId) ||
+    path === `/guilds/${guildId}/events/${eventId}/kill-history`
+  ) {
     return true;
   }
 

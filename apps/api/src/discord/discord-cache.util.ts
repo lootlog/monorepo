@@ -36,22 +36,22 @@ export function getUserGuildsLockKey(identity: DiscordIdentity): string {
   return `user:${identity.userId}:discord:${identity.discordId}:guilds:lock`;
 }
 
-export function getFreshCompleteUserGuildsRequestKey(
+export function getCompleteUserGuildsRequestKey(
   identity: DiscordIdentity,
 ): string {
-  return `user:${identity.userId}:discord:${identity.discordId}:fresh-complete-guilds`;
+  return `user:${identity.userId}:discord:${identity.discordId}:complete-guilds`;
 }
 
-export function getFreshCompleteUserGuildsLockKey(
+export function getCompleteUserGuildsLockKey(
   identity: DiscordIdentity,
 ): string {
-  return `${getFreshCompleteUserGuildsRequestKey(identity)}:lock`;
+  return `${getCompleteUserGuildsRequestKey(identity)}:lock`;
 }
 
-export function getFreshCompleteUserGuildsHandoffKey(
+export function getCompleteUserGuildsCacheKey(
   identity: DiscordIdentity,
 ): string {
-  return `${getFreshCompleteUserGuildsRequestKey(identity)}:handoff`;
+  return `${getCompleteUserGuildsRequestKey(identity)}:data`;
 }
 
 export function getGuildMemberCacheKeys(

@@ -3,12 +3,17 @@ import {
   notificationRulesInApiKeyScope,
 } from "../notification-api-key-scope.js";
 import {
-  mapNotificationTarget,
+  deleteNotificationTargetAndOrphanedRules,
+  readNotificationTargetRuleIds,
+  readSingleTargetNotificationRuleIds,
   updateNotificationTarget,
 } from "#src/notifications/targets/notification-target-store";
-import { readNotificationTestUsage } from "../jobs/notification-test-usage.js";
+import {
+  getNotificationTestUsageResponse,
+  readNotificationTestUsage,
+} from "../jobs/notification-test-usage.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, count, desc, eq, inArray, isNotNull } from "drizzle-orm";
+import { and, desc, eq, isNotNull } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
@@ -41,8 +46,6 @@ import {
 } from "#src/notifications/notification-enums";
 
 const TEST_LIMIT = 5;
-
-const TEST_WINDOW_MS = 15 * 60_000;
 
 type Rule = typeof notificationRuleTable.$inferSelect;
 
@@ -141,20 +144,9 @@ export const makeNotificationUserTargets = (
     });
 
   const recentUsage = (targetIds: number[]) =>
-    readNotificationTestUsage(database, targetIds, TEST_WINDOW_MS).pipe(
+    readNotificationTestUsage(database, targetIds).pipe(
       Effect.mapError(databaseFailure("notifications.userTargets.testUsage")),
     );
-
-  const usageResponse = (usage: readonly Date[]) => ({
-    limit: TEST_LIMIT,
-    used: usage.length,
-    remaining: Math.max(0, TEST_LIMIT - usage.length),
-    windowSeconds: Math.floor(TEST_WINDOW_MS / 1000),
-    nextAvailableAt:
-      usage.length >= TEST_LIMIT && usage[0]
-        ? new Date(usage[0].getTime() + TEST_WINDOW_MS).toISOString()
-        : null,
-  });
 
   const list = Effect.fn("notifications.userTargets.list")(function* (
     discordId: string,
@@ -177,8 +169,11 @@ export const makeNotificationUserTargets = (
     const usage = yield* recentUsage(targets.map(({ id }) => id));
 
     return targets.map((target) => ({
-      ...mapNotificationTarget(target),
-      testTrigger: usageResponse(usage.get(target.id) ?? []),
+      ...target,
+      testTrigger: getNotificationTestUsageResponse(
+        usage.get(target.id) ?? [],
+        TEST_LIMIT,
+      ),
     }));
   });
 
@@ -305,7 +300,7 @@ export const makeNotificationUserTargets = (
         }),
       );
 
-    return mapNotificationTarget(target);
+    return target;
   });
 
   const update = Effect.fn("notifications.userTargets.update")(function* (
@@ -326,29 +321,14 @@ export const makeNotificationUserTargets = (
       Effect.mapError(databaseFailure("notifications.userTargets.update")),
     );
 
-    return rows[0] ? mapNotificationTarget(rows[0]) : null;
+    return rows[0] ?? null;
   });
 
   const orphanedRules = (targetId: number) =>
     Effect.gen(function* () {
-      const links = yield* database
-        .select({ ruleId: notificationRuleTargetTable.ruleId })
-        .from(notificationRuleTargetTable)
-        .where(eq(notificationRuleTargetTable.targetId, targetId));
+      const ruleIds = yield* readNotificationTargetRuleIds(database, targetId);
 
-      const ruleIds = links.map(({ ruleId }) => ruleId);
-
-      if (ruleIds.length === 0) return [];
-
-      const counts = yield* database
-        .select({ ruleId: notificationRuleTargetTable.ruleId, value: count() })
-        .from(notificationRuleTargetTable)
-        .where(inArray(notificationRuleTargetTable.ruleId, ruleIds))
-        .groupBy(notificationRuleTargetTable.ruleId);
-
-      return counts
-        .filter(({ value }) => value === 1)
-        .map(({ ruleId }) => ruleId);
+      return yield* readSingleTargetNotificationRuleIds(database, ruleIds);
     }).pipe(
       Effect.mapError(databaseFailure("notifications.userTargets.ruleUsage")),
     );
@@ -365,26 +345,16 @@ export const makeNotificationUserTargets = (
       concurrency: "unbounded",
       discard: true,
     });
-    yield* database
-      .transaction((transaction) =>
-        Effect.gen(function* () {
-          yield* transaction
-            .delete(notificationTargetTable)
-            .where(eq(notificationTargetTable.id, targetId));
-
-          if (ruleIds.length > 0) {
-            yield* transaction
-              .delete(notificationRuleTable)
-              .where(inArray(notificationRuleTable.id, ruleIds));
-          }
-        }),
-      )
-      .pipe(
-        Effect.mapError(databaseFailure("notifications.userTargets.delete")),
-        Effect.withSpan("notifications.userTargets.delete.transaction", {
-          attributes: { adapter: "notifications.drizzle", retryCount: 0 },
-        }),
-      );
+    yield* deleteNotificationTargetAndOrphanedRules(
+      database,
+      targetId,
+      ruleIds,
+    ).pipe(
+      Effect.mapError(databaseFailure("notifications.userTargets.delete")),
+      Effect.withSpan("notifications.userTargets.delete.transaction", {
+        attributes: { adapter: "notifications.drizzle", retryCount: 0 },
+      }),
+    );
 
     return { success: true as const };
   });
@@ -467,8 +437,9 @@ export const makeNotificationUserTargets = (
         );
       }
 
-      const usage = usageResponse(
+      const usage = getNotificationTestUsageResponse(
         (yield* recentUsage([targetId])).get(targetId) ?? [],
+        TEST_LIMIT,
       );
 
       if (usage.remaining <= 0) {

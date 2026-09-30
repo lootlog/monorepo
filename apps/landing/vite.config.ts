@@ -3,6 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 import viteReact from "@vitejs/plugin-react";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import { defineConfig } from "vite";
+import { landingDocumentPaths } from "./src/config/links.ts";
 
 export default defineConfig(({ command, isPreview }) => ({
   base: command === "serve" && !isPreview ? "/landing-dev/" : "/",
@@ -25,11 +26,7 @@ export default defineConfig(({ command, isPreview }) => ({
     tailwindcss(),
     tanstackStart({
       router: { basepath: "/" },
-      pages: [
-        { path: "/" },
-        { path: "/privacy-policy" },
-        { path: "/terms-of-service" },
-      ],
+      pages: landingDocumentPaths.map((path) => ({ path })),
       prerender: {
         enabled: true,
         crawlLinks: false,

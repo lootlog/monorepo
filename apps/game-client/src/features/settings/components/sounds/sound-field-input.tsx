@@ -1,5 +1,5 @@
 import { NpcTypeChip } from "@/components/settings/npc-type-chip";
-import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { IconButton } from "@/components/ui/icon-button";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { Input } from "@/components/ui/input";
 import { Play } from "lucide-react";
@@ -63,12 +63,9 @@ export const SoundFieldInput: FC<SoundFieldInputProps> = ({
             : undefined
         }
       />
-      <SettingsIconButton
-        label={t("common:actions.playSound")}
-        onClick={onPlaySound}
-      >
+      <IconButton label={t("common:actions.playSound")} onClick={onPlaySound}>
         <Play aria-hidden />
-      </SettingsIconButton>
+      </IconButton>
     </SettingsRow>
   );
 };

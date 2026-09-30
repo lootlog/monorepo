@@ -48,7 +48,9 @@ export const SettingsTextField: FC<SettingsTextFieldProps> = ({
       event.currentTarget.blur();
     }
 
+    // Escape reverts the draft; consuming it keeps the window open.
     if (event.key === "Escape") {
+      event.preventDefault();
       setDraft(null);
       event.currentTarget.blur();
     }

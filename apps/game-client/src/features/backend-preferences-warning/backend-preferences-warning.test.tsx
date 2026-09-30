@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { storageKey } from "@/lib/storage-key";
@@ -48,7 +48,12 @@ describe("BackendPreferencesWarning", () => {
     }));
   });
 
-  it("renders the warning window centered after opening", async () => {
+  it("stays closed for a player whose browser holds no legacy settings, even an empty leftover copy", async () => {
+    window.localStorage.setItem(
+      storageKey("ll-npc-detector-state"),
+      '{"state":{}}',
+    );
+
     useGlobalStore.setState({
       gameState: { gameInitialized: true },
       socketState: {
@@ -60,28 +65,23 @@ describe("BackendPreferencesWarning", () => {
 
     render(<BackendPreferencesWarning />);
 
-    const windowElement = await waitFor(() =>
+    await Promise.resolve();
+    expect(useWindowsStore.getState()["backend-preferences-warning"].open).toBe(
+      false,
+    );
+    expect(
       document.querySelector(
         '[data-ll-draggable-window="backend-preferences-warning"]',
       ),
-    );
-
-    expect(windowElement).not.toBeNull();
-    expect(screen.getByText("Zmiana ustawień")).toBeInTheDocument();
-    expect(windowElement).toHaveStyle({
-      left: `${Math.round((1280 - 430) / 2)}px`,
-      top: `${Math.round((720 - 250) / 2)}px`,
-    });
-    expect(
-      useWindowsStore.getState()["backend-preferences-warning"].position,
-    ).toEqual({
-      x: Math.round((1280 - 430) / 2),
-      y: Math.round((720 - 250) / 2),
-    });
+    ).toBeNull();
   });
 
-  it("opens settings directly on the detector tab", async () => {
+  it("tells a browser with legacy local settings once and opens the detector settings", async () => {
     const user = userEvent.setup();
+    window.localStorage.setItem(
+      storageKey("ll-npc-detector-state"),
+      '{"state":{"settings":{"hero":{"detect":true}}},"version":0}',
+    );
 
     useGlobalStore.setState({
       gameState: { gameInitialized: true },
@@ -95,12 +95,13 @@ describe("BackendPreferencesWarning", () => {
     render(<BackendPreferencesWarning />);
 
     await user.click(
-      await screen.findByRole("button", { name: "Otwórz ustawienia" }),
+      await screen.findByRole("button", { name: "Sprawdź ustawienia" }),
     );
 
     expect(useWindowsStore.getState().settings.open).toBe(true);
     expect(useWindowsStore.getState().settings.state).toEqual({
-      activeTab: "npc-detector",
+      activeTab: "detector",
+      activeSubsection: "detector",
     });
     expect(useWindowsStore.getState()["backend-preferences-warning"].open).toBe(
       false,

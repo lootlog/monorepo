@@ -22,7 +22,10 @@ import type {
 } from "@lootlog/protocol/realtime";
 import { Effect, Option, Schema, type Types, type Scope } from "effect";
 import type { CommandHandler } from "#src/realtime/command-handler";
-import type { RealtimeHub } from "#src/realtime/realtime-hub";
+import {
+  PARTY_GATHERING_STATE_FEDERATION_VERSION,
+  type RealtimeHub,
+} from "#src/realtime/realtime-hub";
 import type { PresenceStore } from "#src/realtime/presence-store";
 import type { CoveragePublisher } from "#src/rabbit/coverage-publisher";
 
@@ -163,6 +166,12 @@ export const gatewayConsumerSpecs: ReadonlyArray<ConsumerSpec> = [
     RabbitRoutingKey.GUILDS_PARTY_GATHERING_DLQ,
     false,
   ),
+  retryable(
+    "gateway-guilds-party-gathering-updated",
+    RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED,
+    RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED_RETRY,
+    RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED_DLQ,
+  ),
   {
     queue: "gateway-guilds-party-gathering-cancel",
     routingKey: RabbitRoutingKey.GUILDS_PARTY_GATHERING_CANCEL,
@@ -261,13 +270,51 @@ const gatewayDeadLetterSpecs = gatewayConsumerSpecs.flatMap((spec) =>
     : [],
 );
 
+const decodeJsonRecord = Schema.decodeUnknownOption(
+  Schema.fromJsonString(Schema.Record(Schema.String, Schema.Unknown)),
+);
+
+const decodeRecord = Schema.decodeUnknownOption(
+  Schema.Record(Schema.String, Schema.Unknown),
+);
+
+const decodeString = Schema.decodeUnknownOption(Schema.String);
+
+const decodeNumber = Schema.decodeUnknownOption(Schema.Number);
+
+// Identifies a dead-lettered delivery without logging its payload or any
+// member's Discord ID. Each field decodes on its own, because a delivery that
+// failed validation is the likeliest one to reach the DLQ.
+const deadLetterIdentifiers = (content: Uint8Array) => {
+  const payload = decodeJsonRecord(new TextDecoder().decode(content));
+  const field = (key: string) => Option.map(payload, (data) => data[key]);
+
+  return {
+    guildId: Option.getOrUndefined(
+      Option.flatMap(field("guildId"), decodeString),
+    ),
+    notificationId: Option.getOrUndefined(
+      Option.flatMap(field("notificationId"), decodeString),
+    ),
+    revision: Option.getOrUndefined(
+      Option.flatMap(field("revision"), decodeNumber),
+    ),
+    updateType: Option.getOrUndefined(
+      field("update").pipe(
+        Option.flatMap(decodeRecord),
+        Option.flatMap((update) => decodeString(update.type)),
+      ),
+    ),
+  };
+};
+
 const record = Schema.decodeUnknownSync(
   Schema.Record(Schema.String, Schema.Unknown),
 );
 
-type OrganizationEvent = Extract<
-  Event,
-  { data: { organizationId: string; payload: unknown } }
+type OrganizationEvent = Exclude<
+  Extract<Event, { data: { organizationId: string; payload: unknown } }>,
+  { type: "party-gathering.state-updated" }
 >;
 
 const organizationEvent = <Payload>(
@@ -277,6 +324,45 @@ const organizationEvent = <Payload>(
 ): OrganizationEvent & {
   data: { organizationId: string; payload: Payload };
 } => ({ v: 1, type, data: { organizationId, payload } });
+
+type GatheringUpdateEnvelope = CanonicalRabbitEvent<
+  typeof RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED
+>;
+
+// Names the first envelope field the update disagrees with, never its value.
+const gatheringUpdateMismatch = (
+  data: GatheringUpdateEnvelope,
+): string | undefined => {
+  const update = data.update;
+
+  if (!data.guildIds.includes(data.guildId)) return "guildIds";
+
+  if (update.type === "REMOVE") {
+    if (update.notificationId !== data.notificationId) return "notificationId";
+
+    return update.revision === data.revision ? undefined : "revision";
+  }
+
+  const gathering = update.gathering;
+
+  if (gathering.notificationId !== data.notificationId) return "notificationId";
+
+  if (gathering.world !== data.world) return "world";
+
+  if (gathering.revision !== data.revision) return "revision";
+
+  if (!gathering.guildIds.includes(data.guildId)) return "gathering.guildIds";
+
+  if (gathering.npc?.lvl !== data.npc?.lvl) return "npc.lvl";
+
+  if (
+    gathering.npc?.type !== undefined &&
+    gathering.npc.type !== data.npc?.type
+  )
+    return "npc.type";
+
+  return undefined;
+};
 
 export class RabbitBridge {
   private consumers: RabbitConsumer[] = [];
@@ -332,8 +418,10 @@ export class RabbitBridge {
               Effect.annotateLogs({
                 queue: spec.queue,
                 routingKey: spec.routingKey,
+                messageId: delivery.properties.messageId,
                 retryCount:
                   delivery.properties.headers?.["x-lootlog-retry-count"] ?? 0,
+                ...deadLetterIdentifiers(delivery.content),
               }),
             ),
         );
@@ -394,6 +482,9 @@ export class RabbitBridge {
       return this.commands.rebalanceAcrossInstances(
         payload.discordId,
         payload.userId,
+        routingKey === RabbitRoutingKey.GUILDS_MEMBERS_REMOVE
+          ? payload.guildId
+          : undefined,
       );
     }
 
@@ -539,6 +630,12 @@ export class RabbitBridge {
       );
     }
 
+    if (routingKey === RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED)
+      return this.publishGatheringUpdate(
+        decodeRabbitEventJson(routingKey, serializedPayload),
+        messageId,
+      );
+
     const payload = decodeRabbitEventJson(routingKey, serializedPayload);
     const data = record(payload);
 
@@ -563,6 +660,73 @@ export class RabbitBridge {
     return fromPromise(() =>
       this.hub.publishToScope(routed.scope, routed.event),
     );
+  }
+
+  private publishGatheringUpdate(
+    data: GatheringUpdateEnvelope,
+    messageId?: string,
+  ): Effect.Effect<void, unknown> {
+    const update = data.update;
+    const mismatch = gatheringUpdateMismatch(data);
+
+    if (mismatch)
+      return Effect.fail(
+        new Error(
+          `Gathering update does not match its source: ${mismatch} differs`,
+        ),
+      );
+
+    if (
+      this.hub.clusterFederationVersion <
+      PARTY_GATHERING_STATE_FEDERATION_VERSION
+    )
+      return Effect.fail(
+        new Error(
+          `Gathering state federation rollout is incomplete: cluster version ${this.hub.clusterFederationVersion}, required ${PARTY_GATHERING_STATE_FEDERATION_VERSION}`,
+        ),
+      );
+
+    const clientUpdate: typeof update =
+      update.type === "UPSERT"
+        ? {
+            type: "UPSERT",
+            gathering: {
+              ...update.gathering,
+              // The frame schema rejects a present but undefined npc, which a
+              // gathering announced with a message instead of an NPC would carry.
+              ...(data.npc && { npc: data.npc }),
+              guildIds: [data.guildId],
+            },
+          }
+        : update;
+
+    return Effect.tryPromise({
+      try: () =>
+        this.hub.publishToScope(
+          {
+            topic: "organization.chat",
+            organizationId: data.guildId,
+            world: data.world,
+          },
+          {
+            v: 1,
+            type: "party-gathering.state-updated",
+            data: { organizationId: data.guildId, payload: clientUpdate },
+          },
+          messageId ?? `${data.notificationId}:${data.revision}`,
+          {
+            discordId: data.organizerDiscordId,
+            partyGatheringSource: {
+              guildId: data.guildId,
+              world: data.world,
+              notificationId: data.notificationId,
+              organizerDiscordId: data.organizerDiscordId,
+              npc: data.npc,
+            },
+          },
+        ),
+      catch: (cause) => cause,
+    });
   }
 
   private routeOrganizationEvent(

@@ -8,12 +8,16 @@ import {
   testRuntimeWindow,
 } from "@/test/test-runtime-window";
 import { usePartyStore } from "@/store/party.store";
-import { useFriendsStore } from "@/store/friends.store";
+import { useGameStore } from "@/store/game.store";
+import {
+  getSocialScopes,
+  useSocialRelationsStore,
+} from "@/store/social-relations.store";
 import type {
   showCharacterEquipment,
   showCharacterProfile,
 } from "@/lib/margonem-runtime/adapters/character-action-runtime-adapter";
-import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
+import { PLAYER_AFK_FILL, PLAYER_RELATION_FILLS } from "@/lib/player-relation";
 import { OnlinePlayersAccountListEntry } from "./online-players-account-list-entry";
 
 const getHighlightFill = (container: HTMLElement) =>
@@ -98,7 +102,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       interface: "ni",
     });
     usePartyStore.getState().clearParty();
-    useFriendsStore.getState().clearFriends();
+    useSocialRelationsStore.setState({ characters: {}, clans: {} });
   });
 
   it("renders player name and location from player location", () => {
@@ -133,14 +137,18 @@ describe("OnlinePlayersAccountListEntry", () => {
     expect(screen.getByText("Torneg")).toBeVisible();
   });
 
-  it("shows Margonem verification only for verified presence", () => {
-    const { rerender } = render(
+  it("shows Margonem verification in the row tooltip only for verified presence", async () => {
+    const user = userEvent.setup();
+
+    const { container, rerender } = render(
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(
-      screen.queryByLabelText("Zweryfikowane konto Margonem"),
-    ).not.toBeInTheDocument();
+    await user.hover(getAccountTile(container));
+
+    expect(await screen.findByRole("tooltip")).not.toHaveTextContent(
+      "Zweryfikowane konto Margonem",
+    );
 
     rerender(
       <OnlinePlayersAccountListEntry
@@ -148,7 +156,11 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Zweryfikowane konto Margonem")).toBeVisible();
+    await waitFor(() =>
+      expect(screen.getByRole("tooltip")).toHaveTextContent(
+        "Zweryfikowane konto Margonem",
+      ),
+    );
   });
 
   it("shows the player details and relation in a tooltip", async () => {
@@ -210,22 +222,6 @@ describe("OnlinePlayersAccountListEntry", () => {
     expectTooltipAboveWindows(tooltip);
   });
 
-  it("keeps the verified account tooltip above draggable windows", async () => {
-    const user = userEvent.setup();
-
-    render(
-      <OnlinePlayersAccountListEntry
-        presence={createPresence({ margonemAccountVerified: true })}
-      />,
-    );
-    await user.hover(screen.getByLabelText("Zweryfikowane konto Margonem"));
-
-    const tooltip = await screen.findByRole("tooltip");
-
-    expect(tooltip).toHaveTextContent("Zweryfikowane konto Margonem");
-    expectTooltipAboveWindows(tooltip);
-  });
-
   it("shows double click invite hint in the tile tooltip when player can be invited", async () => {
     const user = userEvent.setup();
 
@@ -241,7 +237,7 @@ describe("OnlinePlayersAccountListEntry", () => {
     await user.hover(tile);
 
     expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Kliknij dwukrotnie, aby zaprosić do drużyny",
+      "Kliknij dwukrotnie, aby zaprosić do grupy",
     );
   });
 
@@ -268,7 +264,7 @@ describe("OnlinePlayersAccountListEntry", () => {
   it("invites the character to party from the right-side button", () => {
     render(<OnlinePlayersAccountListEntry presence={createPresence()} />);
 
-    fireEvent.click(screen.getByTitle("Zaproś do drużyny"));
+    fireEvent.click(screen.getByRole("button", { name: "Zaproś do grupy" }));
 
     expect(inviteToPartySpy).toHaveBeenCalledWith("party&a=inv&id=10");
   });
@@ -303,8 +299,10 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(getHighlightFill(container)).toBe(TIMERS_COLORS.sky.fill);
-    expect(screen.queryByTitle("Zaproś do drużyny")).not.toBeInTheDocument();
+    expect(getHighlightFill(container)).toBe(PLAYER_RELATION_FILLS.party);
+    expect(
+      screen.queryByRole("button", { name: "Zaproś do grupy" }),
+    ).not.toBeInTheDocument();
   });
 
   it("does not invite party members on tile double click", () => {
@@ -357,8 +355,10 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(getHighlightFill(container)).toBe(TIMERS_COLORS.yellow.fill);
-    expect(screen.queryByTitle("Zaproś do drużyny")).not.toBeInTheDocument();
+    expect(getHighlightFill(container)).toBe(PLAYER_RELATION_FILLS.self);
+    expect(
+      screen.queryByRole("button", { name: "Zaproś do grupy" }),
+    ).not.toBeInTheDocument();
   });
 
   it("does not invite the current player on tile double click", () => {
@@ -388,8 +388,10 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(getHighlightFill(container)).toBe(TIMERS_COLORS.green.fill);
-    expect(screen.getByTitle("Zaproś do drużyny")).toBeVisible();
+    expect(getHighlightFill(container)).toBe(PLAYER_RELATION_FILLS.clan);
+    expect(
+      screen.getByRole("button", { name: "Zaproś do grupy" }),
+    ).toBeVisible();
   });
 
   it("highlights afk players with orange and shows warning icon", () => {
@@ -405,7 +407,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(getHighlightFill(container)).toBe(TIMERS_COLORS.orange.fill);
+    expect(getHighlightFill(container)).toBe(PLAYER_AFK_FILL);
     expect(container.querySelector(".lucide-triangle-alert")).not.toBeNull();
   });
 
@@ -420,7 +422,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(getHighlightFill(container)).toBe(TIMERS_COLORS.yellow.fill);
+    expect(getHighlightFill(container)).toBe(PLAYER_RELATION_FILLS.self);
     expect(container.querySelector(".lucide-triangle-alert")).not.toBeNull();
   });
 
@@ -451,6 +453,16 @@ describe("OnlinePlayersAccountListEntry", () => {
     });
   });
 
+  it("opens the context menu from the keyboard", async () => {
+    const user = userEvent.setup();
+    render(<OnlinePlayersAccountListEntry presence={createPresence()} />);
+
+    await user.tab();
+    await user.keyboard("{Shift>}{F10}{/Shift}");
+    fireEvent.click(await screen.findByText("Pokaż ekwipunek"));
+    await waitFor(() => expect(showEquipmentSpy).toHaveBeenCalledOnce());
+  });
+
   it("adds the character to friends from the context menu", async () => {
     render(
       <OnlinePlayersAccountListEntry
@@ -477,20 +489,18 @@ describe("OnlinePlayersAccountListEntry", () => {
   });
 
   it("hides add friend context action for existing friends", async () => {
-    useFriendsStore.getState().replaceFriends(
-      [
-        {
-          characterId: "10",
-          icon: "hero.gif",
-          level: 123,
-          location: "Ithan",
-          name: "Hero",
-          profession: "w",
-          status: "online",
-        },
-      ],
-      10,
-    );
+    const game = useGameStore.getState().game;
+
+    const scopes = getSocialScopes({
+      accountId: game?.hero.accountId,
+      characterId: game?.hero.characterId,
+      world: game?.world,
+    });
+
+    if (!scopes) throw new Error("Expected a test hero");
+    useSocialRelationsStore
+      .getState()
+      .replaceCharacterList(scopes.character, "friends", ["10"]);
 
     render(<OnlinePlayersAccountListEntry presence={createPresence()} />);
 

@@ -1,23 +1,26 @@
-import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import { createFileRoute } from "@tanstack/react-router";
 import { GuildRouteProviders } from "@/components/layout/guild-route-providers";
 import { GuildRouteError } from "@/components/router/guild-route-error";
 import { GuildRouteNotFound } from "@/components/router/guild-route-not-found";
-import {
-  getGuildsControllerGetGuildByIdQueryOptions,
-  getGuildsControllerGetGuildByIdQueryKey,
-  getGuildsControllerGetGuildPermissionsQueryKey,
-  getGuildsControllerGetGuildPermissionsQueryOptions,
-  getMembersControllerGetMeQueryKey,
-  getMembersControllerGetMeQueryOptions,
-} from "@lootlog/client/main";
-
+import type { SessionData } from "@/hooks/auth/use-session";
+import { rememberOrganization } from "@/lib/last-organization";
+import { loadOrganization } from "@/lib/router/organization-loader";
 import {
   rethrowNotFoundOrError,
-  throwForbiddenRouteError,
   withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
-import { ensureRouteQueryData } from "@/lib/router/route-prefetch";
+
+const rememberVisitedOrganization = (match: {
+  status: string;
+  context: { session?: { data: SessionData | null } };
+  loaderData?: Awaited<ReturnType<typeof loadOrganization>>;
+}) => {
+  const userId = match.context.session?.data?.user.id;
+
+  if (match.status === "success" && match.loaderData?.guild && userId) {
+    rememberOrganization(userId, match.loaderData.guild.id);
+  }
+};
 
 export const Route = createFileRoute("/_authenticated/$guildId")({
   component: GuildRouteProviders,
@@ -29,68 +32,13 @@ export const Route = createFileRoute("/_authenticated/$guildId")({
   loader: ({ abortController, context, params }) =>
     withRouteLoaderCancellation(abortController, async () => {
       try {
-        const [guild, guildMember, permissions] = await Promise.all([
-          ensureRouteQueryData(
-            context.queryClient,
-            getGuildsControllerGetGuildByIdQueryOptions(
-              { guildId: params.guildId },
-              {
-                query: {
-                  queryKey: getGuildsControllerGetGuildByIdQueryKey({
-                    guildId: params.guildId,
-                  }),
-                },
-              },
-            ),
-          ),
-          ensureRouteQueryData(
-            context.queryClient,
-            getMembersControllerGetMeQueryOptions(
-              { guildId: params.guildId },
-              {
-                query: {
-                  queryKey: getMembersControllerGetMeQueryKey({
-                    guildId: params.guildId,
-                  }),
-                  staleTime: 30_000,
-                },
-              },
-            ),
-          ),
-          ensureRouteQueryData(
-            context.queryClient,
-            getGuildsControllerGetGuildPermissionsQueryOptions(
-              { guildId: params.guildId },
-              {
-                query: {
-                  queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
-                    guildId: params.guildId,
-                  }),
-                  staleTime: 30_000,
-                },
-              },
-            ),
-          ),
-        ]);
-
-        const accessPolicy = createAccessPolicy({ capabilities: permissions });
-
-        const canAccessGuild =
-          accessPolicy.allows(Capability.OWNER) || Boolean(guildMember?.active);
-
-        if (!canAccessGuild) {
-          throwForbiddenRouteError();
-        }
-
-        return {
-          guild,
-          guildMember,
-          accessPolicy,
-        };
+        return await loadOrganization(context.queryClient, params.guildId);
       } catch (error) {
         rethrowNotFoundOrError(error);
       }
     }),
+  onEnter: rememberVisitedOrganization,
+  onStay: rememberVisitedOrganization,
   errorComponent: GuildRouteError,
   notFoundComponent: GuildRouteNotFound,
 });

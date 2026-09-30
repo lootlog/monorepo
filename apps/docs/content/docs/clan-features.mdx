@@ -1,11 +1,30 @@
 ---
-title: Funkcje organizacji
-description: Korzystaj ze wspólnych łupów, rezerwacji, statystyk, czatu i powiadomień organizacji.
+title: Darmowy lootlog klanowy w Margonem
+description: Załóż lootlog klanowy dla swojej grupy w Margonem. Połącz serwer Discord, wspólne łupy, timery, statystyki i rezerwacje w bezpłatnym Lootlog.
 ---
 
-Strefa organizacji zbiera dane członków serwera Discord w jednym kontekście.
-Organizacja może obejmować kilka klanów i światów Margonem. Dostęp do każdego
-narzędzia zależy od roli przypisanej w Lootlog.
+Lootlog jest darmowym narzędziem do wspólnego zapisywania łupów i koordynacji
+gry w Margonem. Lootlog klanowy działa w ramach organizacji powiązanej
+z jednym serwerem Discord. Organizacja może obejmować kilka klanów i światów
+Margonem oraz graczy bez klanu. Dostęp do każdego narzędzia zależy od roli
+przypisanej w Lootlog.
+
+## Jak założyć lootlog klanowy
+
+1. Zaloguj się na [lootlog.pl](https://lootlog.pl/@me) przez konto Discord,
+   które ma uprawnienie administratora na serwerze twojej grupy.
+2. Wybierz **Dodaj** na pasku bocznym panelu i dodaj bota Lootlog do serwera.
+   Lista pokazuje tylko serwery, którymi administrujesz.
+3. Skonfiguruj [role i uprawnienia](/docs/permissions), aby członkowie mieli
+   dostęp do właściwych danych i narzędzi.
+4. Poproś członków o [instalację dodatku](/docs/installation) i zalogowanie
+   się kontem Discord należącym do tego serwera.
+5. W ustawieniach dodatku otwórz **Zakres zbierania** i wybierz organizację
+   dla swojej postaci. Każdy członek wykonuje ten krok u siebie.
+
+Po zapisaniu obsługiwanego zdarzenia sprawdź, czy łup lub timer trafił do
+właściwej organizacji. Pełną instrukcję połączenia gry i panelu znajdziesz
+w [Pierwszych krokach](/docs/getting-started).
 
 ## Zanim zaczniesz
 
@@ -62,6 +81,17 @@ zarezerwowaną; organizacja pozostaje zawsze dostępna pod swoim identyfikatorem
 Czat zapewnia wspólny kanał komunikacji, a powiadomienia mogą przenosić
 istotne zdarzenia do wybranych odbiorców lub kanałów Discord.
 
+Jeśli chwilowa awaria uniemożliwi przekazanie powiadomienia do wysyłki na
+Discord, Lootlog ponawia próbę. Po wyczerpaniu prób powiadomienie trafia do
+historii ze statusem błędu i jego przyczyną. Błąd jednego wykonania reguły
+cyklicznej nie zatrzymuje kolejnych terminów.
+
+W regule zaplanowanej wiadomości zmiana terminu jednorazowego na harmonogram
+cykliczny wyznacza najbliższe wykonanie według nowego harmonogramu. Ukryta data
+z poprzedniego trybu nie opóźnia wysyłki. Wyczyść datę końca i zapisz regułę,
+aby usunąć ograniczenie czasu jej działania. Odświeżenie listy reguł w tle
+zachowuje niezapisane zmiany w otwartym formularzu.
+
 Dostęp kontrolują między innymi:
 
 - `LOOTLOG_CHAT_READ` i `LOOTLOG_CHAT_WRITE`;
@@ -72,10 +102,12 @@ Dostęp kontrolują między innymi:
 
 Czat Lootlog jest dostępny w osobnym, przesuwanym oknie zarówno w NI, jak
 i w starym interfejsie. Integracja z czatem gry jest tymczasowo niedostępna.
+W oknach dodatku w grze organizacja nazywa się Lootlogiem, na przykład
+przełącznik **Wszystkie Lootlogi** u góry czatu.
 
-Ustawienia czatu znajdziesz w zakładce **Chat** okna ustawień dodatku. Podzakładka
+Ustawienia czatu znajdziesz w zakładce **Czat** okna ustawień dodatku. Podzakładka
 **Wygląd** zawiera gotowe ustawienia, układ wiadomości NPC, skalę tekstu i metadane, a **Filtry**
-pozwala wyłączyć wiadomości NPC wybranych typów, np. Elita 2, zachowując herosów
+pozwala wyłączyć wiadomości NPC wybranych typów, np. elity II, zachowując herosów
 i tytanów. Domyślnie wszystkie typy są włączone. Wyłączone typy nie pojawiają się
 w czacie i nie wywołują powiadomień o wzmiankach; po ponownym włączeniu historia
 wraca w całości. Ten sam filtr włączysz z czatu: kliknij prawym przyciskiem
@@ -110,31 +142,58 @@ Odpowiedź wybiera organizację wiadomości źródłowej.
 Kliknij wiadomość prawym przyciskiem myszy i wybierz **Odpowiedz**, aby ustawić
 cytat i przejść do pisania. Z klawiatury przejdź do wiadomości klawiszem Tab i otwórz menu
 skrótem Shift+F10 lub klawiszem menu kontekstowego.
-Wysłanych wiadomości nie można edytować.
+Wysłanych wiadomości nie można edytować. Usunięcie wiadomości i wyczyszczenie
+czatu (`/clr`) wymagają potwierdzenia: fokus trafia na **Anuluj**, a Escape
+zamyka pytanie bez zmian.
 Cytat na liście ma wyróżnione tło; treść zawija się pod autorem. Najedź na niego,
 aby zobaczyć pełną treść, albo kliknij, aby przejść do oryginału.
 Kliknięcie cytatu przewija czat do oryginalnej wiadomości i podświetla ją na
 1,5 sekundy. Ponowne kliknięcie przedłuża podświetlenie.
 
 Przycisk **+** w prawym dolnym rogu czatu otwiera menu **Pozycja**, **Pomoc**,
-**Party finder**, który od razu tworzy pustą zbiórkę, tak jak `/grp` bez opisu.
-Korzysta z organizacji wybranych w oknie komend; wymaga wybrania co najmniej jednej.
+**Utwórz zbiórkę**, która od razu tworzy pustą zbiórkę, tak jak `/grp` bez opisu.
+Korzysta z organizacji wybranej u góry czatu; bez wybranej organizacji jest nieaktywna.
 Obok akcji **Pozycja** i **Pomoc** widoczny jest aktualny skrót, który możesz przypisać w ustawieniach
 skrótów klawiszowych. Domyślnie **Alt+P** wysyła pozycję, a **Alt+H** wzywa pomoc.
-Skrót **Utwórz grupę — Party finder** jest domyślnie nieprzypisany. Po przypisaniu
-otwiera formularz tworzenia grupy; nie działa podczas pisania.
-Wpis zaczynający się od `!` już podczas pisania przyjmuje kolor powiadomienia.
+Skrót **Utwórz zbiórkę** jest domyślnie nieprzypisany. Po przypisaniu
+otwiera okno **Nowa zbiórka** z formularzem; nie działa podczas pisania.
+`!` wpisany na początku przełącza pole w tryb powiadomienia, a `/grp` w tryb zbiórki.
+Prefiks znika wtedy z pola, tekst przyjmuje kolor trybu, a puste pole podpowiada, co wpisać. Ikona po lewej stronie pola pokazuje, co wyśle Enter: wiadomość, powiadomienie
+(dzwonek w kolorze powiadomień) albo zbiórkę (fioletowe miecze). Kliknięcie ikony otwiera listę
+trybów **Wiadomość**, **Powiadomienie** (`!`) i **Zbiórka** (`/grp`) ze skrótem, który włącza
+dany tryb podczas pisania. Aktualny tryb jest zaznaczony. Wybór trybu zachowuje wpisany tekst
+i przywraca kursor do pola. Z klawiatury przejdź do ikony klawiszem Tab, otwórz listę Enterem,
+wybierz tryb strzałkami i zatwierdź Enterem; Escape zamyka samą listę. Powiadomienie bez treści
+nie zostanie wysłane; zbiórka bez opisu tworzy pustą zbiórkę. Backspace na początku pola
+wraca do zwykłej wiadomości i zachowuje wpisany tekst.
 **Pozycja** od razu wysyła wpis w formacie `Postać(230w), Ithan (1, 2)`, zachowując szkic. **Pomoc**
 od razu wysyła powiadomienie do organizacji wybranej u góry czatu. Gdy aktualne
 dane gry są dostępne, wiadomość zawiera liczbę wykrytych wrogich postaci.
 
+### Szybki czat
+
+**Szybki czat** (domyślnie **Shift+S** albo przycisk w pasku szybkiego dostępu) otwiera u góry
+ekranu pole czatu do szybkiego wysyłania bez otwierania okna czatu. Działa jak pole czatu:
+Enter wysyła wiadomość, `!` wysyła powiadomienie, `/grp opis` tworzy zbiórkę, a `@` podpowiada
+osoby i role. Przyciski **Powiadomienie** i **Zbiórka** pod polem włączają albo wyłączają
+ten tryb. Ikona trybu po lewej stronie pola otwiera tę samą listę trybów co w oknie czatu;
+Escape w liście zamyka tylko listę, a Szybki czat zostaje otwarty.
+
+Lista pod polem wybiera jedną organizację, do której trafia wpis. Z klawiatury przejdź do niej
+klawiszem Tab, otwórz ją Enterem i wybierz strzałkami; po wyborze kursor wraca do pola.
+Wybór jest zapamiętywany; bez niego Szybki czat wysyła do organizacji wybranej dla postaci.
+Szybki czat nie dołącza cytatu przygotowanego w oknie czatu.
+
+Escape zamyka Szybki czat i czyści wpis. Kliknięcie poza nią zamyka ją, ale zachowuje
+niewysłany tekst.
+
 ### Zbiórki
 
 Zgłoszenia NPC zajmują pełną szerokość wiersza i mają subtelne tło zgodne
-z ustawieniami **Wygląd → Kolory NPC**, tak jak pasek Party findera.
-Nie mają przycisków tworzenia grupy ani przygotowania komunikatu.
+z ustawieniami **Wygląd → Kolory NPC**, tak jak pasek zbiórki.
+Nie mają przycisków tworzenia zbiórki ani przygotowania komunikatu.
 
-Opcja **Party finder** w menu **+** tworzy zbiórkę w organizacji wybranej
+Opcja **Utwórz zbiórkę** w menu **+** tworzy zbiórkę w organizacji wybranej
 w czacie, tak jak **Pozycja** i **Pomoc**.
 
 Utworzenie zbiórki z NPC lub bez NPC nie dodaje wiadomości do historii czatu.
@@ -144,7 +203,7 @@ chęć udziału.
 Pływający panel u góry czatu pokazuje od razu dostępne zbiórki innych graczy ze wszystkich
 włączonych organizacji na bieżącym świecie, od najnowszej. Jest niezależna od historii
 wiadomości i filtra rozmowy. Zbiórki są pobierane również po wejściu do gry
-i ponownym połączeniu. Cały pasek cudzej zbiórki służy do zgłoszenia. Domyślnie widoczna jest najnowsza zbiórka; przycisk z liczbą pozostałych rozwija starsze. Ukrywanie jest dostępne w menu zbiórki.
+i ponownym połączeniu. Kliknięcie celu lub opisu cudzej zbiórki służy do zgłoszenia. Domyślnie widoczna jest najnowsza zbiórka; przycisk z liczbą pozostałych rozwija starsze. Ukrywanie jest dostępne w menu zbiórki.
 Twoja zbiórka, gdy jesteś organizatorem, znajduje się zawsze na końcu listy,
 najbliżej pola pisania. Panel organizatora pokazuje nazwę NPC lub „Twoja zbiórka”, licznik i przycisk „Zaproś”. Zarządzanie oraz anulowanie są dostępne w menu. Zbiórki mają gradient od przezroczystości do delikatnego fioletu, a pole pisania zachowuje zwykłe tło czatu.
 Zbiórki oddzielają cienkie, neutralne poziome linie. Przycisk ukrytych zbiórek znajduje się w prawym dolnym rogu obszaru wiadomości.
@@ -158,23 +217,57 @@ Zbiórki NPC pokazują również grafikę potwora, jeśli zapisano ją przy zgł
 Obok grafiki widać nazwę, poziom i dostępną profesję, a niżej lokację oraz
 współrzędne, jeśli zostały podane.
 Nagłówek zbiórki pokazuje nazwę organizatora z Discorda w kolorze jego roli — przed zgłoszeniem i po nim.
-Licznik obok tytułu pokazuje aktualny skład drużyny względem limitu 10 osób.
-Przykładowo `(2/10)` oznacza dwie osoby w grupie. Obejmuje organizatora i osoby
-bez zgłoszenia; nie pokazuje liczby chętnych. Przed pierwszym odczytem składu
-wyświetla `(—/10)`. Uczestnik dodatkowo widzi
-status swojej bieżącej postaci na przycisku zgłoszenia. Zielony znacznik
-potwierdza zgłoszenie, a podpowiedź informuje też o obecności w grupie.
-Jego liczniki odświeżają się wraz z listą
-zbiórek, co 30 sekund oraz po obsługiwanych zdarzeniach. Brak dostępnej
-wartości oznacza kreska „—”.
+Zbiórka na czacie zajmuje jeden zwarty pasek i nie wypisuje chętnych ani
+członków grupy; skład grupy widać w oknie grupy w grze.
+
+Licznik obok tytułu pokazuje liczbę osób w grupie względem limitu 10 osób.
+Przykładowo `(2/10)` oznacza dwie osoby w odczytanym składzie, niezależnie
+od liczby chętnych. Przed pierwszym odczytem wyświetla `(—/10)`, a podpowiedź
+informuje, że skład grupy jest nieznany. Po dwóch minutach bez nowego odczytu
+lub utracie synchronizacji licznik ma postać `(~2/10)`, a podpowiedź ostrzega
+o możliwie nieaktualnym składzie.
+Dodatek organizatora ponawia odczyt co minutę również wtedy, gdy skład się
+nie zmienia, więc ostrzeżenie oznacza, że odczyty przestały docierać, na
+przykład po rozłączeniu organizatora.
+Starszy dodatek może nie dostarczać całego składu. Wtedy brak odczytu
+pozostaje widoczny jako stan nieznany.
+
+Zgłoszenia, wycofania, usunięcia i zmiany składu docierają na żywo,
+bez okresowego odpytywania serwera. Ponowne połączenie pobiera bieżący stan.
+Uczestnik dodatkowo widzi status swojej postaci na przycisku zgłoszenia.
+Zielony znacznik potwierdza zgłoszenie. Informacja o obecności w grupie
+wymaga aktualnego odczytu z gry. Przyjęcie zaproszenia samo jej nie potwierdza.
 Ikona **Zaproś zgłoszonych** zaprasza osoby pozostające poza grupą. Przy NPC
 znajduje się po prawej stronie jego danych. Bez NPC jest obok opisu lub
 zakresu poziomów; tylko pusta zbiórka ma tę akcję w nagłówku.
 Zapraszanie działa na postaci organizatora po synchronizacji zbiórki.
 Wysłanie zaproszenia nie oznacza, że dana osoba już dołączyła do grupy.
-Organizator ma ikonę **Zarządzaj** w prawym górnym rogu. Otwiera ona okno
-organizowania grupy, dostępne tylko dla organizatora. Obok znajduje się
-**Anuluj zbiórkę**. Uczestnik sprawdza swój status w czacie i wycofuje
+Po chwilowym błędzie wysyłania składu Lootlog ponawia zgłoszenie najwyżej
+dwa razy, po 1 i 2 sekundach, zawsze z najnowszym składem grupy. Każda próba
+odczytu lub wysłania danych ma limit 5 sekund. Przed ponowieniem Lootlog
+odświeża stan zbiórki, również po konflikcie z inną zmianą. Po udanej
+synchronizacji osoba, która opuściła grupę, ponownie kwalifikuje się do zaproszenia.
+Jeśli wszystkie próby zawiodą, nowe zgłoszenie rozpoczyna się po zmianie składu,
+ponownym połączeniu albo minutę po ostatniej próbie.
+Organizator ma w menu zbiórki opcję **Lista chętnych**. Otwiera ona okno
+**Twoja zbiórka**, dostępne tylko dla organizatora. Okno pokazuje zgłoszonych,
+którzy są jeszcze poza grupą; osoby, które już dołączyły, znikają z listy.
+Nagłówek okna pokazuje stan grupy i czas do wygaśnięcia zbiórki. Plus w wierszu
+lub dwuklik zaprasza gracza, a prawy przycisk myszy otwiera menu z opcjami
+**Dodaj do znajomych** i **Usuń ze zbiórki**. **Zaproś wszystkich** pokazuje
+liczbę osób do zaproszenia. Obok znajduje się **Anuluj zbiórkę**, które przed
+anulowaniem zbiórki prosi o potwierdzenie.
+
+W tym oknie po nicku, poziomie i profesji widać klan gracza. Na liście graczy
+online klan pokazuje podpowiedź po najechaniu na wiersz. Kolor wiersza pokazuje
+relację z Twoją postacią: turkusowy to Ty, fioletowy Twoja grupa, zielony Twój
+klan, niebieski znajomy, żółty sojuszniczy klan, a czerwony wróg lub wrogi
+klan. Gra wysyła listę znajomych dopiero po otwarciu
+okna **Społeczność**, a sojusze klanu po otwarciu zakładki **Dyplomacja**.
+Lootlog zapamiętuje je dla każdej postaci i uzupełnia na bieżąco na podstawie
+graczy spotkanych na mapie, np. gracz oznaczony jako sojusznik wskazuje, że cały
+jego klan jest sojuszniczy.
+Uczestnik sprawdza swój status w czacie i wycofuje
 zgłoszenie, klikając ponownie zaznaczony przycisk zgłoszenia.
 Zgłoszenie z powiadomienia otwiera czat z paskiem tej zbiórki.
 Ikony akcji pokazują podpowiedzi po najechaniu lub ustawieniu fokusu.

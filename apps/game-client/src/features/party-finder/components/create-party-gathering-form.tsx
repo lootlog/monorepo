@@ -1,46 +1,68 @@
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { GuildMultiSelector } from "@/components/guild-multi-selector";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { formFieldLabelClassName } from "@/components/ui/form-field";
+import { FormFieldError } from "@/components/form-field-error";
+import { WindowFooter } from "@/components/draggable-window/window-footer";
+import { GuildTargetPicker } from "@/components/guild-target-picker";
+import { useGuildTargets } from "@/hooks/use-guild-targets";
 import { getCreatePartyGatheringErrorMessage } from "@/features/party-finder/get-create-party-gathering-error-message";
 import { usePartyGatheringOrchestration } from "@/features/party-finder/hooks/use-party-gathering-orchestration";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
-import * as z from "zod";
+import { Schema } from "effect";
 import { useGameStore } from "@/store/game.store";
-import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 
-const createFormSchema = (t: TFunction<"partyFinder">) =>
-  z
-    .object({
-      description: z.string().max(200).optional(),
-      minLvl: z.coerce.number().min(1).max(500).optional().or(z.literal("")),
-      maxLvl: z.coerce.number().min(1).max(500).optional().or(z.literal("")),
-    })
-    .refine(
-      (data) => {
-        if (data.minLvl && data.maxLvl) {
-          return Number(data.minLvl) <= Number(data.maxLvl);
-        }
+const MIN_PARTY_LEVEL = 1;
 
-        return true;
-      },
-      {
-        message: t("form.validation.minGreaterThanMax"),
-        path: ["minLvl"],
-      },
-    );
+const MAX_PARTY_LEVEL = 500;
 
-type FormSchema = ReturnType<typeof createFormSchema>;
+const MAX_DESCRIPTION_LENGTH = 200;
 
-type FormData = z.output<FormSchema>;
+/** An empty level input stays `""`; anything else must be a level in range. */
+const LevelInput = Schema.Union([
+  Schema.Literal(""),
+  Schema.FiniteFromString.check(
+    Schema.isBetween({ minimum: MIN_PARTY_LEVEL, maximum: MAX_PARTY_LEVEL }),
+  ),
+]);
+
+const FormSchema = Schema.Struct({
+  description: Schema.optional(
+    Schema.String.check(Schema.isMaxLength(MAX_DESCRIPTION_LENGTH)),
+  ),
+  minLvl: Schema.optional(LevelInput),
+  maxLvl: Schema.optional(LevelInput),
+});
+
+const createFormResolver = (t: TFunction<"partyFinder">) =>
+  standardSchemaResolver(
+    Schema.toStandardSchemaV1(
+      FormSchema.check(
+        Schema.makeFilter(({ minLvl, maxLvl }) =>
+          !minLvl || !maxLvl || minLvl <= maxLvl
+            ? undefined
+            : {
+                path: ["minLvl"],
+                issue: t("form.validation.minGreaterThanMax"),
+              },
+        ),
+      ),
+    ),
+  );
+
+type FormData = typeof FormSchema.Type;
 
 export const CreatePartyGatheringForm = () => {
   const formId = useId();
   const { t } = useTranslation("partyFinder");
   const [selectedGuildIds, setSelectedGuildIds] = useState<string[]>([]);
+  const targetGuildIds = useGuildTargets(selectedGuildIds);
 
   const { isCreatingPartyGathering, startPartyGathering } =
     usePartyGatheringOrchestration();
@@ -50,8 +72,8 @@ export const CreatePartyGatheringForm = () => {
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<z.input<FormSchema>, undefined, FormData>({
-    resolver: zodResolver(createFormSchema(t)),
+  } = useForm<typeof FormSchema.Encoded, undefined, FormData>({
+    resolver: createFormResolver(t),
     defaultValues: {
       description: "",
       minLvl: "",
@@ -60,8 +82,8 @@ export const CreatePartyGatheringForm = () => {
   });
 
   const onSubmit = async (data: FormData) => {
-    if (selectedGuildIds.length === 0) {
-      showRuntimeMessage(t("form.selectGuild"));
+    if (targetGuildIds.length === 0) {
+      toast.error(t("form.selectGuild"));
 
       return;
     }
@@ -70,7 +92,7 @@ export const CreatePartyGatheringForm = () => {
 
     try {
       await startPartyGathering({
-        guildIds: selectedGuildIds,
+        guildIds: targetGuildIds,
         world,
         description: data.description || undefined,
         minLvl: data.minLvl ? Number(data.minLvl) : undefined,
@@ -79,89 +101,88 @@ export const CreatePartyGatheringForm = () => {
       });
       reset();
     } catch (error) {
-      showRuntimeMessage(getCreatePartyGatheringErrorMessage(error));
+      toast.error(getCreatePartyGatheringErrorMessage(error));
     }
   };
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="ll:flex ll:flex-col ll:gap-2 ll:p-1"
+      className="ll:flex ll:h-full ll:w-full ll:flex-col"
     >
-      <GuildMultiSelector
-        value={selectedGuildIds}
-        onChange={setSelectedGuildIds}
-      />
+      <ScrollArea className="ll:min-h-0 ll:w-full ll:flex-1">
+        <div className="ll:flex ll:w-full ll:flex-col ll:gap-2 ll:px-3 ll:py-2">
+          <GuildTargetPicker
+            value={targetGuildIds}
+            onChange={setSelectedGuildIds}
+            className="ll:w-full"
+          />
 
-      <div>
-        <label
-          htmlFor={`${formId}-description`}
-          className="ll:text-[11px] ll:text-gray-300 ll:mb-1 ll:block"
+          <div className="ll:w-full">
+            <Label
+              htmlFor={`${formId}-description`}
+              className={formFieldLabelClassName}
+            >
+              {t("form.descriptionLabel")}
+            </Label>
+            <Input
+              id={`${formId}-description`}
+              {...register("description")}
+              placeholder={t("form.descriptionPlaceholder")}
+              maxLength={MAX_DESCRIPTION_LENGTH}
+            />
+            <FormFieldError message={errors.description?.message} />
+          </div>
+
+          <div className="ll:grid ll:w-full ll:grid-cols-2 ll:gap-2">
+            <div className="ll:min-w-0">
+              <Label
+                htmlFor={`${formId}-minLvl`}
+                className={formFieldLabelClassName}
+              >
+                {t("form.minLvlLabel")}
+              </Label>
+              <Input
+                id={`${formId}-minLvl`}
+                {...register("minLvl")}
+                type="number"
+                min={MIN_PARTY_LEVEL}
+                max={MAX_PARTY_LEVEL}
+                placeholder={String(MIN_PARTY_LEVEL)}
+              />
+              <FormFieldError message={errors.minLvl?.message} />
+            </div>
+            <div className="ll:min-w-0">
+              <Label
+                htmlFor={`${formId}-maxLvl`}
+                className={formFieldLabelClassName}
+              >
+                {t("form.maxLvlLabel")}
+              </Label>
+              <Input
+                id={`${formId}-maxLvl`}
+                {...register("maxLvl")}
+                type="number"
+                min={MIN_PARTY_LEVEL}
+                max={MAX_PARTY_LEVEL}
+                placeholder={String(MAX_PARTY_LEVEL)}
+              />
+              <FormFieldError message={errors.maxLvl?.message} />
+            </div>
+          </div>
+        </div>
+      </ScrollArea>
+
+      <WindowFooter rowClassName="ll:justify-end ll:gap-1 ll:px-3">
+        <Button
+          variant="secondary"
+          size="xs"
+          type="submit"
+          loading={isCreatingPartyGathering}
         >
-          {t("form.descriptionLabel")}
-        </label>
-        <Input
-          id={`${formId}-description`}
-          {...register("description")}
-          placeholder={t("form.descriptionPlaceholder")}
-          maxLength={200}
-        />
-        {errors.description && (
-          <span className="ll:text-[10px] ll:text-red-400">
-            {errors.description.message}
-          </span>
-        )}
-      </div>
-
-      <div className="ll:flex ll:gap-2">
-        <div className="ll:flex-1">
-          <label
-            htmlFor={`${formId}-minLvl`}
-            className="ll:text-[11px] ll:text-gray-300 ll:mb-1 ll:block"
-          >
-            {t("form.minLvlLabel")}
-          </label>
-          <Input
-            id={`${formId}-minLvl`}
-            {...register("minLvl")}
-            type="number"
-            min={1}
-            max={500}
-            placeholder="1"
-          />
-        </div>
-        <div className="ll:flex-1">
-          <label
-            htmlFor={`${formId}-maxLvl`}
-            className="ll:text-[11px] ll:text-gray-300 ll:mb-1 ll:block"
-          >
-            {t("form.maxLvlLabel")}
-          </label>
-          <Input
-            id={`${formId}-maxLvl`}
-            {...register("maxLvl")}
-            type="number"
-            min={1}
-            max={500}
-            placeholder="500"
-          />
-        </div>
-      </div>
-      {errors.minLvl && (
-        <span className="ll:text-[10px] ll:text-red-400">
-          {errors.minLvl.message}
-        </span>
-      )}
-
-      <Button
-        variant="secondary"
-        size="xs"
-        type="submit"
-        disabled={isCreatingPartyGathering}
-        className="ll:mt-2"
-      >
-        {isCreatingPartyGathering ? t("form.submitting") : t("form.submit")}
-      </Button>
+          {t("form.submit")}
+        </Button>
+      </WindowFooter>
     </form>
   );
 };

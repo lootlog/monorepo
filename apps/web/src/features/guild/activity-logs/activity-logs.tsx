@@ -9,11 +9,14 @@ import { useThemedKey } from "@/themes";
 import { useMembersControllerGetGuildMemberReferences } from "@lootlog/client/main";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
+import {
+  getVirtualListPadding,
+  usePageVirtualizer,
+} from "@/hooks/utils/use-page-scroll";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import { AlertCircle, SearchX } from "lucide-react";
-import { useRef } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { activityLogsInfiniteQueryOptions } from "./activity-logs.queries";
 import { ActivityLogsFilterToolbar } from "./components/activity-logs-filter-toolbar";
@@ -23,10 +26,15 @@ import { useActivityLogsFilterModel } from "./components/use-activity-logs-filte
 const ACTIVITY_LOGS_PAGE_LIMIT = 20;
 
 export const ActivityLogs = () => {
+  "use no memo"; // Reads a virtualizer that mutates in place; see usePageVirtualizer.
+
   const { t } = useTranslation();
   const themedKey = useThemedKey();
   const isMobile = useIsMobile();
-  const scrollElementRef = useRef<HTMLDivElement>(null);
+
+  const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
+    null,
+  );
 
   const { guildId } = useParams({
     from: "/_authenticated/$guildId/activity-logs",
@@ -69,9 +77,9 @@ export const ActivityLogs = () => {
 
   const activities = activityLogs?.pages.flatMap((page) => page.data) ?? [];
 
-  const virtualizer = useVirtualizer({
+  const virtualizer = usePageVirtualizer<HTMLElement>({
     count: activities.length,
-    getScrollElement: () => scrollElementRef.current,
+    scrollElement,
     estimateSize: () => (isMobile ? 88 : 56),
     overscan: 8,
   });
@@ -86,8 +94,8 @@ export const ActivityLogs = () => {
     virtualItems: virtualRows,
   });
   useResetScrollTop({
+    getScrollElement: () => scrollElement,
     resetKey: JSON.stringify({ filters, guildId }),
-    scrollElementRef,
   });
 
   const renderResults = () => {
@@ -119,7 +127,11 @@ export const ActivityLogs = () => {
         isMobile={isMobile}
         memberNameByDiscordId={memberNameByDiscordId}
         virtualRows={virtualRows}
-        totalSize={virtualizer.getTotalSize()}
+        padding={getVirtualListPadding(
+          virtualRows,
+          virtualizer.getTotalSize(),
+          virtualizer.options.scrollMargin,
+        )}
       />
     );
   };
@@ -131,7 +143,7 @@ export const ActivityLogs = () => {
         chips={activeFilterChips}
         clearFiltersLabel={t("activityLogs.filters.clear")}
         onClearFilters={filterModel.clearFilters}
-        scrollRef={scrollElementRef}
+        scrollRef={setScrollElement}
         toolbar={<ActivityLogsFilterToolbar model={filterModel} />}
         toolbarLabel={t("activityLogs.filters.title")}
         withHorizontalScroll={!isMobile}
