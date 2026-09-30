@@ -4,7 +4,7 @@ export function DocsBrand() {
   return (
     <Link
       className="docs-brand"
-      to="/docs/$"
+      to="/docs/$/"
       params={{ _splat: "" }}
       aria-label="Lootlog Dokumentacja"
     >

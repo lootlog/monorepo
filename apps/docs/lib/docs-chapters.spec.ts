@@ -8,9 +8,9 @@ import {
 
 describe("documentation routes and chapters", () => {
   it("maps the index and document slugs to public URLs", () => {
-    expect(getDocsPath("index")).toBe("/docs");
-    expect(getDocsPath("installation")).toBe("/docs/installation");
-    expect(docsPaths).toContain("/docs/battle-panel-mechanics");
+    expect(getDocsPath("index")).toBe("/docs/");
+    expect(getDocsPath("installation")).toBe("/docs/installation/");
+    expect(docsPaths).toContain("/docs/battle-panel-mechanics/");
     expect(new Set(docsPaths).size).toBe(docsPaths.length);
   });
 

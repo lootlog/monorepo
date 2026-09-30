@@ -50,7 +50,7 @@ export type DocsChapterId = DocsChapter["id"];
 export const docsSlugs = docsChapters.flatMap((chapter) => chapter.slugs);
 
 export function getDocsPath(slug: string): string {
-  return slug === "index" ? "/docs" : `/docs/${slug}`;
+  return slug === "index" ? "/docs/" : `/docs/${slug}/`;
 }
 
 export const docsPaths = docsSlugs.map(getDocsPath);
