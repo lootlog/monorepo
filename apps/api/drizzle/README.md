@@ -841,3 +841,33 @@ Colosseus. Loots before the first timer observation of an NPC cannot be
 placed in time and stay unresolved. A full search rebuild took 52 seconds
 locally and is expected to add 764 NPC and 37 item documents and remove 56
 legacy NPC documents.
+
+### Local validation
+
+On a copy of that database (restored from `pg_dump` into a separate database;
+the original stayed unchanged), with the local Redis and Meilisearch:
+
+- The migration ran in well under a second.
+- `apply` recomputed and matched all 801 revision hashes, created 764 NPC
+  and 37 item revisions (none existed yet), and moved 178,102 `LootNpc` and
+  13,042 `LootItem` links with no link already on target and none skipped:
+  129,347 to a higher level and 48,755 to a lower one. It recorded 102
+  unresolved selections (79 legacy catalog ids, 52 of them with a suggested
+  timer, 3 unknown ids, 20 watched items) and left every rule's filters
+  byte-identical. Czempion Furboli kept 125 links on its level-183 row and
+  moved 2,120 to level-210 revisions in 52 worlds.
+- An invocation killed with `SIGKILL` after 38,480 moved links left exactly
+  38,480 log rows, each pointing at its target; resuming completed the run.
+  Moving all links took about 75 seconds in batches of 1,000, and a second
+  `apply` moved nothing. Each invocation invalidated the caches of up to 537
+  Organizations.
+- `bun run seed` took 43 seconds and changed the indexes exactly as the dry
+  run predicted: 764 NPC documents added (723 `pl`, 41 `en`), the 56 predicted
+  legacy NPC documents removed, 37 Polish item documents added and 37 item
+  documents with fewer worlds.
+- `rollback` restored all 191,144 links in about 73 seconds, removed the
+  created revisions and unresolved selections, and left `LootNpc`,
+  `LootItem`, `NpcSnapshot` and `ItemSnapshot` checksums identical to the
+  original database.
+
+These are local measurements, not production latency.
