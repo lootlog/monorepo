@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { Effect, Predicate } from "effect";
 import { Meilisearch, type SearchParams } from "meilisearch";
-import { makeItemsModule } from "#src/items/items.service";
+import { itemCatalogKey, makeItemsModule } from "#src/items/items.service";
 import {
   configureMeilisearchIndexes,
   searchIndexSettings,
@@ -299,7 +299,14 @@ describe("Search Effect modules", () => {
 
     const client = makeClient(() => ({
       getDocuments: () =>
-        Promise.resolve({ results: [{ uid: "42", worlds: ["jaruna"] }] }),
+        Promise.resolve({
+          results: [
+            {
+              uid: itemCatalogKey({ id: 42, name: "Item" }),
+              worlds: ["jaruna"],
+            },
+          ],
+        }),
       addDocuments: (
         documents: ReadonlyArray<{
           id: string | number;
@@ -347,7 +354,7 @@ describe("Search Effect modules", () => {
     expect(indexedDocuments).toEqual([
       expect.objectContaining({
         id: 42,
-        uid: "42",
+        uid: itemCatalogKey({ id: 42, name: "Item" }),
         worlds: ["berufs", "gefion", "jaruna"],
       }),
     ]);

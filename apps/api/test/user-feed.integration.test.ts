@@ -271,7 +271,7 @@ describe("personal Organization activity feed", () => {
       [loot.id, npc.id],
     );
     await client.query(
-      `WITH inserted AS (INSERT INTO "ItemSnapshot" ("itemId","statsHash",name,icon,"statRaw","statsSnapshot","itemType",lvl) SELECT n,$2||n,'item','item.png','lvl=100;sa=10','{}'::jsonb,'Sword',100 FROM generate_series(1,5)n RETURNING id) INSERT INTO "LootItem" ("lootId","itemSnapshotId",hid) SELECT $1,id,id::text FROM inserted`,
+      `WITH inserted AS (INSERT INTO "ItemSnapshot" ("itemId","statsHash",name,icon,"statRaw","statsSnapshot","itemType",lvl) SELECT n,$2||n,'item','item.png','lvl=100;sa=10','{}'::jsonb,'Sword',100 FROM generate_series(1,5)n RETURNING id) INSERT INTO "LootItem" ("lootId","itemSnapshotId",hid,"instanceStat") SELECT $1,id,id::text,'amount=3' FROM inserted`,
       [loot.id, randomUUID()],
     );
     await client.query(
@@ -312,7 +312,7 @@ describe("personal Organization activity feed", () => {
         lootShare: { Participant: ["1"] },
       });
       expect(ownerItems[0].summary?.items[0]).toMatchObject({
-        stat: "lvl=100;sa=10",
+        stat: "lvl=100;sa=10;amount=3",
         type: "Sword",
         lvl: 100,
         prof: expect.arrayContaining(["WARRIOR"]),
@@ -326,7 +326,7 @@ describe("personal Organization activity feed", () => {
 
       expect(published).toEqual(ownerItems[0]);
       expect(ownerItems[0].items[0]).toMatchObject({
-        stat: "lvl=100;sa=10",
+        stat: "lvl=100;sa=10;amount=3",
         type: "Sword",
         lvl: 100,
       });

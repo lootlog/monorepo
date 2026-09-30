@@ -3,6 +3,22 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased: Item names, icons and instance stats per loot
+
+A loot item now shows the name and icon it was reported with. Earlier, a later
+loot of an item with equal stats reused the first stored name and icon, so a
+Polish loot could show an English name, and an icon change was lost.
+
+- Loot item `stat` includes that loot's own `created`, `gold`, `amount` and
+  `opis` values. Earlier it repeated the values of the first loot stored with
+  the same stats. Loot items accepted before this change keep their stored
+  `stat`.
+- Item search can return several hits with the same `id`: one per game version
+  and name, such as a Polish and an English name of one item. Deduplicate by
+  `id` and `name` rather than by `id` alone.
+- `POST /loots` is unchanged. Send `name`, `icon` and `stat` exactly as the game
+  shows them; do not translate them.
+
 ## Unreleased: Margonem game version on loots and NPC search
 
 Margonem runs a Polish edition on `*.margonem.pl` and an international edition

@@ -1,3 +1,4 @@
+import { joinItemStat } from "@lootlog/database/item-stat";
 import type { LootItemDto } from "#src/loots/query/loot-item";
 import type { LootNpcDto } from "#src/loots/query/loot-npc";
 import { parseRequiredProfessions } from "#src/loots/required-professions";
@@ -9,6 +10,7 @@ import type {
 
 type LootItemWithSnapshot = {
   hid: string;
+  instanceStat: string | null;
   itemSnapshot: typeof itemSnapshotTable.$inferSelect;
 };
 
@@ -39,7 +41,10 @@ const parseStatValue = (statRaw: string, key: string): string | null => {
 };
 
 export const mapItem = (lootItem: LootItemWithSnapshot): LootItemDto => {
-  const statRaw = lootItem.itemSnapshot.statRaw;
+  const statRaw = joinItemStat(
+    lootItem.itemSnapshot.statRaw,
+    lootItem.instanceStat,
+  );
 
   const lvl =
     lootItem.itemSnapshot.lvl ??

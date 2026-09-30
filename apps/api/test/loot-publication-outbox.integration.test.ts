@@ -54,6 +54,7 @@ import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { makeLootsOperations } from "#src/loots/loots.operations";
 import { makeLootPersistence } from "#src/loots/loot-persistence";
 import { applicationLogger } from "#src/shared/application-logger";
+import { createItemStatsHash } from "@lootlog/database/snapshot-hash";
 
 describe("durable loot publications", () => {
   let runtime = ManagedRuntime.make(ApiDatabaseLive);
@@ -580,6 +581,180 @@ describe("durable loot publications", () => {
     const retry = await accept("en", polish.hids);
     expect(retry.id).toBe(polish.id);
     expect(retry.stored).toEqual(polish.stored);
+  });
+
+  it("keeps each observed item name and icon on its loot and per-instance stats on the looted item", async () => {
+    const { id, request } = await seed();
+    const itemId = 9_000_000 + randomInt(1_000_000);
+    const revisionStat = "rarity=heroic;lvl=80;contra=40";
+
+    // Stored before revisions: first-writer English presentation, no hash.
+    const [legacy] = await runtime.runPromise(
+      database
+        .insert(itemSnapshotTable)
+        .values({
+          itemId,
+          statsHash: createItemStatsHash(revisionStat),
+          name: "Seth's War Trophy",
+          icon: "trophy.gif",
+          lvl: 80,
+          rarity: "HEROIC",
+          statRaw: `${revisionStat};created=1`,
+          statsSnapshot: {},
+        })
+        .returning(),
+    );
+
+    if (!legacy) throw new Error("Expected legacy item snapshot");
+
+    const accept = async (
+      item: { name: string; icon: string; instanceStat: string },
+      hids = [randomUUID()],
+    ) => {
+      const result = await runtime.runPromise(
+        acceptance().accept({
+          ...request,
+          submission: {
+            ...request.submission,
+            gameVersion: "pl",
+            loots: request.submission.loots.map((base, index) => ({
+              ...base,
+              hid: hids[index] ?? randomUUID(),
+              id: itemId,
+              name: item.name,
+              icon: item.icon,
+              stat: `${item.instanceStat};${revisionStat}`,
+            })),
+          },
+        }),
+      );
+
+      snapshotTestLootIds.push(result.id);
+
+      const [stored] = await runtime.runPromise(
+        database
+          .select({
+            instanceStat: lootItemTable.instanceStat,
+            snapshot: itemSnapshotTable,
+          })
+          .from(lootItemTable)
+          .innerJoin(
+            itemSnapshotTable,
+            eq(itemSnapshotTable.id, lootItemTable.itemSnapshotId),
+          )
+          .where(eq(lootItemTable.lootId, result.id)),
+      );
+
+      const search = (await publications(result.id)).find(
+        (intent) =>
+          intent.kind === "rabbit" &&
+          intent.routingKey === RabbitRoutingKey.SEARCH_ITEMS_INDEX,
+      );
+
+      return {
+        hids,
+        id: result.id,
+        search,
+        stored,
+        item: (await lootRecord(id, result.id))?.items[0],
+      };
+    };
+
+    const english = await accept({
+      name: "Seth's War Trophy",
+      icon: "trophy.gif",
+      instanceStat: "created=100;amount=1",
+    });
+
+    const polish = await accept({
+      name: "Wojenne trofeum Seta",
+      icon: "trophy.gif",
+      instanceStat: "created=200;amount=3",
+    });
+
+    const polishAgain = await accept({
+      name: "Wojenne trofeum Seta",
+      icon: "trophy.gif",
+      instanceStat: "created=300;amount=5;opis=Zdobyte przez Gracza",
+    });
+
+    const newIcon = await accept({
+      name: "Wojenne trofeum Seta",
+      icon: "trophy-v2.gif",
+      instanceStat: "created=400",
+    });
+
+    // Equal stats never lend one language's presentation to another, and an
+    // identical presentation reuses its revision whatever the instance stats.
+    expect(english.stored?.snapshot.id).not.toBe(legacy.id);
+    expect(polish.stored?.snapshot.id).not.toBe(english.stored?.snapshot.id);
+    expect(polishAgain.stored?.snapshot.id).toBe(polish.stored?.snapshot.id);
+    expect(newIcon.stored?.snapshot.id).not.toBe(polish.stored?.snapshot.id);
+    expect(polishAgain.stored?.snapshot).toMatchObject({
+      name: "Wojenne trofeum Seta",
+      gameVersion: "pl",
+      statRaw: revisionStat,
+    });
+    expect(polishAgain.stored?.instanceStat).toBe(
+      "created=300;amount=5;opis=Zdobyte przez Gracza",
+    );
+
+    // Each loot shows its own presentation and its own instance values.
+    expect(
+      [english, polish, polishAgain, newIcon].map(({ item }) => [
+        item?.name,
+        item?.icon,
+        item?.stat,
+      ]),
+    ).toEqual([
+      [
+        "Seth's War Trophy",
+        "trophy.gif",
+        `${revisionStat};created=100;amount=1`,
+      ],
+      [
+        "Wojenne trofeum Seta",
+        "trophy.gif",
+        `${revisionStat};created=200;amount=3`,
+      ],
+      [
+        "Wojenne trofeum Seta",
+        "trophy.gif",
+        `${revisionStat};created=300;amount=5;opis=Zdobyte przez Gracza`,
+      ],
+      ["Wojenne trofeum Seta", "trophy-v2.gif", `${revisionStat};created=400`],
+    ]);
+    expect(polish.search).toMatchObject({
+      data: [
+        {
+          id: itemId,
+          name: "Wojenne trofeum Seta",
+          stat: revisionStat,
+          gameVersion: "pl",
+        },
+      ],
+    });
+
+    // A retry with another presentation keeps the accepted loot unchanged.
+    const retry = await accept(
+      {
+        name: "Wojenne trofeum Seta",
+        icon: "trophy.gif",
+        instanceStat: "created=100;amount=1",
+      },
+      english.hids,
+    );
+
+    expect(retry.id).toBe(english.id);
+    expect(retry.stored).toEqual(english.stored);
+    expect(
+      await runtime.runPromise(
+        database
+          .select()
+          .from(itemSnapshotTable)
+          .where(eq(itemSnapshotTable.id, legacy.id)),
+      ),
+    ).toEqual([legacy]);
   });
 
   it("preserves an ambiguous legacy NPC row while accepting a new observed revision", async () => {

@@ -1,5 +1,9 @@
 import type { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
-import { createItemStatsHash } from "@lootlog/database/snapshot-hash";
+import {
+  createItemSnapshotHash,
+  createItemStatsHash,
+} from "@lootlog/database/snapshot-hash";
+import { parseItemStats, splitItemStat } from "@lootlog/database/item-stat";
 import { Effect, Schema } from "effect";
 import { getNpcTypeByWt, MIN_LOOT_NPC_WT } from "@lootlog/domain/npc-type";
 import type {
@@ -28,6 +32,7 @@ import type {
 } from "#src/contracts/loots/schemas";
 import { ErrorKey } from "#src/loots/error-key";
 import { getItemTypeByCl } from "@lootlog/domain/item-type";
+import type { GameVersion } from "@lootlog/schema/game-version";
 import { getProfByShortname } from "@lootlog/domain/profession";
 import { parseRequiredProfessions } from "#src/loots/required-professions";
 import {
@@ -429,7 +434,10 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           location: options.submission.location,
           lootShare: initialAllocation.share,
           lootShareSource: initialAllocation.source,
-          items: this.mapLootItemsToPersistence(options.submission.loots),
+          items: this.mapLootItemsToPersistence(
+            options.submission.loots,
+            options.submission.gameVersion ?? null,
+          ),
           players: this.mapLootPlayersToPersistence(
             options.submission.players,
             options.submission.world,
@@ -513,11 +521,13 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           id: item.id,
           name: item.name,
           icon: item.icon,
-          stat: item.stat,
+          // The search catalog describes revisions, not looted instances.
+          stat: splitItemStat(item.stat).revision,
           lvl: item.lvl,
           rarity: item.rarity,
           type: item.type,
           world: options.submission.world,
+          gameVersion: options.submission.gameVersion ?? null,
         })),
       );
     rabbit(RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED, {
@@ -655,7 +665,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   }
 
   private getItemStats(item: CreateLootRequest["loots"][number]) {
-    const parsedStats = this.parseItemStats(item.stat);
+    const parsedStats = parseItemStats(item.stat);
     const lvl = parsedStats["lvl"] ? Number(parsedStats["lvl"]) : 0;
     const rawRarity = parsedStats["rarity"]?.toUpperCase();
 
@@ -667,18 +677,6 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     const prof = parseRequiredProfessions(parsedStats["reqp"]);
 
     return { lvl, rarity, prof, type: getItemTypeByCl(item.cl) };
-  }
-
-  private parseItemStats(stats: string): Record<string, string> {
-    return stats.split(";").reduce<Record<string, string>>((parsed, entry) => {
-      const [key, value] = entry.split("=");
-
-      if (key && value) {
-        parsed[key] = value;
-      }
-
-      return parsed;
-    }, {});
   }
 
   private mapItems(items: CreateLootRequest["loots"]) {
@@ -704,22 +702,35 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     });
   }
 
-  private mapLootItemsToPersistence(items: CreateLootRequest["loots"]) {
+  private mapLootItemsToPersistence(
+    items: CreateLootRequest["loots"],
+    gameVersion: GameVersion | null,
+  ) {
     return items.map((item) => {
       const { lvl, rarity, type } = this.getItemStats(item);
-      const statsHash = createItemStatsHash(item.stat);
+      const { revision, instance } = splitItemStat(item.stat);
 
       return {
         itemId: item.id,
-        statsHash,
+        gameVersion,
+        statsHash: createItemStatsHash(revision),
+        snapshotHash: createItemSnapshotHash({
+          gameVersion,
+          itemId: item.id,
+          name: item.name,
+          icon: item.icon,
+          itemType: type,
+          stat: revision,
+        }),
         name: item.name,
         icon: item.icon,
         lvl,
         rarity,
         itemType: type,
-        statRaw: item.stat,
-        statsSnapshot: this.parseItemStats(item.stat),
+        statRaw: revision,
+        statsSnapshot: parseItemStats(revision),
         hid: item.hid,
+        instanceStat: instance,
       };
     });
   }

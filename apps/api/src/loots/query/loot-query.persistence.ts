@@ -320,6 +320,7 @@ export const makeLootQueryPersistence = (
       .select({
         lootId: lootItemTable.lootId,
         hid: lootItemTable.hid,
+        instanceStat: lootItemTable.instanceStat,
         itemSnapshot: itemSnapshotTable,
       })
       .from(lootItemTable)
@@ -560,7 +561,11 @@ export const makeLootQueryPersistence = (
       const rows = yield* protect(
         "loots.query.resolve-item",
         database
-          .select({ hid: lootItemTable.hid, itemSnapshot: itemSnapshotTable })
+          .select({
+            hid: lootItemTable.hid,
+            instanceStat: lootItemTable.instanceStat,
+            itemSnapshot: itemSnapshotTable,
+          })
           .from(lootItemTable)
           .innerJoin(
             itemSnapshotTable,
