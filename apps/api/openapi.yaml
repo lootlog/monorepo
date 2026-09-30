@@ -2674,13 +2674,35 @@ paths:
           schema:
             type: string
             minLength: 1
-          required: true
+            description: Case-insensitive substring of the NPC name.
+          required: false
         - name: world
           in: query
           schema:
             type: string
             minLength: 1
-          required: true
+            description: World to search. When omitted, every world of the Organization is searched.
+          required: false
+        - name: npcIds
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+              minimum: 1
+              maximum: 9007199254740991
+            description: Return timers whose runtime NPC id is in this list.
+          required: false
+        - name: templateIds
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+              minimum: 1
+              maximum: 9007199254740991
+            description: Return timers observed with a template id in this list.
+          required: false
         - name: limit
           in: query
           schema:
@@ -2746,7 +2768,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Search for NPCs that have been timed in this guild/world, returning their latest respawn configuration
+      description: Search the Organization's timed NPCs by name, runtime NPC id or template id, returning their latest respawn configuration. Results omit timers the caller's roles cannot view and cover every Organization world when `world` is omitted.
       summary: Search NPCs with timer data
   /timers/auto:
     post:
@@ -18651,6 +18673,8 @@ components:
           maximum: 9007199254740991
         timerKey:
           type: string
+        world:
+          type: string
         name:
           type: string
         lvl:
@@ -18687,6 +18711,7 @@ components:
         - npcId
         - templateId
         - timerKey
+        - world
         - name
         - lvl
         - type

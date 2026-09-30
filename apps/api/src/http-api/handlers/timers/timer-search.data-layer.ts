@@ -1,61 +1,69 @@
 import { isObjectRecord } from "@lootlog/schema/records";
-import { and, desc, eq, isNull, sql } from "drizzle-orm";
-import { Effect, Schema } from "effect";
-import {
-  NpcTypeEnum as NpcType,
-  NpcTypeSchema,
-} from "@lootlog/schema/npc-type";
+import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import { Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { timerTable } from "#src/database/drizzle/schema";
+import type { TimerNpcSearchQuery } from "#src/contracts/timers/schemas";
 import { TIMER_TYPES } from "#src/timers/timer-limits";
-import { timerNpcTemplateId } from "#src/timers/timer-projection";
+import {
+  parseTimerNpc,
+  timerNpcTemplateId,
+} from "#src/timers/timer-projection";
+import { canViewTimer } from "./timer-selection.js";
+import type { TimersGuildAccess } from "./timers.handlers.js";
 import { toTimersDataFailure } from "./timer-errors.js";
 
-const parseNpc = (
-  npc: unknown,
-): { readonly lvl: number; readonly type: NpcType } | null => {
-  if (!npc) return null;
-  const schema = Schema.Struct({ lvl: Schema.Number, type: NpcTypeSchema });
+const DEFAULT_LIMIT = 10;
 
-  return Schema.decodeUnknownSync(
-    typeof npc === "string" ? Schema.fromJsonString(schema) : schema,
-  )(npc);
+const identityCondition = (query: TimerNpcSearchQuery) => {
+  const npcIds = query.npcIds ?? [];
+  const templateIds = query.templateIds ?? [];
+
+  if (npcIds.length === 0 && templateIds.length === 0) return undefined;
+
+  return or(
+    npcIds.length > 0 ? inArray(timerTable.npcId, [...npcIds]) : undefined,
+    templateIds.length > 0
+      ? inArray(sql`${timerTable.npc}->>'templateId'`, templateIds.map(String))
+      : undefined,
+  );
 };
 
 export const makeTimerSearch = (database: typeof ApiDatabase.Service) => {
   const operation = Effect.fn("searchTimersNpcs")(function* (
-    guildId: string,
-    world: string,
-    search: string,
-    limit = 10,
+    access: TimersGuildAccess,
+    query: TimerNpcSearchQuery,
   ) {
-    const boundedLimit = Number(limit) || 10;
-
+    // Every match is read so timers hidden from the caller never take a
+    // visible result's place under the limit.
     const timers = yield* database
-      .selectDistinctOn([timerTable.timerKey], {
+      .select({
         npc: timerTable.npc,
         npcId: timerTable.npcId,
         timerKey: timerTable.timerKey,
+        world: timerTable.world,
         latestRespBaseSeconds: timerTable.latestRespBaseSeconds,
         latestRespawnRandomness: timerTable.latestRespawnRandomness,
       })
       .from(timerTable)
       .where(
         and(
-          eq(timerTable.guildId, guildId),
-          eq(timerTable.world, world),
+          eq(timerTable.guildId, access.guild.id),
+          query.world ? eq(timerTable.world, query.world) : undefined,
           isNull(timerTable.deletedAt),
-          sql`${timerTable.npc}->>'name' ILIKE ${`%${search}%`}`,
+          query.search
+            ? sql`${timerTable.npc}->>'name' ILIKE ${`%${query.search}%`}`
+            : undefined,
+          identityCondition(query),
           sql`COALESCE(${timerTable.npc}->>'margonemType', '0') != ${String(TIMER_TYPES.CUSTOM_MANUAL)}`,
         ),
       )
-      .orderBy(timerTable.timerKey, desc(timerTable.updatedAt))
-      .limit(boundedLimit);
+      .orderBy(timerTable.world, timerTable.timerKey);
 
     const projectSearchTimer = (timer: (typeof timers)[number]) => {
-      const npc = parseNpc(timer.npc);
+      const npc = parseTimerNpc(timer.npc);
 
-      if (!npc) return [];
+      if (!npc || !canViewTimer(access, timer)) return [];
       const source = isObjectRecord(timer.npc) ? timer.npc : {};
 
       return [
@@ -63,6 +71,7 @@ export const makeTimerSearch = (database: typeof ApiDatabase.Service) => {
           npcId: timer.npcId,
           templateId: timerNpcTemplateId(timer.npc),
           timerKey: timer.timerKey,
+          world: timer.world,
           name: typeof source.name === "string" ? source.name : "",
           lvl: npc.lvl,
           type: npc.type,
@@ -79,11 +88,11 @@ export const makeTimerSearch = (database: typeof ApiDatabase.Service) => {
       ];
     };
 
-    return timers.flatMap(projectSearchTimer);
+    return timers
+      .flatMap(projectSearchTimer)
+      .slice(0, query.limit ?? DEFAULT_LIMIT);
   });
 
-  return (guildId: string, world: string, search: string, limit?: number) =>
-    operation(guildId, world, search, limit).pipe(
-      Effect.mapError(toTimersDataFailure),
-    );
+  return (access: TimersGuildAccess, query: TimerNpcSearchQuery) =>
+    operation(access, query).pipe(Effect.mapError(toTimersDataFailure));
 };

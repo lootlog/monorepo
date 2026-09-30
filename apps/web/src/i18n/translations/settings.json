@@ -717,7 +717,14 @@
       "fieldHint": "Wpisz jedno lub wiele ID NPC. Możesz rozdzielać je przecinkami, spacjami albo nowymi liniami."
     },
     "npcOption": {
-      "template": "{{name}} {{type}} (#{{id}}, każdy spawn)"
+      "template": "{{name}} {{type}} (#{{id}}, każdy spawn)",
+      "unmatched": "Brak dostępnego timera (#{{id}})",
+      "unmatchedTemplate": "Brak dostępnego timera (#{{id}}, każdy spawn)"
+    },
+    "npcSelection": {
+      "worldHint": "Lista pokazuje potwory z timerem w tym Lootlogu. Potwora bez timera dodasz, wpisując jego ID ręcznie.",
+      "allWorldsHint": "Dla wszystkich światów możesz wybrać tylko potwory oznaczone „każdy spawn”. Pojedynczy spawn wybierzesz po wskazaniu świata.",
+      "allWorldsTimerWarning": "Pojedynczy spawn pasuje tylko do timerów z tym samym ID, więc na innych światach powiadomienie może nie przyjść. Wybierz świat albo zastąp go potworem oznaczonym „każdy spawn”."
     },
     "deleteTargetDialog": {
       "title": "Usunąć kanał docelowy?",

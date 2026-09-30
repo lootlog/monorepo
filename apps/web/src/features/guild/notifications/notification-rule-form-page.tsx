@@ -41,6 +41,8 @@ export const NotificationRuleFormPage = () => {
     setNpcSearch,
     npcOptions,
     npcSearchError,
+    isAllWorlds,
+    hasAllWorldTimerNpcSelection,
     searchedNpcQuery,
     targetOptions,
     worldOptions,
@@ -148,6 +150,10 @@ export const NotificationRuleFormPage = () => {
                       setNpcSearch={setNpcSearch}
                       searchedNpcQuery={searchedNpcQuery}
                       npcSearchError={npcSearchError}
+                      isAllWorlds={isAllWorlds}
+                      hasAllWorldTimerNpcSelection={
+                        hasAllWorldTimerNpcSelection
+                      }
                     />
 
                     <NotificationScheduleFields form={form} t={t} />

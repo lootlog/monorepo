@@ -123,4 +123,17 @@ describe("NotificationMatchingService", () => {
       ),
     ).toBe(false);
   });
+  it("reports rule selections unmatched by timers without mixing runtime and template ids", () => {
+    const filters = { npcIds: [10, 20], npcTemplateIds: [10, 30] };
+
+    const timers = [
+      { npcId: 10, templateId: 30 },
+      { npcId: 40, templateId: null },
+    ];
+
+    expect(service.unmatchedTimerSelections(filters, timers)).toEqual({
+      npcIds: [20],
+      templateIds: [10],
+    });
+  });
 });
