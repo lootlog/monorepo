@@ -1,27 +1,5 @@
 import { defineConfig } from "orval";
-
-const services = {
-  activity: {
-    mutatorName: "activityFetch",
-    specPath: "../../apps/activity/openapi.yaml",
-  },
-  auth: {
-    mutatorName: "authFetch",
-    specPath: "../../apps/auth/openapi.yaml",
-  },
-  battlelog: {
-    mutatorName: "battlelogFetch",
-    specPath: "../../apps/battlelog/openapi.yaml",
-  },
-  main: {
-    mutatorName: "mainFetch",
-    specPath: "../../apps/api/openapi.yaml",
-  },
-  search: {
-    mutatorName: "searchFetch",
-    specPath: "../../apps/search/openapi.yaml",
-  },
-} as const;
+import { clientServices } from "./scripts/client-services";
 
 const sharedQueryOverride = {
   shouldExportQueryKey: true,
@@ -31,7 +9,7 @@ const sharedQueryOverride = {
   useSetQueryData: true,
 } as const;
 
-const projects = Object.entries(services).map(
+const projects = Object.entries(clientServices).map(
   ([service, { mutatorName, specPath }]) => {
     const input = {
       override: {

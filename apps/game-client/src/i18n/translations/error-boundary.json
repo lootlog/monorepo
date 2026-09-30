@@ -1,15 +1,13 @@
 {
-  "title": "Błąd aplikacji",
-  "summary": "Interfejs się wywalił. Możesz skopiować szczegóły błędu przed zamknięciem tego okna.",
-  "detailsHint": "Zamknięcie tego okna ukrywa tylko fallback. Wywalona część interfejsu nie odzyska się automatycznie.",
+  "title": "Błąd Lootloga",
+  "heading": "Część interfejsu Lootloga przestała działać",
+  "description": "Gra działa dalej. Przeładuj dodatek, aby spróbować ponownie. Jeśli błąd wraca, skopiuj informacje diagnostyczne i dołącz je do zgłoszenia.",
   "errorNameLabel": "Typ błędu",
-  "errorMessageLabel": "Wiadomość",
+  "errorMessageLabel": "Treść błędu",
   "stackLabel": "Stack trace",
-  "copyButton": "Kopiuj błąd",
-  "copySuccessButton": "Skopiowano",
-  "copyErrorButton": "Nie udało się skopiować",
-  "closeButton": "Zamknij",
+  "reloadButton": "Przeładuj dodatek",
+  "launcher": "Błąd Lootloga",
   "unknownErrorName": "Nieznany błąd",
-  "unknownErrorMessage": "Brak wiadomości błędu.",
+  "unknownErrorMessage": "Brak treści błędu.",
   "missingStack": "Stack trace jest niedostępny."
 }

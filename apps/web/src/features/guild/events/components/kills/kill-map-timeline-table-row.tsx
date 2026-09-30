@@ -1,4 +1,3 @@
-import { ROW_ENTRANCE_CLASS_NAME } from "@/components/ui/row-entrance";
 import { Fragment } from "react";
 import type { TFunction } from "i18next";
 import { flexRender, type Cell, type Row } from "@tanstack/react-table";
@@ -46,10 +45,7 @@ export const KillMapTimelineTableRow = ({
     <Fragment>
       <TableRow
         data-state={isExpanded ? "expanded" : undefined}
-        className={cn(
-          "h-14 border-border/70 hover:bg-muted/20 md:h-12",
-          ROW_ENTRANCE_CLASS_NAME,
-        )}
+        className="h-14 border-border/70 hover:bg-muted/20 md:h-12"
       >
         {visibleCells.map((cell) => (
           <TableCell

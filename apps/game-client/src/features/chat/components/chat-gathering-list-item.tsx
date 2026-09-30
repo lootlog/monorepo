@@ -1,9 +1,9 @@
 import { useTranslation } from "react-i18next";
 import { UserPlus, LoaderCircle } from "lucide-react";
-import type { ActivePartyGatheringSummary } from "@lootlog/client/main";
+import type { PartyGatheringSummary } from "@lootlog/schema/party-ready-room";
 import { Button } from "@/components/ui/button";
 import { ChatGatheringHeader } from "./chat-gathering-header";
-import { ChatGatheringCounters } from "./chat-gathering-counters";
+import { GatheringPartyCounter } from "@/components/common/gathering-party-counter";
 import { ChatGatheringDetails } from "./chat-gathering-details";
 
 export function ChatGatheringListItem({
@@ -11,13 +11,15 @@ export function ChatGatheringListItem({
   hidden,
   pending,
   disabled,
+  stale,
   onApply,
   onRestore,
 }: {
-  gathering: ActivePartyGatheringSummary;
+  gathering: PartyGatheringSummary;
   hidden: boolean;
   pending: boolean;
   disabled: boolean;
+  stale?: boolean;
   onApply: () => void;
   onRestore: () => void;
 }) {
@@ -32,7 +34,10 @@ export function ChatGatheringListItem({
             guildIds={gathering.guildIds}
           />
         </div>
-        <ChatGatheringCounters partyMemberCount={gathering.partyMemberCount} />
+        <GatheringPartyCounter
+          partyState={gathering.partyState}
+          stale={stale}
+        />
       </div>
       <ChatGatheringDetails {...gathering} />
       <div className="ll:mt-1 ll:flex ll:items-center ll:justify-between ll:gap-2">

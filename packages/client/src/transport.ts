@@ -25,6 +25,8 @@ export type ApiServiceConfig = {
   baseUrl: string;
   credentials?: RequestCredentials;
   fetch?: FetchImplementation;
+  /** Bounds the HTTP request through completion of its response body. */
+  timeoutMs?: number;
   getHeaders?: () => HeadersInit | Promise<HeadersInit>;
   onError?: (error: ApiError<unknown>, context: ApiRequestContext) => void;
 };
@@ -354,6 +356,7 @@ const resolveRequestConfiguration = (
     baseUrl,
     credentials: override?.credentials ?? serviceConfiguration?.credentials,
     fetch: fetchImplementation,
+    timeoutMs: override?.timeoutMs ?? serviceConfiguration?.timeoutMs,
     getHeaders: override?.getHeaders ?? serviceConfiguration?.getHeaders,
     onError: override?.onError ?? serviceConfiguration?.onError,
   };
@@ -375,7 +378,48 @@ const notifyError = (
   }
 };
 
-const executeFetch = async ({
+const withRequestTimeout = async <T>(
+  execute: (signal: AbortSignal) => Promise<T>,
+  callerSignal: AbortSignal | null | undefined,
+  timeoutMs: number,
+): Promise<T> => {
+  const controller = new AbortController();
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  let cancel: (() => void) | undefined;
+
+  const interrupted = new Promise<never>((_resolve, reject) => {
+    cancel = () => {
+      controller.abort(callerSignal?.reason);
+      reject(controller.signal.reason);
+    };
+
+    if (callerSignal?.aborted) {
+      cancel();
+
+      return;
+    }
+
+    callerSignal?.addEventListener("abort", cancel, { once: true });
+    timeout = setTimeout(() => {
+      controller.abort(
+        new DOMException("API request timed out", "TimeoutError"),
+      );
+      reject(controller.signal.reason);
+    }, timeoutMs);
+  });
+
+  try {
+    if (controller.signal.aborted) return await interrupted;
+
+    return await Promise.race([execute(controller.signal), interrupted]);
+  } finally {
+    clearTimeout(timeout);
+
+    if (cancel) callerSignal?.removeEventListener("abort", cancel);
+  }
+};
+
+const executeRequest = async ({
   configuration,
   headers,
   method,
@@ -397,13 +441,25 @@ const executeFetch = async ({
       headers,
     };
 
-    const fetchImplementation = configuration.fetch;
+    const fetchAndRead = async (signal: AbortSignal | null | undefined) => {
+      const fetchImplementation = configuration.fetch;
+      const options = { ...requestOptions, signal };
 
-    if (fetchImplementation) {
-      return await fetchImplementation.call(globalThis, url, requestOptions);
-    }
+      const response = fetchImplementation
+        ? await fetchImplementation.call(globalThis, url, options)
+        : await fetch(url, options);
 
-    return await fetch(url, requestOptions);
+      return { response, data: await parseResponse(response) };
+    };
+
+    if (configuration.timeoutMs !== undefined)
+      return await withRequestTimeout(
+        fetchAndRead,
+        requestInit.signal,
+        configuration.timeoutMs,
+      );
+
+    return await fetchAndRead(requestInit.signal);
   } catch (caughtError) {
     const error = new ApiError({
       cause: caughtError,
@@ -441,7 +497,7 @@ export const executeApiRequest = async <TData>(
 
   const method = requestInit.method ?? "GET";
 
-  const response = await executeFetch({
+  const { response, data } = await executeRequest({
     configuration,
     headers,
     method,
@@ -449,8 +505,6 @@ export const executeApiRequest = async <TData>(
     service,
     url,
   });
-
-  const data = await parseResponse(response);
 
   if (!response.ok) {
     const error = new ApiError({

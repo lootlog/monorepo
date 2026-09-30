@@ -1,3 +1,4 @@
+import { buildLootVisibilityCacheScope } from "#src/loots/loot-visibility-cache";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   getEffectiveCapabilities,
@@ -26,9 +27,11 @@ import type {
   LootPersistenceError,
 } from "#src/loots/loot-persistence";
 import type {
+  LootNpcNameSummary,
   LootQueryError,
   LootQueryOperations,
 } from "#src/loots/query/loot-query.operations";
+import type { LootQueryFilters } from "#src/loots/query/loot-query-filter";
 import type { LootStatsService } from "#src/loots/query/loot-stats.service";
 
 type Guild = typeof guildTable.$inferSelect;
@@ -101,6 +104,12 @@ export interface LootsOperations {
     roles: Role[],
     options: { readonly hid: string; readonly world?: string },
   ) => LootsEffect<ResolvedLootItem>;
+  readonly summarizeLootsByNpcName: (
+    guild: Guild,
+    accessPolicy: AccessPolicy,
+    roles: Role[],
+    filters: LootQueryFilters,
+  ) => LootsEffect<LootNpcNameSummary>;
 }
 
 interface LootsDependencies {
@@ -115,18 +124,6 @@ const CACHE_TTL_SECONDS = 10;
 
 const MAX_PENDING_DETAIL_READS = 1_024;
 
-const visibilityScope = (permissions: Permission[], roles: Role[]) => ({
-  permissions: [...permissions].sort(),
-  roles: roles
-    .map((role) => ({
-      id: role.id,
-      lvlRangeFrom: role.lvlRangeFrom,
-      lvlRangeTo: role.lvlRangeTo,
-      permissions: [...role.permissions].sort(),
-    }))
-    .sort((left, right) => left.id.localeCompare(right.id)),
-});
-
 const cacheKey = (
   guild: Guild,
   permissions: Permission[],
@@ -140,7 +137,7 @@ const cacheKey = (
     Buffer.from(
       stableJsonStringify({
         params: { ...params, cursor: 0 },
-        visibilityScope: visibilityScope(permissions, roles),
+        visibilityScope: buildLootVisibilityCacheScope(permissions, roles),
       }),
     ).toString("base64url"),
   ].join(":");
@@ -350,7 +347,7 @@ export const makeLootsOperations = ({
           const key = stableJsonStringify({
             guildId: guild.id,
             lootId,
-            visibilityScope: visibilityScope(permissions, roles),
+            visibilityScope: buildLootVisibilityCacheScope(permissions, roles),
           });
 
           const pending = pendingDetails.get(key);
@@ -394,6 +391,14 @@ export const makeLootsOperations = ({
         getEffectiveCapabilities(accessPolicy),
         roles,
         options,
+      ),
+
+    summarizeLootsByNpcName: (guild, accessPolicy, roles, filters) =>
+      query.summarizeLootsByNpcName(
+        guild,
+        getEffectiveCapabilities(accessPolicy),
+        roles,
+        filters,
       ),
   };
 };

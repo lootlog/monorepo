@@ -2,9 +2,12 @@ import { selectEventKillPoints } from "#src/events/kills/event-point-query";
 import { randomUUID } from "node:crypto";
 
 import { and, asc, eq, gte, inArray, isNull, lte, or, sql } from "drizzle-orm";
+import type { PgColumn } from "drizzle-orm/pg-core";
 import { Clock, Effect } from "effect";
+import { chunk, sortBy } from "es-toolkit";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
+  eventHeroKillTable,
   eventHeroNpcTable,
   eventKillPointTable,
   eventMapAssignmentHistoryTable,
@@ -22,6 +25,29 @@ type RankingInsert = typeof eventRankingTable.$inferInsert;
 type KillPointUpdate = Partial<typeof eventKillPointTable.$inferInsert>;
 
 type RankingUpdate = Partial<typeof eventRankingTable.$inferInsert>;
+
+/** Keeps each ranking upsert well below PostgreSQL's bind-parameter limit. */
+const RANKING_UPSERT_BATCH_SIZE = 500;
+
+const excluded = (column: PgColumn) =>
+  sql`excluded.${sql.identifier(column.name)}`;
+
+const increment = (column: PgColumn) => sql`${column} + ${excluded(column)}`;
+
+/**
+ * Adds a proposed ranking row to the current one inside the upsert, so
+ * concurrent kills for the same member accumulate instead of overwriting each
+ * other. The AFK average stays a running average rounded to two decimals, as
+ * `Math.round(value * 100) / 100` would.
+ */
+const addKillToCurrentRanking = {
+  totalPoints: increment(eventRankingTable.totalPoints),
+  totalKills: increment(eventRankingTable.totalKills),
+  totalTimeSeconds: increment(eventRankingTable.totalTimeSeconds),
+  avgAfkPercentage: sql`floor(((${eventRankingTable.avgAfkPercentage} * ${eventRankingTable.totalKills} + ${excluded(eventRankingTable.avgAfkPercentage)} * ${excluded(eventRankingTable.totalKills)}) / (${eventRankingTable.totalKills} + ${excluded(eventRankingTable.totalKills)})) * 100 + 0.5) / 100`,
+  pointsModified: sql`${eventRankingTable.pointsModified} or ${excluded(eventRankingTable.pointsModified)}`,
+  updatedAt: excluded(eventRankingTable.updatedAt),
+};
 
 export const makeEventPointsStore = (database: ApiDatabaseValue) => {
   function run<A>(
@@ -54,54 +80,68 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
     );
   }
 
-  function findRankingByKey(
+  /**
+   * Adds one kill's points to the name-keyed rankings. The kill row is locked
+   * for the transaction, so a concurrent hero deletion either waits for these
+   * writes and then removes them, or has already removed the kill and no
+   * ranking is written.
+   */
+  function addKillToRankings(
     eventId: string,
-    memberId: number,
     heroNpcName: string,
+    killId: string,
+    entries: ReadonlyArray<{
+      memberId: number;
+      points: number;
+      trackingSeconds: number;
+      afkPercentage: number;
+      pointsModified: boolean;
+    }>,
   ) {
     return run((database) =>
-      database
-        .select()
-        .from(eventRankingTable)
-        .where(
-          and(
-            eq(eventRankingTable.eventId, eventId),
-            eq(eventRankingTable.memberId, memberId),
-            eq(eventRankingTable.heroNpcName, heroNpcName),
-          ),
-        )
-        .limit(1),
-    ).pipe(Effect.map((rows) => rows[0] ?? null));
-  }
+      database.transaction((transaction) =>
+        Effect.gen(function* () {
+          const kills = yield* transaction
+            .select({ id: eventHeroKillTable.id })
+            .from(eventHeroKillTable)
+            .where(eq(eventHeroKillTable.id, killId))
+            .for("share");
 
-  function createRanking(data: Omit<RankingInsert, "id" | "updatedAt">) {
-    return run((database) =>
-      database
-        .insert(eventRankingTable)
-        .values({ ...data, id: randomUUID(), updatedAt: new Date() })
-        .returning(),
-    ).pipe(Effect.map((rows) => rows[0]));
-  }
+          if (kills.length === 0) return false;
 
-  function incrementRanking(
-    id: string,
-    points: number,
-    time: number,
-    afk: number,
-    pointsModified: boolean,
-  ) {
-    return run((database) =>
-      database
-        .update(eventRankingTable)
-        .set({
-          totalPoints: sql`${eventRankingTable.totalPoints} + ${points}`,
-          totalKills: sql`${eventRankingTable.totalKills} + 1`,
-          totalTimeSeconds: sql`${eventRankingTable.totalTimeSeconds} + ${time}`,
-          avgAfkPercentage: afk,
-          pointsModified,
-          updatedAt: new Date(),
-        })
-        .where(eq(eventRankingTable.id, id)),
+          const now = new Date(yield* Clock.currentTimeMillis);
+
+          // Rows are locked in conflict-key order so concurrent kills sharing
+          // members cannot deadlock.
+          const rows = sortBy(entries, ["memberId"]).map((entry) => ({
+            id: randomUUID(),
+            eventId,
+            memberId: entry.memberId,
+            heroNpcName,
+            totalPoints: entry.points,
+            totalKills: 1,
+            totalTimeSeconds: entry.trackingSeconds,
+            avgAfkPercentage: entry.afkPercentage,
+            pointsModified: entry.pointsModified,
+            updatedAt: now,
+          }));
+
+          for (const batch of chunk(rows, RANKING_UPSERT_BATCH_SIZE))
+            yield* transaction
+              .insert(eventRankingTable)
+              .values(batch)
+              .onConflictDoUpdate({
+                target: [
+                  eventRankingTable.eventId,
+                  eventRankingTable.memberId,
+                  eventRankingTable.heroNpcName,
+                ],
+                set: addKillToCurrentRanking,
+              });
+
+          return true;
+        }),
+      ),
     );
   }
 
@@ -275,17 +315,15 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
   }
 
   return {
+    addKillToRankings,
     applyRecalculation,
-    createRanking,
     findAssignments,
     findEvent,
     findKillPointsForEvent,
     findMaps,
     findPresenceLogs,
-    findRankingByKey,
     findRankings,
     findWindowSummaries,
-    incrementRanking,
   };
 };
 

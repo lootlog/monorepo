@@ -1,6 +1,7 @@
 import {
   migrateSettingsDocument,
   SETTINGS_CATALOG,
+  type SettingsFieldDefinition,
 } from "@lootlog/domain/settings-documents";
 import type {
   SettingsDocumentLayer,
@@ -13,7 +14,6 @@ import {
   collectLeafPaths,
   decodeSettingsRecord,
   getPath,
-  hasPath,
   pathsOverlap,
   setPath,
   unsetPath,
@@ -31,7 +31,9 @@ interface ApplySettingsPatchInput {
 }
 
 const getFieldDefinition = (domain: SettingsDomain, path: string) => {
-  const fields = SETTINGS_CATALOG[domain].fields;
+  const fields: Readonly<Record<string, SettingsFieldDefinition | undefined>> =
+    SETTINGS_CATALOG[domain].fields;
+
   const exactDefinition = fields[path];
 
   if (exactDefinition) {
@@ -46,10 +48,32 @@ const getFieldDefinition = (domain: SettingsDomain, path: string) => {
     return undefined;
   }
 
+  const definition = fields[ancestorPath];
+
+  if (!definition) return undefined;
+
   return {
-    definition: fields[ancestorPath],
+    definition,
     fieldPath: ancestorPath,
   };
+};
+
+const requireFieldForScope = (
+  domain: SettingsDomain,
+  scope: SettingsScope,
+  path: string,
+) => {
+  const fieldMatch = getFieldDefinition(domain, path);
+
+  if (!fieldMatch) {
+    throw new Error(`Unknown setting path: ${path}`);
+  }
+
+  if (!fieldMatch.definition.scopes.includes(scope.type)) {
+    throw new Error(`Setting ${path} is not available for scope ${scope.type}`);
+  }
+
+  return fieldMatch;
 };
 
 export const resolveSettingsDomain = (
@@ -75,16 +99,16 @@ export const resolveSettingsDomain = (
     sources[path] = "DEFAULT";
 
     for (const layer of migratedLayers) {
-      if (
-        !fieldDefinition.scopes.includes(layer.scope.type) ||
-        !hasPath(layer.overrides, path)
-      ) {
+      if (!fieldDefinition.scopes.includes(layer.scope.type)) {
         continue;
       }
 
       const candidateValue = getPath(layer.overrides, path);
 
-      if (!fieldDefinition.isValid(candidateValue)) {
+      if (
+        candidateValue === undefined ||
+        !fieldDefinition.isValid(candidateValue)
+      ) {
         continue;
       }
 
@@ -134,17 +158,7 @@ export const applySettingsPatch = ({
   const nextOverrides = structuredClone(currentOverrides);
 
   for (const { path, value } of setEntries) {
-    const fieldMatch = getFieldDefinition(domain, path);
-
-    if (!fieldMatch) {
-      throw new Error(`Unknown setting path: ${path}`);
-    }
-
-    if (!fieldMatch.definition.scopes.includes(scope.type)) {
-      throw new Error(
-        `Setting ${path} is not available for scope ${scope.type}`,
-      );
-    }
+    const fieldMatch = requireFieldForScope(domain, scope, path);
 
     if (
       fieldMatch.fieldPath === path &&
@@ -157,17 +171,7 @@ export const applySettingsPatch = ({
   }
 
   for (const path of unset) {
-    const fieldMatch = getFieldDefinition(domain, path);
-
-    if (!fieldMatch) {
-      throw new Error(`Unknown setting path: ${path}`);
-    }
-
-    if (!fieldMatch.definition.scopes.includes(scope.type)) {
-      throw new Error(
-        `Setting ${path} is not available for scope ${scope.type}`,
-      );
-    }
+    requireFieldForScope(domain, scope, path);
 
     unsetPath(nextOverrides, path);
   }

@@ -12,11 +12,12 @@ import {
   type EventScoringMode,
 } from "@lootlog/domain/scoring";
 import { randomUUID } from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
+  eventMapCoverageGapTable,
   eventMapTable,
   eventTable,
   type roleTable,
@@ -40,6 +41,110 @@ class EventUpdateError extends TaggedErrorClass<EventUpdateError>()(
   "EventUpdateError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
+
+type ExistingHero = Pick<
+  typeof eventHeroNpcTable.$inferSelect,
+  "id" | "npcId" | "npcName"
+>;
+
+type ExistingMap = Pick<
+  typeof eventMapTable.$inferSelect,
+  "id" | "heroNpcId" | "mapId" | "mapName"
+>;
+
+type HeroDefinition = NonNullable<UpdateEventRequest["heroNpcs"]>[number];
+
+type HeroListChanges = {
+  heroNpcIds: Array<{ id: string; npcId: number }>;
+  mapNames: Array<{ id: string; mapName: string }>;
+  newHeroes: HeroDefinition[];
+  newMaps: Array<{ heroNpcId: string; mapId: number; mapName: string }>;
+};
+
+/**
+ * Matches the requested hero list to stored heroes by name and to stored maps
+ * by map id, so retained heroes and maps keep their identities and history.
+ * The list may add heroes and maps but never removes them: removal deletes
+ * kills, points and tracking history, so it must use the dedicated endpoints.
+ */
+const planHeroListUpdate = (
+  existingHeroes: ReadonlyArray<ExistingHero>,
+  existingMaps: ReadonlyArray<ExistingMap>,
+  requested: ReadonlyArray<HeroDefinition>,
+): HeroListChanges | InvalidRequestError => {
+  const requestedByName = new Map(
+    requested.map((hero) => [hero.npcName, hero]),
+  );
+
+  if (requestedByName.size !== requested.length) {
+    return new InvalidRequestError("heroNpcs must not repeat a hero name");
+  }
+
+  if (
+    requested.some(
+      (hero) =>
+        new Set(hero.maps.map((map) => map.mapId)).size !== hero.maps.length,
+    )
+  ) {
+    return new InvalidRequestError("A hero must not repeat a map");
+  }
+
+  const changes: HeroListChanges = {
+    heroNpcIds: [],
+    mapNames: [],
+    newHeroes: [],
+    newMaps: [],
+  };
+
+  for (const hero of existingHeroes) {
+    const requestedHero = requestedByName.get(hero.npcName);
+
+    if (!requestedHero) {
+      return new InvalidRequestError(
+        "heroNpcs must list every existing hero; delete a hero through its own endpoint",
+      );
+    }
+
+    if (
+      requestedHero.npcId !== undefined &&
+      requestedHero.npcId !== hero.npcId
+    ) {
+      changes.heroNpcIds.push({ id: hero.id, npcId: requestedHero.npcId });
+    }
+
+    const requestedMaps = new Map(
+      requestedHero.maps.map((map) => [map.mapId, map]),
+    );
+
+    const heroMaps = existingMaps.filter((map) => map.heroNpcId === hero.id);
+
+    for (const map of heroMaps) {
+      const requestedMap = requestedMaps.get(map.mapId);
+
+      if (!requestedMap) {
+        return new InvalidRequestError(
+          "heroNpcs must list every existing map; delete a map through its own endpoint",
+        );
+      }
+
+      if (requestedMap.mapName !== map.mapName) {
+        changes.mapNames.push({ id: map.id, mapName: requestedMap.mapName });
+      }
+
+      requestedMaps.delete(map.mapId);
+    }
+
+    for (const map of requestedMaps.values()) {
+      changes.newMaps.push({ heroNpcId: hero.id, ...map });
+    }
+
+    requestedByName.delete(hero.npcName);
+  }
+
+  changes.newHeroes = [...requestedByName.values()];
+
+  return changes;
+};
 
 const updatedDate = (value: string | null | undefined, current: Date | null) =>
   value === undefined ? current : value ? new Date(value) : null;
@@ -155,10 +260,13 @@ export const makeEventUpdate =
             }
 
             if (heroNpcs) {
+              // Hold the heroes until commit so a concurrent hero deletion
+              // waits instead of removing a hero this update adds maps to.
               const existingHeroes = yield* transaction
                 .select()
                 .from(eventHeroNpcTable)
-                .where(eq(eventHeroNpcTable.eventId, eventId));
+                .where(eq(eventHeroNpcTable.eventId, eventId))
+                .for("share");
 
               if (
                 filterHeroesByLevel(
@@ -172,9 +280,102 @@ export const makeEventUpdate =
                 );
               }
 
-              yield* transaction
-                .delete(eventHeroNpcTable)
-                .where(eq(eventHeroNpcTable.eventId, eventId));
+              const existingMaps =
+                existingHeroes.length === 0
+                  ? []
+                  : yield* transaction
+                      .select()
+                      .from(eventMapTable)
+                      .where(
+                        inArray(
+                          eventMapTable.heroNpcId,
+                          existingHeroes.map((hero) => hero.id),
+                        ),
+                      );
+
+              const changes = planHeroListUpdate(
+                existingHeroes,
+                existingMaps,
+                heroNpcs,
+              );
+
+              if (changes instanceof InvalidRequestError) {
+                return yield* Effect.fail(changes);
+              }
+
+              const now = new Date(yield* Clock.currentTimeMillis);
+
+              for (const { id, npcId } of changes.heroNpcIds) {
+                yield* transaction
+                  .update(eventHeroNpcTable)
+                  .set({ npcId })
+                  .where(eq(eventHeroNpcTable.id, id));
+              }
+
+              for (const { id, mapName } of changes.mapNames) {
+                yield* transaction
+                  .update(eventMapTable)
+                  .set({ mapName, updatedAt: now })
+                  .where(eq(eventMapTable.id, id));
+              }
+
+              const newHeroes = changes.newHeroes.map((hero) => ({
+                ...hero,
+                id: randomUUID(),
+              }));
+
+              if (newHeroes.length > 0) {
+                yield* transaction.insert(eventHeroNpcTable).values(
+                  newHeroes.map((hero) => ({
+                    id: hero.id,
+                    eventId,
+                    npcId: hero.npcId ?? null,
+                    npcName: hero.npcName,
+                  })),
+                );
+              }
+
+              // Like the dedicated endpoints, a map added to an existing hero
+              // starts unassigned; maps of a new hero start without a gap.
+              const addedMaps = changes.newMaps.map((map) => ({
+                ...map,
+                id: randomUUID(),
+              }));
+
+              const newMaps = [
+                ...addedMaps,
+                ...newHeroes.flatMap((hero) =>
+                  hero.maps.map((map) => ({
+                    ...map,
+                    id: randomUUID(),
+                    heroNpcId: hero.id,
+                  })),
+                ),
+              ];
+
+              if (newMaps.length > 0) {
+                yield* transaction.insert(eventMapTable).values(
+                  newMaps.map((map) => ({
+                    id: map.id,
+                    heroNpcId: map.heroNpcId,
+                    mapId: map.mapId,
+                    mapName: map.mapName,
+                    updatedAt: now,
+                  })),
+                );
+              }
+
+              if (addedMaps.length > 0) {
+                yield* transaction.insert(eventMapCoverageGapTable).values(
+                  addedMaps.map((map) => ({
+                    id: randomUUID(),
+                    mapId: map.id,
+                    heroNpcId: map.heroNpcId,
+                    gapType: "UNASSIGNED" as const,
+                    startedAt: now,
+                  })),
+                );
+              }
             }
 
             yield* transaction
@@ -203,33 +404,12 @@ export const makeEventUpdate =
                 updatedAt: new Date(yield* Clock.currentTimeMillis),
               })
               .where(eq(eventTable.id, eventId));
-
-            for (const hero of heroNpcs ?? []) {
-              const heroId = randomUUID();
-              yield* transaction.insert(eventHeroNpcTable).values({
-                id: heroId,
-                eventId,
-                npcId: hero.npcId ?? null,
-                npcName: hero.npcName,
-              });
-
-              if (hero.maps.length > 0) {
-                yield* transaction.insert(eventMapTable).values(
-                  hero.maps.map((map) => ({
-                    id: randomUUID(),
-                    heroNpcId: heroId,
-                    mapId: map.mapId,
-                    mapName: map.mapName,
-                    updatedAt: new Date(),
-                  })),
-                );
-              }
-            }
           }),
         )
         .pipe(
           Effect.mapError((cause) =>
-            cause instanceof ResourceNotFoundError
+            cause instanceof ResourceNotFoundError ||
+            cause instanceof InvalidRequestError
               ? cause
               : new EventUpdateError({
                   operation: "events.update.transaction",

@@ -6,10 +6,15 @@ import {
 } from "@lootlog/client/main";
 import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
 
+// A response reflects expiries that preceded its evaluation on the server,
+// which can lag its receipt by the request's latency.
+const RESPONSE_LATENCY_ALLOWANCE_MS = 60_000;
+
 export function useTimerExpiry(
   timers: Pick<TimerResponseDto, "timerKey" | "maxSpawnTime">[] | undefined,
   guildId: string | undefined,
   world: string | null | undefined,
+  fetchedAt: number,
 ) {
   const queryClient = useQueryClient();
   const expiredRef = useRef(new Map<string, string>());
@@ -21,7 +26,13 @@ export function useTimerExpiry(
     let hasNewExpiry = false;
 
     for (const timer of timers ?? []) {
-      if (Date.parse(timer.maxSpawnTime) > currentTime) continue;
+      const maxSpawnTime = Date.parse(timer.maxSpawnTime);
+
+      if (
+        maxSpawnTime > currentTime ||
+        maxSpawnTime <= fetchedAt - RESPONSE_LATENCY_ALLOWANCE_MS
+      )
+        continue;
       expired.set(timer.timerKey, timer.maxSpawnTime);
 
       if (expiredRef.current.get(timer.timerKey) !== timer.maxSpawnTime) {

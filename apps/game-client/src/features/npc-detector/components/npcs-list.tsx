@@ -7,6 +7,7 @@ import {
   useNpcDetectorStore,
 } from "@/store/npc-detector.store";
 import { useSettingsStore } from "@/store/settings.store";
+import { useAnimationEffects } from "@/hooks/use-animation-effects";
 import { type FC, useLayoutEffect, useRef, useState } from "react";
 import type { DetectorSettings } from "@lootlog/schema/account-preferences";
 import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
@@ -22,11 +23,11 @@ type NpcsListProps = {
   npcTypeColors?: NpcTypeColors;
 };
 
-const NPC_ROW_HEIGHT_PX = 50;
+const NPC_ROW_HEIGHT_PX = 40;
 
-const NPC_ROW_GAP_PX = 4;
+const NPC_ROW_GAP_PX = 0;
 
-const NPC_LIST_PADDING_TOP_PX = 4;
+const NPC_LIST_PADDING_TOP_PX = 0;
 
 const NPC_ROW_STRIDE_PX = NPC_ROW_HEIGHT_PX + NPC_ROW_GAP_PX;
 
@@ -55,7 +56,6 @@ export const NpcsList: FC<NpcsListProps> = ({
   const {
     activeDetectionAnimations,
     clearDetectionAnimation,
-    hasMultipleNpcs,
     latestDetectionAnimationCycle,
     removeNpc,
     setNpcState,
@@ -64,7 +64,6 @@ export const NpcsList: FC<NpcsListProps> = ({
     useShallow((state) => ({
       activeDetectionAnimations: state.activeDetectionAnimations,
       clearDetectionAnimation: state.clearDetectionAnimation,
-      hasMultipleNpcs: state.npcs.length > 1,
       latestDetectionAnimationCycle: state.latestDetectionAnimationCycle,
       removeNpc: state.removeNpc,
       setNpcState: state.setNpcState,
@@ -72,9 +71,13 @@ export const NpcsList: FC<NpcsListProps> = ({
     })),
   );
 
+  // The setting alone drives countdowns, which step under reduced motion;
+  // movement also follows the operating system preference.
   const animationEffectsEnabled = useSettingsStore(
     (state) => state.animationEffectsEnabled,
   );
+
+  const motionEnabled = useAnimationEffects();
 
   const hasActivePartyGathering = useHasOwnedReadyRoom();
 
@@ -131,11 +134,16 @@ export const NpcsList: FC<NpcsListProps> = ({
     if (latestDetectionAnimationCycle === 0) return;
     scrollViewportRef.current?.scrollTo({
       top: 0,
-      behavior: animationEffectsEnabled ? "smooth" : "auto",
+      behavior: motionEnabled ? "smooth" : "auto",
     });
-  }, [animationEffectsEnabled, latestDetectionAnimationCycle]);
+  }, [motionEnabled, latestDetectionAnimationCycle]);
 
   const itemCount = npcs?.length ?? 0;
+
+  // Counts the rows the window shows, not every stored detection: the last
+  // visible row is dismissed through the window's close button, which also
+  // clears detections the window's routing hides.
+  const hasMultipleNpcs = itemCount > 1;
   const viewportHeight = viewport.height || NPC_LIST_FALLBACK_HEIGHT_PX;
 
   const firstVisibleIndex =
@@ -173,14 +181,14 @@ export const NpcsList: FC<NpcsListProps> = ({
     npcs,
     startIndex,
     endIndex,
-    animationEffectsEnabled,
+    animationEffectsEnabled: motionEnabled,
   });
 
   useNpcListRowLayoutAnimation({
     npcs,
     startIndex,
     endIndex,
-    animationEffectsEnabled,
+    animationEffectsEnabled: motionEnabled,
     listContentRef,
     rowStride: NPC_ROW_STRIDE_PX,
   });
@@ -196,7 +204,10 @@ export const NpcsList: FC<NpcsListProps> = ({
   );
 
   return (
-    <ScrollArea ref={scrollViewportRef} className="ll:w-full ll:h-full">
+    <ScrollArea
+      ref={scrollViewportRef}
+      className="ll:h-full ll:max-h-[inherit] ll:w-full"
+    >
       <ul
         ref={listContentRef}
         className="ll:relative ll:w-full ll:m-0 ll:p-0 ll:list-none"
@@ -239,7 +250,7 @@ export const NpcsList: FC<NpcsListProps> = ({
           <li
             key={`exiting-${npc.id}-${startedAt}`}
             aria-hidden="true"
-            className="ll:pointer-events-none ll:absolute ll:left-0 ll:w-full ll:animate-out ll:fade-out-0 ll:slide-out-to-top-3 ll:zoom-out-95 ll:duration-200 ll:transition-none"
+            className="ll:pointer-events-none ll:absolute ll:left-0 ll:w-full ll:animate-out ll:fade-out-0 ll:slide-out-to-right-3 ll:duration-short ll:ease-exit ll:transition-none"
             style={{
               height: NPC_ROW_HEIGHT_PX,
               top: NPC_LIST_PADDING_TOP_PX + index * NPC_ROW_STRIDE_PX,

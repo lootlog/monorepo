@@ -1,6 +1,6 @@
 import { useTimersStore } from "@/store/timers.store";
 import { SettingsColorRow } from "@/components/settings/settings-color-row";
-import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { IconButton } from "@/components/ui/icon-button";
 import { SettingsList } from "@/components/settings/settings-list";
 import {
   Collapsible,
@@ -63,12 +63,12 @@ export const HiddenColorsList: FC<HiddenColorsListProps> = ({
                 borderColor={hex?.border ?? "#9ca3af"}
                 backgroundColor={hex?.background ?? "#9ca3af33"}
               >
-                <SettingsIconButton
+                <IconButton
                   label={restoreLabel}
                   onClick={() => onRestore(colorId)}
                 >
                   <RotateCcw />
-                </SettingsIconButton>
+                </IconButton>
               </SettingsColorRow>
             );
           })}

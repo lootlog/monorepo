@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { isObjectRecord } from "@lootlog/schema/records";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
+import { useAccessibleGuilds } from "@/hooks/api/use-accessible-guilds";
 import { migrateHotkeysState, useHotkeysStore } from "@/store/hotkeys.store";
 import { useBattlePanelStore } from "@/store/battle-panel.store";
 import { useSettingsStore } from "@/store/settings.store";
@@ -52,6 +52,7 @@ export const applyTimerDocuments = (documents: SettingsDocuments) => {
       "timers.colorFiltersEnabled",
     ),
     timersSortOrder: selectSettingsValue(documents, "timers.timersSortOrder"),
+    customLists: selectSettingsValue(documents, "timers.customLists"),
     displayConfig: selectSettingsValue(
       documents,
       "appearance.timers.displayConfig",
@@ -95,6 +96,7 @@ export const applyTimerDocuments = (documents: SettingsDocuments) => {
     colorFiltersEnabled:
       decoded.colorFiltersEnabled ?? store.colorFiltersEnabled,
     timersSortOrder: decoded.timersSortOrder ?? store.timersSortOrder,
+    customLists: decoded.customLists ?? store.customLists,
     customColors: decoded.customColors ?? store.customColors,
     timersColors: decoded.timersColors ?? store.timersColors,
     defaultColorNames: decoded.defaultColorNames ?? store.defaultColorNames,
@@ -125,6 +127,7 @@ type TimersProjection = Pick<
   | "timerFiltersEnabled"
   | "colorFiltersEnabled"
   | "timersSortOrder"
+  | "customLists"
   | "customColors"
   | "timersColors"
   | "defaultColorNames"
@@ -255,7 +258,7 @@ export const useSettingsHydration = () => {
     data: guilds,
     isFetched: areGuildsFetched,
     isFetching: areGuildsFetching,
-  } = useUsersControllerGetCurrentUserAccessibleGuilds();
+  } = useAccessibleGuilds();
 
   const guildIds = getGuildIds(guilds);
 

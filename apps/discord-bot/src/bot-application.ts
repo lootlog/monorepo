@@ -200,7 +200,7 @@ const BotConsumer = Layer.effectDiscard(
     yield* rabbit.consume(
       {
         queue: notificationQueue.name,
-        prefetch: 1,
+        prefetch: 10,
         failurePolicy: { strategy: "requeue" },
       },
       (delivery) =>

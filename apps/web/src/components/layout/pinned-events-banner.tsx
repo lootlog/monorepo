@@ -1,11 +1,11 @@
 import { useState, type FC } from "react";
 import { Link } from "@tanstack/react-router";
 import { Trophy, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
-import { AnimatePresence } from "framer-motion";
 import * as m from "framer-motion/m";
 import { useTranslation } from "react-i18next";
 import type { Event } from "@/features/guild/events/types/api";
-import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
+import { CollapsePresence } from "@/components/common/collapse-presence";
 import { EventTimersList } from "./event-timers-list";
 
 interface PinnedEventsBannerProps {
@@ -121,43 +121,33 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
             </m.button>
           )}
 
-          <AnimatePresence initial={false}>
-            {hasMoreEvents && isExpanded && (
-              <m.div
-                layout
-                initial={{ opacity: 0, scaleY: 0.96 }}
-                animate={{ opacity: 1, scaleY: 1 }}
-                exit={{ opacity: 0, scaleY: 0.96 }}
-                style={{ transformOrigin: "top" }}
-                transition={{ duration: 0.2 }}
-                className="border-t border-yellow-500/20 overflow-hidden"
-              >
-                {otherEvents.map((event) => (
-                  <div key={event.id}>
-                    <Link
-                      to="/$guildId/events/$eventId"
-                      params={{ guildId, eventId: event.id }}
-                      onClick={onNavigate}
-                      className="block"
-                    >
-                      <div className="flex items-center gap-2 px-3 py-2 transition-[background-color,transform] duration-200 hover:translate-x-0.5 hover:bg-yellow-500/10">
-                        <Trophy className="h-3.5 w-3.5 text-yellow-500/70" />
-                        <span className="text-sm truncate flex-1">
-                          {event.name}
-                        </span>
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                      </div>
-                    </Link>
-                    <EventTimersList
-                      event={event}
-                      guildId={guildId}
-                      onNavigate={onNavigate}
-                    />
-                  </div>
-                ))}
-              </m.div>
-            )}
-          </AnimatePresence>
+          <CollapsePresence open={hasMoreEvents && isExpanded}>
+            <div className="border-t border-yellow-500/20">
+              {otherEvents.map((event) => (
+                <div key={event.id}>
+                  <Link
+                    to="/$guildId/events/$eventId"
+                    params={{ guildId, eventId: event.id }}
+                    onClick={onNavigate}
+                    className="block"
+                  >
+                    <div className="flex items-center gap-2 px-3 py-2 transition-[background-color,transform] duration-200 hover:translate-x-0.5 hover:bg-yellow-500/10">
+                      <Trophy className="h-3.5 w-3.5 text-yellow-500/70" />
+                      <span className="text-sm truncate flex-1">
+                        {event.name}
+                      </span>
+                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    </div>
+                  </Link>
+                  <EventTimersList
+                    event={event}
+                    guildId={guildId}
+                    onNavigate={onNavigate}
+                  />
+                </div>
+              ))}
+            </div>
+          </CollapsePresence>
         </>
       </div>
     </div>

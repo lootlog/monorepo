@@ -1,40 +1,56 @@
 import { ChatGatheringCardView } from "./chat-gathering-card-view";
 import { ChatGatheringInviteButton } from "./chat-gathering-invite-button";
 import { ChatGatheringJoinButton } from "./chat-gathering-join-button";
-import { ChatGatheringCounters } from "./chat-gathering-counters";
+import { GatheringPartyCounter } from "@/components/common/gathering-party-counter";
 import { Settings2, Ban, Check, LoaderCircle } from "lucide-react";
 import { ChatGatheringMenu } from "./chat-gathering-menu";
 import { useWindowsStore } from "@/store/windows.store";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
-import type { ActivePartyGatheringSummary } from "@lootlog/client/main";
+import type {
+  PartyReadyRoomProjection,
+  PartyGatheringSummary,
+} from "@lootlog/schema/party-ready-room";
 import { useReadyRoomWithdrawal } from "@/features/party-finder/hooks/use-ready-room-withdrawal";
 import { useCancelPartyGathering } from "@/hooks/api/use-cancel-party-gathering";
 import { Button } from "@/components/ui/button";
+import { useGatheringPartyState } from "@/components/common/use-gathering-party-state";
+
+function getLatestPartyState(
+  room: PartyReadyRoomProjection,
+  summary: PartyGatheringSummary | undefined,
+) {
+  const latestDetails =
+    summary && (summary.revision ?? 0) > room.revision ? summary : room;
+
+  return latestDetails.partyState ?? summary?.partyState;
+}
 
 export function ChatOwnGatheringBar({
   room,
   summary,
+  stale,
 }: {
   room: PartyReadyRoomProjection;
-  summary?: ActivePartyGatheringSummary;
+  summary?: PartyGatheringSummary;
+  stale?: boolean;
 }) {
   const { t } = useTranslation("chat");
-  const setOpen = useWindowsStore((state) => state.setOpen);
+  const openAndFocus = useWindowsStore((state) => state.openAndFocus);
   const cancellation = useCancelPartyGathering();
   const withdrawal = useReadyRoomWithdrawal(room);
   const [inviteFailed, setInviteFailed] = useState(false);
   const [withdrawFailed, setWithdrawFailed] = useState(false);
   const organizer = room.viewer === "ORGANIZER";
 
+  const partyState = getLatestPartyState(room, summary);
+  const { observation, isStale } = useGatheringPartyState(partyState, stale);
+
   const actionLabel = t(
     cancellation.isPending ? "gatherings.cancelling" : "gatherings.cancel",
   );
 
-  const counts = {
-    partyMemberCount: room.partyMemberCount ?? summary?.partyMemberCount,
-  };
+  const counts = { partyState, stale };
 
   const participationButton = organizer ? (
     <ChatGatheringInviteButton onErrorChange={setInviteFailed} />
@@ -43,7 +59,12 @@ export function ChatOwnGatheringBar({
       pending={withdrawal.isWithdrawing}
       disabled={!withdrawal.participant}
       status={
-        withdrawal.participant?.partyPresence === "IN_PARTY"
+        !isStale &&
+        observation?.members.some(
+          (member) =>
+            member.characterId ===
+            withdrawal.participant?.character.characterId,
+        )
           ? "inParty"
           : "applied"
       }
@@ -75,7 +96,7 @@ export function ChatOwnGatheringBar({
             >
               {room.npc?.name ?? t("gatherings.ownTitle")}
             </span>
-            <ChatGatheringCounters {...counts} />
+            <GatheringPartyCounter {...counts} />
           </div>
           {participationButton}
           <ChatGatheringMenu side="top">
@@ -83,7 +104,7 @@ export function ChatOwnGatheringBar({
               size="xs"
               variant="menu"
               className="ll:w-full ll:justify-start ll:gap-2"
-              onClick={() => setOpen("party-finder", true)}
+              onClick={() => openAndFocus("party-finder")}
             >
               <Settings2 size={16} aria-hidden />
               {t("gatherings.manage")}
@@ -107,7 +128,7 @@ export function ChatOwnGatheringBar({
           joined
           organizerDiscordId={room.organizerDiscordId}
           guildIds={room.guildIds}
-          counters=<ChatGatheringCounters {...counts} />
+          counters=<GatheringPartyCounter {...counts} />
           details={{ ...room, action: participationAction }}
           control={participationButton}
         />

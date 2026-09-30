@@ -31,9 +31,9 @@ describe("TimerColorPicker", () => {
     expect(
       screen.queryByRole("button", { name: "Granatowy" }),
     ).not.toBeInTheDocument();
-    expect(red).toHaveStyle({
+    // The swatch paints the overridden accent, not the default red.
+    expect(red.firstElementChild).toHaveStyle({
       backgroundColor: "#222222",
-      borderColor: "#222222",
     });
     expect(custom).toHaveAttribute("aria-pressed", "true");
     await user.hover(red);

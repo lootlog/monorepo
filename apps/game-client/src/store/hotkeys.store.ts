@@ -289,10 +289,17 @@ const migrateBinding = (binding: unknown): HotkeyBinding | null => {
 interface HotkeysState {
   bindings: Record<HotkeyAction, HotkeyBinding>;
   setBinding: (action: HotkeyAction, binding: HotkeyBinding) => boolean;
-  resetBinding: (action: HotkeyAction) => void;
+  resetBinding: (action: HotkeyAction) => boolean;
   resetAll: () => void;
   /** Replaces bindings from the settings documents without writing back. */
   applyBindings: (bindings: Record<HotkeyAction, HotkeyBinding>) => void;
+  /**
+   * The action whose new binding the settings are recording. While set, the
+   * next key or button belongs to the recorder, so hotkeys do not run.
+   * Never persisted.
+   */
+  recordingAction: HotkeyAction | null;
+  setRecordingAction: (action: HotkeyAction | null) => void;
 }
 
 const syncBindings = (bindings: Record<HotkeyAction, HotkeyBinding>) =>
@@ -322,14 +329,9 @@ export const useHotkeysStore = create<HotkeysState>()(
       resetBinding: (action) => {
         const config = HOTKEY_ACTIONS.find((c) => c.action === action);
 
-        if (!config) return;
-        set((state) => ({
-          bindings: {
-            ...state.bindings,
-            [action]: { ...config.defaultBinding },
-          },
-        }));
-        syncBindings(get().bindings);
+        if (!config) return false;
+
+        return get().setBinding(action, { ...config.defaultBinding });
       },
       resetAll: () => {
         set({ bindings: getDefaultBindings() });
@@ -342,6 +344,8 @@ export const useHotkeysStore = create<HotkeysState>()(
 
         set({ bindings });
       },
+      recordingAction: null,
+      setRecordingAction: (action) => set({ recordingAction: action }),
     }),
     {
       name: STORAGE_KEY,

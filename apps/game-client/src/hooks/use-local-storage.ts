@@ -1,5 +1,5 @@
 import type { JsonValue } from "@lootlog/schema/http-scalars";
-import type { ZodType } from "zod";
+import { Option, Schema } from "effect";
 import { useLocalStorage as useStoredValue } from "usehooks-ts";
 
 /**
@@ -10,12 +10,15 @@ import { useLocalStorage as useStoredValue } from "usehooks-ts";
 export const useLocalStorage = <T extends typeof JsonValue.Type>(
   key: string,
   initialValue: T,
-  schema: ZodType<T>,
+  schema: Schema.Decoder<T>,
 ) =>
   useStoredValue<T>(key, initialValue, {
     deserializer: (item) => {
       try {
-        return schema.parse(JSON.parse(item));
+        return Option.getOrElse(
+          Schema.decodeUnknownOption(schema)(JSON.parse(item)),
+          () => initialValue,
+        );
       } catch {
         return initialValue;
       }

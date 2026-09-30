@@ -2,14 +2,19 @@ import { defineBackground } from "wxt/utils/define-background";
 import { browser } from "wxt/browser";
 import { createGameRealtimeClient } from "@/lib/game-client-platform";
 import { createBackgroundConnection } from "@/extension/background-connection";
-import { EXTENSION_CHANNEL, encodeMessage } from "@/extension/protocol";
+import {
+  EXTENSION_CHANNEL,
+  encodeMessage,
+  type ExtensionClosedReason,
+} from "@/extension/protocol";
 import { LOOTLOG_APP_URL } from "@/config/app";
+import { gamePageUrlPattern } from "../matches";
 
 export default defineBackground(() => {
   browser.action.onClicked.addListener(() => {
     void browser.tabs.create({ url: LOOTLOG_APP_URL });
   });
-  let active: { close: () => void } | undefined;
+  let active: { close: (reason?: ExtensionClosedReason) => void } | undefined;
   browser.runtime.onConnect.addListener((port) => {
     const sender = port.sender;
 
@@ -19,16 +24,14 @@ export default defineBackground(() => {
       sender.frameId !== 0 ||
       sender.tab?.id === undefined ||
       !sender.url ||
-      !/^https:\/\/(?!www\.|new\.|forum\.|commons\.|dev-commons\.)[^./]+\.margonem\.(pl|com)\//.test(
-        sender.url,
-      )
+      !gamePageUrlPattern.test(sender.url)
     ) {
       port.disconnect();
 
       return;
     }
 
-    active?.close();
+    active?.close("replaced");
     const realtime = createGameRealtimeClient();
 
     const connection = createBackgroundConnection(realtime, (message) =>
@@ -36,11 +39,11 @@ export default defineBackground(() => {
     );
 
     const owner = {
-      close: () => {
+      close: (reason?: ExtensionClosedReason) => {
         connection.dispose();
 
         try {
-          port.postMessage(encodeMessage({ type: "closed" }));
+          port.postMessage(encodeMessage({ type: "closed", reason }));
         } catch {
           /* Already disconnected. */
         }

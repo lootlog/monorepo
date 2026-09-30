@@ -4,20 +4,14 @@ import {
   isManualTimer,
   type TimerWithTimeLeft,
 } from "@/features/timers/utils/timers-utils";
-import {
-  Eye,
-  EyeOff,
-  Globe,
-  Loader2,
-  Pin,
-  PinOff,
-  RotateCcw,
-  Trash2,
-} from "lucide-react";
+import { Eye, EyeOff, Globe, Loader2, Pin, PinOff } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
+import { TimerActionConfirmation } from "./timer-action-confirmation";
 import { TimerColorPicker } from "./timer-color-picker";
 import { TimerHistoryPopover } from "./timer-history-popover";
+import { TimerListsPopover } from "./timer-lists-popover";
+import { getTimerResetScopes } from "../utils/get-timer-reset-scopes";
 
 type CustomColor = {
   id: string;
@@ -31,6 +25,19 @@ type OverriddenColor = {
   borderColor: string;
 };
 
+const getResetScopeLabel = (
+  timer: TimerWithTimeLeft,
+  grouped: boolean,
+  guildNamesById: Record<string, string>,
+) =>
+  [
+    ...new Set(
+      getTimerResetScopes(timer, grouped).map((scope) => scope.guildId),
+    ),
+  ]
+    .map((guildId) => guildNamesById[guildId] ?? guildId)
+    .join(", ");
+
 type TimerContextMenuContentProps = {
   timer: TimerWithTimeLeft;
   isPending: boolean;
@@ -38,6 +45,8 @@ type TimerContextMenuContentProps = {
   isHidden: boolean;
   canDelete: boolean;
   canReset: boolean;
+  actionPending: boolean;
+  guildNamesById: Record<string, string>;
   timersGrouping: boolean;
   selectedColor: string;
   customColors: Record<string, CustomColor>;
@@ -54,8 +63,9 @@ type TimerContextMenuContentProps = {
   onShowAll: () => void;
   isAlwaysVisibleExpiredTimer: boolean;
   onToggleAlwaysVisibleExpiredTimer: () => void;
-  onReset: () => void;
-  onDelete: (guildId: string, timerKey: string) => void;
+  onReset: () => Promise<boolean>;
+  onResetBegin: () => void;
+  onDelete: (guildId: string, timerKey: string) => Promise<boolean>;
 };
 
 export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
@@ -65,6 +75,8 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
   isHidden,
   canDelete,
   canReset,
+  actionPending,
+  guildNamesById,
   timersGrouping,
   selectedColor,
   customColors,
@@ -82,6 +94,7 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
   isAlwaysVisibleExpiredTimer,
   onToggleAlwaysVisibleExpiredTimer,
   onReset,
+  onResetBegin,
   onDelete,
 }) => {
   const { t } = useTranslation("timers");
@@ -107,6 +120,7 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
         hiddenDefaultColors={hiddenDefaultColors}
         onColorChange={onColorChange}
       />
+      <TimerListsPopover npcName={timer.npc.name} />
       <ContextMenuItem
         onClick={onPin}
         data-active={isPinned}
@@ -162,23 +176,31 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
         </ContextMenuItem>
       )}
       {canReset && (
-        <ContextMenuItem onClick={onReset} className="ll:text-emerald-300">
-          <RotateCcw className="ll:h-4 ll:w-4 ll:mr-2" />
-          {t("contextMenu.restart")}
-        </ContextMenuItem>
+        <TimerActionConfirmation
+          action="reset"
+          timerName={timer.npc.name}
+          scopeLabel={getResetScopeLabel(timer, timersGrouping, guildNamesById)}
+          pending={actionPending}
+          onConfirm={onReset}
+          onOpen={onResetBegin}
+        />
       )}
       {showHistory && <TimerHistoryPopover timer={timer} />}
       {timersGrouping ? (
-        <DeleteTimerPopover timer={timer} onDeleteTimer={onDelete} />
+        <DeleteTimerPopover
+          timer={timer}
+          onDeleteTimer={onDelete}
+          pending={actionPending}
+        />
       ) : (
         canDelete && (
-          <ContextMenuItem
-            className="ll:text-red-300 ll:hover:bg-red-500/20 ll:data-[highlighted]:bg-red-500/20 ll:focus-visible:bg-red-500/20"
-            onClick={() => onDelete(timer.guildId, timer.timerKey)}
-          >
-            <Trash2 className="ll:h-4 ll:w-4 ll:mr-2" />
-            {t("contextMenu.delete")}
-          </ContextMenuItem>
+          <TimerActionConfirmation
+            action="delete"
+            timerName={timer.npc.name}
+            scopeLabel={guildNamesById[timer.guildId] ?? timer.guildId}
+            pending={actionPending}
+            onConfirm={() => onDelete(timer.guildId, timer.timerKey)}
+          />
         )
       )}
     </>

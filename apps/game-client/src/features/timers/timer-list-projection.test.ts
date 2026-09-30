@@ -27,6 +27,7 @@ const createProjectionInput = (
     minLvl: 0,
     searchText: "",
     selectedColors: [],
+    selectedLists: [],
     selectedNpcTypes: [
       NpcType.HERO,
       NpcType.ELITE2,
@@ -38,6 +39,7 @@ const createProjectionInput = (
   preferences: {
     alwaysVisibleExpiredTimers: {},
     colorFiltersEnabled: false,
+    customLists: {},
     hiddenTimers: [],
     pinnedTimers: [],
     removeTimerAfterMs: 30_000,
@@ -68,6 +70,7 @@ describe("projectTimerList", () => {
           minLvl: 0,
           searchText: "tan",
           selectedColors: [],
+          selectedLists: [],
           selectedNpcTypes: [
             NpcType.HERO,
             NpcType.ELITE2,
@@ -79,6 +82,7 @@ describe("projectTimerList", () => {
         preferences: {
           alwaysVisibleExpiredTimers: {},
           colorFiltersEnabled: true,
+          customLists: {},
           hiddenTimers: [],
           pinnedTimers: [],
           removeTimerAfterMs: 30_000,
@@ -229,7 +233,46 @@ describe("projectTimerList", () => {
     ]);
   });
 
-  it("keeps configured expired Timers and sorts pinned and expired Timers compatibly", () => {
+  it("shows timers on any selected list and ignores lists deleted since", () => {
+    const createNamedTimer = (name: string) =>
+      createTimer({ timerKey: name, npc: { ...createTimer().npc, name } });
+
+    const input = createProjectionInput({
+      preferences: {
+        ...createProjectionInput().preferences,
+        customLists: {
+          e2: { id: "e2", name: "E2", npcNames: ["Kic"] },
+          heroes: {
+            id: "heroes",
+            name: "Herosi",
+            npcNames: ["Tanroth", "Kic"],
+          },
+        },
+      },
+      timers: ["Tanroth", "Kic", "Mushita"].map(createNamedTimer),
+    });
+
+    const project = (selectedLists: string[]) =>
+      projectTimerList({
+        ...input,
+        filters: { ...input.filters, selectedLists },
+      });
+
+    expect(
+      project(["e2", "heroes"]).timers.map((timer) => timer.npc.name),
+    ).toEqual(["Tanroth", "Kic"]);
+    expect(project(["e2"])).toMatchObject({
+      areFiltersActive: true,
+      timers: [expect.objectContaining({ timerKey: "Kic" })],
+    });
+
+    const staleSelection = project(["deleted-list"]);
+
+    expect(staleSelection.areFiltersActive).toBe(false);
+    expect(staleSelection.timers).toHaveLength(3);
+  });
+
+  it("keeps recently and configured expired Timers and sorts pinned and expired Timers compatibly", () => {
     const epoch = new Date("2099-04-22T10:00:00.000Z").getTime();
 
     const result = projectTimerList(
@@ -256,6 +299,11 @@ describe("projectTimerList", () => {
             npc: { ...createTimer().npc, name: "Always visible" },
           }),
           createTimer({
+            timerKey: "recently-expired",
+            maxSpawnTime: "2099-04-22T09:59:50.000Z",
+            npc: { ...createTimer().npc, name: "Recently expired" },
+          }),
+          createTimer({
             timerKey: "pinned",
             maxSpawnTime: "2099-04-22T10:03:00.000Z",
             npc: { ...createTimer().npc, name: "Pinned" },
@@ -271,6 +319,7 @@ describe("projectTimerList", () => {
 
     expect(result.timers.map((timer) => timer.npc.name)).toEqual([
       "Pinned",
+      "Recently expired",
       "Active",
       "Always visible",
     ]);

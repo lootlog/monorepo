@@ -17,9 +17,14 @@ import {
   type MemberSummaryResponseDtoOutput,
   type UserPreferencesResponseDtoOutput,
 } from "@lootlog/client/main";
+import { createTestGuild } from "@/test/guild-preferences-test";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { useSettingsStore } from "@/store/settings.store";
-import { useOnlinePlayersStore } from "@/store/online-players.store";
+import {
+  useOnlinePlayersStore,
+  ONLINE_PLAYERS_STORAGE_KEY,
+} from "@/store/online-players.store";
+import { useGameStore } from "@/store/game.store";
 import {
   createOnlinePlayersTest,
   createOnlinePresence,
@@ -81,7 +86,7 @@ describe("OnlinePlayersList", () => {
     );
     harness.queryClient.setQueryData(
       getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-      [],
+      [createTestGuild("guild-1", "Alpha"), createTestGuild("guild-2", "Beta")],
     );
     harness.queryClient.setQueryData(
       getUsersControllerGetUserPreferencesQueryKey(),
@@ -182,13 +187,13 @@ describe("OnlinePlayersList", () => {
     expect(screen.getByRole("status", { busy: true })).toBeVisible();
     expect(
       screen.queryByText(
-        "Brak połączenia z serwerem - nie można pobrać graczy online",
+        "Brak połączenia z serwerem – nie można pobrać graczy online",
       ),
     ).toBeNull();
     act(() => harness.wire.close());
     expect(
       screen.getByText(
-        "Brak połączenia z serwerem - nie można pobrać graczy online",
+        "Brak połączenia z serwerem – nie można pobrać graczy online",
       ),
     ).toBeVisible();
     expect(
@@ -210,7 +215,7 @@ describe("OnlinePlayersList", () => {
       <OnlinePlayersList viewMode="accounts" filtersVisible />,
       false,
     );
-    await act(() => vi.advanceTimersByTimeAsync(10000));
+    await act(() => vi.advanceTimersByTimeAsync(13_000));
     expect(
       screen.getByRole("button", { name: "Spróbuj ponownie" }),
     ).toBeVisible();
@@ -230,12 +235,10 @@ describe("OnlinePlayersList", () => {
       createPresenceSnapshot([person(name, 123, "w", "10", "discord-1", map)]),
     );
 
-    const { container } = await render(
-      <OnlinePlayersList viewMode="accounts" filtersVisible />,
-    );
+    await render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
 
     const playerName = await screen.findByText(`${name} (123w)`);
-    const viewport = container.querySelector("[data-ll-scroll-area-viewport]");
+    const viewport = playerName.closest("[data-ll-scroll-area-viewport]");
     expect(viewport?.firstElementChild).toHaveStyle({
       width: "100%",
       minWidth: 0,
@@ -320,13 +323,13 @@ describe("OnlinePlayersList", () => {
     fireEvent.change(screen.getByPlaceholderText(/Szukaj/), {
       target: { value: "missing" },
     });
-    fireEvent.change(screen.getByLabelText("Minimalny poziom"), {
+    fireEvent.change(screen.getByLabelText("Poziom od"), {
       target: { value: "200" },
     });
     await user.click(screen.getByRole("button", { name: "Wyczyść filtry" }));
     expect(screen.getByPlaceholderText(/Szukaj/)).toHaveValue("");
-    expect(screen.getByLabelText("Minimalny poziom")).toHaveValue(0);
-    expect(screen.getByLabelText("Maksymalny poziom")).toHaveValue(500);
+    expect(screen.getByLabelText("Poziom od")).toHaveValue(0);
+    expect(screen.getByLabelText("Poziom do")).toHaveValue(500);
     expect(screen.getByText("Hero (123w)")).toBeVisible();
     expect(screen.getByText("Scout (80h)")).toBeVisible();
   });
@@ -334,37 +337,140 @@ describe("OnlinePlayersList", () => {
   it("filters account entries by level range and keeps min lower than max", async () => {
     await render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
     await screen.findByText("Hero (123w)");
-    fireEvent.change(screen.getByLabelText("Minimalny poziom"), {
+    fireEvent.change(screen.getByLabelText("Poziom od"), {
       target: { value: "100" },
     });
     expect(screen.getByText("Hero (123w)")).toBeVisible();
     expect(screen.queryByText("Scout (80h)")).not.toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Maksymalny poziom"), {
+    fireEvent.change(screen.getByLabelText("Poziom do"), {
       target: { value: "90" },
     });
-    expect(screen.getByLabelText("Minimalny poziom")).toHaveValue(90);
-    expect(screen.getByLabelText("Maksymalny poziom")).toHaveValue(90);
+    expect(screen.getByLabelText("Poziom od")).toHaveValue(90);
+    expect(screen.getByLabelText("Poziom do")).toHaveValue(90);
   });
 
   it("stores level filters separately for each guild", async () => {
     await render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
     await screen.findByText("Hero (123w)");
-    fireEvent.change(screen.getByLabelText("Minimalny poziom"), {
+    fireEvent.change(screen.getByLabelText("Poziom od"), {
       target: { value: "100" },
     });
     expect(screen.queryByText("Scout (80h)")).not.toBeInTheDocument();
     act(() =>
       useSettingsStore.setState({ guildIdByCharId: { "10": "guild-2" } }),
     );
-    expect(screen.getByLabelText("Minimalny poziom")).toHaveValue(0);
+    expect(screen.getByLabelText("Poziom od")).toHaveValue(0);
     expect(await screen.findByText("Scout (80h)")).toBeVisible();
-    fireEvent.change(screen.getByLabelText("Maksymalny poziom"), {
+    fireEvent.change(screen.getByLabelText("Poziom do"), {
       target: { value: "90" },
     });
-    expect(useOnlinePlayersStore.getState().filtersByGuildId).toMatchObject({
-      "guild-1": { minLvl: 100, maxLvl: 500, selectedProfession: "all" },
-      "guild-2": { minLvl: 0, maxLvl: 90, selectedProfession: "all" },
+    expect(screen.getByLabelText("Poziom do")).toHaveValue(90);
+    act(() =>
+      useSettingsStore.setState({ guildIdByCharId: { "10": "guild-1" } }),
+    );
+    expect(screen.getByLabelText("Poziom od")).toHaveValue(100);
+    expect(screen.getByLabelText("Poziom do")).toHaveValue(500);
+  });
+
+  it("restores each character's saved filters after switching and reloading", async () => {
+    useSettingsStore.setState({
+      guildIdByCharId: { "10": "guild-1", "20": "guild-1" },
     });
+
+    const view = await render(
+      <OnlinePlayersList viewMode="accounts" filtersVisible />,
+    );
+
+    await screen.findByText("Hero (123w)");
+    fireEvent.change(screen.getByLabelText("Poziom od"), {
+      target: { value: "100" },
+    });
+    act(() => setTestRuntimeGame({ hero: { characterId: "20" } }));
+    expect(screen.getByLabelText("Poziom od")).toHaveValue(0);
+    expect(screen.getByText("Scout (80h)")).toBeVisible();
+    fireEvent.change(screen.getByLabelText("Poziom do"), {
+      target: { value: "90" },
+    });
+    expect(screen.queryByText("Hero (123w)")).not.toBeInTheDocument();
+    act(() => setTestRuntimeGame({ hero: { characterId: "10" } }));
+    expect(screen.getByLabelText("Poziom od")).toHaveValue(100);
+    expect(screen.getByLabelText("Poziom do")).toHaveValue(500);
+    expect(screen.queryByText("Scout (80h)")).not.toBeInTheDocument();
+
+    view.unmount();
+    const storageName = ONLINE_PLAYERS_STORAGE_KEY;
+    const saved = localStorage.getItem(storageName);
+    useOnlinePlayersStore.setState(
+      useOnlinePlayersStore.getInitialState(),
+      true,
+    );
+
+    if (saved) localStorage.setItem(storageName, saved);
+    await useOnlinePlayersStore.persist.rehydrate();
+    setTestRuntimeGame({ hero: { characterId: "20" } });
+    await render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
+
+    expect(screen.getByLabelText("Poziom od")).toHaveValue(0);
+    expect(screen.getByLabelText("Poziom do")).toHaveValue(90);
+    expect(await screen.findByText("Scout (80h)")).toBeVisible();
+    expect(screen.queryByText("Hero (123w)")).not.toBeInTheDocument();
+  });
+
+  it("waits for a known character before claiming or writing legacy filters", async () => {
+    useOnlinePlayersStore.setState({
+      legacyFiltersByGuildId: {
+        "guild-1": { minLvl: 100, maxLvl: 200, selectedProfession: "all" },
+      },
+    });
+    useGameStore.getState().clearGame();
+    useSettingsStore.setState({
+      guildIdByCharId: { "": "guild-1", "10": "guild-1" },
+    });
+    // The gateway session requires a character, so the list renders unjoined.
+    renderUi(<OnlinePlayersList viewMode="accounts" filtersVisible />, {
+      wrapper: harness.wrapper,
+    });
+    fireEvent.change(screen.getByLabelText("Poziom od"), {
+      target: { value: "80" },
+    });
+    expect(useOnlinePlayersStore.getState().filtersByScope).toEqual({});
+    expect(
+      useOnlinePlayersStore.getState().legacyFiltersByGuildId,
+    ).toHaveProperty("guild-1");
+
+    act(() => setTestRuntimeGame({ hero: { characterId: "10" } }));
+    expect(screen.getByLabelText("Poziom od")).toHaveValue(100);
+    expect(screen.getByLabelText("Poziom do")).toHaveValue(200);
+    expect(useOnlinePlayersStore.getState().legacyFiltersByGuildId).toEqual({});
+  });
+
+  it("assigns late-hydrated legacy filters to the character viewing them", async () => {
+    await render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
+    localStorage.setItem(
+      ONLINE_PLAYERS_STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        state: {
+          filtersByGuildId: {
+            "guild-1": { minLvl: 100, maxLvl: 200, selectedProfession: "all" },
+          },
+        },
+      }),
+    );
+    await act(async () => {
+      await useOnlinePlayersStore.persist.rehydrate();
+    });
+    expect(screen.getByLabelText("Poziom od")).toHaveValue(100);
+    act(() => {
+      useSettingsStore.setState({
+        guildIdByCharId: { "10": "guild-1", "20": "guild-1" },
+      });
+      setTestRuntimeGame({ hero: { characterId: "20" } });
+    });
+    expect(screen.getByLabelText("Poziom od")).toHaveValue(0);
+    act(() => setTestRuntimeGame({ hero: { characterId: "10" } }));
+    expect(screen.getByLabelText("Poziom od")).toHaveValue(100);
+    expect(screen.getByLabelText("Poziom do")).toHaveValue(200);
   });
 
   it("filters account entries by profession", async () => {
@@ -380,7 +486,7 @@ describe("OnlinePlayersList", () => {
   it("filters member entries when none of member characters match filters", async () => {
     await render(<OnlinePlayersList viewMode="members" filtersVisible />);
     expect(await screen.findByText("(2) Discord User")).toBeVisible();
-    fireEvent.change(screen.getByLabelText("Minimalny poziom"), {
+    fireEvent.change(screen.getByLabelText("Poziom od"), {
       target: { value: "200" },
     });
     expect(screen.queryByText("(2) Discord User")).not.toBeInTheDocument();
@@ -395,7 +501,7 @@ describe("OnlinePlayersList", () => {
     expect(await screen.findByText("Hero (123w)")).toBeVisible();
     expect(screen.queryByPlaceholderText(/Szukaj/)).not.toBeInTheDocument();
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Minimalny poziom")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Poziom od")).not.toBeInTheDocument();
   });
 
   it("shows the empty presence state when nobody is online", async () => {

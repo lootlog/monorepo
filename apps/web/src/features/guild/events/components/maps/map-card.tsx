@@ -36,7 +36,7 @@ interface MapCardProps {
   presenceData?: Map<string, PlayerPresence[]>;
   actionsDisabled?: boolean;
   assignmentDisabled: boolean;
-  assignmentEnabledAt?: Date | null;
+  assignmentEnabledAt?: number | null;
   assignmentDisabledMessage?: string | null;
   onSelfAssignClick?: (mapId: string) => void | Promise<void>;
   onSelfUnassignClick?: (mapId: string) => void | Promise<void>;

@@ -8,7 +8,7 @@
     "dev": "vite",
     "dev:sandbox": "vite --config vite.sandbox.config.ts --mode sandbox",
     "dev:local-prod": "bun run build:local-prod && bun ./src/scripts/serve-local-build.mjs",
-    "build": "bun run typecheck && vite build && bun ./src/scripts/copy-entrypoint.mjs",
+    "build": "vite build && bun ./src/scripts/copy-entrypoint.mjs && bun ./src/scripts/check-bundle-budget.mjs",
     "build:fast": "bun run typecheck && FAST_BUILD=1 vite build && bun ./src/scripts/copy-entrypoint.mjs",
     "build:local-prod": "bun run typecheck && vite build --mode production-local && bun ./src/scripts/generate-local-entrypoint.mjs --output ./dist/@lootlog/game-client-local.user.js --bundle-url http://127.0.0.1:4173/@lootlog/game-client.user.js",
     "preview": "vite preview",
@@ -49,6 +49,7 @@
     "better-auth": "1.7.5",
     "class-variance-authority": "^0.7.1",
     "cn": "catalog:",
+    "effect": "catalog:",
     "es-toolkit": "catalog:",
     "i18next": "^26.4.2",
     "lexical": "catalog:",
@@ -60,7 +61,6 @@
     "react-i18next": "^17.0.14",
     "sonner": "^2.0.8",
     "usehooks-ts": "^3.1.1",
-    "zod": "catalog:",
     "zustand": "^5.0.15"
   },
   "devDependencies": {

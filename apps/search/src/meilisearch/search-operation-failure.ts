@@ -28,7 +28,7 @@ export const completeMeilisearchTask = (
   run: () => EnqueuedTaskPromise,
 ) =>
   attemptMeilisearch(operation, async () => {
-    const task = await run().waitTask({ interval: 15_000, timeout: 60_000 });
+    const task = await run().waitTask({ interval: 250, timeout: 60_000 });
 
     if (task.status !== "succeeded") {
       throw (

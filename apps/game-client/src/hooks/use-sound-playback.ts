@@ -165,7 +165,6 @@ export const useSoundPlayback = () => {
         : categoryVolume * masterVolume;
 
     playSoundRequest({
-      channel: "preview",
       url: soundUrl,
       volume: effectiveVolume,
     });

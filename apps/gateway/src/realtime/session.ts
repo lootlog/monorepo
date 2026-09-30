@@ -27,9 +27,17 @@ export interface SessionData extends AuthenticatedIdentity {
   readonly platform: typeof PresencePlatform.Type;
   readonly userAgent?: string;
   readonly supportsFeed?: boolean;
+  readonly supportsSessionHello?: boolean;
   readonly supportsNotificationVolunteer?: boolean;
+  readonly supportsPartyGatheringState?: boolean;
+  readonly supportsBattlePings?: boolean;
+  readonly supportsTeamBattlePings?: boolean;
+  readonly supportsAirTagMapThreats?: boolean;
+  readonly supportsAirTagScopeUpdates?: boolean;
   readonly frameEncoding?: "json";
   joined: boolean;
+  /** Set when the gateway will close the socket; it no longer acts on commands. */
+  closing?: boolean;
   guilds: UserGuildData[];
   subscriptions: Map<string, typeof SubscriptionScope.Type>;
   airTagScopes: AirTagScope[];
@@ -43,7 +51,6 @@ export interface SessionData extends AuthenticatedIdentity {
       readonly y?: number;
     };
   };
-  backpressureStrikes: number;
 }
 
 export type GatewaySocket = Pick<

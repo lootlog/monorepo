@@ -1,4 +1,4 @@
-import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import {
@@ -15,12 +15,14 @@ import { RootRouteError } from "@/components/router/root-route-error";
 import { RootRouteNotFound } from "@/components/router/root-route-not-found";
 import { resolveAppNavigation } from "@/navigation/app-navigation";
 import { ThemeRootEffects, ThemeSpinnerProvider } from "@/themes";
+import { Toaster } from "@lootlog/ui/components/sonner";
 
 import "@lootlog/ui/globals.css";
 import "@/themes/default.css";
 import "@/themes/muted.css";
 import "@/themes/backgrounds.css";
 import "../scrollbars.css";
+import "../page-scroll.css";
 import "@/i18n/config";
 
 const ReactQueryDevtools = lazy(() =>
@@ -47,6 +49,7 @@ function RootComponent() {
             <NuqsAdapter>
               <GlobalContextProvider>
                 <Outlet />
+                <Toaster />
                 {!prefersReducedMotion && <ThemeRootEffects />}
                 {import.meta.env.DEV ? (
                   <Suspense fallback={null}>

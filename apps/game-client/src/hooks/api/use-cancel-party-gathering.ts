@@ -1,8 +1,12 @@
+import {
+  applyGatheringUpdate,
+  type ActivePartyGatheringsCache,
+} from "@/features/chat/active-party-gatherings-cache";
+import { toast } from "sonner";
 import { ACTIVE_GATHERINGS_QUERY_KEY } from "@/features/chat/hooks/use-active-party-gatherings";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { decodePartyReadyRoomClientUpdate } from "@lootlog/schema/party-ready-room";
 import {
-  type ActivePartyGatheringSummary,
   getChatControllerGetChatMessagesQueryKey,
   partyReadyRoomControllerCancel,
 } from "@lootlog/client/main";
@@ -35,13 +39,20 @@ export const useCancelPartyGathering = () => {
         { expectedRevision: ownedReadyRoom.revision },
       );
 
-      applyUpdate(decodePartyReadyRoomClientUpdate(response));
-      queryClient.setQueriesData<ActivePartyGatheringSummary[]>(
+      const update = decodePartyReadyRoomClientUpdate(response);
+      applyUpdate(update);
+      queryClient.setQueriesData<ActivePartyGatheringsCache>(
         { queryKey: ACTIVE_GATHERINGS_QUERY_KEY },
-        (rooms) =>
-          rooms?.filter(
-            (room) => room.notificationId !== ownedReadyRoom.notificationId,
-          ),
+        (cache) =>
+          cache &&
+          applyGatheringUpdate(cache, {
+            type: "REMOVE",
+            notificationId: ownedReadyRoom.notificationId,
+            revision:
+              update.type === "REMOVE"
+                ? update.revision
+                : ownedReadyRoom.revision,
+          }),
       );
       void queryClient.invalidateQueries({
         queryKey: ACTIVE_GATHERINGS_QUERY_KEY,
@@ -60,13 +71,11 @@ export const useCancelPartyGathering = () => {
     },
     onSuccess: () => {
       setOpen("party-finder", false);
-      showRuntimeMessage(t("messages.cancelSuccess"));
+      toast.success(t("messages.cancelSuccess"));
     },
     onError: (error) => {
       console.warn("Failed to cancel party gathering:", error);
-      showRuntimeMessage(t("messages.cancelFailed"));
+      toast.error(t("messages.cancelFailed"));
     },
   });
 };
-
-import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

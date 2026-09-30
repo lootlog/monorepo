@@ -77,6 +77,7 @@ describe("useCharacterTooltipCatchingGuilds", () => {
         maxHp: 1,
         name: "Hero",
         profession: "w",
+        stasis: false,
         x: 1,
         y: 2,
       },
@@ -330,6 +331,25 @@ describe("useCharacterTooltipCatchingGuilds", () => {
       expect(refreshActiveOtherCanvasTooltip).toHaveBeenCalledOnce();
     });
     expect(endpoint).toHaveBeenCalledOnce();
+  });
+
+  it("ends shift mode when a focused editor stops the shift release", () => {
+    renderHook(() => useCharacterTooltipCatchingGuilds());
+    const editor = document.createElement("div");
+    editor.addEventListener("keyup", (event) => event.stopPropagation());
+    document.body.append(editor);
+
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Shift" }));
+      editor.dispatchEvent(
+        new KeyboardEvent("keyup", { key: "Shift", bubbles: true }),
+      );
+    });
+
+    expect(
+      useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed,
+    ).toBe(false);
+    editor.remove();
   });
 
   it("resets shift state on window blur", () => {

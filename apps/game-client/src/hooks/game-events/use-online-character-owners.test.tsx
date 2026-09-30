@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createRealtimeTest } from "@/test/realtime-test";
+import { createOnlinePresence } from "@/features/online-players/online-players-test-fixtures";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useSettingsStore } from "@/store/settings.store";
@@ -35,6 +36,7 @@ async function setup() {
   const respond = (
     index: number,
     error?: { code: string; message: string; retryable: boolean },
+    presences: ReturnType<typeof createOnlinePresence>[] = [],
   ) => {
     const request = requests()[index];
 
@@ -48,7 +50,7 @@ async function setup() {
               v: 1,
               requestId,
               status: "success",
-              data: { presences: [] },
+              data: { presences },
             },
       ),
     );
@@ -64,7 +66,76 @@ async function setup() {
   };
 }
 
+const ownerPresence = () =>
+  createOnlinePresence({
+    character: {
+      world: "luvia",
+      name: "Owner",
+      lvl: 123,
+      icon: "owner.png",
+      characterId: "10",
+      accountId: "20",
+      prof: "w",
+    },
+  });
+
+const cachedOwner = () =>
+  useOnlineCharacterOwnersStore.getState().getOwner("20", "10");
+
 describe("useOnlineCharacterOwners", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  // Polling in waitFor keeps running while the retry delay is skipped.
+  const skipRetryDelay = () => act(() => vi.advanceTimersByTimeAsync(3_000));
+
+  it("reuses owners across Shift presses and refetches them once stale", async () => {
+    const test = await setup();
+    test.activate(true);
+    await waitFor(() => expect(test.requests()).toHaveLength(1));
+    test.respond(0, undefined, [ownerPresence()]);
+    await waitFor(() => expect(cachedOwner()).toBeDefined());
+
+    test.activate(false);
+    test.activate(true);
+    expect(test.requests()).toHaveLength(1);
+    expect(cachedOwner()).toBeDefined();
+
+    test.activate(false);
+    const staleAt = Date.now() + 31_000;
+    vi.spyOn(Date, "now").mockReturnValue(staleAt);
+    test.activate(true);
+    await waitFor(() => expect(test.requests()).toHaveLength(2));
+    expect(cachedOwner()).toBeDefined();
+  });
+
+  it("drops cached owners when another Organization is selected", async () => {
+    const test = await setup();
+    test.activate(true);
+    await waitFor(() => expect(test.requests()).toHaveLength(1));
+    test.respond(0, undefined, [ownerPresence()]);
+    await waitFor(() => expect(cachedOwner()).toBeDefined());
+    test.activate(false);
+
+    act(() =>
+      useSettingsStore.setState({
+        guildIdByCharId: { "1": "guild-2" },
+        worldByGuildId: { "guild-1": "luvia", "guild-2": "luvia" },
+      }),
+    );
+
+    expect(
+      useOnlineCharacterOwnersStore.getState().ownersByCharacterKey,
+    ).toEqual({});
+    test.activate(true);
+    await waitFor(() => expect(test.requests()).toHaveLength(2));
+    expect(test.requests()[1]?.data).toMatchObject({
+      organizationId: "guild-2",
+    });
+  });
+
   it("does no owner HTTP or presence request until Shift is pressed", async () => {
     const test = await setup();
     expect(test.requests()).toHaveLength(0);
@@ -90,6 +161,7 @@ describe("useOnlineCharacterOwners", () => {
   });
 
   it("retries transient acknowledgement failures and permits a fresh Shift activation", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     const test = await setup();
     test.activate(true);
     await waitFor(() => expect(test.requests()).toHaveLength(1));
@@ -98,6 +170,7 @@ describe("useOnlineCharacterOwners", () => {
       message: "Temporary service failure",
       retryable: true,
     });
+    await skipRetryDelay();
     await waitFor(() => expect(test.requests()).toHaveLength(2));
     test.respond(1, {
       code: "UNAVAILABLE",
@@ -120,6 +193,7 @@ describe("useOnlineCharacterOwners", () => {
   });
 
   it("retries a malformed success acknowledgement instead of reporting access denial", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     const test = await setup();
     test.activate(true);
     await waitFor(() => expect(test.requests()).toHaveLength(1));
@@ -134,6 +208,7 @@ describe("useOnlineCharacterOwners", () => {
         data: { presences: "invalid" },
       }),
     );
+    await skipRetryDelay();
     await waitFor(() => expect(test.requests()).toHaveLength(2));
     test.respond(1);
     await waitFor(() =>

@@ -1,12 +1,15 @@
 import { describe, expect, mock, test } from "bun:test";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { ConsumeMessage, Options } from "amqplib";
-import { Deferred, Effect, Fiber } from "effect";
+import { Cause, Deferred, Effect, Fiber, Logger, References } from "effect";
 import {
   RabbitMessaging,
+  UnprocessableDelivery,
   type RabbitChannel,
   type RabbitDelivery,
 } from "../src/messaging.ts";
+
+type Confirm = NonNullable<Parameters<RabbitChannel["publish"]>[4]>;
 
 const makeMessage = (): ConsumeMessage => ({
   content: Buffer.from('{"ok":true}'),
@@ -50,7 +53,12 @@ const makeChannel = () => {
       _routingKey: string,
       _content: Buffer,
       _options?: Options.Publish,
-    ) => true,
+      confirm?: Confirm,
+    ) => {
+      confirm?.(null, {});
+
+      return true;
+    },
   );
 
   const cancel = mock((consumerTag: string) =>
@@ -73,7 +81,6 @@ const makeChannel = () => {
     nack,
     prefetch: () => Promise.resolve({}),
     publish,
-    waitForConfirms: () => Promise.resolve(),
   };
 
   return {
@@ -234,6 +241,20 @@ describe("RabbitMessaging", () => {
   test("routes failures through retry and then the dead-letter exchange", async () => {
     const { channel, ack, publish, dispatch } = makeChannel();
 
+    const logs: Array<{
+      readonly logLevel: string;
+      readonly cause: string;
+      readonly annotations: unknown;
+    }> = [];
+
+    const logger = Logger.make(({ logLevel, cause, fiber }) => {
+      logs.push({
+        logLevel,
+        cause: Cause.pretty(cause),
+        annotations: fiber.getRef(References.CurrentLogAnnotations),
+      });
+    });
+
     await runWithChannel(
       channel,
       Effect.gen(function* () {
@@ -248,7 +269,7 @@ describe("RabbitMessaging", () => {
               deadLetterRoutingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE_DLQ,
             },
           },
-          () => Effect.fail("failed"),
+          () => Effect.fail(new Error("update does not match its source")),
         );
 
         dispatch(makeMessage());
@@ -258,14 +279,85 @@ describe("RabbitMessaging", () => {
         exhausted.properties.headers = { "x-lootlog-retry-count": 1 };
         dispatch(exhausted);
         yield* Effect.sleep(1);
-      }),
+      }).pipe(Effect.provide(Logger.layer([logger]))),
     );
+
+    // The broker keeps only the payload, so the log is the only record of why.
+    expect(logs).toMatchObject([
+      {
+        logLevel: "Warn",
+        cause: expect.stringContaining("update does not match its source"),
+        annotations: {
+          queue: "test-queue",
+          messageId: "message-1",
+          retryCount: 0,
+          disposition: "retry",
+        },
+      },
+      {
+        logLevel: "Error",
+        cause: expect.stringContaining("update does not match its source"),
+        annotations: { retryCount: 1, disposition: "dead-letter" },
+      },
+    ]);
 
     expect(publish.mock.calls[0]?.[0]).toBe("retry");
     expect(publish.mock.calls[0]?.[1]).toBe("guilds.loots.create.retry");
     expect(publish.mock.calls[1]?.[0]).toBe("dlx");
     expect(publish.mock.calls[1]?.[1]).toBe("guilds.loots.create.dlq");
     expect(ack).toHaveBeenCalledTimes(2);
+  });
+
+  test("dead-letters an unprocessable delivery without retrying it", async () => {
+    const { channel, ack, publish, dispatch } = makeChannel();
+
+    await runWithChannel(
+      channel,
+      Effect.gen(function* () {
+        const messaging = yield* RabbitMessaging;
+        yield* messaging.consume(
+          {
+            queue: "test-queue",
+            failurePolicy: {
+              strategy: "retry",
+              maxRetries: 3,
+              retryRoutingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE_RETRY,
+              deadLetterRoutingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE_DLQ,
+            },
+          },
+          () => new UnprocessableDelivery({ cause: "invalid payload" }),
+        );
+        dispatch(makeMessage());
+        yield* Effect.sleep(1);
+      }),
+    );
+
+    expect(publish).toHaveBeenCalledTimes(1);
+    expect(publish.mock.calls[0]?.[0]).toBe("dlx");
+    expect(publish.mock.calls[0]?.[1]).toBe("guilds.loots.create.dlq");
+    expect(ack).toHaveBeenCalledTimes(1);
+  });
+
+  test("rejects an unprocessable delivery instead of requeueing it", async () => {
+    const { channel, nack, dispatch } = makeChannel();
+
+    await runWithChannel(
+      channel,
+      Effect.gen(function* () {
+        const messaging = yield* RabbitMessaging;
+        yield* messaging.consume(
+          {
+            queue: "test-queue",
+            failurePolicy: { strategy: "requeue" },
+          },
+          () => new UnprocessableDelivery({ cause: "invalid payload" }),
+        );
+        dispatch(makeMessage());
+        yield* Effect.sleep(1);
+      }),
+    );
+
+    expect(nack).toHaveBeenCalledWith(expect.anything(), false, false);
   });
 
   test("interrupts in-flight deliveries when the consumer is cancelled", async () => {
@@ -374,16 +466,16 @@ test("closing the consumer scope cancels the broker subscription exactly once", 
 });
 
 test("a broker confirmation failure is not reported as published", async () => {
-  const { channel } = makeChannel();
+  const { channel, publish } = makeChannel();
+  publish.mockImplementation((_exchange, _key, _content, _options, confirm) => {
+    confirm?.(new Error("broker rejected message"), {});
 
-  const rejectingChannel = {
-    ...channel,
-    waitForConfirms: () => Promise.reject(new Error("broker rejected message")),
-  };
+    return true;
+  });
 
   await expect(
     runWithChannel(
-      rejectingChannel,
+      channel,
       Effect.gen(function* () {
         const messaging = yield* RabbitMessaging;
         yield* messaging.publish({
@@ -393,6 +485,84 @@ test("a broker confirmation failure is not reported as published", async () => {
       }),
     ),
   ).rejects.toMatchObject({ operation: "publish" });
+});
+
+test("a buffered publish settles independently of an earlier pending or rejected message", async () => {
+  const { channel, publish } = makeChannel();
+  const confirmations: Confirm[] = [];
+  const firstPublished = Promise.withResolvers<void>();
+  const secondPublished = Promise.withResolvers<void>();
+  let firstSettled = false;
+
+  publish.mockImplementation((_exchange, _key, _content, _options, confirm) => {
+    if (confirm) confirmations.push(confirm);
+
+    if (publish.mock.calls.length === 1) firstPublished.resolve();
+    else secondPublished.resolve();
+
+    return false;
+  });
+
+  const send = Effect.gen(function* () {
+    const messaging = yield* RabbitMessaging;
+    yield* messaging.publish({
+      routingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE,
+      content: new Uint8Array(),
+    });
+  }).pipe(Effect.exit);
+
+  const first = runWithChannel(channel, send).then((result) => {
+    firstSettled = true;
+
+    return result;
+  });
+
+  await firstPublished.promise;
+
+  const second = runWithChannel(channel, send);
+  await secondPublished.promise;
+
+  confirmations[1]?.(null, {});
+  expect((await second)._tag).toBe("Success");
+  expect(firstSettled).toBe(false);
+  confirmations[0]?.(new Error("first message rejected"), {});
+  expect((await first)._tag).toBe("Failure");
+  expect(publish).toHaveBeenCalledTimes(2);
+});
+
+test("a rejected retry publication requeues the original delivery without acknowledging it", async () => {
+  const { channel, ack, nack, publish, dispatch } = makeChannel();
+  const requeued = Promise.withResolvers<void>();
+  publish.mockImplementation((_exchange, _key, _content, _options, confirm) => {
+    confirm?.(new Error("channel closed"), {});
+
+    return true;
+  });
+  nack.mockImplementation(() => requeued.resolve());
+
+  await runWithChannel(
+    channel,
+    Effect.gen(function* () {
+      const messaging = yield* RabbitMessaging;
+      yield* messaging.consume(
+        {
+          queue: "test-queue",
+          failurePolicy: {
+            strategy: "retry",
+            maxRetries: 1,
+            retryRoutingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE_RETRY,
+            deadLetterRoutingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE_DLQ,
+          },
+        },
+        () => Effect.fail("handler failed"),
+      );
+      dispatch(makeMessage());
+      yield* Effect.promise(() => requeued.promise);
+    }),
+  );
+
+  expect(nack).toHaveBeenCalledWith(expect.anything(), false, true);
+  expect(ack).not.toHaveBeenCalled();
 });
 
 test("interruption while the broker registers a consumer still cancels it", async () => {

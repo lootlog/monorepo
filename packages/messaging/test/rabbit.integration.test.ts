@@ -28,6 +28,101 @@ describe("RabbitMessaging real broker integration", () => {
     await rabbit.stop();
   });
 
+  test("concurrent confirmed publications retain every message in the bound queue", async () => {
+    const queue = `concurrent-publishes-${crypto.randomUUID()}`;
+    const inspection = await amqp.connect(rabbitUri);
+    const channel = await inspection.createChannel();
+    const ids = Array.from({ length: 32 }, (_, index) => `message-${index}`);
+
+    try {
+      await Effect.runPromise(
+        Effect.gen(function* () {
+          const messaging = yield* RabbitMessaging;
+          yield* Effect.forEach(
+            ids,
+            (messageId) =>
+              messaging.publish({
+                routingKey: RabbitRoutingKey.GUILDS_CREATE,
+                messageId,
+                content: new TextEncoder().encode(messageId),
+              }),
+            { concurrency: "unbounded" },
+          );
+        }).pipe(
+          Effect.provide(
+            RabbitMessaging.layer({
+              uri: rabbitUri,
+              queues: [
+                {
+                  name: queue,
+                  exchange: RabbitExchange.DEFAULT,
+                  routingKey: RabbitRoutingKey.GUILDS_CREATE,
+                  durable: false,
+                },
+              ],
+            }),
+          ),
+          RabbitMessaging.supervised,
+          Effect.timeout("10 seconds"),
+        ),
+      );
+
+      const messages = [];
+
+      for (const _id of ids) {
+        const message = await channel.get(queue, { noAck: true });
+
+        if (!message) throw new Error("Confirmed publication was not retained");
+        messages.push([
+          message.properties.messageId,
+          message.content.toString(),
+        ]);
+      }
+
+      expect(messages).toEqual(ids.map((id) => [id, id]));
+      expect((await channel.checkQueue(queue)).messageCount).toBe(0);
+    } finally {
+      await channel.close();
+      await inspection.close();
+    }
+  }, 15_000);
+
+  test("a broker channel close rejects a publication whose confirmation is pending", async () => {
+    const connection = await amqp.connect(rabbitUri);
+    const channel = await connection.createConfirmChannel();
+    channel.on("error", () => undefined);
+
+    try {
+      // The broker closes the channel for this missing queue before processing
+      // the following publish, exercising amqplib's pending-confirm cleanup.
+      const invalidQueue = channel
+        .checkQueue(`missing-${crypto.randomUUID()}`)
+        .catch(() => undefined);
+
+      const failure = await Effect.runPromise(
+        Effect.gen(function* () {
+          const messaging = yield* RabbitMessaging;
+          yield* messaging.publish({
+            routingKey: RabbitRoutingKey.GUILDS_CREATE,
+            content: new Uint8Array(),
+          });
+        }).pipe(
+          Effect.provide(RabbitMessaging.layerFromChannel(channel)),
+          Effect.flip,
+          Effect.timeout("10 seconds"),
+        ),
+      );
+
+      await invalidQueue;
+      expect(failure).toMatchObject({
+        operation: "publish",
+        message: "channel closed",
+      });
+    } finally {
+      await connection.close();
+    }
+  }, 15_000);
+
   test("confirms, retries through TTL, redelivers and dead-letters", async () => {
     const suffix = crypto.randomUUID();
     const mainQueue = `lootlog-rewrite-main-${suffix}`;

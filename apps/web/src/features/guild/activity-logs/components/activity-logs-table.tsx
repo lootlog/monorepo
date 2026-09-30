@@ -1,4 +1,3 @@
-import { ROW_ENTRANCE_CLASS_NAME } from "@/components/ui/row-entrance";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
@@ -25,7 +24,8 @@ type ActivityLogsTableProps = {
   isMobile: boolean;
   memberNameByDiscordId: Map<string, string>;
   virtualRows: VirtualItem[];
-  totalSize: number;
+  /** Spacer heights standing in for the rows outside the rendered range. */
+  padding: { top: number; bottom: number };
 };
 
 // The mobile list is not a table, so it builds no row model.
@@ -36,7 +36,7 @@ export const ActivityLogsTable = ({
   isMobile,
   memberNameByDiscordId,
   virtualRows,
-  totalSize,
+  padding,
 }: ActivityLogsTableProps) => {
   const { t } = useTranslation();
   const columns = useActivityLogsTableColumns({ memberNameByDiscordId });
@@ -49,12 +49,7 @@ export const ActivityLogsTable = ({
   });
 
   const rows = table.getRowModel().rows;
-  const topPadding = virtualRows[0]?.start ?? 0;
-
-  const bottomPadding =
-    virtualRows.length > 0
-      ? totalSize - (virtualRows[virtualRows.length - 1]?.end ?? 0)
-      : 0;
+  const { top: topPadding, bottom: bottomPadding } = padding;
 
   if (isMobile) {
     return (
@@ -152,10 +147,7 @@ export const ActivityLogsTable = ({
           return (
             <TableRow
               key={virtualRow.key}
-              className={cn(
-                ROW_ENTRANCE_CLASS_NAME,
-                "h-14 border-b border-border hover:bg-muted/50",
-              )}
+              className="h-14 border-b border-border hover:bg-muted/50"
             >
               {row.getVisibleCells().map((cell) => (
                 <TableCell

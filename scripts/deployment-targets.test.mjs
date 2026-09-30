@@ -111,6 +111,32 @@ describe("deployment targets", () => {
     expect(rootPlan.dockerTargets).toHaveLength(8);
   });
 
+  test("CI checks every affected package in exactly one workspace shard", async () => {
+    const isolatedPlan = await createDeploymentPlan({
+      mode: "ci",
+      affectedPackages: ["@lootlog/web"],
+      changedFiles: ["apps/web/src/main.tsx"],
+    });
+
+    expect(isolatedPlan.workspaceShards).toEqual([
+      { id: "web", filters: ["@lootlog/web"] },
+    ]);
+
+    const sharedPlan = await createDeploymentPlan({
+      mode: "ci",
+      affectedPackages: ["@lootlog/domain", "@lootlog/game-client"],
+      changedFiles: ["packages/domain/src/index.ts"],
+    });
+
+    expect(sharedPlan.workspaceShards).toEqual([
+      { id: "game-client", filters: ["@lootlog/game-client"] },
+      {
+        id: "other",
+        filters: ["!@lootlog/api", "!@lootlog/game-client", "!@lootlog/web"],
+      },
+    ]);
+  });
+
   test("CI maps shared and target-specific Docker inputs", async () => {
     const backendPlan = await createDeploymentPlan({
       mode: "ci",

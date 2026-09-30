@@ -9,39 +9,36 @@ export function LiveFeedSkeleton() {
     <div role="status" aria-label={t("common.loading")}>
       <div
         aria-hidden="true"
-        className="motion-reduce:[&_[data-slot=skeleton]]:animate-none"
+        className="relative py-1 before:absolute before:inset-y-0 before:left-[1.375rem] before:w-px before:bg-border/70 motion-reduce:[&_[data-slot=skeleton]]:animate-none"
       >
-        {Array.from({ length: 8 }, (_, index) => {
-          const hasLoot = index % 3 === 0;
+        <Skeleton className="mx-4 mt-3 mb-1 h-3 w-28" />
+        {Array.from({ length: 6 }, (_, index) => {
+          const hasLoot = index % 3 !== 1;
 
           return (
             <div
               key={index}
-              className="border-t border-border/50 first:border-t-0 odd:bg-card even:bg-muted/60 pb-1"
+              className="grid grid-cols-[0.75rem_2.5rem_minmax(0,1fr)] gap-x-3 px-4 py-3"
             >
-              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-2">
-                <div className="flex min-w-0 items-center gap-2">
-                  <Skeleton className="size-8 shrink-0" />
-                  <Skeleton className={cn("h-4", hasLoot ? "w-32" : "w-28")} />
+              <span className="flex justify-center pt-4">
+                <Skeleton className="relative size-3 rounded-full ring-4 ring-card" />
+              </span>
+              <Skeleton className="size-10" />
+              <div className="flex min-w-0 flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Skeleton className={cn("h-4", hasLoot ? "w-40" : "w-32")} />
+                  <Skeleton className="h-4 w-12" />
+                  <Skeleton className="ml-auto size-8 rounded-xl" />
                 </div>
-                <div className="ml-auto flex items-center gap-1.5">
-                  {Array.from({ length: hasLoot ? 3 : 4 }, (_, avatar) => (
-                    <Skeleton key={avatar} className="size-8 rounded-xl" />
-                  ))}
-                </div>
-              </div>
-              {hasLoot && (
-                <div className="flex gap-1 border-t border-border/30 px-4 pt-2 pb-1">
-                  <Skeleton className="size-8" />
-                  {index % 2 === 0 && <Skeleton className="size-8" />}
-                </div>
-              )}
-              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-border/30 px-4 py-1">
-                <Skeleton className={cn("h-4", hasLoot ? "w-44" : "w-16")} />
-                <div className="flex h-6 items-center gap-2">
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-3 w-6" />
-                  {hasLoot && <Skeleton className="h-3 w-6" />}
+                {hasLoot && (
+                  <div className="flex gap-1">
+                    <Skeleton className="size-9" />
+                    {index % 2 === 0 && <Skeleton className="size-9" />}
+                  </div>
+                )}
+                <div className="flex gap-4">
+                  <Skeleton className={cn("h-3", hasLoot ? "w-44" : "w-16")} />
+                  <Skeleton className="h-3 w-20" />
                 </div>
               </div>
             </div>

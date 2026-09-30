@@ -250,6 +250,47 @@ describe("ActivityRepository", () => {
     },
   );
 
+  it("limits actor and clan suggestions to snapshots used by the Organization", async () => {
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const repository = yield* ActivityRepository;
+
+        for (const [guildId, names] of [
+          ["suggestions-a", ["Only A", "Shared"]],
+          ["suggestions-b", ["Only B", "Shared"]],
+        ] as const) {
+          for (const name of names) {
+            const activity = gameActivity(`${guildId}-${name}`);
+
+            yield* repository.create({
+              ...activity,
+              guildId,
+              actorSnapshot: {
+                ...activity.actorSnapshot,
+                name: `Actor ${name}`,
+                clanName: `Clan ${name}`,
+              },
+            });
+          }
+        }
+
+        for (const [guildId, suffix] of [
+          ["suggestions-a", "A"],
+          ["suggestions-b", "B"],
+        ] as const) {
+          const actors = yield* repository.suggestActorNames(guildId, "Actor");
+          const clans = yield* repository.suggestClanNames(guildId, "Clan");
+
+          expect(actors.sort()).toEqual([
+            `Actor Only ${suffix}`,
+            "Actor Shared",
+          ]);
+          expect(clans.sort()).toEqual([`Clan Only ${suffix}`, "Clan Shared"]);
+        }
+      }).pipe(Effect.provide(repositoryLayer())),
+    );
+  });
+
   it("persists a redelivered activity exactly once", async () => {
     const activity = {
       userId: "user-1",
@@ -318,4 +359,57 @@ describe("ActivityRepository", () => {
       expect.objectContaining({ id: "xxxxxxxxxxxxxxxxxxxxxxxxx" }),
     ]);
   });
+
+  // Runs last: retention also drops the fixed-date rows of earlier tests.
+  it("drops seven-day-old activity without queuing writers behind readers", async () => {
+    const insert = (key: string, age: string) =>
+      pool.query(
+        `INSERT INTO "Activity" ("id", "userId", "guildId", "discordId", "type", "createdAt", "source", "idempotencyKey")
+         VALUES ($1, 'user-retention', 'guild-retention', 'discord-retention', 'CONNECT_EVENT', now() - $2::interval, 'WEB_APP', $1)`,
+        [key, age],
+      );
+
+    const remaining = async () =>
+      (
+        await pool.query(
+          `SELECT "idempotencyKey" FROM "Activity" WHERE "guildId" = 'guild-retention'`,
+        )
+      ).rows.map((row) => row.idempotencyKey);
+
+    const { rows: jobs } = await pool.query(
+      `SELECT job_id FROM timescaledb_information.jobs WHERE proc_name = 'activity_retention'`,
+    );
+
+    const runner = await pool.connect();
+    const reader = await pool.connect();
+    // Without the job's own lock bound, fail on this timeout instead of waiting for the reader.
+    await runner.query(`SET statement_timeout = '5s'`);
+
+    const retain = () => runner.query(`CALL run_job($1)`, [jobs[0].job_id]);
+
+    try {
+      await insert("retention-kept", "6 days");
+      await insert("retention-expired", "9 days");
+
+      // Every activity write reads snapshots, so dropping a chunk must not lock them.
+      await reader.query("BEGIN");
+      await reader.query(`SELECT count(*) FROM "ActivityActorSnapshot"`);
+      await retain();
+      expect(await remaining()).toEqual(["retention-kept"]);
+      await reader.query("COMMIT");
+
+      // A pending drop blocks every later query on its chunk, so it gives up instead.
+      await insert("retention-late", "9 days");
+      await reader.query("BEGIN");
+      await reader.query(`SELECT count(*) FROM "Activity"`);
+      await expect(retain()).rejects.toMatchObject({ code: "55P03" });
+      await reader.query("COMMIT");
+      await retain();
+      expect(await remaining()).toEqual(["retention-kept"]);
+    } finally {
+      await reader.query("ROLLBACK");
+      reader.release();
+      runner.release(true);
+    }
+  }, 15_000);
 });

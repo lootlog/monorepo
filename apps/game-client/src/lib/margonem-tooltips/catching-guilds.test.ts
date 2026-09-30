@@ -80,6 +80,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
         maxHp: 1,
         name: "Hero",
         profession: "w",
+        stasis: false,
         x: 1,
         y: 2,
       },
@@ -160,7 +161,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
         currentHtml: "<div>Other</div>",
         kind: "other",
       }),
-    ).toContain("Ładowanie...");
+    ).toContain("Ładowanie…");
   });
 
   it("shows escaped guild names for successful entries", () => {
@@ -183,7 +184,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
       kind: "other",
     });
 
-    expect(result).toContain("Dodaje łupy i timery na:");
+    expect(result).toContain("Dodaje łupy i timery do:");
     expect(result).toContain("Gra jako:");
     expect(result).toContain("Member &lt;One&gt;");
     expect(result).toContain("Alpha &lt;One&gt;");
@@ -203,7 +204,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
         currentHtml: "<div>Other</div>",
         kind: "other",
       }),
-    ).toContain("Brak wspólnych serwerów Lootloga");
+    ).toContain("Brak wspólnych Lootlogów");
   });
 
   it("shows unavailable state while shift is pressed when the owner is missing", () => {
@@ -232,7 +233,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
         currentHtml: "<div>Other</div>",
         kind: "other",
       }),
-    ).toContain("Nie udało się pobrać serwerów");
+    ).toContain("Nie udało się pobrać Lootlogów");
   });
 
   it("shows an error state when the presence snapshot fails", () => {
@@ -246,6 +247,6 @@ describe("appendCatchingGuildsTooltipSection", () => {
         currentHtml: "<div>Other</div>",
         kind: "other",
       }),
-    ).toContain("Nie udało się pobrać serwerów");
+    ).toContain("Nie udało się pobrać Lootlogów");
   });
 });

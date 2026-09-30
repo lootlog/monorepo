@@ -1,4 +1,7 @@
-import { decodeClientCommand } from "@lootlog/protocol/realtime";
+import {
+  decodeClientCommand,
+  type ServerEvent,
+} from "@lootlog/protocol/realtime";
 import {
   decodeRealtimeFrame,
   encodeRealtimeFrame,
@@ -43,7 +46,7 @@ class TestWebSocket implements RealtimeWebSocket {
     this.dispatch("open");
   }
 
-  message(data: string | Uint8Array): void {
+  message(data: string | Uint8Array | Blob): void {
     this.dispatch("message", { data });
   }
 
@@ -508,6 +511,59 @@ describe("RealtimeClient", () => {
     },
   );
 
+  it("probes latency only while the joined gateway advertises connection.ping", async () => {
+    vi.useFakeTimers();
+    let now = 0;
+    vi.spyOn(performance, "now").mockImplementation(() => now);
+    const sockets: TestWebSocket[] = [];
+    const latencies: Array<number | null> = [];
+
+    const client = new RealtimeClient({
+      url: "https://gateway.example.test",
+      random: () => 0,
+      webSocketFactory: () => {
+        const socket = new TestWebSocket();
+        sockets.push(socket);
+
+        return socket;
+      },
+    });
+
+    client.subscribeHeartbeatLatency((latency) => latencies.push(latency));
+    client.connect();
+    const current = socketAt(sockets, 0);
+    current.open();
+    const joined = client.join(joinData);
+    respondToLastRequest(current, { capabilities: ["connection.ping"] });
+    await flushMessages();
+    await joined;
+
+    client.probeLatency();
+    client.probeLatency();
+    expect(current.sent).toHaveLength(2);
+    expect(frameAt(current, 1)).toMatchObject({
+      type: "connection.ping",
+      data: {},
+    });
+    now += 30;
+    respondToLastRequest(current);
+    await flushMessages();
+    expect(latencies.at(-1)).toBe(30);
+
+    // A gateway rollback must not receive a command it closes the socket for.
+    current.close(4000);
+    await vi.advanceTimersByTimeAsync(1_000);
+    const rolledBack = socketAt(sockets, 1);
+    rolledBack.open();
+    respondToLastRequest(rolledBack, { organizationIds: ["org-1"] });
+    await flushMessages();
+    expect(client.state).toBe("ready");
+
+    client.probeLatency();
+    expect(rolledBack.sent).toHaveLength(1);
+    client.disconnect();
+  });
+
   it("rejoins and restores logical subscriptions after jittered reconnect", async () => {
     vi.useFakeTimers();
     const sockets: TestWebSocket[] = [];
@@ -662,6 +718,40 @@ describe("RealtimeClient", () => {
 
     await vi.advanceTimersByTimeAsync(500);
     await flushMessages();
+    expect(sockets).toHaveLength(3);
+    client.disconnect();
+  });
+
+  it("waits the delay a busy gateway asks for before reconnecting after a rejected join", async () => {
+    vi.useFakeTimers();
+    const sockets: TestWebSocket[] = [];
+
+    const client = new RealtimeClient({
+      url: "https://gateway.example.test",
+      reconnectBaseDelayMs: 1_000,
+      random: () => 0,
+      webSocketFactory: () => {
+        const socket = new TestWebSocket();
+        sockets.push(socket);
+
+        return socket;
+      },
+    });
+
+    client.connect();
+    socketAt(sockets, 0).open();
+    const joined = client.join(joinData).catch(() => undefined);
+    await rejectLastRequest(socketAt(sockets, 0), true, 3_000);
+    await joined;
+
+    await vi.advanceTimersByTimeAsync(2_999);
+    expect(sockets).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(sockets).toHaveLength(2);
+
+    // The delay applies to that rejection only.
+    socketAt(sockets, 1).close();
+    await vi.advanceTimersByTimeAsync(1_000);
     expect(sockets).toHaveLength(3);
     client.disconnect();
   });
@@ -983,4 +1073,80 @@ describe("RealtimeClient", () => {
     await vi.advanceTimersByTimeAsync(25_000);
     expect(socket.sent).toHaveLength(sentAfterClear);
   });
+});
+
+it("discards decoded and queued frames from a previous connection after reconnect", async () => {
+  const sockets: TestWebSocket[] = [];
+
+  const client = new RealtimeClient({
+    url: "https://gateway.example.test",
+    webSocketFactory: () => {
+      const socket = new TestWebSocket();
+      sockets.push(socket);
+
+      return socket;
+    },
+  });
+
+  const events: ServerEvent[] = [];
+  client.subscribe((event) => events.push(event));
+  const decoding = Promise.withResolvers<void>();
+  const bytes = Promise.withResolvers<ArrayBuffer>();
+
+  class DelayedFrame extends Blob {
+    override arrayBuffer(): Promise<ArrayBuffer> {
+      decoding.resolve();
+
+      return bytes.promise;
+    }
+  }
+
+  try {
+    client.connect();
+    const first = socketAt(sockets, 0);
+    first.open();
+    first.message(new DelayedFrame());
+    first.message(
+      encodeRealtimeFrame({
+        v: 1,
+        type: "permissions.updated",
+        data: {
+          organizationIds: ["previous-organization"],
+          subscriptionScopes: [],
+        },
+      }),
+    );
+    await decoding.promise;
+    first.close();
+    client.connect();
+    const replacement = socketAt(sockets, 1);
+    replacement.open();
+
+    const hello = {
+      v: 1,
+      type: "session.hello",
+      data: { connectionId: "new-connection" },
+    } satisfies ServerEvent;
+
+    const delivered = Promise.withResolvers<void>();
+    client.subscribe((event) => {
+      if (
+        event.type === "session.hello" &&
+        event.data.connectionId === "new-connection"
+      )
+        delivered.resolve();
+    });
+    replacement.message(encodeRealtimeFrame(hello));
+    bytes.resolve(
+      encodeRealtimeFrame({
+        v: 1,
+        type: "session.hello",
+        data: { connectionId: "old-connection" },
+      }).slice().buffer,
+    );
+    await delivered.promise;
+    expect(events).toEqual([hello]);
+  } finally {
+    client.disconnect();
+  }
 });

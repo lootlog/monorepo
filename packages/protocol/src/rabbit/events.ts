@@ -6,6 +6,7 @@ import {
   DiscordGuildSyncStatus,
 } from "@lootlog/schema/discord";
 import { NonNegativeInt } from "@lootlog/schema/primitives";
+import { PartyGatheringUpdateEnvelopeSchema } from "@lootlog/schema/party-ready-room";
 import { Schema } from "effect";
 import { RabbitRoutingKey } from "./topology.js";
 
@@ -375,6 +376,8 @@ const canonicalRabbitEventSchemas = {
   [RabbitRoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER]: NotificationVolunteer,
   [RabbitRoutingKey.GUILDS_PARTY_GATHERING]: OrganizationScopedEvent,
   [RabbitRoutingKey.GUILDS_PARTY_GATHERING_CANCEL]: OrganizationScopedEvent,
+  [RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED]:
+    PartyGatheringUpdateEnvelopeSchema,
   [RabbitRoutingKey.GUILDS_MEMBERS_REFRESH_JOB_UPDATE]: OrganizationScopedEvent,
   [RabbitRoutingKey.GUILDS_RESERVATIONS_CHANGED_V2]: ReservationChangedEventV2,
   [RabbitRoutingKey.NOTIFICATIONS_DELIVERY_RESULT]:

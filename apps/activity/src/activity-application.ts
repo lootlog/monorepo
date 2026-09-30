@@ -9,7 +9,7 @@ import {
 import { ActivityRepository } from "#src/activities/activity-repository";
 import { ActivityConfig } from "#src/config/activity-config";
 import { ActivityDatabase, PgClientLive } from "#src/database/database";
-import { ActivityHealth, ActivityHttpServer } from "#src/http/activity-http";
+import { ActivityReadiness, ActivityHttpServer } from "#src/http/activity-http";
 import { ApiHttpClient } from "#src/http/api-http-client";
 import { Permissions } from "#src/activities/activity-permissions";
 
@@ -30,10 +30,7 @@ const RepositoryLive = ActivityRepository.layer.pipe(
   Layer.provide(PgClientLive),
 );
 
-const HealthLive = ActivityHealth.layer.pipe(
-  Layer.provide(ApiHttpClient.layer),
-  Layer.provide(PgClientLive),
-);
+const ReadinessLive = ActivityReadiness.layer.pipe(Layer.provide(PgClientLive));
 
 const PermissionsLive = Permissions.live.pipe(
   Layer.provide(ApiHttpClient.layer),
@@ -43,7 +40,7 @@ const PermissionsLive = Permissions.live.pipe(
 const DatabaseServices = Layer.mergeAll(
   OnlineRepository.layer.pipe(Layer.provide(PgClientLive)),
   RepositoryLive,
-  HealthLive,
+  ReadinessLive,
 );
 
 export const ActivityApplication = Layer.mergeAll(

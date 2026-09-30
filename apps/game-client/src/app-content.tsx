@@ -1,11 +1,15 @@
 import { useChatQuickActions } from "@/features/chat/hooks/use-chat-quick-actions";
 import { AnimationEffectsRootClass } from "@/components/animation-effects-root-class";
+import { OverlayBootMarks } from "@/components/overlay-boot-marks";
+import { useDeferredValue } from "react";
 import { BackendPreferencesWarning } from "@/features/backend-preferences-warning/backend-preferences-warning";
 import { CatchingWhitelistWarning } from "@/features/catching-whitelist-warning/catching-whitelist-warning";
 import { Chat } from "@/features/chat/chat";
 import { CommandWindow } from "@/features/command/command";
 import { CreatePartyGathering } from "@/features/party-finder/create-party-gathering";
-import { MapPingWheel } from "@/features/map-pings/map-ping-wheel";
+import { BattlePingMarkers } from "@/features/pings/battle-ping-markers";
+import { BattlePingWindow } from "@/features/pings/battle-ping-window";
+import { PingWheel } from "@/features/pings/ping-wheel";
 import { Notifications } from "@/features/notifications/notifications";
 import { NpcDetector } from "@/features/npc-detector/npc-detector";
 import { OnlinePlayers } from "@/features/online-players/online-players";
@@ -18,8 +22,9 @@ import { useGameEventHandlers } from "@/hooks/game-events/use-game-event-handler
 import { useGlobalStore } from "@/store/global.store";
 import { useHotkeys } from "@/hooks/use-hotkeys";
 import { useInit } from "@/hooks/use-init";
-import { useMapPings } from "@/features/map-pings/use-map-pings";
+import { usePings } from "@/features/pings/use-pings";
 import { useAirTags } from "@/features/air-tags/use-air-tags";
+import { WhoIsHereAirTags } from "@/features/air-tags/who-is-here-air-tags";
 import { usePartyGatheringSocket } from "@/features/party-finder/hooks/use-party-gathering-socket";
 import { usePartyReadyRoomExpiry } from "@/features/party-finder/hooks/use-party-ready-room-expiry";
 import { usePartyReadyRoomObserver } from "@/features/party-finder/hooks/use-party-ready-room-observer";
@@ -33,11 +38,11 @@ export const AppContent = () => {
   useInit();
   useSelectedLootlogGuildInitialization();
   useSettingsHydration();
-  const mapPingHotkeyHandlers = useMapPings();
+  const pingHotkeyHandlers = usePings();
   useAirTags();
   const { sendHelp, sendPosition } = useChatQuickActions();
   useHotkeys({
-    ...mapPingHotkeyHandlers,
+    ...pingHotkeyHandlers,
     onChatHelp: () => void sendHelp(),
     onChatPosition: () => void sendPosition(),
   });
@@ -51,27 +56,39 @@ export const AppContent = () => {
     Boolean(state.gameState.gameInitialized),
   );
 
-  if (!gameInitialized) {
-    return null;
-  }
+  // The flag flips inside the game's handling of a server packet. Deferring
+  // the overlay moves its first render out of that task and makes it
+  // interruptible, so the game keeps its frames while the windows render.
+  const overlayVisible = useDeferredValue(gameInitialized);
 
+  // The Toaster stays mounted while the game loads, so feedback raised before
+  // then (such as a missing session) is not dropped. Its @lootlog/ui wrapper
+  // uses the dark theme that ThemeProvider applies to the whole overlay.
   return (
     <>
-      <AnimationEffectsRootClass />
-      <Timers />
-      <Settings />
-      <Chat />
-      <CommandWindow />
-      <OnlinePlayers />
-      <NpcDetector />
-      <Notifications />
-      <QuickAccess />
-      <CatchingWhitelistWarning />
-      <BackendPreferencesWarning />
-      <Toaster theme="light" />
-      <PartyFinder />
-      <CreatePartyGathering />
-      <MapPingWheel />
+      <Toaster />
+      {overlayVisible ? (
+        <>
+          <OverlayBootMarks />
+          <AnimationEffectsRootClass />
+          <Timers />
+          <Settings />
+          <Chat />
+          <CommandWindow />
+          <OnlinePlayers />
+          <NpcDetector />
+          <Notifications />
+          <QuickAccess />
+          <CatchingWhitelistWarning />
+          <BackendPreferencesWarning />
+          <PartyFinder />
+          <CreatePartyGathering />
+          <PingWheel />
+          <BattlePingMarkers />
+          <BattlePingWindow />
+          <WhoIsHereAirTags />
+        </>
+      ) : null}
     </>
   );
 };

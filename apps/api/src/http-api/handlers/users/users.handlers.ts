@@ -7,6 +7,7 @@ import { LootlogApi } from "../../lootlog-api.js";
 import {
   deleteCurrentAccountHttpResponse,
   getCurrentUserGamePreferences,
+  getCurrentUserAccessibleGuilds,
   getCurrentUserGuilds,
   getCurrentUserPreferences,
   toAccountOrganizationHttpResponse,
@@ -19,8 +20,8 @@ export const UsersHandlers = HttpApiBuilder.group(
   "users",
   (handlers) =>
     handlers
-      .handle("UsersControllerGetUserFeed", () =>
-        toRecordsHttpResponse(getUserFeed()),
+      .handle("UsersControllerGetUserFeed", ({ query }) =>
+        toRecordsHttpResponse(getUserFeed(query)),
       )
       .handle("UsersControllerDeleteAccount", deleteCurrentAccountHttpResponse)
       .handle("UsersControllerGetUserPreferences", () =>
@@ -32,10 +33,13 @@ export const UsersHandlers = HttpApiBuilder.group(
         ),
       )
       .handle("UsersControllerGetCurrentUserGuilds", () =>
-        toAccountOrganizationHttpResponse(getCurrentUserGuilds()),
+        toAccountOrganizationHttpResponse(getCurrentUserGuilds(false)),
+      )
+      .handle("UsersControllerRefreshCurrentUserGuilds", () =>
+        toAccountOrganizationHttpResponse(getCurrentUserGuilds(true)),
       )
       .handle("UsersControllerGetCurrentUserAccessibleGuilds", () =>
-        toAccountOrganizationHttpResponse(getCurrentUserGuilds(true)),
+        toAccountOrganizationHttpResponse(getCurrentUserAccessibleGuilds()),
       )
       .handle("UsersControllerGetUserGameAccountPreferences", ({ params }) =>
         toAccountOrganizationHttpResponse(

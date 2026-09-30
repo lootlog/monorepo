@@ -107,8 +107,57 @@ describe("AuthenticationGuard", () => {
     await waitFor(() =>
       expect(loginButton.hasAttribute("disabled")).toBe(false),
     );
+    expect(screen.getByRole("alert").textContent).toBe("auth.signin.failed");
     fireEvent.click(loginButton);
     await waitFor(() => expect(signInFetch).toHaveBeenCalledTimes(2));
+  });
+
+  it.each([429, 503])(
+    "shows an OAuth initiation error after HTTP %i and allows an explicit retry",
+    async (status) => {
+      signInFetch.mockResolvedValueOnce(
+        Response.json(
+          { code: "SIGN_IN_FAILED", message: "Internal authentication error" },
+          { status },
+        ),
+      );
+      renderGuard([]);
+
+      const loginButton = screen.getByRole("button", {
+        name: "auth.reloginRequired.button",
+      });
+
+      fireEvent.click(loginButton);
+      await waitFor(() => {
+        expect(screen.getByRole("alert").textContent).toBe(
+          "auth.signin.failed",
+        );
+        expect(loginButton.hasAttribute("disabled")).toBe(false);
+      });
+      fireEvent.click(loginButton);
+      await waitFor(() => expect(signInFetch).toHaveBeenCalledTimes(2));
+      expect(screen.queryByRole("alert")).toBeNull();
+      expect(screen.queryByText("protected content")).toBeNull();
+    },
+  );
+
+  it("keeps OAuth pending after a successful response until navigation", async () => {
+    signInFetch.mockResolvedValueOnce(
+      Response.json({ url: "/oauth", redirect: false }),
+    );
+    renderGuard([]);
+
+    const loginButton = screen.getByRole("button", {
+      name: "auth.reloginRequired.button",
+    });
+
+    fireEvent.click(loginButton);
+    await waitFor(() => expect(signInFetch).toHaveBeenCalledTimes(1));
+    fireEvent.click(loginButton);
+
+    expect(loginButton.hasAttribute("disabled")).toBe(true);
+    expect(signInFetch).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it("shows recorded callback recovery without starting OAuth", () => {

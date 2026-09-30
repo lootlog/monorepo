@@ -125,6 +125,21 @@ export class DocsRepository extends Context.Service<
   );
 }
 
+const documentHistoryValues = (
+  document: StoredDocument,
+  action: StoredDocumentHistory["action"],
+): typeof guildDocumentHistoryTable.$inferInsert => ({
+  id: randomUUID(),
+  documentId: document.id,
+  guildId: document.guildId,
+  version: document.version,
+  title: document.title,
+  content: document.content,
+  action,
+  actorMemberId: document.updatedByMemberId,
+  editedAt: document.updatedAt,
+});
+
 function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
   const protect = <A, E>(effect: Effect.Effect<A, E>) =>
     effect.pipe(
@@ -273,17 +288,9 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
             );
           }
 
-          yield* transaction.insert(guildDocumentHistoryTable).values({
-            id: randomUUID(),
-            documentId: document.id,
-            guildId: options.guildId,
-            version: document.version,
-            title: document.title,
-            content: document.content,
-            action: "SAVE",
-            actorMemberId: options.memberId,
-            editedAt: now,
-          });
+          yield* transaction
+            .insert(guildDocumentHistoryTable)
+            .values(documentHistoryValues(document, "SAVE"));
 
           return document;
         }),
@@ -354,17 +361,9 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
             );
           }
 
-          yield* transaction.insert(guildDocumentHistoryTable).values({
-            id: randomUUID(),
-            documentId: options.documentId,
-            guildId: options.guildId,
-            version: updated.version,
-            title: updated.title,
-            content: updated.content,
-            action: "SAVE",
-            actorMemberId: options.memberId,
-            editedAt: now,
-          });
+          yield* transaction
+            .insert(guildDocumentHistoryTable)
+            .values(documentHistoryValues(updated, "SAVE"));
 
           return updated;
         }),
@@ -474,17 +473,9 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
             );
           }
 
-          yield* transaction.insert(guildDocumentHistoryTable).values({
-            id: randomUUID(),
-            documentId: options.documentId,
-            guildId: options.guildId,
-            version: updated.version,
-            title: updated.title,
-            content: updated.content,
-            action: options.action,
-            actorMemberId: options.memberId,
-            editedAt: now,
-          });
+          yield* transaction
+            .insert(guildDocumentHistoryTable)
+            .values(documentHistoryValues(updated, options.action));
         }),
       ),
     purge: (guildId, documentId) =>

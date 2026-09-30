@@ -1,12 +1,7 @@
 import { cn } from "cn";
 import { useUpdateUserPreferences } from "@/hooks/api/use-user-preferences";
 import { useSettingsStore } from "@/store/settings.store";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { AvatarFallback } from "@/components/ui/avatar";
 import { type FC, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -18,7 +13,7 @@ import { useShallow } from "zustand/react/shallow";
 import { AsyncStatusIndicator } from "@/components/async-status-indicator";
 import { useWindowsStore } from "@/store/windows.store";
 import { Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { GuildSwitcherItem } from "@/components/guild-switcher-item";
 import { toast } from "sonner";
 
@@ -39,6 +34,7 @@ type GuildSwitcherProps = {
 type GuildSwitcherStatusInput = {
   arePreferencesFetched: boolean;
   arePreferencesLoading: boolean;
+  guildCount: number;
   hasGuilds: boolean;
   hasGuildsError: boolean;
   hasPreferences: boolean;
@@ -51,6 +47,7 @@ type GuildSwitcherStatusInput = {
 const getGuildSwitcherStatus = ({
   arePreferencesFetched,
   arePreferencesLoading,
+  guildCount,
   hasGuilds,
   hasGuildsError,
   hasPreferences,
@@ -59,6 +56,11 @@ const getGuildSwitcherStatus = ({
   isLoading,
   visibleGuildCount,
 }: GuildSwitcherStatusInput) => {
+  // Not a member of any Lootlog: nothing to pick and nothing hidden.
+  if (hasGuilds && isFetched && guildCount === 0) {
+    return "none" as const;
+  }
+
   const hasResolvedGuilds = hasGuilds && isFetched && arePreferencesFetched;
 
   if (hasResolvedGuilds && visibleGuildCount === 1) {
@@ -106,7 +108,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   } = preferencesQuery;
 
   const updatePreferences = useUpdateUserPreferences();
-  const setOpen = useWindowsStore((state) => state.setOpen);
+  const openAndFocus = useWindowsStore((state) => state.openAndFocus);
 
   const { setGuildId, guildId } = useSettingsStore(
     useShallow((state) => ({
@@ -142,6 +144,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   const status = getGuildSwitcherStatus({
     arePreferencesFetched,
     arePreferencesLoading,
+    guildCount: guilds?.length ?? 0,
     hasGuilds: Boolean(guilds),
     hasGuildsError: Boolean(error),
     hasPreferences: Boolean(userPreferences),
@@ -199,7 +202,9 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   // own pill.
   const statusClassName = "ll:mt-0 ll:border-y-0";
 
-  if (status === "single") {
+  // A player outside every Lootlog learns how to join from the window's
+  // empty state, which has room to explain it.
+  if (status === "single" || status === "none") {
     return null;
   }
 
@@ -216,28 +221,17 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
           <span className="ll:min-w-0 ll:flex-1 ll:truncate ll:text-[11px] ll:text-gray-300">
             {t("guildSwitcher.allHidden")}
           </span>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="xs"
-                type="button"
-                variant="ghost"
-                aria-label={t("actions.openSettings")}
-                onClick={() =>
-                  setOpen("settings", true, {
-                    activeTab: "general",
-                    activeSubsection: "visibility",
-                  })
-                }
-                className="ll:size-6 ll:shrink-0 ll:bg-transparent ll:text-gray-400 hover:ll:bg-white/5 hover:ll:text-gray-200"
-              >
-                <Settings className="ll:size-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="ll:font-semibold">{t("actions.openSettings")}</p>
-            </TooltipContent>
-          </Tooltip>
+          <IconButton
+            label={t("actions.openSettings")}
+            onClick={() =>
+              openAndFocus("settings", {
+                activeTab: "general",
+                activeSubsection: "visibility",
+              })
+            }
+          >
+            <Settings aria-hidden />
+          </IconButton>
         </div>
       </TooltipProvider>
     );

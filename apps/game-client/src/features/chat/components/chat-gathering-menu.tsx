@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Ellipsis } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import {
   Popover,
   PopoverTrigger,
@@ -21,15 +21,12 @@ export function ChatGatheringMenu({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          size="xs"
-          type="button"
-          variant="ghost"
-          className="ll:relative ll:z-10 ll:h-[24px] ll:w-[28px] ll:shrink-0 ll:border-0"
-          aria-label={t("gatherings.options")}
+        <IconButton
+          label={t("gatherings.options")}
+          className="ll:relative ll:z-10"
         >
-          <Ellipsis size={16} aria-hidden />
-        </Button>
+          <Ellipsis aria-hidden />
+        </IconButton>
       </PopoverTrigger>
       <PopoverContent
         side={side}

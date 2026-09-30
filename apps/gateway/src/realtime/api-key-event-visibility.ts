@@ -31,6 +31,7 @@ export function prepareApiKeyEventVisibility(event: ServerEvent) {
           access.organizationIds.includes(id),
         );
       case "notification.volunteer":
+      case "party-gathering.state-updated":
         return false;
       case "reservation.changed":
         return (
@@ -48,6 +49,7 @@ export function prepareApiKeyEventVisibility(event: ServerEvent) {
       case "feed.entry":
         return allowed(event.data.guild.id);
       case "map-ping.received":
+      case "battle-ping.received":
         // Its payload has no Organization: the hub checks the authoritative routing scope.
         return true;
       default:

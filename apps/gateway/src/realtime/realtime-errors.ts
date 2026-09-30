@@ -26,6 +26,11 @@ export class NoAuthorizedOrganizations extends TaggedErrorClass<NoAuthorizedOrga
   {},
 ) {}
 
+export class JoinCapacityExceeded extends TaggedErrorClass<JoinCapacityExceeded>()(
+  "JoinCapacityExceeded",
+  { retryAfterMs: Schema.Number },
+) {}
+
 export class PresenceSessionMismatch extends TaggedErrorClass<PresenceSessionMismatch>()(
   "PresenceSessionMismatch",
   {},
@@ -47,6 +52,7 @@ export class RealtimeDependencyError extends TaggedErrorClass<RealtimeDependency
 ) {}
 
 export type CommandRejection =
+  | JoinCapacityExceeded
   | SubscriptionLimitExceeded
   | SessionNotJoined
   | OrganizationAccessDenied
@@ -61,6 +67,7 @@ export type CommandFailure =
   | RealtimeDependencyError;
 
 export const isCommandFailure = (error: unknown): error is CommandFailure =>
+  error instanceof JoinCapacityExceeded ||
   error instanceof SubscriptionLimitExceeded ||
   error instanceof SessionNotJoined ||
   error instanceof OrganizationAccessDenied ||
@@ -71,8 +78,19 @@ export const isCommandFailure = (error: unknown): error is CommandFailure =>
   error instanceof RealtimeStoreError ||
   error instanceof RealtimeDependencyError;
 
-export const commandFailureDetails = (error: CommandFailure) =>
+export const commandFailureDetails = (
+  error: CommandFailure,
+): {
+  readonly message: string;
+  readonly retryable: boolean;
+  readonly retryAfterMs?: number;
+} =>
   Match.valueTags(error, {
+    JoinCapacityExceeded: ({ retryAfterMs }) => ({
+      message: "gateway is busy",
+      retryable: true,
+      retryAfterMs,
+    }),
     SubscriptionLimitExceeded: () => ({
       message: "subscription limit exceeded",
       retryable: false,

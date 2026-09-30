@@ -13,11 +13,13 @@ import { LogsSettingsTab } from "@/features/settings/components/logs/logs-settin
 import { MutedNpcsSettingsTab } from "@/features/settings/components/mutes/muted-npcs-settings-tab";
 import { MutedPlayersSettingsTab } from "@/features/settings/components/mutes/muted-players-settings-tab";
 import { NotificationsSettingsTab } from "@/features/settings/components/notifications/notifications-settings-tab";
+import { PingsSettingsTab } from "@/features/settings/components/pings/pings-settings-tab";
 import { SoundsSettingsTab } from "@/features/settings/components/sounds/sounds-settings-tab";
 import { ServerVisibilitySettingsTab } from "@/features/settings/components/servers/server-visibility-settings-tab";
 import { NpcColorsSettings } from "@/features/settings/components/npc-colors/npc-colors-settings";
 import { TimersSettingsAppearance } from "@/features/settings/components/timers/timers-settings-appearance";
 import { TimersSettingsColors } from "@/features/settings/components/timers/timers-settings-colors";
+import { TimersSettingsLists } from "@/features/settings/components/timers/timers-settings-lists";
 import { TimersSettingsGeneral } from "@/features/settings/components/timers/timers-settings-general";
 import type { SettingsSubsectionValue } from "@/features/settings/constants/settings-tabs";
 import type { SettingsIconName } from "@/features/settings/settings-manifest";
@@ -36,6 +38,7 @@ import {
   Server,
   Settings,
   Swords,
+  MapPin,
   Volume2,
   type LucideIcon,
 } from "lucide-react";
@@ -57,6 +60,7 @@ export const SETTINGS_DOMAIN_ICONS = {
   radar: Radar,
   bellOff: BellOff,
   swords: Swords,
+  mapPin: MapPin,
   volume2: Volume2,
   keyboard: Keyboard,
   flaskConical: FlaskConical,
@@ -74,12 +78,14 @@ export const SETTINGS_SUBSECTION_CONTENT = {
   "timer-behavior": TimersSettingsGeneral,
   "timer-appearance": TimersSettingsAppearance,
   "timer-colors": TimersSettingsColors,
+  "timer-lists": TimersSettingsLists,
   "hidden-timers": HiddenTimersTab,
   "notification-rules": NotificationsSettingsTab,
   detector: DetectorSettingsTab,
   "muted-players": MutedPlayersSettingsTab,
   "muted-npcs": MutedNpcsSettingsTab,
   "battle-panel": BattlePanelSettingsTab,
+  pings: PingsSettingsTab,
   sounds: SoundsSettingsTab,
   hotkeys: HotkeysSettingsTab,
   experimental: ExperimentalSettingsTab,

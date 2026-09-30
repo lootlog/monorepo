@@ -17,7 +17,7 @@ type AssignmentAvailability =
     }
   | {
       allowed: false;
-      enabledAt: Date | null;
+      enabledAt: number | null;
       reason: "NO_TIMER" | "OVERDUE" | "TOO_EARLY";
     };
 
@@ -44,12 +44,11 @@ export const getAssignmentAvailability = ({
     };
   }
 
-  const assignmentEnabledAt = new Date(
+  const assignmentEnabledAt =
     new Date(timer.minSpawnTime).getTime() -
-      assignmentTimeoutMinutes * 60 * 1000,
-  );
+    assignmentTimeoutMinutes * 60 * 1000;
 
-  if (nowTimestamp < assignmentEnabledAt.getTime()) {
+  if (nowTimestamp < assignmentEnabledAt) {
     return {
       allowed: false,
       enabledAt: assignmentEnabledAt,

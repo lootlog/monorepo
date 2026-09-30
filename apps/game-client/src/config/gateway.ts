@@ -31,6 +31,7 @@ export enum GatewayEvent {
   // notifications
   NOTIFICATION = "notifications-send",
   NOTIFICATIONS_VOLUNTEER = "notifications-volunteer",
+  PARTY_GATHERING_STATE_UPDATE = "party-gathering:state-update",
   PARTY_GATHERING_SEND = "party-gathering-send",
   PARTY_GATHERING_CANCEL = "party-gathering-cancel",
   PARTY_READY_ROOM_UPDATE = "party-ready-room:update",
@@ -42,9 +43,13 @@ export enum GatewayEvent {
   MEMBERS_REFRESH_JOB_UPDATE = "members-refresh-job-update",
   MAP_PING_SEND = "map-ping:send",
   MAP_PING_RECEIVE = "map-ping:receive",
+  BATTLE_PING_SEND = "battle-ping:send",
+  BATTLE_PING_RECEIVE = "battle-ping:receive",
   AIR_TAG_SUBSCRIPTION = "air-tag:subscription",
   AIR_TAG_OBSERVATION = "air-tag:observation",
   AIR_TAG_UPDATE = "air-tag:update",
+  AIR_TAG_SCOPE_UPDATE = "air-tag:scope:update",
+  AIR_TAG_MAP_THREAT_UPDATE = "air-tag:map-threat:update",
 
   // margo events (game-specific)
   EVENT_MAP_STATUS_UPDATE = "event:map-status:update",

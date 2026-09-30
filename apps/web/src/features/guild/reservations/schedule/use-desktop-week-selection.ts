@@ -1,6 +1,6 @@
 import type { ReservationSettings } from "@lootlog/domain/reservations";
 import { differenceInCalendarDays } from "date-fns";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   DAYS,
   HEADER_HEIGHT,
@@ -8,7 +8,7 @@ import {
   MIN_ROW_HEIGHT,
 } from "./constants";
 import { isReservationStartSelectable } from "./reservation-settings";
-import { scrollViewportToNowIndicator } from "./scroll-viewport-to-now-indicator";
+import { useScrollToNowIndicator } from "./use-scroll-to-now-indicator";
 import type { ReservationRange, ReservationSegment } from "./types";
 
 export type DesktopWeekScheduleProps = {
@@ -167,12 +167,7 @@ export function useDesktopWeekSelection({
 
   const isNowVisible = nowDay >= 0 && nowDay < DAYS.length;
 
-  useEffect(() => {
-    const nowIndicator = nowRef.current;
-
-    if (!isNowVisible || !nowIndicator) return;
-    scrollViewportToNowIndicator(nowIndicator);
-  }, [isNowVisible]);
+  useScrollToNowIndicator(nowRef, isNowVisible);
 
   return {
     gridRef,

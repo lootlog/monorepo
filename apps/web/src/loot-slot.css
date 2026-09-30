@@ -1,0 +1,117 @@
+/*
+ * Loading indicator: the Lootlog mark sits in an item slot whose rim light
+ * orbits it and turns unique, heroic and then legendary, one lap each.
+ *
+ * Plain CSS, linked from index.html, so the startup screen can show the slot
+ * from the first byte, before any script or Tailwind stylesheet arrives.
+ */
+.loot-slot {
+  --loot-slot-lap: 1.2s;
+
+  position: relative;
+  flex-shrink: 0;
+  width: 4.5rem;
+  height: 4.5rem;
+  overflow: hidden;
+  border-radius: 22%;
+  background: #07111f;
+  isolation: isolate;
+}
+
+.loot-slot--small {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+/* The mark covers the middle, so only the slot's rim shows the light. */
+.loot-slot::after {
+  content: "";
+  position: absolute;
+  inset: 6%;
+  border-radius: 18%;
+  background: #07111f url("/brand/lootlog-mark.svg") center / contain no-repeat;
+}
+
+.loot-slot__rim {
+  position: absolute;
+  inset: -50%;
+  animation: loot-slot-orbit var(--loot-slot-lap) linear infinite;
+}
+
+.loot-slot__rim > span {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: conic-gradient(transparent 55%, var(--loot-slot-rarity));
+  animation: loot-slot-rarity calc(var(--loot-slot-lap) * 3) linear infinite;
+}
+
+/* The rarity colours of item names in loot search. */
+.loot-slot__rim > span:nth-child(1) {
+  --loot-slot-rarity: #ffd230;
+}
+
+.loot-slot__rim > span:nth-child(2) {
+  --loot-slot-rarity: #2b7fff;
+
+  animation-delay: calc(var(--loot-slot-lap) * -2);
+}
+
+.loot-slot__rim > span:nth-child(3) {
+  --loot-slot-rarity: #ff8904;
+
+  animation-delay: calc(var(--loot-slot-lap) * -1);
+}
+
+@keyframes loot-slot-orbit {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes loot-slot-rarity {
+  0%,
+  36%,
+  100% {
+    opacity: 0;
+  }
+
+  8%,
+  28% {
+    opacity: 1;
+  }
+}
+
+/* Covers the app until its first navigation resolves; see startup-screen.ts. */
+.startup-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: var(--background);
+}
+
+/* A start that finishes quickly never flashes the slot. */
+.startup-screen .loot-slot {
+  animation: loot-slot-reveal 200ms cubic-bezier(0.2, 0, 0, 1) 150ms backwards;
+}
+
+@keyframes loot-slot-reveal {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loot-slot__rim,
+  .loot-slot__rim > span,
+  .startup-screen .loot-slot {
+    animation: none;
+  }
+
+  .loot-slot__rim > span:nth-child(1) {
+    opacity: 1;
+  }
+}

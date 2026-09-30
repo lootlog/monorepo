@@ -1,19 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  formatItemHid,
-  isItemHid,
-  parseItemHid,
-} from "@/lib/utils/hid-detection";
-
-describe("isItemHid", () => {
-  it("accepts valid values with surrounding whitespace", () => {
-    expect(isItemHid("  ITEM#123.Aldous  ")).toBe(true);
-  });
-
-  it("rejects invalid values", () => {
-    expect(isItemHid("ITEM#123")).toBe(false);
-  });
-});
+import { formatItemHid, parseItemHid } from "@/lib/utils/hid-detection";
 
 describe("parseItemHid", () => {
   it("returns parsed hid and world for valid values", () => {

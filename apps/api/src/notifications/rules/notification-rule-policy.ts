@@ -190,15 +190,26 @@ const firstScheduledOccurrence = (options: {
   readonly weekday: number | null;
   readonly timezone: string | null;
 }) => {
-  const scheduledAt = options.data.scheduledAt
-    ? new Date(options.data.scheduledAt)
-    : (options.existing?.scheduledAt ?? null);
+  if (options.data.scheduledAt) return new Date(options.data.scheduledAt);
+
+  const existing = options.existing;
+  const scheduledAt = existing?.scheduledAt ?? null;
 
   if (
-    scheduledAt ||
     !isRecurringScheduleInterval(options.intervalType) ||
     !options.timeOfDay ||
     !options.timezone
+  ) {
+    return scheduledAt;
+  }
+
+  if (
+    scheduledAt &&
+    scheduledAt.getTime() > Date.now() &&
+    existing?.scheduleIntervalType === options.intervalType &&
+    existing.scheduleTimeOfDay === options.timeOfDay &&
+    existing.scheduleWeekday === options.weekday &&
+    existing.scheduleTimezone === options.timezone
   ) {
     return scheduledAt;
   }
@@ -234,25 +245,36 @@ const scheduledMessageFields = (
     existing?.scheduleIntervalType,
   );
 
-  const intervalValue = firstNonNullish<number | null>(
-    null,
-    data.scheduleIntervalValue,
-    existing?.scheduleIntervalValue,
-  );
+  const intervalValue =
+    intervalType === NotificationScheduleIntervalType.HOURLY
+      ? firstNonNullish<number | null>(
+          null,
+          data.scheduleIntervalValue,
+          existing?.scheduleIntervalValue,
+        )
+      : null;
 
-  const weekday = firstNonNullish<number | null>(
-    null,
-    data.scheduleWeekday,
-    existing?.scheduleWeekday,
-  );
+  const weekday =
+    intervalType === NotificationScheduleIntervalType.WEEKLY
+      ? firstNonNullish<number | null>(
+          null,
+          data.scheduleWeekday,
+          existing?.scheduleWeekday,
+        )
+      : null;
 
-  const timeOfDay = firstNonNullish<string | null>(
-    null,
-    data.scheduleTimeOfDay,
-    existing?.scheduleTimeOfDay,
-  );
+  const timeOfDay = isRecurringScheduleInterval(intervalType)
+    ? firstNonNullish<string | null>(
+        null,
+        data.scheduleTimeOfDay,
+        existing?.scheduleTimeOfDay,
+      )
+    : null;
 
-  const until = scheduledUntil(data, existing);
+  const until =
+    intervalType === NotificationScheduleIntervalType.ONCE
+      ? null
+      : scheduledUntil(data, existing);
 
   const timezone = scheduleTimezone(
     ownerType,

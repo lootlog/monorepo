@@ -55,6 +55,10 @@ const guildsKey = getUsersControllerGetCurrentUserGuildsQueryKey();
 
 let preferences: UserPreferencesResponseDtoOutput;
 
+let serverGuilds: UserCurrentGuildResponseDtoOutput[];
+
+let refreshedServerGuilds: boolean;
+
 let requests: Request[];
 
 let rejectReads: boolean;
@@ -69,6 +73,8 @@ beforeEach(() => {
     toFake: ["setTimeout", "clearTimeout"],
   });
   preferences = createUserPreferences();
+  serverGuilds = guilds;
+  refreshedServerGuilds = false;
   requests = [];
   rejectReads = false;
   writeResponse = undefined;
@@ -105,12 +111,16 @@ beforeEach(() => {
             return Response.json(preferences);
           }
 
+          const url = new URL(request.url);
+
+          if (url.pathname.endsWith("/users/@me/guilds/refresh")) {
+            refreshedServerGuilds = true;
+          }
+
           if (rejectReads) return Response.json({}, { status: 503 });
 
           return Response.json(
-            new URL(request.url).pathname.endsWith("/preferences")
-              ? preferences
-              : guilds,
+            url.pathname.endsWith("/preferences") ? preferences : serverGuilds,
           );
         },
       },
@@ -228,6 +238,26 @@ describe("GuildsSelector", () => {
     expect(client.getQueryState(preferencesKey)?.status).toBe("error");
     expect(guildLink("guild-1").textContent).toContain("A");
     expect(guildLink("guild-2").textContent).toContain("B");
+  });
+  it("fetches a newly joined server when the list is refreshed", async () => {
+    await renderSelector();
+    serverGuilds = [...guilds, { ...guilds[0]!, id: "guild-3", name: "Gamma" }];
+    fireEvent.click(
+      screen.getByRole("button", { name: "ui.tooltips.refreshServers" }),
+    );
+    await waitFor(() =>
+      expect(guildLink("guild-3").textContent).toContain("G"),
+    );
+    expect(refreshedServerGuilds).toBe(true);
+  });
+  it("reports a failed refresh and keeps the cached guilds", async () => {
+    await renderSelector();
+    rejectReads = true;
+    fireEvent.click(
+      screen.getByRole("button", { name: "ui.tooltips.refreshServers" }),
+    );
+    await screen.findByText("layout.guildsSelector.refreshError");
+    expect(guildLink("guild-1").textContent).toContain("A");
   });
   it("does not retry a rejected guild order automatically", async () => {
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(

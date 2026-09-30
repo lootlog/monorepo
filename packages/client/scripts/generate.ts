@@ -3,8 +3,7 @@ import { mkdirSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
 import { checkOpenApi } from "./check-openapi";
 import { fixGeneratedOutput } from "./fix-generated-output";
-
-const services = ["activity", "auth", "battlelog", "main", "search"] as const;
+import { clientServices } from "./client-services";
 
 const generatedRoot = resolve("src/generated");
 
@@ -31,7 +30,7 @@ rmSync(generatedRoot, { force: true, recursive: true });
 
 mkdirSync(generatedRoot, { recursive: true });
 
-for (const service of services) {
+for (const service of Object.keys(clientServices)) {
   run(process.execPath, [
     "x",
     "orval",

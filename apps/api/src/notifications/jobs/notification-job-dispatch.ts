@@ -2,18 +2,18 @@ import { isObjectRecord } from "@lootlog/schema/records";
 import type { DiscordNotificationSendCommand } from "@lootlog/schema/notifications";
 import type { NotificationContentModule } from "#src/notifications/content/notification-content.service";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Effect, Result, Schema } from "effect";
+import { Clock, Effect, Result, Schema } from "effect";
 import type {
   NotificationJobStore,
   NotificationJobWithRelations,
 } from "#src/notifications/jobs/notification-job-store";
-import type { NotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
+import type { NotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
 import {
   NotificationJobStatus,
   NotificationOwnerType,
   NotificationProvider,
 } from "#src/notifications/notification-enums";
-import type { JsonValue, JsonObject } from "#src/database/json";
+import { isJsonObject, type JsonValue } from "#src/database/json";
 
 export type NotificationDispatchJob = NotificationJobWithRelations;
 
@@ -25,11 +25,20 @@ export interface NotificationDispatchStore {
     jobId: string,
     values: Parameters<NotificationJobStore["updateJob"]>[1],
   ) => Effect.Effect<unknown, unknown, never>;
-  readonly claim: (jobId: string) => Effect.Effect<boolean, unknown, never>;
+  readonly claim: (
+    ...args: Parameters<NotificationJobStore["claimJob"]>
+  ) => Effect.Effect<boolean, unknown, never>;
+  readonly failClaim: (
+    ...args: Parameters<NotificationJobStore["failClaim"]>
+  ) => Effect.Effect<boolean, unknown, never>;
   readonly block: (
-    jobId: string,
-    reason: string,
+    ...args: Parameters<NotificationJobStore["blockJob"]>
   ) => Effect.Effect<unknown, unknown, never>;
+}
+
+export interface NotificationDispatchAttempt {
+  readonly retrying: boolean;
+  readonly finalAttempt: boolean;
 }
 
 export interface NotificationDispatchPermissions {
@@ -75,11 +84,8 @@ const errorMessage = (cause: unknown) =>
     ? String(cause.message)
     : String(cause);
 
-const isPayloadObject = (value: JsonValue): value is JsonObject =>
-  value !== null && typeof value === "object" && !Array.isArray(value);
-
 const parseDispatchPayload = (value: JsonValue) => {
-  const payload = isPayloadObject(value) ? value : undefined;
+  const payload = isJsonObject(value) ? value : undefined;
 
   return {
     content: typeof payload?.content === "string" ? payload.content : undefined,
@@ -96,24 +102,33 @@ export const makeNotificationJobDispatch = (
   store: NotificationDispatchStore,
   permissions: NotificationDispatchPermissions,
   publisher: NotificationDispatchPublisher,
-  scheduler: Pick<NotificationJobScheduler, "enqueue">,
+  finalize: NotificationJobFinalization,
   parseAllowedMentions: NotificationContentModule["parseAllowedMentions"],
 ) =>
-  Effect.fn("notifications.jobs.dispatch")(function* (jobId: string) {
+  Effect.fn("notifications.jobs.dispatch")(function* (
+    jobId: string,
+    attempt: NotificationDispatchAttempt,
+  ) {
     const job = yield* store.find(jobId);
 
     if (
       !job ||
-      (job.status !== NotificationJobStatus.PENDING &&
-        job.status !== NotificationJobStatus.BLOCKED)
-    )
+      job.status === NotificationJobStatus.SENT ||
+      job.status === NotificationJobStatus.FAILED ||
+      job.status === NotificationJobStatus.CANCELED
+    ) {
       return;
+    }
 
     if (
       job.sourceEntityType === "loot" &&
       !(yield* permissions.canReadLootSource(job.id, job.ownerId))
     ) {
-      yield* store.block(job.id, "Loot source is no longer visible");
+      yield* store.block(
+        job.id,
+        "Loot source is no longer visible",
+        attempt.retrying,
+      );
 
       return;
     }
@@ -121,7 +136,7 @@ export const makeNotificationJobDispatch = (
     const blockedReason = targetBlockedReason(job.target);
 
     if (blockedReason) {
-      yield* store.block(job.id, blockedReason);
+      yield* store.block(job.id, blockedReason, attempt.retrying);
 
       return;
     }
@@ -132,13 +147,17 @@ export const makeNotificationJobDispatch = (
       );
 
       if (!permitted) {
-        yield* store.block(job.id, "Missing Discord bot permissions");
+        yield* store.block(
+          job.id,
+          "Missing Discord bot permissions",
+          attempt.retrying,
+        );
 
         return;
       }
     }
 
-    if (!(yield* store.claim(job.id))) return;
+    if (!(yield* store.claim(job.id, attempt.retrying))) return;
     const payload = parseDispatchPayload(job.payloadSnapshot);
 
     const published = yield* publisher
@@ -162,12 +181,24 @@ export const makeNotificationJobDispatch = (
 
     if (Result.isSuccess(published)) return;
     const message = errorMessage(published.failure);
-    yield* store.update(job.id, {
-      status: NotificationJobStatus.PENDING,
+
+    const failed = yield* store.failClaim(job.id, job.attemptCount + 1, {
+      status: attempt.finalAttempt
+        ? NotificationJobStatus.FAILED
+        : NotificationJobStatus.PENDING,
       lastError: `AMQP publish failed: ${message}`,
+      processedAt: attempt.finalAttempt
+        ? new Date(yield* Clock.currentTimeMillis)
+        : null,
     });
-    yield* scheduler.enqueue(
-      job.id,
-      Math.min(60_000, job.attemptCount * 15_000),
-    );
+
+    if (!failed) return;
+
+    if (attempt.finalAttempt) yield* finalize(job);
+
+    return yield* new NotificationJobDispatchFailure({
+      operation: "publish",
+      jobId: job.id,
+      cause: published.failure,
+    });
   });

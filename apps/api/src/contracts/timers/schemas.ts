@@ -77,7 +77,10 @@ export const TimerHistoryResponse = Schema.Struct({
   actorCharacter: Schema.optionalKey(TimerActorCharacter),
   minSpawnTime: Schema.Union([DateTimeString, Schema.Null]),
   maxSpawnTime: Schema.Union([DateTimeString, Schema.Null]),
-  canRestore: Schema.Boolean,
+  canRestore: Schema.Boolean.annotate({
+    description:
+      "Whether this entry can restore a deleted timer or undo the latest timer reset.",
+  }),
   createdAt: DateTimeString,
 }).annotate({ identifier: "TimerHistoryResponseDto" });
 

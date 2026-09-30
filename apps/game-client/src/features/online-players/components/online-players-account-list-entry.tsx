@@ -4,9 +4,11 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
+  openContextMenuOnKeyDown,
 } from "@/components/ui/context-menu";
-import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { ListRow } from "@/components/list-row";
+import { PlayerName } from "@/components/player-name";
 import {
   Tooltip,
   TooltipContent,
@@ -14,15 +16,14 @@ import {
 } from "@/components/ui/tooltip";
 import type { PlayerPresence } from "@/lib/online-players-presence";
 import { getPresenceCharacter } from "@/features/online-players/online-players-list.helpers";
+import { OnlinePlayerTooltip } from "@/features/online-players/components/online-player-tooltip";
+import { usePlayerRelations } from "@/hooks/use-player-relations";
 import {
-  OnlinePlayerTooltip,
-  type OnlinePlayerRelation,
-} from "@/features/online-players/components/online-player-tooltip";
-import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
-import { VerifiedMargonemAccountIcon } from "@/features/online-players/components/verified-margonem-account-icon";
+  PLAYER_AFK_FILL,
+  PLAYER_RELATION_FILLS,
+  type PlayerRelation,
+} from "@/lib/player-relation";
 import type { MemberSummaryResponseDtoOutput } from "@lootlog/client/main";
-import { useFriendsStore } from "@/store/friends.store";
-import { usePartyStore } from "@/store/party.store";
 import { useGameStore } from "@/store/game.store";
 import {
   inviteCharacterToFriends,
@@ -37,38 +38,18 @@ import { useTranslation } from "react-i18next";
 type OnlinePlayersAccountListEntryProps = {
   presence: PlayerPresence;
   guildMember?: MemberSummaryResponseDtoOutput;
-  isAlternateRow?: boolean;
 };
 
-const resolveRelation = ({
-  isSelf,
-  isPartyMember,
-  isSameClan,
-}: {
-  isSelf: boolean;
-  isPartyMember: boolean;
-  isSameClan: boolean;
-}): OnlinePlayerRelation => {
-  if (isSelf) return "self";
+/** Your own row and AFK players keep their colour over any relation. */
+const getHighlightFill = (
+  relation: PlayerRelation | undefined,
+  isAfk: boolean,
+) => {
+  if (relation === "self") return PLAYER_RELATION_FILLS.self;
 
-  if (isPartyMember) return "party";
+  if (isAfk) return PLAYER_AFK_FILL;
 
-  if (isSameClan) return "clan";
-
-  return undefined;
-};
-
-/** Highlights use the timer palette, so every list paints rows alike. */
-const getHighlightFill = (relation: OnlinePlayerRelation, isAfk: boolean) => {
-  if (relation === "self") return TIMERS_COLORS.yellow.fill;
-
-  if (isAfk) return TIMERS_COLORS.orange.fill;
-
-  if (relation === "party") return TIMERS_COLORS.sky.fill;
-
-  if (relation === "clan") return TIMERS_COLORS.green.fill;
-
-  return undefined;
+  return relation ? PLAYER_RELATION_FILLS[relation] : undefined;
 };
 
 const resolvePresenceDetails = (
@@ -84,100 +65,76 @@ const resolvePresenceDetails = (
       : 0,
     locationName: player?.location?.map ?? presence.mapName ?? unknownLocation,
     player,
+    relatedPlayer: {
+      characterId: player?.characterId ?? "",
+      clanId: player?.clan?.id,
+      name: player?.name,
+    },
   };
 };
 
 type OnlinePlayerActionStateInput = {
   accountId: number;
   characterId: number;
-  characterNick: string;
   gameInterface?: string;
-  heroCharacterId?: string;
-  heroClanId?: number;
-  heroName?: string;
   isFriend: boolean;
   isPartyMember: boolean;
-  playerClanId?: number;
+  isSelf: boolean;
 };
 
 const resolveOnlinePlayerActionState = ({
   accountId,
   characterId,
-  characterNick,
   gameInterface,
-  heroCharacterId,
-  heroClanId,
-  heroName,
   isFriend,
   isPartyMember,
-  playerClanId,
+  isSelf,
 }: OnlinePlayerActionStateInput) => {
-  const isSelf =
-    String(characterId) === heroCharacterId || characterNick === heroName;
-
-  const isSameClan =
-    playerClanId !== undefined &&
-    heroClanId !== undefined &&
-    playerClanId === heroClanId;
-
   const canUseCharacterActions = characterId > 0 && accountId > 0;
+  const canAddFriend = characterId > 0 && !isSelf && !isFriend;
+
+  const canShowGameContextActions =
+    gameInterface === "ni" && canUseCharacterActions;
 
   return {
-    canAddFriend: characterId > 0 && !isSelf && !isFriend,
+    canAddFriend,
     canInviteToParty: characterId > 0 && !isSelf && !isPartyMember,
-    canShowGameContextActions: gameInterface === "ni" && canUseCharacterActions,
-    isSameClan,
-    isSelf,
+    canShowGameContextActions,
+    hasContextActions: canShowGameContextActions || canAddFriend,
   };
 };
 
 export const OnlinePlayersAccountListEntry: FC<
   OnlinePlayersAccountListEntryProps
-> = ({ presence, guildMember, isAlternateRow = false }) => {
+> = ({ presence, guildMember }) => {
   const { t } = useTranslation("onlinePlayers");
   const character = getPresenceCharacter(presence);
 
-  const { accountId, characterId, locationName, player } =
+  const { accountId, characterId, locationName, player, relatedPlayer } =
     resolvePresenceDetails(presence, t("location.unknown"));
 
-  const heroCharacterId = useGameStore((state) => state.game?.hero.characterId);
-  const heroName = useGameStore((state) => state.game?.hero.name);
-  const heroClanId = useGameStore((state) => state.game?.hero.clan?.id);
   const currentMapName = useGameStore((state) => state.game?.map.name);
   const gameInterface = useGameStore((state) => state.game?.interface);
 
-  const isPartyMember = usePartyStore(
-    (state) =>
-      characterId > 0 &&
-      state.members.some(
-        (member) => member.characterId === String(characterId),
-      ),
-  );
+  const relations = usePlayerRelations(relatedPlayer);
 
-  const isFriend = useFriendsStore((state) =>
-    state.isFriend(characterId.toString()),
-  );
+  const [relation] = relations;
+  const isSelf = relation === "self";
+  const isFriend = relations.includes("friend");
 
   const {
     canAddFriend,
     canInviteToParty,
     canShowGameContextActions,
-    isSameClan,
-    isSelf,
+    hasContextActions,
   } = resolveOnlinePlayerActionState({
     accountId,
     characterId,
-    characterNick: character.nick,
     gameInterface,
-    heroCharacterId,
-    heroClanId,
-    heroName,
     isFriend,
-    isPartyMember,
-    playerClanId: player?.clan?.id,
+    isPartyMember: relations.includes("party"),
+    isSelf,
   });
-
-  const relation = resolveRelation({ isSelf, isPartyMember, isSameClan });
 
   const visibleLocationName =
     isSelf && !player?.location?.map && !presence.mapName && currentMapName
@@ -218,13 +175,16 @@ export const OnlinePlayersAccountListEntry: FC<
   return (
     <ContextMenu>
       <Tooltip>
-        <ContextMenuTrigger asChild>
+        <ContextMenuTrigger
+          asChild
+          tabIndex={0}
+          onKeyDown={openContextMenuOnKeyDown}
+        >
           <TooltipTrigger asChild>
-            <span className="ll:block ll:w-full">
+            <span className="ll:block ll:w-full ll:outline-none ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring">
               <ListRow
                 className="ll:justify-between ll:py-0.5"
                 fill={getHighlightFill(relation, presence.isAfk)}
-                isAlternateRow={isAlternateRow}
                 onDoubleClick={handleDoubleClick}
               >
                 <span className="ll:flex ll:min-w-0 ll:items-start ll:gap-1">
@@ -234,33 +194,28 @@ export const OnlinePlayersAccountListEntry: FC<
                     className="ll:scale-65 ll:-my-2 ll:-ml-1 ll:-mr-1 ll:shrink-0"
                   />
                   <span className="ll:flex ll:min-w-0 ll:flex-col ll:py-0.5 ll:leading-tight">
-                    <span className="ll:flex ll:min-w-0 ll:items-center ll:gap-1 ll:text-[11px] ll:text-white">
-                      <span className="ll:truncate">
-                        {player?.name || t("player.unknown")} ({character.lvl}
-                        {character.prof})
-                      </span>
-                      {presence.margonemAccountVerified ? (
-                        <VerifiedMargonemAccountIcon className="ll:shrink-0" />
-                      ) : null}
-                    </span>
+                    <PlayerName
+                      className="ll:text-[11px] ll:text-white"
+                      name={player?.name || t("player.unknown")}
+                      level={character.lvl}
+                      profession={character.prof}
+                    />
                     <span className="ll:truncate ll:text-[10px] ll:font-normal ll:text-white/65">
                       {visibleLocationName}
                     </span>
                   </span>
                 </span>
-                {canInviteToParty ? (
-                  <Button
-                    variant="ghost"
-                    size="xs"
-                    type="button"
-                    className="ll:size-5 ll:shrink-0 ll:bg-green-500/20 ll:p-0 ll:text-green-300 ll:shadow-[inset_0_0_0_1px_rgb(74_222_128/0.4)] ll:hover:bg-green-500/35 ll:hover:text-green-200"
-                    onClick={handleInviteToParty}
-                    onDoubleClick={(event) => event.stopPropagation()}
-                    title={t("actions.inviteParty")}
-                  >
-                    <Plus aria-hidden="true" className="ll:size-3.5" />
-                  </Button>
-                ) : null}
+                <span className="ll:flex ll:shrink-0 ll:items-center">
+                  {canInviteToParty ? (
+                    <IconButton
+                      label={t("actions.inviteParty")}
+                      onClick={handleInviteToParty}
+                      onDoubleClick={(event) => event.stopPropagation()}
+                    >
+                      <Plus aria-hidden="true" className="ll:text-green-300" />
+                    </IconButton>
+                  ) : null}
+                </span>
               </ListRow>
             </span>
           </TooltipTrigger>
@@ -268,15 +223,14 @@ export const OnlinePlayersAccountListEntry: FC<
         <TooltipContent className="ll:max-w-64">
           <OnlinePlayerTooltip
             canInviteToParty={canInviteToParty}
-            isFriend={isFriend}
             locationName={visibleLocationName}
             memberName={memberName}
             presence={presence}
-            relation={relation}
+            relations={relations}
           />
         </TooltipContent>
       </Tooltip>
-      {canShowGameContextActions || canAddFriend ? (
+      {hasContextActions ? (
         <ContextMenuContent className="ll:w-44 ll:flex ll:flex-col">
           {canShowGameContextActions ? (
             <>

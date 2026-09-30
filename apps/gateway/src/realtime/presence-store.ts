@@ -1,3 +1,15 @@
+import {
+  EXPIRY_BATCH_SIZE,
+  EXPIRY_DUE_INDEX,
+  EXPIRY_LEASE_MS,
+  EXPIRY_SWEEP_LOCK,
+  INDEX_EXPIRY_DUE,
+  READ_EXPIRY_LEGACY_BATCH,
+  READ_EXPIRY_ORGANIZATION,
+  READ_EXPIRY_READY,
+  REMOVE_EXPIRED_PRESENCE,
+  REMOVE_PRESENCE,
+} from "./presence-expiry.js";
 import { GameCharacterOffline } from "@lootlog/protocol/rabbit/events";
 import type { OnlineHistory } from "./online-history.js";
 import {
@@ -8,6 +20,7 @@ import {
   type PublishedPresence,
   type ServerEvent,
 } from "@lootlog/protocol/realtime";
+import { chunk } from "es-toolkit";
 import { SingleFlight } from "#src/platform/single-flight";
 import { yieldToEventLoop } from "#src/platform/background-tasks";
 import type { RedisGatewayStore } from "#src/platform/redis-store";
@@ -46,6 +59,38 @@ type Published = typeof PublishedPresence.Type;
 type Snapshot = typeof PresenceSnapshot.Type;
 
 type Event = typeof ServerEvent.Type;
+
+type Change =
+  | { readonly action: "upsert"; readonly presence: Basic | Precise }
+  | {
+      readonly action: "remove";
+      readonly userId: string;
+      readonly discordId: string;
+      readonly sessionId: string;
+    };
+
+type CachedSnapshot = {
+  readonly revision: number;
+  readonly readAt: number;
+  readonly presences: ReadonlyArray<Basic | Precise>;
+};
+
+// Changes coalesce per Organization, so a burst of N joins costs one revision
+// and one frame per recipient per interval instead of N of each.
+const DELTA_FLUSH_INTERVAL_MS = 250;
+
+// Keeps a burst's frames far below the socket backpressure limit.
+const MAX_DELTA_CHANGES = 100;
+
+const DELTA_FLUSH_CONCURRENCY = 16;
+
+// A cached snapshot is served only while its revision is current, so every
+// change missing from it reaches the viewer as a later delta. The age bound
+// keeps heartbeat-refreshed lastSeen values from drifting.
+const SNAPSHOT_MAX_AGE_MS = 1_000;
+
+const changedSession = (change: Change): string =>
+  change.action === "upsert" ? change.presence.sessionId : change.sessionId;
 
 type OfflineRecord = {
   readonly key: string;
@@ -161,17 +206,31 @@ redis.call('SREM', KEYS[3], ARGV[3])
 return 1
 `;
 
+// One call refreshes every Organization of a session: KEYS 1-2 are the shared
+// indexes, then presence, metadata and Organization index per Organization.
 const REFRESH_PRESENCE = `
 -- presence:refresh
-redis.call('SET', KEYS[1], ARGV[1], 'EX', ARGV[2])
-redis.call('SET', KEYS[2], ARGV[3])
-if redis.call('SISMEMBER', KEYS[3], ARGV[4]) == 0 then
-  redis.call('SADD', KEYS[3], ARGV[4])
-end
-if redis.call('SISMEMBER', KEYS[4], ARGV[5]) == 0 then
-  redis.call('SADD', KEYS[4], ARGV[5])
+for key = 3, #KEYS, 3 do
+  local arg = 5 + ((key - 3) / 3) * 3
+  redis.call('SET', KEYS[key], ARGV[1], 'EX', ARGV[2])
+  redis.call('SET', KEYS[key + 1], ARGV[3])
+  if redis.call('SISMEMBER', KEYS[key + 2], ARGV[arg]) == 0 then
+    redis.call('SADD', KEYS[key + 2], ARGV[arg])
+  end
+  if redis.call('SISMEMBER', KEYS[1], ARGV[arg + 1]) == 0 then
+    redis.call('SADD', KEYS[1], ARGV[arg + 1])
+  end
+  redis.call('ZADD', KEYS[2], ARGV[4], ARGV[arg + 2])
 end
 return 1
+`;
+
+// Refresh restores both indexes atomically. Checking cardinality and pruning in
+// one script cannot unindex an Organization that a concurrent refresh revived.
+const PRUNE_ORGANIZATION = `
+-- presence:prune-organization
+if redis.call('SCARD', KEYS[1]) ~= 0 then return 0 end
+return redis.call('SREM', KEYS[2], ARGV[1])
 `;
 
 // One fresh Organization snapshot feeds one atomic group decision, with no
@@ -237,6 +296,21 @@ const decodePresence = Schema.decodeUnknownSync(PresenceJson);
 
 const decodePresenceMetadata = Schema.decodeUnknownSync(PresenceMetadataJson);
 
+const decodeExpiryMember = Schema.decodeUnknownEffect(
+  Schema.fromJsonString(Schema.Tuple([Schema.String, Schema.String])),
+);
+
+const decodePresenceOption = Schema.decodeUnknownOption(PresenceJson);
+
+const decodeMetadataOption = Schema.decodeUnknownOption(PresenceMetadataJson);
+
+type ExpiryCandidate = {
+  readonly organizationId: string;
+  readonly sessionId: string;
+  readonly value: string | null;
+  readonly metadataValue: string | null;
+};
+
 const fromPromise = <A>(
   operation: string,
   evaluate: () => Promise<A>,
@@ -256,9 +330,13 @@ const withoutLocation = (presence: Basic | Precise): Basic => {
 export class PresenceStore {
   private readonly pendingSnapshots = new SingleFlight<
     string,
-    Array<Basic | Precise>,
+    CachedSnapshot,
     unknown
   >();
+
+  private readonly snapshots = new Map<string, CachedSnapshot>();
+
+  private readonly pendingDeltas = new Map<string, Map<string, Change>>();
 
   constructor(
     private readonly redis: {
@@ -277,7 +355,7 @@ export class PresenceStore {
     },
     private readonly hub: Pick<
       RealtimeHub,
-      "instanceId" | "publishPresence" | "publishToScope"
+      "instanceId" | "setPresence" | "publishPresence"
     >,
     private readonly now: () => number = Date.now,
     private readonly coverage?: Pick<CoveragePublisher, "publish">,
@@ -302,7 +380,7 @@ export class PresenceStore {
       const previousPresence = socket.data.presence;
 
       if (selectedOrganizationIds.length === 0) {
-        socket.data.presence = undefined;
+        this.hub.setPresence(socket, undefined);
       }
 
       yield* this.removeFromUnselectedOrganizations(
@@ -332,7 +410,7 @@ export class PresenceStore {
         ? { ...basic, location: data.location }
         : basic;
 
-      socket.data.presence = presence;
+      this.hub.setPresence(socket, presence);
 
       if (
         previousPresence?.character &&
@@ -344,8 +422,12 @@ export class PresenceStore {
       }
 
       for (const organizationId of selectedOrganizationIds) {
-        yield* this.refresh(organizationId, presence, socket.data.discordId);
-        yield* this.broadcastUpsert(organizationId, presence);
+        yield* this.refresh(
+          [organizationId],
+          presence,
+          socket.data.discordId,
+          true,
+        );
         yield* this.publishCoverageChange(
           socket.data.discordId,
           organizationId,
@@ -384,11 +466,13 @@ export class PresenceStore {
       }
 
       const presence = { ...socket.data.presence, lastSeen: this.now() };
-      socket.data.presence = presence;
+      this.hub.setPresence(socket, presence);
 
-      for (const organizationId of presence.organizationIds) {
-        yield* this.refresh(organizationId, presence, socket.data.discordId);
-      }
+      yield* this.refresh(
+        presence.organizationIds,
+        presence,
+        socket.data.discordId,
+      );
 
       yield* (
         this.onlineHistory?.observe(socket.data, presence.lastSeen) ??
@@ -483,47 +567,15 @@ export class PresenceStore {
     disconnectedAt = this.now(),
   ): Effect.Effect<void, unknown> {
     return Effect.gen({ self: this }, function* () {
-      if (
-        !this.publishOffline ||
-        presence.platform !== "game" ||
-        !presence.character ||
-        !presence.discordId
-      )
-        return;
+      const event = this.offlineEvent(presence, disconnectedAt);
 
-      const pendingKeys = yield* fromPromise("presence.offline-existing", () =>
-        this.redis.command.smembers(this.offlineCharacterKey(presence)),
-      );
+      if (!event) return;
 
-      if (pendingKeys.length > 0) {
-        const pendingValues = yield* fromPromise(
-          "presence.offline-existing-read",
-          () => this.redis.command.mget(pendingKeys),
-        );
+      const pending = yield* this.readPendingOffline(presence, disconnectedAt);
 
-        if (
-          pendingValues.some((value) => {
-            const event = decodeOffline(value);
-
-            return (
-              Option.isSome(event) &&
-              event.value.disconnectedAt > disconnectedAt
-            );
-          })
-        )
-          return;
-      }
+      if (pending.hasNewerDeparture) return;
 
       yield* this.cancelOffline(presence);
-
-      const event: GameCharacterOffline = {
-        userId: presence.userId,
-        discordId: presence.discordId,
-        world: presence.character.world,
-        characterId: presence.character.characterId,
-        organizationIds: presence.organizationIds,
-        disconnectedAt,
-      };
 
       const key = `${this.offlineCharacterKey(presence)}:session:${presence.sessionId}:${crypto.randomUUID()}`;
       yield* fromPromise("presence.offline-schedule", () =>
@@ -540,6 +592,57 @@ export class PresenceStore {
         ),
       );
     });
+  }
+
+  private readPendingOffline = Effect.fnUntraced(function* (
+    this: PresenceStore,
+    presence: Basic | Precise,
+    disconnectedAt: number,
+  ) {
+    const keys = yield* fromPromise("presence.offline-existing", () =>
+      this.redis.command.smembers(this.offlineCharacterKey(presence)),
+    );
+
+    const values =
+      keys.length === 0
+        ? []
+        : yield* fromPromise("presence.offline-existing-read", () =>
+            this.redis.command.mget(keys),
+          );
+
+    return {
+      keys,
+      values,
+      hasNewerDeparture: values.some((value) => {
+        const event = decodeOffline(value);
+
+        return (
+          Option.isSome(event) && event.value.disconnectedAt > disconnectedAt
+        );
+      }),
+    };
+  });
+
+  private offlineEvent(
+    presence: Basic | Precise,
+    disconnectedAt: number,
+  ): GameCharacterOffline | undefined {
+    if (
+      !this.publishOffline ||
+      presence.platform !== "game" ||
+      !presence.character ||
+      !presence.discordId
+    )
+      return;
+
+    return {
+      userId: presence.userId,
+      discordId: presence.discordId,
+      world: presence.character.world,
+      characterId: presence.character.characterId,
+      organizationIds: presence.organizationIds,
+      disconnectedAt,
+    };
   }
 
   runOfflineSweep() {
@@ -882,10 +985,12 @@ export class PresenceStore {
         allowedOrganizationIds.has(id),
       );
 
-      socket.data.presence =
+      this.hub.setPresence(
+        socket,
         retainedOrganizationIds.length === 0
           ? undefined
-          : { ...previous, organizationIds: retainedOrganizationIds };
+          : { ...previous, organizationIds: retainedOrganizationIds },
+      );
       yield* this.removeFromUnselectedOrganizations(
         socket,
         retainedOrganizationIds,
@@ -900,7 +1005,9 @@ export class PresenceStore {
     world?: string,
   ): Effect.Effect<Snapshot, PresenceFailure> {
     return Effect.gen({ self: this }, function* () {
-      const presences = yield* this.readSnapshotOrganization(organizationId);
+      const { revision, presences } =
+        yield* this.readSnapshotOrganization(organizationId);
+
       const includeLocation = canReadPreciseLocation(viewer, organizationId);
 
       const filtered = presences
@@ -916,7 +1023,7 @@ export class PresenceStore {
       return {
         organizationId,
         world,
-        revision: yield* this.getRevision(organizationId),
+        revision,
         presences: filtered,
       };
     }).pipe(
@@ -934,78 +1041,358 @@ export class PresenceStore {
   }
 
   sweepExpired(): Effect.Effect<void, unknown> {
-    return Effect.gen({ self: this }, function* () {
-      const organizations = yield* fromPromise(
-        "presence.list-organizations",
-        () => this.redis.command.smembers("presence:organizations"),
+    return Effect.suspend(() => {
+      const token = crypto.randomUUID();
+
+      return fromPromise("presence.acquire-sweep-lock", () =>
+        this.redis.command.set(
+          EXPIRY_SWEEP_LOCK,
+          token,
+          "PX",
+          EXPIRY_LEASE_MS,
+          "NX",
+        ),
+      ).pipe(
+        Effect.flatMap((acquired) =>
+          acquired === "OK"
+            ? this.drainExpired(token).pipe(
+                Effect.ensuring(
+                  fromPromise("presence.release-sweep-lock", () =>
+                    this.redis.command.eval(
+                      RELEASE_OFFLINE_LEASE,
+                      1,
+                      EXPIRY_SWEEP_LOCK,
+                      token,
+                    ),
+                  ).pipe(
+                    Effect.interruptible,
+                    Effect.timeout("1 second"),
+                    Effect.ignore,
+                  ),
+                ),
+              )
+            : Effect.void,
+        ),
+      );
+    });
+  }
+
+  private drainExpired = Effect.fnUntraced(function* (
+    this: PresenceStore,
+    token: string,
+  ) {
+    const deadline = performance.now() + 1_000;
+    yield* this.indexLegacyPresence(token);
+
+    do {
+      const raw = yield* fromPromise("presence.expiry-ready", () =>
+        this.redis.command.eval<string>(
+          READ_EXPIRY_READY,
+          2,
+          EXPIRY_SWEEP_LOCK,
+          EXPIRY_DUE_INDEX,
+          token,
+          EXPIRY_LEASE_MS,
+          this.now(),
+          EXPIRY_BATCH_SIZE,
+        ),
       );
 
-      for (const organizationId of organizations) {
-        const lock = yield* fromPromise("presence.acquire-sweep-lock", () =>
-          this.redis.command.set(
-            `presence:sweep-lock:${organizationId}`,
-            this.hub.instanceId,
-            "EX",
-            10,
-            "NX",
-          ),
+      const members = yield* decodeOfflineKeys(raw);
+
+      if (members.length === 0) return;
+
+      const coordinates = yield* Effect.forEach(members, (member) =>
+        decodeExpiryMember(member),
+      );
+
+      const candidates = yield* this.readExpiryCandidates(coordinates);
+
+      let completed = 0;
+
+      for (const [organizationId, group] of Map.groupBy(
+        candidates,
+        (candidate) => candidate.organizationId,
+      )) {
+        completed += yield* this.expireOrganization(
+          token,
+          organizationId,
+          group,
         );
-
-        if (lock !== "OK") continue;
-
-        const keys = yield* fromPromise("presence.list-organization", () =>
-          this.redis.command.smembers(this.indexKey(organizationId)),
-        );
-
-        if (keys.length === 0) continue;
-
-        const values = yield* fromPromise("presence.read-organization", () =>
-          this.redis.command.mget(keys),
-        );
-
-        for (const [index, value] of values.entries()) {
-          const key = keys[index];
-
-          if (!key) continue;
-          let expired = value === null;
-
-          if (value) {
-            try {
-              const presence = decodePresence(value);
-              expired = this.now() - presence.lastSeen >= PRESENCE_EXPIRY_MS;
-            } catch {
-              expired = true;
-            }
-          }
-
-          if (!expired) continue;
-          const sessionId = key.slice(key.lastIndexOf(":") + 1);
-          const metadata = yield* this.readMetadata(organizationId, sessionId);
-          const userId = metadata?.userId;
-
-          if (metadata?.presence) {
-            yield* this.scheduleOffline(
-              metadata.presence,
-              metadata.presence.lastSeen + PRESENCE_EXPIRY_MS,
-            );
-          }
-
-          if (userId)
-            yield* this.remove(
-              organizationId,
-              userId,
-              sessionId,
-              metadata.discordId,
-            );
-          else
-            yield* this.mutateOrganization(
-              organizationId,
-              "presence.remove-stale-index",
-              () => this.redis.command.srem(this.indexKey(organizationId), key),
-            );
-        }
       }
-    });
+
+      if (completed === 0 || members.length < EXPIRY_BATCH_SIZE) return;
+      yield* yieldToEventLoop;
+    } while (performance.now() < deadline);
+  });
+
+  private indexLegacyPresence = Effect.fnUntraced(function* (
+    this: PresenceStore,
+    token: string,
+  ) {
+    const organizationId = yield* fromPromise(
+      "presence.expiry-organization",
+      () =>
+        this.redis.command.eval<string>(
+          READ_EXPIRY_ORGANIZATION,
+          5,
+          EXPIRY_SWEEP_LOCK,
+          "presence:organizations",
+          "presence:expiry:organizations:cursor",
+          "presence:expiry:organizations:overflow",
+          "presence:expiry:organization",
+          token,
+          EXPIRY_BATCH_SIZE,
+        ),
+    );
+
+    if (!organizationId) return;
+
+    const raw = yield* fromPromise("presence.expiry-legacy-batch", () =>
+      this.redis.command.eval<string>(
+        READ_EXPIRY_LEGACY_BATCH,
+        6,
+        EXPIRY_SWEEP_LOCK,
+        this.indexKey(organizationId),
+        `presence:expiry:sessions:${organizationId}:cursor`,
+        `presence:expiry:sessions:${organizationId}:overflow`,
+        EXPIRY_DUE_INDEX,
+        "presence:expiry:organization",
+        token,
+        EXPIRY_BATCH_SIZE,
+        organizationId,
+      ),
+    );
+
+    const batch = yield* decodeOfflineBatch(raw);
+
+    if (batch.keys.length > 0) {
+      const candidates = yield* this.readExpiryCandidates(
+        batch.keys.map(
+          (key) =>
+            [organizationId, key.slice(key.lastIndexOf(":") + 1)] as const,
+        ),
+      );
+
+      yield* this.indexExpiryCandidates(token, candidates);
+    }
+
+    if (batch.complete) yield* this.pruneOrganization(organizationId);
+  });
+
+  private readExpiryCandidates = Effect.fnUntraced(function* (
+    this: PresenceStore,
+    coordinates: ReadonlyArray<readonly [string, string]>,
+  ) {
+    const values = yield* fromPromise("presence.read-expiry-candidates", () =>
+      this.redis.command.mget(
+        coordinates.flatMap(([organizationId, sessionId]) => [
+          this.presenceKey(organizationId, sessionId),
+          this.metadataKey(organizationId, sessionId),
+        ]),
+      ),
+    );
+
+    return coordinates.map(
+      ([organizationId, sessionId], index): ExpiryCandidate => ({
+        organizationId,
+        sessionId,
+        value: values[index * 2] ?? null,
+        metadataValue: values[index * 2 + 1] ?? null,
+      }),
+    );
+  });
+
+  private indexExpiryCandidates = Effect.fnUntraced(function* (
+    this: PresenceStore,
+    token: string,
+    candidates: ReadonlyArray<ExpiryCandidate>,
+  ) {
+    const keys = [EXPIRY_SWEEP_LOCK, EXPIRY_DUE_INDEX];
+    const args: Array<string | number> = [token];
+
+    for (const candidate of candidates) {
+      const presence = Option.getOrUndefined(
+        decodePresenceOption(candidate.value),
+      );
+
+      const metadata = Option.getOrUndefined(
+        decodeMetadataOption(candidate.metadataValue),
+      );
+
+      keys.push(
+        this.presenceKey(candidate.organizationId, candidate.sessionId),
+        this.metadataKey(candidate.organizationId, candidate.sessionId),
+      );
+      args.push(
+        candidate.value ?? "",
+        candidate.metadataValue ?? "",
+        JSON.stringify([candidate.organizationId, candidate.sessionId]),
+        (presence?.lastSeen ??
+          metadata?.presence?.lastSeen ??
+          -PRESENCE_EXPIRY_MS) + PRESENCE_EXPIRY_MS,
+      );
+    }
+
+    yield* fromPromise("presence.expiry-index", () =>
+      this.redis.command.eval(INDEX_EXPIRY_DUE, keys.length, ...keys, ...args),
+    );
+  });
+
+  private expireOrganization = Effect.fnUntraced(function* (
+    this: PresenceStore,
+    token: string,
+    organizationId: string,
+    candidates: ReadonlyArray<ExpiryCandidate>,
+  ) {
+    const lockKey = `presence:sweep-lock:${organizationId}`;
+
+    const acquired = yield* fromPromise(
+      "presence.acquire-organization-sweep-lock",
+      () => this.redis.command.set(lockKey, token, "PX", EXPIRY_LEASE_MS, "NX"),
+    );
+
+    if (acquired !== "OK") return 0;
+
+    return yield* Effect.gen({ self: this }, function* () {
+      let completed = 0;
+
+      for (const candidate of candidates)
+        completed += yield* this.expireCandidate(token, candidate);
+
+      return completed;
+    }).pipe(
+      Effect.ensuring(
+        fromPromise("presence.release-organization-sweep-lock", () =>
+          this.redis.command.eval(RELEASE_OFFLINE_LEASE, 1, lockKey, token),
+        ).pipe(Effect.interruptible, Effect.timeout("1 second"), Effect.ignore),
+      ),
+    );
+  });
+
+  private expireCandidate = Effect.fnUntraced(function* (
+    this: PresenceStore,
+    token: string,
+    candidate: ExpiryCandidate,
+  ) {
+    const presence = Option.getOrUndefined(
+      decodePresenceOption(candidate.value),
+    );
+
+    const metadata = Option.getOrUndefined(
+      decodeMetadataOption(candidate.metadataValue),
+    );
+
+    const latest = presence ?? metadata?.presence;
+
+    if (latest && this.now() - latest.lastSeen < PRESENCE_EXPIRY_MS) {
+      yield* this.indexExpiryCandidates(token, [candidate]);
+
+      return 1;
+    }
+
+    const departure = yield* this.prepareExpiryDeparture(metadata?.presence);
+
+    const keys = [
+      EXPIRY_SWEEP_LOCK,
+      this.presenceKey(candidate.organizationId, candidate.sessionId),
+      this.metadataKey(candidate.organizationId, candidate.sessionId),
+      this.indexKey(candidate.organizationId),
+      EXPIRY_DUE_INDEX,
+      `presence:sweep-lock:${candidate.organizationId}`,
+      ...departure.keys,
+    ];
+
+    const removed = yield* fromPromise("presence.expiry-remove", () =>
+      this.redis.command
+        .eval<number>(
+          REMOVE_EXPIRED_PRESENCE,
+          keys.length,
+          ...keys,
+          token,
+          candidate.value ?? "",
+          candidate.metadataValue ?? "",
+          JSON.stringify([candidate.organizationId, candidate.sessionId]),
+          this.now(),
+          this.presenceKey(candidate.organizationId, candidate.sessionId),
+          EXPIRY_LEASE_MS,
+          ...departure.args,
+        )
+        .then((removed) => {
+          if (removed && metadata)
+            this.queueChange(candidate.organizationId, {
+              action: "remove",
+              userId: metadata.userId,
+              discordId: metadata.discordId,
+              sessionId: candidate.sessionId,
+            });
+
+          return removed;
+        }),
+    );
+
+    if (!removed) return 0;
+
+    yield* this.pruneOrganization(candidate.organizationId);
+
+    return 1;
+  });
+
+  private prepareExpiryDeparture = Effect.fnUntraced(function* (
+    this: PresenceStore,
+    presence: Basic | undefined,
+  ) {
+    const skip = {
+      keys: [],
+      args: [],
+    };
+
+    if (!presence) return skip;
+
+    const event = this.offlineEvent(
+      presence,
+      presence.lastSeen + PRESENCE_EXPIRY_MS,
+    );
+
+    if (!event) return skip;
+    const characterIndex = this.offlineCharacterKey(presence);
+
+    const pending = yield* this.readPendingOffline(
+      presence,
+      event.disconnectedAt,
+    );
+
+    if (pending.hasNewerDeparture) return skip;
+    const key = `${characterIndex}:session:${presence.sessionId}:${crypto.randomUUID()}`;
+
+    return {
+      keys: [
+        key,
+        OFFLINE_PENDING_INDEX,
+        characterIndex,
+        OFFLINE_DUE_INDEX,
+        ...pending.keys,
+      ],
+      args: [
+        JSON.stringify(event),
+        key,
+        event.disconnectedAt + 10_000,
+        ...pending.values.map((value) => value ?? ""),
+        ...pending.keys,
+      ],
+    };
+  });
+
+  private pruneOrganization(organizationId: string) {
+    return fromPromise("presence.prune-organization", () =>
+      this.redis.command.eval(
+        PRUNE_ORGANIZATION,
+        2,
+        this.indexKey(organizationId),
+        "presence:organizations",
+        organizationId,
+      ),
+    );
   }
 
   coverageForMap(
@@ -1099,33 +1486,54 @@ export class PresenceStore {
     });
   }
 
+  // Redis commands may settle after their Effect caller is interrupted. Writes
+  // queue their delta when they settle, so every stored change is announced.
   private refresh(
-    organizationId: string,
+    organizationIds: ReadonlyArray<string>,
     presence: Basic | Precise,
     discordId: string,
+    announce = false,
   ) {
-    const key = this.presenceKey(organizationId, presence.sessionId);
+    if (organizationIds.length === 0) return Effect.void;
+
+    const keys = organizationIds.flatMap((organizationId) => [
+      this.presenceKey(organizationId, presence.sessionId),
+      this.metadataKey(organizationId, presence.sessionId),
+      this.indexKey(organizationId),
+    ]);
+
+    const members = organizationIds.flatMap((organizationId) => [
+      this.presenceKey(organizationId, presence.sessionId),
+      organizationId,
+      JSON.stringify([organizationId, presence.sessionId]),
+    ]);
 
     // Metadata lastSeen survives TTL expiry; both indexes recover independently
     // after partial eviction as well as after complete Redis loss.
-    return this.mutateOrganization(organizationId, "presence.refresh", () =>
-      this.redis.command.eval(
-        REFRESH_PRESENCE,
-        4,
-        key,
-        this.metadataKey(organizationId, presence.sessionId),
-        this.indexKey(organizationId),
-        "presence:organizations",
-        JSON.stringify(presence),
-        REDIS_TTL_SECONDS,
-        JSON.stringify({
-          userId: presence.userId,
-          discordId,
-          presence: withoutLocation(presence),
+    return fromPromise("presence.refresh", () =>
+      this.redis.command
+        .eval(
+          REFRESH_PRESENCE,
+          2 + keys.length,
+          "presence:organizations",
+          EXPIRY_DUE_INDEX,
+          ...keys,
+          JSON.stringify(presence),
+          REDIS_TTL_SECONDS,
+          JSON.stringify({
+            userId: presence.userId,
+            discordId,
+            presence: withoutLocation(presence),
+          }),
+          presence.lastSeen + PRESENCE_EXPIRY_MS,
+          ...members,
+        )
+        .then(() => {
+          if (!announce) return;
+
+          for (const organizationId of organizationIds)
+            this.queueChange(organizationId, { action: "upsert", presence });
         }),
-        key,
-        organizationId,
-      ),
     );
   }
 
@@ -1137,55 +1545,101 @@ export class PresenceStore {
   ): Effect.Effect<void, unknown> {
     return Effect.gen({ self: this }, function* () {
       const key = this.presenceKey(organizationId, sessionId);
-      yield* Effect.all(
-        [
-          this.mutateOrganization(organizationId, "presence.remove", () =>
-            this.redis.command.del(key),
-          ),
-          this.mutateOrganization(
-            organizationId,
-            "presence.remove-metadata",
-            () =>
-              this.redis.command.del(
-                this.metadataKey(organizationId, sessionId),
-              ),
-          ),
-          this.mutateOrganization(organizationId, "presence.remove-index", () =>
-            this.redis.command.srem(this.indexKey(organizationId), key),
-          ),
-        ],
-        { concurrency: "unbounded", discard: true },
+      yield* fromPromise("presence.remove", () =>
+        this.redis.command
+          .eval(
+            REMOVE_PRESENCE,
+            4,
+            key,
+            this.metadataKey(organizationId, sessionId),
+            this.indexKey(organizationId),
+            EXPIRY_DUE_INDEX,
+            key,
+            JSON.stringify([organizationId, sessionId]),
+          )
+          .then(() => {
+            this.queueChange(organizationId, {
+              action: "remove",
+              userId,
+              discordId,
+              sessionId,
+            });
+          }),
       );
-      const revision = yield* this.nextRevision(organizationId);
+    });
+  }
 
-      const event = {
-        v: 1,
-        type: "presence.delta",
-        sequence: revision,
-        data: {
-          organizationId,
-          revision,
-          changes: [{ action: "remove", userId, discordId, sessionId }],
-        },
-      } satisfies Event;
+  private queueChange(organizationId: string, change: Change): void {
+    const changes = this.pendingDeltas.get(organizationId) ?? new Map();
+    const sessionId = changedSession(change);
 
-      yield* fromPromise("presence.publish-remove", () =>
-        this.hub.publishToScope(
-          { topic: "organization.presence", organizationId },
-          event,
+    // A session's latest change supersedes its earlier ones in the batch.
+    changes.delete(sessionId);
+    changes.set(sessionId, change);
+    this.pendingDeltas.set(organizationId, changes);
+  }
+
+  runDeltaFlush() {
+    return this.flushDeltas().pipe(
+      Effect.repeat(Schedule.spaced(DELTA_FLUSH_INTERVAL_MS)),
+      // Queued removals exist nowhere else; deliver them before Redis closes.
+      Effect.ensuring(
+        this.flushDeltas().pipe(Effect.timeout("1 second"), Effect.ignore),
+      ),
+    );
+  }
+
+  flushDeltas(): Effect.Effect<void> {
+    return Effect.suspend(() => {
+      const batches = [...this.pendingDeltas];
+      this.pendingDeltas.clear();
+
+      for (const [organizationId, snapshot] of this.snapshots) {
+        if (this.now() - snapshot.readAt >= SNAPSHOT_MAX_AGE_MS)
+          this.snapshots.delete(organizationId);
+      }
+
+      const unpublished = new Set(
+        batches.flatMap(([organizationId, changes]) =>
+          chunk([...changes.values()], MAX_DELTA_CHANGES).map(
+            (changes) => [organizationId, changes] as const,
+          ),
+        ),
+      );
+
+      return Effect.forEach(
+        [...unpublished],
+        (batch) =>
+          this.publishDelta(...batch).pipe(
+            Effect.tap(() => Effect.sync(() => unpublished.delete(batch))),
+            Effect.catch((error) =>
+              Effect.logError(
+                "Presence delta publication failed; retrying",
+                error,
+              ),
+            ),
+          ),
+        { concurrency: DELTA_FLUSH_CONCURRENCY, discard: true },
+      ).pipe(
+        // Failed and interrupted batches, including those never started,
+        // return to the queue for the next flush.
+        Effect.ensuring(
+          Effect.sync(() => {
+            for (const batch of unpublished) this.requeueChanges(...batch);
+          }),
         ),
       );
     });
   }
 
-  private broadcastUpsert(
+  private publishDelta(
     organizationId: string,
-    presence: Basic | Precise,
+    changes: ReadonlyArray<Change>,
   ): Effect.Effect<void, unknown> {
     return Effect.gen({ self: this }, function* () {
       const revision = yield* this.nextRevision(organizationId);
 
-      const makeEvent = (value: Basic | Precise) =>
+      const makeEvent = (includeLocation: boolean) =>
         ({
           v: 1,
           type: "presence.delta",
@@ -1193,21 +1647,31 @@ export class PresenceStore {
           data: {
             organizationId,
             revision,
-            changes: [
-              {
-                action: "upsert",
-                presence: { ...value, organizationIds: [organizationId] },
-              },
-            ],
+            changes: changes.map((change) =>
+              change.action === "upsert"
+                ? {
+                    action: "upsert",
+                    presence: {
+                      ...(includeLocation
+                        ? change.presence
+                        : withoutLocation(change.presence)),
+                      organizationIds: [organizationId],
+                    },
+                  }
+                : change,
+            ),
           },
         }) satisfies Event;
 
-      const basicEvent = makeEvent(withoutLocation(presence));
+      const basicEvent = makeEvent(false);
 
-      const preciseEvent =
-        "location" in presence ? makeEvent(presence) : basicEvent;
+      const preciseEvent = changes.some(
+        (change) => change.action === "upsert" && "location" in change.presence,
+      )
+        ? makeEvent(true)
+        : basicEvent;
 
-      yield* fromPromise("presence.publish-upsert", () =>
+      yield* fromPromise("presence.publish-delta", () =>
         this.hub.publishPresence(
           { topic: "organization.presence", organizationId },
           basicEvent,
@@ -1217,14 +1681,52 @@ export class PresenceStore {
     });
   }
 
+  // Changes queued since the failed flush are newer and keep precedence.
+  private requeueChanges(
+    organizationId: string,
+    changes: ReadonlyArray<Change>,
+  ): void {
+    const newer = this.pendingDeltas.get(organizationId);
+    this.pendingDeltas.delete(organizationId);
+
+    for (const change of [...changes, ...(newer?.values() ?? [])])
+      this.queueChange(organizationId, change);
+  }
+
   private readSnapshotOrganization(
     organizationId: string,
-  ): Effect.Effect<Array<Basic | Precise>, unknown> {
-    // Offline decisions and coverage require their own fresh read.
-    return this.pendingSnapshots.run(
-      organizationId,
-      this.readOrganization(organizationId).pipe(Effect.timeout("10 seconds")),
-    );
+  ): Effect.Effect<CachedSnapshot, unknown> {
+    return Effect.gen({ self: this }, function* () {
+      // Read the revision first: every change absent from the rows read after
+      // it increments the revision later and reaches viewers as a delta.
+      const revision = yield* this.getRevision(organizationId);
+      const cached = this.snapshots.get(organizationId);
+
+      if (
+        cached?.revision === revision &&
+        this.now() - cached.readAt < SNAPSHOT_MAX_AGE_MS
+      )
+        return cached;
+
+      const readAt = this.now();
+
+      // Offline decisions and coverage require their own fresh read.
+      return yield* this.pendingSnapshots.run(
+        JSON.stringify([organizationId, revision]),
+        this.readOrganization(organizationId).pipe(
+          Effect.timeout("10 seconds"),
+          Effect.map((presences) => {
+            const snapshot = { revision, readAt, presences };
+            const current = this.snapshots.get(organizationId);
+
+            if (!current || current.readAt <= readAt)
+              this.snapshots.set(organizationId, snapshot);
+
+            return snapshot;
+          }),
+        ),
+      );
+    });
   }
 
   private readOrganization(
@@ -1271,23 +1773,8 @@ export class PresenceStore {
   }
 
   private nextRevision(organizationId: string): Effect.Effect<number, unknown> {
-    return this.mutateOrganization(
-      organizationId,
-      "presence.next-revision",
-      () => this.redis.command.incr(`presence:revision:${organizationId}`),
-    );
-  }
-
-  private mutateOrganization<A>(
-    organizationId: string,
-    operation: string,
-    evaluate: () => Promise<A>,
-  ): Effect.Effect<A, RealtimeStoreError> {
-    // Redis commands may settle after their Effect caller is interrupted.
-    return fromPromise(operation, () =>
-      evaluate().finally(() => {
-        this.pendingSnapshots.invalidate(organizationId);
-      }),
+    return fromPromise("presence.next-revision", () =>
+      this.redis.command.incr(`presence:revision:${organizationId}`),
     );
   }
 

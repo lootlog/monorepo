@@ -1,9 +1,12 @@
 import { isEqual } from "es-toolkit";
-import { z } from "zod";
+import { Schema } from "effect";
+import {
+  GuildSettingsDocumentsResponseSchema,
+  SettingsDocumentsResponseSchema,
+} from "@lootlog/schema/settings-documents";
 import {
   SETTINGS_CATALOG,
   SETTINGS_DOMAINS,
-  SETTINGS_SCOPE_TYPES,
   type ServerSettingsCatalogKey,
   type SettingsCatalogValue,
   type SettingsDomain,
@@ -24,48 +27,28 @@ import {
   type SettingsDocumentsControllerGetPreferencesParams,
 } from "@lootlog/client/main";
 
-const settingsScopeSchema = z.object({
-  type: z.enum(SETTINGS_SCOPE_TYPES),
-  id: z.string().min(1),
-});
+// The client keeps the wire form of the documents, so it validates the
+// encoded side of the shared response contract.
+const settingsDocumentsSchema = Schema.toEncoded(
+  SettingsDocumentsResponseSchema,
+);
 
-const settingsVersionSchema = z.number().int().min(1);
+export type SettingsDocuments = typeof settingsDocumentsSchema.Type;
 
-const settingsValuesSchema = z.record(z.string(), z.json());
+export const decodeSettingsDocuments = Schema.decodeUnknownSync(
+  settingsDocumentsSchema,
+);
 
-export const settingsDocumentsSchema = z.object({
-  domains: z.record(
-    z.string(),
-    z.object({
-      effective: settingsValuesSchema,
-      layers: z.array(
-        z.object({
-          scope: settingsScopeSchema,
-          overrides: settingsValuesSchema,
-          schemaVersion: settingsVersionSchema.optional(),
-          updatedAt: z.iso.datetime().optional(),
-        }),
-      ),
-      sources: z.record(
-        z.string(),
-        z.union([z.literal("DEFAULT"), settingsScopeSchema]),
-      ),
-      schemaVersion: settingsVersionSchema,
-      updatedAt: z.iso.datetime().optional(),
-    }),
-  ),
-});
-
-export type SettingsDocuments = z.infer<typeof settingsDocumentsSchema>;
-
-export const guildSettingsDocumentsSchema = z.object({
-  guilds: z.record(z.string(), settingsDocumentsSchema),
-});
+const guildSettingsDocumentsSchema = Schema.toEncoded(
+  GuildSettingsDocumentsResponseSchema,
+);
 
 /** Guild-scoped documents keyed by guild id, from one batched request. */
-export type GuildSettingsDocuments = z.infer<
-  typeof guildSettingsDocumentsSchema
->;
+export type GuildSettingsDocuments = typeof guildSettingsDocumentsSchema.Type;
+
+export const decodeGuildSettingsDocuments = Schema.decodeUnknownSync(
+  guildSettingsDocumentsSchema,
+);
 
 export type SettingsScopeType =
   PatchSettingsDocumentsDtoOperationsItem["scope"]["type"];

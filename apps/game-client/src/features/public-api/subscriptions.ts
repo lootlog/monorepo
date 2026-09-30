@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { Option, Schema } from "effect";
 import type { Query, QueryClient } from "@tanstack/react-query";
 import type { Timer } from "@/api";
 import type { GuildResponseDtoOutput } from "@lootlog/client/main";
@@ -17,12 +17,14 @@ export type PublicApiSubscriptionController = {
   teardown: () => void;
 };
 
-const queryWorldSchema = z.object({ world: z.string().optional() });
+const decodeQueryWorld = Schema.decodeUnknownOption(
+  Schema.Struct({ world: Schema.optional(Schema.String) }),
+);
 
 function getQueryWorld(query: Query): string | undefined {
-  const params = queryWorldSchema.safeParse(query.queryKey[1]);
+  const params = decodeQueryWorld(query.queryKey[1]);
 
-  return params.success ? params.data.world : undefined;
+  return Option.isSome(params) ? params.value.world : undefined;
 }
 
 export function setupSubscriptions(

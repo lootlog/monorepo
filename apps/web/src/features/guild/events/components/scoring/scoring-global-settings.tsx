@@ -1,4 +1,4 @@
-import type { UseFormRegister } from "react-hook-form";
+import type { Control, UseFormRegister } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
@@ -10,12 +10,15 @@ import {
 import { Shield, Percent, Globe, HelpCircle } from "lucide-react";
 
 import type { ScoringRulesFormValues } from "./scoring-rules-editor";
+import { ScoringNumberInput } from "./scoring-number-input";
 
 interface ScoringGlobalSettingsProps {
+  control: Control<ScoringRulesFormValues>;
   register: UseFormRegister<ScoringRulesFormValues>;
 }
 
 export const ScoringGlobalSettings = ({
+  control,
   register,
 }: ScoringGlobalSettingsProps) => {
   const { t } = useTranslation();
@@ -39,13 +42,11 @@ export const ScoringGlobalSettings = ({
             </TooltipContent>
           </Tooltip>
         </div>
-        <Input
-          type="number"
-          min={0}
-          step={0.01}
-          {...register("scoringRules.hardCapPoints", {
-            valueAsNumber: true,
-          })}
+        <ScoringNumberInput
+          control={control}
+          register={register}
+          name="scoringRules.hardCapPoints"
+          label={t("events.scoring.hardCapPoints")}
           className="h-8 text-sm font-mono"
         />
       </div>
@@ -57,14 +58,13 @@ export const ScoringGlobalSettings = ({
           </Label>
         </div>
         <div className="flex items-center gap-1">
-          <Input
-            type="number"
-            min={0}
+          <ScoringNumberInput
+            control={control}
+            register={register}
+            name="scoringRules.minTrackingPercentForBonuses"
+            label={t("events.scoring.minTrackingPercentForBonuses")}
             max={100}
             step={1}
-            {...register("scoringRules.minTrackingPercentForBonuses", {
-              valueAsNumber: true,
-            })}
             className="h-8 text-sm font-mono"
           />
           <span className="text-[11px] text-muted-foreground/50 shrink-0 font-mono">

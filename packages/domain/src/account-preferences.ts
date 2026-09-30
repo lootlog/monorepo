@@ -4,14 +4,13 @@ import {
   DETECTOR_NPC_TYPES,
   NOTIFICATION_TYPES,
   defaultAirTagPreferences,
+  defaultBattlePingPreferences,
   defaultDetectorSettings,
   defaultMapPingPreferences,
   defaultNotificationsSettings,
-  type AirTagPreferences,
   type DetectorRoutingRule,
   type DetectorSettings,
   type DetectorTypeSettings,
-  type MapPingPreferences,
   type NotificationSettings,
   type NotificationsSettings,
 } from "@lootlog/schema/account-preferences";
@@ -293,27 +292,20 @@ export const normalizeDetector = flow(
   },
 );
 
-export const normalizePings = flow(
-  readPreferenceRecord,
-  (settings): MapPingPreferences => {
-    return {
-      enabled: Predicate.isBoolean(settings?.enabled)
-        ? settings.enabled
-        : defaultMapPingPreferences.enabled,
-    };
-  },
+const normalizeEnabledFlag = (defaults: { enabled: boolean }) =>
+  flow(readPreferenceRecord, (settings) => ({
+    enabled: Predicate.isBoolean(settings?.enabled)
+      ? settings.enabled
+      : defaults.enabled,
+  }));
+
+export const normalizePings = normalizeEnabledFlag(defaultMapPingPreferences);
+
+export const normalizeBattlePings = normalizeEnabledFlag(
+  defaultBattlePingPreferences,
 );
 
-export const normalizeAirTags = flow(
-  readPreferenceRecord,
-  (settings): AirTagPreferences => {
-    return {
-      enabled: Predicate.isBoolean(settings?.enabled)
-        ? settings.enabled
-        : defaultAirTagPreferences.enabled,
-    };
-  },
-);
+export const normalizeAirTags = normalizeEnabledFlag(defaultAirTagPreferences);
 
 export const normalizeNotificationMutes = flow(
   readPreferenceRecord,

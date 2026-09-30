@@ -25,6 +25,9 @@ export default async function setup() {
     )
       .withCommand([
         "--requirepass=test",
+        // Production flags: BullMQ scripts touch undeclared `{bull}` keys.
+        "--cluster_mode=emulated",
+        "--lock_on_hashtags",
         "--logtostderr",
         "--proactor_threads=2",
       ])

@@ -294,10 +294,19 @@ describe("DesktopWeekSchedule", () => {
   it("centers the current time marker in the viewport on mount", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 0, 7, 12, 0));
-    vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(400);
     const nowTop = HEADER_HEIGHT + 12 * MIN_ROW_HEIGHT;
-    vi.spyOn(HTMLElement.prototype, "offsetTop", "get").mockReturnValue(nowTop);
-    const scrollTop = vi.spyOn(HTMLElement.prototype, "scrollTop", "set");
+
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: HTMLElement) {
+        return this.dataset.slot === "scroll-area-viewport"
+          ? new DOMRect(0, 0, 800, 400)
+          : new DOMRect(0, nowTop, 800, 2);
+      },
+    );
+
+    const scrollTo = vi
+      .spyOn(HTMLElement.prototype, "scrollTo")
+      .mockImplementation(() => undefined);
 
     const { container } = render(
       <DesktopWeekSchedule
@@ -317,8 +326,8 @@ describe("DesktopWeekSchedule", () => {
 
     if (!(scrollViewport instanceof HTMLElement)) return;
 
-    expect(scrollTop).toHaveBeenCalledWith(nowTop - 200);
-    expect(scrollTop.mock.instances).toContain(scrollViewport);
+    expect(scrollTo).toHaveBeenCalledWith({ top: nowTop - 200 });
+    expect(scrollTo.mock.instances).toContain(scrollViewport);
   });
 
   it("selects the maximum allowed range across midnight", () => {

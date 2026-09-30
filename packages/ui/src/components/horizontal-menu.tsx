@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, type ComponentProps } from "react";
 import { useHorizontalWheelScroll } from "../hooks/use-horizontal-wheel-scroll";
 import { cn } from "cn";
+import { getPrefersReducedMotion } from "../hooks/use-prefers-reduced-motion";
 
 export function HorizontalMenu({
   children,
@@ -24,9 +25,7 @@ export function HorizontalMenu({
       viewport.scrollTo({
         left:
           element.offsetLeft - (viewport.clientWidth - element.offsetWidth) / 2,
-        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? "instant"
-          : "smooth",
+        behavior: getPrefersReducedMotion() ? "instant" : "smooth",
       });
     };
 

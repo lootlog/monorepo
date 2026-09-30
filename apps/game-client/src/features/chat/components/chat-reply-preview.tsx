@@ -7,7 +7,7 @@ import {
 import type { ChatReplyDraft } from "@/store/chat.store";
 import { Reply, X } from "lucide-react";
 import type { FC, MouseEvent } from "react";
-import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 
 type ChatReplyPreviewProps = {
   reply: Pick<ChatReplyDraft, "senderNick" | "message" | "type">;
@@ -104,19 +104,16 @@ export const ChatReplyPreview: FC<ChatReplyPreviewProps> = ({
         </span>
       </Content>
       {onClear && (
-        <Button
-          size="xs"
-          aria-label={t("messageActions.clearReply")}
-          type="button"
-          variant="ghost"
-          className="ll:size-6 ll:shrink-0 ll:p-0 ll:mr-2 ll:border-0 ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:focus-visible:-outline-offset-2"
+        <IconButton
+          label={t("messageActions.clearReply")}
+          className="ll:mr-2"
           onClick={(event: MouseEvent<HTMLButtonElement>) => {
             event.stopPropagation();
             onClear();
           }}
         >
-          <X aria-hidden className="ll:size-3" />
-        </Button>
+          <X aria-hidden />
+        </IconButton>
       )}
     </div>
   );

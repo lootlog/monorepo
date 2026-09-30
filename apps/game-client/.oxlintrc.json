@@ -249,7 +249,7 @@
           {
             "boundaryFunctions": [
               "migrateOnlinePlayersState",
-              "sanitizeFiltersByGuildId"
+              "sanitizeFilters"
             ]
           }
         ],
@@ -393,10 +393,7 @@
           "error",
           {
             "allowInTypeGuards": true,
-            "boundaryFunctions": [
-              "createRuntimeAdapter",
-              "getMargonemInterface"
-            ]
+            "boundaryFunctions": ["createRuntimeAdapter"]
           }
         ]
       }
@@ -519,7 +516,7 @@
         "anti-slop/no-unknown-parameters": [
           "error",
           {
-            "boundaryFunctions": ["handleUpdate"]
+            "boundaryFunctions": ["handleUpdate", "handleScopeUpdate"]
           }
         ]
       }

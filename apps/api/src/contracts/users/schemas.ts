@@ -7,6 +7,8 @@ import {
   SafeInteger,
   PositiveSafeInteger,
 } from "@lootlog/schema/http-scalars";
+import { ChatNpcLayoutSchema } from "@lootlog/schema/chat-appearance";
+import { organizationSummaryFields } from "#src/contracts/shared";
 
 const MutedPlayer = Schema.Struct({
   discordId: NonEmptyString,
@@ -90,7 +92,7 @@ export const UserPreferencesResponse = Schema.Struct({
   hiddenGuildIds: Schema.Array(Schema.String),
   theme: Schema.String,
   chatAppearance: Schema.Struct({
-    npcLayout: Schema.Literals(["tile", "inline"]),
+    npcLayout: ChatNpcLayoutSchema,
     fontScalePercent: FiniteNumber.check(
       Schema.isGreaterThanOrEqualTo(70).annotate({
         expected: "a value greater than or equal to 70",
@@ -159,7 +161,7 @@ export const UpdateUserPreferencesRequest = Schema.Struct({
   ),
   chatAppearance: Schema.optionalKey(
     Schema.Struct({
-      npcLayout: Schema.optionalKey(Schema.Literals(["tile", "inline"])),
+      npcLayout: Schema.optionalKey(ChatNpcLayoutSchema),
       fontScalePercent: Schema.optionalKey(FiniteNumber),
       messageGapPx: Schema.optionalKey(FiniteNumber),
       showTimestamp: Schema.optionalKey(Schema.Boolean),
@@ -181,12 +183,7 @@ export type CurrentOrganizationResponse =
   typeof CurrentOrganizationResponse.Type;
 
 export const CurrentOrganizationResponse = Schema.Struct({
-  id: Schema.String,
-  name: Schema.String,
-  icon: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-  vanityUrl: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-  ownerId: Schema.String,
-  publicStatsCardEnabled: Schema.Boolean,
+  ...organizationSummaryFields,
   hasLootlogAccess: Schema.Boolean,
   isAccessDataStale: Schema.Boolean,
 }).annotate({ identifier: "UserCurrentGuildResponseDto_Output" });

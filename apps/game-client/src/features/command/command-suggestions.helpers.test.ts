@@ -18,6 +18,7 @@ describe("command-suggestions.helpers", () => {
   it("opens suggestions only for slash-prefixed input", () => {
     expect(isCommandSuggestionsInput("/")).toBe(true);
     expect(isCommandSuggestionsInput("/g")).toBe(true);
+    expect(isCommandSuggestionsInput("/grp")).toBe(false);
     expect(isCommandSuggestionsInput("!g")).toBe(false);
     expect(isCommandSuggestionsInput("hello")).toBe(false);
   });

@@ -52,11 +52,31 @@ export const findTimerMatches = (
   return database.select().from(timerTable).where(timerCondition);
 };
 
+export const activeTimerEventCondition = (
+  guildId: string,
+  world: string,
+  npcId: number,
+  npcName: string,
+  now: Date,
+) =>
+  and(
+    eq(eventTable.guildId, guildId),
+    eq(eventTable.world, world),
+    or(
+      eq(eventHeroNpcTable.npcId, npcId),
+      eq(eventHeroNpcTable.npcName, npcName),
+    ),
+    or(isNull(eventTable.startsAt), lte(eventTable.startsAt, now)),
+    or(isNull(eventTable.endsAt), gt(eventTable.endsAt, now)),
+  );
+
+type TimerEventNpc = Pick<typeof timerTable.$inferSelect, "npcId" | "npc">;
+
 export const findActiveTimerEventHeroes = (
   database: TimerDatabase,
   guildId: string,
   world: string,
-  timer: typeof timerTable.$inferSelect,
+  timers: readonly [TimerEventNpc, ...TimerEventNpc[]],
   now: Date,
 ) => {
   return database
@@ -64,18 +84,16 @@ export const findActiveTimerEventHeroes = (
     .from(eventHeroNpcTable)
     .innerJoin(eventTable, eq(eventTable.id, eventHeroNpcTable.eventId))
     .where(
-      and(
-        eq(eventTable.guildId, guildId),
-        eq(eventTable.world, world),
-        or(
-          eq(eventHeroNpcTable.npcId, timer.npcId),
-          eq(
-            eventHeroNpcTable.npcName,
+      or(
+        ...timers.map((timer) =>
+          activeTimerEventCondition(
+            guildId,
+            world,
+            timer.npcId,
             String(timerNpcField(timer.npc, "name") ?? ""),
+            now,
           ),
         ),
-        or(isNull(eventTable.startsAt), lte(eventTable.startsAt, now)),
-        or(isNull(eventTable.endsAt), gt(eventTable.endsAt, now)),
       ),
     )
     .limit(1);

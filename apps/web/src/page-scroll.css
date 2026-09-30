@@ -1,0 +1,18 @@
+/*
+ * Below `md` the document scrolls every page, so mobile browsers can collapse
+ * their toolbars and offer pull-to-refresh. From `md` up the app shell has a
+ * fixed height and each page scrolls its own viewport.
+ * See `usePageScrollsDocument`.
+ */
+@media (width >= 48rem) {
+  body {
+    overflow: hidden;
+  }
+}
+
+/* The app bar (`AppTopBar`, 3.5rem) stays pinned over the scrolling document. */
+@media (width < 48rem) {
+  html:has(.app-content-frame) {
+    scroll-padding-top: 3.5rem;
+  }
+}

@@ -7,6 +7,7 @@ import {
 import { QueryClient } from "@tanstack/react-query";
 import { configureApiClients } from "@lootlog/client/transport";
 import { queryKeys } from "@/features/public-api/query-keys";
+import { settingsPatchQueue } from "@/features/settings/persistence/settings-patch-client";
 import {
   createTimerFixture,
   createTimerHistoryFixture,
@@ -15,6 +16,7 @@ import {
 export const createTimerHttpFixture = (
   respond?: (request: Request) => Response | Promise<Response>,
 ) => {
+  settingsPatchQueue.reset();
   const requests: Request[] = [];
 
   const queryClient = new QueryClient({
@@ -73,6 +75,7 @@ export const createTimerHttpFixture = (
     history,
     restored,
     cleanup: () => {
+      settingsPatchQueue.reset();
       queryClient.clear();
       restoreApi();
     },

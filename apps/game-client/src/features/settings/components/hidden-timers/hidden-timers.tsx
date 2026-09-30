@@ -1,5 +1,5 @@
 import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
-import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { IconButton } from "@/components/ui/icon-button";
 import { SettingsList } from "@/components/settings/settings-list";
 import { SettingsListRow } from "@/components/settings/settings-list-row";
 import { useTimersStore } from "@/store/timers.store";
@@ -34,12 +34,12 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ guildId }) => {
     <SettingsList>
       {uniqueHiddenTimers.map((timer) => (
         <SettingsListRow key={timer} title={timer}>
-          <SettingsIconButton
+          <IconButton
             label={t("common:actions.restore")}
             onClick={() => revealTimer(key, timer)}
           >
             <RotateCcw aria-hidden="true" />
-          </SettingsIconButton>
+          </IconButton>
         </SettingsListRow>
       ))}
     </SettingsList>

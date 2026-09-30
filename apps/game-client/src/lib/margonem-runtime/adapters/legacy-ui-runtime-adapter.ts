@@ -1,7 +1,6 @@
 type LegacyUiRuntimeWindow = Window & {
   getCookie?: (name: string) => string | undefined;
   getZoomFactor?: () => number;
-  message?: (message: string) => void;
 };
 
 const getRuntimeWindow = (): LegacyUiRuntimeWindow => window;
@@ -12,10 +11,6 @@ export const getRuntimeCookie = (name: string): string | undefined => {
 
 export const getRuntimeZoomFactor = (): number | null => {
   return getRuntimeWindow().getZoomFactor?.() ?? null;
-};
-
-export const showRuntimeMessage = (message: string): void => {
-  getRuntimeWindow().message?.(message);
 };
 
 export const getRuntimeUiScale = (): number =>

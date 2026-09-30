@@ -20,7 +20,11 @@ export class ChatEventProcessor {
     if (!lastLootId) return;
 
     updateLoot({ msg: message, id: lastLootId })
-      .then(() => {
+      .then((confirmedShare) => {
+        // An empty share means the message matched none of this loot's items,
+        // e.g. a late distribution of an earlier loot; keep waiting for ours.
+        if (Object.keys(confirmedShare).length === 0) return;
+
         if (useLootStore.getState().lastLootId === lastLootId) {
           useLootStore.getState().setLastLootId(null);
         }

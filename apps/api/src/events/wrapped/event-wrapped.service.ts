@@ -1,15 +1,12 @@
+import { buildLootVisibilityCacheScope } from "#src/loots/loot-visibility-cache";
 import { roundEventDisplayValue } from "#src/events/round-event-display-value";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { Logger } from "#src/shared/application-logger";
 import type { Permission } from "@lootlog/schema/permissions";
 import { stableJsonCacheKey } from "@lootlog/schema/stable-json";
-import type {
-  guildTable,
-  itemSnapshotTable,
-  roleTable,
-} from "#src/database/drizzle/schema";
-import type { LootQueryResult } from "#src/loots/query/loot-query-result";
+import type { guildTable, roleTable } from "#src/database/drizzle/schema";
+import type { LootNpcNameSummary } from "#src/loots/query/loot-query.operations";
 import type { LootsOperations } from "#src/loots/loots.operations";
 import { Clock, Effect } from "effect";
 import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
@@ -31,8 +28,6 @@ import { selectEventWrappedLeader } from "#src/events/wrapped/select-event-wrapp
 import type { EventWrappedStore } from "#src/events/wrapped/event-wrapped.repository";
 
 type Guild = typeof guildTable.$inferSelect;
-
-type ItemRarity = NonNullable<typeof itemSnapshotTable.$inferSelect.rarity>;
 
 type Role = typeof roleTable.$inferSelect;
 
@@ -80,11 +75,7 @@ type AggregatedMember = {
   totalKills: number;
   totalTimeSeconds: number;
   totalAfkSeconds: number;
-  distinctMapIds: Set<string>;
-  distinctHeroIds: Set<string>;
-  assignmentCount: number;
   totalAssignedSeconds: number;
-  longestSingleAssignmentSeconds: number;
   maxMapsPerRespawn: number;
   avgMapsPerRespawn: number;
 };
@@ -94,32 +85,215 @@ type HeroLootAggregate = {
   rarityTotals: EventWrappedRarityTotalsDto;
 };
 
+type SpawnWindow = {
+  killedAt: Date;
+  minSpawnTimeAtKill: Date;
+};
+
+type AssignmentInterval = Pick<
+  AssignmentRow,
+  "mapId" | "memberId" | "assignedAt" | "unassignedAt"
+>;
+
+type MemberRespawnMapStats = {
+  maxMapsPerRespawn: number;
+  avgMapsPerRespawn: number;
+};
+
+type SpawnWindowCoverage = {
+  minSpawnTime: number;
+  mapIds: Set<string>;
+  mapIdsByMember: Map<number, Set<string>>;
+};
+
+// Events sharing a timestamp run in this order, which makes both interval
+// bounds inclusive: an assignment starting at a window's minimum spawn time or
+// ending at it, or starting at the kill, still covers the window.
+const SweepStep = {
+  assignmentStart: 0,
+  windowOpen: 1,
+  windowClose: 2,
+  assignmentEnd: 3,
+} as const;
+
+type AssignmentStep =
+  | typeof SweepStep.assignmentStart
+  | typeof SweepStep.assignmentEnd;
+
+type WindowStep = typeof SweepStep.windowOpen | typeof SweepStep.windowClose;
+
+type SweepEvent =
+  | { at: number; step: AssignmentStep; assignment: AssignmentInterval }
+  | { at: number; step: WindowStep; window: SpawnWindowCoverage };
+
 const createEmptyRarityTotals = (): EventWrappedRarityTotalsDto => ({
   unique: 0,
   heroic: 0,
   legendary: 0,
 });
 
-const getRarityKey = (
-  rarity: ItemRarity | null | undefined,
-): keyof EventWrappedRarityTotalsDto | null => {
-  if (rarity === "UNIQUE") return "unique";
-
-  if (rarity === "HEROIC") return "heroic";
-
-  if (rarity === "LEGENDARY") return "legendary";
-
-  return null;
-};
-
 const countMapStats = (mapStats: unknown): number => {
   return Array.isArray(mapStats) ? mapStats.length : 0;
 };
 
+const endsAtOrAfter = (end: Date | null, time: number) =>
+  end === null || end.getTime() >= time;
+
+/**
+ * Counts the maps assigned during each kill's spawn window, in total and per
+ * member. An assignment covers a window when it starts no later than the kill
+ * and is still open or ends no earlier than the minimum spawn time. A window
+ * whose minimum spawn time follows its kill is covered only by an assignment
+ * spanning that whole inverted range.
+ *
+ * One sweep over the sorted start and end times replaces a scan of every
+ * assignment per kill: each window reads the assignments active when it opens,
+ * and each later assignment start reaches only the windows open at that time.
+ */
+const summarizeSpawnWindowAssignments = (
+  kills: ReadonlyArray<SpawnWindow>,
+  assignments: ReadonlyArray<AssignmentInterval>,
+) => {
+  const events: SweepEvent[] = [];
+
+  for (const assignment of assignments) {
+    events.push({
+      at: assignment.assignedAt.getTime(),
+      step: SweepStep.assignmentStart,
+      assignment,
+    });
+
+    if (assignment.unassignedAt !== null) {
+      events.push({
+        at: assignment.unassignedAt.getTime(),
+        step: SweepStep.assignmentEnd,
+        assignment,
+      });
+    }
+  }
+
+  for (const kill of kills) {
+    const killedAt = kill.killedAt.getTime();
+
+    const window: SpawnWindowCoverage = {
+      minSpawnTime: kill.minSpawnTimeAtKill.getTime(),
+      mapIds: new Set(),
+      mapIdsByMember: new Map(),
+    };
+
+    // An inverted window opens at its kill and closes immediately.
+    events.push({
+      at: Math.min(window.minSpawnTime, killedAt),
+      step: SweepStep.windowOpen,
+      window,
+    });
+
+    if (window.minSpawnTime <= killedAt) {
+      events.push({ at: killedAt, step: SweepStep.windowClose, window });
+    }
+  }
+
+  events.sort((left, right) => left.at - right.at || left.step - right.step);
+
+  // Assignments that started and have not ended. One that ends before it
+  // starts never becomes active; it can only reach windows already open.
+  const activeAssignments = new Set<AssignmentInterval>();
+
+  const openWindows = new Set<SpawnWindowCoverage>();
+
+  const memberTotals = new Map<
+    number,
+    { windowCount: number; totalMaps: number; maxMaps: number }
+  >();
+
+  let totalAssignedMaps = 0;
+
+  const cover = (
+    window: SpawnWindowCoverage,
+    assignment: AssignmentInterval,
+  ) => {
+    window.mapIds.add(assignment.mapId);
+
+    const memberMapIds =
+      window.mapIdsByMember.get(assignment.memberId) ?? new Set<string>();
+
+    memberMapIds.add(assignment.mapId);
+    window.mapIdsByMember.set(assignment.memberId, memberMapIds);
+  };
+
+  const close = (window: SpawnWindowCoverage) => {
+    totalAssignedMaps += window.mapIds.size;
+
+    for (const [memberId, mapIds] of window.mapIdsByMember) {
+      const totals = memberTotals.get(memberId) ?? {
+        windowCount: 0,
+        totalMaps: 0,
+        maxMaps: 0,
+      };
+
+      totals.windowCount += 1;
+      totals.totalMaps += mapIds.size;
+      totals.maxMaps = Math.max(totals.maxMaps, mapIds.size);
+      memberTotals.set(memberId, totals);
+    }
+  };
+
+  for (const event of events) {
+    if (event.step === SweepStep.assignmentStart) {
+      const { assignment } = event;
+
+      for (const window of openWindows) {
+        if (endsAtOrAfter(assignment.unassignedAt, window.minSpawnTime)) {
+          cover(window, assignment);
+        }
+      }
+
+      if (endsAtOrAfter(assignment.unassignedAt, event.at)) {
+        activeAssignments.add(assignment);
+      }
+    } else if (event.step === SweepStep.assignmentEnd) {
+      activeAssignments.delete(event.assignment);
+    } else if (event.step === SweepStep.windowClose) {
+      openWindows.delete(event.window);
+      close(event.window);
+    } else if (event.step === SweepStep.windowOpen) {
+      const { window } = event;
+
+      for (const assignment of activeAssignments) {
+        if (endsAtOrAfter(assignment.unassignedAt, window.minSpawnTime)) {
+          cover(window, assignment);
+        }
+      }
+
+      if (window.minSpawnTime > event.at) {
+        close(window);
+      } else {
+        openWindows.add(window);
+      }
+    }
+  }
+
+  return {
+    avgMapsPerSpawnWindow:
+      kills.length > 0 ? totalAssignedMaps / kills.length : 0,
+    memberStats: new Map(
+      Array.from(memberTotals, ([memberId, totals]) => [
+        memberId,
+        {
+          maxMapsPerRespawn: totals.maxMaps,
+          avgMapsPerRespawn: roundEventDisplayValue(
+            totals.totalMaps / totals.windowCount,
+          ),
+        } satisfies MemberRespawnMapStats,
+      ]),
+    ),
+  };
+};
+
 export const makeEventWrapped = (
   repository: EventWrappedStore,
-  redis: RedisService,
-  lootsService: LootsOperations,
+  redis: Pick<RedisService, "getJson" | "setJson">,
+  lootsService: Pick<LootsOperations, "summarizeLootsByNpcName">,
 ) => {
   const logger = new Logger("EventWrapped");
 
@@ -132,7 +306,7 @@ export const makeEventWrapped = (
     const cacheKey = getEventWrappedCacheKey(
       guild.id,
       eventId,
-      buildVisibilityCacheScope(permissions, roles),
+      stableJsonCacheKey(buildLootVisibilityCacheScope(permissions, roles)),
     );
 
     const load = getWrappedUncached(guild, eventId, permissions, roles);
@@ -192,7 +366,7 @@ export const makeEventWrapped = (
         event.heroNpcs.map((hero) => [hero.npcName.toLowerCase(), hero]),
       );
 
-      const [rankings, kills, windowSummaries, assignments, loots] =
+      const [rankings, kills, windowSummaries, assignments, lootSummary] =
         yield* Effect.all(
           [
             repository.findRankings(eventId),
@@ -212,18 +386,16 @@ export const makeEventWrapped = (
           { concurrency: "unbounded" },
         );
 
-      const members = aggregateMembers(rankings, assignments, kills, {
+      const { avgMapsPerSpawnWindow, memberStats } =
+        summarizeSpawnWindowAssignments(kills, assignments);
+
+      const members = aggregateMembers(rankings, assignments, memberStats, {
         eventWindowStart,
         eventWindowEnd,
       });
 
-      const heroLoots = aggregateHeroLoots(loots, heroByName);
+      const heroLoots = aggregateHeroLoots(lootSummary.npcs, heroByName);
       const coverage = aggregateCoverage(windowSummaries, event.heroNpcs);
-
-      const avgMapsPerSpawnWindow = calculateAverageMapsPerSpawnWindow(
-        kills,
-        assignments,
-      );
 
       const heroEntries: EventWrappedHeroDto[] = event.heroNpcs
         .map((hero) => {
@@ -296,7 +468,7 @@ export const makeEventWrapped = (
         0,
       );
 
-      const totalLoots = loots.length;
+      const totalLoots = lootSummary.lootCount;
 
       const totalRarityTotals = Array.from(heroLoots.values()).reduce(
         (accumulator, aggregate) => {
@@ -404,22 +576,6 @@ export const makeEventWrapped = (
     });
   }
 
-  function buildVisibilityCacheScope(permissions: Permission[], roles: Role[]) {
-    const visibilityScope = {
-      permissions: [...permissions].sort(),
-      roles: roles
-        .map((role) => ({
-          id: role.id,
-          lvlRangeFrom: role.lvlRangeFrom,
-          lvlRangeTo: role.lvlRangeTo,
-          permissions: [...role.permissions].sort(),
-        }))
-        .sort((leftRole, rightRole) => leftRole.id.localeCompare(rightRole.id)),
-    };
-
-    return stableJsonCacheKey(visibilityScope);
-  }
-
   function getEventLoots(params: {
     guild: Guild;
     permissions: Permission[];
@@ -430,68 +586,29 @@ export const makeEventWrapped = (
     createdAtMax: string;
   }) {
     if (params.heroNames.length === 0) {
-      return Effect.succeed([]);
+      return Effect.succeed<LootNpcNameSummary>({ lootCount: 0, npcs: [] });
     }
 
-    const accessPolicy = createAccessPolicy({
-      capabilities: params.permissions,
-    });
-
-    const fetchLootsBatch = (
-      cursor: number | undefined,
-      collectedLoots: LootQueryResult[],
-    ): Effect.Effect<LootQueryResult[], unknown, never> =>
-      Effect.gen(function* () {
-        const batch = yield* lootsService.fetchLootsByGuildId(
-          params.guild,
-          accessPolicy,
-          params.roles,
-          {
-            limit: 100,
-            cursor,
-            players: [],
-            rarities: [],
-            npcTypes: [],
-            npcs: params.heroNames,
-            world: params.world,
-            createdAtMin: params.createdAtMin,
-            createdAtMax: params.createdAtMax,
-          },
-        );
-
-        collectedLoots.push(...batch);
-
-        if (batch.length < 100) {
-          return collectedLoots;
-        }
-
-        const nextCursor = batch[batch.length - 1]?.id;
-
-        if (!nextCursor) {
-          return collectedLoots;
-        }
-
-        return yield* fetchLootsBatch(nextCursor, collectedLoots);
-      });
-
-    return fetchLootsBatch(undefined, []);
+    return lootsService.summarizeLootsByNpcName(
+      params.guild,
+      createAccessPolicy({ capabilities: params.permissions }),
+      params.roles,
+      {
+        npcs: params.heroNames,
+        world: params.world,
+        createdAtMin: params.createdAtMin,
+        createdAtMax: params.createdAtMax,
+      },
+    );
   }
 
   function aggregateMembers(
     rankings: RankingRow[],
     assignments: AssignmentRow[],
-    kills: Array<{
-      killedAt: Date;
-      minSpawnTimeAtKill: Date;
-    }>,
+    respawnStatsByMemberId: ReadonlyMap<number, MemberRespawnMapStats>,
     options: { eventWindowStart: Date; eventWindowEnd: Date },
   ): Map<number, AggregatedMember> {
     const members = new Map<number, AggregatedMember>();
-
-    const respawnStatsByMemberId = calculateMemberRespawnMapStats(
-      kills,
-      assignments,
-    );
 
     for (const ranking of rankings) {
       const existing = members.get(ranking.memberId) ?? {
@@ -502,11 +619,7 @@ export const makeEventWrapped = (
         totalKills: 0,
         totalTimeSeconds: 0,
         totalAfkSeconds: 0,
-        distinctMapIds: new Set<string>(),
-        distinctHeroIds: new Set<string>(),
-        assignmentCount: 0,
         totalAssignedSeconds: 0,
-        longestSingleAssignmentSeconds: 0,
         maxMapsPerRespawn: 0,
         avgMapsPerRespawn: 0,
       };
@@ -530,11 +643,7 @@ export const makeEventWrapped = (
         totalKills: 0,
         totalTimeSeconds: 0,
         totalAfkSeconds: 0,
-        distinctMapIds: new Set<string>(),
-        distinctHeroIds: new Set<string>(),
-        assignmentCount: 0,
         totalAssignedSeconds: 0,
-        longestSingleAssignmentSeconds: 0,
         maxMapsPerRespawn: 0,
         avgMapsPerRespawn: 0,
       };
@@ -546,14 +655,7 @@ export const makeEventWrapped = (
         windowEnd: options.eventWindowEnd,
       });
 
-      existing.assignmentCount += 1;
       existing.totalAssignedSeconds += durationSeconds;
-      existing.longestSingleAssignmentSeconds = Math.max(
-        existing.longestSingleAssignmentSeconds,
-        durationSeconds,
-      );
-      existing.distinctMapIds.add(assignment.mapId);
-      existing.distinctHeroIds.add(assignment.heroNpcId);
 
       members.set(assignment.memberId, existing);
     }
@@ -568,69 +670,8 @@ export const makeEventWrapped = (
     return members;
   }
 
-  function calculateMemberRespawnMapStats(
-    kills: Array<{
-      killedAt: Date;
-      minSpawnTimeAtKill: Date;
-    }>,
-    assignments: AssignmentRow[],
-  ): Map<
-    number,
-    {
-      maxMapsPerRespawn: number;
-      avgMapsPerRespawn: number;
-    }
-  > {
-    const respawnCountsByMember = new Map<number, number[]>();
-
-    for (const kill of kills) {
-      const mapIdsByMember = new Map<number, Set<string>>();
-
-      for (const assignment of assignments) {
-        const overlapsWindow =
-          assignment.assignedAt <= kill.killedAt &&
-          (assignment.unassignedAt === null ||
-            assignment.unassignedAt >= kill.minSpawnTimeAtKill);
-
-        if (!overlapsWindow) {
-          continue;
-        }
-
-        const memberMapIds =
-          mapIdsByMember.get(assignment.memberId) ?? new Set<string>();
-
-        memberMapIds.add(assignment.mapId);
-        mapIdsByMember.set(assignment.memberId, memberMapIds);
-      }
-
-      for (const [memberId, mapIds] of mapIdsByMember) {
-        const counts = respawnCountsByMember.get(memberId) ?? [];
-
-        counts.push(mapIds.size);
-        respawnCountsByMember.set(memberId, counts);
-      }
-    }
-
-    return new Map(
-      Array.from(respawnCountsByMember.entries()).map(([memberId, counts]) => {
-        const totalMaps = counts.reduce((sum, value) => sum + value, 0);
-
-        return [
-          memberId,
-          {
-            maxMapsPerRespawn: Math.max(...counts, 0),
-            avgMapsPerRespawn:
-              counts.length > 0
-                ? roundEventDisplayValue(totalMaps / counts.length)
-                : 0,
-          },
-        ];
-      }),
-    );
-  }
-
   function aggregateHeroLoots(
-    loots: LootQueryResult[],
+    npcs: LootNpcNameSummary["npcs"],
     heroByName: Map<
       string,
       {
@@ -642,33 +683,23 @@ export const makeEventWrapped = (
   ): Map<string, HeroLootAggregate> {
     const heroLoots = new Map<string, HeroLootAggregate>();
 
-    for (const loot of loots) {
-      const matchingHeroes = loot.npcs
-        .map((npc) => heroByName.get(npc.name.toLowerCase()))
-        .filter((hero): hero is NonNullable<typeof hero> => Boolean(hero));
+    // A loot counts once for each of its NPC rows naming an event hero, so a
+    // hero listed twice in one encounter counts that loot and its items twice.
+    for (const npc of npcs) {
+      const hero = heroByName.get(npc.name.toLowerCase());
 
-      if (matchingHeroes.length === 0) {
-        continue;
-      }
+      if (!hero) continue;
 
-      for (const hero of matchingHeroes) {
-        const existing = heroLoots.get(hero.id) ?? {
-          totalLoots: 0,
-          rarityTotals: createEmptyRarityTotals(),
-        };
+      const existing = heroLoots.get(hero.id) ?? {
+        totalLoots: 0,
+        rarityTotals: createEmptyRarityTotals(),
+      };
 
-        existing.totalLoots += 1;
-
-        for (const item of loot.items) {
-          const rarityKey = getRarityKey(item.rarity);
-
-          if (rarityKey) {
-            existing.rarityTotals[rarityKey] += 1;
-          }
-        }
-
-        heroLoots.set(hero.id, existing);
-      }
+      existing.totalLoots += npc.encounters;
+      existing.rarityTotals.unique += npc.unique;
+      existing.rarityTotals.heroic += npc.heroic;
+      existing.rarityTotals.legendary += npc.legendary;
+      heroLoots.set(hero.id, existing);
     }
 
     return heroLoots;
@@ -778,39 +809,6 @@ export const makeEventWrapped = (
       roughestHeroCoverage: coverageEntries[coverageEntries.length - 1] ?? null,
       heroCoverageById,
     };
-  }
-
-  function calculateAverageMapsPerSpawnWindow(
-    kills: Array<{
-      killedAt: Date;
-      minSpawnTimeAtKill: Date;
-    }>,
-    assignments: AssignmentRow[],
-  ): number {
-    if (kills.length === 0) {
-      return 0;
-    }
-
-    let totalAssignedMapsAcrossWindows = 0;
-
-    for (const kill of kills) {
-      const assignedMaps = new Set<string>();
-
-      for (const assignment of assignments) {
-        const overlapsWindow =
-          assignment.assignedAt <= kill.killedAt &&
-          (assignment.unassignedAt === null ||
-            assignment.unassignedAt >= kill.minSpawnTimeAtKill);
-
-        if (overlapsWindow) {
-          assignedMaps.add(assignment.mapId);
-        }
-      }
-
-      totalAssignedMapsAcrossWindows += assignedMaps.size;
-    }
-
-    return totalAssignedMapsAcrossWindows / kills.length;
   }
 
   return { getWrapped };

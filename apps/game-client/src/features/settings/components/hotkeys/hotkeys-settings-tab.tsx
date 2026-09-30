@@ -30,13 +30,22 @@ const categories = Array.from(groupedActions);
 
 export const HotkeysSettingsTab = () => {
   const gameInterface = useGameStore((state) => state.game?.interface);
-  const { bindings, setBinding, resetBinding, resetAll } = useHotkeysStore();
 
-  const [capturingAction, setCapturingAction] = useState<HotkeyAction | null>(
+  const {
+    bindings,
+    setBinding,
+    resetBinding,
+    resetAll,
+    recordingAction: capturingAction,
+    setRecordingAction: setCapturingAction,
+  } = useHotkeysStore();
+
+  // Leaving the tab mid-recording must not leave every hotkey disabled.
+  useEffect(() => () => setCapturingAction(null), [setCapturingAction]);
+
+  const [conflictAction, setConflictAction] = useState<HotkeyAction | null>(
     null,
   );
-
-  const [captureError, setCaptureError] = useState<string | null>(null);
 
   const [lastAssignment, setLastAssignment] = useState<{
     action: HotkeyAction;
@@ -50,12 +59,12 @@ export const HotkeysSettingsTab = () => {
 
     const saveBinding = (binding: HotkeyBinding) => {
       if (!setBinding(capturingAction, binding)) {
-        setCaptureError(t("settings.hotkeys.conflict"));
+        setConflictAction(capturingAction);
 
         return;
       }
 
-      setCaptureError(null);
+      setConflictAction(null);
       setLastAssignment({ action: capturingAction, at: Date.now() });
       setCapturingAction(null);
     };
@@ -69,6 +78,7 @@ export const HotkeysSettingsTab = () => {
       if (ignoredKeys.includes(event.key)) return;
 
       if (event.key === "Escape") {
+        setConflictAction(null);
         setCapturingAction(null);
 
         return;
@@ -108,7 +118,7 @@ export const HotkeysSettingsTab = () => {
         capture: true,
       });
     };
-  }, [capturingAction, setBinding, t]);
+  }, [capturingAction, setBinding, setCapturingAction]);
 
   return (
     <SettingsTabLayout>
@@ -126,7 +136,11 @@ export const HotkeysSettingsTab = () => {
             const binding = bindings[config.action];
             const isCapturing = capturingAction === config.action;
             const actionLabel = t(config.labelKey);
-            const error = isCapturing ? captureError : null;
+
+            const error =
+              conflictAction === config.action
+                ? t("settings.hotkeys.conflict")
+                : null;
 
             return (
               <SettingsRow
@@ -134,7 +148,9 @@ export const HotkeysSettingsTab = () => {
                 label={actionLabel}
                 description={
                   error ? (
-                    <span className="ll:text-destructive">{error}</span>
+                    <span role="alert" className="ll:text-destructive">
+                      {error}
+                    </span>
                   ) : config.descriptionKey ? (
                     t(config.descriptionKey)
                   ) : undefined
@@ -156,10 +172,15 @@ export const HotkeysSettingsTab = () => {
                       : undefined
                   }
                   onCaptureToggle={() => {
-                    setCaptureError(null);
+                    setConflictAction(null);
                     setCapturingAction(isCapturing ? null : config.action);
                   }}
-                  onReset={() => resetBinding(config.action)}
+                  onReset={() => {
+                    setCapturingAction(null);
+                    setConflictAction(
+                      resetBinding(config.action) ? null : config.action,
+                    );
+                  }}
                 />
               </SettingsRow>
             );
@@ -171,7 +192,16 @@ export const HotkeysSettingsTab = () => {
           label={t("settings.hotkeys.restoreDefaultsLabel")}
           description={t("settings.hotkeys.restoreDefaultsDescription")}
         >
-          <Button variant="outline" size="sm" onClick={resetAll} type="button">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              resetAll();
+              setCapturingAction(null);
+              setConflictAction(null);
+            }}
+            type="button"
+          >
             {t("common:actions.restore")}
           </Button>
         </SettingsRow>

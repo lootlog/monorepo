@@ -1,4 +1,4 @@
-import { Predicate } from "effect";
+import { Predicate, Schema } from "effect";
 import {
   CHAT_APPEARANCE_COMPACT_PRESET,
   CHAT_APPEARANCE_READABLE_PRESET,
@@ -6,6 +6,7 @@ import {
   CHAT_FONT_SCALE_MIN_PERCENT,
   CHAT_MESSAGE_GAP_MAX_PX,
   CHAT_MESSAGE_GAP_MIN_PX,
+  ChatNpcLayoutSchema,
   type ChatAppearancePreset,
   type ChatAppearanceSettings,
 } from "@lootlog/schema/chat-appearance";
@@ -23,6 +24,8 @@ const normalizeNumber = (
   return Math.min(maximum, Math.max(minimum, value));
 };
 
+const isChatNpcLayout = Schema.is(ChatNpcLayoutSchema);
+
 const normalizeBoolean = (value: unknown, fallback: boolean) =>
   typeof value === "boolean" ? value : fallback;
 
@@ -33,10 +36,9 @@ export const normalizeChatAppearanceSettings = (
   const settings = Predicate.isObject(value) ? value : {};
 
   return {
-    npcLayout:
-      settings.npcLayout === "tile" || settings.npcLayout === "inline"
-        ? settings.npcLayout
-        : fallback.npcLayout,
+    npcLayout: isChatNpcLayout(settings.npcLayout)
+      ? settings.npcLayout
+      : fallback.npcLayout,
     fontScalePercent: normalizeNumber(
       settings.fontScalePercent,
       fallback.fontScalePercent,

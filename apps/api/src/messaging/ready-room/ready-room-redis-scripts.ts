@@ -30,7 +30,18 @@ local function declareIndexedRoomKeys(prefix, firstIndex, lastIndex)
 end
 `;
 
+// Full snapshots can replace older pending revisions; delivery acknowledges only
+// the revision it published. These keys have no room TTL so cancellation survives.
+const ENQUEUE_READY_ROOM_PUBLICATION_SCRIPT = `
+local function enqueuePublication(keyIndex)
+  local aggregate = cjson.decode(ARGV[2])
+  redis.call("hset", KEYS[keyIndex], aggregate.notificationId, ARGV[2])
+  redis.call("zadd", KEYS[keyIndex + 1], 0, aggregate.notificationId)
+end
+`;
+
 export const CREATE_READY_ROOM_SCRIPT = `
+${ENQUEUE_READY_ROOM_PUBLICATION_SCRIPT}
 ${DECLARE_INDEXED_ROOM_KEYS_SCRIPT}
 local missing = declareIndexedRoomKeys(ARGV[1], 2, 3)
 if missing then return missing end
@@ -63,10 +74,12 @@ for index = 4, tonumber(ARGV[6]) do
   local ttl = redis.call("ttl", KEYS[index])
   if ttl < tonumber(ARGV[4]) then redis.call("expire", KEYS[index], ARGV[4]) end
 end
+enqueuePublication(tonumber(ARGV[6]) + 1)
 return { "CREATED" }
 `;
 
 export const JOIN_READY_ROOM_SCRIPT = `
+${ENQUEUE_READY_ROOM_PUBLICATION_SCRIPT}
 ${ASSERT_READY_ROOM_REVISION_SCRIPT}
 ${DECLARE_INDEXED_ROOM_KEYS_SCRIPT}
 local missing = declareIndexedRoomKeys(ARGV[6], 3, 3)
@@ -87,18 +100,21 @@ if userIndexTtl < tonumber(ARGV[5]) then
   redis.call("expire", KEYS[2], ARGV[5])
 end
 redis.call("set", KEYS[3], ARGV[3], "EX", ARGV[5])
-
+enqueuePublication(4)
 return { "COMMITTED" }
 `;
 
 export const COMMIT_READY_ROOM_SCRIPT = `
+${ENQUEUE_READY_ROOM_PUBLICATION_SCRIPT}
 ${ASSERT_READY_ROOM_REVISION_SCRIPT}
 
 redis.call("set", KEYS[1], ARGV[2], "EX", ARGV[3])
+enqueuePublication(2)
 return { "COMMITTED" }
 `;
 
 export const EXIT_READY_ROOM_PARTICIPANT_SCRIPT = `
+${ENQUEUE_READY_ROOM_PUBLICATION_SCRIPT}
 ${ASSERT_READY_ROOM_REVISION_SCRIPT}
 
 redis.call("set", KEYS[1], ARGV[2], "EX", ARGV[4])
@@ -110,11 +126,12 @@ local characterRoomId = redis.call("get", KEYS[3])
 if characterRoomId == ARGV[3] then
   redis.call("del", KEYS[3])
 end
-
+enqueuePublication(4)
 return { "COMMITTED" }
 `;
 
 export const TERMINATE_READY_ROOM_SCRIPT = `
+${ENQUEUE_READY_ROOM_PUBLICATION_SCRIPT}
 ${ASSERT_READY_ROOM_REVISION_SCRIPT}
 
 redis.call("set", KEYS[1], ARGV[2], "EX", ARGV[4])
@@ -129,14 +146,14 @@ if organizerCharacterRoomId == ARGV[3] then
   redis.call("del", KEYS[3])
 end
 
-for keyIndex = 4, #KEYS, 2 do
+for keyIndex = 4, #KEYS - 2, 2 do
   redis.call("zrem", KEYS[keyIndex], ARGV[3])
   local participantCharacterRoomId = redis.call("get", KEYS[keyIndex + 1])
   if participantCharacterRoomId == ARGV[3] then
     redis.call("del", KEYS[keyIndex + 1])
   end
 end
-
+enqueuePublication(#KEYS - 1)
 return { "COMMITTED" }
 `;
 

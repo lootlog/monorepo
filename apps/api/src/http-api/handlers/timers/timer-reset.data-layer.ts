@@ -1,3 +1,5 @@
+import { getTimerHistoryValues } from "./timer-restore-snapshot.js";
+import { pruneTimerHistory } from "./timer-history-retention.js";
 import {
   canViewTimer,
   findTimerMatches,
@@ -5,9 +7,8 @@ import {
 } from "./timer-selection.js";
 import { upsertActorCharacter } from "./timer-actor-snapshot.js";
 
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { Clock, Effect } from "effect";
-import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   memberTable,
@@ -27,21 +28,12 @@ import type { ResetTimerRequest } from "#src/contracts/timers/schemas";
 import type { TimersGuildAccess } from "./timers.handlers.js";
 import { TimersMemberNotFound, toTimersDataFailure } from "./timer-errors.js";
 import {
-  mapTimerResponse,
-  timerNpcField,
-  type TimerPublishedEvent,
-} from "#src/timers/timer-projection";
+  publishTimerUpdate,
+  type TimerUpdatePorts,
+} from "./timer-update-publication.js";
+import { timerNpcField } from "#src/timers/timer-projection";
 
-export interface ResetTimerPorts {
-  readonly invalidateList: (guildId: string) => Effect.Effect<unknown, unknown>;
-  readonly publish: <
-    Key extends
-      | typeof RabbitRoutingKey.GUILDS_TIMERS_UPDATE
-      | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
-  >(
-    routingKey: Key,
-    payload: TimerPublishedEvent<Key>,
-  ) => Effect.Effect<unknown, unknown>;
+export interface ResetTimerPorts extends TimerUpdatePorts {
   readonly withLock: <A, E>(
     key: string,
     effect: Effect.Effect<A, E>,
@@ -92,7 +84,7 @@ export const makeResetTimer = (
       database,
       access.guild.id,
       payload.world,
-      resolved,
+      [resolved],
       now,
     );
 
@@ -118,7 +110,8 @@ export const makeResetTimer = (
                 eq(timerTable.timerKey, resolved.timerKey),
               ),
             )
-            .limit(1);
+            .limit(1)
+            .for("update");
 
           const current = currentRows[0];
 
@@ -172,13 +165,6 @@ export const makeResetTimer = (
             actor,
           );
 
-          const actorUpdate = actor
-            ? {
-                actorCharacterSnapshotId: actorCharacter?.id ?? null,
-                actorCharacterLvl: actor.lvl ?? null,
-              }
-            : {};
-
           const updatedRows = yield* transaction
             .update(timerTable)
             .set({
@@ -188,7 +174,8 @@ export const makeResetTimer = (
               wasReset: true,
               deletedAt: null,
               updatedAt: now,
-              ...actorUpdate,
+              actorCharacterSnapshotId: actorCharacter?.id ?? null,
+              actorCharacterLvl: actor?.lvl ?? null,
             })
             .where(
               and(
@@ -215,50 +202,24 @@ export const makeResetTimer = (
 
           if (!manual) {
             yield* transaction.insert(timerHistoryEntryTable).values({
+              ...getTimerHistoryValues(updated),
               guildId: access.guild.id,
               world: payload.world,
               timerKey: updated.timerKey,
-              npcId: updated.npcId,
-              npc: updated.npc,
               action: TimerHistoryAction.RESET,
               actorMemberId: member.id,
               actorCharacterSnapshotId: actorCharacter?.id,
               actorCharacterLvl: actor?.lvl,
               minSpawnTime,
               maxSpawnTime,
-              latestRespBaseSeconds: updated.latestRespBaseSeconds,
-              latestRespawnRandomness: updated.latestRespawnRandomness,
-              wasReset: updated.wasReset,
-              windowOpenedAt: updated.windowOpenedAt,
-              timerCreatedById: updated.createdById,
-              timerActorCharacterSnapshotId: updated.actorCharacterSnapshotId,
-              timerActorCharacterLvl: updated.actorCharacterLvl,
             });
 
-            const stale = yield* transaction
-              .select({ id: timerHistoryEntryTable.id })
-              .from(timerHistoryEntryTable)
-              .where(
-                and(
-                  eq(timerHistoryEntryTable.guildId, access.guild.id),
-                  eq(timerHistoryEntryTable.world, payload.world),
-                  eq(timerHistoryEntryTable.timerKey, updated.timerKey),
-                ),
-              )
-              .orderBy(
-                desc(timerHistoryEntryTable.createdAt),
-                desc(timerHistoryEntryTable.id),
-              )
-              .offset(5);
-
-            if (stale.length > 0) {
-              yield* transaction.delete(timerHistoryEntryTable).where(
-                inArray(
-                  timerHistoryEntryTable.id,
-                  stale.map(({ id }) => id),
-                ),
-              );
-            }
+            yield* pruneTimerHistory(
+              transaction,
+              access.guild.id,
+              payload.world,
+              updated.timerKey,
+            );
           }
 
           return { ...updated, member, actorCharacter };
@@ -266,15 +227,7 @@ export const makeResetTimer = (
       ),
     );
 
-    const response = mapTimerResponse(projection);
-    yield* ports.invalidateList(access.guild.id);
-    yield* ports.publish(RabbitRoutingKey.GUILDS_TIMERS_UPDATE, response);
-    yield* ports.publish(
-      RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
-      response,
-    );
-
-    return response;
+    return yield* publishTimerUpdate(ports, access.guild.id, projection);
   });
 
   return (

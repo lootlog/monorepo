@@ -3,7 +3,10 @@ import { GatewayEvent } from "@/config/gateway";
 import { useCurrentGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
 import { getSocket, type PermissionsUpdatedPayload } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
-import type { AirTagUpdateEvent } from "@lootlog/schema/air-tag";
+import type {
+  AirTagScopeUpdateEvent,
+  AirTagUpdateEvent,
+} from "@lootlog/schema/air-tag";
 import { airTagRuntime } from "./air-tag-runtime";
 
 export const useAirTags = (): void => {
@@ -27,15 +30,21 @@ export const useAirTags = (): void => {
       airTagRuntime.handleUpdate(event);
     };
 
+    const handleScopeUpdate = (event: AirTagScopeUpdateEvent) => {
+      airTagRuntime.handleScopeUpdate(event);
+    };
+
     const handlePermissionsUpdated = (payload: PermissionsUpdatedPayload) => {
       airTagRuntime.handlePermissionsUpdated(payload);
     };
 
     socket.on(GatewayEvent.AIR_TAG_UPDATE, handleUpdate);
+    socket.on(GatewayEvent.AIR_TAG_SCOPE_UPDATE, handleScopeUpdate);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
 
     return () => {
       socket.off(GatewayEvent.AIR_TAG_UPDATE, handleUpdate);
+      socket.off(GatewayEvent.AIR_TAG_SCOPE_UPDATE, handleScopeUpdate);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
     };
   }, [connected, enabled, joined]);

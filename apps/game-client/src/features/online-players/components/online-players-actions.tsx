@@ -1,4 +1,4 @@
-import { WindowActionButton } from "@/components/draggable-window/window-action-button";
+import { IconButton } from "@/components/ui/icon-button";
 import type { OnlinePlayersViewMode } from "@/features/online-players/online-players.types";
 import { List, ListFilter, MapPinned } from "lucide-react";
 import type { FC } from "react";
@@ -24,7 +24,7 @@ export const OnlinePlayersActions: FC<OnlinePlayersActionsProps> = ({
 
   return (
     <>
-      <WindowActionButton
+      <IconButton
         label={t(
           filtersVisible ? "actions.hideFilters" : "actions.showFilters",
         )}
@@ -32,8 +32,8 @@ export const OnlinePlayersActions: FC<OnlinePlayersActionsProps> = ({
         onClick={toggleFiltersVisible}
       >
         <ListFilter size={ICON_SIZE} aria-hidden="true" />
-      </WindowActionButton>
-      <WindowActionButton
+      </IconButton>
+      <IconButton
         label={t(
           isAccountsView
             ? "actions.showMembersView"
@@ -47,7 +47,7 @@ export const OnlinePlayersActions: FC<OnlinePlayersActionsProps> = ({
         ) : (
           <MapPinned size={ICON_SIZE} aria-hidden="true" />
         )}
-      </WindowActionButton>
+      </IconButton>
     </>
   );
 };

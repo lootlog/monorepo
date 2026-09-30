@@ -1,18 +1,15 @@
-import { z } from "zod";
-import { type FC, useEffect, useRef } from "react";
-import { useLocalStorage } from "@/hooks/use-local-storage";
-import { DraggableWindow } from "@/components/draggable-window/draggable-window";
-import { useWindowsStore } from "@/store/windows.store";
-import { WarningWindowActions } from "@/components/warning-window/warning-window-actions";
-import { useGameStore } from "@/store/game.store";
-import { storageKey } from "@/lib/storage-key";
+import { Schema } from "effect";
+import { TriangleAlert } from "lucide-react";
+import { useEffect, useRef, type FC } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
-  useUserLootlogConfigControllerGetUserLootlogConfigByAccountId,
-} from "@lootlog/client/main";
+import { WarningWindow } from "@/components/warning-window/warning-window";
+import { useSetupChecklist } from "@/features/setup-checklist/use-setup-checklist";
+import { useLocalStorage } from "@/hooks/use-local-storage";
+import { storageKey } from "@/lib/storage-key";
+import { useGameStore } from "@/store/game.store";
+import { useWindowsStore } from "@/store/windows.store";
 
-const dismissedCharactersSchema = z.record(z.string(), z.boolean());
+const dismissedCharactersSchema = Schema.Record(Schema.String, Schema.Boolean);
 
 const STORAGE_KEY = storageKey("ll:catching-whitelist-warning-dismissed");
 
@@ -20,33 +17,29 @@ type DismissedCharacters = Record<string, boolean>;
 
 const DEFAULT_DISMISSED_CHARACTERS: DismissedCharacters = {};
 
+/**
+ * Reminds a player whose character sends its loot and timers nowhere. It
+ * reads the catching step of the first-run checklist, so it stays closed for
+ * a signed-out player or one without any Lootlog. While the checklist is on
+ * screen it already carries that step, so the reminder is only for players
+ * who dismissed it, and it waits until no other notice window is open.
+ */
 export const CatchingWhitelistWarning: FC = () => {
-  const { t } = useTranslation(["catchingWhitelistWarning", "common"]);
-  const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
+  const { t } = useTranslation("catchingWhitelistWarning");
 
-  const queryKey =
-    getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
-      accountId,
-    });
+  const open = useWindowsStore(
+    (state) => state["catching-whitelist-warning"].open,
+  );
 
-  const windowState = useWindowsStore(
-    (state) => state["catching-whitelist-warning"],
+  const otherNoticeOpen = useWindowsStore(
+    (state) => state["backend-preferences-warning"].open,
   );
 
   const setOpen = useWindowsStore((state) => state.setOpen);
+  const openAndFocus = useWindowsStore((state) => state.openAndFocus);
+  const { steps, dismissed: checklistDismissed } = useSetupChecklist();
 
-  const { data: lootlogCharactersConfig, isSuccess } =
-    useUserLootlogConfigControllerGetUserLootlogConfigByAccountId(
-      { accountId },
-      {
-        query: {
-          queryKey,
-          refetchOnMount: false,
-          refetchOnWindowFocus: false,
-          staleTime: 60_000,
-        },
-      },
-    );
+  const catchingStatus = steps.find((step) => step.id === "catching")?.status;
 
   const characterId = useGameStore(
     (state) => state.game?.hero.characterId ?? "",
@@ -63,31 +56,31 @@ export const CatchingWhitelistWarning: FC = () => {
 
   useEffect(() => {
     if (
-      !isSuccess ||
       !characterId ||
-      checkedCharacterIdsRef.current.has(characterId)
+      checkedCharacterIdsRef.current.has(characterId) ||
+      catchingStatus === undefined ||
+      catchingStatus === "pending" ||
+      catchingStatus === "blocked" ||
+      otherNoticeOpen
     )
       return;
 
-    if (dismissedCharacters[characterId]) {
-      checkedCharacterIdsRef.current.add(characterId);
-
-      return;
-    }
-
-    const config = lootlogCharactersConfig?.[characterId];
-    const hasCatchingGuilds = (config?.catchingGuildIds?.length ?? 0) > 0;
-
-    if (!hasCatchingGuilds) {
-      setOpen("catching-whitelist-warning", true);
-    }
-
+    // Decided once per character, so dismissing the checklist later does not
+    // bring this window up straight after.
     checkedCharacterIdsRef.current.add(characterId);
+
+    if (
+      catchingStatus === "todo" &&
+      checklistDismissed &&
+      !dismissedCharacters[characterId]
+    )
+      setOpen("catching-whitelist-warning", true);
   }, [
-    isSuccess,
-    lootlogCharactersConfig,
+    catchingStatus,
     characterId,
+    checklistDismissed,
     dismissedCharacters,
+    otherNoticeOpen,
     setOpen,
   ]);
 
@@ -103,32 +96,26 @@ export const CatchingWhitelistWarning: FC = () => {
   };
 
   const handleOpenSettings = () => {
-    setOpen("settings", true);
+    openAndFocus("settings", {
+      activeTab: "catching",
+      activeSubsection: "catching",
+    });
     handleClose();
   };
 
   return (
-    <DraggableWindow
-      isOpen={windowState.open}
+    <WarningWindow
       id="catching-whitelist-warning"
+      open={open}
       title={t("window.title")}
+      icon={TriangleAlert}
+      heading={t("content.title")}
+      description={t("content.description")}
+      primaryAction={{
+        label: t("actions.chooseLootlogs"),
+        onClick: handleOpenSettings,
+      }}
       onClose={handleClose}
-      variant="small"
-      resizable={false}
-      minWidth={400}
-      minHeight={240}
-      dynamicHeight
-    >
-      <div className="ll:p-4 ll:flex ll:flex-col ll:gap-4">
-        <div className="ll:text-sm ll:text-gray-200">
-          <p className="ll:mb-3">{t("content.title")}</p>
-          <p className="ll:mb-3">{t("content.description")}</p>
-        </div>
-        <WarningWindowActions
-          onClose={handleClose}
-          onOpenSettings={handleOpenSettings}
-        />
-      </div>
-    </DraggableWindow>
+    />
   );
 };

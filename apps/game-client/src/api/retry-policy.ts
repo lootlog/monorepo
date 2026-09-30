@@ -15,3 +15,13 @@ export const GAME_EVENT_RETRY_OPTIONS: LoggedActionRetryOptions = {
     return 750;
   },
 };
+
+export const AUTO_TIMER_REQUEST_TIMEOUT_MS = 8_000;
+
+export const AUTO_TIMER_RETRY_OPTIONS: LoggedActionRetryOptions = {
+  ...GAME_EVENT_RETRY_OPTIONS,
+  // The API deduplicates automatic timers for 30 seconds. An attempt starting
+  // by 20 seconds ends by its deadline with a 2-second margin, including after
+  // tab suspension.
+  latestAttemptStartMs: 20_000,
+};

@@ -50,6 +50,7 @@ describe("GuildSwitcher", () => {
         maxHp: 1,
         name: "Hero",
         profession: "w",
+        stasis: false,
         x: 1,
         y: 2,
       },
@@ -139,7 +140,7 @@ describe("GuildSwitcher", () => {
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
     act(() => vi.advanceTimersByTime(200));
 
-    expect(screen.getByRole("status")).toHaveTextContent("Ładowanie serwerów");
+    expect(screen.getByRole("status")).toHaveTextContent("Ładowanie Lootlogów");
   });
 
   it("does not write a selection before the character identity is available", () => {
@@ -246,8 +247,21 @@ describe("GuildSwitcher", () => {
 
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
     expect(
-      screen.queryByText("Wszystkie serwery są ukryte"),
+      screen.queryByText("Wszystkie Lootlogi są ukryte"),
     ).not.toBeInTheDocument();
+  });
+
+  it("does not tell a player without any Lootlog that their Lootlogs are hidden", () => {
+    harness.queryClient.setQueryData(harness.guildsKey, []);
+    harness.setPreferences({ hiddenGuildIds: ["guild-1"] });
+
+    render(<GuildSwitcher allowAll value="all" />);
+
+    expect(
+      screen.queryByText("Wszystkie Lootlogi są ukryte"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
   it("shows a full-width settings notice when every guild is hidden", () => {
@@ -259,7 +273,9 @@ describe("GuildSwitcher", () => {
     const { container } = render(<GuildSwitcher allowAll value="all" />);
 
     expect(screen.queryByText("*")).not.toBeInTheDocument();
-    expect(screen.getByText("Wszystkie serwery są ukryte")).toBeInTheDocument();
+    expect(
+      screen.getByText("Wszystkie Lootlogi są ukryte"),
+    ).toBeInTheDocument();
     expect(
       container.querySelector("[data-ll-scroll-area-viewport]"),
     ).not.toBeInTheDocument();

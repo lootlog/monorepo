@@ -1,3 +1,6 @@
+import type { GuildSummary } from "./accessible-guilds.data-layer.js";
+import { readGuildOrderPreference } from "#src/guilds/guild-order-query";
+import { sortGuildsByPreference } from "#src/guilds/guild-order";
 import { hydrateMemberRoles } from "#src/members/member-role-hydration";
 import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
 import { and, eq, inArray } from "drizzle-orm";
@@ -6,11 +9,7 @@ import type { RESTAPIPartialCurrentUserGuild } from "discord-api-types/v10";
 import { Permission } from "@lootlog/schema/permissions";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import {
-  guildTable,
-  memberTable,
-  userSettingsTable,
-} from "#src/database/drizzle/schema";
+import { guildTable, memberTable } from "#src/database/drizzle/schema";
 import { isDiscordAdministrator } from "#src/discord/is-discord-administrator";
 import { getMemberCacheSoftTtl } from "#src/members/member-cache";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/member-refresh-queue";
@@ -23,17 +22,6 @@ import {
   AccountOrganizationOperationError,
 } from "./account-organization.operations.js";
 
-type GuildSummary = {
-  readonly id: string;
-  readonly name: string;
-  readonly icon: string | null;
-  readonly vanityUrl: string | null;
-  readonly ownerId: string;
-  readonly publicStatsCardEnabled: boolean;
-  readonly hasLootlogAccess: boolean;
-  readonly isAccessDataStale: boolean;
-};
-
 export interface CurrentUserGuildPorts {
   readonly accessibleFallback: (
     identity: AuthenticatedIdentity,
@@ -43,9 +31,22 @@ export interface CurrentUserGuildPorts {
     readonly userId: string;
     readonly activeDiscordGuildIds: ReadonlyArray<string>;
   }) => Effect.Effect<unknown, unknown>;
-  readonly freshDiscordGuilds: (
+  /**
+   * Serves the list from a cache unless `refresh` is set. `fresh` is false for
+   * a cached list, which may miss a server the user has joined since. `stale`
+   * marks a list past its max age that is shown while it is replaced.
+   */
+  readonly discordGuilds: (
     identity: AuthenticatedIdentity,
-  ) => Effect.Effect<ReadonlyArray<RESTAPIPartialCurrentUserGuild>, unknown>;
+    options: { readonly refresh: boolean },
+  ) => Effect.Effect<
+    {
+      readonly guilds: ReadonlyArray<RESTAPIPartialCurrentUserGuild>;
+      readonly fresh: boolean;
+      readonly stale: boolean;
+    },
+    unknown
+  >;
   readonly queueMember: (options: {
     readonly discordId: string;
     readonly guildId: string;
@@ -59,7 +60,7 @@ export interface CurrentUserGuildPorts {
     readonly userId: string;
     readonly priority: number;
     readonly reason: string;
-  }) => Effect.Effect<{ readonly refreshQueued: boolean }, unknown>;
+  }) => Effect.Effect<unknown, unknown>;
 }
 
 const fallbackEligible = (error: unknown) => {
@@ -103,56 +104,43 @@ export const makeCurrentUserGuilds = (
       return yield* hydrateMemberRoles(database, members);
     });
 
-  const sort = (userId: string, summaries: GuildSummary[]) =>
-    database
-      .select({ guildsOrder: userSettingsTable.guildsOrder })
-      .from(userSettingsTable)
-      .where(eq(userSettingsTable.userId, userId))
-      .limit(1)
-      .pipe(
-        Effect.map((rows) => {
-          const order = new Map(
-            (rows[0]?.guildsOrder ?? []).map((id, index) => [id, index]),
-          );
-
-          return [...summaries].sort(
-            (left, right) =>
-              (order.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
-              (order.get(right.id) ?? Number.MAX_SAFE_INTEGER),
-          );
-        }),
-      );
-
   const operation = Effect.fn("getCurrentUserGuilds")(function* (
     identity: AuthenticatedIdentity,
+    refresh: boolean,
   ) {
     if (yield* requestApiKeyAccess)
       return yield* ports.accessibleFallback(identity);
 
-    const discordGuilds = yield* ports.freshDiscordGuilds(identity).pipe(
-      Effect.map((guilds) => ({ kind: "discord" as const, guilds })),
-      Effect.catch((error) =>
-        fallbackEligible(error)
-          ? ports.accessibleFallback(identity).pipe(
-              Effect.map((guilds) => ({
-                kind: "fallback" as const,
-                guilds: guilds.map((guild) => ({
-                  ...guild,
-                  isAccessDataStale: true,
+    const discordGuilds = yield* ports
+      .discordGuilds(identity, { refresh })
+      .pipe(
+        Effect.map((result) => ({ kind: "discord" as const, ...result })),
+        Effect.catch((error) =>
+          fallbackEligible(error)
+            ? ports.accessibleFallback(identity).pipe(
+                Effect.map((guilds) => ({
+                  kind: "fallback" as const,
+                  guilds: guilds.map((guild) => ({
+                    ...guild,
+                    isAccessDataStale: true,
+                  })),
                 })),
-              })),
-            )
-          : Effect.fail(error),
-      ),
-    );
+              )
+            : Effect.fail(error),
+        ),
+      );
 
     if (discordGuilds.kind === "fallback") return discordGuilds.guilds;
     const apiGuilds = discordGuilds.guilds;
     const discordGuildIds = apiGuilds.map(({ id }) => id);
-    yield* ports.deactivateMissing({
-      ...identity,
-      activeDiscordGuildIds: discordGuildIds,
-    });
+
+    // A cached list can predate a join, so only a fresh one may deactivate.
+    if (discordGuilds.fresh) {
+      yield* ports.deactivateMissing({
+        ...identity,
+        activeDiscordGuildIds: discordGuildIds,
+      });
+    }
 
     if (discordGuildIds.length === 0) return [];
 
@@ -205,6 +193,7 @@ export const makeCurrentUserGuilds = (
         return [
           {
             guildId: guild.id,
+            grantsAccessOnRefresh: !hasAccess,
             rank: !member ? 0 : !hasAccess ? 1 : privileged ? 2 : 3,
           },
         ];
@@ -214,18 +203,19 @@ export const makeCurrentUserGuilds = (
           left.rank - right.rank || left.guildId.localeCompare(right.guildId),
       );
 
+    // Only a refresh that can grant missing access waits on Discord, and at
+    // most twice per request; stored access is shown until the queue refreshes it.
     let immediate = 0;
 
     for (const candidate of candidates) {
-      if (immediate < 2) {
-        const refreshed = yield* ports.refreshMember({
+      if (candidate.grantsAccessOnRefresh && immediate < 2) {
+        immediate += 1;
+        yield* ports.refreshMember({
           ...identity,
           guildId: candidate.guildId,
           priority: MEMBER_REFRESH_PRIORITY.CONNECT,
           reason: "guild-connect",
         });
-
-        if (!refreshed.refreshQueued) immediate += 1;
       } else {
         yield* ports.queueMember({
           ...identity,
@@ -266,17 +256,25 @@ export const makeCurrentUserGuilds = (
               role.permissions.includes(Permission.LOOTLOG_ACCESS),
             )),
         ),
+        // A list past its max age may still show a departed Organization
+        // or miss a new one, so every entry from it is reported stale.
         isAccessDataStale: Boolean(
-          !owner && (!lastSync || lastSync.getTime() < staleThreshold),
+          discordGuilds.stale ||
+          (!owner && (!lastSync || lastSync.getTime() < staleThreshold)),
         ),
       };
     });
 
-    return yield* sort(identity.userId, summaries);
+    const preferredIds = yield* readGuildOrderPreference(
+      database,
+      identity.userId,
+    );
+
+    return sortGuildsByPreference(summaries, preferredIds);
   });
 
-  return (identity: AuthenticatedIdentity) =>
-    operation(identity).pipe(
+  return (identity: AuthenticatedIdentity, refresh = false) =>
+    operation(identity, refresh).pipe(
       Effect.mapError(
         (cause) => new AccountOrganizationOperationError({ cause }),
       ),

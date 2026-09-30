@@ -25,6 +25,8 @@ const ModalControls = () => (
   </>
 );
 
+const manageableGuilds = [{ id: "1", name: "Test guild", icon: null }];
+
 afterEach(() => {
   cleanup();
   vi.unstubAllEnvs();
@@ -36,7 +38,7 @@ it("opens deferred modals, restores focus and preserves create form state after 
   vi.stubEnv("VITE_ADDON_INSTALL_URL", "https://lootlog.test/addon.user.js");
 
   const fetchGuilds = vi.fn<typeof fetch>(() =>
-    Promise.resolve(Response.json([])),
+    Promise.resolve(Response.json(manageableGuilds)),
   );
 
   const restore = configureApiClients({
@@ -111,8 +113,8 @@ it("opens deferred modals, restores focus and preserves create form state after 
 
       expect(
         within(installer)
-          .getByRole("link", {
-            name: i18n.t("ui.actions.installAddon"),
+          .getByRole("button", {
+            name: `${i18n.t("ui.modals.installAddon.userscript.install")}${i18n.t("ui.externalLink.newTab")}`,
           })
           .getAttribute("href"),
       ).toBe("https://lootlog.test/addon.user.js");
@@ -134,7 +136,7 @@ it("cancels the pending guild search when the modal is unmounted", async () => {
   const restore = configureApiClients({
     main: {
       baseUrl: "https://lootlog.test",
-      fetch: () => Promise.resolve(Response.json([])),
+      fetch: () => Promise.resolve(Response.json(manageableGuilds)),
     },
   });
 
@@ -181,6 +183,62 @@ it("cancels the pending guild search when the modal is unmounted", async () => {
     const searchTimer = schedule.mock.results[searchTimerIndex]?.value;
     cleanup();
     expect(cancel).toHaveBeenCalledWith(searchTimer);
+  } finally {
+    cleanup();
+    client.clear();
+    restore();
+  }
+});
+
+it("lets a user without administered servers check again after an admin grants access", async () => {
+  const fetchGuilds = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(Response.json([]))
+    .mockResolvedValue(Response.json(manageableGuilds));
+
+  const restore = configureApiClients({
+    main: { baseUrl: "https://lootlog.test", fetch: fetchGuilds },
+  });
+
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+  });
+
+  try {
+    render(
+      <QueryClientProvider client={client}>
+        <GlobalContextProvider>
+          <ModalControls />
+        </GlobalContextProvider>
+      </QueryClientProvider>,
+    );
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: i18n.t("ui.tooltips.createLootlog"),
+        }),
+      );
+      await vi.dynamicImportSettled();
+    });
+
+    const dialog = await screen.findByRole("dialog", {
+      name: i18n.t("ui.modals.createLootlog.title"),
+    });
+
+    fireEvent.click(
+      await within(dialog).findByRole("button", {
+        name: i18n.t("ui.modals.createLootlog.empty.action"),
+      }),
+    );
+
+    expect(
+      await within(dialog).findByRole("button", {
+        name: i18n.t("ui.modals.createLootlog.addToServer", {
+          name: "Test guild",
+        }),
+      }),
+    ).toBeTruthy();
+    expect(fetchGuilds).toHaveBeenCalledTimes(2);
   } finally {
     cleanup();
     client.clear();

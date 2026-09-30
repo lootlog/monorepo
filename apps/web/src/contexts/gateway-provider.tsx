@@ -17,9 +17,16 @@ import {
 } from "@lootlog/client/main";
 import { useQueryClient } from "@tanstack/react-query";
 import { LootUnreadProvider } from "./loot-unread-provider";
+import type { AccessPolicyChange } from "@lootlog/protocol/realtime/access-policy";
+import { reconcileEventPolicyQueries } from "@/features/guild/events/hooks/mutations/invalidate-event-queries";
 
-type GatewayJoinPayload = {
+type GatewayPolicyPayload = {
+  accessPolicyChanges?: readonly AccessPolicyChange[];
+};
+
+type GatewayJoinPayload = GatewayPolicyPayload & {
   status: "error" | "success";
+  recover: boolean;
 };
 
 type Props = {
@@ -58,6 +65,10 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
       return;
     }
 
+    // A first join with a known policy leaves the freshly loaded data alone.
+    if (data.recover || !data.accessPolicyChanges)
+      void reconcileEventPolicyQueries(queryClient, data.accessPolicyChanges);
+
     setJoined(true);
   });
 
@@ -67,9 +78,12 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
     }
   });
 
-  const handlePermissionsUpdated = useEffectEvent(() => {
-    void invalidateUsersControllerGetCurrentUserAccessibleGuilds(queryClient);
-  });
+  const handlePermissionsUpdated = useEffectEvent(
+    (data: GatewayPolicyPayload) => {
+      void reconcileEventPolicyQueries(queryClient, data.accessPolicyChanges);
+      void invalidateUsersControllerGetCurrentUserAccessibleGuilds(queryClient);
+    },
+  );
 
   useEffect(() => {
     socket.on(GatewayEvent.DISCONNECT, handleDisconnect);

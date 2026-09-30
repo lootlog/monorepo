@@ -7,18 +7,28 @@ import {
 } from "effect/unstable/httpapi";
 import {
   HealthzControllerCheck200,
-  HealthzControllerCheck503,
+  ReadyzControllerCheck200,
+  ReadyzControllerCheck503,
 } from "./schemas.js";
 
 export class HealthGroup extends HttpApiGroup.make("health").add(
   HttpApiEndpoint.get("HealthzControllerCheck", "/healthz", {
     success: HealthzControllerCheck200,
-    error: HealthzControllerCheck503.pipe(HttpApiSchema.status(503)),
   })
     .annotate(OpenApi.Identifier, "HealthzController_check")
-    .annotate(OpenApi.Summary, "Health check")
+    .annotate(OpenApi.Summary, "Liveness check")
     .annotate(
       OpenApi.Description,
-      "Check the health status of the Activity service (database, API service, memory, disk)",
+      "Check that the Activity process and HTTP event loop respond without checking dependencies",
+    ),
+  HttpApiEndpoint.get("ReadyzControllerCheck", "/readyz", {
+    success: ReadyzControllerCheck200,
+    error: ReadyzControllerCheck503.pipe(HttpApiSchema.status(503)),
+  })
+    .annotate(OpenApi.Identifier, "ReadyzController_check")
+    .annotate(OpenApi.Summary, "Readiness check")
+    .annotate(
+      OpenApi.Description,
+      "Check the Activity service's direct PostgreSQL dependency with a three-second timeout; no other service health endpoints are called",
     ),
 ) {}

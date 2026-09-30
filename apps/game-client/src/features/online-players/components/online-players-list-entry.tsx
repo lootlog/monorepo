@@ -10,21 +10,16 @@ import type { MemberSummaryResponseDtoOutput } from "@lootlog/client/main";
 type OnlinePlayersListEntryProps = {
   presences: PlayerPresence[];
   guildMember?: MemberSummaryResponseDtoOutput;
-  isAlternateRow?: boolean;
 };
 
 export const OnlinePlayersListEntry: FC<OnlinePlayersListEntryProps> = ({
   presences,
   guildMember,
-  isAlternateRow = false,
 }) => {
   const color = useMemberColor(guildMember);
 
   return (
-    <ListRow
-      className="ll:justify-between ll:py-0.5"
-      isAlternateRow={isAlternateRow}
-    >
+    <ListRow className="ll:justify-between ll:py-0.5">
       <div
         className="ll:min-w-16 ll:max-w-32 ll:truncate ll:whitespace-nowrap ll:text-[11px]"
         style={{ color: `#${color}` }}

@@ -1,3 +1,4 @@
+import { normalizeBattleSearchText } from "./normalize-battle-search-text";
 import type {
   BattleWarrior as Warrior,
   RawBattleParsedEvent,
@@ -9,18 +10,7 @@ export type BattleLogSearchEntry = {
   visibleText?: string;
 };
 
-export type BattleLogSearchMatch = {
-  turn: number;
-};
-
 export type BattleLogSearchDirection = "previous" | "next";
-
-const DIACRITICS_REGEX = /\p{Diacritic}/gu;
-
-const POLISH_CHARACTER_REPLACEMENTS = new Map([
-  ["Ł", "L"],
-  ["ł", "l"],
-]);
 
 const ACTION_SEARCH_LABELS = new Map([
   ["+crit", ["Cios krytyczny"]],
@@ -105,18 +95,6 @@ const appendActionSearchParts = (
   });
 };
 
-export const normalizeBattleLogSearchText = (value: string): string =>
-  value
-    .replace(
-      /[Łł]/g,
-      (character) => POLISH_CHARACTER_REPLACEMENTS.get(character) ?? character,
-    )
-    .normalize("NFD")
-    .replace(DIACRITICS_REGEX, "")
-    .toLocaleLowerCase("pl-PL")
-    .replace(/\s+/g, " ")
-    .trim();
-
 export const buildBattleLogRawSearchText = ({
   event,
   attacker,
@@ -151,35 +129,19 @@ export const findBattleLogSearchMatches = ({
 }: {
   query: string;
   entries: BattleLogSearchEntry[];
-}): BattleLogSearchMatch[] => {
-  const normalizedQuery = normalizeBattleLogSearchText(query);
+}): number[] => {
+  const normalizedQuery = normalizeBattleSearchText(query);
 
   if (normalizedQuery.length === 0) {
     return [];
   }
 
-  const matchedTurns = new Set<number>();
-
-  entries.forEach((entry) => {
-    if (matchedTurns.has(entry.turn)) {
-      return;
-    }
-
-    const normalizedRawText = normalizeBattleLogSearchText(entry.rawText);
-
-    const normalizedVisibleText = normalizeBattleLogSearchText(
-      entry.visibleText ?? "",
-    );
-
-    if (
-      normalizedRawText.includes(normalizedQuery) ||
-      normalizedVisibleText.includes(normalizedQuery)
-    ) {
-      matchedTurns.add(entry.turn);
-    }
-  });
-
-  return Array.from(matchedTurns).map((turn) => ({ turn }));
+  return entries.flatMap((entry) =>
+    normalizeBattleSearchText(entry.rawText).includes(normalizedQuery) ||
+    normalizeBattleSearchText(entry.visibleText ?? "").includes(normalizedQuery)
+      ? [entry.turn]
+      : [],
+  );
 };
 
 export const getNextBattleLogSearchIndex = ({

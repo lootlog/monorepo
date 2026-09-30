@@ -170,6 +170,19 @@ describe("settings resolver", () => {
     expect(controls.fields.hotkeys.isValid({ "toggle-chat": "k" })).toBe(false);
   });
 
+  it("keeps the text chat NPC layout chosen by the user", () => {
+    const resolution = resolveSettingsDomain("appearance", [
+      {
+        scope: { type: "USER", id: "user-1" },
+        overrides: { chat: { npcLayout: "text" } },
+      },
+    ]);
+
+    expect(resolution.effective).toMatchObject({
+      chat: { npcLayout: "text" },
+    });
+  });
+
   it("keeps chat values on the user layer while ignoring lower scopes", () => {
     const resolution = resolveSettingsDomain("appearance", [
       {
@@ -341,6 +354,22 @@ describe("settings resolver", () => {
         unset: [],
       }),
     ).toThrow(/scope/i);
+
+    for (const type of ["GUILD", "GAME_ACCOUNT"] as const) {
+      const currentOverrides = { chat: { fontScalePercent: 120 } };
+
+      expect(() =>
+        applySettingsPatch({
+          domain: "appearance",
+          scope: { type, id: "scope-1" },
+          currentOverrides,
+          set: {},
+          unset: ["chat.fontScalePercent"],
+        }),
+      ).toThrow(/scope/i);
+
+      expect(currentOverrides).toEqual({ chat: { fontScalePercent: 120 } });
+    }
 
     expect(() =>
       applySettingsPatch({

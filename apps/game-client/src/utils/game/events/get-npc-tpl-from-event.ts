@@ -2,11 +2,16 @@ import { useGameStore } from "@/store/game.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import type { NpcTpl } from "@lootlog/margonem/npc-tpl-manager";
 
+export type EventNpcTemplatesById = ReadonlyMap<
+  number,
+  NonNullable<GameEvent["npc_tpls"]>[number]
+>;
+
 export const getNpcTplFromEvent = (
-  event: GameEvent,
+  templatesById: EventNpcTemplatesById,
   templateId: number,
 ): NpcTpl | undefined => {
-  const templateBase = event.npc_tpls?.find((tpl) => tpl.id === templateId);
+  const templateBase = templatesById.get(templateId);
 
   if (!templateBase || !templateBase.warrior_type || !templateBase.prof)
     return undefined;

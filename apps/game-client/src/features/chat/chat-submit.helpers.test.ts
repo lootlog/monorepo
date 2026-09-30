@@ -61,11 +61,21 @@ describe("chat submit helpers", () => {
     expect(
       getChatSubmitAction({
         canClearChat: false,
+        messageValue: "!alarm",
+      }),
+    ).toEqual({
+      kind: "notification",
+      message: "alarm",
+    });
+
+    expect(
+      getChatSubmitAction({
+        canClearChat: false,
         messageValue: "!",
       }),
     ).toEqual({
       kind: "notification",
-      message: "!",
+      message: "",
     });
 
     expect(

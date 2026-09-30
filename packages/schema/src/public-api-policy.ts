@@ -1,13 +1,15 @@
 /** Explicit supported HTTP inventory. Unknown operations are session-only. */
 export type PublicApiService = "main" | "activity" | "battlelog" | "search";
 
-type PublicApiOperation = {
+export type PublicApiOperation = {
   readonly service: PublicApiService;
   readonly method: string;
   readonly path: string;
   readonly operationId: string;
   readonly access: "read" | "write" | "session-only";
   readonly data: "organization" | "personal" | "mixed" | "public";
+  /** Parameters the Web app uses but the published SDK does not expose. */
+  readonly sessionOnlyParameters?: ReadonlyArray<string>;
 };
 
 export const PUBLIC_API_OPERATIONS = [
@@ -18,6 +20,13 @@ export const PUBLIC_API_OPERATIONS = [
     operationId: "UsersController_getUserFeed",
     access: "read",
     data: "mixed",
+    // Dashboard filters; exposing them would move the SDK call's request
+    // options behind a new query argument.
+    sessionOnlyParameters: [
+      "excludedGuildIds",
+      "excludedNpcCategories",
+      "withLootOnly",
+    ],
   },
   {
     service: "main",
@@ -49,6 +58,14 @@ export const PUBLIC_API_OPERATIONS = [
     path: "/users/@me/guilds",
     operationId: "UsersController_getCurrentUserGuilds",
     access: "read",
+    data: "mixed",
+  },
+  {
+    service: "main",
+    method: "POST",
+    path: "/users/@me/guilds/refresh",
+    operationId: "UsersController_refreshCurrentUserGuilds",
+    access: "session-only",
     data: "mixed",
   },
   {
@@ -1255,6 +1272,15 @@ export const PUBLIC_API_OPERATIONS = [
   {
     service: "main",
     method: "GET",
+    path: "/guilds/{guildId}/events/{eventId}/kill-history",
+    operationId: "listEventKillHistory",
+    access: "read",
+    data: "organization",
+  },
+  // TODO(kill-history-legacy): Remove the next three deprecated list operations with their API routes.
+  {
+    service: "main",
+    method: "GET",
     path: "/guilds/{guildId}/events/{eventId}/kills",
     operationId: "EventsRankingController_getEventKillHistory",
     access: "read",
@@ -1617,6 +1643,14 @@ export const PUBLIC_API_OPERATIONS = [
     method: "GET",
     path: "/healthz",
     operationId: "HealthzController_check",
+    access: "session-only",
+    data: "organization",
+  },
+  {
+    service: "activity",
+    method: "GET",
+    path: "/readyz",
+    operationId: "ReadyzController_check",
     access: "session-only",
     data: "organization",
   },

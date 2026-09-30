@@ -31,6 +31,11 @@ let lastOtherCanvasTipObject: Other | null = null;
 // section, so releasing Shift redraws only the tooltips that still show it.
 let shiftSectionDrawn = false;
 
+// Others whose cached tooltip html was rebuilt while Shift was held. The game
+// keeps that html until something rebuilds it, so releasing Shift rebuilds
+// exactly these instead of leaving the Shift-only section on them.
+const othersWithShiftSection = new Set<MargonemTooltipCharacter>();
+
 const patchedCharacters = new Set<MargonemTooltipCharacter>();
 
 const patchedOtherPrototypes = new Set<MargonemTooltipCharacter>();
@@ -235,6 +240,26 @@ export function patchOtherCharacterTooltip(other: OtherHandle): void {
   }
 
   refreshCharacterTooltip(other);
+
+  if (useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed) {
+    othersWithShiftSection.add(other);
+  }
+}
+
+function removeShiftSections(): void {
+  if (othersWithShiftSection.size === 0) return;
+
+  // Others that left the map are no longer drawn, so only the present ones
+  // need their html rebuilt.
+  const presentOthers = new Set<MargonemTooltipCharacter>(
+    Object.values(runtimeOtherHandles.getAll()),
+  );
+
+  for (const other of othersWithShiftSection) {
+    if (presentOthers.has(other)) refreshCharacterTooltip(other);
+  }
+
+  othersWithShiftSection.clear();
 }
 
 function redrawOtherCanvasTooltip(other: MargonemTooltipCharacter): void {
@@ -251,6 +276,7 @@ export function refreshActiveOtherCanvasTooltip(): void {
 
   if (!state.isShiftPressed) {
     state.clearActiveOther();
+    removeShiftSections();
 
     if (!shiftSectionDrawn || !hoveredOther) return;
 
@@ -310,6 +336,7 @@ export function installCharacterTooltipTransforms(): () => void {
 
     patchedCharacters.clear();
     patchedOtherPrototypes.clear();
+    othersWithShiftSection.clear();
 
     cleanupCurrentInstallation = null;
   };

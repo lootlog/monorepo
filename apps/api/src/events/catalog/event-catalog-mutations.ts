@@ -1,12 +1,11 @@
 import { isObjectRecord } from "@lootlog/schema/records";
 import { eventHeroScope } from "#src/events/event-scope-query";
 import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
-import { makeEventMapHydration } from "./event-map-hydration.js";
+import { makeEventMapRead } from "./event-map-read.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import {
   and,
-  asc,
   desc,
   eq,
   inArray,
@@ -24,6 +23,7 @@ import {
   eventMapCoverageGapTable,
   eventMapLocationTable,
   eventMapTable,
+  eventRankingTable,
   eventTable,
   timerTable,
 } from "#src/database/drizzle/schema";
@@ -51,8 +51,8 @@ class EventCatalogMutationError extends TaggedErrorClass<EventCatalogMutationErr
 
 export const makeEventCatalogMutations = (
   database: typeof ApiDatabase.Service,
-  redis: RedisService,
-  logger: Logger,
+  redis: Pick<RedisService, "invalidateScopes" | "deleteByPattern">,
+  logger: Pick<Logger, "warn">,
 ) => {
   const query = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
@@ -138,22 +138,10 @@ export const makeEventCatalogMutations = (
         .limit(1),
     ).pipe(Effect.map((rows) => rows[0]?.location ?? null));
 
-  const hydrateMaps = makeEventMapHydration(database, query);
-
-  const mapsForHero = (heroId: string, locationId?: string) =>
-    query(
-      "events.catalog.maps",
-      database
-        .select()
-        .from(eventMapTable)
-        .where(
-          and(
-            eq(eventMapTable.heroNpcId, heroId),
-            locationId ? eq(eventMapTable.locationId, locationId) : undefined,
-          ),
-        )
-        .orderBy(asc(eventMapTable.mapId)),
-    ).pipe(Effect.flatMap(hydrateMaps));
+  const { hydrateMaps, heroMaps, heroMapLayouts } = makeEventMapRead(
+    database,
+    query,
+  );
 
   return {
     addHero: (
@@ -255,7 +243,7 @@ export const makeEventCatalogMutations = (
         const hero = heroes[0];
         yield* invalidate(guild.id, eventId);
 
-        return hero ? { ...hero, maps: yield* mapsForHero(heroId) } : null;
+        return hero ? { ...hero, maps: yield* heroMaps([heroId]) } : null;
       }).pipe(Effect.withSpan("EventsAssignmentController_addHero")),
 
     updateHero: (
@@ -290,15 +278,34 @@ export const makeEventCatalogMutations = (
 
     deleteHero: (guild: { id: string }, eventId: string, heroId: string) =>
       Effect.gen(function* () {
-        if (!(yield* findHero(guild.id, eventId, heroId)))
+        const hero = yield* findHero(guild.id, eventId, heroId);
+
+        if (!hero)
           return yield* Effect.fail(
             new ResourceNotFoundError("Hero not found"),
           );
+        // Kills, points, maps and tracking history cascade with the hero.
+        // Rankings are keyed by hero name, so remove them explicitly to keep
+        // ranking totals consistent with the remaining kill points. Deleting
+        // the hero first waits for ranking writes that hold a kill lock, so
+        // the ranking delete also sees rankings they committed meanwhile.
         yield* query(
           "events.catalog.deleteHero",
-          database
-            .delete(eventHeroNpcTable)
-            .where(eq(eventHeroNpcTable.id, heroId)),
+          database.transaction((transaction) =>
+            Effect.gen(function* () {
+              yield* transaction
+                .delete(eventHeroNpcTable)
+                .where(eq(eventHeroNpcTable.id, heroId));
+              yield* transaction
+                .delete(eventRankingTable)
+                .where(
+                  and(
+                    eq(eventRankingTable.eventId, eventId),
+                    eq(eventRankingTable.heroNpcName, hero.npcName),
+                  ),
+                );
+            }),
+          ),
         );
         yield* invalidate(guild.id, eventId);
 
@@ -395,20 +402,9 @@ export const makeEventCatalogMutations = (
             new ResourceNotFoundError("Hero not found"),
           );
 
-        const locations = yield* query(
-          "events.catalog.locations",
-          database
-            .select()
-            .from(eventMapLocationTable)
-            .where(eq(eventMapLocationTable.heroNpcId, heroId))
-            .orderBy(asc(eventMapLocationTable.order)),
-        );
+        const layoutOf = yield* heroMapLayouts([heroId]);
 
-        return yield* Effect.forEach(locations, (location) =>
-          mapsForHero(heroId, location.id).pipe(
-            Effect.map((maps) => ({ ...location, maps })),
-          ),
-        );
+        return layoutOf(heroId).locations;
       }).pipe(Effect.withSpan("EventsAssignmentController_getLocations")),
 
     createLocation: (
@@ -528,7 +524,7 @@ export const makeEventCatalogMutations = (
         yield* invalidate(guild.id, eventId);
 
         return rows[0]
-          ? { ...rows[0], maps: yield* mapsForHero(heroId, locationId) }
+          ? { ...rows[0], maps: yield* heroMaps([heroId], locationId) }
           : null;
       }).pipe(Effect.withSpan("EventsAssignmentController_updateLocation")),
 

@@ -68,11 +68,9 @@ describe("Settings", () => {
       left: `${Math.round((1280 - 640) / 2)}px`,
       top: `${Math.round((720 - 440) / 2)}px`,
     });
-    expect(useWindowsStore.getState().settings.position).toEqual({
-      x: Math.round((1280 - 640) / 2),
-      y: Math.round((720 - 440) / 2),
-    });
-    expect(useWindowsStore.getState().settings.hasDefinedPosition).toBe(true);
+    // The default placement is not saved, so a later layout reset or a
+    // different screen still centers it.
+    expect(useWindowsStore.getState().settings.hasDefinedPosition).toBe(false);
   });
 
   it("keeps an explicitly defined top-left position", async () => {

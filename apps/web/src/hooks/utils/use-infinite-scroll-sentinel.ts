@@ -1,10 +1,12 @@
 import { useEffect, useRef } from "react";
+import { usePageScrollsDocument } from "@/hooks/utils/use-page-scroll";
 
 type UseInfiniteScrollSentinelOptions = {
   enabled?: boolean;
   fetchNextPage: (() => void) | undefined;
   hasNextPage?: boolean;
   isFetchingNextPage: boolean;
+  /** The page's scroll viewport; the document stands in for it below `md`. */
   scrollElement: Element | null;
 };
 
@@ -21,6 +23,9 @@ export const useInfiniteScrollSentinel = <TSentinel extends Element>({
   scrollElement,
 }: UseInfiniteScrollSentinelOptions) => {
   const sentinelRef = useRef<TSentinel>(null);
+  const scrollsDocument = usePageScrollsDocument();
+  // A viewport that only grows with its content would always contain the sentinel.
+  const root = scrollsDocument ? null : scrollElement;
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -30,7 +35,7 @@ export const useInfiniteScrollSentinel = <TSentinel extends Element>({
       !enabled ||
       !hasNextPage ||
       isFetchingNextPage ||
-      !scrollElement ||
+      (!scrollsDocument && !scrollElement) ||
       !fetchNextPage ||
       typeof IntersectionObserver === "undefined"
     ) {
@@ -44,7 +49,7 @@ export const useInfiniteScrollSentinel = <TSentinel extends Element>({
         }
       },
       {
-        root: scrollElement,
+        root,
         rootMargin: "240px 0px",
       },
     );
@@ -52,7 +57,15 @@ export const useInfiniteScrollSentinel = <TSentinel extends Element>({
     observer.observe(sentinel);
 
     return () => observer.disconnect();
-  }, [enabled, fetchNextPage, hasNextPage, isFetchingNextPage, scrollElement]);
+  }, [
+    enabled,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    root,
+    scrollElement,
+    scrollsDocument,
+  ]);
 
   return sentinelRef;
 };

@@ -6,7 +6,9 @@ const commitSha = "1234567890abcdef1234567890abcdef12345678";
 
 const buildTimestamp = "2026-07-23T10:20:30.000Z";
 
-describe("InformationSettingsTab", () => {
+// Each test re-imports the tab's whole module graph after resetModules, which
+// can outlast the default timeout while the full suite loads the machine.
+describe("InformationSettingsTab", { timeout: 20_000 }, () => {
   beforeEach(() => {
     vi.resetModules();
     vi.stubEnv("VITE_COMMIT_SHA", commitSha);
@@ -35,7 +37,7 @@ describe("InformationSettingsTab", () => {
     expect(screen.getByText(commitSha)).toBeInTheDocument();
     expect(screen.getByText("Środowisko")).toBeInTheDocument();
     expect(screen.getByText("production")).toBeInTheDocument();
-    expect(screen.getByText("Data builda (UTC)")).toBeInTheDocument();
+    expect(screen.getByText("Data kompilacji (UTC)")).toBeInTheDocument();
     expect(screen.getByText(formattedBuildTimestamp)).toBeInTheDocument();
   });
 
@@ -51,6 +53,48 @@ describe("InformationSettingsTab", () => {
     expect(
       screen.queryByRole("button", { name: "Kopiuj Commit SHA" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("copies one diagnostics bundle that keeps request secrets and identifiers out", async () => {
+    const user = userEvent.setup();
+    const { useLogsStore } = await import("@/store/logs.store");
+    const logs = useLogsStore.getState();
+
+    const actionId = logs.appendAction({
+      actionType: "create_timer",
+      payload: { note: "private-payload" },
+    });
+
+    logs.appendRequest({
+      actionId,
+      method: "POST",
+      endpoint:
+        "https://api.lootlog.test/guilds/1180473652345/timers/manual?token=secret-token",
+      payload: { note: "private-payload" },
+      response: { message: "private-response" },
+      statusCode: 500,
+      status: "error",
+    });
+
+    const { InformationSettingsTab } =
+      await import("./information-settings-tab");
+
+    render(<InformationSettingsTab />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Kopiuj informacje diagnostyczne" }),
+    );
+
+    const report = await navigator.clipboard.readText();
+    expect(report).toContain("version: 1.0.1");
+    expect(report).toContain(`commit: ${commitSha}`);
+    expect(report).toContain(
+      "POST api.lootlog.test/guilds/:id/timers/manual -> 500",
+    );
+    expect(report).not.toContain("1180473652345");
+    expect(report).not.toContain("secret-token");
+    expect(report).not.toContain("private-payload");
+    expect(report).not.toContain("private-response");
   });
 
   it("copies the commit sha to the clipboard", async () => {

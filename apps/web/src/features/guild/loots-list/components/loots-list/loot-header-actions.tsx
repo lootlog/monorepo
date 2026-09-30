@@ -38,12 +38,12 @@ export const LootHeaderActions = ({
           e.stopPropagation();
           onOpenDetails();
         }}
-        variant="secondary"
+        variant="ghost"
         size="sm"
         icon={<ExternalLink className="size-3.5" />}
         aria-label={t("loots.list.details")}
         title={t("loots.list.details")}
-        className="h-8 px-2.5 text-xs max-sm:w-8 max-sm:px-0"
+        className="h-8 gap-1 px-2 text-xs text-muted-foreground max-sm:w-8 max-sm:px-0"
       >
         <span className="max-sm:sr-only">{t("loots.list.details")}</span>
       </Button>

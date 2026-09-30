@@ -1,6 +1,7 @@
 import { ONLINE_HISTORY_RETENTION_DAYS } from "./online-retention.js";
 import { PgClient } from "@effect/sql-pg";
-import { Clock, Context, Effect, Layer } from "effect";
+import { Clock, Context, Effect, Layer, Schema } from "effect";
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, count, inArray, lte, sql as drizzleSql } from "drizzle-orm";
 import { ActivityDatabase } from "#src/database/database";
 import { userOnlineIntervals } from "#src/database/schema";
@@ -9,6 +10,11 @@ import type {
   UserOnlineQuery,
   UserOnlineResponse,
 } from "#src/http-api/contracts/users/schemas";
+
+export class OnlineIngestRejected extends TaggedErrorClass<OnlineIngestRejected>()(
+  "OnlineIngestRejected",
+  { message: Schema.String },
+) {}
 
 export interface OnlineRepositoryValue {
   readonly ingest: (event: UserOnlineEventV1) => Effect.Effect<void, unknown>;
@@ -36,7 +42,9 @@ export class OnlineRepository extends Context.Service<
 
         if (Date.parse(event.observedAt) > now + 60_000)
           return yield* Effect.fail(
-            new Error("Online observation is in the future"),
+            new OnlineIngestRejected({
+              message: "Online observation is in the future",
+            }),
           );
 
         if (event.type === "collector") {
@@ -58,7 +66,9 @@ export class OnlineRepository extends Context.Service<
           Date.parse(event.endedAt) > Date.parse(event.observedAt)
         ) {
           return yield* Effect.fail(
-            new Error("Invalid online interval ordering"),
+            new OnlineIngestRejected({
+              message: "Invalid online interval ordering",
+            }),
           );
         }
 
@@ -85,7 +95,9 @@ export class OnlineRepository extends Context.Service<
 
             if (!inserted.length)
               return yield* Effect.fail(
-                new Error("Online segment start or world cannot change"),
+                new OnlineIngestRejected({
+                  message: "Online segment start or world cannot change",
+                }),
               );
             yield* sql`INSERT INTO "UserOnlineTracking" ("userId", "lastObservedAt")
           VALUES (${event.userId}, ${event.observedAt}::timestamptz)

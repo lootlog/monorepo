@@ -1,4 +1,5 @@
 import { isObjectRecord } from "@lootlog/schema/records";
+import { getUserGuildPermissionsCacheScope } from "#src/shared/cache";
 import { makeJsonCodec } from "#src/redis/redis.service";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { makeDiscordBotClient } from "#src/discord-bot-client/discord-bot-client";
@@ -77,7 +78,10 @@ export const guildDiscordSyncLive = Layer.effect(
 );
 
 export const organizationContextLookup = Layer.unwrap(
-  Effect.map(ApiRedis, (redis) => {
+  Effect.gen(function* () {
+    const redis = yield* ApiRedis;
+    const { refresh } = yield* MemberServices;
+
     const attempt = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({ try: operation, catch: (error) => error });
 
@@ -85,9 +89,14 @@ export const organizationContextLookup = Layer.unwrap(
       get: (key) => attempt(() => redis.get(key)),
       set: (key, value, ttl) => attempt(() => redis.set(key, value, ttl)),
       del: (key) => attempt(() => redis.del(key)),
+      setIfAbsent: (key, value, ttl) =>
+        attempt(() => redis.setNX(key, value, ttl)),
     };
 
-    return OrganizationContextLookup.layerDatabase(cache);
+    return OrganizationContextLookup.layerDatabase(
+      cache,
+      refresh.queueMemberRefresh,
+    );
   }),
 ).pipe(Layer.provide(membersData));
 
@@ -174,18 +183,10 @@ export const accountOrganizationOperationsLive = Layer.effect(
       ({ userId, discordId }) => discord.getUserGuilds(userId, discordId),
     );
 
-    const getUserGuildsWithPermissions = makeUserGuildPermissions(database, {
-      getJson: (key, schema) =>
-        Effect.tryPromise({
-          try: () => redis.getJson(key, makeJsonCodec(schema)),
-          catch: (error) => error,
-        }),
-      setJson: (key, value, ttl) =>
-        Effect.tryPromise({
-          try: () => redis.setJson(key, value, ttl),
-          catch: (error) => error,
-        }),
-    });
+    const getUserGuildsWithPermissions = makeUserGuildPermissions(
+      database,
+      redis,
+    );
 
     const getCurrentUserAccessibleGuilds = makeAccessibleGuilds(
       database,
@@ -201,6 +202,9 @@ export const accountOrganizationOperationsLive = Layer.effect(
             try: () => redis.setJson(key, value, ttl),
             catch: (error) => error,
           }),
+        setIfAbsent: (key, value, ttl) =>
+          cacheAttempt(() => redis.setNX(key, value, ttl)),
+        deleteCached: (key) => cacheAttempt(() => redis.del(key)),
         queueRefresh: refresh.queueMemberRefresh,
       },
       config.environment,
@@ -245,10 +249,10 @@ export const accountOrganizationOperationsLive = Layer.effect(
             activeDiscordGuildIds: [...options.activeDiscordGuildIds],
             status: MEMBER_LAST_DISCORD_STATUS.GUILD_NOT_IN_DISCORD_LIST,
           }),
-        freshDiscordGuilds: ({ userId, discordId }) =>
-          discord
-            .getFreshCompleteUserGuilds(userId, discordId)
-            .pipe(Effect.map(({ guilds }) => guilds)),
+        discordGuilds: ({ userId, discordId }, { refresh }) =>
+          refresh
+            ? discord.getFreshCompleteUserGuilds(userId, discordId)
+            : discord.getCachedCompleteUserGuilds(userId, discordId),
         queueMember: refresh.queueMemberRefresh,
         refreshMember: refresh.refreshGuildMemberWithinBudget,
       },
@@ -285,12 +289,9 @@ export const internalGuildsData = Layer.unwrap(
 
     const cache: InternalGuildsCache = {
       get: (key) => cacheOperation(() => redis.get(key)),
-      getJson: (key, schema) =>
-        cacheOperation(() => redis.getJson(key, makeJsonCodec(schema))),
+      getOrSetJsonEffect: (options) => redis.getOrSetJsonEffect(options),
       set: (key, value, ttl) =>
         cacheOperation(() => redis.set(key, value, ttl)),
-      setJson: (key, value, ttl) =>
-        cacheOperation(() => redis.setJson(key, value, ttl)),
       del: (key) => cacheOperation(() => redis.del(key)).pipe(Effect.asVoid),
     };
 
@@ -305,6 +306,15 @@ export const rolesData = Layer.unwrap(
 
     return RolesData.layerDatabase(
       {
+        invalidateUserGuildPermissions: (discordId) =>
+          Effect.tryPromise({
+            try: () =>
+              redis.invalidateScopes(
+                getUserGuildPermissionsCacheScope(discordId),
+              ),
+            catch: (cause) =>
+              new OrganizationWorkspaceOperationError({ cause }),
+          }),
         deleteByPattern: (pattern) =>
           Effect.tryPromise({
             try: () => redis.deleteByPattern(pattern),

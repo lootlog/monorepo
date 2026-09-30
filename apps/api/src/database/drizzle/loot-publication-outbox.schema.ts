@@ -21,5 +21,12 @@ export const lootPublicationOutboxTable = pgTable(
     lastAttemptAt: timestamp("lastAttemptAt", { precision: 3 }),
     createdAt: timestamp("createdAt", { precision: 3 }).defaultNow().notNull(),
   },
-  (table) => [index("LootPublicationOutbox_lootId_idx").on(table.lootId)],
+  (table) => [
+    index("LootPublicationOutbox_lootId_idx").on(table.lootId),
+    // Matches the dispatcher's `lastAttemptAt ASC NULLS FIRST, id ASC` selection.
+    index("LootPublicationOutbox_lastAttemptAt_id_idx").on(
+      table.lastAttemptAt.asc().nullsFirst(),
+      table.id.asc(),
+    ),
+  ],
 );

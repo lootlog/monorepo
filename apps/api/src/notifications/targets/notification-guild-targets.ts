@@ -1,16 +1,15 @@
+import { notificationChannelMetadata } from "#src/notifications/targets/notification-channel-metadata";
 import {
-  mapNotificationTarget,
+  deleteNotificationTargetAndOrphanedRules,
+  readNotificationTargetRuleIds,
+  readSingleTargetNotificationRuleIds,
   updateNotificationTarget,
 } from "#src/notifications/targets/notification-target-store";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, count, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import {
-  notificationRuleTable,
-  notificationRuleTargetTable,
-  notificationTargetTable,
-} from "#src/database/drizzle/schema";
+import { notificationTargetTable } from "#src/database/drizzle/schema";
 import type {
   CreateNotificationTargetRequest,
   UpdateNotificationTargetRequest,
@@ -59,23 +58,6 @@ export class NotificationGuildTargetFailure extends TaggedErrorClass<Notificatio
   "NotificationGuildTargetFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
-
-const targetMetadata = (
-  channel: Pick<
-    NotificationGuildChannel,
-    | "channelType"
-    | "requiredPermissions"
-    | "grantedPermissions"
-    | "missingPermissions"
-    | "hasRequiredPermissions"
-  >,
-) => ({
-  channelType: channel.channelType,
-  requiredPermissions: channel.requiredPermissions,
-  grantedPermissions: channel.grantedPermissions,
-  missingPermissions: channel.missingPermissions,
-  hasRequiredPermissions: channel.hasRequiredPermissions,
-});
 
 export const makeNotificationGuildTargets = (
   database: ApiDatabaseValue,
@@ -128,7 +110,7 @@ export const makeNotificationGuildTargets = (
       )
       .pipe(Effect.mapError(databaseFailure("notifications.targets.list")));
 
-    return rows.map(mapNotificationTarget);
+    return rows;
   });
 
   const create = Effect.fn("notifications.guildTargets.create")(function* (
@@ -177,7 +159,7 @@ export const makeNotificationGuildTargets = (
         externalId: data.externalId,
         displayName: data.displayName ?? selected.name,
         guildName: null,
-        metadata: targetMetadata(selected),
+        metadata: notificationChannelMetadata(selected),
         active: true,
         canSend: selected.hasRequiredPermissions,
         lastSyncedAt: new Date(selected.lastSyncedAt),
@@ -194,7 +176,7 @@ export const makeNotificationGuildTargets = (
         ],
         set: {
           displayName: data.displayName ?? selected.name,
-          metadata: targetMetadata(selected),
+          metadata: notificationChannelMetadata(selected),
           active: true,
           canSend: selected.hasRequiredPermissions,
           lastSyncedAt: new Date(selected.lastSyncedAt),
@@ -215,7 +197,7 @@ export const makeNotificationGuildTargets = (
       );
     }
 
-    return mapNotificationTarget(target);
+    return target;
   });
 
   const update = Effect.fn("notifications.guildTargets.update")(function* (
@@ -235,41 +217,24 @@ export const makeNotificationGuildTargets = (
 
     if (data.active === false) yield* jobs.cancel({ targetId });
 
-    return rows[0] ? mapNotificationTarget(rows[0]) : null;
+    return rows[0] ?? null;
   });
 
   const removeById = Effect.fn("notifications.guildTargets.deleteById")(
     function* (targetId: number) {
-      const links = yield* database
-        .select({ ruleId: notificationRuleTargetTable.ruleId })
-        .from(notificationRuleTargetTable)
-        .where(eq(notificationRuleTargetTable.targetId, targetId))
-        .pipe(
-          Effect.mapError(databaseFailure("notifications.targets.ruleLinks")),
-        );
+      const ruleIds = yield* readNotificationTargetRuleIds(
+        database,
+        targetId,
+      ).pipe(
+        Effect.mapError(databaseFailure("notifications.targets.ruleLinks")),
+      );
 
-      const ruleIds = links.map(({ ruleId }) => ruleId);
-
-      const counts =
-        ruleIds.length === 0
-          ? []
-          : yield* database
-              .select({
-                ruleId: notificationRuleTargetTable.ruleId,
-                value: count(),
-              })
-              .from(notificationRuleTargetTable)
-              .where(inArray(notificationRuleTargetTable.ruleId, ruleIds))
-              .groupBy(notificationRuleTargetTable.ruleId)
-              .pipe(
-                Effect.mapError(
-                  databaseFailure("notifications.targets.ruleCounts"),
-                ),
-              );
-
-      const orphanedRuleIds = counts
-        .filter(({ value }) => value === 1)
-        .map(({ ruleId }) => ruleId);
+      const orphanedRuleIds = yield* readSingleTargetNotificationRuleIds(
+        database,
+        ruleIds,
+      ).pipe(
+        Effect.mapError(databaseFailure("notifications.targets.ruleCounts")),
+      );
 
       yield* jobs.cancel({ targetId });
       yield* Effect.forEach(
@@ -280,26 +245,16 @@ export const makeNotificationGuildTargets = (
           discard: true,
         },
       );
-      yield* database
-        .transaction((transaction) =>
-          Effect.gen(function* () {
-            yield* transaction
-              .delete(notificationTargetTable)
-              .where(eq(notificationTargetTable.id, targetId));
-
-            if (orphanedRuleIds.length > 0) {
-              yield* transaction
-                .delete(notificationRuleTable)
-                .where(inArray(notificationRuleTable.id, orphanedRuleIds));
-            }
-          }),
-        )
-        .pipe(
-          Effect.mapError(databaseFailure("notifications.targets.delete")),
-          Effect.withSpan("notifications.targets.delete.transaction", {
-            attributes: { adapter: "notifications.drizzle", retryCount: 0 },
-          }),
-        );
+      yield* deleteNotificationTargetAndOrphanedRules(
+        database,
+        targetId,
+        orphanedRuleIds,
+      ).pipe(
+        Effect.mapError(databaseFailure("notifications.targets.delete")),
+        Effect.withSpan("notifications.targets.delete.transaction", {
+          attributes: { adapter: "notifications.drizzle", retryCount: 0 },
+        }),
+      );
 
       return { success: true as const };
     },

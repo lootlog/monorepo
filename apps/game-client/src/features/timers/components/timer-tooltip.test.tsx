@@ -54,13 +54,13 @@ describe("TimerTooltip", () => {
     expect(screen.getByText("Hero One (300b)")).toBeVisible();
     expect(screen.getByText("+1")).toBeVisible();
     expect(screen.queryByText("Scout (Beta)")).not.toBeInTheDocument();
-    expect(screen.getByText("⟳ Timer został zresetowany")).toBeVisible();
+    expect(screen.getByText("Timer został zresetowany")).toBeVisible();
     expect(screen.getByText("Dodano:")).toBeVisible();
-    expect(screen.getByText("22.04.2026 - 11:59:00")).toBeVisible();
+    expect(screen.getByText("22.04 11:59:00")).toBeVisible();
     expect(screen.getByText("Min:")).toBeVisible();
-    expect(screen.getByText("22.04.2026 - 12:00:00")).toBeVisible();
+    expect(screen.getByText("22.04 12:00:00")).toBeVisible();
     expect(screen.getByText("Max:")).toBeVisible();
-    expect(screen.getByText("22.04.2026 - 12:05:00")).toBeVisible();
+    expect(screen.getByText("22.04 12:05:00")).toBeVisible();
   });
 
   it("omits member and reset sections when the timer has no such metadata", () => {
@@ -77,7 +77,7 @@ describe("TimerTooltip", () => {
 
     expect(screen.queryByText("Dodane przez:")).not.toBeInTheDocument();
     expect(
-      screen.queryByText("⟳ Timer został zresetowany"),
+      screen.queryByText("Timer został zresetowany"),
     ).not.toBeInTheDocument();
     expect(screen.queryByText("Dodano:")).not.toBeInTheDocument();
   });

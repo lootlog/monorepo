@@ -21,7 +21,6 @@ const socket = (): GatewaySocket => ({
     subscriptions: new Map(),
     airTagScopes: [],
     confidence: "reported",
-    backpressureStrikes: 0,
   },
   close: () => {},
   send: () => 1,

@@ -1,17 +1,14 @@
 {
   "window": {
-    "title": "Konsola"
+    "title": "Szybki czat"
   },
-  "actions": {
-    "infoTooltip": "! = powiadomienie, /grp = szukaj grupy"
-  },
-  "input": {
-    "placeholder": "Wiadomość..."
+  "target": {
+    "label": "Lootlog, do którego wysyłasz"
   },
   "suggestions": {
-    "partySearchLabel": "Szukaj grupy",
-    "partySearchDescription": "/grp [opis] - Rozpocznij szukanie grupy",
+    "partySearchLabel": "Utwórz zbiórkę",
+    "partySearchDescription": "/grp [opis] – utwórz zbiórkę",
     "clearChatLabel": "Wyczyść czat",
-    "clearChatDescription": "/clr - Wyczyść historię czatu klanu"
+    "clearChatDescription": "/clr – wyczyść historię czatu Lootloga"
   }
 }

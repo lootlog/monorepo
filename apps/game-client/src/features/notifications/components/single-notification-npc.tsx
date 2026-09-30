@@ -1,9 +1,14 @@
 import type { FC } from "react";
-import type { NotificationWithServers } from "@/store/notifications.store";
+import { CountBadge } from "@/components/count-badge";
+import {
+  getNotificationReportCount,
+  type NotificationWithServers,
+  type StoredNotification,
+} from "@/store/notifications.store";
 import { useTranslation } from "react-i18next";
 
 type SingleNotificationNpcProps = {
-  notification: NotificationWithServers;
+  notification: StoredNotification & NotificationWithServers;
 };
 
 export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
@@ -14,8 +19,8 @@ export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
   if (!notification.npc) return null;
 
   return (
-    <div className="ll:flex ll:min-w-0 ll:flex-col">
-      <div className="ll:flex ll:gap-1 ll:overflow-hidden ll:text-xs">
+    <>
+      <div className="ll:flex ll:items-center ll:gap-1 ll:overflow-hidden ll:text-xs">
         <span className="ll:min-w-0 ll:truncate ll:font-semibold">
           {notification.npc.name}
         </span>
@@ -23,12 +28,13 @@ export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
           ({notification.npc.lvl}
           {notification.npc.prof})
         </span>
+        <CountBadge count={getNotificationReportCount(notification)} />
       </div>
-      <div className="ll:flex ll:gap-1 ll:overflow-hidden ll:text-[11px] ll:text-gray-400">
+      <div className="ll:flex ll:gap-1 ll:overflow-hidden ll:text-[11px] ll:text-gray-300">
         <span className="ll:min-w-0 ll:truncate">
           {notification.npc.location}
         </span>
-        <span className="ll:shrink-0">
+        <span className="ll:shrink-0 ll:tabular-nums">
           ({notification.npc.x}, {notification.npc.y})
         </span>
         {notification.isGatheringParty && (
@@ -37,6 +43,6 @@ export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
           </span>
         )}
       </div>
-    </div>
+    </>
   );
 };

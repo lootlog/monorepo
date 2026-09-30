@@ -15,13 +15,13 @@ import {
 import { Button } from "@lootlog/ui/components/button";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import { Switch } from "@lootlog/ui/components/switch";
 import { useUsersControllerGetCurrentUserGuilds } from "@lootlog/client/main";
 import { Eye, EyeOff, RotateCcw, Server } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SearchInput } from "@/components/ui/search-input";
+import { LoadingSlot } from "@/components/common/loading-slot";
 
 type VisibilityFilter = "all" | "visible" | "hidden";
 
@@ -110,7 +110,7 @@ export const ServerVisibilitySettings = () => {
 
           {isLoading ? (
             <SectionCard className="flex h-64 items-center justify-center bg-card">
-              <Spinner className="size-8" />
+              <LoadingSlot size="small" />
               <span className="sr-only">{t("settings.servers.loading")}</span>
             </SectionCard>
           ) : null}

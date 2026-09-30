@@ -1,11 +1,10 @@
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTable } from "@tanstack/react-table";
-import { AlertCircle, Skull } from "lucide-react";
+import { Skull } from "lucide-react";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import {
   Table,
   TableBody,
@@ -16,21 +15,26 @@ import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { useInfiniteScrollSentinel } from "@/hooks/utils/use-infinite-scroll-sentinel";
-import type { EventMemberKill } from "../../hooks/queries/use-event-member-kill-history";
+import { useResetScrollTop } from "@/hooks/utils/use-virtual-infinite-scroll";
+import type { KillHistoryMemberEntry } from "@lootlog/client/main";
 import { MemberKillBreakdownRow } from "./member-kill-breakdown-row";
 import { createMemberKillsTableColumns } from "./member-kills-table-columns";
+import { EventReadError } from "../shared/event-read-error";
+import { EventHistoryPaginationStatus } from "../shared/event-history-pagination-status";
 
 type MemberKillsListProps = {
   guildId: string;
   eventId: string;
   scrollElement: HTMLDivElement;
   resetKey: string;
-  allKills: EventMemberKill[];
+  allKills: KillHistoryMemberEntry[];
   isLoading: boolean;
   hasError: boolean;
   hasNextPage?: boolean;
   isFetchingNextPage: boolean;
   fetchNextPage: () => void;
+  onRetry: () => void;
+  isRetrying?: boolean;
 };
 
 const HEAD_TEXT_CLASS_NAME = "text-[10px] uppercase tracking-[0.08em]";
@@ -81,6 +85,8 @@ export const MemberKillsList = ({
   hasNextPage,
   isFetchingNextPage,
   fetchNextPage,
+  onRetry,
+  isRetrying,
 }: MemberKillsListProps) => {
   const { t } = useTranslation();
 
@@ -116,11 +122,13 @@ export const MemberKillsList = ({
     getRowId: (kill) => kill.id,
   });
 
-  useEffect(() => {
-    scrollElement.scrollTo(0, 0);
-  }, [resetKey, scrollElement]);
+  useResetScrollTop({
+    getScrollElement: () => scrollElement,
+    resetKey,
+  });
 
   const loaderRowRef = useInfiniteScrollSentinel<HTMLTableRowElement>({
+    enabled: !hasError,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -144,16 +152,15 @@ export const MemberKillsList = ({
     );
   }
 
-  if (hasError) {
+  if (hasError && allKills.length === 0) {
     return (
-      <div className="flex min-h-48 flex-col items-center justify-center gap-2 text-muted-foreground">
-        <AlertCircle className="size-6 text-destructive" />
-        <p className="text-sm">{t("events.error")}</p>
+      <div className="flex min-h-48 items-center justify-center">
+        <EventReadError onRetry={onRetry} isRetrying={isRetrying} />
       </div>
     );
   }
 
-  if (allKills.length === 0) {
+  if (allKills.length === 0 && !hasNextPage) {
     return (
       <div className="flex min-h-48 flex-col items-center justify-center text-muted-foreground">
         <Skull className="mb-2 size-6 opacity-50" />
@@ -200,16 +207,12 @@ export const MemberKillsList = ({
               colSpan={columns.length}
               className="h-12 border-t border-border/70 text-center text-xs text-muted-foreground"
             >
-              {hasNextPage ? (
-                <span className="inline-flex items-center gap-2">
-                  {isFetchingNextPage && (
-                    <Spinner className="size-4 text-primary" />
-                  )}
-                  {t("events.kills.loading")}
-                </span>
-              ) : (
-                t("events.kills.endOfList")
-              )}
+              <EventHistoryPaginationStatus
+                hasError={hasError}
+                hasNextPage={hasNextPage}
+                isFetching={isRetrying ?? isFetchingNextPage}
+                onRetry={onRetry}
+              />
             </TableCell>
           </TableRow>
         </TableBody>

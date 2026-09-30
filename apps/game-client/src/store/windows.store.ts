@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { Option, Schema } from "effect";
 import { isObjectRecord } from "@lootlog/schema/records";
 import {
   resolveSettingsPath,
@@ -13,7 +13,6 @@ import {
   APP_ERROR_WINDOW_DEFAULT_HEIGHT,
   APP_ERROR_WINDOW_WIDTH,
 } from "@/features/error-boundary/error-boundary.constants";
-import type { GameNpc } from "@lootlog/margonem/npcs";
 import { create } from "zustand";
 import {
   persist,
@@ -21,6 +20,7 @@ import {
   type StateStorage,
 } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
+import { looseStruct, optionalOrUndefined } from "@/lib/stored-value-schema";
 
 const STORAGE_KEY = storageKey("ll-windows-state");
 
@@ -38,16 +38,12 @@ export const createDeduplicatingStateStorage = (
   },
 });
 
-type CreateNotificationState = {
-  npc?: GameNpc;
-};
-
 type SettingsWindowState = {
   activeTab?: SettingsTabValue;
   activeSubsection?: SettingsSubsectionValue;
 };
 
-type WindowPayload = CreateNotificationState | SettingsWindowState;
+type WindowPayload = SettingsWindowState;
 
 export type WindowId =
   | "extension-login"
@@ -59,12 +55,12 @@ export type WindowId =
   | "online-players"
   | "npc-detector"
   | "notifications"
-  | "create-notification"
   | "quick-access"
   | "catching-whitelist-warning"
   | "backend-preferences-warning"
   | "party-finder"
-  | "create-party-gathering";
+  | "create-party-gathering"
+  | "battle-pings";
 
 interface WindowPositionState {
   x: number;
@@ -85,9 +81,28 @@ interface WindowData {
   size: WindowSizeState;
   opacity: WindowOpacity;
   locked: boolean;
-  autofocus?: boolean;
   maxContentHeight?: number;
+  /** Shrunk to its collapsed content; `size` keeps the expanded size. */
+  collapsed?: boolean;
 }
+
+export type WindowFocusRequest = {
+  windowId: WindowId;
+  /** Receives focus back when the window closes; `null` returns it to the game. */
+  returnFocusTo: HTMLElement | null;
+};
+
+const createFocusRequest = (windowId: WindowId): WindowFocusRequest => {
+  const activeElement = document.activeElement;
+
+  return {
+    windowId,
+    returnFocusTo:
+      activeElement instanceof HTMLElement && activeElement !== document.body
+        ? activeElement
+        : null,
+  };
+};
 
 interface WindowsState {
   "extension-login": WindowData;
@@ -99,23 +114,38 @@ interface WindowsState {
   "online-players": WindowData;
   "npc-detector": WindowData;
   notifications: WindowData;
-  "create-notification": WindowData & { state: CreateNotificationState };
   "quick-access": WindowData;
   "catching-whitelist-warning": WindowData;
   "backend-preferences-warning": WindowData;
   "party-finder": WindowData;
   "create-party-gathering": WindowData;
+  "battle-pings": WindowData;
   currentWindowFocus?: WindowId;
   windowFocusHistory: WindowId[];
+  /**
+   * The window a player just opened on purpose, waiting for its frame to move
+   * keyboard focus into it. Never persisted: a restored or automatically
+   * opened window must not take focus from the game.
+   */
+  focusRequest?: WindowFocusRequest;
   setCurrentWindowFocus: (key: WindowId) => void;
+  /** Opens or closes a window without moving keyboard focus. */
   setOpen: (window: WindowId, open: boolean, state?: WindowPayload) => void;
+  /**
+   * Opens a window in response to an explicit player action (a button, a
+   * shortcut, a command) and asks its frame to move keyboard focus into it.
+   * Focus returns to the previously focused element when the window closes.
+   */
+  openAndFocus: (window: WindowId, state?: WindowPayload) => void;
+  clearFocusRequest: (window: WindowId) => void;
   setPosition: (window: WindowId, pos: WindowPositionState) => void;
   setSize: (window: WindowId, size: WindowSizeState) => void;
   setMaxContentHeight: (window: WindowId, height: number) => void;
   setOpacity: (window: WindowId, opacity: WindowOpacity) => void;
   setLocked: (window: WindowId, locked: boolean) => void;
-  toggleOpen: (window: WindowId, autofocus?: boolean) => void;
-  setAutofocus: (window: WindowId, autofocus: boolean) => void;
+  setCollapsed: (window: WindowId, collapsed: boolean) => void;
+  /** A player action: opening this way also moves keyboard focus into the window. */
+  toggleOpen: (window: WindowId) => void;
   setSettingsActiveTab: (activeTab?: SettingsTabValue) => void;
   /**
    * Restores every window's default geometry, opacity and lock while keeping
@@ -131,6 +161,11 @@ interface WindowsState {
 
 const DEFAULT_OPACITY: WindowOpacity = 4;
 
+/**
+ * Stored until the player places a window. While `hasDefinedPosition` is false
+ * the frame ignores it and shows the window at its viewport-relative default
+ * (`resolveDefaultWindowPosition`), which the layout reset restores.
+ */
 const DEFAULT_POSITION: WindowPositionState = { x: 0, y: 0 };
 
 const DEFAULT_QUICK_ACCESS_WIDTH = 250;
@@ -158,10 +193,12 @@ const hasNonZeroPosition = (
 
 type RawPersistedWindows = Record<string, unknown>;
 
-const settingsTabSchema = z.enum([
+const settingsTabSchema = Schema.Literals([
   ...SETTINGS_DOMAIN_VALUES,
   ...LEGACY_SETTINGS_TAB_VALUES,
 ]);
+
+const isSettingsTab = Schema.is(settingsTabSchema);
 
 const inferLegacyDefinedPosition = (
   windowId: WindowId,
@@ -194,12 +231,12 @@ const WINDOW_IDS: WindowId[] = [
   "online-players",
   "npc-detector",
   "notifications",
-  "create-notification",
   "quick-access",
   "catching-whitelist-warning",
   "backend-preferences-warning",
   "party-finder",
   "create-party-gathering",
+  "battle-pings",
 ];
 
 const migrateLegacyCommand = (state: RawPersistedWindows): void => {
@@ -232,14 +269,17 @@ const migrateQuickAccessWidth = (state: RawPersistedWindows): void => {
 const migrateSettingsTabToPath = (state: RawPersistedWindows): void => {
   const settings = isObjectRecord(state.settings) ? state.settings : {};
   const settingsState = isObjectRecord(settings.state) ? settings.state : {};
-  const previousTab = settingsTabSchema.safeParse(settingsState.activeTab);
+
+  const previousTab = isSettingsTab(settingsState.activeTab)
+    ? settingsState.activeTab
+    : undefined;
 
   // Version 12 mapped "appearance" to its chat subsection, which version 14
   // later moved into the chat domain; keep that historical destination.
   const nextPath: SettingsPath =
-    previousTab.success && previousTab.data === "appearance"
+    previousTab === "appearance"
       ? { domain: "chat", subsection: "chat-appearance" }
-      : resolveSettingsPath(previousTab.success ? previousTab.data : undefined);
+      : resolveSettingsPath(previousTab);
 
   state.settings = {
     ...settings,
@@ -391,6 +431,9 @@ export const migrateWindowsState = (
   // Manual timer creation moved into the timers window in version 19.
   if (version < 19) delete state["add-timer"];
 
+  // The notification creation window was never rendered; version 20 drops it.
+  if (version < 20) delete state["create-notification"];
+
   for (const [since, migrate] of SETTINGS_PATH_MIGRATIONS) {
     if (version < since) migrate(state);
   }
@@ -398,44 +441,35 @@ export const migrateWindowsState = (
   return state;
 };
 
-const optionalNumber = z.number().optional().catch(undefined);
+const optionalNumber = optionalOrUndefined(Schema.Finite);
 
-const optionalBoolean = z.boolean().optional().catch(undefined);
+const optionalBoolean = optionalOrUndefined(Schema.Boolean);
 
-const windowSchema = z.looseObject({
+const windowSchema = looseStruct({
   open: optionalBoolean,
   hasDefinedPosition: optionalBoolean,
   locked: optionalBoolean,
-  opacity: z
-    .union([
-      z.literal(1),
-      z.literal(2),
-      z.literal(3),
-      z.literal(4),
-      z.literal(5),
-    ])
-    .optional()
-    .catch(undefined),
-  autofocus: optionalBoolean,
+  opacity: optionalOrUndefined(Schema.Literals([1, 2, 3, 4, 5])),
   maxContentHeight: optionalNumber,
-  position: z
-    .looseObject({ x: optionalNumber, y: optionalNumber })
-    .optional()
-    .catch(undefined),
-  size: z
-    .looseObject({ width: optionalNumber, height: optionalNumber })
-    .optional()
-    .catch(undefined),
+  collapsed: optionalBoolean,
+  position: optionalOrUndefined(
+    looseStruct({ x: optionalNumber, y: optionalNumber }),
+  ),
+  size: optionalOrUndefined(
+    looseStruct({ width: optionalNumber, height: optionalNumber }),
+  ),
 });
+
+const decodeWindow = Schema.decodeUnknownOption(windowSchema);
 
 const parsePersistedWindow = (
   value: unknown,
   defaults: WindowData,
 ): WindowData => {
-  const parsed = windowSchema.safeParse(value);
+  const parsed = decodeWindow(value);
 
-  if (!parsed.success) return defaults;
-  const data = parsed.data;
+  if (Option.isNone(parsed)) return defaults;
+  const data = parsed.value;
 
   return {
     ...defaults,
@@ -444,8 +478,8 @@ const parsePersistedWindow = (
     hasDefinedPosition: data.hasDefinedPosition ?? defaults.hasDefinedPosition,
     locked: data.locked ?? defaults.locked,
     opacity: data.opacity ?? defaults.opacity,
-    autofocus: data.autofocus ?? defaults.autofocus,
     maxContentHeight: data.maxContentHeight ?? defaults.maxContentHeight,
+    collapsed: data.collapsed ?? defaults.collapsed,
     position: {
       ...defaults.position,
       ...data.position,
@@ -461,34 +495,15 @@ const parsePersistedWindow = (
   };
 };
 
-const settingsPayloadSchema = z.looseObject({
-  activeTab: settingsTabSchema.optional().catch(undefined),
-  activeSubsection: z
-    .enum(SETTINGS_SUBSECTION_VALUES)
-    .optional()
-    .catch(undefined),
-});
-
-const notificationPayloadSchema = z.looseObject({
-  npc: z
-    .looseObject({
-      icon: z.string(),
-      id: z.number(),
-      tpl: z.number(),
-      x: z.number(),
-      y: z.number(),
-      nick: z.string(),
-      prof: z.string(),
-      type: z.number(),
-      wt: z.number(),
-      lvl: z.number(),
-      actions: optionalNumber,
-      grp: optionalNumber,
-      resp_rand: optionalNumber,
-    })
-    .optional()
-    .catch(undefined),
-});
+// A payload that is not an object throws, which leaves the store unhydrated.
+const decodeSettingsPayload = Schema.decodeUnknownSync(
+  looseStruct({
+    activeTab: optionalOrUndefined(settingsTabSchema),
+    activeSubsection: optionalOrUndefined(
+      Schema.Literals(SETTINGS_SUBSECTION_VALUES),
+    ),
+  }),
+);
 
 const readPersistedWindowPayload = (value: unknown) =>
   isObjectRecord(value) && isObjectRecord(value.state) ? value.state : {};
@@ -502,27 +517,20 @@ const mergePersistedWindows = (
   const merged = { ...raw, ...current };
 
   for (const id of WINDOW_IDS) {
-    if (id === "settings" || id === "create-notification") continue;
+    if (id === "settings") continue;
     merged[id] = parsePersistedWindow(raw[id], current[id]);
   }
+
+  // Quick chat is summoned for one entry: a reload, including one that
+  // restores an older payload with the console open, must not reopen it and
+  // pull focus away from the game.
+  merged.command = { ...merged.command, open: false };
 
   merged.settings = {
     ...parsePersistedWindow(raw.settings, current.settings),
     state: {
       ...current.settings.state,
-      ...settingsPayloadSchema.parse(readPersistedWindowPayload(raw.settings)),
-    },
-  };
-  merged["create-notification"] = {
-    ...parsePersistedWindow(
-      raw["create-notification"],
-      current["create-notification"],
-    ),
-    state: {
-      ...current["create-notification"].state,
-      ...notificationPayloadSchema.parse(
-        readPersistedWindowPayload(raw["create-notification"]),
-      ),
+      ...decodeSettingsPayload(readPersistedWindowPayload(raw.settings)),
     },
   };
 
@@ -575,19 +583,14 @@ export const useWindowsStore = create<WindowsState>()(
         size: DEFAULT_SIZE,
         opacity: DEFAULT_OPACITY,
         locked: false,
-        autofocus: false,
       },
       command: {
         open: false,
-        position: {
-          x: Math.round((window.innerWidth - 242) / 2),
-          y: Math.round((window.innerHeight - 240) / 2),
-        },
-        hasDefinedPosition: true,
+        position: DEFAULT_POSITION,
+        hasDefinedPosition: false,
         size: { width: 242, height: 240 },
         opacity: DEFAULT_OPACITY,
         locked: false,
-        autofocus: false,
       },
       "online-players": {
         open: false,
@@ -613,15 +616,6 @@ export const useWindowsStore = create<WindowsState>()(
         opacity: DEFAULT_OPACITY,
         locked: false,
       },
-      "create-notification": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 242, height: 300 },
-        opacity: DEFAULT_OPACITY,
-        state: { npcs: [] },
-        locked: false,
-      },
       "quick-access": {
         open: true,
         position: DEFAULT_POSITION,
@@ -642,7 +636,7 @@ export const useWindowsStore = create<WindowsState>()(
         open: false,
         position: DEFAULT_POSITION,
         hasDefinedPosition: false,
-        size: { width: 430, height: 250 },
+        size: { width: 400, height: 240 },
         opacity: DEFAULT_OPACITY,
         locked: false,
       },
@@ -658,12 +652,21 @@ export const useWindowsStore = create<WindowsState>()(
         open: false,
         position: DEFAULT_POSITION,
         hasDefinedPosition: false,
-        size: { width: 280, height: 220 },
+        size: { width: 280, height: 230 },
+        opacity: DEFAULT_OPACITY,
+        locked: false,
+      },
+      "battle-pings": {
+        open: false,
+        position: DEFAULT_POSITION,
+        hasDefinedPosition: false,
+        size: { width: 242, height: 240 },
         opacity: DEFAULT_OPACITY,
         locked: false,
       },
       currentWindowFocus: undefined,
       windowFocusHistory: [],
+      focusRequest: undefined,
       setCurrentWindowFocus: (key: WindowId) =>
         set((state) => {
           if (
@@ -710,6 +713,11 @@ export const useWindowsStore = create<WindowsState>()(
           nextHistory = state.windowFocusHistory.filter((id) => id !== key);
         }
 
+        const nextFocusRequest =
+          !open && state.focusRequest?.windowId === key
+            ? undefined
+            : state.focusRequest;
+
         let nextCurrentWindowFocus = state.currentWindowFocus;
 
         if (open) {
@@ -726,7 +734,8 @@ export const useWindowsStore = create<WindowsState>()(
           currentWindow.open === open &&
           hasSameWindowState &&
           state.currentWindowFocus === nextCurrentWindowFocus &&
-          state.windowFocusHistory === nextHistory
+          state.windowFocusHistory === nextHistory &&
+          state.focusRequest === nextFocusRequest
         ) {
           return;
         }
@@ -748,7 +757,17 @@ export const useWindowsStore = create<WindowsState>()(
           [key]: nextWindow,
           currentWindowFocus: nextCurrentWindowFocus,
           windowFocusHistory: nextHistory,
+          focusRequest: nextFocusRequest,
         });
+      },
+      openAndFocus: (key, windowState) => {
+        const focusRequest = createFocusRequest(key);
+        get().setOpen(key, true, windowState);
+        set({ focusRequest });
+      },
+      clearFocusRequest: (key) => {
+        if (get().focusRequest?.windowId !== key) return;
+        set({ focusRequest: undefined });
       },
       setPosition: (key: WindowId, pos) =>
         set((state) => {
@@ -814,11 +833,11 @@ export const useWindowsStore = create<WindowsState>()(
             ? state
             : { [key]: { ...state[key], locked } },
         ),
-      setAutofocus: (key: WindowId, autofocus: boolean) =>
+      setCollapsed: (key: WindowId, collapsed: boolean) =>
         set((state) =>
-          state[key].autofocus === autofocus
+          (state[key].collapsed ?? false) === collapsed
             ? state
-            : { [key]: { ...state[key], autofocus } },
+            : { [key]: { ...state[key], collapsed } },
         ),
       setSettingsActiveTab: (activeTab) =>
         set((state) => {
@@ -857,6 +876,7 @@ export const useWindowsStore = create<WindowsState>()(
             opacity: fallback.opacity,
             locked: fallback.locked,
             maxContentHeight: undefined,
+            collapsed: fallback.collapsed,
           });
 
           return {
@@ -875,10 +895,6 @@ export const useWindowsStore = create<WindowsState>()(
             notifications: resetWindow(
               state.notifications,
               defaults.notifications,
-            ),
-            "create-notification": resetWindow(
-              state["create-notification"],
-              defaults["create-notification"],
             ),
             "quick-access": resetWindow(
               state["quick-access"],
@@ -900,6 +916,10 @@ export const useWindowsStore = create<WindowsState>()(
               state["create-party-gathering"],
               defaults["create-party-gathering"],
             ),
+            "battle-pings": resetWindow(
+              state["battle-pings"],
+              defaults["battle-pings"],
+            ),
           };
         }),
       setSettingsPath: (activeTab, activeSubsection) =>
@@ -913,8 +933,9 @@ export const useWindowsStore = create<WindowsState>()(
             },
           },
         })),
-      toggleOpen: (key: WindowId, autofocus?: boolean) => {
+      toggleOpen: (key: WindowId) => {
         const curr = get()[key].open;
+        const focusRequest = curr ? undefined : createFocusRequest(key);
         set((state) => {
           const newHistory = !curr
             ? [key, ...state.windowFocusHistory.filter((id) => id !== key)]
@@ -924,10 +945,14 @@ export const useWindowsStore = create<WindowsState>()(
             [key]: {
               ...state[key],
               open: !curr,
-              autofocus,
             },
             currentWindowFocus: !curr ? key : undefined,
             windowFocusHistory: newHistory,
+            focusRequest:
+              focusRequest ??
+              (state.focusRequest?.windowId === key
+                ? undefined
+                : state.focusRequest),
           };
         });
       },
@@ -938,39 +963,32 @@ export const useWindowsStore = create<WindowsState>()(
         const {
           currentWindowFocus: _focus,
           windowFocusHistory: _history,
+          focusRequest: _focusRequest,
           "extension-login": _extensionLogin,
           "app-error": _appError,
           setCurrentWindowFocus: _setCurrentWindowFocus,
           setOpen: _setOpen,
+          openAndFocus: _openAndFocus,
+          clearFocusRequest: _clearFocusRequest,
           setPosition: _setPosition,
           setSize: _setSize,
           setMaxContentHeight: _setMaxContentHeight,
           setOpacity: _setOpacity,
           setLocked: _setLocked,
+          setCollapsed: _setCollapsed,
           toggleOpen: _toggleOpen,
-          setAutofocus: _setAutofocus,
           setSettingsActiveTab: _setSettingsActiveTab,
           resetWindowLayout: _resetWindowLayout,
           setSettingsPath: _setSettingsPath,
           ...persisted
         } = state;
 
-        const {
-          open: _open,
-          hasDefinedPosition: _hasDefinedPosition,
-          locked: _locked,
-          autofocus: _autofocus,
-          maxContentHeight: _maxContentHeight,
-          state: _notificationState,
-          ...notificationGeometry
-        } = state["create-notification"];
-
-        return { ...persisted, "create-notification": notificationGeometry };
+        return persisted;
       },
       storage: createJSONStorage(() =>
         createDeduplicatingStateStorage(localStorage),
       ),
-      version: 19,
+      version: 20,
       migrate: migrateWindowsState,
       merge: mergePersistedWindows,
     },
@@ -992,18 +1010,7 @@ export const resetExtensionLoginWindow = () => {
   useWindowsStore.setState({
     "extension-login": {
       ...useWindowsStore.getInitialState()["extension-login"],
-      position: {
-        x: Math.max(
-          0,
-          ((window.visualViewport?.width ?? window.innerWidth) - width) / 2,
-        ),
-        y: Math.max(
-          0,
-          ((window.visualViewport?.height ?? window.innerHeight) - height) / 2,
-        ),
-      },
       size: { width, height },
-      hasDefinedPosition: true,
     },
   });
 };

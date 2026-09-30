@@ -1,12 +1,14 @@
 import { lazy, Suspense, type CSSProperties } from "react";
-import { AppSidebar } from "@/components/layout/app-sidebar";
+import {
+  AppSidebar,
+  COMPACT_SIDEBAR_WIDTH,
+} from "@/components/layout/app-sidebar";
 import { GuildShell } from "@/components/layout/guild-shell";
 import { GuildSidebarNavPlaceholder } from "@/components/layout/guild-sidebar-nav-placeholder";
 import { GuildsSidebarNav } from "@/components/layout/guilds-sidebar-nav";
 import { StandaloneShell } from "@/components/layout/standalone-shell";
 import { UserShell } from "@/components/layout/user-shell";
 import { UserSidebarNav } from "@/components/layout/user-sidebar-nav";
-import { Toaster } from "@lootlog/ui/components/sonner";
 import { SidebarProvider } from "@lootlog/ui/components/sidebar";
 import { Outlet, useLocation, useMatches } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -41,28 +43,31 @@ export const AppLayout = () => {
   const showGuildNav =
     !isUserRoute && guildRouteMatch?.loaderData !== undefined;
 
-  // A failed Organization route has no navigation to wait for, so the
-  // sidebar stays empty instead of pulsing a skeleton forever.
   const hasFailedGuildRoute =
     guildRouteMatch?.status === "error" ||
     guildRouteMatch?.status === "notFound";
 
-  const sidebarNavigation =
-    isStandaloneRoute || hasFailedGuildRoute ? null : isUserRoute ? (
-      <UserSidebarNav />
-    ) : showGuildNav ? (
-      <GuildsSidebarNav />
-    ) : (
-      <GuildSidebarNavPlaceholder />
-    );
+  // A failed Organization route has no navigation or server details to show,
+  // so the sidebar narrows to the server rail instead of an empty column.
+  const isCompactSidebar = isStandaloneRoute || hasFailedGuildRoute;
+
+  const sidebarNavigation = isCompactSidebar ? null : isUserRoute ? (
+    <UserSidebarNav />
+  ) : showGuildNav ? (
+    <GuildsSidebarNav />
+  ) : (
+    <GuildSidebarNavPlaceholder />
+  );
 
   const sidebarStyle:
     | (CSSProperties & { "--sidebar-width": string })
-    | undefined = isStandaloneRoute ? { "--sidebar-width": "4rem" } : undefined;
+    | undefined = isCompactSidebar
+    ? { "--sidebar-width": COMPACT_SIDEBAR_WIDTH }
+    : undefined;
 
   return (
     <div
-      className="flex h-dvh w-full flex-col overflow-hidden bg-background text-foreground"
+      className="flex min-h-dvh w-full flex-col bg-background text-foreground md:h-dvh md:overflow-hidden"
       data-design-system="signal-v2"
     >
       <a
@@ -75,13 +80,10 @@ export const AppLayout = () => {
         <ThemeAnnouncement />
       </Suspense>
       <SidebarProvider
-        className="relative min-h-0 flex-1 overflow-hidden"
+        className="relative min-h-0 flex-1 md:overflow-hidden"
         style={sidebarStyle}
       >
-        <AppSidebar
-          compact={isStandaloneRoute}
-          navigation={sidebarNavigation}
-        />
+        <AppSidebar compact={isCompactSidebar} navigation={sidebarNavigation} />
         {isStandaloneRoute ? (
           <StandaloneShell>
             <Outlet />
@@ -104,7 +106,6 @@ export const AppLayout = () => {
           </GuildShell>
         )}
       </SidebarProvider>
-      <Toaster />
       <GlobalModals />
     </div>
   );

@@ -1,16 +1,15 @@
-import { Check, ChevronDown } from "lucide-react";
-import { useState, type FC, type MouseEvent } from "react";
+import { ChevronDown } from "lucide-react";
+import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 import { NpcType } from "@/api/npcs.api";
-import { Button } from "@/components/ui/button";
+import { ChecklistMenu } from "@/components/checklist-menu";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { toolbarStripLightDividerClassName } from "@/components/ui/toolbar-strip";
-import { NPC_NAMES } from "@/constants/margonem";
 
 export const NPC_TYPE_FILTER_OPTIONS = [
   NpcType.ELITE2,
@@ -24,12 +23,10 @@ type TimersNpcTypeFilterProps = {
   onChange: (selectedNpcTypes: NpcType[]) => void;
 };
 
-const ICON_SIZE = 12;
-
 /**
  * One strip cell that opens the monster type checklist, so the filter row
- * does not show a second row of tiles under the guild switcher. Right-click
- * on an entry keeps only that type, like the old inline toggles did.
+ * does not show a second row of tiles under the guild switcher. Each entry's
+ * "only" button (or a right-click on the entry) keeps only that type.
  */
 export const TimersNpcTypeFilter: FC<TimersNpcTypeFilterProps> = ({
   selectedNpcTypes,
@@ -45,11 +42,6 @@ export const TimersNpcTypeFilter: FC<TimersNpcTypeFilterProps> = ({
         ? selectedNpcTypes.filter((entry) => entry !== type)
         : [...selectedNpcTypes, type],
     );
-  };
-
-  const selectOnly = (event: MouseEvent<HTMLButtonElement>, type: NpcType) => {
-    event.preventDefault();
-    onChange([type]);
   };
 
   return (
@@ -74,40 +66,22 @@ export const TimersNpcTypeFilter: FC<TimersNpcTypeFilterProps> = ({
       </PopoverTrigger>
       <PopoverContent
         align="end"
-        className="ll-action-menu ll:w-40 ll:overflow-hidden ll:p-0"
+        className="ll-action-menu ll:w-44 ll:overflow-hidden ll:p-0"
       >
-        <div
-          role="group"
+        <ChecklistMenu
           aria-label={t("filters.npcTypesLabel")}
-          className="ll:flex ll:flex-col"
-        >
-          {NPC_TYPE_FILTER_OPTIONS.map((type) => {
-            const isSelected = selected.has(type);
-
-            return (
-              <Button
-                key={type}
-                size="xs"
-                variant="menu"
-                aria-pressed={isSelected}
-                className={cn(
-                  "ll:w-full ll:justify-between ll:capitalize",
-                  !isSelected && "ll:text-muted-foreground",
-                )}
-                onClick={() => toggle(type)}
-                onContextMenu={(event) => selectOnly(event, type)}
-              >
-                <span>{NPC_NAMES[type].longname}</span>
-                {isSelected ? (
-                  <Check size={ICON_SIZE} aria-hidden="true" />
-                ) : null}
-              </Button>
-            );
-          })}
-        </div>
-        <p className="ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:px-2 ll:py-1 ll:text-[10px] ll:text-muted-foreground">
-          {t("filters.npcTypesOnlyHint")}
-        </p>
+          items={NPC_TYPE_FILTER_OPTIONS.map((type) => ({
+            value: type,
+            label: t(`common:npcTypes.${type.toLowerCase()}`),
+          }))}
+          selected={selected}
+          onToggle={toggle}
+          only={{
+            text: t("filters.npcTypesOnly"),
+            getLabel: (type) => t("filters.npcTypesOnlyLabel", { type }),
+            onSelect: (type) => onChange([type]),
+          }}
+        />
       </PopoverContent>
     </Popover>
   );

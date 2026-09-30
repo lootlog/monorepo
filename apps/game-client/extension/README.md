@@ -20,7 +20,7 @@ Run commands from `apps/game-client`. Extension service URLs are owned by `exten
 | `bun run zip:extension:sources`                                         | Reviewer sources in `.output/`                        |
 | `bun run build`                                                         | Existing userscript in `dist/`                        |
 
-Local Firefox builds explicitly omit CSP's automatic HTTPS upgrade so the local gateway can use `ws://localhost`. Production keeps the browser's default CSP. Zod runs without its dynamic-code optimization in the extension transport.
+Local Firefox builds explicitly omit CSP's automatic HTTPS upgrade so the local gateway can use `ws://localhost`. Production keeps the browser's default CSP. The extension transport validates messages with Effect Schema, which generates no code at runtime and needs no CSP exception.
 
 Every build checks manifest host permissions, bundled service endpoints and content-script UTF-8 before ZIP packaging. Production and local build directories are separate; rebuilding production does not replace an installed local addon. Extension build tasks bypass Turbo caching so artifact checks run each time.
 

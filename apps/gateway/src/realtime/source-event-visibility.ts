@@ -6,8 +6,12 @@ import {
   type LootVisibilityNpc,
 } from "@lootlog/domain/loot-visibility";
 import { Permission } from "@lootlog/schema/permissions";
+import { isBattleTeamPingType } from "@lootlog/schema/battle-ping";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
-import { prepareNpcSourceEvent } from "#src/realtime/npc-event-visibility";
+import {
+  prepareNpcSourceEvent,
+  type PartyGatheringEventSource,
+} from "#src/realtime/npc-event-visibility";
 import type { UserGuildData } from "#src/guilds/guild";
 import type { SessionData } from "#src/realtime/session";
 
@@ -57,29 +61,13 @@ const canReadLootSource = (
 };
 
 export const eventOrganizationId = (event: Event): string | undefined => {
-  switch (event.type) {
-    case "member-refresh.updated":
-    case "event.map-status-updated":
-    case "event.hero-killed":
-    case "event.respawn-window-opened":
-    case "event.respawn-window-closed":
-    case "party-ready-room.updated":
-    case "timer.created":
-    case "timer.deleted":
-    case "chat.created":
-    case "chat.updated":
-    case "chat.deleted":
-    case "notification.sent":
-      return event.data.organizationId;
-    case "loot.created":
-    case "loot.share-updated":
-    case "kills.changed":
-      return event.data.guildId;
-    case "feed.entry":
-      return event.data.guild.id;
-    default:
-      return undefined;
-  }
+  if ("organizationId" in event.data) return event.data.organizationId;
+
+  if ("guildId" in event.data) return event.data.guildId;
+
+  if (event.type === "feed.entry") return event.data.guild.id;
+
+  return undefined;
 };
 
 export const findEventGuild = (
@@ -93,9 +81,15 @@ export const findEventGuild = (
 export const prepareSourceEventVisibility = (
   event: Event,
   sourceNpcs: readonly LootVisibilityNpc[] = [],
+  gatheringSource?: PartyGatheringEventSource,
 ) => {
   const canReadApiKey = prepareApiKeyEventVisibility(event);
-  const canReadNpc = prepareNpcSourceEvent(event);
+
+  const isTeamBattlePing =
+    event.type === "battle-ping.received" &&
+    isBattleTeamPingType(event.data.type);
+
+  const canReadNpc = prepareNpcSourceEvent(event, gatheringSource);
 
   const npcs =
     event.type === "loot.created" || event.type === "loot.share-updated"
@@ -107,6 +101,21 @@ export const prepareSourceEventVisibility = (
 
     if (event.type === "notification.volunteer")
       return session.supportsNotificationVolunteer === true;
+
+    if (
+      event.type === "party-gathering.state-updated" &&
+      !session.supportsPartyGatheringState
+    )
+      return false;
+
+    // Older game clients close the socket on an event type they cannot decode.
+    if (event.type === "battle-ping.received")
+      return isTeamBattlePing
+        ? session.supportsTeamBattlePings === true
+        : session.supportsBattlePings === true;
+
+    if (event.type === "air-tag.map-threat-updated")
+      return session.supportsAirTagMapThreats === true;
 
     if (!canReadNpc(session, guild)) return false;
 

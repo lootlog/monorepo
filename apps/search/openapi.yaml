@@ -495,7 +495,7 @@ components:
                 type: array
                 items:
                   type: string
-                default: []
+                default: &a1 []
             required:
               - id
               - name
@@ -563,7 +563,7 @@ components:
                 type: array
                 items:
                   type: string
-                default: []
+                default: *a1
             required:
               - id
               - name

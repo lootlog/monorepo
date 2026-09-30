@@ -1,4 +1,6 @@
-import { waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { createElement } from "react";
 import { configureApiClients } from "@lootlog/client/transport";
 import {
   seedSettingsDocumentValues,
@@ -8,6 +10,8 @@ import {
 import type { UserSoundSettings } from "@lootlog/schema/sound-settings";
 import { useSettingsStore } from "@/store/settings.store";
 import { disposeSoundPlayback } from "@/lib/sound-playback";
+import { useSoundPlayback } from "@/hooks/use-sound-playback";
+import type { DetectorNpcType } from "@lootlog/schema/account-preferences";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createDetectorSettings } from "@/lib/game-account-preferences";
 import { queryClient } from "@/lib/query-client";
@@ -35,6 +39,7 @@ const play = vi.fn<HTMLMediaElement["play"]>().mockResolvedValue();
 let soundValues: SettingsDocumentValues = {};
 
 const readyPreferences = (overrides?: {
+  npcType?: DetectorNpcType;
   detect?: boolean;
   autoSend?: boolean;
   notifySound?: boolean;
@@ -49,9 +54,10 @@ const readyPreferences = (overrides?: {
   responseGuildIds =
     overrides?.routingRules?.flatMap((rule) => rule.guildIds) ?? [];
   const detector = createDetectorSettings();
-  detector.HERO.detect = overrides?.detect ?? true;
-  detector.HERO.autoSend = overrides?.autoSend ?? false;
-  detector.HERO.notifySound = overrides?.notifySound ?? false;
+  const npcType = overrides?.npcType ?? "HERO";
+  detector[npcType].detect = overrides?.detect ?? true;
+  detector[npcType].autoSend = overrides?.autoSend ?? false;
+  detector[npcType].notifySound = overrides?.notifySound ?? false;
   detector.routingRules = overrides?.routingRules ?? [];
 
   seedSettingsDocumentValues(
@@ -109,6 +115,7 @@ const setInitialNpcs = (npcs: GameNpc[]) => {
       maxHp: 1,
       name: "Tester",
       profession: "w",
+      stasis: false,
       x: 1,
       y: 2,
     },
@@ -210,6 +217,82 @@ describe("NpcsDetectionProcessor", () => {
     processor.handleInitialDetection();
 
     expect(useNpcDetectorStore.getState().npcs).toEqual([]);
+  });
+
+  it("plays a previewed custom elite sound when the browser grants playback per media element", () => {
+    const soundUrl = "https://audio.test/custom-elite.mp3";
+    soundValues = {
+      ...soundValues,
+      "sounds.detectorVolume": 0.8,
+      "sounds.detectorConfig": {
+        ELITE2: { volume: 1, soundUrl },
+      },
+    };
+    readyPreferences({ npcType: "ELITE2", notifySound: true });
+    useSettingsStore.setState({ masterVolume: 0.5 });
+
+    let userGesture = false;
+    const unlockedAudio = new WeakSet<HTMLMediaElement>();
+    const audible: { url: string; volume: number }[] = [];
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockImplementation(function (
+      this: HTMLMediaElement,
+    ) {
+      if (userGesture) unlockedAudio.add(this);
+
+      if (!unlockedAudio.has(this)) {
+        return Promise.reject(
+          new DOMException("Gesture required", "NotAllowedError"),
+        );
+      }
+
+      audible.push({ url: this.src, volume: this.volume });
+
+      return Promise.resolve();
+    });
+
+    const { result, unmount } = renderHook(() => useSoundPlayback(), {
+      wrapper: ({ children }) =>
+        createElement(QueryClientProvider, { client: queryClient }, children),
+    });
+
+    userGesture = true;
+    act(() => result.current.playSoundTest("detector", "ELITE2"));
+    userGesture = false;
+
+    const event = createNpcEvent({
+      npcTpls: [{ ...createNpcTpl(), warrior_type: 20 }],
+    });
+
+    processor.handle(event);
+    processor.handle(event);
+
+    expect(useNpcDetectorStore.getState().npcs).toEqual([
+      expect.objectContaining({ id: 500, wt: 20 }),
+    ]);
+    expect(audible).toEqual([
+      { url: soundUrl, volume: 0.4 },
+      { url: soundUrl, volume: 0.4 },
+    ]);
+    unmount();
+  });
+
+  it("detects an elite silently when its detector sound is disabled", () => {
+    soundValues = {
+      ...soundValues,
+      "sounds.detectorConfig": {
+        ELITE2: { volume: 1, soundUrl: "https://audio.test/custom-elite.mp3" },
+      },
+    };
+    readyPreferences({ npcType: "ELITE2", notifySound: false });
+
+    processor.handle(
+      createNpcEvent({ npcTpls: [{ ...createNpcTpl(), warrior_type: 20 }] }),
+    );
+
+    expect(useNpcDetectorStore.getState().npcs).toEqual([
+      expect.objectContaining({ id: 500, wt: 20 }),
+    ]);
+    expect(play).not.toHaveBeenCalled();
   });
 
   it("queues event until detector preferences are ready and flushes it later", () => {

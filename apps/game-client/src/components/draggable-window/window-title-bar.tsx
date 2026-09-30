@@ -1,6 +1,6 @@
 import type { FC } from "react";
 import { Blend, Lock, Unlock, X } from "lucide-react";
-import { WindowActionButton } from "@/components/draggable-window/window-action-button";
+import { IconButton } from "@/components/ui/icon-button";
 import type { WindowOpacity } from "@/store/windows.store";
 import { useTranslation } from "react-i18next";
 
@@ -10,6 +10,8 @@ const ICON_SIZE = 14;
 
 interface WindowTitleBarProps {
   title: string;
+  /** Names the window dialog through `aria-labelledby`. */
+  titleId: string;
   actions?: React.ReactNode;
   closable: boolean;
   opacity: WindowOpacity;
@@ -27,6 +29,7 @@ interface WindowTitleBarProps {
  */
 export const WindowTitleBar: FC<WindowTitleBarProps> = ({
   title,
+  titleId,
   actions,
   closable,
   opacity,
@@ -55,42 +58,44 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
       style={{ touchAction: "none" }}
     >
       <div
-        className="ll:flex ll:items-center ll:gap-0.5 ll:justify-self-start"
+        className="ll:flex ll:items-center ll:justify-self-start"
         data-ll-draggable="false"
       >
         {actions}
       </div>
-      <p className="ll:min-w-0 ll:truncate ll:text-center ll:text-xs ll:font-semibold ll:leading-none ll:tracking-wide ll:text-gray-100">
+      <p
+        id={titleId}
+        className="ll:min-w-0 ll:truncate ll:text-center ll:text-xs ll:font-semibold ll:leading-none ll:tracking-wide ll:text-gray-100"
+      >
         {title}
       </p>
       <div
-        className="ll:flex ll:items-center ll:gap-0.5 ll:justify-self-end"
+        className="ll:flex ll:items-center ll:justify-self-end"
         data-ll-draggable="false"
       >
-        <WindowActionButton
-          label={t("windowControls.changeOpacity")}
+        <IconButton
+          label={t("windowControls.opacityLevel", {
+            level: opacity,
+            max: OPACITY_LEVELS.length,
+          })}
           onClick={handleOpacityChange}
         >
           <Blend size={ICON_SIZE} aria-hidden="true" />
-        </WindowActionButton>
-        <WindowActionButton
-          label={lockLabel}
-          active={isLocked}
-          onClick={onLockToggle}
-        >
+        </IconButton>
+        <IconButton label={lockLabel} active={isLocked} onClick={onLockToggle}>
           {isLocked ? (
             <Lock size={ICON_SIZE} aria-hidden="true" />
           ) : (
             <Unlock size={ICON_SIZE} aria-hidden="true" />
           )}
-        </WindowActionButton>
+        </IconButton>
         {closable && (
-          <WindowActionButton
+          <IconButton
             label={t("windowControls.closeWindow")}
             onClick={() => onClose?.()}
           >
-            <X size={16} aria-hidden="true" />
-          </WindowActionButton>
+            <X aria-hidden="true" className="ll:size-4" />
+          </IconButton>
         )}
       </div>
     </div>

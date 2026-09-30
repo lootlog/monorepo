@@ -78,7 +78,9 @@ export const SettingsNumberField: FC<SettingsNumberFieldProps> = ({
       event.currentTarget.blur();
     }
 
+    // Escape reverts the draft; consuming it keeps the window open.
     if (event.key === "Escape") {
+      event.preventDefault();
       cancelled.current = true;
       setDraft(null);
       event.currentTarget.blur();

@@ -6,6 +6,7 @@ import {
   MapPingAckSchema,
   AirTagSubscriptionAck,
   AirTagObservationAck,
+  AirTagMapThreatsFetchResponse,
   RealtimeFrame,
   type RealtimeFrame as RealtimeFrameType,
 } from "./protocol.js";
@@ -128,6 +129,14 @@ export const isAirTagSubscriptionAcknowledgement = Schema.is(
 
 export const isAirTagObservationAcknowledgement =
   Schema.is(AirTagObservationAck);
+
+export const isAirTagMapThreatsFetchResponse = Schema.is(
+  AirTagMapThreatsFetchResponse,
+);
+
+export const hasRealtimeCapabilities = Schema.is(
+  Schema.Struct({ capabilities: Schema.Array(Schema.NonEmptyString) }),
+);
 
 export const isPresenceFetchResult = Schema.is(
   Schema.Struct({

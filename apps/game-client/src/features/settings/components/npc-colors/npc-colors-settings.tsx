@@ -1,5 +1,5 @@
 import { SettingsColorRow } from "@/components/settings/settings-color-row";
-import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { IconButton } from "@/components/ui/icon-button";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Button } from "@/components/ui/button";
@@ -132,13 +132,13 @@ export const NpcColorsSettings = () => {
                 </NpcColorPreviewChip>
               }
             >
-              <SettingsIconButton
+              <IconButton
                 label={`${t("settings.npcColors.reset")}: ${npcTypeLabel}`}
                 disabled={!isModified}
                 onClick={() => resetType(npcType)}
               >
                 <RotateCcw />
-              </SettingsIconButton>
+              </IconButton>
             </SettingsColorRow>
           );
         })}

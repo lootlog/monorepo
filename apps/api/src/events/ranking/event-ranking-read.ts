@@ -1,5 +1,8 @@
 import { IsoDateTime } from "@lootlog/schema/primitives";
-import { topMemberDisplayRoles } from "#src/members/member-display-role";
+import {
+  memberDisplayRolesQuery,
+  topMemberDisplayRoles,
+} from "#src/members/member-display-role";
 import { roundEventDisplayValue } from "#src/events/round-event-display-value";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { Effect, Schema } from "effect";
@@ -9,8 +12,6 @@ import {
   eventRankingTable,
   eventTable,
   memberTable,
-  memberToRoleTable,
-  roleTable,
 } from "#src/database/drizzle/schema";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
@@ -69,16 +70,7 @@ export const makeEventRankingRead = (
       const roles =
         memberIds.length === 0
           ? []
-          : yield* database
-              .select({
-                memberId: memberToRoleTable.A,
-                position: roleTable.position,
-                color: roleTable.color,
-              })
-              .from(memberToRoleTable)
-              .innerJoin(roleTable, eq(roleTable.id, memberToRoleTable.B))
-              .where(inArray(memberToRoleTable.A, memberIds))
-              .orderBy(desc(roleTable.position));
+          : yield* memberDisplayRolesQuery(database, memberIds);
 
       return rows.map(({ ranking, member }) => ({
         ...ranking,

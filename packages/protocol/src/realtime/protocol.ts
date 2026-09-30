@@ -1,11 +1,18 @@
 import { AccessPolicySnapshot, AccessPolicyChange } from "./access-policy.js";
 import { UserFeedItem } from "../feed.js";
 import { NonNegativeInt } from "@lootlog/schema/primitives";
+import { PartyGatheringClientUpdateSchema } from "@lootlog/schema/party-ready-room";
 import {
+  AirTagMapThreatEventSchema,
   AirTagObservationBatchSchema,
   AirTagScopeSnapshotSchema,
+  AirTagScopeUpdateEventSchema,
   AirTagUpdateEventSchema,
 } from "@lootlog/schema/air-tag";
+import {
+  BattlePingEventSchema,
+  BattlePingSendPayloadSchema,
+} from "@lootlog/schema/battle-ping";
 import {
   MapPingAckSchema,
   MapPingEventSchema,
@@ -26,7 +33,42 @@ export const REALTIME_FEED_CAPABILITY = "lootlog.feed.v1";
 export const REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY =
   "lootlog.notification-volunteer.v1";
 
+export const REALTIME_PARTY_GATHERING_STATE_CAPABILITY =
+  "lootlog.party-gathering-state.v1";
+
 export const REALTIME_SUBPROTOCOL = "lootlog.realtime.v1";
+
+// Listed in `session.joined` capabilities. Older gateways close the socket on an
+// unknown command, so clients send `connection.ping` only when it is listed.
+export const REALTIME_PING_CAPABILITY = "connection.ping";
+
+// Offered as a subprotocol by clients that decode `battle-ping.received`, and
+// listed in `session.joined` capabilities by gateways that accept
+// `battle-ping.send`. Older clients close the socket on an unknown event, and
+// older gateways close it on an unknown command.
+export const REALTIME_BATTLE_PING_CAPABILITY = "lootlog.battle-ping.v1";
+
+// Negotiated like `lootlog.battle-ping.v1`, for the battle ping types that
+// address the whole team (`quick-fight`), which v1 clients and gateways cannot
+// decode.
+export const REALTIME_TEAM_BATTLE_PING_CAPABILITY =
+  "lootlog.battle-ping.team.v1";
+
+// Offered as a subprotocol by clients that decode `air-tag.map-threat-updated`,
+// and listed in `session.joined` capabilities by gateways that accept
+// `air-tag.map-threats.fetch`. Older clients close the socket on an unknown
+// event, and older gateways close it on an unknown command.
+export const REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY =
+  "lootlog.air-tag-map-threat.v1";
+
+// Offered as a subprotocol by clients that decode `air-tag.scope-updated`, and
+// listed in `session.joined` capabilities by gateways that accept `departures`
+// in `air-tag.observation`. Clients without it receive one `air-tag.updated`
+// per target and no removals.
+export const REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY =
+  "lootlog.air-tag-scope-update.v1";
+
+export const REALTIME_SESSION_HELLO_CAPABILITY = "lootlog.session-hello.v1";
 
 export const REALTIME_JSON_SUBPROTOCOL = "lootlog.realtime.json.v1";
 
@@ -193,6 +235,9 @@ const HeartbeatCommand = command(
 
 const PresencePublishCommand = command("presence.publish", PublishedPresence);
 
+// Answered without I/O, so the round trip measures only the connection.
+const PingCommand = command("connection.ping", Schema.Struct({}));
+
 const PresenceFetchCommand = command(
   "presence.fetch",
   Schema.Struct({
@@ -214,6 +259,12 @@ export const MapPingCommand = command(
   MapPingSendPayloadSchema,
 );
 
+// Acknowledged with `MapPingAckSchema`: both pings share one reject vocabulary.
+export const BattlePingCommand = command(
+  "battle-ping.send",
+  BattlePingSendPayloadSchema,
+);
+
 export const AirTagSubscriptionCommand = command(
   "air-tag.subscription",
   Schema.Struct({
@@ -227,6 +278,18 @@ export const AirTagObservationCommand = command(
   "air-tag.observation",
   AirTagObservationBatchSchema,
 );
+
+export const AirTagMapThreatsFetchCommand = command(
+  "air-tag.map-threats.fetch",
+  Schema.Struct({
+    organizationId: Schema.NonEmptyString,
+    world: Schema.NonEmptyString,
+  }),
+);
+
+export const AirTagMapThreatsFetchResponse = Schema.Struct({
+  threats: Schema.Array(AirTagMapThreatEventSchema),
+});
 
 export const AirTagRejectCode = Schema.Literals([
   "forbidden",
@@ -267,13 +330,16 @@ export { MapPingAckSchema };
 export const ClientCommand = Schema.Union([
   SessionJoinCommand,
   HeartbeatCommand,
+  PingCommand,
   PresencePublishCommand,
   PresenceFetchCommand,
   SubscribeCommand,
   UnsubscribeCommand,
   MapPingCommand,
+  BattlePingCommand,
   AirTagSubscriptionCommand,
   AirTagObservationCommand,
+  AirTagMapThreatsFetchCommand,
 ]);
 
 export type ClientCommand = typeof ClientCommand.Type;
@@ -326,12 +392,17 @@ const OrganizationEvent = Schema.Struct({
 
 export const ServerEvent = Schema.Union([
   serverEvent(
+    "session.hello",
+    Schema.Struct({ connectionId: Schema.NonEmptyString }),
+  ),
+  serverEvent(
     "session.joined",
     Schema.Struct({
       connectionId: Schema.NonEmptyString,
       organizationIds: Schema.Array(Schema.NonEmptyString),
       subscriptionScopes: Schema.Array(SubscriptionScope),
       accessPolicy: Schema.optional(AccessPolicySnapshot),
+      capabilities: Schema.optional(Schema.Array(Schema.NonEmptyString)),
     }),
   ),
   serverEvent(
@@ -365,9 +436,19 @@ export const ServerEvent = Schema.Union([
   serverEvent("member-refresh.updated", OrganizationEvent),
   serverEvent("party-gathering.updated", OrganizationEvent),
   serverEvent("party-gathering.cancelled", OrganizationEvent),
+  serverEvent(
+    "party-gathering.state-updated",
+    Schema.Struct({
+      organizationId: Schema.NonEmptyString,
+      payload: PartyGatheringClientUpdateSchema,
+    }),
+  ),
   serverEvent("party-ready-room.updated", OrganizationEvent),
   serverEvent("map-ping.received", MapPingEventSchema),
+  serverEvent("battle-ping.received", BattlePingEventSchema),
   serverEvent("air-tag.updated", AirTagUpdateEventSchema),
+  serverEvent("air-tag.scope-updated", AirTagScopeUpdateEventSchema),
+  serverEvent("air-tag.map-threat-updated", AirTagMapThreatEventSchema),
   serverEvent("event.map-status-updated", OrganizationEvent),
   serverEvent("event.hero-killed", OrganizationEvent),
   serverEvent("event.ranking-updated", OrganizationEvent),

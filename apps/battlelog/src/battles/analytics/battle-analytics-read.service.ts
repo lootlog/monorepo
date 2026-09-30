@@ -26,6 +26,7 @@ import type {
   HeadToHeadRecord,
 } from "./battle-statistics-response.js";
 import { filterAndSortHeadToHeadRecords } from "./head-to-head-calculator.service.js";
+import { battleSummaryCalculator } from "./battle-summary-calculator.service.js";
 
 import { selectedWarriorOrder } from "#src/battles/battle-warrior-query";
 import { battleWarriorNumberStat } from "#src/battles/statistics/battle-warrior-stats-query";
@@ -238,10 +239,7 @@ export const makeBattleAnalyticsRead = (
       .from(runs);
 
     if (!row || row.currentWin === null)
-      return {
-        current: { type: "none", count: 0 },
-        longest: { wins: 0, losses: 0 },
-      };
+      return battleSummaryCalculator.getEmptyStreak();
 
     return {
       current: {

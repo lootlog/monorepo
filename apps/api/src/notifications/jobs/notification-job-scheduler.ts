@@ -238,3 +238,15 @@ export const makeNotificationJobScheduler = (
 export type NotificationJobScheduler = ReturnType<
   typeof makeNotificationJobScheduler
 >;
+
+export const enqueuePendingNotificationJob = (
+  scheduler: Pick<NotificationJobScheduler, "enqueue">,
+  job: Pick<typeof notificationJobTable.$inferSelect, "id" | "status"> | null,
+  scheduledFor: Date,
+) =>
+  job?.status === NotificationJobStatus.PENDING
+    ? scheduler.enqueue(
+        job.id,
+        Math.max(0, scheduledFor.getTime() - Date.now()),
+      )
+    : Effect.void;

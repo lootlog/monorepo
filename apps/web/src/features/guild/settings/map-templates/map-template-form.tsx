@@ -16,14 +16,18 @@ import {
   FormMessage,
 } from "@lootlog/ui/components/form";
 import { Input } from "@lootlog/ui/components/input";
+import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { MapPin, X } from "lucide-react";
+import { useId } from "react";
 
 import { useMapTemplateForm } from "./use-map-template-form";
 
 export const MapTemplateForm = (
   props: Parameters<typeof useMapTemplateForm>[0],
 ) => {
+  const searchId = useId();
+
   const {
     Icon,
     t,
@@ -115,6 +119,9 @@ export const MapTemplateForm = (
                               </span>
                               <button
                                 type="button"
+                                aria-label={t("common.removeOption", {
+                                  label: map.name,
+                                })}
                                 onClick={() => handleRemoveMap(map.id)}
                                 className="hover:text-destructive shrink-0"
                               >
@@ -131,10 +138,14 @@ export const MapTemplateForm = (
               />
 
               <div className="space-y-3">
-                <FormLabel className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <Label
+                  htmlFor={searchId}
+                  className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                >
                   {t("settings.mapTemplates.searchAndAddMaps")}
-                </FormLabel>
+                </Label>
                 <SearchInput
+                  id={searchId}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t("settings.mapTemplates.searchPlaceholder")}

@@ -1,5 +1,8 @@
 /* eslint-disable react-doctor/jsx-no-constructed-context-values -- Vite React Compiler output caches this provider value and its callbacks by their actual dependencies; verified through the running Vite module transform. */
-import { GuildWatchedItemsContext } from "./guild-watched-items-context";
+import {
+  GuildWatchedItemsContext,
+  type GuildWatchedItemsContextValue,
+} from "./guild-watched-items-context";
 import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
 import {
   getNotificationsUserControllerGetUserTargetsQueryKey,
@@ -70,6 +73,23 @@ export const GuildWatchedItemsProvider = ({ children }: PropsWithChildren) => {
     ]),
   );
 
+  const getWatchedItemId: GuildWatchedItemsContextValue["getWatchedItemId"] = (
+    itemId,
+    scope,
+  ) => {
+    const guildId = scope.guildId ? resolveGuildId(scope.guildId) : undefined;
+
+    return (
+      watchedItems.find(
+        (watchedItem) =>
+          watchedItem.itemId === itemId &&
+          watchedItem.world === scope.world &&
+          guildId !== undefined &&
+          watchedGuildIds.get(watchedItem.id)?.has(guildId) === true,
+      )?.id ?? null
+    );
+  };
+
   const state =
     targetsQuery.data !== undefined && watchedItemsQuery.data !== undefined
       ? "ready"
@@ -91,34 +111,9 @@ export const GuildWatchedItemsProvider = ({ children }: PropsWithChildren) => {
             (watchedItem) =>
               watchedItem.itemId === itemId && watchedItem.world === world,
           ),
-        isItemWatchedInScope: (itemId, scope) => {
-          const guildId = scope.guildId
-            ? resolveGuildId(scope.guildId)
-            : undefined;
-
-          return watchedItems.some(
-            (watchedItem) =>
-              watchedItem.itemId === itemId &&
-              watchedItem.world === scope.world &&
-              guildId !== undefined &&
-              watchedGuildIds.get(watchedItem.id)?.has(guildId) === true,
-          );
-        },
-        getWatchedItemId: (itemId, scope) => {
-          const guildId = scope.guildId
-            ? resolveGuildId(scope.guildId)
-            : undefined;
-
-          return (
-            watchedItems.find(
-              (watchedItem) =>
-                watchedItem.itemId === itemId &&
-                watchedItem.world === scope.world &&
-                guildId !== undefined &&
-                watchedGuildIds.get(watchedItem.id)?.has(guildId) === true,
-            )?.id ?? null
-          );
-        },
+        isItemWatchedInScope: (itemId, scope) =>
+          getWatchedItemId(itemId, scope) !== null,
+        getWatchedItemId,
       }}
     >
       {children}

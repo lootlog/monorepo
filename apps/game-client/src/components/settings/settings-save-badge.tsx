@@ -6,7 +6,7 @@ export type SettingsSaveBadgeStatus = "saving" | "saved" | "error";
 
 /** Contextual icon entrance: scale 0.25, blur 4px, opacity 0 -> rest. */
 export const SETTINGS_SAVE_ICON_ENTER_CLASS_NAME =
-  "ll:flex ll:items-center ll:animate-in ll:fade-in-0 ll:zoom-in-[0.25] ll:blur-in-[4px] ll:duration-300 ll:ease-[cubic-bezier(0.2,0,0,1)]";
+  "ll:flex ll:items-center ll:animate-in ll:fade-in-0 ll:zoom-in-[0.25] ll:blur-in-[4px] ll:duration-long ll:ease-enter";
 
 type SettingsSaveBadgeProps = {
   status: SettingsSaveBadgeStatus;

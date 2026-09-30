@@ -13,7 +13,7 @@ known worlds. Comparisons use the complete serialized document, including
 derived search fields, rather than a process-local cache. Replayed successful
 updates therefore do not require another indexing task.
 
-Task completion is checked every 15 seconds, with a 60-second timeout. A timeout or
+Task completion is checked every 250 milliseconds, with a 60-second timeout. A timeout or
 failed task retries the batch without individually requeueing its messages. Startup only
 updates index settings when the settings owned by this service differ.
 

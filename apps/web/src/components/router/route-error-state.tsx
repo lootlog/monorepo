@@ -15,6 +15,7 @@ type RouteErrorStateProps = {
   status: RouteErrorStatus;
   title?: string;
   description?: string;
+  details?: string;
   primaryAction?: ReactNode;
   secondaryAction?: ReactNode;
 };
@@ -33,6 +34,7 @@ export const RouteErrorState = ({
   status,
   title,
   description,
+  details,
   primaryAction,
   secondaryAction,
 }: RouteErrorStateProps) => {
@@ -58,6 +60,16 @@ export const RouteErrorState = ({
           {primaryAction}
           {secondaryAction}
         </div>
+      )}
+      {details && (
+        <details className="mt-4 text-left text-sm">
+          <summary className="cursor-pointer rounded-sm text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring">
+            {t("common.routeErrors.details")}
+          </summary>
+          <p className="mt-2 whitespace-pre-wrap break-words text-muted-foreground">
+            {details}
+          </p>
+        </details>
       )}
     </NoticeCard>
   );

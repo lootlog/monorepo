@@ -3,7 +3,6 @@ import { Button } from "@lootlog/ui/components/button";
 import { useState, type FC } from "react";
 import { Textarea } from "@lootlog/ui/components/textarea";
 import { LootSingleComment } from "@/features/guild/loots-list/components/loots-list/loot-single-comment";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -13,6 +12,7 @@ import {
   useLootsControllerCreateComment,
   useLootsControllerGetComments,
 } from "@lootlog/client/main";
+import { LoadingSlot } from "@/components/common/loading-slot";
 
 const MAX_LENGTH = 256;
 
@@ -114,7 +114,7 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
 
       {isLoading && (
         <div className="flex items-center justify-center px-4 py-5">
-          <Spinner className="size-5 text-muted-foreground" />
+          <LoadingSlot size="small" />
         </div>
       )}
       {isError && (

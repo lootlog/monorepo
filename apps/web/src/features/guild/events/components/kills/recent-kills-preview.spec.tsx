@@ -4,6 +4,7 @@ import { createOrganizationTestWrapper } from "@/lib/testing/router";
 import { createHeroKill } from "@/lib/testing/event-kill";
 import type { ReactNode } from "react";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -37,15 +38,22 @@ const renderPreview = (
     configureApiClients({ main: { baseUrl: "https://api.test", fetch } }),
   );
 
-  return render(
-    <QueryClientProvider client={queryClient}>{content}</QueryClientProvider>,
-    { wrapper: RouterWrapper },
-  );
+  return {
+    ...render(
+      <QueryClientProvider client={queryClient}>{content}</QueryClientProvider>,
+      { wrapper: RouterWrapper },
+    ),
+    queryClient,
+  };
 };
 
 const recentKillsResponse = () =>
   Promise.resolve(
-    Response.json({ data: [createHeroKill()], nextCursor: null }),
+    Response.json({
+      kind: "event",
+      data: [createHeroKill()],
+      nextCursor: null,
+    }),
   );
 
 describe("RecentKillsPreview", () => {
@@ -107,7 +115,7 @@ describe("RecentKillsPreview", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Maddok" }));
     await waitFor(() =>
       expect(requests[requests.length - 1]).toContain(
-        "/heroes/hero-2/kills?limit=5",
+        "/kill-history?limit=5&heroId=hero-2",
       ),
     );
     expect(
@@ -115,6 +123,35 @@ describe("RecentKillsPreview", () => {
         await screen.findByRole("link", { name: "events.kills.viewAll" })
       ).getAttribute("href"),
     ).toContain("/heroes/hero-2/kills");
+  });
+
+  it("keeps recent kills visible and recovers from a failed refresh", async () => {
+    let shouldFail = false;
+
+    const { queryClient } = renderPreview(
+      <RecentKillsPreview guildId="guild-1" eventId="event-1" />,
+      () =>
+        shouldFail
+          ? Promise.resolve(
+              Response.json({ message: "Unavailable" }, { status: 503 }),
+            )
+          : recentKillsResponse(),
+    );
+
+    await screen.findAllByText("Zorin");
+    shouldFail = true;
+    await act(() => queryClient.invalidateQueries());
+
+    expect(await screen.findByRole("alert")).toBeTruthy();
+    expect(screen.getAllByText("Zorin").length).toBeGreaterThan(0);
+
+    shouldFail = false;
+    fireEvent.click(
+      screen.getByRole("button", { name: "common.actions.retry" }),
+    );
+
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+    expect(screen.getAllByText("Zorin").length).toBeGreaterThan(0);
   });
 
   it.each(["loading", "empty", "error"] as const)(
@@ -131,7 +168,9 @@ describe("RecentKillsPreview", () => {
               Response.json({ message: "Unavailable" }, { status: 503 }),
             );
 
-          return Promise.resolve(Response.json({ data: [], nextCursor: null }));
+          return Promise.resolve(
+            Response.json({ kind: "event", data: [], nextCursor: null }),
+          );
         },
       );
       expect(

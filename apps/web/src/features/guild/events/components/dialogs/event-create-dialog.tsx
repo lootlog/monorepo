@@ -11,6 +11,7 @@ import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { Textarea } from "@lootlog/ui/components/textarea";
 import { BookOpenText, Settings, Trophy } from "lucide-react";
+import { Controller } from "react-hook-form";
 import {
   useEventCreateDialog,
   type EventCreateDialogProps,
@@ -18,6 +19,7 @@ import {
 
 import { ScoringModeSelector } from "../scoring/scoring-mode-selector";
 import { ScoringRulesEditor } from "../scoring/scoring-rules-editor";
+import { hasValidScoringNumbers } from "../../utils/scoring-number-validation";
 
 export const EventCreateDialog = ({
   open,
@@ -171,11 +173,22 @@ export const EventCreateDialog = ({
                   <Settings className="size-3" />
                   {t("events.scoring.title")}
                 </Label>
-                <ScoringRulesEditor
-                  value={form.watch("scoringRules")}
-                  onChange={(value) =>
-                    form.setValue("scoringRules", value, { shouldDirty: true })
-                  }
+                <Controller
+                  control={form.control}
+                  name="scoringRules"
+                  rules={{
+                    validate: (value) =>
+                      hasValidScoringNumbers(value) ||
+                      t("events.scoring.validation.invalidRules"),
+                  }}
+                  render={({ field, fieldState }) => (
+                    <ScoringRulesEditor
+                      value={field.value}
+                      onChange={field.onChange}
+                      error={fieldState.error?.message}
+                      ref={field.ref}
+                    />
+                  )}
                 />
               </div>
             )}

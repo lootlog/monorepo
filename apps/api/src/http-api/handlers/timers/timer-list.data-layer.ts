@@ -1,3 +1,4 @@
+import { selectTimersWithActors } from "#src/timers/timer-query";
 import {
   accessibleGuildsQuery,
   activeGuildMemberJoin,
@@ -24,7 +25,6 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   memberTable,
   memberToRoleTable,
-  playerSnapshotTable,
   roleTable,
   timerTable,
   userSettingDocumentTable,
@@ -110,18 +110,7 @@ const readVisibleTimers = (
         )
       : inArray(timerTable.guildId, [...guildIds]);
 
-    return yield* database
-      .select({
-        timer: timerTable,
-        member: memberTable,
-        actorCharacter: playerSnapshotTable,
-      })
-      .from(timerTable)
-      .leftJoin(memberTable, eq(memberTable.id, timerTable.createdById))
-      .leftJoin(
-        playerSnapshotTable,
-        eq(playerSnapshotTable.id, timerTable.actorCharacterSnapshotId),
-      )
+    return yield* selectTimersWithActors(database)
       .where(and(scope, visibility))
       .orderBy(desc(timerTable.maxSpawnTime))
       .pipe(

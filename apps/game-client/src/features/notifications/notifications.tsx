@@ -62,13 +62,14 @@ export const Notifications = () => {
         }
       />
       onClose={handleClose}
-      heightMode="css-auto-up-to-max"
+      heightMode="auto-up-to-max"
       maxContentHeight={resolvedMaxContentHeight}
       isMaxHeightAdjustmentArmed={isMaxHeightAdjustmentArmed}
       onMaxHeightAdjustmentArmedChange={setIsMaxHeightAdjustmentArmed}
       onMaxContentHeightChange={(nextMaxContentHeight) =>
         setMaxContentHeight("notifications", nextMaxContentHeight)
       }
+      contentClassName="ll:-mx-1 ll:-mb-1"
       resizable
       minHeight={64}
       maxHeight={600}

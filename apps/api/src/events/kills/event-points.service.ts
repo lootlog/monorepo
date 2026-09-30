@@ -1,9 +1,11 @@
 import {
+  getTrackingDurationSecondsForRanking,
   isKillPointCountedInRanking,
   roundPoints,
 } from "#src/events/kills/event-ranking-policy";
 import type { eventKillPointTable } from "#src/database/drizzle/schema";
 import { Array as Arr, Clock, Effect } from "effect";
+import { groupBy } from "es-toolkit";
 import type { EventEmitter } from "#src/events/event-emitter";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
@@ -21,6 +23,8 @@ import type { EventPointsStore } from "#src/events/kills/event-points.repository
 import {
   calculateTrackingDurationSeconds,
   clipIntervalToWindow,
+  clipToWindow,
+  getTrackingWindowDurationSeconds,
 } from "#src/events/monitoring/tracking-window";
 
 type CalculateMemberPointsParams = {
@@ -120,16 +124,6 @@ export const makeEventPoints = (
     });
   }
 
-  function getTrackingDurationSecondsForRanking(params: {
-    trackingDurationSeconds: number | null | undefined;
-  }): number {
-    if (!Number.isFinite(params.trackingDurationSeconds)) {
-      return 0;
-    }
-
-    return Math.max(0, Math.round(params.trackingDurationSeconds));
-  }
-
   function createRankingKey(params: {
     memberId: number;
     heroNpcName: string;
@@ -167,17 +161,8 @@ export const makeEventPoints = (
       return undefined;
     }
 
-    const trackingWindowStartTime =
-      params.minSpawnTimeAtKill > params.killedAt
-        ? params.killedAt
-        : params.minSpawnTimeAtKill;
-
-    const trackingWindowDurationSeconds = Math.max(
-      0,
-      Math.floor(
-        (params.killedAt.getTime() - trackingWindowStartTime.getTime()) / 1000,
-      ),
-    );
+    const trackingWindowDurationSeconds =
+      getTrackingWindowDurationSeconds(params);
 
     if (trackingWindowDurationSeconds <= 0) {
       return undefined;
@@ -739,14 +724,14 @@ export const makeEventPoints = (
           continue;
         }
 
-        const effectiveStart =
-          since && log.startedAt < since ? since : log.startedAt;
+        const { start, end } = clipToWindow({
+          start: log.startedAt,
+          end: log.endedAt,
+          windowStart: since ?? log.startedAt,
+          windowEnd,
+        });
 
-        const endTime = log.endedAt
-          ? new Date(Math.min(log.endedAt.getTime(), windowEnd.getTime()))
-          : windowEnd;
-
-        const duration = endTime.getTime() - effectiveStart.getTime();
+        const duration = end.getTime() - start.getTime();
 
         if (duration > 0) {
           currentStats.totalTimeMs += duration;
@@ -811,14 +796,14 @@ export const makeEventPoints = (
 
           if (!stats) continue;
 
-          const effectiveStart =
-            since && log.startedAt < since ? since : log.startedAt;
+          const { start, end } = clipToWindow({
+            start: log.startedAt,
+            end: log.endedAt,
+            windowStart: since ?? log.startedAt,
+            windowEnd,
+          });
 
-          const endTime = log.endedAt
-            ? new Date(Math.min(log.endedAt.getTime(), windowEnd.getTime()))
-            : windowEnd;
-
-          const duration = endTime.getTime() - effectiveStart.getTime();
+          const duration = end.getTime() - start.getTime();
 
           if (duration > 0) {
             stats.presenceTimeMs += duration;
@@ -879,14 +864,14 @@ export const makeEventPoints = (
 
           if (!stats) continue;
 
-          const effectiveStart =
-            since && log.startedAt < since ? since : log.startedAt;
+          const { start, end } = clipToWindow({
+            start: log.startedAt,
+            end: log.endedAt,
+            windowStart: since ?? log.startedAt,
+            windowEnd,
+          });
 
-          const endTime = log.endedAt
-            ? new Date(Math.min(log.endedAt.getTime(), windowEnd.getTime()))
-            : windowEnd;
-
-          const duration = endTime.getTime() - effectiveStart.getTime();
+          const duration = end.getTime() - start.getTime();
 
           if (duration > 0) {
             stats.presenceTimeMs += duration;
@@ -925,52 +910,23 @@ export const makeEventPoints = (
 
     return Effect.gen(function* () {
       yield* Effect.forEach(
-        rankableKillPoints,
-        (killPoint) =>
-          Effect.gen(function* () {
-            const trackingDurationSeconds =
-              getTrackingDurationSecondsForRanking({
-                trackingDurationSeconds: killPoint.trackingDurationSeconds,
-              });
-
-            const existing = yield* repository.findRankingByKey(
-              eventId,
-              killPoint.memberId,
-              heroNpcName,
-            );
-
-            if (existing) {
-              const newTotalKills = existing.totalKills + 1;
-
-              const newAvgAfk =
-                (existing.avgAfkPercentage * existing.totalKills +
-                  killPoint.afkPercentage) /
-                newTotalKills;
-
-              yield* repository.incrementRanking(
-                existing.id,
-                killPoint.points,
-                trackingDurationSeconds,
-                Math.round(newAvgAfk * 100) / 100,
-                existing.pointsModified ||
-                  killPoint.manualAdjustmentPoints !== 0,
-              );
-
-              return;
-            }
-
-            yield* repository.createRanking({
-              eventId,
+        Object.entries(groupBy(rankableKillPoints, ({ killId }) => killId)),
+        ([killId, points]) =>
+          repository.addKillToRankings(
+            eventId,
+            heroNpcName,
+            killId,
+            points.map((killPoint) => ({
               memberId: killPoint.memberId,
-              heroNpcName,
-              totalPoints: killPoint.points,
-              totalKills: 1,
-              totalTimeSeconds: trackingDurationSeconds,
-              avgAfkPercentage: killPoint.afkPercentage,
+              points: killPoint.points,
+              trackingSeconds: getTrackingDurationSecondsForRanking({
+                trackingDurationSeconds: killPoint.trackingDurationSeconds,
+              }),
+              afkPercentage: killPoint.afkPercentage,
               pointsModified: killPoint.manualAdjustmentPoints !== 0,
-            });
-          }),
-        { concurrency: "unbounded", discard: true },
+            })),
+          ),
+        { discard: true },
       );
 
       yield* emitRankingUpdateByEventId(eventId);

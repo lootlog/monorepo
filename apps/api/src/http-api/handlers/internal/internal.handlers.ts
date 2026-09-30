@@ -2,23 +2,20 @@ import {
   readGuildConfigurationCache,
   writeGuildConfigurationCache,
 } from "#src/guilds/guild-configuration-cache";
-import { hydrateMemberRoles } from "#src/members/member-role-hydration";
-import { activeGuildMemberJoin } from "#src/members/member-access-query";
+import {
+  makeUserGuildPermissionsPersistence,
+  makeUserGuildPermissionsProjection,
+  type UserGuildPermissionsCache,
+  type UserGuildPermissionsPersistence,
+} from "#src/members/user-guild-permissions";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
-import { Permission } from "@lootlog/schema/permissions";
-import { and, arrayOverlaps, eq, inArray, or } from "drizzle-orm";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { findActiveGuild } from "#src/guilds/active-guild-lookup";
-import {
-  guildTable,
-  memberTable,
-  memberToRoleTable,
-  roleTable,
-} from "#src/database/drizzle/schema";
+import type { guildTable } from "#src/database/drizzle/schema";
 
 import { OrganizationSummary } from "#src/contracts/shared";
 import { InternalUserPermissionsResponse } from "#src/contracts/internal/schemas";
@@ -29,20 +26,11 @@ export class InternalGuildsOperationError extends TaggedErrorClass<InternalGuild
   { cause: Schema.Defect() },
 ) {}
 
-export interface InternalGuildsCache {
+export interface InternalGuildsCache extends UserGuildPermissionsCache {
   readonly get: (key: string) => Effect.Effect<string | null, unknown>;
-  readonly getJson: <S extends Schema.ConstraintDecoder<unknown>>(
-    key: string,
-    schema: S,
-  ) => Effect.Effect<S["Type"] | null, unknown>;
   readonly set: (
     key: string,
     value: string,
-    ttl: number,
-  ) => Effect.Effect<void, unknown>;
-  readonly setJson: <Value>(
-    key: string,
-    value: Value,
     ttl: number,
   ) => Effect.Effect<void, unknown>;
   readonly del: (key: string) => Effect.Effect<void, unknown>;
@@ -50,24 +38,10 @@ export interface InternalGuildsCache {
 
 type GuildRecord = typeof guildTable.$inferSelect;
 
-type MemberRecord = typeof memberTable.$inferSelect;
-
-type RoleRecord = typeof roleTable.$inferSelect;
-
-export interface InternalGuildsPersistence {
+export interface InternalGuildsPersistence extends UserGuildPermissionsPersistence {
   readonly findActiveGuild: (
     idOrVanityUrl: string,
   ) => Effect.Effect<GuildRecord | null, unknown>;
-  readonly findGuildsForPermissions: (
-    discordId: string,
-  ) => Effect.Effect<ReadonlyArray<GuildRecord>, unknown>;
-  readonly findMembersWithRoles: (
-    discordId: string,
-    guildIds: ReadonlyArray<string>,
-  ) => Effect.Effect<
-    ReadonlyArray<MemberRecord & { readonly roles: ReadonlyArray<RoleRecord> }>,
-    unknown
-  >;
 }
 
 export const makeInternalGuildsData = (
@@ -94,83 +68,14 @@ export const makeInternalGuildsData = (
       return { ...guild, ...resolveReservationSettings(guild) };
     });
 
-  const getUserPermissions = (discordId: string, userId: string) =>
-    Effect.gen(function* () {
-      const cacheKey = `user:${userId}:discord:${discordId}:guild-permissions`;
-
-      const cached = yield* cache.getJson(
-        cacheKey,
-        InternalUserPermissionsResponse,
-      );
-
-      if (cached !== null) return cached;
-
-      const guilds = yield* persistence.findGuildsForPermissions(discordId);
-
-      if (guilds.length === 0) return [];
-
-      const members = yield* persistence.findMembersWithRoles(
-        discordId,
-        guilds.map(({ id }) => id),
-      );
-
-      const memberByGuild = new Map(
-        members.map((member) => [member.guildId, member]),
-      );
-
-      const allPermissions = Object.values(Permission);
-
-      const result = guilds.flatMap((guild) => {
-        if (guild.ownerId === discordId) {
-          return [
-            {
-              guild: { id: guild.id, ownerId: guild.ownerId },
-              roles: [
-                {
-                  id: "owner",
-                  lvlRangeFrom: 0,
-                  lvlRangeTo: 999,
-                  permissions: allPermissions,
-                },
-              ],
-            },
-          ];
-        }
-
-        const member = memberByGuild.get(guild.id);
-
-        if (
-          !member?.active ||
-          !member.roles.some((role) =>
-            role.permissions.includes(Permission.LOOTLOG_ACCESS),
-          )
-        ) {
-          return [];
-        }
-
-        return [
-          {
-            guild: { id: guild.id, ownerId: guild.ownerId },
-            roles: member.roles
-              .filter(({ permissions }) => permissions.length > 0)
-              .map(({ id, lvlRangeFrom, lvlRangeTo, permissions }) => ({
-                id,
-                lvlRangeFrom,
-                lvlRangeTo,
-                permissions,
-              })),
-          },
-        ];
-      });
-
-      yield* cache.setJson(cacheKey, result, 60);
-
-      return result;
-    });
+  const getUserPermissions = makeUserGuildPermissionsProjection(
+    persistence,
+    cache,
+  );
 
   return InternalGuildsData.of({
-    getUserPermissions: (discordId, userId) =>
-      operation(getUserPermissions(discordId, userId)),
+    getUserPermissions: (discordId, userId, freshness) =>
+      operation(getUserPermissions(discordId, userId, freshness)),
     getGuild: (idOrVanityUrl) => operation(getGuild(idOrVanityUrl)),
   });
 };
@@ -181,6 +86,7 @@ export class InternalGuildsData extends Context.Service<
     readonly getUserPermissions: (
       discordId: string,
       userId: string,
+      freshness?: "required",
     ) => Effect.Effect<unknown, InternalGuildsOperationError>;
     readonly getGuild: (
       idOrVanityUrl: string,
@@ -194,42 +100,7 @@ export class InternalGuildsData extends Context.Service<
         const persistence: InternalGuildsPersistence = {
           findActiveGuild: (idOrVanityUrl) =>
             findActiveGuild(database, idOrVanityUrl),
-          findGuildsForPermissions: (discordId) =>
-            database
-              .selectDistinct({ guild: guildTable })
-              .from(guildTable)
-              .leftJoin(memberTable, activeGuildMemberJoin(discordId))
-              .leftJoin(
-                memberToRoleTable,
-                eq(memberToRoleTable.A, memberTable.id),
-              )
-              .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-              .where(
-                and(
-                  eq(guildTable.active, true),
-                  or(
-                    eq(guildTable.ownerId, discordId),
-                    arrayOverlaps(roleTable.permissions, [
-                      Permission.LOOTLOG_ACCESS,
-                    ]),
-                  ),
-                ),
-              )
-              .pipe(Effect.map((rows) => rows.map(({ guild }) => guild))),
-          findMembersWithRoles: (discordId, guildIds) =>
-            Effect.gen(function* () {
-              const members = yield* database
-                .select()
-                .from(memberTable)
-                .where(
-                  and(
-                    eq(memberTable.userId, discordId),
-                    inArray(memberTable.guildId, [...guildIds]),
-                  ),
-                );
-
-              return yield* hydrateMemberRoles(database, members);
-            }),
+          ...makeUserGuildPermissionsPersistence(database),
         };
 
         return makeInternalGuildsData(persistence, cache);
@@ -243,13 +114,17 @@ const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
     Effect.mapError((cause) => new InternalGuildsOperationError({ cause })),
   );
 
-export const getInternalUserPermissions = (discordId: string, userId: string) =>
+export const getInternalUserPermissions = (
+  discordId: string,
+  userId: string,
+  freshness?: "required",
+) =>
   Effect.gen(function* () {
     if (discordId.length === 0 || userId.length === 0) return [];
     const data = yield* InternalGuildsData;
 
     return yield* Effect.flatMap(
-      data.getUserPermissions(discordId, userId),
+      data.getUserPermissions(discordId, userId, freshness),
       (value) => decode(InternalUserPermissionsResponse, value),
     );
   }).pipe(
@@ -287,7 +162,11 @@ export const InternalGuildsHandlers = HttpApiBuilder.group(
     handlers
       .handle("GuildsInternalControllerGetUserPermissions", ({ query }) =>
         orDieHttpFailure(
-          getInternalUserPermissions(query.discordId, query.userId),
+          getInternalUserPermissions(
+            query.discordId,
+            query.userId,
+            query.freshness,
+          ),
         ),
       )
       .handle("GuildsInternalControllerGetGuildByIdOrVanityUrl", ({ params }) =>

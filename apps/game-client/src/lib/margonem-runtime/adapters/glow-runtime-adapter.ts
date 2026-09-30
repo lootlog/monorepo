@@ -1,6 +1,7 @@
 import { isObjectRecord as isObject } from "@lootlog/schema/records";
 import type { Other, OtherHandle } from "@lootlog/margonem/others";
 import type { CharacterTooltipCatchingGuildsEntry } from "@/store/character-tooltip-catching-guilds.store";
+import type { RuntimeCharacterRef } from "./renderer-runtime-adapter";
 
 export const LOOTLOG_OTHER_GLOW_BLUE = "#3ed1de";
 
@@ -21,15 +22,22 @@ export function getLootlogOtherGlowColor(
     : LOOTLOG_OTHER_GLOW_RED_ORANGE;
 }
 
-type RuntimeOther = Other & {
+/** What a glow reads from the game character it sits behind. */
+type GlowMaster = {
+  d: { id?: number | string | null; x?: number; y?: number };
   fw?: number;
   fh?: number;
-  imgLoaded?: boolean;
+  leftPosMod?: number;
   rx?: number;
   ry?: number;
-  update?: RuntimeOtherUpdate;
   waterTopModify?: number;
 };
+
+type RuntimeOther = Other &
+  GlowMaster & {
+    imgLoaded?: boolean;
+    update?: RuntimeOtherUpdate;
+  };
 
 // Other.update may be wrapped by another addon; preserve its return value.
 type RuntimeOtherUpdate = (this: RuntimeOther, ...args: unknown[]) => unknown;
@@ -65,7 +73,11 @@ type RuntimeWindow = Window &
       mapShift?: {
         getShift?: () => [number, number];
       };
+      npcs?: {
+        getById?: (id: number) => GlowMaster | undefined;
+      };
       others?: {
+        getById?: (id: number) => GlowMaster | undefined;
         getDrawableList?: () => unknown[];
       };
     };
@@ -106,25 +118,35 @@ function isNativeOtherGlowDrawable(drawable: unknown): boolean {
   );
 }
 
-class LootlogOtherGlow {
+type TintedMaskSource = (
+  color: string,
+  width: number,
+  height: number,
+) => HTMLCanvasElement | null;
+
+/**
+ * The game's character glow (`WhoIsHereGlow2`): a tinted mask 4 px larger
+ * than the sprite, drawn just behind it.
+ */
+class CharacterGlow<Master extends GlowMaster> {
+  private alpha = 1;
   private color: string;
   private drawMask: HTMLCanvasElement | null = null;
-  private mask: HTMLImageElement | null = null;
-  private maskLoaded = false;
+  private readonly getTintedMask: TintedMaskSource;
   private rx = 0;
   private ry = 0;
 
   d: { id: string; x?: number; y?: number };
   fw = 36;
   fh = 52;
-  master: RuntimeOther;
+  master: Master;
 
-  constructor(master: RuntimeOther, color: string) {
+  constructor(master: Master, color: string, getTintedMask: TintedMaskSource) {
     this.master = master;
     this.color = color;
+    this.getTintedMask = getTintedMask;
     this.d = { id: String(master.d.id) };
     this.update();
-    this.createImage();
   }
 
   getColor(): string {
@@ -138,6 +160,10 @@ class LootlogOtherGlow {
     this.drawMask = null;
   }
 
+  setAlpha(alpha: number): void {
+    this.alpha = alpha;
+  }
+
   getOrder(): number {
     return (this.master.ry ?? 0) + 0.1;
   }
@@ -147,6 +173,15 @@ class LootlogOtherGlow {
     this.ry = this.master.ry ?? this.master.d.y ?? 0;
     this.d.x = this.master.d.x;
     this.d.y = this.master.d.y;
+
+    const fw = (this.master.fw ?? 32) + 4;
+    const fh = (this.master.fh ?? 48) + 4;
+
+    if (fw === this.fw && fh === this.fh) return;
+
+    this.fw = fw;
+    this.fh = fh;
+    this.drawMask = null;
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
@@ -155,13 +190,24 @@ class LootlogOtherGlow {
     const runtimeWindow = getRuntimeWindow();
     const engine = runtimeWindow.Engine;
 
-    if (!this.maskLoaded || !this.createMaskColor() || !engine?.map) return;
+    if (!engine?.map) return;
+
+    this.drawMask ??= this.getTintedMask(this.color, this.fw, this.fh);
+
+    const drawMask = this.drawMask;
+
+    if (!drawMask) return;
 
     const mapOffset = engine.map.offset ?? [0, 0];
     const mapShift = engine.mapShift?.getShift?.() ?? [0, 0];
 
     const left = Math.round(
-      this.rx * 32 + 16 - this.fw / 2 - mapOffset[0] - mapShift[0],
+      this.rx * 32 +
+        16 -
+        this.fw / 2 -
+        mapOffset[0] -
+        mapShift[0] +
+        (this.master.leftPosMod ?? 0),
     );
 
     const top = this.ry * 32 - this.fh + 32 - mapOffset[1] - mapShift[1];
@@ -173,10 +219,6 @@ class LootlogOtherGlow {
         : top,
     );
 
-    const drawMask = this.drawMask;
-
-    if (!drawMask) return;
-
     const clipImage = engine.map.clipObject?.(
       left,
       topModified,
@@ -184,8 +226,12 @@ class LootlogOtherGlow {
       this.fh,
     );
 
+    const previousAlpha = ctx.globalAlpha;
+    ctx.globalAlpha = previousAlpha * this.alpha;
+
     if (!clipImage) {
       ctx.drawImage(drawMask, left, topModified, this.fw, this.fh);
+      ctx.globalAlpha = previousAlpha;
 
       return;
     }
@@ -201,63 +247,146 @@ class LootlogOtherGlow {
       clipImage.width,
       clipImage.height,
     );
+    ctx.globalAlpha = previousAlpha;
   }
+}
 
-  private createImage(): void {
+/**
+ * One mask request and one tinted canvas per (color, size) serve every glow,
+ * of players and NPCs alike, and survive Shift releases.
+ */
+class TintedGlowMasks {
+  private mask: HTMLImageElement | null = null;
+  private requested = false;
+  private readonly tinted = new Map<string, HTMLCanvasElement>();
+
+  request(): void {
+    if (this.requested) return;
+
+    this.requested = true;
+
+    const setMask = (image: HTMLImageElement) => {
+      this.mask = image;
+      this.tinted.clear();
+    };
+
     const imgLoader = getRuntimeWindow().Engine?.imgLoader;
 
-    const beforeOnload = (image: HTMLImageElement) => {
-      this.fw = (this.master.fw ?? 32) + 4;
-      this.fh = (this.master.fh ?? 48) + 4;
-      this.mask = image;
-    };
-
-    const afterOnload = (image: HTMLImageElement) => {
-      this.mask = image;
-      this.maskLoaded = true;
-      this.drawMask = null;
-    };
-
     if (imgLoader?.onload) {
-      imgLoader.onload(MASK_PATH, false, beforeOnload, afterOnload);
+      imgLoader.onload(MASK_PATH, false, () => undefined, setMask);
 
       return;
     }
 
     const image = new Image();
-    image.onload = () => {
-      beforeOnload(image);
-      afterOnload(image);
-    };
-
+    image.onload = () => setMask(image);
     image.src = MASK_PATH;
   }
 
-  private createMaskColor(): HTMLCanvasElement | null {
-    if (this.drawMask || !this.mask) {
-      return this.drawMask;
-    }
+  /** Lets the next request try again after an earlier load never finished. */
+  retryIfMissing(): void {
+    if (!this.mask) this.requested = false;
+  }
+
+  release(): void {
+    this.mask = null;
+    this.requested = false;
+    this.tinted.clear();
+  }
+
+  readonly get: TintedMaskSource = (color, width, height) => {
+    const mask = this.mask;
+
+    if (!mask) return null;
+
+    const key = `${color}|${width}|${height}`;
+    const cached = this.tinted.get(key);
+
+    if (cached) return cached;
 
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
 
     if (!context) return null;
 
-    canvas.width = this.fw;
-    canvas.height = this.fh;
-    context.drawImage(this.mask, 0, 0, this.fw, this.fh);
+    canvas.width = width;
+    canvas.height = height;
+    context.drawImage(mask, 0, 0, width, height);
     context.globalCompositeOperation = "source-in";
-    context.fillStyle = this.color;
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    this.drawMask = canvas;
+    context.fillStyle = color;
+    context.fillRect(0, 0, width, height);
+    this.tinted.set(key, canvas);
 
-    return this.drawMask;
-  }
+    return canvas;
+  };
 }
+
+const tintedGlowMasks = new TintedGlowMasks();
+
+export type TrackedCharacterGlow = {
+  draw: (context: CanvasRenderingContext2D) => void;
+  getAlwaysDraw: () => boolean;
+  getOrder: () => number;
+  /** False once the character left the map; the glow then draws nothing. */
+  isPresent: () => boolean;
+  setAlpha: (alpha: number) => void;
+};
+
+/**
+ * A glow behind a monster's or player's sprite, like the game's own group
+ * glow. It looks the character up on every frame, so a respawned or moved
+ * character keeps its glow; add it to the renderer each frame it should show.
+ */
+export const createCharacterGlow = (
+  { id, kind }: RuntimeCharacterRef,
+  color: string,
+): TrackedCharacterGlow => {
+  const findCharacter = () => {
+    const engine = getRuntimeWindow().Engine;
+
+    return (kind === "npc" ? engine?.npcs : engine?.others)?.getById?.(id);
+  };
+
+  let glow: CharacterGlow<GlowMaster> | null = null;
+
+  tintedGlowMasks.request();
+
+  const resolve = () => {
+    const character = findCharacter();
+
+    if (!character) return null;
+
+    glow ??= new CharacterGlow(character, color, tintedGlowMasks.get);
+    glow.master = character;
+
+    return glow;
+  };
+
+  let alpha = 1;
+
+  return {
+    draw: (context) => {
+      const current = resolve();
+
+      if (!current) return;
+      current.setAlpha(alpha);
+      current.draw(context);
+    },
+    getAlwaysDraw: () => true,
+    getOrder: () => resolve()?.getOrder() ?? 0,
+    isPresent: () => findCharacter() !== undefined,
+    setAlpha: (next) => {
+      alpha = next;
+    },
+  };
+};
 
 class LootlogOtherGlowManager {
   private cleanupDrawableListPatch: (() => void) | null = null;
-  private readonly glowsByCharacterId = new Map<string, LootlogOtherGlow>();
+  private readonly glowsByCharacterId = new Map<
+    string,
+    CharacterGlow<RuntimeOther>
+  >();
   private nativeGlowSuppressed = false;
   private originalGetDrawableList: OriginalGetDrawableList | null = null;
   private readonly originalOtherUpdates = new WeakMap<
@@ -272,17 +401,35 @@ class LootlogOtherGlowManager {
 
     if (!others?.getDrawableList) return;
 
-    this.originalGetDrawableList = others.getDrawableList;
-    others.getDrawableList = () => {
-      const baseDrawableList = this.getBaseDrawableList(others);
+    tintedGlowMasks.retryIfMissing();
 
-      if (this.glowsByCharacterId.size === 0) {
-        return baseDrawableList;
+    this.originalGetDrawableList = others.getDrawableList;
+    // Engine calls this every rendered frame; build at most one array per call.
+    others.getDrawableList = () => {
+      const drawables = this.originalGetDrawableList?.call(others) ?? [];
+
+      if (!this.nativeGlowSuppressed && this.glowsByCharacterId.size === 0) {
+        return drawables;
       }
 
-      this.updateGlows();
+      const combined: unknown[] = [];
 
-      return [...baseDrawableList, ...this.glowsByCharacterId.values()];
+      for (let index = 0; index < drawables.length; index += 1) {
+        const drawable = drawables[index];
+
+        if (this.nativeGlowSuppressed && isNativeOtherGlowDrawable(drawable)) {
+          continue;
+        }
+
+        combined.push(drawable);
+      }
+
+      for (const glow of this.glowsByCharacterId.values()) {
+        glow.update();
+        combined.push(glow);
+      }
+
+      return combined;
     };
 
     this.cleanupDrawableListPatch = () => {
@@ -329,9 +476,10 @@ class LootlogOtherGlowManager {
     }
 
     this.patchOtherUpdate(runtimeOther);
+    tintedGlowMasks.request();
     this.glowsByCharacterId.set(
       characterId,
-      new LootlogOtherGlow(runtimeOther, color),
+      new CharacterGlow(runtimeOther, color, tintedGlowMasks.get),
     );
   }
 
@@ -352,10 +500,16 @@ class LootlogOtherGlowManager {
     this.glowsByCharacterId.clear();
   }
 
-  cleanup(): void {
+  // Shift released: stop drawing and restore the game, keep shared masks.
+  uninstall(): void {
     this.nativeGlowSuppressed = false;
     this.clear();
     this.cleanupDrawableListPatch?.();
+  }
+
+  cleanup(): void {
+    this.uninstall();
+    tintedGlowMasks.release();
   }
 
   getGlowColor(characterId: string): string | undefined {
@@ -383,24 +537,6 @@ class LootlogOtherGlowManager {
 
   getNativeGlowSuppressed(): boolean {
     return this.nativeGlowSuppressed;
-  }
-
-  private getBaseDrawableList(others: {
-    getDrawableList?: () => unknown[];
-  }): unknown[] {
-    const drawables = this.originalGetDrawableList?.call(others) ?? [];
-
-    if (!this.nativeGlowSuppressed) {
-      return drawables;
-    }
-
-    return drawables.filter((drawable) => !isNativeOtherGlowDrawable(drawable));
-  }
-
-  private updateGlows(): void {
-    for (const glow of this.glowsByCharacterId.values()) {
-      glow.update();
-    }
   }
 
   private patchOtherUpdate(other: RuntimeOther): void {

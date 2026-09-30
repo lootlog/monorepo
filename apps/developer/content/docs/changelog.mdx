@@ -3,6 +3,108 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased: Conditional party observations
+
+`POST /messaging/party-gathering/{notificationId}/party-observation` accepts
+an optional positive integer `expectedRevision`. Use the latest room projection's
+`revision` to prevent a delayed observation from overwriting a newer roster.
+When supplied, a stale revision or a concurrent write returns
+`409 REVISION_CONFLICT`. A successful conditional observation advances the room
+revision even if the roster is unchanged and was observed moments ago. Requests
+without the field keep their existing behavior, including returning the current
+room without a new revision for an unchanged roster observed within 45 seconds.
+
+After a conflict or an uncertain HTTP result, read the room again and retry the
+latest roster with its current revision. Bound both the requests and retry count;
+aborting HTTP does not cancel a server write. Deploy the API to every writer
+before relying on the precondition. No persistence migration is required.
+Generated clients include the optional field for the next SDK release.
+
+## Unreleased: Event hero lists keep history
+
+`PATCH /guilds/{guildId}/events/{eventId}` no longer rebuilds the event's heroes
+and maps when the request includes `heroNpcs`. Heroes are matched by `npcName`
+and maps by `mapId`, so retained heroes and maps keep their IDs, kills, kill
+points, tracking history and ranking entries. The list can add heroes, add
+maps, rename maps and set a hero's `npcId`; omitting `npcId` keeps the stored
+value.
+As with the map create operation, a map added to an existing hero starts with
+an open unassigned coverage gap.
+
+A `heroNpcs` list that omits an existing hero or map now returns `400` and
+changes nothing. Previously the omitted records were deleted with their history.
+Repeated hero names, or a repeated `mapId` within one hero, also return `400`.
+Remove a hero with `DELETE /guilds/{guildId}/events/{eventId}/heroes/{heroId}`
+and a map with
+`DELETE /guilds/{guildId}/events/{eventId}/heroes/{heroId}/maps/{mapId}`.
+
+Deleting a hero removes its maps, kills, kill points and tracking history, and
+now also its ranking entries, so event ranking totals match the remaining kill
+points. No migration is required.
+
+## Unreleased: Event kill history
+
+`GET /guilds/{guildId}/events/{eventId}/kill-history` adds a paginated summary
+of kills visible to the caller. It requires `LOOTLOG_EVENTS_READ` and supports
+read-only API keys within their Organization scope. Optional query parameters
+are `heroId`, `memberId`, `cursor` and `limit`. The limit is an integer from 1
+to 100 and defaults to 20.
+
+The response contains `kind`, `data` and `nextCursor`. `kind` is `event` unless
+`memberId` is supplied, when it is `member`. Summaries include hero identity,
+timestamps, manual closure status and `participantCount`. This count includes
+all saved participant point records, including participants with
+`wasPresent: false`. Member summaries also include the selected member and
+their scoring and tracking data. Lists omit map presence, roles and other
+participants' full records. Existing detail and timeline endpoints remain
+available.
+
+Treat the new cursor as opaque and pass it unchanged with the same Organization,
+event and filters. Results use `killedAt DESC, id DESC`; the cursor remains usable
+if its boundary kill is deleted. Invalid cursors, mismatched filters and invalid
+limits return `400`. Each request applies current access rules. Pagination does
+not freeze a snapshot of the history.
+
+The existing event, hero and member kill-list endpoints are deprecated. Their
+response shapes and UUID cursors remain supported with corrected chronological
+pagination. A missing, hidden or out-of-scope UUID cursor returns the same
+`400 Invalid cursor` response. Inaccessible resources return `404`.
+
+Apply the database index migration and deploy the API before migrating clients
+to the new endpoint. The migration changes indexes only. Generated clients
+include the endpoint for the next SDK release; SDK publication remains a
+separate release step.
+
+## Unreleased — Realtime latency probe
+
+The realtime v1 `session.joined` event and `session.join` response add an
+optional `capabilities` list. Gateways that list `connection.ping` accept the
+`connection.ping` command and answer it without side effects, including on
+integration connections. The SDK realtime client adds `probeLatency()`, which
+reports through `subscribeHeartbeatLatency`.
+
+Deploy the gateway before relying on the probe. Clients send the command only
+when the capability is listed, so clients connected to older gateways keep the
+heartbeat measurement. No migration is required.
+
+## Unreleased — Notification schedules and role level ranges
+
+Notification rule create and update requests accept `scheduledUntil: null`.
+For a recurring rule, `null` removes the end date; omitting the field preserves
+it. Switching to a one-time schedule clears recurring fields, including the end date.
+Send only fields relevant to the selected schedule type. For daily and weekly
+schedules, omit `scheduledAt` to calculate the next occurrence from the selected
+time, weekday and timezone when the schedule changes.
+
+Role update requests reject `lvlRangeFrom` and `lvlRangeTo` values that are not
+integers from 0 to 500, and ranges where `lvlRangeTo` is lower than
+`lvlRangeFrom`, with `400 Bad Request`. A role saved earlier with a reversed range
+must receive a corrected range on its next update.
+
+Deploy the API before clients begin sending `null`. Existing valid requests remain
+compatible, and no database migration is required. Generated SDK types include
+these changes for the next SDK release.
+
 ## 2026-09-17 — SDK 0.1.1
 
 Documentation update with runnable organization, timer and loot examples,

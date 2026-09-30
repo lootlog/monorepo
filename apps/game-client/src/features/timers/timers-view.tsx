@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useTimerFilters } from "@/features/timers/hooks/use-timer-filters";
+import { useDeferredValue, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import type { Timer } from "@/api/timers.api";
@@ -25,7 +26,6 @@ type TimersStoreState = ReturnType<typeof useTimersStore.getState>;
 
 const getTimersViewState = ({
   settingsKey,
-  timersFilters,
   hiddenTimers,
   pinnedTimers,
   timerFiltersSearchText,
@@ -36,7 +36,6 @@ const getTimersViewState = ({
   timers,
 }: {
   settingsKey: string;
-  timersFilters: TimersStoreState["timersFilters"];
   hiddenTimers: TimersStoreState["hiddenTimers"];
   pinnedTimers: TimersStoreState["pinnedTimers"];
   timerFiltersSearchText: TimersStoreState["timerFiltersSearchText"];
@@ -46,7 +45,6 @@ const getTimersViewState = ({
   allowWorldSelection: boolean | undefined;
   timers: Timer[] | undefined;
 }) => ({
-  filters: timersFilters[settingsKey] ?? DEFAULT_TIMERS_FILTERS,
   hiddenTimers: hiddenTimers[settingsKey] ?? [],
   pinnedTimers: pinnedTimers[settingsKey] ?? [],
   searchText: timerFiltersSearchText ?? "",
@@ -96,10 +94,9 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     setTimerFiltersSearchText,
     timersSortOrder,
     setTimersSortOrder,
-    timersFilters,
-    setTimersFilters,
     displayConfig,
     timersColors,
+    customLists,
     alwaysVisibleExpiredTimers,
   } = useTimersStore(
     useShallow((state) => ({
@@ -114,10 +111,9 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
       setTimerFiltersSearchText: state.setTimerFiltersSearchText,
       timersSortOrder: state.timersSortOrder,
       setTimersSortOrder: state.setTimersSortOrder,
-      timersFilters: state.timersFilters,
-      setTimersFilters: state.setTimersFilters,
       displayConfig: state.displayConfig,
       timersColors: state.timersColors,
+      customLists: state.customLists,
       alwaysVisibleExpiredTimers: state.alwaysVisibleExpiredTimers,
     })),
   );
@@ -126,7 +122,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     data: timers,
     error: timersError,
     isFetching: timersFetching,
-    isLoading: timersLoading,
+    isPending: timersLoading,
     refetch: refetchTimers,
   } = useTimers({ world: desiredWorld });
 
@@ -136,9 +132,9 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   const timersRefreshing = timersFetching && hasTimersResponse;
   const [showHiddenTimers, setShowHiddenTimers] = useState(false);
   const settingsKey = generalConfig.timersGrouping ? "global" : guildId;
+  const { filters, setFilters } = useTimerFilters(settingsKey, desiredWorld);
 
   const {
-    filters,
     hiddenTimers: hiddenTimersForSettings,
     pinnedTimers: pinnedTimersForSettings,
     searchText,
@@ -149,7 +145,6 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     timers: resolvedTimers,
   } = getTimersViewState({
     settingsKey,
-    timersFilters,
     hiddenTimers,
     pinnedTimers,
     timerFiltersSearchText,
@@ -160,23 +155,29 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     timers,
   });
 
+  // Typing updates the search box at once; the grid re-filters in an
+  // interruptible render that the next keystroke can abandon.
+  const deferredSearchText = useDeferredValue(searchText);
+
   const { areFiltersActive, timers: sortedTimers } = useTimerListProjection({
     context: {
       guildId: guildId ?? "",
       isGrouping: generalConfig.timersGrouping,
     },
-    enabled: isUnderBag || isOpen,
+    enabled: isOpen,
     filters: {
       maxLvl: filters.maxLvl,
       minLvl: filters.minLvl,
-      searchText,
+      searchText: deferredSearchText,
       selectedColors: filters.selectedColors,
+      selectedLists: filters.selectedLists,
       selectedNpcTypes: filters.selectedNpcTypes,
       showHiddenTimers,
     },
     preferences: {
       alwaysVisibleExpiredTimers,
       colorFiltersEnabled: resolvedColorFiltersEnabled,
+      customLists,
       hiddenTimers: hiddenTimersForSettings,
       pinnedTimers: pinnedTimersForSettings,
       removeTimerAfterMs: generalConfig.removeTimerAfterMs,
@@ -195,6 +196,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   const addTimerOverlay = addTimerOpen ? (
     <AddTimerPanel
       guildId={guildId}
+      world={desiredWorld}
       onClose={() => setAddTimerOpen(false)}
       className={isUnderBag ? undefined : "ll:rounded-b-md"}
     />
@@ -202,9 +204,10 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
 
   const handleResetFilters = () => {
     setTimerFiltersSearchText("");
-    setTimersFilters(settingsKey, {
+    setFilters({
       ...DEFAULT_TIMERS_FILTERS,
       selectedColors: [...DEFAULT_TIMERS_FILTERS.selectedColors],
+      selectedLists: [...DEFAULT_TIMERS_FILTERS.selectedLists],
       selectedNpcTypes: [...DEFAULT_TIMERS_FILTERS.selectedNpcTypes],
     });
     setShowHiddenTimers(true);
@@ -214,9 +217,10 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     return (
       <UnderBagTimers>
         {/* Mirrors the window title bar: actions lead, the title sits in the
-            middle column, and the empty trailing column keeps it centered. */}
-        <div className="ll:grid ll:h-7 ll:shrink-0 ll:grid-cols-[1fr_auto_1fr] ll:items-center ll:gap-1 ll:px-0.5">
-          <div className="ll:flex ll:items-center ll:gap-0.5 ll:justify-self-start">
+            middle column, and the empty trailing column keeps it centered.
+            Same height as the title bar, with no gap before the content. */}
+        <div className="ll:grid ll:h-6 ll:shrink-0 ll:grid-cols-[1fr_auto_1fr] ll:items-center ll:gap-1 ll:px-0.5">
+          <div className="ll:flex ll:items-center ll:justify-self-start">
             <TimersActions
               timerFiltersEnabled={resolvedTimerFiltersEnabled}
               toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
@@ -239,6 +243,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
           <div aria-hidden="true" />
         </div>
         <TimersContent
+          world={desiredWorld}
           sortedTimers={sortedTimers}
           settingsKey={settingsKey}
           hiddenTimers={hiddenTimersForSettings}
@@ -299,6 +304,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     >
       <div className="ll:flex ll:flex-col ll:h-full">
         <TimersContent
+          world={desiredWorld}
           sortedTimers={sortedTimers}
           settingsKey={settingsKey}
           hiddenTimers={hiddenTimersForSettings}

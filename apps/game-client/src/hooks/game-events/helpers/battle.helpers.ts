@@ -18,6 +18,23 @@ export const parseNumericHpValue = (value: unknown) => {
   return null;
 };
 
+export const isWarriorDead = (warrior: BattleWarriorsWithAccountId[string]) => {
+  const legacyHpp = parseNumericHpValue(warrior.hpp);
+
+  if (legacyHpp !== null) return legacyHpp <= 0;
+
+  const hpData = warrior.hp;
+  const nestedHpp = parseNumericHpValue(hpData?.hpp);
+
+  if (nestedHpp !== null) return nestedHpp <= 0;
+
+  const currentHp = parseNumericHpValue(hpData?.cur);
+
+  if (currentHp !== null) return currentHp <= 0;
+
+  return false;
+};
+
 const getModernHpPercentage = (
   warrior: Partial<W[string]>,
   currentWarrior?: BattleWarriorsWithAccountId[string],
