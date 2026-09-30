@@ -783,9 +783,11 @@ invalidated.
   references it, so a newer loot that reused it keeps it. Unresolved
   selections recorded by the run are removed. A rolled-back run cannot be
   applied again; generate a new run id.
-- **Caches.** After a run moves or restores links, the command bumps the
-  `loots:list` and `loot-stats` generations and deletes event-wrapped
-  summaries of each affected Organization. The public stats card counts item
+- **Caches.** After each committed batch, the command bumps the `loots:list`
+  and `loot-stats` generations and deletes the event-wrapped summaries of the
+  Organizations whose links moved. Every `apply` and `rollback` first does the
+  same for all Organizations already in the run's log, so a process stopped
+  between a commit and its invalidation is healed by the next invocation. The public stats card counts item
   rarity, which a relink never changes. Kill statistics keep their own level
   copy and are not derived from loot links.
 

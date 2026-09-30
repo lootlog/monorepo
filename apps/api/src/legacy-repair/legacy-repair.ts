@@ -42,6 +42,7 @@ import {
 } from "#src/database/drizzle/schema";
 import { NotificationTriggerType } from "#src/notifications/notification-enums";
 import type { RedisService } from "#src/redis/redis.service";
+import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import {
   getEventWrappedCachePattern,
   getLootListCacheScope,
@@ -91,7 +92,14 @@ export interface LegacyRepairProgress {
   readonly status: string;
   readonly complete: boolean;
   readonly processedRows: number;
+  /** Organizations whose read caches this invocation invalidated. */
+  readonly invalidatedOrganizations: number;
 }
+
+/** Drops the read caches of Organizations whose loots changed. */
+export type LegacyRepairCacheInvalidation = (
+  guildIds: readonly string[],
+) => Effect.Effect<unknown, LegacyRepairError>;
 
 const fail = (message: string) =>
   Effect.fail(new LegacyRepairError({ message }));
@@ -246,7 +254,38 @@ const sameValue = <T extends string | number>(
   right: T | null | undefined,
 ) => (left ?? null) === (right ?? null);
 
-export const makeLegacyRepair = (database: ApiDatabaseValue) => {
+export const makeLegacyRepair = (
+  database: ApiDatabaseValue,
+  invalidateCaches: LegacyRepairCacheInvalidation = () => Effect.void,
+) => {
+  /** Organizations with a loot among the given links. */
+  const organizationsOf = (
+    rowTable: LegacyRepairRowTable,
+    rowIds: readonly number[],
+  ) => {
+    const link = linkColumns(rowTable);
+
+    return database
+      .selectDistinct({ guildId: organizationLootRecordTable.guildId })
+      .from(link.table)
+      .innerJoin(
+        organizationLootRecordTable,
+        eq(organizationLootRecordTable.lootId, link.lootId),
+      )
+      .where(inArray(link.id, [...rowIds]))
+      .pipe(Effect.map((rows) => rows.map(({ guildId }) => guildId)));
+  };
+
+  // Runs after a batch commits, so a cache refilled from the old links is
+  // dropped; `touched` collects the Organizations of one invocation.
+  const invalidate = (touched: Set<string>, guildIds: readonly string[]) =>
+    Effect.gen(function* () {
+      if (guildIds.length === 0) return;
+
+      for (const guildId of guildIds) touched.add(guildId);
+      yield* invalidateCaches(guildIds);
+    });
+
   const registerRun = Effect.fn("legacyRepair.registerRun")(function* (
     manifest: LegacyRepairManifest,
   ) {
@@ -506,8 +545,9 @@ export const makeLegacyRepair = (database: ApiDatabaseValue) => {
     entry: RelinkPlan,
     targetSnapshotId: number,
     batchSize: number,
+    touched: Set<string>,
   ) {
-    return yield* database.transaction((transaction) =>
+    const batch = yield* database.transaction((transaction) =>
       Effect.gen(function* () {
         const row = yield* lockEntry(transaction, runId, entry.entryId);
 
@@ -584,9 +624,20 @@ export const makeLegacyRepair = (database: ApiDatabaseValue) => {
           updatedAt: at,
         });
 
-        return ids.length;
+        return { processed: ids.length, moved: moved.map(({ id }) => id) };
       }),
     );
+
+    if (batch === null) return null;
+
+    if (batch.moved.length > 0) {
+      yield* invalidate(
+        touched,
+        yield* organizationsOf(entry.rowTable, batch.moved),
+      );
+    }
+
+    return batch.processed;
   });
 
   const applySelection = Effect.fn("legacyRepair.applySelection")(function* (
@@ -746,6 +797,11 @@ export const makeLegacyRepair = (database: ApiDatabaseValue) => {
     options: LegacyRepairOptions,
   ) {
     const run = yield* registerRun(manifest);
+    const touched = new Set<string>();
+
+    // Heals an earlier invocation that stopped between a commit and its
+    // cache invalidation.
+    yield* invalidate(touched, yield* affectedOrganizationIds(manifest.runId));
 
     const pending = new Set(
       (yield* openEntries(manifest.runId, ["pending"])).map(
@@ -774,6 +830,7 @@ export const makeLegacyRepair = (database: ApiDatabaseValue) => {
           entry,
           target,
           Math.min(options.batchSize, options.maxRows - processedRows),
+          touched,
         );
 
         if (batch === null) break;
@@ -793,6 +850,7 @@ export const makeLegacyRepair = (database: ApiDatabaseValue) => {
       status: complete ? "applied" : "applying",
       complete,
       processedRows,
+      invalidatedOrganizations: touched.size,
     } satisfies LegacyRepairProgress;
   });
 
@@ -802,12 +860,13 @@ export const makeLegacyRepair = (database: ApiDatabaseValue) => {
     runId: string,
     entryId: string,
     batchSize: number,
+    touched: Set<string>,
   ) {
-    return yield* database.transaction((transaction) =>
+    const batch = yield* database.transaction((transaction) =>
       Effect.gen(function* () {
         const row = yield* lockEntry(transaction, runId, entryId);
 
-        if (!row?.rowTable || row.status === "rolledBack") return 0;
+        if (!row?.rowTable || row.status === "rolledBack") return null;
 
         const links = yield* transaction
           .select()
@@ -822,7 +881,7 @@ export const makeLegacyRepair = (database: ApiDatabaseValue) => {
           .orderBy(asc(legacyRepairLinkTable.rowId))
           .limit(batchSize);
 
-        if (links.length === 0) return 0;
+        if (links.length === 0) return null;
 
         const current = new Map(
           (yield* lockLinks(
@@ -877,9 +936,24 @@ export const makeLegacyRepair = (database: ApiDatabaseValue) => {
           updatedAt: at,
         });
 
-        return links.length;
+        return {
+          processed: links.length,
+          rowTable: row.rowTable,
+          restored: [...restoredIds],
+        };
       }),
     );
+
+    if (batch === null) return 0;
+
+    if (batch.restored.length > 0) {
+      yield* invalidate(
+        touched,
+        yield* organizationsOf(batch.rowTable, batch.restored),
+      );
+    }
+
+    return batch.processed;
   });
 
   // Removes a revision this run created once no loot link references it; a
@@ -952,6 +1026,10 @@ export const makeLegacyRepair = (database: ApiDatabaseValue) => {
       yield* setRunStatus(runId, "rollingBack");
     }
 
+    const touched = new Set<string>();
+
+    yield* invalidate(touched, yield* affectedOrganizationIds(runId));
+
     const entries = (yield* openEntries(runId, [
       "pending",
       "applied",
@@ -972,6 +1050,7 @@ export const makeLegacyRepair = (database: ApiDatabaseValue) => {
             runId,
             entry.entryId,
             Math.min(options.batchSize, options.maxRows - processedRows),
+            touched,
           );
 
           if (batch === 0) {
@@ -1036,6 +1115,7 @@ export const makeLegacyRepair = (database: ApiDatabaseValue) => {
       status: complete ? "rolledBack" : "rollingBack",
       complete,
       processedRows,
+      invalidatedOrganizations: touched.size,
     } satisfies LegacyRepairProgress;
   });
 
@@ -1134,16 +1214,6 @@ export const makeLegacyRepair = (database: ApiDatabaseValue) => {
   return { apply, rollback, status, affectedOrganizationIds };
 };
 
-export class LegacyRepair extends Context.Service<
-  LegacyRepair,
-  ReturnType<typeof makeLegacyRepair>
->()("@lootlog/api/legacy-repair/LegacyRepair") {
-  static readonly layer = Layer.effect(
-    LegacyRepair,
-    Effect.map(ApiDatabase, makeLegacyRepair),
-  );
-}
-
 /**
  * Drops read caches that may hold loots with their pre-repair NPC level or
  * item presentation: list pages, statistics and event summaries. Rarity is
@@ -1177,3 +1247,19 @@ export const invalidateLegacyRepairCaches = Effect.fn(
 
   return guildIds.length;
 });
+
+export class LegacyRepair extends Context.Service<
+  LegacyRepair,
+  ReturnType<typeof makeLegacyRepair>
+>()("@lootlog/api/legacy-repair/LegacyRepair") {
+  static readonly layer = Layer.effect(
+    LegacyRepair,
+    Effect.gen(function* () {
+      const redis = yield* ApiRedis;
+
+      return makeLegacyRepair(yield* ApiDatabase, (guildIds) =>
+        invalidateLegacyRepairCaches(redis, guildIds),
+      );
+    }),
+  );
+}

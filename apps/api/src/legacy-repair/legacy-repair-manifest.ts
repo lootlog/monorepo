@@ -250,6 +250,12 @@ const verifiedRows = Effect.fnUntraced(function* (
     return yield* fail(`${where}: row table differs from the manifest`);
   }
 
+  // Snapshot and link ids of the two domains are independent sequences, so
+  // an NPC entry must never move item links, or the reverse.
+  if (rowTable !== (line.domain === "npc" ? "LootNpc" : "LootItem")) {
+    return yield* fail(`${where}: ${rowTable} rows in an ${line.domain} entry`);
+  }
+
   const rowIds = uniq(row.ids).toSorted((left, right) => left - right);
 
   if (rowIds.length !== row.ids.length || rowIds.length !== rowCount) {
