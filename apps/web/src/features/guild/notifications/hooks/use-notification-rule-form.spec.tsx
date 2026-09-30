@@ -456,3 +456,29 @@ it("reopens timer NPC selections, keeps unmatched ids removable and only narrows
     npcTemplateIds: [900],
   });
 });
+
+it("saves an all-world rule after removing its unmatched selection", async () => {
+  const { result, requests } = await renderEditedRule({
+    triggerType: "TIMER_BEFORE_SPAWN",
+    scheduleStrategy: "SPAWN_WINDOW_RELATIVE",
+    scheduleAnchor: "MIN_SPAWN",
+    scheduleOffsetMinutes: 5,
+    scheduledAt: null,
+    filters: { npcTemplateIds: [900], npcIds: [555] },
+  });
+
+  act(() => {
+    result.current.form.setValue("npcIds", ["template:900"]);
+    result.current.form.setValue("targetIds", ["9"]);
+  });
+  await act(() =>
+    result.current.form.handleSubmit(result.current.handleSubmit)(),
+  );
+
+  expect(requests).toHaveLength(1);
+
+  const payload = await requests[0]?.json();
+
+  expect(payload).toMatchObject({ npcIds: [], npcTemplateIds: [900] });
+  expect(payload).not.toHaveProperty("world");
+});

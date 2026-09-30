@@ -60,7 +60,7 @@ const queryParameterSchemas = new Map<string, JsonObject>(
     },
     "TimersController_searchNpcsWithTimerData:npcIds": {
       type: "array",
-      items: integerSchema(1, Number.MAX_SAFE_INTEGER),
+      items: integerSchema(1, 2_147_483_647),
       description: "Return timers whose runtime NPC id is in this list.",
     },
     "TimersController_searchNpcsWithTimerData:templateIds": {

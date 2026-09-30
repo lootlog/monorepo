@@ -143,14 +143,6 @@ const validateTimerRule = (
   t: Translator,
   maxNpcCount: number,
 ) => {
-  if (!data.world || data.world === ALL_WORLDS_VALUE) {
-    addIssue(
-      ctx,
-      t("settings.notifications.validation.worldRequired"),
-      "world",
-    );
-  }
-
   if (data.manualNpcEntry ?? false) {
     validateManualNpcIds(data, ctx, t, maxNpcCount);
   } else {

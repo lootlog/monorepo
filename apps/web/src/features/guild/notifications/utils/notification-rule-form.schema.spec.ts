@@ -90,20 +90,12 @@ describe("ruleFormSchema", () => {
     );
   });
 
-  it("still requires a world for timer notifications", () => {
+  it("accepts a timer rule for all worlds so saved all-world rules stay editable", () => {
     const result = ruleFormSchema(t, 5).safeParse({
       ...createBaseTimerFormValues(),
       world: ALL_WORLDS_VALUE,
     });
 
-    expect(result.success).toBe(false);
-    expect(result.error?.issues).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          path: ["world"],
-          message: "settings.notifications.validation.worldRequired",
-        }),
-      ]),
-    );
+    expect(result.success).toBe(true);
   });
 });
