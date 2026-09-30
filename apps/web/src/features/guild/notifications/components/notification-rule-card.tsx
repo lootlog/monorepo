@@ -33,6 +33,10 @@ export const NotificationRuleCard = (
     handleDelete,
   } = useNotificationRuleActions(props);
 
+  const unresolvedNpcCount = rule.unresolvedSelections.filter(
+    ({ kind }) => kind === "npc",
+  ).length;
+
   return (
     <div className="border-b border-border/70 py-3 last:border-b-0">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -94,6 +98,14 @@ export const NotificationRuleCard = (
                   {index < rule.targets.length - 1 ? "," : ""}
                 </span>
               ))}
+            </p>
+          ) : null}
+          {unresolvedNpcCount > 0 ? (
+            <p className="flex items-center gap-1.5 text-xs text-amber-500">
+              <TriangleAlert className="size-3.5 shrink-0" />
+              {t("settings.notifications.unresolvedSelections.cardWarning", {
+                count: unresolvedNpcCount,
+              })}
             </p>
           ) : null}
           {rule.testTrigger.nextAvailableAt ? (

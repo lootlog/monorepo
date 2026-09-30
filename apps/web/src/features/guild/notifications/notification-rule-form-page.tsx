@@ -154,6 +154,7 @@ export const NotificationRuleFormPage = () => {
                       hasAllWorldTimerNpcSelection={
                         hasAllWorldTimerNpcSelection
                       }
+                      unresolvedSelections={rule?.unresolvedSelections ?? []}
                     />
 
                     <NotificationScheduleFields form={form} t={t} />

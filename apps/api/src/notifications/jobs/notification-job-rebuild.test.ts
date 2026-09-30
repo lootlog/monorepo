@@ -276,6 +276,143 @@ describe("notification job rebuild", () => {
     }
   });
 
+  it("never announces a closed spawn window and does not resend a past-due occurrence on the next rebuild", async () => {
+    const now = Date.now();
+
+    const fixture = await seedTimerNotifications({
+      rules: [timerRule(7, [104, 105])],
+      links: [{ ruleId: 7, targetId: 1 }],
+      now,
+    });
+
+    try {
+      await fixture.boundary.run(
+        fixture.database.insert(timerTable).values([
+          {
+            guildId: "guild-1",
+            createdById: 1,
+            npcId: 104,
+            timerKey: "hero:104",
+            world: "fobos",
+            npc: { name: "NPC 104" },
+            minSpawnTime: new Date(now - 120 * minute),
+            maxSpawnTime: new Date(now - 60 * minute),
+            updatedAt: new Date(now - 180 * minute),
+          },
+          {
+            guildId: "guild-1",
+            createdById: 1,
+            npcId: 105,
+            timerKey: "hero:105",
+            world: "fobos",
+            npc: { name: "NPC 105" },
+            minSpawnTime: new Date(now - 10 * minute),
+            maxSpawnTime: new Date(now + 30 * minute),
+            updatedAt: new Date(now - 60 * minute),
+          },
+        ]),
+      );
+
+      const rebuild = fixture.makeRebuild(true);
+
+      await fixture.boundary.run(rebuild.rebuildRule(7));
+
+      const first = await fixture.jobs();
+
+      expect(first.map(({ sourceEntityId }) => sourceEntityId)).toEqual([
+        "guild-1:fobos:hero:105",
+      ]);
+
+      await fixture.boundary.run(
+        fixture.database
+          .update(notificationJobTable)
+          .set({ status: "SENT" })
+          .where(eq(notificationJobTable.id, first[0]!.id)),
+      );
+      await fixture.boundary.run(rebuild.rebuildRule(7));
+
+      expect(
+        (await fixture.jobs()).map(({ id, status }) => ({ id, status })),
+      ).toEqual([{ id: first[0]!.id, status: "SENT" }]);
+    } finally {
+      await fixture.boundary.dispose();
+    }
+  });
+
+  it("keeps a past-due reminder sent under a pre-occurrence key but still announces a new spawn window", async () => {
+    const now = Date.now();
+
+    const fixture = await seedTimerNotifications({
+      rules: [timerRule(7, [105, 106])],
+      links: [{ ruleId: 7, targetId: 1 }],
+      now,
+    });
+
+    const window = (minutes: readonly [number, number]) => ({
+      minSpawnTime: new Date(now + minutes[0] * minute),
+      maxSpawnTime: new Date(now + minutes[1] * minute),
+    });
+
+    const open = window([-10, 30]);
+
+    try {
+      await fixture.boundary.run(
+        fixture.database.insert(timerTable).values(
+          [105, 106].map((npcId) => ({
+            guildId: "guild-1",
+            createdById: 1,
+            npcId,
+            timerKey: `hero:${npcId}`,
+            world: "fobos",
+            npc: { name: `NPC ${npcId}` },
+            ...open,
+            updatedAt: new Date(now - 60 * minute),
+          })),
+        ),
+      );
+
+      // Sent before deploying occurrence keys: keyed by the moved time. The
+      // job of 105 announced this window, the job of 106 an earlier one.
+      await fixture.boundary.run(
+        fixture.database.insert(notificationJobTable).values(
+          (
+            [
+              [105, open],
+              [106, window([-300, -260])],
+            ] as const
+          ).map(([npcId, sent]) =>
+            createNotificationJobFixture({
+              ...staleTimerJob(
+                `legacy-${npcId}`,
+                7,
+                npcId,
+                new Date(now - 5 * minute),
+              ),
+              targetId: 1,
+              status: "SENT",
+              payloadSnapshot: {
+                minSpawnTime: sent.minSpawnTime.toISOString(),
+                maxSpawnTime: sent.maxSpawnTime.toISOString(),
+              },
+            }),
+          ),
+        ),
+      );
+
+      await fixture.boundary.run(fixture.makeRebuild(true).rebuildRule(7));
+
+      const created = (await fixture.jobs()).filter(
+        ({ id }) => !id.startsWith("legacy-"),
+      );
+
+      expect(created.map(({ sourceEntityId }) => sourceEntityId)).toEqual([
+        "guild-1:fobos:hero:106",
+      ]);
+    } finally {
+      await fixture.boundary.dispose();
+    }
+  });
+
   it("rebuilds an updated timer for every matching rule without touching other timers", async () => {
     const now = Date.now();
 

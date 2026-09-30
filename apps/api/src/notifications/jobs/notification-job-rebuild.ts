@@ -146,6 +146,10 @@ export const makeNotificationJobRebuild = (
     event: TimerUpdatedEvent,
     now: Date,
   ) => {
+    // A timer whose spawn window has closed is history: announcing it now
+    // would notify about a spawn that already happened.
+    if (new Date(event.maxSpawnTime) <= now) return null;
+
     const anchor =
       rule.scheduleAnchor === NotificationScheduleAnchor.MAX_SPAWN
         ? new Date(event.maxSpawnTime)
@@ -159,16 +163,19 @@ export const makeNotificationJobRebuild = (
       event,
       sourceEntityId: timerSourceEntityId(event),
       scheduledFor: calculated < now ? now : calculated,
+      occurrenceAt: calculated,
     };
   };
 
   const createTimerJob = (
     rule: RuleWithTargets,
     target: RuleTarget["target"],
-    schedule: ReturnType<typeof timerSchedule>,
+    schedule: NonNullable<ReturnType<typeof timerSchedule>>,
     isPermitted: boolean,
   ) => {
-    const { event, sourceEntityId, scheduledFor } = schedule;
+    const { event, sourceEntityId, scheduledFor, occurrenceAt } = schedule;
+    const minSpawnTime = new Date(event.minSpawnTime);
+    const maxSpawnTime = new Date(event.maxSpawnTime);
 
     return scheduler
       .create({
@@ -176,6 +183,11 @@ export const makeNotificationJobRebuild = (
         target,
         jobKind: NotificationJobKind.SCHEDULED,
         scheduledFor,
+        occurrenceAt,
+        occurrence: {
+          minSpawnTime: minSpawnTime.toISOString(),
+          maxSpawnTime: maxSpawnTime.toISOString(),
+        },
         sourceEntityType: "timer",
         sourceEntityId,
         payloadSnapshot: content.timer({
@@ -185,8 +197,8 @@ export const makeNotificationJobRebuild = (
           npcName: event.npc?.name ?? null,
           world: event.world,
           timerKey: event.timerKey,
-          minSpawnTime: new Date(event.minSpawnTime),
-          maxSpawnTime: new Date(event.maxSpawnTime),
+          minSpawnTime,
+          maxSpawnTime,
           scheduledFor,
         }),
         forceBlocked: !isPermitted,
@@ -228,12 +240,12 @@ export const makeNotificationJobRebuild = (
           yield* scheduler.cancel({
             ruleId: rule.id,
             sourceEntityType: "timer",
-            sourceEntityId: schedule.sourceEntityId,
+            sourceEntityId: timerSourceEntityId(event),
           });
 
           const eligible = rule.targets.filter(isEligibleTarget);
 
-          if (eligible.length === 0) return;
+          if (!schedule || eligible.length === 0) return;
           const isPermitted = yield* permittedFor(rule);
 
           yield* Effect.forEach(
@@ -335,7 +347,9 @@ export const makeNotificationJobRebuild = (
       const npc = Predicate.isObject(timer.npc) ? timer.npc : null;
       const schedule = timerSchedule(rule, { ...timer, npc }, now);
 
-      return eligible.map(({ target }) => ({ target, schedule }));
+      return schedule
+        ? eligible.map(({ target }) => ({ target, schedule }))
+        : [];
     });
 
     yield* Effect.forEach(

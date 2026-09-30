@@ -1,5 +1,6 @@
 import { IsoDateTime } from "@lootlog/schema/primitives";
 import { Schema } from "effect";
+import { NotificationRuleUnresolvedSelection } from "#src/contracts/notifications/schemas";
 import {
   NotificationJobKind,
   NotificationJobStatus,
@@ -110,6 +111,7 @@ const NotificationRuleSummaryResponse = Schema.Struct({
 export const NotificationRuleResponse = Schema.Struct({
   ...NotificationRuleSummaryResponse.fields,
   targets: Schema.Array(NotificationRuleTargetResponse),
+  unresolvedSelections: Schema.Array(NotificationRuleUnresolvedSelection),
 });
 
 const NotificationRuleWithTestTriggerResponse = Schema.Struct({

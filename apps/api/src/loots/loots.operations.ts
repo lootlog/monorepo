@@ -1,3 +1,4 @@
+import { getLootListCacheScope } from "#src/shared/cache";
 import { buildLootVisibilityCacheScope } from "#src/loots/loot-visibility-cache";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
@@ -201,7 +202,7 @@ export const makeLootsOperations = ({
       [...new Set(guildIds)],
       (guildId) =>
         attempt("loots.cache.invalidateList", () =>
-          redis.invalidateScopes(`loots:list:${guildId}`),
+          redis.invalidateScopes(getLootListCacheScope(guildId)),
         ).pipe(
           Effect.catch((error) =>
             Effect.sync(() =>
@@ -327,7 +328,7 @@ export const makeLootsOperations = ({
 
       return redis.getOrSetJsonEffect({
         key,
-        scopes: [`loots:list:${guild.id}`],
+        scopes: [getLootListCacheScope(guild.id)],
         codec: {
           stringify: wireCodec.stringify,
           parse: (text) => normalizeCachedLoots(wireCodec.parse(text)),
