@@ -95,10 +95,24 @@ const NAMESPACE_PREFERENCE: Record<NpcIdentityNamespace, number> = {
 };
 
 const collapseByNameAndType = (hits: readonly NpcHit[]) => {
-  const suggestionKey = (npc: NpcHit) => `${npc.name}_${npc.type}`;
+  const nameAndType = (npc: NpcHit) => `${npc.name}_${npc.type}`;
+
+  // Equal names in different editions are different NPCs. An unversioned hit
+  // is older data of either edition and yields to a versioned one.
+  const versioned = new Set(
+    hits.flatMap((hit) => (hit.gameVersion === null ? [] : [nameAndType(hit)])),
+  );
+
+  const candidates = hits.filter(
+    (hit) => hit.gameVersion !== null || !versioned.has(nameAndType(hit)),
+  );
+
+  const suggestionKey = (npc: NpcHit) =>
+    `${npc.gameVersion}_${nameAndType(npc)}`;
+
   const preferred = new Map<string, NpcHit>();
 
-  for (const hit of hits) {
+  for (const hit of candidates) {
     const current = preferred.get(suggestionKey(hit));
 
     if (
@@ -110,8 +124,8 @@ const collapseByNameAndType = (hits: readonly NpcHit[]) => {
     }
   }
 
-  // Keep the relevance position of each name/type's first hit.
-  return uniqBy(hits, suggestionKey).flatMap(
+  // Keep the relevance position of each suggestion's first hit.
+  return uniqBy(candidates, suggestionKey).flatMap(
     (hit) => preferred.get(suggestionKey(hit)) ?? [],
   );
 };
