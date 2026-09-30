@@ -890,41 +890,49 @@ export const makeLegacyRepair = (database: ApiDatabaseValue) => {
 
       const targetId = row.targetSnapshotId;
 
-      yield* (
+      // Built per use: drizzle builders are mutable, so the subquery of the
+      // delete and the later lookup must not share one.
+      const references = () =>
+        row.rowTable === "LootNpc"
+          ? database
+              .select({ id: lootNpcTable.id })
+              .from(lootNpcTable)
+              .where(eq(lootNpcTable.npcSnapshotId, targetId))
+          : database
+              .select({ id: lootItemTable.id })
+              .from(lootItemTable)
+              .where(eq(lootItemTable.itemSnapshotId, targetId));
+
+      const remove =
         row.rowTable === "LootNpc"
           ? database
               .delete(npcSnapshotTable)
               .where(
-                and(
-                  eq(npcSnapshotTable.id, targetId),
-                  notExists(
-                    database
-                      .select({ id: lootNpcTable.id })
-                      .from(lootNpcTable)
-                      .where(eq(lootNpcTable.npcSnapshotId, targetId)),
-                  ),
-                ),
+                and(eq(npcSnapshotTable.id, targetId), notExists(references())),
               )
           : database
               .delete(itemSnapshotTable)
               .where(
                 and(
                   eq(itemSnapshotTable.id, targetId),
-                  notExists(
-                    database
-                      .select({ id: lootItemTable.id })
-                      .from(lootItemTable)
-                      .where(eq(lootItemTable.itemSnapshotId, targetId)),
-                  ),
+                  notExists(references()),
                 ),
-              )
-      ).pipe(
-        // A loot accepted concurrently can reference it before the delete;
-        // the revision is then a valid observation and stays.
+              );
+
+      yield* remove.pipe(
+        // A loot accepted concurrently can reference the revision before the
+        // delete; it is then a valid observation and stays. Any other failure
+        // fails the invocation, so the entry stays open and is retried.
         Effect.catch((cause) =>
-          Effect.logWarning("Legacy repair kept a created revision").pipe(
-            Effect.annotateLogs({ entryId: row.entryId, cause: String(cause) }),
-          ),
+          Effect.gen(function* () {
+            const [referenced] = yield* references().limit(1);
+
+            if (!referenced) return yield* Effect.fail(cause);
+
+            yield* Effect.logWarning(
+              "Legacy repair kept a created revision a newer loot references",
+            ).pipe(Effect.annotateLogs({ entryId: row.entryId }));
+          }),
         ),
       );
     });
