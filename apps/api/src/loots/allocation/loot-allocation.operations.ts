@@ -1,3 +1,4 @@
+import { getLootListCacheScope } from "#src/shared/cache";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { createHash } from "node:crypto";
 import { joinItemStat } from "@lootlog/database/item-stat";
@@ -293,7 +294,7 @@ export const makeLootAllocationOperations = (options: {
 
         yield* Effect.all(
           organizationIds.map((guildId) =>
-            options.cache.invalidateScopes(`loots:list:${guildId}`).pipe(
+            options.cache.invalidateScopes(getLootListCacheScope(guildId)).pipe(
               Effect.catch((error) =>
                 Effect.sync(() =>
                   options.logger.warn("Failed to invalidate loots list cache", {
