@@ -56,6 +56,36 @@ export const CachedTimerProjectionSchema = Schema.Struct({
 
 export type CachedTimerProjection = typeof CachedTimerProjectionSchema.Type;
 
+export const timerNpcField = (npc: unknown, key: string) =>
+  Predicate.isObject(npc) ? npc[key] : undefined;
+
+const isPositiveSafeInteger = (value: unknown): value is number =>
+  typeof value === "number" && Number.isSafeInteger(value) && value > 0;
+
+/**
+ * `npcId` is the timer's own NPC id: a Margonem runtime id for automatic
+ * timers, a generated id for manual and event timers. `templateId` is the
+ * Margonem template observed with it, or null when no client reported one.
+ */
+export type TimerNpcIdentity = {
+  readonly npcId: number;
+  readonly templateId: number | null;
+};
+
+export const timerNpcTemplateId = (npc: unknown): number | null => {
+  const templateId = timerNpcField(npc, "templateId");
+
+  return isPositiveSafeInteger(templateId) ? templateId : null;
+};
+
+export const timerNpcIdentity = (timer: {
+  readonly npcId: number;
+  readonly npc?: unknown;
+}): TimerNpcIdentity => ({
+  npcId: timer.npcId,
+  templateId: timerNpcTemplateId(timer.npc),
+});
+
 export const mapTimerNpc = (npc: unknown) => {
   if (!Predicate.isObject(npc)) return null;
   const value = npc;
@@ -67,6 +97,7 @@ export const mapTimerNpc = (npc: unknown) => {
 
   return {
     id: typeof value.id === "number" ? value.id : 0,
+    templateId: timerNpcTemplateId(value),
     name: typeof value.name === "string" ? value.name : "",
     prof: typeof value.prof === "string" ? value.prof : "",
     location: typeof value.location === "string" ? value.location : "",
@@ -172,9 +203,6 @@ export const mapTimerResponse = (timer: CachedTimerProjection) => {
     updatedAt: toTimerDate(timer.updatedAt) ?? new Date(),
   };
 };
-
-export const timerNpcField = (npc: unknown, key: string) =>
-  Predicate.isObject(npc) ? npc[key] : undefined;
 
 export type TimerPublishedEvent<
   Key extends

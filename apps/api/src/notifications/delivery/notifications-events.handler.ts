@@ -13,6 +13,7 @@ import {
   type TimerUpdatedEvent,
 } from "#src/notifications/jobs/notification-job-rebuild";
 import type { NotificationMatching } from "#src/notifications/rules/notification-matching.service";
+import { timerNpcIdentity } from "#src/timers/timer-projection";
 import type { NotificationEventStore } from "#src/notifications/delivery/notification-event-store";
 import {
   WATCHED_ITEM_DROPPED_TITLE,
@@ -54,7 +55,10 @@ export const makeNotificationsEvents = (options: {
         event.world,
       ))
         .filter((rule) =>
-          options.matching.matchesTimerRule(rule.filters, event.npcId),
+          options.matching.matchesTimerRule(
+            rule.filters,
+            timerNpcIdentity(event),
+          ),
         )
         .map(({ id }) => id);
 

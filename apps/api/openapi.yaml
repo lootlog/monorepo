@@ -18132,6 +18132,12 @@ components:
           properties:
             id:
               type: number
+            templateId:
+              description: Margonem template id (`tpl`) observed with this timer's NPC, or null when no client reported one.
+              nullable: true
+              type: integer
+              minimum: 1
+              maximum: 9007199254740991
             name:
               type: string
             prof:
@@ -18161,6 +18167,7 @@ components:
               type: string
           required:
             - id
+            - templateId
             - name
             - prof
             - location
@@ -18380,6 +18387,12 @@ components:
           properties:
             id:
               type: number
+            templateId:
+              description: Margonem template id (`tpl`) observed with this timer's NPC, or null when no client reported one.
+              nullable: true
+              type: integer
+              minimum: 1
+              maximum: 9007199254740991
             name:
               type: string
             prof:
@@ -18409,6 +18422,7 @@ components:
               type: string
           required:
             - id
+            - templateId
             - name
             - prof
             - location
@@ -18630,6 +18644,11 @@ components:
       properties:
         npcId:
           type: number
+        templateId:
+          nullable: true
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
         timerKey:
           type: string
         name:
@@ -18666,6 +18685,7 @@ components:
           type: number
       required:
         - npcId
+        - templateId
         - timerKey
         - name
         - lvl
@@ -18701,6 +18721,13 @@ components:
           properties:
             id:
               type: number
+              description: Margonem runtime NPC id (`npc.id`) of the removed spawn.
+            templateId:
+              description: Margonem template id (`npc.tpl`); null when the client did not observe it.
+              nullable: true
+              type: integer
+              minimum: 1
+              maximum: 9007199254740991
             name:
               type: string
             location:
@@ -20258,6 +20285,18 @@ components:
             properties:
               id:
                 type: number
+                description: "Deprecated overloaded NPC id: a template id or a runtime id. Ignored for identity when `runtimeId` or `templateId` is present."
+              runtimeId:
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
+                description: Margonem runtime NPC id (`npc.id`, battle `originalId`) of the looted spawn.
+              templateId:
+                description: Margonem template id (`npc.tpl`); null when the client did not observe it.
+                nullable: true
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
               name:
                 type: string
                 minLength: 1
@@ -22108,6 +22147,12 @@ components:
                       type: integer
                       minimum: -9007199254740991
                       maximum: 9007199254740991
+                  npcTemplateIds:
+                    type: array
+                    items:
+                      type: integer
+                      minimum: -9007199254740991
+                      maximum: 9007199254740991
                   itemId:
                     nullable: true
                     type: integer
@@ -22406,6 +22451,14 @@ components:
             minimum: -9007199254740991
             maximum: 9007199254740991
           maxItems: 5
+        npcTemplateIds:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          maxItems: 5
+          description: Margonem template ids (`tpl`). Matches every timer observed with one of these templates; `npcId` and `npcIds` match a timer's own NPC id.
         itemId:
           type: integer
           minimum: -9007199254740991
@@ -22539,6 +22592,12 @@ components:
               minimum: -9007199254740991
               maximum: 9007199254740991
             npcIds:
+              type: array
+              items:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+            npcTemplateIds:
               type: array
               items:
                 type: integer
@@ -22776,6 +22835,14 @@ components:
             minimum: -9007199254740991
             maximum: 9007199254740991
           maxItems: 5
+        npcTemplateIds:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          maxItems: 5
+          description: Margonem template ids (`tpl`). Matches every timer observed with one of these templates; `npcId` and `npcIds` match a timer's own NPC id.
         itemId:
           type: integer
           minimum: -9007199254740991
@@ -23095,6 +23162,12 @@ components:
                         minimum: -9007199254740991
                         maximum: 9007199254740991
                       npcIds:
+                        type: array
+                        items:
+                          type: integer
+                          minimum: -9007199254740991
+                          maximum: 9007199254740991
+                      npcTemplateIds:
                         type: array
                         items:
                           type: integer
@@ -23539,6 +23612,12 @@ components:
                         minimum: -9007199254740991
                         maximum: 9007199254740991
                       npcIds:
+                        type: array
+                        items:
+                          type: integer
+                          minimum: -9007199254740991
+                          maximum: 9007199254740991
+                      npcTemplateIds:
                         type: array
                         items:
                           type: integer
@@ -23997,6 +24076,12 @@ components:
                   minimum: -9007199254740991
                   maximum: 9007199254740991
                 npcIds:
+                  type: array
+                  items:
+                    type: integer
+                    minimum: -9007199254740991
+                    maximum: 9007199254740991
+                npcTemplateIds:
                   type: array
                   items:
                     type: integer

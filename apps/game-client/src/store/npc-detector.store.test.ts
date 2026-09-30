@@ -12,7 +12,6 @@ const createNpc = (id: number, nick = `npc-${id}`): GameNpcWithLocation => ({
   nick,
   notificationSentAt: null,
   prof: "w",
-  tpl: id,
   type: 3,
   wt: 80,
   x: 1,

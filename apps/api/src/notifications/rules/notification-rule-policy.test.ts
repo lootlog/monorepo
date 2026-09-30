@@ -96,6 +96,31 @@ describe("notification rule policy", () => {
     ).toThrow();
   });
 
+  it("limits timer and template NPC selections together and replaces the previous selection", () => {
+    const timerRule = createNotificationRuleFixture({
+      triggerType: NotificationTriggerType.TIMER_BEFORE_SPAWN,
+      world: "fobos",
+      filters: { npcIds: [313_103] },
+      scheduleStrategy: "SPAWN_WINDOW_RELATIVE",
+      scheduleAnchor: "MIN_SPAWN",
+      scheduleOffsetMinutes: 5,
+      scheduledAt: null,
+    });
+
+    expect(() =>
+      updateNotificationRuleValues(NotificationOwnerType.GUILD, timerRule, {
+        npcIds: [1, 2, 3],
+        npcTemplateIds: [4, 5, 6],
+      }),
+    ).toThrow("NOTIFICATION_RULE_MAX_NPCS_EXCEEDED");
+
+    expect(
+      updateNotificationRuleValues(NotificationOwnerType.GUILD, timerRule, {
+        npcTemplateIds: [257_636, 257_636],
+      }).filters,
+    ).toEqual({ npcTemplateIds: [257_636] });
+  });
+
   it("preserves fields omitted by an update", () => {
     const values = updateNotificationRuleValues(
       NotificationOwnerType.USER,

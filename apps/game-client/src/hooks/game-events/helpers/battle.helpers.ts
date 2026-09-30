@@ -1,5 +1,6 @@
 import type { RuntimeIngressSnapshot } from "@/lib/margonem-runtime/runtime.types";
 import { useGameStore } from "@/store/game.store";
+import { useNpcsStore } from "@/store/npcs.store";
 import { useOthersStore } from "@/store/others.store";
 import type { BattleWarriorsWithAccountId } from "@/store/game-store/battle.store";
 import type { W } from "@lootlog/margonem/game-events";
@@ -97,6 +98,20 @@ export const mergeBattleWarriorPatches = (
       ...warrior,
       accountId,
     };
+
+    // The warrior has no template field. Resolve it from the map NPC while it
+    // exists: the npcs_del that removes it may precede the fight loot.
+    if (key.startsWith("-")) {
+      const runtimeId = mergedWarriors[key].originalId;
+
+      mergedWarriors[key].templateId =
+        currentWarrior?.templateId ??
+        (
+          ingress?.npcsById[runtimeId] ??
+          useNpcsStore.getState().getNpc(runtimeId)
+        )?.templateId ??
+        null;
+    }
 
     if (modernHpPercentage !== undefined) {
       mergedWarriors[key].hpp = modernHpPercentage;

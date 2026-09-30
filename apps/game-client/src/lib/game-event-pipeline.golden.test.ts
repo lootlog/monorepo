@@ -602,6 +602,9 @@ describe("game event pipeline golden replay", () => {
               hpp: 0,
               icon: "boss.gif",
               id: 100,
+              // The NPC never reached the map store: no template is invented.
+              runtimeId: 100,
+              templateId: null,
               location: "Nithal",
               lvl: 300,
               name: "Boss",
@@ -638,6 +641,55 @@ describe("game event pipeline golden replay", () => {
       secondDispatcher.cleanup();
     },
   );
+
+  it("keeps the template of a battle NPC removed in the fight loot packet", async () => {
+    resetPipelineState();
+    const dispatcher = new EventDispatcher();
+    pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
+    margonemRuntimeBridge.setupProxies();
+    dispatcher.register();
+
+    useNpcsStore.getState().replaceNpcs([
+      Object.freeze({
+        icon: "boss.gif",
+        id: 100,
+        level: 300,
+        name: "Boss",
+        profession: "w",
+        templateId: 700,
+        type: 2,
+        weight: 85,
+        x: 1,
+        y: 2,
+      }),
+    ]);
+
+    dispatchRuntimeEvent({
+      f: { ...finalFightEvent.f, endBattle: undefined, init: "1" },
+    });
+    dispatchRuntimeEvent({
+      ...fightLootEvent,
+      f: finalFightEvent.f,
+      npcs_del: [{ id: 100 }],
+    });
+
+    expect(useNpcsStore.getState().getNpc(100)).toBeUndefined();
+    await vi.waitFor(() => expect(requestsFor("/loots")).toHaveLength(1));
+    expect(requestsFor("/loots")[0]?.body).toEqual(
+      expect.objectContaining({
+        npcs: [
+          expect.objectContaining({
+            id: 700,
+            runtimeId: 100,
+            templateId: 700,
+            name: "Boss",
+          }),
+        ],
+      }),
+    );
+
+    dispatcher.cleanup();
+  });
 
   it("submits dialog loot after projection removes the talked NPC", async () => {
     resetPipelineState();
@@ -676,7 +728,14 @@ describe("game event pipeline golden replay", () => {
     await vi.waitFor(() => expect(requestsFor("/loots")).toHaveLength(1));
     expect(requestsFor("/loots")[0]?.body).toEqual(
       expect.objectContaining({
-        npcs: [expect.objectContaining({ id: 501, name: "Talked NPC" })],
+        npcs: [
+          expect.objectContaining({
+            id: 701,
+            runtimeId: 501,
+            templateId: 701,
+            name: "Talked NPC",
+          }),
+        ],
         source: "DIALOG",
       }),
     );

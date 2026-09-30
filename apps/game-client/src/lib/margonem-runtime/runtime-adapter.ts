@@ -63,6 +63,12 @@ type RuntimeOtherData = {
 
 type RuntimeOtherWrapper = RuntimeOtherData & { d?: RuntimeOtherData };
 
+// NpcManager merges template data by `tpl`; a missing or non-positive value
+// has no template to identify.
+export function normalizeNpcTemplateId(tpl: number | undefined): number | null {
+  return tpl !== undefined && Number.isSafeInteger(tpl) && tpl > 0 ? tpl : null;
+}
+
 export function normalizeNpc(npc: GameNpc): RuntimeNpc {
   return Object.freeze({
     actions: npc.actions,
@@ -73,7 +79,7 @@ export function normalizeNpc(npc: GameNpc): RuntimeNpc {
     name: npc.nick,
     profession: npc.prof,
     respawnRandomness: npc.resp_rand,
-    templateId: npc.tpl,
+    templateId: normalizeNpcTemplateId(npc.tpl),
     type: npc.type,
     weight: npc.wt,
     x: npc.x,

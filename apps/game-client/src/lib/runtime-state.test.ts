@@ -36,7 +36,6 @@ describe("resetTransientRuntimeState", () => {
           prof: "w",
           type: 2,
           wt: 80,
-          tpl: 1,
           x: 1,
           y: 2,
           location: "Ithan",

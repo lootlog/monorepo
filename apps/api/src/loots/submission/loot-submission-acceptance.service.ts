@@ -16,6 +16,7 @@ import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
 import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
+import { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import { Permission } from "@lootlog/schema/permissions";
 import type {
   guildTable,
@@ -69,6 +70,29 @@ interface LootSubmissionLock {
     effect: Effect.Effect<A, E>,
   ) => Effect.Effect<A, unknown>;
 }
+
+/**
+ * The catalog identity stored for a looted NPC. A reported template wins; a
+ * spawn without one stays in the runtime namespace instead of posing as a
+ * template. Clients that send only the overloaded `id` keep `legacy`.
+ */
+const lootNpcIdentity = (npc: CreateLootRequest["npcs"][number]) => {
+  if (npc.templateId !== undefined && npc.templateId !== null) {
+    return {
+      identityNamespace: NpcIdentityNamespace.TEMPLATE,
+      npcId: npc.templateId,
+    };
+  }
+
+  if (npc.runtimeId !== undefined) {
+    return {
+      identityNamespace: NpcIdentityNamespace.RUNTIME,
+      npcId: npc.runtimeId,
+    };
+  }
+
+  return { identityNamespace: NpcIdentityNamespace.LEGACY, npcId: npc.id };
+};
 
 const LOOT_LOCK_TTL_MS = 30_000;
 
@@ -465,6 +489,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       RabbitRoutingKey.SEARCH_NPCS_INDEX,
       options.npcs.map((npc) => ({
         id: npc.npcId,
+        identityNamespace: npc.identityNamespace,
         snapshotHash: npc.snapshotHash ?? undefined,
         name: npc.name,
         lvl: npc.lvl,
@@ -745,7 +770,8 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
 
   private mapLootNpcsToPersistence(npcs: CreateLootRequest["npcs"]) {
     return npcs.map((npc) => ({
-      npcId: npc.id,
+      ...lootNpcIdentity(npc),
+      runtimeNpcId: npc.runtimeId ?? null,
       name: npc.name,
       type: getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type),
       lvl: npc.lvl,

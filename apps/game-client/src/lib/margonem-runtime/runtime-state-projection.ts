@@ -10,6 +10,7 @@ import type {
 } from "@lootlog/margonem/game-events";
 import {
   createRuntimeAdapter,
+  normalizeNpcTemplateId,
   type MargonemRuntimeAdapter,
 } from "./runtime-adapter";
 import { runtimeOtherHandles } from "./runtime-other-handles";
@@ -469,8 +470,11 @@ export class RuntimeStateProjection {
     entry: AppliedNpcEntry,
     heroLevel: number | undefined,
   ): RuntimeNpc | undefined {
-    const templateId = valueOrCurrent(entry.tpl, 0);
-    const template = this.npcTemplates.get(templateId);
+    const templateId = normalizeNpcTemplateId(entry.tpl);
+
+    const template =
+      templateId === null ? undefined : this.npcTemplates.get(templateId);
+
     const icon = this.resolveNpcIcon(entry.icon);
     const name = valueOrCurrent(entry.nick, template?.nick);
     const profession = valueOrCurrent(entry.prof, template?.prof);

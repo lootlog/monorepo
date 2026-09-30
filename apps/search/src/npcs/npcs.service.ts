@@ -1,5 +1,6 @@
 import { indexChangedDocuments } from "#src/meilisearch/index-changed-documents";
 import { NpcTypeEnum, NpcTypeSchema } from "@lootlog/schema/npc-type";
+import { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import { Effect, Predicate, Schema } from "effect";
 import { partition, uniqBy } from "es-toolkit";
 import type { Meilisearch } from "meilisearch";
@@ -15,7 +16,11 @@ import { NPCS_INDEX } from "./search-index.js";
 import type { IndexNpcsCommand } from "./index-npcs-command.js";
 import type { NpcHit } from "./npc-hit.js";
 
-type RawNpcHit = Omit<NpcHit, "margonemType" | "prof" | "type"> & {
+type RawNpcHit = Omit<
+  NpcHit,
+  "identityNamespace" | "margonemType" | "prof" | "type"
+> & {
+  identityNamespace?: NpcIdentityNamespace;
   margonemType?: number | null;
   prof?: string | null;
   type?: NpcHit["type"] | number | string | null;
@@ -43,6 +48,7 @@ const normalizeNpcHit = (npc: RawNpcHit): NpcHit => {
 
   return {
     id: npc.id,
+    identityNamespace: npc.identityNamespace ?? NpcIdentityNamespace.LEGACY,
     name: npc.name,
     icon: npc.icon,
     lvl: npc.lvl,
@@ -56,9 +62,51 @@ const normalizeNpcHit = (npc: RawNpcHit): NpcHit => {
 
 type IndexNpc = IndexNpcsCommand["npcs"][number];
 
+// Legacy keys keep their deployed format; equal ids in another namespace are
+// a different NPC and must not share a catalog group.
 export const npcCatalogKey = (
-  npc: Pick<RawNpcHit, "id" | "margonemType" | "type" | "world">,
-) => `${npc.id}_${resolveMargonemType(npc)}_${npc.world}`;
+  npc: Pick<
+    RawNpcHit,
+    "id" | "identityNamespace" | "margonemType" | "type" | "world"
+  >,
+) => {
+  const key = `${npc.id}_${resolveMargonemType(npc)}_${npc.world}`;
+  const namespace = npc.identityNamespace ?? NpcIdentityNamespace.LEGACY;
+
+  return namespace === NpcIdentityNamespace.LEGACY
+    ? key
+    : `${namespace}_${key}`;
+};
+
+// A template id selects every spawn of the monster; prefer it when name and
+// type collapse several catalog identities into one suggestion.
+const NAMESPACE_PREFERENCE: Record<NpcIdentityNamespace, number> = {
+  [NpcIdentityNamespace.TEMPLATE]: 0,
+  [NpcIdentityNamespace.LEGACY]: 1,
+  [NpcIdentityNamespace.RUNTIME]: 2,
+};
+
+const collapseByNameAndType = (hits: readonly NpcHit[]) => {
+  const suggestionKey = (npc: NpcHit) => `${npc.name}_${npc.type}`;
+  const preferred = new Map<string, NpcHit>();
+
+  for (const hit of hits) {
+    const current = preferred.get(suggestionKey(hit));
+
+    if (
+      !current ||
+      NAMESPACE_PREFERENCE[hit.identityNamespace] <
+        NAMESPACE_PREFERENCE[current.identityNamespace]
+    ) {
+      preferred.set(suggestionKey(hit), hit);
+    }
+  }
+
+  // Keep the relevance position of each name/type's first hit.
+  return uniqBy(hits, suggestionKey).flatMap(
+    (hit) => preferred.get(suggestionKey(hit)) ?? [],
+  );
+};
 
 /** The stored shape of one NPC; the seed script and the consumer share it. */
 export const toNpcDocument = (npc: IndexNpc) => {
@@ -102,9 +150,7 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
       Effect.map((response) => {
         const hits = uniqBy(response.hits.map(normalizeNpcHit), npcCatalogKey);
 
-        return ids && ids.length > 0
-          ? hits
-          : uniqBy(hits, (npc) => `${npc.name}_${npc.type}`);
+        return ids && ids.length > 0 ? hits : collapseByNameAndType(hits);
       }),
       Effect.tapError((error) =>
         Effect.sync(() => logger.error("NPC search error", { error })),

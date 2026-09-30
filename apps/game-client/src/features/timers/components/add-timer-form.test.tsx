@@ -9,6 +9,7 @@ import { AddTimerForm } from "./add-timer-form";
 
 const npc: SearchTimersNpcResponseDtoOutput = {
   npcId: 500,
+  templateId: null,
   timerKey: "npc-500",
   name: "Tanroth",
   lvl: 120,

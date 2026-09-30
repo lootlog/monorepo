@@ -104,6 +104,7 @@ describe("Search Effect modules", () => {
   test("keeps the first NPC per name and type unless ids are requested", async () => {
     const first = {
       id: 7,
+      identityNamespace: "legacy",
       name: "Hero",
       icon: "npc.gif",
       lvl: 100,

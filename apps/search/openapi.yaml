@@ -429,6 +429,13 @@ components:
       properties:
         id:
           type: number
+        identityNamespace:
+          type: string
+          enum:
+            - legacy
+            - runtime
+            - template
+          description: "Meaning of `id`: a Margonem template id, a runtime spawn id observed without a template, or an overloaded legacy id."
         prof:
           type: string
         icon:
@@ -457,6 +464,7 @@ components:
           type: string
       required:
         - id
+        - identityNamespace
         - prof
         - icon
         - name
@@ -612,6 +620,13 @@ components:
             properties:
               id:
                 type: number
+              identityNamespace:
+                type: string
+                enum:
+                  - legacy
+                  - runtime
+                  - template
+                description: "Meaning of `id`: a Margonem template id, a runtime spawn id observed without a template, or an overloaded legacy id."
               prof:
                 type: string
               icon:
@@ -640,6 +655,7 @@ components:
                 type: string
             required:
               - id
+              - identityNamespace
               - prof
               - icon
               - name

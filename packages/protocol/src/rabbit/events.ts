@@ -1,6 +1,9 @@
 import { UserFeedItem } from "../feed.js";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
-import { DateTimeWithOffsetString } from "@lootlog/schema/http-scalars";
+import {
+  DateTimeWithOffsetString,
+  PositiveSafeInteger,
+} from "@lootlog/schema/http-scalars";
 import {
   discordPermissionFields,
   DiscordGuildSyncStatus,
@@ -252,7 +255,12 @@ const NotificationTimerUpdated = Schema.Struct({
   minSpawnTime: Schema.NonEmptyString,
   maxSpawnTime: Schema.NonEmptyString,
   npc: Schema.optional(
-    Schema.NullOr(Schema.Struct({ name: Schema.optional(Schema.String) })),
+    Schema.NullOr(
+      Schema.Struct({
+        name: Schema.optional(Schema.String),
+        templateId: Schema.optional(Schema.NullOr(PositiveSafeInteger)),
+      }),
+    ),
   ),
 });
 

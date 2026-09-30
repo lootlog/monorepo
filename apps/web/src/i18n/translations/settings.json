@@ -716,6 +716,9 @@
       "hint": "Przełącz na ręczne wpisanie ID NPC jako alternatywę dla wyszukiwarki.",
       "fieldHint": "Wpisz jedno lub wiele ID NPC. Możesz rozdzielać je przecinkami, spacjami albo nowymi liniami."
     },
+    "npcOption": {
+      "template": "{{name}} {{type}} (#{{id}}, każdy spawn)"
+    },
     "deleteTargetDialog": {
       "title": "Usunąć kanał docelowy?",
       "description": "Kanał {{name}} zostanie usunięty ze wszystkich reguł i zaplanowanych wysyłek.",

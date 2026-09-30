@@ -122,7 +122,7 @@ export const notificationsServicesLive = Layer.effect(
         findRules: jobsStore.findRules,
         timers: jobsStore.findTimers,
       },
-      (filters, npcId) => matching.matchesTimerRule(filters, npcId),
+      (filters, timer) => matching.matchesTimerRule(filters, timer),
       guildSync.hasRequiredGuildPermissions,
       {
         timer: (options) => content.buildTimerNotificationPayload(options),

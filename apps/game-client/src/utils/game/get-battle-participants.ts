@@ -13,8 +13,15 @@ export type PartyMember = {
   accountId: number;
 };
 
+/**
+ * `runtimeId` is the looted spawn (battle `originalId`), `templateId` its
+ * Margonem template or null when it was not observed. `id` keeps the value
+ * older API revisions expect: the template when known, else the runtime id.
+ */
 export type Npc = {
   id: number;
+  runtimeId: number;
+  templateId: number | null;
   name: string;
   icon: string;
   hpp: number;
@@ -34,11 +41,14 @@ export const getBattleParticipants = (
 
   Object.entries(battleWarriors).forEach(([key, value]) => {
     if (key.startsWith("-")) {
-      const npcData = useNpcsStore.getState().getNpc(value.originalId);
+      const runtimeId = value.originalId;
+      const npcData = useNpcsStore.getState().getNpc(runtimeId);
+      const templateId = value.templateId ?? npcData?.templateId ?? null;
+      const identity = { id: templateId ?? runtimeId, runtimeId, templateId };
 
       if (!npcData) {
         npcs.push({
-          id: value.originalId,
+          ...identity,
           name: value.name,
           icon: value.icon,
           hpp: value.hpp,
@@ -53,7 +63,7 @@ export const getBattleParticipants = (
       }
 
       npcs.push({
-        id: npcData.templateId,
+        ...identity,
         name: npcData.name,
         icon: npcData.icon,
         hpp: value.hpp,

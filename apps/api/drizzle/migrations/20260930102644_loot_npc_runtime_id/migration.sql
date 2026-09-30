@@ -1,0 +1,1 @@
+ALTER TABLE "LootNpc" ADD COLUMN "runtimeNpcId" integer;

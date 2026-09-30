@@ -7,6 +7,7 @@ import {
 import type { NotificationContentModule } from "#src/notifications/content/notification-content.service";
 import type { NotificationEventStore } from "#src/notifications/delivery/notification-event-store";
 import type { NotificationMatching } from "#src/notifications/rules/notification-matching.service";
+import { timerNpcIdentity } from "#src/timers/timer-projection";
 import {
   NotificationScheduleAnchor,
   NotificationTriggerType,
@@ -61,7 +62,7 @@ export const makeNotificationTestContent = (
       const timers = yield* store.timersForRule(rule.guildId, rule.world);
 
       const timer = timers.find((candidate) =>
-        matching.matchesTimerRule(rule.filters, candidate.npcId),
+        matching.matchesTimerRule(rule.filters, timerNpcIdentity(candidate)),
       );
 
       if (timer) {

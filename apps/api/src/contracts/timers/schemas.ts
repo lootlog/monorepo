@@ -13,6 +13,10 @@ import { MemberProfile } from "#src/contracts/members/schemas";
 
 const TimerNpc = Schema.Struct({
   id: FiniteNumber,
+  templateId: Schema.NullOr(PositiveSafeInteger).annotate({
+    description:
+      "Margonem template id (`tpl`) observed with this timer's NPC, or null when no client reported one.",
+  }),
   name: Schema.String,
   prof: Schema.String,
   location: Schema.String,
@@ -88,6 +92,7 @@ export type TimerNpcSearchResult = typeof TimerNpcSearchResult.Type;
 
 export const TimerNpcSearchResult = Schema.Struct({
   npcId: FiniteNumber,
+  templateId: Schema.NullOr(PositiveSafeInteger),
   timerKey: Schema.String,
   name: Schema.String,
   lvl: FiniteNumber,
@@ -113,7 +118,15 @@ export const CreateAutoTimerRequest = Schema.Struct({
   customMaxSpawnTime: Schema.optionalKey(DateTimeString),
   world: NonEmptyString,
   npc: Schema.Struct({
-    id: FiniteNumber,
+    id: FiniteNumber.annotate({
+      description: "Margonem runtime NPC id (`npc.id`) of the removed spawn.",
+    }),
+    templateId: Schema.optionalKey(
+      Schema.NullOr(PositiveSafeInteger).annotate({
+        description:
+          "Margonem template id (`npc.tpl`); null when the client did not observe it.",
+      }),
+    ),
     name: Schema.String,
     location: Schema.String,
     lvl: FiniteNumber,

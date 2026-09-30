@@ -418,6 +418,84 @@ describe("durable loot publications", () => {
     },
   );
 
+  it("stores explicit template and runtime NPC identities apart from the overloaded id", async () => {
+    const { request } = await seed();
+    const name = `Identity hero ${randomUUID()}`;
+
+    const accept = async (npc: Partial<CreateLootRequest["npcs"][number]>) => {
+      const result = await runtime.runPromise(
+        acceptance().accept({
+          ...request,
+          submission: {
+            ...request.submission,
+            loots: request.submission.loots.map((item) => ({
+              ...item,
+              hid: randomUUID(),
+            })),
+            npcs: request.submission.npcs.map((base) => ({
+              ...base,
+              name,
+              ...npc,
+            })),
+          },
+        }),
+      );
+
+      snapshotTestLootIds.push(result.id);
+
+      const [link] = await runtime.runPromise(
+        database
+          .select({
+            runtimeNpcId: lootNpcTable.runtimeNpcId,
+            npcId: npcSnapshotTable.npcId,
+            identityNamespace: npcSnapshotTable.identityNamespace,
+          })
+          .from(lootNpcTable)
+          .innerJoin(
+            npcSnapshotTable,
+            eq(npcSnapshotTable.id, lootNpcTable.npcSnapshotId),
+          )
+          .where(eq(lootNpcTable.lootId, result.id)),
+      );
+
+      const search = (await publications(result.id)).find(
+        (intent) =>
+          intent.kind === "rabbit" &&
+          intent.routingKey === RabbitRoutingKey.SEARCH_NPCS_INDEX,
+      );
+
+      return { link, search };
+    };
+
+    // The template wins over the overloaded id; the spawn stays on the loot.
+    expect(
+      await accept({ id: 313_103, runtimeId: 313_103, templateId: 257_636 }),
+    ).toMatchObject({
+      link: {
+        runtimeNpcId: 313_103,
+        npcId: 257_636,
+        identityNamespace: "template",
+      },
+      search: { data: [{ id: 257_636, identityNamespace: "template" }] },
+    });
+    // An unresolved template is never filled from the runtime id.
+    expect(
+      await accept({ id: 313_104, runtimeId: 313_104, templateId: null }),
+    ).toMatchObject({
+      link: {
+        runtimeNpcId: 313_104,
+        npcId: 313_104,
+        identityNamespace: "runtime",
+      },
+      search: { data: [{ id: 313_104, identityNamespace: "runtime" }] },
+    });
+    // Older clients keep their overloaded id in the legacy namespace.
+    expect(await accept({ id: 257_636 })).toMatchObject({
+      link: { runtimeNpcId: null, npcId: 257_636, identityNamespace: "legacy" },
+      search: { data: [{ id: 257_636, identityNamespace: "legacy" }] },
+    });
+  });
+
   it("preserves an ambiguous legacy NPC row while accepting a new observed revision", async () => {
     const { id, request } = await seed();
     const name = `Legacy hero ${id}`;

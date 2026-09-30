@@ -50,6 +50,18 @@ export interface SearchUnavailableEncoded {
   message: string;
 }
 
+/**
+ * Meaning of `id`: a Margonem template id, a runtime spawn id observed without a template, or an overloaded legacy id.
+ */
+export type NpcHitDtoOutputIdentityNamespace = typeof NpcHitDtoOutputIdentityNamespace[keyof typeof NpcHitDtoOutputIdentityNamespace];
+
+
+export const NpcHitDtoOutputIdentityNamespace = {
+  legacy: 'legacy',
+  runtime: 'runtime',
+  template: 'template',
+} as const;
+
 export type NpcHitDtoOutputType = typeof NpcHitDtoOutputType[keyof typeof NpcHitDtoOutputType];
 
 
@@ -70,6 +82,8 @@ export const NpcHitDtoOutputType = {
  */
 export interface NpcHitDtoOutput {
   id: number;
+  /** Meaning of `id`: a Margonem template id, a runtime spawn id observed without a template, or an overloaded legacy id. */
+  identityNamespace: NpcHitDtoOutputIdentityNamespace;
   prof: string;
   icon: string;
   name: string;
@@ -143,6 +157,18 @@ export type SearchAllResponseDtoOutputPlayersItem = {
   world: string;
 };
 
+/**
+ * Meaning of `id`: a Margonem template id, a runtime spawn id observed without a template, or an overloaded legacy id.
+ */
+export type SearchAllResponseDtoOutputNpcsItemIdentityNamespace = typeof SearchAllResponseDtoOutputNpcsItemIdentityNamespace[keyof typeof SearchAllResponseDtoOutputNpcsItemIdentityNamespace];
+
+
+export const SearchAllResponseDtoOutputNpcsItemIdentityNamespace = {
+  legacy: 'legacy',
+  runtime: 'runtime',
+  template: 'template',
+} as const;
+
 export type SearchAllResponseDtoOutputNpcsItemType = typeof SearchAllResponseDtoOutputNpcsItemType[keyof typeof SearchAllResponseDtoOutputNpcsItemType];
 
 
@@ -163,6 +189,8 @@ export const SearchAllResponseDtoOutputNpcsItemType = {
  */
 export type SearchAllResponseDtoOutputNpcsItem = {
   id: number;
+  /** Meaning of `id`: a Margonem template id, a runtime spawn id observed without a template, or an overloaded legacy id. */
+  identityNamespace: SearchAllResponseDtoOutputNpcsItemIdentityNamespace;
   prof: string;
   icon: string;
   name: string;
