@@ -69,8 +69,10 @@ export const logOAuthCallbackError = createAuthMiddleware((ctx) => {
       ? ctx.context.responseHeaders?.get("location")
       : undefined;
 
+  // URL.parse cannot throw, so logging never replaces the callback redirect.
   const error = location
-    ? new URL(location, ctx.context.baseURL).searchParams.get("error")
+    ? (URL.parse(location, ctx.context.baseURL)?.searchParams.get("error") ??
+      null)
     : null;
 
   if (error !== null)
