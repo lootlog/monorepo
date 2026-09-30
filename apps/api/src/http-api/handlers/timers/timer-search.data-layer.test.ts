@@ -178,6 +178,32 @@ describe("timer NPC search", () => {
     expect(outOfRange).toEqual([]);
   });
 
+  it("keeps reading past a full batch of hidden timers to fill the limit", async () => {
+    await boundary.run(
+      boundary.database.insert(timerTable).values([
+        ...Array.from({ length: 100 }, (_, index) =>
+          timer(guild.id, "world-c", 1000 + index, {
+            name: "Ogr hero",
+            lvl: 300,
+            type: "HERO",
+          }),
+        ),
+        timer(guild.id, "world-c", 2000, {
+          name: "Ogr elite",
+          lvl: 50,
+          type: "ELITE2",
+        }),
+      ]),
+    );
+
+    const results = await search(
+      [role([Permission.LOOTLOG_TIMERS_READ], 0, 100)],
+      { world: "world-c", search: "ogr", limit: 1 },
+    );
+
+    expect(results.map(({ npcId }) => npcId)).toEqual([2000]);
+  });
+
   it("returns a hero's identity, location and respawn data to an authorized caller", async () => {
     const results = await search(
       [
