@@ -113,6 +113,7 @@ describe("Search Effect modules", () => {
       margonemType: 2,
       prof: "w",
       world: "berufs",
+      gameVersion: null,
     } satisfies NpcHit;
 
     const hits = [first, { ...first, id: 8, lvl: 150 }];

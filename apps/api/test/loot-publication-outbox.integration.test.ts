@@ -496,6 +496,92 @@ describe("durable loot publications", () => {
     });
   });
 
+  it("stores the declared game version on the loot, its NPC revision and search publication", async () => {
+    const { request } = await seed();
+    const name = `Game version hero ${randomUUID()}`;
+
+    const accept = async (
+      gameVersion: CreateLootRequest["gameVersion"],
+      hids = request.submission.loots.map(() => randomUUID()),
+    ) => {
+      const { gameVersion: _omitted, ...base } = request.submission;
+
+      const observed: CreateLootRequest = {
+        ...base,
+        loots: request.submission.loots.map((item, index) => ({
+          ...item,
+          hid: hids[index] ?? randomUUID(),
+        })),
+        npcs: request.submission.npcs.map((npc) => ({
+          ...npc,
+          name,
+          templateId: 257_636,
+        })),
+      };
+
+      // Older clients omit the field; `undefined` stands for that request.
+      const submission =
+        gameVersion === undefined ? observed : { ...observed, gameVersion };
+
+      const result = await runtime.runPromise(
+        acceptance().accept({ ...request, submission }),
+      );
+
+      snapshotTestLootIds.push(result.id);
+
+      const [stored] = await runtime.runPromise(
+        database
+          .select({
+            lootGameVersion: lootTable.gameVersion,
+            snapshotId: npcSnapshotTable.id,
+            snapshotGameVersion: npcSnapshotTable.gameVersion,
+          })
+          .from(lootTable)
+          .innerJoin(lootNpcTable, eq(lootNpcTable.lootId, lootTable.id))
+          .innerJoin(
+            npcSnapshotTable,
+            eq(npcSnapshotTable.id, lootNpcTable.npcSnapshotId),
+          )
+          .where(eq(lootTable.id, result.id)),
+      );
+
+      const search = (await publications(result.id)).find(
+        (intent) =>
+          intent.kind === "rabbit" &&
+          intent.routingKey === RabbitRoutingKey.SEARCH_NPCS_INDEX,
+      );
+
+      return { hids, id: result.id, search, stored };
+    };
+
+    const polish = await accept("pl");
+    const english = await accept("en");
+
+    expect(polish).toMatchObject({
+      stored: { lootGameVersion: "pl", snapshotGameVersion: "pl" },
+      search: { data: [{ id: 257_636, gameVersion: "pl" }] },
+    });
+    expect(english).toMatchObject({
+      stored: { lootGameVersion: "en", snapshotGameVersion: "en" },
+      search: { data: [{ id: 257_636, gameVersion: "en" }] },
+    });
+    // Equal template ids from different editions never share a revision.
+    expect(english.stored?.snapshotId).not.toBe(polish.stored?.snapshotId);
+
+    // Older clients and unrecognized hosts stay unknown, never Polish.
+    for (const gameVersion of [undefined, null] as const) {
+      expect(await accept(gameVersion)).toMatchObject({
+        stored: { lootGameVersion: null, snapshotGameVersion: null },
+        search: { data: [{ id: 257_636, gameVersion: null }] },
+      });
+    }
+
+    // A retry of an accepted loot keeps the provenance it was accepted with.
+    const retry = await accept("en", polish.hids);
+    expect(retry.id).toBe(polish.id);
+    expect(retry.stored).toEqual(polish.stored);
+  });
+
   it("preserves an ambiguous legacy NPC row while accepting a new observed revision", async () => {
     const { id, request } = await seed();
     const name = `Legacy hero ${id}`;

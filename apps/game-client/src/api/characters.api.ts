@@ -1,15 +1,14 @@
 import { isNotNil, isPlainObject } from "es-toolkit";
 import { parseFiniteNumber as toNumberOrNull } from "@lootlog/schema/numbers";
-import { LanguageVersion } from "@/store/global.store";
+import { GameVersion } from "@lootlog/schema/game-version";
 import { createApiClient } from "@lootlog/client/transport";
 import { getRuntimeCookie } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { pruneByRecency } from "@/lib/prune-by-recency";
 
-const MARGONEM_CHARACTER_LIST_URL =
-  "https://public-api.margonem.pl/account/charlist";
-
-const MARGONEM_CHARACTER_LIST_EN_URL =
-  "https://public-api.margonem.com/account/charlist";
+const MARGONEM_CHARACTER_LIST_URLS: Record<GameVersion, string> = {
+  [GameVersion.EN]: "https://public-api.margonem.com/account/charlist",
+  [GameVersion.PL]: "https://public-api.margonem.pl/account/charlist",
+};
 
 export const CHARACTER_LIST_CACHE_FRESH_TTL_MS = 15 * 60 * 1000;
 
@@ -220,7 +219,7 @@ const filterCharactersByWorld = (
 type FetchCharacterListOptions = {
   accountId: number;
   world: string | undefined;
-  languageVersion: LanguageVersion;
+  gameVersion: GameVersion;
 };
 
 type CharacterListCacheEntry = {
@@ -280,11 +279,11 @@ const getLocalStorageKeys = (): string[] => {
 const getPersistentCharacterListCacheKey = ({
   accountId,
   world,
-  languageVersion,
+  gameVersion,
 }: FetchCharacterListOptions) => {
   return [
     CHARACTER_LIST_CACHE_KEY_PREFIX,
-    languageVersion,
+    gameVersion,
     String(accountId),
     world ?? "unknown",
   ].join(":");
@@ -395,7 +394,7 @@ const writePersistentCharacterListCache = (
 const readMargonemCharacterListCache = ({
   accountId,
   world,
-}: FetchCharacterListOptions) => {
+}: Pick<FetchCharacterListOptions, "accountId" | "world">) => {
   const parsed = parseJsonOrNull(
     getLocalStorageItem(MARGONEM_LOCAL_STORAGE_KEY),
   );
@@ -419,11 +418,18 @@ const readMargonemCharacterListCache = ({
 export async function fetchCharacterList({
   accountId,
   world,
-  languageVersion,
-}: FetchCharacterListOptions): Promise<MargonemCharacter[]> {
+  gameVersion,
+}: Omit<FetchCharacterListOptions, "gameVersion"> & {
+  gameVersion: GameVersion | null;
+}): Promise<MargonemCharacter[]> {
   sweepPersistentCharacterListCache();
-  const options = { accountId, world, languageVersion };
-  const filteredCached = readMargonemCharacterListCache(options);
+  const filteredCached = readMargonemCharacterListCache({ accountId, world });
+
+  // An unrecognized host has no edition API or edition cache; only the game's
+  // own cached list applies.
+  if (gameVersion === null) return filteredCached;
+
+  const options = { accountId, world, gameVersion };
 
   if (filteredCached.length > 0) {
     writePersistentCharacterListCache(options, filteredCached);
@@ -442,10 +448,7 @@ export async function fetchCharacterList({
 
   const hs3 = getRuntimeCookie("hs3");
 
-  const url =
-    languageVersion === LanguageVersion.PL
-      ? MARGONEM_CHARACTER_LIST_URL
-      : MARGONEM_CHARACTER_LIST_EN_URL;
+  const url = MARGONEM_CHARACTER_LIST_URLS[gameVersion];
 
   try {
     if (!hs3) {

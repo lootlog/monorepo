@@ -37,6 +37,7 @@ describe("WorldSelector", () => {
         x: 1,
         y: 2,
       },
+      gameVersion: "pl",
       interface: "ni",
       map: { id: 1, name: "Map", visibility: 30 },
       world: "tempest",

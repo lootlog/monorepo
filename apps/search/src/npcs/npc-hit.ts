@@ -1,4 +1,5 @@
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
+import { GameVersionSchema } from "@lootlog/schema/game-version";
 import { NpcIdentityNamespaceSchema } from "@lootlog/schema/npc-identity";
 import { Schema } from "effect";
 
@@ -13,6 +14,7 @@ export const NpcHit = Schema.Struct({
   type: NpcTypeSchema,
   margonemType: Schema.Number,
   world: Schema.String,
+  gameVersion: Schema.NullOr(GameVersionSchema),
 });
 
 export type NpcHit = typeof NpcHit.Type;

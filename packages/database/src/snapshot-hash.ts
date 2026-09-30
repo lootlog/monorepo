@@ -31,9 +31,14 @@ export function createItemStatsHash(stats: string): string {
   return createHash("sha256").update(normalized).digest("hex");
 }
 
-/** A revision describes one observation, never the latest attributes of an NPC. */
+/**
+ * A revision describes one observation, never the latest attributes of an NPC.
+ * A known game version is appended, so an observation without one keeps the
+ * hash that clients before game-version provenance produced.
+ */
 export function createNpcSnapshotHash(npc: {
   identityNamespace: string;
+  gameVersion?: string | null;
   world: string;
   npcId: number;
   name: string;
@@ -58,6 +63,7 @@ export function createNpcSnapshotHash(npc: {
         npc.prof ?? null,
         npc.wt ?? null,
         npc.margonemType ?? null,
+        ...(npc.gameVersion ? [npc.gameVersion] : []),
       ]),
     )
     .digest("hex");

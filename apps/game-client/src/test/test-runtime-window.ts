@@ -36,6 +36,7 @@ export const setTestRuntimeGame = (
   } = {},
 ): void => {
   useGameStore.getState().replaceGame({
+    gameVersion: game.gameVersion === undefined ? "pl" : game.gameVersion,
     hero: { ...DEFAULT_TEST_HERO, ...game.hero },
     interface: game.interface ?? "ni",
     map: game.map ?? { id: 42, name: "Ithan", visibility: 30 },

@@ -4,14 +4,14 @@ import {
   fetchCharacterList,
 } from "@/api";
 import { useGameStore } from "@/store/game.store";
-import { getLanguageVersion } from "@/utils/game/get-language-version";
 import { useQuery } from "@tanstack/react-query";
+import type { GameVersion } from "@lootlog/schema/game-version";
 
 const getCharacterListQueryKey = (
   accountId: number,
   world: string | undefined,
-  languageVersion: string,
-) => ["characters-v2", accountId, world, languageVersion] as const;
+  gameVersion: GameVersion | null,
+) => ["characters-v2", accountId, world, gameVersion] as const;
 
 export const useCharacterList = () => {
   const accountId = useGameStore((state) =>
@@ -20,17 +20,12 @@ export const useCharacterList = () => {
 
   const world = useGameStore((state) => state.game?.world);
   const gameReady = useGameStore((state) => state.game !== null);
-  const languageVersion = getLanguageVersion(window.location.href);
+  const gameVersion = useGameStore((state) => state.game?.gameVersion ?? null);
 
   const query = useQuery({
     enabled: gameReady,
-    queryKey: getCharacterListQueryKey(accountId, world, languageVersion),
-    queryFn: () =>
-      fetchCharacterList({
-        accountId,
-        world,
-        languageVersion,
-      }),
+    queryKey: getCharacterListQueryKey(accountId, world, gameVersion),
+    queryFn: () => fetchCharacterList({ accountId, world, gameVersion }),
     gcTime: CHARACTER_LIST_CACHE_STALE_TTL_MS,
     retry: false,
     staleTime: CHARACTER_LIST_CACHE_FRESH_TTL_MS,

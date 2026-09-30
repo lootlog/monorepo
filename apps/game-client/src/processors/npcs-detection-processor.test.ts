@@ -119,6 +119,7 @@ const setInitialNpcs = (npcs: GameNpc[]) => {
       x: 1,
       y: 2,
     },
+    gameVersion: "pl",
     interface: "ni",
     map: { id: 1, name: "Ithan", visibility: 30 },
     world: "luvia",

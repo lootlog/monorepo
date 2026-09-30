@@ -154,6 +154,7 @@ describe("ServerVisibilitySettingsTab", () => {
         x: 1,
         y: 2,
       },
+      gameVersion: "pl",
       interface: "ni",
       map: { id: 100, name: "Karka-han", visibility: 0 },
       world: "alpha",

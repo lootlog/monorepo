@@ -33,6 +33,7 @@ it("keeps authorized air targets while coalescing grants and excludes revoked ta
       x: 1,
       y: 2,
     },
+    gameVersion: "pl",
     interface: "ni",
     map: { id: 12, name: "Torneg", visibility: 30 },
     world: "fobos",

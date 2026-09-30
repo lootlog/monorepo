@@ -51,6 +51,7 @@ export const buildNpcSeedQuery = (database: SeedDatabase) => {
       wt: npcSnapshotTable.wt,
       margonemType,
       world: snapshotWorlds.world,
+      gameVersion: npcSnapshotTable.gameVersion,
       snapshotHash: npcSnapshotTable.snapshotHash,
     })
     .from(snapshotWorlds)
@@ -71,7 +72,7 @@ const decodeIdentityNamespace = Schema.decodeUnknownSync(
   NpcIdentityNamespaceSchema,
 );
 
-/** Rebuilt documents keep the identity namespace of their snapshot. */
+/** Rebuilt documents keep the identity namespace and game version of their snapshot. */
 export const toNpcSeedDocument = (npc: NpcSeedRow) =>
   toNpcDocument({
     id: npc.id,
@@ -84,5 +85,6 @@ export const toNpcSeedDocument = (npc: NpcSeedRow) =>
     wt: npc.wt ?? 0,
     margonemType: npc.margonemType,
     world: npc.world,
+    gameVersion: npc.gameVersion,
     snapshotHash: npc.snapshotHash ?? undefined,
   });
