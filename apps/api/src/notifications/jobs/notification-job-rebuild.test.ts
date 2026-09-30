@@ -276,6 +276,69 @@ describe("notification job rebuild", () => {
     }
   });
 
+  it("never announces a closed spawn window and does not resend a past-due occurrence on the next rebuild", async () => {
+    const now = Date.now();
+
+    const fixture = await seedTimerNotifications({
+      rules: [timerRule(7, [104, 105])],
+      links: [{ ruleId: 7, targetId: 1 }],
+      now,
+    });
+
+    try {
+      await fixture.boundary.run(
+        fixture.database.insert(timerTable).values([
+          {
+            guildId: "guild-1",
+            createdById: 1,
+            npcId: 104,
+            timerKey: "hero:104",
+            world: "fobos",
+            npc: { name: "NPC 104" },
+            minSpawnTime: new Date(now - 120 * minute),
+            maxSpawnTime: new Date(now - 60 * minute),
+            updatedAt: new Date(now - 180 * minute),
+          },
+          {
+            guildId: "guild-1",
+            createdById: 1,
+            npcId: 105,
+            timerKey: "hero:105",
+            world: "fobos",
+            npc: { name: "NPC 105" },
+            minSpawnTime: new Date(now - 10 * minute),
+            maxSpawnTime: new Date(now + 30 * minute),
+            updatedAt: new Date(now - 60 * minute),
+          },
+        ]),
+      );
+
+      const rebuild = fixture.makeRebuild(true);
+
+      await fixture.boundary.run(rebuild.rebuildRule(7));
+
+      const first = await fixture.jobs();
+
+      expect(first.map(({ sourceEntityId }) => sourceEntityId)).toEqual([
+        "guild-1:fobos:hero:105",
+      ]);
+
+      await fixture.boundary.run(
+        fixture.database
+          .update(notificationJobTable)
+          .set({ status: "SENT" })
+          .where(eq(notificationJobTable.id, first[0]!.id)),
+      );
+      await fixture.boundary.run(rebuild.rebuildRule(7));
+
+      expect(
+        (await fixture.jobs()).map(({ id, status }) => ({ id, status })),
+      ).toEqual([{ id: first[0]!.id, status: "SENT" }]);
+    } finally {
+      await fixture.boundary.dispose();
+    }
+  });
+
   it("rebuilds an updated timer for every matching rule without touching other timers", async () => {
     const now = Date.now();
 

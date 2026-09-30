@@ -38,6 +38,12 @@ export interface NotificationJobInput {
   };
   readonly jobKind: NotificationJobKind;
   readonly scheduledFor: Date;
+  /**
+   * When a scheduled occurrence was due, if it was due before it could be
+   * planned and `scheduledFor` moved it to now. It keys the job, so planning
+   * the same past-due occurrence again cannot send it a second time.
+   */
+  readonly occurrenceAt?: Date;
   readonly sourceEntityType?: string;
   readonly sourceEntityId?: string;
   readonly sourceEventId?: string;
@@ -66,7 +72,7 @@ export const notificationJobIdempotencyKey = (options: NotificationJobInput) =>
         options.target.id,
         options.sourceEntityType ?? "unknown",
         options.sourceEntityId ?? "unknown",
-        options.scheduledFor.toISOString(),
+        (options.occurrenceAt ?? options.scheduledFor).toISOString(),
       ].join(":")
     : [
         options.jobKind === NotificationJobKind.TEST ? "test" : "instant",
