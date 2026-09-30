@@ -15,7 +15,7 @@ export const Route = createFileRoute("/privacy-policy")({
     links: [
       {
         rel: "canonical",
-        href: "https://lootlog.pl/privacy-policy",
+        href: "https://lootlog.pl/privacy-policy/",
       },
     ],
   }),

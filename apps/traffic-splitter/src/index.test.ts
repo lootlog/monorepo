@@ -74,12 +74,21 @@ describe("traffic splitter", () => {
   });
 
   it.each([
-    ["/docs", "GET"],
-    ["/docs/battle-panel/?source=search", "GET"],
-    ["/docs/installation", "HEAD"],
+    ["/docs", "GET", "/docs/"],
+    [
+      "/docs/battle-panel/?source=search",
+      "GET",
+      "/docs/battle-panel/?source=search",
+    ],
+    [
+      "/docs/battle-panel?source=search",
+      "GET",
+      "/docs/battle-panel/?source=search",
+    ],
+    ["/docs/installation", "HEAD", "/docs/installation/"],
   ])(
     "redirects the production document %s to the docs subdomain",
-    async (path, method) => {
+    async (path, method, canonicalPath) => {
       const upstreamFetch = vi.fn<UpstreamFetch>(() =>
         Promise.resolve(new Response("documentation")),
       );
@@ -92,7 +101,7 @@ describe("traffic splitter", () => {
 
       expect(response.status).toBe(308);
       expect(response.headers.get("location")).toBe(
-        `https://docs.lootlog.pl${path}`,
+        `https://docs.lootlog.pl${canonicalPath}`,
       );
       expect(upstreamFetch).not.toHaveBeenCalled();
     },

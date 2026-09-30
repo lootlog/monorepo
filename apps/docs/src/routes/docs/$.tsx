@@ -16,7 +16,7 @@ import { DocsHeader } from "@/components/docs-header";
 import { DocsScrollToTop } from "@/components/docs-scroll-to-top";
 import { DocsSidebarSeparator } from "@/components/docs-sidebar-separator";
 import { ProductScreenshot } from "@/components/product-screenshot";
-import { getChapterBySlug } from "@/lib/docs-chapters";
+import { getChapterBySlug, getDocsPath } from "@/lib/docs-chapters";
 import { docsTranslations } from "@/lib/polish-translations";
 import { docs, source } from "@/lib/source";
 
@@ -71,7 +71,7 @@ export const Route = createFileRoute("/docs/$")({
       links: [
         {
           rel: "canonical",
-          href: `https://docs.lootlog.pl/docs${loaderData.slugs.length ? `/${loaderData.slugs.join("/")}` : ""}`,
+          href: `https://docs.lootlog.pl${getDocsPath(loaderData.slugs.join("/") || "index")}`,
         },
       ],
       meta: [
@@ -111,7 +111,7 @@ function DocsRoute() {
   return (
     <DocsLayout
       tree={pageTree}
-      nav={{ url: "/docs" }}
+      nav={{ url: "/docs/" }}
       themeSwitch={{ enabled: false }}
       searchToggle={{
         full: { className: "docs-search-trigger" },

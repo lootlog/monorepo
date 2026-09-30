@@ -12,11 +12,11 @@ const rootDocument = await readFile(
   "utf8",
 );
 
-assert.match(rootDocument, /http-equiv="refresh" content="0;url=\/docs"/u);
+assert.match(rootDocument, /http-equiv="refresh" content="0;url=\/docs\/"/u);
 
-assert.match(rootDocument, /window\.location\.replace\("\/docs"\)/u);
+assert.match(rootDocument, /window\.location\.replace\("\/docs\/"\)/u);
 
-assert.match(rootDocument, /href="\/docs"/u);
+assert.match(rootDocument, /href="\/docs\/"/u);
 
 assert.doesNotMatch(
   rootDocument,
@@ -47,7 +47,7 @@ const canonicalLocations = contentFiles
   .map((fileName) => {
     const slug = fileName.slice(0, -".mdx".length);
 
-    return `https://docs.lootlog.pl/${slug === "index" ? "docs" : `docs/${slug}`}`;
+    return `https://docs.lootlog.pl/${slug === "index" ? "docs" : `docs/${slug}`}/`;
   })
   .sort();
 
@@ -93,7 +93,7 @@ await Promise.all(
     assert.match(document, /class="[^"]*docs-body/u);
     assert.ok(
       document.includes(
-        `<link rel="canonical" href="https://docs.lootlog.pl/${routePath}"`,
+        `<link rel="canonical" href="https://docs.lootlog.pl/${routePath}/"`,
       ),
       `${routePath} lacks its production canonical URL`,
     );

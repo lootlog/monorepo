@@ -64,10 +64,10 @@ export function LandingFooter() {
             {t("landing.footer.copyright", { year: new Date().getFullYear() })}
           </p>
           <div className="flex gap-6">
-            <Link className="landing-footer-link" to="/privacy-policy">
+            <Link className="landing-footer-link" to="/privacy-policy/">
               {t("landing.footer.privacy")}
             </Link>
-            <Link className="landing-footer-link" to="/terms-of-service">
+            <Link className="landing-footer-link" to="/terms-of-service/">
               {t("landing.footer.terms")}
             </Link>
           </div>

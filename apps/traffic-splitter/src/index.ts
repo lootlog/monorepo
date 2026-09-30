@@ -278,7 +278,9 @@ export async function routeRequest(
     isPathWithin(requestUrl.pathname, "/docs")
   ) {
     const canonicalUrl = new URL("https://docs.lootlog.pl");
-    canonicalUrl.pathname = requestUrl.pathname;
+    canonicalUrl.pathname = requestUrl.pathname.endsWith("/")
+      ? requestUrl.pathname
+      : `${requestUrl.pathname}/`;
     canonicalUrl.search = requestUrl.search;
 
     return Response.redirect(canonicalUrl.href, 308);
