@@ -26,6 +26,7 @@ import type {
   CreateManualTimerRequest,
   CreateAutoTimerRequest,
   ResetTimerRequest,
+  TimerNpcSearchQuery,
 } from "#src/contracts/timers/schemas";
 
 import {
@@ -81,10 +82,8 @@ export class TimersData extends Context.Service<
       world?: string,
     ) => DataEffect;
     readonly searchNpcs: (
-      guildId: string,
-      world: string,
-      search: string,
-      limit?: number,
+      access: TimersGuildAccess,
+      query: TimerNpcSearchQuery,
     ) => DataEffect;
     readonly createAuto: (
       identity: TimersIdentity,
@@ -217,15 +216,10 @@ export const getGuildTimers = Effect.fn("getGuildTimers")(function* (
 
 export const searchTimerNpcs = Effect.fn("searchTimerNpcs")(function* (
   guildId: string,
-  world: string,
-  search: string,
-  limit?: number,
+  query: TimerNpcSearchQuery,
 ) {
   const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_READ);
-
-  const value = yield* data((service) =>
-    service.searchNpcs(access.guild.id, world, search, limit),
-  );
+  const value = yield* data((service) => service.searchNpcs(access, query));
 
   return yield* mapResponseError(decodeTimerNpcSearchResponse(value));
 });
@@ -332,14 +326,7 @@ export const TimersHandlers = HttpApiBuilder.group(
         ),
       )
       .handle("TimersControllerSearchNpcsWithTimerData", ({ params, query }) =>
-        toHttpResponse(
-          searchTimerNpcs(
-            params.guildId,
-            query.world,
-            query.search,
-            query.limit,
-          ),
-        ),
+        toHttpResponse(searchTimerNpcs(params.guildId, query)),
       )
       .handle("TimersControllerCreateAutoTimer", ({ payload }) =>
         toHttpResponse(createAutoTimer(payload)),

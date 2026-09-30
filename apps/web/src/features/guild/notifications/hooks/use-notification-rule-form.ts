@@ -2,7 +2,7 @@ import { getNotificationFieldVisibility } from "../utils/notification-field-visi
 import { z } from "zod";
 import { useEffect, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { toast } from "sonner";
@@ -24,6 +24,10 @@ import {
   useNotificationsGuildControllerUpdateGuildRule,
   useRolesControllerGetGuildRoles,
   useGuildsControllerGetWorldsByGuildId,
+  type SearchTimersNpcResponseDtoOutput,
+  type TimersControllerSearchNpcsWithTimerDataParams,
+  getTimersControllerSearchNpcsWithTimerDataQueryKey,
+  useTimersControllerSearchNpcsWithTimerData,
 } from "@lootlog/client/main";
 
 import { useQueryClient } from "@tanstack/react-query";
@@ -47,19 +51,18 @@ import {
 } from "../utils/notification-rule-form.schema";
 import {
   buildNotificationRuleNpcFilterPayload,
+  findSelectedTimerNpc,
   getNotificationRuleNpcIdsForSubmit,
-  getNotificationRuleNpcSelectionId,
-  toNotificationRuleNpcSelection,
+  getNotificationRuleNpcLookupParams,
+  hasTimerNpcSelection,
+  parseManualNotificationRuleNpcIds,
+  parseNotificationRuleNpcSelection,
+  toTimerNpcSearchSelection,
 } from "../utils/notification-rule-form-npc.utils";
 import { ROUTES } from "@/config/routes";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 
 import { invalidateGuildNotificationQueries } from "../notifications-api";
-
-import {
-  getNpcsControllerGetNpcsQueryKey,
-  useNpcsControllerGetNpcs,
-} from "@lootlog/client/search";
 
 const getDefaultContentTemplate = (
   triggerType: CreateNotificationRuleDtoTriggerType,
@@ -202,32 +205,77 @@ const getWorldOptions = (
   return options;
 };
 
+// Leaves room for the same monster's timers on several worlds.
+const TIMER_NPC_SEARCH_LIMIT = 50;
+
+const NUMERIC_NPC_SEARCH_PATTERN = /^\d+$/;
+
+const getTimerNpcSearchParams = (
+  search: string,
+  world: string | undefined,
+): TimersControllerSearchNpcsWithTimerDataParams => {
+  const term = search.trim();
+
+  const criteria = NUMERIC_NPC_SEARCH_PATTERN.test(term)
+    ? { npcIds: [Number(term)], templateIds: [Number(term)] }
+    : { search: term };
+
+  return { ...criteria, world, limit: TIMER_NPC_SEARCH_LIMIT };
+};
+
+const getNpcOptionLabel = (
+  selection: string,
+  timer: SearchTimersNpcResponseDtoOutput | undefined,
+  t: TFunction,
+) => {
+  const { isTemplate, id } = parseNotificationRuleNpcSelection(selection);
+
+  if (!timer) {
+    return t(
+      isTemplate
+        ? "settings.notifications.npcOption.unmatchedTemplate"
+        : "settings.notifications.npcOption.unmatched",
+      { id },
+    );
+  }
+
+  const type = t(`npcType.${timer.type}`);
+
+  return isTemplate
+    ? t("settings.notifications.npcOption.template", {
+        name: timer.name,
+        type,
+        id,
+      })
+    : `${timer.name} ${type} (#${id})`;
+};
+
+/**
+ * Saved selections are labelled from their timers; once the lookup has
+ * answered, a selection without a visible timer stays listed as unmatched so
+ * it can be inspected and removed.
+ */
 const getNpcOptions = (
-  npcs: Array<{
-    id: number;
-    identityNamespace?: string;
-    name: string;
-    type: string;
-  }>,
+  selected: { values: string[]; timers?: SearchTimersNpcResponseDtoOutput[] },
+  searched: SearchTimersNpcResponseDtoOutput[],
+  isAllWorlds: boolean,
   t: TFunction,
 ) => {
   const options = new Map<string, { value: string; label: string }>();
 
-  for (const npc of npcs) {
-    const value = toNotificationRuleNpcSelection(npc);
-    const type = t(`npcType.${npc.type}`);
+  if (selected.timers) {
+    for (const value of selected.values) {
+      const timer = findSelectedTimerNpc(value, selected.timers);
+      options.set(value, { value, label: getNpcOptionLabel(value, timer, t) });
+    }
+  }
 
-    options.set(value, {
-      value,
-      label:
-        npc.identityNamespace === "template"
-          ? t("settings.notifications.npcOption.template", {
-              name: npc.name,
-              type,
-              id: npc.id,
-            })
-          : `${npc.name} ${type} (#${npc.id})`,
-    });
+  for (const timer of searched) {
+    const value = toTimerNpcSearchSelection(timer, isAllWorlds);
+
+    if (value && !options.has(value)) {
+      options.set(value, { value, label: getNpcOptionLabel(value, timer, t) });
+    }
   }
 
   return Array.from(options.values());
@@ -280,6 +328,98 @@ const useNotificationRuleData = (
     guildRoles,
     rule,
     maxNpcCount: rulesQuery.data?.limits?.maxNpcsPerRule ?? 5,
+  };
+};
+
+/** NPC options for a timer rule, read from the Organization's timers. */
+const useTimerNpcSelection = (
+  form: Pick<UseFormReturn<RuleFormValues>, "control">,
+  guildId: string | undefined,
+  npcSearch: string,
+  t: TFunction,
+) => {
+  const [selectedWorld, manualNpcEntry, watchedNpcIds, manualNpcIds] = useWatch(
+    {
+      control: form.control,
+      name: ["world", "manualNpcEntry", "npcIds", "manualNpcIds"],
+    },
+  );
+
+  const isManualNpcEntry = manualNpcEntry ?? false;
+  const selectedNpcIds = watchedNpcIds ?? [];
+
+  const normalizedWorld =
+    selectedWorld !== ALL_WORLDS_VALUE ? selectedWorld : undefined;
+
+  const selectedNpcSearchParams = {
+    ...getNotificationRuleNpcLookupParams(selectedNpcIds),
+    world: normalizedWorld,
+    limit: TIMER_NPC_SEARCH_LIMIT,
+  };
+
+  const searchPathParams = { guildId: guildId ?? "" };
+
+  const selectedNpcQuery = useTimersControllerSearchNpcsWithTimerData(
+    searchPathParams,
+    selectedNpcSearchParams,
+    {
+      query: {
+        queryKey: getTimersControllerSearchNpcsWithTimerDataQueryKey(
+          searchPathParams,
+          selectedNpcSearchParams,
+        ),
+        enabled: !!guildId && !isManualNpcEntry && selectedNpcIds.length > 0,
+      },
+    },
+  );
+
+  const searchedNpcSearchParams = getTimerNpcSearchParams(
+    npcSearch,
+    normalizedWorld,
+  );
+
+  const hasNpcSearch = npcSearch.trim().length > 0;
+
+  const searchedNpcQuery = useTimersControllerSearchNpcsWithTimerData(
+    searchPathParams,
+    searchedNpcSearchParams,
+    {
+      query: {
+        queryKey: getTimersControllerSearchNpcsWithTimerDataQueryKey(
+          searchPathParams,
+          searchedNpcSearchParams,
+        ),
+        enabled: !!guildId && !isManualNpcEntry && hasNpcSearch,
+      },
+    },
+  );
+
+  const isAllWorlds = normalizedWorld === undefined;
+
+  const npcOptions = getNpcOptions(
+    { values: selectedNpcIds, timers: selectedNpcQuery.data },
+    searchedNpcQuery.data ?? [],
+    isAllWorlds,
+    t,
+  );
+
+  const activeNpcQuery = hasNpcSearch ? searchedNpcQuery : selectedNpcQuery;
+
+  const npcSelections = isManualNpcEntry
+    ? parseManualNotificationRuleNpcIds(manualNpcIds ?? "").ids
+    : selectedNpcIds;
+
+  return {
+    isManualNpcEntry,
+    npcOptions,
+    npcSearchError:
+      activeNpcQuery.isEnabled && activeNpcQuery.isError
+        ? t("common.searchUnavailable")
+        : undefined,
+    isAllWorlds,
+    hasAllWorldTimerNpcSelection:
+      isAllWorlds && hasTimerNpcSelection(npcSelections),
+    searchedNpcQuery,
   };
 };
 
@@ -394,45 +534,14 @@ export const useNotificationRuleForm = () => {
     showIntervalValueField,
   } = getNotificationFieldVisibility(watchedTriggerType, watchedIntervalType);
 
-  const selectedWorld = form.watch("world");
-  const isManualNpcEntry = form.watch("manualNpcEntry") ?? false;
-  const selectedNpcIds = form.watch("npcIds") ?? [];
-
-  const normalizedWorld =
-    selectedWorld !== ALL_WORLDS_VALUE ? selectedWorld : undefined;
-
-  const selectedNpcSearchParams = {
-    ids: selectedNpcIds.map(getNotificationRuleNpcSelectionId),
-    world: normalizedWorld,
-  };
-
-  const selectedNpcQuery = useNpcsControllerGetNpcs(selectedNpcSearchParams, {
-    query: {
-      queryKey: getNpcsControllerGetNpcsQueryKey(selectedNpcSearchParams),
-      enabled: !isManualNpcEntry && selectedNpcIds.length > 0,
-    },
-  });
-
-  const searchedNpcSearchParams = {
-    search: npcSearch,
-    world: normalizedWorld,
-  };
-
-  const hasNpcSearch = npcSearch.trim().length > 0;
-
-  const searchedNpcQuery = useNpcsControllerGetNpcs(searchedNpcSearchParams, {
-    query: {
-      queryKey: getNpcsControllerGetNpcsQueryKey(searchedNpcSearchParams),
-      enabled: !isManualNpcEntry && hasNpcSearch,
-    },
-  });
-
-  const npcOptions = getNpcOptions(
-    [...(selectedNpcQuery.data ?? []), ...(searchedNpcQuery.data ?? [])],
-    t,
-  );
-
-  const activeNpcQuery = hasNpcSearch ? searchedNpcQuery : selectedNpcQuery;
+  const {
+    isManualNpcEntry,
+    npcOptions,
+    npcSearchError,
+    isAllWorlds,
+    hasAllWorldTimerNpcSelection,
+    searchedNpcQuery,
+  } = useTimerNpcSelection(form, guildId, npcSearch, t);
 
   const targetOptions = mergedTargets.map((target) => ({
     value: String(target.id),
@@ -600,10 +709,9 @@ export const useNotificationRuleForm = () => {
     npcSearch,
     setNpcSearch,
     npcOptions,
-    npcSearchError:
-      activeNpcQuery.isEnabled && activeNpcQuery.isError
-        ? t("common.searchUnavailable")
-        : undefined,
+    npcSearchError,
+    isAllWorlds,
+    hasAllWorldTimerNpcSelection,
     searchedNpcQuery,
     targetOptions,
     worldOptions,

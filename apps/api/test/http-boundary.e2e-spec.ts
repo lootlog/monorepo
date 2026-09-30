@@ -562,6 +562,56 @@ describe("API HTTP boundary", () => {
     expect(await countTimers()).toBe(0);
   });
 
+  it("searches timed NPCs by identity across the Organization's worlds", async () => {
+    const [member] = await databaseRuntime.runPromise(
+      database
+        .select({ id: memberTable.id })
+        .from(memberTable)
+        .where(eq(memberTable.guildId, authorizedGuildId)),
+    );
+
+    const now = new Date();
+
+    const timer = (guildId: string, timerWorld: string, npcId: number) => ({
+      guildId,
+      world: timerWorld,
+      npcId,
+      timerKey: `${npcId}:kic`,
+      createdById: member?.id ?? 0,
+      npc: { id: npcId, templateId: 77, name: "Kic", lvl: 60, type: "ELITE2" },
+      minSpawnTime: now,
+      maxSpawnTime: new Date(now.getTime() + 60_000),
+      updatedAt: now,
+    });
+
+    await databaseRuntime.runPromise(
+      database
+        .insert(timerTable)
+        .values([
+          timer(authorizedGuildId, world, 1),
+          timer(authorizedGuildId, "Other world", 2),
+          timer(forbiddenGuildId, world, 3),
+        ]),
+    );
+
+    const search = (query: string) =>
+      request(`/guilds/${authorizedGuildId}/timers/npcs/search?${query}`);
+
+    const byTemplate = await search("templateIds=77");
+    expect(byTemplate.status).toBe(200);
+    expect(await byTemplate.json()).toEqual([
+      expect.objectContaining({ world, npcId: 1, templateId: 77 }),
+      expect.objectContaining({ world: "Other world", npcId: 2 }),
+    ]);
+
+    const byRuntimeIds = await search(`npcIds=1&npcIds=2&world=${world}`);
+    expect(await byRuntimeIds.json()).toEqual([
+      expect.objectContaining({ world, npcId: 1 }),
+    ]);
+
+    expect((await search(`world=${world}`)).status).toBe(400);
+  });
+
   it("enforces Organization access for events and notifications", async () => {
     const responses = await Promise.all([
       request(`/guilds/${authorizedGuildId}/events`),

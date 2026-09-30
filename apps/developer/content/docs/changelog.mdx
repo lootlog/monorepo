@@ -3,6 +3,25 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased: Timer NPC search follows timer visibility
+
+`GET /guilds/{guildId}/timers/npcs/search` now applies the same visibility as
+the timer list. Timers whose NPC type or level is outside the caller's roles
+are omitted before `limit` is applied, so they no longer reveal an NPC's
+identity, location or respawn configuration.
+
+- `world` is optional. Without it, the search covers every world of the
+  Organization, and each result adds `world`.
+- `search` is optional when `npcIds` or `templateIds` is present. Both accept
+  repeated positive integers: `npcIds` matches a timer's runtime NPC id and
+  `templateIds` matches its template id. A request needs at least one of
+  `search`, `npcIds` or `templateIds`; otherwise it returns `400`.
+- Manual timers remain excluded.
+
+Existing callers that send `search` and `world` keep their behavior, except
+that hidden timers no longer appear. Generated clients include the new
+parameters and field for the next SDK release.
+
 ## Unreleased: Explicit NPC runtime and template identities
 
 Margonem gives every NPC spawn a runtime id (`npc.id`, the battle

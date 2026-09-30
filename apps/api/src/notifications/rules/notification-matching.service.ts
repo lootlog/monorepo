@@ -46,6 +46,18 @@ export const parseNotificationFilters = (
 ): NotificationFilters =>
   isJsonObject(filtersValue) ? decodeNotificationFilters(filtersValue) : {};
 
+const timerRuleSelections = (filtersValue: JsonValue) => {
+  const filters = parseNotificationFilters(filtersValue);
+
+  return {
+    npcIds: [
+      ...(filters.npcId ? [filters.npcId] : []),
+      ...(filters.npcIds ?? []),
+    ],
+    templateIds: filters.npcTemplateIds ?? [],
+  };
+};
+
 export const notificationMatchingPolicy = {
   parseFilters: parseNotificationFilters,
   /**
@@ -54,21 +66,30 @@ export const notificationMatchingPolicy = {
    * A rule without NPC filters matches every timer.
    */
   matchesTimerRule: (filtersValue: JsonValue, timer: TimerNpcIdentity) => {
-    const filters = parseNotificationFilters(filtersValue);
+    const { npcIds, templateIds } = timerRuleSelections(filtersValue);
 
-    const timerIds = [
-      ...(filters.npcId ? [filters.npcId] : []),
-      ...(filters.npcIds ?? []),
-    ];
-
-    const templateIds = filters.npcTemplateIds ?? [];
-
-    if (timerIds.length === 0 && templateIds.length === 0) return true;
+    if (npcIds.length === 0 && templateIds.length === 0) return true;
 
     return (
-      timerIds.includes(timer.npcId) ||
+      npcIds.includes(timer.npcId) ||
       (timer.templateId !== null && templateIds.includes(timer.templateId))
     );
+  },
+  /** The rule's NPC selections that none of the given timers match. */
+  unmatchedTimerSelections: (
+    filtersValue: JsonValue,
+    timers: readonly TimerNpcIdentity[],
+  ) => {
+    const { npcIds, templateIds } = timerRuleSelections(filtersValue);
+    const timerNpcIds = new Set(timers.map((timer) => timer.npcId));
+    const timerTemplateIds = new Set(timers.map((timer) => timer.templateId));
+
+    return {
+      npcIds: npcIds.filter((npcId) => !timerNpcIds.has(npcId)),
+      templateIds: templateIds.filter(
+        (templateId) => !timerTemplateIds.has(templateId),
+      ),
+    };
   },
   matchesLootRule: (filtersValue: JsonValue, event: LootCreatedEvent) => {
     const filters = parseNotificationFilters(filtersValue);

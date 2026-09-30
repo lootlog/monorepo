@@ -11,6 +11,7 @@ const npc: SearchTimersNpcResponseDtoOutput = {
   npcId: 500,
   templateId: null,
   timerKey: "npc-500",
+  world: "Aldous",
   name: "Tanroth",
   lvl: 120,
   type: "HERO",

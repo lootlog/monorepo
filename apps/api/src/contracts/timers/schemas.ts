@@ -94,6 +94,7 @@ export const TimerNpcSearchResult = Schema.Struct({
   npcId: FiniteNumber,
   templateId: Schema.NullOr(PositiveSafeInteger),
   timerKey: Schema.String,
+  world: Schema.String,
   name: Schema.String,
   lvl: FiniteNumber,
   type: NpcTypeSchema,
@@ -238,8 +239,27 @@ export const TimerOrganizationPath = Schema.Struct({
 export type TimerNpcSearchQuery = typeof TimerNpcSearchQuery.Type;
 
 export const TimerNpcSearchQuery = Schema.Struct({
-  search: NonEmptyString,
-  world: NonEmptyString,
+  search: Schema.optionalKey(
+    NonEmptyString.annotate({
+      description: "Case-insensitive substring of the NPC name.",
+    }),
+  ),
+  world: Schema.optionalKey(
+    NonEmptyString.annotate({
+      description:
+        "World to search. When omitted, every world of the Organization is searched.",
+    }),
+  ),
+  npcIds: Schema.optionalKey(
+    Schema.Array(PositiveSafeInteger).annotate({
+      description: "Return timers whose runtime NPC id is in this list.",
+    }),
+  ),
+  templateIds: Schema.optionalKey(
+    Schema.Array(PositiveSafeInteger).annotate({
+      description: "Return timers observed with a template id in this list.",
+    }),
+  ),
   limit: Schema.optionalKey(
     Schema.Number.annotate({ default: 10 })
       .check(Schema.isFinite().annotate({ expected: "a finite number" }))
@@ -254,7 +274,18 @@ export const TimerNpcSearchQuery = Schema.Struct({
         }),
       ),
   ),
-});
+}).check(
+  Schema.makeFilter((query) =>
+    query.search !== undefined ||
+    (query.npcIds?.length ?? 0) > 0 ||
+    (query.templateIds?.length ?? 0) > 0
+      ? undefined
+      : {
+          path: ["search"],
+          issue: "search, npcIds or templateIds is required",
+        },
+  ),
+);
 
 export type TimerNpcSearchResponse = typeof TimerNpcSearchResponse.Type;
 

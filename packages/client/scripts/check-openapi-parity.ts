@@ -953,6 +953,68 @@ const normalizeInternalPermissionFreshness = (
   return { ...operation, parameters: expectedParameters.slice(0, 2) };
 };
 
+const TIMER_NPC_SEARCH_ID_PARAMETERS = ["npcIds", "templateIds"];
+
+const normalizeTimerNpcSearchQuery = (
+  service: string,
+  operationKey: string,
+  operation: JsonValue,
+): JsonValue => {
+  // Verified by api/src/http-api/handlers/timers/timer-search.data-layer.test.ts
+  // and the timer NPC search case in api/test/http-boundary.e2e-spec.ts:
+  // `search` and `world` became optional and id lookups were added; callers
+  // that send both keep their request shape.
+  if (
+    service !== "api" ||
+    operationKey !== "GET /guilds/{guildId}/timers/npcs/search" ||
+    !isJsonObject(operation) ||
+    !isJsonArray(operation.parameters)
+  )
+    return operation;
+
+  const parameters = operation.parameters.filter(isJsonObject);
+
+  const idParameters = parameters.filter((parameter) =>
+    TIMER_NPC_SEARCH_ID_PARAMETERS.some((name) => parameter.name === name),
+  );
+
+  const expectedIdParameters: JsonValue[] = TIMER_NPC_SEARCH_ID_PARAMETERS.map(
+    (name) => ({
+      name,
+      in: "query",
+      required: false,
+      schema: {
+        type: "array",
+        items: {
+          type: "integer",
+          minimum: 1,
+          maximum: Number.MAX_SAFE_INTEGER,
+        },
+      },
+    }),
+  );
+
+  if (
+    JSON.stringify(normalizeOpenApiRepresentation(idParameters)) !==
+    JSON.stringify(normalizeOpenApiRepresentation(expectedIdParameters))
+  ) {
+    throw new Error(
+      `${operationKey} must accept optional npcIds and templateIds arrays`,
+    );
+  }
+
+  return {
+    ...operation,
+    parameters: parameters
+      .filter((parameter) => !idParameters.includes(parameter))
+      .map((parameter) =>
+        parameter.name === "search" || parameter.name === "world"
+          ? { ...parameter, required: true }
+          : parameter,
+      ),
+  };
+};
+
 const ACTIVITY_LEGACY_HEALTH_DETAILS: JsonValue = {
   type: "object",
   additionalProperties: {
@@ -1054,6 +1116,7 @@ export const normalizeAllowedChanges = (
     normalized,
   );
   normalized = normalizeActivityLiveness(service, operationKey, normalized);
+  normalized = normalizeTimerNpcSearchQuery(service, operationKey, normalized);
 
   if (service === "api" && operationKey === "GET /guilds/@me/manageable") {
     normalized = normalizeManageableOrganizationResponse(normalized, schemas);
