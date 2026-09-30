@@ -130,6 +130,10 @@ export const lootSourceEnum = pgEnum("LootSource", [
   "FIGHT",
 ]);
 
+// GameVersion from @lootlog/schema/game-version. NULL means unknown: an older
+// client or an unrecognized host; never read it as either edition.
+export const gameVersionEnum = pgEnum("GameVersion", ["pl", "en"]);
+
 export const lootShareSourceEnum = pgEnum("LootShareSource", [
   "NONE",
   "ITEM_OWNER",
@@ -464,6 +468,7 @@ export const lootTable = pgTable(
     id: serial("id").notNull().primaryKey(),
     uniqueId: text("uniqueId").notNull(),
     world: text("world").notNull(),
+    gameVersion: gameVersionEnum("gameVersion"),
     source: lootSourceEnum("source").notNull(),
     location: text("location").notNull(),
     createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
@@ -714,6 +719,7 @@ export const npcSnapshotTable = pgTable(
     // from clients that sent an overloaded id; do not infer their meaning.
     identityNamespace: text("identityNamespace").default("legacy").notNull(),
     world: text("world"),
+    gameVersion: gameVersionEnum("gameVersion"),
     snapshotHash: text("snapshotHash"),
     name: text("name").notNull(),
     type: npcTypeEnum("type"),

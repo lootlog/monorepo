@@ -49,6 +49,7 @@ describe("AfkProcessor", () => {
         x: 1,
         y: 2,
       },
+      gameVersion: "pl",
       interface: "ni",
       map: { id: 77, name: "Ithan", visibility: 30 },
       world: "luvia",

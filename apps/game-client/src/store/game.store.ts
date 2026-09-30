@@ -33,6 +33,7 @@ function areGameSnapshotsEqual(
   incoming: RuntimeGameSnapshot,
 ): boolean {
   return (
+    current.gameVersion === incoming.gameVersion &&
     current.interface === incoming.interface &&
     current.world === incoming.world &&
     current.map.id === incoming.map.id &&
@@ -61,6 +62,7 @@ function freezeGameSnapshot(game: RuntimeGameSnapshot): RuntimeGameSnapshot {
   }
 
   return Object.freeze({
+    gameVersion: game.gameVersion,
     hero: Object.freeze({ ...game.hero, clan }),
     interface: game.interface,
     map: Object.freeze({ ...game.map }),

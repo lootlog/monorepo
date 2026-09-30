@@ -424,6 +424,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           mapPlayersSnapshot: options.mapPlayersSnapshot,
           uniqueId: options.uniqueId,
           world: options.submission.world,
+          gameVersion: options.submission.gameVersion ?? null,
           source: options.submission.source,
           location: options.submission.location,
           lootShare: initialAllocation.share,
@@ -500,6 +501,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         margonemType: npc.margonemType,
         location: options.submission.location,
         world: options.submission.world,
+        gameVersion: npc.gameVersion,
       })),
     );
     const items = this.mapItems(options.submission.loots);

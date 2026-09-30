@@ -1,3 +1,4 @@
+import { GameVersionSchema } from "@lootlog/schema/game-version";
 import { NpcIdentityNamespaceSchema } from "@lootlog/schema/npc-identity";
 import { Schema } from "effect";
 
@@ -13,6 +14,8 @@ const IndexNpc = Schema.Struct({
   type: Schema.String,
   margonemType: Schema.Number,
   world: Schema.String,
+  // Older publishers and observations from an unknown host have no edition.
+  gameVersion: Schema.optional(Schema.NullOr(GameVersionSchema)),
   snapshotHash: Schema.optional(Schema.String),
 });
 

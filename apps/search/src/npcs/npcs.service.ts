@@ -18,8 +18,9 @@ import type { NpcHit } from "./npc-hit.js";
 
 type RawNpcHit = Omit<
   NpcHit,
-  "identityNamespace" | "margonemType" | "prof" | "type"
+  "gameVersion" | "identityNamespace" | "margonemType" | "prof" | "type"
 > & {
+  gameVersion?: NpcHit["gameVersion"];
   identityNamespace?: NpcIdentityNamespace;
   margonemType?: number | null;
   prof?: string | null;
@@ -54,6 +55,7 @@ const normalizeNpcHit = (npc: RawNpcHit): NpcHit => {
     lvl: npc.lvl,
     wt: npc.wt,
     world: npc.world,
+    gameVersion: npc.gameVersion ?? null,
     prof,
     margonemType,
     type,
@@ -62,20 +64,26 @@ const normalizeNpcHit = (npc: RawNpcHit): NpcHit => {
 
 type IndexNpc = IndexNpcsCommand["npcs"][number];
 
-// Legacy keys keep their deployed format; equal ids in another namespace are
-// a different NPC and must not share a catalog group.
+// Legacy keys keep their deployed format; equal ids in another namespace or
+// game version are a different NPC and must not share a catalog group.
 export const npcCatalogKey = (
   npc: Pick<
     RawNpcHit,
-    "id" | "identityNamespace" | "margonemType" | "type" | "world"
+    | "gameVersion"
+    | "id"
+    | "identityNamespace"
+    | "margonemType"
+    | "type"
+    | "world"
   >,
 ) => {
   const key = `${npc.id}_${resolveMargonemType(npc)}_${npc.world}`;
   const namespace = npc.identityNamespace ?? NpcIdentityNamespace.LEGACY;
 
-  return namespace === NpcIdentityNamespace.LEGACY
-    ? key
-    : `${namespace}_${key}`;
+  const namespaced =
+    namespace === NpcIdentityNamespace.LEGACY ? key : `${namespace}_${key}`;
+
+  return npc.gameVersion ? `${npc.gameVersion}_${namespaced}` : namespaced;
 };
 
 // A template id selects every spawn of the monster; prefer it when name and
@@ -87,10 +95,24 @@ const NAMESPACE_PREFERENCE: Record<NpcIdentityNamespace, number> = {
 };
 
 const collapseByNameAndType = (hits: readonly NpcHit[]) => {
-  const suggestionKey = (npc: NpcHit) => `${npc.name}_${npc.type}`;
+  const nameAndType = (npc: NpcHit) => `${npc.name}_${npc.type}`;
+
+  // Equal names in different editions are different NPCs. An unversioned hit
+  // is older data of either edition and yields to a versioned one.
+  const versioned = new Set(
+    hits.flatMap((hit) => (hit.gameVersion === null ? [] : [nameAndType(hit)])),
+  );
+
+  const candidates = hits.filter(
+    (hit) => hit.gameVersion !== null || !versioned.has(nameAndType(hit)),
+  );
+
+  const suggestionKey = (npc: NpcHit) =>
+    `${npc.gameVersion}_${nameAndType(npc)}`;
+
   const preferred = new Map<string, NpcHit>();
 
-  for (const hit of hits) {
+  for (const hit of candidates) {
     const current = preferred.get(suggestionKey(hit));
 
     if (
@@ -102,8 +124,8 @@ const collapseByNameAndType = (hits: readonly NpcHit[]) => {
     }
   }
 
-  // Keep the relevance position of each name/type's first hit.
-  return uniqBy(hits, suggestionKey).flatMap(
+  // Keep the relevance position of each suggestion's first hit.
+  return uniqBy(candidates, suggestionKey).flatMap(
     (hit) => preferred.get(suggestionKey(hit)) ?? [],
   );
 };

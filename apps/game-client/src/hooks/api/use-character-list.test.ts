@@ -4,7 +4,7 @@ import {
   fetchCharacterList,
   normalizeCharacterList,
 } from "@/api";
-import { LanguageVersion } from "@/store/global.store";
+import { GameVersion } from "@lootlog/schema/game-version";
 
 const createCharacter = (overrides?: {
   id?: number;
@@ -191,10 +191,41 @@ describe("use-character-list helpers", () => {
     const result = await fetchCharacterList({
       accountId: 123,
       world: "fobos",
-      languageVersion: LanguageVersion.PL,
+      gameVersion: GameVersion.PL,
     });
 
     expect(result.map((character) => character.id)).toEqual([2, 1]);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("requests the character list from the edition the game runs on", async () => {
+    const fetchMock = vi.mocked(fetch);
+    fetchMock.mockResolvedValue(createJsonResponse([createCharacter()]));
+
+    await fetchCharacterList({
+      accountId: 123,
+      world: "fobos",
+      gameVersion: GameVersion.EN,
+    });
+
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain(
+      "https://public-api.margonem.com/account/charlist",
+    );
+  });
+
+  it("reads only the game's own cache on an unrecognized host", async () => {
+    window.localStorage.setItem(
+      "Margonem",
+      JSON.stringify({ charlist: { "123": [createCharacter({ id: 7 })] } }),
+    );
+
+    const options = { accountId: 123, world: "fobos", gameVersion: null };
+
+    expect(await fetchCharacterList(options)).toEqual([
+      createCharacter({ id: 7 }),
+    ]);
+    window.localStorage.removeItem("Margonem");
+    expect(await fetchCharacterList(options)).toEqual([]);
     expect(fetch).not.toHaveBeenCalled();
   });
 
@@ -205,7 +236,7 @@ describe("use-character-list helpers", () => {
     await fetchCharacterList({
       accountId: 123,
       world: "fobos",
-      languageVersion: LanguageVersion.PL,
+      gameVersion: GameVersion.PL,
     });
 
     fetchMock.mockClear();
@@ -213,7 +244,7 @@ describe("use-character-list helpers", () => {
     const result = await fetchCharacterList({
       accountId: 123,
       world: "fobos",
-      languageVersion: LanguageVersion.PL,
+      gameVersion: GameVersion.PL,
     });
 
     expect(result).toEqual([createCharacter()]);
@@ -227,7 +258,7 @@ describe("use-character-list helpers", () => {
     await fetchCharacterList({
       accountId: 123,
       world: "fobos",
-      languageVersion: LanguageVersion.PL,
+      gameVersion: GameVersion.PL,
     });
 
     vi.setSystemTime(new Date("2026-01-01T00:16:00.000Z"));
@@ -236,7 +267,7 @@ describe("use-character-list helpers", () => {
     const result = await fetchCharacterList({
       accountId: 123,
       world: "fobos",
-      languageVersion: LanguageVersion.PL,
+      gameVersion: GameVersion.PL,
     });
 
     expect(result).toEqual([createCharacter()]);
@@ -250,7 +281,7 @@ describe("use-character-list helpers", () => {
     await fetchCharacterList({
       accountId: 123,
       world: "fobos",
-      languageVersion: LanguageVersion.PL,
+      gameVersion: GameVersion.PL,
     });
 
     vi.setSystemTime(new Date("2026-01-01T00:16:00.000Z"));
@@ -259,7 +290,7 @@ describe("use-character-list helpers", () => {
     const result = await fetchCharacterList({
       accountId: 123,
       world: "fobos",
-      languageVersion: LanguageVersion.PL,
+      gameVersion: GameVersion.PL,
     });
 
     expect(result).toEqual([createCharacter()]);
@@ -273,7 +304,7 @@ describe("use-character-list helpers", () => {
     await fetchCharacterList({
       accountId: 123,
       world: "fobos",
-      languageVersion: LanguageVersion.PL,
+      gameVersion: GameVersion.PL,
     });
 
     window.localStorage.setItem(getCharacterListCacheKey(), "{bad-json");
@@ -284,7 +315,7 @@ describe("use-character-list helpers", () => {
     const result = await fetchCharacterList({
       accountId: 123,
       world: "fobos",
-      languageVersion: LanguageVersion.PL,
+      gameVersion: GameVersion.PL,
     });
 
     expect(result).toEqual([createCharacter({ id: 4, nick: "Recovered" })]);
@@ -298,7 +329,7 @@ describe("use-character-list helpers", () => {
     const options = {
       accountId: 123,
       world: "fobos",
-      languageVersion: LanguageVersion.PL,
+      gameVersion: GameVersion.PL,
     };
 
     await fetchCharacterList(options);
@@ -329,7 +360,7 @@ describe("use-character-list helpers", () => {
       fetchCharacterList({
         accountId: 999,
         world: "missing",
-        languageVersion: LanguageVersion.PL,
+        gameVersion: GameVersion.PL,
       }),
     ).rejects.toThrow("Missing required authentication cookie");
 

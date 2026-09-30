@@ -41,6 +41,7 @@ it("shows connecting, then memberships and heartbeat latency, and lets a dropped
       x: 1,
       y: 2,
     },
+    gameVersion: "pl",
     interface: "ni",
     map: { id: 100, name: "Karka-han", visibility: 0 },
     world: "luvia",

@@ -42,6 +42,7 @@ import type {
   LootSourceEnum as LootSource,
   ProfessionEnum as Profession,
 } from "@lootlog/schema/loot";
+import type { GameVersion } from "@lootlog/schema/game-version";
 
 export type AcceptedNpcSnapshot = typeof npcSnapshotTable.$inferSelect;
 
@@ -54,6 +55,7 @@ export type NewLootPersistence = {
   mapPlayersSnapshot: MapPlayersSnapshot | null;
   uniqueId: string;
   world: string;
+  gameVersion: GameVersion | null;
   source: LootSource;
   location: string;
   lootShare: Record<string, string[]>;
@@ -452,6 +454,7 @@ export const makeLootSubmissionAcceptancePersistence = (
           .values({
             uniqueId: data.uniqueId,
             world: data.world,
+            gameVersion: data.gameVersion,
             source: data.source,
             location: data.location,
             lootShare: data.lootShare,
@@ -509,7 +512,7 @@ export const makeLootSubmissionAcceptancePersistence = (
 
         const acceptedNpcs = yield* resolveNpcSnapshots(
           transaction,
-          data.world,
+          { world: data.world, gameVersion: data.gameVersion },
           data.npcs.map((npc) => omit(npc, ["runtimeNpcId"])),
         );
 
