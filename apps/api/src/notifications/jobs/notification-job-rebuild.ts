@@ -17,6 +17,10 @@ import {
   NotificationTriggerType,
 } from "#src/notifications/notification-enums";
 import type { JsonValue } from "#src/database/json";
+import {
+  timerNpcIdentity,
+  type TimerNpcIdentity,
+} from "#src/timers/timer-projection";
 
 export interface TimerUpdatedEvent {
   readonly guildId: string;
@@ -25,7 +29,10 @@ export interface TimerUpdatedEvent {
   readonly timerKey: string;
   readonly minSpawnTime: string | Date;
   readonly maxSpawnTime: string | Date;
-  readonly npc?: { readonly name?: string } | null;
+  readonly npc?: {
+    readonly name?: string;
+    readonly templateId?: number | null;
+  } | null;
 }
 
 type RuleWithTargets = NotificationRuleWithTargets;
@@ -97,7 +104,10 @@ const isEligibleTarget = ({ target }: RuleTarget) =>
 
 export const makeNotificationJobRebuild = (
   store: NotificationRebuildStore,
-  matchesTimerRule: (filters: JsonValue | null, npcId: number) => boolean,
+  matchesTimerRule: (
+    filters: JsonValue | null,
+    timer: TimerNpcIdentity,
+  ) => boolean,
   hasRequiredGuildPermissions: (
     guildId: string,
   ) => Effect.Effect<boolean, unknown, never>,
@@ -200,7 +210,9 @@ export const makeNotificationJobRebuild = (
 
     const schedulable = (yield* store.findRules(ruleIds))
       .filter(isSchedulableTimerRule)
-      .filter((rule) => matchesTimerRule(rule.filters, event.npcId));
+      .filter((rule) =>
+        matchesTimerRule(rule.filters, timerNpcIdentity(event)),
+      );
 
     if (schedulable.length === 0) return [];
     const permittedFor = yield* permittedByOwner(schedulable);
@@ -287,7 +299,7 @@ export const makeNotificationJobRebuild = (
     if (eligible.length === 0) return;
 
     const timers = (yield* store.timers(rule.guildId, rule.world)).filter(
-      (timer) => matchesTimerRule(rule.filters, timer.npcId),
+      (timer) => matchesTimerRule(rule.filters, timerNpcIdentity(timer)),
     );
 
     if (timers.length === 0) return;

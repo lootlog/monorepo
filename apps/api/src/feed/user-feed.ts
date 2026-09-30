@@ -209,13 +209,17 @@ export const buildUserFeedQuery = (
       .orderBy(({ occurredAt, entryId }) => [desc(occurredAt), desc(entryId)]),
   );
 
+  // Kills and NPC statistics use the runtime spawn id. A loot reports it
+  // beside its catalog identity; older clients sent only the overloaded id.
+  const feedNpcId = sql<number>`coalesce(${lootNpcTable.runtimeNpcId}, ${npcSnapshotTable.npcId})`;
+
   // The strongest NPC names the loot, decides its NPC filter group and links
   // it to that NPC's kill.
   const lootNpcs = query.$with("loot_top_npcs").as(
     query
       .selectDistinctOn([lootNpcTable.lootId], {
         lootId: lootNpcTable.lootId,
-        npcId: sql`${npcSnapshotTable.npcId}`.as("top_npc_id"),
+        npcId: feedNpcId.as("top_npc_id"),
         npcType: sql`coalesce(${npcSnapshotTable.type}::text, 'COMMON')`.as(
           "top_npc_type",
         ),
@@ -329,7 +333,7 @@ export const buildUserFeedQuery = (
 
   const npc = query
     .select({
-      value: sql`json_build_object('id', ${npcSnapshotTable.npcId}, 'name', ${npcSnapshotTable.name}, 'type', ${npcSnapshotTable.type}, 'lvl', ${npcSnapshotTable.lvl}, 'icon', ${npcSnapshotTable.icon}, 'prof', ${npcSnapshotTable.prof})`,
+      value: sql`json_build_object('id', ${feedNpcId}, 'name', ${npcSnapshotTable.name}, 'type', ${npcSnapshotTable.type}, 'lvl', ${npcSnapshotTable.lvl}, 'icon', ${npcSnapshotTable.icon}, 'prof', ${npcSnapshotTable.prof})`,
     })
     .from(lootNpcTable)
     .innerJoin(

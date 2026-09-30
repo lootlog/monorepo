@@ -8,6 +8,7 @@ import {
   type NotificationJobsResponseDto,
   type NotificationTargetResponseDto,
 } from "@lootlog/client/main";
+import { toNotificationRuleNpcSelection } from "./notification-rule-form-npc.utils";
 
 type GuildNotificationTarget = NotificationTargetResponseDto;
 
@@ -93,6 +94,15 @@ export const getGuildNotificationRuleNpcIds = (
         npcIds.add(String(npcId));
       }
     }
+  }
+
+  for (const templateId of filters.npcTemplateIds ?? []) {
+    npcIds.add(
+      toNotificationRuleNpcSelection({
+        id: templateId,
+        identityNamespace: "template",
+      }),
+    );
   }
 
   return Array.from(npcIds);

@@ -18,6 +18,7 @@
     "./map-ping": "./src/map-ping.ts",
     "./notifications": "./src/notifications.ts",
     "./npc-appearance": "./src/npc-appearance.ts",
+    "./npc-identity": "./src/npc-identity.ts",
     "./npc-routing": "./src/npc-routing.ts",
     "./npc-type": "./src/npc-type.ts",
     "./openapi-compatibility": "./src/openapi-compatibility.ts",

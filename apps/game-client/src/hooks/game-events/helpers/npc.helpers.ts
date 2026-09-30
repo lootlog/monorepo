@@ -4,7 +4,7 @@ import type { NpcTpl } from "@lootlog/margonem/npc-tpl-manager";
 
 export const composeNpcFromEvent = (
   npc: EventNpc,
-  tpl: NpcTpl,
+  tpl: Omit<NpcTpl, "id">,
   processedSettings: ProcessedNpcSettings,
   location: string,
 ): GameNpcWithLocation => ({

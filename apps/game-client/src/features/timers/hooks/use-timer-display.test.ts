@@ -116,6 +116,7 @@ describe("useTimerDisplay", () => {
           member: undefined,
           npc: {
             ...createTimer().npc,
+            templateId: null,
             type: NpcType.NPC,
             margonemType: "999",
             wt: "10",

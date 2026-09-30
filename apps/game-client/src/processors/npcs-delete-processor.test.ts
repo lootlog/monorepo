@@ -21,7 +21,8 @@ import { NpcsDeleteProcessor } from "./npcs-delete-processor";
 
 const trackedNpc = (id = 500) => ({
   id,
-  tpl: id,
+  // A spawn's runtime id and its template id are different numbers.
+  tpl: id + 400,
   x: 1,
   y: 1,
   icon: "npc.gif",
@@ -335,6 +336,7 @@ it("sends native respawn details and actor identity to the timer endpoint", asyn
     npc: {
       icon: "npc.gif",
       id: 500,
+      templateId: 900,
       prof: "m",
       wt: 90,
       hpp: 0,

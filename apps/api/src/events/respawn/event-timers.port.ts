@@ -6,7 +6,11 @@ import {
   RabbitExchange,
   RabbitRoutingKey,
 } from "@lootlog/protocol/rabbit/topology";
-import { mapTimerResponse, timerNpcField } from "#src/timers/timer-projection";
+import {
+  mapTimerResponse,
+  timerNpcField,
+  timerNpcTemplateId,
+} from "#src/timers/timer-projection";
 import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
 import type { RedisService } from "#src/redis/redis.service";
 import { ResourceConflictError } from "#src/shared/http/http-errors";
@@ -226,8 +230,17 @@ export const makeEventTimersPort = ({
         Effect.gen(function* () {
           const windowOpenedAt = new Date(yield* Clock.currentTimeMillis);
 
+          // The event window replaces the NPC description; keep the template
+          // an automatic timer observed so template-level rules still match.
+          const existing = yield* store.findTimer(
+            input.guildId,
+            input.world,
+            timerKey,
+          );
+
           const npc = {
             id: input.npcId,
+            templateId: timerNpcTemplateId(existing?.npc),
             name: input.npcName,
             prof: "",
             location: "",

@@ -3,6 +3,33 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased: Explicit NPC runtime and template identities
+
+Margonem gives every NPC spawn a runtime id (`npc.id`, the battle
+`originalId`) and every monster template a template id (`npc.tpl`). Several
+spawns share one template.
+
+- `POST /loots` accepts optional `npcs[].runtimeId` and nullable
+  `npcs[].templateId`. When either is present, `npcs[].id` is ignored for
+  identity; keep sending it for older API revisions. Send `templateId: null`
+  when the template is unknown; never substitute the runtime id.
+- `POST /timers/auto` accepts optional nullable `npc.templateId`. `npc.id`
+  remains the runtime id and still identifies the timer, so spawns sharing a
+  template keep separate timers.
+- Timer responses, timer history and `GET /guilds/{guildId}/timers/npcs/search`
+  add `templateId`, which is null until a client reports it. A later
+  submission without it keeps the stored value.
+- Notification rules accept `npcTemplateIds`, at most five together with
+  `npcId` and `npcIds`. A template id matches every timer observed with that
+  template; `npcId` and `npcIds` still match a timer's own id.
+- Search NPC hits add `identityNamespace`: `template`, `runtime` (a spawn
+  observed without a template) or `legacy` (an overloaded id from an older
+  client). Equal ids in different namespaces are different NPCs.
+
+Deploy the database migration, the search service, the API, the web app and
+the game client in that order. Older clients keep working and write `legacy`
+identities. Existing saved filters and legacy records are not remapped.
+
 ## Unreleased: Conditional party observations
 
 `POST /messaging/party-gathering/{notificationId}/party-observation` accepts

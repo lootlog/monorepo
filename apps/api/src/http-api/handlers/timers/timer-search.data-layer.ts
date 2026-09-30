@@ -8,6 +8,7 @@ import {
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { timerTable } from "#src/database/drizzle/schema";
 import { TIMER_TYPES } from "#src/timers/timer-limits";
+import { timerNpcTemplateId } from "#src/timers/timer-projection";
 import { toTimersDataFailure } from "./timer-errors.js";
 
 const parseNpc = (
@@ -60,6 +61,7 @@ export const makeTimerSearch = (database: typeof ApiDatabase.Service) => {
       return [
         {
           npcId: timer.npcId,
+          templateId: timerNpcTemplateId(timer.npc),
           timerKey: timer.timerKey,
           name: typeof source.name === "string" ? source.name : "",
           lvl: npc.lvl,

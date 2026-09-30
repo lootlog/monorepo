@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { toast } from "sonner";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { getApiErrorMessage } from "@lootlog/client/transport";
@@ -47,6 +48,8 @@ import {
 import {
   buildNotificationRuleNpcFilterPayload,
   getNotificationRuleNpcIdsForSubmit,
+  getNotificationRuleNpcSelectionId,
+  toNotificationRuleNpcSelection,
 } from "../utils/notification-rule-form-npc.utils";
 import { ROUTES } from "@/config/routes";
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -200,15 +203,30 @@ const getWorldOptions = (
 };
 
 const getNpcOptions = (
-  npcs: Array<{ id: number; name: string; type: string }>,
-  t: (key: string) => string,
+  npcs: Array<{
+    id: number;
+    identityNamespace?: string;
+    name: string;
+    type: string;
+  }>,
+  t: TFunction,
 ) => {
   const options = new Map<string, { value: string; label: string }>();
 
   for (const npc of npcs) {
-    options.set(String(npc.id), {
-      value: String(npc.id),
-      label: `${npc.name} ${t(`npcType.${npc.type}`)} (#${npc.id})`,
+    const value = toNotificationRuleNpcSelection(npc);
+    const type = t(`npcType.${npc.type}`);
+
+    options.set(value, {
+      value,
+      label:
+        npc.identityNamespace === "template"
+          ? t("settings.notifications.npcOption.template", {
+              name: npc.name,
+              type,
+              id: npc.id,
+            })
+          : `${npc.name} ${type} (#${npc.id})`,
     });
   }
 
@@ -384,7 +402,7 @@ export const useNotificationRuleForm = () => {
     selectedWorld !== ALL_WORLDS_VALUE ? selectedWorld : undefined;
 
   const selectedNpcSearchParams = {
-    ids: selectedNpcIds.map((npcId) => Number(npcId)),
+    ids: selectedNpcIds.map(getNotificationRuleNpcSelectionId),
     world: normalizedWorld,
   };
 

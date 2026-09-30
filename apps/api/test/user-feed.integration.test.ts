@@ -108,7 +108,7 @@ const kill = (
 
 const insertLoot = async (
   guildId: string,
-  npc: { npcId: number; type: string },
+  npc: { npcId: number; type: string; runtimeNpcId?: number },
   recordedAt: Date,
 ) => {
   const [loot] = Schema.decodeUnknownSync(
@@ -118,9 +118,16 @@ const insertLoot = async (
       await client.query(
         `WITH loot AS (INSERT INTO "Loot" ("uniqueId",world,source,location,"updatedAt") VALUES ($1,'tempest','FIGHT','map',now()) RETURNING id),
         npc AS (INSERT INTO "NpcSnapshot" ("npcId",name,type,lvl,prof) VALUES ($2,$1,$3::"NpcType",100,'WARRIOR') RETURNING id),
-        linked AS (INSERT INTO "LootNpc" ("lootId","npcSnapshotId") SELECT loot.id, npc.id FROM loot, npc)
+        linked AS (INSERT INTO "LootNpc" ("lootId","npcSnapshotId","runtimeNpcId") SELECT loot.id, npc.id, $6::integer FROM loot, npc)
         INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt") SELECT id,$4,$5,now() FROM loot RETURNING "lootId" AS id`,
-        [randomUUID(), npc.npcId, npc.type, guildId, recordedAt],
+        [
+          randomUUID(),
+          npc.npcId,
+          npc.type,
+          guildId,
+          recordedAt,
+          npc.runtimeNpcId ?? null,
+        ],
       )
     ).rows,
   );
@@ -373,6 +380,19 @@ describe("personal Organization activity feed", () => {
     expect(await feed({ withLootOnly: true })).not.toContain("kill:9");
     expect(await feed({ excludedNpcCategories: ["HERO"] })).toEqual(["kill:9"]);
     expect(await feed({ excludedGuildIds: [guild.id] })).toEqual([]);
+
+    // A loot stored under its template id still links through its spawn id.
+    await run(kill(guild.id, { npcId: 11, npcType: "HERO" }));
+
+    const templateLoot = await insertLoot(
+      guild.id,
+      { npcId: 257_636, runtimeNpcId: 11, type: "HERO" },
+      lootAt(5000),
+    );
+
+    expect(await feed({ withLootOnly: true })).toEqual(
+      expect.arrayContaining(["kill:11", `loot:${templateLoot}`]),
+    );
 
     const busy = await seed();
 

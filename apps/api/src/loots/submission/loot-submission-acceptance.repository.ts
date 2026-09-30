@@ -12,7 +12,7 @@ import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { DependencyUnavailableError } from "#src/shared/http/http-errors";
 import { and, desc, eq, inArray, isNull, ne, or } from "drizzle-orm";
 import { Clock, Effect } from "effect";
-import { zip } from "es-toolkit";
+import { omit, zip } from "es-toolkit";
 import { lootPublicationOutboxTable } from "#src/database/drizzle/loot-publication-outbox.schema";
 import type { LootPublication } from "./loot-publication-outbox.js";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -31,6 +31,7 @@ import {
   userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
 import type { Permission } from "@lootlog/schema/permissions";
+import type { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import {
   NpcTypeEnum as NpcTypeValue,
   type NpcTypeEnum as NpcType,
@@ -80,6 +81,8 @@ export type NewLootPersistence = {
   }>;
   npcs: Array<{
     npcId: number;
+    identityNamespace: NpcIdentityNamespace;
+    runtimeNpcId: number | null;
     name: string;
     type: NpcType;
     lvl: number;
@@ -507,14 +510,15 @@ export const makeLootSubmissionAcceptancePersistence = (
         const acceptedNpcs = yield* resolveNpcSnapshots(
           transaction,
           data.world,
-          data.npcs,
+          data.npcs.map((npc) => omit(npc, ["runtimeNpcId"])),
         );
 
         if (acceptedNpcs.length > 0) {
           yield* transaction.insert(lootNpcTable).values(
-            acceptedNpcs.map((snapshot) => ({
+            zip(acceptedNpcs, data.npcs).map(([snapshot, npc]) => ({
               lootId: loot.id,
               npcSnapshotId: snapshot.id,
+              runtimeNpcId: npc.runtimeNpcId,
             })),
           );
         }

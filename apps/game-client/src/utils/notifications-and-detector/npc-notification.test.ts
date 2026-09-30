@@ -20,7 +20,6 @@ const npc: GameNpcWithLocation = {
   prof: "m",
   type: 3,
   wt: 80,
-  tpl: 900,
   location: "Ithan",
   notificationSentAt: null,
 };

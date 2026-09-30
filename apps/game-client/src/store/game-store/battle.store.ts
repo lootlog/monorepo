@@ -9,9 +9,14 @@ const clearCapturedEvents = (events: GameEvent[]) => {
   events.length = 0;
 };
 
+/**
+ * NPC warriors (keys starting with "-") carry `originalId`, the runtime NPC id.
+ * `templateId` is the map NPC's template captured while it was still on the
+ * map; null when it could not be resolved.
+ */
 export type BattleWarriorsWithAccountId = Record<
   string,
-  W[string] & { accountId?: number }
+  W[string] & { accountId?: number; templateId?: number | null }
 >;
 
 interface BattleState {

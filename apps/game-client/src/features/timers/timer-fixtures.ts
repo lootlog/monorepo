@@ -51,6 +51,7 @@ export const createTimerHistoryFixture = (
   npcId: 123,
   npc: {
     id: 123,
+    templateId: null,
     name: "Tanroth",
     prof: "w",
     location: "",
