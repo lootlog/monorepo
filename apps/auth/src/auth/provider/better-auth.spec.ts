@@ -2,8 +2,8 @@ import { describe, expect, it } from "bun:test";
 import { installScopedLogRunner } from "@lootlog/instrumentation";
 import { getTestInstance } from "better-auth/test";
 import { APIError } from "better-auth/api";
-import { Effect, Logger } from "effect";
-import { betterAuthLogger } from "./better-auth.js";
+import { Effect, Logger, References } from "effect";
+import { betterAuthLogger, logOAuthCallbackError } from "./better-auth.js";
 
 describe("Better Auth logging", () => {
   it("omits OAuth callback input and database exception details", async () => {
@@ -97,6 +97,42 @@ describe("Better Auth logging", () => {
         message: ["Authentication event", { context: "BetterAuth" }],
       },
     ]);
+    expect(JSON.stringify(entries)).not.toContain("private-");
+  });
+
+  it("annotates failed OAuth callbacks with the redirect error code only", async () => {
+    const { auth } = await getTestInstance(
+      { logger: betterAuthLogger, hooks: { after: logOAuthCallbackError } },
+      { disableTestUser: true },
+    );
+
+    const entries: unknown[] = [];
+
+    const logger = Logger.make(({ message, fiber }) => {
+      entries.push({
+        message,
+        annotations: { ...fiber.getRef(References.CurrentLogAnnotations) },
+      });
+    });
+
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        yield* installScopedLogRunner;
+        yield* Effect.promise(() =>
+          auth.handler(
+            new Request(
+              "http://localhost:3000/api/auth/callback/discord?error=private-oauth-token",
+            ),
+          ),
+        );
+        yield* Effect.yieldNow;
+      }).pipe(Effect.scoped, Effect.provide(Logger.layer([logger]))),
+    );
+
+    expect(entries).toContainEqual({
+      message: ["OAuth callback failed"],
+      annotations: { context: "BetterAuth", code: "state_not_found" },
+    });
     expect(JSON.stringify(entries)).not.toContain("private-");
   });
 });
