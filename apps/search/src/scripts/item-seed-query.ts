@@ -12,8 +12,10 @@ type SeedDatabase = Pick<
 >;
 
 /**
- * Every looted item snapshot with the worlds it dropped in, oldest first, so
- * merging rows into catalog documents keeps the newest revision of each name.
+ * Every looted item snapshot with the worlds it dropped in, ordered by its
+ * latest loot link, so merging rows into catalog documents keeps the revision
+ * most recently observed for each name, as live indexing does. A revision can
+ * be observed again after a newer one, so its creation time is not enough.
  */
 export const buildItemSeedQuery = (database: SeedDatabase) => {
   // Reduce repeated loot links before reading the larger snapshot records.
@@ -22,6 +24,9 @@ export const buildItemSeedQuery = (database: SeedDatabase) => {
       .select({
         itemSnapshotId: lootItemTable.itemSnapshotId,
         world: lootTable.world,
+        latestLinkId: sql<number>`max(${lootItemTable.id})`.as(
+          "latest_link_id",
+        ),
       })
       .from(lootItemTable)
       .innerJoin(lootTable, eq(lootTable.id, lootItemTable.lootId))
@@ -47,5 +52,8 @@ export const buildItemSeedQuery = (database: SeedDatabase) => {
       eq(itemSnapshotTable.id, snapshotWorlds.itemSnapshotId),
     )
     .groupBy(itemSnapshotTable.id)
-    .orderBy(asc(itemSnapshotTable.createdAt), asc(itemSnapshotTable.id));
+    .orderBy(
+      sql`max(${snapshotWorlds.latestLinkId})`,
+      asc(itemSnapshotTable.id),
+    );
 };
