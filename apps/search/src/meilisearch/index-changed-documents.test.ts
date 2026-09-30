@@ -174,6 +174,37 @@ test("delayed and retried NPC observations preserve accepted revisions and catal
       .filter((hit) => hit.name === "Czempion Furboli")
       .map((hit) => [hit.identityNamespace, hit.id]),
   ).toEqual([["template", 52950]]);
+
+  // Editions: an equal name and type in another edition is another NPC, and a
+  // versioned observation replaces the unversioned suggestion.
+  await index([
+    {
+      ...reworked,
+      identityNamespace: "template",
+      gameVersion: "pl",
+      snapshotHash: "template-pl",
+    },
+    {
+      ...reworked,
+      id: 70_001,
+      identityNamespace: "template",
+      gameVersion: "en",
+      snapshotHash: "template-en",
+    },
+  ]);
+
+  const editionSuggestions = await Effect.runPromise(
+    npcs.getNpcs({ limit: 10 }),
+  );
+
+  expect(
+    editionSuggestions
+      .filter((hit) => hit.name === "Czempion Furboli")
+      .map((hit) => [hit.gameVersion, hit.id]),
+  ).toEqual([
+    ["pl", 52950],
+    ["en", 70_001],
+  ]);
 });
 
 for (const catalog of ["players", "npcs", "items"] as const) {

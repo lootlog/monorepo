@@ -609,7 +609,9 @@ an edition from the world name.
   existing revisions instead of duplicating them.
 - NPC search publications carry `gameVersion`. Search adds it to the document,
   prefixes the catalog key with it when known, and returns it as a nullable
-  field on NPC hits. Older search revisions ignore the field.
+  field on NPC hits. Name suggestions stay separate per edition, and an
+  unversioned hit yields to a versioned one with the same name and type. Older
+  search revisions ignore the field.
 - Item snapshots and the item search document stay keyed by item id and stat
   hash; their per-edition isolation belongs to
   [LOO-36](https://linear.app/lootlog/issue/LOO-36). The loot's game version
