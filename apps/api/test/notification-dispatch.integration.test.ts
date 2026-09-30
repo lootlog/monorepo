@@ -26,6 +26,7 @@ import { makeNotificationJobScheduler } from "#src/notifications/jobs/notificati
 import { makeNotificationJobStore } from "#src/notifications/jobs/notification-job-store";
 import { redisUrl } from "#src/runtime/infrastructure/api-redis";
 import { applicationLogger } from "#src/shared/application-logger";
+import { canDispatchLootNotification } from "#src/notifications/notification-loot-source-visibility";
 import { requireIsolatedTestDatabase } from "./isolated-test-database.js";
 
 describe("notification dispatch with BullMQ and PostgreSQL", () => {
@@ -204,8 +205,13 @@ describe("notification dispatch with BullMQ and PostgreSQL", () => {
 
           return store.failClaim(...args);
         },
+        block: store.blockJob,
       },
-      { hasRequiredGuildPermissions: () => Effect.succeed(true) },
+      {
+        hasRequiredGuildPermissions: () => Effect.succeed(true),
+        canReadLootSource: (jobId, discordId) =>
+          canDispatchLootNotification(database, jobId, discordId),
+      },
       {
         publish: Effect.fnUntraced(function* (
           payload: DiscordNotificationSendCommand,

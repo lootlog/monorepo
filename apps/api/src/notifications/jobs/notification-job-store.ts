@@ -152,6 +152,30 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
         Effect.map((rows) => rows.length > 0),
       );
 
+  // A queued retry may block a job its failed attempt left PROCESSING, as it
+  // may claim it; a first attempt never overrides another worker's claim.
+  const blockJob = (jobId: string, reason: string, retrying = false) =>
+    database
+      .update(notificationJobTable)
+      .set({
+        status: "BLOCKED",
+        blockedReason: reason,
+        lastError: reason,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(notificationJobTable.id, jobId),
+          inArray(
+            notificationJobTable.status,
+            retrying
+              ? ["PENDING", "BLOCKED", "PROCESSING"]
+              : ["PENDING", "BLOCKED"],
+          ),
+        ),
+      )
+      .pipe(Effect.mapError(failure("notifications.jobStore.block")));
+
   const recordDelivery = (options: NotificationDeliveryUpdate) =>
     database
       .transaction((transaction) =>
@@ -295,6 +319,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
 
   return {
     advanceRule,
+    blockJob,
     claimJob,
     cycleStatuses,
     failClaim,

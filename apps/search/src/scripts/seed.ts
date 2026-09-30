@@ -2,7 +2,7 @@
  * Rebuilds the Meilisearch indexes from the API database.
  *
  * Each index is rebuilt in a shadow index (`<name>_rebuild`) that receives the
- * service settings and the latest snapshot of every NPC, player and item,
+ * service settings, retained NPC revisions, and player and item snapshots,
  * loaded in one query per entity and pushed in large batches. Batches are
  * enqueued without waiting, so Meilisearch merges them into a few indexing
  * runs; the script waits once, then swaps the shadow indexes into place in a
@@ -19,6 +19,7 @@
  * `MEILISEARCH_HOST` and `MEILISEARCH_API_KEY` set.
  */
 import { SQL } from "bun";
+import { drizzle } from "drizzle-orm/bun-sql";
 import { Config, Effect, Redacted } from "effect";
 import { chunk } from "es-toolkit";
 import { Meilisearch, type EnqueuedTask, type Task } from "meilisearch";
@@ -33,6 +34,7 @@ import { NPCS_INDEX } from "#src/npcs/search-index";
 import { toNpcDocument } from "#src/npcs/npcs.service";
 import { PLAYERS_INDEX } from "#src/players/search-index";
 import { toPlayerDocument } from "#src/players/players.service";
+import { buildNpcSeedQuery } from "./npc-seed-query.js";
 
 const DOCUMENTS_PER_BATCH = 10_000;
 
@@ -54,22 +56,12 @@ const config = await Effect.runPromise(
 
 const sql = new SQL({ url: Redacted.value(config.databaseUrl) });
 
+const database = drizzle({ client: sql });
+
 const meilisearch = new Meilisearch({
   host: config.meilisearchHost,
   apiKey: Redacted.value(config.meilisearchApiKey),
 });
-
-type NpcRow = {
-  id: number;
-  name: string;
-  type: string | null;
-  prof: string | null;
-  icon: string | null;
-  lvl: number | null;
-  wt: number | null;
-  margonemType: number;
-  world: string;
-};
 
 type PlayerRow = {
   world: string;
@@ -219,37 +211,12 @@ const indexDocuments = async <Document extends { uid: string }>(
 const seedNpcs = async () => {
   const startedAt = performance.now();
 
-  // Loot rows outnumber snapshots a thousandfold, so reduce them to distinct
-  // (snapshot, world) pairs by hashing before touching snapshot columns. The
-  // uid is (npc id, margonem type, world); take the newest snapshot of each.
-  const rows = await sql<NpcRow[]>`
-    WITH snapshot_worlds AS (
-      SELECT ln."npcSnapshotId", l."world"
-      FROM "LootNpc" ln
-      INNER JOIN "Loot" l ON l."id" = ln."lootId"
-      GROUP BY ln."npcSnapshotId", l."world"
-    )
-    SELECT DISTINCT ON (ns."npcId", COALESCE(ns."margonemType", 0), sw."world")
-      ns."npcId" AS "id",
-      ns."name",
-      ns."type",
-      ns."prof",
-      ns."icon",
-      ns."lvl",
-      ns."wt",
-      COALESCE(ns."margonemType", 0) AS "margonemType",
-      sw."world"
-    FROM snapshot_worlds sw
-    INNER JOIN "NpcSnapshot" ns ON ns."id" = sw."npcSnapshotId"
-    ORDER BY ns."npcId", COALESCE(ns."margonemType", 0), sw."world",
-      ns."createdAt" DESC, ns."id" DESC
-  `;
+  const rows = await buildNpcSeedQuery(database);
 
   const documents = rows.map((npc) =>
     toNpcDocument({
       id: npc.id,
       name: npc.name,
-      // The stored type is advisory; the document builder derives it from wt.
       type: npc.type ?? "",
       prof: npc.prof,
       icon: npc.icon ?? "",
@@ -257,6 +224,7 @@ const seedNpcs = async () => {
       wt: npc.wt ?? 0,
       margonemType: npc.margonemType,
       world: npc.world,
+      snapshotHash: npc.snapshotHash ?? undefined,
     }),
   );
 

@@ -1,6 +1,7 @@
 import { getItemTypeByCl } from "@lootlog/domain/item-type";
 import {
   createItemStatsHash,
+  createNpcSnapshotHash,
   createPlayerSnapshotHash,
 } from "@lootlog/database/snapshot-hash";
 import { buildTimerKey } from "@lootlog/api/timers/timer-key";
@@ -437,20 +438,26 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
       }
 
       for (const npc of loot.npcs) {
+        const observation = {
+          identityNamespace: "legacy",
+          world: loot.world,
+          npcId: npc.id,
+          name: npc.name,
+          type: npc.type,
+          lvl: npc.lvl,
+          icon: npc.icon,
+          wt: npc.wt,
+          margonemType: npc.margonemType,
+          prof: npc.prof ?? null,
+        };
+
+        const snapshotHash = createNpcSnapshotHash(observation);
+
         const insertedSnapshots = await transaction
           .insert(npcSnapshotTable)
-          .values({
-            npcId: npc.id,
-            name: npc.name,
-            type: npc.type,
-            lvl: npc.lvl,
-            icon: npc.icon,
-            wt: npc.wt,
-            margonemType: npc.margonemType,
-            prof: npc.prof,
-          })
+          .values({ ...observation, snapshotHash })
           .onConflictDoNothing({
-            target: [npcSnapshotTable.npcId, npcSnapshotTable.name],
+            target: [npcSnapshotTable.npcId, npcSnapshotTable.snapshotHash],
           })
           .returning({ id: npcSnapshotTable.id });
 
@@ -463,7 +470,7 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
               .where(
                 and(
                   eq(npcSnapshotTable.npcId, npc.id),
-                  eq(npcSnapshotTable.name, npc.name),
+                  eq(npcSnapshotTable.snapshotHash, snapshotHash),
                 ),
               )
               .limit(1)

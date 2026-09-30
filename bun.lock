@@ -354,9 +354,11 @@
         "meilisearch": "^0.62.0",
       },
       "devDependencies": {
+        "@lootlog/api": "workspace:*",
         "@lootlog/typescript-config": "workspace:*",
         "@types/bun": "catalog:",
         "@types/node": "catalog:",
+        "drizzle-orm": "catalog:",
         "typescript": "catalog:",
         "yaml": "catalog:",
       },

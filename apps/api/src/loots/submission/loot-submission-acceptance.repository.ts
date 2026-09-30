@@ -4,7 +4,7 @@ import {
 } from "./loot-map-players.persistence.js";
 import {
   resolveItemSnapshotIds,
-  resolveNpcSnapshotIds,
+  resolveNpcSnapshots,
 } from "./loot-snapshot.persistence.js";
 import { resolvePlayerSnapshots } from "#src/shared/margonem/player-snapshot.persistence";
 import type { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
@@ -41,6 +41,8 @@ import type {
   LootSourceEnum as LootSource,
   ProfessionEnum as Profession,
 } from "@lootlog/schema/loot";
+
+export type AcceptedNpcSnapshot = typeof npcSnapshotTable.$inferSelect;
 
 export type PersistedLootSubmission = {
   guildId: string;
@@ -134,7 +136,10 @@ export interface LootSubmissionAcceptancePersistence {
   readonly appendSubmissions: (
     lootId: number,
     submissions: PersistedLootSubmission[],
-    publications: (organizationIds: string[]) => LootPublication[],
+    publications: (
+      organizationIds: string[],
+      npcs: AcceptedNpcSnapshot[],
+    ) => LootPublication[],
     mapPlayersSnapshot?: { guildIds: string[]; players: MapPlayersSnapshot },
   ) => Effect.Effect<
     Array<{ id: number; guildId: string; archivedAt: Date | null }>,
@@ -142,7 +147,10 @@ export interface LootSubmissionAcceptancePersistence {
   >;
   readonly createNewLoot: (
     data: NewLootPersistence,
-    publications: (lootId: number) => LootPublication[],
+    publications: (
+      lootId: number,
+      npcs: AcceptedNpcSnapshot[],
+    ) => LootPublication[],
   ) => Effect.Effect<number, unknown>;
 }
 
@@ -398,14 +406,27 @@ export const makeLootSubmissionAcceptancePersistence = (
             });
         }
 
-        const intents = publications([
-          ...new Set([
-            ...records
-              .filter((record) => record.archivedAt === null)
-              .map((record) => record.guildId),
-            ...snapshotGuildIds,
-          ]),
-        ]);
+        const acceptedNpcs = yield* transaction
+          .select({ npc: npcSnapshotTable })
+          .from(lootNpcTable)
+          .innerJoin(
+            npcSnapshotTable,
+            eq(npcSnapshotTable.id, lootNpcTable.npcSnapshotId),
+          )
+          .where(eq(lootNpcTable.lootId, lootId))
+          .orderBy(lootNpcTable.id);
+
+        const intents = publications(
+          [
+            ...new Set([
+              ...records
+                .filter((record) => record.archivedAt === null)
+                .map((record) => record.guildId),
+              ...snapshotGuildIds,
+            ]),
+          ],
+          acceptedNpcs.map(({ npc }) => npc),
+        );
 
         if (intents.length > 0) {
           yield* transaction
@@ -483,16 +504,17 @@ export const makeLootSubmissionAcceptancePersistence = (
           );
         }
 
-        const npcSnapshotIds = yield* resolveNpcSnapshotIds(
+        const acceptedNpcs = yield* resolveNpcSnapshots(
           transaction,
+          data.world,
           data.npcs,
         );
 
-        if (npcSnapshotIds.length > 0) {
+        if (acceptedNpcs.length > 0) {
           yield* transaction.insert(lootNpcTable).values(
-            npcSnapshotIds.map((npcSnapshotId) => ({
+            acceptedNpcs.map((snapshot) => ({
               lootId: loot.id,
-              npcSnapshotId,
+              npcSnapshotId: snapshot.id,
             })),
           );
         }
@@ -544,7 +566,7 @@ export const makeLootSubmissionAcceptancePersistence = (
             };
           }),
         );
-        const intents = publications(loot.id);
+        const intents = publications(loot.id, acceptedNpcs);
 
         if (intents.length > 0) {
           yield* transaction

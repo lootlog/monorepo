@@ -34,6 +34,16 @@ Poniższe identyfikatory odpowiadają wartościom używanym przez aplikację.
 | `LOOTLOG_LOOTS_TITANS_READ` | Odczyt łupów z tytanów   |
 | `LOOTLOG_LOOTS_HEROES_READ` | Odczyt łupów z herosów   |
 
+Zakres poziomów roli jest sprawdzany według danych potwora zapisanych przy
+konkretnym łupie. Jeśli potwór miał zapisany poziom 183, a kolejne zgłoszenie
+pod tą samą nazwą zawiera poziom 210, powstają dwa odrębne zapisy. Rola z limitem
+190 może mieć dostęp do pierwszego łupu, ale nie do drugiego. Nadal musi
+spełniać pozostałe warunki dostępu, w tym uprawnienie do danego typu potwora.
+
+Zmiana przydziału łupu wymaga aktualnego uprawnienia do zapisu i dostępu do
+tego łupu. Po odebraniu dostępu oczekujące powiadomienie o łupie nie zostanie
+wysłane, a jego wpis może zniknąć z historii powiadomień użytkownika.
+
 ### Timery
 
 | Uprawnienie                  | Zakres                 |

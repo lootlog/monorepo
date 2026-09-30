@@ -177,3 +177,11 @@ export const getJobStatusLabel = (status: string, t: (key: string) => string) =>
 
 export const getJobKindLabel = (kind: string, t: (key: string) => string) =>
   t(`settings.notifications.jobKinds.${kind.toLowerCase()}`);
+
+export const getJobErrorMessage = (
+  message: string,
+  t: (key: string) => string,
+) =>
+  message === "Loot source is no longer visible"
+    ? t("settings.notifications.jobErrors.lootSourceNotVisible")
+    : message;

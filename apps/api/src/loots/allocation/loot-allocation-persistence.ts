@@ -7,12 +7,17 @@ import {
   gte,
   isNull,
   ne,
-  notInArray,
+  not,
   notExists,
+  or,
   sql,
+  type SQL,
 } from "drizzle-orm";
 import { alias, QueryBuilder } from "drizzle-orm/pg-core";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
+import { hydrateMemberRoles } from "#src/members/member-role-hydration";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
+import { buildLootNpcVisibilityCondition } from "#src/loots/loot-visibility";
 import {
   requestApiKeyAccess,
   requestScopedIdentity,
@@ -22,6 +27,7 @@ import { Effect, Schema } from "effect";
 import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
+  guildTable,
   itemSnapshotTable,
   lootItemTable,
   lootNpcTable,
@@ -58,7 +64,10 @@ const allocationSubmission = alias(
 
 const allocationMember = alias(memberTable, "allocation_member");
 
-const authorizedSubmissionExists = (options: AuthorizedLootOptions) =>
+const authorizedSubmissionExists = (
+  options: AuthorizedLootOptions,
+  visibleSource: SQL,
+) =>
   exists(
     query
       .select({ id: allocationRecord.id })
@@ -74,7 +83,10 @@ const authorizedSubmissionExists = (options: AuthorizedLootOptions) =>
       .where(
         and(
           eq(allocationRecord.lootId, lootTable.id),
+          isNull(allocationRecord.archivedAt),
+          eq(allocationMember.active, true),
           eq(allocationMember.globalUserId, options.actorUserId),
+          visibleSource,
           gte(
             allocationSubmission.createdAt,
             databaseSubmissionCutoff(options.submissionCutoff),
@@ -91,31 +103,106 @@ export class LootAllocationPersistenceError extends TaggedErrorClass<LootAllocat
 export const makeLootAllocationPersistence = (
   database: typeof ApiDatabase.Service,
 ) => {
-  const keyAllocationScope = Effect.gen(function* () {
-    if (!(yield* requestApiKeyAccess)) return undefined;
-    const identity = yield* requestScopedIdentity;
-
-    const guilds = yield* selectAccessibleGuilds(database, identity.discordId, [
-      Permission.LOOTLOG_LOOTS_WRITE,
-    ]);
-
-    const ids = guilds.map(({ guild }) => guild.id);
-
-    if (ids.length === 0) return sql`false`;
-
-    // Allocation is shared by every organization record; never partially authorize a global update.
-    return notExists(
-      query
-        .select({ id: organizationLootRecordTable.id })
-        .from(organizationLootRecordTable)
+  const sourceAccess = (actorUserId: string) =>
+    Effect.gen(function* () {
+      const members = yield* database
+        .select({ member: memberTable, ownerId: guildTable.ownerId })
+        .from(memberTable)
+        .innerJoin(guildTable, eq(guildTable.id, memberTable.guildId))
         .where(
           and(
-            eq(organizationLootRecordTable.lootId, lootTable.id),
-            notInArray(organizationLootRecordTable.guildId, ids),
+            eq(memberTable.globalUserId, actorUserId),
+            eq(memberTable.active, true),
+            eq(guildTable.active, true),
           ),
+        );
+
+      const memberships = yield* hydrateMemberRoles(
+        database,
+        members.map(({ member, ownerId }) => ({ ...member, ownerId })),
+      );
+
+      return memberships.flatMap((member) => {
+        const permissions =
+          member.ownerId === member.userId
+            ? [Permission.OWNER]
+            : member.roles.flatMap((role) => role.permissions);
+
+        if (
+          !createAccessPolicy({ capabilities: permissions }).allows(
+            Permission.LOOTLOG_LOOTS_WRITE,
+          )
+        )
+          return [];
+
+        return [
+          {
+            guildId: member.guildId,
+            visibility:
+              buildLootNpcVisibilityCondition(
+                lootTable.id,
+                permissions,
+                member.roles,
+              ) ?? sql`true`,
+          },
+        ];
+      });
+    });
+
+  const allocationAuthorization = (options: AuthorizedLootOptions) =>
+    Effect.gen(function* () {
+      const sources = yield* sourceAccess(options.actorUserId);
+
+      const visibleSource =
+        or(
+          ...sources.map(({ guildId, visibility }) =>
+            and(eq(allocationRecord.guildId, guildId), visibility),
+          ),
+        ) ?? sql`false`;
+
+      const submission = authorizedSubmissionExists(options, visibleSource);
+
+      if (!(yield* requestApiKeyAccess)) return submission;
+      const identity = yield* requestScopedIdentity;
+
+      const guilds = yield* selectAccessibleGuilds(
+        database,
+        identity.discordId,
+        [Permission.LOOTLOG_LOOTS_WRITE],
+      );
+
+      if (guilds.length === 0) return sql`false`;
+
+      const visibleOrganizations =
+        or(
+          ...guilds.map(({ guild }) =>
+            and(
+              eq(organizationLootRecordTable.guildId, guild.id),
+              isNull(organizationLootRecordTable.archivedAt),
+              guild.ownerId === identity.discordId
+                ? undefined
+                : (sources.find((source) => source.guildId === guild.id)
+                    ?.visibility ?? sql`false`),
+            ),
+          ),
+        ) ?? sql`false`;
+
+      // Allocation is shared by every organization record; never partially authorize a global update.
+      return and(
+        submission,
+        notExists(
+          query
+            .select({ id: organizationLootRecordTable.id })
+            .from(organizationLootRecordTable)
+            .where(
+              and(
+                eq(organizationLootRecordTable.lootId, lootTable.id),
+                not(visibleOrganizations),
+              ),
+            ),
         ),
-    );
-  });
+      );
+    });
 
   const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
@@ -131,18 +218,12 @@ export const makeLootAllocationPersistence = (
     protect(
       "loot-allocation.find-authorized",
       Effect.gen(function* () {
-        const keyScope = yield* keyAllocationScope;
+        const authorized = yield* allocationAuthorization(options);
 
         const [loot] = yield* database
           .select()
           .from(lootTable)
-          .where(
-            and(
-              eq(lootTable.id, options.lootId),
-              keyScope,
-              authorizedSubmissionExists(options),
-            ),
-          )
+          .where(and(eq(lootTable.id, options.lootId), authorized))
           .limit(1);
 
         if (!loot) return null;
@@ -218,7 +299,7 @@ export const makeLootAllocationPersistence = (
     protect(
       "loot-allocation.compare-and-set",
       Effect.gen(function* () {
-        const keyScope = yield* keyAllocationScope;
+        const authorized = yield* allocationAuthorization(options);
 
         return yield* database
           .update(lootTable)
@@ -230,9 +311,8 @@ export const makeLootAllocationPersistence = (
           .where(
             and(
               eq(lootTable.id, options.lootId),
-              keyScope,
+              authorized,
               ne(lootTable.lootShareSource, LootShareSource.CHAT_MESSAGE),
-              authorizedSubmissionExists(options),
             ),
           )
           .returning({ id: lootTable.id })
@@ -244,7 +324,7 @@ export const makeLootAllocationPersistence = (
     protect(
       "loot-allocation.find-state",
       Effect.gen(function* () {
-        const keyScope = yield* keyAllocationScope;
+        const authorized = yield* allocationAuthorization(options);
 
         return yield* database
           .select({
@@ -252,32 +332,7 @@ export const makeLootAllocationPersistence = (
             lootShareSource: lootTable.lootShareSource,
           })
           .from(lootTable)
-          .innerJoin(
-            organizationLootRecordTable,
-            eq(organizationLootRecordTable.lootId, lootTable.id),
-          )
-          .innerJoin(
-            lootSubmissionTable,
-            eq(
-              lootSubmissionTable.organizationLootRecordId,
-              organizationLootRecordTable.id,
-            ),
-          )
-          .innerJoin(
-            memberTable,
-            eq(memberTable.id, lootSubmissionTable.memberId),
-          )
-          .where(
-            and(
-              eq(lootTable.id, options.lootId),
-              keyScope,
-              eq(memberTable.globalUserId, options.actorUserId),
-              gte(
-                lootSubmissionTable.createdAt,
-                databaseSubmissionCutoff(options.submissionCutoff),
-              ),
-            ),
-          )
+          .where(and(eq(lootTable.id, options.lootId), authorized))
           .limit(1)
           .pipe(Effect.map((rows) => rows[0] ?? null));
       }),
