@@ -3,7 +3,7 @@ import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import type { AuthProvider } from "#src/auth/auth-service";
 import { runLogEffect } from "@lootlog/instrumentation";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
-import { APIError } from "better-auth/api";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins/admin";
 import { bearer } from "better-auth/plugins/bearer";
@@ -59,6 +59,33 @@ export const betterAuthLogger = {
   log: logBetterAuthEvent,
 } satisfies BetterAuthOptions["logger"];
 
+const OAUTH_CALLBACK_ERROR_CODE = /^[A-Za-z0-9_]{1,64}$/u;
+
+// Counts failed OAuth callbacks per Better Auth `?error=` code. The code is
+// the only logged value; profile data and query input stay out of logs.
+export const logOAuthCallbackError = createAuthMiddleware((ctx) => {
+  const location =
+    ctx.path === "/callback/:id" && !ctx.context.newSession
+      ? ctx.context.responseHeaders?.get("location")
+      : undefined;
+
+  const error = location
+    ? new URL(location, ctx.context.baseURL).searchParams.get("error")
+    : null;
+
+  if (error !== null)
+    runLogEffect(
+      Effect.logWarning("OAuth callback failed").pipe(
+        Effect.annotateLogs({
+          context: "BetterAuth",
+          code: OAUTH_CALLBACK_ERROR_CODE.test(error) ? error : "unrecognized",
+        }),
+      ),
+    );
+
+  return Promise.resolve();
+});
+
 export const createLootlogAuth = ({
   config,
   database,
@@ -85,6 +112,7 @@ export const createLootlogAuth = ({
   return betterAuth({
     appName: "@lootlog/auth",
     logger: betterAuthLogger,
+    hooks: { after: logOAuthCallbackError },
     baseURL: betterAuthBaseURL,
     database: drizzleAdapter(database, {
       provider: "pg",
