@@ -106,6 +106,19 @@ obejmuje także je. Wybrany NPC, którego timera nie widzisz, ma w formularzu
 opis „Brak dostępnego timera”. Możesz go usunąć albo zastąpić innym. Jeśli reguła dla
 wszystkich światów zawiera pojedynczy spawn, formularz pokaże ostrzeżenie.
 
+Starsze reguły mogły zapisać ID potwora ze starej wyszukiwarki. Takie ID nie
+pasuje do żadnego timera, więc reguła nie wysyłała dla niego przypomnień.
+Lootlog nie zmienia tych reguł automatycznie. Na liście reguł zobaczysz
+ostrzeżenie, a w formularzu opis problemu i prawdopodobny odpowiednik
+w timerach, jeśli go znamy. Możesz użyć odpowiednika, usunąć ID z wyboru albo
+wybrać innego potwora. Zmiana zacznie działać po zapisaniu reguły. Zapisanie
+reguły nie wysyła przypomnień o spawnach, których okno już minęło.
+
+Przy obserwowanym itemie może pojawić się uwaga, że zapisana nazwa pochodzi
+z innej wersji gry albo nie pasuje do żadnego znanego itemu. Powiadomienie
+działa według ID itemu i świata, więc przychodzi bez zmian. Dodaj item
+ponownie, aby poprawić nazwę.
+
 Dostęp kontrolują między innymi:
 
 - `LOOTLOG_CHAT_READ` i `LOOTLOG_CHAT_WRITE`;

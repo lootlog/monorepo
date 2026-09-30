@@ -14,6 +14,7 @@ import {
   notificationJobTable,
   notificationRuleTable,
   notificationRuleTargetTable,
+  notificationRuleUnresolvedSelectionTable,
   notificationTargetTable,
 } from "#src/database/drizzle/schema";
 import { makeNotificationUserTargets } from "../targets/notification-user-targets.js";
@@ -175,6 +176,93 @@ test("preserves an omitted end date and persists an explicitly cleared end date"
     expect(
       (await boundary.run(rules.listUser("user-1")))[0]?.scheduledUntil,
     ).toBeNull();
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+test("a legacy NPC selection stays unresolved until the rule is saved without it, and never widens the rule", async () => {
+  const boundary = await createDatabaseBoundary();
+
+  try {
+    const database = boundary.database;
+    const rebuilt: number[] = [];
+
+    await boundary.run(
+      database.insert(guildTable).values(createGuildFixture()),
+    );
+    await boundary.run(
+      database.insert(notificationRuleTable).values(
+        createNotificationRuleFixture({
+          id: 8,
+          ownerType: "GUILD",
+          ownerId: "guild-1",
+          guildId: "guild-1",
+          world: "fobos",
+          triggerType: "TIMER_BEFORE_SPAWN",
+          filters: { npcIds: [52553, 101] },
+          scheduleStrategy: "SPAWN_WINDOW_RELATIVE",
+          scheduleAnchor: "MIN_SPAWN",
+          scheduleOffsetMinutes: 5,
+          scheduledAt: null,
+        }),
+      ),
+    );
+    await boundary.run(
+      database.insert(notificationRuleUnresolvedSelectionTable).values({
+        ruleId: 8,
+        kind: "npc",
+        selectedId: 52553,
+        selectedName: "Versus Zoons",
+        reason: "legacyCatalogId",
+        suggestedId: 333269,
+        suggestedName: "Versus Zoons",
+      }),
+    );
+
+    const rules = makeNotificationRuleOperations(database, {
+      ensureGuildPermissions: () => Effect.void,
+      rebuildJobs: (ruleId) => Effect.sync(() => void rebuilt.push(ruleId)),
+      cancelJobs: () => Effect.void,
+      buildTestPayload: () => Effect.succeed({}),
+      createTestJob: () => Effect.succeed(null),
+      enqueueJob: () => Effect.void,
+    });
+
+    const decode = Schema.decodeUnknownSync(UpdateNotificationRuleRequest);
+
+    const listed = async () =>
+      (await boundary.run(rules.listGuild("guild-1"))).items[0];
+
+    expect((await listed())?.unresolvedSelections).toEqual([
+      {
+        kind: "npc",
+        selectedId: 52553,
+        selectedName: "Versus Zoons",
+        reason: "legacyCatalogId",
+        suggestedId: 333269,
+        suggestedName: "Versus Zoons",
+      },
+    ]);
+
+    await boundary.run(
+      rules.updateGuild("guild-1", 8, decode({ name: "Renamed" })),
+    );
+
+    const renamed = await listed();
+
+    expect(renamed?.unresolvedSelections).toHaveLength(1);
+    expect(renamed?.filters).toEqual({ npcIds: [52553, 101] });
+
+    await boundary.run(
+      rules.updateGuild("guild-1", 8, decode({ npcIds: [333269, 101] })),
+    );
+
+    const reselected = await listed();
+
+    expect(reselected?.unresolvedSelections).toEqual([]);
+    expect(reselected?.filters).toEqual({ npcIds: [333269, 101] });
+    expect(rebuilt).toEqual([8, 8]);
   } finally {
     await boundary.dispose();
   }

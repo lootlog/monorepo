@@ -11,6 +11,7 @@ export default defineConfig({
   schema: [
     "./src/database/drizzle/schema.ts",
     "./src/database/drizzle/loot-publication-outbox.schema.ts",
+    "./src/database/drizzle/legacy-repair.schema.ts",
   ],
   out: "./drizzle/migrations",
   dbCredentials: { url: databaseUrl },

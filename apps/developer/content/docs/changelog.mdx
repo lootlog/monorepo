@@ -3,6 +3,29 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased: Unresolved notification selections and repaired loot links
+
+Some saved notification selections do not identify what their rule matches:
+timer rules saved with an NPC id from the legacy search catalog, and watched
+items whose saved name came from the other game edition.
+
+- Notification rule responses, including the rule of a watched item, add
+  `unresolvedSelections`. Each entry names the `kind` (`npc` or `item`), the
+  saved `selectedId` and `selectedName`, a `reason`, and for a timer rule an
+  optional `suggestedId` and `suggestedName`. The array is empty for most
+  rules.
+- The API never changes a rule's filters to resolve an entry. It disappears
+  when the rule is saved without that id, or when the watched item is added
+  again. Treat `suggestedId` as a suggestion; applying it is a normal rule
+  update.
+- Saving or rebuilding a timer rule no longer schedules notifications for
+  timers whose spawn window has already closed, and does not send a
+  notification again for an occurrence that was already sent.
+- A one-time repair moves some historical loot links to new NPC and item
+  revisions: an NPC level observed on the timer at the time of the loot, or the
+  Polish name and icon of an item. A loot's NPC level can therefore change,
+  and with it which roles can read the loot. Loot and item ids are unchanged.
+
 ## Unreleased: Item names, icons and instance stats per loot
 
 A loot item now shows the name and icon it was reported with. Earlier, a later
