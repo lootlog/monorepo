@@ -5,11 +5,7 @@ import { apiRedisConfiguration } from "#src/config/api.config";
 import { ApiDatabaseLive } from "#src/database/drizzle/database";
 import { ApiRedis, redisUrl } from "#src/runtime/infrastructure/api-redis";
 import { readLegacyRepairManifest } from "./legacy-repair-manifest.js";
-import {
-  invalidateLegacyRepairCaches,
-  LegacyRepair,
-  LegacyRepairError,
-} from "./legacy-repair.js";
+import { LegacyRepair, LegacyRepairError } from "./legacy-repair.js";
 
 /**
  * LOO-38 legacy association repair.
@@ -90,19 +86,10 @@ const program = Effect.gen(function* () {
         )
       : yield* repair.rollback(runId, options);
 
-  // Every Organization with a moved or restored link loses its cached list
-  // pages, statistics and event summaries; only their number is reported.
-  const invalidatedOrganizations =
-    progress.processedRows > 0 || progress.complete
-      ? yield* invalidateLegacyRepairCaches(
-          yield* ApiRedis,
-          yield* repair.affectedOrganizationIds(runId),
-        )
-      : 0;
-
+  // The repair invalidates the caches of affected Organizations after each
+  // committed batch; the result reports only their number.
   const result = {
     ...progress,
-    invalidatedOrganizations,
     next: progress.complete ? null : `run ${command} again to continue`,
   };
 
@@ -124,8 +111,9 @@ if (import.meta.main) {
     program.pipe(
       Effect.provide(
         Layer.mergeAll(
-          LegacyRepair.layer.pipe(Layer.provideMerge(ApiDatabaseLive)),
-          RedisLive,
+          LegacyRepair.layer.pipe(
+            Layer.provideMerge(Layer.mergeAll(ApiDatabaseLive, RedisLive)),
+          ),
         ),
       ),
     ),

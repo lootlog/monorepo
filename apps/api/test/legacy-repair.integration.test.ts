@@ -209,8 +209,13 @@ const rowsEntry = (entryId: string, table: string, ids: readonly number[]) =>
 
 const writeManifest = async (
   directory: string,
-  options: { readonly corruptChecksum?: boolean } = {},
+  options: {
+    readonly corruptChecksum?: boolean;
+    readonly itemRowTable?: "LootItem" | "LootNpc";
+  } = {},
 ) => {
+  const itemRowTable = options.itemRowTable ?? "LootItem";
+
   await mkdir(join(directory, "rows"), { recursive: true });
 
   const npcEntry = (world: string, ids: readonly number[]) => ({
@@ -261,7 +266,7 @@ const writeManifest = async (
       classification: "confirmed",
       source: {
         snapshotId: fixture.legacyItemId,
-        rowTable: "LootItem",
+        rowTable: itemRowTable,
         rowCount: fixture.lootItemIds.length,
         rowIdsFile: "rows/item.jsonl",
         rowIdsSha256: rowIdsChecksum(fixture.lootItemIds),
@@ -316,14 +321,23 @@ const writeManifest = async (
   );
   await Bun.write(
     join(directory, "rows/item.jsonl"),
-    rowsEntry(itemEntryId, "LootItem", fixture.lootItemIds),
+    rowsEntry(itemEntryId, itemRowTable, fixture.lootItemIds),
   );
 
   return join(directory, "manifest.jsonl");
 };
 
+// Organizations passed to cache invalidation, one list per call.
+const invalidations: string[][] = [];
+
 const repair = () =>
-  run(Effect.map(ApiDatabase, (database) => makeLegacyRepair(database)));
+  run(
+    Effect.map(ApiDatabase, (database) =>
+      makeLegacyRepair(database, (guildIds) =>
+        Effect.sync(() => void invalidations.push([...guildIds])),
+      ),
+    ),
+  );
 
 const applyUntilComplete = async (manifestPath: string) => {
   const legacyRepair = await repair();
@@ -526,25 +540,38 @@ describe("legacy association repair", () => {
     await runtime.dispose();
   });
 
-  it("refuses a manifest whose rows do not match their checksum before writing anything", async () => {
-    const directory = join(fixture.directory, "corrupt");
-    const path = await writeManifest(directory, { corruptChecksum: true });
+  for (const [name, options, reason] of [
+    [
+      "rows do not match their checksum",
+      { corruptChecksum: true },
+      "rowIdsSha256",
+    ],
+    [
+      "an item entry lists NPC links",
+      { itemRowTable: "LootNpc" },
+      "LootNpc rows in an item entry",
+    ],
+  ] as const) {
+    it(`refuses a manifest whose ${name} before writing anything`, async () => {
+      const directory = join(fixture.directory, name.replaceAll(" ", "-"));
+      const path = await writeManifest(directory, options);
 
-    const failure = await run(
-      Effect.flip(readLegacyRepairManifest(path, runId)),
-    );
+      const failure = await run(
+        Effect.flip(readLegacyRepairManifest(path, runId)),
+      );
 
-    expect(failure.message).toContain("rowIdsSha256");
+      expect(failure.message).toContain(reason);
 
-    const [runs] = await db((database) =>
-      database
-        .select({ value: count() })
-        .from(legacyRepairRunTable)
-        .where(eq(legacyRepairRunTable.runId, runId)),
-    );
+      const [runs] = await db((database) =>
+        database
+          .select({ value: count() })
+          .from(legacyRepairRunTable)
+          .where(eq(legacyRepairRunTable.runId, runId)),
+      );
 
-    expect(runs!.value).toBe(0);
-  });
+      expect(runs!.value).toBe(0);
+    });
+  }
 
   it("relinks only the evidenced rows in bounded, resumable invocations", async () => {
     manifestPath = await writeManifest(join(fixture.directory, "valid"));
@@ -560,6 +587,11 @@ describe("legacy association repair", () => {
     expect(invocations.map(({ processedRows }) => processedRows)).toEqual([
       3, 3, 3, 1,
     ]);
+
+    // Every committed batch drops the moved loots' caches before the next
+    // one runs, and only for the Organization that owns them.
+    expect(invalidations.length).toBeGreaterThanOrEqual(5);
+    expect(new Set(invalidations.flat())).toEqual(new Set([affectedGuild]));
 
     const [created] = await db((database) =>
       database
