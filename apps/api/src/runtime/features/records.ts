@@ -1,3 +1,7 @@
+import {
+  getLootListCacheScope,
+  getLootStatsCacheScope,
+} from "#src/shared/cache";
 import { makeUserFeed } from "#src/feed/user-feed";
 import { makeGuildKillActivityPublisher } from "#src/kills/guild-kill-activity";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -59,8 +63,8 @@ export const recordsServicesLive = Layer.effect(
             Effect.tryPromise({
               try: () =>
                 redis.invalidateScopes(
-                  `loots:list:${guildId}`,
-                  `loot-stats:${guildId}`,
+                  getLootListCacheScope(guildId),
+                  getLootStatsCacheScope(guildId),
                 ),
               catch: (error) => error,
             }),
