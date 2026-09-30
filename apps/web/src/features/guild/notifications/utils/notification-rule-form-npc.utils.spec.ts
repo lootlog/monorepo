@@ -3,6 +3,7 @@ import {
   buildNotificationRuleNpcFilterPayload,
   getNotificationRuleNpcIdsForSubmit,
   parseManualNotificationRuleNpcIds,
+  replaceNotificationRuleNpcSelection,
   toTimerNpcSearchSelection,
 } from "./notification-rule-form-npc.utils";
 import { getGuildNotificationRuleNpcIds } from "./notification-settings.utils";
@@ -89,5 +90,21 @@ describe("notificationRuleFormNpcUtils", () => {
     ).toStrictEqual({
       npcIds: [101, 202, 303],
     });
+  });
+  it("replaces only the unresolved timer id, never a template with the same number", () => {
+    const saved = ["52553", "template:52553", "101"];
+
+    expect(replaceNotificationRuleNpcSelection(saved, 52553, 333269)).toEqual([
+      "333269",
+      "template:52553",
+      "101",
+    ]);
+    expect(replaceNotificationRuleNpcSelection(saved, 52553, null)).toEqual([
+      "template:52553",
+      "101",
+    ]);
+    expect(
+      replaceNotificationRuleNpcSelection(["52553", "333269"], 52553, 333269),
+    ).toEqual(["333269"]);
   });
 });

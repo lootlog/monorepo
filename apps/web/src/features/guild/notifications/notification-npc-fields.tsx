@@ -17,7 +17,10 @@ import {
 } from "@lootlog/ui/components/select";
 import { Switch } from "@lootlog/ui/components/switch";
 import { Textarea } from "@lootlog/ui/components/textarea";
+import type { NotificationRuleUnresolvedSelectionDto } from "@lootlog/client/main";
 import type { useNotificationRuleForm } from "./hooks/use-notification-rule-form";
+import { NotificationUnresolvedNpcSelections } from "./notification-unresolved-npc-selections";
+import { parseManualNotificationRuleNpcIds } from "./utils/notification-rule-form-npc.utils";
 import { ALL_WORLDS_VALUE } from "./utils/notification-rule-form.schema";
 
 type Props = Pick<
@@ -36,7 +39,9 @@ type Props = Pick<
   | "npcSearchError"
   | "isAllWorlds"
   | "hasAllWorldTimerNpcSelection"
->;
+> & {
+  readonly unresolvedSelections: readonly NotificationRuleUnresolvedSelectionDto[];
+};
 
 export const NotificationNpcFields = ({
   isScheduledMessage,
@@ -53,6 +58,7 @@ export const NotificationNpcFields = ({
   npcSearchError,
   isAllWorlds,
   hasAllWorldTimerNpcSelection,
+  unresolvedSelections,
 }: Props) => (
   <>
     {!isScheduledMessage ? (
@@ -161,6 +167,16 @@ export const NotificationNpcFields = ({
                   {t("settings.notifications.manualNpcEntry.fieldHint")}
                 </p>
                 <FormMessage />
+                <NotificationUnresolvedNpcSelections
+                  selections={unresolvedSelections}
+                  value={
+                    parseManualNotificationRuleNpcIds(field.value ?? "").ids
+                  }
+                  onChange={() => undefined}
+                  isAllWorlds={isAllWorlds}
+                  isManualNpcEntry
+                  t={t}
+                />
               </FormItem>
             )}
           />
@@ -204,6 +220,14 @@ export const NotificationNpcFields = ({
                   )}
                 </p>
                 <FormMessage />
+                <NotificationUnresolvedNpcSelections
+                  selections={unresolvedSelections}
+                  value={field.value ?? []}
+                  onChange={field.onChange}
+                  isAllWorlds={isAllWorlds}
+                  isManualNpcEntry={false}
+                  t={t}
+                />
               </FormItem>
             )}
           />

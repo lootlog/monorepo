@@ -36,7 +36,8 @@
     "db:pull": "bunx drizzle-kit pull --config drizzle.config.ts",
     "db:migrate:dev": "bun src/database/drizzle/migrate.ts",
     "db:migrate:deploy": "bun src/database/drizzle/migrate.ts",
-    "db:studio": "drizzle-kit studio --config drizzle.config.ts"
+    "db:studio": "drizzle-kit studio --config drizzle.config.ts",
+    "repair:legacy-associations": "bun --conditions=development --enable-source-maps src/legacy-repair/main.ts"
   },
   "dependencies": {
     "@discordjs/rest": "^2.6.3",
