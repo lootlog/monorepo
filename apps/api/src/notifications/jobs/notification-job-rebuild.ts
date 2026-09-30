@@ -174,6 +174,8 @@ export const makeNotificationJobRebuild = (
     isPermitted: boolean,
   ) => {
     const { event, sourceEntityId, scheduledFor, occurrenceAt } = schedule;
+    const minSpawnTime = new Date(event.minSpawnTime);
+    const maxSpawnTime = new Date(event.maxSpawnTime);
 
     return scheduler
       .create({
@@ -182,6 +184,10 @@ export const makeNotificationJobRebuild = (
         jobKind: NotificationJobKind.SCHEDULED,
         scheduledFor,
         occurrenceAt,
+        occurrence: {
+          minSpawnTime: minSpawnTime.toISOString(),
+          maxSpawnTime: maxSpawnTime.toISOString(),
+        },
         sourceEntityType: "timer",
         sourceEntityId,
         payloadSnapshot: content.timer({
@@ -191,8 +197,8 @@ export const makeNotificationJobRebuild = (
           npcName: event.npc?.name ?? null,
           world: event.world,
           timerKey: event.timerKey,
-          minSpawnTime: new Date(event.minSpawnTime),
-          maxSpawnTime: new Date(event.maxSpawnTime),
+          minSpawnTime,
+          maxSpawnTime,
           scheduledFor,
         }),
         forceBlocked: !isPermitted,
