@@ -4,6 +4,9 @@ import {
   npcSnapshotTable,
 } from "@lootlog/api/database/schema";
 import { desc, eq, sql } from "drizzle-orm";
+import { Schema } from "effect";
+import { NpcIdentityNamespaceSchema } from "@lootlog/schema/npc-identity";
+import { toNpcDocument } from "#src/npcs/npcs.service";
 import type { drizzle } from "drizzle-orm/bun-sql";
 
 type SeedDatabase = Pick<
@@ -61,3 +64,25 @@ export const buildNpcSeedQuery = (database: SeedDatabase) => {
       desc(npcSnapshotTable.id),
     );
 };
+
+type NpcSeedRow = Awaited<ReturnType<typeof buildNpcSeedQuery>>[number];
+
+const decodeIdentityNamespace = Schema.decodeUnknownSync(
+  NpcIdentityNamespaceSchema,
+);
+
+/** Rebuilt documents keep the identity namespace of their snapshot. */
+export const toNpcSeedDocument = (npc: NpcSeedRow) =>
+  toNpcDocument({
+    id: npc.id,
+    identityNamespace: decodeIdentityNamespace(npc.identityNamespace),
+    name: npc.name,
+    type: npc.type ?? "",
+    prof: npc.prof,
+    icon: npc.icon ?? "",
+    lvl: npc.lvl ?? 0,
+    wt: npc.wt ?? 0,
+    margonemType: npc.margonemType,
+    world: npc.world,
+    snapshotHash: npc.snapshotHash ?? undefined,
+  });
