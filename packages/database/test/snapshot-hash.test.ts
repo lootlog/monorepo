@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import { createHash } from "node:crypto";
 import {
+  createItemSnapshotHash,
   createItemStatsHash,
   createNpcSnapshotHash,
   createPlayerSnapshotHash,
@@ -14,6 +15,40 @@ test("seed and live ingestion keep item identity despite ordering and transient 
   expect(createItemStatsHash("ac=15;lvl=100")).toBe(expected);
   expect(createItemStatsHash("ac=16;lvl=100")).not.toBe(expected);
   expect(createItemStatsHash("ac=15;ac=15;lvl=100")).not.toBe(expected);
+});
+
+test("item revisions separate edition and presentation but not per-instance stats", () => {
+  const observation = {
+    gameVersion: "pl",
+    itemId: 62_271,
+    name: "Wojenne trofeum Seta",
+    icon: "trophy.gif",
+    itemType: "trophies",
+    stat: "rarity=heroic;contra=40",
+  };
+
+  const revision = createItemSnapshotHash(observation);
+
+  expect(
+    createItemSnapshotHash({
+      ...observation,
+      stat: "created=1;contra=40;amount=5;rarity=heroic;gold=2;opis=x",
+    }),
+  ).toBe(revision);
+  expect(
+    new Set([
+      revision,
+      createItemSnapshotHash({ ...observation, gameVersion: "en" }),
+      createItemSnapshotHash({ ...observation, gameVersion: null }),
+      createItemSnapshotHash({ ...observation, name: "Seth's War Trophy" }),
+      createItemSnapshotHash({ ...observation, icon: "trophy-v2.gif" }),
+      createItemSnapshotHash({ ...observation, itemType: "neutral" }),
+      createItemSnapshotHash({
+        ...observation,
+        stat: "rarity=heroic;contra=50",
+      }),
+    ]).size,
+  ).toBe(7);
 });
 
 test("player snapshots retain existing identity across the shared hash implementation", () => {

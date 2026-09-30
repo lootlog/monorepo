@@ -13,7 +13,10 @@ import type { GameVersion } from "@lootlog/schema/game-version";
 
 type SnapshotDatabase = Pick<typeof ApiDatabase.Service, "insert" | "select">;
 
-type ItemSnapshotInput = Omit<typeof itemSnapshotTable.$inferInsert, "id">;
+type ItemObservationInput = Omit<
+  typeof itemSnapshotTable.$inferInsert,
+  "id" | "snapshotHash"
+> & { readonly snapshotHash: string };
 
 type NpcObservationInput = Omit<
   typeof npcSnapshotTable.$inferInsert,
@@ -91,12 +94,12 @@ const resolveSnapshotIds = <Input extends object, E>(
     return resolved;
   });
 
-const itemKey = (item: { itemId: number; statsHash: string }): SnapshotKey => [
-  item.itemId,
-  item.statsHash,
-];
-
 // Legacy rows have no hash and never match an observation lookup.
+const itemKey = (item: {
+  itemId: number;
+  snapshotHash: string | null;
+}): SnapshotKey => [item.itemId, item.snapshotHash ?? ""];
+
 const npcKey = (npc: {
   npcId: number;
   snapshotHash: string | null;
@@ -105,7 +108,7 @@ const npcKey = (npc: {
 const itemSnapshotColumns = {
   id: itemSnapshotTable.id,
   itemId: itemSnapshotTable.itemId,
-  statsHash: itemSnapshotTable.statsHash,
+  snapshotHash: itemSnapshotTable.snapshotHash,
 };
 
 const npcSnapshotColumns = {
@@ -115,16 +118,21 @@ const npcSnapshotColumns = {
 };
 
 const toItemKeys = (
-  rows: Array<{ id: number; itemId: number; statsHash: string }>,
+  rows: Array<{ id: number; itemId: number; snapshotHash: string | null }>,
 ) => rows.map((row) => ({ id: row.id, key: itemKey(row) }));
 
 const toNpcKeys = (
   rows: Array<{ id: number; npcId: number; snapshotHash: string | null }>,
 ) => rows.map((row) => ({ id: row.id, key: npcKey(row) }));
 
+/**
+ * Resolves the observed revision of each item, in input order. A localized
+ * name, rename or icon change is a new revision instead of reusing the first
+ * row stored for the same item id and stats.
+ */
 export const resolveItemSnapshotIds = (
   database: SnapshotDatabase,
-  items: readonly ItemSnapshotInput[],
+  items: readonly ItemObservationInput[],
 ) =>
   resolveSnapshotIds(items, {
     keyOf: itemKey,
@@ -137,7 +145,7 @@ export const resolveItemSnapshotIds = (
             ...pending.map((item) =>
               and(
                 eq(itemSnapshotTable.itemId, item.itemId),
-                eq(itemSnapshotTable.statsHash, item.statsHash),
+                eq(itemSnapshotTable.snapshotHash, item.snapshotHash),
               ),
             ),
           ),
@@ -146,21 +154,9 @@ export const resolveItemSnapshotIds = (
     insert: (missing) =>
       database
         .insert(itemSnapshotTable)
-        .values(
-          missing.map((item) => ({
-            itemId: item.itemId,
-            statsHash: item.statsHash,
-            name: item.name,
-            icon: item.icon,
-            lvl: item.lvl,
-            rarity: item.rarity,
-            itemType: item.itemType,
-            statRaw: item.statRaw,
-            statsSnapshot: item.statsSnapshot,
-          })),
-        )
+        .values([...missing])
         .onConflictDoNothing({
-          target: [itemSnapshotTable.itemId, itemSnapshotTable.statsHash],
+          target: [itemSnapshotTable.itemId, itemSnapshotTable.snapshotHash],
         })
         .returning(itemSnapshotColumns)
         .pipe(Effect.map(toItemKeys)),

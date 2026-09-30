@@ -1,3 +1,4 @@
+import { uniqBy } from "es-toolkit";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
@@ -162,8 +163,10 @@ export const useLootSearchCommand = ({
 
   const canSearchDirectly = allTrue(!isHidInput, trimmedSearch.length >= 2);
 
-  const npcResults = searchResults?.npcs ?? [];
-  const itemResults = searchResults?.items ?? [];
+  // Selecting a hit filters by name, so each name is one option even when
+  // several editions or ids share it.
+  const npcResults = uniqBy(searchResults?.npcs ?? [], (npc) => npc.name);
+  const itemResults = uniqBy(searchResults?.items ?? [], (item) => item.name);
   const playerResults = searchResults?.players ?? [];
 
   const hasSearchResults = anyTrue(

@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { Effect } from "effect";
 import { Meilisearch } from "meilisearch";
-import { makeItemsModule } from "./items.service.js";
+import { itemCatalogKey, makeItemsModule } from "./items.service.js";
 
 const logger = { info() {}, warn() {}, error() {} };
 
@@ -35,9 +35,11 @@ test("batches existing-world reads and preserves worlds across duplicate and mis
         expect(url.searchParams.get("limit")).toBe(String(ids.length));
         expect(url.searchParams.has("fields")).toBe(false);
 
+        const stored = itemCatalogKey(item(1));
+
         return Promise.resolve({
-          results: ids.includes("1")
-            ? [{ uid: "1", world: "legacy", worlds: ["old", "new"] }]
+          results: ids.includes(stored)
+            ? [{ uid: stored, world: "legacy", worlds: ["old", "new"] }]
             : [],
         });
       }
@@ -64,14 +66,69 @@ test("batches existing-world reads and preserves worlds across duplicate and mis
   expect(written).toEqual(
     expect.arrayContaining([
       expect.objectContaining({
-        uid: "1",
+        uid: itemCatalogKey(item(1)),
         worlds: ["legacy", "new", "old", "other"],
       }),
-      expect.objectContaining({ uid: "101", worlds: ["new"] }),
+      expect.objectContaining({
+        uid: itemCatalogKey(item(101)),
+        worlds: ["new"],
+      }),
     ]),
   );
   expect(written).toHaveLength(101);
   expect(writeSizes).toEqual([101]);
+});
+
+test("keeps each edition and name of one item searchable instead of the last observation", async () => {
+  const written: Array<{ uid: string; name: string; worlds: string[] }> = [];
+
+  const client = new Meilisearch({
+    host: "http://search.invalid",
+    httpClient: (input, init) => {
+      const url = new URL(String(input));
+
+      if ((init?.method ?? "GET").toUpperCase() === "GET") {
+        return Promise.resolve(
+          url.pathname.startsWith("/tasks/")
+            ? { uid: 1, status: "succeeded" }
+            : { results: [] },
+        );
+      }
+
+      written.push(...JSON.parse(String(init?.body)));
+
+      return Promise.resolve({ taskUid: 1, status: "enqueued" });
+    },
+  });
+
+  const trophy = (
+    name: string,
+    world: string,
+    gameVersion: "en" | "pl" | null,
+  ) => ({ ...item(62_271, world), name, gameVersion });
+
+  await Effect.runPromise(
+    makeItemsModule(client, logger).indexItems({
+      items: [
+        trophy("Seth's War Trophy", "gordion", "pl"),
+        trophy("Wojenne trofeum Seta", "tarhuna", "pl"),
+        trophy("Wojenne trofeum Seta", "katahha", "pl"),
+        trophy("Seth's War Trophy", "alpha", "en"),
+        trophy("Seth's War Trophy", "legacy", null),
+      ],
+    }),
+  );
+
+  expect(
+    written
+      .map(({ name, worlds }) => [name, worlds])
+      .sort((left, right) => String(left).localeCompare(String(right))),
+  ).toEqual([
+    ["Seth's War Trophy", ["alpha"]],
+    ["Seth's War Trophy", ["gordion"]],
+    ["Seth's War Trophy", ["legacy"]],
+    ["Wojenne trofeum Seta", ["katahha", "tarhuna"]],
+  ]);
 });
 
 test("failed existing-world reads prevent overwriting indexed worlds", async () => {

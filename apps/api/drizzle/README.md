@@ -612,13 +612,66 @@ an edition from the world name.
   field on NPC hits. Name suggestions stay separate per edition, and an
   unversioned hit yields to a versioned one with the same name and type. Older
   search revisions ignore the field.
-- Item snapshots and the item search document stay keyed by item id and stat
-  hash; their per-edition isolation belongs to
-  [LOO-36](https://linear.app/lootlog/issue/LOO-36). The loot's game version
-  identifies the edition of its items meanwhile.
+- Item revisions and item search documents include the game version; see
+  "Item observation revisions" below.
 - Timers remain keyed by Organization, world and runtime NPC id and do not
   store a game version. An Organization represents one faction, so its timers
   come from one edition.
 
 Deploy the migration, then search, then the API, then the game client. An API
 rollback keeps accepting new clients because older revisions ignore the field.
+
+## Item observation revisions
+
+`ItemSnapshot` records one observed revision of an item template: its game
+version, item id, name, icon, item type, and revision stats.
+`createItemSnapshotHash` in `packages/database/src/snapshot-hash.ts` hashes
+these into `snapshotHash`, and `ItemSnapshot_itemId_snapshotHash_key` makes it
+the revision identity. A Polish and an English name with equal stats, a rename,
+an icon change, or a stat change are separate revisions; an identical
+observation reuses its revision. Names are stored as the client sent them and
+are never translated.
+
+Margonem item stats also carry per-instance values. `ITEM_INSTANCE_STAT_KEYS`
+in `packages/database/src/item-stat.ts` lists them: `created`, `gold`,
+`amount`, and `opis`. `splitItemStat` removes them from the revision, so they
+never create one, and the API stores them on the looted item as
+`LootItem.instanceStat`. Loot lists, details, the activity feed, and chat
+allocation join both parts with `joinItemStat` (or the equivalent SQL in the
+feed), so each loot shows its own creation time, amount, gold value, and
+description instead of those of the revision's first writer. `statsHash` keeps
+the hash of the revision stats alone, unchanged from earlier revisions, so
+presentation variants of one stat revision remain groupable.
+
+`20260930150928_item_observation_revisions` drops
+`ItemSnapshot_itemId_statsHash_key`, adds nullable `ItemSnapshot.gameVersion`,
+`ItemSnapshot.snapshotHash`, and `LootItem.instanceStat`, and creates
+`ItemSnapshot_itemId_snapshotHash_key`. Existing rows and `LootItem` links keep
+their values. Their `snapshotHash` stays null because the first writer chose
+their name and icon and their `statRaw` kept its per-instance values; new
+observations never reuse them. Loot items accepted earlier keep a null
+`instanceStat` and show the stats stored on their snapshot. Repairing the
+existing associations belongs to
+[LOO-38](https://linear.app/lootlog/issue/LOO-38), not to a translation update.
+
+On a local copy of production (28,634 item snapshots, 21 MB; about 32 million
+loot items, 8.3 GB), the migration completed in well under a second: the index
+is rebuilt on the small snapshot table, and adding nullable columns without a
+default changes only the catalog of `LootItem`. The rebuilt search seed query
+read all 28,634 snapshots in about 8 seconds and produced 13,625 item
+documents. These are local measurements, not production latency.
+
+The API acceptance writer and the CLI seed writer share `splitItemStat` and
+`createItemSnapshotHash`. Drain earlier API and seed writers before applying
+the migration: their `ON CONFLICT ("itemId", "statsHash")` target no longer
+exists. Watched items are unaffected: they store the selected item id and
+name, match drops by item id and world, and read presentation from a snapshot
+with that id and name.
+
+Item search publications carry the revision stats and `gameVersion`. Search
+stores one document per game version, item id, and name, and merges worlds
+into it, so each language of an item stays searchable instead of the last
+observation replacing it. Search revisions before this one ignore the field and
+keep one document per item id. Deploy search before the API, then rebuild the
+search indexes with `bun run seed` in `apps/search` to replace the documents
+keyed by item id alone.

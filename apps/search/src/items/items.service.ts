@@ -67,30 +67,46 @@ const uniqueWorlds = (worlds: ReadonlyArray<string>) =>
 const itemWorlds = (item: IndexItem) =>
   uniqueWorlds([...(item.worlds ?? []), ...(item.world ? [item.world] : [])]);
 
-const mergeItemsById = (items: ReadonlyArray<IndexItem>): IndexedItem[] => {
-  const itemsById = new Map<number, IndexedItem>();
+/**
+ * One catalog entry per edition, item id and name. A template observed in
+ * Polish and English, or renamed, keeps each name searchable instead of the
+ * last observation replacing it.
+ */
+export const itemCatalogKey = (
+  item: Pick<IndexItem, "gameVersion" | "id" | "name">,
+) => {
+  const key = `${item.id}_${new Bun.CryptoHasher("sha256").update(item.name).digest("hex")}`;
+
+  return item.gameVersion ? `${item.gameVersion}_${key}` : key;
+};
+
+const mergeItemsByCatalogKey = (
+  items: ReadonlyArray<IndexItem>,
+): IndexedItem[] => {
+  const itemsByKey = new Map<string, IndexedItem>();
 
   for (const item of items) {
+    const uid = itemCatalogKey(item);
     const worlds = itemWorlds(item);
-    const existingItem = itemsById.get(item.id);
-    itemsById.set(item.id, {
+    const existingItem = itemsByKey.get(uid);
+    itemsByKey.set(uid, {
       ...existingItem,
       ...item,
-      uid: String(item.id),
+      uid,
       worlds: uniqueWorlds([...(existingItem?.worlds ?? []), ...worlds]),
     });
   }
 
-  return [...itemsById.values()];
+  return [...itemsByKey.values()];
 };
 
 /**
- * The stored shape of items: one document per item id with its worlds merged
- * and the searchable stat fields expanded. The seed script and the consumer
- * share it.
+ * The stored shape of items: one document per catalog key with its worlds
+ * merged and the searchable stat fields expanded. The seed script and the
+ * consumer share it.
  */
 export const toItemDocuments = (items: ReadonlyArray<IndexItem>) =>
-  mergeItemsById(items).map(({ world: _world, ...item }) => ({
+  mergeItemsByCatalogKey(items).map(({ world: _world, ...item }) => ({
     ...item,
     ...createItemSearchFields(item.stat),
   }));
