@@ -10,6 +10,7 @@ const IndexNpc = Schema.Struct({
   type: Schema.String,
   margonemType: Schema.Number,
   world: Schema.String,
+  snapshotHash: Schema.optional(Schema.String),
 });
 
 export const IndexNpcsPayload = Schema.Array(IndexNpc);

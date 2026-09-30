@@ -1,5 +1,6 @@
-import { and, eq, or } from "drizzle-orm";
-import { sortBy, uniqBy } from "es-toolkit";
+import { createNpcSnapshotHash } from "@lootlog/database/snapshot-hash";
+import { and, eq, inArray, or } from "drizzle-orm";
+import { sortBy, uniq, uniqBy } from "es-toolkit";
 import { Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -12,7 +13,10 @@ type SnapshotDatabase = Pick<typeof ApiDatabase.Service, "insert" | "select">;
 
 type ItemSnapshotInput = Omit<typeof itemSnapshotTable.$inferInsert, "id">;
 
-type NpcSnapshotInput = Omit<typeof npcSnapshotTable.$inferInsert, "id">;
+type NpcObservationInput = Omit<
+  typeof npcSnapshotTable.$inferInsert,
+  "id" | "identityNamespace" | "world" | "snapshotHash"
+>;
 
 /** Unique natural key of a snapshot table: a Margonem id and a variant text. */
 type SnapshotKey = readonly [number, string];
@@ -90,10 +94,11 @@ const itemKey = (item: { itemId: number; statsHash: string }): SnapshotKey => [
   item.statsHash,
 ];
 
-const npcKey = (npc: { npcId: number; name: string }): SnapshotKey => [
-  npc.npcId,
-  npc.name,
-];
+// Legacy rows have no hash and never match an observation lookup.
+const npcKey = (npc: {
+  npcId: number;
+  snapshotHash: string | null;
+}): SnapshotKey => [npc.npcId, npc.snapshotHash ?? ""];
 
 const itemSnapshotColumns = {
   id: itemSnapshotTable.id,
@@ -104,15 +109,16 @@ const itemSnapshotColumns = {
 const npcSnapshotColumns = {
   id: npcSnapshotTable.id,
   npcId: npcSnapshotTable.npcId,
-  name: npcSnapshotTable.name,
+  snapshotHash: npcSnapshotTable.snapshotHash,
 };
 
 const toItemKeys = (
   rows: Array<{ id: number; itemId: number; statsHash: string }>,
 ) => rows.map((row) => ({ id: row.id, key: itemKey(row) }));
 
-const toNpcKeys = (rows: Array<{ id: number; npcId: number; name: string }>) =>
-  rows.map((row) => ({ id: row.id, key: npcKey(row) }));
+const toNpcKeys = (
+  rows: Array<{ id: number; npcId: number; snapshotHash: string | null }>,
+) => rows.map((row) => ({ id: row.id, key: npcKey(row) }));
 
 export const resolveItemSnapshotIds = (
   database: SnapshotDatabase,
@@ -159,35 +165,77 @@ export const resolveItemSnapshotIds = (
     failure: "Failed to resolve item snapshot",
   });
 
-export const resolveNpcSnapshotIds = (
+/**
+ * Resolves the immutable observation revision of each NPC, in input order.
+ * Any observed attribute change produces a new revision instead of reusing the
+ * first row stored for the same id and name.
+ */
+export const resolveNpcSnapshots = (
   database: SnapshotDatabase,
-  npcs: readonly NpcSnapshotInput[],
+  world: string,
+  npcs: readonly NpcObservationInput[],
 ) =>
-  resolveSnapshotIds(npcs, {
-    keyOf: npcKey,
-    select: (pending) =>
-      database
-        .select(npcSnapshotColumns)
-        .from(npcSnapshotTable)
-        .where(
-          or(
-            ...pending.map((npc) =>
-              and(
-                eq(npcSnapshotTable.npcId, npc.npcId),
-                eq(npcSnapshotTable.name, npc.name),
+  Effect.gen(function* () {
+    const observations = npcs.map((npc) => {
+      const observation = { ...npc, identityNamespace: "legacy", world };
+
+      return {
+        ...observation,
+        snapshotHash: createNpcSnapshotHash(observation),
+      };
+    });
+
+    const ids = yield* resolveSnapshotIds(observations, {
+      keyOf: npcKey,
+      select: (pending) =>
+        database
+          .select(npcSnapshotColumns)
+          .from(npcSnapshotTable)
+          .where(
+            or(
+              ...pending.map((npc) =>
+                and(
+                  eq(npcSnapshotTable.npcId, npc.npcId),
+                  eq(npcSnapshotTable.snapshotHash, npc.snapshotHash),
+                ),
               ),
             ),
-          ),
-        )
-        .pipe(Effect.map(toNpcKeys)),
-    insert: (missing) =>
-      database
-        .insert(npcSnapshotTable)
-        .values([...missing])
-        .onConflictDoNothing({
-          target: [npcSnapshotTable.npcId, npcSnapshotTable.name],
-        })
-        .returning(npcSnapshotColumns)
-        .pipe(Effect.map(toNpcKeys)),
-    failure: "Failed to resolve NPC snapshot",
+          )
+          .pipe(Effect.map(toNpcKeys)),
+      insert: (missing) =>
+        database
+          .insert(npcSnapshotTable)
+          .values([...missing])
+          .onConflictDoNothing({
+            target: [npcSnapshotTable.npcId, npcSnapshotTable.snapshotHash],
+          })
+          .returning(npcSnapshotColumns)
+          .pipe(Effect.map(toNpcKeys)),
+      failure: "Failed to resolve NPC snapshot",
+    });
+
+    if (ids.length === 0) return [];
+
+    // Publications describe the persisted revisions, not the request payload.
+    const rows = yield* database
+      .select()
+      .from(npcSnapshotTable)
+      .where(inArray(npcSnapshotTable.id, uniq(ids)));
+
+    const snapshotById = new Map(rows.map((row) => [row.id, row]));
+    const snapshots: Array<typeof npcSnapshotTable.$inferSelect> = [];
+
+    for (const id of ids) {
+      const snapshot = snapshotById.get(id);
+
+      if (!snapshot) {
+        return yield* Effect.fail(
+          new DependencyUnavailableError("Failed to resolve NPC snapshot"),
+        );
+      }
+
+      snapshots.push(snapshot);
+    }
+
+    return snapshots;
   });

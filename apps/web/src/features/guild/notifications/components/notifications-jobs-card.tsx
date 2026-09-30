@@ -14,6 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getApiErrorMessage } from "@lootlog/client/transport";
 import {
   getGuildNotificationTargetLabel,
+  getJobErrorMessage,
   getJobKindLabel,
   getJobStatusLabel,
   getNotificationTriggerTranslationKey,
@@ -149,7 +150,7 @@ export const NotificationsPendingJobsCard = ({
                     <NotificationJobCountdown scheduledFor={job.scheduledFor} />
                     {job.blockedReason ? (
                       <p className="text-xs text-amber-500">
-                        {job.blockedReason}
+                        {getJobErrorMessage(job.blockedReason, t)}
                       </p>
                     ) : null}
                     <div className="pt-1">

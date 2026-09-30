@@ -30,3 +30,35 @@ export function createItemStatsHash(stats: string): string {
 
   return createHash("sha256").update(normalized).digest("hex");
 }
+
+/** A revision describes one observation, never the latest attributes of an NPC. */
+export function createNpcSnapshotHash(npc: {
+  identityNamespace: string;
+  world: string;
+  npcId: number;
+  name: string;
+  type?: string | null;
+  lvl?: number | null;
+  icon?: string | null;
+  prof?: string | null;
+  wt?: number | null;
+  margonemType?: number | null;
+}): string {
+  return createHash("sha256")
+    .update(
+      JSON.stringify([
+        "npc-observation-v1",
+        npc.identityNamespace,
+        npc.world,
+        npc.npcId,
+        npc.name,
+        npc.type ?? null,
+        npc.lvl ?? null,
+        npc.icon ?? null,
+        npc.prof ?? null,
+        npc.wt ?? null,
+        npc.margonemType ?? null,
+      ]),
+    )
+    .digest("hex");
+}

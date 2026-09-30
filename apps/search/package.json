@@ -16,7 +16,8 @@
     "test": "bun test",
     "test:watch": "bun test --watch",
     "openapi:generate": "bun --conditions=development src/openapi/generate-openapi.ts",
-    "seed": "bun src/scripts/seed.ts"
+    "seed": "bun src/scripts/seed.ts",
+    "backfill:npc-catalog": "bun src/scripts/backfill-npc-catalog.ts"
   },
   "dependencies": {
     "@effect/platform-bun": "catalog:",
@@ -30,9 +31,11 @@
     "meilisearch": "^0.62.0"
   },
   "devDependencies": {
+    "@lootlog/api": "workspace:*",
     "@lootlog/typescript-config": "workspace:*",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
+    "drizzle-orm": "catalog:",
     "typescript": "catalog:",
     "yaml": "catalog:"
   }

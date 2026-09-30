@@ -1,11 +1,139 @@
 import { expect, test } from "bun:test";
-import { Effect } from "effect";
-import { Meilisearch } from "meilisearch";
+import { Effect, Schema } from "effect";
+import { Meilisearch, type SearchParams } from "meilisearch";
+import { uniqBy } from "es-toolkit";
+import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import { makePlayersModule } from "../players/players.service.js";
-import { makeNpcsModule } from "../npcs/npcs.service.js";
+import { makeNpcsModule, type toNpcDocument } from "../npcs/npcs.service.js";
 import { makeItemsModule } from "../items/items.service.js";
+import { IndexNpcsPayload } from "../npcs/index-npcs-command.js";
 
 const logger = { info() {}, warn() {}, error() {} };
+
+test("delayed and retried NPC observations preserve accepted revisions and catalog identity", async () => {
+  type Document = ReturnType<typeof toNpcDocument>;
+
+  const stored = new Map<string, Document>();
+  const writes: Document[][] = [];
+
+  const client = new Meilisearch({
+    host: "http://search.invalid",
+    httpClient: (input, init) => {
+      const url = new URL(String(input));
+
+      if (url.pathname.startsWith("/tasks/"))
+        return Promise.resolve({ uid: 1, status: "succeeded" });
+
+      if (url.pathname.endsWith("/search")) {
+        const query: SearchParams = JSON.parse(String(init?.body));
+        const documents = [...stored.values()];
+
+        const matches =
+          query.distinct === "catalogKey"
+            ? uniqBy(documents, (document) => document.catalogKey)
+            : documents;
+
+        return Promise.resolve({ hits: matches.slice(0, query.limit) });
+      }
+
+      if ((init?.method ?? "GET").toUpperCase() === "GET") {
+        const ids = (url.searchParams.get("ids") ?? "").split(",");
+
+        return Promise.resolve({
+          results: ids.flatMap((id) =>
+            stored.has(id) ? [stored.get(id)] : [],
+          ),
+        });
+      }
+
+      const documents: Document[] = JSON.parse(String(init?.body));
+      writes.push(documents);
+
+      for (const document of documents) stored.set(document.uid, document);
+
+      return Promise.resolve({ taskUid: 1, status: "enqueued" });
+    },
+  });
+
+  const npcs = makeNpcsModule(client, logger);
+
+  const original = {
+    id: 52950,
+    name: "Czempion Furboli",
+    world: "test",
+    icon: "old.gif",
+    prof: "w",
+    lvl: 183,
+    wt: 20,
+    type: NpcTypeEnum.ELITE2,
+    margonemType: 2,
+    snapshotHash: "observed-183",
+  };
+
+  const reworked = {
+    ...original,
+    lvl: 210,
+    icon: "reworked.gif",
+    // The accepted classification survives changes to the local wt classifier.
+    type: NpcTypeEnum.HERO,
+    snapshotHash: "observed-210",
+  };
+
+  const index = (observations: typeof IndexNpcsPayload.Type) =>
+    Effect.runPromise(
+      npcs.indexNpcs({
+        npcs: Schema.decodeUnknownSync(IndexNpcsPayload)(observations),
+      }),
+    );
+
+  await index([reworked]);
+  await index([original]);
+  await index([original, reworked]);
+  expect(writes).toHaveLength(2);
+  expect([...stored.values()]).toEqual([
+    expect.objectContaining(reworked),
+    expect.objectContaining(original),
+  ]);
+
+  const { snapshotHash: _snapshotHash, ...legacy } = original;
+  await index([legacy]);
+  expect(stored.size).toBe(3);
+  expect([...stored.values()]).toEqual([
+    expect.objectContaining(reworked),
+    expect.objectContaining(original),
+    expect.objectContaining(legacy),
+  ]);
+
+  for (const query of [{ limit: 10 }, { limit: 10, ids: [52950] }]) {
+    const hits = await Effect.runPromise(npcs.getNpcs(query));
+    expect(hits).toHaveLength(1);
+    expect(hits[0]).toEqual({
+      ...legacy,
+      lvl: reworked.lvl,
+      icon: reworked.icon,
+      type: reworked.type,
+    });
+  }
+
+  await index([
+    ...Array.from({ length: 10 }, (_, variant) => ({
+      ...original,
+      icon: `variant-${variant}.gif`,
+      snapshotHash: `variant-${variant}`,
+    })),
+    {
+      ...original,
+      id: 302783,
+      name: "Another champion",
+      snapshotHash: "another",
+    },
+  ]);
+
+  for (const query of [{ limit: 2 }, { limit: 2, ids: [52950, 302783] }]) {
+    const hits = await Effect.runPromise(npcs.getNpcs(query));
+    expect(hits.map((hit) => hit.id)).toEqual([52950, 302783]);
+  }
+});
 
 for (const catalog of ["players", "npcs", "items"] as const) {
   test(`${catalog} skips redelivery, keeps latest duplicate and reindexes changes`, async () => {
