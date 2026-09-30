@@ -710,7 +710,8 @@ export const npcSnapshotTable = pgTable(
   {
     id: serial("id").notNull().primaryKey(),
     npcId: integer("npcId").notNull(),
-    // Deployed clients use an overloaded ID; do not infer runtime/template identity.
+    // NpcIdentityNamespace from @lootlog/schema/npc-identity. `legacy` rows come
+    // from clients that sent an overloaded id; do not infer their meaning.
     identityNamespace: text("identityNamespace").default("legacy").notNull(),
     world: text("world"),
     snapshotHash: text("snapshotHash"),
@@ -741,6 +742,9 @@ export const lootNpcTable = pgTable(
     id: serial("id").notNull().primaryKey(),
     lootId: integer("lootId").notNull(),
     npcSnapshotId: integer("npcSnapshotId").notNull(),
+    // Margonem runtime id of the looted spawn; null for clients that sent only
+    // an overloaded id. The snapshot holds the catalog identity.
+    runtimeNpcId: integer("runtimeNpcId"),
   },
   (table) => [
     index("LootNpc_lootId_idx").on(table["lootId"]),

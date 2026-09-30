@@ -244,7 +244,6 @@ export class NpcsDetectionProcessor {
           (runtimeNpc
             ? {
                 icon: runtimeNpc.icon,
-                id: runtimeNpc.templateId,
                 lvl: runtimeNpc.level,
                 nick: runtimeNpc.name,
                 prof: runtimeNpc.profession,
@@ -358,7 +357,6 @@ export class NpcsDetectionProcessor {
           notificationSentAt: null,
           prof: npc.profession,
           resp_rand: npc.respawnRandomness,
-          tpl: npc.templateId,
           type: npc.type,
           wt: npc.weight,
           x: npc.x,

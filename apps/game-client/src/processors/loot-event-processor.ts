@@ -329,7 +329,9 @@ export class LootEventProcessor {
     const npcs: Npc[] = [
       {
         icon: npcData.icon,
-        id: npcData.id,
+        id: npcData.templateId ?? npcData.id,
+        runtimeId: npcData.id,
+        templateId: npcData.templateId,
         name: npcData.name,
         prof: npcData.profession,
         hpp: 0,

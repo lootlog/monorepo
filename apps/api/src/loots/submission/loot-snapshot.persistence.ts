@@ -8,6 +8,7 @@ import {
   npcSnapshotTable,
 } from "#src/database/drizzle/schema";
 import { DependencyUnavailableError } from "#src/shared/http/http-errors";
+import type { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 
 type SnapshotDatabase = Pick<typeof ApiDatabase.Service, "insert" | "select">;
 
@@ -16,7 +17,7 @@ type ItemSnapshotInput = Omit<typeof itemSnapshotTable.$inferInsert, "id">;
 type NpcObservationInput = Omit<
   typeof npcSnapshotTable.$inferInsert,
   "id" | "identityNamespace" | "world" | "snapshotHash"
->;
+> & { readonly identityNamespace: NpcIdentityNamespace };
 
 /** Unique natural key of a snapshot table: a Margonem id and a variant text. */
 type SnapshotKey = readonly [number, string];
@@ -177,7 +178,7 @@ export const resolveNpcSnapshots = (
 ) =>
   Effect.gen(function* () {
     const observations = npcs.map((npc) => {
-      const observation = { ...npc, identityNamespace: "legacy", world };
+      const observation = { ...npc, world };
 
       return {
         ...observation,

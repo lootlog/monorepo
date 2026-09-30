@@ -65,7 +65,9 @@ const validateNpcSelection = (data: RuleInput) => {
 
   for (const npcId of data.npcIds ?? []) npcIds.add(npcId);
 
-  if (npcIds.size > MAX_NPCS_PER_RULE) {
+  const templateIds = new Set(data.npcTemplateIds ?? []);
+
+  if (npcIds.size + templateIds.size > MAX_NPCS_PER_RULE) {
     throw new InvalidRequestError({
       message: NotificationError.NOTIFICATION_RULE_MAX_NPCS_EXCEEDED,
       maxNpcsPerRule: MAX_NPCS_PER_RULE,
@@ -79,6 +81,9 @@ const buildFilters = (data: RuleInput): JsonObject => {
   if (data.npcId !== undefined) filters.npcId = data.npcId;
 
   if (data.npcIds !== undefined) filters.npcIds = [...data.npcIds];
+
+  if (data.npcTemplateIds !== undefined)
+    filters.npcTemplateIds = [...new Set(data.npcTemplateIds)];
 
   if (data.itemId !== undefined) filters.itemId = data.itemId;
 
@@ -351,6 +356,7 @@ export const updateNotificationRuleValues = (
   const hasFilterUpdate =
     data.npcId !== undefined ||
     data.npcIds !== undefined ||
+    data.npcTemplateIds !== undefined ||
     data.itemId !== undefined ||
     data.itemIds !== undefined;
 

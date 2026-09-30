@@ -17,6 +17,7 @@ import {
   SafeInteger,
   JsonValue,
   NonEmptyString,
+  PositiveSafeInteger,
 } from "@lootlog/schema/http-scalars";
 
 const NotificationTargetMetadata = JsonValue.annotate({
@@ -159,6 +160,7 @@ const notificationRuleFields = {
         world: Schema.optionalKey(Schema.String),
         npcId: Schema.optionalKey(Schema.Union([SafeInteger, Schema.Null])),
         npcIds: Schema.optionalKey(Schema.Array(SafeInteger)),
+        npcTemplateIds: Schema.optionalKey(Schema.Array(SafeInteger)),
         itemId: Schema.optionalKey(Schema.Union([SafeInteger, Schema.Null])),
         itemIds: Schema.optionalKey(Schema.Array(SafeInteger)),
       }),
@@ -261,6 +263,18 @@ const notificationRuleInputFields = {
       }),
     ),
   ),
+  npcTemplateIds: Schema.optionalKey(
+    Schema.Array(PositiveSafeInteger)
+      .check(
+        Schema.isMaxLength(5).annotate({
+          expected: "a value with a length of at most 5",
+        }),
+      )
+      .annotate({
+        description:
+          "Margonem template ids (`tpl`). Matches every timer observed with one of these templates; `npcId` and `npcIds` match a timer's own NPC id.",
+      }),
+  ),
   itemId: Schema.optionalKey(SafeInteger),
   itemIds: Schema.optionalKey(
     Schema.Array(SafeInteger).check(
@@ -338,6 +352,29 @@ const notificationRuleInputFields = {
   enabled: Schema.optionalKey(Schema.Boolean),
 };
 
+// An NPC selection that is present must name at least one timer or template.
+const targetsAtLeastOneNpc = (data: {
+  readonly npcId?: number | null;
+  readonly npcIds?: ReadonlyArray<number>;
+  readonly npcTemplateIds?: ReadonlyArray<number>;
+}) => {
+  if (
+    data.npcId === undefined &&
+    data.npcIds === undefined &&
+    data.npcTemplateIds === undefined
+  )
+    return undefined;
+
+  return (data.npcId !== undefined && data.npcId !== null) ||
+    (data.npcIds?.length ?? 0) > 0 ||
+    (data.npcTemplateIds?.length ?? 0) > 0
+    ? undefined
+    : {
+        path: ["npcId"],
+        issue: NotificationError.NOTIFICATION_RULE_MUST_TARGET_AT_LEAST_ONE_NPC,
+      };
+};
+
 export const CreateNotificationRuleRequest = Schema.Struct({
   ...notificationRuleInputFields,
   triggerType: NotificationTriggerTypeSchema,
@@ -358,21 +395,7 @@ export const CreateNotificationRuleRequest = Schema.Struct({
           },
     ),
   )
-  .check(
-    Schema.makeFilter((data) => {
-      if (data.npcId === undefined && data.npcIds === undefined)
-        return undefined;
-
-      return (data.npcId !== undefined && data.npcId !== null) ||
-        (data.npcIds !== undefined && data.npcIds.length > 0)
-        ? undefined
-        : {
-            path: ["npcId"],
-            issue:
-              NotificationError.NOTIFICATION_RULE_MUST_TARGET_AT_LEAST_ONE_NPC,
-          };
-    }),
-  )
+  .check(Schema.makeFilter(targetsAtLeastOneNpc))
   .annotate({ identifier: "CreateNotificationRuleDto" });
 
 export type CreateNotificationRuleRequest =
@@ -405,21 +428,7 @@ export const UpdateNotificationRuleRequest = Schema.Struct({
           },
     ),
   )
-  .check(
-    Schema.makeFilter((data) => {
-      if (data.npcId === undefined && data.npcIds === undefined)
-        return undefined;
-
-      return (data.npcId !== undefined && data.npcId !== null) ||
-        (data.npcIds !== undefined && data.npcIds.length > 0)
-        ? undefined
-        : {
-            path: ["npcId"],
-            issue:
-              NotificationError.NOTIFICATION_RULE_MUST_TARGET_AT_LEAST_ONE_NPC,
-          };
-    }),
-  )
+  .check(Schema.makeFilter(targetsAtLeastOneNpc))
   .annotate({ identifier: "UpdateNotificationRuleDto" });
 
 export type UpdateNotificationRuleRequest =

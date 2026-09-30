@@ -89,6 +89,7 @@ const storedTimer = {
   maxSpawnTime: new Date("2026-09-02T12:10:00.000Z"),
   npc: {
     id: 123,
+    templateId: null,
     name: "Test boss",
     prof: "w",
     location: "Ithan",

@@ -437,15 +437,41 @@ revision. Returning to an identical observation reuses its existing revision.
 This model has no mutable latest-NPC record for a delayed submission to regress.
 Retrying an already accepted loot keeps its original snapshot associations.
 
-The current namespace is `legacy`. Deployed clients overload `id`: normal
-battle loot may supply a template id, while fallback and dialog loot may supply
-a runtime id. The namespace records this uncertainty; it does not assert that
-equal numbers identify the same template or establish a mapping between runtime
-and template ids. World separates new observations across worlds without
-claiming a game-version identifier. Explicit runtime/template identity and
-game-version provenance remain the work of
-[LOO-33](https://linear.app/lootlog/issue/LOO-33) and
-[LOO-35](https://linear.app/lootlog/issue/LOO-35).
+`identityNamespace` records what `npcId` means; its values are defined in
+`@lootlog/schema/npc-identity`. Margonem gives every spawn a runtime id
+(`npc.id`, the battle `originalId`) and every monster template a template id
+(`npc.tpl`). Clients that send `npcs[].templateId` store the observation under
+`template` with that id. A client that reports `runtimeId` without a template
+stores it under `runtime`; the API never promotes a runtime id to a template.
+Deployed clients that send only the overloaded `id` keep `legacy`: normal battle
+loot may have supplied a template id, while fallback and dialog loot may have
+supplied a runtime id. Equal numbers in different namespaces are unrelated, and
+no mapping between them is inferred. World separates new observations across
+worlds without claiming a game-version identifier; game-version provenance
+remains the work of [LOO-35](https://linear.app/lootlog/issue/LOO-35).
+
+`20260930102644_loot_npc_runtime_id` adds the nullable `LootNpc.runtimeNpcId`,
+the looted spawn reported beside the catalog identity. Adding a nullable column
+without a default changes only the catalog. Older rows and older clients leave
+it null. The activity feed uses it, falling back to the snapshot id, to link a
+loot to the kill of the same spawn, because kills and NPC statistics are keyed
+by the runtime id.
+
+Timers keep `npcId` and `timerKey` on the runtime id, so spawns of one template
+keep independent timers; manual timers keep their generated id with a null
+template. The timer `npc` JSON stores `templateId`. An automatic submission
+without one keeps the stored value, and event respawn windows preserve it.
+`TIMER_BEFORE_SPAWN` rules match `npcTemplateIds` against it and `npcId` or
+`npcIds` against the timer's own id.
+
+Deploy explicit identities in this order: apply the migration, deploy search
+(which accepts `identityNamespace`, keeps legacy catalog keys, and prefixes the
+others), then the API, then Web, then the game client. An API rollback keeps
+accepting new clients because they still send `id`. Keep search at least at
+this revision while the API publishes namespaced observations, or equal ids
+from different namespaces would share one catalog group. Saved filters and
+legacy snapshots are not remapped; that repair belongs to
+[LOO-38](https://linear.app/lootlog/issue/LOO-38).
 
 `20260930003916_npc_observation_revisions` adds `identityNamespace` with default
 `legacy`, nullable `world` and `snapshotHash`, and replaces `NpcSnapshot_npcId_name_key` with
@@ -465,17 +491,19 @@ search rebuild script retains hashed revisions and selects one legacy snapshot
 per legacy document id; running that script does not recover missing history.
 
 Public NPC search remains a catalog of suggestions with the existing NPC ids.
-Every indexed document carries an internal `catalogKey` for its id, Margonem
-type, and world. Search uses Meilisearch's
+Every indexed document carries an internal `catalogKey` for its identity
+namespace, id, Margonem type, and world; legacy keys omit the namespace. Search uses Meilisearch's
 [`distinct` parameter](https://www.meilisearch.com/docs/reference/api/search/search-with-post)
 to group those documents before the requested hit limit. A large revision
 history for one NPC cannot consume the slots for other catalog identities,
 including requests that resolve several selected NPC ids. The existing
-name/type collapse still applies after catalog grouping. Search ranking chooses
+name/type collapse still applies after catalog grouping and keeps a template
+hit over legacy and runtime hits of the same name and type. Search ranking chooses
 the displayed suggestion; it is not a current-level authority or a source of
 loot access decisions. Neither hash order nor the highest observed level
-establishes chronology. Catalog identity changes and saved notification
-selection remain separate work under LOO-33 and LOO-37.
+establishes chronology. The notification rule form stores a selected template
+hit as a template id; timer-based selection and source visibility remain the
+work of [LOO-37](https://linear.app/lootlog/issue/LOO-37).
 
 Deploy this change with a coordinated writer transition:
 

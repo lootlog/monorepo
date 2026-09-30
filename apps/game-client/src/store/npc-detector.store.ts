@@ -2,7 +2,8 @@ import { isNotNil } from "es-toolkit";
 import type { GameNpc } from "@lootlog/margonem/npcs";
 import { create } from "zustand";
 
-export type GameNpcWithLocation = GameNpc & {
+// Detector entries are keyed by runtime id; the template id is not tracked.
+export type GameNpcWithLocation = Omit<GameNpc, "tpl"> & {
   location: string;
   /** Epoch ms of the last sent notification; drives the resend cooldown. */
   notificationSentAt: number | null;

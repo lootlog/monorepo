@@ -26,6 +26,7 @@ const timer: TimerResponseDto = {
   wasReset: false,
   npc: {
     id: 1,
+    templateId: null,
     name: "NPC",
     prof: "w",
     lvl: 100,

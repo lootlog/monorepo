@@ -31,10 +31,9 @@ import {
 } from "#src/meilisearch/meilisearch-indexes.service";
 import { getMeilisearchErrorCode } from "#src/meilisearch/query-builder";
 import { NPCS_INDEX } from "#src/npcs/search-index";
-import { toNpcDocument } from "#src/npcs/npcs.service";
 import { PLAYERS_INDEX } from "#src/players/search-index";
 import { toPlayerDocument } from "#src/players/players.service";
-import { buildNpcSeedQuery } from "./npc-seed-query.js";
+import { buildNpcSeedQuery, toNpcSeedDocument } from "./npc-seed-query.js";
 
 const DOCUMENTS_PER_BATCH = 10_000;
 
@@ -213,20 +212,7 @@ const seedNpcs = async () => {
 
   const rows = await buildNpcSeedQuery(database);
 
-  const documents = rows.map((npc) =>
-    toNpcDocument({
-      id: npc.id,
-      name: npc.name,
-      type: npc.type ?? "",
-      prof: npc.prof,
-      icon: npc.icon ?? "",
-      lvl: npc.lvl ?? 0,
-      wt: npc.wt ?? 0,
-      margonemType: npc.margonemType,
-      world: npc.world,
-      snapshotHash: npc.snapshotHash ?? undefined,
-    }),
-  );
+  const documents = rows.map(toNpcSeedDocument);
 
   await indexDocuments(NPCS_INDEX, documents, formatDuration(startedAt));
 };

@@ -11,7 +11,6 @@ import { NpcDetector } from "./npc-detector";
 
 const createHero = (id: number): GameNpcWithLocation => ({
   id,
-  tpl: id,
   nick: `Heros ${id}`,
   icon: "npc.gif",
   prof: "w",

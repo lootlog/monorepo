@@ -18,7 +18,9 @@ import {
   notificationRuleTable,
   notificationRuleTargetTable,
   notificationTargetTable,
+  timerHistoryEntryTable,
   timerTable,
+  userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
 import { makeNotificationContent } from "#src/notifications/content/notification-content.service";
 import { makeNotificationEventStore } from "#src/notifications/delivery/notification-event-store";
@@ -32,6 +34,10 @@ import { makeNotificationJobStore } from "#src/notifications/jobs/notification-j
 import { makeNotificationMatching } from "#src/notifications/rules/notification-matching.service";
 import { makeNotificationGuildTargets } from "#src/notifications/targets/notification-guild-targets";
 import { applicationLogger } from "#src/shared/application-logger";
+import { makeAutoTimer } from "#src/http-api/handlers/timers/timer-auto.data-layer";
+import type { CreateAutoTimerRequest } from "#src/contracts/timers/schemas";
+import { decodeRabbitEventJson } from "@lootlog/protocol/rabbit/events";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 
 const minute = 60_000;
 
@@ -120,7 +126,7 @@ const seedTimerNotifications = async (options: {
         findRules: store.findRules,
         timers: store.findTimers,
       },
-      (filters, npcId) => matching.matchesTimerRule(filters, npcId),
+      (filters, timer) => matching.matchesTimerRule(filters, timer),
       () => Effect.succeed(permitted),
       {
         timer: (timerOptions) =>
@@ -364,6 +370,186 @@ describe("notification job rebuild", () => {
         },
       ]);
       expect(fixture.enqueued).toEqual([]);
+    } finally {
+      await fixture.boundary.dispose();
+    }
+  });
+
+  it("schedules a template rule for every spawn of that template from game client submissions", async () => {
+    const now = Date.now();
+
+    const templateRule = (
+      id: number,
+      overrides: Partial<ReturnType<typeof timerRule>>,
+    ) => ({
+      ...timerRule(id, []),
+      filters: { npcTemplateIds: [257_636] },
+      ...overrides,
+    });
+
+    const fixture = await seedTimerNotifications({
+      rules: [
+        templateRule(7, {}),
+        templateRule(8, { world: "tempest" }),
+        // A timer id rule keeps selecting only its own spawn.
+        timerRule(10, [313_103]),
+      ],
+      links: [7, 8, 10].map((ruleId) => ({ ruleId, targetId: 1 })),
+      now,
+    });
+
+    try {
+      const { boundary, database } = fixture;
+
+      await boundary.run(
+        database
+          .insert(guildTable)
+          .values(createGuildFixture({ id: "guild-2", ownerId: "owner-2" })),
+      );
+      await boundary.run(
+        database
+          .insert(notificationRuleTable)
+          .values(templateRule(9, { ownerId: "guild-2", guildId: "guild-2" })),
+      );
+      await boundary.run(
+        database
+          .insert(notificationRuleTargetTable)
+          .values({ ruleId: 9, targetId: 1 }),
+      );
+      await boundary.run(
+        database.update(guildTable).set({ ownerId: "user-1" }),
+      );
+      await boundary.run(
+        database.insert(userCharactersLootlogSettingsTable).values({
+          userId: "user-1",
+          accountId: "1",
+          characterId: "2",
+          catchingGuildIds: ["guild-1"],
+          updatedAt: new Date(now),
+        }),
+      );
+
+      const events = makeNotificationsEvents({
+        store: makeNotificationEventStore(database),
+        scheduler: fixture.scheduler,
+        matching: fixture.matching,
+        guildTargets: makeNotificationGuildTargets(
+          database,
+          { selectable: () => Effect.die("channels must not be listed") },
+          fixture.scheduler,
+        ),
+        findGuilds: () => Effect.succeed([]),
+        delivery: () => Effect.void,
+        rebuild: fixture.makeRebuild(true),
+        logger: applicationLogger,
+      });
+
+      const published: string[] = [];
+
+      const submit = makeAutoTimer(database, {
+        get: () => Effect.succeed(null),
+        set: () => Effect.void,
+        setNx: () => Effect.succeed(true),
+        releaseDedup: () => Effect.void,
+        invalidateList: () => Effect.void,
+        enqueueEventHeroCheck: () => Effect.void,
+        withLock: (_key, operation) => operation,
+        publish: (routingKey, payload) =>
+          Effect.sync(() => {
+            if (routingKey === RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED)
+              published.push(JSON.stringify(payload));
+          }),
+      });
+
+      const kill = (
+        npc: Pick<CreateAutoTimerRequest["npc"], "id" | "templateId">,
+      ) =>
+        boundary.run(
+          submit(
+            { discordId: "user-1", userId: "user" },
+            {
+              respBaseSeconds: 3_600,
+              world: "fobos",
+              npc: {
+                ...npc,
+                name: "Vonaros",
+                location: "Map",
+                lvl: 64,
+                wt: 31,
+                icon: "vonaros.gif",
+                type: 2,
+              },
+              accountId: "1",
+              characterId: "2",
+            },
+          ),
+        );
+
+      // Two spawns of template 257636, then a spawn of another template.
+      await kill({ id: 313_103, templateId: 257_636 });
+      await kill({ id: 313_104, templateId: 257_636 });
+      await kill({ id: 313_105, templateId: 300_351 });
+      // A retried submission within the deduplication window is not a kill.
+      await kill({ id: 313_103, templateId: 257_636 });
+
+      for (const payload of published.splice(0)) {
+        await boundary.run(
+          events.handleTimerUpdated(
+            decodeRabbitEventJson(
+              RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
+              payload,
+            ),
+          ),
+        );
+      }
+
+      const scheduled = async () =>
+        (await fixture.jobs())
+          .filter(({ status }) => status === "PENDING")
+          .map(({ ruleId, sourceEntityId }) => [ruleId, sourceEntityId]);
+
+      const vonaros = (runtimeId: number) =>
+        `guild-1:fobos:${runtimeId}:vonaros`;
+
+      expect(await scheduled()).toEqual([
+        [7, vonaros(313_103)],
+        [7, vonaros(313_104)],
+        [10, vonaros(313_103)],
+      ]);
+
+      // An older client reports only the runtime id after the next kill.
+      await boundary.run(
+        database
+          .update(timerHistoryEntryTable)
+          .set({ createdAt: new Date(now - 60_000) }),
+      );
+      await kill({ id: 313_104 });
+
+      const timers = await boundary.run(
+        database
+          .select({ npcId: timerTable.npcId, npc: timerTable.npc })
+          .from(timerTable)
+          .where(eq(timerTable.npcId, 313_104)),
+      );
+
+      expect(timers).toMatchObject([{ npc: { templateId: 257_636 } }]);
+
+      for (const payload of published.splice(0)) {
+        await boundary.run(
+          events.handleTimerUpdated(
+            decodeRabbitEventJson(
+              RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
+              payload,
+            ),
+          ),
+        );
+      }
+
+      expect(await scheduled()).toEqual([
+        [7, vonaros(313_103)],
+        [7, vonaros(313_104)],
+        [10, vonaros(313_103)],
+      ]);
     } finally {
       await fixture.boundary.dispose();
     }

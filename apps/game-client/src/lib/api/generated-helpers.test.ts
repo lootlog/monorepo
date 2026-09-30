@@ -41,6 +41,7 @@ describe("generated response normalization", () => {
     expect(
       normalizeTimerNpc({
         id: 7,
+        templateId: null,
         name: "Dragon",
         lvl: 20,
         prof: "w",

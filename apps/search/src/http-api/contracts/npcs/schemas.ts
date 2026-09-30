@@ -6,6 +6,14 @@ export type NpcHitDto_Output = typeof NpcHitDto_Output.Type;
 
 export const NpcHitDto_Output = Schema.Struct({
   id: FiniteNumber,
+  identityNamespace: Schema.Literals([
+    "legacy",
+    "runtime",
+    "template",
+  ]).annotate({
+    description:
+      "Meaning of `id`: a Margonem template id, a runtime spawn id observed without a template, or an overloaded legacy id.",
+  }),
   prof: Schema.String,
   icon: Schema.String,
   name: Schema.String,

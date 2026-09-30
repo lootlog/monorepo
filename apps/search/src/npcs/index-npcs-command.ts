@@ -1,7 +1,10 @@
+import { NpcIdentityNamespaceSchema } from "@lootlog/schema/npc-identity";
 import { Schema } from "effect";
 
 const IndexNpc = Schema.Struct({
   id: Schema.Number,
+  // Older publishers omit it; their ids are legacy.
+  identityNamespace: Schema.optional(NpcIdentityNamespaceSchema),
   prof: Schema.NullishOr(Schema.String),
   icon: Schema.String,
   name: Schema.String,

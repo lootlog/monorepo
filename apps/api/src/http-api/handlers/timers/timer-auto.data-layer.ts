@@ -44,6 +44,7 @@ import {
 import {
   CachedTimerProjectionSchema,
   mapTimerResponse,
+  timerNpcTemplateId,
   type TimerPublishedEvent,
 } from "#src/timers/timer-projection";
 
@@ -165,8 +166,13 @@ const calculateSpawnWindow = (payload: CreateAutoTimerRequest, now: Date) => {
   };
 };
 
-const makeNpc = (payload: CreateAutoTimerRequest) => ({
+const makeNpc = (
+  payload: CreateAutoTimerRequest,
+  knownTemplateId: number | null = null,
+) => ({
   id: payload.npc.id,
+  // Older clients omit the template; keep the one observed for this spawn.
+  templateId: payload.npc.templateId ?? knownTemplateId,
   name: payload.npc.name,
   prof: getProfByShortname(payload.npc.prof ?? ""),
   location: payload.npc.location,
@@ -320,8 +326,6 @@ export const makeAutoTimer = (
                   }),
           });
 
-          const npc = makeNpc(payload);
-
           const members = yield* transaction
             .select()
             .from(memberTable)
@@ -392,6 +396,7 @@ export const makeAutoTimer = (
           }
 
           const now = new Date(yield* Clock.currentTimeMillis);
+          const npc = makeNpc(payload, timerNpcTemplateId(previousTimer?.npc));
 
           const timerUpdate = {
             createdById: member.id,
