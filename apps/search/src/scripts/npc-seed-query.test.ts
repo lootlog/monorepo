@@ -12,6 +12,7 @@ const row = {
   wt: 31,
   margonemType: 2,
   world: "fobos",
+  gameVersion: null,
   snapshotHash: "observed",
 };
 
@@ -23,4 +24,11 @@ test("a rebuilt NPC document keeps the identity namespace of its snapshot", () =
   expect(
     toNpcSeedDocument({ ...row, identityNamespace: "legacy" }).catalogKey,
   ).toBe("257636_2_fobos");
+});
+
+test("a rebuilt NPC document keeps the game version of its snapshot", () => {
+  expect(toNpcSeedDocument({ ...row, gameVersion: "en" })).toMatchObject({
+    gameVersion: "en",
+    catalogKey: "en_template_257636_2_fobos",
+  });
 });

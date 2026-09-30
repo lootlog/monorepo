@@ -20,6 +20,7 @@ const createGame = (overrides?: {
       y: 20,
       ...overrides?.hero,
     }),
+    gameVersion: "pl",
     interface: "ni",
     map: Object.freeze({ id: 1, name: "Map", visibility: 30 }),
     world: "tempest",

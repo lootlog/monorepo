@@ -62,6 +62,7 @@ const authorizedLoot: AuthorizedLoot = {
   id: 42,
   uniqueId: "loot-42",
   world: "fobos",
+  gameVersion: null,
   source: "FIGHT",
   location: "Map",
   createdAt,

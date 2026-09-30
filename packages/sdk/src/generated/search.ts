@@ -60,6 +60,18 @@ export const NpcHitDtoOutputType = {
 } as const;
 
 /**
+ * Margonem edition of the observation: `pl` for margonem.pl, `en` for margonem.com; null when unknown. Equal ids in different editions are unrelated.
+ * @nullable
+ */
+export type NpcHitDtoOutputGameVersion = typeof NpcHitDtoOutputGameVersion[keyof typeof NpcHitDtoOutputGameVersion] | null;
+
+
+export const NpcHitDtoOutputGameVersion = {
+  en: 'en',
+  pl: 'pl',
+} as const;
+
+/**
  * NPC search hit
  */
 export interface NpcHitDtoOutput {
@@ -74,6 +86,11 @@ export interface NpcHitDtoOutput {
   type: NpcHitDtoOutputType;
   margonemType: number;
   world: string;
+  /**
+     * Margonem edition of the observation: `pl` for margonem.pl, `en` for margonem.com; null when unknown. Equal ids in different editions are unrelated.
+     * @nullable
+     */
+  gameVersion: NpcHitDtoOutputGameVersion;
 }
 
 /**
@@ -167,6 +184,18 @@ export const SearchAllResponseDtoOutputNpcsItemType = {
 } as const;
 
 /**
+ * Margonem edition of the observation: `pl` for margonem.pl, `en` for margonem.com; null when unknown. Equal ids in different editions are unrelated.
+ * @nullable
+ */
+export type SearchAllResponseDtoOutputNpcsItemGameVersion = typeof SearchAllResponseDtoOutputNpcsItemGameVersion[keyof typeof SearchAllResponseDtoOutputNpcsItemGameVersion] | null;
+
+
+export const SearchAllResponseDtoOutputNpcsItemGameVersion = {
+  en: 'en',
+  pl: 'pl',
+} as const;
+
+/**
  * NPC search hit
  */
 export type SearchAllResponseDtoOutputNpcsItem = {
@@ -181,6 +210,11 @@ export type SearchAllResponseDtoOutputNpcsItem = {
   type: SearchAllResponseDtoOutputNpcsItemType;
   margonemType: number;
   world: string;
+  /**
+     * Margonem edition of the observation: `pl` for margonem.pl, `en` for margonem.com; null when unknown. Equal ids in different editions are unrelated.
+     * @nullable
+     */
+  gameVersion: SearchAllResponseDtoOutputNpcsItemGameVersion;
 };
 
 /**

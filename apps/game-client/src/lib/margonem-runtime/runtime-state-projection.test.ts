@@ -34,6 +34,7 @@ const game = Object.freeze({
     x: 1,
     y: 2,
   }),
+  gameVersion: "pl",
   interface: "ni",
   map: Object.freeze({ id: 10, name: "Map", visibility: 30 }),
   world: "luvia",
@@ -318,6 +319,7 @@ describe("RuntimeStateProjection", () => {
       projection.bootstrap();
       useGameStore.getState().replaceGame({
         ...game,
+        gameVersion: "pl",
         interface: runtimeInterface,
         map: { ...game.map, name: "" },
       });

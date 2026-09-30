@@ -1,10 +1,5 @@
 import { create } from "zustand";
 
-export enum LanguageVersion {
-  EN = "en",
-  PL = "pl",
-}
-
 interface GameState {
   gameInitialized: boolean;
 }

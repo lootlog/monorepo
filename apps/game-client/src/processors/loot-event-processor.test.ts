@@ -282,6 +282,7 @@ it("sends parsed battle participants and loot then stores the accepted id", asyn
   expect(useLootStore.getState().lastLootId).toBeNull();
   expect(await fixture.payload()).toMatchObject({
     world: "luvia",
+    gameVersion: "pl",
     source: "FIGHT",
     location: "Ithan",
     accountId: "202",
@@ -323,10 +324,18 @@ it("ignores dialog loot without a tracked NPC", () => {
   expect(useLootStore.getState().lastLootId).toBe(44);
 });
 
-it.each(["context snapshot", "ingress snapshot", "canonical store"])(
-  "attributes dialog loot through %s after unrelated NPC deletion",
-  async (source) => {
+it.each([
+  ["context snapshot", "en"],
+  ["ingress snapshot", "pl"],
+  ["canonical store", null],
+] as const)(
+  "attributes dialog loot through %s after unrelated NPC deletion on game version %s",
+  async (source, gameVersion) => {
     const fixture = createFixture();
+    setTestRuntimeGame({
+      ...useGameStore.getState().game,
+      gameVersion,
+    });
     const npc = createRuntimeNpc();
     setDialogNpcContext(501, source === "context snapshot" ? npc : null);
 
@@ -343,6 +352,7 @@ it.each(["context snapshot", "ingress snapshot", "canonical store"])(
     );
     expect(useLootStore.getState().lastLootId).toBeNull();
     expect(await fixture.payload()).toMatchObject({
+      gameVersion,
       source: "DIALOG",
       npcs: [{ id: 501, name: "Kliknięty NPC", hpp: 0, location: "Ithan" }],
       players: [{ id: 101, name: "Tester", hpp: 50, accountId: 202 }],

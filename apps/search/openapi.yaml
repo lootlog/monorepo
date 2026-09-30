@@ -462,6 +462,13 @@ components:
           type: number
         world:
           type: string
+        gameVersion:
+          description: "Margonem edition of the observation: `pl` for margonem.pl, `en` for margonem.com; null when unknown. Equal ids in different editions are unrelated."
+          nullable: true
+          type: string
+          enum:
+            - en
+            - pl
       required:
         - id
         - identityNamespace
@@ -473,6 +480,7 @@ components:
         - type
         - margonemType
         - world
+        - gameVersion
       description: NPC search hit
     SearchItemsResponseDto_Output:
       type: object
@@ -653,6 +661,13 @@ components:
                 type: number
               world:
                 type: string
+              gameVersion:
+                description: "Margonem edition of the observation: `pl` for margonem.pl, `en` for margonem.com; null when unknown. Equal ids in different editions are unrelated."
+                nullable: true
+                type: string
+                enum:
+                  - en
+                  - pl
             required:
               - id
               - identityNamespace
@@ -664,6 +679,7 @@ components:
               - type
               - margonemType
               - world
+              - gameVersion
             description: NPC search hit
       required:
         - items

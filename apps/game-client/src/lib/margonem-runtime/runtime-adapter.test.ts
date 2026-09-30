@@ -4,6 +4,7 @@ import {
   isMargonemRuntimeReady,
   NiRuntimeAdapter,
   normalizeNpc,
+  resolveGameVersion,
   SiRuntimeAdapter,
 } from "./runtime-adapter";
 
@@ -117,11 +118,13 @@ describe("NI runtime adapter", () => {
     };
 
     vi.stubGlobal("Engine", engine);
+    vi.stubGlobal("location", new URL("https://world.margonem.com/"));
     const adapter = new NiRuntimeAdapter();
 
     const snapshot = adapter.getStateSnapshot();
 
     expect(snapshot.game).toEqual({
+      gameVersion: "en",
       hero: {
         accountId: "101",
         characterId: "202",
@@ -207,9 +210,13 @@ describe("SI runtime adapter", () => {
       other: { "404": legacyOther },
       worldConfig: { getWorldName: () => "legacy-world" },
     });
+    vi.stubGlobal("location", new URL("https://legacy-world.margonem.pl/"));
     const adapter = new SiRuntimeAdapter();
 
-    expect(adapter.getGameSnapshot().world).toBe("legacy-world");
+    expect(adapter.getGameSnapshot()).toMatchObject({
+      gameVersion: "pl",
+      world: "legacy-world",
+    });
     expect(adapter.getOtherHandle("404")).toBe(legacyOther);
     expect(adapter.getAllOtherHandles()["404"]).toBe(legacyOther);
     expect("d" in legacyOther).toBe(false);
@@ -231,6 +238,26 @@ describe("SI runtime adapter", () => {
     expect(adapter.getNpc(gameNpc.id)).toBeUndefined();
     expect(adapter.getOther("404")).toBeUndefined();
     expect(adapter.isReady()).toBe(false);
+  });
+});
+
+describe("game version", () => {
+  it("resolves any world of a supported edition without a world list", () => {
+    expect(resolveGameVersion("nowyswiat.margonem.pl")).toBe("pl");
+    expect(resolveGameVersion("Nowyswiat.Margonem.COM.")).toBe("en");
+  });
+
+  it("leaves lookalike and unknown hosts unresolved instead of Polish", () => {
+    for (const hostname of [
+      "margonem.pl.example.com",
+      "fobosmargonem.pl",
+      "fobos.margonem.pl.evil",
+      "margonem.de",
+      "localhost",
+      "",
+    ]) {
+      expect(resolveGameVersion(hostname)).toBeNull();
+    }
   });
 });
 

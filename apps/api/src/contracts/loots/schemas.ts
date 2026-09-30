@@ -18,6 +18,7 @@ import {
   FiniteNumber,
   PositiveSafeInteger,
 } from "@lootlog/schema/http-scalars";
+import { GameVersionSchema } from "@lootlog/schema/game-version";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
 import { LootSourceSchema } from "@lootlog/schema/loot";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
@@ -204,6 +205,12 @@ export const CreateLootRequest = Schema.Struct({
     }),
   ),
   world: NonEmptyString,
+  gameVersion: Schema.optionalKey(
+    Schema.NullOr(GameVersionSchema).annotate({
+      description:
+        "Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Null or absent when unknown; the API stores it as unknown and never assumes an edition. Declared by the client and not verified by the API.",
+    }),
+  ),
   source: LootSourceSchema,
   location: NonEmptyString,
   accountId: NonEmptyString,
