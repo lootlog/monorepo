@@ -39,6 +39,7 @@ export const NotificationFiltersResponse = Schema.Struct({
   world: Schema.optionalKey(Schema.String),
   npcId: optionalNullable(Schema.Int),
   npcIds: Schema.optionalKey(Schema.Array(Schema.Int)),
+  npcTemplateIds: Schema.optionalKey(Schema.Array(Schema.Int)),
   itemId: optionalNullable(Schema.Int),
   itemIds: Schema.optionalKey(Schema.Array(Schema.Int)),
 });

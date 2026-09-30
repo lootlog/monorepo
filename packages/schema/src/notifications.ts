@@ -66,6 +66,10 @@ export const NotificationFiltersSchema = Schema.Struct({
   world: Schema.optionalKey(Schema.String),
   npcId: Schema.optionalKey(Schema.NullOr(Schema.Number)),
   npcIds: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.Number))),
+  /** Margonem template ids; `npcId`/`npcIds` hold timer (runtime or legacy) ids. */
+  npcTemplateIds: Schema.optionalKey(
+    Schema.mutable(Schema.Array(Schema.Number)),
+  ),
   itemId: Schema.optionalKey(Schema.NullOr(Schema.Number)),
   itemIds: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.Number))),
 });

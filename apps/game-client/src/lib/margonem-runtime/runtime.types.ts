@@ -4,6 +4,12 @@ export type RuntimeStatus = "uninitialized" | "ready";
 
 export type RuntimeInterface = "ni" | "si";
 
+/**
+ * `id` is Margonem's runtime NPC id (`npc.id`): one spawn on the current map,
+ * used by `npcs_del` and as battle `originalId`. `templateId` is `npc.tpl`,
+ * shared by every spawn of one monster template; null when the runtime did not
+ * provide a positive template id.
+ */
 export type RuntimeNpc = Readonly<{
   actions?: number;
   groupId?: number;
@@ -13,7 +19,7 @@ export type RuntimeNpc = Readonly<{
   name: string;
   profession: string;
   respawnRandomness?: number;
-  templateId: number;
+  templateId: number | null;
   type: number;
   weight: number;
   x: number;

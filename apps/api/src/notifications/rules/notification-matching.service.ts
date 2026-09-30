@@ -14,6 +14,7 @@ import {
 import { Permission } from "@lootlog/schema/permissions";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { guildTable, memberTable } from "#src/database/drizzle/schema";
+import type { TimerNpcIdentity } from "#src/timers/timer-projection";
 
 type LootCreatedEvent = {
   readonly lootId: number;
@@ -47,14 +48,27 @@ export const parseNotificationFilters = (
 
 export const notificationMatchingPolicy = {
   parseFilters: parseNotificationFilters,
-  matchesTimerRule: (filtersValue: JsonValue, npcId: number) => {
+  /**
+   * `npcId`/`npcIds` select individual timers by their stored NPC id; a
+   * `npcTemplateIds` entry selects every timer observed with that template.
+   * A rule without NPC filters matches every timer.
+   */
+  matchesTimerRule: (filtersValue: JsonValue, timer: TimerNpcIdentity) => {
     const filters = parseNotificationFilters(filtersValue);
 
-    if (filters.npcId && filters.npcId !== npcId) return false;
+    const timerIds = [
+      ...(filters.npcId ? [filters.npcId] : []),
+      ...(filters.npcIds ?? []),
+    ];
 
-    if (filters.npcIds?.length && !filters.npcIds.includes(npcId)) return false;
+    const templateIds = filters.npcTemplateIds ?? [];
 
-    return true;
+    if (timerIds.length === 0 && templateIds.length === 0) return true;
+
+    return (
+      timerIds.includes(timer.npcId) ||
+      (timer.templateId !== null && templateIds.includes(timer.templateId))
+    );
   },
   matchesLootRule: (filtersValue: JsonValue, event: LootCreatedEvent) => {
     const filters = parseNotificationFilters(filtersValue);

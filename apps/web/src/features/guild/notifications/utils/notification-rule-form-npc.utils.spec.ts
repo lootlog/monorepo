@@ -3,7 +3,9 @@ import {
   buildNotificationRuleNpcFilterPayload,
   getNotificationRuleNpcIdsForSubmit,
   parseManualNotificationRuleNpcIds,
+  toNotificationRuleNpcSelection,
 } from "./notification-rule-form-npc.utils";
+import { getGuildNotificationRuleNpcIds } from "./notification-settings.utils";
 
 describe("notificationRuleFormNpcUtils", () => {
   it("parses many manual npc ids with mixed separators", () => {
@@ -53,6 +55,32 @@ describe("notificationRuleFormNpcUtils", () => {
     expect(buildNotificationRuleNpcFilterPayload(["101"])).toStrictEqual({
       npcId: 101,
     });
+  });
+
+  it("sends a template search hit as a template id and restores it when the rule is reopened", () => {
+    const selections = [
+      toNotificationRuleNpcSelection({
+        id: 257_636,
+        identityNamespace: "template",
+      }),
+      toNotificationRuleNpcSelection({
+        id: 313_103,
+        identityNamespace: "runtime",
+      }),
+    ];
+
+    const payload = buildNotificationRuleNpcFilterPayload(selections);
+
+    expect(payload).toStrictEqual({
+      npcIds: [313_103],
+      npcTemplateIds: [257_636],
+    });
+    expect(
+      getGuildNotificationRuleNpcIds({ filters: payload }).sort(),
+    ).toStrictEqual([...selections].sort());
+    expect(
+      parseManualNotificationRuleNpcIds(selections.join("\n")).ids,
+    ).toStrictEqual(selections);
   });
 
   it("builds a multi npc payload when many ids are selected", () => {

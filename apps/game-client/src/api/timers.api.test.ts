@@ -180,6 +180,7 @@ describe("timers.api", () => {
       updatedAt: "2026-05-03T07:30:00.000Z",
       npc: {
         id: 123,
+        templateId: null,
         name: "Test Boss",
         prof: "w",
         location: "Test Location",

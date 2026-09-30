@@ -124,6 +124,7 @@ export const makeManualTimer = (
             wasReset: false,
             npc: {
               id: npcId,
+              templateId: null,
               name: payload.name,
               prof: payload.prof ?? "",
               location: "",

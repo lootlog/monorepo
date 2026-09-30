@@ -16,6 +16,7 @@ import {
   DateTimeWithOffsetString,
   DateTimeString,
   FiniteNumber,
+  PositiveSafeInteger,
 } from "@lootlog/schema/http-scalars";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
 import { LootSourceSchema } from "@lootlog/schema/loot";
@@ -155,7 +156,22 @@ export const CreateLootRequest = Schema.Struct({
     ),
   npcs: Schema.Array(
     Schema.Struct({
-      id: FiniteNumber,
+      id: FiniteNumber.annotate({
+        description:
+          "Deprecated overloaded NPC id: a template id or a runtime id. Ignored for identity when `runtimeId` or `templateId` is present.",
+      }),
+      runtimeId: Schema.optionalKey(
+        PositiveSafeInteger.annotate({
+          description:
+            "Margonem runtime NPC id (`npc.id`, battle `originalId`) of the looted spawn.",
+        }),
+      ),
+      templateId: Schema.optionalKey(
+        Schema.NullOr(PositiveSafeInteger).annotate({
+          description:
+            "Margonem template id (`npc.tpl`); null when the client did not observe it.",
+        }),
+      ),
       name: NonEmptyString,
       location: NonEmptyString,
       lvl: FiniteNumber,

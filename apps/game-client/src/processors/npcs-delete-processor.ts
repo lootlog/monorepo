@@ -117,6 +117,7 @@ export class NpcsDeleteProcessor {
         npc: {
           icon: data.icon,
           id: data.id,
+          templateId: data.templateId,
           prof: data.profession,
           wt: data.weight,
           hpp: 0,

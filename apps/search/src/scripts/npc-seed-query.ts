@@ -28,6 +28,7 @@ export const buildNpcSeedQuery = (database: SeedDatabase) => {
 
   // Retain every hashed revision and only the newest row for each legacy UID.
   const identity = [
+    npcSnapshotTable.identityNamespace,
     npcSnapshotTable.npcId,
     margonemType,
     snapshotWorlds.world,
@@ -38,6 +39,7 @@ export const buildNpcSeedQuery = (database: SeedDatabase) => {
     .with(snapshotWorlds)
     .selectDistinctOn(identity, {
       id: npcSnapshotTable.npcId,
+      identityNamespace: npcSnapshotTable.identityNamespace,
       name: npcSnapshotTable.name,
       type: npcSnapshotTable.type,
       prof: npcSnapshotTable.prof,

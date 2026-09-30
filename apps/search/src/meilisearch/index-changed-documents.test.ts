@@ -109,6 +109,7 @@ test("delayed and retried NPC observations preserve accepted revisions and catal
     expect(hits).toHaveLength(1);
     expect(hits[0]).toEqual({
       ...legacy,
+      identityNamespace: "legacy",
       lvl: reworked.lvl,
       icon: reworked.icon,
       type: reworked.type,
@@ -133,6 +134,45 @@ test("delayed and retried NPC observations preserve accepted revisions and catal
     const hits = await Effect.runPromise(npcs.getNpcs(query));
     expect(hits.map((hit) => hit.id)).toEqual([52950, 302783]);
   }
+
+  // Explicit identities: the same number in another namespace is another NPC,
+  // and a template suggestion replaces the legacy one for the same monster.
+  await index([
+    {
+      ...reworked,
+      identityNamespace: "template",
+      snapshotHash: "template-observed",
+    },
+    {
+      ...reworked,
+      name: "Unrelated spawn",
+      identityNamespace: "runtime",
+      snapshotHash: "runtime-observed",
+    },
+  ]);
+
+  const byId = await Effect.runPromise(
+    npcs.getNpcs({ limit: 10, ids: [52950] }),
+  );
+
+  // The fake search ignores the id filter.
+  expect(
+    byId
+      .filter((hit) => hit.id === 52950)
+      .map((hit) => [hit.identityNamespace, hit.name]),
+  ).toEqual([
+    ["legacy", "Czempion Furboli"],
+    ["template", "Czempion Furboli"],
+    ["runtime", "Unrelated spawn"],
+  ]);
+
+  const suggestions = await Effect.runPromise(npcs.getNpcs({ limit: 10 }));
+
+  expect(
+    suggestions
+      .filter((hit) => hit.name === "Czempion Furboli")
+      .map((hit) => [hit.identityNamespace, hit.id]),
+  ).toEqual([["template", 52950]]);
 });
 
 for (const catalog of ["players", "npcs", "items"] as const) {

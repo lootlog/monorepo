@@ -15,7 +15,6 @@ import { NpcsList } from "./npcs-list";
 
 const createNpc = (id: number): GameNpcWithLocation => ({
   id,
-  tpl: id,
   nick: `NPC ${id}`,
   icon: "npc.gif",
   prof: "w",

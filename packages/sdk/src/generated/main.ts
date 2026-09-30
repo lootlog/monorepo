@@ -1237,6 +1237,13 @@ export const TimerResponseDtoNpcType = {
 
 export type TimerResponseDtoNpc = {
   id: number;
+  /**
+     * Margonem template id (`tpl`) observed with this timer's NPC, or null when no client reported one.
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  templateId: number | null;
   name: string;
   prof: string;
   location: string;
@@ -1416,6 +1423,13 @@ export const TimerHistoryResponseDtoNpcType = {
 
 export type TimerHistoryResponseDtoNpc = {
   id: number;
+  /**
+     * Margonem template id (`tpl`) observed with this timer's NPC, or null when no client reported one.
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  templateId: number | null;
   name: string;
   prof: string;
   location: string;
@@ -1610,6 +1624,12 @@ export const SearchTimersNpcResponseDtoOutputType = {
 
 export interface SearchTimersNpcResponseDtoOutput {
   npcId: number;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  templateId: number | null;
   timerKey: string;
   name: string;
   lvl: number;
@@ -1649,7 +1669,15 @@ export interface CreateAutoTimerResponseDtoOutput {
 }
 
 export type CreateTimerFromGameClientDtoNpc = {
+  /** Margonem runtime NPC id (`npc.id`) of the removed spawn. */
   id: number;
+  /**
+     * Margonem template id (`npc.tpl`); null when the client did not observe it.
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  templateId?: number | null;
   name: string;
   location: string;
   lvl: number;
@@ -2445,7 +2473,21 @@ export type CreateLootDtoLootsItem = {
 };
 
 export type CreateLootDtoNpcsItem = {
+  /** Deprecated overloaded NPC id: a template id or a runtime id. Ignored for identity when `runtimeId` or `templateId` is present. */
   id: number;
+  /**
+     * Margonem runtime NPC id (`npc.id`, battle `originalId`) of the looted spawn.
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  runtimeId?: number;
+  /**
+     * Margonem template id (`npc.tpl`); null when the client did not observe it.
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  templateId?: number | null;
   /** @minLength 1 */
   name: string;
   /** @minLength 1 */
@@ -3633,6 +3675,11 @@ export type GuildNotificationRulesResponseDtoItemsItemFilters = {[key: string]: 
      */
   npcIds?: number[];
   /**
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  npcTemplateIds?: number[];
+  /**
      * @minimum -9007199254740991
      * @maximum 9007199254740991
      * @nullable
@@ -3925,6 +3972,11 @@ export type NotificationRuleResponseDtoFilters = {[key: string]: unknown} & ({
      */
   npcIds?: number[];
   /**
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  npcTemplateIds?: number[];
+  /**
      * @minimum -9007199254740991
      * @maximum 9007199254740991
      * @nullable
@@ -4180,6 +4232,13 @@ export interface CreateNotificationRuleDto {
      */
   npcIds?: number[];
   /**
+     * Margonem template ids (`tpl`). Matches every timer observed with one of these templates; `npcId` and `npcIds` match a timer's own NPC id.
+     * @maxItems 5
+     * @items.minimum 1
+     * @items.maximum 9007199254740991
+     */
+  npcTemplateIds?: number[];
+  /**
      * @minimum -9007199254740991
      * @maximum 9007199254740991
      */
@@ -4289,6 +4348,13 @@ export interface UpdateNotificationRuleDto {
      * @items.maximum 9007199254740991
      */
   npcIds?: number[];
+  /**
+     * Margonem template ids (`tpl`). Matches every timer observed with one of these templates; `npcId` and `npcIds` match a timer's own NPC id.
+     * @maxItems 5
+     * @items.minimum 1
+     * @items.maximum 9007199254740991
+     */
+  npcTemplateIds?: number[];
   /**
      * @minimum -9007199254740991
      * @maximum 9007199254740991
@@ -4521,6 +4587,11 @@ export type NotificationJobsResponseDtoPendingItemRuleFilters = {[key: string]: 
      * @items.maximum 9007199254740991
      */
   npcIds?: number[];
+  /**
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  npcTemplateIds?: number[];
   /**
      * @minimum -9007199254740991
      * @maximum 9007199254740991
@@ -4933,6 +5004,11 @@ export type NotificationJobsResponseDtoHistoryItemRuleFilters = {[key: string]: 
      */
   npcIds?: number[];
   /**
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  npcTemplateIds?: number[];
+  /**
      * @minimum -9007199254740991
      * @maximum 9007199254740991
      * @nullable
@@ -5308,6 +5384,11 @@ export type WatchedItemResponseDtoNotificationRuleFilters = {[key: string]: unkn
      * @items.maximum 9007199254740991
      */
   npcIds?: number[];
+  /**
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  npcTemplateIds?: number[];
   /**
      * @minimum -9007199254740991
      * @maximum 9007199254740991
