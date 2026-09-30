@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { splitItemStat } from "./item-stat.js";
 
 export function createPlayerSnapshotHash(
   name: string,
@@ -10,25 +11,39 @@ export function createPlayerSnapshotHash(
     .digest("hex");
 }
 
-const SNAPSHOT_HASH_IGNORED_KEYS = new Set([
-  "created",
-  "gold",
-  "amount",
-  "opis",
-]);
-
+/** Hash of the revision stats: per-instance entries are ignored, order is not. */
 export function createItemStatsHash(stats: string): string {
-  const normalized = stats
-    .split(";")
-    .filter((entry) => {
-      const [key] = entry.split("=");
-
-      return Boolean(key) && !SNAPSHOT_HASH_IGNORED_KEYS.has(key ?? "");
-    })
-    .sort()
-    .join(";");
+  const normalized = splitItemStat(stats).revision.split(";").sort().join(";");
 
   return createHash("sha256").update(normalized).digest("hex");
+}
+
+/**
+ * An item revision is one observed presentation of a template: its edition,
+ * name, icon, type and revision stats. Localized names, renames and icon
+ * changes are separate revisions; per-instance stats never create one.
+ */
+export function createItemSnapshotHash(item: {
+  gameVersion: string | null;
+  itemId: number;
+  name: string;
+  icon: string;
+  itemType?: string | null;
+  stat: string;
+}): string {
+  return createHash("sha256")
+    .update(
+      JSON.stringify([
+        "item-observation-v1",
+        item.gameVersion,
+        item.itemId,
+        item.name,
+        item.icon,
+        item.itemType ?? null,
+        createItemStatsHash(item.stat),
+      ]),
+    )
+    .digest("hex");
 }
 
 /**

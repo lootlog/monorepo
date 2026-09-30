@@ -21,10 +21,13 @@ const lootItem = (
   lootId: 42,
   itemSnapshotId: itemId,
   hid,
+  instanceStat: null,
   itemSnapshot: {
     id: itemId,
     itemId,
+    gameVersion: null,
     statsHash: `hash-${itemId}`,
+    snapshotHash: `hash-${itemId}`,
     name: `Item ${itemId}`,
     icon: "item.gif",
     lvl: 100,

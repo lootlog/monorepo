@@ -62,7 +62,9 @@ export type NewLootPersistence = {
   lootShareSource: LootShareSource;
   items: Array<{
     itemId: number;
+    gameVersion: GameVersion | null;
     statsHash: string;
+    snapshotHash: string;
     name: string;
     icon: string;
     lvl: number;
@@ -71,6 +73,7 @@ export type NewLootPersistence = {
     statRaw: string;
     statsSnapshot: Record<string, string>;
     hid: string;
+    instanceStat: string | null;
   }>;
   players: Array<{
     world: string;
@@ -475,7 +478,7 @@ export const makeLootSubmissionAcceptancePersistence = (
         // overlapping concurrent loots cannot wait on each other's keys in reverse.
         const itemSnapshotIds = yield* resolveItemSnapshotIds(
           transaction,
-          data.items,
+          data.items.map((item) => omit(item, ["hid", "instanceStat"])),
         );
 
         if (itemSnapshotIds.length > 0) {
@@ -484,6 +487,7 @@ export const makeLootSubmissionAcceptancePersistence = (
               lootId: loot.id,
               itemSnapshotId,
               hid: item.hid,
+              instanceStat: item.instanceStat,
             })),
           );
         }

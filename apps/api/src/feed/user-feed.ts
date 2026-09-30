@@ -350,7 +350,10 @@ export const buildUserFeedQuery = (
       name: itemSnapshotTable.name,
       icon: itemSnapshotTable.icon,
       rarity: itemSnapshotTable.rarity,
-      stat: sql`${itemSnapshotTable.statRaw}`.as("stat"),
+      // joinItemStat in SQL: the revision stats, then this instance's stats.
+      stat: sql`concat_ws(';', nullif(${itemSnapshotTable.statRaw}, ''), ${lootItemTable.instanceStat})`.as(
+        "stat",
+      ),
       type: sql`${itemSnapshotTable.itemType}`.as("type"),
       lvl: itemSnapshotTable.lvl,
     })

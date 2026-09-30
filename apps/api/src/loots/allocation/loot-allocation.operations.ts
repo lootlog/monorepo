@@ -1,5 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { createHash } from "node:crypto";
+import { joinItemStat } from "@lootlog/database/item-stat";
 import { Clock, Effect, Schema } from "effect";
 import type {
   GuildLootEventNpc,
@@ -202,17 +203,19 @@ export const makeLootAllocationOperations = (options: {
           }),
         );
 
-        const items = authorized.lootItems.map(({ hid, itemSnapshot }) => ({
-          id: String(itemSnapshot.itemId),
-          hid,
-          name: itemSnapshot.name,
-          icon: itemSnapshot.icon,
-          stat: itemSnapshot.statRaw,
-          lvl: itemSnapshot.lvl ?? 0,
-          rarity: itemSnapshot.rarity,
-          prof: [],
-          type: itemSnapshot.itemType ?? "",
-        }));
+        const items = authorized.lootItems.map(
+          ({ hid, instanceStat, itemSnapshot }) => ({
+            id: String(itemSnapshot.itemId),
+            hid,
+            name: itemSnapshot.name,
+            icon: itemSnapshot.icon,
+            stat: joinItemStat(itemSnapshot.statRaw, instanceStat),
+            lvl: itemSnapshot.lvl ?? 0,
+            rarity: itemSnapshot.rarity,
+            prof: [],
+            type: itemSnapshot.itemType ?? "",
+          }),
+        );
 
         const allocation = resolveChatAllocation(parsed, players, items);
 
