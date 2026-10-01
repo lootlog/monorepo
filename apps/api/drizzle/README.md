@@ -850,3 +850,73 @@ NPC search documents keep the icon they were written with until the next
 observation or an index rebuild, and other services (activity, battlelog) keep
 their own copies; the web and game client NPC tiles therefore still accept an
 absolute icon URL.
+
+## Database audit cleanup
+
+`20261001154027_db_audit_cleanup` removes data and indexes that the October
+2026 audit found unused. Production index counters (never reset since the
+cluster was created) and a local production copy were the evidence.
+
+- It deletes `Loot` rows without an `OrganizationLootRecord`, with their items,
+  players and NPCs, and the item, NPC and player snapshots only they
+  referenced. Legacy writers left about 3.2 million such loots between June
+  2025 and August 2026; no Organization can see them, and the current writer
+  creates the records in the loot transaction.
+- It deletes guild settings documents and `LootlogConfig` rows whose Discord
+  guild has no `Guild` row. Such documents fail the membership check on every
+  read and write.
+- It drops `UserGameAccountSettings`, `UserGuildTimerSettings`,
+  `UserSoundSettings` and `UserTimerSettings`, which settings documents
+  replaced, and the legacy `_prisma_migrations` journal. The legacy ORM
+  migration `20260724030000_add_user_setting_documents` copied the timer,
+  guild timer and sound rows, which received no writes afterwards, and
+  `20260910185220_settings_documents_backfill` copied the game account rows.
+- It drops indexes that had no scans or are covered by a unique key, and it
+  makes the `OrganizationLootRecord.archivedByMemberId` index partial.
+  `LootItem.hid` gets a hash index, because only equality lookups read the
+  64-character digest; the hash index is a third of the btree size.
+- `LootSubmission` loses its unused `id` column, and its unique key becomes the
+  primary key. `LootPlayer` gets the key `(lootId, id)`, which serves the
+  per-loot reads in insertion order, so the `lootId` index goes.
+
+Deploy the API revision without the legacy settings tables first. An older
+revision inserts `LootSubmission.id` and deletes from the dropped tables during
+account deletion. Then build and drop the large indexes concurrently, each
+statement outside a transaction:
+
+```sql
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "LootItem_hid_idx" ON "LootItem" USING hash ("hid");
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "LootPlayer_lootId_id_key" ON "LootPlayer" ("lootId","id");
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "OrganizationLootRecord_archivedByMemberId_notnull_idx" ON "OrganizationLootRecord" ("archivedByMemberId") WHERE "archivedByMemberId" IS NOT NULL;
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "Member_guildId_id_idx" ON "Member" ("guildId","id");
+DROP INDEX CONCURRENTLY IF EXISTS "LootItem_hid_lootId_idx";
+DROP INDEX CONCURRENTLY IF EXISTS "LootPlayer_lootId_idx";
+DROP INDEX CONCURRENTLY IF EXISTS "OrganizationLootRecord_archivedByMemberId_idx";
+DROP INDEX CONCURRENTLY IF EXISTS "Member_id_guildId_idx";
+DROP INDEX CONCURRENTLY IF EXISTS "UserKillStatsBucket_userId_npcType_periodStart_idx";
+DROP INDEX CONCURRENTLY IF EXISTS "NpcKillStatsBucket_guildId_npcType_periodStart_idx";
+DROP INDEX CONCURRENTLY IF EXISTS "UserKillStats_userId_idx";
+DROP INDEX CONCURRENTLY IF EXISTS "UserKillStats_userId_npcType_idx";
+DROP INDEX CONCURRENTLY IF EXISTS "NpcKillStats_guildId_idx";
+DROP INDEX CONCURRENTLY IF EXISTS "GuildKillSummary_guildId_idx";
+DROP INDEX CONCURRENTLY IF EXISTS "UserSettingDocument_userId_domain_idx";
+DROP INDEX CONCURRENTLY IF EXISTS "UserSettings_userId_idx";
+DROP INDEX CONCURRENTLY IF EXISTS "Timer_npcId_guildId_idx";
+DROP INDEX CONCURRENTLY IF EXISTS "idx_timer_npc_name";
+```
+
+A failed concurrent build leaves an invalid index that `IF NOT EXISTS` then
+skips. The migration refuses to run on a populated database until the three
+loot indexes exist and are valid. Drop an invalid one and build it again.
+
+Then apply the migration with `bun run db:api:migrate:deploy`. Small indexes
+are dropped inside it. The key changes on `LootSubmission` and `LootPlayer`
+reuse the prebuilt unique indexes, so they only rename them, and they run last
+because they lock the loot write path until the commit. Those statements use
+`lock_timeout = '3s'`. If a long reader holds either table, the whole migration
+rolls back, and it can be run again.
+
+Deleted rows free space inside the tables for new rows; the files do not shrink
+until a rewrite such as `pg_repack`. The `id` columns of the kill statistics
+tables stay: `readNpcKillPage` and the top-NPC queries use them to choose one
+row's NPC metadata per page entry.
