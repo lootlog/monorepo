@@ -751,3 +751,18 @@ a game version; every API since LOO-250 sends one, so only publications queued
 before that deploy would be lost. Its NPC and item indexes stop declaring
 `world` and `catalogKey` filterable, which Meilisearch applies once at startup;
 existing documents need no rebuild.
+
+### Unlinked duplicate revisions
+
+`20261001111738_drop_unlinked_duplicate_revisions` deletes the revisions the
+repair relinked away: no loot links them, and a linked revision repeats every
+attribute they hold. On production on 2026-10-01 (read-only, before the cleanup
+above) these were 6,394 NPC revisions, per-world rows that differed from their
+edition revision only in `world`, and the 2,943 item revisions retired by
+`LOO-250-prod-1`. They were every unlinked revision with an edition. The NPC
+rows carry pre-edition hashes and the item rows none, so no writer can select
+them during the migration; an unlinked revision without a linked twin is kept.
+
+Readers that query revisions without a link see no change: watched items and
+the colossus check find the linked twin's identical values, and name and search
+lookups only lose ids that matched no loot. Apply it after the cleanup above.
