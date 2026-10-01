@@ -123,11 +123,7 @@ export function useWatchItemForm({
     ...new Set(worldQueries.flatMap((query) => query.data ?? [])),
   ].sort();
 
-  const itemSearchParams = {
-    limit: 10,
-    search: itemSearchValue,
-    world: selectedWorld || undefined,
-  };
+  const itemSearchParams = { limit: 10, search: itemSearchValue };
 
   const itemSearchQuery = useItemsControllerGetItems(itemSearchParams, {
     query: {

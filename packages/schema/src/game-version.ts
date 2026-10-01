@@ -6,13 +6,12 @@ import { Schema } from "effect";
  * `*.margonem.pl`, `en` from `*.margonem.com`.
  *
  * The edition namespaces catalog identities and their presentation; it does
- * not prove the language of every text in a payload. `world` scopes gameplay
- * and is independent of it. A record without a game version (`null`) came
- * from an older client or an unrecognized host and must not be treated as
- * either edition.
+ * not prove the language of every text in a payload. `world` scopes gameplay;
+ * every world belongs to exactly one edition (`gameVersionOfWorld`).
  *
  * A game version is declared by the client. The API validates the value but
- * cannot verify which host the client ran on.
+ * cannot verify which host the client ran on; when a client declares none, the
+ * API derives it from the world.
  */
 export const GameVersion = {
   EN: "en",
@@ -25,3 +24,17 @@ export const GameVersionSchema = Schema.Literals([
   GameVersion.EN,
   GameVersion.PL,
 ]);
+
+/**
+ * Worlds served from `*.margonem.com`. Every other world belongs to the Polish
+ * edition, so a new English world needs an entry here.
+ */
+export const EN_EDITION_WORLDS: ReadonlySet<string> = new Set([
+  "cronus",
+  "husaria",
+  "steamrealm",
+]);
+
+/** Edition of a world, for observations whose client declared none. */
+export const gameVersionOfWorld = (world: string): GameVersion =>
+  EN_EDITION_WORLDS.has(world.toLowerCase()) ? GameVersion.EN : GameVersion.PL;

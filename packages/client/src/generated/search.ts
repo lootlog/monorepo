@@ -78,7 +78,7 @@ export const NpcHitDtoOutputType = {
 } as const;
 
 /**
- * Margonem edition of the observation: `pl` for margonem.pl, `en` for margonem.com; null when unknown. Equal ids in different editions are unrelated.
+ * Margonem edition of the NPC: `pl` for margonem.pl, `en` for margonem.com. Equal ids in different editions are unrelated. Always set; the field stays nullable for compatibility.
  * @nullable
  */
 export type NpcHitDtoOutputGameVersion = typeof NpcHitDtoOutputGameVersion[keyof typeof NpcHitDtoOutputGameVersion] | null;
@@ -103,9 +103,12 @@ export interface NpcHitDtoOutput {
   wt: number;
   type: NpcHitDtoOutputType;
   margonemType: number;
+  /** Deprecated: the world of the latest observation. Use `worlds`. */
   world: string;
+  /** Worlds of the edition where this NPC was observed. */
+  worlds: string[];
   /**
-     * Margonem edition of the observation: `pl` for margonem.pl, `en` for margonem.com; null when unknown. Equal ids in different editions are unrelated.
+     * Margonem edition of the NPC: `pl` for margonem.pl, `en` for margonem.com. Equal ids in different editions are unrelated. Always set; the field stays nullable for compatibility.
      * @nullable
      */
   gameVersion: NpcHitDtoOutputGameVersion;
@@ -202,7 +205,7 @@ export const SearchAllResponseDtoOutputNpcsItemType = {
 } as const;
 
 /**
- * Margonem edition of the observation: `pl` for margonem.pl, `en` for margonem.com; null when unknown. Equal ids in different editions are unrelated.
+ * Margonem edition of the NPC: `pl` for margonem.pl, `en` for margonem.com. Equal ids in different editions are unrelated. Always set; the field stays nullable for compatibility.
  * @nullable
  */
 export type SearchAllResponseDtoOutputNpcsItemGameVersion = typeof SearchAllResponseDtoOutputNpcsItemGameVersion[keyof typeof SearchAllResponseDtoOutputNpcsItemGameVersion] | null;
@@ -227,9 +230,12 @@ export type SearchAllResponseDtoOutputNpcsItem = {
   wt: number;
   type: SearchAllResponseDtoOutputNpcsItemType;
   margonemType: number;
+  /** Deprecated: the world of the latest observation. Use `worlds`. */
   world: string;
+  /** Worlds of the edition where this NPC was observed. */
+  worlds: string[];
   /**
-     * Margonem edition of the observation: `pl` for margonem.pl, `en` for margonem.com; null when unknown. Equal ids in different editions are unrelated.
+     * Margonem edition of the NPC: `pl` for margonem.pl, `en` for margonem.com. Equal ids in different editions are unrelated. Always set; the field stays nullable for compatibility.
      * @nullable
      */
   gameVersion: SearchAllResponseDtoOutputNpcsItemGameVersion;
@@ -282,6 +288,9 @@ export type NpcsControllerGetNpcsParams = {
 ids?: number[];
 limit?: number;
 search?: string | string[];
+/**
+ * Deprecated and ignored: every world of an edition shares its NPC and item ids. Accepted for older callers; it will be removed in a breaking release.
+ */
 world?: string;
 };
 
@@ -301,6 +310,9 @@ export type ItemsControllerGetItemsParams = {
 limit?: number;
 offset?: number;
 search?: string;
+/**
+ * Deprecated and ignored: every world of an edition shares its NPC and item ids. Accepted for older callers; it will be removed in a breaking release.
+ */
 world?: string;
 filter?: string | string[];
 facets?: string[];
@@ -322,6 +334,9 @@ export type ItemsControllerGetItems429 = {
 export type AllControllerSearchAllParams = {
 limit?: number;
 search?: string;
+/**
+ * Filters players by world. NPC and item results ignore it; that use is deprecated.
+ */
 world?: string;
 };
 

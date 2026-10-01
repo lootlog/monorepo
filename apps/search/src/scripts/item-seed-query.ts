@@ -3,6 +3,7 @@ import {
   lootItemTable,
   lootTable,
 } from "@lootlog/api/database/schema";
+import { lootGameVersionSql } from "@lootlog/api/database/game-version";
 import { asc, eq, sql } from "drizzle-orm";
 import type { drizzle } from "drizzle-orm/bun-sql";
 
@@ -16,6 +17,8 @@ type SeedDatabase = Pick<
  * latest loot link, so merging rows into catalog documents keeps the revision
  * most recently observed for each name, as live indexing does. A revision can
  * be observed again after a newer one, so its creation time is not enough.
+ * A revision without an edition, written before editions, takes the edition
+ * of each loot, so links from two editions yield one row per edition.
  */
 export const buildItemSeedQuery = (database: SeedDatabase) => {
   // Reduce repeated loot links before reading the larger snapshot records.
@@ -24,20 +27,29 @@ export const buildItemSeedQuery = (database: SeedDatabase) => {
       .select({
         itemSnapshotId: lootItemTable.itemSnapshotId,
         world: lootTable.world,
+        gameVersion: lootGameVersionSql.as("loot_game_version"),
         latestLinkId: sql<number>`max(${lootItemTable.id})`.as(
           "latest_link_id",
         ),
       })
       .from(lootItemTable)
       .innerJoin(lootTable, eq(lootTable.id, lootItemTable.lootId))
-      .groupBy(lootItemTable.itemSnapshotId, lootTable.world),
+      .groupBy(
+        lootItemTable.itemSnapshotId,
+        lootTable.world,
+        lootGameVersionSql,
+      ),
   );
+
+  const gameVersion = sql<
+    "en" | "pl"
+  >`coalesce(${itemSnapshotTable.gameVersion}, ${snapshotWorlds.gameVersion})`;
 
   return database
     .with(snapshotWorlds)
     .select({
       id: itemSnapshotTable.itemId,
-      gameVersion: itemSnapshotTable.gameVersion,
+      gameVersion,
       name: itemSnapshotTable.name,
       icon: itemSnapshotTable.icon,
       stat: itemSnapshotTable.statRaw,
@@ -51,7 +63,7 @@ export const buildItemSeedQuery = (database: SeedDatabase) => {
       itemSnapshotTable,
       eq(itemSnapshotTable.id, snapshotWorlds.itemSnapshotId),
     )
-    .groupBy(itemSnapshotTable.id)
+    .groupBy(itemSnapshotTable.id, gameVersion)
     .orderBy(
       sql`max(${snapshotWorlds.latestLinkId})`,
       asc(itemSnapshotTable.id),

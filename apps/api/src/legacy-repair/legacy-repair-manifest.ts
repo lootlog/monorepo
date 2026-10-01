@@ -7,13 +7,18 @@ import type { LegacyRepairRowTable } from "#src/database/drizzle/legacy-repair.s
 import type { notificationRuleUnresolvedSelectionTable } from "#src/database/drizzle/schema";
 
 /**
- * Reads a LOO-38 repair manifest: one JSON decision per line, written outside
- * the repository, with the loot link ids of each entry in side files. Every
- * entry is decoded and every row-id checksum verified before anything is
- * written, so a truncated or edited manifest cannot be partly applied.
+ * Reads a legacy association repair manifest: one JSON decision per line,
+ * written outside the repository by the read-only `plan` command (and, for
+ * saved notification selections, the LOO-38 dry run), with the loot link ids
+ * of each entry in side files. Every entry is decoded and every row-id
+ * checksum verified before anything is written, so a truncated or edited
+ * manifest cannot be partly applied.
+ *
+ * Version 2 moves revisions to one per game edition (LOO-250). Version 1
+ * manifests created one NPC revision per world and are refused.
  */
 
-export const LEGACY_REPAIR_MANIFEST_VERSION = 1;
+export const LEGACY_REPAIR_MANIFEST_VERSION = 2;
 
 export class LegacyRepairManifestError extends TaggedErrorClass<LegacyRepairManifestError>()(
   "LegacyRepairManifestError",
@@ -24,8 +29,19 @@ const Int = Schema.Number.check(Schema.isInt());
 
 const RowTable = Schema.Literals(["LootNpc", "LootItem"]);
 
+// The revision as the dry run read it; a promotion stops if it changed since.
+const Before = Schema.Struct({
+  snapshotHash: Schema.NullOr(Schema.String),
+  gameVersion: Schema.NullOr(GameVersionSchema),
+  world: Schema.optionalKey(Schema.NullOr(Schema.String)),
+  statRawSha256: Schema.optionalKey(Schema.String),
+});
+
+export type LegacyRepairSnapshotBefore = typeof Before.Type;
+
 const Source = Schema.Struct({
   snapshotId: Schema.optionalKey(Int),
+  before: Schema.optionalKey(Before),
   rowTable: Schema.optionalKey(RowTable),
   rowCount: Schema.optionalKey(Int),
   rowIdsFile: Schema.optionalKey(Schema.String),
@@ -46,11 +62,10 @@ const Source = Schema.Struct({
 const NpcRevision = Schema.Struct({
   identityNamespace: Schema.String,
   gameVersion: GameVersionSchema,
-  world: Schema.String,
   npcId: Int,
   name: Schema.String,
   type: Schema.NullOr(Schema.String),
-  lvl: Int,
+  lvl: Schema.NullOr(Int),
   icon: Schema.NullOr(Schema.String),
   prof: Schema.NullOr(Schema.String),
   wt: Schema.NullOr(Int),
@@ -73,7 +88,13 @@ export type LegacyRepairItemRevision = typeof ItemRevision.Type;
 const Target = Schema.Struct({
   proposedRevision: Schema.optionalKey(Schema.Unknown),
   proposedSnapshotHash: Schema.optionalKey(Schema.String),
-  nameIconSourceSnapshotId: Schema.optionalKey(Int),
+  // Item relinks: the same-edition revision whose name and icon the target
+  // takes; null when they are the source's own.
+  nameIconSourceSnapshotId: Schema.optionalKey(Schema.NullOr(Int)),
+  // Promotions: the revision that held the edition hash when planned. When
+  // applied, whichever revision with identical content holds it then hands
+  // the hash over and its links move to the promoted revision.
+  retireSnapshotId: Schema.optionalKey(Schema.NullOr(Int)),
   npcId: Schema.optionalKey(Int),
   name: Schema.optionalKey(Schema.String),
 });
@@ -82,9 +103,11 @@ const ManifestLine = Schema.Struct({
   manifestVersion: Int,
   runId: Schema.String,
   entryId: Schema.String,
-  domain: Schema.Literals(["item", "npc", "timerRule", "watchedItem"]),
+  domain: Schema.Literals(["loot", "item", "npc", "timerRule", "watchedItem"]),
   action: Schema.Literals([
-    "createRevisionAndRelink",
+    "backfillGameVersion",
+    "promoteRevision",
+    "relinkRevision",
     "markUnresolved",
     "noop",
     "proposeForReview",
@@ -123,19 +146,30 @@ interface RowSet {
 type NotificationSelectionReason =
   typeof notificationRuleUnresolvedSelectionTable.$inferInsert.reason;
 
+type Promotion<Domain, Revision> = {
+  readonly kind: "promote";
+  readonly domain: Domain;
+  readonly snapshotId: number;
+  readonly before: LegacyRepairSnapshotBefore;
+  readonly revision: Revision;
+  readonly snapshotHash: string;
+  readonly retireSnapshotId: number | null;
+};
+
 export type LegacyRepairPlanEntry = LegacyRepairEntryMeta &
   (
+    | { readonly kind: "lootBackfill" }
+    | Promotion<"npc", LegacyRepairNpcRevision>
+    | Promotion<"item", LegacyRepairItemRevision>
     | ({
         readonly kind: "npcRelink";
-        readonly worlds: readonly string[];
         readonly revision: LegacyRepairNpcRevision;
         readonly snapshotHash: string;
       } & RowSet)
     | ({
         readonly kind: "itemRelink";
-        readonly worlds: readonly string[];
         readonly revision: LegacyRepairItemRevision;
-        readonly nameIconSourceSnapshotId: number;
+        readonly nameIconSourceSnapshotId: number | null;
         readonly snapshotHash: string;
       } & RowSet)
     | {
@@ -286,23 +320,13 @@ const relinkEntry = Effect.fnUntraced(function* (
   }
 
   const set = yield* verifiedRows(line, rows);
-  const worlds = line.source.selector?.worlds ?? [];
-
-  if (worlds.length === 0) return yield* fail(`${where}: missing worlds`);
 
   if (line.domain === "npc") {
-    const revision = yield* decodeRevision(NpcRevision, line);
-
-    if (worlds.length !== 1 || worlds[0] !== revision.world) {
-      return yield* fail(`${where}: an NPC revision covers one world`);
-    }
-
     return {
       ...entryMeta(line),
       ...set,
       kind: "npcRelink",
-      worlds,
-      revision,
+      revision: yield* decodeRevision(NpcRevision, line),
       snapshotHash: target.proposedSnapshotHash,
     } satisfies LegacyRepairPlanEntry;
   }
@@ -315,10 +339,54 @@ const relinkEntry = Effect.fnUntraced(function* (
     ...entryMeta(line),
     ...set,
     kind: "itemRelink",
-    worlds,
     revision: yield* decodeRevision(ItemRevision, line),
     nameIconSourceSnapshotId: target.nameIconSourceSnapshotId,
     snapshotHash: target.proposedSnapshotHash,
+  } satisfies LegacyRepairPlanEntry;
+});
+
+// A promotion changes the identity of one revision and moves no listed link.
+const promotionEntry = Effect.fnUntraced(function* (line: ManifestLine) {
+  const { target, source } = line;
+  const where = `entry ${line.entryId}`;
+
+  if (!target?.proposedSnapshotHash) {
+    return yield* fail(`${where}: missing proposed revision`);
+  }
+
+  if (source.snapshotId === undefined || source.before === undefined) {
+    return yield* fail(`${where}: missing source revision`);
+  }
+
+  const promotion = {
+    ...entryMeta(line),
+    kind: "promote" as const,
+    snapshotId: source.snapshotId,
+    before: source.before,
+    snapshotHash: target.proposedSnapshotHash,
+    retireSnapshotId: target.retireSnapshotId ?? null,
+  };
+
+  if (promotion.retireSnapshotId === promotion.snapshotId) {
+    return yield* fail(`${where}: a revision cannot retire itself`);
+  }
+
+  if (line.domain === "npc") {
+    return {
+      ...promotion,
+      domain: "npc",
+      revision: yield* decodeRevision(NpcRevision, line),
+    } satisfies LegacyRepairPlanEntry;
+  }
+
+  if (source.before.statRawSha256 === undefined) {
+    return yield* fail(`${where}: missing source stats checksum`);
+  }
+
+  return {
+    ...promotion,
+    domain: "item",
+    revision: yield* decodeRevision(ItemRevision, line),
   } satisfies LegacyRepairPlanEntry;
 });
 
@@ -406,15 +474,24 @@ const toPlanEntry = Effect.fnUntraced(function* (
     return yield* selectionEntry(line);
   }
 
-  if (line.action === "createRevisionAndRelink") {
-    return yield* relinkEntry(line, rows);
+  if (line.domain === "loot") {
+    return line.action === "backfillGameVersion"
+      ? ({
+          ...entryMeta(line),
+          kind: "lootBackfill",
+        } satisfies LegacyRepairPlanEntry)
+      : yield* fail(`entry ${line.entryId}: not a loot action`);
   }
 
-  if (line.action === "remapFilter") {
+  if (line.action === "backfillGameVersion" || line.action === "remapFilter") {
     return yield* fail(
-      `entry ${line.entryId}: remapFilter is not a loot action`,
+      `entry ${line.entryId}: ${line.action} is not a ${line.domain} action`,
     );
   }
+
+  if (line.action === "relinkRevision") return yield* relinkEntry(line, rows);
+
+  if (line.action === "promoteRevision") return yield* promotionEntry(line);
 
   return yield* lootRecordEntry(line, rows);
 });
@@ -486,8 +563,26 @@ export const readLegacyRepairManifest = Effect.fn("legacyRepair.readManifest")(
     );
 
     const relinked = new Map<string, string>();
+    const promoted = new Map<string, string>();
 
     for (const entry of entries) {
+      if (entry.kind === "promote") {
+        for (const snapshotId of [entry.snapshotId, entry.retireSnapshotId]) {
+          if (snapshotId === null) continue;
+
+          const key = `${entry.domain}:${snapshotId}`;
+          const previous = promoted.get(key);
+
+          if (previous) {
+            return yield* fail(
+              `entries ${previous} and ${entry.entryId} change the same revision`,
+            );
+          }
+
+          promoted.set(key, entry.entryId);
+        }
+      }
+
       if (entry.kind !== "npcRelink" && entry.kind !== "itemRelink") continue;
 
       for (const rowId of entry.rowIds) {

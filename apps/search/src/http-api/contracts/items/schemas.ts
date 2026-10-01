@@ -50,7 +50,12 @@ export const ItemsControllerGetItemsQuery = Schema.Struct({
     ),
   ),
   search: Schema.optionalKey(Schema.String),
-  world: Schema.optionalKey(Schema.String),
+  world: Schema.optionalKey(
+    Schema.String.annotate({
+      description:
+        "Deprecated and ignored: every world of an edition shares its NPC and item ids. Accepted for older callers; it will be removed in a breaking release.",
+    }),
+  ),
   filter: Schema.optionalKey(
     Schema.Union([Schema.String, Schema.Array(Schema.String)]),
   ),

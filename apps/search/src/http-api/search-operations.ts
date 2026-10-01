@@ -82,6 +82,9 @@ export class SearchOperations extends Context.Service<
 
       yield* configureMeilisearchIndexes(meilisearch, effectLogger);
 
+      // Every world of an edition shares its NPC and item ids, so NPC and
+      // item search ignore the deprecated `world` parameter; players still
+      // filter by it.
       return SearchOperations.of({
         searchPlayers: (query) =>
           players.getPlayers({
@@ -93,7 +96,7 @@ export class SearchOperations extends Context.Service<
                 ? query.search
                 : [...query.search]),
           }),
-        searchNpcs: (query) =>
+        searchNpcs: ({ world: _world, ...query }) =>
           npcs.getNpcs({
             ...query,
             ids: query.ids ? [...query.ids] : undefined,
@@ -104,7 +107,7 @@ export class SearchOperations extends Context.Service<
                 ? query.search
                 : [...query.search]),
           }),
-        searchItems: (query) =>
+        searchItems: ({ world: _world, ...query }) =>
           items.searchItems({
             ...query,
             facets: query.facets ? [...query.facets] : undefined,
@@ -116,8 +119,14 @@ export class SearchOperations extends Context.Service<
         searchAll: (query) =>
           Effect.all(
             {
-              items: items.getItems({ ...query, limit: query.limit ?? 10 }),
-              npcs: npcs.getNpcs({ ...query, limit: query.limit ?? 10 }),
+              items: items.getItems({
+                search: query.search,
+                limit: query.limit ?? 10,
+              }),
+              npcs: npcs.getNpcs({
+                search: query.search,
+                limit: query.limit ?? 10,
+              }),
               players: players.getPlayers({
                 ...query,
                 limit: query.limit ?? 10,
