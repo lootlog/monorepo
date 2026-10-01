@@ -766,3 +766,40 @@ them during the migration; an unlinked revision without a linked twin is kept.
 Readers that query revisions without a link see no change: watched items and
 the colossus check find the linked twin's identical values, and name and search
 lookups only lose ids that matched no loot. Apply it after the cleanup above.
+
+## Player snapshot merge
+
+Legacy writers hashed the same player snapshot with the full profession
+(`MAGE`, the 2025-11-24 migration) and with its shortname (`m`, loot and timer
+writers until 2026-09-06), so one character content could be stored twice.
+`resolvePlayerSnapshots` looks snapshots up by content and writes `v2:` hashes,
+so no new duplicates appear.
+
+`20261001123619_merge_duplicate_player_snapshots` keeps the lowest id of each
+content, which `resolvePlayerSnapshots` already selects, moves `LootPlayer`,
+`LootMapPlayer`, `Timer` and `TimerHistoryEntry` references to it and deletes
+the other rows. It then deletes snapshots that nothing references: timer
+actors whose timer moved to another snapshot, was deleted or pruned its
+history. These keep appearing, and a later cleanup can repeat its last
+statements.
+
+On the local production copy on 2026-10-01 it deleted 2,843 unreferenced and
+117,649 duplicate snapshots (900,305 to 779,813) and moved 10,791,774 loot
+players, 5,997 timers and 56,173 history references. Every loot, timer and
+history reference count stayed the same. It took about 4.6 minutes, mostly the
+`LootPlayer` update and the foreign key probes of the delete. Loot reads and
+submissions are not blocked. Timer and history references are `ON DELETE SET
+NULL`, so a reference written while their snapshot is deleted would be cleared
+silently:
+
+- Merged rows are never selected by writers, and timers move to the kept row
+  just before the merged rows are deleted. Timer resets on about 6,000 timers
+  wait for the last ~25 seconds.
+- Unreferenced snapshots are locked first and re-checked in a new statement,
+  so a reference committed before the locks keeps its snapshot. This runs last,
+  for about 8 seconds. A loot submission or timer change that resolved one of
+  them and references it after the locks fails its foreign key check once the
+  migration commits.
+
+Run it outside peak hours. These are local measurements, not production
+latency.
