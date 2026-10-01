@@ -14,8 +14,7 @@ const IndexNpc = Schema.Struct({
   type: Schema.String,
   margonemType: Schema.Number,
   world: Schema.String,
-  // Older publishers and observations from an unknown host have no edition.
-  gameVersion: Schema.optional(Schema.NullOr(GameVersionSchema)),
+  gameVersion: GameVersionSchema,
   snapshotHash: Schema.optional(Schema.String),
   // The loot that observed it; older publishers omit it.
   lootId: Schema.optional(Schema.Number),

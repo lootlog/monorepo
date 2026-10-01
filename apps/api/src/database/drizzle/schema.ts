@@ -468,7 +468,7 @@ export const lootTable = pgTable(
     id: serial("id").notNull().primaryKey(),
     uniqueId: text("uniqueId").notNull(),
     world: text("world").notNull(),
-    gameVersion: gameVersionEnum("gameVersion"),
+    gameVersion: gameVersionEnum("gameVersion").notNull(),
     source: lootSourceEnum("source").notNull(),
     location: text("location").notNull(),
     createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
@@ -499,12 +499,12 @@ export const itemSnapshotTable = pgTable(
   {
     id: serial("id").notNull().primaryKey(),
     itemId: integer("itemId").notNull(),
-    gameVersion: gameVersionEnum("gameVersion"),
+    gameVersion: gameVersionEnum("gameVersion").notNull(),
     // Hash of the revision stats alone; revisions of one item that differ only
     // in presentation or edition share it.
     statsHash: text("statsHash").notNull(),
-    // Revision identity from createItemSnapshotHash. Null on rows accepted
-    // before revisions, whose name and icon came from the first writer (LOO-38).
+    // Revision identity from createItemSnapshotHash. Null on revisions written
+    // before editions that the LOO-250 repair retired into a promoted one.
     snapshotHash: text("snapshotHash"),
     name: text("name").notNull(),
     icon: text("icon").notNull(),
@@ -727,8 +727,7 @@ export const npcSnapshotTable = pgTable(
     // NpcIdentityNamespace from @lootlog/schema/npc-identity. `legacy` rows come
     // from clients that sent an overloaded id; do not infer their meaning.
     identityNamespace: text("identityNamespace").default("legacy").notNull(),
-    world: text("world"),
-    gameVersion: gameVersionEnum("gameVersion"),
+    gameVersion: gameVersionEnum("gameVersion").notNull(),
     snapshotHash: text("snapshotHash"),
     name: text("name").notNull(),
     type: npcTypeEnum("type"),
@@ -1484,52 +1483,6 @@ export const watchedItemTable = pgTable(
       name: "WatchedItem_notificationRuleId_fkey",
     })
       .onDelete("set null")
-      .onUpdate("cascade"),
-  ],
-);
-
-// A saved selection that no longer identifies what its rule matches, recorded
-// by the LOO-38 repair. The rule keeps its filters unchanged until a member
-// reselects or removes the selection; nothing is remapped automatically.
-export const notificationRuleUnresolvedSelectionTable = pgTable(
-  "NotificationRuleUnresolvedSelection",
-  {
-    id: serial("id").notNull().primaryKey(),
-    ruleId: integer("ruleId").notNull(),
-    // `npc` for a timer rule's npcId/npcIds entry, `item` for a watched item.
-    kind: text("kind").$type<"npc" | "item">().notNull(),
-    selectedId: integer("selectedId").notNull(),
-    selectedName: text("selectedName"),
-    reason: text("reason")
-      .$type<
-        | "legacyCatalogId"
-        | "unknownId"
-        | "nameFromOtherEdition"
-        | "nameWithoutSnapshot"
-      >()
-      .notNull(),
-    suggestedId: integer("suggestedId"),
-    suggestedName: text("suggestedName"),
-    repairRunId: text("repairRunId"),
-    repairEntryId: text("repairEntryId"),
-    createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
-      .defaultNow()
-      .notNull(),
-  },
-  (table) => [
-    uniqueIndex(
-      "NotificationRuleUnresolvedSelection_ruleId_kind_selectedId_key",
-    ).on(table["ruleId"], table["kind"], table["selectedId"]),
-    check(
-      "NotificationRuleUnresolvedSelection_kind_check",
-      sql`${table["kind"]} in ('npc', 'item')`,
-    ),
-    foreignKey({
-      columns: [table["ruleId"]],
-      foreignColumns: [notificationRuleTable["id"]],
-      name: "NotificationRuleUnresolvedSelection_ruleId_fkey",
-    })
-      .onDelete("cascade")
       .onUpdate("cascade"),
   ],
 );

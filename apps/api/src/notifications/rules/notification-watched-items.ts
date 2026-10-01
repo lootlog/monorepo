@@ -1,7 +1,3 @@
-import {
-  readUnresolvedSelections,
-  resolveUnresolvedSelections,
-} from "./notification-unresolved-selections.js";
 import { readNotificationRuleTargets } from "#src/notifications/targets/notification-target-store";
 import {
   notificationApiKeyOrganizations,
@@ -27,7 +23,6 @@ import {
 } from "#src/shared/http/http-errors";
 import type {
   CreateWatchedItemRequest,
-  NotificationRuleUnresolvedSelection,
   QuickAddWatchedItemRequest,
 } from "#src/contracts/notifications/schemas";
 import {
@@ -75,7 +70,6 @@ export const makeNotificationWatchedItems = (
   const mapRule = (
     rule: typeof notificationRuleTable.$inferSelect,
     targets: unknown[],
-    unresolvedSelections: readonly NotificationRuleUnresolvedSelection[],
   ) => ({
     ...rule,
     filters:
@@ -83,7 +77,6 @@ export const makeNotificationWatchedItems = (
         ? null
         : Schema.decodeUnknownSync(NotificationFiltersResponse)(rule.filters),
     targets,
-    unresolvedSelections,
   });
 
   const findByScope = (discordId: string, itemId: number, world: string) =>
@@ -158,10 +151,6 @@ export const makeNotificationWatchedItems = (
       Effect.mapError(databaseFailure("notifications.watchedItems.targets")),
     );
 
-    const unresolved = yield* readUnresolvedSelections(database, ruleIds).pipe(
-      Effect.mapError(databaseFailure("notifications.watchedItems.unresolved")),
-    );
-
     const pairs = [
       ...new Map(
         rows.map(({ watchedItem }) => [
@@ -224,11 +213,7 @@ export const makeNotificationWatchedItems = (
       return {
         ...watchedItem,
         notificationRule: rule
-          ? mapRule(
-              rule,
-              targets.get(rule.id) ?? [],
-              unresolved.get(rule.id) ?? [],
-            )
+          ? mapRule(rule, targets.get(rule.id) ?? [])
           : null,
         itemSnapshot: snapshot
           ? Schema.decodeUnknownSync(WatchedItemSnapshotResponse)({
@@ -421,9 +406,6 @@ export const makeNotificationWatchedItems = (
             .insert(notificationRuleTargetTable)
             .values(targetIds.map((targetId) => ({ ruleId, targetId })))
             .onConflictDoNothing();
-
-          // The item was selected again, so its saved name is current.
-          yield* resolveUnresolvedSelections(transaction, ruleId, "item", []);
         }),
       )
       .pipe(

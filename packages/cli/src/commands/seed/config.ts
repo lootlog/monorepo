@@ -1,3 +1,5 @@
+import { GameVersion } from "@lootlog/schema/game-version";
+
 export const SCRAPER_CONFIG = {
   margoworld: {
     baseUrl: "https://margoworld.pl",
@@ -7,6 +9,8 @@ export const SCRAPER_CONFIG = {
   },
   npcTypes: ["elite2", "titan", "elite", "heros", "kolos"],
   professions: ["p", "w", "h", "b", "t", "m"] as const,
+  // margoworld.pl and these worlds belong to the Polish edition.
+  gameVersion: GameVersion.PL,
   worlds: [
     "gordion",
     "classic",

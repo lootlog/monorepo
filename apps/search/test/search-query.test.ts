@@ -15,8 +15,9 @@ const player = {
   world: "luvia",
 };
 
-const npc = {
+const npcHit = {
   id: 1,
+  identityNamespace: "template",
   name: "Tanro",
   lvl: 100,
   prof: "w",
@@ -24,8 +25,11 @@ const npc = {
   wt: 80,
   type: "HERO",
   margonemType: 2,
-  world: "luvia",
+  worlds: ["luvia"],
+  gameVersion: "pl",
 };
+
+const npcDocument = { ...npcHit, uid: "pl_template_1_2", observedLootId: 7 };
 
 test("individual endpoints preserve text search and repeated exact-name filters through HTTP", async () => {
   const queries: { index: string; q: string; filter?: string }[] = [];
@@ -45,7 +49,7 @@ test("individual endpoints preserve text search and repeated exact-name filters 
 
           const index = path.split("/")[2] ?? "";
           queries.push({ index, ...query });
-          const candidate = index === "players" ? player : npc;
+          const candidate = index === "players" ? player : npcDocument;
 
           const hits =
             index !== "items" &&
@@ -93,18 +97,7 @@ test("individual endpoints preserve text search and repeated exact-name filters 
   try {
     for (const [index, term, expected] of [
       ["players", "cash", player],
-      // Documents indexed before identity namespaces are served as legacy,
-      // and those indexed before editions take the edition of their world.
-      [
-        "npcs",
-        "tanro",
-        {
-          ...npc,
-          identityNamespace: "legacy",
-          gameVersion: "pl",
-          worlds: ["luvia"],
-        },
-      ],
+      ["npcs", "tanro", npcHit],
     ] as const) {
       const individual = await boundary.handler(
         new Request(`http://localhost/${index}?search=${term}&world=luvia`),
@@ -123,7 +116,14 @@ test("individual endpoints preserve text search and repeated exact-name filters 
       expect(await all.json()).toMatchObject({ [index]: [expected] });
     }
 
-    // NPC and item search ignore the deprecated world; players filter by it.
+    // Older clients still send `world` to NPC and item search; it is an
+    // unknown parameter there and filters only players.
+    const items = await boundary.handler(
+      new Request("http://localhost/items?search=sword&world=luvia"),
+      Context.empty(),
+    );
+
+    expect(items.status).toBe(200);
     expect(new Set(queries.map(({ index }) => index))).toEqual(
       new Set(["players", "npcs", "items"]),
     );

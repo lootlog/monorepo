@@ -328,6 +328,7 @@ test.each([true, false])(
       );
       await boundary.run(
         database.insert(lootTable).values({
+          gameVersion: "pl",
           id: 1,
           uniqueId: "loot",
           world: "world",
@@ -344,6 +345,7 @@ test.each([true, false])(
       await boundary.run(
         database.insert(npcSnapshotTable).values([
           {
+            gameVersion: "pl",
             id: 1,
             npcId: 99,
             name: "NPC",
@@ -352,6 +354,7 @@ test.each([true, false])(
             snapshotHash: "current",
           },
           {
+            gameVersion: "pl",
             id: 2,
             npcId: 99,
             name: "NPC",
@@ -366,6 +369,7 @@ test.each([true, false])(
       );
       await boundary.run(
         database.insert(lootTable).values({
+          gameVersion: "pl",
           id: 2,
           uniqueId: "old-loot",
           world: "world",

@@ -88,6 +88,7 @@ describe("notification job dispatch", () => {
       await run(
         database.insert(npcSnapshotTable).values([
           {
+            gameVersion: "pl",
             id: 1,
             npcId: 52950,
             name: "Czempion Furboli",
@@ -96,6 +97,7 @@ describe("notification job dispatch", () => {
             snapshotHash: "before",
           },
           {
+            gameVersion: "pl",
             id: 2,
             npcId: 52950,
             name: "Czempion Furboli",
@@ -123,6 +125,7 @@ describe("notification job dispatch", () => {
       for (const id of [1, 2]) {
         await run(
           database.insert(lootTable).values({
+            gameVersion: "pl",
             id,
             uniqueId: `loot-${id}`,
             world: "world",

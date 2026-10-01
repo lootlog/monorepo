@@ -1,8 +1,5 @@
 import { getItemTypeByCl } from "@lootlog/domain/item-type";
-import {
-  gameVersionOfWorld,
-  type GameVersion,
-} from "@lootlog/schema/game-version";
+import type { GameVersion } from "@lootlog/schema/game-version";
 import { parseItemStats, splitItemStat } from "@lootlog/database/item-stat";
 import {
   createItemSnapshotHash,
@@ -42,7 +39,7 @@ import { GuildGenerator } from "./generators/guild-generator.js";
 import { LootGenerator } from "./generators/loot-generator.js";
 import { BattlesGenerator } from "./generators/battles-generator.js";
 import { BattleProcessor, type Warrior } from "@lootlog/battle-processor";
-import { SEED_CONFIG } from "./config.js";
+import { SCRAPER_CONFIG, SEED_CONFIG } from "./config.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { and, eq } from "drizzle-orm";
@@ -406,7 +403,7 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
       : [];
 
   for (const loot of loots) {
-    const gameVersion = gameVersionOfWorld(loot.world);
+    const { gameVersion } = SCRAPER_CONFIG;
 
     const createdLoot = await mainDatabase.transaction(async (transaction) => {
       const insertedLoots = await transaction

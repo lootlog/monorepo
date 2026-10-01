@@ -34,7 +34,8 @@ export const AllControllerSearchAllQuery = Schema.Struct({
     ),
   ),
   search: Schema.optionalKey(Schema.String),
-  // Filters players only; NPC and item results ignore it.
+  // Filters players only; NPCs and items are shared by every world of an
+  // edition.
   world: Schema.optionalKey(Schema.String),
 });
 

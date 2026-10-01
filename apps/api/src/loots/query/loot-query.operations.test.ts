@@ -84,6 +84,7 @@ describe("filtered loot reads", () => {
       await run(
         database.insert(npcSnapshotTable).values([
           {
+            gameVersion: "pl",
             id: 1,
             npcId: 52950,
             name: "Czempion Furboli",
@@ -92,6 +93,7 @@ describe("filtered loot reads", () => {
             snapshotHash: "observed-183",
           },
           {
+            gameVersion: "pl",
             id: 2,
             npcId: 52950,
             name: "Czempion Furboli",
@@ -103,6 +105,7 @@ describe("filtered loot reads", () => {
       );
       await run(
         database.insert(itemSnapshotTable).values({
+          gameVersion: "pl",
           id: 1,
           itemId: 1,
           statsHash: "legendary",
@@ -118,6 +121,7 @@ describe("filtered loot reads", () => {
       for (const id of [1, 2]) {
         await run(
           database.insert(lootTable).values({
+            gameVersion: "pl",
             id,
             uniqueId: `revision-${id}`,
             world: "test",
@@ -348,17 +352,60 @@ describe("filtered loot reads", () => {
 
       await run(
         database.insert(npcSnapshotTable).values([
-          { id: 1, npcId: 1, name: "Named common", type: "COMMON", lvl: 50 },
-          { id: 2, npcId: 2, name: "High hero", type: "HERO", lvl: 250 },
-          { id: 3, npcId: 3, name: "Low hero", type: "HERO", lvl: 50 },
-          { id: 4, npcId: 4, name: "Unknown type", type: null, lvl: 50 },
-          { id: 5, npcId: 5, name: "Unknown level", type: "COMMON", lvl: null },
-          { id: 6, npcId: 6, name: "Named common", type: "COMMON", lvl: 75 },
+          {
+            gameVersion: "pl",
+            id: 1,
+            npcId: 1,
+            name: "Named common",
+            type: "COMMON",
+            lvl: 50,
+          },
+          {
+            gameVersion: "pl",
+            id: 2,
+            npcId: 2,
+            name: "High hero",
+            type: "HERO",
+            lvl: 250,
+          },
+          {
+            gameVersion: "pl",
+            id: 3,
+            npcId: 3,
+            name: "Low hero",
+            type: "HERO",
+            lvl: 50,
+          },
+          {
+            gameVersion: "pl",
+            id: 4,
+            npcId: 4,
+            name: "Unknown type",
+            type: null,
+            lvl: 50,
+          },
+          {
+            gameVersion: "pl",
+            id: 5,
+            npcId: 5,
+            name: "Unknown level",
+            type: "COMMON",
+            lvl: null,
+          },
+          {
+            gameVersion: "pl",
+            id: 6,
+            npcId: 6,
+            name: "Named common",
+            type: "COMMON",
+            lvl: 75,
+          },
         ]),
       );
       await run(
         database.insert(itemSnapshotTable).values([
           {
+            gameVersion: "pl",
             id: 1,
             itemId: 1,
             statsHash: "low",
@@ -370,6 +417,7 @@ describe("filtered loot reads", () => {
             statsSnapshot: {},
           },
           {
+            gameVersion: "pl",
             id: 2,
             itemId: 2,
             statsHash: "high",
@@ -387,6 +435,7 @@ describe("filtered loot reads", () => {
       await run(
         database.insert(lootTable).values(
           Array.from({ length: 8 }, (_, index) => ({
+            gameVersion: "pl" as const,
             id: index + 1,
             uniqueId: `filtered-${index + 1}`,
             world: "test",
@@ -624,13 +673,28 @@ describe("free-text loot search", () => {
 
       await run(
         database.insert(npcSnapshotTable).values([
-          { id: 1, npcId: 1, name: "Zbójca", type: "COMMON", lvl: 10 },
-          { id: 2, npcId: 2, name: "Cienisty Golem", type: "COMMON", lvl: 20 },
+          {
+            gameVersion: "pl",
+            id: 1,
+            npcId: 1,
+            name: "Zbójca",
+            type: "COMMON",
+            lvl: 10,
+          },
+          {
+            gameVersion: "pl",
+            id: 2,
+            npcId: 2,
+            name: "Cienisty Golem",
+            type: "COMMON",
+            lvl: 20,
+          },
         ]),
       );
       await run(
         database.insert(itemSnapshotTable).values([
           {
+            gameVersion: "pl",
             id: 1,
             itemId: 1,
             statsHash: "a",
@@ -640,6 +704,7 @@ describe("free-text loot search", () => {
             statsSnapshot: {},
           },
           {
+            gameVersion: "pl",
             id: 2,
             itemId: 2,
             statsHash: "b",
@@ -686,6 +751,7 @@ describe("free-text loot search", () => {
       await run(
         database.insert(lootTable).values(
           locations.map((location, index) => ({
+            gameVersion: "pl" as const,
             id: index + 1,
             uniqueId: `search-${index + 1}`,
             world: "test",

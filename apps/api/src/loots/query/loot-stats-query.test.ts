@@ -81,19 +81,19 @@ describe("loot statistics at the PostgreSQL boundary", () => {
             sql`insert into "Member" (id, "guildId", "userId", name, "updatedAt") values (1, 'stats-a', 'reader-a', 'Reader A', now()), (2, 'stats-b', 'reader-b', 'Reader B', now())`,
           );
           yield* db.execute(
-            sql`insert into "Loot" (id, "uniqueId", world, source, location, "createdAt", "updatedAt") values (1, 'stats-1', 'test', 'FIGHT', 'Test', timestamp '2026-01-01 10:30:00', now()), (2, 'stats-2', 'test', 'FIGHT', 'Test', timestamp '2026-01-01 10:30:00', now()), (3, 'stats-3', 'test', 'FIGHT', 'Test', timestamp '2026-01-01 10:30:00', now())`,
+            sql`insert into "Loot" (id, "uniqueId", world, source, location, "createdAt", "updatedAt", "gameVersion") values (1, 'stats-1', 'test', 'FIGHT', 'Test', timestamp '2026-01-01 10:30:00', now(), 'pl'), (2, 'stats-2', 'test', 'FIGHT', 'Test', timestamp '2026-01-01 10:30:00', now(), 'pl'), (3, 'stats-3', 'test', 'FIGHT', 'Test', timestamp '2026-01-01 10:30:00', now(), 'pl')`,
           );
           yield* db.execute(
             sql`insert into "OrganizationLootRecord" (id, "lootId", "guildId", "archivedAt", "updatedAt") values (1, 1, 'stats-a', null, now()), (2, 1, 'stats-b', null, now()), (3, 2, 'stats-a', null, now()), (4, 3, 'stats-a', now(), now())`,
           );
           yield* db.execute(
-            sql`insert into "NpcSnapshot" (id, "npcId", name, type, lvl) values (1, 100, 'Hero', 'HERO', 100), (2, 200, 'Elite', 'ELITE2', 100), (3, 300, 'Titan', 'TITAN', 100)`,
+            sql`insert into "NpcSnapshot" (id, "npcId", name, type, lvl, "gameVersion") values (1, 100, 'Hero', 'HERO', 100, 'pl'), (2, 200, 'Elite', 'ELITE2', 100, 'pl'), (3, 300, 'Titan', 'TITAN', 100, 'pl')`,
           );
           yield* db.execute(
             sql`insert into "LootNpc" ("lootId", "npcSnapshotId") values (1,1), (1,2), (2,1), (2,3), (3,1)`,
           );
           yield* db.execute(
-            sql`insert into "ItemSnapshot" (id, "itemId", "statsHash", name, icon, lvl, rarity, "itemType", "statRaw", "statsSnapshot") values (1, 101, 'legendary', 'Legendary', 'l.gif', 100, 'LEGENDARY', 'WEAPON', '', '{}'), (2, 102, 'heroic', 'Heroic', 'h.gif', 100, 'HEROIC', 'WEAPON', '', '{}')`,
+            sql`insert into "ItemSnapshot" (id, "itemId", "statsHash", name, icon, lvl, rarity, "itemType", "statRaw", "statsSnapshot", "gameVersion") values (1, 101, 'legendary', 'Legendary', 'l.gif', 100, 'LEGENDARY', 'WEAPON', '', '{}', 'pl'), (2, 102, 'heroic', 'Heroic', 'h.gif', 100, 'HEROIC', 'WEAPON', '', '{}', 'pl')`,
           );
           yield* db.execute(
             sql`insert into "LootItem" ("lootId", "itemSnapshotId", hid) values (1,1,'legendary-b'), (1,1,'legendary-a'), (1,2,'heroic'), (2,1,'hidden'), (3,1,'archived')`,

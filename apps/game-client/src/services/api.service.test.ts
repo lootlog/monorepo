@@ -55,6 +55,7 @@ describe("api.service logging", () => {
 
     const payload: CreateLootDto = {
       world: "luvia",
+      gameVersion: "pl",
       source: "FIGHT",
       location: "Karka-han",
       npcs: [],
@@ -174,6 +175,7 @@ describe("api.service logging", () => {
       createLoot(
         {
           world: "luvia",
+          gameVersion: "pl",
           source: "DIALOG",
           location: "Karka-han",
           npcs: [],
@@ -238,6 +240,7 @@ describe("api.service logging", () => {
 
     const payload: CreateLootDto = {
       world: "luvia",
+      gameVersion: "pl",
       source: "FIGHT",
       location: "Karka-han",
       npcs: [],

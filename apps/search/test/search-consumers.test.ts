@@ -207,6 +207,7 @@ test("coalesces each index independently and acknowledges only completed Meilise
           rarity: null,
           type: null,
           world: "test",
+          gameVersion: "pl",
         },
       ]);
       fixture.dispatch("search-npcs-index", [
@@ -220,6 +221,7 @@ test("coalesces each index independently and acknowledges only completed Meilise
           type: "COMMON",
           margonemType: 0,
           world: "test",
+          gameVersion: "pl",
         },
       ]);
     }

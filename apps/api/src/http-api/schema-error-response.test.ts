@@ -94,6 +94,7 @@ for (const { path, payload, field } of [
     path: "/loots",
     payload: {
       world: "luvia",
+      gameVersion: "pl",
       source: "FIGHT",
       npcs: [{ ...npc, location: "" }],
       loots: [

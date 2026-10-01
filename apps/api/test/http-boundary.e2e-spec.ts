@@ -397,6 +397,7 @@ describe("API HTTP boundary", () => {
           updatedAt: new Date(),
         });
         yield* database.insert(itemSnapshotTable).values({
+          gameVersion: "pl",
           itemId,
           statsHash: "watched-item-test",
           name: "Watched item",

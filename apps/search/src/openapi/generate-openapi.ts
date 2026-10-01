@@ -15,18 +15,6 @@ const formArray = (items: { type: "string" }) => ({
   explode: true,
 });
 
-// Deprecated parameters stay accepted until a breaking release removes them.
-const deprecatedString = (description: string) => ({
-  schema: { type: "string" },
-  description,
-  deprecated: true,
-});
-
-const ignoredWorld = () =>
-  deprecatedString(
-    "Deprecated and ignored: every world of an edition shares its NPC and item ids. Accepted for older callers; it will be removed in a breaking release.",
-  );
-
 preserveOpenApi30Contract(
   document,
   {
@@ -42,10 +30,8 @@ preserveOpenApi30Contract(
       },
     },
     "NpcsController_getNpcs:limit": numberWithDefault(10),
-    "NpcsController_getNpcs:world": ignoredWorld(),
     "ItemsController_getItems:limit": numberWithDefault(20),
     "ItemsController_getItems:offset": numberWithDefault(0),
-    "ItemsController_getItems:world": ignoredWorld(),
     "ItemsController_getItems:filter": {
       schema: {
         anyOf: [
@@ -62,7 +48,7 @@ preserveOpenApi30Contract(
     "AllController_searchAll:world": {
       schema: { type: "string" },
       description:
-        "Filters players by world. NPC and item results ignore it; that use is deprecated.",
+        "Filters players by world. NPC and item results cover every world of their edition.",
     },
   },
   {

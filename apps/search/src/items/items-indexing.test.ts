@@ -14,6 +14,7 @@ const item = (id: number, world = "new") => ({
   lvl: 1,
   rarity: null,
   type: null,
+  gameVersion: "pl" as const,
 });
 
 test("batches existing-world reads and preserves worlds across duplicate and missing documents", async () => {
@@ -35,11 +36,11 @@ test("batches existing-world reads and preserves worlds across duplicate and mis
         expect(url.searchParams.get("limit")).toBe(String(ids.length));
         expect(url.searchParams.has("fields")).toBe(false);
 
-        const stored = itemCatalogKey({ gameVersion: "pl", ...item(1) });
+        const stored = itemCatalogKey(item(1));
 
         return Promise.resolve({
           results: ids.includes(stored)
-            ? [{ uid: stored, world: "legacy", worlds: ["old", "new"] }]
+            ? [{ uid: stored, worlds: ["old", "new"] }]
             : [],
         });
       }
@@ -66,11 +67,11 @@ test("batches existing-world reads and preserves worlds across duplicate and mis
   expect(written).toEqual(
     expect.arrayContaining([
       expect.objectContaining({
-        uid: itemCatalogKey({ gameVersion: "pl", ...item(1) }),
-        worlds: ["legacy", "new", "old", "other"],
+        uid: itemCatalogKey(item(1)),
+        worlds: ["new", "old", "other"],
       }),
       expect.objectContaining({
-        uid: itemCatalogKey({ gameVersion: "pl", ...item(101) }),
+        uid: itemCatalogKey(item(101)),
         worlds: ["new"],
       }),
     ]),
@@ -101,11 +102,11 @@ test("keeps each edition and name of one item searchable instead of the last obs
     },
   });
 
-  const trophy = (
-    name: string,
-    world: string,
-    gameVersion: "en" | "pl" | null,
-  ) => ({ ...item(62_271, world), name, gameVersion });
+  const trophy = (name: string, world: string, gameVersion: "en" | "pl") => ({
+    ...item(62_271, world),
+    name,
+    gameVersion,
+  });
 
   await Effect.runPromise(
     makeItemsModule(client, logger).indexItems({
@@ -114,8 +115,7 @@ test("keeps each edition and name of one item searchable instead of the last obs
         trophy("Wojenne trofeum Seta", "tarhuna", "pl"),
         trophy("Wojenne trofeum Seta", "katahha", "pl"),
         trophy("Seth's War Trophy", "cronus", "en"),
-        // Older publishers sent no edition; the world's edition applies.
-        trophy("Seth's War Trophy", "husaria", null),
+        trophy("Seth's War Trophy", "husaria", "en"),
       ],
     }),
   );
