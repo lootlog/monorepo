@@ -731,7 +731,8 @@ CPU cores. The second production plan used a one-off patch instead.
 - It drops the repair log tables and `NotificationRuleUnresolvedSelection`,
   together with the `unresolvedSelections` field of notification rules.
 - It deletes revisions without an edition that no loot links (213 NPC and 221
-  item revisions on the local production copy). Only rows the repair relinked
+  item revisions, counted read-only on production on 2026-10-01, with no
+  linked revision without an edition). Only rows the repair relinked
   away remain without one, and no writer can match their hashes again. A
   linked revision without an edition aborts the migration instead.
 - It drops `NpcSnapshot.world` and makes `gameVersion` `NOT NULL` on `Loot`,
