@@ -867,7 +867,10 @@ cluster was created) and a local production copy were the evidence.
   read and write.
 - It drops `UserGameAccountSettings`, `UserGuildTimerSettings`,
   `UserSoundSettings` and `UserTimerSettings`, which settings documents
-  replaced, and the legacy `_prisma_migrations` journal.
+  replaced, and the legacy `_prisma_migrations` journal. The legacy ORM
+  migration `20260724030000_add_user_setting_documents` copied the timer,
+  guild timer and sound rows, which received no writes afterwards, and
+  `20260910185220_settings_documents_backfill` copied the game account rows.
 - It drops indexes that had no scans or are covered by a unique key, and it
   makes the `OrganizationLootRecord.archivedByMemberId` index partial.
   `LootItem.hid` gets a hash index, because only equality lookups read the

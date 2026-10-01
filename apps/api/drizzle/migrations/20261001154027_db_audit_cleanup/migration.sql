@@ -48,8 +48,11 @@ DROP TABLE "OrphanItemSnapshot", "OrphanNpcSnapshot", "OrphanPlayerSnapshot", "U
 DELETE FROM "UserSettingDocument" WHERE "scopeType" = 'GUILD' AND NOT EXISTS (SELECT 1 FROM "Guild" WHERE "Guild"."id" = "UserSettingDocument"."scopeId");--> statement-breakpoint
 DELETE FROM "LootlogConfigNpc" WHERE NOT EXISTS (SELECT 1 FROM "Guild" WHERE "Guild"."id" = "LootlogConfigNpc"."lootlogConfigId");--> statement-breakpoint
 DELETE FROM "LootlogConfig" WHERE NOT EXISTS (SELECT 1 FROM "Guild" WHERE "Guild"."id" = "LootlogConfig"."id");--> statement-breakpoint
--- Settings documents replaced these tables; their rows were backfilled by
--- 20260910185220_settings_documents_backfill and nothing reads them since.
+-- Settings documents replaced these tables. The legacy ORM migration
+-- 20260724030000_add_user_setting_documents copied the timer, guild timer and
+-- sound rows (master volume stays on the device), after which they received no
+-- writes; 20260910185220_settings_documents_backfill copied the game account
+-- rows. Nothing reads them since.
 DROP TABLE "UserGameAccountSettings";--> statement-breakpoint
 DROP TABLE "UserGuildTimerSettings";--> statement-breakpoint
 DROP TABLE "UserSoundSettings";--> statement-breakpoint
