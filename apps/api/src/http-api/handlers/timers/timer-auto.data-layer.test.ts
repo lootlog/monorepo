@@ -415,6 +415,7 @@ it("writes a kill within the dedup window of an event respawn window that has no
     );
 
     const publications: string[] = [];
+    const eventHeroIcons: Array<string | undefined> = [];
 
     const create = makeAutoTimer(database, {
       get: () => Effect.succeed(null),
@@ -422,7 +423,10 @@ it("writes a kill within the dedup window of an event respawn window that has no
       setNx: () => Effect.succeed(true),
       releaseDedup: () => Effect.void,
       invalidateList: () => Effect.void,
-      enqueueEventHeroCheck: () => Effect.void,
+      enqueueEventHeroCheck: (check) =>
+        Effect.sync(() => {
+          eventHeroIcons.push(check.npcIcon);
+        }),
       withLock: (_key, operation) => operation,
       publish: (routingKey) =>
         Effect.sync(() => {
@@ -442,7 +446,8 @@ it("writes a kill within the dedup window of an event respawn window that has no
             location: "Map",
             lvl: 100,
             wt: 85,
-            icon: "hero.png",
+            // Older old-interface clients report the rendered CDN URL.
+            icon: "https://micc.garmory-cdn.cloud/obrazki/npc/her/hero.png",
             type: 2,
           },
           accountId: "1",
@@ -453,12 +458,17 @@ it("writes a kill within the dedup window of an event respawn window that has no
 
     expect(
       await boundary.run(database.select().from(timerHistoryEntryTable)),
-    ).toMatchObject([{ action: TimerHistoryAction.CREATE }]);
+    ).toMatchObject([
+      { action: TimerHistoryAction.CREATE, npc: { icon: "her/hero.png" } },
+    ]);
     expect(
       (await boundary.run(database.select().from(timerTable))).map(
-        ({ latestRespBaseSeconds }) => latestRespBaseSeconds,
+        ({ latestRespBaseSeconds, npc }) => ({ latestRespBaseSeconds, npc }),
       ),
-    ).toEqual([60]);
+    ).toMatchObject([
+      { latestRespBaseSeconds: 60, npc: { icon: "her/hero.png" } },
+    ]);
+    expect(eventHeroIcons).toEqual(["her/hero.png"]);
     expect(publications).toEqual([
       RabbitRoutingKey.GUILDS_TIMERS_UPDATE,
       RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
