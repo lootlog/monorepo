@@ -20390,12 +20390,11 @@ components:
           type: string
           minLength: 1
         gameVersion:
-          description: "Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API. Send it with every loot: omitting it, or sending null, is deprecated and a later breaking release will reject such loots. Until then the API uses the edition of `world`: `cronus`, `husaria` and `steamrealm` are `en`, every other world is `pl`."
-          nullable: true
           type: string
           enum:
             - en
             - pl
+          description: "Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API."
         source:
           type: string
           enum:
@@ -20416,6 +20415,7 @@ components:
         - npcs
         - players
         - world
+        - gameVersion
         - source
         - location
         - accountId
@@ -22111,45 +22111,6 @@ components:
         active:
           type: boolean
       additionalProperties: false
-    NotificationRuleUnresolvedSelectionDto:
-      type: object
-      properties:
-        kind:
-          type: string
-          enum:
-            - npc
-            - item
-        selectedId:
-          type: integer
-          minimum: -9007199254740991
-          maximum: 9007199254740991
-        selectedName:
-          nullable: true
-          type: string
-        reason:
-          type: string
-          enum:
-            - legacyCatalogId
-            - unknownId
-            - nameFromOtherEdition
-            - nameWithoutSnapshot
-        suggestedId:
-          nullable: true
-          type: integer
-          minimum: -9007199254740991
-          maximum: 9007199254740991
-        suggestedName:
-          nullable: true
-          type: string
-      required:
-        - kind
-        - selectedId
-        - selectedName
-        - reason
-        - suggestedId
-        - suggestedName
-      additionalProperties: false
-      description: "A saved selection that does not identify what the rule matches. `npc`: a timer rule id from the legacy NPC catalog (`legacyCatalogId`) or an id found nowhere (`unknownId`); the rule still matches only its saved ids, and `suggestedId` names the timer id observed for the same NPC, if known. `item`: a watched item whose saved name may come from the other game edition or matches no item revision; matching by item id and world is unaffected. It disappears once the rule is saved without the id, or the item is selected again."
     GuildNotificationRulesResponseDto__schema0:
       anyOf:
         - type: string
@@ -22306,10 +22267,6 @@ components:
                 type: string
                 format: date-time
                 pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-              unresolvedSelections:
-                type: array
-                items:
-                  $ref: "#/components/schemas/NotificationRuleUnresolvedSelectionDto"
               targets:
                 type: array
                 items:
@@ -22464,7 +22421,6 @@ components:
               - dedupeWindowSeconds
               - createdAt
               - updatedAt
-              - unresolvedSelections
               - targets
               - testTrigger
             additionalProperties: false
@@ -22761,10 +22717,6 @@ components:
           type: string
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-        unresolvedSelections:
-          type: array
-          items:
-            $ref: "#/components/schemas/NotificationRuleUnresolvedSelectionDto"
         targets:
           type: array
           items:
@@ -22888,7 +22840,6 @@ components:
         - dedupeWindowSeconds
         - createdAt
         - updatedAt
-        - unresolvedSelections
         - targets
       additionalProperties: false
     UpdateNotificationRuleDto:
@@ -24250,10 +24201,6 @@ components:
               type: string
               format: date-time
               pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-            unresolvedSelections:
-              type: array
-              items:
-                $ref: "#/components/schemas/NotificationRuleUnresolvedSelectionDto"
             targets:
               type: array
               items:
@@ -24377,7 +24324,6 @@ components:
             - dedupeWindowSeconds
             - createdAt
             - updatedAt
-            - unresolvedSelections
             - targets
           allOf:
             - type: object

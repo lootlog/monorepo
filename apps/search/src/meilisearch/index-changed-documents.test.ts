@@ -1,7 +1,6 @@
 import { expect, test } from "bun:test";
 import { Effect, Schema } from "effect";
 import { Meilisearch, type SearchParams } from "meilisearch";
-import { uniqBy } from "es-toolkit";
 import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import { makePlayersModule } from "../players/players.service.js";
 import { makeNpcsModule, type toNpcDocument } from "../npcs/npcs.service.js";
@@ -25,14 +24,10 @@ test("NPC observations are one catalog entry per edition and identity, with ever
 
       if (url.pathname.endsWith("/search")) {
         const query: SearchParams = JSON.parse(String(init?.body));
-        const documents = [...stored.values()];
 
-        const matches =
-          query.distinct === "catalogKey"
-            ? uniqBy(documents, (document) => document.catalogKey)
-            : documents;
-
-        return Promise.resolve({ hits: matches.slice(0, query.limit) });
+        return Promise.resolve({
+          hits: [...stored.values()].slice(0, query.limit),
+        });
       }
 
       if ((init?.method ?? "GET").toUpperCase() === "GET") {
@@ -78,12 +73,10 @@ test("NPC observations are one catalog entry per edition and identity, with ever
     );
 
   // The same NPC on other worlds of the edition, delivered separately and
-  // again, including from a publisher that sent no edition.
+  // again.
   await index([champion, { ...champion, world: "fobos" }]);
   await index([champion]);
-
-  const { gameVersion: _gameVersion, ...unversioned } = champion;
-  await index([{ ...unversioned, world: "jaruna" }]);
+  await index([{ ...champion, world: "jaruna" }]);
 
   expect([...stored.keys()]).toEqual(["pl_52950_2"]);
 
@@ -113,7 +106,7 @@ test("NPC observations are one catalog entry per edition and identity, with ever
 
   // Editions never share an entry: an English world is another NPC, even
   // with an equal id, name and type.
-  await index([{ ...unversioned, world: "cronus" }]);
+  await index([{ ...champion, world: "cronus", gameVersion: "en" }]);
 
   expect(
     (await Effect.runPromise(npcs.getNpcs({ limit: 10 }))).map((hit) => [
@@ -219,6 +212,7 @@ for (const catalog of ["players", "npcs", "items"] as const) {
             wt: 80,
             margonemType: 2,
             type: "hero",
+            gameVersion: "pl",
           })),
         });
 
@@ -232,6 +226,7 @@ for (const catalog of ["players", "npcs", "items"] as const) {
           stat: "lvl=1",
           rarity: null,
           type: null,
+          gameVersion: "pl",
         })),
       });
     };

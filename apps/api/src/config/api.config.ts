@@ -52,13 +52,6 @@ export interface ApiConfiguration {
 }
 
 /** The complete API environment contract, decoded by Effect Config. */
-export const apiRedisConfiguration = Config.all({
-  host: Config.String("REDIS_HOST"),
-  port: Config.Number("REDIS_PORT"),
-  username: Config.String("REDIS_USERNAME"),
-  password: Config.Redacted("REDIS_PASSWORD"),
-});
-
 export const apiConfiguration = Config.all({
   authIdpTokenSecret: optionalRedacted("AUTH_IDP_TOKEN_SECRET"),
   battlelogCleanupSecret: optionalRedacted("BATTLELOG_CLEANUP_SECRET"),
@@ -78,7 +71,12 @@ export const apiConfiguration = Config.all({
   ),
   postgresqlConnectionUri: optionalRedacted("POSTGRESQL_CONNECTION_URI"),
   rabbitmqUri: Config.Redacted("RABBITMQ_URI"),
-  redis: apiRedisConfiguration,
+  redis: Config.all({
+    host: Config.String("REDIS_HOST"),
+    port: Config.Number("REDIS_PORT"),
+    username: Config.String("REDIS_USERNAME"),
+    password: Config.Redacted("REDIS_PASSWORD"),
+  }),
   authServiceUrl: Config.schema(Schema.URLFromString, "AUTH_SERVICE_URL"),
   battlelogServiceUrl: Config.schema(
     Schema.URLFromString,

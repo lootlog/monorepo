@@ -808,6 +808,7 @@ describe("Read cache Dragonfly integration", () => {
           const [loot] = yield* db
             .insert(lootTable)
             .values({
+              gameVersion: "pl",
               uniqueId: randomUUID(),
               world: "test",
               source: "FIGHT",

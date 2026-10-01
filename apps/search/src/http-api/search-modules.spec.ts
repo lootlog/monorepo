@@ -106,7 +106,6 @@ describe("Search Effect modules", () => {
       type: "HERO",
       margonemType: 2,
       prof: "w",
-      world: "berufs",
       worlds: ["berufs"],
       gameVersion: "pl",
     } satisfies NpcHit;
@@ -187,6 +186,7 @@ describe("Search Effect modules", () => {
             margonemType: 2,
             prof: null,
             world: "berufs",
+            gameVersion: "pl",
           },
           {
             id: 0,
@@ -198,6 +198,7 @@ describe("Search Effect modules", () => {
             margonemType: 2,
             prof: null,
             world: "berufs",
+            gameVersion: "pl",
           },
         ],
       }),
@@ -260,35 +261,6 @@ describe("Search Effect modules", () => {
     expect(failure.operation).toBe("search.players.index");
   });
 
-  test("normalizes legacy NPC hit fields", async () => {
-    const client = makeClient(() => ({
-      search: () =>
-        Promise.resolve({
-          hits: [
-            {
-              id: 7,
-              prof: null,
-              icon: "npc.gif",
-              name: "Hero",
-              lvl: 100,
-              wt: 80,
-              type: 2,
-              margonemType: null,
-              world: "berufs",
-            },
-          ],
-        }),
-    }));
-
-    const npcs = makeNpcsModule(client, silentLogger);
-
-    const result = await Effect.runPromise(npcs.getNpcs({ limit: 10 }));
-
-    expect(result).toHaveLength(1);
-    expect(result[0]?.margonemType).toBe(2);
-    expect(result[0]?.prof).toBe("");
-  });
-
   test("merges item worlds before indexing", async () => {
     let indexedDocuments: unknown;
 
@@ -331,6 +303,7 @@ describe("Search Effect modules", () => {
             rarity: null,
             type: null,
             world: "berufs",
+            gameVersion: "pl",
           },
           {
             id: 42,
@@ -341,6 +314,7 @@ describe("Search Effect modules", () => {
             rarity: null,
             type: null,
             world: "gefion",
+            gameVersion: "pl",
           },
         ],
       }),

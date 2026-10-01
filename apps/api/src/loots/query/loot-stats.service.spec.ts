@@ -115,19 +115,19 @@ describe("LootStatsService aggregates", () => {
             sql`insert into "Guild" (id, name, "ownerId", "updatedAt") values ('guild-1', 'A', 'owner-a', now()), ('guild-2', 'B', 'owner-b', now())`,
           );
           yield* db.execute(
-            sql`insert into "Loot" (id, "uniqueId", world, source, location, "createdAt", "updatedAt") values (1, 'several-npcs', 'test', 'FIGHT', 'Test', timestamp '2026-01-01 10:30:00', now()), (2, 'one-npc', 'test', 'FIGHT', 'Test', timestamp '2026-01-08 10:30:00', now()), (3, 'common-only', 'test', 'FIGHT', 'Test', timestamp '2026-01-08 10:30:00', now()), (4, 'archived', 'test', 'FIGHT', 'Test', timestamp '2026-01-08 10:30:00', now()), (5, 'other-organization', 'test', 'FIGHT', 'Test', timestamp '2026-01-08 10:30:00', now())`,
+            sql`insert into "Loot" (id, "uniqueId", world, source, location, "createdAt", "updatedAt", "gameVersion") values (1, 'several-npcs', 'test', 'FIGHT', 'Test', timestamp '2026-01-01 10:30:00', now(), 'pl'), (2, 'one-npc', 'test', 'FIGHT', 'Test', timestamp '2026-01-08 10:30:00', now(), 'pl'), (3, 'common-only', 'test', 'FIGHT', 'Test', timestamp '2026-01-08 10:30:00', now(), 'pl'), (4, 'archived', 'test', 'FIGHT', 'Test', timestamp '2026-01-08 10:30:00', now(), 'pl'), (5, 'other-organization', 'test', 'FIGHT', 'Test', timestamp '2026-01-08 10:30:00', now(), 'pl')`,
           );
           yield* db.execute(
             sql`insert into "OrganizationLootRecord" ("lootId", "guildId", "archivedAt", "updatedAt") values (1, 'guild-1', null, now()), (2, 'guild-1', null, now()), (3, 'guild-1', null, now()), (4, 'guild-1', now(), now()), (5, 'guild-2', null, now())`,
           );
           yield* db.execute(
-            sql`insert into "NpcSnapshot" (id, "npcId", name, type, lvl) values (1, 100, 'Hero', 'HERO', 100), (2, 200, 'Elite', 'ELITE2', 100), (3, 300, 'Elite III', 'ELITE3', 100), (4, 400, 'Common', 'COMMON', 100)`,
+            sql`insert into "NpcSnapshot" (id, "npcId", name, type, lvl, "gameVersion") values (1, 100, 'Hero', 'HERO', 100, 'pl'), (2, 200, 'Elite', 'ELITE2', 100, 'pl'), (3, 300, 'Elite III', 'ELITE3', 100, 'pl'), (4, 400, 'Common', 'COMMON', 100, 'pl')`,
           );
           yield* db.execute(
             sql`insert into "LootNpc" ("lootId", "npcSnapshotId") values (1,1), (1,2), (1,3), (1,4), (2,1), (3,4), (4,1), (5,1)`,
           );
           yield* db.execute(
-            sql`insert into "ItemSnapshot" (id, "itemId", "statsHash", name, icon, lvl, rarity, "itemType", "statRaw", "statsSnapshot") values (1, 101, 'legendary', 'Legendary', 'l.gif', 100, 'LEGENDARY', 'WEAPON', '', '{}'), (2, 102, 'heroic', 'Heroic', 'h.gif', 100, 'HEROIC', 'WEAPON', '', '{}'), (3, 103, 'unique', 'Unique', 'u.gif', 100, 'UNIQUE', 'WEAPON', '', '{}'), (4, 104, 'plain', 'Plain', 'p.gif', 100, null, 'WEAPON', '', '{}')`,
+            sql`insert into "ItemSnapshot" (id, "itemId", "statsHash", name, icon, lvl, rarity, "itemType", "statRaw", "statsSnapshot", "gameVersion") values (1, 101, 'legendary', 'Legendary', 'l.gif', 100, 'LEGENDARY', 'WEAPON', '', '{}', 'pl'), (2, 102, 'heroic', 'Heroic', 'h.gif', 100, 'HEROIC', 'WEAPON', '', '{}', 'pl'), (3, 103, 'unique', 'Unique', 'u.gif', 100, 'UNIQUE', 'WEAPON', '', '{}', 'pl'), (4, 104, 'plain', 'Plain', 'p.gif', 100, null, 'WEAPON', '', '{}', 'pl')`,
           );
           yield* db.execute(
             sql`insert into "LootItem" ("lootId", "itemSnapshotId", hid) values (1,1,'l-1'), (1,2,'h-1'), (1,3,'u-1'), (1,4,'p-1'), (2,1,'l-2'), (2,2,'h-2'), (2,4,'p-2'), (3,1,'l-3'), (4,1,'l-4'), (5,1,'l-5')`,

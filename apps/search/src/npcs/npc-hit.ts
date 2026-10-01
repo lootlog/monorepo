@@ -13,7 +13,6 @@ export const NpcHit = Schema.Struct({
   wt: Schema.Number,
   type: NpcTypeSchema,
   margonemType: Schema.Number,
-  world: Schema.String,
   worlds: Schema.Array(Schema.String),
   gameVersion: GameVersionSchema,
 });

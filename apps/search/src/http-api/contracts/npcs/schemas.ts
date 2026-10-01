@@ -31,17 +31,13 @@ export const NpcHitDto_Output = Schema.Struct({
     "NPC",
   ]),
   margonemType: FiniteNumber,
-  world: Schema.String.annotate({
-    description:
-      "Deprecated: the world of the latest observation. Use `worlds`.",
-  }),
   worlds: Schema.Array(Schema.String).annotate({
     description: "Worlds of the edition where this NPC was observed.",
     default: [],
   }),
-  gameVersion: Schema.NullOr(Schema.Literals(["en", "pl"])).annotate({
+  gameVersion: Schema.Literals(["en", "pl"]).annotate({
     description:
-      "Margonem edition of the NPC: `pl` for margonem.pl, `en` for margonem.com. Equal ids in different editions are unrelated. Always set; the field stays nullable for compatibility.",
+      "Margonem edition of the NPC: `pl` for margonem.pl, `en` for margonem.com. Equal ids in different editions are unrelated.",
   }),
 }).annotate({ description: "NPC search hit", identifier: "NpcHitDto_Output" });
 
@@ -70,12 +66,6 @@ export const NpcsControllerGetNpcsQuery = Schema.Struct({
   ),
   search: Schema.optionalKey(
     Schema.Union([Schema.String, Schema.Array(Schema.String)]),
-  ),
-  world: Schema.optionalKey(
-    Schema.String.annotate({
-      description:
-        "Deprecated and ignored: every world of an edition shares its NPC and item ids. Accepted for older callers; it will be removed in a breaking release.",
-    }),
   ),
 });
 

@@ -36,6 +36,7 @@ test("an API key cannot update a shared allocation when one Organization hides i
     const now = new Date();
     await run(
       database.insert(lootTable).values({
+        gameVersion: "pl",
         id: 1,
         uniqueId: "shared-allocation",
         world: "world",
@@ -46,6 +47,7 @@ test("an API key cannot update a shared allocation when one Organization hides i
     );
     await run(
       database.insert(npcSnapshotTable).values({
+        gameVersion: "pl",
         id: 1,
         npcId: 52950,
         name: "Czempion Furboli",
@@ -217,6 +219,7 @@ test("allocation requires a recent actor submission and access to every organiza
     );
     await run(
       database.insert(lootTable).values({
+        gameVersion: "pl",
         id: 1,
         uniqueId: "allocation",
         world: "world",
@@ -311,6 +314,7 @@ test("allocation requires a recent actor submission and access to every organiza
     );
     await run(
       database.insert(npcSnapshotTable).values({
+        gameVersion: "pl",
         id: 1,
         npcId: 52950,
         name: "Legacy NPC",
@@ -325,6 +329,7 @@ test("allocation requires a recent actor submission and access to every organiza
     );
     await run(
       database.insert(itemSnapshotTable).values({
+        gameVersion: "pl",
         id: 1,
         itemId: 1,
         name: "Reward",
