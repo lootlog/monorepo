@@ -86,4 +86,61 @@ describe("NPC observation revision migration", () => {
       await database.close();
     }
   });
+
+  it("deletes only unlinked revisions that repeat a linked revision", async () => {
+    const database = new PGlite({ extensions: { pg_trgm } });
+
+    try {
+      const migrations = readMigrationFiles({
+        migrationsFolder: fileURLToPath(
+          new URL("../../../drizzle/migrations", import.meta.url),
+        ),
+      });
+
+      const deletionIndex = migrations.findIndex((migration) =>
+        migration.sql.some((statement) => statement.includes('AS "linked"')),
+      );
+
+      if (deletionIndex < 0)
+        throw new Error("Duplicate revision deletion is missing");
+
+      for (const migration of migrations.slice(0, deletionIndex)) {
+        await database.exec(migration.sql.join("\n"));
+      }
+
+      // 1 is linked, 2 repeats it, 3 differs in level and 4 repeats only the
+      // unlinked 3; items follow the same pattern with their stats.
+      await database.exec(`
+        INSERT INTO "Loot" (id, "uniqueId", world, "gameVersion", source, location, "updatedAt")
+        VALUES (100, 'loot', 'test', 'pl', 'FIGHT', 'Map', now());
+        INSERT INTO "NpcSnapshot" (id, "npcId", "identityNamespace", "gameVersion", "snapshotHash", name, lvl, type, icon, prof)
+        VALUES
+          (1, 52950, 'template', 'pl', 'linked', 'Hero', 183, 'HERO', 'her/a.gif', NULL),
+          (2, 52950, 'template', 'pl', 'per-world', 'Hero', 183, 'HERO', 'her/a.gif', NULL),
+          (3, 52950, 'template', 'pl', 'other-level', 'Hero', 184, 'HERO', 'her/a.gif', NULL),
+          (4, 52950, 'template', 'pl', 'other-level-copy', 'Hero', 184, 'HERO', 'her/a.gif', NULL);
+        INSERT INTO "LootNpc" ("lootId", "npcSnapshotId") VALUES (100, 1);
+        INSERT INTO "ItemSnapshot" (id, "itemId", "gameVersion", "statsHash", "snapshotHash", name, icon, "itemType", "statRaw", "statsSnapshot")
+        VALUES
+          (1, 1147, 'pl', 'stats', 'linked', 'Item', 'tar/a.gif', 'SHIELD', 'ac=1', '{}'),
+          (2, 1147, 'pl', 'stats', NULL, 'Item', 'tar/a.gif', 'SHIELD', 'ac=1', '{}'),
+          (3, 1147, 'pl', 'other-stats', NULL, 'Item', 'tar/a.gif', 'SHIELD', 'ac=2', '{}');
+        INSERT INTO "LootItem" ("lootId", "itemSnapshotId", hid) VALUES (100, 1, 'hid');
+      `);
+
+      for (const migration of migrations.slice(deletionIndex)) {
+        await database.exec(migration.sql.join("\n"));
+      }
+
+      expect(
+        (await database.query(`SELECT id FROM "NpcSnapshot" ORDER BY id`)).rows,
+      ).toEqual([{ id: 1 }, { id: 3 }, { id: 4 }]);
+      expect(
+        (await database.query(`SELECT id FROM "ItemSnapshot" ORDER BY id`))
+          .rows,
+      ).toEqual([{ id: 1 }, { id: 3 }]);
+    } finally {
+      await database.close();
+    }
+  });
 });
