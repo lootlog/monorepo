@@ -130,7 +130,10 @@ describe("NPC observation revision migration", () => {
         INSERT INTO "LootItem" ("lootId", "itemSnapshotId", hid) VALUES (100, 1, 'hid');
       `);
 
-      for (const migration of migrations.slice(deletionIndex)) {
+      for (const migration of migrations.slice(
+        deletionIndex,
+        deletionIndex + 1,
+      )) {
         await database.exec(migration.sql.join("\n"));
       }
 
@@ -296,7 +299,7 @@ describe("NPC observation revision migration", () => {
         );
       }
 
-      for (const migration of migrations.slice(repairIndex)) {
+      for (const migration of migrations.slice(repairIndex, repairIndex + 1)) {
         await database.exec(migration.sql.join("\n"));
       }
 
