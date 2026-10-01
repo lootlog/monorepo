@@ -54,9 +54,8 @@ Deploy the API with this migration before shipping a Game client that writes
 `notifications` or `gameData` documents directly. Otherwise a client document
 would be created first and the legacy row would be skipped by the backfill.
 
-`UserGameAccountSettings` is not dropped: an older API revision still reads it
-during rollback. Remove the table (and the account-deletion cascade entry) once
-no deployed revision references it.
+`20261001154027_db_audit_cleanup` drops `UserGameAccountSettings` and the
+other legacy settings tables once no deployed revision read them.
 
 ## Client-side import
 

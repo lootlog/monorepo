@@ -286,7 +286,6 @@ export const guildTable = pgTable(
       sql`${table["vanityUrl"]} <> '' AND ${table["vanityUrl"]} !~ '^[0-9]+$'`,
     ),
     uniqueIndex("Guild_vanityUrl_key").on(table["vanityUrl"]),
-    index("Guild_vanityUrl_idx").on(table["vanityUrl"]),
     index("Guild_ownerId_idx").on(table["ownerId"]),
   ],
 );
@@ -354,7 +353,7 @@ export const memberTable = pgTable(
       table["userId"],
       table["guildId"],
     ),
-    index("Member_id_guildId_idx").on(table["id"], table["guildId"]),
+    index("Member_guildId_id_idx").on(table["guildId"], table["id"]),
     index("Member_globalUserId_guildId_active_idx").on(
       table["globalUserId"],
       table["guildId"],
@@ -421,7 +420,6 @@ export const timerTable = pgTable(
       columns: [table["guildId"], table["world"], table["timerKey"]],
       name: "Timer_pkey",
     }),
-    index("Timer_npcId_guildId_idx").on(table["npcId"], table["guildId"]),
     index("Timer_guildId_maxSpawnTime_idx").on(
       table["guildId"],
       table["maxSpawnTime"],
@@ -458,7 +456,6 @@ export const timerTable = pgTable(
     })
       .onDelete("set null")
       .onUpdate("cascade"),
-    index("idx_timer_npc_name").using("btree", sql`(${table["npc"]}->>'name')`),
   ],
 );
 
@@ -543,7 +540,9 @@ export const lootItemTable = pgTable(
       table["lootId"],
       table["itemSnapshotId"],
     ),
-    index("LootItem_hid_lootId_idx").on(table["hid"], table["lootId"]),
+    // Only equality lookups read hid, a 64-character hex digest; a hash index
+    // stores a 4-byte code per row instead of the digest.
+    index("LootItem_hid_idx").using("hash", table["hid"]),
     index("LootItem_itemSnapshotId_lootId_idx").on(
       table["itemSnapshotId"],
       table["lootId"],
@@ -693,14 +692,18 @@ export const timerHistoryEntryTable = pgTable(
 export const lootPlayerTable = pgTable(
   "LootPlayer",
   {
-    id: serial("id").notNull().primaryKey(),
+    id: serial("id").notNull(),
     lootId: integer("lootId").notNull(),
     playerSnapshotId: integer("playerSnapshotId").notNull(),
     lvl: integer("lvl"),
     hpp: integer("hpp"),
   },
   (table) => [
-    index("LootPlayer_lootId_idx").on(table["lootId"]),
+    // Players are read per loot in insertion order, so the key leads with lootId.
+    primaryKey({
+      columns: [table["lootId"], table["id"]],
+      name: "LootPlayer_pkey",
+    }),
     index("LootPlayer_playerSnapshotId_idx").on(table["playerSnapshotId"]),
     foreignKey({
       columns: [table["lootId"]],
@@ -804,9 +807,9 @@ export const organizationLootRecordTable = pgTable(
       table["archivedAt"],
       table["lootId"],
     ),
-    index("OrganizationLootRecord_archivedByMemberId_idx").on(
-      table["archivedByMemberId"],
-    ),
+    index("OrganizationLootRecord_archivedByMemberId_notnull_idx")
+      .on(table["archivedByMemberId"])
+      .where(sql`${table["archivedByMemberId"]} IS NOT NULL`),
     foreignKey({
       columns: [table["lootId"]],
       foreignColumns: [lootTable["id"]],
@@ -863,7 +866,6 @@ export const lootMapPlayerTable = pgTable(
 export const lootSubmissionTable = pgTable(
   "LootSubmission",
   {
-    id: serial("id").notNull().primaryKey(),
     organizationLootRecordId: integer("organizationLootRecordId").notNull(),
     memberId: integer("memberId").notNull(),
     createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
@@ -872,10 +874,10 @@ export const lootSubmissionTable = pgTable(
     updatedAt: timestamp("updatedAt", { mode: "date", precision: 3 }).notNull(),
   },
   (table) => [
-    uniqueIndex("LootSubmission_organizationLootRecordId_memberId_key").on(
-      table["organizationLootRecordId"],
-      table["memberId"],
-    ),
+    primaryKey({
+      columns: [table["organizationLootRecordId"], table["memberId"]],
+      name: "LootSubmission_pkey",
+    }),
     index("LootSubmission_memberId_idx").on(table["memberId"]),
     foreignKey({
       columns: [table["organizationLootRecordId"]],
@@ -996,10 +998,6 @@ export const reservationTable = pgTable(
       table["guildId"],
       table["endsAt"],
     ),
-    index("Reservation_createdByUserId_endsAt_idx").on(
-      table["createdByUserId"],
-      table["endsAt"],
-    ),
     foreignKey({
       columns: [table["guildId"]],
       foreignColumns: [guildTable["id"]],
@@ -1094,7 +1092,6 @@ export const reservationShareInvitationTable = pgTable(
     index("ReservationShareInvitation_targetGuildId_idx").on(
       table["targetGuildId"],
     ),
-    index("ReservationShareInvitation_expiresAt_idx").on(table["expiresAt"]),
     foreignKey({
       columns: [table["sourceGuildId"]],
       foreignColumns: [guildTable["id"]],
@@ -1186,10 +1183,7 @@ export const userSettingsTable = pgTable(
       .notNull(),
     updatedAt: timestamp("updatedAt", { mode: "date", precision: 3 }).notNull(),
   },
-  (table) => [
-    uniqueIndex("UserSettings_userId_key").on(table["userId"]),
-    index("UserSettings_userId_idx").on(table["userId"]),
-  ],
+  (table) => [uniqueIndex("UserSettings_userId_key").on(table["userId"])],
 );
 
 export const userSettingDocumentTable = pgTable(
@@ -1216,38 +1210,11 @@ export const userSettingDocumentTable = pgTable(
       table["scopeType"],
       table["scopeId"],
     ),
-    index("UserSettingDocument_userId_domain_idx").on(
-      table["userId"],
-      table["domain"],
-    ),
     index("UserSettingDocument_userId_scopeType_scopeId_idx").on(
       table["userId"],
       table["scopeType"],
       table["scopeId"],
     ),
-  ],
-);
-
-export const userGameAccountSettingsTable = pgTable(
-  "UserGameAccountSettings",
-  {
-    id: serial("id").notNull().primaryKey(),
-    userId: text("userId").notNull(),
-    accountId: text("accountId").notNull(),
-    settings: jsonb("settings")
-      .default(sql`'{}'::jsonb`)
-      .notNull(),
-    createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
-      .defaultNow()
-      .notNull(),
-    updatedAt: timestamp("updatedAt", { mode: "date", precision: 3 }).notNull(),
-  },
-  (table) => [
-    uniqueIndex("UserGameAccountSettings_userId_accountId_key").on(
-      table["userId"],
-      table["accountId"],
-    ),
-    index("UserGameAccountSettings_userId_idx").on(table["userId"]),
   ],
 );
 
@@ -1529,11 +1496,6 @@ export const discordGuildChannelSnapshotTable = pgTable(
       table["guildId"],
       table["channelId"],
     ),
-    index("DiscordGuildChannelSnapshot_guildId_active_canSend_idx").on(
-      table["guildId"],
-      table["active"],
-      table["canSend"],
-    ),
     foreignKey({
       columns: [table["guildId"]],
       foreignColumns: [guildTable["id"]],
@@ -1603,103 +1565,7 @@ export const memberRefreshJobTable = pgTable(
     updatedAt: timestamp("updatedAt", { mode: "date", precision: 3 }).notNull(),
     completedAt: timestamp("completedAt", { mode: "date", precision: 3 }),
   },
-  (table) => [
-    index("MemberRefreshJob_guildId_idx").on(table["guildId"]),
-    index("MemberRefreshJob_status_idx").on(table["status"]),
-  ],
-);
-
-export const userTimerSettingsTable = pgTable(
-  "UserTimerSettings",
-  {
-    id: serial("id").notNull().primaryKey(),
-    userId: text("userId").notNull(),
-    generalConfig: jsonb("generalConfig").notNull(),
-    displayConfig: jsonb("displayConfig").notNull(),
-    customColors: jsonb("customColors").notNull(),
-    timersColors: jsonb("timersColors").notNull(),
-    alwaysVisibleExpiredTimers: jsonb("alwaysVisibleExpiredTimers")
-      .default(sql`'{}'::jsonb`)
-      .notNull(),
-    defaultColorNames: jsonb("defaultColorNames").notNull(),
-    overriddenDefaultColors: jsonb("overriddenDefaultColors").notNull(),
-    hiddenDefaultColors: jsonb("hiddenDefaultColors").notNull(),
-    timerFiltersEnabled: boolean("timerFiltersEnabled").default(true).notNull(),
-    colorFiltersEnabled: boolean("colorFiltersEnabled")
-      .default(false)
-      .notNull(),
-    timersSortOrder: text("timersSortOrder").default("asc").notNull(),
-    syncEnabled: boolean("syncEnabled").default(true).notNull(),
-    createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
-      .defaultNow()
-      .notNull(),
-    updatedAt: timestamp("updatedAt", { mode: "date", precision: 3 }).notNull(),
-  },
-  (table) => [
-    uniqueIndex("UserTimerSettings_userId_key").on(table["userId"]),
-    index("UserTimerSettings_userId_idx").on(table["userId"]),
-  ],
-);
-
-export const userGuildTimerSettingsTable = pgTable(
-  "UserGuildTimerSettings",
-  {
-    id: serial("id").notNull().primaryKey(),
-    userId: text("userId").notNull(),
-    guildId: text("guildId").notNull(),
-    hiddenTimers: text("hiddenTimers")
-      .array()
-      .default(sql`'{}'::text[]`)
-      .notNull(),
-    pinnedTimers: text("pinnedTimers")
-      .array()
-      .default(sql`'{}'::text[]`)
-      .notNull(),
-    createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
-      .defaultNow()
-      .notNull(),
-    updatedAt: timestamp("updatedAt", { mode: "date", precision: 3 }).notNull(),
-  },
-  (table) => [
-    uniqueIndex("UserGuildTimerSettings_userId_guildId_key").on(
-      table["userId"],
-      table["guildId"],
-    ),
-    index("UserGuildTimerSettings_userId_idx").on(table["userId"]),
-    index("UserGuildTimerSettings_guildId_idx").on(table["guildId"]),
-  ],
-);
-
-export const userSoundSettingsTable = pgTable(
-  "UserSoundSettings",
-  {
-    id: serial("id").notNull().primaryKey(),
-    userId: text("userId").notNull(),
-    masterVolume: doublePrecision("masterVolume").default(0.5).notNull(),
-    notificationsVolume: doublePrecision("notificationsVolume")
-      .default(0.5)
-      .notNull(),
-    detectorVolume: doublePrecision("detectorVolume").default(0.5).notNull(),
-    timersVolume: doublePrecision("timersVolume").default(0.5).notNull(),
-    pingsVolume: doublePrecision("pingsVolume").default(0).notNull(),
-    notificationsConfig: jsonb("notificationsConfig")
-      .default(sql`'{}'::jsonb`)
-      .notNull(),
-    detectorConfig: jsonb("detectorConfig")
-      .default(sql`'{}'::jsonb`)
-      .notNull(),
-    timersConfig: jsonb("timersConfig")
-      .default(sql`'{}'::jsonb`)
-      .notNull(),
-    createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
-      .defaultNow()
-      .notNull(),
-    updatedAt: timestamp("updatedAt", { mode: "date", precision: 3 }).notNull(),
-  },
-  (table) => [
-    uniqueIndex("UserSoundSettings_userId_key").on(table["userId"]),
-    index("UserSoundSettings_userId_idx").on(table["userId"]),
-  ],
+  (table) => [index("MemberRefreshJob_guildId_idx").on(table["guildId"])],
 );
 
 export const eventTable = pgTable(
@@ -1827,8 +1693,6 @@ export const eventMapTable = pgTable(
       table["heroNpcId"],
       table["mapId"],
     ),
-    index("EventMap_mapId_idx").on(table["mapId"]),
-    index("EventMap_mapName_idx").on(table["mapName"]),
     index("EventMap_locationId_idx").on(table["locationId"]),
     foreignKey({
       columns: [table["heroNpcId"]],
@@ -1958,7 +1822,6 @@ export const eventHeroNpcTable = pgTable(
       table["eventId"],
       table["npcName"],
     ),
-    index("EventHeroNpc_npcId_idx").on(table["npcId"]),
     foreignKey({
       columns: [table["eventId"]],
       foreignColumns: [eventTable["id"]],
@@ -2233,9 +2096,6 @@ export const eventRespawnWindowSummaryTable = pgTable(
   (table) => [
     uniqueIndex("EventRespawnWindowSummary_killId_key").on(table["killId"]),
     index("EventRespawnWindowSummary_heroNpcId_idx").on(table["heroNpcId"]),
-    index("EventRespawnWindowSummary_windowClosedAt_idx").on(
-      table["windowClosedAt"],
-    ),
     foreignKey({
       columns: [table["heroNpcId"]],
       foreignColumns: [eventHeroNpcTable["id"]],
@@ -2269,7 +2129,6 @@ export const mapTemplateTable = pgTable(
       table["guildId"],
       table["name"],
     ),
-    index("MapTemplate_guildId_idx").on(table["guildId"]),
     foreignKey({
       columns: [table["guildId"]],
       foreignColumns: [guildTable["id"]],
@@ -2298,11 +2157,6 @@ export const guildDocumentTable = pgTable(
     updatedAt: timestamp("updatedAt", { mode: "date", precision: 3 }).notNull(),
   },
   (table) => [
-    index("GuildDocument_guildId_deletedAt_updatedAt_idx").on(
-      table["guildId"],
-      table["deletedAt"],
-      table["updatedAt"].desc(),
-    ),
     index("GuildDocument_guildId_deletedAt_idx").on(
       table["guildId"],
       table["deletedAt"].desc(),
@@ -2336,10 +2190,6 @@ export const guildDocumentHistoryTable = pgTable(
     index("GuildDocumentHistory_documentId_version_idx").on(
       table["documentId"],
       table["version"],
-    ),
-    index("GuildDocumentHistory_documentId_editedAt_idx").on(
-      table["documentId"],
-      table["editedAt"].desc(),
     ),
     index("GuildDocumentHistory_guildId_editedAt_idx").on(
       table["guildId"],
@@ -2389,7 +2239,6 @@ export const npcKillStatsTable = pgTable(
       table["world"],
       table["npcId"],
     ),
-    index("NpcKillStats_guildId_idx").on(table["guildId"]),
     index("NpcKillStats_guildId_npcType_idx").on(
       table["guildId"],
       table["npcType"],
@@ -2441,11 +2290,6 @@ export const userKillStatsTable = pgTable(
       table["world"],
       table["npcId"],
     ),
-    index("UserKillStats_userId_idx").on(table["userId"]),
-    index("UserKillStats_userId_npcType_idx").on(
-      table["userId"],
-      table["npcType"],
-    ),
     index("UserKillStats_userId_world_npcType_idx").on(
       table["userId"],
       table["world"],
@@ -2478,7 +2322,6 @@ export const guildKillSummaryTable = pgTable(
       table["world"],
       table["npcId"],
     ),
-    index("GuildKillSummary_guildId_idx").on(table["guildId"]),
     index("GuildKillSummary_guildId_npcType_idx").on(
       table["guildId"],
       table["npcType"],
@@ -2531,11 +2374,6 @@ export const userKillStatsBucketTable = pgTable(
       table["userId"],
       table["periodStart"],
     ),
-    index("UserKillStatsBucket_userId_npcType_periodStart_idx").on(
-      table["userId"],
-      table["npcType"],
-      table["periodStart"],
-    ),
     index("UserKillStatsBucket_userId_world_npcType_periodStart_idx").on(
       table["userId"],
       table["world"],
@@ -2581,11 +2419,6 @@ export const npcKillStatsBucketTable = pgTable(
     ),
     index("NpcKillStatsBucket_guildId_periodStart_idx").on(
       table["guildId"],
-      table["periodStart"],
-    ),
-    index("NpcKillStatsBucket_guildId_npcType_periodStart_idx").on(
-      table["guildId"],
-      table["npcType"],
       table["periodStart"],
     ),
     index("NpcKillStatsBucket_guildId_world_npcType_periodStart_idx").on(

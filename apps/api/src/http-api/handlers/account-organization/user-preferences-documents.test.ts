@@ -1,10 +1,7 @@
 import { expect, test } from "bun:test";
 import { Effect } from "effect";
 import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
-import {
-  userGameAccountSettingsTable,
-  userSettingDocumentTable,
-} from "#src/database/drizzle/schema";
+import { userSettingDocumentTable } from "#src/database/drizzle/schema";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
 import { makeSettingsDocuments } from "#src/settings-documents/settings-documents.service";
@@ -32,7 +29,7 @@ const setup = async () => {
   return { boundary, data, run };
 };
 
-test("legacy preference routes write only settings documents", async () => {
+test("legacy preference routes write settings documents", async () => {
   const { boundary, data, run } = await setup();
 
   try {
@@ -50,12 +47,6 @@ test("legacy preference routes write only settings documents", async () => {
         notifications: { TITAN: { sound: true, guildIds: ["guild-1"] } },
       }),
     );
-
-    const legacyRows = await boundary.run(
-      boundary.database.select().from(userGameAccountSettingsTable),
-    );
-
-    expect(legacyRows).toHaveLength(0);
 
     const documents = await boundary.run(
       boundary.database.select().from(userSettingDocumentTable),

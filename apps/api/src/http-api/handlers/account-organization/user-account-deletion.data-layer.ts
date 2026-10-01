@@ -6,14 +6,10 @@ import {
   memberToRoleTable,
   npcKillStatsTable,
   userCharactersLootlogSettingsTable,
-  userGameAccountSettingsTable,
-  userGuildTimerSettingsTable,
   userKillStatsTable,
   userPinnedEventTable,
   userSettingDocumentTable,
   userSettingsTable,
-  userSoundSettingsTable,
-  userTimerSettingsTable,
 } from "#src/database/drizzle/schema";
 import {
   getGuildMemberCacheKeys,
@@ -95,18 +91,6 @@ const deletePersistedAccount = (
       yield* transaction
         .delete(userSettingDocumentTable)
         .where(eq(userSettingDocumentTable.userId, identity.userId));
-      yield* transaction
-        .delete(userGameAccountSettingsTable)
-        .where(eq(userGameAccountSettingsTable.userId, identity.userId));
-      yield* transaction
-        .delete(userTimerSettingsTable)
-        .where(eq(userTimerSettingsTable.userId, identity.userId));
-      yield* transaction
-        .delete(userSoundSettingsTable)
-        .where(eq(userSoundSettingsTable.userId, identity.userId));
-      yield* transaction
-        .delete(userGuildTimerSettingsTable)
-        .where(eq(userGuildTimerSettingsTable.userId, identity.userId));
       yield* transaction
         .delete(userPinnedEventTable)
         .where(eq(userPinnedEventTable.userId, identity.userId));

@@ -50,7 +50,7 @@ describe("player snapshot merge migration", () => {
         VALUES ('guild', 'test', 'npc:1', 1, '{}', 'RESET', 10, 2, 2);
       `);
 
-      for (const migration of migrations.slice(mergeIndex)) {
+      for (const migration of migrations.slice(mergeIndex, mergeIndex + 1)) {
         await database.exec(migration.sql.join("\n"));
       }
 
