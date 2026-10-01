@@ -766,3 +766,28 @@ them during the migration; an unlinked revision without a linked twin is kept.
 Readers that query revisions without a link see no change: watched items and
 the colossus check find the linked twin's identical values, and name and search
 lookups only lose ids that matched no loot. Apply it after the cleanup above.
+
+## Player snapshot merge
+
+Legacy writers hashed the same player snapshot with the full profession
+(`MAGE`, the 2025-11-24 migration) and with its shortname (`m`, loot and timer
+writers until 2026-09-06), so one character content could be stored twice.
+`resolvePlayerSnapshots` looks snapshots up by content and writes `v2:` hashes,
+so no new duplicates appear.
+
+`20261001123619_merge_duplicate_player_snapshots` keeps the lowest id of each
+content, which `resolvePlayerSnapshots` already selects, moves `LootPlayer`,
+`LootMapPlayer`, `Timer` and `TimerHistoryEntry` references to it and deletes
+the other rows. It first deletes snapshots that nothing references: timer
+actors whose timer moved to another snapshot and whose history was pruned.
+These keep appearing, and a later cleanup can repeat the first statement.
+
+On the local production copy on 2026-10-01 it deleted 2,843 unreferenced and
+117,649 duplicate snapshots (900,305 to 779,813) and moved 10,791,774 loot
+players, 5,997 timers and 56,173 history references. Every loot, timer and
+history reference count stayed the same. It took about 4.6 minutes, mostly the
+`LootPlayer` update and the foreign key probes of the delete. Loot reads and
+submissions are not blocked. The timer and history references are `ON DELETE
+SET NULL`, so they move just before their snapshots are deleted, and timer
+resets on about 6,000 timers wait for the last ~25 seconds. Run it outside peak
+hours. These are local measurements, not production latency.
