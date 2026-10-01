@@ -96,6 +96,12 @@ Discord, Lootlog ponawia próbę. Po wyczerpaniu prób powiadomienie trafia do
 historii ze statusem błędu i jego przyczyną. Błąd jednego wykonania reguły
 cyklicznej nie zatrzymuje kolejnych terminów.
 
+Powiadomienie, którego nie udało się wysłać w ciągu 15 minut od zaplanowanego
+terminu, nie zostanie już wysłane, bo byłoby nieaktualne. Przypomnienie przed
+spawnem pozostaje aktualne do końca okna respawnu. Pominięte powiadomienie
+trafia do historii ze statusem błędu, a reguła cykliczna przechodzi do
+najbliższego przyszłego terminu bez nadrabiania pominiętych.
+
 W regule zaplanowanej wiadomości zmiana terminu jednorazowego na harmonogram
 cykliczny wyznacza najbliższe wykonanie według nowego harmonogramu. Ukryta data
 z poprzedniego trybu nie opóźnia wysyłki. Wyczyść datę końca i zapisz regułę,

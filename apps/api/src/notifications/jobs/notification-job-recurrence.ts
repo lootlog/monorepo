@@ -1,5 +1,5 @@
 import { scheduleNotificationOccurrence } from "./notification-scheduled-occurrence.js";
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 import type { NotificationRuleWithTargets } from "#src/notifications/jobs/notification-job-store";
 import type { NotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
 import {
@@ -71,18 +71,26 @@ export const makeNotificationJobRecurrence = (
 
     if (statuses.some(({ status }) => !finalStatuses.includes(status))) return;
 
-    const next = calculateNextOccurrenceInTimeZone({
-      currentScheduledAt: rule.scheduledAt,
-      intervalType: rule.scheduleIntervalType,
-      intervalValue: rule.scheduleIntervalValue,
-      weekday: rule.scheduleWeekday,
-      timeOfDay: rule.scheduleTimeOfDay,
-      timeZone:
-        rule.scheduleTimezone ??
-        (rule.ownerType === NotificationOwnerType.GUILD
-          ? GUILD_NOTIFICATION_TIMEZONE
-          : "UTC"),
-    });
+    const following = (currentScheduledAt: Date) =>
+      calculateNextOccurrenceInTimeZone({
+        currentScheduledAt,
+        intervalType: rule.scheduleIntervalType,
+        intervalValue: rule.scheduleIntervalValue,
+        weekday: rule.scheduleWeekday,
+        timeOfDay: rule.scheduleTimeOfDay,
+        timeZone:
+          rule.scheduleTimezone ??
+          (rule.ownerType === NotificationOwnerType.GUILD
+            ? GUILD_NOTIFICATION_TIMEZONE
+            : "UTC"),
+      });
+
+    const now = new Date(yield* Clock.currentTimeMillis);
+    let next = following(rule.scheduledAt);
+
+    // A cycle closed late skips the occurrences that passed meanwhile instead
+    // of sending each of them at once.
+    while (next && next <= now) next = following(next);
 
     if (!next) return;
 
