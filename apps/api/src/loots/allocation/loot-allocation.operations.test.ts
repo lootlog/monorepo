@@ -25,7 +25,7 @@ const lootItem = (
   itemSnapshot: {
     id: itemId,
     itemId,
-    gameVersion: null,
+    gameVersion: "pl",
     statsHash: `hash-${itemId}`,
     snapshotHash: `hash-${itemId}`,
     name: `Item ${itemId}`,
@@ -65,7 +65,7 @@ const authorizedLoot: AuthorizedLoot = {
   id: 42,
   uniqueId: "loot-42",
   world: "fobos",
-  gameVersion: null,
+  gameVersion: "pl",
   source: "FIGHT",
   location: "Map",
   createdAt,

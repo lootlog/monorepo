@@ -2887,10 +2887,9 @@ export type CreateLootDtoPlayersItem = {
 };
 
 /**
- * Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API. Send it with every loot: omitting it, or sending null, is deprecated and a later breaking release will reject such loots. Until then the API uses the edition of `world`: `cronus`, `husaria` and `steamrealm` are `en`, every other world is `pl`.
- * @nullable
+ * Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API.
  */
-export type CreateLootDtoGameVersion = typeof CreateLootDtoGameVersion[keyof typeof CreateLootDtoGameVersion] | null;
+export type CreateLootDtoGameVersion = typeof CreateLootDtoGameVersion[keyof typeof CreateLootDtoGameVersion];
 
 
 export const CreateLootDtoGameVersion = {
@@ -2921,11 +2920,8 @@ export interface CreateLootDto {
   players: CreateLootDtoPlayersItem[];
   /** @minLength 1 */
   world: string;
-  /**
-     * Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API. Send it with every loot: omitting it, or sending null, is deprecated and a later breaking release will reject such loots. Until then the API uses the edition of `world`: `cronus`, `husaria` and `steamrealm` are `en`, every other world is `pl`.
-     * @nullable
-     */
-  gameVersion?: CreateLootDtoGameVersion;
+  /** Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API. */
+  gameVersion: CreateLootDtoGameVersion;
   source: CreateLootDtoSource;
   /** @minLength 1 */
   location: string;
@@ -4051,47 +4047,6 @@ export interface UpdateNotificationTargetDto {
   active?: boolean;
 }
 
-export type NotificationRuleUnresolvedSelectionDtoKind = typeof NotificationRuleUnresolvedSelectionDtoKind[keyof typeof NotificationRuleUnresolvedSelectionDtoKind];
-
-
-export const NotificationRuleUnresolvedSelectionDtoKind = {
-  npc: 'npc',
-  item: 'item',
-} as const;
-
-export type NotificationRuleUnresolvedSelectionDtoReason = typeof NotificationRuleUnresolvedSelectionDtoReason[keyof typeof NotificationRuleUnresolvedSelectionDtoReason];
-
-
-export const NotificationRuleUnresolvedSelectionDtoReason = {
-  legacyCatalogId: 'legacyCatalogId',
-  unknownId: 'unknownId',
-  nameFromOtherEdition: 'nameFromOtherEdition',
-  nameWithoutSnapshot: 'nameWithoutSnapshot',
-} as const;
-
-/**
- * A saved selection that does not identify what the rule matches. `npc`: a timer rule id from the legacy NPC catalog (`legacyCatalogId`) or an id found nowhere (`unknownId`); the rule still matches only its saved ids, and `suggestedId` names the timer id observed for the same NPC, if known. `item`: a watched item whose saved name may come from the other game edition or matches no item revision; matching by item id and world is unaffected. It disappears once the rule is saved without the id, or the item is selected again.
- */
-export interface NotificationRuleUnresolvedSelectionDto {
-  kind: NotificationRuleUnresolvedSelectionDtoKind;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  selectedId: number;
-  /** @nullable */
-  selectedName: string | null;
-  reason: NotificationRuleUnresolvedSelectionDtoReason;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  suggestedId: number | null;
-  /** @nullable */
-  suggestedName: string | null;
-}
-
 export type GuildNotificationRulesResponseDtoSchema0 = string | number | boolean | (GuildNotificationRulesResponseDtoSchema0 | null)[] | {[key: string]: GuildNotificationRulesResponseDtoSchema0 | null} | null;
 
 export type GuildNotificationRulesResponseDtoItemsItemOwnerType = typeof GuildNotificationRulesResponseDtoItemsItemOwnerType[keyof typeof GuildNotificationRulesResponseDtoItemsItemOwnerType];
@@ -4352,7 +4307,6 @@ export type GuildNotificationRulesResponseDtoItemsItem = {
   createdAt: string;
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   updatedAt: string;
-  unresolvedSelections: NotificationRuleUnresolvedSelectionDto[];
   targets: GuildNotificationRulesResponseDtoItemsItemTargetsItem[];
   testTrigger: GuildNotificationRulesResponseDtoItemsItemTestTrigger;
 };
@@ -4739,7 +4693,6 @@ export interface NotificationRuleResponseDto {
   createdAt: string;
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   updatedAt: string;
-  unresolvedSelections: NotificationRuleUnresolvedSelectionDto[];
   targets: NotificationRuleResponseDtoTargetsItem[];
 }
 
@@ -6039,7 +5992,6 @@ export type WatchedItemResponseDtoNotificationRule = {[key: string]: unknown} & 
   createdAt: string;
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   updatedAt: string;
-  unresolvedSelections: NotificationRuleUnresolvedSelectionDto[];
   targets: WatchedItemResponseDtoNotificationRuleTargetsItem[];
 } | null) | null;
 

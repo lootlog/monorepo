@@ -194,32 +194,10 @@ const notificationRuleFields = {
   updatedAt: DateTimeString,
 };
 
-export const NotificationRuleUnresolvedSelection = Schema.Struct({
-  kind: Schema.Literals(["npc", "item"]),
-  selectedId: SafeInteger,
-  selectedName: Schema.Union([Schema.String, Schema.Null]),
-  reason: Schema.Literals([
-    "legacyCatalogId",
-    "unknownId",
-    "nameFromOtherEdition",
-    "nameWithoutSnapshot",
-  ]),
-  suggestedId: Schema.Union([SafeInteger, Schema.Null]),
-  suggestedName: Schema.Union([Schema.String, Schema.Null]),
-}).annotate({
-  identifier: "NotificationRuleUnresolvedSelectionDto",
-  description:
-    "A saved selection that does not identify what the rule matches. `npc`: a timer rule id from the legacy NPC catalog (`legacyCatalogId`) or an id found nowhere (`unknownId`); the rule still matches only its saved ids, and `suggestedId` names the timer id observed for the same NPC, if known. `item`: a watched item whose saved name may come from the other game edition or matches no item revision; matching by item id and world is unaffected. It disappears once the rule is saved without the id, or the item is selected again.",
-});
-
-export type NotificationRuleUnresolvedSelection =
-  typeof NotificationRuleUnresolvedSelection.Type;
-
 const notificationRuleResponseFields = (
   metadata: Schema.Codec<Schema.Json>,
 ) => ({
   ...notificationRuleFields,
-  unresolvedSelections: Schema.Array(NotificationRuleUnresolvedSelection),
   targets: Schema.Array(
     Schema.Struct({
       ruleId: SafeInteger,

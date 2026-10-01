@@ -62,7 +62,7 @@ describe("Search HttpApi contract", () => {
 
     const response = await handler(
       new Request(
-        "http://localhost/items?limit=5&offset=2&facets=rarity&facets=type&filter=world%20%3D%20berufs",
+        "http://localhost/items?limit=5&offset=2&facets=rarity&facets=type&filter=worlds%20%3D%20berufs",
       ),
     );
 
@@ -70,7 +70,7 @@ describe("Search HttpApi contract", () => {
     expect(readItemQuery()).toEqual({
       limit: 5,
       offset: 2,
-      filter: "world = berufs",
+      filter: "worlds = berufs",
       facets: ["rarity", "type"],
     });
     await dispose();

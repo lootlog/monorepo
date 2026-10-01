@@ -27,17 +27,17 @@ test("a rebuild merges the worlds of an edition and keeps the latest observation
     ]),
   ).toEqual([
     expect.objectContaining({
-      catalogKey: "pl_template_257636_2",
+      uid: "pl_template_257636_2",
       identityNamespace: "template",
       lvl: 70,
       worlds: ["fobos", "tarhuna"],
     }),
     expect.objectContaining({
-      catalogKey: "en_template_257636_2",
+      uid: "en_template_257636_2",
       worlds: ["cronus"],
     }),
     expect.objectContaining({
-      catalogKey: "pl_257636_2",
+      uid: "pl_257636_2",
       identityNamespace: "legacy",
       worlds: ["fobos"],
     }),

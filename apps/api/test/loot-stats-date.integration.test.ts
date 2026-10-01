@@ -43,6 +43,7 @@ describe("loot statistics date parameter compatibility", () => {
               const [loot] = yield* transaction
                 .insert(lootTable)
                 .values({
+                  gameVersion: "pl",
                   uniqueId: crypto.randomUUID(),
                   world: "date-boundary",
                   source: "FIGHT",
@@ -55,6 +56,7 @@ describe("loot statistics date parameter compatibility", () => {
               const [item] = yield* transaction
                 .insert(itemSnapshotTable)
                 .values({
+                  gameVersion: "pl",
                   itemId: 1,
                   statsHash: crypto.randomUUID(),
                   name: "Item",
@@ -70,6 +72,7 @@ describe("loot statistics date parameter compatibility", () => {
               const [npc] = yield* transaction
                 .insert(npcSnapshotTable)
                 .values({
+                  gameVersion: "pl",
                   npcId: 1,
                   name: crypto.randomUUID(),
                   type: "HERO",

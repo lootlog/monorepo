@@ -905,7 +905,14 @@ const normalizeLegacyKillHistoryDeprecation = (
   return withoutDeprecation;
 };
 
-const normalizeIgnoredSearchWorld = (
+const REMOVED_SEARCH_WORLD: JsonValue = {
+  name: "world",
+  in: "query",
+  required: false,
+  schema: { type: "string" },
+};
+
+const normalizeRemovedSearchWorld = (
   service: string,
   operationKey: string,
   operation: JsonValue,
@@ -918,23 +925,20 @@ const normalizeIgnoredSearchWorld = (
   )
     return operation;
 
-  // Verified by search/test/search-query.test.ts: NPC and item search accept
-  // `world` and ignore it, since every world of an edition shares their ids.
-  const parameters = operation["parameters"].map((parameter) => {
-    if (!isJsonObject(parameter) || parameter["name"] !== "world") {
-      return parameter;
-    }
+  // Verified by search/test/search-query.test.ts: every world of an edition
+  // shares NPC and item ids, so the breaking SDK release removed `world`
+  // from these operations; older callers that still send it get results.
+  if (
+    operation["parameters"].some(
+      (parameter) => isJsonObject(parameter) && parameter["name"] === "world",
+    )
+  )
+    throw new Error(`${operationKey} must not declare world`);
 
-    if (parameter["deprecated"] !== true) {
-      throw new Error(`${operationKey} must keep world deprecated`);
-    }
-
-    const { deprecated: _deprecated, ...withoutDeprecation } = parameter;
-
-    return withoutDeprecation;
-  });
-
-  return { ...operation, parameters };
+  return {
+    ...operation,
+    parameters: [...operation["parameters"], REMOVED_SEARCH_WORLD],
+  };
 };
 
 const normalizeInternalPermissionFreshness = (
@@ -1158,7 +1162,7 @@ export const normalizeAllowedChanges = (
     }
   }
 
-  normalized = normalizeIgnoredSearchWorld(service, operationKey, normalized);
+  normalized = normalizeRemovedSearchWorld(service, operationKey, normalized);
   normalized = normalizeInternalPermissionFreshness(
     service,
     operationKey,

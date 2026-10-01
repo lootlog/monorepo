@@ -1,8 +1,4 @@
 import { indexChangedDocuments } from "#src/meilisearch/index-changed-documents";
-import {
-  gameVersionOfWorld,
-  type GameVersion,
-} from "@lootlog/schema/game-version";
 import { Effect } from "effect";
 import type { Meilisearch, SearchParams } from "meilisearch";
 import { getMeilisearchErrorCode } from "#src/meilisearch/query-builder";
@@ -27,7 +23,6 @@ type SearchItemsResponse = {
 type IndexItem = IndexItemsCommand["items"][number];
 
 type IndexedItem = IndexItem & {
-  gameVersion: GameVersion;
   uid: string;
   worlds: string[];
 };
@@ -40,7 +35,6 @@ const itemAttributesToRetrieve = [
   "lvl",
   "rarity",
   "type",
-  "world",
   "worlds",
 ];
 
@@ -72,7 +66,7 @@ const itemWorlds = (item: IndexItem) =>
  * last observation replacing it.
  */
 export const itemCatalogKey = (
-  item: Pick<IndexItem, "id" | "name"> & { gameVersion: GameVersion },
+  item: Pick<IndexItem, "id" | "name" | "gameVersion">,
 ) =>
   `${item.gameVersion}_${item.id}_${new Bun.CryptoHasher("sha256").update(item.name).digest("hex")}`;
 
@@ -83,17 +77,12 @@ const mergeItemsByCatalogKey = (
 
   for (const item of items) {
     const worlds = itemWorlds(item);
-
-    // Older publishers sent no edition; every world belongs to one.
-    const gameVersion = item.gameVersion ?? gameVersionOfWorld(worlds[0] ?? "");
-
-    const uid = itemCatalogKey({ ...item, gameVersion });
+    const uid = itemCatalogKey(item);
     const existingItem = itemsByKey.get(uid);
 
     itemsByKey.set(uid, {
       ...existingItem,
       ...item,
-      gameVersion,
       uid,
       worlds: uniqueWorlds([...(existingItem?.worlds ?? []), ...worlds]),
     });
@@ -229,7 +218,7 @@ export const makeItemsModule = (
       itemsWithSearchFields,
       (item, stored) => ({
         ...item,
-        worlds: uniqueWorlds([...item.worlds, ...itemWorlds(stored ?? item)]),
+        worlds: uniqueWorlds([...item.worlds, ...(stored?.worlds ?? [])]),
       }),
     );
   });

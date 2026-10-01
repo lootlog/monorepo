@@ -1,4 +1,4 @@
-import { partition, uniq } from "es-toolkit";
+import { partition } from "es-toolkit";
 import type { SearchTimersNpcResponseDtoOutput } from "@lootlog/client/main";
 
 type ManualNpcIdsParseResult = {
@@ -157,23 +157,3 @@ export const buildNotificationRuleNpcFilterPayload = (selections: string[]) => {
 
   return { npcIds: timerNpcIds };
 };
-
-/**
- * Replaces one saved timer NPC id with `replacement`, or removes it when
- * `replacement` is null. Other selections and their order are kept, and a
- * replacement already selected is not added twice.
- */
-export const replaceNotificationRuleNpcSelection = (
-  selections: readonly string[],
-  selectedId: number,
-  replacement: number | null,
-) =>
-  uniq(
-    selections.flatMap((selection) =>
-      selection === String(selectedId)
-        ? replacement === null
-          ? []
-          : [String(replacement)]
-        : [selection],
-    ),
-  );

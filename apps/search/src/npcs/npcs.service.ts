@@ -1,12 +1,9 @@
 import { indexChangedDocuments } from "#src/meilisearch/index-changed-documents";
 import { NpcTypeEnum, NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
-import {
-  gameVersionOfWorld,
-  type GameVersion,
-} from "@lootlog/schema/game-version";
-import { Effect, Predicate, Schema } from "effect";
-import { partition, uniqBy } from "es-toolkit";
+import type { GameVersion } from "@lootlog/schema/game-version";
+import { Effect, Schema } from "effect";
+import { partition, pick, uniqBy } from "es-toolkit";
 import type { Meilisearch } from "meilisearch";
 import { buildMeilisearchNameQuery } from "#src/meilisearch/query-builder";
 import {
@@ -20,83 +17,28 @@ import { NPCS_INDEX } from "./search-index.js";
 import type { IndexNpcsCommand } from "./index-npcs-command.js";
 import type { NpcHit } from "./npc-hit.js";
 
-// Documents written before editions have no `gameVersion` or `worlds`.
-type RawNpcHit = Omit<
-  NpcHit,
-  | "gameVersion"
-  | "identityNamespace"
-  | "margonemType"
-  | "prof"
-  | "type"
-  | "worlds"
-> & {
-  gameVersion?: NpcHit["gameVersion"] | null;
-  identityNamespace?: NpcIdentityNamespace;
-  margonemType?: number | null;
-  prof?: string | null;
-  type?: NpcHit["type"] | number | string | null;
-  worlds?: readonly string[];
-};
-
 const uniqueWorlds = (worlds: ReadonlyArray<string>) =>
   [...new Set(worlds.filter(Boolean))].sort((first, second) =>
     first.localeCompare(second),
   );
-
-const npcWorlds = (npc: { world: string; worlds?: readonly string[] }) =>
-  uniqueWorlds([...(npc.worlds ?? []), npc.world]);
-
-const resolveMargonemType = (npc: Pick<RawNpcHit, "margonemType" | "type">) => {
-  let margonemType = 0;
-
-  if (Predicate.isNumber(npc.margonemType)) {
-    margonemType = npc.margonemType;
-  } else if (Predicate.isNumber(npc.type)) {
-    margonemType = npc.type;
-  }
-
-  return margonemType;
-};
-
-const normalizeNpcHit = (npc: RawNpcHit): NpcHit => {
-  const prof = npc.prof ?? "";
-  const margonemType = resolveMargonemType(npc);
-
-  const type = Schema.is(NpcTypeSchema)(npc.type)
-    ? npc.type
-    : getNpcTypeByWt(NpcTypeEnum, npc.wt, prof, margonemType);
-
-  return {
-    id: npc.id,
-    identityNamespace: npc.identityNamespace ?? NpcIdentityNamespace.LEGACY,
-    name: npc.name,
-    icon: npc.icon,
-    lvl: npc.lvl,
-    wt: npc.wt,
-    world: npc.world,
-    worlds: npcWorlds(npc),
-    gameVersion: npc.gameVersion ?? gameVersionOfWorld(npc.world),
-    prof,
-    margonemType,
-    type,
-  };
-};
 
 type IndexNpc = IndexNpcsCommand["npcs"][number];
 
 // One catalog entry per edition, identity namespace, id and Margonem type:
 // every world of an edition uses the same NPC ids. Legacy keys omit the
 // namespace; equal ids in another namespace or edition are a different NPC.
-export const npcCatalogKey = (
-  npc: Pick<RawNpcHit, "id" | "identityNamespace" | "margonemType" | "type"> & {
-    gameVersion: GameVersion;
-  },
-) => {
-  const key = `${npc.id}_${resolveMargonemType(npc)}`;
-  const namespace = npc.identityNamespace ?? NpcIdentityNamespace.LEGACY;
+export const npcCatalogKey = (npc: {
+  id: number;
+  identityNamespace: NpcIdentityNamespace;
+  margonemType: number;
+  gameVersion: GameVersion;
+}) => {
+  const key = `${npc.id}_${npc.margonemType}`;
 
   const namespaced =
-    namespace === NpcIdentityNamespace.LEGACY ? key : `${namespace}_${key}`;
+    npc.identityNamespace === NpcIdentityNamespace.LEGACY
+      ? key
+      : `${npc.identityNamespace}_${key}`;
 
   return `${npc.gameVersion}_${namespaced}`;
 };
@@ -136,23 +78,22 @@ const collapseByNameAndType = (hits: readonly NpcHit[]) => {
 
 /**
  * The stored shape of one NPC catalog entry; the seed script and the consumer
- * share it. `world` is the world of the latest observation and `worlds` every
- * world it was observed in. An observation without an edition takes the
- * edition of its world. `observedLootId` orders observations.
+ * share it. `worlds` holds every world the entry was observed in, and
+ * `observedLootId` orders observations.
  */
 export const toNpcDocument = (npc: IndexNpc) => {
   const prof = npc.prof ?? "";
+
+  const identityNamespace =
+    npc.identityNamespace ?? NpcIdentityNamespace.LEGACY;
 
   const type = Schema.is(NpcTypeSchema)(npc.type)
     ? npc.type
     : getNpcTypeByWt(NpcTypeEnum, npc.wt, prof, npc.margonemType);
 
-  const gameVersion = npc.gameVersion ?? gameVersionOfWorld(npc.world);
-  const catalogKey = npcCatalogKey({ ...npc, gameVersion });
-
   return {
     id: npc.id,
-    identityNamespace: npc.identityNamespace ?? NpcIdentityNamespace.LEGACY,
+    identityNamespace,
     name: npc.name,
     icon: npc.icon,
     lvl: npc.lvl,
@@ -160,16 +101,29 @@ export const toNpcDocument = (npc: IndexNpc) => {
     prof,
     type,
     margonemType: npc.margonemType,
-    world: npc.world,
-    worlds: npcWorlds(npc),
-    gameVersion,
-    catalogKey,
-    uid: catalogKey,
+    worlds: [npc.world],
+    gameVersion: npc.gameVersion,
+    uid: npcCatalogKey({ ...npc, identityNamespace }),
     observedLootId: npc.lootId ?? null,
   };
 };
 
 type NpcDocument = ReturnType<typeof toNpcDocument>;
+
+const toNpcHit = (document: NpcDocument): NpcHit =>
+  pick(document, [
+    "id",
+    "identityNamespace",
+    "name",
+    "icon",
+    "lvl",
+    "wt",
+    "prof",
+    "type",
+    "margonemType",
+    "worlds",
+    "gameVersion",
+  ]);
 
 /**
  * One catalog entry from two observations: the later loot's attributes, and
@@ -181,18 +135,14 @@ export const mergeNpcDocument = (
   incoming: NpcDocument,
   stored: NpcDocument,
 ): NpcDocument => {
-  // Documents written before chronology have no `observedLootId`.
-  const storedLootId = stored.observedLootId ?? null;
-
   const storedIsNewer =
     incoming.observedLootId !== null &&
-    storedLootId !== null &&
-    storedLootId > incoming.observedLootId;
+    stored.observedLootId !== null &&
+    stored.observedLootId > incoming.observedLootId;
 
   return {
     ...(storedIsNewer ? stored : incoming),
-    observedLootId: storedIsNewer ? storedLootId : incoming.observedLootId,
-    worlds: uniqueWorlds([...incoming.worlds, ...(stored.worlds ?? [])]),
+    worlds: uniqueWorlds([...incoming.worlds, ...stored.worlds]),
   };
 };
 
@@ -215,14 +165,12 @@ export const mergeNpcDocuments = (
 };
 
 export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
-  // `world` is accepted for older callers and ignored: every world of an
-  // edition shares its NPCs.
   const getNpcs = Effect.fn("SearchNpcs.get")(function* ({
     ids,
     limit,
     search,
   }: NpcSearchQuery) {
-    const index = meilisearch.index<RawNpcHit>(NPCS_INDEX);
+    const index = meilisearch.index<NpcDocument>(NPCS_INDEX);
 
     const { searchTerm, query } = buildMeilisearchNameQuery({
       ids,
@@ -230,15 +178,11 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
       search,
     });
 
-    // Documents written before editions are one per revision and world;
-    // group them by catalog identity before the hit limit applies.
     return yield* attemptMeilisearch("search.npcs", () =>
-      index.search(searchTerm, { ...query, distinct: "catalogKey" }),
+      index.search(searchTerm, query),
     ).pipe(
       Effect.map((response) => {
-        const hits = uniqBy(response.hits.map(normalizeNpcHit), (hit) =>
-          npcCatalogKey(hit),
-        );
+        const hits = response.hits.map(toNpcHit);
 
         return ids && ids.length > 0 ? hits : collapseByNameAndType(hits);
       }),

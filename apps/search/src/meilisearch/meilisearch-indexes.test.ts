@@ -44,7 +44,7 @@ test("startup skips unchanged settings and preserves searchable attribute order"
     filterableAttributes: ["name", "world"],
   });
   expect(settings.get("npcs")).toEqual({
-    filterableAttributes: ["id", "name", "type", "world", "catalogKey"],
+    filterableAttributes: ["id", "name", "type"],
   });
 
   for (const value of settings.values()) {

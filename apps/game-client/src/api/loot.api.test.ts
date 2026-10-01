@@ -41,6 +41,7 @@ describe("createLoot", () => {
         characterId: "2",
         location: operation === "loot" ? "" : "Nithal",
         world: "luvia",
+        gameVersion: "pl",
         source: "FIGHT",
         loots: [],
         npcs: [npc],
@@ -119,6 +120,7 @@ describe("createLoot", () => {
       ],
       source: "FIGHT",
       world: "luvia",
+      gameVersion: "pl",
     };
 
     const response = {
@@ -151,6 +153,7 @@ describe("createLoot", () => {
       characterId: "2",
       location: "Nithal",
       world: "luvia",
+      gameVersion: "pl",
       source: "FIGHT",
       loots: [],
       players: [],
@@ -202,6 +205,7 @@ describe("createLoot", () => {
       characterId: "2",
       location: "Map",
       world: "luvia",
+      gameVersion: "pl",
       source: "FIGHT",
       loots: [],
       npcs: [],

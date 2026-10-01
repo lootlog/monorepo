@@ -242,6 +242,7 @@ it.each([
   "missing-fight-data",
   "empty-parsed-loots",
   "npc-wt-too-low",
+  "unknown-game-version",
 ])("reports why battle loot was skipped: %s", (reason) => {
   const fixture = createFixture();
   const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
@@ -254,6 +255,9 @@ it.each([
   if (reason === "missing-fight-data") delete event.f;
 
   if (reason === "empty-parsed-loots") event.item = {};
+
+  if (reason === "unknown-game-version")
+    setTestRuntimeGame({ ...useGameStore.getState().game, gameVersion: null });
 
   if (reason === "npc-wt-too-low")
     useBattleStore.setState({
@@ -327,7 +331,7 @@ it("ignores dialog loot without a tracked NPC", () => {
 it.each([
   ["context snapshot", "en"],
   ["ingress snapshot", "pl"],
-  ["canonical store", null],
+  ["canonical store", "en"],
 ] as const)(
   "attributes dialog loot through %s after unrelated NPC deletion on game version %s",
   async (source, gameVersion) => {
