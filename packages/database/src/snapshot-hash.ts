@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import type { GameVersion } from "@lootlog/schema/game-version";
 import { splitItemStat } from "./item-stat.js";
 
 export function createPlayerSnapshotHash(
@@ -24,7 +25,7 @@ export function createItemStatsHash(stats: string): string {
  * changes are separate revisions; per-instance stats never create one.
  */
 export function createItemSnapshotHash(item: {
-  gameVersion: string | null;
+  gameVersion: GameVersion;
   itemId: number;
   name: string;
   icon: string;
@@ -48,13 +49,13 @@ export function createItemSnapshotHash(item: {
 
 /**
  * A revision describes one observation, never the latest attributes of an NPC.
- * A known game version is appended, so an observation without one keeps the
- * hash that clients before game-version provenance produced.
+ * Every world of an edition uses the same NPC ids, so the edition, not the
+ * world, separates revisions: one observation on several worlds of an edition
+ * is one revision, and editions never share one.
  */
 export function createNpcSnapshotHash(npc: {
   identityNamespace: string;
-  gameVersion?: string | null;
-  world: string;
+  gameVersion: GameVersion;
   npcId: number;
   name: string;
   type?: string | null;
@@ -67,9 +68,9 @@ export function createNpcSnapshotHash(npc: {
   return createHash("sha256")
     .update(
       JSON.stringify([
-        "npc-observation-v1",
+        "npc-observation-v2",
         npc.identityNamespace,
-        npc.world,
+        npc.gameVersion,
         npc.npcId,
         npc.name,
         npc.type ?? null,
@@ -78,7 +79,6 @@ export function createNpcSnapshotHash(npc: {
         npc.prof ?? null,
         npc.wt ?? null,
         npc.margonemType ?? null,
-        ...(npc.gameVersion ? [npc.gameVersion] : []),
       ]),
     )
     .digest("hex");

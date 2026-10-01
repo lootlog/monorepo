@@ -15,6 +15,7 @@
   },
   "exports": {
     "./database/schema": "./src/database/drizzle/schema.ts",
+    "./database/game-version": "./src/database/drizzle/game-version.ts",
     "./timers/timer-key": "./src/timers/timer-key.ts"
   },
   "scripts": {

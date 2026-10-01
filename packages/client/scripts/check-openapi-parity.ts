@@ -905,6 +905,38 @@ const normalizeLegacyKillHistoryDeprecation = (
   return withoutDeprecation;
 };
 
+const normalizeIgnoredSearchWorld = (
+  service: string,
+  operationKey: string,
+  operation: JsonValue,
+): JsonValue => {
+  if (
+    service !== "search" ||
+    !["GET /npcs", "GET /items"].includes(operationKey) ||
+    !isJsonObject(operation) ||
+    !isJsonArray(operation["parameters"])
+  )
+    return operation;
+
+  // Verified by search/test/search-query.test.ts: NPC and item search accept
+  // `world` and ignore it, since every world of an edition shares their ids.
+  const parameters = operation["parameters"].map((parameter) => {
+    if (!isJsonObject(parameter) || parameter["name"] !== "world") {
+      return parameter;
+    }
+
+    if (parameter["deprecated"] !== true) {
+      throw new Error(`${operationKey} must keep world deprecated`);
+    }
+
+    const { deprecated: _deprecated, ...withoutDeprecation } = parameter;
+
+    return withoutDeprecation;
+  });
+
+  return { ...operation, parameters };
+};
+
 const normalizeInternalPermissionFreshness = (
   service: string,
   operationKey: string,
@@ -1126,6 +1158,7 @@ export const normalizeAllowedChanges = (
     }
   }
 
+  normalized = normalizeIgnoredSearchWorld(service, operationKey, normalized);
   normalized = normalizeInternalPermissionFreshness(
     service,
     operationKey,

@@ -1,40 +1,50 @@
-export type BasicRouteSearch = {
+export type QueryRouteSearch = {
   query: string;
+};
+
+export type QueryAndWorldRouteSearch = QueryRouteSearch & {
   world: string;
 };
 
+export type BasicRouteSearch = QueryRouteSearch | QueryAndWorldRouteSearch;
+
 export type SearchStatus = "error" | "idle" | "loading" | "ready";
 
-export const emptyBasicRouteSearch: BasicRouteSearch = {
-  query: "",
-  world: "",
-};
+export function validateQueryRouteSearch(search: {
+  query?: unknown;
+}): QueryRouteSearch {
+  return {
+    query: typeof search.query === "string" ? search.query : "",
+  };
+}
 
-export function validateBasicRouteSearch(search: {
+export function validateQueryAndWorldRouteSearch(search: {
   query?: unknown;
   world?: unknown;
-}): BasicRouteSearch {
+}): QueryAndWorldRouteSearch {
   return {
     query: typeof search.query === "string" ? search.query : "",
     world: typeof search.world === "string" ? search.world : "",
   };
 }
 
-export function getBasicRouteSearchState({
-  queryValue,
-  worldValue,
-}: {
-  queryValue: string;
-  worldValue: string;
-}): BasicRouteSearch {
-  return {
-    query: queryValue.trim(),
-    world: worldValue.trim(),
-  };
+const getWorld = (search: BasicRouteSearch) =>
+  "world" in search ? search.world : undefined;
+
+/** Keeps the shape of `search`: `world` is set only on routes that have it. */
+export function getBasicRouteSearchState<TSearch extends BasicRouteSearch>(
+  search: TSearch,
+  { queryValue, worldValue }: { queryValue: string; worldValue: string },
+): TSearch {
+  const query = queryValue.trim();
+
+  return "world" in search
+    ? { ...search, query, world: worldValue.trim() }
+    : { ...search, query };
 }
 
 export function isBasicRouteSearchActive(search: BasicRouteSearch): boolean {
-  return search.query.trim() !== "" || search.world.trim() !== "";
+  return search.query.trim() !== "" || Boolean(getWorld(search)?.trim());
 }
 
 export function areBasicRouteSearchStatesEqual(
@@ -43,7 +53,7 @@ export function areBasicRouteSearchStatesEqual(
 ): boolean {
   return (
     firstSearch.query === secondSearch.query &&
-    firstSearch.world === secondSearch.world
+    getWorld(firstSearch) === getWorld(secondSearch)
   );
 }
 
@@ -52,11 +62,8 @@ export function getBasicRouteSearchQueryParams(
   limit: number,
 ) {
   const query = search.query.trim();
-  const world = search.world.trim();
+  const params = { limit, search: query === "" ? undefined : query };
+  const world = getWorld(search)?.trim();
 
-  return {
-    limit,
-    search: query === "" ? undefined : query,
-    world: world === "" ? undefined : world,
-  };
+  return world ? { ...params, world } : params;
 }

@@ -166,16 +166,18 @@ export const resolveItemSnapshotIds = (
 /**
  * Resolves the immutable observation revision of each NPC, in input order.
  * Any observed attribute change produces a new revision instead of reusing the
- * first row stored for the same id and name.
+ * first row stored for the same id and name. `world` stays null: it is
+ * deprecated on revisions and kept only for rows written before editions.
  */
 export const resolveNpcSnapshots = (
   database: SnapshotDatabase,
-  provenance: { world: string; gameVersion: GameVersion | null },
+  gameVersion: GameVersion,
   npcs: readonly NpcObservationInput[],
 ) =>
   Effect.gen(function* () {
+    // One revision serves every world of the edition; the loot keeps its world.
     const observations = npcs.map((npc) => {
-      const observation = { ...npc, ...provenance };
+      const observation = { ...npc, gameVersion };
 
       return {
         ...observation,

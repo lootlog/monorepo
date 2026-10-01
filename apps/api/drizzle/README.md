@@ -429,10 +429,11 @@ visibility. Revoking access can therefore block pending delivery and hide a
 history entry without changing the accepted loot or its NPC observation.
 
 `createNpcSnapshotHash` in `packages/database/src/snapshot-hash.ts` identifies a
-revision by its identity namespace, world, supplied NPC id, name, derived NPC
-type, level, icon, profession, weight, Margonem type, and a known game version. Missing and null
-optional attributes are equivalent; empty strings and zero remain distinct
-values. The name participates in revision identity, so a rename creates a new
+revision by its identity namespace, game version, supplied NPC id, name, derived
+NPC type, level, icon, profession, weight and Margonem type. Every world of an
+edition uses the same NPC ids, so the world is not part of it (see
+"Revisions per game edition" below). Missing and null optional attributes are
+equivalent; empty strings and zero remain distinct values. The name participates in revision identity, so a rename creates a new
 revision. Returning to an identical observation reuses its existing revision.
 This model has no mutable latest-NPC record for a delayed submission to regress.
 Retrying an already accepted loot keeps its original snapshot associations.
@@ -446,8 +447,8 @@ stores it under `runtime`; the API never promotes a runtime id to a template.
 Deployed clients that send only the overloaded `id` keep `legacy`: normal battle
 loot may have supplied a template id, while fallback and dialog loot may have
 supplied a runtime id. Equal numbers in different namespaces are unrelated, and
-no mapping between them is inferred. World separates new observations across
-worlds; the game version, described below, separates Margonem editions.
+no mapping between them is inferred. The game version, described below,
+separates Margonem editions.
 
 `20260930102644_loot_npc_runtime_id` adds the nullable `LootNpc.runtimeNpcId`,
 the looted spawn reported beside the catalog identity. Adding a nullable column
@@ -481,19 +482,18 @@ use hashed revisions, including when their attributes match an unhashed legacy
 row. The API acceptance writer and CLI seed writer share the revision function.
 The existing name and type/level indexes remain available to readers.
 
-NPC search publications carry the optional `snapshotHash`. The search consumer
-stores each hashed observation under a separate document id, so delayed or
-retried delivery cannot replace another revision. It preserves an accepted NPC
-type; classification from weight remains a fallback for legacy type values.
-Events without a hash continue to write their existing catalog document. The
-search rebuild script retains hashed revisions and selects one legacy snapshot
-per legacy document id; running that script does not recover missing history.
+NPC search publications carry the optional `snapshotHash`; since LOO-250 the
+search consumer ignores it and stores one document per catalog entry (see
+"Revisions per game edition"). It preserves an accepted NPC type;
+classification from weight remains a fallback for legacy type values.
 
 Public NPC search remains a catalog of suggestions with the existing NPC ids.
-Every indexed document carries an internal `catalogKey` for its identity
-namespace, id, Margonem type, and world; legacy keys omit the namespace. Search uses Meilisearch's
+Every indexed document carries an internal `catalogKey` for its game version,
+identity namespace, id and Margonem type; legacy keys omit the namespace.
+Search uses Meilisearch's
 [`distinct` parameter](https://www.meilisearch.com/docs/reference/api/search/search-with-post)
-to group those documents before the requested hit limit. A large revision
+to group documents written before that change by catalog entry before the
+requested hit limit. A large revision
 history for one NPC cannot consume the slots for other catalog identities,
 including requests that resolve several selected NPC ids. The existing
 name/type collapse still applies after catalog grouping and keeps a template
@@ -513,21 +513,15 @@ Deploy this change with a coordinated writer transition:
 2. Apply the migration with `bun run db:migrate:deploy`. The migrator runs in a
    transaction; schedule the unique-index replacement for a window that allows
    the required table locks.
-3. From `apps/search`, run `bun run backfill:npc-catalog` with the existing
-   `MEILISEARCH_HOST` and `MEILISEARCH_API_KEY`. Each run updates at most 10,000
-   documents in acknowledged batches of 500. Repeat until its JSON result says
-   `complete: true`. The command adds only missing `catalogKey` values, preserves
-   every existing document and attribute, and safely resumes after interruption.
-   Complete this step before enabling the new search queries; legacy documents
-   without the grouping field cannot participate in the same distinct group.
-4. Deploy the new search service before the new API publisher. Its startup
+3. Deploy the new search service before the new API publisher. Its startup
    settings make `catalogKey` and `id` filterable, and it accepts both hashed and
-   older events. Its index writes and the updated rebuild script include the
-   grouping field. Run that rebuild script only after the database migration.
-5. Start only API and seed/import revisions that target the new snapshot key,
+   older events. After the database migration, rebuild the indexes with
+   `bun run seed` in `apps/search`; the rebuilt documents include the grouping
+   field.
+4. Start only API and seed/import revisions that target the new snapshot key,
    then resume ingestion. Old writers use `ON CONFLICT (npcId, name)` and cannot
    run after the old unique index is removed.
-6. Verify that new loots reference rows with non-null world and hash, and that
+5. Verify that new loots reference rows with non-null world and hash, and that
    different levels under one id and name coexist without changing earlier
    links. Check a restricted role through the list, detail, and derived views.
 
@@ -575,7 +569,7 @@ text in a payload.
 
 The game client derives it once per page in the runtime adapter
 (`resolveGameVersion`) from the page hostname: the edition domain itself or
-any subdomain of it. A new world needs no list entry. Lookalike and unknown
+any subdomain of it; the client needs no world list. Lookalike and unknown
 hosts resolve to null and are never treated as Polish. NI and SI are served
 from the same world URL and differ only by the `interface` cookie, so the
 hostname gives both interfaces, and every installation method, the same value. The character list uses the same value to pick the edition's public
@@ -592,7 +586,8 @@ unlisted domain stays unknown until verified.
 `POST /loots` accepts an optional nullable `gameVersion`. The API validates the
 value but cannot verify it: requests reach it through the browser extension or
 userscript transport, not from the game page's origin. It is provenance, not an
-Organization authorization input. Absent and null values are stored as null.
+Organization authorization input. Since LOO-250 the API fills an absent or null
+value from the world (see below), so every loot and revision has one.
 
 `20260930143511_loot_game_version` creates the `GameVersion` enum and adds the
 nullable `Loot.gameVersion` and `NpcSnapshot.gameVersion`. Adding nullable
@@ -604,14 +599,10 @@ an edition from the world name.
 - The loot `uniqueId` still hashes item hids and world, so a retry, or the same
   loot submitted by an older and a newer client, resolves to one loot. The first
   accepted game version is kept; a later submission never changes it.
-- NPC revisions of different editions never share a row. An observation without
-  a game version keeps the hash that older clients produce, so it reuses
-  existing revisions instead of duplicating them.
+- NPC revisions of different editions never share a row.
 - NPC search publications carry `gameVersion`. Search adds it to the document,
-  prefixes the catalog key with it when known, and returns it as a nullable
-  field on NPC hits. Name suggestions stay separate per edition, and an
-  unversioned hit yields to a versioned one with the same name and type. Older
-  search revisions ignore the field.
+  prefixes the catalog key with it, and returns it on NPC hits. Name
+  suggestions stay separate per edition.
 - Item revisions and item search documents include the game version; see
   "Item observation revisions" below.
 - Timers remain keyed by Organization, world and runtime NPC id and do not
@@ -676,29 +667,76 @@ keep one document per item id. Deploy search before the API, then rebuild the
 search indexes with `bun run seed` in `apps/search` to replace the documents
 keyed by item id alone.
 
+## Revisions per game edition
+
+Margonem uses the same NPC and item ids on every world of an edition
+([LOO-250](https://linear.app/lootlog/issue/LOO-250)). Revisions are therefore
+one per edition, and every loot and revision records its edition.
+
+- `gameVersionOfWorld` in `@lootlog/schema/game-version` maps a world to its
+  edition: `cronus`, `husaria` and `steamrealm` are `en`, every other world is
+  `pl`. A new English world needs an entry in `EN_EDITION_WORLDS`. This
+  reverses the rule of keeping no world list: loots accepted before
+  [LOO-35](https://linear.app/lootlog/issue/LOO-35), and clients that send no
+  game version, have no other source. `gameVersionOfWorldSql` in
+  `src/database/drizzle/game-version.ts` is the same map in SQL.
+- Loot acceptance uses the declared `gameVersion`. A declared value that
+  differs from the map wins and is logged as a warning with the world and both
+  values. A submission without one is a client defect: the API logs a warning
+  and fills it from the world so the loot is not lost. This fallback is
+  deprecated; once those warnings stop, a breaking release makes
+  `gameVersion` required and removes it. The backfill, the search rebuild and
+  older search publications keep using the map for data written without an
+  edition. The game client already declares
+  it from the hostname for every installation method, and on the local
+  production copy all 1,230 loots with a declared edition agreed with the map.
+- `createNpcSnapshotHash` leaves the world out (`npc-observation-v2`) and
+  requires the game version, so one observation on several worlds of an
+  edition is one revision and editions never share one. New revisions store
+  a null `NpcSnapshot.world`; the column is deprecated and a later migration
+  drops it once the repair below is complete and no older API writer runs.
+  `createItemSnapshotHash` is unchanged and now always receives an edition.
+- Search stores one NPC document per edition, identity namespace, id and
+  Margonem type, with a merged `worlds` list, as items already did. NPC
+  publications carry the observing `lootId`; a document keeps the attributes
+  of the latest loot, so a retried or redelivered older publication only adds
+  its world. The
+  `world` query parameter of `/npcs` and `/items` is accepted, ignored and
+  marked deprecated in the contract; on `/all` it still filters players. The
+  index rebuild (`bun run seed`) takes the edition of a revision, or of its
+  loot for revisions written before editions.
+
+Deploy search first: it indexes both older and new publications. Then deploy
+the API, run the repair below, and rebuild the search indexes. An API rollback
+to a revision before this one is safe for reads, but that writer hashes NPC
+observations per world again and stores loots without an edition from older
+clients; run the repair's plan again after rolling forward.
+
 ## Legacy association repair
 
-> [!WARNING]
-> Do not run the repair command against production until
-> [LOO-250](https://linear.app/lootlog/issue/LOO-250) has shipped. It creates
-> one NPC revision per world; LOO-250 moves NPC revisions to one per game
-> edition and adapts this command and its manifest. Deploying the migration and
-> the code is safe: the tables stay empty and nothing runs by itself.
+Rows written before immutable, per-edition revisions can point at the wrong
+revision, and most have no edition at all:
 
-Rows written before immutable NPC and item revisions can point at the wrong
-revision. A legacy `NpcSnapshot` kept the first level seen for an id and name,
-so later kills of a reworked NPC, and loots whose client started sending the
-runtime id instead of the template id, show a stale level. That level decides
-which roles can read the loot. A legacy `ItemSnapshot` kept the first name
-seen for an item id and stats, so Polish loots can show an English name.
-Saved timer notification rules can hold ids from the legacy NPC catalog that
-never match a timer. The repair of [LOO-38](https://linear.app/lootlog/issue/LOO-38)
-corrects only associations with independent evidence and records every change.
+- A legacy `NpcSnapshot` kept the first level seen for an id and name, so later
+  kills of a reworked NPC show a stale level
+  ([LOO-38](https://linear.app/lootlog/issue/LOO-38)). That level decides which
+  roles can read the loot.
+- A legacy `ItemSnapshot` kept the first name seen for an item id and stats, so
+  loots of one edition can show the other edition's name.
+- Revisions accepted between LOO-34 and LOO-250 are one per world, and loots
+  and revisions from clients without a game version have none.
+- Saved timer notification rules can hold ids from the legacy NPC catalog that
+  never match a timer.
 
-### Migration
+The repair corrects these from independent evidence, records every change and
+can be rolled back exactly. It runs as a separate, resumable command; nothing
+runs by itself.
+
+### Migrations
 
 `20260930204919_legacy_association_repair` creates four empty tables and
-changes no existing row:
+`20261001000448_legacy_repair_snapshot_log` a fifth. Neither changes an
+existing row:
 
 - `LegacyRepairRun`: one row per applied manifest, with its version, SHA-256,
   entry count and status (`applying`, `applied`, `rollingBack`, `rolledBack`).
@@ -709,48 +747,79 @@ changes no existing row:
 - `LegacyRepairLink`: one row per moved `LootNpc` or `LootItem` link:
   `(runId, rowTable, rowId, entryId, fromSnapshotId, toSnapshotId, appliedAt)`
   plus the rollback outcome.
+- `LegacyRepairSnapshot`: one row per revision whose identity the run changed,
+  a `promote` or a `retire`, with its previous hash, game version, world and,
+  for items, stats.
 - `NotificationRuleUnresolvedSelection`: a saved selection that does not
   identify what its rule matches, deleted with its rule.
 
 The log holds snapshot, link and rule ids and counts. It holds no Organization
 ids or names and is retained after a run completes or is rolled back.
 
+### Plan
+
+`plan` reads the database in one repeatable-read, read-only transaction and
+writes a manifest, its row files and `summary.json` into `--out`, which must
+stay outside the repository and private. The edition of a loot is its game
+version, or its world's edition. For every NPC and item revision that is not
+already an edition revision:
+
+- **Promote.** A revision written before editions takes the edition of most of
+  its loots at its own level (for an item, the edition whose client first
+  wrote its name, from its earliest link). It keeps every attribute and its
+  links; only its game version, world and hash change, and an item's shared
+  stats lose the per-instance entries its first writer left in them. A later
+  revision that holds the same edition hash hands it over and its links move
+  to the promoted revision. When two revisions written before editions share
+  an edition hash, only the first is promoted and the links of the other
+  relink to it; `apply` refuses two promotions to one hash.
+- **Relink.** Links from the other edition, and every link of a per-world or
+  unversioned revision, move to the revision of their edition with the same
+  attributes, which is created or reused. An item takes the name and icon of
+  that edition's revision of the same item id and type; a name is never
+  translated. Without one, its links stay and are recorded as
+  `markUnresolved` (`noSameEditionName`).
+- **Level evidence (LOO-38).** For legacy NPC revisions whose timer history
+  shows another level for the same id and name, each link is compared with
+  timer `CREATE` entries of the same NPC and edition within seven days of the
+  loot. A single other level moves the link to a revision with that level;
+  anything less certain keeps the stored level and is recorded (`noop`
+  `timerConsistent`, or `markUnresolved` `bothLevelsObserved`,
+  `severalOtherLevelsObserved`, `onlyOtherEditionEvidence`, `noDatedEvidence`).
+  Relinks carry their access effect: `restrict` when the level rises,
+  `expand` when it falls. Review `expand` entries before applying.
+- **Backfill.** One entry fills `Loot.gameVersion` from the world where it is
+  null.
+
+Entry ids order execution: the backfill (`1:`), promotions (`2:`), relinks
+(`3:`), records (`4:`). Saved notification selections come from the LOO-38
+dry run as `5:` entries in the same format (`remapFilter` or `markUnresolved`
+for a timer rule, `markUnresolved` for a watched item); the rule's filters are
+never changed. Two plans of the same data are byte-identical.
+
 ### Manifest
 
-A manifest is produced by a read-only dry run and kept outside the repository:
-one JSON decision per line, with the link ids of each entry in side files. An
+One JSON decision per line, with the link ids of each entry in side files. An
 entry's `rowIdsSha256` is the SHA-256 of its ascending link ids joined by
-`\n`. Before anything is written, the command decodes every entry, requires
-`manifestVersion` 1 and the `--run-id` given by the operator, verifies every
-checksum and row count, and refuses two entries that move the same link.
+`\n`. Before anything is written, `apply` decodes every entry, requires
+`manifestVersion` 2 and the `--run-id` given by the operator, verifies every
+checksum and row count, and refuses two entries that move the same link or
+change the same revision. Version 1 manifests, which created one NPC revision
+per world, are refused.
 
-Actions:
+When applied:
 
-- `createRevisionAndRelink` (NPC or item): create the evidenced revision, or
-  reuse an identical one that already exists, and move the listed links.
-- `noop`, `markUnresolved` (NPC or item): record the entry and its row count;
-  no link changes. Genuine pre-rework loots stay on their old level.
-- `proposeForReview` (item): recorded as `deferred`, never applied.
-- `remapFilter`, `markUnresolved` (timer rule): record an unresolved selection
-  with the suggested runtime successor, if any. The rule's filters are never
-  changed.
-- `markUnresolved` (watched item): record that the saved name may come from
-  the other edition or matches no revision. Matching by item id and world is
-  unaffected.
-
-A replacement NPC revision copies every attribute of the legacy row except
-the level, which comes from timer observations of the same NPC, world and
-edition within seven days of the loot. It keeps `identityNamespace` `legacy`,
-sets `world`, and takes the game version assigned to the loot's world by the
-dry run. A replacement item revision has `gameVersion` `pl`, the name and icon
-of the Polish revision with the same item id and type, the source item type,
-lvl and rarity, and `splitItemStat(statRaw).revision` as its stats; its
-`statsHash` equals the source's, so rarity and level-based access do not
-change. `instanceStat` stays null; no per-instance value is invented. The
-command recomputes each hash with `createNpcSnapshotHash` or
-`createItemSnapshotHash` and stops if it differs from the manifest. The world
-assignment is an input of this one repair; runtime code never maps worlds to
-editions.
+- A promotion stops if its revision changed since the plan, or if a revision
+  with different attributes holds its hash. A revision with identical
+  attributes that holds it, including one the API wrote after the plan, hands
+  it over in the same transaction. Its links then move in batches, and the
+  entry completes only once none are left and the swap is 60 seconds old, so a
+  loot that resolved the retired revision just before the swap moves too.
+- A relink recomputes the target hash with `createNpcSnapshotHash` or
+  `createItemSnapshotHash`, checks that the target keeps the source's other
+  attributes and, for items, its `statsHash`, rarity and level, and moves only
+  listed links that still point at the source and whose loot is of the
+  target's edition.
 
 ### Commands
 
@@ -758,38 +827,45 @@ From `apps/api`, with `POSTGRESQL_CONNECTION_URI` and the `REDIS_*` variables
 of the API:
 
 ```sh
+bun run repair:legacy-associations plan --out <dir> --run-id <runId>
 bun run repair:legacy-associations apply --manifest <dir>/manifest.jsonl --run-id <runId>
 bun run repair:legacy-associations status --run-id <runId>
 bun run repair:legacy-associations rollback --run-id <runId>
 ```
 
-`--batch-size` (default 1,000) sets the links moved per transaction and
-`--max-rows` (default 50,000) the links moved per invocation. Repeat `apply`
-or `rollback` until its JSON result reports `complete: true`. Each result
-reports counts only, including the number of Organizations whose caches were
-invalidated.
+`--batch-size` (default 1,000) sets the links moved or loots filled per
+transaction and `--max-rows` (default 50,000) the rows changed per invocation.
+Repeat `apply` or `rollback` until its JSON result reports `complete: true`.
+Each result reports counts only, including the number of Organizations whose
+caches were invalidated.
 
 - **Bounded and resumable.** A batch locks its entry and the next links by id,
-  moves only links that still point at the source revision, belong to one of
-  the entry's worlds and have a null or matching loot game version, writes
-  their log rows and advances the entry cursor in one transaction. An
-  interrupted run resumes after its last committed batch.
+  moves them, writes their log rows and advances the entry cursor in one
+  transaction. An interrupted run resumes after its last committed batch.
 - **Idempotent.** A completed entry is skipped. A link already on the target
   counts as `alreadyOnTargetRows`; a link that points elsewhere is left alone
   and counts as `skippedRows`. Re-running a completed run changes nothing.
-- **Rollback.** Only logged links that still point at their target move back
-  to their source revision. A link changed since the repair keeps its current
-  revision (`keptRows`). A created revision is deleted only when no link
-  references it, so a newer loot that reused it keeps it. Unresolved
-  selections recorded by the run are removed. A rolled-back run cannot be
-  applied again; generate a new run id.
+- **Rollback.** Entries are undone in reverse order. Only logged links that
+  still point at their target move back (`restored`); a link changed since
+  keeps its current revision (`kept`). A created revision is deleted only when
+  no link references it, so a newer loot that reused it keeps it. A promoted
+  revision gets its previous identity and stats back while it still carries
+  the values the run set and no loot accepted since the promotion links it
+  (a link above the highest link id at the swap, kept on the entry's
+  cursor); otherwise it stays promoted (`kept`), so that loot's record does
+  not change. A retired revision gets its hash back only after its promoted
+  revision reverted.
+  Unresolved selections recorded by the run are removed. A filled
+  `Loot.gameVersion` stays: it was unknown, and the world determines it. A
+  rolled-back run cannot be applied again; plan under a new run id.
 - **Caches.** After each committed batch, the command bumps the `loots:list`
   and `loot-stats` generations and deletes the event-wrapped summaries of the
-  Organizations whose links moved. Every `apply` and `rollback` first does the
-  same for all Organizations already in the run's log, so a process stopped
-  between a commit and its invalidation is healed by the next invocation. The public stats card counts item
-  rarity, which a relink never changes. Kill statistics keep their own level
-  copy and are not derived from loot links.
+  Organizations whose links moved; after a promotion that changed item stats,
+  of every Organization. Every `apply` and `rollback` first does the same for
+  the Organizations already in the run's log, so a process stopped between a
+  commit and its invalidation is healed by the next invocation. The public
+  stats card counts item rarity, which the repair never changes. Kill
+  statistics keep their own level copy and are not derived from loot links.
 
 Lists, details, statistics, the activity feed, search results and notification
 delivery all read the NPC level through `LootNpc` with one shared visibility
@@ -800,83 +876,81 @@ reselects an id rebuilds its jobs without announcing timers whose spawn window
 has closed.
 
 New submissions cannot recreate the repaired associations: every NPC and item
-observation resolves by its revision hash, legacy rows have no hash and never
-match, and a versioned client that observes the same NPC or item reuses the
-repaired revision. `test/legacy-repair.integration.test.ts` covers this
-together with apply, resume, idempotency, rollback, cache invalidation and the
-level cap of a restricted role.
+observation resolves by its edition hash, which the promoted and created
+revisions hold. `test/legacy-repair.integration.test.ts` covers the plan,
+apply, resume, a revision written after the plan, idempotency, rollback, cache
+invalidation and the level cap of a restricted role.
 
 ### Rollout and rollback
 
-1. Deploy the migration, then the API, then Web. Older API and Web revisions
-   ignore the new tables and the additive `unresolvedSelections` response
-   field, so the compatibility window is open in both directions until a run
-   is applied.
-2. Re-run the dry run read-only against production and compare its totals with
-   the local reconciliation below. Keep the manifest and row files private.
+1. Deploy the migrations, then search, then the API and Web. The new tables
+   stay empty until a run is applied.
+2. Run `plan` against production and compare its `summary.json` with the local
+   dry run below. Keep the manifest and row files private.
 3. Take a database backup or snapshot.
 4. Run `apply` until `complete: true`, then `status`, and review the counters.
-5. From `apps/search`, run `bun run seed` to rebuild the NPC and item
-   indexes from the repaired links.
-6. Check a restricted role through the loot list, details, statistics and
-   the feed for an NPC whose level changed.
+   The backfill rewrites every loot without an edition; give it a larger
+   `--batch-size` and `--max-rows` and watch replication lag and table bloat.
+5. From `apps/search`, run `bun run seed` to rebuild the NPC and item indexes.
+6. Check a restricted role through the loot list, details, statistics and the
+   feed for an NPC whose level changed.
 
 To undo the data change, run `rollback` with a compatible API image until
 `complete: true`, then rebuild the search indexes again. Rolling back the API
-image alone leaves repaired links in place; this is safe because they are
-ordinary revisions. Do not drop the log tables while a run may need rollback.
+image alone leaves the repaired revisions in place; this is safe because they
+are ordinary revisions. Do not drop the log tables while a run may need
+rollback.
 
 ### Local dry run
 
-On the local copy of production (loots up to id 13,553,717), the manifest has
-8,340 entries:
+On a copy of production restored on 2026-10-01 (13,803,407 loots, 22.1 million
+`LootNpc` and 33.2 million `LootItem` links), `plan` took 35 seconds and wrote
+44,928 entries:
 
-| Domain       | Action                                                    | Entries |   Links |
-| ------------ | --------------------------------------------------------- | ------: | ------: |
-| NPC          | createRevisionAndRelink (restrict 129,347, expand 48,755) |     764 | 178,102 |
-| NPC          | noop (genuine pre-rework or timer-consistent)             |     424 | 597,562 |
-| NPC          | markUnresolved (unrecoverable or suspected)               |      59 | 323,139 |
-| Item         | createRevisionAndRelink                                   |      37 |  13,042 |
-| Item         | markUnresolved                                            |   6,434 | 327,988 |
-| Item         | proposeForReview (not applied)                            |     520 |   4,081 |
-| Timer rule   | unresolved with a suggested successor                     |      52 |       – |
-| Timer rule   | unresolved without a successor or unknown                 |      30 |       – |
-| Watched item | unresolved name                                           |      20 |       – |
+| Domain | Action                                      | Entries |      Links |
+| ------ | ------------------------------------------- | ------: | ---------: |
+| Loot   | backfillGameVersion                         |       1 | 13,802,177 |
+| NPC    | promoteRevision                             |   6,503 |          – |
+| NPC    | relinkRevision                              |   2,480 |    288,426 |
+| NPC    | noop (`timerConsistent`)                    |       2 |      5,875 |
+| NPC    | markUnresolved (level evidence)             |      29 |    327,408 |
+| Item   | promoteRevision (1,264 retiring a revision) |  28,745 |      2,018 |
+| Item   | relinkRevision                              |     750 |     25,247 |
+| Item   | markUnresolved (`noSameEditionName`)        |   6,418 |    335,814 |
 
-Relinked NPC links belong to loots of 518 Organizations and relinked item
-links to 387. Genuine pre-rework loots stay on their old level: 102 for
-Czempion Furboli, 2 for Furbol Champion and 20,950 for Arachniregina
-Colosseus. Loots before the first timer observation of an NPC cannot be
-placed in time and stay unresolved. A full search rebuild took 52 seconds
-locally and is expected to add 764 NPC and 37 item documents and remove 56
-legacy NPC documents.
+The loot count is the number of loots without an edition; the promotion row
+counts the links of retired revisions. Promotions keep 22.1 million NPC and
+33.2 million item links in place. NPC relinks move 90,279 English and 3,057
+Polish links of the other edition or of per-world revisions, and the level
+evidence of 28 entries (one per legacy revision, edition and level, instead of
+the 764 per-world revisions of the first LOO-38 dry run) moves 141,774 links
+to a higher level (`restrict`) and 53,316 to a lower one (`expand`). Item
+relinks give 18,985 Polish and 6,262 English links their edition's name. The
+plan is byte-identical when repeated.
 
 ### Local validation
 
-On a copy of that database (restored from `pg_dump` into a separate database;
-the original stayed unchanged), with the local Redis and Meilisearch:
+On a template copy of that database, with the local Redis and Meilisearch:
 
-- The migration ran in well under a second.
-- `apply` recomputed and matched all 801 revision hashes, created 764 NPC
-  and 37 item revisions (none existed yet), and moved 178,102 `LootNpc` and
-  13,042 `LootItem` links with no link already on target and none skipped:
-  129,347 to a higher level and 48,755 to a lower one. It recorded 102
-  unresolved selections (79 legacy catalog ids, 52 of them with a suggested
-  timer, 3 unknown ids, 20 watched items) and left every rule's filters
-  byte-identical. Czempion Furboli kept 125 links on its level-183 row and
-  moved 2,120 to level-210 revisions in 52 worlds.
-- An invocation killed with `SIGKILL` after 38,480 moved links left exactly
-  38,480 log rows, each pointing at its target; resuming completed the run.
-  Moving all links took about 75 seconds in batches of 1,000, and a second
-  `apply` moved nothing. Each invocation invalidated the caches of up to 537
-  Organizations.
-- `bun run seed` took 43 seconds and changed the indexes exactly as the dry
-  run predicted: 764 NPC documents added (723 `pl`, 41 `en`), the 56 predicted
-  legacy NPC documents removed, 37 Polish item documents added and 37 item
-  documents with fewer worlds.
-- `rollback` restored all 191,144 links in about 73 seconds, removed the
-  created revisions and unresolved selections, and left `LootNpc`,
-  `LootItem`, `NpcSnapshot` and `ItemSnapshot` checksums identical to the
-  original database.
+- `apply` backfilled 13,802,177 loots, promoted 6,503 NPC and 28,745 item
+  revisions (17,872 of them without the first writer's per-instance stats),
+  retired 1,264 item revisions into them with their 2,018 links, created 738
+  NPC and 547 item revisions and moved 313,673 links, none already on target
+  or skipped. Promotions and relinks took about five minutes; the backfill on
+  the 2 GiB local container took about 40, so give production a larger
+  `--batch-size`.
+- An invocation killed with `SIGKILL` during the backfill left no loot
+  without an edition before its cursor; the next invocation resumed. A
+  repeated `apply` changed nothing.
+- Afterwards no `LootNpc` link pointed at a revision without an edition or
+  with a world, no NPC link differed from its loot's edition, and the only
+  item links of another edition were the 335,814 recorded as unresolved.
+- `bun run seed` took 45 seconds and produced 7,135 NPC documents, one per
+  edition and identity, and 13,677 item documents. `tanro` returned Tanroth
+  once per edition, each with a game version.
+- `rollback` took three minutes, restored 315,691 links and all 36,512
+  revision changes, and left the checksums of `LootNpc`, `LootItem`,
+  `NpcSnapshot` and `ItemSnapshot` identical to the original. The filled
+  `Loot.gameVersion` stayed.
 
 These are local measurements, not production latency.
