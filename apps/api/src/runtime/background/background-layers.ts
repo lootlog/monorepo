@@ -212,7 +212,16 @@ export const BullWorkers = Layer.effectDiscard(
     );
 
     const { kills } = yield* EventsServices;
-    const { dispatch } = yield* NotificationsServices;
+    const { dispatch, recovery } = yield* NotificationsServices;
+
+    yield* recovery().pipe(
+      Effect.catch((error) =>
+        Effect.logError("Overdue notification job recovery failed", error),
+      ),
+      Effect.repeat(Schedule.spaced("1 minute")),
+      Effect.forkScoped,
+    );
+
     const database = yield* ApiDatabase;
     const runWorker = yield* FiberSet.makeRuntimePromise();
 

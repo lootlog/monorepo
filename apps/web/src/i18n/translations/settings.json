@@ -565,7 +565,8 @@
       "sendsNow": "Wysyłka teraz"
     },
     "jobErrors": {
-      "lootSourceNotVisible": "Łup nie jest już dostępny."
+      "lootSourceNotVisible": "Łup nie jest już dostępny.",
+      "missedDeliveryWindow": "Wysyłka nie odbyła się w terminie i została pominięta."
     },
     "jobDetail": {
       "title": "Szczegóły wysyłki",
