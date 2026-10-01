@@ -20,6 +20,7 @@ import {
   sql,
   sum,
 } from "drizzle-orm";
+import { chunk } from "es-toolkit";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
@@ -299,6 +300,10 @@ const moveLinks = (
           )
           .returning({ id: lootItemTable.id });
 
+// Log rows per insert: seven bind parameters each must stay below the
+// protocol's 32,767-parameter limit at any `--batch-size`.
+const LINK_LOG_CHUNK = 1000;
+
 const logLinks = (
   executor: Executor,
   values: {
@@ -311,22 +316,22 @@ const logLinks = (
     at: Date;
   },
 ) =>
-  values.ids.length === 0
-    ? Effect.void
-    : executor
-        .insert(legacyRepairLinkTable)
-        .values(
-          values.ids.map((rowId) => ({
-            runId: values.runId,
-            rowTable: values.rowTable,
-            rowId,
-            entryId: values.entryId,
-            fromSnapshotId: values.from,
-            toSnapshotId: values.to,
-            appliedAt: values.at,
-          })),
-        )
-        .pipe(Effect.asVoid);
+  Effect.forEach(
+    chunk([...values.ids], LINK_LOG_CHUNK),
+    (ids) =>
+      executor.insert(legacyRepairLinkTable).values(
+        ids.map((rowId) => ({
+          runId: values.runId,
+          rowTable: values.rowTable,
+          rowId,
+          entryId: values.entryId,
+          fromSnapshotId: values.from,
+          toSnapshotId: values.to,
+          appliedAt: values.at,
+        })),
+      ),
+    { discard: true },
+  );
 
 const lockEntry = (executor: Executor, runId: string, entryId: string) =>
   executor
