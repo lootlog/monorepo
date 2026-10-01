@@ -274,6 +274,10 @@ describe("NPC observation revision migration", () => {
         INSERT INTO "Event" (id, "guildId", name, world, "updatedAt") VALUES ('event', 'guild', 'Event', 'test', now());
         INSERT INTO "EventHeroNpc" (id, "eventId", "npcName", "npcIcon")
         VALUES ('cdn', 'event', 'Kasim', '${cdn}her/ksiaze.gif'), ('relative', 'event', 'Mamuna', 'hum/mamuna.gif');
+        INSERT INTO "UserKillStatsBucket" (id, "userId", world, "npcId", "npcName", "npcType", "npcLvl", "npcIcon", "periodStart", "updatedAt")
+        VALUES
+          ('cdn', 'user', 'test', 1, 'Kasim', 'HERO', 116, '${cdn}her/ksiaze.gif', '2026-01-01', '2026-01-01T00:00:00Z'),
+          ('relative', 'user', 'test', 2, 'Mamuna', 'HERO', 283, 'hum/mamuna.gif', '2026-01-01', '2026-01-01T00:00:00Z');
       `);
 
       for (const [timerKey, npc] of [
@@ -355,6 +359,18 @@ describe("NPC observation revision migration", () => {
           )
         ).rows,
       ).toEqual([{ npcIcon: "her/ksiaze.gif" }, { npcIcon: "hum/mamuna.gif" }]);
+      expect(
+        (
+          await database.query(
+            `SELECT "npcIcon", "updatedAt" FROM "UserKillStatsBucket" ORDER BY id`,
+          )
+        ).rows,
+      ).toEqual(
+        ["her/ksiaze.gif", "hum/mamuna.gif"].map((npcIcon) => ({
+          npcIcon,
+          updatedAt: new Date("2026-01-01T00:00:00Z"),
+        })),
+      );
     } finally {
       await database.close();
     }

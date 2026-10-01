@@ -692,7 +692,7 @@ describe("game event pipeline golden replay", () => {
     dispatcher.cleanup();
   });
 
-  it("submits the map observation of a battle NPC removed before the battle starts", async () => {
+  it("submits the map observation of a battle NPC removed before the battle starts, with its kill", async () => {
     resetPipelineState();
     const dispatcher = new EventDispatcher();
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
@@ -732,6 +732,13 @@ describe("game event pipeline golden replay", () => {
             type: 3,
           }),
         ],
+      }),
+    );
+
+    await vi.waitFor(() => expect(requestsFor("/kills")).toHaveLength(1));
+    expect(requestsFor("/kills")[0]?.body).toEqual(
+      expect.objectContaining({
+        npc: expect.objectContaining({ icon: "map-boss.gif" }),
       }),
     );
 

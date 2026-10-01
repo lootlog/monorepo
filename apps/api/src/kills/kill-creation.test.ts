@@ -175,6 +175,75 @@ it("a scoped key cannot suppress later personal or other-organization kill recor
   }
 });
 
+it("stores the relative NPC icon when a sender reports its CDN URL", async () => {
+  const boundary = await createDatabaseBoundary();
+
+  const cache: KillCreationCache = {
+    invalidateScopes: () => Effect.succeed(0),
+    deleteIfValue: () => Effect.succeed(0),
+    setNx: () => Effect.succeed(true),
+  };
+
+  try {
+    const database = boundary.database;
+    await boundary.run(
+      database
+        .insert(guildTable)
+        .values(createGuildFixture({ id: "123", ownerId: "discord-1" })),
+    );
+    await boundary.run(
+      database.insert(memberTable).values(
+        createMemberFixture({
+          id: 1,
+          guildId: "123",
+          userId: "discord-1",
+          globalUserId: "user",
+        }),
+      ),
+    );
+    await boundary.run(
+      database.insert(userCharactersLootlogSettingsTable).values({
+        userId: "discord-1",
+        accountId: payload.accountId,
+        characterId: payload.characterId,
+        catchingGuildIds: ["123"],
+        updatedAt: new Date(),
+      }),
+    );
+
+    await boundary.run(
+      makeKillCreation(
+        database,
+        cache,
+        logger,
+      )("discord-1", {
+        ...payload,
+        npc: {
+          ...payload.npc,
+          icon: "https://micc.garmory-cdn.cloud/obrazki/npc/her/mushita.gif",
+        },
+      }),
+    );
+
+    for (const table of [
+      userKillStatsTable,
+      userKillStatsBucketTable,
+      npcKillStatsTable,
+      npcKillStatsBucketTable,
+      guildKillSummaryTable,
+      guildKillSummaryBucketTable,
+    ]) {
+      expect(
+        (await boundary.run(database.select().from(table))).map(
+          ({ npcIcon }) => npcIcon,
+        ),
+      ).toEqual(["her/mushita.gif"]);
+    }
+  } finally {
+    await boundary.dispose();
+  }
+});
+
 for (const { name, failingTable, failedTotalTable } of [
   {
     name: "personal",
