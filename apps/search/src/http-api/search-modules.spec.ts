@@ -68,14 +68,12 @@ describe("Search Effect modules", () => {
         ids: [1, 2],
         limit: 10,
         search: "Hero",
-        world: "berufs",
       }),
     );
     await Effect.runPromise(
       makeItemsModule(client, silentLogger).getItems({
         limit: 10,
         search: "Sword",
-        world: "berufs",
       }),
     );
 
@@ -88,15 +86,11 @@ describe("Search Effect modules", () => {
       },
       {
         term: "Hero",
-        options: expect.objectContaining({
-          filter: 'id IN [1, 2] AND world = "berufs"',
-        }),
+        options: expect.objectContaining({ filter: "id IN [1, 2]" }),
       },
       {
         term: "Sword",
-        options: expect.objectContaining({
-          filter: '(worlds = "berufs" OR world = "berufs")',
-        }),
+        options: expect.not.objectContaining({ filter: expect.anything() }),
       },
     ]);
   });
@@ -113,7 +107,8 @@ describe("Search Effect modules", () => {
       margonemType: 2,
       prof: "w",
       world: "berufs",
-      gameVersion: null,
+      worlds: ["berufs"],
+      gameVersion: "pl",
     } satisfies NpcHit;
 
     const hits = [first, { ...first, id: 8, lvl: 150 }];
@@ -212,7 +207,7 @@ describe("Search Effect modules", () => {
       expect.objectContaining({ uid: "1_PlayerOne_berufs" }),
     ]);
     expect(indexed[1]).toEqual([
-      expect.objectContaining({ uid: "7_2_berufs" }),
+      expect.objectContaining({ uid: "pl_7_2", worlds: ["berufs"] }),
     ]);
   });
 
@@ -302,7 +297,7 @@ describe("Search Effect modules", () => {
         Promise.resolve({
           results: [
             {
-              uid: itemCatalogKey({ id: 42, name: "Item" }),
+              uid: itemCatalogKey({ gameVersion: "pl", id: 42, name: "Item" }),
               worlds: ["jaruna"],
             },
           ],
@@ -354,7 +349,7 @@ describe("Search Effect modules", () => {
     expect(indexedDocuments).toEqual([
       expect.objectContaining({
         id: 42,
-        uid: itemCatalogKey({ id: 42, name: "Item" }),
+        uid: itemCatalogKey({ gameVersion: "pl", id: 42, name: "Item" }),
         worlds: ["berufs", "gefion", "jaruna"],
       }),
     ]);

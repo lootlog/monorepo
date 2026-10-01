@@ -41,7 +41,6 @@ type ItemsRouteSearch = {
   rarities: string;
   sort: string;
   types: string;
-  world: string;
 };
 
 const displayRarityOptions = [
@@ -128,7 +127,6 @@ function validateSearch(search: {
   rarities?: unknown;
   sort?: unknown;
   types?: unknown;
-  world?: unknown;
 }): ItemsRouteSearch {
   return {
     advancedFilter:
@@ -144,7 +142,6 @@ function validateSearch(search: {
         ? search.sort
         : "relevance",
     types: typeof search.types === "string" ? search.types : "",
-    world: typeof search.world === "string" ? search.world : "",
   };
 }
 
@@ -201,7 +198,6 @@ const getSearchState = ({
   raritiesValue,
   sortValue,
   typesValue,
-  worldValue,
 }: {
   advancedFilterValue: string;
   maxLevelValue: string;
@@ -211,7 +207,6 @@ const getSearchState = ({
   raritiesValue: string;
   sortValue: string;
   typesValue: string;
-  worldValue: string;
 }): ItemsRouteSearch => ({
   advancedFilter: advancedFilterValue.trim(),
   maxLevel: maxLevelValue.trim(),
@@ -221,7 +216,6 @@ const getSearchState = ({
   rarities: raritiesValue,
   sort: sortValue,
   types: typesValue,
-  world: worldValue.trim(),
 });
 
 const itemSearchKeys: Array<keyof ItemsRouteSearch> = [
@@ -233,7 +227,6 @@ const itemSearchKeys: Array<keyof ItemsRouteSearch> = [
   "rarities",
   "sort",
   "types",
-  "world",
 ];
 
 const isSameSearchState = (
@@ -242,10 +235,7 @@ const isSameSearchState = (
 ): boolean => itemSearchKeys.every((key) => first[key] === second[key]);
 
 const getItemsSearchRequest = (search: ItemsRouteSearch, filters: string[]) => {
-  const hasActiveSearch =
-    search.query.trim() !== "" ||
-    search.world.trim() !== "" ||
-    filters.length > 0;
+  const hasActiveSearch = search.query.trim() !== "" || filters.length > 0;
 
   return {
     hasActiveSearch,
@@ -257,7 +247,6 @@ const getItemsSearchRequest = (search: ItemsRouteSearch, filters: string[]) => {
       search: search.query.trim() || undefined,
       sort:
         search.sort && search.sort !== "relevance" ? [search.sort] : undefined,
-      world: search.world.trim() || undefined,
     },
   };
 };
@@ -294,7 +283,6 @@ function ItemsRoute() {
   const { searchApiUrl } = Route.useLoaderData();
   const search = Route.useSearch();
   const [queryValue, setQueryValue] = useState(search.query);
-  const [worldValue, setWorldValue] = useState(search.world);
   const [minLevelValue, setMinLevelValue] = useState(search.minLevel);
   const [maxLevelValue, setMaxLevelValue] = useState(search.maxLevel);
   const [raritiesValue, setRaritiesValue] = useState(search.rarities);
@@ -336,7 +324,6 @@ function ItemsRoute() {
 
   useEffect(() => {
     setQueryValue(search.query);
-    setWorldValue(search.world);
     setMinLevelValue(search.minLevel);
     setMaxLevelValue(search.maxLevel);
     setRaritiesValue(search.rarities);
@@ -353,7 +340,6 @@ function ItemsRoute() {
     search.rarities,
     search.sort,
     search.types,
-    search.world,
   ]);
 
   useEffect(() => {
@@ -366,7 +352,6 @@ function ItemsRoute() {
       raritiesValue,
       sortValue,
       typesValue,
-      worldValue,
     });
 
     if (
@@ -379,7 +364,6 @@ function ItemsRoute() {
         rarities: search.rarities,
         sort: search.sort,
         types: search.types,
-        world: search.world,
       })
     ) {
       return;
@@ -413,10 +397,8 @@ function ItemsRoute() {
     search.rarities,
     search.sort,
     search.types,
-    search.world,
     sortValue,
     typesValue,
-    worldValue,
   ]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -433,7 +415,6 @@ function ItemsRoute() {
           raritiesValue,
           sortValue,
           typesValue,
-          worldValue,
         }),
       });
     });
@@ -441,7 +422,6 @@ function ItemsRoute() {
 
   function handleReset() {
     setQueryValue("");
-    setWorldValue("");
     setMinLevelValue("");
     setMaxLevelValue("");
     setRaritiesValue("");
@@ -461,7 +441,6 @@ function ItemsRoute() {
           rarities: "",
           sort: "relevance",
           types: "",
-          world: "",
         },
       });
     });
@@ -511,18 +490,12 @@ function ItemsRoute() {
         </CardHeader>
         <CardContent className="px-0">
           <form className="grid gap-3" onSubmit={handleSubmit}>
-            <div className="grid gap-3 lg:grid-cols-[1.4fr_0.8fr_0.6fr_0.6fr_0.75fr_auto]">
+            <div className="grid gap-3 lg:grid-cols-[1.4fr_0.6fr_0.6fr_0.75fr_auto]">
               <SearchTextField
                 label={t("search.queryLabel")}
                 value={queryValue}
                 onValueChange={setQueryValue}
                 placeholder={t("search.queryPlaceholder")}
-              />
-              <SearchTextField
-                label={t("search.worldLabel")}
-                value={worldValue}
-                onValueChange={setWorldValue}
-                placeholder={t("search.worldPlaceholder")}
               />
               <SearchTextField
                 label={t("filters.minLevel")}

@@ -15,7 +15,7 @@ import {
   getBasicRouteSearchQueryParams,
   isBasicRouteSearchActive,
   type SearchStatus,
-  validateBasicRouteSearch,
+  validateQueryAndWorldRouteSearch,
 } from "./-search-route.utils";
 
 const SEARCH_LIMIT = 72;
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/players")({
     ],
   }),
   loader: () => getRuntimeConfig(),
-  validateSearch: validateBasicRouteSearch,
+  validateSearch: validateQueryAndWorldRouteSearch,
 });
 
 function PlayersRoute() {

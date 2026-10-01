@@ -2518,7 +2518,7 @@ export type CreateLootDtoPlayersItem = {
 };
 
 /**
- * Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Null or absent when unknown; the API stores it as unknown and never assumes an edition. Declared by the client and not verified by the API.
+ * Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API. Send it with every loot: omitting it, or sending null, is deprecated and a later breaking release will reject such loots. Until then the API uses the edition of `world`: `cronus`, `husaria` and `steamrealm` are `en`, every other world is `pl`.
  * @nullable
  */
 export type CreateLootDtoGameVersion = typeof CreateLootDtoGameVersion[keyof typeof CreateLootDtoGameVersion] | null;
@@ -2553,7 +2553,7 @@ export interface CreateLootDto {
   /** @minLength 1 */
   world: string;
   /**
-     * Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Null or absent when unknown; the API stores it as unknown and never assumes an edition. Declared by the client and not verified by the API.
+     * Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API. Send it with every loot: omitting it, or sending null, is deprecated and a later breaking release will reject such loots. Until then the API uses the edition of `world`: `cronus`, `husaria` and `steamrealm` are `en`, every other world is `pl`.
      * @nullable
      */
   gameVersion?: CreateLootDtoGameVersion;

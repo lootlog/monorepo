@@ -1,21 +1,28 @@
 import { BunRedis, BunRuntime } from "@effect/platform-bun";
+import { mkdir } from "node:fs/promises";
+import { join } from "node:path";
 import { parseArgs } from "node:util";
+import { groupBy } from "es-toolkit";
 import { Console, Effect, Layer } from "effect";
 import { apiRedisConfiguration } from "#src/config/api.config";
-import { ApiDatabaseLive } from "#src/database/drizzle/database";
+import { ApiDatabase, ApiDatabaseLive } from "#src/database/drizzle/database";
 import { ApiRedis, redisUrl } from "#src/runtime/infrastructure/api-redis";
 import { readLegacyRepairManifest } from "./legacy-repair-manifest.js";
+import { planLegacyRepair } from "./legacy-repair-plan.js";
 import { LegacyRepair, LegacyRepairError } from "./legacy-repair.js";
 
 /**
- * LOO-38 legacy association repair.
+ * Legacy association repair (LOO-38, LOO-250).
  *
+ *   plan     --out <dir> --run-id <id>
  *   apply    --manifest <manifest.jsonl> --run-id <id> [--batch-size n] [--max-rows n]
  *   rollback --run-id <id> [--batch-size n] [--max-rows n]
  *   status   --run-id <id>
  *
- * Each invocation moves at most `--max-rows` loot links and prints a JSON
- * result with counts only. Repeat apply or rollback until it reports
+ * `plan` only reads and writes the manifest, its row files and a summary of
+ * counts into `--out`, which must stay private. Each apply or rollback
+ * invocation changes at most `--max-rows` loot links or loots and prints a
+ * JSON result with counts only. Repeat apply or rollback until it reports
  * `complete: true`; both resume after an interruption and are idempotent.
  */
 
@@ -43,6 +50,7 @@ const program = Effect.gen(function* () {
     allowPositionals: true,
     options: {
       manifest: { type: "string" },
+      out: { type: "string" },
       "run-id": { type: "string" },
       "batch-size": { type: "string" },
       "max-rows": { type: "string" },
@@ -52,11 +60,24 @@ const program = Effect.gen(function* () {
   const [command] = positionals;
   const runId = values["run-id"];
 
-  if (!runId || !["apply", "rollback", "status"].includes(command ?? "")) {
+  if (
+    !runId ||
+    !["plan", "apply", "rollback", "status"].includes(command ?? "")
+  ) {
     return yield* new LegacyRepairError({
       message:
-        "usage: apply --manifest <path> --run-id <id> | rollback --run-id <id> | status --run-id <id>",
+        "usage: plan --out <dir> --run-id <id> | apply --manifest <path> --run-id <id> | rollback --run-id <id> | status --run-id <id>",
     });
+  }
+
+  if (command === "plan") {
+    const out =
+      values.out ??
+      (yield* new LegacyRepairError({ message: "--out is required" }));
+
+    return yield* Console.log(
+      JSON.stringify(yield* writePlan(out, runId), null, 2),
+    );
   }
 
   const options = {
@@ -94,6 +115,67 @@ const program = Effect.gen(function* () {
   };
 
   yield* Console.log(JSON.stringify(result, null, 2));
+});
+
+const jsonLines = (values: readonly unknown[]) =>
+  values.map((value) => `${JSON.stringify(value)}\n`).join("");
+
+// Writes the manifest, one row file per domain and action, and the counts
+// per decision; returns the counts.
+const writePlan = Effect.fnUntraced(function* (out: string, runId: string) {
+  const plan = yield* planLegacyRepair(yield* ApiDatabase, runId);
+
+  const write = (file: string, text: string) =>
+    Effect.tryPromise({
+      try: async () => {
+        await mkdir(join(out, "rows"), { recursive: true });
+        await Bun.write(join(out, file), text);
+      },
+      catch: (cause) =>
+        new LegacyRepairError({ message: `cannot write ${file}: ${cause}` }),
+    });
+
+  yield* write("manifest.jsonl", jsonLines(plan.lines));
+
+  for (const [file, rows] of Object.entries(
+    groupBy(plan.rows, (row) => row.file),
+  )) {
+    yield* write(
+      `rows/${file}.jsonl`,
+      jsonLines(
+        (rows ?? []).map(({ entryId, table, ids }) => ({
+          entryId,
+          table,
+          ids,
+        })),
+      ),
+    );
+  }
+
+  const links = new Map(plan.rows.map((row) => [row.entryId, row.ids.length]));
+  const totals = new Map<string, { entries: number; links: number }>();
+
+  for (const line of plan.lines) {
+    const key = [line.domain, line.action, line.unresolvedReason]
+      .filter(Boolean)
+      .join(" ");
+
+    const total = totals.get(key) ?? { entries: 0, links: 0 };
+
+    total.entries += 1;
+    total.links += links.get(line.entryId) ?? 0;
+    totals.set(key, total);
+  }
+
+  const summary = {
+    runId,
+    entries: plan.lines.length,
+    totals: Object.fromEntries(totals),
+  };
+
+  yield* write("summary.json", `${JSON.stringify(summary, null, 2)}\n`);
+
+  return summary;
 });
 
 const RedisLive = Layer.unwrap(

@@ -1,4 +1,8 @@
 import { indexChangedDocuments } from "#src/meilisearch/index-changed-documents";
+import {
+  gameVersionOfWorld,
+  type GameVersion,
+} from "@lootlog/schema/game-version";
 import { Effect } from "effect";
 import type { Meilisearch, SearchParams } from "meilisearch";
 import { getMeilisearchErrorCode } from "#src/meilisearch/query-builder";
@@ -23,6 +27,7 @@ type SearchItemsResponse = {
 type IndexItem = IndexItemsCommand["items"][number];
 
 type IndexedItem = IndexItem & {
+  gameVersion: GameVersion;
   uid: string;
   worlds: string[];
 };
@@ -38,12 +43,6 @@ const itemAttributesToRetrieve = [
   "world",
   "worlds",
 ];
-
-const buildItemWorldFilter = (world: string) => {
-  const formattedWorld = JSON.stringify(world);
-
-  return `(worlds = ${formattedWorld} OR world = ${formattedWorld})`;
-};
 
 const mapSearchResponse = (data: {
   estimatedTotalHits?: number;
@@ -73,12 +72,9 @@ const itemWorlds = (item: IndexItem) =>
  * last observation replacing it.
  */
 export const itemCatalogKey = (
-  item: Pick<IndexItem, "gameVersion" | "id" | "name">,
-) => {
-  const key = `${item.id}_${new Bun.CryptoHasher("sha256").update(item.name).digest("hex")}`;
-
-  return item.gameVersion ? `${item.gameVersion}_${key}` : key;
-};
+  item: Pick<IndexItem, "id" | "name"> & { gameVersion: GameVersion },
+) =>
+  `${item.gameVersion}_${item.id}_${new Bun.CryptoHasher("sha256").update(item.name).digest("hex")}`;
 
 const mergeItemsByCatalogKey = (
   items: ReadonlyArray<IndexItem>,
@@ -86,12 +82,18 @@ const mergeItemsByCatalogKey = (
   const itemsByKey = new Map<string, IndexedItem>();
 
   for (const item of items) {
-    const uid = itemCatalogKey(item);
     const worlds = itemWorlds(item);
+
+    // Older publishers sent no edition; every world belongs to one.
+    const gameVersion = item.gameVersion ?? gameVersionOfWorld(worlds[0] ?? "");
+
+    const uid = itemCatalogKey({ ...item, gameVersion });
     const existingItem = itemsByKey.get(uid);
+
     itemsByKey.set(uid, {
       ...existingItem,
       ...item,
+      gameVersion,
       uid,
       worlds: uniqueWorlds([...(existingItem?.worlds ?? []), ...worlds]),
     });
@@ -122,7 +124,6 @@ export const makeItemsModule = (
     offset,
     search,
     sort,
-    world,
   }: ItemSearchQuery) {
     const index = meilisearch.index<ItemHit>(ITEMS_INDEX);
     const searchTerm = search ?? "";
@@ -134,10 +135,7 @@ export const makeItemsModule = (
       incomingFilters = [filter];
     }
 
-    const filters = [
-      ...incomingFilters,
-      ...(world ? [buildItemWorldFilter(world)] : []),
-    ];
+    const filters = incomingFilters;
 
     const query: SearchParams = {
       limit,
@@ -191,13 +189,11 @@ export const makeItemsModule = (
   const getItems = Effect.fn("SearchItems.get")(function* ({
     limit,
     search,
-    world,
-  }: Pick<ItemSearchQuery, "limit" | "search" | "world">) {
+  }: Pick<ItemSearchQuery, "limit" | "search">) {
     const response = yield* searchItems({
       limit,
       offset: 0,
       search,
-      world,
     });
 
     return response.hits;
@@ -240,7 +236,7 @@ export const makeItemsModule = (
 
   return { getItems, indexItems, searchItems } satisfies {
     readonly getItems: (
-      input: Pick<ItemSearchQuery, "limit" | "search" | "world">,
+      input: Pick<ItemSearchQuery, "limit" | "search">,
     ) => Effect.Effect<ReadonlyArray<ItemHit>, SearchOperationFailure>;
     readonly indexItems: (
       data: IndexItemsCommand,

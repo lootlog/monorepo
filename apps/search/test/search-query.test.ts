@@ -94,11 +94,16 @@ test("individual endpoints preserve text search and repeated exact-name filters 
     for (const [index, term, expected] of [
       ["players", "cash", player],
       // Documents indexed before identity namespaces are served as legacy,
-      // and those indexed before game versions as unknown.
+      // and those indexed before editions take the edition of their world.
       [
         "npcs",
         "tanro",
-        { ...npc, identityNamespace: "legacy", gameVersion: null },
+        {
+          ...npc,
+          identityNamespace: "legacy",
+          gameVersion: "pl",
+          worlds: ["luvia"],
+        },
       ],
     ] as const) {
       const individual = await boundary.handler(
@@ -117,6 +122,16 @@ test("individual endpoints preserve text search and repeated exact-name filters 
       expect(all.status).toBe(200);
       expect(await all.json()).toMatchObject({ [index]: [expected] });
     }
+
+    // NPC and item search ignore the deprecated world; players filter by it.
+    expect(new Set(queries.map(({ index }) => index))).toEqual(
+      new Set(["players", "npcs", "items"]),
+    );
+    expect(
+      queries.filter(
+        ({ index, filter }) => index !== "players" && filter !== undefined,
+      ),
+    ).toEqual([]);
 
     queries.length = 0;
 

@@ -20,7 +20,10 @@
           "error",
           {
             "allowInTypeGuards": true,
-            "boundaryFunctions": ["validateBasicRouteSearch"]
+            "boundaryFunctions": [
+              "validateQueryRouteSearch",
+              "validateQueryAndWorldRouteSearch"
+            ]
           }
         ]
       }

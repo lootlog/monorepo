@@ -10,11 +10,10 @@ import { IndexNpcsPayload } from "../npcs/index-npcs-command.js";
 
 const logger = { info() {}, warn() {}, error() {} };
 
-test("delayed and retried NPC observations preserve accepted revisions and catalog identity", async () => {
+test("NPC observations are one catalog entry per edition and identity, with every world", async () => {
   type Document = ReturnType<typeof toNpcDocument>;
 
   const stored = new Map<string, Document>();
-  const writes: Document[][] = [];
 
   const client = new Meilisearch({
     host: "http://search.invalid",
@@ -47,7 +46,6 @@ test("delayed and retried NPC observations preserve accepted revisions and catal
       }
 
       const documents: Document[] = JSON.parse(String(init?.body));
-      writes.push(documents);
 
       for (const document of documents) stored.set(document.uid, document);
 
@@ -57,27 +55,20 @@ test("delayed and retried NPC observations preserve accepted revisions and catal
 
   const npcs = makeNpcsModule(client, logger);
 
-  const original = {
+  const champion = {
     id: 52950,
     name: "Czempion Furboli",
-    world: "test",
-    icon: "old.gif",
-    prof: "w",
-    lvl: 183,
-    wt: 20,
-    type: NpcTypeEnum.ELITE2,
-    margonemType: 2,
-    snapshotHash: "observed-183",
-  };
-
-  const reworked = {
-    ...original,
-    lvl: 210,
+    world: "tarhuna",
     icon: "reworked.gif",
+    prof: "w",
+    lvl: 210,
+    wt: 20,
     // The accepted classification survives changes to the local wt classifier.
     type: NpcTypeEnum.HERO,
+    margonemType: 2,
+    gameVersion: "pl",
     snapshotHash: "observed-210",
-  };
+  } as const;
 
   const index = (observations: typeof IndexNpcsPayload.Type) =>
     Effect.runPromise(
@@ -86,70 +77,59 @@ test("delayed and retried NPC observations preserve accepted revisions and catal
       }),
     );
 
-  await index([reworked]);
-  await index([original]);
-  await index([original, reworked]);
-  expect(writes).toHaveLength(2);
-  expect([...stored.values()]).toEqual([
-    expect.objectContaining(reworked),
-    expect.objectContaining(original),
-  ]);
+  // The same NPC on other worlds of the edition, delivered separately and
+  // again, including from a publisher that sent no edition.
+  await index([champion, { ...champion, world: "fobos" }]);
+  await index([champion]);
 
-  const { snapshotHash: _snapshotHash, ...legacy } = original;
-  await index([legacy]);
-  expect(stored.size).toBe(3);
-  expect([...stored.values()]).toEqual([
-    expect.objectContaining(reworked),
-    expect.objectContaining(original),
-    expect.objectContaining(legacy),
-  ]);
+  const { gameVersion: _gameVersion, ...unversioned } = champion;
+  await index([{ ...unversioned, world: "jaruna" }]);
 
-  for (const query of [{ limit: 10 }, { limit: 10, ids: [52950] }]) {
-    const hits = await Effect.runPromise(npcs.getNpcs(query));
-    expect(hits).toHaveLength(1);
-    expect(hits[0]).toEqual({
-      ...legacy,
-      identityNamespace: "legacy",
-      gameVersion: null,
-      lvl: reworked.lvl,
-      icon: reworked.icon,
-      type: reworked.type,
-    });
-  }
+  expect([...stored.keys()]).toEqual(["pl_52950_2"]);
 
+  // A retried publication of an older loot adds its world and keeps the
+  // newer observation's attributes.
+  await index([{ ...champion, lootId: 20 }]);
   await index([
-    ...Array.from({ length: 10 }, (_, variant) => ({
-      ...original,
-      icon: `variant-${variant}.gif`,
-      snapshotHash: `variant-${variant}`,
-    })),
-    {
-      ...original,
-      id: 302783,
-      name: "Another champion",
-      snapshotHash: "another",
-    },
+    { ...champion, lootId: 10, lvl: 183, icon: "old.gif", world: "nerthus" },
   ]);
 
-  for (const query of [{ limit: 2 }, { limit: 2, ids: [52950, 302783] }]) {
-    const hits = await Effect.runPromise(npcs.getNpcs(query));
-    expect(hits.map((hit) => hit.id)).toEqual([52950, 302783]);
-  }
+  expect(stored.get("pl_52950_2")).toMatchObject({
+    lvl: 210,
+    icon: champion.icon,
+    observedLootId: 20,
+  });
+  expect(stored.get("pl_52950_2")?.worlds).toContain("nerthus");
+
+  const hits = await Effect.runPromise(npcs.getNpcs({ limit: 10 }));
+
+  expect(hits).toEqual([
+    expect.objectContaining({
+      id: 52950,
+      gameVersion: "pl",
+      worlds: ["fobos", "jaruna", "nerthus", "tarhuna"],
+    }),
+  ]);
+
+  // Editions never share an entry: an English world is another NPC, even
+  // with an equal id, name and type.
+  await index([{ ...unversioned, world: "cronus" }]);
+
+  expect(
+    (await Effect.runPromise(npcs.getNpcs({ limit: 10 }))).map((hit) => [
+      hit.gameVersion,
+      hit.worlds,
+    ]),
+  ).toEqual([
+    ["pl", ["fobos", "jaruna", "nerthus", "tarhuna"]],
+    ["en", ["cronus"]],
+  ]);
 
   // Explicit identities: the same number in another namespace is another NPC,
   // and a template suggestion replaces the legacy one for the same monster.
   await index([
-    {
-      ...reworked,
-      identityNamespace: "template",
-      snapshotHash: "template-observed",
-    },
-    {
-      ...reworked,
-      name: "Unrelated spawn",
-      identityNamespace: "runtime",
-      snapshotHash: "runtime-observed",
-    },
+    { ...champion, identityNamespace: "template" },
+    { ...champion, name: "Unrelated spawn", identityNamespace: "runtime" },
   ]);
 
   const byId = await Effect.runPromise(
@@ -159,7 +139,7 @@ test("delayed and retried NPC observations preserve accepted revisions and catal
   // The fake search ignores the id filter.
   expect(
     byId
-      .filter((hit) => hit.id === 52950)
+      .filter((hit) => hit.gameVersion === "pl")
       .map((hit) => [hit.identityNamespace, hit.name]),
   ).toEqual([
     ["legacy", "Czempion Furboli"],
@@ -172,38 +152,10 @@ test("delayed and retried NPC observations preserve accepted revisions and catal
   expect(
     suggestions
       .filter((hit) => hit.name === "Czempion Furboli")
-      .map((hit) => [hit.identityNamespace, hit.id]),
-  ).toEqual([["template", 52950]]);
-
-  // Editions: an equal name and type in another edition is another NPC, and a
-  // versioned observation replaces the unversioned suggestion.
-  await index([
-    {
-      ...reworked,
-      identityNamespace: "template",
-      gameVersion: "pl",
-      snapshotHash: "template-pl",
-    },
-    {
-      ...reworked,
-      id: 70_001,
-      identityNamespace: "template",
-      gameVersion: "en",
-      snapshotHash: "template-en",
-    },
-  ]);
-
-  const editionSuggestions = await Effect.runPromise(
-    npcs.getNpcs({ limit: 10 }),
-  );
-
-  expect(
-    editionSuggestions
-      .filter((hit) => hit.name === "Czempion Furboli")
-      .map((hit) => [hit.gameVersion, hit.id]),
+      .map((hit) => [hit.gameVersion, hit.identityNamespace]),
   ).toEqual([
-    ["pl", 52950],
-    ["en", 70_001],
+    ["pl", "template"],
+    ["en", "legacy"],
   ]);
 });
 

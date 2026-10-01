@@ -29,7 +29,7 @@ const messages = {
     itemsDescription:
       "Szukaj przedmiotów po nazwie, poziomie, rzadkości i profesji.",
     npcsTitle: "NPC i potwory",
-    npcsDescription: "Szukaj NPC-ów i potworów po nazwie i świecie.",
+    npcsDescription: "Szukaj NPC-ów i potworów po nazwie.",
     playersTitle: "Gracze",
     playersDescription: "Szukaj postaci po nazwie i świecie.",
     statusEyebrow: "Udostępnianie wyników",
@@ -161,7 +161,10 @@ const messages = {
       "Znajdź NPC-a lub potwora po nazwie i sprawdź jego typ oraz poziom.",
     typeLabel: "Typ",
     levelLabel: "Poziom",
-    worldLabel: "Świat",
+    gameVersions: {
+      pl: "margonem.pl",
+      en: "margonem.com",
+    },
   },
   players: {
     eyebrow: "Gracze",

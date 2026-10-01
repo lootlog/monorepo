@@ -344,7 +344,7 @@ describe("durable loot publications", () => {
             icon: snapshot.icon,
             wt: snapshot.wt,
             margonemType: snapshot.margonemType,
-            world: snapshot.world,
+            world: request.submission.world,
           },
         ],
       });
@@ -497,18 +497,22 @@ describe("durable loot publications", () => {
     });
   });
 
-  it("stores the declared game version on the loot, its NPC revision and search publication", async () => {
+  it("stores a game version on every loot and NPC revision, one revision per edition", async () => {
     const { request } = await seed();
     const name = `Game version hero ${randomUUID()}`;
 
     const accept = async (
       gameVersion: CreateLootRequest["gameVersion"],
-      hids = request.submission.loots.map(() => randomUUID()),
+      {
+        hids = request.submission.loots.map(() => randomUUID()),
+        world = request.submission.world,
+      }: { hids?: string[]; world?: string } = {},
     ) => {
       const { gameVersion: _omitted, ...base } = request.submission;
 
       const observed: CreateLootRequest = {
         ...base,
+        world,
         loots: request.submission.loots.map((item, index) => ({
           ...item,
           hid: hids[index] ?? randomUUID(),
@@ -536,6 +540,7 @@ describe("durable loot publications", () => {
             lootGameVersion: lootTable.gameVersion,
             snapshotId: npcSnapshotTable.id,
             snapshotGameVersion: npcSnapshotTable.gameVersion,
+            snapshotWorld: npcSnapshotTable.world,
           })
           .from(lootTable)
           .innerJoin(lootNpcTable, eq(lootNpcTable.lootId, lootTable.id))
@@ -556,29 +561,58 @@ describe("durable loot publications", () => {
     };
 
     const polish = await accept("pl");
-    const english = await accept("en");
+    const english = await accept("en", { world: "cronus" });
 
     expect(polish).toMatchObject({
-      stored: { lootGameVersion: "pl", snapshotGameVersion: "pl" },
-      search: { data: [{ id: 257_636, gameVersion: "pl" }] },
+      stored: {
+        lootGameVersion: "pl",
+        snapshotGameVersion: "pl",
+        snapshotWorld: null,
+      },
+      search: {
+        data: [
+          { id: 257_636, gameVersion: "pl", world: request.submission.world },
+        ],
+      },
     });
     expect(english).toMatchObject({
       stored: { lootGameVersion: "en", snapshotGameVersion: "en" },
-      search: { data: [{ id: 257_636, gameVersion: "en" }] },
+      search: { data: [{ id: 257_636, gameVersion: "en", world: "cronus" }] },
     });
     // Equal template ids from different editions never share a revision.
     expect(english.stored?.snapshotId).not.toBe(polish.stored?.snapshotId);
 
-    // Older clients and unrecognized hosts stay unknown, never Polish.
+    // Clients that send no edition get their world's; every world of the
+    // edition shares the revision.
     for (const gameVersion of [undefined, null] as const) {
       expect(await accept(gameVersion)).toMatchObject({
-        stored: { lootGameVersion: null, snapshotGameVersion: null },
-        search: { data: [{ id: 257_636, gameVersion: null }] },
+        stored: {
+          lootGameVersion: "pl",
+          snapshotId: polish.stored?.snapshotId,
+        },
+        search: { data: [{ id: 257_636, gameVersion: "pl" }] },
+      });
+      expect(await accept(gameVersion, { world: "husaria" })).toMatchObject({
+        stored: {
+          lootGameVersion: "en",
+          snapshotId: english.stored?.snapshotId,
+        },
       });
     }
 
+    expect(
+      (await accept("pl", { world: `other-${randomUUID()}` })).stored
+        ?.snapshotId,
+    ).toBe(polish.stored?.snapshotId);
+
+    // A declared edition wins over the world's.
+    expect((await accept("en")).stored).toMatchObject({
+      lootGameVersion: "en",
+      snapshotId: english.stored?.snapshotId,
+    });
+
     // A retry of an accepted loot keeps the provenance it was accepted with.
-    const retry = await accept("en", polish.hids);
+    const retry = await accept("en", { hids: polish.hids });
     expect(retry.id).toBe(polish.id);
     expect(retry.stored).toEqual(polish.stored);
   });

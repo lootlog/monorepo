@@ -1,4 +1,8 @@
 import { getItemTypeByCl } from "@lootlog/domain/item-type";
+import {
+  gameVersionOfWorld,
+  type GameVersion,
+} from "@lootlog/schema/game-version";
 import { parseItemStats, splitItemStat } from "@lootlog/database/item-stat";
 import {
   createItemSnapshotHash,
@@ -243,9 +247,10 @@ type MainTransaction = Parameters<
   Parameters<typeof mainDatabase.transaction>[0]
 >[0];
 
-/** Resolves the revision of a seeded item, which has no game version. */
+/** Resolves the revision of a seeded item in the edition of its loot. */
 async function findOrCreateItemSnapshot(
   transaction: MainTransaction,
+  gameVersion: GameVersion,
   item: {
     id: number;
     name: string;
@@ -260,7 +265,7 @@ async function findOrCreateItemSnapshot(
   const parsedStats = parseItemStats(revisionStat);
 
   const snapshotHash = createItemSnapshotHash({
-    gameVersion: null,
+    gameVersion,
     itemId: item.id,
     name: item.name,
     icon: item.icon,
@@ -272,6 +277,7 @@ async function findOrCreateItemSnapshot(
     .insert(itemSnapshotTable)
     .values({
       itemId: item.id,
+      gameVersion,
       statsHash: createItemStatsHash(revisionStat),
       snapshotHash,
       name: item.name,
@@ -400,12 +406,15 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
       : [];
 
   for (const loot of loots) {
+    const gameVersion = gameVersionOfWorld(loot.world);
+
     const createdLoot = await mainDatabase.transaction(async (transaction) => {
       const insertedLoots = await transaction
         .insert(lootTable)
         .values({
           uniqueId: `loot-${Date.now()}-${crypto.randomUUID()}`,
           world: loot.world,
+          gameVersion,
           source: loot.source,
           location: loot.location,
           lootShare: loot.lootShare,
@@ -422,6 +431,7 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
 
         const snapshot = await findOrCreateItemSnapshot(
           transaction,
+          gameVersion,
           item,
           revision,
         );
@@ -452,7 +462,7 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
       for (const npc of loot.npcs) {
         const observation = {
           identityNamespace: "legacy",
-          world: loot.world,
+          gameVersion,
           npcId: npc.id,
           name: npc.name,
           type: npc.type,
