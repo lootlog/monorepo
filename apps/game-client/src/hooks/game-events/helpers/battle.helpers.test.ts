@@ -41,7 +41,7 @@ describe("mergeBattleWarriorPatches", () => {
     expect(mergedWarriors).toEqual({
       "101": { ...currentWarriors["101"], hpp: 75 },
       "102": currentWarriors["102"],
-      "-501": { ...currentWarriors["-501"], hpp: 0, templateId: null },
+      "-501": { ...currentWarriors["-501"], hpp: 0, mapNpc: null },
     });
     expect(currentWarriors["101"].hpp).toBe(100);
     expect(currentWarriors["-501"].hpp).toBe(100);

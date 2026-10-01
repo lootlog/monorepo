@@ -1,3 +1,4 @@
+import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import type { RuntimeGameSnapshot } from "@/lib/margonem-runtime/runtime.types";
 import { useGameStore } from "@/store/game.store";
 import { useNpcsStore } from "@/store/npcs.store";
@@ -42,15 +43,20 @@ export const getBattleParticipants = (
   Object.entries(battleWarriors).forEach(([key, value]) => {
     if (key.startsWith("-")) {
       const runtimeId = value.originalId;
-      const npcData = useNpcsStore.getState().getNpc(runtimeId);
-      const templateId = value.templateId ?? npcData?.templateId ?? null;
-      const identity = { id: templateId ?? runtimeId, runtimeId, templateId };
 
+      const npcData =
+        value.mapNpc ?? useNpcsStore.getState().getMapNpc(runtimeId);
+
+      // The map never showed this NPC. The warrior names no template to read
+      // the Margonem type from and NI never reads a warrior `type`, so 2, the
+      // plain monster type, stands in when the warrior has none.
       if (!npcData) {
         npcs.push({
-          ...identity,
+          id: runtimeId,
+          runtimeId,
+          templateId: null,
           name: value.name,
-          icon: value.icon,
+          icon: normalizeNpcIcon(value.icon),
           hpp: value.hpp,
           prof: value.prof,
           lvl: value.lvl,
@@ -63,7 +69,9 @@ export const getBattleParticipants = (
       }
 
       npcs.push({
-        ...identity,
+        id: npcData.templateId ?? runtimeId,
+        runtimeId,
+        templateId: npcData.templateId,
         name: npcData.name,
         icon: npcData.icon,
         hpp: value.hpp,

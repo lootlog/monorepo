@@ -99,17 +99,15 @@ export const mergeBattleWarriorPatches = (
       accountId,
     };
 
-    // The warrior has no template field. Resolve it from the map NPC while it
-    // exists: the npcs_del that removes it may precede the fight loot.
+    // Capture the map NPC once: its npcs_del can precede the battle or the
+    // fight loot, and the warrior alone has no template or Margonem type.
     if (key.startsWith("-")) {
       const runtimeId = mergedWarriors[key].originalId;
 
-      mergedWarriors[key].templateId =
-        currentWarrior?.templateId ??
-        (
-          ingress?.npcsById[runtimeId] ??
-          useNpcsStore.getState().getNpc(runtimeId)
-        )?.templateId ??
+      mergedWarriors[key].mapNpc =
+        currentWarrior?.mapNpc ??
+        ingress?.npcsById[runtimeId] ??
+        useNpcsStore.getState().getMapNpc(runtimeId) ??
         null;
     }
 

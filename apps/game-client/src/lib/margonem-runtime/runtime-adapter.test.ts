@@ -206,7 +206,13 @@ describe("SI runtime adapter", () => {
     vi.stubGlobal("map", map);
     vi.stubGlobal("g", {
       init: 5,
-      npc: { [gameNpc.id]: gameNpc },
+      // The old interface stores the rendered URL of the icon NI keeps relative.
+      npc: {
+        [gameNpc.id]: {
+          ...gameNpc,
+          icon: "https://micc.garmory-cdn.cloud/obrazki/npc/npc.gif",
+        },
+      },
       other: { "404": legacyOther },
       worldConfig: { getWorldName: () => "legacy-world" },
     });
@@ -223,7 +229,10 @@ describe("SI runtime adapter", () => {
     expect(adapter.getAllNpcs()).toEqual([
       expect.objectContaining({ id: gameNpc.id }),
     ]);
-    expect(adapter.getNpc(gameNpc.id)?.id).toBe(gameNpc.id);
+    expect(adapter.getNpc(gameNpc.id)).toMatchObject({
+      id: gameNpc.id,
+      icon: gameNpc.icon,
+    });
     expect(adapter.getAllOthers()["404"]?.accountId).toBe("303");
     expect(adapter.getOther("404")?.characterId).toBe("404");
     expect(adapter.getParty()).toEqual([]);

@@ -400,6 +400,36 @@ describe("RuntimeStateProjection", () => {
     expect(useNpcsStore.getState().getNpc(503)?.level).toBe(300);
   });
 
+  it("keeps the relative icon when a packet carries its rendered CDN URL", () => {
+    const projection = new RuntimeStateProjection({ adapter: createAdapter() });
+    projection.bootstrap();
+
+    projection.apply(
+      createEnvelope({
+        icons: [
+          {
+            icon: "https://micc.garmory-cdn.cloud/obrazki/npc/her/ksiaze.gif",
+            id: 93,
+          },
+        ],
+        npc_tpls: [
+          {
+            id: 703,
+            level: 116,
+            nick: "Książę Kasim",
+            prof: "w",
+            resp_rand: 0,
+            type: 2,
+            warrior_type: 80,
+          },
+        ],
+        npcs: [{ icon: { id: 93 }, id: 504, tpl: 703, x: 4, y: 5 }],
+      }),
+    );
+
+    expect(useNpcsStore.getState().getNpc(504)?.icon).toBe("her/ksiaze.gif");
+  });
+
   it("publishes identity only for CREATE and ignores movement packets", () => {
     const adapter = createAdapter();
 
