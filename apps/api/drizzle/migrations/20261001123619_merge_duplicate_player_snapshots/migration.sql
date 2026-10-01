@@ -1,7 +1,3 @@
--- Deletes player snapshots that nothing references: timer actors whose timer
--- moved on to another snapshot and whose history entries were pruned. Running
--- before the merge keeps the probes below free of the merge's dead rows.
-DELETE FROM "PlayerSnapshot" WHERE NOT EXISTS (SELECT 1 FROM "LootPlayer" WHERE "LootPlayer"."playerSnapshotId" = "PlayerSnapshot"."id") AND NOT EXISTS (SELECT 1 FROM "LootMapPlayer" WHERE "LootMapPlayer"."playerSnapshotId" = "PlayerSnapshot"."id") AND NOT EXISTS (SELECT 1 FROM "Timer" WHERE "Timer"."actorCharacterSnapshotId" = "PlayerSnapshot"."id") AND NOT EXISTS (SELECT 1 FROM "TimerHistoryEntry" WHERE "TimerHistoryEntry"."actorCharacterSnapshotId" = "PlayerSnapshot"."id") AND NOT EXISTS (SELECT 1 FROM "TimerHistoryEntry" WHERE "TimerHistoryEntry"."timerActorCharacterSnapshotId" = "PlayerSnapshot"."id");--> statement-breakpoint
 -- Legacy writers hashed the same character data with the full profession and
 -- with its shortname, so one snapshot content can have two rows. Each content
 -- keeps its lowest id, the row resolvePlayerSnapshots already selects, so a
@@ -18,4 +14,14 @@ UPDATE "TimerHistoryEntry" SET "actorCharacterSnapshotId" = "PlayerSnapshotMerge
 UPDATE "TimerHistoryEntry" SET "timerActorCharacterSnapshotId" = "PlayerSnapshotMerge"."survivorId" FROM "PlayerSnapshotMerge" WHERE "TimerHistoryEntry"."timerActorCharacterSnapshotId" = "PlayerSnapshotMerge"."id";--> statement-breakpoint
 UPDATE "Timer" SET "actorCharacterSnapshotId" = "PlayerSnapshotMerge"."survivorId" FROM "PlayerSnapshotMerge" WHERE "Timer"."actorCharacterSnapshotId" = "PlayerSnapshotMerge"."id";--> statement-breakpoint
 DELETE FROM "PlayerSnapshot" USING "PlayerSnapshotMerge" WHERE "PlayerSnapshot"."id" = "PlayerSnapshotMerge"."id";--> statement-breakpoint
-DROP TABLE "PlayerSnapshotMerge";
+DROP TABLE "PlayerSnapshotMerge";--> statement-breakpoint
+-- Deletes snapshots that nothing references: timer actors whose timer moved
+-- to another snapshot, was deleted or pruned its history. Timer references
+-- are ON DELETE SET NULL, so the rows are locked first and re-checked in a new
+-- statement, which sees every reference committed before the locks instead of
+-- nulling it. Running last keeps the locks to the final seconds; a request
+-- that resolved one of these rows and references it after that fails its
+-- foreign key check.
+CREATE TEMPORARY TABLE "PlayerSnapshotOrphan" AS SELECT "id" FROM "PlayerSnapshot" WHERE NOT EXISTS (SELECT 1 FROM "LootPlayer" WHERE "LootPlayer"."playerSnapshotId" = "PlayerSnapshot"."id") AND NOT EXISTS (SELECT 1 FROM "LootMapPlayer" WHERE "LootMapPlayer"."playerSnapshotId" = "PlayerSnapshot"."id") AND NOT EXISTS (SELECT 1 FROM "Timer" WHERE "Timer"."actorCharacterSnapshotId" = "PlayerSnapshot"."id") AND NOT EXISTS (SELECT 1 FROM "TimerHistoryEntry" WHERE "TimerHistoryEntry"."actorCharacterSnapshotId" = "PlayerSnapshot"."id") AND NOT EXISTS (SELECT 1 FROM "TimerHistoryEntry" WHERE "TimerHistoryEntry"."timerActorCharacterSnapshotId" = "PlayerSnapshot"."id") FOR UPDATE OF "PlayerSnapshot";--> statement-breakpoint
+DELETE FROM "PlayerSnapshot" USING "PlayerSnapshotOrphan" WHERE "PlayerSnapshot"."id" = "PlayerSnapshotOrphan"."id" AND NOT EXISTS (SELECT 1 FROM "LootPlayer" WHERE "LootPlayer"."playerSnapshotId" = "PlayerSnapshot"."id") AND NOT EXISTS (SELECT 1 FROM "LootMapPlayer" WHERE "LootMapPlayer"."playerSnapshotId" = "PlayerSnapshot"."id") AND NOT EXISTS (SELECT 1 FROM "Timer" WHERE "Timer"."actorCharacterSnapshotId" = "PlayerSnapshot"."id") AND NOT EXISTS (SELECT 1 FROM "TimerHistoryEntry" WHERE "TimerHistoryEntry"."actorCharacterSnapshotId" = "PlayerSnapshot"."id") AND NOT EXISTS (SELECT 1 FROM "TimerHistoryEntry" WHERE "TimerHistoryEntry"."timerActorCharacterSnapshotId" = "PlayerSnapshot"."id");--> statement-breakpoint
+DROP TABLE "PlayerSnapshotOrphan";
