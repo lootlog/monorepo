@@ -6,6 +6,7 @@ describe("NPC icon identity", () => {
     "https://micc.garmory-cdn.cloud/obrazki/npc/hum/gnoll21.gif",
     "http://micc.garmory-cdn.cloud/obrazki/npc/hum/gnoll21.gif",
     "//micc.garmory-cdn.cloud/obrazki/npc/hum/gnoll21.gif",
+    "https://micc.garmory-cdn.cloud/obrazki/npc/https://micc.garmory-cdn.cloud/obrazki/npc/hum/gnoll21.gif",
     "https://another-cdn.example/obrazki/npc/hum/gnoll21.gif",
     "/obrazki/npc/hum/gnoll21.gif",
     "/hum/gnoll21.gif",

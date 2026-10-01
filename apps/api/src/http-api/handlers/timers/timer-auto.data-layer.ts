@@ -8,6 +8,7 @@ import { Clock, Effect, Predicate, Result, Schema } from "effect";
 import { partition } from "es-toolkit";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
@@ -184,7 +185,7 @@ const makeNpc = (
     payload.npc.prof ?? "",
     payload.npc.type,
   ),
-  icon: payload.npc.icon,
+  icon: normalizeNpcIcon(payload.npc.icon),
   margonemType: String(payload.npc.type),
 });
 
@@ -558,7 +559,7 @@ export const makeAutoTimer = (
               world: payload.world,
               npcId: payload.npc.id,
               npcName: payload.npc.name,
-              npcIcon: payload.npc.icon,
+              npcIcon: normalizeNpcIcon(payload.npc.icon),
               npcLvl: payload.npc.lvl,
               timerData: {
                 minSpawnTime: result.projection.minSpawnTime,

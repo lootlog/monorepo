@@ -769,3 +769,37 @@ them during the migration; an unlinked revision without a linked twin is kept.
 Readers that query revisions without a link see no change: watched items and
 the colossus check find the linked twin's identical values, and name and search
 lookups only lose ids that matched no loot. Apply it after the cleanup above.
+
+### Relative NPC icons
+
+`20261001122213_relative_npc_icons` stores every NPC icon in the form of
+`normalizeNpcIcon`, which the API applies to new loots and automatic timers:
+the old interface reported the rendered CDN URL of an icon Margonem keeps
+relative to `/obrazki/npc/`, and some timers carried that prefix twice. On
+production on 2026-10-01 (read-only) this affected 231 `NpcSnapshot` rows,
+9,572 `Timer` rows, 9,409 `TimerHistoryEntry` rows and 30 `EventHeroNpc` rows.
+
+A revision whose normalized icon repeats another revision of the same NPC is
+merged into the one more loots link (the lower id on a tie): its `LootNpc` rows
+move there and the revision is deleted. On production that is 8 revisions and
+18 links; the merged revisions differ only in the icon form, so no loot changes
+its visible NPC, level or type. The other 223 revisions keep their id and links,
+and their `snapshotHash` is recomputed in SQL with the formula of
+`createNpcSnapshotHash`; a revision without a hash keeps none. The migration
+test checks the SQL hash against the TypeScript function. Timer, timer history
+and event hero rows only change the icon; `updatedAt` stays.
+
+A dry run on a production clone took about 2 seconds and locked the updated
+`Timer` rows until commit, so a concurrent timer write waits for the migration.
+Apply it with the API revision that normalizes icons on write: rows an older
+API revision writes after the migration keep a full URL. Afterwards this count
+should stay at zero:
+
+```sql
+SELECT count(*) FROM "NpcSnapshot"
+WHERE "icon" ~* '/obrazki/npc/' OR "icon" LIKE '/%';
+```
+
+NPC search documents and kill statistics keep the icon they were written with
+until the next observation or an index rebuild; the web and game client NPC
+tiles therefore still accept an absolute icon URL.
