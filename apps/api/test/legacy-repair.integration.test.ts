@@ -1103,6 +1103,12 @@ describe("legacy association repair", () => {
     const newerLoot = await insertLoot(polishWorlds[0], new Date());
     const newerLink = await linkNpc(newerLoot, polish210);
     fixture.npcLootIds.push(newerLoot);
+
+    // A newer English loot reuses the promoted item revision by its hash.
+    await linkItem(
+      await insertLoot(englishWorld, new Date(), affectedGuild, "en"),
+      fixture.legacyItemId,
+    );
     const corrected = fixture.reworkedLootNpcIds.at(-1)!;
 
     const [elsewhere] = await db((database) =>
@@ -1161,7 +1167,24 @@ describe("legacy association repair", () => {
           ].includes(id),
       ),
     ).toEqual(before.npcs);
-    expect(after.items).toEqual(before.items);
+    // The promoted item revision a newer loot uses keeps its edition identity
+    // and stats, so the revision it retired keeps no hash; its loot is back.
+    const keptIds = [fixture.legacyItemId, fixture.englishRevisionId];
+
+    expect(after.items.filter(({ id }) => !keptIds.includes(id))).toEqual(
+      before.items.filter(({ id }) => !keptIds.includes(id)),
+    );
+    expect(
+      after.items.find(({ id }) => id === fixture.legacyItemId),
+    ).toMatchObject({
+      gameVersion: "en",
+      snapshotHash: itemHash("en", englishItem),
+      statRaw: splitItemStat(englishStat).revision,
+    });
+    expect(
+      after.items.find(({ id }) => id === fixture.englishRevisionId)
+        ?.snapshotHash,
+    ).toBeNull();
 
     // The revision the API wrote has its hash and its loot back.
     const concurrent = after.npcs.find(

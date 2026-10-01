@@ -514,6 +514,9 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       RabbitRoutingKey.SEARCH_NPCS_INDEX,
       options.npcs.map((npc) => ({
         id: npc.npcId,
+        // Search keeps the latest observation of a catalog entry; loot ids
+        // order observations even when deliveries arrive out of order.
+        lootId: options.lootId,
         identityNamespace: npc.identityNamespace,
         snapshotHash: npc.snapshotHash ?? undefined,
         name: npc.name,

@@ -87,13 +87,27 @@ test("NPC observations are one catalog entry per edition and identity, with ever
 
   expect([...stored.keys()]).toEqual(["pl_52950_2"]);
 
+  // A retried publication of an older loot adds its world and keeps the
+  // newer observation's attributes.
+  await index([{ ...champion, lootId: 20 }]);
+  await index([
+    { ...champion, lootId: 10, lvl: 183, icon: "old.gif", world: "nerthus" },
+  ]);
+
+  expect(stored.get("pl_52950_2")).toMatchObject({
+    lvl: 210,
+    icon: champion.icon,
+    observedLootId: 20,
+  });
+  expect(stored.get("pl_52950_2")?.worlds).toContain("nerthus");
+
   const hits = await Effect.runPromise(npcs.getNpcs({ limit: 10 }));
 
   expect(hits).toEqual([
     expect.objectContaining({
       id: 52950,
       gameVersion: "pl",
-      worlds: ["fobos", "jaruna", "tarhuna"],
+      worlds: ["fobos", "jaruna", "nerthus", "tarhuna"],
     }),
   ]);
 
@@ -107,7 +121,7 @@ test("NPC observations are one catalog entry per edition and identity, with ever
       hit.worlds,
     ]),
   ).toEqual([
-    ["pl", ["fobos", "jaruna", "tarhuna"]],
+    ["pl", ["fobos", "jaruna", "nerthus", "tarhuna"]],
     ["en", ["cronus"]],
   ]);
 

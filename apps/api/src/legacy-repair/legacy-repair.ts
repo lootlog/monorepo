@@ -15,6 +15,7 @@ import {
   inArray,
   isNotNull,
   isNull,
+  max,
   ne,
   notExists,
   sql,
@@ -1169,8 +1170,17 @@ export const makeLegacyRepair = (
             ? yield* promoteNpc(transaction, runId, entry, at)
             : yield* promoteItem(transaction, runId, entry, at);
 
+        // Links are numbered in order, so a link above the highest id at the
+        // swap belongs to a loot accepted since; rollback keeps its revision.
+        const link = linkColumns(rowTableOf(entry.domain));
+
+        const [watermark] = yield* transaction
+          .select({ id: max(link.id) })
+          .from(link.table);
+
         yield* updateEntry(transaction, runId, entry.entryId, {
           sourceSnapshotId: result.retiredId,
+          cursorRowId: watermark?.id ?? 0,
           updatedAt: at,
         });
 
@@ -1726,6 +1736,35 @@ export const makeLegacyRepair = (
       );
     });
 
+  /** Whether a loot accepted after the promotion links the promoted revision. */
+  const acceptedSince = (
+    transaction: Transaction,
+    runId: string,
+    entryId: string,
+    promoted: typeof legacyRepairSnapshotTable.$inferSelect,
+  ) =>
+    Effect.gen(function* () {
+      const row = yield* lockEntry(transaction, runId, entryId);
+
+      const watermark = row?.cursorRowId ?? null;
+
+      if (watermark === null) return false;
+
+      const link = linkColumns(
+        promoted.snapshotTable === "NpcSnapshot" ? "LootNpc" : "LootItem",
+      );
+
+      const [newer] = yield* transaction
+        .select({ id: link.id })
+        .from(link.table)
+        .where(
+          and(eq(link.snapshotId, promoted.snapshotId), gt(link.id, watermark)),
+        )
+        .limit(1);
+
+      return newer !== undefined;
+    });
+
   // The previous identity of a promoted item revision, and its stats when the
   // promotion removed per-instance entries from them.
   const itemRestore = (log: typeof legacyRepairSnapshotTable.$inferSelect) => {
@@ -1768,6 +1807,10 @@ export const makeLegacyRepair = (
         let presentationChanged = false;
         let hashFreed = false;
 
+        const accepted = promoted
+          ? yield* acceptedSince(transaction, runId, entryId, promoted)
+          : false;
+
         const settle = (
           log: typeof legacyRepairSnapshotTable.$inferSelect,
           outcome: "restored" | "kept",
@@ -1783,7 +1826,11 @@ export const makeLegacyRepair = (
               ),
             );
 
-        if (promoted) {
+        if (promoted && accepted) {
+          // A loot accepted since the promotion resolved this revision by its
+          // edition hash; reverting it would change that loot's record.
+          yield* settle(promoted, "kept");
+        } else if (promoted) {
           const restored =
             promoted.snapshotTable === "NpcSnapshot"
               ? yield* transaction

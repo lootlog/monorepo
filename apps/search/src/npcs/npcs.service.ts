@@ -138,7 +138,7 @@ const collapseByNameAndType = (hits: readonly NpcHit[]) => {
  * The stored shape of one NPC catalog entry; the seed script and the consumer
  * share it. `world` is the world of the latest observation and `worlds` every
  * world it was observed in. An observation without an edition takes the
- * edition of its world.
+ * edition of its world. `observedLootId` orders observations.
  */
 export const toNpcDocument = (npc: IndexNpc) => {
   const prof = npc.prof ?? "";
@@ -165,12 +165,38 @@ export const toNpcDocument = (npc: IndexNpc) => {
     gameVersion,
     catalogKey,
     uid: catalogKey,
+    observedLootId: npc.lootId ?? null,
   };
 };
 
 type NpcDocument = ReturnType<typeof toNpcDocument>;
 
-/** Documents of one catalog entry in one batch keep the last observation. */
+/**
+ * One catalog entry from two observations: the later loot's attributes, and
+ * every world of both. Delivery order is not chronology: a retried or
+ * redelivered publication can arrive after a newer one. An observation
+ * without a loot id, from an older publisher, counts as the latest.
+ */
+export const mergeNpcDocument = (
+  incoming: NpcDocument,
+  stored: NpcDocument,
+): NpcDocument => {
+  // Documents written before chronology have no `observedLootId`.
+  const storedLootId = stored.observedLootId ?? null;
+
+  const storedIsNewer =
+    incoming.observedLootId !== null &&
+    storedLootId !== null &&
+    storedLootId > incoming.observedLootId;
+
+  return {
+    ...(storedIsNewer ? stored : incoming),
+    observedLootId: storedIsNewer ? storedLootId : incoming.observedLootId,
+    worlds: uniqueWorlds([...incoming.worlds, ...(stored.worlds ?? [])]),
+  };
+};
+
+/** Documents of one catalog entry in one batch merge into one. */
 export const mergeNpcDocuments = (
   documents: ReadonlyArray<NpcDocument>,
 ): NpcDocument[] => {
@@ -179,10 +205,10 @@ export const mergeNpcDocuments = (
   for (const document of documents) {
     const existing = byUid.get(document.uid);
 
-    byUid.set(document.uid, {
-      ...document,
-      worlds: uniqueWorlds([...(existing?.worlds ?? []), ...document.worlds]),
-    });
+    byUid.set(
+      document.uid,
+      existing ? mergeNpcDocument(document, existing) : document,
+    );
   }
 
   return [...byUid.values()];
@@ -247,10 +273,7 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
     yield* indexChangedDocuments(
       meilisearch.index<NpcDocument>(NPCS_INDEX),
       mergeNpcDocuments(validNpcs.map(toNpcDocument)),
-      (npc, stored) => ({
-        ...npc,
-        worlds: uniqueWorlds([...npc.worlds, ...(stored?.worlds ?? [])]),
-      }),
+      (npc, stored) => (stored ? mergeNpcDocument(npc, stored) : npc),
     );
   });
 
