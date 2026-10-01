@@ -565,8 +565,13 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     return intents;
   }
 
-  // The client's declaration wins; the world only fills a missing one. A
-  // disagreement is logged, never rejected: the API cannot verify either.
+  // The client's declaration wins; a disagreement with the world is logged,
+  // never rejected: the API cannot verify either.
+  //
+  // Deprecated: a submission without a game version is a client defect. Its
+  // edition is taken from the world only so loots from clients not yet
+  // updated are not lost; remove this fallback and require `gameVersion`
+  // once the logged submissions without one stop.
   private resolveGameVersion(
     submission: CreateLootRequest,
   ): Effect.Effect<ResolvedLootSubmission> {
@@ -574,9 +579,19 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     const declared = submission.gameVersion ?? null;
     const resolved = { ...submission, gameVersion: declared ?? fromWorld };
 
-    if (declared === null || declared === fromWorld) {
-      return Effect.succeed(resolved);
+    if (declared === null) {
+      return Effect.logWarning(
+        "Loot submitted without a game version; using its world's edition",
+      ).pipe(
+        Effect.annotateLogs({
+          world: submission.world,
+          worldGameVersion: fromWorld,
+        }),
+        Effect.as(resolved),
+      );
     }
+
+    if (declared === fromWorld) return Effect.succeed(resolved);
 
     return Effect.logWarning(
       "Loot game version differs from its world's edition",
