@@ -60,8 +60,6 @@ const timerRuleSelections = (filtersValue: JsonValue) => {
 
 export const notificationMatchingPolicy = {
   parseFilters: parseNotificationFilters,
-  /** Timer ids (`npcId`/`npcIds`) and template ids a timer rule selects. */
-  timerSelections: timerRuleSelections,
   /**
    * `npcId`/`npcIds` select individual timers by their stored NPC id; a
    * `npcTemplateIds` entry selects every timer observed with that template.

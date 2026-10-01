@@ -1,5 +1,5 @@
 import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
-import { ShieldAlert, Trash2, TriangleAlert } from "lucide-react";
+import { ShieldAlert, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Badge } from "@lootlog/ui/components/badge";
@@ -53,12 +53,6 @@ export const WatchedItemCard = ({
       throw error;
     }
   };
-
-  // Matching uses the item id and world, so this only concerns the name.
-  const unresolvedName =
-    watchedItem.notificationRule?.unresolvedSelections.find(
-      ({ kind }) => kind === "item",
-    );
 
   const snapshot = watchedItem.itemSnapshot;
   const rarity = resolveItemRarity(snapshot?.rarity);
@@ -115,14 +109,6 @@ export const WatchedItemCard = ({
               </Badge>
             ))}
           </div>
-          {unresolvedName ? (
-            <p className="flex items-center gap-1.5 text-xs text-amber-500">
-              <TriangleAlert className="size-3.5 shrink-0" />
-              {t(
-                `settings.userNotifications.unresolvedItemName.${unresolvedName.reason}`,
-              )}
-            </p>
-          ) : null}
           {missingGuildIds.length > 0 ? (
             <p className="flex items-center gap-1.5 text-xs text-amber-500">
               <ShieldAlert className="size-3.5 shrink-0" />

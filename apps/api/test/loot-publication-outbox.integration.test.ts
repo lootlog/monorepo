@@ -132,6 +132,7 @@ describe("durable loot publications", () => {
         },
       ],
       world: "outbox-test",
+      gameVersion: "pl",
       source: "FIGHT",
       location: "Test map",
       accountId: "123",
@@ -508,10 +509,9 @@ describe("durable loot publications", () => {
         world = request.submission.world,
       }: { hids?: string[]; world?: string } = {},
     ) => {
-      const { gameVersion: _omitted, ...base } = request.submission;
-
-      const observed: CreateLootRequest = {
-        ...base,
+      const submission: CreateLootRequest = {
+        ...request.submission,
+        gameVersion,
         world,
         loots: request.submission.loots.map((item, index) => ({
           ...item,
@@ -523,10 +523,6 @@ describe("durable loot publications", () => {
           templateId: 257_636,
         })),
       };
-
-      // Older clients omit the field; `undefined` stands for that request.
-      const submission =
-        gameVersion === undefined ? observed : { ...observed, gameVersion };
 
       const result = await runtime.runPromise(
         acceptance().accept({ ...request, submission }),
@@ -540,7 +536,6 @@ describe("durable loot publications", () => {
             lootGameVersion: lootTable.gameVersion,
             snapshotId: npcSnapshotTable.id,
             snapshotGameVersion: npcSnapshotTable.gameVersion,
-            snapshotWorld: npcSnapshotTable.world,
           })
           .from(lootTable)
           .innerJoin(lootNpcTable, eq(lootNpcTable.lootId, lootTable.id))
@@ -567,7 +562,6 @@ describe("durable loot publications", () => {
       stored: {
         lootGameVersion: "pl",
         snapshotGameVersion: "pl",
-        snapshotWorld: null,
       },
       search: {
         data: [
@@ -582,30 +576,13 @@ describe("durable loot publications", () => {
     // Equal template ids from different editions never share a revision.
     expect(english.stored?.snapshotId).not.toBe(polish.stored?.snapshotId);
 
-    // Clients that send no edition get their world's; every world of the
-    // edition shares the revision.
-    for (const gameVersion of [undefined, null] as const) {
-      expect(await accept(gameVersion)).toMatchObject({
-        stored: {
-          lootGameVersion: "pl",
-          snapshotId: polish.stored?.snapshotId,
-        },
-        search: { data: [{ id: 257_636, gameVersion: "pl" }] },
-      });
-      expect(await accept(gameVersion, { world: "husaria" })).toMatchObject({
-        stored: {
-          lootGameVersion: "en",
-          snapshotId: english.stored?.snapshotId,
-        },
-      });
-    }
-
+    // Every world of the edition shares the revision.
     expect(
       (await accept("pl", { world: `other-${randomUUID()}` })).stored
         ?.snapshotId,
     ).toBe(polish.stored?.snapshotId);
 
-    // A declared edition wins over the world's.
+    // The declared edition decides the revision, whatever the world.
     expect((await accept("en")).stored).toMatchObject({
       lootGameVersion: "en",
       snapshotId: english.stored?.snapshotId,
@@ -627,6 +604,7 @@ describe("durable loot publications", () => {
       database
         .insert(itemSnapshotTable)
         .values({
+          gameVersion: "pl",
           itemId,
           statsHash: createItemStatsHash(revisionStat),
           name: "Seth's War Trophy",
@@ -799,6 +777,7 @@ describe("durable loot publications", () => {
       database
         .insert(npcSnapshotTable)
         .values({
+          gameVersion: "pl",
           npcId: 8234568,
           name,
           type: "HERO",

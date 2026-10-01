@@ -3,6 +3,25 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased (breaking): Game version required, deprecated search fields removed
+
+The one-time repair of per-edition revisions is complete: every loot and NPC
+search hit has a game version. The compatibility paths kept for the rollout
+are removed. Release the SDK as a breaking version.
+
+- `POST /loots` requires `gameVersion` (`pl` or `en`). A loot without it, or
+  with `null`, is rejected with `400`. The API no longer derives an edition
+  from `world`. Derive it from the game page's hostname; when the host is not
+  a recognized edition domain, do not submit the loot.
+- `/npcs` and `/items` no longer declare the `world` query parameter. The
+  service ignores it if an older client still sends it. On `/all`, `world`
+  still filters players.
+- NPC hits no longer return `world`; use `worlds`. `gameVersion` on NPC hits
+  is no longer nullable.
+- Notification rule responses, including the rule of a watched item, no longer
+  return `unresolvedSelections`. The selections it would have reported were
+  never recorded, so the array was always empty.
+
 ## Unreleased: NPC and item revisions per game edition
 
 Every world of a Margonem edition uses the same NPC and item ids. NPC

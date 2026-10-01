@@ -3,7 +3,6 @@ import {
   lootTable,
   npcSnapshotTable,
 } from "@lootlog/api/database/schema";
-import { lootGameVersionSql } from "@lootlog/api/database/game-version";
 import { asc, eq, sql } from "drizzle-orm";
 import { Schema } from "effect";
 import { NpcIdentityNamespaceSchema } from "@lootlog/schema/npc-identity";
@@ -16,11 +15,10 @@ type SeedDatabase = Pick<
 >;
 
 /**
- * Every looted NPC revision with each world and edition it was observed in,
+ * Every looted NPC revision with each world it was observed in,
  * ordered by its latest loot. Merging the rows into catalog documents
  * keeps the most recently observed revision of each entry, as live indexing
- * does; hash order and level do not establish chronology. A revision without
- * an edition, written before editions, takes the edition of its loot.
+ * does; hash order and level do not establish chronology.
  */
 export const buildNpcSeedQuery = (database: SeedDatabase) => {
   // Reduce repeated loot links before reading the larger snapshot records.
@@ -29,14 +27,13 @@ export const buildNpcSeedQuery = (database: SeedDatabase) => {
       .select({
         npcSnapshotId: lootNpcTable.npcSnapshotId,
         world: lootTable.world,
-        gameVersion: lootGameVersionSql.as("loot_game_version"),
         latestLootId: sql<number>`max(${lootNpcTable.lootId})`.as(
           "latest_loot_id",
         ),
       })
       .from(lootNpcTable)
       .innerJoin(lootTable, eq(lootTable.id, lootNpcTable.lootId))
-      .groupBy(lootNpcTable.npcSnapshotId, lootTable.world, lootGameVersionSql),
+      .groupBy(lootNpcTable.npcSnapshotId, lootTable.world),
   );
 
   return database
@@ -52,9 +49,7 @@ export const buildNpcSeedQuery = (database: SeedDatabase) => {
       wt: npcSnapshotTable.wt,
       margonemType: sql<number>`coalesce(${npcSnapshotTable.margonemType}, 0)`,
       world: snapshotWorlds.world,
-      gameVersion: sql<
-        "en" | "pl"
-      >`coalesce(${npcSnapshotTable.gameVersion}, ${snapshotWorlds.gameVersion})`,
+      gameVersion: npcSnapshotTable.gameVersion,
       latestLootId: snapshotWorlds.latestLootId,
     })
     .from(snapshotWorlds)

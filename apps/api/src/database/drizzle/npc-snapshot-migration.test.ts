@@ -24,6 +24,16 @@ describe("NPC observation revision migration", () => {
       if (revisionIndex < 0)
         throw new Error("NPC revision migration is missing");
 
+      // The LOO-252 cleanup requires an edition on every linked revision,
+      // which only the LOO-250 repair gave historical rows.
+      const cleanupIndex = migrations.findIndex((migration) =>
+        migration.sql.some((statement) =>
+          statement.includes('DROP TABLE "LegacyRepairSnapshot"'),
+        ),
+      );
+
+      if (cleanupIndex < 0) throw new Error("LOO-252 cleanup is missing");
+
       for (const migration of migrations.slice(0, revisionIndex)) {
         await database.exec(migration.sql.join("\n"));
       }
@@ -42,7 +52,7 @@ describe("NPC observation revision migration", () => {
 
       const before = await database.query(historicalQuery);
 
-      for (const migration of migrations.slice(revisionIndex)) {
+      for (const migration of migrations.slice(revisionIndex, cleanupIndex)) {
         await database.exec(migration.sql.join("\n"));
       }
 

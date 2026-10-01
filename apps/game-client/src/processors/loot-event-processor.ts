@@ -184,11 +184,20 @@ export class LootEventProcessor {
 
     if (this.isRejectedByEveryOrganization(npcs, debugContext)) return;
 
-    const { hero, map } = game;
+    const { hero, map, gameVersion } = game;
+
+    if (gameVersion === null) {
+      logLootCreateDebug("skipped", {
+        ...debugContext,
+        reason: "unknown-game-version",
+      });
+
+      return;
+    }
 
     const payload = {
       world: game.world,
-      gameVersion: game.gameVersion,
+      gameVersion,
       source: LOOT_SOURCE_BY_EVENT_SOURCE[loot.source],
       location: map.name,
       npcs,
@@ -352,7 +361,19 @@ export class LootEventProcessor {
       return;
     }
 
-    const { hero } = game;
+    const { hero, gameVersion } = game;
+
+    if (gameVersion === null) {
+      useDialogStore.getState().clearNpcContext();
+      logLootCreateDebug("skipped", {
+        ...debugContext,
+        npcId: npcData.id,
+        reason: "unknown-game-version",
+        resolutionSource,
+      });
+
+      return;
+    }
 
     const players: PartyMember[] = [
       {
@@ -368,7 +389,7 @@ export class LootEventProcessor {
 
     const payload = {
       world: game.world,
-      gameVersion: game.gameVersion,
+      gameVersion,
       source: LOOT_SOURCE_BY_EVENT_SOURCE[loot.source],
       location: mapName,
       loots,

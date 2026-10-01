@@ -196,11 +196,46 @@ describe("event wrapped summary", () => {
 
       await run(
         database.insert(npcSnapshotTable).values([
-          { id: 1, npcId: 1, name: "Mroczny Patryk", type: "HERO", lvl: 90 },
-          { id: 2, npcId: 2, name: "Mroczny Patryk", type: "HERO", lvl: 90 },
-          { id: 3, npcId: 3, name: "mroczny patryk", type: "HERO", lvl: 90 },
-          { id: 4, npcId: 4, name: "Złodziej", type: "HERO", lvl: 200 },
-          { id: 5, npcId: 5, name: "Kompan", type: "COMMON", lvl: 80 },
+          {
+            id: 1,
+            npcId: 1,
+            name: "Mroczny Patryk",
+            type: "HERO",
+            lvl: 90,
+            gameVersion: "pl",
+          },
+          {
+            id: 2,
+            npcId: 2,
+            name: "Mroczny Patryk",
+            type: "HERO",
+            lvl: 90,
+            gameVersion: "pl",
+          },
+          {
+            id: 3,
+            npcId: 3,
+            name: "mroczny patryk",
+            type: "HERO",
+            lvl: 90,
+            gameVersion: "pl",
+          },
+          {
+            id: 4,
+            npcId: 4,
+            name: "Złodziej",
+            type: "HERO",
+            lvl: 200,
+            gameVersion: "pl",
+          },
+          {
+            id: 5,
+            npcId: 5,
+            name: "Kompan",
+            type: "COMMON",
+            lvl: 80,
+            gameVersion: "pl",
+          },
         ]),
       );
       await run(
@@ -215,6 +250,7 @@ describe("event wrapped summary", () => {
               rarity,
               statRaw: "",
               statsSnapshot: {},
+              gameVersion: "pl" as const,
             }),
           ),
         ),
@@ -242,6 +278,7 @@ describe("event wrapped summary", () => {
             id: index + 1,
             uniqueId: `loot-${index + 1}`,
             world: loot.world ?? "world",
+            gameVersion: "pl" as const,
             source: "FIGHT" as const,
             location: "Map",
             createdAt: loot.createdAt ?? minute(90),

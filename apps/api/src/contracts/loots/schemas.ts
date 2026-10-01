@@ -205,12 +205,10 @@ export const CreateLootRequest = Schema.Struct({
     }),
   ),
   world: NonEmptyString,
-  gameVersion: Schema.optionalKey(
-    Schema.NullOr(GameVersionSchema).annotate({
-      description:
-        "Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API. Send it with every loot: omitting it, or sending null, is deprecated and a later breaking release will reject such loots. Until then the API uses the edition of `world`: `cronus`, `husaria` and `steamrealm` are `en`, every other world is `pl`.",
-    }),
-  ),
+  gameVersion: GameVersionSchema.annotate({
+    description:
+      "Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API.",
+  }),
   source: LootSourceSchema,
   location: NonEmptyString,
   accountId: NonEmptyString,

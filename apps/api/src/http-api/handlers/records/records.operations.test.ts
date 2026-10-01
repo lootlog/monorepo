@@ -148,6 +148,7 @@ describe("Kills and Loots HttpApi handlers", () => {
       Effect.flip(
         createLoot({
           world: "tempest",
+          gameVersion: "pl",
           source: "FIGHT",
           location: "Map",
           accountId: "1",

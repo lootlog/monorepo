@@ -116,8 +116,8 @@ const insertLoot = async (
   )(
     (
       await client.query(
-        `WITH loot AS (INSERT INTO "Loot" ("uniqueId",world,source,location,"updatedAt") VALUES ($1,'tempest','FIGHT','map',now()) RETURNING id),
-        npc AS (INSERT INTO "NpcSnapshot" ("npcId",name,type,lvl,prof) VALUES ($2,$1,$3::"NpcType",100,'WARRIOR') RETURNING id),
+        `WITH loot AS (INSERT INTO "Loot" ("uniqueId",world,"gameVersion",source,location,"updatedAt") VALUES ($1,'tempest','pl','FIGHT','map',now()) RETURNING id),
+        npc AS (INSERT INTO "NpcSnapshot" ("npcId",name,type,lvl,prof,"gameVersion") VALUES ($2,$1,$3::"NpcType",100,'WARRIOR','pl') RETURNING id),
         linked AS (INSERT INTO "LootNpc" ("lootId","npcSnapshotId","runtimeNpcId") SELECT loot.id, npc.id, $6::integer FROM loot, npc)
         INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt") SELECT id,$4,$5,now() FROM loot RETURNING "lootId" AS id`,
         [
@@ -242,7 +242,7 @@ describe("personal Organization activity feed", () => {
     )(
       (
         await client.query(
-          `INSERT INTO "Loot" ("uniqueId",world,source,location,"updatedAt") VALUES ($1,'tempest','FIGHT','map',now()) RETURNING id`,
+          `INSERT INTO "Loot" ("uniqueId",world,"gameVersion",source,location,"updatedAt") VALUES ($1,'tempest','pl','FIGHT','map',now()) RETURNING id`,
           [randomUUID()],
         )
       ).rows,
@@ -259,7 +259,7 @@ describe("personal Organization activity feed", () => {
     )(
       (
         await client.query(
-          `INSERT INTO "NpcSnapshot" ("npcId",name,type,lvl,prof) VALUES (1,$1,'ELITE2',100,'WARRIOR') RETURNING id`,
+          `INSERT INTO "NpcSnapshot" ("npcId",name,type,lvl,prof,"gameVersion") VALUES (1,$1,'ELITE2',100,'WARRIOR','pl') RETURNING id`,
           [randomUUID()],
         )
       ).rows,
@@ -271,7 +271,7 @@ describe("personal Organization activity feed", () => {
       [loot.id, npc.id],
     );
     await client.query(
-      `WITH inserted AS (INSERT INTO "ItemSnapshot" ("itemId","statsHash",name,icon,"statRaw","statsSnapshot","itemType",lvl) SELECT n,$2||n,'item','item.png','lvl=100;sa=10','{}'::jsonb,'Sword',100 FROM generate_series(1,5)n RETURNING id) INSERT INTO "LootItem" ("lootId","itemSnapshotId",hid,"instanceStat") SELECT $1,id,id::text,'amount=3' FROM inserted`,
+      `WITH inserted AS (INSERT INTO "ItemSnapshot" ("itemId","statsHash",name,icon,"statRaw","statsSnapshot","itemType",lvl,"gameVersion") SELECT n,$2||n,'item','item.png','lvl=100;sa=10','{}'::jsonb,'Sword',100,'pl' FROM generate_series(1,5)n RETURNING id) INSERT INTO "LootItem" ("lootId","itemSnapshotId",hid,"instanceStat") SELECT $1,id,id::text,'amount=3' FROM inserted`,
       [loot.id, randomUUID()],
     );
     await client.query(
@@ -679,8 +679,8 @@ describe("personal Organization activity feed", () => {
       [randomUUID(), guild.id, other.guild.id],
     );
     await client.query(
-      `WITH npcs AS (INSERT INTO "NpcSnapshot" ("npcId",name,type,lvl) SELECT n,'NPC '||n||$2,CASE WHEN n%2=0 THEN 'ELITE2'::"NpcType" ELSE 'HERO'::"NpcType" END,100 FROM generate_series(0,199)n RETURNING id,"npcId"),
-      loots AS (INSERT INTO "Loot" ("uniqueId",world,source,location,"updatedAt") SELECT $2||n,'tempest','FIGHT','map',now() FROM generate_series(1,30000)n RETURNING id),
+      `WITH npcs AS (INSERT INTO "NpcSnapshot" ("npcId",name,type,lvl,"gameVersion") SELECT n,'NPC '||n||$2,CASE WHEN n%2=0 THEN 'ELITE2'::"NpcType" ELSE 'HERO'::"NpcType" END,100,'pl' FROM generate_series(0,199)n RETURNING id,"npcId"),
+      loots AS (INSERT INTO "Loot" ("uniqueId",world,"gameVersion",source,location,"updatedAt") SELECT $2||n,'tempest','pl','FIGHT','map',now() FROM generate_series(1,30000)n RETURNING id),
       linked AS (INSERT INTO "LootNpc" ("lootId","npcSnapshotId") SELECT loots.id, npcs.id FROM loots JOIN npcs ON npcs."npcId"=loots.id%200)
       INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt") SELECT id,$1,now()-(id%86400)*interval '1 second',now() FROM loots`,
       [guild.id, randomUUID()],

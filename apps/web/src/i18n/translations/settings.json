@@ -725,29 +725,6 @@
       "allWorldsHint": "Dla wszystkich światów możesz wybrać tylko potwory oznaczone „każdy spawn”. Pojedynczy spawn wybierzesz po wskazaniu świata.",
       "allWorldsTimerWarning": "Pojedynczy spawn pasuje tylko do timerów z tym samym ID, więc na innych światach powiadomienie może nie przyjść. Wybierz świat albo zastąp go potworem oznaczonym „każdy spawn”."
     },
-    "unresolvedSelections": {
-      "title_one": "Wybrany potwór nie pasuje do żadnego timera",
-      "title_few": "{{count}} wybrane potwory nie pasują do żadnego timera",
-      "title_many": "{{count}} wybranych potworów nie pasuje do żadnego timera",
-      "description": "Reguła zapisała te ID ze starej wyszukiwarki potworów, więc nie wysyła dla nich powiadomień. Nic nie zmieniliśmy automatycznie: reguła nadal obejmuje tylko zapisane ID.",
-      "selected": "{{name}} (#{{id}})",
-      "unknownName": "Nieznany potwór",
-      "reasons": {
-        "legacyCatalogId": "To ID pochodzi ze starej wyszukiwarki potworów, a timery używają innego ID.",
-        "unknownId": "Lootlog nie zna tego ID z żadnego timera ani łupu."
-      },
-      "suggested": "Prawdopodobny odpowiednik w timerach: {{name}} (#{{id}}). Sprawdź go przed zapisaniem.",
-      "suggestedNeedsWorld": "Sugerowany timer to pojedynczy spawn. Wybierz świat, aby go użyć.",
-      "onlySelection": "To jedyny potwór w regule. Wybierz innego z listy powyżej albo usuń regułę.",
-      "saveHint": "Zmiany zaczną działać po zapisaniu reguły.",
-      "actions": {
-        "useSuggested": "Użyj sugerowanego timera",
-        "remove": "Usuń z wyboru"
-      },
-      "cardWarning_one": "{{count}} wybrany potwór nie pasuje do żadnego timera. Edytuj regułę, aby go poprawić.",
-      "cardWarning_few": "{{count}} wybrane potwory nie pasują do żadnego timera. Edytuj regułę, aby je poprawić.",
-      "cardWarning_many": "{{count}} wybranych potworów nie pasuje do żadnego timera. Edytuj regułę, aby je poprawić."
-    },
     "deleteTargetDialog": {
       "title": "Usunąć kanał docelowy?",
       "description": "Kanał {{name}} zostanie usunięty ze wszystkich reguł i zaplanowanych wysyłek.",
@@ -911,10 +888,6 @@
     "watchLimitStatus": "{{count}} / {{limit}}",
     "missingGuild": "Brak dostępu: {{guildId}}",
     "staleGuildWarning": "Ta obserwacja zawiera lootlogi, do których nie masz już dostępu w aktualnej sesji.",
-    "unresolvedItemName": {
-      "nameFromOtherEdition": "Zapisana nazwa może pochodzić z innej wersji gry. Powiadomienia działają według ID itemu i świata, więc przychodzą bez zmian. Dodaj item ponownie, aby poprawić nazwę.",
-      "nameWithoutSnapshot": "Lootlog nie zna itemu o zapisanej nazwie. Powiadomienia działają według ID itemu i świata, więc przychodzą bez zmian. Dodaj item ponownie, aby poprawić nazwę."
-    },
     "itemSelector": {
       "selectedLabel": "{{name}} (#{{id}})",
       "itemId": "#{{id}}",

@@ -15,7 +15,6 @@
   },
   "exports": {
     "./database/schema": "./src/database/drizzle/schema.ts",
-    "./database/game-version": "./src/database/drizzle/game-version.ts",
     "./timers/timer-key": "./src/timers/timer-key.ts"
   },
   "scripts": {
@@ -37,8 +36,7 @@
     "db:pull": "bunx drizzle-kit pull --config drizzle.config.ts",
     "db:migrate:dev": "bun src/database/drizzle/migrate.ts",
     "db:migrate:deploy": "bun src/database/drizzle/migrate.ts",
-    "db:studio": "drizzle-kit studio --config drizzle.config.ts",
-    "repair:legacy-associations": "bun --conditions=development --enable-source-maps src/legacy-repair/main.ts"
+    "db:studio": "drizzle-kit studio --config drizzle.config.ts"
   },
   "dependencies": {
     "@discordjs/rest": "^2.6.3",

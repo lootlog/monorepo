@@ -59,6 +59,7 @@ describe("loot visibility", () => {
       await run(
         database.insert(lootTable).values(
           [1, 2, 3].map((id) => ({
+            gameVersion: "pl" as const,
             id,
             uniqueId: `visibility-${id}`,
             world: "world",
@@ -70,8 +71,22 @@ describe("loot visibility", () => {
       );
       await run(
         database.insert(npcSnapshotTable).values([
-          { id: 1, npcId: 1, name: "Hero", type: "HERO", lvl: 50 },
-          { id: 2, npcId: 2, name: "Unknown", type: null, lvl: 50 },
+          {
+            gameVersion: "pl",
+            id: 1,
+            npcId: 1,
+            name: "Hero",
+            type: "HERO",
+            lvl: 50,
+          },
+          {
+            gameVersion: "pl",
+            id: 2,
+            npcId: 2,
+            name: "Unknown",
+            type: null,
+            lvl: 50,
+          },
         ]),
       );
       await run(
