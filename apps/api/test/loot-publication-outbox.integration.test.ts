@@ -420,6 +420,42 @@ describe("durable loot publications", () => {
     },
   );
 
+  it("reuses the NPC revision when a sender reports the icon's CDN URL", async () => {
+    const { request } = await seed();
+    const npcName = `CDN icon hero ${randomUUID()}`;
+    const snapshotIds: number[] = [];
+
+    for (const icon of [
+      "npc.png",
+      "https://micc.garmory-cdn.cloud/obrazki/npc/npc.png",
+    ]) {
+      const result = await runtime.runPromise(
+        acceptance().accept({
+          ...request,
+          submission: {
+            ...request.submission,
+            loots: request.submission.loots.map((item) => ({
+              ...item,
+              hid: randomUUID(),
+            })),
+            npcs: request.submission.npcs.map((npc) => ({
+              ...npc,
+              name: npcName,
+              icon,
+            })),
+          },
+        }),
+      );
+
+      snapshotTestLootIds.push(result.id);
+      const saved = await npcSnapshots(result.id);
+      expect(saved[0]?.npc).toMatchObject({ name: npcName, icon: "npc.png" });
+      snapshotIds.push(saved[0]?.npc.id ?? 0);
+    }
+
+    expect(snapshotIds[1]).toBe(snapshotIds[0]);
+  });
+
   it("stores explicit template and runtime NPC identities apart from the overloaded id", async () => {
     const { request } = await seed();
     const name = `Identity hero ${randomUUID()}`;

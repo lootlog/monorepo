@@ -32,6 +32,7 @@ import type {
 } from "#src/contracts/loots/schemas";
 import { ErrorKey } from "#src/loots/error-key";
 import { getItemTypeByCl } from "@lootlog/domain/item-type";
+import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import type { GameVersion } from "@lootlog/schema/game-version";
 import { getProfByShortname } from "@lootlog/domain/profession";
 import { parseRequiredProfessions } from "#src/loots/required-professions";
@@ -795,7 +796,9 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       name: npc.name,
       type: getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type),
       lvl: npc.lvl,
-      icon: npc.icon,
+      // Senders may report the rendered CDN URL of the graphic; a revision
+      // must not depend on which form a sender chose.
+      icon: normalizeNpcIcon(npc.icon),
       wt: npc.wt,
       margonemType: npc.type,
       prof: getProfByShortname(npc.prof ?? "") ?? null,
