@@ -19,7 +19,7 @@ import {
   min,
   sql,
 } from "drizzle-orm";
-import { groupBy, maxBy, minBy, sortBy, sumBy, uniq } from "es-toolkit";
+import { chunk, groupBy, maxBy, minBy, sortBy, sumBy, uniq } from "es-toolkit";
 import { Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { lootGameVersionSql } from "#src/database/drizzle/game-version";
@@ -298,6 +298,8 @@ const linkGroups = (
   );
 };
 
+const EDITION_LINKS_CHUNK = 5000;
+
 interface EditionLinks {
   readonly snapshotId: number;
   readonly gameVersion: GameVersion;
@@ -333,36 +335,40 @@ const linkIdsByEdition = (
             snapshotId: lootItemTable.itemSnapshotId,
           };
 
-    const pairs = sql.join(
-      wanted.map(
-        ({ snapshotId, gameVersion }) =>
-          sql`(${snapshotId}::integer, ${gameVersion}::"GameVersion")`,
-      ),
-      sql`, `,
-    );
-
-    const links = yield* transaction
-      .select({
-        id: link.id,
-        snapshotId: link.snapshotId,
-        gameVersion: lootGameVersionSql,
-      })
-      .from(link.table)
-      .innerJoin(lootTable, eq(lootTable.id, link.lootId))
-      .where(
-        and(
-          inArray(
-            link.snapshotId,
-            uniq(wanted.map(({ snapshotId }) => snapshotId)),
-          ),
-          sql`(${link.snapshotId}, ${lootGameVersionSql}) in (values ${pairs})`,
+    // Three bind parameters per pair stay below the protocol's
+    // 32,767-parameter limit at any plan size.
+    for (const part of chunk([...wanted], EDITION_LINKS_CHUNK)) {
+      const pairs = sql.join(
+        part.map(
+          ({ snapshotId, gameVersion }) =>
+            sql`(${snapshotId}::integer, ${gameVersion}::"GameVersion")`,
         ),
+        sql`, `,
       );
 
-    for (const { id, snapshotId, gameVersion } of links) {
-      const key = `${snapshotId}:${gameVersion}`;
+      const links = yield* transaction
+        .select({
+          id: link.id,
+          snapshotId: link.snapshotId,
+          gameVersion: lootGameVersionSql,
+        })
+        .from(link.table)
+        .innerJoin(lootTable, eq(lootTable.id, link.lootId))
+        .where(
+          and(
+            inArray(
+              link.snapshotId,
+              uniq(part.map(({ snapshotId }) => snapshotId)),
+            ),
+            sql`(${link.snapshotId}, ${lootGameVersionSql}) in (values ${pairs})`,
+          ),
+        );
 
-      result.set(key, [...(result.get(key) ?? []), id]);
+      for (const { id, snapshotId, gameVersion } of links) {
+        const key = `${snapshotId}:${gameVersion}`;
+
+        result.set(key, [...(result.get(key) ?? []), id]);
+      }
     }
 
     return result;
@@ -621,10 +627,12 @@ interface NpcPlanContext {
   readonly line: Line;
   readonly deferred: ReturnType<typeof deferredLines>;
   readonly holders: ReadonlyMap<string, number>;
+  /** Edition hashes already promoted in this plan, by owner id. */
+  readonly promoted: Set<string>;
 }
 
 const planNpcRevision = (
-  { line, deferred, holders }: NpcPlanContext,
+  { line, deferred, holders, promoted }: NpcPlanContext,
   row: NpcRow,
   linked: readonly LinkGroup[],
   classified: readonly NpcLevelLink[] | undefined,
@@ -634,7 +642,7 @@ const planNpcRevision = (
   // Only a revision written before editions is promoted: its links are the
   // bulk of the history. A per-world revision holds recent links only and is
   // merged into its edition revision.
-  const home =
+  const candidate =
     row.snapshotHash === null
       ? maxBy(
           cells.filter(({ lvl }) => lvl === row.lvl),
@@ -642,9 +650,22 @@ const planNpcRevision = (
         )
       : undefined;
 
-  if (home) {
+  const promotedHash = candidate
+    ? createNpcSnapshotHash(npcRevisionOf(row, candidate.gameVersion, row.lvl))
+    : undefined;
+
+  // Two revisions can share an edition hash: the second one's links move to
+  // the first, which holds the hash, instead of a second promotion.
+  const home =
+    promotedHash && !promoted.has(`${row.npcId}:${promotedHash}`)
+      ? candidate
+      : undefined;
+
+  if (home && promotedHash) {
     const revision = npcRevisionOf(row, home.gameVersion, row.lvl);
-    const snapshotHash = createNpcSnapshotHash(revision);
+    const snapshotHash = promotedHash;
+
+    promoted.add(`${row.npcId}:${snapshotHash}`);
 
     line({
       entryId: `2:npc:promote:${row.id}`,
@@ -728,6 +749,7 @@ const planNpcs = (transaction: Transaction, line: Line) =>
     );
 
     const deferred = deferredLines(line, "LootNpc");
+    const promoted = new Set<string>();
 
     for (const row of sortBy(snapshots, [({ id }) => id])) {
       const linked = groups[String(row.id)] ?? [];
@@ -735,7 +757,7 @@ const planNpcs = (transaction: Transaction, line: Line) =>
       if (linked.length === 0 || isEditionNpc(row)) continue;
 
       planNpcRevision(
-        { line, deferred, holders },
+        { line, deferred, holders, promoted },
         row,
         linked,
         levels.get(row.id),
@@ -746,6 +768,169 @@ const planNpcs = (transaction: Transaction, line: Line) =>
   });
 
 // ------------------------------------------------------------------- items
+
+interface ItemPlanContext {
+  readonly line: Line;
+  readonly deferred: ReturnType<typeof deferredLines>;
+  readonly holders: ReadonlyMap<string, number>;
+  /** Edition hashes already promoted in this plan, by owner id. */
+  readonly promoted: Set<string>;
+  readonly nameEdition: ReadonlyMap<number, GameVersion>;
+  readonly sameEditionPresentation: (
+    row: ItemRow,
+    gameVersion: GameVersion,
+  ) => { presentation: ItemRow | null; reason: string | null };
+}
+
+const planItemRevision = (
+  {
+    line,
+    deferred,
+    holders,
+    promoted,
+    nameEdition,
+    sameEditionPresentation,
+  }: ItemPlanContext,
+  row: ItemRow,
+  linked: readonly LinkGroup[],
+) => {
+  const revisionOf = (
+    gameVersion: GameVersion,
+    presentation: ItemRow,
+  ): LegacyRepairItemRevision => ({
+    gameVersion,
+    itemId: row.itemId,
+    name: presentation.name,
+    icon: presentation.icon,
+    itemType: row.itemType,
+    statsHash: row.statsHash,
+  });
+
+  // A revision whose stats no longer hash to its stats hash cannot be
+  // matched safely; its links stay.
+  if (createItemStatsHash(row.statRaw) !== row.statsHash) {
+    for (const group of linked) {
+      deferred.add(
+        {
+          entryId: `4:item:unresolved:${row.id}:${group.gameVersion}`,
+          domain: "item",
+          action: "markUnresolved",
+          classification: "unrecoverable",
+          unresolvedReason: "statsHashMismatch",
+          source: { snapshotId: row.id, itemId: row.itemId },
+        },
+        "item-markUnresolved",
+        { snapshotId: row.id, gameVersion: group.gameVersion },
+      );
+    }
+
+    return;
+  }
+
+  const nameHome =
+    row.snapshotHash === null ? nameEdition.get(row.id) : undefined;
+
+  const promotedHash = nameHome
+    ? itemHash(revisionOf(nameHome, row), row.statRaw)
+    : undefined;
+
+  // Two revisions can share an edition hash: the second one's links move
+  // to the first, which holds the hash, instead of a second promotion.
+  const home =
+    promotedHash && !promoted.has(`${row.itemId}:${promotedHash}`)
+      ? nameHome
+      : undefined;
+
+  if (home && promotedHash) {
+    const revision = revisionOf(home, row);
+    const snapshotHash = promotedHash;
+    const holder = holders.get(`${row.itemId}:${snapshotHash}`);
+
+    promoted.add(`${row.itemId}:${snapshotHash}`);
+
+    line({
+      entryId: `2:item:promote:${row.id}`,
+      domain: "item",
+      action: "promoteRevision",
+      classification: "confirmed",
+      unresolvedReason: null,
+      source: {
+        snapshotId: row.id,
+        before: {
+          snapshotHash: row.snapshotHash,
+          gameVersion: row.gameVersion,
+          statRawSha256: sha256(row.statRaw),
+        },
+        links: sumBy(
+          linked.filter(({ gameVersion }) => gameVersion === home),
+          ({ links }) => links,
+        ),
+        dropsInstanceStats: splitItemStat(row.statRaw).instance !== null,
+      },
+      target: {
+        proposedRevision: revision,
+        proposedSnapshotHash: snapshotHash,
+        retireSnapshotId: holder ?? null,
+      },
+    });
+  }
+
+  for (const group of linked) {
+    if (group.gameVersion === home) continue;
+
+    // A revision written with an edition, or by a client without one,
+    // carries the name that client saw in the loot's edition, as does a
+    // legacy revision's own edition.
+    const ownName =
+      group.gameVersion === nameHome ||
+      (row.snapshotHash !== null &&
+        (row.gameVersion === null || row.gameVersion === group.gameVersion));
+
+    const { presentation, reason } = ownName
+      ? { presentation: row, reason: null }
+      : sameEditionPresentation(row, group.gameVersion);
+
+    const links = { snapshotId: row.id, gameVersion: group.gameVersion };
+
+    if (!presentation) {
+      deferred.add(
+        {
+          entryId: `4:item:unresolved:${row.id}:${group.gameVersion}`,
+          domain: "item",
+          action: "markUnresolved",
+          classification: "unrecoverable",
+          unresolvedReason: reason,
+          source: { snapshotId: row.id, itemId: row.itemId },
+        },
+        "item-markUnresolved",
+        links,
+      );
+
+      continue;
+    }
+
+    const revision = revisionOf(group.gameVersion, presentation);
+
+    deferred.add(
+      {
+        entryId: `3:item:relink:${row.id}:${group.gameVersion}`,
+        domain: "item",
+        action: "relinkRevision",
+        classification: "confirmed",
+        unresolvedReason: null,
+        source: { snapshotId: row.id, itemId: row.itemId },
+        target: {
+          proposedRevision: revision,
+          proposedSnapshotHash: itemHash(revision, row.statRaw),
+          nameIconSourceSnapshotId:
+            presentation.id === row.id ? null : presentation.id,
+        },
+      },
+      "item-relinkRevision",
+      links,
+    );
+  }
+};
 
 const planItems = (transaction: Transaction, line: Line) =>
   Effect.gen(function* () {
@@ -780,6 +965,7 @@ const planItems = (transaction: Transaction, line: Line) =>
 
     const byItem = groupBy(snapshots, ({ itemId }) => String(itemId));
     const deferred = deferredLines(line, "LootItem");
+    const promoted = new Set<string>();
 
     // The name and icon one edition shows for an item id and type, from its
     // most recently looted revision; none when the edition has several names.
@@ -812,132 +998,21 @@ const planItems = (transaction: Transaction, line: Line) =>
       };
     };
 
+    const context: ItemPlanContext = {
+      line,
+      deferred,
+      holders,
+      promoted,
+      nameEdition,
+      sameEditionPresentation,
+    };
+
     for (const row of sortBy(snapshots, [({ id }) => id])) {
       const linked = groups[String(row.id)] ?? [];
 
       if (linked.length === 0 || isEditionItem(row)) continue;
 
-      const revisionOf = (
-        gameVersion: GameVersion,
-        presentation: ItemRow,
-      ): LegacyRepairItemRevision => ({
-        gameVersion,
-        itemId: row.itemId,
-        name: presentation.name,
-        icon: presentation.icon,
-        itemType: row.itemType,
-        statsHash: row.statsHash,
-      });
-
-      // A revision whose stats no longer hash to its stats hash cannot be
-      // matched safely; its links stay.
-      if (createItemStatsHash(row.statRaw) !== row.statsHash) {
-        for (const group of linked) {
-          deferred.add(
-            {
-              entryId: `4:item:unresolved:${row.id}:${group.gameVersion}`,
-              domain: "item",
-              action: "markUnresolved",
-              classification: "unrecoverable",
-              unresolvedReason: "statsHashMismatch",
-              source: { snapshotId: row.id, itemId: row.itemId },
-            },
-            "item-markUnresolved",
-            { snapshotId: row.id, gameVersion: group.gameVersion },
-          );
-        }
-
-        continue;
-      }
-
-      const home =
-        row.snapshotHash === null ? nameEdition.get(row.id) : undefined;
-
-      if (home) {
-        const revision = revisionOf(home, row);
-        const snapshotHash = itemHash(revision, row.statRaw);
-        const holder = holders.get(`${row.itemId}:${snapshotHash}`);
-
-        line({
-          entryId: `2:item:promote:${row.id}`,
-          domain: "item",
-          action: "promoteRevision",
-          classification: "confirmed",
-          unresolvedReason: null,
-          source: {
-            snapshotId: row.id,
-            before: {
-              snapshotHash: row.snapshotHash,
-              gameVersion: row.gameVersion,
-              statRawSha256: sha256(row.statRaw),
-            },
-            links: sumBy(
-              linked.filter(({ gameVersion }) => gameVersion === home),
-              ({ links }) => links,
-            ),
-            dropsInstanceStats: splitItemStat(row.statRaw).instance !== null,
-          },
-          target: {
-            proposedRevision: revision,
-            proposedSnapshotHash: snapshotHash,
-            retireSnapshotId: holder ?? null,
-          },
-        });
-      }
-
-      for (const group of linked) {
-        if (group.gameVersion === home) continue;
-
-        // A revision written with an edition, or by a client without one,
-        // carries the name that client saw in the loot's edition.
-        const ownName =
-          row.snapshotHash !== null &&
-          (row.gameVersion === null || row.gameVersion === group.gameVersion);
-
-        const { presentation, reason } = ownName
-          ? { presentation: row, reason: null }
-          : sameEditionPresentation(row, group.gameVersion);
-
-        const links = { snapshotId: row.id, gameVersion: group.gameVersion };
-
-        if (!presentation) {
-          deferred.add(
-            {
-              entryId: `4:item:unresolved:${row.id}:${group.gameVersion}`,
-              domain: "item",
-              action: "markUnresolved",
-              classification: "unrecoverable",
-              unresolvedReason: reason,
-              source: { snapshotId: row.id, itemId: row.itemId },
-            },
-            "item-markUnresolved",
-            links,
-          );
-
-          continue;
-        }
-
-        const revision = revisionOf(group.gameVersion, presentation);
-
-        deferred.add(
-          {
-            entryId: `3:item:relink:${row.id}:${group.gameVersion}`,
-            domain: "item",
-            action: "relinkRevision",
-            classification: "confirmed",
-            unresolvedReason: null,
-            source: { snapshotId: row.id, itemId: row.itemId },
-            target: {
-              proposedRevision: revision,
-              proposedSnapshotHash: itemHash(revision, row.statRaw),
-              nameIconSourceSnapshotId:
-                presentation.id === row.id ? null : presentation.id,
-            },
-          },
-          "item-relinkRevision",
-          links,
-        );
-      }
+      planItemRevision(context, row, linked);
     }
 
     yield* deferred.write(transaction);

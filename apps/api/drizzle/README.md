@@ -513,19 +513,15 @@ Deploy this change with a coordinated writer transition:
 2. Apply the migration with `bun run db:migrate:deploy`. The migrator runs in a
    transaction; schedule the unique-index replacement for a window that allows
    the required table locks.
-3. From `apps/search`, run the catalog key backfill (removed with LOO-250,
-   whose index rebuild replaces it) until it reports `complete: true`. It
-   added only missing `catalogKey` values. Complete this step before enabling
-   the new search queries; legacy documents without the grouping field cannot
-   participate in the same distinct group.
-4. Deploy the new search service before the new API publisher. Its startup
+3. Deploy the new search service before the new API publisher. Its startup
    settings make `catalogKey` and `id` filterable, and it accepts both hashed and
-   older events. Its index writes and the updated rebuild script include the
-   grouping field. Run that rebuild script only after the database migration.
-5. Start only API and seed/import revisions that target the new snapshot key,
+   older events. After the database migration, rebuild the indexes with
+   `bun run seed` in `apps/search`; the rebuilt documents include the grouping
+   field.
+4. Start only API and seed/import revisions that target the new snapshot key,
    then resume ingestion. Old writers use `ON CONFLICT (npcId, name)` and cannot
    run after the old unique index is removed.
-6. Verify that new loots reference rows with non-null world and hash, and that
+5. Verify that new loots reference rows with non-null world and hash, and that
    different levels under one id and name coexist without changing earlier
    links. Check a restricted role through the list, detail, and derived views.
 
@@ -769,7 +765,9 @@ already an edition revision:
   links; only its game version, world and hash change, and an item's shared
   stats lose the per-instance entries its first writer left in them. A later
   revision that holds the same edition hash hands it over and its links move
-  to the promoted revision.
+  to the promoted revision. When two revisions written before editions share
+  an edition hash, only the first is promoted and the links of the other
+  relink to it; `apply` refuses two promotions to one hash.
 - **Relink.** Links from the other edition, and every link of a per-world or
   unversioned revision, move to the revision of their edition with the same
   attributes, which is created or reused. An item takes the name and icon of

@@ -564,9 +564,26 @@ export const readLegacyRepairManifest = Effect.fn("legacyRepair.readManifest")(
 
     const relinked = new Map<string, string>();
     const promoted = new Map<string, string>();
+    const promotedHashes = new Map<string, string>();
 
     for (const entry of entries) {
       if (entry.kind === "promote") {
+        // Two promotions to one edition hash would have the second retire
+        // the first; the plan relinks the second revision instead.
+        const owner =
+          entry.domain === "npc" ? entry.revision.npcId : entry.revision.itemId;
+
+        const hashKey = `${entry.domain}:${owner}:${entry.snapshotHash}`;
+        const sameHash = promotedHashes.get(hashKey);
+
+        if (sameHash) {
+          return yield* fail(
+            `entries ${sameHash} and ${entry.entryId} promote to the same revision`,
+          );
+        }
+
+        promotedHashes.set(hashKey, entry.entryId);
+
         for (const snapshotId of [entry.snapshotId, entry.retireSnapshotId]) {
           if (snapshotId === null) continue;
 
