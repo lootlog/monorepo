@@ -179,15 +179,16 @@ export const useLootFiltersSidebar = ({
     world,
   );
 
-  const npcsSearchParams = getEntitySearchParams(
-    debouncedNpcsSearchValue,
-    world,
-  );
+  // Every world of an edition shares its NPCs and items, so their search
+  // takes no world.
+  const npcsSearchParams =
+    debouncedNpcsSearchValue.length > 0
+      ? { search: debouncedNpcsSearchValue }
+      : undefined;
 
   const itemsSearchParams = {
     limit: 10,
     search: debouncedItemsSearchValue,
-    world: world || "",
   };
 
   const playersQuery = usePlayersControllerGetPlayers(playersSearchParams, {

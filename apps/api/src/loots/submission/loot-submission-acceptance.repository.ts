@@ -55,14 +55,14 @@ export type NewLootPersistence = {
   mapPlayersSnapshot: MapPlayersSnapshot | null;
   uniqueId: string;
   world: string;
-  gameVersion: GameVersion | null;
+  gameVersion: GameVersion;
   source: LootSource;
   location: string;
   lootShare: Record<string, string[]>;
   lootShareSource: LootShareSource;
   items: Array<{
     itemId: number;
-    gameVersion: GameVersion | null;
+    gameVersion: GameVersion;
     statsHash: string;
     snapshotHash: string;
     name: string;
@@ -516,7 +516,7 @@ export const makeLootSubmissionAcceptancePersistence = (
 
         const acceptedNpcs = yield* resolveNpcSnapshots(
           transaction,
-          { world: data.world, gameVersion: data.gameVersion },
+          data.gameVersion,
           data.npcs.map((npc) => omit(npc, ["runtimeNpcId"])),
         );
 

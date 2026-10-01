@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@effect/sql-pg": "catalog:",
+    "@lootlog/schema": "workspace:*",
     "effect": "catalog:",
     "pg": "^8.23.0"
   },

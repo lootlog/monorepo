@@ -5,13 +5,17 @@ import {
   foreignKey,
   index,
   integer,
+  jsonb,
   pgTable,
   primaryKey,
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
+import { gameVersionEnum } from "./schema.js";
 
 export type LegacyRepairRowTable = "LootNpc" | "LootItem";
+
+export type LegacyRepairSnapshotTable = "NpcSnapshot" | "ItemSnapshot";
 
 export type LegacyRepairRunStatus =
   | "applying"
@@ -26,7 +30,7 @@ export type LegacyRepairEntryStatus =
   | "deferred"
   | "rolledBack";
 
-// Retained audit log of the LOO-38 legacy association repair. Rows hold
+// Retained audit log of the legacy association repairs (LOO-38, LOO-250). Rows hold
 // snapshot and link ids, counts and manifest decisions, never Organization
 // data, and are kept after a run completes or is rolled back.
 
@@ -134,6 +138,62 @@ export const legacyRepairLinkTable = pgTable(
     check(
       "LegacyRepairLink_rowTable_check",
       sql`${table.rowTable} in ('LootNpc', 'LootItem')`,
+    ),
+  ],
+);
+
+// One row per revision whose identity a run changed: a legacy or per-world
+// revision promoted to its edition, or a revision whose hash was handed to a
+// promoted one. Holds the previous values so a rollback restores them exactly.
+export const legacyRepairSnapshotTable = pgTable(
+  "LegacyRepairSnapshot",
+  {
+    runId: text("runId").notNull(),
+    snapshotTable: text("snapshotTable")
+      .$type<LegacyRepairSnapshotTable>()
+      .notNull(),
+    snapshotId: integer("snapshotId").notNull(),
+    entryId: text("entryId").notNull(),
+    // `promote`: the revision took the edition identity; `retire`: it handed
+    // its hash to a promoted revision and its links moved there.
+    change: text("change").$type<"promote" | "retire">().notNull(),
+    previousSnapshotHash: text("previousSnapshotHash"),
+    previousGameVersion: gameVersionEnum("previousGameVersion"),
+    previousWorld: text("previousWorld"),
+    // Item revisions only: stats before per-instance entries were removed.
+    previousStatRaw: text("previousStatRaw"),
+    previousStatsSnapshot: jsonb("previousStatsSnapshot"),
+    appliedSnapshotHash: text("appliedSnapshotHash"),
+    appliedGameVersion: gameVersionEnum("appliedGameVersion"),
+    appliedAt: timestamp("appliedAt", { precision: 3 }).notNull(),
+    restoredAt: timestamp("restoredAt", { precision: 3 }),
+    // `restored`, or `kept` when the revision changed since the run.
+    restoreOutcome: text("restoreOutcome").$type<"restored" | "kept">(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.runId, table.snapshotTable, table.snapshotId],
+      name: "LegacyRepairSnapshot_pkey",
+    }),
+    foreignKey({
+      columns: [table.runId, table.entryId],
+      foreignColumns: [
+        legacyRepairEntryTable.runId,
+        legacyRepairEntryTable.entryId,
+      ],
+      name: "LegacyRepairSnapshot_runId_entryId_fkey",
+    }),
+    index("LegacyRepairSnapshot_runId_entryId_idx").on(
+      table.runId,
+      table.entryId,
+    ),
+    check(
+      "LegacyRepairSnapshot_snapshotTable_check",
+      sql`${table.snapshotTable} in ('NpcSnapshot', 'ItemSnapshot')`,
+    ),
+    check(
+      "LegacyRepairSnapshot_change_check",
+      sql`${table.change} in ('promote', 'retire')`,
     ),
   ],
 );

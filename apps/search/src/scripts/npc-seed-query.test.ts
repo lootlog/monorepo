@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { toNpcSeedDocument } from "./npc-seed-query.js";
+import { toNpcSeedDocuments } from "./npc-seed-query.js";
 
 const row = {
   id: 257_636,
@@ -12,23 +12,33 @@ const row = {
   wt: 31,
   margonemType: 2,
   world: "fobos",
-  gameVersion: null,
-  snapshotHash: "observed",
+  gameVersion: "pl" as const,
 };
 
-test("a rebuilt NPC document keeps the identity namespace of its snapshot", () => {
-  expect(toNpcSeedDocument(row)).toMatchObject({
-    identityNamespace: "template",
-    catalogKey: "template_257636_2_fobos",
-  });
+test("a rebuild merges the worlds of an edition and keeps the latest revision", () => {
+  // Rows arrive ordered by their latest loot link.
   expect(
-    toNpcSeedDocument({ ...row, identityNamespace: "legacy" }).catalogKey,
-  ).toBe("257636_2_fobos");
-});
-
-test("a rebuilt NPC document keeps the game version of its snapshot", () => {
-  expect(toNpcSeedDocument({ ...row, gameVersion: "en" })).toMatchObject({
-    gameVersion: "en",
-    catalogKey: "en_template_257636_2_fobos",
-  });
+    toNpcSeedDocuments([
+      row,
+      { ...row, world: "cronus", gameVersion: "en" },
+      { ...row, world: "tarhuna", lvl: 70 },
+      { ...row, identityNamespace: "legacy" },
+    ]),
+  ).toEqual([
+    expect.objectContaining({
+      catalogKey: "pl_template_257636_2",
+      identityNamespace: "template",
+      lvl: 70,
+      worlds: ["fobos", "tarhuna"],
+    }),
+    expect.objectContaining({
+      catalogKey: "en_template_257636_2",
+      worlds: ["cronus"],
+    }),
+    expect.objectContaining({
+      catalogKey: "pl_257636_2",
+      identityNamespace: "legacy",
+      worlds: ["fobos"],
+    }),
+  ]);
 });

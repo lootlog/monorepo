@@ -34,7 +34,7 @@ import { NPCS_INDEX } from "#src/npcs/search-index";
 import { PLAYERS_INDEX } from "#src/players/search-index";
 import { toPlayerDocument } from "#src/players/players.service";
 import { buildItemSeedQuery } from "./item-seed-query.js";
-import { buildNpcSeedQuery, toNpcSeedDocument } from "./npc-seed-query.js";
+import { buildNpcSeedQuery, toNpcSeedDocuments } from "./npc-seed-query.js";
 
 const DOCUMENTS_PER_BATCH = 10_000;
 
@@ -200,9 +200,7 @@ const indexDocuments = async <Document extends { uid: string }>(
 const seedNpcs = async () => {
   const startedAt = performance.now();
 
-  const rows = await buildNpcSeedQuery(database);
-
-  const documents = rows.map(toNpcSeedDocument);
+  const documents = toNpcSeedDocuments(await buildNpcSeedQuery(database));
 
   await indexDocuments(NPCS_INDEX, documents, formatDuration(startedAt));
 };

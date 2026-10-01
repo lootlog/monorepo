@@ -35,7 +35,7 @@ test("batches existing-world reads and preserves worlds across duplicate and mis
         expect(url.searchParams.get("limit")).toBe(String(ids.length));
         expect(url.searchParams.has("fields")).toBe(false);
 
-        const stored = itemCatalogKey(item(1));
+        const stored = itemCatalogKey({ gameVersion: "pl", ...item(1) });
 
         return Promise.resolve({
           results: ids.includes(stored)
@@ -66,11 +66,11 @@ test("batches existing-world reads and preserves worlds across duplicate and mis
   expect(written).toEqual(
     expect.arrayContaining([
       expect.objectContaining({
-        uid: itemCatalogKey(item(1)),
+        uid: itemCatalogKey({ gameVersion: "pl", ...item(1) }),
         worlds: ["legacy", "new", "old", "other"],
       }),
       expect.objectContaining({
-        uid: itemCatalogKey(item(101)),
+        uid: itemCatalogKey({ gameVersion: "pl", ...item(101) }),
         worlds: ["new"],
       }),
     ]),
@@ -113,8 +113,9 @@ test("keeps each edition and name of one item searchable instead of the last obs
         trophy("Seth's War Trophy", "gordion", "pl"),
         trophy("Wojenne trofeum Seta", "tarhuna", "pl"),
         trophy("Wojenne trofeum Seta", "katahha", "pl"),
-        trophy("Seth's War Trophy", "alpha", "en"),
-        trophy("Seth's War Trophy", "legacy", null),
+        trophy("Seth's War Trophy", "cronus", "en"),
+        // Older publishers sent no edition; the world's edition applies.
+        trophy("Seth's War Trophy", "husaria", null),
       ],
     }),
   );
@@ -124,9 +125,8 @@ test("keeps each edition and name of one item searchable instead of the last obs
       .map(({ name, worlds }) => [name, worlds])
       .sort((left, right) => String(left).localeCompare(String(right))),
   ).toEqual([
-    ["Seth's War Trophy", ["alpha"]],
+    ["Seth's War Trophy", ["cronus", "husaria"]],
     ["Seth's War Trophy", ["gordion"]],
-    ["Seth's War Trophy", ["legacy"]],
     ["Wojenne trofeum Seta", ["katahha", "tarhuna"]],
   ]);
 });

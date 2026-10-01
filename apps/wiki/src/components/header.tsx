@@ -34,7 +34,6 @@ export default function Header() {
               rarities: "",
               sort: "relevance",
               types: "",
-              world: "",
             }}
             className="nav-link"
             activeProps={{ className: "nav-link is-active" }}
@@ -43,7 +42,7 @@ export default function Header() {
           </Link>
           <Link
             to="/npcs"
-            search={{ query: "", world: "" }}
+            search={{ query: "" }}
             className="nav-link"
             activeProps={{ className: "nav-link is-active" }}
           >

@@ -16,7 +16,7 @@ import {
   getBasicRouteSearchQueryParams,
   isBasicRouteSearchActive,
   type SearchStatus,
-  validateBasicRouteSearch,
+  validateQueryRouteSearch,
 } from "./-search-route.utils";
 
 const SEARCH_LIMIT = 72;
@@ -31,7 +31,7 @@ export const Route = createFileRoute("/npcs")({
     ],
   }),
   loader: () => getRuntimeConfig(),
-  validateSearch: validateBasicRouteSearch,
+  validateSearch: validateQueryRouteSearch,
 });
 
 function NpcsRoute() {
@@ -104,7 +104,7 @@ function NpcsRoute() {
             <div className="grid grid-flow-dense grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
               {data.map((npc) => (
                 <article
-                  key={`${npc.id}_${npc.world}_${npc.margonemType}`}
+                  key={`${npc.gameVersion}_${npc.identityNamespace}_${npc.id}_${npc.margonemType}`}
                   className="flex items-center gap-3 rounded-xl border border-border bg-background/40 p-3"
                 >
                   <NpcTile
@@ -116,7 +116,10 @@ function NpcsRoute() {
                       {npc.name}
                     </h2>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {t(`npcTypes.${npc.type}`)} · {npc.world}
+                      {t(`npcTypes.${npc.type}`)}
+                      {npc.gameVersion
+                        ? ` · ${t(`npcs.gameVersions.${npc.gameVersion}`)}`
+                        : null}
                     </p>
                   </div>
                 </article>

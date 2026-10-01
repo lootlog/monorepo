@@ -159,6 +159,8 @@ paths:
           schema:
             type: string
           required: false
+          description: "Deprecated and ignored: every world of an edition shares its NPC and item ids. Accepted for older callers; it will be removed in a breaking release."
+          deprecated: true
       responses:
         "200":
           description: List of matching NPCs
@@ -236,6 +238,8 @@ paths:
           schema:
             type: string
           required: false
+          description: "Deprecated and ignored: every world of an edition shares its NPC and item ids. Accepted for older callers; it will be removed in a breaking release."
+          deprecated: true
         - name: filter
           in: query
           schema:
@@ -334,6 +338,7 @@ paths:
           schema:
             type: string
           required: false
+          description: Filters players by world. NPC and item results ignore it; that use is deprecated.
       responses:
         "200":
           description: Aggregated search results across items, players, and NPCs
@@ -462,8 +467,15 @@ components:
           type: number
         world:
           type: string
+          description: "Deprecated: the world of the latest observation. Use `worlds`."
+        worlds:
+          type: array
+          items:
+            type: string
+          description: Worlds of the edition where this NPC was observed.
+          default: &a2 []
         gameVersion:
-          description: "Margonem edition of the observation: `pl` for margonem.pl, `en` for margonem.com; null when unknown. Equal ids in different editions are unrelated."
+          description: "Margonem edition of the NPC: `pl` for margonem.pl, `en` for margonem.com. Equal ids in different editions are unrelated. Always set; the field stays nullable for compatibility."
           nullable: true
           type: string
           enum:
@@ -480,6 +492,7 @@ components:
         - type
         - margonemType
         - world
+        - worlds
         - gameVersion
       description: NPC search hit
     SearchItemsResponseDto_Output:
@@ -661,8 +674,15 @@ components:
                 type: number
               world:
                 type: string
+                description: "Deprecated: the world of the latest observation. Use `worlds`."
+              worlds:
+                type: array
+                items:
+                  type: string
+                description: Worlds of the edition where this NPC was observed.
+                default: *a2
               gameVersion:
-                description: "Margonem edition of the observation: `pl` for margonem.pl, `en` for margonem.com; null when unknown. Equal ids in different editions are unrelated."
+                description: "Margonem edition of the NPC: `pl` for margonem.pl, `en` for margonem.com. Equal ids in different editions are unrelated. Always set; the field stays nullable for compatibility."
                 nullable: true
                 type: string
                 enum:
@@ -679,6 +699,7 @@ components:
               - type
               - margonemType
               - world
+              - worlds
               - gameVersion
             description: NPC search hit
       required:

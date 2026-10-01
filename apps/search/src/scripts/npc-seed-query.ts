@@ -3,10 +3,11 @@ import {
   lootTable,
   npcSnapshotTable,
 } from "@lootlog/api/database/schema";
-import { desc, eq, sql } from "drizzle-orm";
+import { lootGameVersionSql } from "@lootlog/api/database/game-version";
+import { asc, eq, sql } from "drizzle-orm";
 import { Schema } from "effect";
 import { NpcIdentityNamespaceSchema } from "@lootlog/schema/npc-identity";
-import { toNpcDocument } from "#src/npcs/npcs.service";
+import { mergeNpcDocuments, toNpcDocument } from "#src/npcs/npcs.service";
 import type { drizzle } from "drizzle-orm/bun-sql";
 
 type SeedDatabase = Pick<
@@ -14,6 +15,13 @@ type SeedDatabase = Pick<
   "$with" | "select" | "with"
 >;
 
+/**
+ * Every looted NPC revision with each world and edition it was observed in,
+ * ordered by its latest loot link. Merging the rows into catalog documents
+ * keeps the most recently observed revision of each entry, as live indexing
+ * does; hash order and level do not establish chronology. A revision without
+ * an edition, written before editions, takes the edition of its loot.
+ */
 export const buildNpcSeedQuery = (database: SeedDatabase) => {
   // Reduce repeated loot links before reading the larger snapshot records.
   const snapshotWorlds = database.$with("snapshot_worlds").as(
@@ -21,26 +29,17 @@ export const buildNpcSeedQuery = (database: SeedDatabase) => {
       .select({
         npcSnapshotId: lootNpcTable.npcSnapshotId,
         world: lootTable.world,
+        gameVersion: lootGameVersionSql.as("loot_game_version"),
+        latestLinkId: sql<number>`max(${lootNpcTable.id})`.as("latest_link_id"),
       })
       .from(lootNpcTable)
       .innerJoin(lootTable, eq(lootTable.id, lootNpcTable.lootId))
-      .groupBy(lootNpcTable.npcSnapshotId, lootTable.world),
+      .groupBy(lootNpcTable.npcSnapshotId, lootTable.world, lootGameVersionSql),
   );
-
-  const margonemType = sql<number>`coalesce(${npcSnapshotTable.margonemType}, 0)`;
-
-  // Retain every hashed revision and only the newest row for each legacy UID.
-  const identity = [
-    npcSnapshotTable.identityNamespace,
-    npcSnapshotTable.npcId,
-    margonemType,
-    snapshotWorlds.world,
-    npcSnapshotTable.snapshotHash,
-  ];
 
   return database
     .with(snapshotWorlds)
-    .selectDistinctOn(identity, {
+    .select({
       id: npcSnapshotTable.npcId,
       identityNamespace: npcSnapshotTable.identityNamespace,
       name: npcSnapshotTable.name,
@@ -49,21 +48,18 @@ export const buildNpcSeedQuery = (database: SeedDatabase) => {
       icon: npcSnapshotTable.icon,
       lvl: npcSnapshotTable.lvl,
       wt: npcSnapshotTable.wt,
-      margonemType,
+      margonemType: sql<number>`coalesce(${npcSnapshotTable.margonemType}, 0)`,
       world: snapshotWorlds.world,
-      gameVersion: npcSnapshotTable.gameVersion,
-      snapshotHash: npcSnapshotTable.snapshotHash,
+      gameVersion: sql<
+        "en" | "pl"
+      >`coalesce(${npcSnapshotTable.gameVersion}, ${snapshotWorlds.gameVersion})`,
     })
     .from(snapshotWorlds)
     .innerJoin(
       npcSnapshotTable,
       eq(npcSnapshotTable.id, snapshotWorlds.npcSnapshotId),
     )
-    .orderBy(
-      ...identity,
-      desc(npcSnapshotTable.createdAt),
-      desc(npcSnapshotTable.id),
-    );
+    .orderBy(asc(snapshotWorlds.latestLinkId), asc(npcSnapshotTable.id));
 };
 
 type NpcSeedRow = Awaited<ReturnType<typeof buildNpcSeedQuery>>[number];
@@ -72,19 +68,22 @@ const decodeIdentityNamespace = Schema.decodeUnknownSync(
   NpcIdentityNamespaceSchema,
 );
 
-/** Rebuilt documents keep the identity namespace and game version of their snapshot. */
-export const toNpcSeedDocument = (npc: NpcSeedRow) =>
-  toNpcDocument({
-    id: npc.id,
-    identityNamespace: decodeIdentityNamespace(npc.identityNamespace),
-    name: npc.name,
-    type: npc.type ?? "",
-    prof: npc.prof,
-    icon: npc.icon ?? "",
-    lvl: npc.lvl ?? 0,
-    wt: npc.wt ?? 0,
-    margonemType: npc.margonemType,
-    world: npc.world,
-    gameVersion: npc.gameVersion,
-    snapshotHash: npc.snapshotHash ?? undefined,
-  });
+/** One document per catalog entry, from rows in `buildNpcSeedQuery` order. */
+export const toNpcSeedDocuments = (rows: readonly NpcSeedRow[]) =>
+  mergeNpcDocuments(
+    rows.map((npc) =>
+      toNpcDocument({
+        id: npc.id,
+        identityNamespace: decodeIdentityNamespace(npc.identityNamespace),
+        name: npc.name,
+        type: npc.type ?? "",
+        prof: npc.prof,
+        icon: npc.icon ?? "",
+        lvl: npc.lvl ?? 0,
+        wt: npc.wt ?? 0,
+        margonemType: npc.margonemType,
+        world: npc.world,
+        gameVersion: npc.gameVersion,
+      }),
+    ),
+  );

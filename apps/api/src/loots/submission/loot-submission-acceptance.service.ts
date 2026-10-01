@@ -32,7 +32,10 @@ import type {
 } from "#src/contracts/loots/schemas";
 import { ErrorKey } from "#src/loots/error-key";
 import { getItemTypeByCl } from "@lootlog/domain/item-type";
-import type { GameVersion } from "@lootlog/schema/game-version";
+import {
+  gameVersionOfWorld,
+  type GameVersion,
+} from "@lootlog/schema/game-version";
 import { getProfByShortname } from "@lootlog/domain/profession";
 import { parseRequiredProfessions } from "#src/loots/required-professions";
 import {
@@ -107,6 +110,11 @@ const LOOT_LOCK_RETRY_OPTIONS = {
   retryJitter: 50,
 } as const;
 
+/** A submission whose edition is known: declared, or derived from its world. */
+type ResolvedLootSubmission = CreateLootRequest & {
+  readonly gameVersion: GameVersion;
+};
+
 export interface LootSubmissionAcceptance {
   readonly accept: (options: {
     discordId: string;
@@ -135,7 +143,15 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         `loot:lock:${uniqueId}`,
         LOOT_LOCK_TTL_MS,
         LOOT_LOCK_RETRY_OPTIONS,
-        this.acceptWithLock({ ...options, uniqueId }),
+        this.resolveGameVersion(options.submission).pipe(
+          Effect.flatMap((submission) =>
+            this.acceptWithLock({
+              discordId: options.discordId,
+              submission,
+              uniqueId,
+            }),
+          ),
+        ),
       )
       .pipe(
         Effect.withSpan("LootSubmissionAcceptance.accept", {
@@ -146,7 +162,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
 
   private acceptWithLock(options: {
     discordId: string;
-    submission: CreateLootRequest;
+    submission: ResolvedLootSubmission;
     uniqueId: string;
   }): Effect.Effect<CreateLootResponse, unknown> {
     return Effect.gen({ self: this }, function* () {
@@ -287,7 +303,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     lootlogConfigs: Array<{ id: string; npcs: LootlogConfigNpc[] }>;
     members: Array<{ id: number; guildId: string }>;
     primaryNpcType: NpcType;
-    submission: CreateLootRequest;
+    submission: ResolvedLootSubmission;
     whitelistedGuildIds: Set<string>;
   }): AcceptanceOutcome {
     const lootlogConfigByGuildId = new Map(
@@ -410,7 +426,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     npcData: { primary: CreateLootRequest["npcs"][number] };
     outcome: AcceptanceOutcome;
     primaryNpcType: NpcType;
-    submission: CreateLootRequest;
+    submission: ResolvedLootSubmission;
     uniqueId: string;
     publications: (
       lootId: number,
@@ -429,14 +445,14 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           mapPlayersSnapshot: options.mapPlayersSnapshot,
           uniqueId: options.uniqueId,
           world: options.submission.world,
-          gameVersion: options.submission.gameVersion ?? null,
+          gameVersion: options.submission.gameVersion,
           source: options.submission.source,
           location: options.submission.location,
           lootShare: initialAllocation.share,
           lootShareSource: initialAllocation.source,
           items: this.mapLootItemsToPersistence(
             options.submission.loots,
-            options.submission.gameVersion ?? null,
+            options.submission.gameVersion,
           ),
           players: this.mapLootPlayersToPersistence(
             options.submission.players,
@@ -458,7 +474,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     lootId: number;
     npcs: AcceptedNpcSnapshot[];
     outcome: AcceptanceOutcome;
-    submission: CreateLootRequest;
+    submission: ResolvedLootSubmission;
   }): LootPublication[] {
     const organizationIds = this.getUniqueOrganizationIds(
       options.outcome.submissionData,
@@ -527,7 +543,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           rarity: item.rarity,
           type: item.type,
           world: options.submission.world,
-          gameVersion: options.submission.gameVersion ?? null,
+          gameVersion: options.submission.gameVersion,
         })),
       );
     rabbit(RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED, {
@@ -546,6 +562,31 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     return intents;
   }
 
+  // The client's declaration wins; the world only fills a missing one. A
+  // disagreement is logged, never rejected: the API cannot verify either.
+  private resolveGameVersion(
+    submission: CreateLootRequest,
+  ): Effect.Effect<ResolvedLootSubmission> {
+    const fromWorld = gameVersionOfWorld(submission.world);
+    const declared = submission.gameVersion ?? null;
+    const resolved = { ...submission, gameVersion: declared ?? fromWorld };
+
+    if (declared === null || declared === fromWorld) {
+      return Effect.succeed(resolved);
+    }
+
+    return Effect.logWarning(
+      "Loot game version differs from its world's edition",
+    ).pipe(
+      Effect.annotateLogs({
+        world: submission.world,
+        gameVersion: declared,
+        worldGameVersion: fromWorld,
+      }),
+      Effect.as(resolved),
+    );
+  }
+
   private createUniqueLootId(
     loots: CreateLootRequest["loots"],
     world: string,
@@ -560,7 +601,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   }
 
   private inferInitialAllocation(
-    submission: CreateLootRequest,
+    submission: ResolvedLootSubmission,
     primaryNpc: CreateLootRequest["npcs"][number],
     primaryNpcType: NpcType,
   ) {
@@ -704,7 +745,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
 
   private mapLootItemsToPersistence(
     items: CreateLootRequest["loots"],
-    gameVersion: GameVersion | null,
+    gameVersion: GameVersion,
   ) {
     return items.map((item) => {
       const { lvl, rarity, type } = this.getItemStats(item);

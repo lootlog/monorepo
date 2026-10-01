@@ -1,6 +1,10 @@
 import { indexChangedDocuments } from "#src/meilisearch/index-changed-documents";
 import { NpcTypeEnum, NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
+import {
+  gameVersionOfWorld,
+  type GameVersion,
+} from "@lootlog/schema/game-version";
 import { Effect, Predicate, Schema } from "effect";
 import { partition, uniqBy } from "es-toolkit";
 import type { Meilisearch } from "meilisearch";
@@ -16,16 +20,31 @@ import { NPCS_INDEX } from "./search-index.js";
 import type { IndexNpcsCommand } from "./index-npcs-command.js";
 import type { NpcHit } from "./npc-hit.js";
 
+// Documents written before editions have no `gameVersion` or `worlds`.
 type RawNpcHit = Omit<
   NpcHit,
-  "gameVersion" | "identityNamespace" | "margonemType" | "prof" | "type"
+  | "gameVersion"
+  | "identityNamespace"
+  | "margonemType"
+  | "prof"
+  | "type"
+  | "worlds"
 > & {
-  gameVersion?: NpcHit["gameVersion"];
+  gameVersion?: NpcHit["gameVersion"] | null;
   identityNamespace?: NpcIdentityNamespace;
   margonemType?: number | null;
   prof?: string | null;
   type?: NpcHit["type"] | number | string | null;
+  worlds?: readonly string[];
 };
+
+const uniqueWorlds = (worlds: ReadonlyArray<string>) =>
+  [...new Set(worlds.filter(Boolean))].sort((first, second) =>
+    first.localeCompare(second),
+  );
+
+const npcWorlds = (npc: { world: string; worlds?: readonly string[] }) =>
+  uniqueWorlds([...(npc.worlds ?? []), npc.world]);
 
 const resolveMargonemType = (npc: Pick<RawNpcHit, "margonemType" | "type">) => {
   let margonemType = 0;
@@ -55,7 +74,8 @@ const normalizeNpcHit = (npc: RawNpcHit): NpcHit => {
     lvl: npc.lvl,
     wt: npc.wt,
     world: npc.world,
-    gameVersion: npc.gameVersion ?? null,
+    worlds: npcWorlds(npc),
+    gameVersion: npc.gameVersion ?? gameVersionOfWorld(npc.world),
     prof,
     margonemType,
     type,
@@ -64,26 +84,21 @@ const normalizeNpcHit = (npc: RawNpcHit): NpcHit => {
 
 type IndexNpc = IndexNpcsCommand["npcs"][number];
 
-// Legacy keys keep their deployed format; equal ids in another namespace or
-// game version are a different NPC and must not share a catalog group.
+// One catalog entry per edition, identity namespace, id and Margonem type:
+// every world of an edition uses the same NPC ids. Legacy keys omit the
+// namespace; equal ids in another namespace or edition are a different NPC.
 export const npcCatalogKey = (
-  npc: Pick<
-    RawNpcHit,
-    | "gameVersion"
-    | "id"
-    | "identityNamespace"
-    | "margonemType"
-    | "type"
-    | "world"
-  >,
+  npc: Pick<RawNpcHit, "id" | "identityNamespace" | "margonemType" | "type"> & {
+    gameVersion: GameVersion;
+  },
 ) => {
-  const key = `${npc.id}_${resolveMargonemType(npc)}_${npc.world}`;
+  const key = `${npc.id}_${resolveMargonemType(npc)}`;
   const namespace = npc.identityNamespace ?? NpcIdentityNamespace.LEGACY;
 
   const namespaced =
     namespace === NpcIdentityNamespace.LEGACY ? key : `${namespace}_${key}`;
 
-  return npc.gameVersion ? `${npc.gameVersion}_${namespaced}` : namespaced;
+  return `${npc.gameVersion}_${namespaced}`;
 };
 
 // A template id selects every spawn of the monster; prefer it when name and
@@ -95,24 +110,13 @@ const NAMESPACE_PREFERENCE: Record<NpcIdentityNamespace, number> = {
 };
 
 const collapseByNameAndType = (hits: readonly NpcHit[]) => {
-  const nameAndType = (npc: NpcHit) => `${npc.name}_${npc.type}`;
-
-  // Equal names in different editions are different NPCs. An unversioned hit
-  // is older data of either edition and yields to a versioned one.
-  const versioned = new Set(
-    hits.flatMap((hit) => (hit.gameVersion === null ? [] : [nameAndType(hit)])),
-  );
-
-  const candidates = hits.filter(
-    (hit) => hit.gameVersion !== null || !versioned.has(nameAndType(hit)),
-  );
-
+  // Equal names in different editions are different NPCs.
   const suggestionKey = (npc: NpcHit) =>
-    `${npc.gameVersion}_${nameAndType(npc)}`;
+    `${npc.gameVersion}_${npc.name}_${npc.type}`;
 
   const preferred = new Map<string, NpcHit>();
 
-  for (const hit of candidates) {
+  for (const hit of hits) {
     const current = preferred.get(suggestionKey(hit));
 
     if (
@@ -125,12 +129,17 @@ const collapseByNameAndType = (hits: readonly NpcHit[]) => {
   }
 
   // Keep the relevance position of each suggestion's first hit.
-  return uniqBy(candidates, suggestionKey).flatMap(
+  return uniqBy(hits, suggestionKey).flatMap(
     (hit) => preferred.get(suggestionKey(hit)) ?? [],
   );
 };
 
-/** The stored shape of one NPC; the seed script and the consumer share it. */
+/**
+ * The stored shape of one NPC catalog entry; the seed script and the consumer
+ * share it. `world` is the world of the latest observation and `worlds` every
+ * world it was observed in. An observation without an edition takes the
+ * edition of its world.
+ */
 export const toNpcDocument = (npc: IndexNpc) => {
   const prof = npc.prof ?? "";
 
@@ -138,23 +147,54 @@ export const toNpcDocument = (npc: IndexNpc) => {
     ? npc.type
     : getNpcTypeByWt(NpcTypeEnum, npc.wt, prof, npc.margonemType);
 
+  const gameVersion = npc.gameVersion ?? gameVersionOfWorld(npc.world);
+  const catalogKey = npcCatalogKey({ ...npc, gameVersion });
+
   return {
-    ...npc,
+    id: npc.id,
+    identityNamespace: npc.identityNamespace ?? NpcIdentityNamespace.LEGACY,
+    name: npc.name,
+    icon: npc.icon,
+    lvl: npc.lvl,
+    wt: npc.wt,
     prof,
     type,
-    catalogKey: npcCatalogKey(npc),
-    uid: npc.snapshotHash
-      ? `${npcCatalogKey(npc)}_${npc.snapshotHash}`
-      : npcCatalogKey(npc),
+    margonemType: npc.margonemType,
+    world: npc.world,
+    worlds: npcWorlds(npc),
+    gameVersion,
+    catalogKey,
+    uid: catalogKey,
   };
 };
 
+type NpcDocument = ReturnType<typeof toNpcDocument>;
+
+/** Documents of one catalog entry in one batch keep the last observation. */
+export const mergeNpcDocuments = (
+  documents: ReadonlyArray<NpcDocument>,
+): NpcDocument[] => {
+  const byUid = new Map<string, NpcDocument>();
+
+  for (const document of documents) {
+    const existing = byUid.get(document.uid);
+
+    byUid.set(document.uid, {
+      ...document,
+      worlds: uniqueWorlds([...(existing?.worlds ?? []), ...document.worlds]),
+    });
+  }
+
+  return [...byUid.values()];
+};
+
 export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
+  // `world` is accepted for older callers and ignored: every world of an
+  // edition shares its NPCs.
   const getNpcs = Effect.fn("SearchNpcs.get")(function* ({
     ids,
     limit,
     search,
-    world,
   }: NpcSearchQuery) {
     const index = meilisearch.index<RawNpcHit>(NPCS_INDEX);
 
@@ -162,15 +202,17 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
       ids,
       limit,
       search,
-      world,
     });
 
-    // Group revisions of one catalog identity before the hit limit applies.
+    // Documents written before editions are one per revision and world;
+    // group them by catalog identity before the hit limit applies.
     return yield* attemptMeilisearch("search.npcs", () =>
       index.search(searchTerm, { ...query, distinct: "catalogKey" }),
     ).pipe(
       Effect.map((response) => {
-        const hits = uniqBy(response.hits.map(normalizeNpcHit), npcCatalogKey);
+        const hits = uniqBy(response.hits.map(normalizeNpcHit), (hit) =>
+          npcCatalogKey(hit),
+        );
 
         return ids && ids.length > 0 ? hits : collapseByNameAndType(hits);
       }),
@@ -202,11 +244,13 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
       );
     }
 
-    const npcsWithUid = validNpcs.map(toNpcDocument);
-
     yield* indexChangedDocuments(
-      meilisearch.index<(typeof npcsWithUid)[number]>(NPCS_INDEX),
-      npcsWithUid,
+      meilisearch.index<NpcDocument>(NPCS_INDEX),
+      mergeNpcDocuments(validNpcs.map(toNpcDocument)),
+      (npc, stored) => ({
+        ...npc,
+        worlds: uniqueWorlds([...npc.worlds, ...(stored?.worlds ?? [])]),
+      }),
     );
   });
 

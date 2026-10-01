@@ -3,6 +3,30 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased: NPC and item revisions per game edition
+
+Every world of a Margonem edition uses the same NPC and item ids. NPC
+revisions and search results are now one per edition instead of one per world,
+and every loot has a game version.
+
+- `POST /loots`: when `gameVersion` is null or omitted, the API uses the
+  edition of `world`: `cronus`, `husaria` and `steamrealm` are `en`, every
+  other world is `pl`. A value you send still wins. Keep deriving it from the
+  game page's hostname.
+- NPC search (`/npcs`, and the NPC hits of `/all`) returns one hit per game
+  version, identity namespace, id and Margonem type, with a new `worlds` list
+  of the edition's worlds where the NPC was observed. `world` on an NPC hit is
+  deprecated: it names the world of the latest observation. `gameVersion` is
+  always set; the field stays nullable for compatibility.
+- The `world` query parameter of `/npcs` and `/items` is deprecated and
+  ignored, and on `/all` it only filters players. A later breaking release
+  removes it from NPC and item search. Item hits were already one per edition,
+  id and name with a `worlds` list.
+- A one-time repair gives existing loots and revisions an edition. Loot links
+  from the other edition move to that edition's revision; an item link takes
+  that edition's name and icon, or keeps its stored name when the edition has
+  none. Loot, item and NPC ids are unchanged.
+
 ## Unreleased: Unresolved notification selections and repaired loot links
 
 Some saved notification selections do not identify what their rule matches:
@@ -22,9 +46,10 @@ items whose saved name came from the other game edition.
   timers whose spawn window has already closed, and does not send a
   notification again for an occurrence that was already sent.
 - A one-time repair moves some historical loot links to new NPC and item
-  revisions: an NPC level observed on the timer at the time of the loot, or the
-  Polish name and icon of an item. A loot's NPC level can therefore change,
-  and with it which roles can read the loot. Loot and item ids are unchanged.
+  revisions: an NPC level observed on timers of the same edition at the time
+  of the loot, or the name and icon of the loot's own edition. A loot's NPC
+  level can therefore change, and with it which roles can read the loot. Loot
+  and item ids are unchanged.
 
 ## Unreleased: Item names, icons and instance stats per loot
 
@@ -57,8 +82,8 @@ each edition, and a world name does not identify the edition.
 - Retrying a loot, or submitting one another client already reported, keeps the
   game version it was first accepted with.
 - NPC search hits add a nullable `gameVersion`. Equal ids with different game
-  versions are different NPCs. Hits from older clients and from existing data
-  have `null`; do not assume an edition for them.
+  versions are different NPCs. See "NPC and item revisions per game edition"
+  for how the API now fills a missing game version.
 
 Deploy the database migration, the search service, the API and the game client
 in that order. Older clients keep working and their loots stay unknown.

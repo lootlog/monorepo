@@ -19,7 +19,7 @@ test("seed and live ingestion keep item identity despite ordering and transient 
 
 test("item revisions separate edition and presentation but not per-instance stats", () => {
   const observation = {
-    gameVersion: "pl",
+    gameVersion: "pl" as const,
     itemId: 62_271,
     name: "Wojenne trofeum Seta",
     icon: "trophy.gif",
@@ -39,7 +39,6 @@ test("item revisions separate edition and presentation but not per-instance stat
     new Set([
       revision,
       createItemSnapshotHash({ ...observation, gameVersion: "en" }),
-      createItemSnapshotHash({ ...observation, gameVersion: null }),
       createItemSnapshotHash({ ...observation, name: "Seth's War Trophy" }),
       createItemSnapshotHash({ ...observation, icon: "trophy-v2.gif" }),
       createItemSnapshotHash({ ...observation, itemType: "neutral" }),
@@ -48,7 +47,7 @@ test("item revisions separate edition and presentation but not per-instance stat
         stat: "rarity=heroic;contra=50",
       }),
     ]).size,
-  ).toBe(7);
+  ).toBe(6);
 });
 
 test("player snapshots retain existing identity across the shared hash implementation", () => {
@@ -63,42 +62,38 @@ test("player snapshots retain existing identity across the shared hash implement
   );
 });
 
-test("NPC revisions separate game versions and keep revisions stored without one", () => {
+test("NPC revisions are one per edition, never per world", () => {
   const observation = {
     identityNamespace: "template",
-    world: "fobos",
+    gameVersion: "pl",
     npcId: 700,
     name: "Kotołak",
     lvl: 30,
-  };
+  } as const;
 
-  const storedWithoutGameVersion = createHash("sha256")
-    .update(
-      JSON.stringify([
-        "npc-observation-v1",
-        "template",
-        "fobos",
-        700,
-        "Kotołak",
-        null,
-        30,
-        null,
-        null,
-        null,
-        null,
-      ]),
-    )
-    .digest("hex");
-
-  expect(createNpcSnapshotHash(observation)).toBe(storedWithoutGameVersion);
-  expect(createNpcSnapshotHash({ ...observation, gameVersion: null })).toBe(
-    storedWithoutGameVersion,
+  // The API writer, the seed writer and the repair store this hash; the
+  // world is not part of it. Changing its input splits new observations from
+  // every revision already stored under it.
+  expect(createNpcSnapshotHash(observation)).toBe(
+    createHash("sha256")
+      .update(
+        JSON.stringify([
+          "npc-observation-v2",
+          "template",
+          "pl",
+          700,
+          "Kotołak",
+          null,
+          30,
+          null,
+          null,
+          null,
+          null,
+        ]),
+      )
+      .digest("hex"),
   );
-  expect(
-    new Set([
-      storedWithoutGameVersion,
-      createNpcSnapshotHash({ ...observation, gameVersion: "pl" }),
-      createNpcSnapshotHash({ ...observation, gameVersion: "en" }),
-    ]).size,
-  ).toBe(3);
+  expect(createNpcSnapshotHash({ ...observation, gameVersion: "en" })).not.toBe(
+    createNpcSnapshotHash(observation),
+  );
 });
