@@ -813,25 +813,22 @@ latency.
 `normalizeNpcIcon`, which the API applies to new loots, kills and automatic
 timers: the old interface reported the rendered CDN URL of an icon Margonem
 keeps relative to `/obrazki/npc/`, and some timers carried that prefix twice.
-On production on 2026-10-01 (read-only) this affected 231 `NpcSnapshot` rows,
-9,572 `Timer` rows, 9,409 `TimerHistoryEntry` rows, 30 `EventHeroNpc` rows and
-881 kill statistics rows, 872 of them in the `*Bucket` tables.
+It rewrites `NpcSnapshot`, the kill statistics, `Timer`, `TimerHistoryEntry`
+and `EventHeroNpc` rows whose icon is not in that form.
 
 A revision whose normalized icon repeats another revision of the same NPC is
 merged into the one more loots link (the lower id on a tie): its `LootNpc` rows
-move there and the revision is deleted. On production that is 8 revisions and
-18 links; the merged revisions differ only in the icon form, so no loot changes
-its visible NPC, level or type. The other 223 revisions keep their id and links,
-and their `snapshotHash` is recomputed in SQL with the formula of
-`createNpcSnapshotHash`; a revision without a hash keeps none. The migration
-test checks the SQL hash against the TypeScript function. Kill statistics,
-timer, timer history and event hero rows only change the icon; `updatedAt`
-stays.
+move there and the revision is deleted. The merged revisions differ only in the
+icon form, so no loot changes its visible NPC, level or type. Every other
+affected revision keeps its id and links, and its `snapshotHash` is recomputed
+in SQL with the formula of `createNpcSnapshotHash`; a revision without a hash
+keeps none. The migration test checks the SQL hash against the TypeScript
+function. Kill statistics, timer, timer history and event hero rows only change
+the icon; `updatedAt` stays.
 
-The kill statistics have no index on the icon, so the migration scans them
-first: about 15 GB on production, 18 seconds for the whole migration in a dry
-run on a production clone. Updated rows stay locked until commit, so a
-concurrent kill or timer write to one of them waits for the migration; the
+The kill statistics, including the large `*Bucket` tables, have no index on the
+icon, so the migration scans them first. Updated rows stay locked until commit,
+so a concurrent kill or timer write to one of them waits for the migration; the
 `Timer` rows are updated last to keep that wait short.
 
 Neither the API container nor its deployment applies migrations. Deploy the
