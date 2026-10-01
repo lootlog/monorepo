@@ -28,8 +28,8 @@ describe("player snapshot merge migration", () => {
       }
 
       // 1 and 2 hold the same content under both legacy hashes; 2 is linked
-      // from a loot, a timer and its history. 3 is the same character after a
-      // rename, 4 a timer actor nothing references any more.
+      // from a loot, its map players, a timer and its history. 3 is the same
+      // character after a rename, 4 a timer actor nothing references any more.
       await database.exec(`
         INSERT INTO "Guild" (id, name, "ownerId", "updatedAt") VALUES ('guild', 'Guild', 'owner', now());
         INSERT INTO "Member" (id, "userId", "guildId", name, "updatedAt") VALUES (10, 'user', 'guild', 'Member', now());
@@ -42,6 +42,8 @@ describe("player snapshot merge migration", () => {
           (3, 'test', 7, 70, 'renamed', 'Renamed', 'MAGE', '/m.gif'),
           (4, 'test', 8, 80, 'timer-actor', 'Gone', 'WARRIOR', '/w.gif');
         INSERT INTO "LootPlayer" ("lootId", "playerSnapshotId", lvl) VALUES (100, 1, 50), (101, 2, 51), (101, 3, 51);
+        INSERT INTO "OrganizationLootRecord" (id, "lootId", "guildId", "updatedAt") VALUES (200, 101, 'guild', now());
+        INSERT INTO "LootMapPlayer" ("organizationLootRecordId", "playerSnapshotId") VALUES (200, 2);
         INSERT INTO "Timer" ("createdById", "guildId", "npcId", world, "minSpawnTime", "maxSpawnTime", "updatedAt", npc, "timerKey", "actorCharacterSnapshotId")
         VALUES (10, 'guild', 1, 'test', now(), now(), now(), '{}', 'npc:1', 2);
         INSERT INTO "TimerHistoryEntry" ("guildId", world, "timerKey", "npcId", npc, action, "actorMemberId", "actorCharacterSnapshotId", "timerActorCharacterSnapshotId")
@@ -67,6 +69,13 @@ describe("player snapshot merge migration", () => {
         { lootId: 101, playerSnapshotId: 1 },
         { lootId: 101, playerSnapshotId: 3 },
       ]);
+      expect(
+        (
+          await database.query(
+            `SELECT "organizationLootRecordId", "playerSnapshotId" FROM "LootMapPlayer"`,
+          )
+        ).rows,
+      ).toEqual([{ organizationLootRecordId: 200, playerSnapshotId: 1 }]);
       // Timer references are ON DELETE SET NULL, so a merged row deleted
       // before its timers move would silently drop the actor.
       expect(
