@@ -4,6 +4,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, desc, eq, isNotNull, or, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
+import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
@@ -359,7 +360,8 @@ export const makeKillCreation = (
       npcType,
       npcLvl: data.npc.lvl,
       npcProf: data.npc.prof ?? null,
-      npcIcon: data.npc.icon ?? null,
+      npcIcon:
+        data.npc.icon === undefined ? null : normalizeNpcIcon(data.npc.icon),
       lastKilledAt: killedAt,
     };
 

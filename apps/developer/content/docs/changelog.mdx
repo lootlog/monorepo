@@ -3,6 +3,27 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased: Relative NPC icons on loots, kills and timers
+
+Margonem stores an NPC icon relative to its NPC image directory and adds the
+CDN address only to render it. Some clients report the rendered URL instead, so
+one observation of an NPC produced two revisions.
+
+- `POST /loots`, `POST /kills` and `POST /timers/auto` are unchanged. The API
+  now stores `npcs[].icon` and `npc.icon` relative to the NPC image directory:
+  `https://micc.garmory-cdn.cloud/obrazki/npc/her/a.gif`,
+  `//micc.garmory-cdn.cloud/obrazki/npc/her/a.gif`, `/obrazki/npc/her/a.gif`
+  and `/her/a.gif` are all stored as `her/a.gif`, and identify the same NPC
+  revision.
+- A one-time repair rewrites stored icons of NPC revisions, kill statistics,
+  timers, timer history and event heroes the same way. NPC revisions that
+  differed only in the icon form are merged; a loot can therefore link a
+  different NPC revision id with the same name, level and type.
+- Loot, kill, timer and NPC search responses return the stored icon. Build the
+  image URL by prefixing `https://micc.garmory-cdn.cloud/obrazki/npc/`. Search
+  documents written earlier can still hold a full URL; use an absolute `icon`
+  as is.
+
 ## Unreleased (breaking): Game version required, deprecated search fields removed
 
 The one-time repair of per-edition revisions is complete: every loot and NPC

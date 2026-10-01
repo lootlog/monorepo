@@ -1,3 +1,4 @@
+import type { RuntimeNpc } from "@/lib/margonem-runtime/runtime.types";
 import { create } from "zustand";
 import type { GameEvent, W } from "@lootlog/margonem/game-events";
 
@@ -11,12 +12,13 @@ const clearCapturedEvents = (events: GameEvent[]) => {
 
 /**
  * NPC warriors (keys starting with "-") carry `originalId`, the runtime NPC id.
- * `templateId` is the map NPC's template captured while it was still on the
- * map; null when it could not be resolved.
+ * `mapNpc` is the map observation of that NPC captured when the warrior joined:
+ * the battle warrior has no template and its other fields are battle data, not
+ * the NPC Margonem shows on the map. Null when the map never showed the NPC.
  */
 export type BattleWarriorsWithAccountId = Record<
   string,
-  W[string] & { accountId?: number; templateId?: number | null }
+  W[string] & { accountId?: number; mapNpc?: RuntimeNpc | null }
 >;
 
 interface BattleState {

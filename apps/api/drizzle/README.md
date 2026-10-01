@@ -432,7 +432,10 @@ history entry without changing the accepted loot or its NPC observation.
 revision by its identity namespace, game version, supplied NPC id, name, derived
 NPC type, level, icon, profession, weight and Margonem type. Every world of an
 edition uses the same NPC ids, so the world is not part of it (see
-"Revisions per game edition" below). Missing and null optional attributes are
+"Revisions per game edition" below). The icon is stored relative to Margonem's
+NPC image directory (`normalizeNpcIcon` in `@lootlog/domain/npc-icon`), so a
+rendered CDN URL and the relative path of one graphic are one revision; game
+client adapters apply the same function. Missing and null optional attributes are
 equivalent; empty strings and zero remain distinct values. The name participates in revision identity, so a rename creates a new
 revision. Returning to an identical observation reuses its existing revision.
 This model has no mutable latest-NPC record for a delayed submission to regress.
@@ -803,3 +806,47 @@ silently:
 
 Run it outside peak hours. These are local measurements, not production
 latency.
+
+### Relative NPC icons
+
+`20261001134324_relative_npc_icons` stores every NPC icon in the form of
+`normalizeNpcIcon`, which the API applies to new loots, kills and automatic
+timers: the old interface reported the rendered CDN URL of an icon Margonem
+keeps relative to `/obrazki/npc/`, and some timers carried that prefix twice.
+It rewrites `NpcSnapshot`, the kill statistics, `Timer`, `TimerHistoryEntry`
+and `EventHeroNpc` rows whose icon is not in that form.
+
+A revision whose normalized icon repeats another revision of the same NPC is
+merged into the one more loots link (the lower id on a tie): its `LootNpc` rows
+move there and the revision is deleted. The merged revisions differ only in the
+icon form, so no loot changes its visible NPC, level or type. Every other
+affected revision keeps its id and links, and its `snapshotHash` is recomputed
+in SQL with the formula of `createNpcSnapshotHash`; a revision without a hash
+keeps none. The migration test checks the SQL hash against the TypeScript
+function. Kill statistics, timer, timer history and event hero rows only change
+the icon; `updatedAt` stays.
+
+The kill statistics, including the large `*Bucket` tables, have no index on the
+icon, so the migration scans them first. Updated rows stay locked until commit,
+so a concurrent kill or timer write to one of them waits for the migration; the
+`Timer` rows are updated last to keep that wait short.
+
+Neither the API container nor its deployment applies migrations. Deploy the
+API revision that normalizes icons on write first; once no older API pod runs,
+apply the migration with `bun run db:api:migrate:deploy`. Rows an older API
+revision writes after the migration keep a full URL. The migrator applies every
+pending migration in one transaction: run together with the player snapshot
+merge above, this one adds its time to that run and its row locks come last.
+Afterwards these counts should stay at zero:
+
+```sql
+SELECT count(*) FROM "NpcSnapshot"
+WHERE "icon" ~* '/obrazki/npc/' OR "icon" LIKE '/%';
+SELECT count(*) FROM "Timer"
+WHERE "npc"->>'icon' ~* '/obrazki/npc/' OR "npc"->>'icon' LIKE '/%';
+```
+
+NPC search documents keep the icon they were written with until the next
+observation or an index rebuild, and other services (activity, battlelog) keep
+their own copies; the web and game client NPC tiles therefore still accept an
+absolute icon URL.

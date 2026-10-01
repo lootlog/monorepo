@@ -4,6 +4,7 @@ import type { GameHero } from "@lootlog/margonem/hero";
 import type { GameMap } from "@lootlog/margonem/map";
 import type { GameNpc } from "@lootlog/margonem/npcs";
 import type { OtherHandle } from "@lootlog/margonem/others";
+import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import { GameVersion } from "@lootlog/schema/game-version";
 import type {
   RuntimeGameSnapshot,
@@ -95,7 +96,7 @@ export function normalizeNpc(npc: GameNpc): RuntimeNpc {
   return Object.freeze({
     actions: npc.actions,
     groupId: npc.grp,
-    icon: npc.icon,
+    icon: normalizeNpcIcon(npc.icon),
     id: npc.id,
     level: npc.lvl,
     name: npc.nick,

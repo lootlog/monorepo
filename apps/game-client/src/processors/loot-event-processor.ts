@@ -116,7 +116,7 @@ export class LootEventProcessor {
     const npc =
       npcContext.npc ??
       ingress?.npcsById[npcContext.npcId] ??
-      useNpcsStore.getState().getNpc(npcContext.npcId);
+      useNpcsStore.getState().getMapNpc(npcContext.npcId);
 
     const resolutionSource: DialogNpcContextSource = npcContext.npc
       ? npcContext.source
