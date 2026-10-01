@@ -1,4 +1,5 @@
 import { createSHA256Hash } from "@/helpers/create-sha-256-hash";
+import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import { mapBattleEventsToPayload } from "@/helpers/mappers/battlelog.mappers";
 import { LOOTLOG_APP_URL } from "@/config/app";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
@@ -103,7 +104,7 @@ const getNpcBattleSummary = (warriors: BattleWarriorsWithAccountId) => {
       name: warrior.name,
       lvl: warrior.lvl,
       prof: warrior.prof || "",
-      icon: warrior.icon,
+      icon: warrior.mapNpc?.icon ?? normalizeNpcIcon(warrior.icon),
       wt: warrior.wt,
       type: warrior.type,
     };

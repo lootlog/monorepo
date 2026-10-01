@@ -773,11 +773,12 @@ lookups only lose ids that matched no loot. Apply it after the cleanup above.
 ### Relative NPC icons
 
 `20261001122213_relative_npc_icons` stores every NPC icon in the form of
-`normalizeNpcIcon`, which the API applies to new loots and automatic timers:
-the old interface reported the rendered CDN URL of an icon Margonem keeps
-relative to `/obrazki/npc/`, and some timers carried that prefix twice. On
-production on 2026-10-01 (read-only) this affected 231 `NpcSnapshot` rows,
-9,572 `Timer` rows, 9,409 `TimerHistoryEntry` rows and 30 `EventHeroNpc` rows.
+`normalizeNpcIcon`, which the API applies to new loots, kills and automatic
+timers: the old interface reported the rendered CDN URL of an icon Margonem
+keeps relative to `/obrazki/npc/`, and some timers carried that prefix twice.
+On production on 2026-10-01 (read-only) this affected 231 `NpcSnapshot` rows,
+9,572 `Timer` rows, 9,409 `TimerHistoryEntry` rows, 30 `EventHeroNpc` rows and
+881 kill statistics rows, 872 of them in the `*Bucket` tables.
 
 A revision whose normalized icon repeats another revision of the same NPC is
 merged into the one more loots link (the lower id on a tie): its `LootNpc` rows
@@ -786,20 +787,30 @@ move there and the revision is deleted. On production that is 8 revisions and
 its visible NPC, level or type. The other 223 revisions keep their id and links,
 and their `snapshotHash` is recomputed in SQL with the formula of
 `createNpcSnapshotHash`; a revision without a hash keeps none. The migration
-test checks the SQL hash against the TypeScript function. Timer, timer history
-and event hero rows only change the icon; `updatedAt` stays.
+test checks the SQL hash against the TypeScript function. Kill statistics,
+timer, timer history and event hero rows only change the icon; `updatedAt`
+stays.
 
-A dry run on a production clone took about 2 seconds and locked the updated
-`Timer` rows until commit, so a concurrent timer write waits for the migration.
-Apply it with the API revision that normalizes icons on write: rows an older
-API revision writes after the migration keep a full URL. Afterwards this count
+The kill statistics have no index on the icon, so the migration scans them
+first: about 15 GB on production, 18 seconds for the whole migration in a dry
+run on a production clone. Updated rows stay locked until commit, so a
+concurrent kill or timer write to one of them waits for the migration; the
+`Timer` rows are updated last to keep that wait short.
+
+Neither the API container nor its deployment applies migrations. Deploy the
+API revision that normalizes icons on write first; once no older API pod runs,
+apply the migration with `bun run db:api:migrate:deploy`. Rows an older API
+revision writes after the migration keep a full URL. Afterwards these counts
 should stay at zero:
 
 ```sql
 SELECT count(*) FROM "NpcSnapshot"
 WHERE "icon" ~* '/obrazki/npc/' OR "icon" LIKE '/%';
+SELECT count(*) FROM "Timer"
+WHERE "npc"->>'icon' ~* '/obrazki/npc/' OR "npc"->>'icon' LIKE '/%';
 ```
 
-NPC search documents and kill statistics keep the icon they were written with
-until the next observation or an index rebuild; the web and game client NPC
-tiles therefore still accept an absolute icon URL.
+NPC search documents keep the icon they were written with until the next
+observation or an index rebuild, and other services (activity, battlelog) keep
+their own copies; the web and game client NPC tiles therefore still accept an
+absolute icon URL.

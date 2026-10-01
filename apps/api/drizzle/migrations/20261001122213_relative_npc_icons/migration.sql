@@ -9,8 +9,24 @@
 -- links move there and it is deleted. Every other affected revision keeps its
 -- id and links; its icon and snapshotHash are rewritten, the hash with the
 -- formula of createNpcSnapshotHash (packages/database/src/snapshot-hash.ts).
--- A revision without a hash keeps none. Timers, their history and event heroes
--- only change the icon; their updatedAt and every other value stay.
+-- A revision without a hash keeps none. Kill statistics, timers, their history
+-- and event heroes only change the icon; their updatedAt and every other value
+-- stay. Kill statistics come first: their tables need full scans, and the rows
+-- updated later stay locked only for the rest of the migration.
+UPDATE "NpcKillStats" SET "npcIcon" = regexp_replace(regexp_replace("npcIcon", '^(?:(?:(?:[a-z][a-z0-9+.-]*:)?//[^/?#]*)?/obrazki/npc/)+', '', 'i'), '^/', '')
+WHERE "npcIcon" ~* '^(?:(?:(?:[a-z][a-z0-9+.-]*:)?//[^/?#]*)?/obrazki/npc/)+' OR "npcIcon" LIKE '/%';--> statement-breakpoint
+UPDATE "NpcKillStatsBucket" SET "npcIcon" = regexp_replace(regexp_replace("npcIcon", '^(?:(?:(?:[a-z][a-z0-9+.-]*:)?//[^/?#]*)?/obrazki/npc/)+', '', 'i'), '^/', '')
+WHERE "npcIcon" ~* '^(?:(?:(?:[a-z][a-z0-9+.-]*:)?//[^/?#]*)?/obrazki/npc/)+' OR "npcIcon" LIKE '/%';--> statement-breakpoint
+UPDATE "UserKillStats" SET "npcIcon" = regexp_replace(regexp_replace("npcIcon", '^(?:(?:(?:[a-z][a-z0-9+.-]*:)?//[^/?#]*)?/obrazki/npc/)+', '', 'i'), '^/', '')
+WHERE "npcIcon" ~* '^(?:(?:(?:[a-z][a-z0-9+.-]*:)?//[^/?#]*)?/obrazki/npc/)+' OR "npcIcon" LIKE '/%';--> statement-breakpoint
+UPDATE "UserKillStatsBucket" SET "npcIcon" = regexp_replace(regexp_replace("npcIcon", '^(?:(?:(?:[a-z][a-z0-9+.-]*:)?//[^/?#]*)?/obrazki/npc/)+', '', 'i'), '^/', '')
+WHERE "npcIcon" ~* '^(?:(?:(?:[a-z][a-z0-9+.-]*:)?//[^/?#]*)?/obrazki/npc/)+' OR "npcIcon" LIKE '/%';--> statement-breakpoint
+UPDATE "GuildKillSummary" SET "npcIcon" = regexp_replace(regexp_replace("npcIcon", '^(?:(?:(?:[a-z][a-z0-9+.-]*:)?//[^/?#]*)?/obrazki/npc/)+', '', 'i'), '^/', '')
+WHERE "npcIcon" ~* '^(?:(?:(?:[a-z][a-z0-9+.-]*:)?//[^/?#]*)?/obrazki/npc/)+' OR "npcIcon" LIKE '/%';--> statement-breakpoint
+UPDATE "GuildKillSummaryBucket" SET "npcIcon" = regexp_replace(regexp_replace("npcIcon", '^(?:(?:(?:[a-z][a-z0-9+.-]*:)?//[^/?#]*)?/obrazki/npc/)+', '', 'i'), '^/', '')
+WHERE "npcIcon" ~* '^(?:(?:(?:[a-z][a-z0-9+.-]*:)?//[^/?#]*)?/obrazki/npc/)+' OR "npcIcon" LIKE '/%';--> statement-breakpoint
+UPDATE "GuildKillActivity" SET "npcIcon" = regexp_replace(regexp_replace("npcIcon", '^(?:(?:(?:[a-z][a-z0-9+.-]*:)?//[^/?#]*)?/obrazki/npc/)+', '', 'i'), '^/', '')
+WHERE "npcIcon" ~* '^(?:(?:(?:[a-z][a-z0-9+.-]*:)?//[^/?#]*)?/obrazki/npc/)+' OR "npcIcon" LIKE '/%';--> statement-breakpoint
 CREATE TEMPORARY TABLE "NpcIconRepair" AS
 SELECT "id", regexp_replace(regexp_replace("icon", '^(?:(?:(?:[a-z][a-z0-9+.-]*:)?//[^/?#]*)?/obrazki/npc/)+', '', 'i'), '^/', '') AS "icon"
 FROM "NpcSnapshot"
