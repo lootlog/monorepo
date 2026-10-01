@@ -158,6 +158,8 @@ const fixture = {
   legacyNpcId: 0,
   perWorldNpcId: 0,
   legacyItemId: 0,
+  duplicateItemId: 0,
+  duplicateLootItemId: 0,
   polishItemId: 0,
   englishRevisionId: 0,
   observedEnglishNpcId: 0,
@@ -181,6 +183,7 @@ const snapshotIds = () =>
     fixture.legacyNpcId,
     fixture.perWorldNpcId,
     fixture.legacyItemId,
+    fixture.duplicateItemId,
     fixture.polishItemId,
     fixture.englishRevisionId,
   ]);
@@ -252,6 +255,7 @@ const itemLinks = () =>
         inArray(lootItemTable.id, [
           ...fixture.polishLootItemIds,
           fixture.firstEnglishLootItemId,
+          fixture.duplicateLootItemId,
           fixture.englishRevisionLootItemId,
         ]),
       ),
@@ -547,6 +551,25 @@ describe("legacy association repair", () => {
     fixture.polishItemId = polish!.id;
     fixture.englishRevisionId = englishRevision!.id;
 
+    // Another legacy row of the same item that differs only in its first
+    // writer's description: the same revision stats and edition hash.
+    const duplicateStat = englishStat.replace("opis=Grawer", "opis=Inny");
+
+    const [duplicate] = await db((database) =>
+      database
+        .insert(itemSnapshotTable)
+        .values({
+          ...englishItem,
+          lvl: 64,
+          rarity: "UNIQUE",
+          statRaw: duplicateStat,
+          statsSnapshot: parseItemStats(duplicateStat),
+        })
+        .returning({ id: itemSnapshotTable.id }),
+    );
+
+    fixture.duplicateItemId = duplicate!.id;
+
     // The English name was written first, on an English world.
     const firstEnglishLoot = await insertLoot(
       englishWorld,
@@ -561,6 +584,11 @@ describe("legacy association repair", () => {
     await linkItem(
       await insertLoot(polishWorlds[0], new Date("2026-07-02T10:00:00Z")),
       fixture.polishItemId,
+    );
+
+    fixture.duplicateLootItemId = await linkItem(
+      await insertLoot(englishWorld, new Date("2026-07-03T10:00:00Z")),
+      fixture.duplicateItemId,
     );
 
     for (const index of [0, 1]) {
@@ -723,6 +751,8 @@ describe("legacy association repair", () => {
         `2:item:promote:${fixture.legacyItemId}`,
         `2:item:promote:${fixture.polishItemId}`,
         `3:item:relink:${fixture.legacyItemId}:pl`,
+        // Its edition hash is promoted already, so it joins that revision.
+        `3:item:relink:${fixture.duplicateItemId}:en`,
       ].sort(),
     );
 
@@ -909,6 +939,9 @@ describe("legacy association repair", () => {
     expect(itemTargets.get(fixture.englishRevisionLootItemId)).toBe(
       fixture.legacyItemId,
     );
+    expect(itemTargets.get(fixture.duplicateLootItemId)).toBe(
+      fixture.legacyItemId,
+    );
 
     const polishRelinked = byId(
       items,
@@ -1042,9 +1075,9 @@ describe("legacy association repair", () => {
     ]);
     expect(await logged()).toEqual(loggedBefore);
     // 8 reworked and English NPC links, the per-world link, the link of the
-    // revision the API wrote, 3 Polish item links and the retired English
-    // revision's link.
-    expect(loggedBefore[0]!.value).toBe(14);
+    // revision the API wrote, 3 Polish item links, the duplicate item's link
+    // and the retired English revision's link.
+    expect(loggedBefore[0]!.value).toBe(15);
   });
 
   it("invalidates the caches of Organizations whose loots changed", async () => {
