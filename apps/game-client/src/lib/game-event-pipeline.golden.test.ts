@@ -692,6 +692,52 @@ describe("game event pipeline golden replay", () => {
     dispatcher.cleanup();
   });
 
+  it("submits the map observation of a battle NPC removed before the battle starts", async () => {
+    resetPipelineState();
+    const dispatcher = new EventDispatcher();
+    pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
+    margonemRuntimeBridge.setupProxies();
+    dispatcher.register();
+
+    useNpcsStore.getState().replaceNpcs([
+      Object.freeze({
+        icon: "map-boss.gif",
+        id: 100,
+        level: 300,
+        name: "Boss",
+        profession: "w",
+        templateId: 700,
+        type: 3,
+        weight: 85,
+        x: 1,
+        y: 2,
+      }),
+    ]);
+
+    dispatchRuntimeEvent({ npcs_del: [{ id: 100 }] });
+    dispatchRuntimeEvent({
+      f: { ...finalFightEvent.f, endBattle: undefined, init: "1" },
+    });
+    dispatchRuntimeEvent({ ...fightLootEvent, f: finalFightEvent.f });
+
+    await vi.waitFor(() => expect(requestsFor("/loots")).toHaveLength(1));
+    expect(requestsFor("/loots")[0]?.body).toEqual(
+      expect.objectContaining({
+        npcs: [
+          expect.objectContaining({
+            id: 700,
+            runtimeId: 100,
+            templateId: 700,
+            icon: "map-boss.gif",
+            type: 3,
+          }),
+        ],
+      }),
+    );
+
+    dispatcher.cleanup();
+  });
+
   it("submits dialog loot after projection removes the talked NPC", async () => {
     resetPipelineState();
     const dispatcher = new EventDispatcher();

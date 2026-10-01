@@ -3,6 +3,21 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased: Relative NPC icons on loots
+
+Margonem stores an NPC icon relative to its NPC image directory and adds the
+CDN address only to render it. Some clients report the rendered URL instead, so
+one observation of an NPC produced two revisions.
+
+- `POST /loots` is unchanged. The API now stores `npcs[].icon` relative to the
+  NPC image directory: `https://micc.garmory-cdn.cloud/obrazki/npc/her/a.gif`,
+  `//micc.garmory-cdn.cloud/obrazki/npc/her/a.gif`, `/obrazki/npc/her/a.gif`
+  and `/her/a.gif` are all stored as `her/a.gif`, and identify the same
+  revision.
+- Loot and NPC search responses return the stored icon. Build the image URL by
+  prefixing `https://micc.garmory-cdn.cloud/obrazki/npc/`. Revisions stored
+  before this change can still hold a full URL; use an absolute `icon` as is.
+
 ## Unreleased (breaking): Game version required, deprecated search fields removed
 
 The one-time repair of per-edition revisions is complete: every loot and NPC

@@ -1,3 +1,4 @@
+import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import { createsOther } from "./runtime-event-parser";
 import { useGameStore } from "@/store/game.store";
 import { useNpcsStore } from "@/store/npcs.store";
@@ -402,7 +403,9 @@ export class RuntimeStateProjection {
       this.npcTemplates.set(template.id, Object.freeze({ ...template }));
     }
 
-    for (const icon of event.icons ?? []) this.icons.set(icon.id, icon.icon);
+    for (const icon of event.icons ?? []) {
+      this.icons.set(icon.id, normalizeNpcIcon(icon.icon));
+    }
   }
 
   private applyOthers(
@@ -526,7 +529,7 @@ export class RuntimeStateProjection {
   // NpcManager.mergeNpcDataWithNpcIconData resolves raw icon.id to its string
   // before game storage; ingress can contain either that reference or the string.
   private resolveNpcIcon(icon: AppliedNpcEntry["icon"]): string | undefined {
-    if (typeof icon === "string") return icon;
+    if (typeof icon === "string") return normalizeNpcIcon(icon);
 
     return this.icons.get(getOptionalProperty(icon, "id") ?? -1);
   }

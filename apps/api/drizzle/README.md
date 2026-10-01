@@ -432,7 +432,10 @@ history entry without changing the accepted loot or its NPC observation.
 revision by its identity namespace, game version, supplied NPC id, name, derived
 NPC type, level, icon, profession, weight and Margonem type. Every world of an
 edition uses the same NPC ids, so the world is not part of it (see
-"Revisions per game edition" below). Missing and null optional attributes are
+"Revisions per game edition" below). The icon is stored relative to Margonem's
+NPC image directory (`normalizeNpcIcon` in `@lootlog/domain/npc-icon`), so a
+rendered CDN URL and the relative path of one graphic are one revision; game
+client adapters apply the same function. Missing and null optional attributes are
 equivalent; empty strings and zero remain distinct values. The name participates in revision identity, so a rename creates a new
 revision. Returning to an identical observation reuses its existing revision.
 This model has no mutable latest-NPC record for a delayed submission to regress.

@@ -16,6 +16,7 @@ const createNpc = (id: number, nick: string) => ({
 
 describe("useNpcsStore", () => {
   beforeEach(() => {
+    useNpcsStore.setState(useNpcsStore.getInitialState(), true);
     useNpcsStore.getState().clearNpcs();
   });
 
@@ -54,6 +55,24 @@ describe("useNpcsStore", () => {
     expect(useNpcsStore.getState()).toBe(initialState);
     expect(listener).not.toHaveBeenCalled();
     unsubscribe();
+  });
+
+  it("keeps a removed NPC identifiable on its map until the map changes", () => {
+    const npc = createNpc(501, "Usunięty");
+    useNpcsStore.getState().replaceNpcs([npc]);
+
+    useNpcsStore.getState().applyNpcBatch({ removeIds: [501] });
+
+    expect(useNpcsStore.getState().getNpc(501)).toBeUndefined();
+    expect(useNpcsStore.getState().getMapNpc(501)).toEqual(npc);
+
+    const respawned = { ...npc, x: 9 };
+    useNpcsStore.getState().applyNpcBatch({ upserts: [respawned] });
+    useNpcsStore.getState().applyNpcBatch({ removeIds: [501] });
+    expect(useNpcsStore.getState().getMapNpc(501)).toEqual(respawned);
+
+    useNpcsStore.getState().replaceNpcs([], true);
+    expect(useNpcsStore.getState().getMapNpc(501)).toBeUndefined();
   });
 
   it("represents an empty but ready map without polling", () => {
