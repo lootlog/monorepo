@@ -9,10 +9,11 @@ Every world of a Margonem edition uses the same NPC and item ids. NPC
 revisions and search results are now one per edition instead of one per world,
 and every loot has a game version.
 
-- `POST /loots`: when `gameVersion` is null or omitted, the API uses the
-  edition of `world`: `cronus`, `husaria` and `steamrealm` are `en`, every
-  other world is `pl`. A value you send still wins. Keep deriving it from the
-  game page's hostname.
+- `POST /loots`: send `gameVersion` with every loot, derived from the game
+  page's hostname. Omitting it, or sending `null`, is deprecated, and a later
+  breaking release will reject such loots. Until then the API uses the edition
+  of `world`: `cronus`, `husaria` and `steamrealm` are `en`, every other world
+  is `pl`. A value you send always wins.
 - NPC search (`/npcs`, and the NPC hits of `/all`) returns one hit per game
   version, identity namespace, id and Margonem type, with a new `worlds` list
   of the edition's worlds where the NPC was observed. `world` on an NPC hit is

@@ -680,9 +680,14 @@ one per edition, and every loot and revision records its edition.
   [LOO-35](https://linear.app/lootlog/issue/LOO-35), and clients that send no
   game version, have no other source. `gameVersionOfWorldSql` in
   `src/database/drizzle/game-version.ts` is the same map in SQL.
-- Loot acceptance uses the declared `gameVersion` and fills a missing one from
-  the world. A declared value that differs from the map wins and is logged as
-  a warning with the world and both values. The game client already declares
+- Loot acceptance uses the declared `gameVersion`. A declared value that
+  differs from the map wins and is logged as a warning with the world and both
+  values. A submission without one is a client defect: the API logs a warning
+  and fills it from the world so the loot is not lost. This fallback is
+  deprecated; once those warnings stop, a breaking release makes
+  `gameVersion` required and removes it. The backfill, the search rebuild and
+  older search publications keep using the map for data written without an
+  edition. The game client already declares
   it from the hostname for every installation method, and on the local
   production copy all 1,230 loots with a declared edition agreed with the map.
 - `createNpcSnapshotHash` leaves the world out (`npc-observation-v2`) and
