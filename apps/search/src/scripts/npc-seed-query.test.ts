@@ -13,15 +13,16 @@ const row = {
   margonemType: 2,
   world: "fobos",
   gameVersion: "pl" as const,
+  latestLootId: 1,
 };
 
-test("a rebuild merges the worlds of an edition and keeps the latest revision", () => {
-  // Rows arrive ordered by their latest loot link.
+test("a rebuild merges the worlds of an edition and keeps the latest observation", () => {
+  // The revision with the latest loot wins, whatever the row order.
   expect(
     toNpcSeedDocuments([
+      { ...row, world: "tarhuna", lvl: 70, latestLootId: 3 },
       row,
       { ...row, world: "cronus", gameVersion: "en" },
-      { ...row, world: "tarhuna", lvl: 70 },
       { ...row, identityNamespace: "legacy" },
     ]),
   ).toEqual([

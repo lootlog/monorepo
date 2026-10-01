@@ -17,7 +17,7 @@ type SeedDatabase = Pick<
 
 /**
  * Every looted NPC revision with each world and edition it was observed in,
- * ordered by its latest loot link. Merging the rows into catalog documents
+ * ordered by its latest loot. Merging the rows into catalog documents
  * keeps the most recently observed revision of each entry, as live indexing
  * does; hash order and level do not establish chronology. A revision without
  * an edition, written before editions, takes the edition of its loot.
@@ -30,7 +30,9 @@ export const buildNpcSeedQuery = (database: SeedDatabase) => {
         npcSnapshotId: lootNpcTable.npcSnapshotId,
         world: lootTable.world,
         gameVersion: lootGameVersionSql.as("loot_game_version"),
-        latestLinkId: sql<number>`max(${lootNpcTable.id})`.as("latest_link_id"),
+        latestLootId: sql<number>`max(${lootNpcTable.lootId})`.as(
+          "latest_loot_id",
+        ),
       })
       .from(lootNpcTable)
       .innerJoin(lootTable, eq(lootTable.id, lootNpcTable.lootId))
@@ -53,13 +55,14 @@ export const buildNpcSeedQuery = (database: SeedDatabase) => {
       gameVersion: sql<
         "en" | "pl"
       >`coalesce(${npcSnapshotTable.gameVersion}, ${snapshotWorlds.gameVersion})`,
+      latestLootId: snapshotWorlds.latestLootId,
     })
     .from(snapshotWorlds)
     .innerJoin(
       npcSnapshotTable,
       eq(npcSnapshotTable.id, snapshotWorlds.npcSnapshotId),
     )
-    .orderBy(asc(snapshotWorlds.latestLinkId), asc(npcSnapshotTable.id));
+    .orderBy(asc(snapshotWorlds.latestLootId), asc(npcSnapshotTable.id));
 };
 
 type NpcSeedRow = Awaited<ReturnType<typeof buildNpcSeedQuery>>[number];
@@ -84,6 +87,7 @@ export const toNpcSeedDocuments = (rows: readonly NpcSeedRow[]) =>
         margonemType: npc.margonemType,
         world: npc.world,
         gameVersion: npc.gameVersion,
+        lootId: npc.latestLootId,
       }),
     ),
   );

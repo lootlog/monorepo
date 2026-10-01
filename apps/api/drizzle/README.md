@@ -696,7 +696,10 @@ one per edition, and every loot and revision records its edition.
   drops it once the repair below is complete and no older API writer runs.
   `createItemSnapshotHash` is unchanged and now always receives an edition.
 - Search stores one NPC document per edition, identity namespace, id and
-  Margonem type, with a merged `worlds` list, as items already did. The
+  Margonem type, with a merged `worlds` list, as items already did. NPC
+  publications carry the observing `lootId`; a document keeps the attributes
+  of the latest loot, so a retried or redelivered older publication only adds
+  its world. The
   `world` query parameter of `/npcs` and `/items` is accepted, ignored and
   marked deprecated in the contract; on `/all` it still filters players. The
   index rebuild (`bun run seed`) takes the edition of a revision, or of its
@@ -844,7 +847,11 @@ caches were invalidated.
   keeps its current revision (`kept`). A created revision is deleted only when
   no link references it, so a newer loot that reused it keeps it. A promoted
   revision gets its previous identity and stats back while it still carries
-  the values the run set, and then a retired revision gets its hash back.
+  the values the run set and no loot accepted since the promotion links it
+  (a link above the highest link id at the swap, kept on the entry's
+  cursor); otherwise it stays promoted (`kept`), so that loot's record does
+  not change. A retired revision gets its hash back only after its promoted
+  revision reverted.
   Unresolved selections recorded by the run are removed. A filled
   `Loot.gameVersion` stays: it was unknown, and the world determines it. A
   rolled-back run cannot be applied again; plan under a new run id.
