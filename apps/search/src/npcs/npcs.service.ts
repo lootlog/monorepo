@@ -3,7 +3,7 @@ import { NpcTypeEnum, NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import type { GameVersion } from "@lootlog/schema/game-version";
 import { Effect, Schema } from "effect";
-import { partition, pick, uniqBy } from "es-toolkit";
+import { partition, pick } from "es-toolkit";
 import type { Meilisearch } from "meilisearch";
 import { buildMeilisearchNameQuery } from "#src/meilisearch/query-builder";
 import {
@@ -71,9 +71,7 @@ const collapseByNameAndType = (hits: readonly NpcHit[]) => {
   }
 
   // Keep the relevance position of each suggestion's first hit.
-  return uniqBy(hits, suggestionKey).flatMap(
-    (hit) => preferred.get(suggestionKey(hit)) ?? [],
-  );
+  return [...preferred.values()];
 };
 
 /**
