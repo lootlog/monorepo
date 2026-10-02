@@ -1,3 +1,4 @@
+import { uniqueWorlds } from "#src/shared/unique-worlds";
 import { indexChangedDocuments } from "#src/meilisearch/index-changed-documents";
 import { Effect } from "effect";
 import type { Meilisearch, SearchParams } from "meilisearch";
@@ -51,11 +52,6 @@ const mapSearchResponse = (data: {
   facetDistribution: data.facetDistribution ?? {},
   facetStats: data.facetStats ?? {},
 });
-
-const uniqueWorlds = (worlds: ReadonlyArray<string>) =>
-  [...new Set(worlds.filter(Boolean))].sort((first, second) =>
-    first.localeCompare(second),
-  );
 
 const itemWorlds = (item: IndexItem) =>
   uniqueWorlds([...(item.worlds ?? []), ...(item.world ? [item.world] : [])]);

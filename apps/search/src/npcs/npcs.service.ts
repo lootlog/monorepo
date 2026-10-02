@@ -1,3 +1,4 @@
+import { uniqueWorlds } from "#src/shared/unique-worlds";
 import { indexChangedDocuments } from "#src/meilisearch/index-changed-documents";
 import { NpcTypeEnum, NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
@@ -16,11 +17,6 @@ import type { NpcSearchQuery } from "./npc-search-query.js";
 import { NPCS_INDEX } from "./search-index.js";
 import type { IndexNpcsCommand } from "./index-npcs-command.js";
 import type { NpcHit } from "./npc-hit.js";
-
-const uniqueWorlds = (worlds: ReadonlyArray<string>) =>
-  [...new Set(worlds.filter(Boolean))].sort((first, second) =>
-    first.localeCompare(second),
-  );
 
 type IndexNpc = IndexNpcsCommand["npcs"][number];
 
