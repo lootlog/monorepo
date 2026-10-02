@@ -10,6 +10,7 @@ import {
   ne,
   notInArray,
   sql,
+  type SQLWrapper,
 } from "drizzle-orm";
 import { Effect } from "effect";
 import type { DrizzleDatabase } from "#src/database/database";
@@ -30,6 +31,35 @@ import { battleSummaryCalculator } from "./battle-summary-calculator.service.js"
 
 import { selectedWarriorOrder } from "#src/battles/battle-warrior-query";
 import { battleWarriorNumberStat } from "#src/battles/statistics/battle-warrior-stats-query";
+
+type WarriorSnapshotFields = keyof HeadToHeadRecord["lastBattleUserWarrior"];
+
+const warriorSnapshotSelection = <
+  T extends Record<WarriorSnapshotFields, SQLWrapper>,
+>(
+  warrior: T,
+): Pick<T, WarriorSnapshotFields> => ({
+  name: warrior.name,
+  icon: warrior.icon,
+  prof: warrior.prof,
+  lvl: warrior.lvl,
+  fireDamage: warrior.fireDamage,
+  frostDamage: warrior.frostDamage,
+  lightningDamage: warrior.lightningDamage,
+  poisonDamageTaken: warrior.poisonDamageTaken,
+  woundDamageTaken: warrior.woundDamageTaken,
+  critWoundDamageTaken: warrior.critWoundDamageTaken,
+});
+
+const warriorSnapshotJson = (
+  warrior: Record<WarriorSnapshotFields, SQLWrapper>,
+) =>
+  sql<HeadToHeadRecord["lastBattleUserWarrior"]>`jsonb_build_object(${sql.join(
+    Object.entries(warriorSnapshotSelection(warrior)).flatMap(
+      ([field, value]) => [sql.raw(`'${field}'`), sql`${value}`],
+    ),
+    sql`, `,
+  )})`;
 
 const snapshotColumns = {
   id: battleWarriors.id,
@@ -397,16 +427,10 @@ export const makeBattleAnalyticsRead = (
         totalRatingDelta: latest.totalRatingDelta,
         battlesWithRating: latest.battlesWithRating,
         position: latest.position,
-        lastBattleUserWarrior: sql<
-          HeadToHeadRecord["lastBattleUserWarrior"]
-        >`jsonb_build_object('name', ${latestUser.name}, 'icon', ${latestUser.icon}, 'prof', ${latestUser.prof}, 'lvl', ${latestUser.lvl}, 'fireDamage', ${latestUser.fireDamage}, 'frostDamage', ${latestUser.frostDamage}, 'lightningDamage', ${latestUser.lightningDamage}, 'poisonDamageTaken', ${latestUser.poisonDamageTaken}, 'woundDamageTaken', ${latestUser.woundDamageTaken}, 'critWoundDamageTaken', ${latestUser.critWoundDamageTaken})`.as(
-          "user_snapshot",
-        ),
-        lastBattleOpponentWarrior: sql<
-          HeadToHeadRecord["lastBattleOpponentWarrior"]
-        >`jsonb_build_object('name', ${latestOpponent.name}, 'icon', ${latestOpponent.icon}, 'prof', ${latestOpponent.prof}, 'lvl', ${latestOpponent.lvl}, 'fireDamage', ${latestOpponent.fireDamage}, 'frostDamage', ${latestOpponent.frostDamage}, 'lightningDamage', ${latestOpponent.lightningDamage}, 'poisonDamageTaken', ${latestOpponent.poisonDamageTaken}, 'woundDamageTaken', ${latestOpponent.woundDamageTaken}, 'critWoundDamageTaken', ${latestOpponent.critWoundDamageTaken})`.as(
-          "opponent_snapshot",
-        ),
+        lastBattleUserWarrior:
+          warriorSnapshotJson(latestUser).as("user_snapshot"),
+        lastBattleOpponentWarrior:
+          warriorSnapshotJson(latestOpponent).as("opponent_snapshot"),
       })
       .from(latest)
       .innerJoinLateral(latestUser, sql`true`)
@@ -628,30 +652,8 @@ export const makeBattleAnalyticsRead = (
         ratingDelta: battles.ratingDelta,
         userRating: battles.rating,
         opponentRating: battles.opponentRating,
-        userWarrior: {
-          name: user.name,
-          icon: user.icon,
-          prof: user.prof,
-          lvl: user.lvl,
-          fireDamage: user.fireDamage,
-          frostDamage: user.frostDamage,
-          lightningDamage: user.lightningDamage,
-          poisonDamageTaken: user.poisonDamageTaken,
-          woundDamageTaken: user.woundDamageTaken,
-          critWoundDamageTaken: user.critWoundDamageTaken,
-        },
-        opponentWarrior: {
-          name: selectedOpponent.name,
-          icon: selectedOpponent.icon,
-          prof: selectedOpponent.prof,
-          lvl: selectedOpponent.lvl,
-          fireDamage: selectedOpponent.fireDamage,
-          frostDamage: selectedOpponent.frostDamage,
-          lightningDamage: selectedOpponent.lightningDamage,
-          poisonDamageTaken: selectedOpponent.poisonDamageTaken,
-          woundDamageTaken: selectedOpponent.woundDamageTaken,
-          critWoundDamageTaken: selectedOpponent.critWoundDamageTaken,
-        },
+        userWarrior: warriorSnapshotSelection(user),
+        opponentWarrior: warriorSnapshotSelection(selectedOpponent),
       })
       .from(battles)
       .innerJoinLateral(user, sql`true`)
