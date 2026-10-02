@@ -57,12 +57,19 @@ wysłane, a jego wpis może zniknąć z historii powiadomień użytkownika.
 
 ### Rezerwacje i członkowie
 
-| Uprawnienie                   | Zakres                        |
-| ----------------------------- | ----------------------------- |
-| `LOOTLOG_RESERVATIONS_READ`   | Odczyt rezerwacji             |
-| `LOOTLOG_RESERVATIONS_WRITE`  | Tworzenie i zmiana rezerwacji |
-| `LOOTLOG_MEMBERS_READ`        | Odczyt listy członków         |
-| `LOOTLOG_ONLINE_PLAYERS_READ` | Odczyt listy graczy online    |
+| Uprawnienie                      | Zakres                             |
+| -------------------------------- | ---------------------------------- |
+| `LOOTLOG_RESERVATIONS_READ`      | Odczyt rezerwacji                  |
+| `LOOTLOG_RESERVATIONS_WRITE`     | Tworzenie i zmiana rezerwacji      |
+| `LOOTLOG_MEMBERS_READ`           | Odczyt listy członków              |
+| `LOOTLOG_ONLINE_PLAYERS_READ`    | Odczyt listy graczy online         |
+| `LOOTLOG_PRESENCE_LOCATION_READ` | Odczyt map i pozycji graczy online |
+
+W edycji roli, w sekcji **Członkowie**, możesz włączyć lub wyłączyć
+**Przeglądanie lokacji graczy online**. Dostęp do lokacji wymaga także
+uprawnienia **Przeglądanie graczy online**. Sam dostęp do listy online nie
+ujawnia map ani pozycji innych graczy — przy ich lokacji pojawia się
+„Nieznana lokacja”.
 
 ### Czat
 
