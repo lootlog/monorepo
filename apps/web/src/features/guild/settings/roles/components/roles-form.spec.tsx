@@ -27,14 +27,19 @@ const role = {
   name: "Loot readers",
   color: 0,
   position: 1,
-  permissions: [Permission.LOOTLOG_ACCESS, Permission.LOOTLOG_LOOTS_READ],
+  permissions: [
+    Permission.LOOTLOG_ACCESS,
+    Permission.LOOTLOG_LOOTS_READ,
+    Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+    Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+  ],
   lvlRangeFrom: 0,
   lvlRangeTo: 500,
 } satisfies RoleResponseDtoOutput;
 
-const renderForm = async () => {
+const renderForm = async (initialRole: RoleResponseDtoOutput = role) => {
   const save = vi.fn((_input: RequestInfo | URL, _init?: RequestInit) =>
-    Promise.resolve(Response.json(role)),
+    Promise.resolve(Response.json(initialRole)),
   );
 
   onTestFinished(
@@ -48,7 +53,7 @@ const renderForm = async () => {
   });
 
   onTestFinished(() => queryClient.clear());
-  const router = createOrganizationTestRouter(<RolesForm role={role} />);
+  const router = createOrganizationTestRouter(<RolesForm role={initialRole} />);
   await router.load();
 
   render(
@@ -117,3 +122,31 @@ it("lets a user correct an inverted range and saves integer limits with the exis
   });
   expect(screen.queryByRole("alert")).toBeNull();
 });
+
+it.each([true, false])(
+  "lets a user change location access from %s while keeping online player access",
+  async (initialLocationAccess) => {
+    const basicPermissions = role.permissions.filter(
+      (permission) => permission !== Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+    );
+
+    const { save } = await renderForm({
+      ...role,
+      permissions: initialLocationAccess ? role.permissions : basicPermissions,
+    });
+
+    const locationAccess = await screen.findByRole("checkbox", {
+      name: "permissions.LOOTLOG_PRESENCE_LOCATION_READ",
+    });
+
+    fireEvent.click(locationAccess);
+    await submitForm();
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+    const request = new Request("https://api.test", save.mock.calls[0]?.[1]);
+    expect(await request.json()).toEqual({
+      lvlRangeFrom: 0,
+      lvlRangeTo: 500,
+      permissions: initialLocationAccess ? basicPermissions : role.permissions,
+    });
+  },
+);

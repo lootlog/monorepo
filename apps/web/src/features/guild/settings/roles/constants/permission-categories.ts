@@ -96,6 +96,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     permissions: [
       Permission.LOOTLOG_MEMBERS_READ,
       Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+      Permission.LOOTLOG_PRESENCE_LOCATION_READ,
     ],
   },
   {
