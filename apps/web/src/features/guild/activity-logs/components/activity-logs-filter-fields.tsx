@@ -115,7 +115,7 @@ export const ActivityLogsFilterFields = ({
           }
           placeholder={t("activityLogs.filters.typeShort")}
           icon={Activity}
-          width={stacked ? "w-full" : "w-[160px]"}
+          width={stacked ? "w-full" : "w-[140px]"}
           multiSelect
           showSearch={false}
           renderTriggerLabel={renderSelectedCount(
@@ -137,7 +137,7 @@ export const ActivityLogsFilterFields = ({
           }
           placeholder={t("activityLogs.filters.source")}
           icon={MonitorSmartphone}
-          width={stacked ? "w-full" : "w-[160px]"}
+          width={stacked ? "w-full" : "w-[140px]"}
           multiSelect
           showSearch={false}
           renderTriggerLabel={renderSelectedCount(
