@@ -32,7 +32,11 @@ import {
   BattleDeletedResponseDto_Output,
   UpdateBattleDto,
 } from "./mutations.schemas.js";
-import { DateTimeString, FiniteNumber } from "@lootlog/schema/http-scalars";
+import {
+  DateTimeString,
+  FiniteNumber,
+  PositiveSafeInteger,
+} from "@lootlog/schema/http-scalars";
 
 // schemas
 const BattleAnalyticsQueryFields = {
@@ -41,48 +45,12 @@ const BattleAnalyticsQueryFields = {
   period: Schema.optionalKey(
     Schema.Literals(["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"]),
   ),
-  minLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  maxLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
+  minLevel: Schema.optionalKey(PositiveSafeInteger),
+  maxLevel: Schema.optionalKey(PositiveSafeInteger),
   startDate: Schema.optionalKey(DateTimeString),
   endDate: Schema.optionalKey(DateTimeString),
   cursor: Schema.optionalKey(Schema.String),
-  size: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
+  size: Schema.optionalKey(PositiveSafeInteger),
   sortBy: Schema.optionalKey(
     Schema.Literals([
       "wins",
@@ -99,19 +67,7 @@ const BattleAnalyticsQueryFields = {
   ),
   includeTotal: Schema.optionalKey(Schema.Boolean),
   search: Schema.optionalKey(Schema.String),
-  minBattles: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
+  minBattles: Schema.optionalKey(PositiveSafeInteger),
   ph: Schema.optionalKey(Schema.Boolean),
   matchmaking: Schema.optionalKey(Schema.Boolean),
 };
@@ -207,32 +163,8 @@ export const BattlesControllerGetBattleAnalyticsQuery = Schema.Struct({
   period: Schema.optionalKey(
     Schema.Literals(["24h", "3d", "7d", "14d", "30d", "90d", "180d"]),
   ),
-  minLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
-  maxLevel: Schema.optionalKey(
-    Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-          expected: "a value less than or equal to 9007199254740991",
-        }),
-      ),
-  ),
+  minLevel: Schema.optionalKey(PositiveSafeInteger),
+  maxLevel: Schema.optionalKey(PositiveSafeInteger),
   startDate: Schema.optionalKey(DateTimeString),
   endDate: Schema.optionalKey(DateTimeString),
   ph: Schema.optionalKey(Schema.Boolean),
