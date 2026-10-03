@@ -24,6 +24,10 @@ import {
   makeNotificationJobRebuild,
   type NotificationJobRebuild,
 } from "#src/notifications/jobs/notification-job-rebuild";
+import {
+  makeNotificationJobRecovery,
+  type NotificationJobRecovery,
+} from "#src/notifications/jobs/notification-job-recovery";
 import { makeNotificationJobRecurrence } from "#src/notifications/jobs/notification-job-recurrence";
 import { makeNotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
 import { makeNotificationJobStore } from "#src/notifications/jobs/notification-job-store";
@@ -57,6 +61,7 @@ interface NotificationsServicesValue {
   readonly dispatch: ReturnType<typeof makeNotificationJobDispatch>;
   readonly delivery: ReturnType<typeof makeNotificationDeliveryResult>;
   readonly rebuild: NotificationJobRebuild;
+  readonly recovery: NotificationJobRecovery;
 }
 
 export class NotificationsServices extends Context.Service<
@@ -184,6 +189,15 @@ export const notificationsServicesLive = Layer.effect(
       (value) => content.parseAllowedMentions(value),
     );
 
+    const recovery = makeNotificationJobRecovery(
+      {
+        findOverdue: jobsStore.findOverdue,
+        closeMissed: jobsStore.closeMissed,
+      },
+      notificationScheduler.enqueue,
+      finalize,
+    );
+
     const delivery = makeNotificationDeliveryResult(
       {
         find: jobsStore.findJob,
@@ -211,6 +225,7 @@ export const notificationsServicesLive = Layer.effect(
       dispatch,
       delivery,
       rebuild,
+      recovery,
       layer: notificationDataLayer({
         guildTargets: targets,
         jobOperations: makeNotificationJobOperations(database, {
