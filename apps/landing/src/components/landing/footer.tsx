@@ -3,6 +3,8 @@ import { ArrowUpRight, Heart, MessageCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { links } from "@/src/config/links";
 
+const copyrightYear = new Date().getFullYear();
+
 export function LandingFooter() {
   const { t } = useTranslation();
 
@@ -61,7 +63,7 @@ export function LandingFooter() {
         </nav>
         <div className="flex flex-col gap-3 pt-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-[var(--broadcast-text-subtle)]">
-            {t("landing.footer.copyright", { year: new Date().getFullYear() })}
+            {t("landing.footer.copyright", { year: copyrightYear })}
           </p>
           <div className="flex gap-6">
             <Link className="landing-footer-link" to="/privacy-policy">

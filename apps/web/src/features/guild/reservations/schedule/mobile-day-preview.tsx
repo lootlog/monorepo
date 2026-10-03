@@ -1,4 +1,5 @@
 import { HOURS, LABEL_COLUMN_WIDTH, MIN_ROW_HEIGHT } from "./constants";
+import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { ReservationBlock } from "./reservation-block";
 import { isReservationStartSelectable } from "./reservation-settings";
 import type { ReservationSegment } from "./types";
@@ -15,7 +16,8 @@ export function MobileDayPreview({
   segments,
 }: MobileDayPreviewProps) {
   const daySegments = segments.filter((segment) => segment.dayIdx === dayIndex);
-  const isToday = date.toDateString() === new Date().toDateString();
+  const now = new Date(useMinuteTimestamp());
+  const isToday = date.toDateString() === now.toDateString();
 
   return (
     <div
@@ -60,8 +62,7 @@ export function MobileDayPreview({
             left: LABEL_COLUMN_WIDTH,
             right: 0,
             top:
-              ((new Date().getHours() * 60 + new Date().getMinutes()) / 60) *
-              MIN_ROW_HEIGHT,
+              ((now.getHours() * 60 + now.getMinutes()) / 60) * MIN_ROW_HEIGHT,
           }}
         />
       )}

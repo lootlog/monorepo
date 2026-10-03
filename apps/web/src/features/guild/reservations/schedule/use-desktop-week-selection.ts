@@ -1,6 +1,7 @@
 import type { ReservationSettings } from "@lootlog/domain/reservations";
 import { differenceInCalendarDays } from "date-fns";
 import { useRef, useState } from "react";
+import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import {
   DAYS,
   HEADER_HEIGHT,
@@ -29,6 +30,7 @@ export function useDesktopWeekSelection({
   onRangeSelect,
 }: DesktopWeekScheduleProps) {
   const minuteStep = settings.reservationTimeGranularityMinutes;
+  const currentTimestamp = useMinuteTimestamp();
   const gridRef = useRef<HTMLDivElement>(null);
   const nowRef = useRef<HTMLDivElement>(null);
   const contextMenuOpenRef = useRef(false);
@@ -149,7 +151,7 @@ export function useDesktopWeekSelection({
     onRangeSelect(range);
   };
 
-  const now = new Date();
+  const now = new Date(currentTimestamp);
 
   const nowDay = Math.floor(
     (new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() -
