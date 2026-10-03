@@ -7,11 +7,9 @@ import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from "@lootlog/ui/components/dialog";
+import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { useDocsControllerCreateDocument } from "@lootlog/client/main";
@@ -76,17 +74,13 @@ export const GuildDocCreateDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FilePlus2 className="size-4" />
-            {t("docs.list.createTitle")}
-          </DialogTitle>
-          <DialogDescription>
-            {t("docs.list.createDescription")}
-          </DialogDescription>
-        </DialogHeader>
+        <IconDialogHeader
+          icon={FilePlus2}
+          title={t("docs.list.createTitle")}
+          description={t("docs.list.createDescription")}
+        />
 
-        <form className="space-y-4 px-4 pb-4 pt-1" onSubmit={handleSubmit}>
+        <form className="space-y-4 p-5" onSubmit={handleSubmit}>
           <div className="space-y-2">
             <Label htmlFor="guild-doc-title">{t("docs.list.titleLabel")}</Label>
             <Input

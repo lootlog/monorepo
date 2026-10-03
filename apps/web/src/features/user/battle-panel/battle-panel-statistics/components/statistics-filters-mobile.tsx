@@ -1,10 +1,10 @@
 import { CharacterSelector } from "@/components/filters/character-selector";
 import { PeriodSelector } from "@/components/filters/period-selector";
-import { Filter, TrendingUp, Award } from "lucide-react";
+import { Filter, Award } from "lucide-react";
 import { Label } from "@lootlog/ui/components/label";
 import { Button } from "@lootlog/ui/components/button";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
-import { Input } from "@lootlog/ui/components/input";
+import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import type { StatisticsFiltersProps } from "./statistics-filters";
 import { useTranslation } from "react-i18next";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
@@ -61,37 +61,12 @@ export const StatisticsFiltersMobile = ({
 
       <div className="space-y-2">
         <Label>{t("battlePanel.filters.levelRange")}</Label>
-        <div className="flex items-center gap-2">
-          <div className="flex-1">
-            <Input
-              type="number"
-              placeholder={t("battlePanel.filters.minPlaceholder")}
-              value={minLevel ?? ""}
-              onChange={(e) => {
-                const value = e.target.value;
-                onMinLevelChange(value ? Number(value) : undefined);
-              }}
-              min={1}
-              max={500}
-              className="w-full"
-            />
-          </div>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          <div className="flex-1">
-            <Input
-              type="number"
-              placeholder={t("battlePanel.filters.maxPlaceholder")}
-              value={maxLevel ?? ""}
-              onChange={(e) => {
-                const value = e.target.value;
-                onMaxLevelChange(value ? Number(value) : undefined);
-              }}
-              min={1}
-              max={500}
-              className="w-full"
-            />
-          </div>
-        </div>
+        <LevelRangeFilter
+          minLevel={minLevel}
+          maxLevel={maxLevel}
+          onMinLevelChange={onMinLevelChange}
+          onMaxLevelChange={onMaxLevelChange}
+        />
       </div>
 
       <div className="flex items-center justify-between rounded-xl border p-3">

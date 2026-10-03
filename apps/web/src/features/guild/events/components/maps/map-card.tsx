@@ -204,9 +204,9 @@ export const MapCard = ({
                   let avatarBorderClassName = "border-background";
 
                   if (isWindowActive(windowStatus) && isOnMap && !isAfk) {
-                    avatarBorderClassName = "border-green-500";
+                    avatarBorderClassName = "border-signal-ready";
                   } else if (isWindowActive(windowStatus) && isAfk) {
-                    avatarBorderClassName = "border-orange-500";
+                    avatarBorderClassName = "border-signal-timer";
                   }
 
                   return (
@@ -247,7 +247,7 @@ export const MapCard = ({
               </span>
             </>
           ) : (
-            <span className="truncate text-xs font-semibold text-destructive">
+            <span className="truncate text-xs font-semibold text-signal-alert">
               {t("events.maps.gap.unassigned")}
             </span>
           )}
@@ -342,7 +342,7 @@ export const MapCard = ({
               />
               {player.isAfk && (
                 <div className="absolute -right-1 -top-1 z-10">
-                  <AlertTriangle className="size-3 text-orange-500" />
+                  <AlertTriangle className="size-3 text-signal-timer" />
                 </div>
               )}
             </div>

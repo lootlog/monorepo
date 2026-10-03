@@ -1,32 +1,36 @@
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { Skull } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { TRACKABLE_NPC_TYPES } from "../constants";
 
-type StatsNpcTypeSelectProps = {
+const ALL_NPC_TYPES = "ALL";
+
+type KillStatsNpcTypeSelectProps = {
+  /** The NPC types this page tracks; guild and personal kill stats differ. */
+  types: readonly string[];
   value: string | null | undefined;
   onValueChange: (value: string | null) => void;
   width?: string;
 };
 
-export const StatsNpcTypeSelect = ({
+export const KillStatsNpcTypeSelect = ({
+  types,
   value,
   onValueChange,
   width = "w-[200px]",
-}: StatsNpcTypeSelectProps) => {
+}: KillStatsNpcTypeSelectProps) => {
   const { t } = useTranslation();
 
   return (
     <FilterPopover
       icon={Skull}
       options={[
-        { value: "ALL", label: t("kills.filters.allTypes") },
-        ...TRACKABLE_NPC_TYPES.map((type) => ({
+        { value: ALL_NPC_TYPES, label: t("kills.filters.allTypes") },
+        ...types.map((type) => ({
           value: type,
           label: t(`npcType.${type}`),
         })),
       ]}
-      value={value ?? "ALL"}
+      value={value ?? ALL_NPC_TYPES}
       onValueChange={onValueChange}
       placeholder={t("kills.filters.npcType")}
       emptyMessage={t("common.noResults")}

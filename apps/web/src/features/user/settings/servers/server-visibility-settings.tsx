@@ -123,9 +123,20 @@ export const ServerVisibilitySettings = () => {
               role="status"
               aria-label={t("settings.servers.loading")}
             >
-              <div className="flex min-h-12 items-center border-b border-border/70 px-3 py-2">
-                <Skeleton className="h-5 w-48" />
-              </div>
+              <SectionCardHeader
+                icon={Server}
+                title={t("settings.servers.title")}
+                description={
+                  <span className="flex h-lh items-center">
+                    <Skeleton render={<span />} className="block h-3 w-40" />
+                  </span>
+                }
+                actions={<Skeleton className="h-9 w-36 rounded-md" />}
+              />
+              <TableFilterToolbar>
+                <Skeleton className="h-10 w-full min-w-0 rounded-xl sm:min-w-[200px] sm:flex-1" />
+                <Skeleton className="h-10 w-full shrink-0 rounded-md sm:w-56" />
+              </TableFilterToolbar>
               <div className="divide-y divide-border">
                 {Array.from({ length: 4 }, (_, index) => (
                   <div

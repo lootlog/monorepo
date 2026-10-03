@@ -1,9 +1,8 @@
+import { formatLevel } from "@lootlog/domain/profession";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@lootlog/ui/components/button";
-import { ArrowUpDown } from "lucide-react";
-import { PodiumRankIcon } from "@/components/ui/podium-rank-icon";
+import { SortableColumnHeader } from "@/components/ui/sortable-column-header";
+import { RankBadge } from "@/components/common/rank-badge";
 import { NpcTile } from "@/components/tiles/npc-tile";
-import { getNpcTypeName } from "@/constants/npc";
 import i18n from "@/i18n/config";
 import type { UserNpcKillsResponseDtoOutputNpcsItem } from "@lootlog/client/main";
 import type { sortingTableFeatures } from "@/lib/tanstack-table-features";
@@ -21,14 +20,7 @@ export const createKillsColumns = (
 
       return (
         <div className="flex items-center justify-center w-8">
-          <PodiumRankIcon
-            rank={rank}
-            fallback={
-              <span className="text-sm font-medium text-muted-foreground">
-                {rank}
-              </span>
-            }
-          />
+          <RankBadge rank={rank} />
         </div>
       );
     },
@@ -61,22 +53,13 @@ export const createKillsColumns = (
   {
     accessorKey: "npcLvl",
     header: ({ column }) => (
-      <div className="text-center">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8"
-        >
-          {i18n.t("kills.columns.level")}
-          <ArrowUpDown className="ml-2 h-3 w-3" />
-        </Button>
-      </div>
+      <SortableColumnHeader column={column}>
+        {i18n.t("kills.columns.level")}
+      </SortableColumnHeader>
     ),
     cell: ({ row }) => (
       <div className="text-center">
-        {row.original.npcLvl}
-        {row.original.npcProf}
+        {formatLevel(row.original.npcLvl, row.original.npcProf)}
       </div>
     ),
   },
@@ -88,7 +71,7 @@ export const createKillsColumns = (
     cell: ({ row }) => (
       <div className="text-center text-muted-foreground text-sm">
         {i18n.t(`npcType.${row.original.npcType}`, {
-          defaultValue: getNpcTypeName(row.original.npcType),
+          defaultValue: row.original.npcType,
         })}
       </div>
     ),
@@ -97,17 +80,9 @@ export const createKillsColumns = (
   {
     accessorKey: "totalKills",
     header: ({ column }) => (
-      <div className="text-center">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8"
-        >
-          {i18n.t("kills.columns.kills")}
-          <ArrowUpDown className="ml-2 h-3 w-3" />
-        </Button>
-      </div>
+      <SortableColumnHeader column={column}>
+        {i18n.t("kills.columns.kills")}
+      </SortableColumnHeader>
     ),
     cell: ({ row }) => (
       <div className="text-center font-semibold tabular-nums">

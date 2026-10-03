@@ -71,7 +71,7 @@ export const RoleSettingsDetailPage = () => {
             <TooltipProvider delay={100}>
               {activeCategories.map(({ category, activePermissions }) => (
                 <PermissionCategoryTooltip
-                  key={category.name}
+                  key={category.groupKey}
                   category={category}
                   activePermissions={activePermissions}
                   side="bottom"

@@ -3,6 +3,7 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { BattleBreakdownTable } from "./battle-breakdown-table";
 import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
+import { BreakdownEmptyMessage } from "./breakdown-empty-message";
 
 interface LegendaryBonusesBreakdownProps {
   warrior: Warrior;
@@ -93,9 +94,9 @@ export const LegendaryBonusesBreakdown: FC<LegendaryBonusesBreakdownProps> = ({
     passiveBonuses.length === 0
   ) {
     return (
-      <div className="p-4 text-sm bg-background text-muted-foreground">
+      <BreakdownEmptyMessage>
         {t("battleUi.breakdowns.legendary.empty")}
-      </div>
+      </BreakdownEmptyMessage>
     );
   }
 

@@ -1,6 +1,6 @@
 import { Link, type LinkProps } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { StatsRank } from "./stats-rank";
+import { RankBadge } from "@/components/common/rank-badge";
 
 type StatsLeaderboardRowProps = {
   rank: number;
@@ -34,7 +34,7 @@ export const StatsLeaderboardRow = ({
         aria-hidden="true"
       />
       <span className="relative flex min-w-0 flex-1 items-center gap-3">
-        <StatsRank rank={rank} />
+        <RankBadge rank={rank} />
         {media}
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="truncate text-sm font-medium leading-tight">

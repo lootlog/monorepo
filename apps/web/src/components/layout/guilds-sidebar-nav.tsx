@@ -29,14 +29,14 @@ import {
 const organizationNavigationIcons: Partial<
   Record<AppNavigationItemId, ReactNode>
 > = {
-  "organization-loots": <ClipboardList className="mr-1 h-4 w-4" />,
-  "organization-timers": <Clock className="mr-1 h-4 w-4" />,
-  "organization-reservations": <CalendarClock className="mr-1 h-4 w-4" />,
-  "organization-docs": <FileText className="mr-1 h-4 w-4" />,
-  "organization-stats": <BarChart4 className="mr-1 h-4 w-4" />,
-  "organization-activity": <Logs className="mr-1 h-4 w-4" />,
-  "organization-notifications": <BellRing className="mr-1 h-4 w-4" />,
-  "organization-settings": <Settings className="mr-1 h-4 w-4" />,
+  "organization-loots": <ClipboardList className="mr-1 size-4" />,
+  "organization-timers": <Clock className="mr-1 size-4" />,
+  "organization-reservations": <CalendarClock className="mr-1 size-4" />,
+  "organization-docs": <FileText className="mr-1 size-4" />,
+  "organization-stats": <BarChart4 className="mr-1 size-4" />,
+  "organization-activity": <Logs className="mr-1 size-4" />,
+  "organization-notifications": <BellRing className="mr-1 size-4" />,
+  "organization-settings": <Settings className="mr-1 size-4" />,
 };
 
 function getEventsIcon(hasActiveEvents: boolean) {
@@ -46,9 +46,9 @@ function getEventsIcon(hasActiveEvents: boolean) {
         className={cn("size-4", hasActiveEvents && "text-signal-timer")}
       />
       {hasActiveEvents && (
-        <span className="absolute -top-1 -right-1 flex h-2 w-2">
+        <span className="absolute -top-1 -right-1 flex size-2">
           <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-signal-timer opacity-75" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-signal-timer" />
+          <span className="relative inline-flex rounded-full size-2 bg-signal-timer" />
         </span>
       )}
     </div>

@@ -51,7 +51,7 @@ export function LiveFeedFilters({ settings, disabled, onChange }: Props) {
       : t(`npcType.${category}`);
 
   return (
-    <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border/70 px-3 py-2">
+    <div className="flex shrink-0 flex-col gap-2 border-b border-border/70 px-3 py-2 sm:flex-row sm:flex-wrap sm:items-center">
       <FilterPopover
         icon={Server}
         multiSelect
@@ -84,7 +84,8 @@ export function LiveFeedFilters({ settings, disabled, onChange }: Props) {
         placeholder={t("statistics.feedLootlogs")}
         searchPlaceholder={t("statistics.feedLootlogsSearch")}
         emptyMessage={t("common.noResults")}
-        width="w-[200px]"
+        width="w-full sm:w-[200px]"
+        contentClassName="w-[200px]"
         disabled={disabled || guilds.length === 0}
         renderTriggerLabel={(count) =>
           count === guilds.length
@@ -123,7 +124,8 @@ export function LiveFeedFilters({ settings, disabled, onChange }: Props) {
           })
         }
         placeholder={t("kills.filters.npcType")}
-        width="w-[180px]"
+        width="w-full sm:w-[180px]"
+        contentClassName="w-[180px]"
         disabled={disabled}
         renderTriggerLabel={(count) =>
           count === ACTIVITY_FEED_NPC_CATEGORIES.length

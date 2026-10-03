@@ -1,13 +1,10 @@
 import { REFRESH_PERMISSIONS_TTL } from "@/constants/refresh-permissions-ttl";
+import i18n from "@/i18n/config";
 
 export type PermissionRefreshInfo = {
   canTriggerRefresh: boolean;
   canTriggerRefreshText: string;
 };
-
-const UP_TO_DATE_TEXT = "Uprawnienia są aktualne";
-
-const REFRESH_AVAILABLE_TEXT = "Odśwież swoje uprawnienia";
 
 const MINUTE_IN_MS = 1000 * 60;
 
@@ -24,13 +21,19 @@ export const getPermissionRefreshInfo = (
   currentTimestamp = Date.now(),
 ): PermissionRefreshInfo => {
   if (!updatedAt) {
-    return createPermissionRefreshInfo(false, UP_TO_DATE_TEXT);
+    return createPermissionRefreshInfo(
+      false,
+      i18n.t("common.permissionRefresh.upToDate"),
+    );
   }
 
   const updatedAtTimestamp = new Date(updatedAt).getTime();
 
   if (updatedAtTimestamp < currentTimestamp - REFRESH_PERMISSIONS_TTL) {
-    return createPermissionRefreshInfo(true, REFRESH_AVAILABLE_TEXT);
+    return createPermissionRefreshInfo(
+      true,
+      i18n.t("common.permissionRefresh.available"),
+    );
   }
 
   const nextRefreshTimestamp = updatedAtTimestamp + REFRESH_PERMISSIONS_TTL;
@@ -42,9 +45,14 @@ export const getPermissionRefreshInfo = (
   if (minutesUntilRefresh > 0) {
     return createPermissionRefreshInfo(
       false,
-      `Spróbuj ponownie za ${minutesUntilRefresh} min`,
+      i18n.t("common.permissionRefresh.retryIn", {
+        minutes: minutesUntilRefresh,
+      }),
     );
   }
 
-  return createPermissionRefreshInfo(false, UP_TO_DATE_TEXT);
+  return createPermissionRefreshInfo(
+    false,
+    i18n.t("common.permissionRefresh.upToDate"),
+  );
 };

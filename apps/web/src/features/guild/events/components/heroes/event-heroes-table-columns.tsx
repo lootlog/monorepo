@@ -1,4 +1,4 @@
-import { formatNpcLevel } from "@lootlog/domain/profession";
+import { formatLevel } from "@lootlog/domain/profession";
 import { sumBy } from "es-toolkit";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import type { TFunction } from "i18next";
@@ -17,6 +17,7 @@ import type { EventHeroNpc, EventTimer } from "../../types/api";
 import { HeroTimerDisplay } from "./hero-timer-display";
 import { HeroWindowStatusBadge } from "./hero-window-status-badge";
 import type { coreTableFeatures } from "@/lib/tanstack-table-features";
+import { EMPTY_VALUE } from "@/constants/empty-value";
 
 type EventHeroStats = {
   npcId: number | null;
@@ -66,7 +67,7 @@ export const createEventHeroesTableColumns = ({
         const killCount = stats?.killCount ?? 0;
 
         const npcLevel = hero.npcLvl
-          ? formatNpcLevel(hero.npcLvl, stats?.npcProf)
+          ? formatLevel(hero.npcLvl, stats?.npcProf)
           : null;
 
         return (
@@ -98,7 +99,7 @@ export const createEventHeroesTableColumns = ({
               <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] leading-none text-muted-foreground">
                 <span>
                   {t("events.heroes.columns.idValue", {
-                    id: hero.npcId ?? "-",
+                    id: hero.npcId ?? EMPTY_VALUE,
                   })}
                 </span>
                 <span className="lg:hidden" aria-hidden="true">

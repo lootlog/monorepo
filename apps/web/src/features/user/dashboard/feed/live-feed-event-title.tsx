@@ -1,3 +1,4 @@
+import { formatLevel } from "@lootlog/domain/profession";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -42,8 +43,7 @@ export function LiveFeedEventTitle({ group, npc }: Props) {
       {name}
       {npc?.lvl !== null && npc?.lvl !== undefined && (
         <span className="ml-1 font-medium text-muted-foreground">
-          ({npc.lvl}
-          {npc.prof?.charAt(0).toLowerCase() ?? ""})
+          ({formatLevel(npc.lvl, npc.prof)})
         </span>
       )}
     </TextLink>

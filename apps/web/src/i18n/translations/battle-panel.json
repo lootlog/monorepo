@@ -26,23 +26,23 @@
     "battleTypeShort": "Typ",
     "period": "Okres",
     "levelRange": "Zakres poziomów",
-    "honorPoints": "Punkty Honoru",
+    "honorPoints": "Punkty honoru",
     "matchmaking": "Otchłań",
     "allWorlds": "Wszystkie światy",
     "allResults": "Wszystkie wyniki",
     "allTypes": "Wszystkie typy",
-    "selectedCount": "{{count}} wybranych",
+    "selectedCount_one": "{{count}} wybrany",
+    "selectedCount_few": "{{count}} wybrane",
+    "selectedCount_many": "{{count}} wybranych",
     "worldSearchPlaceholder": "Szukaj świata...",
     "noWorlds": "Brak światów",
-    "minPlaceholder": "Min",
-    "maxPlaceholder": "Max",
     "chips": {
       "search": "Wojownicy: {{count}}",
       "world": "Świat: {{value}}",
       "result": "Wynik: {{count}}",
       "character": "Postać: {{count}}",
       "type": "Typ: {{count}}",
-      "honorPoints": "Punkty Honoru",
+      "honorPoints": "Punkty honoru",
       "matchmaking": "Otchłań",
       "levelRange": "Poziom: {{min}}-{{max}}",
       "period": "Okres: {{value}}"
@@ -64,7 +64,7 @@
     }
   },
   "actions": {
-    "copyLink": "Skopiuj link",
+    "copyLink": "Kopiuj link",
     "hide": "Ukryj",
     "share": "Udostępnij",
     "delete": "Usuń",
@@ -120,7 +120,9 @@
     }
   },
   "bulk": {
-    "selected": "{{count}} zaznaczonych",
+    "selected_one": "{{count}} zaznaczona",
+    "selected_few": "{{count}} zaznaczone",
+    "selected_many": "{{count}} zaznaczonych",
     "share": "Udostępnij",
     "delete": "Usuń",
     "clearSelection": "Wyczyść zaznaczenie",
@@ -141,7 +143,7 @@
     "seasonRange": "{{from}} - {{to}}",
     "seasonsTitle": "Sezony Otchłani",
     "seasonsSubtitle": "Sezony wykrywamy po przerwach między walkami",
-    "currentSeason": "Wybrana",
+    "currentSeason": "Wybrany",
     "openH2h": "Bilans z przeciwnikami",
     "emptyTitle": "Brak walk w Otchłani",
     "emptyDescription": "Ta postać nie ma zapisanych walk w Otchłani. Wybierz inną postać.",
@@ -169,7 +171,9 @@
       "action": "Akcja"
     },
     "stats": {
-      "totalBattles": "{{count}} walk"
+      "totalBattles_one": "{{count}} walka",
+      "totalBattles_few": "{{count}} walki",
+      "totalBattles_many": "{{count}} walk"
     },
     "details": {
       "winRate": "wygranych walk",
@@ -381,7 +385,9 @@
       "title": "Skuteczność przeciwko profesjom",
       "description": "Odsetek wygranych walk 1v1 z każdą profesją",
       "empty": "Brak danych o walkach",
-      "tooltipBattles": "{{profession}} ({{count}} walk)"
+      "tooltipBattles_one": "{{profession}} ({{count}} walka)",
+      "tooltipBattles_few": "{{profession}} ({{count}} walki)",
+      "tooltipBattles_many": "{{profession}} ({{count}} walk)"
     },
     "directMatchups": {
       "title": "Bilans z przeciwnikami",
@@ -421,7 +427,7 @@
       "total": "Łącznie",
       "result": "Wynik",
       "ratingDelta": "Rating Δ",
-      "yourRating": "Twój Rating",
+      "yourRating": "Twój rating",
       "opponentRating": "Rating przeciwnika",
       "duration": "Czas trwania",
       "date": "Data",

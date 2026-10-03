@@ -1,4 +1,4 @@
-import { formatNpcLevel } from "@lootlog/domain/profession";
+import { formatLevel } from "@lootlog/domain/profession";
 import { EmptyState } from "@/components/common/empty-state";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
@@ -10,12 +10,13 @@ import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { UserX } from "lucide-react";
-import { KillStatsFilterBar } from "./components/kill-stats-filter-bar";
+import { KillStatsFilterBar } from "@/features/kills/components/kill-stats-filter-bar";
+import { TRACKABLE_NPC_TYPES } from "./constants";
 import { StatsCountCell } from "./components/stats-count-cell";
 import { StatsDetailHeader } from "./components/stats-detail-header";
 import { StatsMemberAvatar } from "./components/stats-member-avatar";
 import { StatsNpcCell } from "./components/stats-npc-cell";
-import { StatsRank } from "./components/stats-rank";
+import { RankBadge } from "@/components/common/rank-badge";
 import {
   STATS_TABLE_COUNT_COLUMN_ID,
   STATS_TABLE_POSITION_COLUMN_ID,
@@ -89,7 +90,7 @@ export const MemberStatsPage = () => {
       {
         id: STATS_TABLE_POSITION_COLUMN_ID,
         header: () => t("kills.memberRanking.position"),
-        cell: ({ row }) => <StatsRank rank={cursor + row.index + 1} />,
+        cell: ({ row }) => <RankBadge rank={cursor + row.index + 1} />,
       },
       {
         id: "npc",
@@ -112,7 +113,7 @@ export const MemberStatsPage = () => {
                 {npc.npcName}
               </TextLink>
             }
-            subtitle={`${t(`npcType.${npc.npcType}`)} · ${t("kills.level", { level: formatNpcLevel(npc.npcLvl, npc.npcProf) })}`}
+            subtitle={`${t(`npcType.${npc.npcType}`)} · ${t("kills.level", { level: formatLevel(npc.npcLvl, npc.npcProf) })}`}
           />
         ),
       },
@@ -198,6 +199,7 @@ export const MemberStatsPage = () => {
           onMaxLvlChange: handleMaxLvlChange,
         }}
         npcType={{
+          types: TRACKABLE_NPC_TYPES,
           value: settings.npcType,
           onValueChange: handleNpcTypeChange,
         }}

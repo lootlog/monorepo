@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { format } from "date-fns";
-import { pl } from "date-fns/locale";
 import { ArrowRight, History, Info } from "lucide-react";
 import {
   Popover,
@@ -14,8 +12,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
+import { EmptyState } from "@/components/common/empty-state";
 import type { EventRanking } from "../../types/api";
 import { formatPoints, formatSignedPoints } from "../../utils/format-points";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 type EventRankingPointsProps = {
   ranking: EventRanking;
@@ -112,9 +112,7 @@ export const EventRankingPoints = ({
                   >
                     <div className="mb-1 flex items-center gap-2 text-muted-foreground">
                       <span className="text-xs">
-                        {format(new Date(entry.editedAt), "d MMM yyyy, HH:mm", {
-                          locale: pl,
-                        })}
+                        {timestampToDate(entry.editedAt)}
                       </span>
                       <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
                         {entry.editType === "RANKING"
@@ -150,9 +148,11 @@ export const EventRankingPoints = ({
                 ))}
               </div>
             ) : (
-              <div className="p-4 text-center text-sm text-muted-foreground">
-                {t("events.points.noHistory")}
-              </div>
+              <EmptyState
+                compact
+                icon={History}
+                title={t("events.points.noHistory")}
+              />
             )}
           </ScrollArea>
         </div>

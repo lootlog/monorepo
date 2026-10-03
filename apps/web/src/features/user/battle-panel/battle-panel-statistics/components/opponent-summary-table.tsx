@@ -32,7 +32,7 @@ export const OpponentSummaryTable = <Record extends { opponentId: string }>({
       <Table>
         <TanStackTableHeader
           table={table}
-          className="bg-background/80"
+          className="sticky top-0 z-10 bg-background"
           rowClassName="border-b-1! border-border"
           headClassName="whitespace-nowrap"
         />
@@ -46,7 +46,7 @@ export const OpponentSummaryTable = <Record extends { opponentId: string }>({
             role: "link",
             tabIndex: 0,
             className:
-              "h-14 cursor-pointer border-b border-border transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+              "h-14 cursor-pointer border-b border-border transition-colors hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
           })}
         />
       </Table>

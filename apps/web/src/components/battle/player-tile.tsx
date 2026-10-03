@@ -7,6 +7,7 @@ import {
 import type { FC } from "react";
 import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import { PlayerSpriteTile } from "@/components/tiles/player-sprite-tile";
+import { PlayerTooltipContent } from "@/components/tiles/player-tooltip-content";
 
 type PlayerTileProps = {
   player: {
@@ -45,12 +46,7 @@ export const PlayerTile: FC<PlayerTileProps> = ({
           />
         />
         <TooltipContent>
-          <p>
-            {name}
-            {lvl === undefined
-              ? null
-              : `(${lvl}${prof?.charAt(0).toLowerCase()})`}
-          </p>
+          <PlayerTooltipContent name={name} lvl={lvl} prof={prof} />
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

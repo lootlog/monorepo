@@ -1,3 +1,4 @@
+import { formatLevel } from "@lootlog/domain/profession";
 import {
   AccordionContent,
   AccordionItem,
@@ -50,7 +51,9 @@ export const LootNpcFilters = ({
     description: t(`npcType.${npc.type}`),
     meta:
       npc.lvl > 0
-        ? t("loots.searchCommand.level", { level: npc.lvl })
+        ? t("loots.searchCommand.level", {
+            level: formatLevel(npc.lvl, npc.prof),
+          })
         : undefined,
     icon: <NpcSearchTile icon={npc.icon} name={npc.name} />,
   }));

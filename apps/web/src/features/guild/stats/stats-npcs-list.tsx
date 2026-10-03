@@ -1,13 +1,14 @@
-import { formatNpcLevel } from "@lootlog/domain/profession";
+import { formatLevel } from "@lootlog/domain/profession";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
-import { KillStatsFilterBar } from "./components/kill-stats-filter-bar";
+import { KillStatsFilterBar } from "@/features/kills/components/kill-stats-filter-bar";
+import { TRACKABLE_NPC_TYPES } from "./constants";
 import { StatsCountCell } from "./components/stats-count-cell";
 import { StatsNpcCell } from "./components/stats-npc-cell";
-import { StatsRank } from "./components/stats-rank";
+import { RankBadge } from "@/components/common/rank-badge";
 import {
   STATS_TABLE_COUNT_COLUMN_ID,
   STATS_TABLE_POSITION_COLUMN_ID,
@@ -48,7 +49,7 @@ export const StatsNpcsList = () => {
     {
       id: STATS_TABLE_POSITION_COLUMN_ID,
       header: () => t("kills.memberRanking.position"),
-      cell: ({ row }) => <StatsRank rank={cursor + row.index + 1} />,
+      cell: ({ row }) => <RankBadge rank={cursor + row.index + 1} />,
     },
     {
       id: "npc",
@@ -72,7 +73,7 @@ export const StatsNpcsList = () => {
               {npc.npcName}
             </TextLink>
           }
-          subtitle={t("kills.level", { level: formatNpcLevel(npc.npcLvl) })}
+          subtitle={t("kills.level", { level: formatLevel(npc.npcLvl) })}
         />
       ),
     },
@@ -117,6 +118,7 @@ export const StatsNpcsList = () => {
           onMaxLvlChange: handleMaxLvlChange,
         }}
         npcType={{
+          types: TRACKABLE_NPC_TYPES,
           value: settings.npcType,
           onValueChange: handleNpcTypeChange,
         }}
@@ -154,7 +156,7 @@ export const StatsNpcsList = () => {
                 params={{ guildId, npcId: String(npc.npcId) }}
                 className="flex min-w-0 items-center gap-3 p-3 outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
               >
-                <StatsRank rank={cursor + index + 1} />
+                <RankBadge rank={cursor + index + 1} />
                 <span className="min-w-0 flex-1">
                   <StatsNpcCell
                     npc={{
@@ -164,7 +166,7 @@ export const StatsNpcsList = () => {
                       icon: npc.npcIcon,
                     }}
                     name={npc.npcName}
-                    subtitle={`${t(`npcType.${npc.npcType}`)} · ${t("kills.level", { level: formatNpcLevel(npc.npcLvl) })}`}
+                    subtitle={`${t(`npcType.${npc.npcType}`)} · ${t("kills.level", { level: formatLevel(npc.npcLvl) })}`}
                   />
                 </span>
                 <span className="shrink-0 text-sm font-semibold tabular-nums">

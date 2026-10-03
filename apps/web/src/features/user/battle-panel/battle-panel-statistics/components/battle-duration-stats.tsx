@@ -6,7 +6,7 @@ import { formatDurationCompact } from "@/features/guild/events/utils/format-dura
 import type { BattleDurationStats } from "@/lib/api/battlelog-types";
 import { Zap, Hourglass } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { StatCard } from "./stat-card";
+import { ChartCard } from "@/components/common/chart-card";
 import { StatCardMetric } from "./stat-card-metric";
 import { cn } from "cn";
 
@@ -51,12 +51,13 @@ export function BattleDurationStatsCard({
   ];
 
   return (
-    <StatCard
+    <ChartCard
       title={t("battlePanel.statistics.battleDuration.title")}
       description={t("battlePanel.statistics.battleDuration.description")}
       isLoading={isLoading}
-      isEmpty={!hasData}
-      emptyMessage={t("battlePanel.statistics.battleDuration.empty")}
+      emptyMessage={
+        !hasData ? t("battlePanel.statistics.battleDuration.empty") : undefined
+      }
     >
       <div className="grid min-h-40 flex-1 grid-cols-2 items-stretch gap-3">
         {averages.map((average) => (
@@ -94,6 +95,6 @@ export function BattleDurationStatsCard({
           valueClassName={BATTLE_TEXT_COLORS.metric.secondary}
         />
       </div>
-    </StatCard>
+    </ChartCard>
   );
 }

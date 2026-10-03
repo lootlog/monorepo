@@ -1,6 +1,6 @@
 import { Button } from "@lootlog/ui/components/button";
 import { cn } from "cn";
-import { ExternalLink, MessageSquare } from "lucide-react";
+import { Info, MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export const LootHeaderActions = ({
@@ -40,7 +40,7 @@ export const LootHeaderActions = ({
         }}
         variant="ghost"
         size="sm"
-        icon={<ExternalLink className="size-3.5" />}
+        icon={<Info className="size-3.5" />}
         aria-label={t("loots.list.details")}
         title={t("loots.list.details")}
         className="h-8 gap-1 px-2 text-xs text-muted-foreground max-sm:w-8 max-sm:px-0"

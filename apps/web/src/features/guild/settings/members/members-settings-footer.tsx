@@ -28,7 +28,7 @@ export const MembersSettingsFooter = ({
       <span>{summaryItems.join(" · ")}</span>
       <button
         type="button"
-        className="inline-flex min-h-8 items-center rounded-full border border-amber-500/25 bg-amber-500/10 px-2 text-xs font-medium text-amber-500 transition-colors hover:bg-amber-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="inline-flex min-h-8 items-center rounded-full border border-signal-timer/30 bg-signal-timer/10 px-2 text-xs font-medium text-signal-timer transition-colors hover:bg-signal-timer/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         onClick={onProblemsClick}
       >
         {t("settings.members.summary.problems", { count: problematicMembers })}

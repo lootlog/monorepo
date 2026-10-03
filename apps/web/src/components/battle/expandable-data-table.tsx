@@ -14,7 +14,6 @@ import {
 } from "@tanstack/react-table";
 import { cn } from "cn";
 import { Fragment, type ReactNode, useState } from "react";
-import { ArrowUp, ArrowDown } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import * as m from "framer-motion/m";
 import { DamageBreakdown } from "./damage-breakdown";
@@ -26,6 +25,8 @@ import { DamageDealtBreakdown } from "./damage-dealt-breakdown";
 import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 import { sortedTableFeatures } from "@/lib/tanstack-table-features";
+import { getColumnAriaSort } from "@/components/ui/get-column-aria-sort";
+import { SortableColumnHeader } from "@/components/ui/sortable-column-header";
 import type { BattleStatsExpansionType } from "./battle-stats-table-columns-full";
 
 interface ExpandableDataTableProps<TData extends Warrior> {
@@ -34,24 +35,6 @@ interface ExpandableDataTableProps<TData extends Warrior> {
   getTeamClassName?: (warrior: TData) => string;
   expandedRows: Map<string, BattleStatsExpansionType>;
 }
-
-const renderSortIcon = (sortDirection: false | "asc" | "desc"): ReactNode => {
-  if (sortDirection === "asc") {
-    return <ArrowUp className="size-3 shrink-0" aria-hidden />;
-  }
-
-  if (sortDirection === "desc") {
-    return <ArrowDown className="size-3 shrink-0" aria-hidden />;
-  }
-
-  // Ten columns share a narrow panel, so an unsorted column spends no width on an icon.
-  return null;
-};
-
-const ARIA_SORT_BY_DIRECTION = {
-  asc: "ascending",
-  desc: "descending",
-} as const;
 
 const renderExpandedContent = (
   expansionType: BattleStatsExpansionType,
@@ -99,27 +82,22 @@ export function ExpandableDataTable<TData extends Warrior>({
           <TableRow key={headerGroup.id} className="hover:bg-transparent">
             {headerGroup.headers.map((header, headerIndex) => {
               const canSort = header.column.getCanSort();
-              const sortDirection = header.column.getIsSorted();
               let headerContent: ReactNode = null;
 
               if (!header.isPlaceholder && canSort) {
                 headerContent = (
-                  <button
-                    type="button"
-                    className={cn(
-                      "flex w-full cursor-pointer select-none items-center gap-1 rounded-sm px-1 py-1 leading-tight hover:bg-gray-400/10",
-                      headerIndex === 0
-                        ? "justify-start text-left"
-                        : "justify-end text-right",
-                    )}
-                    onClick={header.column.getToggleSortingHandler()}
+                  <SortableColumnHeader
+                    column={header.column}
+                    align={headerIndex === 0 ? "start" : "end"}
+                    // Ten columns share a narrow panel, so an unsorted column spends no width on an icon.
+                    showUnsortedIcon={false}
+                    className="px-1 py-1 leading-tight"
                   >
                     {flexRender(
                       header.column.columnDef.header,
                       header.getContext(),
                     )}
-                    {renderSortIcon(sortDirection)}
-                  </button>
+                  </SortableColumnHeader>
                 );
               } else if (!header.isPlaceholder) {
                 headerContent = (
@@ -135,11 +113,7 @@ export function ExpandableDataTable<TData extends Warrior>({
               return (
                 <TableHead
                   key={header.id}
-                  aria-sort={
-                    sortDirection
-                      ? ARIA_SORT_BY_DIRECTION[sortDirection]
-                      : undefined
-                  }
+                  aria-sort={getColumnAriaSort(header.column)}
                   className={cn(
                     "h-auto whitespace-normal px-0.5 py-1.5 align-bottom text-[11px]",
                     headerIndex === 0 &&
@@ -235,7 +209,10 @@ export function ExpandableDataTable<TData extends Warrior>({
           })
         ) : (
           <TableRow>
-            <TableCell colSpan={columns.length} className="h-24 text-center">
+            <TableCell
+              colSpan={columns.length}
+              className="h-24 text-center text-sm text-muted-foreground"
+            >
               {t("battleUi.statsTable.empty")}
             </TableCell>
           </TableRow>

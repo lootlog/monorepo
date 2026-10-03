@@ -5,7 +5,7 @@ import { buildDiscordBotInstallUrl } from "@/utils/build-discord-bot-install-url
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { Info, RefreshCcw, ShieldAlert } from "lucide-react";
+import { Info, RefreshCw, ShieldAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 type GuildDiscordSyncNoticeProps = {
@@ -85,7 +85,7 @@ export const GuildDiscordSyncNotice = ({
             onClick={refresh}
             disabled={!guildId || isLoading}
             loading={isLoading}
-            icon={<RefreshCcw className="size-3.5" />}
+            icon={<RefreshCw className="size-3.5" />}
           >
             {t("settings.guildInfo.refresh")}
           </Button>

@@ -102,31 +102,27 @@ const renderAccountPage = async () => {
 describe("user shell navigation", () => {
   afterEach(cleanup);
 
-  it.each(["back", "breadcrumb"])(
-    "removes the page's header action when returning through %s navigation",
-    async (navigation) => {
-      const router = await renderAccountPage();
-      expect(
-        await screen.findByRole("button", { name: "Page action" }),
-      ).toBeDefined();
-      expect(
-        within(screen.getByRole("main")).queryByRole("button", {
-          name: "Page action",
-        }),
-      ).toBeNull();
+  it("removes the page's header action when returning through the breadcrumb", async () => {
+    const router = await renderAccountPage();
+    expect(
+      await screen.findByRole("button", { name: "Page action" }),
+    ).toBeDefined();
+    expect(
+      within(screen.getByRole("main")).queryByRole("button", {
+        name: "Page action",
+      }),
+    ).toBeNull();
+    // A settings tab is a sibling of the overview, not its child.
+    expect(screen.queryByRole("link", { name: "Wróć" })).toBeNull();
 
-      const parentControl =
-        navigation === "back"
-          ? screen.getByRole("link", { name: "Wróć" })
-          : within(screen.getByRole("navigation")).getByRole("link", {
-              name: "Ustawienia",
-            });
+    fireEvent.click(
+      within(screen.getByRole("navigation")).getByRole("link", {
+        name: "Ustawienia",
+      }),
+    );
 
-      fireEvent.click(parentControl);
-
-      await screen.findByRole("heading", { name: "Settings overview" });
-      expect(router.state.location.pathname).toBe("/@me/settings");
-      expect(screen.queryByRole("button", { name: "Page action" })).toBeNull();
-    },
-  );
+    await screen.findByRole("heading", { name: "Settings overview" });
+    expect(router.state.location.pathname).toBe("/@me/settings");
+    expect(screen.queryByRole("button", { name: "Page action" })).toBeNull();
+  });
 });

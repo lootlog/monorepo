@@ -1,3 +1,4 @@
+import { upperFirst } from "es-toolkit";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { AlertTriangle } from "lucide-react";
@@ -76,7 +77,7 @@ export const NotificationNpcFields = ({
                   },
                   ...worldOptions.map((world) => ({
                     value: world,
-                    label: <>{world}</>,
+                    label: <>{upperFirst(world)}</>,
                   })),
                 ]}
               >
@@ -86,7 +87,7 @@ export const NotificationNpcFields = ({
                       <SelectValue>
                         {field.value === ALL_WORLDS_VALUE
                           ? t("settings.notifications.allWorlds")
-                          : field.value}
+                          : upperFirst(field.value ?? "")}
                       </SelectValue>
                     </SelectTrigger>
                   }
@@ -97,7 +98,7 @@ export const NotificationNpcFields = ({
                   </SelectItem>
                   {worldOptions.map((world) => (
                     <SelectItem key={world} value={world}>
-                      {world}
+                      {upperFirst(world)}
                     </SelectItem>
                   ))}
                 </SelectContent>

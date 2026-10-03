@@ -8,7 +8,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@lootlog/ui/components/popover";
-import { ArrowRight, Filter, SlidersHorizontal } from "lucide-react";
+import { Filter, SlidersHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 type PlayerVsPlayerFilterToolbarProps = {
@@ -57,7 +57,7 @@ export const PlayerVsPlayerFilterToolbar = ({
         <Button
           type="button"
           variant="outline"
-          className="shrink-0 gap-2 px-3"
+          className="h-10 shrink-0 gap-2 px-3"
           onClick={onMobileFiltersOpen}
         >
           <Filter className="size-4" aria-hidden="true" />
@@ -88,17 +88,12 @@ export const PlayerVsPlayerFilterToolbar = ({
             <Label className="text-xs text-muted-foreground">
               {t("battlePanel.filters.levelRange")}
             </Label>
-            <div className="flex items-center gap-2">
-              <LevelRangeFilter
-                minLevel={minLevel}
-                maxLevel={maxLevel}
-                onMinLevelChange={onMinLevelChange}
-                onMaxLevelChange={onMaxLevelChange}
-                inputClassName="w-full"
-                containerClassName="flex-1"
-                separator=<ArrowRight className="size-4 shrink-0 text-muted-foreground" />
-              />
-            </div>
+            <LevelRangeFilter
+              minLevel={minLevel}
+              maxLevel={maxLevel}
+              onMinLevelChange={onMinLevelChange}
+              onMaxLevelChange={onMaxLevelChange}
+            />
           </div>
         </PopoverContent>
       </Popover>

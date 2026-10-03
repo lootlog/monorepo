@@ -1,3 +1,4 @@
+import { formatLevel } from "@lootlog/domain/profession";
 import { PlayerTile } from "@/components/battle";
 import { BattleDamageTags } from "@/features/user/battle-panel/components/battle-damage-tags";
 import type { BattleDamageTagWarrior } from "@/features/user/battle-panel/components/battle-damage-tag-data";
@@ -34,8 +35,7 @@ export function BattlePanelPvpWarriorSummary({
         <div className="truncate text-xs font-semibold">{warrior.name}</div>
         <div className="flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground">
           <span className="shrink-0">
-            ({warrior.lvl}
-            {warrior.prof})
+            ({formatLevel(warrior.lvl, warrior.prof)})
           </span>
           <BattleDamageTags
             team={[warrior]}

@@ -4,7 +4,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { Button } from "@lootlog/ui/components/button";
-import { RotateCcw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -30,7 +30,7 @@ export const GuildsRefreshButton: FC<GuildsRefreshButtonProps> = ({
             loading={isRefreshing}
             onClick={onRefresh}
           >
-            <RotateCcw className="size-4" />
+            <RefreshCw className="size-4" />
           </Button>
         }
       />

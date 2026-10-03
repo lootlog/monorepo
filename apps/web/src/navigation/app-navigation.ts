@@ -422,14 +422,14 @@ function resolveUserNavigationInfo(
   if (path === ROUTES.user.battlePanel.statistics) {
     return navigationInfo(
       [battlePanel, { label: t("layout.breadcrumbs.statistics"), path: null }],
-      battlePanel.path,
+      null,
     );
   }
 
   if (path === ROUTES.user.battlePanel.abyss) {
     return navigationInfo(
       [battlePanel, { label: t("layout.breadcrumbs.abyss"), path: null }],
-      battlePanel.path,
+      null,
     );
   }
 
@@ -522,7 +522,7 @@ function resolveUserNavigationInfo(
         },
         { label: t(settingsRoute[1]), path: null },
       ],
-      ROUTES.user.settings.base,
+      null,
     );
   }
 
@@ -864,75 +864,54 @@ function resolveSimpleRoute(
 ): NavigationInfo | null {
   if (path === routes.base) {
     return {
-      breadcrumbs: [{ label: t("common.breadcrumbs.lootsList"), path: null }],
+      breadcrumbs: [
+        guildBreadcrumb,
+        { label: t("common.breadcrumbs.lootsList"), path: null },
+      ],
       showBack: false,
     };
   }
 
+  /**
+   * Sidebar sections and their tabs are top-level destinations, so only a
+   * child page such as the new event form gets a back target.
+   */
   const simpleRoutes: Array<{
     path: string;
     label: string;
-    backPath: string;
-    /** Breadcrumb parent when it differs from the back target, as for stats tabs. */
     parentPath?: string;
+    backPath?: string;
   }> = [
-    {
-      path: routes.timers,
-      label: t("common.breadcrumbs.timers"),
-      backPath: routes.base,
-    },
-    {
-      path: routes.reservations,
-      label: t("common.breadcrumbs.reservations"),
-      backPath: routes.base,
-    },
-    {
-      path: routes.docs,
-      label: t("common.breadcrumbs.docs"),
-      backPath: routes.base,
-    },
-    {
-      path: routes.activityLogs,
-      label: t("common.breadcrumbs.activityLogs"),
-      backPath: routes.base,
-    },
-    {
-      path: routes.stats,
-      label: t("common.breadcrumbs.stats"),
-      backPath: routes.base,
-    },
+    { path: routes.timers, label: t("common.breadcrumbs.timers") },
+    { path: routes.reservations, label: t("common.breadcrumbs.reservations") },
+    { path: routes.docs, label: t("common.breadcrumbs.docs") },
+    { path: routes.activityLogs, label: t("common.breadcrumbs.activityLogs") },
+    { path: routes.stats, label: t("common.breadcrumbs.stats") },
     {
       path: routes.statsKills,
       label: t("common.stats.kills"),
-      backPath: routes.base,
       parentPath: routes.stats,
     },
     {
       path: routes.statsLoots,
       label: t("common.stats.loots"),
-      backPath: routes.base,
       parentPath: routes.stats,
     },
-    {
-      path: routes.events,
-      label: t("common.breadcrumbs.events"),
-      backPath: routes.base,
-    },
+    { path: routes.events, label: t("common.breadcrumbs.events") },
     {
       path: routes.statsRanking,
       label: t("common.breadcrumbs.memberRanking"),
-      backPath: routes.base,
       parentPath: routes.stats,
     },
     {
       path: routes.statsNpcs,
       label: t("common.breadcrumbs.npcs"),
-      backPath: routes.base,
       parentPath: routes.stats,
     },
     {
       path: `${routes.events}/create`,
       label: t("common.breadcrumbs.newEvent"),
+      parentPath: routes.events,
       backPath: routes.events,
     },
   ];
@@ -942,27 +921,16 @@ function resolveSimpleRoute(
 
     const breadcrumbs: Breadcrumb[] = [guildBreadcrumb];
 
-    const parentPath = route.parentPath ?? route.backPath;
+    // eslint-disable-next-line react-doctor/js-index-maps -- Only the matching route reaches this lookup, then the outer loop returns; the search runs once, not once per route.
+    const parentRoute = simpleRoutes.find((r) => r.path === route.parentPath);
 
-    if (parentPath !== routes.base) {
-      // eslint-disable-next-line react-doctor/js-index-maps -- Only the matching route reaches this lookup, then the outer loop returns; the search runs once, not once per route.
-      const parentRoute = simpleRoutes.find((r) => r.path === parentPath);
-
-      if (parentRoute) {
-        breadcrumbs.push({
-          label: parentRoute.label,
-          path: parentRoute.path,
-        });
-      }
+    if (parentRoute) {
+      breadcrumbs.push({ label: parentRoute.label, path: parentRoute.path });
     }
 
     breadcrumbs.push({ label: route.label, path: null });
 
-    return {
-      breadcrumbs,
-      showBack: true,
-      backPath: route.backPath,
-    };
+    return navigationInfo(breadcrumbs, route.backPath ?? null);
   }
 
   if (path.startsWith(routes.reservations) && path !== routes.reservations) {
@@ -1223,8 +1191,7 @@ function resolveNotificationRoutes(
         guildBreadcrumb,
         { label: t("common.breadcrumbs.notifications"), path: null },
       ],
-      showBack: true,
-      backPath: routes.base,
+      showBack: false,
     };
   }
 
@@ -1273,7 +1240,7 @@ function resolveSettingsRoutes(
       path: null,
     });
 
-    return { breadcrumbs, showBack: true, backPath: routes.base };
+    return { breadcrumbs, showBack: false };
   }
 
   breadcrumbs.push(settingsBreadcrumb);
@@ -1283,13 +1250,11 @@ function resolveSettingsRoutes(
 
   if (breadcrumbs.length === breadcrumbsBeforeLeaf) {
     breadcrumbs.push({ label: t("common.breadcrumbs.page"), path: null });
+
+    return navigationInfo(breadcrumbs, routes.settings);
   }
 
-  return {
-    breadcrumbs,
-    showBack: true,
-    backPath: getSettingsBackPath(path, routes),
-  };
+  return navigationInfo(breadcrumbs, getSettingsBackPath(path, routes));
 }
 
 function appendSettingsRouteBreadcrumbs(
@@ -1358,9 +1323,8 @@ function appendSettingsRouteBreadcrumbs(
   }
 }
 
-function getSettingsBackPath(path: string, routes: Routes): string {
-  if (path === routes.settings) return routes.base;
-
+/** Settings tabs are siblings; only an entity detail page goes back. */
+function getSettingsBackPath(path: string, routes: Routes): string | null {
   if (path.startsWith(`${routes.settingsRoles}/`)) return routes.settingsRoles;
 
   if (path.startsWith(`${routes.settingsMembers}/`)) {
@@ -1369,7 +1333,7 @@ function getSettingsBackPath(path: string, routes: Routes): string {
 
   if (path.startsWith(`${routes.settingsNpcs}/`)) return routes.settingsNpcs;
 
-  return routes.settings;
+  return null;
 }
 
 function fallback(

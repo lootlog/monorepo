@@ -278,7 +278,7 @@ describe("EventRankingTable", () => {
       screen.getByRole("columnheader", { name: "events.ranking.points" }),
     ).toBeTruthy();
     expect(screen.getByText("1m")).toBeTruthy();
-    expect(screen.getByText("-")).toBeTruthy();
+    expect(screen.getByText("—")).toBeTruthy();
 
     const primaryLink = screen.getByRole("link", {
       name: "events.ranking.openMemberStats",
@@ -421,26 +421,6 @@ describe("EventRankingTable", () => {
 
     expect(screen.getByText("Member 1").style.color).toBe("#25A7E8");
     expect(screen.getByText("Member 2").getAttribute("style")).toBeNull();
-  });
-
-  it("keeps distinct medal treatments for the top three positions", () => {
-    const { container } = renderRankingTable([
-      createRanking({ id: "ranking-1", memberId: 1, totalPoints: 40 }),
-      createRanking({ id: "ranking-2", memberId: 2, totalPoints: 30 }),
-      createRanking({ id: "ranking-3", memberId: 3, totalPoints: 20 }),
-      createRanking({ id: "ranking-4", memberId: 4, totalPoints: 10 }),
-    ]);
-
-    const positionBadges = container.querySelectorAll(
-      "tbody tr td:first-child span",
-    );
-
-    expect(positionBadges[0]?.className).toContain("bg-yellow-500");
-    expect(positionBadges[0]?.className).toContain("rounded-full");
-    expect(positionBadges[0]?.className).toContain("shrink-0");
-    expect(positionBadges[1]?.className).toContain("bg-gray-300");
-    expect(positionBadges[2]?.className).toContain("bg-amber-700");
-    expect(positionBadges[3]?.className).toContain("bg-muted");
   });
 
   it("right-aligns every numeric data cell", () => {

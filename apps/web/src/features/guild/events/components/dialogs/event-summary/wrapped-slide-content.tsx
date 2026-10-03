@@ -1,3 +1,4 @@
+import { upperFirst } from "es-toolkit";
 import { useTranslation } from "react-i18next";
 import type { WrappedSlide } from "./build-wrapped-slides";
 import { getFactValue } from "./utils";
@@ -27,7 +28,9 @@ export const WrappedSlideContent = ({
         <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
           {t("events.summaryDialog.openingDescription")}
         </p>
-        <p className="mt-8 text-sm font-medium text-foreground/80">{world}</p>
+        <p className="mt-8 text-sm font-medium text-foreground/80">
+          {upperFirst(world)}
+        </p>
       </div>
     );
   }

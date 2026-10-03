@@ -1,3 +1,4 @@
+import { formatLevel } from "@lootlog/domain/profession";
 import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { cn } from "cn";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -134,8 +135,7 @@ export const getBattleStatsTableColumns = ({
                 )}
               </span>
               <span className="block text-[11px] font-normal text-muted-foreground">
-                {warrior.lvl}
-                {warrior.prof}
+                {formatLevel(warrior.lvl, warrior.prof)}
               </span>
             </span>
           </BattleStatsExpandButton>

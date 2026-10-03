@@ -2,11 +2,10 @@ import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from "@lootlog/ui/components/dialog";
+import { IconDialogHeader } from "@/components/common/icon-dialog-header";
+import { Hash } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -47,22 +46,19 @@ export const NotificationTargetDialog = (
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-hidden sm:max-w-lg">
-        <DialogHeader className="border-b bg-muted/30 px-5 py-4">
-          <DialogTitle className="px-0 pt-0 text-base">
-            {t(
-              isCreateMode
-                ? "settings.notifications.targetDialog.createTitle"
-                : "settings.notifications.targetDialog.editTitle",
-            )}
-          </DialogTitle>
-          <DialogDescription className="px-0">
-            {t(
-              isCreateMode
-                ? "settings.notifications.targetDialog.createDescription"
-                : "settings.notifications.targetDialog.editDescription",
-            )}
-          </DialogDescription>
-        </DialogHeader>
+        <IconDialogHeader
+          icon={Hash}
+          title={t(
+            isCreateMode
+              ? "settings.notifications.targetDialog.createTitle"
+              : "settings.notifications.targetDialog.editTitle",
+          )}
+          description={t(
+            isCreateMode
+              ? "settings.notifications.targetDialog.createDescription"
+              : "settings.notifications.targetDialog.editDescription",
+          )}
+        />
 
         <Form {...form}>
           <form
@@ -182,7 +178,7 @@ export const NotificationTargetDialog = (
                       />
                     </div>
                     {!field.value && target?.active ? (
-                      <p className="text-xs text-amber-500">
+                      <p className="text-xs text-signal-timer">
                         {t(
                           "settings.notifications.fields.activeDeactivateWarning",
                         )}

@@ -2,11 +2,11 @@ import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palet
 import type { PlayerVsPlayerBattle } from "@/lib/api/battlelog-types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { cn } from "cn";
-import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { getPlayerVsPlayerBattleResult } from "./battle-panel-battle-presentation";
 import { BattlePanelPvpWarriorSummary } from "./battle-panel-pvp-warrior-summary";
 import { BattleResultStatus } from "./battle-result-status";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 type BattlePanelPvpBattleCardProps = {
   battle: PlayerVsPlayerBattle;
@@ -19,7 +19,7 @@ export const BattlePanelPvpBattleCard = ({
 }: BattlePanelPvpBattleCardProps) => {
   const { t } = useTranslation();
   const result = getPlayerVsPlayerBattleResult(battle);
-  const exactTime = format(new Date(battle.createdAt), "dd.MM.yyyy HH:mm");
+  const exactTime = timestampToDate(battle.createdAt);
   const ratingDelta = battle.ratingDelta;
   let ratingDeltaLabel = t("battlePanel.single.recentOpponent.noRating");
 

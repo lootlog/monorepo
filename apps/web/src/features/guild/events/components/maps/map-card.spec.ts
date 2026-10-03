@@ -18,25 +18,22 @@ const assignedMap: EventMap = {
 };
 
 describe("map card status", () => {
-  it("shows an assigned map without present players as orange", () => {
-    const status = getMapStatus(assignedMap, new Map());
-
-    expect(status).toBe("ASSIGNED_ABSENT");
-    expect(STATUS_STYLES[status].bg).toBe("bg-orange-500/10");
+  it("treats an assigned map without present players as absent", () => {
+    expect(getMapStatus(assignedMap, new Map())).toBe("ASSIGNED_ABSENT");
   });
 
-  it("keeps an assigned map orange while presence is unavailable", () => {
+  it("shows unavailable presence the same way as absent players", () => {
     const status = getMapStatus(assignedMap);
 
     expect(status).toBe("ASSIGNED_UNKNOWN");
-    expect(STATUS_STYLES[status].bg).toBe("bg-orange-500/10");
+    expect(STATUS_STYLES[status]).toEqual(STATUS_STYLES.ASSIGNED_ABSENT);
   });
 
-  it("makes an unassigned map visually distinct with a destructive background", () => {
+  it("keeps an unassigned map visually distinct from an absent one", () => {
     const unassignedMap = { ...assignedMap, assignedMembers: [] };
     const status = getMapStatus(unassignedMap, new Map());
 
     expect(status).toBe("UNASSIGNED");
-    expect(STATUS_STYLES[status].bg).toBe("bg-destructive/10");
+    expect(STATUS_STYLES[status].bg).not.toBe(STATUS_STYLES.ASSIGNED_ABSENT.bg);
   });
 });

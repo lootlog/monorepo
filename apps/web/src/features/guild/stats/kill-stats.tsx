@@ -8,7 +8,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "usehooks-ts";
-import { KillStatsFilterBar } from "./components/kill-stats-filter-bar";
+import { KillStatsFilterBar } from "@/features/kills/components/kill-stats-filter-bar";
 import { KillStatsOverview } from "./components/kill-stats-overview";
 import { MemberLeaderboardCard } from "./components/member-leaderboard-card";
 import { TopNpcsCard } from "./components/top-npcs-card";

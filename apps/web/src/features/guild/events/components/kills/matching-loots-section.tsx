@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { EmbeddedLootRowsSkeleton } from "../shared/embedded-loot-rows-skeleton";
 import type { Loot } from "@/lib/loots/loot-types";
 import { LootsListItem } from "@/features/guild/loots-list/components/loots-list/loots-list-item";
-import { EventReadError } from "../shared/event-read-error";
+import { QueryErrorNotice } from "@/components/common/query-error-notice";
 
 interface MatchingLootsSectionProps {
   loots: Loot[];
@@ -50,7 +50,7 @@ export const MatchingLootsSection = ({
       />
 
       {hasError && (
-        <EventReadError
+        <QueryErrorNotice
           message={t("events.killDetail.lootsError")}
           onRetry={onRetry}
           isRetrying={isRetrying}
@@ -59,7 +59,11 @@ export const MatchingLootsSection = ({
       {isLoading ? (
         <EmbeddedLootRowsSkeleton rows={3} />
       ) : loots.length === 0 && !hasError ? (
-        <EmptyState icon={Package} title={t("events.killDetail.noLoots")} />
+        <EmptyState
+          compact
+          icon={Package}
+          title={t("events.killDetail.noLoots")}
+        />
       ) : (
         <div className="divide-y divide-border/70">
           {loots.map((loot) => (

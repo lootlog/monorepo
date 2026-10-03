@@ -3,7 +3,8 @@ import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { useTranslation } from "react-i18next";
 import { useTable } from "@tanstack/react-table";
-import { Skull } from "lucide-react";
+import { CircleAlert, RotateCcw, Skull } from "lucide-react";
+import { Button } from "@lootlog/ui/components/button";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
   Table,
@@ -19,7 +20,6 @@ import { createEventKillsTableColumns } from "./event-kills-table-columns";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { useInfiniteScrollSentinel } from "@/hooks/utils/use-infinite-scroll-sentinel";
 import { useResetScrollTop } from "@/hooks/utils/use-virtual-infinite-scroll";
-import { EventReadError } from "../shared/event-read-error";
 import { EventHistoryPaginationStatus } from "../shared/event-history-pagination-status";
 
 type EventKillsTableBaseProps = {
@@ -142,7 +142,23 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
     }
 
     if (hasError && kills.length === 0) {
-      return <EventReadError onRetry={onRetry} isRetrying={isRetrying} />;
+      return (
+        <EmptyState
+          icon={CircleAlert}
+          title={t("events.error")}
+          action={
+            <Button
+              type="button"
+              variant="outline"
+              loading={isRetrying ?? false}
+              icon=<RotateCcw className="size-3.5" />
+              onClick={onRetry}
+            >
+              {t("common.actions.retry")}
+            </Button>
+          }
+        />
+      );
     }
 
     if (kills.length === 0 && !hasNextPage) {

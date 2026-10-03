@@ -2,7 +2,7 @@ import type { TFunction } from "i18next";
 import type { ColumnDef } from "@tanstack/react-table";
 import { differenceInSeconds } from "date-fns";
 import type { KillHistoryEntry } from "@lootlog/client/main";
-import { formatDateTime } from "../../utils/format-date";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { KillMonsterCell } from "./kill-monster-cell";
 import { formatDurationHuman } from "../../utils/format-duration";
 import type { coreTableFeatures } from "@/lib/tanstack-table-features";
@@ -42,7 +42,7 @@ export const createEventKillsTableColumns = ({
     header: t("events.kills.date"),
     cell: ({ row }) => (
       <span className="text-xs tabular-nums sm:text-sm">
-        {formatDateTime(new Date(row.original.killedAt))}
+        {timestampToDate(row.original.killedAt)}
       </span>
     ),
     enableSorting: false,
