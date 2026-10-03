@@ -633,13 +633,14 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
       context.syncedAt,
     );
 
-  const handleChannelCreate = (channel: GuildBasedChannel) => {
-    if (!isSyncableGuildChannel(channel)) return Effect.void;
-
-    return channelSync(
+  const publishChannelUpsert = (
+    channel: SyncableGuildChannel,
+    operation: "handleChannelCreate" | "handleChannelUpdate",
+  ) =>
+    channelSync(
       channel.guild.id,
       createSyncContext(channel.guild, { source: "cache" }).pipe(
-        Effect.mapError((cause) => failure("handleChannelCreate", cause)),
+        Effect.mapError((cause) => failure(operation, cause)),
         Effect.flatMap((initialContext) => {
           const context = contextWithChannel(initialContext, channel);
 
@@ -651,6 +652,32 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
         }),
       ),
     );
+
+  const publishChannelDeletion = (
+    channel: SyncableGuildChannel,
+    operation: "handleChannelDelete" | "handleChannelUpdate",
+  ) =>
+    channelSync(
+      channel.guild.id,
+      createSyncContext(channel.guild, {
+        source: "cache",
+        excludeChannelId: channel.id,
+      }).pipe(
+        Effect.mapError((cause) => failure(operation, cause)),
+        Effect.flatMap((context) =>
+          publish(RoutingKey.DISCORD_GUILD_CHANNEL_DELETED, {
+            guildId: channel.guild.id,
+            channelId: channel.id,
+            syncState: syncStateFromContext(channel.guild.id, context),
+          } satisfies DiscordGuildChannelDeletedEvent),
+        ),
+      ),
+    );
+
+  const handleChannelCreate = (channel: GuildBasedChannel) => {
+    if (!isSyncableGuildChannel(channel)) return Effect.void;
+
+    return publishChannelUpsert(channel, "handleChannelCreate");
   };
 
   const handleChannelUpdate = (
@@ -668,62 +695,18 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
         return Effect.void;
       }
 
-      return channelSync(
-        newChannel.guild.id,
-        createSyncContext(newChannel.guild, { source: "cache" }).pipe(
-          Effect.mapError((cause) => failure("handleChannelUpdate", cause)),
-          Effect.flatMap((initialContext) => {
-            const context = contextWithChannel(initialContext, newChannel);
-
-            return publish(RoutingKey.DISCORD_GUILD_CHANNEL_UPSERTED, {
-              guildId: newChannel.guild.id,
-              channel: snapshotFromContext(newChannel, context),
-              syncState: syncStateFromContext(newChannel.guild.id, context),
-            } satisfies DiscordGuildChannelUpsertedEvent);
-          }),
-        ),
-      );
+      return publishChannelUpsert(newChannel, "handleChannelUpdate");
     }
 
     if (!hadSyncableType) return Effect.void;
 
-    return channelSync(
-      oldChannel.guild.id,
-      createSyncContext(oldChannel.guild, {
-        source: "cache",
-        excludeChannelId: oldChannel.id,
-      }).pipe(
-        Effect.mapError((cause) => failure("handleChannelUpdate", cause)),
-        Effect.flatMap((context) =>
-          publish(RoutingKey.DISCORD_GUILD_CHANNEL_DELETED, {
-            guildId: oldChannel.guild.id,
-            channelId: oldChannel.id,
-            syncState: syncStateFromContext(oldChannel.guild.id, context),
-          } satisfies DiscordGuildChannelDeletedEvent),
-        ),
-      ),
-    );
+    return publishChannelDeletion(oldChannel, "handleChannelUpdate");
   };
 
   const handleChannelDelete = (channel: GuildBasedChannel) => {
     if (!isSyncableGuildChannel(channel)) return Effect.void;
 
-    return channelSync(
-      channel.guild.id,
-      createSyncContext(channel.guild, {
-        source: "cache",
-        excludeChannelId: channel.id,
-      }).pipe(
-        Effect.mapError((cause) => failure("handleChannelDelete", cause)),
-        Effect.flatMap((context) =>
-          publish(RoutingKey.DISCORD_GUILD_CHANNEL_DELETED, {
-            guildId: channel.guild.id,
-            channelId: channel.id,
-            syncState: syncStateFromContext(channel.guild.id, context),
-          } satisfies DiscordGuildChannelDeletedEvent),
-        ),
-      ),
-    );
+    return publishChannelDeletion(channel, "handleChannelDelete");
   };
 
   const getGuildSyncStatus = (guildId: string) =>
