@@ -18,9 +18,11 @@ describe("EventRankingSummary", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Mushita" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "events.ranking.title" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Mushita")).toBeTruthy();
     expect(screen.getByText("Wakacje 2026")).toBeTruthy();
-    expect(screen.getByText("events.ranking.title")).toBeTruthy();
     expect(screen.queryByText("events.ranking.participants")).not.toBeTruthy();
   });
 });

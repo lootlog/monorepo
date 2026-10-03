@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/common/empty-state";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { useTranslation } from "react-i18next";
@@ -121,70 +122,52 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
     scrollElement,
   });
 
-  if (isLoading) {
-    return (
-      <div
-        aria-label={t("events.kills.loading")}
-        className={cn(
-          "overflow-hidden",
-          !isPreview && "rounded-2xl border border-border",
-        )}
-      >
-        <Skeleton className="h-9 w-full rounded-none" />
-        {Array.from({ length: 7 }).map((_, index) => (
-          <Skeleton
-            key={index}
-            className="h-11 w-full rounded-none border-t border-border/70"
-          />
-        ))}
-      </div>
-    );
-  }
-
-  if (hasError && kills.length === 0) {
-    return (
-      <div className="flex min-h-48 items-center justify-center">
-        <EventReadError onRetry={onRetry} isRetrying={isRetrying} />
-      </div>
-    );
-  }
-
-  if (kills.length === 0 && !hasNextPage) {
-    return (
-      <div className="flex min-h-48 flex-col items-center justify-center text-muted-foreground">
-        <Skull className="mb-2 size-6 opacity-50" />
-        <p className="text-sm">{t("events.kills.noKills")}</p>
-      </div>
-    );
-  }
-
   const Container = ({ history: SectionCard, preview: "section" } as const)[
     variant
   ];
 
-  return (
-    <Container className="w-full min-w-0 overflow-hidden">
-      {!isPreview && (
-        <SectionCardHeader icon={Skull} title={t("events.kills.title")} />
-      )}
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div aria-busy="true" aria-label={t("events.kills.loading")}>
+          <Skeleton className="h-10 w-full rounded-none border-b border-border" />
+          {Array.from({ length: isPreview ? 5 : 7 }).map((_, index) => (
+            <Skeleton
+              key={index}
+              className="h-14 w-full rounded-none border-b border-border last:border-b-0"
+            />
+          ))}
+        </div>
+      );
+    }
+
+    if (hasError && kills.length === 0) {
+      return <EventReadError onRetry={onRetry} isRetrying={isRetrying} />;
+    }
+
+    if (kills.length === 0 && !hasNextPage) {
+      return <EmptyState icon={Skull} title={t("events.kills.noKills")} />;
+    }
+
+    return (
       <Table className="w-full table-auto xl:table-fixed">
         <TanStackTableHeader
           table={table}
-          className="bg-secondary/25"
-          rowClassName="border-border/80"
+          className="sticky top-0 z-10 bg-background"
+          rowClassName="border-b-1! border-border"
           getHeadClassName={(header) =>
             cn(
-              "h-9 px-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground",
+              "whitespace-nowrap align-middle",
               getColumnClassName(header.column.id, isPreview),
             )
           }
         />
         <TanStackTableBody
           table={table}
-          rowClassName="group h-11 border-border/70 hover:bg-muted/20"
+          rowClassName="h-14 border-b border-border hover:bg-muted/40"
           getCellClassName={(cell) =>
             cn(
-              "h-11 overflow-hidden p-2 align-middle",
+              "h-14 overflow-hidden align-middle",
               getColumnClassName(cell.column.id, isPreview),
             )
           }
@@ -194,7 +177,7 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
             <TableRow ref={loaderRowRef} className="hover:bg-transparent">
               <TableCell
                 colSpan={columns.length}
-                className="h-11 text-center text-xs text-muted-foreground"
+                className="h-14 text-center text-xs text-muted-foreground"
               >
                 <EventHistoryPaginationStatus
                   hasError={hasError}
@@ -207,6 +190,15 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
           </TableBody>
         )}
       </Table>
+    );
+  };
+
+  return (
+    <Container className="w-full min-w-0 overflow-hidden">
+      {!isPreview && (
+        <SectionCardHeader icon={Skull} title={t("events.kills.title")} />
+      )}
+      {renderContent()}
     </Container>
   );
 };

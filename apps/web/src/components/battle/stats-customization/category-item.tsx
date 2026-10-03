@@ -89,6 +89,9 @@ export const CategoryItem = ({
           variant="ghost"
           size="sm"
           onClick={onRemoveCategory}
+          aria-label={t("battleUi.customization.removeCategory", {
+            name: localName,
+          })}
           className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive flex-shrink-0"
         >
           <Trash2 className="h-4 w-4" />
@@ -98,6 +101,10 @@ export const CategoryItem = ({
           variant="ghost"
           size="sm"
           onClick={() => setIsExpanded(!isExpanded)}
+          aria-expanded={isExpanded}
+          aria-label={t("battleUi.customization.toggleCategory", {
+            name: localName,
+          })}
           className="flex-shrink-0"
         >
           <m.div

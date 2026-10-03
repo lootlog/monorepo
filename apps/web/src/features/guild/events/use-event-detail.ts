@@ -23,8 +23,6 @@ import {
 import { Permission } from "@lootlog/schema/permissions";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { format } from "date-fns";
-import { pl } from "date-fns/locale";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -35,7 +33,11 @@ import type {
   EventMapsResponse,
 } from "./types/api";
 import { canManageEvent } from "./utils/event-access";
-import { getEventStatusAtTimestamp } from "./utils/event-activity";
+import {
+  EVENT_STATUS_PRESENTATION,
+  getEventStatusAtTimestamp,
+} from "./utils/event-activity";
+import { formatDateRange } from "./utils/format-date";
 
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { invalidateEventDetailQueries } from "./hooks/mutations/invalidate-event-queries";
@@ -75,19 +77,11 @@ const getEventDateRangeLabel = (
 ) => {
   if (!event) return "";
 
-  const start = format(
+  return formatDateRange(
     new Date(event.startsAt || event.createdAt),
-    "d MMM yyyy",
-    {
-      locale: pl,
-    },
+    event.endsAt ? new Date(event.endsAt) : null,
+    t("events.ongoing"),
   );
-
-  const end = event.endsAt
-    ? format(new Date(event.endsAt), "d MMM yyyy", { locale: pl })
-    : t("events.ongoing");
-
-  return `${start} - ${end}`;
 };
 
 const getEventAccess = (
@@ -115,32 +109,14 @@ const getEventStatusView = (
     pinActionLabel = t("events.unpinEvent");
   }
 
-  if (status === "upcoming") {
-    return {
-      status,
-      isActive: false,
-      pinActionLabel,
-      statusLabel: t("events.upcoming"),
-      statusVariant: "outline" as const,
-    };
-  }
-
-  if (status === "active") {
-    return {
-      status,
-      isActive: true,
-      pinActionLabel,
-      statusLabel: t("events.active"),
-      statusVariant: "default" as const,
-    };
-  }
+  const { labelKey, badgeVariant } = EVENT_STATUS_PRESENTATION[status];
 
   return {
     status,
-    isActive: false,
+    isActive: status === "active",
     pinActionLabel,
-    statusLabel: t("events.ended"),
-    statusVariant: "secondary" as const,
+    statusLabel: t(labelKey),
+    statusVariant: badgeVariant,
   };
 };
 
@@ -160,11 +136,6 @@ const getEventPinnedState = (
   eventId: string | undefined,
   isPinned: (eventId: string) => boolean,
 ) => (eventId ? isPinned(eventId) : false);
-
-export const hasEventDetailErrors = (
-  mapsError: Error | null,
-  rankingError: Error | null,
-) => Boolean(mapsError || rankingError);
 
 const getEventRouteQuery = (
   guildId: string | undefined,
@@ -204,6 +175,7 @@ export const useEventDetail = () => {
     data: event,
     isLoading,
     error,
+    refetch: refetchEvent,
   } = useShowEventOverview(
     {
       guildId: queryGuildId,
@@ -224,6 +196,8 @@ export const useEventDetail = () => {
     data: eventMaps,
     isLoading: isMapsLoading,
     error: mapsError,
+    refetch: refetchMaps,
+    isFetching: isMapsFetching,
   } = useListEventMaps(
     {
       guildId: queryGuildId,
@@ -278,7 +252,12 @@ export const useEventDetail = () => {
     },
   );
 
-  const { data: rankings = [], error: rankingError } = useListEventRanking(
+  const {
+    data: rankings = [],
+    error: rankingError,
+    refetch: refetchRanking,
+    isFetching: isRankingFetching,
+  } = useListEventRanking(
     {
       guildId: queryGuildId,
       eventId: queryEventId,
@@ -449,8 +428,13 @@ export const useEventDetail = () => {
     canDeleteEvent,
     navigateToEventEdit,
     openEventStatusDialog,
+    refetchEvent,
     mapsError,
     rankingError,
+    refetchMaps,
+    refetchRanking,
+    isMapsFetching,
+    isRankingFetching,
     heroes,
     heroTimers,
     heroStats,
@@ -458,6 +442,7 @@ export const useEventDetail = () => {
     handleEditHero,
     handleManageMaps,
     handleDeleteHero,
+    isDeleteHeroPending: deleteHero.isPending,
     rankings,
     isLoading,
     isMapsLoading,

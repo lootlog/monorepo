@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/common/empty-state";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
@@ -45,7 +46,7 @@ export const NotificationsTargetsCard = ({
       />
       <SectionCardContent className="flex flex-col gap-3">
         {targets.length > 0 ? (
-          <div className="flex flex-col gap-3">
+          <div className="overflow-hidden rounded-xl border border-border/70">
             {targets.map((target) => (
               <NotificationTargetCard
                 key={target.id}
@@ -64,9 +65,11 @@ export const NotificationsTargetsCard = ({
             ))}
           </div>
         ) : (
-          <div className="py-6 text-sm text-muted-foreground">
-            {t("settings.notifications.empty.targets")}
-          </div>
+          <EmptyState
+            icon={Hash}
+            title={t("settings.notifications.empty.targets")}
+            compact
+          />
         )}
       </SectionCardContent>
     </SectionCard>

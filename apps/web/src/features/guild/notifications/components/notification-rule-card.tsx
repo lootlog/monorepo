@@ -34,7 +34,7 @@ export const NotificationRuleCard = (
   } = useNotificationRuleActions(props);
 
   return (
-    <div className="border-b border-border/70 py-3 last:border-b-0">
+    <div className="border-b border-border/70 px-3 py-3 last:border-b-0">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 space-y-2">
           <div className="min-w-0">

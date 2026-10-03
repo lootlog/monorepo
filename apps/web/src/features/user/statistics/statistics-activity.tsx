@@ -4,6 +4,8 @@ import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { ActivityHeatmap } from "@/components/common/activity-heatmap/activity-heatmap";
+import { KpiCard } from "@/components/common/kpi-card";
+import { Flame, Trophy } from "lucide-react";
 
 import { StatisticsDistribution } from "./statistics-distribution";
 import { summarizeActivityDistributions } from "./summarize-activity-distributions";
@@ -28,6 +30,18 @@ export function StatisticsActivity({
 
   return (
     <>
+      <div className="grid grid-cols-2 gap-3">
+        <KpiCard
+          icon={Flame}
+          label={t("statistics.currentStreak")}
+          value={t("statistics.days", { count: data.overview.currentStreak })}
+        />
+        <KpiCard
+          icon={Trophy}
+          label={t("statistics.longestStreak")}
+          value={t("statistics.days", { count: data.overview.longestStreak })}
+        />
+      </div>
       <SectionCard>
         <SectionCardHeader title={t("statistics.activity")} />
         <SectionCardContent>
@@ -40,21 +54,6 @@ export function StatisticsActivity({
             label={t("statistics.activity")}
             formatValue={(value) => t("statistics.count", { count: value })}
           />
-          <dl className="mt-4 grid grid-cols-2 gap-4">
-            {[
-              { key: "currentStreak", value: data.overview.currentStreak },
-              { key: "longestStreak", value: data.overview.longestStreak },
-            ].map(({ key, value }) => (
-              <div key={key}>
-                <dt className="text-xs text-muted-foreground">
-                  {t(`statistics.${key}`)}
-                </dt>
-                <dd className="text-2xl font-semibold">
-                  {t("statistics.days", { count: value })}
-                </dd>
-              </div>
-            ))}
-          </dl>
         </SectionCardContent>
       </SectionCard>
       <div className="grid items-start gap-3 lg:grid-cols-2">
@@ -78,7 +77,7 @@ export function StatisticsActivity({
       <SectionCard>
         <SectionCardHeader
           title={t("statistics.hours")}
-          description="Europe/Warsaw"
+          description={t("statistics.polishTime")}
         />
         <SectionCardContent>
           <div className="overflow-x-auto">

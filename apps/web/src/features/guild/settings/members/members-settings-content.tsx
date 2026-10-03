@@ -1,10 +1,6 @@
 import { useMemberActivity } from "@/features/guild/settings/members/use-member-activity";
-import { EmptyState } from "@/components/common/empty-state";
 import { RefreshMembersButton } from "./components/refresh-members-button";
-import { TableFilterToolbar } from "@/components/ui/table-filter-toolbar";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SearchInput } from "@/components/ui/search-input";
+import { SettingsTableCard } from "@/features/guild/settings/components/settings-table-card";
 import { MembersSettingsFooter } from "@/features/guild/settings/members/members-settings-footer";
 import { MembersTable } from "@/features/guild/settings/members/members-table";
 import {
@@ -32,10 +28,9 @@ import {
 import type { MembersStats } from "@/features/guild/settings/members/members.types";
 import { AnimatedToggleGroup } from "@/components/ui/animated-toggle-group";
 import { Permission } from "@lootlog/schema/permissions";
-import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
-import { FilterX, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { startTransition, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -111,100 +106,55 @@ export const MembersSettingsContent = () => {
     statusFilter !== defaultStatusFilter || searchValue.trim() !== "";
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-x-hidden overflow-y-auto px-3 pb-3 gap-3">
-      <h1 className="sr-only">{t("settings.members.title")}</h1>
-      <SectionCard className="max-h-full shrink-0">
-        <SectionCardContent className="flex min-h-0 flex-col gap-0 p-0">
-          <TableFilterToolbar>
-            <SearchInput
-              value={searchValue}
-              onChange={(event) => setSearchValue(event.target.value)}
-              placeholder={t("settings.members.searchPlaceholder")}
-              className="h-9"
-              wrapperClassName="w-full min-w-0 sm:min-w-[200px] sm:flex-1"
+    <SettingsTableCard
+      title={t("settings.members.title")}
+      search={{
+        value: searchValue,
+        placeholder: t("settings.members.searchPlaceholder"),
+        onChange: setSearchValue,
+      }}
+      toolbarEnd={
+        <>
+          <ScrollArea
+            orientation="horizontal"
+            className="w-full min-w-0 max-w-full sm:w-auto"
+          >
+            <AnimatedToggleGroup
+              size="large"
+              value={statusFilter}
+              onValueChange={(filter) => {
+                scrollToTop();
+                startTransition(() => setStatusFilter(filter));
+              }}
+              label={t("settings.members.table.status")}
+              options={statusFilters.map((filter) => ({
+                value: filter,
+                label: t(`settings.members.filters.${filter}`),
+              }))}
+              className="w-max min-w-full max-w-none"
             />
-            <ScrollArea
-              orientation="horizontal"
-              className="min-w-0 max-w-full w-full sm:w-auto"
-            >
-              <AnimatedToggleGroup
-                size="default"
-                value={statusFilter}
-                onValueChange={(filter) => {
-                  scrollToTop();
-                  startTransition(() => setStatusFilter(filter));
-                }}
-                label={t("settings.members.table.status")}
-                options={statusFilters.map((filter) => ({
-                  value: filter,
-                  label: t(`settings.members.filters.${filter}`),
-                }))}
-                className="w-max min-w-full max-w-none"
-              />
-            </ScrollArea>
-            <RefreshMembersButton />
-          </TableFilterToolbar>
-
-          <div className="flex min-h-0 flex-1 overflow-hidden">
-            <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-              <ScrollArea className="h-full flex-1" ref={setScrollElement}>
-                <div className="w-full max-w-full min-w-0">
-                  {filteredMembers.length > 0 && (
-                    <MembersTable
-                      members={filteredMembers}
-                      guildOwnerId={guild?.ownerId}
-                      activityStatsByDiscordIdAndSource={
-                        memberActivityStatsByDiscordIdAndSource
-                      }
-                      scrollElement={scrollElement}
-                      isMobile={isMobile}
-                      canManageMembers={canManageMembers}
-                      memberGamePresenceByDiscordId={
-                        memberGamePresenceByDiscordId
-                      }
-                      memberWebPresenceByDiscordId={
-                        memberWebPresenceByDiscordId
-                      }
-                      guildId={routeGuildId ?? ""}
-                    />
-                  )}
-                  {filteredMembers.length === 0 && (
-                    <EmptyState
-                      className="min-h-80"
-                      icon={Users}
-                      title={
-                        members?.length === 0
-                          ? t("settings.members.emptyGuildTitle")
-                          : t("settings.members.emptyTitle")
-                      }
-                      description={
-                        hasActiveFilters
-                          ? t("settings.members.emptyFilteredDescription")
-                          : t("settings.members.emptyDescription")
-                      }
-                      action={
-                        hasActiveFilters && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setSearchValue("");
-                              setStatusFilter(defaultStatusFilter);
-                            }}
-                          >
-                            <FilterX className="size-4" />
-                            {t("settings.members.resetFilters")}
-                          </Button>
-                        )
-                      }
-                    />
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
-          </div>
-        </SectionCardContent>
+          </ScrollArea>
+          <RefreshMembersButton />
+        </>
+      }
+      isEmpty={filteredMembers.length === 0}
+      empty={{
+        icon: Users,
+        title:
+          members?.length === 0
+            ? t("settings.members.emptyGuildTitle")
+            : t("settings.members.emptyTitle"),
+        description: hasActiveFilters
+          ? t("settings.members.emptyFilteredDescription")
+          : t("settings.members.emptyDescription"),
+      }}
+      hasActiveFilters={hasActiveFilters}
+      onResetFilters={() => {
+        setSearchValue("");
+        setStatusFilter(defaultStatusFilter);
+      }}
+      scrollRef={setScrollElement}
+      footer={
         <MembersSettingsFooter
           {...memberStats}
           onProblemsClick={() => {
@@ -212,7 +162,21 @@ export const MembersSettingsContent = () => {
             startTransition(() => setStatusFilter("problems"));
           }}
         />
-      </SectionCard>
-    </div>
+      }
+    >
+      <MembersTable
+        members={filteredMembers}
+        guildOwnerId={guild?.ownerId}
+        activityStatsByDiscordIdAndSource={
+          memberActivityStatsByDiscordIdAndSource
+        }
+        scrollElement={scrollElement}
+        isMobile={isMobile}
+        canManageMembers={canManageMembers}
+        memberGamePresenceByDiscordId={memberGamePresenceByDiscordId}
+        memberWebPresenceByDiscordId={memberWebPresenceByDiscordId}
+        guildId={routeGuildId ?? ""}
+      />
+    </SettingsTableCard>
   );
 };

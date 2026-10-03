@@ -258,6 +258,10 @@
     "availableStats": "Dostępne statystyki:",
     "searchStat": "Szukaj statystyki...",
     "noStatsFound": "Nie znaleziono statystyk",
-    "noStatsInCategory": "Brak statystyk w tej kategorii"
+    "noStatsInCategory": "Brak statystyk w tej kategorii",
+    "removeCategory": "Usuń kategorię {{name}}",
+    "toggleCategory": "Pokaż statystyki kategorii {{name}}",
+    "addStat": "Dodaj statystykę {{name}}",
+    "removeStat": "Usuń statystykę {{name}}"
   }
 }

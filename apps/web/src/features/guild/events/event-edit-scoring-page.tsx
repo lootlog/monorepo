@@ -6,13 +6,13 @@ import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { PageHeader } from "@/components/common/page-header";
 import { useQueryClient } from "@tanstack/react-query";
+import { useId } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
-import { RefreshCcw, Settings, Trophy } from "lucide-react";
+import { RefreshCcw, Trophy } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
-import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
@@ -55,14 +55,22 @@ const toScoringDefaults = (
 };
 
 export const EventEditScoringPage = () => {
-  const { event, error, isLoading, routeParams } = useEventEditRoute();
+  const { event, error, isLoading, refetch, routeParams } = useEventEditRoute();
 
   if (isLoading) {
     return <EventEditSkeleton />;
   }
 
   if (error || !event) {
-    return <EventLoadError {...routeParams} />;
+    return (
+      <EventLoadError
+        backTo="event"
+        guildId={routeParams.guildId}
+        eventId={routeParams.eventId}
+        error={error}
+        onRetry={() => refetch()}
+      />
+    );
   }
 
   return (
@@ -87,6 +95,7 @@ const EventEditScoringForm = ({
   };
 }) => {
   const { t } = useTranslation();
+  const modeHeadingId = useId();
   const queryClient = useQueryClient();
 
   const updateEvent = useUpdateEvent({
@@ -175,7 +184,6 @@ const EventEditScoringForm = ({
       <PageHeader
         icon={Trophy}
         title={event.name}
-        description={t("events.editSections.scoring")}
         actions={
           <Button
             type="button"
@@ -192,54 +200,47 @@ const EventEditScoringForm = ({
       />
 
       <form className="space-y-3 pb-24" onSubmit={form.handleSubmit(onSubmit)}>
-        <SectionCard className=" border-border bg-card ">
-          <SectionCardHeader title={t("events.scoring.mode")} />
-          <SectionCardContent className="flex min-h-0 flex-col gap-3">
-            <div className="space-y-2">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("events.scoring.mode")}
-              </Label>
-              <Controller
-                control={form.control}
-                name="scoringMode"
-                render={({ field }) => (
-                  <ScoringModeSelector
-                    value={normalizeEventScoringMode(field.value)}
-                    onChange={(mode) => field.onChange(mode)}
-                  />
-                )}
-              />
-            </div>
+        <SectionCard>
+          <SectionCardHeader
+            id={modeHeadingId}
+            title={t("events.scoring.mode")}
+          />
+          <SectionCardContent>
+            <Controller
+              control={form.control}
+              name="scoringMode"
+              render={({ field }) => (
+                <ScoringModeSelector
+                  aria-labelledby={modeHeadingId}
+                  value={normalizeEventScoringMode(field.value)}
+                  onChange={(mode) => field.onChange(mode)}
+                />
+              )}
+            />
           </SectionCardContent>
         </SectionCard>
 
         {scoringMode === "ADVANCED" && (
-          <SectionCard className=" border-border bg-card ">
+          <SectionCard>
             <SectionCardHeader title={t("events.scoring.title")} />
-            <SectionCardContent className="flex min-h-0 flex-col gap-3">
-              <div className="space-y-3">
-                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                  <Settings className="size-3" />
-                  {t("events.scoring.title")}
-                </Label>
-                <Controller
-                  control={form.control}
-                  name="scoringRules"
-                  rules={{
-                    validate: (value) =>
-                      hasValidScoringNumbers(value) ||
-                      t("events.scoring.validation.invalidRules"),
-                  }}
-                  render={({ field, fieldState }) => (
-                    <ScoringRulesEditor
-                      value={field.value}
-                      onChange={field.onChange}
-                      error={fieldState.error?.message}
-                      ref={field.ref}
-                    />
-                  )}
-                />
-              </div>
+            <SectionCardContent>
+              <Controller
+                control={form.control}
+                name="scoringRules"
+                rules={{
+                  validate: (value) =>
+                    hasValidScoringNumbers(value) ||
+                    t("events.scoring.validation.invalidRules"),
+                }}
+                render={({ field, fieldState }) => (
+                  <ScoringRulesEditor
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={fieldState.error?.message}
+                    ref={field.ref}
+                  />
+                )}
+              />
             </SectionCardContent>
           </SectionCard>
         )}

@@ -1,6 +1,8 @@
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { BellRing } from "lucide-react";
+import { BellRing, Package, Plus } from "lucide-react";
+import { Button } from "@lootlog/ui/components/button";
+import { EmptyState } from "@/components/common/empty-state";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@lootlog/ui/components/badge";
 import { SectionCard } from "@/components/common/section-card/section-card";
@@ -14,11 +16,16 @@ const getWatchedItemGuildIds = (filters: { guildIds?: string[] } | null) =>
 type WatchedItemsListProps = {
   watchedItems: WatchedItemResponseDto[];
   guilds: Array<{ id: string; name: string }>;
+  /** Watching needs active direct messages; the empty state offers the first watch only then. */
+  canAddWatch: boolean;
+  onAddWatch: () => void;
 };
 
 export const WatchedItemsList = ({
   watchedItems,
   guilds,
+  canAddWatch,
+  onAddWatch,
 }: WatchedItemsListProps) => {
   const { t } = useTranslation();
   const watchedItemsCount = watchedItems.length;
@@ -38,7 +45,7 @@ export const WatchedItemsList = ({
           </Badge>
         }
       />
-      <SectionCardContent>
+      <SectionCardContent className={watchedItemsCount > 0 ? undefined : "p-0"}>
         {watchedItemsCount > 0 ? (
           <div className="flex flex-col gap-3">
             {watchedItems.map((watchedItem) => {
@@ -68,9 +75,23 @@ export const WatchedItemsList = ({
             })}
           </div>
         ) : (
-          <div className="p-6 text-sm text-muted-foreground">
-            {t("settings.userNotifications.empty.watchedItems")}
-          </div>
+          <EmptyState
+            icon={Package}
+            title={t("settings.userNotifications.empty.watchedItems")}
+            description={t(
+              canAddWatch
+                ? "settings.userNotifications.empty.watchedItemsDescription"
+                : "settings.userNotifications.dm.requiredHint",
+            )}
+            action={
+              canAddWatch && (
+                <Button onClick={onAddWatch}>
+                  <Plus data-icon="inline-start" aria-hidden />
+                  {t("settings.userNotifications.actions.addWatch")}
+                </Button>
+              )
+            }
+          />
         )}
       </SectionCardContent>
     </SectionCard>

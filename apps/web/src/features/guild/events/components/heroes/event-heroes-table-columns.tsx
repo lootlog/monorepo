@@ -1,25 +1,18 @@
+import { formatNpcLevel } from "@lootlog/domain/profession";
 import { sumBy } from "es-toolkit";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import type { TFunction } from "i18next";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Link } from "@tanstack/react-router";
-import {
-  Map as MapIcon,
-  MoreVertical,
-  Pencil,
-  Swords,
-  Trash2,
-} from "lucide-react";
+import { Map as MapIcon, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
-import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@lootlog/ui/components/dropdown-menu";
-import { NpcTile } from "@/components/tiles";
-import { cn } from "cn";
+import { HeroAvatar } from "../shared/hero-avatar";
 import type { EventHeroNpc, EventTimer } from "../../types/api";
 import { HeroTimerDisplay } from "./hero-timer-display";
 import { HeroWindowStatusBadge } from "./hero-window-status-badge";
@@ -41,7 +34,7 @@ type CreateEventHeroesTableColumnsOptions = {
   canManage: boolean;
   eventId: string;
   guildId: string;
-  onDeleteHero: (heroId: string) => void;
+  onRequestDeleteHero: (hero: EventHeroNpc) => void;
   onEditHero: (hero: EventHeroNpc) => void;
   onManageMaps: (hero: EventHeroNpc) => void;
   t: TFunction;
@@ -55,7 +48,7 @@ export const createEventHeroesTableColumns = ({
   canManage,
   eventId,
   guildId,
-  onDeleteHero,
+  onRequestDeleteHero,
   onEditHero,
   onManageMaps,
   t,
@@ -71,12 +64,10 @@ export const createEventHeroesTableColumns = ({
         const { hero, stats } = row.original;
         const totalMapsCount = getTotalMapsCount(hero);
         const killCount = stats?.killCount ?? 0;
-        const npcProfession = stats?.npcProf?.charAt(0).toLowerCase() ?? "";
 
-        const npcLevelAndProfession =
-          hero.npcLvl === null || hero.npcLvl === undefined
-            ? null
-            : `${hero.npcLvl}${npcProfession}`;
+        const npcLevel = hero.npcLvl
+          ? formatNpcLevel(hero.npcLvl, stats?.npcProf)
+          : null;
 
         return (
           <TextLink
@@ -86,30 +77,17 @@ export const createEventHeroesTableColumns = ({
               params={{ guildId, eventId, heroId: hero.id }}
             />
           >
-            <div
-              className={cn(
-                "flex size-10 shrink-0 items-center justify-center rounded-lg",
-                !hero.npcIcon && "bg-muted/50",
-              )}
-            >
-              {hero.npcIcon ? (
-                <NpcTile
-                  npc={{
-                    id: hero.npcId ?? undefined,
-                    name: hero.npcName,
-                    icon: hero.npcIcon,
-                  }}
-                />
-              ) : (
-                <Swords className="size-4 text-yellow-500" />
-              )}
-            </div>
+            <HeroAvatar hero={hero} />
 
             <div className="min-w-0 flex-1">
               <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                 <span className="min-w-0 truncate text-sm font-semibold leading-tight">
                   {hero.npcName}
-                  {npcLevelAndProfession ? ` (${npcLevelAndProfession})` : ""}
+                  {npcLevel ? (
+                    <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                      {npcLevel}
+                    </span>
+                  ) : null}
                 </span>
                 <HeroWindowStatusBadge
                   eventId={eventId}
@@ -191,7 +169,7 @@ export const createEventHeroesTableColumns = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="size-9 shrink-0 text-muted-foreground"
+                    className="size-8 shrink-0 text-muted-foreground"
                     aria-label={t("events.heroes.actions")}
                     title={t("events.heroes.actions")}
                   >
@@ -208,19 +186,13 @@ export const createEventHeroesTableColumns = ({
                   <MapIcon className="size-4" />
                   {t("events.heroes.manageMaps")}
                 </DropdownMenuItem>
-                <ConfirmDeleteDialog
-                  onConfirm={() => onDeleteHero(hero.id)}
-                  title={t("events.heroes.deleteTitle")}
-                  description={t("events.heroes.deleteDescription", {
-                    name: hero.npcName,
-                  })}
-                  trigger={
-                    <div className="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-destructive outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:text-destructive data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
-                      <Trash2 className="size-4" />
-                      {t("events.heroes.deleteAction")}
-                    </div>
-                  }
-                />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => onRequestDeleteHero(hero)}
+                >
+                  <Trash2 className="size-4" />
+                  {t("events.heroes.deleteAction")}
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

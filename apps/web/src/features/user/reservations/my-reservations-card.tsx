@@ -2,13 +2,14 @@ import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, CalendarX2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   useListMyReservations,
   type MyReservationsResponseDtoItemsItem,
 } from "@lootlog/client/main";
 
+import { EmptyState } from "@/components/common/empty-state";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { ROUTES } from "@/config/routes";
@@ -70,18 +71,21 @@ export function MyReservationsCard() {
                       reservation.id
                   }
                   onEdit={() => setEditingReservation(reservation)}
-                  onCancel={() =>
-                    cancelMutation.mutate({
+                  onCancel={async () => {
+                    await cancelMutation.mutateAsync({
                       pathParams: { reservationId: reservation.id },
-                    })
-                  }
+                    });
+                  }}
                 />
               ))}
             </ul>
           ) : (
-            <p className="flex flex-1 items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">
-              {t("reservations.my.emptyUpcoming")}
-            </p>
+            <EmptyState
+              icon={CalendarX2}
+              title={t("reservations.my.emptyUpcoming")}
+              compact
+              className="flex-1"
+            />
           )}
         </StatisticsQueryState>
       </SectionCardContent>

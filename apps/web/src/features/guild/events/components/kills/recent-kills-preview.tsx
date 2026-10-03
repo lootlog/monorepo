@@ -5,10 +5,9 @@ import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Skull } from "lucide-react";
 import { SectionCard } from "@/components/common/section-card/section-card";
-import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
 import { useRecentHeroKills } from "../../hooks/queries/use-recent-hero-kills";
 import type { EventHeroNpc } from "../../types/api";
-import { EventScrollableTabsList } from "../shared/event-scrollable-tabs-list";
+import { HeroTabs } from "../shared/hero-tabs";
 import { EventKillsTable } from "./event-kills-table";
 
 interface RecentKillsPreviewProps {
@@ -52,53 +51,39 @@ export const RecentKillsPreview = ({
   });
 
   return (
-    <SectionCard className="gap-0 overflow-hidden border-border bg-card p-0">
+    <SectionCard className="overflow-hidden">
       <SectionCardHeader
         icon={Skull}
         title={t("events.kills.recentTitle")}
         actions={
-          <>
-            {kills && kills.length > 0 ? (
-              <ChevronLink
-                className="inline-flex h-8 shrink-0 items-center gap-1 text-xs"
-                render=<Link
-                  to={
-                    activeHeroId
-                      ? "/$guildId/events/$eventId/heroes/$heroId/kills"
-                      : "/$guildId/events/$eventId/kills"
-                  }
-                  params={
-                    activeHeroId
-                      ? { guildId, eventId, heroId: activeHeroId }
-                      : { guildId, eventId }
-                  }
-                />
-              >
-                {t("events.kills.viewAll")}
-              </ChevronLink>
-            ) : null}
-          </>
+          kills && kills.length > 0 ? (
+            <ChevronLink
+              render=<Link
+                to={
+                  activeHeroId
+                    ? "/$guildId/events/$eventId/heroes/$heroId/kills"
+                    : "/$guildId/events/$eventId/kills"
+                }
+                params={
+                  activeHeroId
+                    ? { guildId, eventId, heroId: activeHeroId }
+                    : { guildId, eventId }
+                }
+              />
+            >
+              {t("events.kills.viewAll")}
+            </ChevronLink>
+          ) : null
         }
       />
 
-      {showHeroTabs && heroNpcs && heroNpcs.length > 1 && (
-        <Tabs
-          value={activeHero?.id ?? heroNpcs[0]?.id}
-          onValueChange={setSelectedHeroId}
-          className="border-b border-border/70 px-3 py-2"
-        >
-          <EventScrollableTabsList>
-            {heroNpcs.map((hero) => (
-              <TabsTrigger
-                key={hero.id}
-                value={hero.id}
-                className="flex-shrink-0 text-xs"
-              >
-                {hero.npcName}
-              </TabsTrigger>
-            ))}
-          </EventScrollableTabsList>
-        </Tabs>
+      {showHeroTabs && heroNpcs && (
+        <HeroTabs
+          placement="section"
+          heroes={heroNpcs}
+          value={activeHero?.id}
+          onValueChange={(heroId) => setSelectedHeroId(heroId ?? null)}
+        />
       )}
 
       <EventKillsTable

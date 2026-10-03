@@ -1,6 +1,9 @@
 {
   "navigation": {
     "skipToContent": "Przejdź do treści",
+    "userAriaLabel": "Nawigacja konta",
+    "guildAriaLabel": "Nawigacja Lootloga",
+    "beta": "BETA",
     "dashboard": "Dashboard",
     "battlePanel": "Panel walk",
     "notifications": "Powiadomienia",
@@ -16,7 +19,7 @@
   },
   "guildsSelector": {
     "unreadLootsOverflow": "99+",
-    "refreshError": "Nie udało się odświeżyć listy serwerów."
+    "refreshError": "Nie udało się odświeżyć listy Lootlogów."
   },
   "userMenu": {
     "account": "Konto",

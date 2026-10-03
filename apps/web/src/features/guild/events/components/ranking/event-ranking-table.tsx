@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/common/empty-state";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { useState, type ReactNode } from "react";
@@ -305,7 +306,7 @@ export const EventRankingTable = ({
         }
         tabIndex={isPrimaryLink ? 0 : -1}
         className={cn(
-          "flex min-h-12 w-full min-w-0 items-center px-2 text-inherit outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+          "flex min-h-14 w-full min-w-0 items-center px-2 text-inherit outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
           cell.column.id === "position" && "pl-4",
           RIGHT_ALIGNED_COLUMN_IDS.has(cell.column.id) && "justify-end",
         )}
@@ -315,15 +316,6 @@ export const EventRankingTable = ({
     );
   };
 
-  if (rankings.length === 0) {
-    return (
-      <div className="flex min-h-48 flex-col items-center justify-center text-muted-foreground">
-        <Trophy className="mb-2 size-6 opacity-50" />
-        <p className="text-sm">{t("events.ranking.noRanking")}</p>
-      </div>
-    );
-  }
-
   const Container = variant === "default" ? SectionCard : "section";
 
   return (
@@ -331,44 +323,47 @@ export const EventRankingTable = ({
       {variant === "default" && (
         <SectionCardHeader icon={Trophy} title={t("events.ranking.title")} />
       )}
-      <Table className="w-full table-fixed">
-        <TanStackTableHeader
-          table={table}
-          className="bg-secondary/25"
-          rowClassName="border-border/80"
-          getHeadClassName={(header) =>
-            cn(
-              "h-9 px-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground",
-              header.column.id === "position" && "pl-4",
-              getColumnClassName(header.column.id, variant),
-            )
-          }
-        />
-        <TanStackTableBody
-          table={table}
-          getRowClassName={(row) =>
-            cn(
-              "group h-12 border-border/70 hover:bg-muted/20",
-              row.index < 3 && "bg-primary/[0.025]",
-              row.original.memberId === currentMemberId &&
-                "bg-primary/10 hover:bg-primary/15",
-            )
-          }
-          getCellClassName={(cell) =>
-            cn(
-              "h-12 overflow-hidden p-0! align-middle",
-              getColumnClassName(cell.column.id, variant),
-              variant === "compact" && cell.column.id === "points" && "pr-3!",
-            )
-          }
-          getRowProps={(row) => ({
-            id: `event-ranking-row-${row.original.id}`,
-            "aria-selected":
-              row.original.memberId === currentMemberId || undefined,
-          })}
-          renderCellContent={renderRankingLinkCell}
-        />
-      </Table>
+      {rankings.length === 0 ? (
+        <EmptyState icon={Trophy} title={t("events.ranking.noRanking")} />
+      ) : (
+        <Table className="w-full table-fixed">
+          <TanStackTableHeader
+            table={table}
+            className="sticky top-0 z-10 bg-background"
+            rowClassName="border-b-1! border-border"
+            getHeadClassName={(header) =>
+              cn(
+                "whitespace-nowrap align-middle",
+                header.column.id === "position" && "pl-4",
+                getColumnClassName(header.column.id, variant),
+              )
+            }
+          />
+          <TanStackTableBody
+            table={table}
+            getRowClassName={(row) =>
+              cn(
+                "h-14 border-b border-border hover:bg-muted/40",
+                row.original.memberId === currentMemberId &&
+                  "bg-primary/10 hover:bg-primary/15",
+              )
+            }
+            getCellClassName={(cell) =>
+              cn(
+                "h-14 overflow-hidden p-0! align-middle",
+                getColumnClassName(cell.column.id, variant),
+                variant === "compact" && cell.column.id === "points" && "pr-3!",
+              )
+            }
+            getRowProps={(row) => ({
+              id: `event-ranking-row-${row.original.id}`,
+              "aria-selected":
+                row.original.memberId === currentMemberId || undefined,
+            })}
+            renderCellContent={renderRankingLinkCell}
+          />
+        </Table>
+      )}
       {canEdit && editingRanking && (
         <EventRankingPointsDialog
           key={editingRanking.id}

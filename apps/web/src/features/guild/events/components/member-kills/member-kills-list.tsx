@@ -1,4 +1,6 @@
+import { EmptyState } from "@/components/common/empty-state";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
+import { cn } from "cn";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -37,24 +39,13 @@ type MemberKillsListProps = {
   isRetrying?: boolean;
 };
 
-const HEAD_TEXT_CLASS_NAME = "text-[10px] uppercase tracking-[0.08em]";
-
 const HEAD_CLASS_NAMES = new Map([
-  ["monster", `h-9 min-w-0 px-2 ${HEAD_TEXT_CLASS_NAME}`],
-  [
-    "date",
-    `hidden h-9 w-0 px-2 ${HEAD_TEXT_CLASS_NAME} sm:table-cell sm:w-28 lg:w-36`,
-  ],
-  [
-    "timeCoverage",
-    `hidden h-9 w-0 px-2 text-right ${HEAD_TEXT_CLASS_NAME} xl:table-cell xl:w-28`,
-  ],
-  [
-    "trackingTime",
-    `hidden h-9 w-0 px-2 text-right ${HEAD_TEXT_CLASS_NAME} xl:table-cell xl:w-40`,
-  ],
-  ["points", `h-9 w-20 px-2 text-right ${HEAD_TEXT_CLASS_NAME} sm:w-24`],
-  ["actions", "h-9 w-11 px-2"],
+  ["monster", "min-w-0"],
+  ["date", "hidden w-0 sm:table-cell sm:w-28 lg:w-36"],
+  ["timeCoverage", "hidden w-0 text-right xl:table-cell xl:w-28"],
+  ["trackingTime", "hidden w-0 text-right xl:table-cell xl:w-40"],
+  ["points", "w-20 text-right sm:w-24"],
+  ["actions", "w-11"],
 ]);
 
 const CELL_CLASS_NAMES = new Map([
@@ -135,55 +126,45 @@ export const MemberKillsList = ({
     scrollElement,
   });
 
-  if (isLoading) {
-    return (
-      <div
-        aria-label={t("events.kills.loading")}
-        className="overflow-hidden rounded-2xl border border-border"
-      >
-        <Skeleton className="h-9 w-full rounded-none" />
-        {Array.from({ length: 7 }).map((_, index) => (
-          <Skeleton
-            key={index}
-            className="h-14 w-full rounded-none border-t border-border/70"
-          />
-        ))}
-      </div>
-    );
-  }
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div aria-busy="true" aria-label={t("events.kills.loading")}>
+          <Skeleton className="h-10 w-full rounded-none border-b border-border" />
+          {Array.from({ length: 7 }).map((_, index) => (
+            <Skeleton
+              key={index}
+              className="h-14 w-full rounded-none border-b border-border last:border-b-0"
+            />
+          ))}
+        </div>
+      );
+    }
 
-  if (hasError && allKills.length === 0) {
-    return (
-      <div className="flex min-h-48 items-center justify-center">
-        <EventReadError onRetry={onRetry} isRetrying={isRetrying} />
-      </div>
-    );
-  }
+    if (hasError && allKills.length === 0) {
+      return <EventReadError onRetry={onRetry} isRetrying={isRetrying} />;
+    }
 
-  if (allKills.length === 0 && !hasNextPage) {
-    return (
-      <div className="flex min-h-48 flex-col items-center justify-center text-muted-foreground">
-        <Skull className="mb-2 size-6 opacity-50" />
-        <p className="text-sm">{t("events.kills.noKills")}</p>
-      </div>
-    );
-  }
+    if (allKills.length === 0 && !hasNextPage) {
+      return <EmptyState icon={Skull} title={t("events.kills.noKills")} />;
+    }
 
-  return (
-    <SectionCard className="w-full overflow-hidden">
-      <SectionCardHeader icon={Skull} title={t("events.kills.title")} />
+    return (
       <Table className="w-full table-auto xl:table-fixed">
         <TanStackTableHeader
           table={table}
-          className="bg-secondary/25"
-          rowClassName="border-border/80 hover:bg-transparent"
+          className="sticky top-0 z-10 bg-background"
+          rowClassName="border-b-1! border-border hover:bg-transparent"
           getHeadClassName={(header) =>
-            HEAD_CLASS_NAMES.get(header.column.id) ?? ""
+            cn(
+              "whitespace-nowrap align-middle",
+              HEAD_CLASS_NAMES.get(header.column.id),
+            )
           }
         />
         <TanStackTableBody
           table={table}
-          rowClassName="group h-14 hover:bg-muted/20"
+          rowClassName="h-14 border-b border-border hover:bg-muted/40"
           getCellClassName={(cell) =>
             CELL_CLASS_NAMES.get(cell.column.id) ?? ""
           }
@@ -205,7 +186,7 @@ export const MemberKillsList = ({
           <TableRow ref={loaderRowRef} className="hover:bg-transparent">
             <TableCell
               colSpan={columns.length}
-              className="h-12 border-t border-border/70 text-center text-xs text-muted-foreground"
+              className="h-14 text-center text-xs text-muted-foreground"
             >
               <EventHistoryPaginationStatus
                 hasError={hasError}
@@ -217,6 +198,13 @@ export const MemberKillsList = ({
           </TableRow>
         </TableBody>
       </Table>
+    );
+  };
+
+  return (
+    <SectionCard className="w-full overflow-hidden">
+      <SectionCardHeader icon={Skull} title={t("events.kills.title")} />
+      {renderContent()}
     </SectionCard>
   );
 };

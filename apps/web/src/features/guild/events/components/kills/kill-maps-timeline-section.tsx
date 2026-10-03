@@ -7,6 +7,8 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useEventsMonitoringControllerGetKillTimelineData } from "@lootlog/client/main";
 import { KillMapsTimelineTable } from "./kill-maps-timeline-table";
 import { EventReadError } from "../shared/event-read-error";
+import { COVERAGE_SEGMENT_BG_CLASS_NAMES } from "../../utils/get-map-coverage-color-class-name";
+import { cn } from "cn";
 
 interface KillMapsTimelineSectionProps {
   eventId: string;
@@ -79,15 +81,30 @@ export const KillMapsTimelineSection = ({
             </span>
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
-                <span className="size-2.5 rounded-full bg-emerald-500" />
+                <span
+                  className={cn(
+                    "size-2.5 rounded-full",
+                    COVERAGE_SEGMENT_BG_CLASS_NAMES.COVERED,
+                  )}
+                />
                 {t("events.killDetail.mapCoverage.covered")}
               </span>
               <span className="flex items-center gap-1">
-                <span className="size-2.5 rounded-full bg-amber-500" />
+                <span
+                  className={cn(
+                    "size-2.5 rounded-full",
+                    COVERAGE_SEGMENT_BG_CLASS_NAMES.UNCOVERED,
+                  )}
+                />
                 {t("events.killDetail.mapCoverage.uncovered")}
               </span>
               <span className="flex items-center gap-1">
-                <span className="size-2.5 rounded-full bg-destructive" />
+                <span
+                  className={cn(
+                    "size-2.5 rounded-full",
+                    COVERAGE_SEGMENT_BG_CLASS_NAMES.UNASSIGNED,
+                  )}
+                />
                 {t("events.killDetail.mapCoverage.unassigned")}
               </span>
             </div>

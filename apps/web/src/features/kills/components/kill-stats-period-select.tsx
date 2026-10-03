@@ -27,7 +27,7 @@ export const KillStatsPeriodSelect: React.FC<KillStatsPeriodSelectProps> = ({
       excludePeriods={["90d", "180d"]}
       allLabel={allLabel}
       width={className ?? "w-[140px]"}
-      className={triggerClassName ?? "h-9"}
+      className={triggerClassName}
     />
   );
 };

@@ -1,6 +1,6 @@
 import { NpcType } from "@lootlog/client/main";
 
-export const NPC_TYPE_NAMES: Record<NpcType, string> = {
+const NPC_TYPE_NAMES: Record<NpcType, string> = {
   [NpcType.TITAN]: "Tytan",
   [NpcType.COLOSSUS]: "Kolos",
   [NpcType.HERO]: "Heros",
@@ -20,14 +20,6 @@ export const NPC_TYPE_SORT_ORDER = [
   NpcType.ELITE2,
   NpcType.ELITE,
 ];
-
-export const ITEM_RARITY_NAMES = new Map([
-  ["LEGENDARY", "Legendarny"],
-  ["HEROIC", "Heroiczny"],
-  ["UNIQUE", "Unikatowy"],
-  ["UPGRADED", "Ulepszony"],
-  ["COMMON", "Zwykły"],
-]);
 
 export const findNpcType = (value: string | null) =>
   Object.values(NpcType).find((type) => type === value);

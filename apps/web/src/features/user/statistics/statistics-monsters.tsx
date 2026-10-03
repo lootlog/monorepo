@@ -67,8 +67,16 @@ export function StatisticsMonsters({
         <SectionCardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TanStackTableHeader table={table} />
-              <TanStackTableBody table={table} rowHeaderColumnId="npcType" />
+              <TanStackTableHeader
+                table={table}
+                className="sticky top-0 z-10 bg-background"
+                rowClassName="border-b-1! border-border"
+              />
+              <TanStackTableBody
+                table={table}
+                rowHeaderColumnId="npcType"
+                rowClassName="h-14 border-b border-border hover:bg-muted/40"
+              />
             </Table>
           </div>
         </SectionCardContent>

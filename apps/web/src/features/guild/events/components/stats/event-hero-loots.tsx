@@ -1,17 +1,17 @@
+import { EmptyState } from "@/components/common/empty-state";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { SectionCard } from "@/components/common/section-card/section-card";
-import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
-import { Package, Frown } from "lucide-react";
+import { Package } from "lucide-react";
 import { useEventLoots } from "../../hooks/queries/use-event-loots";
 import type { EventHeroNpc } from "../../types/api";
 import { LootsListItem } from "@/features/guild/loots-list/components/loots-list/loots-list-item";
 import { LootDetailsDialog } from "@/features/guild/loots-list/components/loots-list/loot-details-dialog";
-import { EventScrollableTabsList } from "../shared/event-scrollable-tabs-list";
-import { LoadingSlot } from "@/components/common/loading-slot";
+import { EmbeddedLootRowsSkeleton } from "../shared/embedded-loot-rows-skeleton";
+import { HeroTabs } from "../shared/hero-tabs";
 
 interface EventHeroLootsProps {
   guildId: string;
@@ -49,61 +49,43 @@ export const EventHeroLoots = ({
 
   return (
     <>
-      <SectionCard className="gap-0 overflow-hidden border-border bg-card p-0">
+      <SectionCard className="overflow-hidden">
         <SectionCardHeader
           icon={Package}
           title={t("events.loots.title")}
           actions={
-            <>
-              <ChevronLink
-                className="inline-flex h-8 shrink-0 items-center gap-1 text-xs"
-                render=<Link
-                  to="/$guildId"
-                  params={{ guildId }}
-                  search={{
-                    npcs: activeHeroName ?? heroNpcNames.join(","),
-                  }}
-                />
-              >
-                {t("events.loots.showAll")}
-              </ChevronLink>
-            </>
+            <ChevronLink
+              render=<Link
+                to="/$guildId"
+                params={{ guildId }}
+                search={{
+                  npcs: activeHeroName ?? heroNpcNames.join(","),
+                }}
+              />
+            >
+              {t("events.loots.showAll")}
+            </ChevronLink>
           }
         />
 
-        {showHeroTabs && heroNpcs && heroNpcs.length > 1 && (
-          <Tabs
-            value={activeHeroName ?? heroNpcs[0]?.npcName}
-            onValueChange={setSelectedHeroName}
-            className="border-b border-border/70 px-3 py-2"
-          >
-            <EventScrollableTabsList>
-              {heroNpcs.map((hero) => (
-                <TabsTrigger
-                  key={hero.id}
-                  value={hero.npcName}
-                  className="flex-shrink-0 text-xs"
-                >
-                  {hero.npcName}
-                </TabsTrigger>
-              ))}
-            </EventScrollableTabsList>
-          </Tabs>
+        {showHeroTabs && heroNpcs && (
+          <HeroTabs
+            placement="section"
+            heroes={heroNpcs}
+            valueKey="npcName"
+            value={activeHeroName ?? undefined}
+            onValueChange={(heroName) => setSelectedHeroName(heroName ?? null)}
+          />
         )}
 
         {isLoading ? (
-          <div className="flex min-h-32 items-center justify-center">
-            <LoadingSlot size="small" />
-          </div>
+          <EmbeddedLootRowsSkeleton rows={Math.min(limit, 3)} />
         ) : !loots || loots.length === 0 ? (
-          <div className="flex min-h-32 flex-col items-center justify-center py-6 text-muted-foreground">
-            <Frown className="w-8 h-8 mb-2 opacity-50" />
-            <p className="text-sm">{t("events.loots.noLoots")}</p>
-          </div>
+          <EmptyState icon={Package} title={t("events.loots.noLoots")} />
         ) : (
           <div
             key={activeHeroName}
-            className="divide-y divide-border/70 animate-in fade-in-0 duration-200"
+            className="divide-y divide-border/70 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200"
           >
             {loots.map((loot) => (
               <LootsListItem key={loot.id} loot={loot} variant="embedded" />

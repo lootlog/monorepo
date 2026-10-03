@@ -1,14 +1,12 @@
-import { SectionLoading } from "@/components/common/section-loading";
+import { EmptyState } from "@/components/common/empty-state";
 import type { AccessPolicy, Capability } from "@lootlog/domain/access-policy";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Crosshair } from "lucide-react";
+import { Crosshair } from "lucide-react";
 import { toast } from "sonner";
 import { Permission } from "@lootlog/schema/permissions";
-import { Button } from "@lootlog/ui/components/button";
-import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {
@@ -19,6 +17,8 @@ import {
   type EventCoordinationResponseDtoHeroesItem,
 } from "@lootlog/client/main";
 import { EventActionDialog } from "./components/dialogs/event-action-dialog";
+import { EventLoadError } from "./components/event-load-error";
+import { EventCoordinationSkeleton } from "./event-coordination-skeleton";
 import { EventCoordinationHeroCard } from "./components/coordination/event-coordination-hero-card";
 import { EventCoordinationSummaryCard } from "./components/coordination/event-coordination-summary-card";
 import { invalidateMapQueries } from "./hooks/mutations/invalidate-map-queries";
@@ -53,7 +53,6 @@ export const EventCoordinationPage = () => {
     isPending,
     error,
     refetch,
-    isFetching,
   } = useEventsMonitoringControllerGetCoordination(
     {
       guildId: resolvedGuildId,
@@ -179,24 +178,19 @@ export const EventCoordinationPage = () => {
   };
 
   if (isPending) {
-    return <SectionLoading />;
+    return <EventCoordinationSkeleton />;
   }
 
   if (error || !coordination) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4 max-h-full overflow-y-auto [justify-content:safe_center]">
-        <AlertCircle className="w-12 h-12 text-destructive" />
-        <p className="text-muted-foreground">
-          {t("events.coordination.error")}
-        </p>
-        <Button
-          variant="outline"
-          loading={isFetching}
-          onClick={() => void refetch()}
-        >
-          {t("common.routeErrors.actions.retry")}
-        </Button>
-      </div>
+      <EventLoadError
+        backTo="event"
+        guildId={resolvedGuildId}
+        eventId={resolvedEventId}
+        error={error}
+        titles={{ 500: t("events.coordination.error") }}
+        onRetry={() => refetch()}
+      />
     );
   }
 
@@ -219,16 +213,15 @@ export const EventCoordinationPage = () => {
       />
 
       <ScrollArea className="flex-1 min-h-0">
-        <div className="px-3 py-3 flex flex-col gap-4">
+        <div className="flex flex-col gap-3 px-3 py-3">
           <EventCoordinationSummaryCard coordination={coordination} />
 
           {coordination.heroes.length === 0 ? (
-            <Card className="flex flex-col items-center justify-center gap-3 bg-card py-12">
-              <Crosshair className="w-12 h-12 text-muted-foreground opacity-50" />
-              <p className="text-muted-foreground">
-                {t("events.coordination.empty")}
-              </p>
-            </Card>
+            <EmptyState
+              framed
+              icon={Crosshair}
+              title={t("events.coordination.empty")}
+            />
           ) : (
             <div className="flex flex-col gap-3">
               {coordination.heroes.map((hero) => (

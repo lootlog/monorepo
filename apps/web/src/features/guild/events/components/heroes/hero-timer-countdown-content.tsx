@@ -2,8 +2,6 @@ import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { Clock } from "lucide-react";
-import { format } from "date-fns";
-import { pl } from "date-fns/locale";
 import { cn } from "cn";
 import {
   Tooltip,
@@ -13,6 +11,7 @@ import {
 import { parseMsToTime } from "@lootlog/datetime";
 import type { EventTimer } from "../../types/api";
 import { getHeroTimerCountdownState } from "./hero-timer-countdown-state";
+import { formatTime } from "../../utils/format-date";
 
 export const HeroTimerCountdownContent = ({ timer }: { timer: EventTimer }) => {
   const { t } = useTranslation();
@@ -54,8 +53,8 @@ export const HeroTimerCountdownContent = ({ timer }: { timer: EventTimer }) => {
             className={cn(
               "flex items-center gap-1.5 px-2 py-1 rounded-md text-sm font-medium",
               isWaiting
-                ? "bg-amber-500/10 text-amber-500"
-                : "bg-green-500/10 text-green-500",
+                ? "bg-signal-timer/10 text-signal-timer"
+                : "bg-signal-ready/10 text-signal-ready",
             )}
           >
             <Clock className="w-4 h-4" />
@@ -69,16 +68,16 @@ export const HeroTimerCountdownContent = ({ timer }: { timer: EventTimer }) => {
         <div className="text-sm space-y-1">
           <p>
             {t("events.respawn.minSpawnTime")}:{" "}
-            {format(new Date(timer.minSpawnTime), "HH:mm:ss", { locale: pl })}
+            {formatTime(new Date(timer.minSpawnTime))}
           </p>
           <p>
             {t("events.respawn.maxSpawnTime")}:{" "}
-            {format(new Date(timer.maxSpawnTime), "HH:mm:ss", { locale: pl })}
+            {formatTime(new Date(timer.maxSpawnTime))}
           </p>
           <p
             className={cn(
               "font-medium",
-              isWaiting ? "text-amber-500" : "text-green-500",
+              isWaiting ? "text-signal-timer" : "text-signal-ready",
             )}
           >
             {isWaiting

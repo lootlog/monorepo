@@ -7,7 +7,7 @@ export const ReservationsSettingsSkeleton = () => {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="min-h-0 flex-1 overflow-hidden">
-        <div className="w-full space-y-4 px-3 pb-3">
+        <div className="flex w-full flex-col gap-3 px-3 pb-3">
           <SectionCard className="overflow-hidden">
             <SectionCardContent className="flex flex-col gap-3">
               {Array.from({ length: 3 }).map((_, sectionIndex) => (

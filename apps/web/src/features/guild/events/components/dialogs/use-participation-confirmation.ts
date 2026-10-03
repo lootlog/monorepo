@@ -114,19 +114,9 @@ export function useParticipationConfirmation({
           killId,
         },
       });
-      toast.success(
-        t(
-          "events.confirmation.success",
-          "Udział został potwierdzony i punkty doliczone",
-        ),
-      );
+      toast.success(t("events.confirmation.success"));
     } catch {
-      toast.error(
-        t(
-          "events.confirmation.error",
-          "Nie udało się potwierdzić udziału (limit czasu mógł minąć)",
-        ),
-      );
+      toast.error(t("events.confirmation.error"));
     }
 
     setConfirmingKillIds((ids) => {

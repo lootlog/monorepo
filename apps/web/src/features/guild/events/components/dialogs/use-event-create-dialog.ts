@@ -85,23 +85,19 @@ export function useEventCreateDialog({ onOpenChange }: EventCreateDialogProps) {
 
   const onSubmit = (data: FormData) => {
     if (data.endsAt && data.startsAt && data.endsAt <= data.startsAt) {
-      toast.error(
-        t(
-          "events.createDialog.endDateMustBeAfterStart",
-          "Data końca musi być po dacie startu",
-        ),
-      );
+      toast.error(t("events.createDialog.endDateMustBeAfterStart"));
 
       return;
     }
 
-    if (!data.name.trim() || !data.world.trim()) {
-      toast.error(
-        t(
-          "events.createDialog.nameWorldRequired",
-          "Nazwa eventu i świat są wymagane",
-        ),
-      );
+    if (!data.name.trim()) {
+      toast.error(t("events.createDialog.nameRequired"));
+
+      return;
+    }
+
+    if (!data.world.trim()) {
+      toast.error(t("events.createDialog.worldRequired"));
 
       return;
     }

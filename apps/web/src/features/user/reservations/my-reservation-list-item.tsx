@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import type { MyReservationsResponseDtoItemsItem } from "@lootlog/client/main";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
+import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
 import {
   Avatar,
   AvatarFallback,
@@ -26,7 +27,8 @@ type MyReservationListItemProps = {
   cancelPending?: boolean;
   cancelDisabled?: boolean;
   onEdit?: () => void;
-  onCancel?: () => void;
+  /** Runs after the player confirms; a rejection keeps the dialog open. */
+  onCancel?: () => Promise<void>;
 };
 
 export function MyReservationListItem({
@@ -133,29 +135,33 @@ export function MyReservationListItem({
             </Tooltip>
           )}
           {showCancel && reservation.canCancel && (
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    loading={cancelPending}
-                    disabled={cancelDisabled}
-                    onClick={onCancel}
-                    aria-label={t("reservations.my.cancel", {
-                      spot: reservation.spotName,
-                    })}
-                  >
-                    <Trash2 className="size-3.5" />
-                  </Button>
-                }
-              />
-              <TooltipContent sideOffset={4}>
-                {t("reservations.my.cancel", { spot: reservation.spotName })}
-              </TooltipContent>
-            </Tooltip>
+            <ConfirmDeleteDialog
+              title={t("reservations.my.cancelConfirmTitle", {
+                spot: reservation.spotName,
+              })}
+              description={t("reservations.my.cancelConfirmDescription")}
+              confirmButtonLabel={t("reservations.details.cancel")}
+              cancelButtonLabel={t("reservations.my.keep")}
+              disabled={cancelDisabled}
+              onConfirm={onCancel ?? (() => undefined)}
+              triggerTooltip={t("reservations.my.cancel", {
+                spot: reservation.spotName,
+              })}
+              trigger={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  loading={cancelPending}
+                  aria-label={t("reservations.my.cancel", {
+                    spot: reservation.spotName,
+                  })}
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+              }
+            />
           )}
         </div>
       )}

@@ -11,16 +11,16 @@ export const MembersSettingsSkeleton = () => {
     <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden px-3 pb-3">
       <SectionCard className="min-h-0 flex-1 overflow-hidden">
         <div className="flex shrink-0 flex-col gap-3 border-b border-border/70 bg-background/30 p-2 xl:flex-row xl:items-center xl:justify-between">
-          <Skeleton className="h-9 w-full rounded-md xl:max-w-md 2xl:max-w-xl" />
+          <Skeleton className="h-10 w-full rounded-xl xl:max-w-md 2xl:max-w-xl" />
           <div className="flex flex-wrap items-center gap-1.5 xl:justify-end">
             {filterButtons.map((_, index) => (
               <Skeleton
                 key={index}
-                className="h-9 w-20 rounded-md first:w-16"
+                className="h-10 w-20 rounded-md first:w-16"
               />
             ))}
           </div>
-          <Skeleton className="h-9 w-40 shrink-0" />
+          <Skeleton className="h-10 w-40 shrink-0" />
         </div>
 
         <div className="min-h-0 flex-1 overflow-hidden">

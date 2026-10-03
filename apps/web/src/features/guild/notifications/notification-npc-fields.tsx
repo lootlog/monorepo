@@ -62,9 +62,7 @@ export const NotificationNpcFields = ({
           name="world"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                {t("settings.notifications.fields.world")}
-              </FormLabel>
+              <FormLabel>{t("settings.notifications.fields.world")}</FormLabel>
               <Select
                 value={field.value}
                 onValueChange={(value) => {
@@ -138,7 +136,7 @@ export const NotificationNpcFields = ({
             name="manualNpcIds"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                <FormLabel>
                   {t("settings.notifications.fields.manualNpcIds")}
                 </FormLabel>
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -170,9 +168,7 @@ export const NotificationNpcFields = ({
             name="npcIds"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                  {t("settings.notifications.fields.npcs")}
-                </FormLabel>
+                <FormLabel>{t("settings.notifications.fields.npcs")}</FormLabel>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {t("settings.notifications.validation.maxNpcCount", {
                     count: maxNpcCount,

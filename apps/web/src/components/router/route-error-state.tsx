@@ -24,10 +24,10 @@ const statusConfig: Record<
   RouteErrorStatus,
   { icon: LucideIcon; color: string }
 > = {
-  401: { icon: KeyRound, color: "text-blue-500" },
-  403: { icon: ShieldAlert, color: "text-amber-500" },
-  404: { icon: Ghost, color: "text-slate-500" },
-  500: { icon: TriangleAlert, color: "text-red-500" },
+  401: { icon: KeyRound, color: "text-signal-live" },
+  403: { icon: ShieldAlert, color: "text-signal-timer" },
+  404: { icon: Ghost, color: "text-muted-foreground" },
+  500: { icon: TriangleAlert, color: "text-destructive" },
 };
 
 export const RouteErrorState = ({

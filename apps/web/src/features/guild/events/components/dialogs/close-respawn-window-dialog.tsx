@@ -4,13 +4,8 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@lootlog/ui/components/dialog";
+import { IconDialogHeader } from "@/components/common/icon-dialog-header";
+import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Input } from "@lootlog/ui/components/input";
 import {
@@ -128,21 +123,12 @@ export const CloseRespawnWindowDialog = ({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
-        <DialogHeader className="px-5 pt-5 pb-4 border-b bg-muted/30">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-destructive/10">
-              <XCircle className="size-4 text-destructive" />
-            </div>
-            <div>
-              <DialogTitle className="text-base">
-                {t("events.respawn.closeWindow")}
-              </DialogTitle>
-              <DialogDescription className="text-xs mt-0.5">
-                {heroName}
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
+        <IconDialogHeader
+          icon={XCircle}
+          tone="destructive"
+          title={t("events.respawn.closeWindow")}
+          description={heroName}
+        />
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleConfirm)}>

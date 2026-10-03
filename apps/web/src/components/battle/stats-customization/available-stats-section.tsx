@@ -65,6 +65,9 @@ export const AvailableStatsSection = ({
                   variant="ghost"
                   size="sm"
                   onClick={() => onAddStat(String(stat.key))}
+                  aria-label={t("battleUi.customization.addStat", {
+                    name: t(stat.labelKey),
+                  })}
                   className="h-6 w-6 p-0 hover:bg-primary/10 hover:text-primary"
                 >
                   <Plus className="h-3 w-3" />

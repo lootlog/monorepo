@@ -1,8 +1,8 @@
 {
   "title": "Eventy",
-  "description": "Lista eventów klanu",
-  "create": "Utwórz Event",
-  "edit": "Edytuj Event",
+  "description": "Lista eventów Lootloga",
+  "create": "Utwórz event",
+  "edit": "Edytuj event",
   "editButton": "Edytuj",
   "editSections": {
     "ariaLabel": "Edycja eventu",
@@ -11,6 +11,7 @@
     "scoring": "Ustawienia punktów"
   },
   "delete": "Usuń event",
+  "deleteNamed": "Usuń event {{name}}",
   "pinEvent": "Przypnij",
   "unpinEvent": "Odepnij",
   "pinUnavailable": "Można przypinać tylko aktywne eventy",
@@ -22,13 +23,23 @@
   "ongoing": "W trakcie",
   "ended": "Zakończony",
   "noEvents": "Brak eventów",
-  "emptyDescription": "Utwórz event, aby rozpocząć koordynację wydarzenia w klanie.",
+  "emptyDescription": "Utwórz event, aby rozpocząć koordynację wydarzenia w Lootlogu.",
   "searchPlaceholder": "Szukaj eventu...",
   "noResults": "Nie znaleziono eventów",
   "noResultsDescription": "Spróbuj zmienić wyszukiwaną frazę.",
   "clearSearch": "Wyczyść wyszukiwanie",
   "error": "Błąd podczas pobierania",
   "accessDenied": "Brak dostępu do eventów",
+  "loadError": {
+    "title": "Nie udało się załadować eventu",
+    "notFound": "Nie znaleziono eventu",
+    "listTitle": "Nie udało się załadować eventów"
+  },
+  "filtersLabel": "Filtry eventów",
+  "searchLabel": "Szukaj eventu",
+  "heroTabs": {
+    "label": "Wybór herosa"
+  },
   "backToList": "Powrót do listy",
   "end": "Zakończ",
   "resume": "Wznów",
@@ -53,8 +64,8 @@
     "description": "Czy na pewno chcesz wznowić ten event? Będzie on ponownie aktywny."
   },
   "createDialog": {
-    "title": "Nowy Event",
-    "description": "Utwórz nowy event dla gildii",
+    "title": "Nowy event",
+    "description": "Utwórz nowy event w Lootlogu",
     "nameLabel": "Nazwa eventu",
     "namePlaceholder": "np. Gwiazdka 2025",
     "worldLabel": "Świat",
@@ -77,11 +88,15 @@
     "error": "Błąd podczas tworzenia eventu",
     "cancel": "Anuluj",
     "creating": "Tworzenie...",
-    "create": "Utwórz"
+    "create": "Utwórz",
+    "back": "Wstecz",
+    "next": "Dalej"
   },
   "rulebook": {
     "label": "Regulamin eventu",
-    "placeholder": "Wpisz regulamin eventu, zasady uczestnictwa i dodatkowe informacje."
+    "placeholder": "Wpisz regulamin eventu, zasady uczestnictwa i dodatkowe informacje.",
+    "saveSuccess": "Zapisano regulamin",
+    "saveError": "Nie udało się zapisać regulaminu"
   },
   "rulesDialog": {
     "trigger": "Zasady eventu",
@@ -91,7 +106,7 @@
     "scoringTitle": "Zasady punktacji"
   },
   "summaryDialog": {
-    "trigger": "Wrapped eventu",
+    "trigger": "Podsumowanie eventu",
     "title": "Podsumowanie eventu",
     "loadingTitle": "Przygotowuję podsumowanie",
     "loadingDescription": "Sprawdzam dostępne statystyki eventu.",
@@ -108,12 +123,12 @@
     "play": "Wznów automatyczne przejście",
     "openingProgressLabel": "Otwarcie",
     "finaleProgressLabel": "Podsumowanie",
-    "eyebrow": "Event wrapped",
+    "eyebrow": "Podsumowanie eventu",
     "openingDescription": "Najważniejsze potwierdzone statystyki z przebiegu eventu.",
     "finaleEyebrow": "W skrócie",
     "finaleTitle": "To był ten event",
     "sparseEyebrow": "Podsumowanie",
-    "sparseDescription": "Danych jest jeszcze za mało na pełne wrapped. Pokazujemy tylko statystyki, które można potwierdzić.",
+    "sparseDescription": "Danych jest jeszcze za mało na pełne podsumowanie. Pokazujemy tylko statystyki, które można potwierdzić.",
     "noVerifiedFacts": "Nie ma jeszcze potwierdzonych statystyk do pokazania.",
     "facts": {
       "kills": {
@@ -173,9 +188,6 @@
   "actionsCard": {
     "subtitle": "Zarządzanie"
   },
-  "common": {
-    "pointsShort": "pkt"
-  },
   "coordination": {
     "trigger": "Koordynator",
     "title": "Koordynator respów",
@@ -195,11 +207,10 @@
       "none": "Brak timera"
     },
     "summary": {
-      "critical": "{{count}} pilne",
-      "warning": "{{count}} ostrzeżeń",
-      "coverage": "{{covered}}/{{total}} map ({{percentage}}%)",
-      "nextSpawn": "Najbliżej: {{time}}",
-      "noNextSpawn": "brak"
+      "coverageLabel": "Pokrycie map",
+      "coveredMaps": "{{covered}}/{{total}} map",
+      "nextSpawnLabel": "Najbliższy respawn",
+      "noNextSpawn": "Brak"
     },
     "hero": {
       "coverageShort": "{{covered}}/{{total}} map ({{percentage}}%)",
@@ -236,7 +247,7 @@
     "acknowledgeError": "Nie udało się zapamiętać przeterminowanych potwierdzeń"
   },
   "ranking": {
-    "title": "Ranking Eventowy",
+    "title": "Ranking eventowy",
     "position": "Miejsce",
     "player": "Gracz",
     "points": "Punkty",
@@ -251,6 +262,7 @@
     "time": "Czas",
     "afk": "AFK %",
     "noRanking": "Brak danych w rankingu",
+    "error": "Nie udało się pobrać rankingu. Dane mogą być niepełne.",
     "viewAll": "Zobacz pełny ranking",
     "memberFallback": "Gracz #{{memberId}}",
     "openMemberStats": "Otwórz statystyki gracza {{memberName}}",
@@ -258,6 +270,7 @@
     "moreActions": "Więcej akcji"
   },
   "common": {
+    "pointsShort": "pkt",
     "backToEvent": "Powrót do eventu",
     "backToHero": "Powrót do herosa",
     "close": "Zamknij"
@@ -281,6 +294,7 @@
     "unassignSuccess": "Wypisano z mapy",
     "unassignError": "Błąd podczas odpisywania",
     "noMaps": "Brak map",
+    "error": "Nie udało się pobrać map eventu.",
     "assigned": "Przypisane mapy",
     "noMapsAssigned": "Brak przypisanych map",
     "loadFromTemplate": "Załaduj z szablonu",
@@ -322,12 +336,12 @@
     }
   },
   "heroes": {
-    "title": "Herosi Eventowi",
+    "title": "Herosi eventowi",
     "count_one": "{{count}} heros eventowy",
     "count_few": "{{count}} herosi eventowi",
     "count_many": "{{count}} herosów eventowych",
     "notFound": "Nie znaleziono herosa",
-    "killed": "Heros Zabity!",
+    "killed": "Heros zabity!",
     "kills": "bicia",
     "kill": "bicie",
     "killCount_one": "{{count}} bicie",
@@ -352,6 +366,8 @@
       "idValue": "ID: {{id}}"
     },
     "addDescription": "Dodaj nowego herosa do eventu",
+    "nameHint": "Nazwa musi być <strong>dokładnie</strong> taka sama jak w grze.",
+    "saveError": "Nie udało się zapisać herosa",
     "mapsHint": "Mapy dla herosa dodasz po jego utworzeniu.",
     "idHint": "Jeśli nie znasz ID lub jest niedostępne - zostanie ustawione automatycznie po pierwszym zbiciu herosa (wymaga poprawnej nazwy).",
     "nameLockedError": "Nie można zmienić nazwy herosa po ustawieniu jego ID.",
@@ -563,7 +579,9 @@
     "startsAt": "Data rozpoczęcia",
     "endsAt": "Data zakończenia",
     "datesHint": "Daty są opcjonalne. Możesz je ustawić później.",
-    "endDateMustBeAfterStart": "Data zakończenia musi być późniejsza niż data rozpoczęcia"
+    "endDateMustBeAfterStart": "Data zakończenia musi być późniejsza niż data rozpoczęcia",
+    "saveSuccess": "Zapisano ustawienia eventu",
+    "saveError": "Nie udało się zapisać ustawień eventu"
   },
   "scoring": {
     "validation": {
@@ -719,7 +737,9 @@
       "capped": "(limit)",
       "noRulesFired": "Żadna reguła nie zadziałała",
       "firedRules": "Zadziałały",
-      "context": "Scenariusz gracza"
+      "context": "Scenariusz gracza",
+      "minutesUnit": "min",
+      "secondsUnit": "sek"
     }
   },
   "header": {

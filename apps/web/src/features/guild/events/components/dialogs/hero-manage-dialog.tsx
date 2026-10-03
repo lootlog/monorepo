@@ -1,14 +1,10 @@
 import { DialogActionFooter } from "./dialog-action-footer";
+import { useId } from "react";
 import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { Trans, useTranslation } from "react-i18next";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@lootlog/ui/components/dialog";
+import { IconDialogHeader } from "@/components/common/icon-dialog-header";
+import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { Swords, Plus, Pencil, Info } from "lucide-react";
@@ -46,6 +42,8 @@ export const HeroManageDialog = ({
 }: HeroManageDialogProps) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const npcIdInputId = useId();
+  const npcNameInputId = useId();
 
   const addHero = useEventsAssignmentControllerAddHero({
     mutation: {
@@ -112,7 +110,7 @@ export const HeroManageDialog = ({
       toast.error(
         getApiErrorMessage(error) === "EVENT_HERO_NAME_LOCKED"
           ? t("events.heroes.nameLockedError")
-          : t("common.error"),
+          : t("events.heroes.saveError"),
       );
     }
   };
@@ -125,21 +123,13 @@ export const HeroManageDialog = ({
       }}
     >
       <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
-        <DialogHeader className="px-5 pt-5 pb-4 border-b bg-muted/30">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-yellow-500/10">
-              <Swords className="size-4 text-yellow-500" />
-            </div>
-            <div>
-              <DialogTitle className="text-base">
-                {isEditing ? t("events.heroes.edit") : t("events.heroes.add")}
-              </DialogTitle>
-              <DialogDescription className="text-xs mt-0.5">
-                {isEditing ? hero?.npcName : t("events.heroes.addDescription")}
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
+        <IconDialogHeader
+          icon={Swords}
+          title={isEditing ? t("events.heroes.edit") : t("events.heroes.add")}
+          description={
+            isEditing ? hero?.npcName : t("events.heroes.addDescription")
+          }
+        />
 
         <form
           id="hero-manage-form"
@@ -148,10 +138,14 @@ export const HeroManageDialog = ({
         >
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <Label
+                htmlFor={npcIdInputId}
+                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+              >
                 {t("events.createDialog.heroIdLabel")}
               </Label>
               <Input
+                id={npcIdInputId}
                 type="number"
                 placeholder={t("events.createDialog.heroIdPlaceholder")}
                 {...register("npcId")}
@@ -160,10 +154,14 @@ export const HeroManageDialog = ({
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <Label
+                htmlFor={npcNameInputId}
+                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+              >
                 {t("events.createDialog.heroNameLabel")}
               </Label>
               <Input
+                id={npcNameInputId}
                 placeholder={t("events.createDialog.heroNamePlaceholder")}
                 {...register("npcName", { required: true })}
                 className="h-9 text-sm"
@@ -178,7 +176,6 @@ export const HeroManageDialog = ({
                 <p>
                   <Trans
                     i18nKey="events.heroes.nameHint"
-                    defaults="Nazwa musi być <strong>dokładnie</strong> taka sama jak w grze."
                     components={{
                       strong: (
                         <strong className="font-semibold text-foreground" />

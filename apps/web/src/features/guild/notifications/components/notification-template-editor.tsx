@@ -114,7 +114,7 @@ export const NotificationTemplateEditor = (
       >
         <div className="overflow-visible rounded-xl border border-border/70 bg-background">
           <div className="border-b border-border/60 bg-muted/20 px-3 py-2">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            <p className="text-sm font-medium">
               {t("settings.notifications.templateEditor.label")}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -253,7 +253,7 @@ export const NotificationTemplateEditor = (
       </Dialog>
 
       <div className="py-3">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        <p className="text-sm font-medium">
           {t("settings.notifications.templateEditor.availableVariables")}
         </p>
         <p className="mt-2 text-xs leading-6 text-muted-foreground">

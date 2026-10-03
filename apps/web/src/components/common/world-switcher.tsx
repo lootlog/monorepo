@@ -118,9 +118,9 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
         placeholder={t("kills.home.filters.world")}
         emptyMessage={t("common.noResults")}
         searchPlaceholder={t("common.search")}
-        width={cn(width ?? "w-[140px] md:w-[180px]", className)}
+        width={cn(width ?? "w-[140px] md:w-[200px]", className)}
         triggerClassName={cn(
-          "h-9 shrink-0 hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground",
+          "shrink-0 hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground",
           triggerClassName,
         )}
         contentClassName="max-h-64"

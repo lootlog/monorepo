@@ -258,6 +258,32 @@ describe("resolveAppNavigation", () => {
     ).toMatchObject({ active: true, visible: true });
   });
 
+  it("sends back from a statistics tab to the Organization, not the redirecting stats root", () => {
+    const navigation = resolveAppNavigation({
+      matches: [
+        createMatch({
+          loaderData: { guild: { name: "Nocna Straż" } },
+          params: { guildId: "guild-1" },
+          pathname: "/guild-1",
+          routeId: "/_authenticated/$guildId",
+        }),
+        createMatch({
+          params: { guildId: "guild-1" },
+          pathname: "/guild-1/stats/kills",
+          routeId: "/_authenticated/$guildId/stats/kills",
+        }),
+      ],
+      accessPolicy: policy(Capability.LOOTLOG_LOOTS_READ),
+    });
+
+    expect(navigation.breadcrumbs).toEqual([
+      { label: "Nocna Straż", path: "/guild-1" },
+      { label: "Statystyki", path: "/guild-1/stats" },
+      { label: "Statystyki bić", path: null },
+    ]);
+    expect(navigation.parentPath).toBe("/guild-1");
+  });
+
   it("derives Organization sidebar visibility from Access policy permissions", () => {
     const navigation = resolveAppNavigation({
       matches: [

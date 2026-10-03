@@ -16,7 +16,9 @@ export const ReservationDetailSkeleton = () => {
       />
 
       <SectionCard className="border-border bg-card ">
-        <SectionCardHeader title=<Skeleton className="h-4 w-32" /> />
+        <SectionCardHeader
+          title=<Skeleton render={<span />} className="block h-4 w-32" />
+        />
         <SectionCardContent>
           <Skeleton className="mb-3 h-5 w-32" />
           <div className="space-y-2">

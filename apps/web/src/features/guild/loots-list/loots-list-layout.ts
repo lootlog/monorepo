@@ -20,6 +20,6 @@ export const LOOT_CARD_DIVIDER_CLASS = "border-t border-border/40";
 
 /** Legendary drops share one accent with the legendary item frame. */
 export const LEGENDARY_LOOT_CARD_CLASS =
-  "border-orange-500/60 shadow-[0_0_14px_rgba(234,88,12,0.18)] hover:border-orange-500/80 hover:shadow-[0_0_18px_rgba(234,88,12,0.28)]";
+  "border-orange-600/60 shadow-[0_0_14px_rgba(234,88,12,0.18)] hover:border-orange-600/80 hover:shadow-[0_0_18px_rgba(234,88,12,0.28)]";
 
-export const LEGENDARY_LOOT_ROW_CLASS = "bg-orange-500/[0.05]";
+export const LEGENDARY_LOOT_ROW_CLASS = "bg-orange-600/[0.05]";

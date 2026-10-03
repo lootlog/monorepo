@@ -101,7 +101,8 @@
     "listView": "Widok listy",
     "gridView": "Widok siatki",
     "mobileFiltersTitle": "Filtry łupów",
-    "toolbarLabel": "Wyszukiwanie i widok łupów"
+    "toolbarLabel": "Wyszukiwanie i widok łupów",
+    "filtersButton": "Filtry"
   },
   "searchCommand": {
     "dialogTitle": "Wyszukaj łup",
@@ -139,7 +140,7 @@
     "noWorldSelectedCat": "Miau! Wybierz świat, żeby zobaczyć łupy 🐱",
     "noWorldSelectedRukia": "Lodowa cisza... Wybierz świat, by przełamać mróz.",
     "noWorldSelectedRias": "Krąg magiczny nieaktywny... Wybierz świat, by go przywołać.",
-    "empty": "Nie znaleziono żadnych lootów.",
+    "empty": "Brak łupów",
     "emptyCat": "Kot przeszukał wszystko... nic nie znalazł 😿",
     "emptyRukia": "Absolutne zero... nie znaleziono żadnych łupów.",
     "emptyRias": "Moc Zniszczenia nie wykryła żadnych łupów.",
@@ -149,11 +150,11 @@
     "clearFilters": "Wyczyść filtry",
     "loadError": "Nie udało się wczytać łupów",
     "loadErrorDescription": "Sprawdź połączenie i spróbuj ponownie.",
-    "loadingMore": "Ładowanie kolejnych lootów...",
+    "loadingMore": "Ładowanie kolejnych łupów...",
     "loadingMoreCat": "Kotek poluje na kolejne łupy...",
     "loadingMoreRukia": "Szron pokrywa kolejne łupy...",
     "loadingMoreRias": "Krąg Gremory przywołuje kolejne łupy...",
-    "end": "To już wszystkie looty",
+    "end": "To już wszystkie łupy",
     "endCat": "Miau, to już wszystkie łupy! 😺",
     "endRukia": "Hakka no Togame... to już wszystkie łupy.",
     "endRias": "Królowa zadecydowała... to już wszystkie łupy.",
@@ -194,7 +195,7 @@
     "itemIds": "Identyfikatory przedmiotów ({{count}})",
     "delete": {
       "title": "Usunąć ten łup?",
-      "description": "Łup zniknie z listy i statystyk organizacji. Tej operacji nie można cofnąć."
+      "description": "Łup zniknie z listy i statystyk Lootloga. Tej operacji nie można cofnąć."
     }
   }
 }

@@ -153,28 +153,18 @@ const EventActionDialogWithConfirmation = ({
 
         <div className="space-y-2">
           <Label htmlFor={inputId}>
-            {t(
-              "events.deleteDialog.confirmLabel",
-              "Wpisz nazwę eventu, aby potwierdzić",
-            )}
+            {t("events.deleteDialog.confirmLabel")}
           </Label>
           <Input
             id={inputId}
             value={confirmationValue}
             onChange={(e) => setConfirmationValue(e.target.value)}
-            placeholder={t(
-              "events.deleteDialog.confirmPlaceholder",
-              "Nazwa eventu",
-            )}
+            placeholder={t("events.deleteDialog.confirmPlaceholder")}
             autoComplete="off"
             disabled={isPending}
           />
           <p className="text-xs text-muted-foreground">
-            {t(
-              "events.deleteDialog.confirmHint",
-              "Aby usunąć event, wpisz dokładnie: {{name}}",
-              { name: eventName },
-            )}
+            {t("events.deleteDialog.confirmHint", { name: eventName })}
           </p>
         </div>
 

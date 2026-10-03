@@ -186,14 +186,14 @@ export const KillMapsTimelineTable = ({
           />
         ))}
       </colgroup>
-      <TableHeader className="max-md:sr-only bg-secondary/25">
+      <TableHeader className="sticky top-0 z-10 bg-background max-md:sr-only">
         {table.getHeaderGroups().map((headerGroup) => (
-          <TableRow key={headerGroup.id} className="border-border/80">
+          <TableRow key={headerGroup.id} className="border-b-1! border-border">
             {headerGroup.headers.map((header) => (
               <TableHead
                 key={header.id}
                 className={cn(
-                  "h-9 px-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground",
+                  "whitespace-nowrap px-3 align-middle",
                   getKillMapTimelineColumnClassName(header.column.id),
                 )}
               >

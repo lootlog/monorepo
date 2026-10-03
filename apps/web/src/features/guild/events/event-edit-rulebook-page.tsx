@@ -2,10 +2,9 @@ import { EventEditSkeleton } from "./event-edit-skeleton";
 import { EventLoadError } from "./components/event-load-error";
 import { useEventEditRoute } from "./hooks/queries/use-event-edit-route";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { PageHeader } from "@/components/common/page-header";
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -34,7 +33,8 @@ const toRulebookDefaults = (
 
 export const EventEditRulebookPage = () => {
   const { t } = useTranslation();
-  const { event, error, isLoading, routeParams } = useEventEditRoute();
+  const rulebookFieldId = useId();
+  const { event, error, isLoading, refetch, routeParams } = useEventEditRoute();
 
   const queryClient = useQueryClient();
 
@@ -78,9 +78,9 @@ export const EventEditRulebookPage = () => {
       form.reset({
         rulebookMarkdown: normalizedRulebookMarkdown,
       });
-      toast.success(t("events.scoring.saveSuccess"));
+      toast.success(t("events.rulebook.saveSuccess"));
     } catch {
-      toast.error(t("events.scoring.saveError"));
+      toast.error(t("events.rulebook.saveError"));
     }
   };
 
@@ -89,31 +89,37 @@ export const EventEditRulebookPage = () => {
   }
 
   if (error || !event) {
-    return <EventLoadError {...routeParams} />;
+    return (
+      <EventLoadError
+        backTo="event"
+        guildId={routeParams.guildId}
+        eventId={routeParams.eventId}
+        error={error}
+        onRetry={() => refetch()}
+      />
+    );
   }
 
   return (
     <ScrollArea className="h-full">
       <div className="flex flex-col gap-3 px-3 py-3">
-        <PageHeader
-          icon={BookOpenText}
-          title={event.name}
-          description={t("events.editSections.rulebook")}
-        />
+        <PageHeader icon={BookOpenText} title={event.name} />
 
         <form
           className="space-y-3 pb-24"
           onSubmit={form.handleSubmit(onSubmit)}
         >
-          <SectionCard className=" border-border bg-card ">
-            <SectionCardHeader title={t("events.editSections.rulebook")} />
+          <SectionCard>
             <SectionCardContent className="flex min-h-0 flex-col gap-3">
               <div className="space-y-2">
-                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                  <BookOpenText className="size-3" />
+                <Label
+                  htmlFor={rulebookFieldId}
+                  className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                >
                   {t("events.rulebook.label")}
                 </Label>
                 <Textarea
+                  id={rulebookFieldId}
                   {...form.register("rulebookMarkdown")}
                   placeholder={t("events.rulebook.placeholder")}
                   className="min-h-[360px] text-sm"

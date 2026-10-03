@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Users } from "lucide-react";
+import { EmptyState } from "@/components/common/empty-state";
 import { useEventsRankingControllerUpdateKillPoint } from "@lootlog/client/main";
 import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";
 import { invalidateKillQueries } from "../../hooks/mutations/invalidate-kill-queries";
@@ -104,12 +105,10 @@ export const KillParticipantsCard = ({
       />
 
       {sortedParticipants.length === 0 ? (
-        <div className="border-t border-border/70 px-4 py-8 text-center text-sm text-muted-foreground">
-          {t("events.kills.noParticipants")}
-        </div>
+        <EmptyState icon={Users} title={t("events.kills.noParticipants")} />
       ) : (
         <>
-          <div className="hidden h-9 grid-cols-[2rem_minmax(0,1fr)_7rem_5rem_6.5rem_5rem] items-center gap-2 border-y border-border/70 bg-secondary/25 px-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground lg:grid">
+          <div className="hidden h-10 grid-cols-[2rem_minmax(0,1fr)_7rem_5rem_6.5rem_5rem] items-center gap-2 border-b border-border bg-background px-3 text-xs font-semibold text-muted-foreground lg:grid">
             <span className="text-center">#</span>
             <span>{t("events.ranking.player")}</span>
             <span className="text-right">{t("events.ranking.time")}</span>
@@ -117,7 +116,7 @@ export const KillParticipantsCard = ({
             <span className="text-right">{t("events.ranking.points")}</span>
             <span className="sr-only">{t("events.ranking.actions")}</span>
           </div>
-          <div className="border-t border-border/70 lg:border-t-0">
+          <div>
             {sortedParticipants.map((participant, index) => (
               <KillParticipantRow
                 key={participant.id}

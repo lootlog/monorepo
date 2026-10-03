@@ -34,10 +34,10 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
 
   return (
     <div className="px-2 mb-3 pb-3 border-b border-border">
-      <div className="rounded-lg overflow-hidden bg-gradient-to-r from-yellow-500/20 via-amber-500/15 to-orange-500/20 border border-yellow-500/30 relative">
+      <div className="rounded-lg overflow-hidden bg-gradient-to-r from-signal-timer/20 via-signal-timer/15 to-signal-timer/10 border border-signal-timer/30 relative">
         {prefersReducedMotion ? null : (
           <m.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-400/20 to-transparent"
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-signal-timer/20 to-transparent"
             animate={{
               x: ["-100%", "100%"],
             }}
@@ -58,9 +58,9 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
             onClick={onNavigate}
             className="block"
           >
-            <div className="relative flex items-center gap-3 px-3 py-2.5 transition-[background-color,transform] duration-200 hover:translate-x-0.5 hover:bg-yellow-500/10">
+            <div className="relative flex items-center gap-3 px-3 py-2.5 transition-[background-color,transform] duration-200 motion-safe:hover:translate-x-0.5 hover:bg-signal-timer/10">
               <div className="relative">
-                <Trophy className="h-4 w-4 text-yellow-500" />
+                <Trophy className="h-4 w-4 text-signal-timer" />
                 <m.div
                   key={String(prefersReducedMotion)}
                   animate={
@@ -77,11 +77,11 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
                     ease: "easeInOut",
                   }}
                 >
-                  <Sparkles className="absolute -top-1 -right-1 h-2.5 w-2.5 text-yellow-400" />
+                  <Sparkles className="absolute -top-1 -right-1 h-2.5 w-2.5 text-signal-timer" />
                 </m.div>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
+                <p className="text-xs text-signal-timer font-medium">
                   {t("events.sidebarBanner.pinnedEvent")}
                 </p>
                 <p className="text-sm font-semibold truncate">
@@ -104,8 +104,8 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
             <m.button
               type="button"
               onClick={() => setIsExpanded((currentValue) => !currentValue)}
-              className="w-full px-3 py-1.5 flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:bg-yellow-500/10 transition-colors border-t border-yellow-500/20"
-              whileHover={{ backgroundColor: "rgba(234, 179, 8, 0.1)" }}
+              className="w-full px-3 py-1.5 flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:bg-signal-timer/10 transition-colors border-t border-signal-timer/20"
+              aria-expanded={isExpanded}
             >
               <span>
                 {t("events.sidebarBanner.showMore", {
@@ -122,7 +122,7 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
           )}
 
           <CollapsePresence open={hasMoreEvents && isExpanded}>
-            <div className="border-t border-yellow-500/20">
+            <div className="border-t border-signal-timer/20">
               {otherEvents.map((event) => (
                 <div key={event.id}>
                   <Link
@@ -131,8 +131,8 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
                     onClick={onNavigate}
                     className="block"
                   >
-                    <div className="flex items-center gap-2 px-3 py-2 transition-[background-color,transform] duration-200 hover:translate-x-0.5 hover:bg-yellow-500/10">
-                      <Trophy className="h-3.5 w-3.5 text-yellow-500/70" />
+                    <div className="flex items-center gap-2 px-3 py-2 transition-[background-color,transform] duration-200 motion-safe:hover:translate-x-0.5 hover:bg-signal-timer/10">
+                      <Trophy className="h-3.5 w-3.5 text-signal-timer/70" />
                       <span className="text-sm truncate flex-1">
                         {event.name}
                       </span>

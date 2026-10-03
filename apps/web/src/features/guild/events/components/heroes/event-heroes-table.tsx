@@ -1,4 +1,6 @@
+import { EmptyState } from "@/components/common/empty-state";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTable } from "@tanstack/react-table";
 import { Plus, Swords } from "lucide-react";
@@ -9,6 +11,7 @@ import { cn } from "cn";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import type { EventHeroNpc } from "../../types/api";
+import { EventActionDialog } from "../dialogs/event-action-dialog";
 import {
   createEventHeroesTableColumns,
   type EventHeroTableRow,
@@ -20,7 +23,8 @@ type EventHeroesTableProps = {
   eventId: string;
   guildId: string;
   onAddHero: () => void;
-  onDeleteHero: (heroId: string) => void;
+  onDeleteHero: (heroId: string) => Promise<void>;
+  isDeleteHeroPending: boolean;
   onEditHero: (hero: EventHeroNpc) => void;
   onManageMaps: (hero: EventHeroNpc) => void;
   rows: EventHeroTableRow[];
@@ -46,17 +50,19 @@ export const EventHeroesTable = ({
   guildId,
   onAddHero,
   onDeleteHero,
+  isDeleteHeroPending,
   onEditHero,
   onManageMaps,
   rows,
 }: EventHeroesTableProps) => {
   const { t } = useTranslation();
+  const [heroToDelete, setHeroToDelete] = useState<EventHeroNpc | null>(null);
 
   const columns = createEventHeroesTableColumns({
     canManage,
     eventId,
     guildId,
-    onDeleteHero,
+    onRequestDeleteHero: setHeroToDelete,
     onEditHero,
     onManageMaps,
     t,
@@ -79,10 +85,10 @@ export const EventHeroesTable = ({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 shrink-0 pl-3 pr-4!"
+                className="h-8 shrink-0"
                 onClick={onAddHero}
+                icon=<Plus className="size-4" />
               >
-                <Plus className="size-4" />
                 {t("events.heroes.addButton")}
               </Button>
             ) : null}
@@ -91,35 +97,47 @@ export const EventHeroesTable = ({
       />
 
       {rows.length === 0 ? (
-        <div className="flex min-h-36 flex-col items-center justify-center text-muted-foreground">
-          <Swords className="mb-2 size-7 opacity-50" />
-          <p className="text-sm">{t("events.heroes.empty")}</p>
-        </div>
+        <EmptyState icon={Swords} title={t("events.heroes.empty")} />
       ) : (
         <Table className="w-full table-auto lg:table-fixed">
           <TanStackTableHeader
             table={table}
-            className="bg-secondary/25"
-            rowClassName="border-border/80"
+            className="sticky top-0 z-10 bg-background"
+            rowClassName="border-b-1! border-border"
             getHeadClassName={(header) =>
               cn(
-                "h-9 px-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground",
+                "whitespace-nowrap align-middle",
                 getColumnClassName(header.column.id),
               )
             }
           />
           <TanStackTableBody
             table={table}
-            rowClassName="group h-14 border-border/70 hover:bg-muted/20"
+            rowClassName="h-14 border-b border-border hover:bg-muted/40"
             getCellClassName={(cell) =>
               cn(
-                "h-14 overflow-hidden p-2 align-middle",
+                "h-14 overflow-hidden align-middle",
                 getColumnClassName(cell.column.id),
               )
             }
           />
         </Table>
       )}
+      <EventActionDialog
+        open={heroToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setHeroToDelete(null);
+        }}
+        eventName={heroToDelete?.npcName ?? ""}
+        onConfirm={async () => {
+          if (heroToDelete) await onDeleteHero(heroToDelete.id);
+        }}
+        isPending={isDeleteHeroPending}
+        titleKey="events.heroes.deleteTitle"
+        descriptionKey="events.heroes.deleteDescription"
+        actionLabelKey="events.heroes.deleteAction"
+        variant="destructive"
+      />
     </SectionCard>
   );
 };

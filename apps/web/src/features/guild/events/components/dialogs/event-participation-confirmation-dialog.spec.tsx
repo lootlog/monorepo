@@ -67,7 +67,7 @@ async function expectAcknowledged(killId: string) {
   expect(await request.json()).toEqual({ killIds: [killId] });
 }
 
-await initializeTestTranslations({});
+await initializeTestTranslations();
 
 describe("EventParticipationConfirmationDialog", () => {
   it("keeps bulk confirmation busy after one request fails until every request settles", async () => {
@@ -102,7 +102,11 @@ describe("EventParticipationConfirmationDialog", () => {
         eventId="event-1"
       />,
     );
-    const bulk = screen.getByRole("button", { name: "Potwierdź wszystko" });
+
+    const bulk = screen.getByRole("button", {
+      name: "events.confirmation.confirmAll",
+    });
+
     fireEvent.click(bulk);
     expect(bulk.getAttribute("aria-busy")).toBe("true");
     await act(async () => {
@@ -112,9 +116,9 @@ describe("EventParticipationConfirmationDialog", () => {
     });
     expect(bulk.hasAttribute("disabled")).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
-    expect(screen.getByRole("button", { name: "Potwierdź wszystko" })).toBe(
-      bulk,
-    );
+    expect(
+      screen.getByRole("button", { name: "events.confirmation.confirmAll" }),
+    ).toBe(bulk);
     await act(async () => {
       finishLast();
       await last;
@@ -178,7 +182,7 @@ describe("EventParticipationConfirmationDialog", () => {
       />,
     );
 
-    expect(screen.getByText("Przeterminowane potwierdzenia")).toBeTruthy();
+    expect(screen.getByText("events.confirmation.expiredTitle")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
 
@@ -200,7 +204,7 @@ describe("EventParticipationConfirmationDialog", () => {
       />,
     );
 
-    expect(screen.getByText("Przeterminowane potwierdzenia")).toBeTruthy();
+    expect(screen.getByText("events.confirmation.expiredTitle")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
 
@@ -228,7 +232,7 @@ describe("EventParticipationConfirmationDialog", () => {
       vi.advanceTimersByTime(1_001);
     });
 
-    expect(screen.getByText("Przeterminowane potwierdzenia")).toBeTruthy();
+    expect(screen.getByText("events.confirmation.expiredTitle")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
 
@@ -250,7 +254,9 @@ describe("EventParticipationConfirmationDialog", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "Potwierdź" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "events.confirmation.confirm" }),
+    ).toBeTruthy();
   });
 
   it("shows expired feedback alongside a new active confirmation without submitting expired kills", async () => {
@@ -279,14 +285,14 @@ describe("EventParticipationConfirmationDialog", () => {
     );
 
     expect(screen.getByRole("dialog")).toBeTruthy();
-    expect(screen.getByText("Przeterminowane potwierdzenia")).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: "Potwierdź" })).toHaveLength(
-      1,
-    );
+    expect(screen.getByText("events.confirmation.expiredTitle")).toBeTruthy();
+    expect(
+      screen.getAllByRole("button", { name: "events.confirmation.confirm" }),
+    ).toHaveLength(1);
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Potwierdź wszystko",
+        name: "events.confirmation.confirmAll",
       }),
     );
 
@@ -332,7 +338,9 @@ describe("EventParticipationConfirmationDialog", () => {
     });
     await act(() => vi.advanceTimersByTimeAsync(0));
 
-    expect(screen.getByRole("button", { name: "Potwierdź" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "events.confirmation.confirm" }),
+    ).toBeTruthy();
   });
 });
 

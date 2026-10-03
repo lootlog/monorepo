@@ -22,7 +22,7 @@ import {
   guildDocsTrashQueryOptions,
   invalidateGuildDocsQueries,
 } from "../docs-api";
-import { formatGuildDocDateTime } from "../docs-date-format";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { useTranslation } from "react-i18next";
 
 type GuildDocTrashDialogProps = {
@@ -137,7 +137,7 @@ export const GuildDocTrashDialog = ({
                 const deletedByName =
                   document.deletedBy.name ?? t("docs.list.unknownEditor");
 
-                const deletedAt = formatGuildDocDateTime(document.deletedAt);
+                const deletedAt = timestampToDate(document.deletedAt);
 
                 return (
                   <div

@@ -20,10 +20,7 @@ import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useMaxWidth } from "@lootlog/ui/hooks/use-max-width";
 import { useLocalStorage } from "usehooks-ts";
 import { LootDetailsDialog } from "@/features/guild/loots-list/components/loots-list/loot-details-dialog";
-import { Button } from "@lootlog/ui/components/button";
-import { Filter } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useGuildContext } from "@/hooks/context/use-guild-context";
 import {
   LOOTS_COMPACT_FILTERS_BREAKPOINT,
   LOOTS_FILTERS_OPEN_KEY,
@@ -31,7 +28,6 @@ import {
 
 export const LootsListPage: React.FC = () => {
   const { t } = useTranslation();
-  const { world } = useGuildContext();
   const { hasActiveFilters, setFilters } = useLootsFilters();
 
   const [isFiltersOpen, setIsFiltersOpen] = useLocalStorage(
@@ -113,17 +109,6 @@ export const LootsListPage: React.FC = () => {
           </CollapsePresence>
         </div>
       </div>
-
-      {isMobile && world && (
-        <Button
-          onClick={handleOpenSidebar}
-          size="icon"
-          aria-label={t("loots.header.mobileFiltersTitle")}
-          className="fixed bottom-4 right-4 z-20 h-12 w-12 rounded-xl border border-primary/30 shadow-lg"
-        >
-          <Filter className="h-5 w-5" />
-        </Button>
-      )}
 
       <LootDetailsDialog
         onShowPlayerLoots={(playerName) =>

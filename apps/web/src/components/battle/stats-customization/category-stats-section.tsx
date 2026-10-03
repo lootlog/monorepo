@@ -72,6 +72,9 @@ export const CategoryStatsSection = ({
             variant="ghost"
             size="sm"
             onClick={() => onRemoveStat(statKey)}
+            aria-label={t("battleUi.customization.removeStat", {
+              name: getStatLabel(statKey),
+            })}
             className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
           >
             <X className="h-3 w-3" />

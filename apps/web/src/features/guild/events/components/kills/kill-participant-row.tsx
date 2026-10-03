@@ -133,8 +133,8 @@ export const KillParticipantRow = ({
   };
 
   return (
-    <div className="border-t border-border/70 first:border-t-0">
-      <div className="grid min-h-14 grid-cols-[1.5rem_minmax(0,1fr)_4.5rem_5.5rem] items-center gap-2 px-3 py-0 transition-colors hover:bg-muted/20 lg:min-h-12 lg:grid-cols-[2rem_minmax(0,1fr)_7rem_5rem_6.5rem_5rem]">
+    <div className="border-b border-border last:border-b-0">
+      <div className="grid min-h-14 grid-cols-[1.5rem_minmax(0,1fr)_4.5rem_5.5rem] items-center gap-2 px-3 py-0 transition-colors hover:bg-muted/40 lg:grid-cols-[2rem_minmax(0,1fr)_7rem_5rem_6.5rem_5rem]">
         <span className="text-center text-xs font-medium tabular-nums text-muted-foreground">
           {rank}
         </span>

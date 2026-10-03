@@ -11,10 +11,8 @@ import type {
   LootStatsResponseDtoOutputTimelineItem,
   LootsControllerGetLootStatsPeriod,
 } from "@lootlog/client/main";
-import {
-  getLootRarityChartConfig,
-  LOOT_RARITY_COLORS,
-} from "./loot-rarity-chart-config";
+import { LOOT_RARITY_CHART_COLORS } from "@/features/guild/loots-list/loot-rarity-colors";
+import { getLootRarityChartConfig } from "./loot-rarity-chart-config";
 import { StatsChartCard } from "./stats-chart-card";
 
 type LootTimelineChartProps = {
@@ -119,16 +117,16 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
             type="monotone"
             dataKey="LEGENDARY"
             stackId="1"
-            stroke={LOOT_RARITY_COLORS.LEGENDARY}
-            fill={LOOT_RARITY_COLORS.LEGENDARY}
+            stroke={LOOT_RARITY_CHART_COLORS.LEGENDARY}
+            fill={LOOT_RARITY_CHART_COLORS.LEGENDARY}
             fillOpacity={0.6}
           />
           <Area
             type="monotone"
             dataKey="HEROIC"
             stackId="1"
-            stroke={LOOT_RARITY_COLORS.HEROIC}
-            fill={LOOT_RARITY_COLORS.HEROIC}
+            stroke={LOOT_RARITY_CHART_COLORS.HEROIC}
+            fill={LOOT_RARITY_CHART_COLORS.HEROIC}
             fillOpacity={0.6}
           />
         </AreaChart>

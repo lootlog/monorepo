@@ -6,19 +6,20 @@ import type {
   EventCoordinationResponseDtoHeroesItemTimerStatus,
 } from "@lootlog/client/main";
 
+/** Signal tone of a priority, shared by its badge and coverage bar; idle has none. */
 export function getCoordinationPriorityTone(
   priority: EventCoordinationResponseDtoHeroesItemPriority,
 ) {
   switch (priority) {
     case "CRITICAL":
-      return "destructive";
+      return "alert";
     case "WARNING":
-      return "warning";
+      return "timer";
     case "OK":
-      return "success";
+      return "ready";
     case "IDLE":
     default:
-      return "muted";
+      return null;
   }
 }
 

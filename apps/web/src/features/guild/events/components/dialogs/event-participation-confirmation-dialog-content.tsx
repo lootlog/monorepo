@@ -1,12 +1,7 @@
+import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { NpcTile } from "@/components/tiles";
 import { Button } from "@lootlog/ui/components/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@lootlog/ui/components/dialog";
+import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { formatDistanceToNowStrict } from "date-fns";
@@ -55,29 +50,22 @@ export const EventParticipationConfirmationDialogContent = ({
         handleOpenChange(nextOpen);
       }}
     >
-      <DialogContent className="sm:max-w-xl p-5">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ShieldCheck className="size-4 text-primary" />
-            {t("events.confirmation.title", "Potwierdź udział")}
-          </DialogTitle>
-          <DialogDescription>
-            {t(
-              "events.confirmation.description",
-              "Potwierdź udział w obstawianiu, aby naliczyć punkty za te bicia.",
-            )}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-xl p-0 gap-0 overflow-hidden">
+        <IconDialogHeader
+          icon={ShieldCheck}
+          title={t("events.confirmation.title")}
+          description={t("events.confirmation.description")}
+        />
 
         {isLoading ? (
           <div className="flex items-center justify-center py-6 text-muted-foreground">
             <Spinner className="size-4" />
           </div>
         ) : (
-          <>
+          <div className="p-5">
             {sortedItems.length > 0 && (
               <>
-                <ScrollArea className="max-h-[320px] pr-2 py-4">
+                <ScrollArea className="max-h-[320px] pr-2">
                   <div className="space-y-2">
                     {sortedItems.map((item) => {
                       const deadline = new Date(item.confirmationDeadlineAt);
@@ -112,10 +100,7 @@ export const EventParticipationConfirmationDialogContent = ({
                                 </p>
                                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                                   <Clock className="size-3" />
-                                  {t(
-                                    "events.confirmation.deadline",
-                                    "Do",
-                                  )}:{" "}
+                                  {t("events.confirmation.deadline")}:{" "}
                                   {formatDateTime(deadline)} ({remaining})
                                 </p>
                               </div>
@@ -132,7 +117,7 @@ export const EventParticipationConfirmationDialogContent = ({
                               loading={confirmingKillIds.has(item.killId)}
                               onClick={() => handleConfirm(item.killId)}
                             >
-                              {t("events.confirmation.confirm", "Potwierdź")}
+                              {t("events.confirmation.confirm")}
                             </Button>
                           </div>
                         </div>
@@ -153,7 +138,7 @@ export const EventParticipationConfirmationDialogContent = ({
                       confirmParticipation.isPending
                     }
                   >
-                    {t("events.confirmation.confirmAll", "Potwierdź wszystko")}
+                    {t("events.confirmation.confirmAll")}
                   </Button>
                 </div>
               </>
@@ -164,17 +149,11 @@ export const EventParticipationConfirmationDialogContent = ({
                 <div className="mb-2 flex items-center gap-2 text-amber-500">
                   <AlertTriangle className="size-4" />
                   <p className="text-sm font-semibold">
-                    {t(
-                      "events.confirmation.expiredTitle",
-                      "Przeterminowane potwierdzenia",
-                    )}
+                    {t("events.confirmation.expiredTitle")}
                   </p>
                 </div>
                 <p className="mb-2 text-xs text-muted-foreground">
-                  {t(
-                    "events.confirmation.expiredDescription",
-                    "Dla tych bić nie potwierdzono udziału na czas, więc punkty nie zostały naliczone.",
-                  )}
+                  {t("events.confirmation.expiredDescription")}
                 </p>
 
                 <ScrollArea className="max-h-[180px] pr-2">
@@ -205,7 +184,7 @@ export const EventParticipationConfirmationDialogContent = ({
                                 {formatDateTime(new Date(item.killedAt))}
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                {t("events.confirmation.deadline", "Do")}:{" "}
+                                {t("events.confirmation.deadline")}:{" "}
                                 {formatDateTime(deadline)}
                               </p>
                             </div>
@@ -217,7 +196,7 @@ export const EventParticipationConfirmationDialogContent = ({
                 </ScrollArea>
               </div>
             )}
-          </>
+          </div>
         )}
       </DialogContent>
     </Dialog>

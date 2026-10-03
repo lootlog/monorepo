@@ -100,7 +100,7 @@ export const createMemberKillsTableColumns = ({
           <span className="font-bold text-primary tabular-nums">
             {formatPoints(point.points)}
             <span className="ml-1 hidden text-xs font-medium text-primary/75 sm:inline">
-              {t("events.common.pointsShort", "pkt")}
+              {t("events.common.pointsShort")}
             </span>
           </span>
         </div>

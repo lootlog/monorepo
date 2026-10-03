@@ -12,6 +12,7 @@ import {
 } from "@lootlog/ui/components/dropdown-menu";
 import { ChevronUp, LogOut, Settings, User2 } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
+import { useSidebar } from "@lootlog/ui/components/sidebar";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useUser } from "@/hooks/api/user/use-user";
@@ -27,8 +28,10 @@ export const UserMenu = () => {
   const { t } = useTranslation();
   const { logout, isPending: isLogoutPending } = useLogout();
   const { joined } = useGateway();
+  const { setOpenMobile } = useSidebar();
 
   const handleOpenAccountSettings = () => {
+    setOpenMobile(false);
     navigate({ to: ROUTES.user.settings.account });
   };
 

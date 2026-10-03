@@ -52,8 +52,6 @@ describe("EventHeroLoots", () => {
 
     expect(target.pathname).toBe("/guild-one");
     expect(target.searchParams.get("npcs")).toBe("Potulny Berserker");
-    expect(action.getAttribute("class")).toContain("hover:text-primary");
-    expect(action.getAttribute("class")).not.toContain("hover:bg-");
     expect(
       screen
         .getAllByTestId("loot-list-item")

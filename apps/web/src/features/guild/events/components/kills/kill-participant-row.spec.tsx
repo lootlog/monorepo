@@ -22,24 +22,6 @@ const render = (element: ReactElement) => renderElement(element, { wrapper });
 afterEach(cleanup);
 
 describe("KillParticipantRow", () => {
-  it("uses compact desktop row metrics and standard member typography", () => {
-    const { container } = render(
-      <KillParticipantRow
-        participant={createParticipant()}
-        rank={1}
-        isExpanded={false}
-        onToggle={() => {}}
-      />,
-    );
-
-    const summaryRow = container.querySelector(".grid.min-h-14");
-    const memberName = screen.getByText("Tester");
-
-    expect(summaryRow?.className).toContain("lg:min-h-12");
-    expect(summaryRow?.className).toContain("py-0");
-    expect(memberName.className).toContain("text-sm");
-  });
-
   it("uses the regular table font size for desktop time and AFK values", () => {
     const participant = createParticipant({
       mapData: [

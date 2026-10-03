@@ -24,6 +24,7 @@ export function ReservationFilters({
       label={t("reservations.filters.label")}
       value={value}
       onValueChange={onChange}
+      size="large"
       options={FILTERS.map((filter) => ({
         value: filter,
         label: t(`reservations.filters.${filter}`),

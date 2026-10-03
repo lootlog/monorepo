@@ -42,7 +42,7 @@ export const PublicBattle = () => {
       <div className="flex min-h-dvh bg-background">
         <RouteErrorState
           status={normalizeRouteErrorStatus(getRouteErrorStatus(error))}
-          description={getRouteErrorMessage(error)}
+          details={getRouteErrorMessage(error)}
         />
       </div>
     );

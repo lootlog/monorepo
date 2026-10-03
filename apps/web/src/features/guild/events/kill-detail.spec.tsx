@@ -144,30 +144,13 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("KillDetail states", () => {
-  it("renders the compact loading state", async () => {
+  it("renders the loading state", async () => {
     state = "loading";
 
     const { container } = await renderDetail();
 
-    expect(
-      container.querySelectorAll("[data-slot='skeleton']").length,
-    ).toBeGreaterThan(0);
-    expect(container.firstElementChild?.className).toContain("px-3");
-    expect(container.firstElementChild?.className).not.toContain("lg:px-4");
-    expect(screen.queryByRole("heading")).toBeNull();
-  });
-
-  it("uses the same compact page padding as the member view", async () => {
-    await renderDetail();
-
-    const main = screen
-      .getByRole("heading", { name: "Potulny Berserker" })
-      .closest("header")?.parentElement?.parentElement;
-
-    expect(main?.className).toContain("px-3");
-    expect(main?.className).toContain("py-3");
-    expect(main?.className).not.toContain("lg:px-4");
-    expect(main?.className).not.toContain("lg:py-4");
+    expect(container.querySelector("[aria-busy='true']")).toBeTruthy();
+    expect(screen.queryByText(detail.kill.heroNpc.npcName)).toBeNull();
   });
 
   it("allows a failed detail request to recover without reporting the kill as missing", async () => {
@@ -185,7 +168,7 @@ describe("KillDetail states", () => {
 
     state = "success";
     fireEvent.click(
-      screen.getByRole("button", { name: "common.actions.retry" }),
+      screen.getByRole("button", { name: "common.routeErrors.actions.retry" }),
     );
     expect(
       await screen.findByRole("heading", { name: detail.kill.heroNpc.npcName }),
@@ -197,7 +180,9 @@ describe("KillDetail states", () => {
     await renderDetail();
     expect(await screen.findByText("events.killDetail.notFound")).toBeTruthy();
     expect(
-      screen.queryByRole("button", { name: "common.actions.retry" }),
+      screen.queryByRole("button", {
+        name: "common.routeErrors.actions.retry",
+      }),
     ).toBeNull();
   });
 

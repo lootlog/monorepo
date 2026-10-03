@@ -45,13 +45,13 @@ export const KillMapTimelineTableRow = ({
     <Fragment>
       <TableRow
         data-state={isExpanded ? "expanded" : undefined}
-        className="h-14 border-border/70 hover:bg-muted/20 md:h-12"
+        className="h-14 border-b border-border hover:bg-muted/40"
       >
         {visibleCells.map((cell) => (
           <TableCell
             key={cell.id}
             className={cn(
-              "h-14 overflow-hidden px-3 py-0 align-middle md:h-12",
+              "h-14 overflow-hidden px-3 py-0 align-middle",
               getKillMapTimelineColumnClassName(cell.column.id),
               cell.column.id === "actions" && "p-0!",
             )}
@@ -87,7 +87,10 @@ export const KillMapTimelineTableRow = ({
       </TableRow>
 
       {isExpanded ? (
-        <TableRow data-state="expanded-detail" className="border-border/70">
+        <TableRow
+          data-state="expanded-detail"
+          className="border-b border-border"
+        >
           <TableCell
             colSpan={visibleColumnCount}
             className="h-auto min-w-0 whitespace-normal p-0! align-top"
@@ -144,7 +147,7 @@ export const KillMapTimelineTableRow = ({
                       <KillMapGapAudit gaps={diagnostics.gaps} t={t} />
                     </div>
                   ) : (
-                    <div className="mx-3 mt-2 flex min-h-10 items-center justify-center gap-2 border-t border-border/60 text-xs font-medium text-green-500">
+                    <div className="mx-3 mt-2 flex min-h-10 items-center justify-center gap-2 border-t border-border/60 text-xs font-medium text-signal-ready">
                       <CheckCircle2 className="size-4" />
                       {t("events.killDetail.mapCoverage.fullCoverage")}
                     </div>

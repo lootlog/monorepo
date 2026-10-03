@@ -1,8 +1,6 @@
 import { PageHeader } from "@/components/common/page-header";
-import {
-  SectionCard as Card,
-  SectionCard,
-} from "@/components/common/section-card/section-card";
+import { EmptyState } from "@/components/common/empty-state";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import {
   AlertDialog,
@@ -17,7 +15,7 @@ import {
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { FileText, History, LockKeyhole, Trash2 } from "lucide-react";
+import { FileText, FileX2, History, LockKeyhole, Trash2 } from "lucide-react";
 
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { Input } from "@lootlog/ui/components/input";
@@ -29,7 +27,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { GuildDocHistoryDialog } from "./components/guild-doc-history-dialog";
-import { formatGuildDocDateTime } from "./docs-date-format";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { GuildDocEditor } from "./editor/guild-doc-editor";
 import { GuildDocEditorSkeleton } from "./guild-doc-editor-skeleton";
 
@@ -69,12 +67,24 @@ export const GuildDocEditorPage = () => {
       <div className="flex h-full min-h-0 flex-col">
         <ScrollArea className="min-h-0 flex-1">
           <div className="px-3 py-3">
-            <Card className="flex flex-col items-center justify-center gap-3 border-border bg-card py-12">
-              <FileText className="size-12 text-muted-foreground opacity-50" />
-              <p className="text-sm text-muted-foreground">
-                {t("docs.editor.loadError")}
-              </p>
-            </Card>
+            <EmptyState
+              framed
+              icon={FileX2}
+              title={t("docs.editor.loadError")}
+              description={t("docs.editor.loadErrorDescription")}
+              action={
+                documentQuery.isError ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    loading={documentQuery.isFetching}
+                    onClick={() => void documentQuery.refetch()}
+                  >
+                    {t("common.actions.retry")}
+                  </Button>
+                ) : undefined
+              }
+            />
           </div>
         </ScrollArea>
       </div>
@@ -84,31 +94,27 @@ export const GuildDocEditorPage = () => {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <ScrollArea className="min-h-0 flex-1">
-        <div className="flex min-h-full flex-col gap-4 px-3 py-3">
+        <div className="flex min-h-full flex-col gap-3 px-3 py-3">
           <PageHeader
             icon={FileText}
             title={document.title}
             description={
               <>
                 {t("docs.editor.updatedMeta", {
-                  date: formatGuildDocDateTime(document.updatedAt),
+                  date: timestampToDate(document.updatedAt),
                   version: document.version,
                 })}
               </>
             }
             status={
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                {canWrite ? (
-                  <Badge variant="secondary">
-                    {t("docs.editor.manualSave")}
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="gap-1">
-                    <LockKeyhole className="size-3" />
-                    {t("docs.editor.readOnly")}
-                  </Badge>
-                )}
-              </div>
+              canWrite ? (
+                <Badge variant="secondary">{t("docs.editor.manualSave")}</Badge>
+              ) : (
+                <Badge variant="outline" className="gap-1">
+                  <LockKeyhole className="size-3" aria-hidden="true" />
+                  {t("docs.editor.readOnly")}
+                </Badge>
+              )
             }
             actions={
               <>
@@ -159,14 +165,11 @@ export const GuildDocEditorPage = () => {
           />
 
           <form className="flex min-h-0 flex-1 flex-col" onSubmit={saveDraft}>
-            <SectionCard className="flex min-h-0 flex-1 flex-col  border-border bg-card ">
+            <SectionCard className="flex min-h-0 flex-1 flex-col">
               <SectionCardHeader title={t("docs.list.title")} />
               <SectionCardContent className="flex min-h-0 flex-col gap-3">
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="guild-doc-editor-title"
-                    className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-                  >
+                  <Label htmlFor="guild-doc-editor-title">
                     {t("docs.editor.titleLabel")}
                   </Label>
                   <Input
@@ -235,9 +238,11 @@ export const GuildDocEditorPage = () => {
                 {t("common.cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
-                render=<Button loading={deleteDocument.isPending} />
+                render=<Button
+                  variant="destructive"
+                  loading={deleteDocument.isPending}
+                />
                 disabled={deleteDocument.isPending}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 onClick={(event) => {
                   event.preventBaseUIHandler();
                   void moveDocumentToTrash();

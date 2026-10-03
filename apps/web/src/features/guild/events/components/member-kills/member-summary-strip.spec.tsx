@@ -64,29 +64,4 @@ describe("MemberSummaryStrip", () => {
     expect(screen.getByRole("heading", { name: "#8112" })).toBeTruthy();
     expect(screen.getAllByText("0").length).toBeGreaterThan(0);
   });
-
-  it("always renders statistics directly after the player header", () => {
-    const { container } = render(
-      <MemberSummaryStrip
-        contextStats={{
-          avgAfkPercentage: 0,
-          avgPointsPerKill: 1.5,
-          avgTimePerKillSeconds: 5160,
-          totalKills: 2,
-          totalPoints: 3,
-          totalTimeSeconds: 10_380,
-        }}
-        eventName="Wakacje 2026"
-        member={{ avatar: null, name: "Wild", userId: "user-1" }}
-        memberId="8112"
-      />,
-    );
-
-    expect(screen.getByRole("heading", { name: "Wild" })).toBeTruthy();
-    expect(screen.getByText("events.kills.kpiKills")).toBeTruthy();
-    expect(screen.queryByRole("button")).toBeNull();
-    expect(
-      container.querySelector("[data-slot=card]")?.lastElementChild?.tagName,
-    ).toBe("DL");
-  });
 });
