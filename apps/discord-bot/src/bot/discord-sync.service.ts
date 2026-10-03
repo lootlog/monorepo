@@ -148,14 +148,7 @@ const unavailableSyncState = (
   return {
     guildId,
     status: options?.status ?? DiscordGuildSyncStatus.STALE,
-    hasRequiredPermissions: false,
-    requiredPermissions: REQUIRED_NOTIFICATION_PERMISSIONS.map(
-      (permission) => permission.name,
-    ),
-    grantedPermissions: [],
-    missingPermissions: REQUIRED_NOTIFICATION_PERMISSIONS.map(
-      (permission) => permission.name,
-    ),
+    ...permissionState(undefined),
     channelCount: 0,
     selectableChannelCount: 0,
     lastAttemptAt: options?.lastAttemptAt ?? updatedAt,
