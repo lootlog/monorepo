@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useDebounceCallback } from "usehooks-ts";
 import { Input } from "@lootlog/ui/components/input";
 import { cn } from "cn";
 
@@ -20,6 +19,29 @@ export interface LevelRangeFilterProps {
   size?: "default" | "sm";
   className?: string;
 }
+
+/**
+ * Commits the last scheduled value once typing pauses. The commit reads the
+ * latest props, so a caller that passes new callbacks on every render never
+ * cancels or delays a pending edit; unmounting drops it.
+ */
+const useDebouncedCommit = <T,>(
+  onCommit: (value: T) => void,
+  delayMs: number,
+) => {
+  const [draft, setDraft] = useState<{ value: T } | null>(null);
+  const commit = useEffectEvent(onCommit);
+
+  useEffect(() => {
+    if (!draft) return;
+
+    const timer = setTimeout(() => commit(draft.value), delayMs);
+
+    return () => clearTimeout(timer);
+  }, [draft, delayMs]);
+
+  return (value: T) => setDraft({ value });
+};
 
 const parseLevel = (value: string) => {
   const parsed = Number.parseInt(value, 10);
@@ -58,21 +80,13 @@ export function LevelRangeFilter({
     if (syncedLevels.maxLevel !== maxLevel) setLocalMaxLevel(maxLevel);
   }
 
-  const commitMinLevel = useDebounceCallback((value: number | undefined) => {
+  const commitMinLevel = useDebouncedCommit((value: number | undefined) => {
     if (value !== minLevel) onMinLevelChange(value);
   }, debounceMs);
 
-  const commitMaxLevel = useDebounceCallback((value: number | undefined) => {
+  const commitMaxLevel = useDebouncedCommit((value: number | undefined) => {
     if (value !== maxLevel) onMaxLevelChange(value);
   }, debounceMs);
-
-  useEffect(
-    () => () => {
-      commitMinLevel.cancel();
-      commitMaxLevel.cancel();
-    },
-    [commitMinLevel, commitMaxLevel],
-  );
 
   const handleMinLevelChange = (value: string) => {
     const level = value === "" ? undefined : parseLevel(value);
