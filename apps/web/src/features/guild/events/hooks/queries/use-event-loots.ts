@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  getLootsControllerFetchLootsByGuildIdQueryKey,
-  lootsControllerFetchLootsByGuildId,
+  getLootsControllerFetchLootsByGuildIdQueryOptions,
   type LootsControllerFetchLootsByGuildIdParams,
 } from "@lootlog/client/main";
 
@@ -29,12 +28,7 @@ export const useEventLoots = ({
   } satisfies LootsControllerFetchLootsByGuildIdParams;
 
   return useQuery<Loot[]>({
-    queryKey: getLootsControllerFetchLootsByGuildIdQueryKey(
-      { guildId },
-      params,
-    ),
-    queryFn: ({ signal }) =>
-      lootsControllerFetchLootsByGuildId({ guildId }, params, { signal }),
+    ...getLootsControllerFetchLootsByGuildIdQueryOptions({ guildId }, params),
     enabled: !!guildId && !!world && npcNames.length > 0,
     staleTime: EVENT_LIVE_QUERY_STALE_TIME_MS,
   });
