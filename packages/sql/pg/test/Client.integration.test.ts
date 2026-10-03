@@ -1,11 +1,11 @@
 import { PgClient } from "@effect/sql-pg"
 import { assert, expect, it } from "@effect/vitest"
-import { DateTime, Deferred, Effect, Fiber, Option, Queue, Schedule, Schema, Stream, String } from "effect"
+import { Cause, DateTime, Deferred, Effect, Fiber, Option, Queue, Schedule, Schema, Stream, String } from "effect"
+import * as Reactivity from "effect/reactivity/Reactivity"
+import { Model } from "effect/schema"
+import { SqlClient, SqlError, SqlModel } from "effect/sql"
+import * as Statement from "effect/sql/Statement"
 import { TestClock } from "effect/testing"
-import * as Reactivity from "effect/unstable/reactivity/Reactivity"
-import { Model } from "effect/unstable/schema"
-import { SqlClient, SqlModel } from "effect/unstable/sql"
-import * as Statement from "effect/unstable/sql/Statement"
 import { PgContainer } from "./utils.ts"
 
 const compilerTransform = PgClient.makeCompiler(String.camelToSnake)
@@ -303,6 +303,27 @@ it.layer(PgContainer.layerClient, { timeout: "30 seconds" })("PgClient", (it) =>
       ])
     }))
 
+  it.effect("releases completed nested transaction locks", () =>
+    Effect.gen(function*() {
+      const sql = yield* PgClient.PgClient
+      const locks = sql`SELECT count(*)::integer AS count FROM pg_locks
+        WHERE pid = pg_backend_pid() AND locktype = 'transactionid'`
+      yield* sql.withTransaction(Effect.gen(function*() {
+        yield* sql`CREATE TEMP TABLE savepoint_locks (value INTEGER) ON COMMIT DROP`
+
+        yield* sql.withTransaction(sql`INSERT INTO savepoint_locks VALUES (1)`)
+        assert.deepStrictEqual(yield* locks, [{ count: 1 }])
+
+        const error = yield* sql.withTransaction(
+          sql`INSERT INTO savepoint_locks VALUES (2)`.pipe(Effect.andThen(Effect.fail("rollback")))
+        ).pipe(Effect.flip)
+        assert.strictEqual(error, "rollback")
+        assert.deepStrictEqual(yield* locks, [{ count: 1 }])
+
+        assert.deepStrictEqual(yield* sql`SELECT value FROM savepoint_locks`, [{ value: 1 }])
+      }))
+    }))
+
   it.effect("preserves successful concurrent nested transactions", () =>
     Effect.gen(function*() {
       const sql = yield* PgClient.PgClient
@@ -335,7 +356,45 @@ it.layer(PgContainer.layerClient, { timeout: "30 seconds" })("PgClient", (it) =>
 
       assert.deepStrictEqual(rows, [{ value: "first" }])
     }).pipe(TestClock.withLive))
+
+  it.effect("fails a transaction whose COMMIT rolls back after a caught error", () =>
+    Effect.gen(function*() {
+      const sql = yield* PgClient.PgClient
+      const cause = yield* sql.withTransaction(Effect.gen(function*() {
+        yield* Effect.ignore(sql`SELECT 1 / 0`)
+      })).pipe(Effect.sandbox, Effect.flip)
+
+      assert.isTrue(Cause.hasDies(cause))
+      assert.isFalse(Cause.hasFails(cause))
+      const defect = Cause.squash(cause)
+      assert.instanceOf(defect, SqlError.SqlError)
+      assert.strictEqual(defect.reason._tag, "UnknownError")
+      assert.strictEqual(defect.reason.operation, "commit")
+    }))
 })
+
+it.layer(PgContainer.layerMakeClientUnprepared, { timeout: "30 seconds" })(
+  "PgClient.makeClient without preparation",
+  (it) => {
+    it.effect("fails an aborted COMMIT and reuses the connection", () =>
+      Effect.gen(function*() {
+        const sql = yield* PgClient.PgClient
+        const cause = yield* sql.withTransaction(Effect.gen(function*() {
+          yield* Effect.ignore(sql`SELECT 1 / 0`)
+        })).pipe(Effect.sandbox, Effect.flip)
+
+        assert.isTrue(Cause.hasDies(cause))
+        assert.isFalse(Cause.hasFails(cause))
+        const defect = Cause.squash(cause)
+        assert.instanceOf(defect, SqlError.SqlError)
+        assert.strictEqual(defect.reason._tag, "UnknownError")
+        assert.strictEqual(defect.reason.operation, "commit")
+
+        const rows = yield* sql.withTransaction(sql<{ value: number }>`SELECT 1 AS value`)
+        assert.deepStrictEqual(rows, [{ value: 1 }])
+      }))
+  }
+)
 
 it.layer(PgContainer.layerMakeClient, { timeout: "30 seconds" })("PgClient.makeClient", (it) => {
   it.effect("connects before executing queries", () =>
