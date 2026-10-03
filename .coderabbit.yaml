@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+reviews:
+  # Vendored reference repositories for agents are never imported or shipped.
+  path_filters:
+    - "!repos/**"

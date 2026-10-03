@@ -2,5 +2,6 @@
   "extends": "./packages/typescript-config/base.json",
   "compilerOptions": {
     "noEmit": true
-  }
+  },
+  "exclude": ["**/node_modules", "repos"]
 }

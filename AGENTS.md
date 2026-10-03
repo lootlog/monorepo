@@ -124,6 +124,8 @@ tests, and module structure as reference material.
   vendored repository.
 - Keep application imports pointed at installed package dependencies; never
   import or ship code from `repos/`.
+- Keep `repos/` out of linting, formatting, type checking, tests, CI, code
+  scanning, and code review; it is reference material only.
 - Before writing Effect code, read `repos/effect/LLMS.md`, then inspect
   `repos/effect/` for the relevant idiomatic patterns.
 
