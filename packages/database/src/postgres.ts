@@ -1,8 +1,8 @@
 import { PgClient } from "@effect/sql-pg";
 import { Context, Effect, Layer } from "effect";
-import { Reactivity } from "effect/unstable/reactivity";
-import { SqlClient } from "effect/unstable/sql";
-import { ConnectionError, SqlError } from "effect/unstable/sql/SqlError";
+import { Reactivity } from "effect/reactivity";
+import { SqlClient } from "effect/sql";
+import { ConnectionError, SqlError } from "effect/sql/SqlError";
 
 export const makePostgresLayer = (options: PgClient.PgPoolConfig) =>
   Layer.effectContext(

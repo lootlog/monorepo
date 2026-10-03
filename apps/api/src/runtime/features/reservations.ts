@@ -2,7 +2,7 @@ import { makeJsonCodec } from "#src/redis/redis.service";
 import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Layer } from "effect";
-import { HttpClient } from "effect/unstable/http";
+import { HttpClient } from "effect/http";
 import { makeReservationCatalogAdapter } from "#src/http-api/handlers/organization-workspace/reservation-catalog.adapter";
 import { makeReservationReadDataLayer } from "#src/http-api/handlers/organization-workspace/reservation-read.data-layer";
 import { makeReservationSharingDataLayer } from "#src/http-api/handlers/organization-workspace/reservation-sharing.data-layer";

@@ -1,5 +1,5 @@
-import { HttpClient, HttpClientResponse } from "effect/unstable/http";
-import { Redis } from "effect/unstable/persistence";
+import { HttpClient, HttpClientResponse } from "effect/http";
+import { Redis } from "effect/persistence";
 import { ApiKeyService } from "#src/auth/api-key-service";
 import { AppConfig } from "#src/config/env";
 import { afterAll, beforeAll, describe, expect, it, spyOn } from "bun:test";

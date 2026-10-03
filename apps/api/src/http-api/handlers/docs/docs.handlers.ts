@@ -11,7 +11,7 @@ import {
 } from "@lootlog/schema/permissions";
 import { Context, Effect, Layer, Schema } from "effect";
 
-import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { HttpApiBuilder } from "effect/http-api";
 import { DocsRepository } from "#src/docs/docs.repository";
 import { makeDocsService, type DocsService } from "#src/docs/docs.service";
 import {

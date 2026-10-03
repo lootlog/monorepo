@@ -6,7 +6,7 @@ import {
   makePublicGuildStatsCard,
 } from "#src/public-guild-stats-card/public-guild-stats-card.service";
 import { Effect, Layer } from "effect";
-import { HttpClient } from "effect/unstable/http";
+import { HttpClient } from "effect/http";
 import {
   PublicSystemData,
   PublicSystemOperationError,

@@ -3,7 +3,7 @@ import { RedisClient } from "bun";
 import { createBunRedisClient, RedisConnection } from "bullmq";
 import { RedisService } from "#src/redis/redis.service";
 import { Context, Effect, FiberSet, Layer, Redacted } from "effect";
-import { Redis } from "effect/unstable/persistence";
+import { Redis } from "effect/persistence";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 
 RedisConnection.clientFactory = (options) => {

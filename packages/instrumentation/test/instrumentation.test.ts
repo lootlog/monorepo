@@ -1,10 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { Effect, Fiber, Layer, Logger, Metric } from "effect";
-import {
-  HttpRouter,
-  HttpServer,
-  HttpServerResponse,
-} from "effect/unstable/http";
+import { HttpRouter, HttpServer, HttpServerResponse } from "effect/http";
 import {
   httpServerDuration,
   httpServerMetrics,

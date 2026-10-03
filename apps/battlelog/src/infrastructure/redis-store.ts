@@ -4,7 +4,7 @@ import {
   fillJsonCache,
 } from "@lootlog/database/redis-cache-fill";
 import { Effect, Schema } from "effect";
-import * as Redis from "effect/unstable/persistence/Redis";
+import * as Redis from "effect/persistence/Redis";
 
 export interface RedisOptions {
   readonly host: string;

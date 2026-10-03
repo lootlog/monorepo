@@ -4,8 +4,8 @@ import {
   httpServerRouteMetrics,
 } from "@lootlog/instrumentation";
 import { Effect, Layer } from "effect";
-import { HttpRouter, HttpServerResponse } from "effect/unstable/http";
-import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { HttpRouter, HttpServerResponse } from "effect/http";
+import { HttpApiBuilder } from "effect/http-api";
 import { SearchConfig } from "#src/config/search-config";
 import { SearchApi } from "./search-api.js";
 import { SearchHandlers } from "./search-handlers.js";

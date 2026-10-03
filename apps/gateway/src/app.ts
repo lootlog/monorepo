@@ -34,8 +34,8 @@ import {
   Option,
   Redacted,
 } from "effect";
-import { Headers, HttpClient, HttpTraceContext } from "effect/unstable/http";
-import { Redis } from "effect/unstable/persistence";
+import { Headers, HttpClient, HttpTraceContext } from "effect/http";
+import { Redis } from "effect/persistence";
 import { makeGatewayAuth, type GatewayAuth } from "#src/auth/auth-service";
 import { ApiKeyLeases } from "#src/auth/api-key-leases";
 import { makeMargonemProofVerifier } from "#src/auth/margonem-proof";

@@ -62,8 +62,8 @@ import {
   toOrganizationWorkspaceHttpResponse,
 } from "./organization-workspace.operations.js";
 
-import { Etag, HttpPlatform, HttpRouter } from "effect/unstable/http";
-import { HttpApiTest } from "effect/unstable/httpapi";
+import { Etag, HttpPlatform, HttpRouter } from "effect/http";
+import { HttpApiTest } from "effect/http-api";
 import { LootlogApi } from "../../lootlog-api.js";
 import { ReservationsHandlers } from "../reservations/reservations.handlers.js";
 import { BearerSecurityMiddleware } from "../../contracts/shared.js";

@@ -1,5 +1,5 @@
 import { Duration, Effect, Random, Schedule, Stream } from "effect";
-import { withScope, type HttpClient } from "effect/unstable/http/HttpClient";
+import { withScope, type HttpClient } from "effect/http/HttpClient";
 
 type FailureReason =
   | "invalid-response"

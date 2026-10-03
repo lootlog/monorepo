@@ -5,7 +5,7 @@ import {
   type DiscordGuildSyncState,
 } from "@lootlog/schema/notifications";
 import { Effect, Schema } from "effect";
-import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
+import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
 import {
   outboundHttpRequest,
   type OutboundHttpFailure,

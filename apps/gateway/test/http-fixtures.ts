@@ -1,9 +1,5 @@
 import { Effect } from "effect";
-import {
-  HttpClient,
-  HttpClientError,
-  HttpClientResponse,
-} from "effect/unstable/http";
+import { HttpClient, HttpClientError, HttpClientResponse } from "effect/http";
 
 export const httpClientFromResponses = (
   respond: () => Effect.Effect<Response, Error>,

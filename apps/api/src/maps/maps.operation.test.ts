@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from "bun:test";
 import { Effect, Fiber, Layer } from "effect";
-import { FetchHttpClient, HttpClient } from "effect/unstable/http";
+import { FetchHttpClient, HttpClient } from "effect/http";
 import type { RedisService } from "#src/redis/redis.service";
 import { makeMapsOperation } from "./maps.operation.js";
 

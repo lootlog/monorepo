@@ -1,7 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { verify as verifySignatureValue } from "node:crypto";
 import { Cause, Clock, Effect, Option, Schema } from "effect";
-import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
+import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
 import { SingleFlight } from "#src/platform/single-flight";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 

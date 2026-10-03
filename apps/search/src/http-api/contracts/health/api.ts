@@ -4,7 +4,7 @@ import {
   HttpApiGroup,
   HttpApiSchema,
   OpenApi,
-} from "effect/unstable/httpapi";
+} from "effect/http-api";
 
 export class HealthGroup extends HttpApiGroup.make("health").add(
   HttpApiEndpoint.get("HealthzControllerHealthCheck", "/healthz", {

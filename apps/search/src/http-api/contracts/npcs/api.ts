@@ -5,7 +5,7 @@ import {
   HttpApiGroup,
   HttpApiSchema,
   OpenApi,
-} from "effect/unstable/httpapi";
+} from "effect/http-api";
 import {
   NpcsControllerGetNpcs200,
   NpcsControllerGetNpcsQuery,

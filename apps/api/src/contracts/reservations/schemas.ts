@@ -19,7 +19,7 @@ const ReservationSourceOrganization = Schema.Struct({
   iconUrl: Schema.Union([Schema.String, Schema.Null]),
   isCurrent: Schema.Boolean,
   calendarPath: Schema.String.check(
-    Schema.isPattern(new RegExp("^\\/.*")).annotate({
+    Schema.isPattern(new RegExp("^\\/.*", "u")).annotate({
       expected: "a string matching the RegExp ^\\/.*",
     }),
   ),

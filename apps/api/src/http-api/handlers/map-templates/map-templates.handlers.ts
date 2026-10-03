@@ -6,7 +6,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { Context, Effect, Layer, Schema } from "effect";
 
-import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { HttpApiBuilder } from "effect/http-api";
 import { and, asc, eq } from "drizzle-orm";
 import {
   Permission,

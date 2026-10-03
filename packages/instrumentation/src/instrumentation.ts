@@ -5,7 +5,7 @@ import {
   HttpServerError,
   HttpServerRequest,
   type HttpServerResponse,
-} from "effect/unstable/http";
+} from "effect/http";
 import { currentLogSpan } from "./logging.js";
 
 const durationBoundaries = [

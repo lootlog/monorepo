@@ -1,5 +1,5 @@
 import { Schema } from "effect";
-import { HttpApiSchema } from "effect/unstable/httpapi";
+import { HttpApiSchema } from "effect/http-api";
 
 export const BadRequestResponse = Schema.Struct({
   error: Schema.String,

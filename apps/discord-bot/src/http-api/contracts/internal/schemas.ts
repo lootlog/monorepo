@@ -4,7 +4,7 @@ import {
 } from "@lootlog/schema/discord";
 /** Transport schemas owned by the internal HTTP module. */
 import { Schema } from "effect";
-import { HttpApiSchema } from "effect/unstable/httpapi";
+import { HttpApiSchema } from "effect/http-api";
 
 export const GuildParams = Schema.Struct({ guildId: Schema.String });
 

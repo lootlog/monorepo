@@ -1,7 +1,7 @@
 import { describe, expect, it, mock } from "bun:test";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { Effect, Layer, Queue, Redacted } from "effect";
-import { Redis } from "effect/unstable/persistence";
+import { Redis } from "effect/persistence";
 import { ActivityConfig } from "#src/config/activity-config";
 import { ApiHttpClient } from "#src/http/api-http-client";
 import { Permissions } from "./activity-permissions.js";

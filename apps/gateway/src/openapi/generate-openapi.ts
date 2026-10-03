@@ -1,5 +1,5 @@
 import { preserveOpenApi30Contract } from "@lootlog/schema/openapi-compatibility";
-import { OpenApi } from "effect/unstable/httpapi";
+import { OpenApi } from "effect/http-api";
 import { stringify } from "yaml";
 import { GatewayApi } from "../http-api/gateway-api.js";
 

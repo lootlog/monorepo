@@ -13,7 +13,7 @@ import {
 import { Context, Effect, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 
-import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { HttpApiBuilder } from "effect/http-api";
 import type {
   guildTable,
   memberTable,

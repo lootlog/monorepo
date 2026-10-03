@@ -1,9 +1,5 @@
 /** security transport definitions for battles. */
-import {
-  HttpApiMiddleware,
-  HttpApiSecurity,
-  OpenApi,
-} from "effect/unstable/httpapi";
+import { HttpApiMiddleware, HttpApiSecurity, OpenApi } from "effect/http-api";
 
 export const BearerSecurity = HttpApiSecurity.bearer.pipe(
   HttpApiSecurity.annotate(OpenApi.Format, "JWT"),

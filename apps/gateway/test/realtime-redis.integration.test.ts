@@ -15,7 +15,7 @@ import {
   Result,
   Schedule,
 } from "effect";
-import { Redis } from "effect/unstable/persistence";
+import { Redis } from "effect/persistence";
 import {
   GenericContainer,
   type StartedTestContainer,
@@ -2418,7 +2418,7 @@ describe("realtime Dragonfly integration", () => {
         `
           import { BunRedis, BunRuntime } from "@effect/platform-bun";
           import { Effect } from "effect";
-          import { Redis } from "effect/unstable/persistence";
+          import { Redis } from "effect/persistence";
           BunRuntime.runMain(Effect.gen(function* () {
             const redis = yield* Redis.Redis;
             yield* redis.subscribe("shutdown:signal");

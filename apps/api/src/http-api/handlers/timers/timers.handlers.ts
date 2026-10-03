@@ -7,7 +7,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 
 import { applicationErrorResponse } from "../../application-error-response.js";
-import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { HttpApiBuilder } from "effect/http-api";
 import {
   decodeTimerResponse,
   decodeTimersResponse,

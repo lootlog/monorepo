@@ -1,16 +1,16 @@
 import { describe, expect, it } from "bun:test";
 import { PgClient } from "@effect/sql-pg";
-import { Reactivity } from "effect/unstable/reactivity";
-import { SqlClient, SqlError } from "effect/unstable/sql";
+import { Reactivity } from "effect/reactivity";
+import { SqlClient, SqlError } from "effect/sql";
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Layer, Redacted, Queue } from "effect";
-import { HttpRouter, HttpServer } from "effect/unstable/http";
+import { HttpRouter, HttpServer } from "effect/http";
 import {
   ActivityRepository,
   type ActivityRepositoryValue,
 } from "#src/activities/activity-repository";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
-import { Redis } from "effect/unstable/persistence";
+import { Redis } from "effect/persistence";
 import { ActivityConfig } from "#src/config/activity-config";
 import { ApiHttpClient, ApiHttpClientFailure } from "#src/http/api-http-client";
 import { OnlineRepository } from "#src/online/online-repository";

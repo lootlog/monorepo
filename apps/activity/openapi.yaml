@@ -1053,6 +1053,184 @@ paths:
       summary: Get the signed-in user's confirmed game online time by Warsaw calendar day
 components:
   schemas:
+    UserOnlineResponseDto:
+      type: object
+      properties:
+        timezone:
+          type: string
+          enum:
+            - Europe/Warsaw
+        trackingStartedAt:
+          nullable: true
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+        lastObservedAt:
+          nullable: true
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+        status:
+          type: string
+          enum:
+            - fresh
+            - stale
+            - unavailable
+        days:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              onlineSeconds:
+                nullable: true
+                type: number
+              partial:
+                type: boolean
+              worlds:
+                type: array
+                items:
+                  type: string
+              worldsComplete:
+                type: boolean
+            required:
+              - date
+              - onlineSeconds
+              - partial
+              - worlds
+              - worldsComplete
+      required:
+        - timezone
+        - trackingStartedAt
+        - lastObservedAt
+        - status
+        - days
+    DeleteActivityResponseDto_Output:
+      type: object
+      properties:
+        count:
+          type: number
+      required:
+        - count
+    ActivityResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        guildId:
+          type: string
+        discordId:
+          type: string
+        type:
+          type: string
+          enum:
+            - CONNECT_EVENT
+            - DISCONNECT_EVENT
+        source:
+          type: string
+          enum:
+            - GAME
+            - WEB_APP
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        world:
+          nullable: true
+          type: string
+        details:
+          type: object
+          additionalProperties: {}
+        actorSnapshot:
+          type: object
+          properties:
+            id:
+              type: string
+            accountId:
+              type: number
+            characterId:
+              type: number
+            name:
+              type: string
+            clanName:
+              nullable: true
+              type: string
+            clanId:
+              nullable: true
+              type: number
+            icon:
+              type: string
+            lvl:
+              type: number
+            prof:
+              type: string
+            source:
+              type: string
+              enum:
+                - GAME
+                - WEB_APP
+            createdAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          required:
+            - id
+            - accountId
+            - characterId
+            - name
+            - icon
+            - lvl
+            - prof
+            - source
+            - createdAt
+      required:
+        - id
+        - userId
+        - guildId
+        - discordId
+        - type
+        - source
+        - createdAt
+    MemberActivityStatsResponseDto:
+      type: object
+      properties:
+        guildId:
+          type: string
+        discordId:
+          type: string
+        source:
+          type: string
+          enum:
+            - GAME
+            - WEB_APP
+        lastSeenAt:
+          format: date-time
+          nullable: true
+          type: string
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        visitCount:
+          type: number
+        activeSessionCount:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+      required:
+        - guildId
+        - discordId
+        - source
+        - visitCount
+        - activeSessionCount
+        - createdAt
+        - updatedAt
     PaginatedActivitiesResponseDto:
       type: object
       properties:
@@ -1146,7 +1324,7 @@ components:
       required:
         - data
         - hasMore
-    ActorNameSuggestionsResponseDto_Output:
+    ClanNameSuggestionsResponseDto_Output:
       type: object
       properties:
         suggestions:
@@ -1164,7 +1342,7 @@ components:
             type: string
       required:
         - worlds
-    ClanNameSuggestionsResponseDto_Output:
+    ActorNameSuggestionsResponseDto_Output:
       type: object
       properties:
         suggestions:
@@ -1173,184 +1351,6 @@ components:
             type: string
       required:
         - suggestions
-    MemberActivityStatsResponseDto:
-      type: object
-      properties:
-        guildId:
-          type: string
-        discordId:
-          type: string
-        source:
-          type: string
-          enum:
-            - GAME
-            - WEB_APP
-        lastSeenAt:
-          format: date-time
-          nullable: true
-          type: string
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-        visitCount:
-          type: number
-        activeSessionCount:
-          type: number
-        createdAt:
-          type: string
-          format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-        updatedAt:
-          type: string
-          format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-      required:
-        - guildId
-        - discordId
-        - source
-        - visitCount
-        - activeSessionCount
-        - createdAt
-        - updatedAt
-    ActivityResponseDto:
-      type: object
-      properties:
-        id:
-          type: string
-        userId:
-          type: string
-        guildId:
-          type: string
-        discordId:
-          type: string
-        type:
-          type: string
-          enum:
-            - CONNECT_EVENT
-            - DISCONNECT_EVENT
-        source:
-          type: string
-          enum:
-            - GAME
-            - WEB_APP
-        createdAt:
-          type: string
-          format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-        world:
-          nullable: true
-          type: string
-        details:
-          type: object
-          additionalProperties: {}
-        actorSnapshot:
-          type: object
-          properties:
-            id:
-              type: string
-            accountId:
-              type: number
-            characterId:
-              type: number
-            name:
-              type: string
-            clanName:
-              nullable: true
-              type: string
-            clanId:
-              nullable: true
-              type: number
-            icon:
-              type: string
-            lvl:
-              type: number
-            prof:
-              type: string
-            source:
-              type: string
-              enum:
-                - GAME
-                - WEB_APP
-            createdAt:
-              type: string
-              format: date-time
-              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-          required:
-            - id
-            - accountId
-            - characterId
-            - name
-            - icon
-            - lvl
-            - prof
-            - source
-            - createdAt
-      required:
-        - id
-        - userId
-        - guildId
-        - discordId
-        - type
-        - source
-        - createdAt
-    DeleteActivityResponseDto_Output:
-      type: object
-      properties:
-        count:
-          type: number
-      required:
-        - count
-    UserOnlineResponseDto:
-      type: object
-      properties:
-        timezone:
-          type: string
-          enum:
-            - Europe/Warsaw
-        trackingStartedAt:
-          nullable: true
-          type: string
-          format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-        lastObservedAt:
-          nullable: true
-          type: string
-          format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-        status:
-          type: string
-          enum:
-            - fresh
-            - stale
-            - unavailable
-        days:
-          type: array
-          items:
-            type: object
-            properties:
-              date:
-                type: string
-              onlineSeconds:
-                nullable: true
-                type: number
-              partial:
-                type: boolean
-              worlds:
-                type: array
-                items:
-                  type: string
-              worldsComplete:
-                type: boolean
-            required:
-              - date
-              - onlineSeconds
-              - partial
-              - worlds
-              - worldsComplete
-      required:
-        - timezone
-        - trackingStartedAt
-        - lastObservedAt
-        - status
-        - days
   securitySchemes:
     bearer:
       type: http

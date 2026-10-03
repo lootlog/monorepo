@@ -1,5 +1,5 @@
 import { Effect, Queue, Schema } from "effect";
-import { Redis } from "effect/unstable/persistence";
+import { Redis } from "effect/persistence";
 import { RedisService } from "../src/redis/redis.service.js";
 import type { InternalGuildsCache } from "../src/http-api/handlers/internal/internal.handlers.js";
 
