@@ -3,7 +3,7 @@ import { SectionCard } from "@/components/common/section-card/section-card";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { SearchX } from "lucide-react";
 import type { ReactNode } from "react";
-import { StatsRankingRowsSkeleton } from "./stats-ranking-rows-skeleton";
+import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 
 type StatsTableCardProps = {
   isLoading: boolean;
@@ -26,7 +26,7 @@ export const StatsTableCard = ({
   >
     <ScrollArea className="relative min-h-0 flex-1">
       {isLoading ? (
-        <StatsRankingRowsSkeleton />
+        <TableRowsSkeleton />
       ) : emptyMessage ? (
         <EmptyState icon={SearchX} title={emptyMessage} />
       ) : (

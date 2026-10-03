@@ -83,9 +83,9 @@
     "searchPlaceholder": "Szukaj potwora",
     "noData": "Ten członek nie ma jeszcze żadnych bić",
     "filteredNoData": "Żadne bicie nie pasuje do filtrów",
-    "notFound": "Nie ma takiego członka w tej organizacji"
+    "notFound": "Nie ma takiego członka w tym Lootlogu"
   },
-  "level": "{{level}} lvl",
+  "level": "Poziom {{level}}",
   "leaders": {
     "title": "Czołówka"
   }

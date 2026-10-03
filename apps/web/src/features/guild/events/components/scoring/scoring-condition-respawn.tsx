@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { ScoringOperatorSelect } from "./scoring-operator-select";
 import { ScoringConditionTimeWindow } from "./scoring-condition-time-window";
 import {
@@ -25,6 +26,7 @@ export const ScoringConditionRespawn = ({
   conditionIndex,
 }: ScoringConditionRespawnProps) => {
   const { t } = useTranslation();
+  const idPrefix = useId();
 
   return (
     <div className="space-y-2">
@@ -37,7 +39,10 @@ export const ScoringConditionRespawn = ({
       {/* Coverage threshold row */}
       <div className="grid grid-cols-2 gap-1.5">
         <div className="space-y-0.5">
-          <Label className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60">
+          <Label
+            htmlFor={`${idPrefix}-operator`}
+            className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60"
+          >
             {t("events.scoring.conditionLabel.coverage")}
           </Label>
           <Controller
@@ -45,6 +50,7 @@ export const ScoringConditionRespawn = ({
             name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.operator`}
             render={({ field }) => (
               <ScoringOperatorSelect
+                id={`${idPrefix}-operator`}
                 value={field.value}
                 onChange={field.onChange}
               />
@@ -52,11 +58,15 @@ export const ScoringConditionRespawn = ({
           />
         </div>
         <div className="space-y-0.5">
-          <Label className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60">
+          <Label
+            htmlFor={`${idPrefix}-value`}
+            className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60"
+          >
             {t("events.scoring.conditionLabel.value")}
           </Label>
           <div className="flex items-center gap-1">
             <ScoringNumberInput
+              id={`${idPrefix}-value`}
               control={control}
               register={register}
               name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.value`}

@@ -27,8 +27,8 @@ it("keeps incomplete intervals identifiable in table view", () => {
   );
   fireEvent.click(screen.getByRole("button", { name: "statistics.table" }));
   const table = screen.getByRole("table", { name: "Weekly kills" });
-  const partialRow = within(table).getByRole("row", { name: /2026-08-03/ });
-  const completeRow = within(table).getByRole("row", { name: /2026-08-10/ });
+  const partialRow = within(table).getByRole("row", { name: /3\.08\.2026/ });
+  const completeRow = within(table).getByRole("row", { name: /10\.08\.2026/ });
   expect(within(partialRow).getByText("statistics.partial")).toBeDefined();
   expect(within(completeRow).queryByText("statistics.partial")).toBeNull();
   expect(within(partialRow).getByRole("cell").textContent).toBe("12");

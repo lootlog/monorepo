@@ -19,6 +19,10 @@ import { useTranslation } from "react-i18next";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import {
+  formatStatisticsDate,
+  formatStatisticsDay,
+} from "./format-statistics-date";
 
 type KillAnalyticsTrendPoint = {
   date: string;
@@ -48,7 +52,7 @@ export function KillAnalyticsTrend({ title, data }: KillAnalyticsTrendProps) {
       header: () => t("statistics.date"),
       cell: ({ row: { original: day } }) => (
         <>
-          {day.date}
+          {formatStatisticsDate(day.date)}
           {day.partial && (
             <span className="ml-2 text-xs text-muted-foreground">
               {t("statistics.partial")}
@@ -93,7 +97,7 @@ export function KillAnalyticsTrend({ title, data }: KillAnalyticsTrendProps) {
               <BarChart data={data} accessibilityLayer>
                 <XAxis
                   dataKey="date"
-                  tickFormatter={(date: string) => date.slice(5)}
+                  tickFormatter={formatStatisticsDay}
                   minTickGap={36}
                   tick={{ fontSize: 11 }}
                 />
@@ -105,7 +109,7 @@ export function KillAnalyticsTrend({ title, data }: KillAnalyticsTrendProps) {
                 <Tooltip
                   cursor={{ fill: "var(--primary)", fillOpacity: 0.12 }}
                   labelFormatter={(date) =>
-                    `${date}${partialDates.has(String(date)) ? ` · ${t("statistics.partial")}` : ""}`
+                    `${formatStatisticsDate(String(date))}${partialDates.has(String(date)) ? ` · ${t("statistics.partial")}` : ""}`
                   }
                   contentStyle={{
                     background: "var(--card)",

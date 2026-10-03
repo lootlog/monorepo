@@ -26,7 +26,7 @@ export const InstallButton: FC = () => {
             className="h-auto w-14 flex-col gap-1 px-1 py-1.5 text-xs leading-none has-[>svg]:px-1"
             onClick={() => dispatch({ type: "OPEN" })}
           >
-            <Blocks aria-hidden="true" color="#3E8667" className="!size-6" />
+            <Blocks aria-hidden="true" className="!size-6 text-primary" />
             {t("ui.sidebar.installAddon")}
           </Button>
         }

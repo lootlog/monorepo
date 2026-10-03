@@ -65,20 +65,18 @@ export function DashboardKillSummary() {
         icon={Swords}
         title={t("statistics.killSummaryTitle")}
         actions={
-          <>
-            <ChevronLink
-              render=<Link
-                to="/@me/statistics"
-                search={{
-                  tab: "overview",
-                  days: period === "7d" ? 7 : 30,
-                  world: world ?? undefined,
-                }}
-              />
-            >
-              {t("statistics.title")}
-            </ChevronLink>
-          </>
+          <ChevronLink
+            render=<Link
+              to="/@me/statistics"
+              search={{
+                tab: "overview",
+                days: period === "7d" ? 7 : 30,
+                world: world ?? undefined,
+              }}
+            />
+          >
+            {t("statistics.title")}
+          </ChevronLink>
         }
       />
       <SectionCardContent
@@ -90,12 +88,12 @@ export function DashboardKillSummary() {
             {t("common.loading")}
           </span>
         )}
-        <div className="grid gap-5 @min-[800px]/kill-summary:grid-cols-[minmax(320px,1fr)_3fr] @min-[800px]/kill-summary:gap-6">
+        <div className="grid gap-5 @min-[800px]/kill-summary:grid-cols-[minmax(380px,1fr)_3fr] @min-[800px]/kill-summary:gap-6">
           <div className="flex flex-wrap items-center justify-between gap-4 @min-[800px]/kill-summary:flex-col @min-[800px]/kill-summary:items-start @min-[800px]/kill-summary:justify-center @min-[800px]/kill-summary:border-r @min-[800px]/kill-summary:pr-6">
             <StatisticsQueryState query={query} loading={totalSummary}>
               {totalSummary}
             </StatisticsQueryState>
-            <div className="grid w-full min-w-0 grid-cols-2 gap-2 [&>div]:min-w-0">
+            <div className="grid w-full min-w-0 grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-2 [&>div]:min-w-0">
               <KillStatsPeriodSelect
                 value={period}
                 onValueChange={setPeriod}

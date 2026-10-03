@@ -1,4 +1,3 @@
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { PageHeader } from "@/components/common/page-header";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -17,9 +16,10 @@ import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { Skull } from "lucide-react";
+import { Button } from "@lootlog/ui/components/button";
+import { EmptyState } from "@/components/common/empty-state";
+import { ResultsSurface } from "@/components/common/results-surface";
+import { CircleAlert, FilterX, SearchX, Skull } from "lucide-react";
 import {
   KillsFilters,
   type KillsFiltersState,
@@ -123,15 +123,13 @@ export const KillsPage: React.FC = () => {
     period: filters.period === "all" ? undefined : filters.period,
   };
 
-  const { data, isLoading } = useKillsControllerGetUserNpcKills(
-    npcKillsParams,
-    {
+  const { data, isLoading, isError, isFetching, refetch } =
+    useKillsControllerGetUserNpcKills(npcKillsParams, {
       query: {
         queryKey: getKillsControllerGetUserNpcKillsQueryKey(npcKillsParams),
         staleTime: 30_000,
       },
-    },
-  );
+    });
 
   const handleWorldChange = (world: string | undefined) => {
     setQuery({ world: world ?? null, cursor: null });
@@ -146,6 +144,20 @@ export const KillsPage: React.FC = () => {
 
     setDrafts(nextDrafts);
     publishQuery({ ...nextDrafts, cursor: null });
+  };
+
+  const handleResetFilters = () => {
+    publishQuery.cancel();
+    setDrafts({ search: "", minLvl: "", maxLvl: "" });
+    setQuery({
+      world: null,
+      npcType: null,
+      search: null,
+      minLvl: null,
+      maxLvl: null,
+      period: null,
+      cursor: null,
+    });
   };
 
   const handlePeriodChange = (period: KillStatsPeriod) => {
@@ -185,17 +197,42 @@ export const KillsPage: React.FC = () => {
       return <TableRowsSkeleton trailingColumns={2} />;
     }
 
+    if (isError && !data) {
+      return (
+        <EmptyState
+          icon={CircleAlert}
+          title={t("statistics.killsLoadError")}
+          action={
+            <Button
+              variant="outline"
+              loading={isFetching}
+              onClick={() => void refetch()}
+            >
+              {t("common.actions.retry")}
+            </Button>
+          }
+        />
+      );
+    }
+
     if (!data || data.npcs.length === 0) {
       return (
-        <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
-          <p className="text-muted-foreground">
-            {t(
-              hasActiveFilters
-                ? "kills.ranking.filteredNoData"
-                : "kills.ranking.noData",
-            )}
-          </p>
-        </div>
+        <EmptyState
+          icon={SearchX}
+          title={t(
+            hasActiveFilters
+              ? "kills.ranking.filteredNoData"
+              : "kills.ranking.noData",
+          )}
+          action={
+            hasActiveFilters && (
+              <Button variant="outline" size="sm" onClick={handleResetFilters}>
+                <FilterX data-icon="inline-start" aria-hidden />
+                {t("statistics.clearFilters")}
+              </Button>
+            )
+          }
+        />
       );
     }
 
@@ -207,13 +244,13 @@ export const KillsPage: React.FC = () => {
       <Table className="border-b">
         <TanStackTableHeader
           table={table}
-          className="bg-background sticky top-0 z-10"
+          className="sticky top-0 z-10 bg-background"
           rowClassName="border-b-1! border-border"
           headClassName="whitespace-nowrap"
         />
         <TanStackTableBody
           table={table}
-          rowClassName="bg-background border-b border-border h-14"
+          rowClassName="h-14 border-b border-border hover:bg-muted/40"
           cellClassName="whitespace-nowrap"
         />
       </Table>
@@ -223,51 +260,40 @@ export const KillsPage: React.FC = () => {
   const totalKills = data?.pagination?.total ?? 0;
 
   return (
-    <div className="flex flex-col h-full min-h-0">
-      <ScrollArea className="flex-1 min-h-0">
-        <div className="px-3 py-3 flex flex-col gap-4">
-          <PageHeader
-            icon={Skull}
-            title={t("kills.ranking.title")}
-            description={t("kills.ranking.description")}
-          >
-            <KillsFilters
-              filters={{
-                ...filters,
-                search: drafts.search,
-                minLvl: drafts.minLvl ? Number(drafts.minLvl) : undefined,
-                maxLvl: drafts.maxLvl ? Number(drafts.maxLvl) : undefined,
-              }}
-              onWorldChange={handleWorldChange}
-              onNpcTypeChange={handleNpcTypeChange}
-              onSearchChange={(search) => handleDraftChange("search", search)}
-              onMinLvlChange={(minLvl) => handleDraftChange("minLvl", minLvl)}
-              onMaxLvlChange={(maxLvl) => handleDraftChange("maxLvl", maxLvl)}
-              onPeriodChange={handlePeriodChange}
-            />
-          </PageHeader>
-
-          <SectionCard className="flex-1 min-h-0 flex flex-col overflow-hidden">
-            <SectionCardHeader
-              title={t("kills.ranking.total", {
-                count: totalKills,
-              })}
-            />
-            <ScrollArea className="relative flex-1 min-h-0 w-full">
-              {renderResults()}
-            </ScrollArea>
-            <TablePaginationFooter
-              totalLabel={t("kills.ranking.total", {
-                count: totalKills,
-              })}
-              hasPrev={hasPrev}
-              hasNext={Boolean(data?.pagination?.hasNext)}
-              onPreviousPage={handlePreviousPage}
-              onNextPage={handleNextPage}
-            />
-          </SectionCard>
-        </div>
-      </ScrollArea>
+    <div className="flex h-full min-h-0 flex-col gap-3 p-3">
+      <PageHeader
+        icon={Skull}
+        title={t("kills.ranking.title")}
+        description={t("kills.ranking.description")}
+      />
+      <KillsFilters
+        filters={{
+          ...filters,
+          search: drafts.search,
+          minLvl: drafts.minLvl ? Number(drafts.minLvl) : undefined,
+          maxLvl: drafts.maxLvl ? Number(drafts.maxLvl) : undefined,
+        }}
+        onWorldChange={handleWorldChange}
+        onNpcTypeChange={handleNpcTypeChange}
+        onSearchChange={(search) => handleDraftChange("search", search)}
+        onMinLvlChange={(minLvl) => handleDraftChange("minLvl", minLvl)}
+        onMaxLvlChange={(maxLvl) => handleDraftChange("maxLvl", maxLvl)}
+        onPeriodChange={handlePeriodChange}
+      />
+      <ResultsSurface
+        withHorizontalScroll={!isMobile}
+        footer={
+          <TablePaginationFooter
+            totalLabel={t("kills.ranking.total", { count: totalKills })}
+            hasPrev={hasPrev}
+            hasNext={Boolean(data?.pagination?.hasNext)}
+            onPreviousPage={handlePreviousPage}
+            onNextPage={handleNextPage}
+          />
+        }
+      >
+        {renderResults()}
+      </ResultsSurface>
     </div>
   );
 };

@@ -93,7 +93,10 @@ export const BattlePanelSingleBattleSkeleton = () => {
               <SectionCard className={panelCardClassName}>
                 <SectionCardHeader
                   className="shrink-0"
-                  title=<Skeleton className="h-5 w-36" />
+                  title=<Skeleton
+                    render={<span />}
+                    className="block h-5 w-36"
+                  />
                 />
                 <div className="flex min-h-[49px] shrink-0 items-center gap-2 border-b border-border/70 px-3 py-2">
                   <Skeleton className="h-8 min-w-0 flex-1 rounded-md" />
@@ -133,7 +136,9 @@ export const BattlePanelSingleBattleSkeleton = () => {
             </div>
 
             <SectionCard className={panelCardClassName}>
-              <SectionCardHeader title=<Skeleton className="h-5 w-32" /> />
+              <SectionCardHeader
+                title=<Skeleton render={<span />} className="block h-5 w-32" />
+              />
               <div className="flex flex-col gap-4 p-3">
                 {summaryRows.map((_, index) => (
                   <div key={index} className="space-y-1.5">
@@ -152,7 +157,10 @@ export const BattlePanelSingleBattleSkeleton = () => {
               <SectionCard className={panelCardClassName}>
                 <SectionCardHeader
                   className="shrink-0"
-                  title=<Skeleton className="h-5 w-36" />
+                  title=<Skeleton
+                    render={<span />}
+                    className="block h-5 w-36"
+                  />
                   actions={
                     <div className="flex items-center gap-1.5">
                       <Skeleton className="size-8 rounded-md" />

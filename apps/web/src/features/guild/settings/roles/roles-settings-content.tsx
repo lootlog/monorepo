@@ -1,17 +1,11 @@
-import { EmptyState } from "@/components/common/empty-state";
-import { TableFilterToolbar } from "@/components/ui/table-filter-toolbar";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SearchInput } from "@/components/ui/search-input";
+import { SettingsTableCard } from "@/features/guild/settings/components/settings-table-card";
 import { RolesTable } from "@/features/guild/settings/roles/roles-table";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useRolesControllerGetGuildRoles } from "@lootlog/client/main";
 import { Permission } from "@lootlog/schema/permissions";
-import { Button } from "@lootlog/ui/components/button";
 
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
-import { FilterX, Shield } from "lucide-react";
+import { Shield } from "lucide-react";
 import { startTransition, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -53,68 +47,32 @@ export const RolesSettingsContent = () => {
   const hasActiveFilters = normalizedSearchValue !== "";
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-x-hidden overflow-y-auto px-3 pb-3 gap-3">
-      <h1 className="sr-only">{t("settings.roles.title")}</h1>
-      <SectionCard className="max-h-full shrink-0">
-        <SectionCardContent className="flex min-h-0 flex-col gap-0 p-0">
-          <TableFilterToolbar>
-            <SearchInput
-              value={searchValue}
-              onChange={(event) => setSearchValue(event.target.value)}
-              placeholder={t("settings.roles.searchPlaceholder")}
-              className="h-9"
-              wrapperClassName="w-full min-w-0 sm:min-w-[200px] sm:flex-1"
-            />
-          </TableFilterToolbar>
-
-          <div className="flex min-h-0 flex-1 overflow-hidden">
-            <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-              <ScrollArea className="h-full flex-1">
-                <div className="w-full max-w-full min-w-0">
-                  {filteredRoles.length > 0 && (
-                    <RolesTable
-                      guildId={guildId ?? ""}
-                      isMobile={isMobile}
-                      roles={filteredRoles}
-                    />
-                  )}
-                  {filteredRoles.length === 0 && (
-                    <EmptyState
-                      className="min-h-80"
-                      icon={Shield}
-                      title={
-                        roles?.length === 0
-                          ? t("settings.roles.emptyGuildTitle")
-                          : t("settings.roles.emptyTitle")
-                      }
-                      description={
-                        hasActiveFilters
-                          ? t("settings.roles.emptyFilteredDescription")
-                          : t("settings.roles.emptyDescription")
-                      }
-                      action={
-                        hasActiveFilters && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              startTransition(() => setSearchValue(""))
-                            }
-                          >
-                            <FilterX className="size-4" />
-                            {t("settings.roles.resetFilters")}
-                          </Button>
-                        )
-                      }
-                    />
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
-          </div>
-        </SectionCardContent>
-      </SectionCard>
-    </div>
+    <SettingsTableCard
+      title={t("settings.roles.title")}
+      search={{
+        value: searchValue,
+        placeholder: t("settings.roles.searchPlaceholder"),
+        onChange: setSearchValue,
+      }}
+      isEmpty={filteredRoles.length === 0}
+      empty={{
+        icon: Shield,
+        title:
+          roles?.length === 0
+            ? t("settings.roles.emptyGuildTitle")
+            : t("settings.roles.emptyTitle"),
+        description: hasActiveFilters
+          ? t("settings.roles.emptyFilteredDescription")
+          : t("settings.roles.emptyDescription"),
+      }}
+      hasActiveFilters={hasActiveFilters}
+      onResetFilters={() => startTransition(() => setSearchValue(""))}
+    >
+      <RolesTable
+        guildId={guildId ?? ""}
+        isMobile={isMobile}
+        roles={filteredRoles}
+      />
+    </SettingsTableCard>
   );
 };

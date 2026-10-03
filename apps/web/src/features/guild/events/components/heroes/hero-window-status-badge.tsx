@@ -39,26 +39,12 @@ export const HeroWindowStatusBadge = ({
     return null;
   }
 
-  const config = getWindowStatusConfig(respawnConfig.windowStatus, (key) =>
-    t(
-      key,
-      {
-        "events.respawn.status.open": "Okno otwarte",
-        "events.respawn.status.waiting": "Oczekiwanie",
-        "events.respawn.status.overdue": "Poszukiwanie",
-        "events.respawn.status.none": "Brak okna",
-      }[key] ?? key,
-    ),
-  );
+  const config = getWindowStatusConfig(respawnConfig.windowStatus, t);
 
   return (
     <Badge
-      variant="outline"
-      className={cn(
-        "text-[11px] whitespace-nowrap",
-        config.className,
-        className,
-      )}
+      variant={config.variant}
+      className={cn("text-[11px] whitespace-nowrap", className)}
     >
       {config.label}
     </Badge>

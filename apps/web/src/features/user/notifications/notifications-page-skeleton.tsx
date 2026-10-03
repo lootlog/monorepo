@@ -17,7 +17,12 @@ export const UserNotificationsPageSkeleton = () => {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2">
             <SectionCard>
-              <SectionCardHeader title=<Skeleton className="mb-3 h-5 w-40" /> />
+              <SectionCardHeader
+                title=<Skeleton
+                  render={<span />}
+                  className="block mb-3 h-5 w-40"
+                />
+              />
               <SectionCardContent>
                 <div className="space-y-2">
                   {Array.from({ length: 4 }).map((_, i) => (
@@ -29,7 +34,12 @@ export const UserNotificationsPageSkeleton = () => {
           </div>
           <div className="space-y-4">
             <SectionCard>
-              <SectionCardHeader title=<Skeleton className="mb-3 h-5 w-32" /> />
+              <SectionCardHeader
+                title=<Skeleton
+                  render={<span />}
+                  className="block mb-3 h-5 w-32"
+                />
+              />
               <SectionCardContent>
                 <div className="space-y-2">
                   <Skeleton className="h-10 rounded-md" />

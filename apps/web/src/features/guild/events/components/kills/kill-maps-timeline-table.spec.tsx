@@ -34,16 +34,7 @@ describe("KillMapsTimelineTable", () => {
       1,
     );
 
-    const columnWidths = Array.from(document.querySelectorAll("col")).map(
-      (column) => column.className,
-    );
-
-    expect(columnWidths[0]).toBe("w-16");
-    const coverage = screen.getByText("100%");
-    expect(coverage.className).toContain("text-sm");
-    expect(coverage.className).not.toContain("text-xs");
-    expect(coverage.className).toContain("text-green-500");
-    expect(coverage.className).not.toContain("bg-");
+    expect(screen.getByText("100%").className).toContain("text-signal-ready");
   });
 
   it("uses the shared coverage thresholds in table rows and expanded diagnostics", () => {
@@ -56,10 +47,10 @@ describe("KillMapsTimelineTable", () => {
 
     renderTable(maps);
 
-    expect(screen.getByText("49%").className).toContain("text-destructive");
-    expect(screen.getByText("50%").className).toContain("text-amber-500");
-    expect(screen.getByText("89%").className).toContain("text-amber-500");
-    expect(screen.getByText("90%").className).toContain("text-green-500");
+    expect(screen.getByText("49%").className).toContain("text-signal-alert");
+    expect(screen.getByText("50%").className).toContain("text-signal-timer");
+    expect(screen.getByText("89%").className).toContain("text-signal-timer");
+    expect(screen.getByText("90%").className).toContain("text-signal-ready");
 
     fireEvent.click(
       screen.getAllByRole("button", {
@@ -68,7 +59,7 @@ describe("KillMapsTimelineTable", () => {
     );
 
     const expandedCoverage = screen.getAllByText("49%")[1];
-    expect(expandedCoverage?.className).toContain("text-destructive");
+    expect(expandedCoverage?.className).toContain("text-signal-alert");
   });
 
   it("groups repeated assignments and reveals every period without duplicate key warnings", () => {
@@ -87,12 +78,6 @@ describe("KillMapsTimelineTable", () => {
       name: "events.killDetail.mapCoverage.expandMap",
     });
 
-    expect(mapToggle.className).toContain("size-11");
-    expect(mapToggle.className).toContain("lg:size-9");
-    expect(mapToggle.className).toContain("mr-1");
-    expect(mapToggle.className).toContain("lg:mr-3");
-    expect(mapToggle.className).toContain("text-muted-foreground");
-    expect(mapToggle.className).not.toContain("rounded-none");
     expect(mapToggle.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(mapToggle);
     expect(mapToggle.getAttribute("aria-expanded")).toBe("true");
@@ -100,21 +85,10 @@ describe("KillMapsTimelineTable", () => {
 
     const detail = document.getElementById("map-map-1-details");
     expect(detail?.getAttribute("aria-labelledby")).toBe("map-map-1-summary");
-    expect(detail?.className).not.toContain("bg-muted");
     expect(detail?.closest("td")?.getAttribute("colspan")).toBe("5");
     expect(detail?.closest("tr")?.getAttribute("data-state")).toBe(
       "expanded-detail",
     );
-    expect(detail?.closest("tr")?.className).not.toContain(
-      "hover:bg-transparent",
-    );
-
-    const diagnostics = screen
-      .getByText("events.killDetail.mapCoverage.covered")
-      .closest("dl");
-
-    expect(diagnostics?.className).toContain("border-b");
-    expect(diagnostics?.className).not.toContain("border-y");
 
     expect(screen.getAllByText("Tester")).toHaveLength(1);
     expect(

@@ -5,6 +5,10 @@ import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import type { UserKillAnalyticsResponseDtoOutput } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
+import { upperFirst } from "es-toolkit";
+import { Skull } from "lucide-react";
+import { EmptyState } from "@/components/common/empty-state";
+import { formatStatisticsDate } from "./format-statistics-date";
 
 export function StatisticsNpcTable({
   npcs,
@@ -33,7 +37,7 @@ export function StatisticsNpcTable({
     {
       accessorKey: "world",
       header: () => t("statistics.world"),
-      cell: ({ row: { original: npc } }) => npc.world,
+      cell: ({ row: { original: npc } }) => upperFirst(npc.world),
     },
     {
       accessorKey: "totalKills",
@@ -84,7 +88,7 @@ export function StatisticsNpcTable({
       header: () => t("statistics.bestDay"),
       cell: ({ row: { original: npc } }) => (
         <>
-          {npc.bestDay?.date ?? "—"}
+          {npc.bestDay ? formatStatisticsDate(npc.bestDay.date) : "—"}
           <span className="block text-xs text-muted-foreground">
             {npc.bestDay && t("statistics.count", { count: npc.bestDay.kills })}
           </span>
@@ -101,17 +105,21 @@ export function StatisticsNpcTable({
   });
 
   if (!npcs.length)
-    return (
-      <p className="py-6 text-center text-sm text-muted-foreground">
-        {t("statistics.noData")}
-      </p>
-    );
+    return <EmptyState icon={Skull} title={t("statistics.noData")} />;
 
   return (
     <div className="overflow-x-auto">
       <Table className="min-w-[680px]">
-        <TanStackTableHeader table={table} />
-        <TanStackTableBody table={table} rowHeaderColumnId="npcName" />
+        <TanStackTableHeader
+          table={table}
+          className="sticky top-0 z-10 bg-background"
+          rowClassName="border-b-1! border-border"
+        />
+        <TanStackTableBody
+          table={table}
+          rowHeaderColumnId="npcName"
+          rowClassName="h-14 border-b border-border hover:bg-muted/40"
+        />
       </Table>
     </div>
   );

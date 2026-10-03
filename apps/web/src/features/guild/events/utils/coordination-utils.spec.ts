@@ -11,10 +11,10 @@ import type { EventCoordinationResponseDtoHeroesItem } from "@lootlog/client/mai
 
 describe("coordination-utils", () => {
   it("maps priorities to stable UI tones and translation keys", () => {
-    expect(getCoordinationPriorityTone("CRITICAL")).toBe("destructive");
-    expect(getCoordinationPriorityTone("WARNING")).toBe("warning");
-    expect(getCoordinationPriorityTone("OK")).toBe("success");
-    expect(getCoordinationPriorityTone("IDLE")).toBe("muted");
+    expect(getCoordinationPriorityTone("CRITICAL")).toBe("alert");
+    expect(getCoordinationPriorityTone("WARNING")).toBe("timer");
+    expect(getCoordinationPriorityTone("OK")).toBe("ready");
+    expect(getCoordinationPriorityTone("IDLE")).toBeNull();
     expect(getCoordinationPriorityLabelKey("CRITICAL")).toBe(
       "events.coordination.priority.critical",
     );

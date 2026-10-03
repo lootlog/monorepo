@@ -1,6 +1,6 @@
 import { EventLoadError } from "./components/event-load-error";
 import { sumBy } from "es-toolkit";
-import { SectionLoading } from "@/components/common/section-loading";
+import { EventMemberSkeleton } from "./event-member-skeleton";
 import { useState } from "react";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
@@ -10,7 +10,7 @@ import {
   useShowEventOverview,
 } from "@lootlog/client/main";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
-import { HeroKillsFilter } from "@/features/guild/events/components/shared/hero-kills-filter";
+import { HeroTabs } from "./components/shared/hero-tabs";
 import { MemberKillsList } from "./components/member-kills/member-kills-list";
 import { MemberSummaryStrip } from "./components/member-kills/member-summary-strip";
 import type { MemberStatsSummary } from "./components/member-kills/member-kills-view-model";
@@ -97,6 +97,7 @@ export const EventMemberKillsPageContent = ({
     data: event,
     isLoading: eventLoading,
     error: eventError,
+    refetch: refetchEvent,
   } = useShowEventOverview(
     {
       guildId: queryGuildId,
@@ -148,11 +149,19 @@ export const EventMemberKillsPageContent = ({
   );
 
   if (eventLoading) {
-    return <SectionLoading />;
+    return <EventMemberSkeleton />;
   }
 
   if (eventError || !event) {
-    return <EventLoadError guildId={queryGuildId} />;
+    return (
+      <EventLoadError
+        backTo="event"
+        guildId={queryGuildId}
+        eventId={queryEventId}
+        error={eventError}
+        onRetry={() => refetchEvent()}
+      />
+    );
   }
 
   const heroes = event.heroNpcs ?? [];
@@ -189,11 +198,12 @@ export const EventMemberKillsPageContent = ({
             selectedHeroName={selectedHero?.npcName}
             contextStats={contextStats}
           />
-          <HeroKillsFilter
-            variant="member"
+          <HeroTabs
+            placement="page"
             heroes={heroes}
-            selectedHeroId={selectedHeroId}
-            onSelectedHeroChange={setSelectedHeroId}
+            includeAll
+            value={selectedHeroId}
+            onValueChange={setSelectedHeroId}
           />
           {scrollElement && (
             <MemberKillsList

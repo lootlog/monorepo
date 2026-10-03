@@ -1,12 +1,6 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@lootlog/ui/components/dialog";
+import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
 import { Label } from "@lootlog/ui/components/label";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -17,6 +11,7 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useMembersControllerGetGuildMembers } from "@lootlog/client/main";
 import { SearchInput } from "@/components/ui/search-input";
 import { useAssignmentCountdown } from "../../hooks/utils/use-assignment-countdown";
+import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { LoadingSlot } from "@/components/common/loading-slot";
 
 interface MemberAssignmentModalProps {
@@ -49,6 +44,7 @@ export const MemberAssignmentModal = ({
 }: MemberAssignmentModalProps) => {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
+  const memberSearchInputId = useId();
   const { isEnabled } = useAssignmentCountdown(disabled, enabledAt);
   const isAssignDisabled = !isEnabled;
 
@@ -98,21 +94,11 @@ export const MemberAssignmentModal = ({
       }}
     >
       <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden max-h-[85vh] flex flex-col">
-        <DialogHeader className="px-5 pt-5 pb-4 border-b bg-muted/30 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-green-500/10">
-              <Users className="size-4 text-green-500" />
-            </div>
-            <div>
-              <DialogTitle className="text-base">
-                {t("events.maps.assign")}
-              </DialogTitle>
-              <DialogDescription className="text-xs mt-0.5">
-                {mapName}
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
+        <IconDialogHeader
+          icon={Users}
+          title={t("events.maps.assign")}
+          description={mapName}
+        />
 
         <div className="flex-1 overflow-y-auto custom-scrollbar [scrollbar-gutter:stable]">
           <div className="p-5 space-y-5">
@@ -182,10 +168,14 @@ export const MemberAssignmentModal = ({
                   </p>
                 </div>
               )}
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <Label
+                htmlFor={memberSearchInputId}
+                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+              >
                 {t("events.maps.addMember")}
               </Label>
               <SearchInput
+                id={memberSearchInputId}
                 placeholder={t("events.maps.searchMember")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}

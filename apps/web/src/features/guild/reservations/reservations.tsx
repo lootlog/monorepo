@@ -1,10 +1,10 @@
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCard } from "@/components/common/section-card/section-card";
+import { EmptyState } from "@/components/common/empty-state";
+import { FilterBar } from "@/components/common/filter-bar";
 import { useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { SearchX, TriangleAlert } from "lucide-react";
+import { CircleAlert, RotateCcw, SearchX } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
@@ -16,14 +16,6 @@ import {
 } from "@lootlog/client/main";
 
 import { Button } from "@lootlog/ui/components/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@lootlog/ui/components/empty";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { SearchInput } from "@/components/ui/search-input";
 import { ViewModeToggle } from "@/components/ui/view-mode-toggle";
@@ -114,33 +106,28 @@ export function Reservations() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("layout.navigation.reservations")}</h1>
-      <div className="space-y-2 px-3 pt-3">
-        <SectionCard className="rounded-xl">
-          <SectionCardContent className="p-2">
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2    xl:grid-cols-[minmax(14rem,1fr)_auto_auto]">
-              <SearchInput
-                value={searchValue}
-                onChange={(event) => setSearchValue(event.target.value)}
-                placeholder={t("reservations.searchPlaceholder")}
-                className="h-9"
-                wrapperClassName="min-w-0"
-                disabled={spotsQuery.isPending}
-              />
-              <ReservationFilters
-                value={filter}
-                onChange={setFilter}
-                className="col-span-2 row-start-2 xl:col-span-1 xl:col-start-2 xl:row-start-1"
-              />
-              <ViewModeToggle
-                value={viewMode}
-                onChange={setViewMode}
-                listLabel={t("reservations.view.list")}
-                gridLabel={t("reservations.view.grid")}
-                className="col-start-2 row-start-1 xl:col-start-3"
-              />
-            </div>
-          </SectionCardContent>
-        </SectionCard>
+      <div className="px-3 pt-3">
+        <FilterBar ariaLabel={t("reservations.toolbarLabel")}>
+          <SearchInput
+            value={searchValue}
+            onChange={(event) => setSearchValue(event.target.value)}
+            placeholder={t("reservations.searchPlaceholder")}
+            aria-label={t("reservations.searchPlaceholder")}
+            wrapperClassName="h-10 min-w-0 flex-1 basis-48"
+            disabled={spotsQuery.isPending}
+          />
+          <ReservationFilters
+            value={filter}
+            onChange={setFilter}
+            className="order-last basis-full xl:order-none xl:basis-auto"
+          />
+          <ViewModeToggle
+            value={viewMode}
+            onChange={setViewMode}
+            listLabel={t("reservations.view.list")}
+            gridLabel={t("reservations.view.grid")}
+          />
+        </FilterBar>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col pt-3">
@@ -153,50 +140,41 @@ export function Reservations() {
             </div>
           </ScrollArea>
         ) : spotsQuery.isError ? (
-          <div className="flex min-h-0 flex-1 [align-items:safe_center] justify-center overflow-y-auto px-3 pb-3">
-            <Empty className="min-h-56 w-full max-w-xl">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <TriangleAlert />
-                </EmptyMedia>
-                <EmptyTitle>{t("reservations.error.title")}</EmptyTitle>
-                <EmptyDescription>
-                  {t("reservations.error.description")}
-                </EmptyDescription>
-              </EmptyHeader>
-              <EmptyContent>
+          <div className="px-3 pb-3">
+            <EmptyState
+              framed
+              icon={CircleAlert}
+              title={t("reservations.error.title")}
+              description={t("reservations.error.description")}
+              action={
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
                   loading={spotsQuery.isFetching}
-                  onClick={() => spotsQuery.refetch()}
+                  icon=<RotateCcw className="size-3.5" />
+                  onClick={() => void spotsQuery.refetch()}
                 >
                   {t("common.actions.retry")}
                 </Button>
-              </EmptyContent>
-            </Empty>
+              }
+            />
           </div>
         ) : sortedSpots.length === 0 ? (
-          <div className="flex min-h-0 flex-1 [align-items:safe_center] justify-center overflow-y-auto px-3 pb-3">
-            <Empty className="min-h-56 w-full max-w-xl">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <SearchX />
-                </EmptyMedia>
-                <EmptyTitle>{t("reservations.empty.title")}</EmptyTitle>
-                <EmptyDescription>
-                  {normalizedSearch
-                    ? t("reservations.empty.searchDescription")
-                    : t("reservations.empty.description")}
-                </EmptyDescription>
-              </EmptyHeader>
-              {(normalizedSearch || filter !== "all") && (
-                <EmptyContent>
+          <div className="px-3 pb-3">
+            <EmptyState
+              framed
+              icon={SearchX}
+              title={t("reservations.empty.title")}
+              description={
+                normalizedSearch
+                  ? t("reservations.empty.searchDescription")
+                  : t("reservations.empty.description")
+              }
+              action={
+                normalizedSearch || filter !== "all" ? (
                   <Button
                     type="button"
                     variant="outline"
-                    size="sm"
                     onClick={() => {
                       setSearchValue("");
                       setFilter("all");
@@ -204,9 +182,9 @@ export function Reservations() {
                   >
                     {t("reservations.empty.clearFilters")}
                   </Button>
-                </EmptyContent>
-              )}
-            </Empty>
+                ) : undefined
+              }
+            />
           </div>
         ) : (
           <ScrollArea className="min-h-0 flex-1">

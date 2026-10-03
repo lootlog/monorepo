@@ -8,6 +8,7 @@ import {
 } from "@lootlog/ui/components/table";
 import type { UserKillAnalyticsResponseDtoOutput } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
+import { upperFirst } from "es-toolkit";
 import { Button } from "@lootlog/ui/components/button";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
@@ -37,11 +38,11 @@ export function StatisticsWorlds({
             ) : undefined
           }
         />
-        <SectionCardContent>
+        <SectionCardContent className="p-0">
           <div className="overflow-x-auto">
             <Table className="min-w-[450px]">
-              <TableHeader>
-                <TableRow>
+              <TableHeader className="sticky top-0 z-10 bg-background">
+                <TableRow className="border-b-1! border-border">
                   {[
                     "world",
                     "kills",
@@ -58,13 +59,16 @@ export function StatisticsWorlds({
               </TableHeader>
               <TableBody>
                 {data.worlds.map((world) => (
-                  <TableRow key={world.world}>
+                  <TableRow
+                    key={world.world}
+                    className="h-14 border-b border-border hover:bg-muted/40"
+                  >
                     <TableCell
                       as="th"
                       scope="row"
                       className="text-left font-medium"
                     >
-                      {world.world}
+                      {upperFirst(world.world)}
                     </TableCell>
                     <TableCell>
                       {world.totalKills.toLocaleString("pl-PL")}
@@ -98,7 +102,7 @@ export function StatisticsWorlds({
         {data.worlds.map((world) => (
           <KillAnalyticsTrend
             key={world.world}
-            title={world.world}
+            title={upperFirst(world.world)}
             data={world.daily}
           />
         ))}

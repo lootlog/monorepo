@@ -96,10 +96,10 @@
   "init": {
     "missingGuild": {
       "title": "Nie wskazano serwera Discord",
-      "description": "W tym adresie brakuje identyfikatora serwera Discord. Przejdź do panelu, aby wybrać organizację lub ponownie dodać bota."
+      "description": "W tym adresie brakuje identyfikatora serwera Discord. Przejdź do panelu, aby wybrać Lootloga lub ponownie dodać bota."
     },
     "failed": {
-      "title": "Nie udało się przygotować organizacji",
+      "title": "Nie udało się przygotować Lootloga",
       "description": "Nie udało się sprawdzić serwera Discord. Jeśli bot został właśnie dodany, poczekaj chwilę i spróbuj ponownie."
     },
     "offline": {
@@ -108,11 +108,11 @@
   },
   "routeErrors": {
     "details": "Szczegóły techniczne",
-    "guildShellTitle": "Nawigacja gildii",
+    "guildShellTitle": "Nawigacja Lootloga",
     "code": "Kod błędu: {{status}}",
     "guildForbidden": {
-      "title": "Brak dostępu do tej organizacji",
-      "description": "Twoje role na serwerze Discord nie dają dostępu do jej Lootloga. Poproś lidera lub administratora o nadanie uprawnień."
+      "title": "Brak dostępu do tego Lootloga",
+      "description": "Twoje role na serwerze Discord nie dają dostępu do tego Lootloga. Poproś lidera lub administratora o nadanie uprawnień."
     },
     "actions": {
       "retry": "Spróbuj ponownie",
@@ -155,5 +155,12 @@
     "endCat": "Miau, to już wszystko! 😺",
     "endRukia": "Absolutne zero... to już wszystkie aktywności.",
     "endRias": "Królowa zadecydowała... to już wszystkie aktywności."
+  },
+  "pagination": {
+    "label": "Paginacja",
+    "previous": "Poprzednia",
+    "next": "Następna",
+    "previousPage": "Poprzednia strona",
+    "nextPage": "Następna strona"
   }
 }

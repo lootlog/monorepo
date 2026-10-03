@@ -1,12 +1,41 @@
 import { createCachedFormatter } from "@lootlog/datetime";
 import type { UserKillAnalyticsResponseDtoOutput } from "@lootlog/client/main";
+import {
+  CalendarCheck,
+  CalendarDays,
+  CalendarRange,
+  Gauge,
+  Ghost,
+  History,
+  Skull,
+  TrendingUp,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { KpiCard } from "@/components/common/kpi-card";
 import { KillAnalyticsTrend } from "./kill-analytics-trend";
+import { formatStatisticsDateRange } from "./format-statistics-date";
 
 const getOverviewDateFormatter = createCachedFormatter("pl-PL", {});
+
+const countFormatter = new Intl.NumberFormat("pl-PL", {
+  maximumFractionDigits: 1,
+});
+
+const deltaFormatter = new Intl.NumberFormat("pl-PL", {
+  signDisplay: "exceptZero",
+});
+
+const percentFormatter = new Intl.NumberFormat("pl-PL", {
+  style: "percent",
+  maximumFractionDigits: 1,
+  signDisplay: "exceptZero",
+});
+
+const RECORDS = [
+  { key: "bestDay", icon: CalendarCheck },
+  { key: "bestWeek", icon: CalendarRange },
+  { key: "bestMonth", icon: CalendarDays },
+] as const;
 
 export function StatisticsOverview({
   data,
@@ -18,42 +47,38 @@ export function StatisticsOverview({
   const previousStart = new Date(data.meta.startDate);
   previousStart.setUTCDate(previousStart.getUTCDate() - data.meta.days);
 
-  const ranges = {
-    current: `${dateFormatter.format(new Date(data.meta.startDate))} – ${dateFormatter.format(new Date(data.comparison.currentThrough))}`,
-    previous: `${dateFormatter.format(previousStart)} – ${dateFormatter.format(new Date(data.comparison.previousThrough))}`,
-    change: null,
-  };
+  const { overview, comparison } = data;
 
-  const metrics = {
-    total: data.overview.totalKills,
-    activeDays: data.overview.activeDays,
-    average: data.overview.activeDays
-      ? data.overview.totalKills / data.overview.activeDays
-      : null,
-    uniqueNpcs: data.overview.uniqueNpcs,
-  };
+  const metrics = [
+    { key: "total", icon: Skull, value: overview.totalKills },
+    { key: "activeDays", icon: CalendarCheck, value: overview.activeDays },
+    {
+      key: "average",
+      icon: Gauge,
+      value: overview.activeDays
+        ? overview.totalKills / overview.activeDays
+        : null,
+    },
+    { key: "uniqueNpcs", icon: Ghost, value: overview.uniqueNpcs },
+  ] as const;
 
   return (
     <>
-      <SectionCard>
-        <SectionCardHeader title={t("statistics.overview")} />
-        <SectionCardContent>
-          <dl className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {Object.entries(metrics).map(([key, value]) => (
-              <div key={key}>
-                <dt className="text-xs text-muted-foreground">
-                  {t(`statistics.${key}`)}
-                </dt>
-                <dd className="mt-1 text-2xl font-semibold tabular-nums">
-                  {value?.toLocaleString("pl-PL", {
-                    maximumFractionDigits: 1,
-                  }) ?? "—"}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </SectionCardContent>
-      </SectionCard>
+      <section aria-labelledby="statistics-overview-title">
+        <h2 id="statistics-overview-title" className="sr-only">
+          {t("statistics.overview")}
+        </h2>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {metrics.map(({ key, icon, value }) => (
+            <KpiCard
+              key={key}
+              icon={icon}
+              label={t(`statistics.${key}`)}
+              value={value === null ? "—" : countFormatter.format(value)}
+            />
+          ))}
+        </div>
+      </section>
       <div className="grid gap-3 xl:grid-cols-2">
         <KillAnalyticsTrend title={t("statistics.daily")} data={data.daily} />
         <KillAnalyticsTrend
@@ -65,66 +90,72 @@ export function StatisticsOverview({
           }))}
         />
       </div>
-      <SectionCard>
-        <SectionCardHeader
-          title={t("statistics.comparison")}
-          description={t("statistics.alignedComparison")}
-        />
-        <SectionCardContent>
-          <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {(
-              [
-                { key: "current", value: data.comparison.currentKills },
-                { key: "previous", value: data.comparison.previousKills },
-                { key: "change", value: data.comparison.deltaKills },
-              ] satisfies Array<{ key: keyof typeof ranges; value: number }>
-            ).map(({ key, value }) => (
-              <div key={key}>
-                <dt className="text-xs text-muted-foreground">
-                  {t(`statistics.${key}`)}
-                  {ranges[key] && ` (${ranges[key]})`}
-                </dt>
-                <dd className="text-xl font-semibold tabular-nums">
-                  {value.toLocaleString("pl-PL")}
-                </dd>
-              </div>
-            ))}
-            <div>
-              <dt className="text-xs text-muted-foreground">
-                {t("statistics.change")} %
-              </dt>
-              <dd className="text-xl font-semibold">
-                {data.comparison.deltaPercent === null
-                  ? "—"
-                  : `${data.comparison.deltaPercent.toLocaleString("pl-PL", { maximumFractionDigits: 1 })}%`}
-              </dd>
-            </div>
-          </dl>
-        </SectionCardContent>
-      </SectionCard>
-      <SectionCard>
-        <SectionCardHeader title={t("statistics.records")} />
-        <SectionCardContent>
-          <dl className="grid gap-4 sm:grid-cols-3">
-            {Object.entries(data.records).map(([key, record]) => (
-              <div key={key}>
-                <dt className="text-sm text-muted-foreground">
-                  {t(`statistics.${key}`)}
-                </dt>
-                <dd className="text-xl font-semibold">
-                  {record?.kills.toLocaleString("pl-PL") ?? "—"}
-                </dd>
-                {record && (
-                  <p className="text-xs text-muted-foreground">
-                    {record.startDate} – {record.endDate}
-                    {record.partial && ` · ${t("statistics.partial")}`}
-                  </p>
-                )}
-              </div>
-            ))}
-          </dl>
-        </SectionCardContent>
-      </SectionCard>
+      <section
+        aria-labelledby="statistics-comparison-title"
+        className="space-y-2"
+      >
+        <div className="px-1">
+          <h2
+            id="statistics-comparison-title"
+            className="text-sm font-semibold"
+          >
+            {t("statistics.comparison")}
+          </h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {t("statistics.alignedComparison")}
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <KpiCard
+            icon={TrendingUp}
+            label={t("statistics.current")}
+            value={countFormatter.format(comparison.currentKills)}
+            detail={`${dateFormatter.format(new Date(data.meta.startDate))} – ${dateFormatter.format(new Date(comparison.currentThrough))}`}
+          />
+          <KpiCard
+            icon={History}
+            label={t("statistics.previous")}
+            value={countFormatter.format(comparison.previousKills)}
+            detail={`${dateFormatter.format(previousStart)} – ${dateFormatter.format(new Date(comparison.previousThrough))}`}
+          />
+          <KpiCard
+            icon={Gauge}
+            label={t("statistics.change")}
+            value={deltaFormatter.format(comparison.deltaKills)}
+            detail={
+              comparison.deltaPercent === null
+                ? undefined
+                : percentFormatter.format(comparison.deltaPercent / 100)
+            }
+          />
+        </div>
+      </section>
+      <section aria-labelledby="statistics-records-title" className="space-y-2">
+        <h2
+          id="statistics-records-title"
+          className="px-1 text-sm font-semibold"
+        >
+          {t("statistics.records")}
+        </h2>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {RECORDS.map(({ key, icon }) => {
+            const record = data.records[key];
+
+            return (
+              <KpiCard
+                key={key}
+                icon={icon}
+                label={t(`statistics.${key}`)}
+                value={record ? countFormatter.format(record.kills) : "—"}
+                detail={
+                  record &&
+                  `${formatStatisticsDateRange(record.startDate, record.endDate)}${record.partial ? ` · ${t("statistics.partial")}` : ""}`
+                }
+              />
+            );
+          })}
+        </div>
+      </section>
     </>
   );
 }

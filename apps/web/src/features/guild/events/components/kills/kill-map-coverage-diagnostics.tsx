@@ -1,7 +1,10 @@
 import type { TFunction } from "i18next";
 import { cn } from "cn";
 import { formatDurationHuman } from "../../utils/format-duration";
-import { getMapCoverageColorClassName } from "../../utils/get-map-coverage-color-class-name";
+import {
+  COVERAGE_SEGMENT_TEXT_CLASS_NAMES,
+  getMapCoverageColorClassName,
+} from "../../utils/get-map-coverage-color-class-name";
 import type { KillMapTimelineDiagnostics } from "../../utils/kill-map-timeline-data";
 
 interface KillMapCoverageDiagnosticsProps {
@@ -18,7 +21,7 @@ export const KillMapCoverageDiagnostics = ({
       label: t("events.killDetail.mapCoverage.covered"),
       duration: formatDurationHuman(diagnostics.coveredSeconds),
       detail: `${diagnostics.coveragePercent}%`,
-      colorClassName: "text-green-500",
+      colorClassName: COVERAGE_SEGMENT_TEXT_CLASS_NAMES.COVERED,
       detailColorClassName: getMapCoverageColorClassName(
         diagnostics.coveragePercent,
       ),
@@ -29,7 +32,7 @@ export const KillMapCoverageDiagnostics = ({
       detail: t("events.killDetail.mapCoverage.gapCount", {
         count: diagnostics.uncoveredCount,
       }),
-      colorClassName: "text-amber-500",
+      colorClassName: COVERAGE_SEGMENT_TEXT_CLASS_NAMES.UNCOVERED,
       detailColorClassName: "text-muted-foreground",
     },
     {
@@ -38,7 +41,7 @@ export const KillMapCoverageDiagnostics = ({
       detail: t("events.killDetail.mapCoverage.gapCount", {
         count: diagnostics.unassignedCount,
       }),
-      colorClassName: "text-destructive",
+      colorClassName: COVERAGE_SEGMENT_TEXT_CLASS_NAMES.UNASSIGNED,
       detailColorClassName: "text-muted-foreground",
     },
   ];

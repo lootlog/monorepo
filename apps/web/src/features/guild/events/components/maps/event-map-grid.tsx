@@ -12,6 +12,8 @@ import {
 } from "../../hooks/use-window-status";
 import type { CoverageGap } from "../../hooks/queries/use-map-coverage-timer";
 import { MapCard } from "./map-card";
+import { EmptyState } from "@/components/common/empty-state";
+import { getCoveredMapsColorClassName } from "../../utils/get-map-coverage-color-class-name";
 import { getMapStatus, STATUS_STYLES } from "./map-status";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 
@@ -114,12 +116,9 @@ const LocationSection = ({
         <span className="ml-auto text-xs text-muted-foreground shrink-0">
           {canShowCoverageCount ? (
             <span
-              className={cn(
-                coveredCount === maps.length
-                  ? "text-green-500"
-                  : coveredCount > 0
-                    ? "text-yellow-500"
-                    : "text-destructive",
+              className={getCoveredMapsColorClassName(
+                coveredCount,
+                maps.length,
               )}
             >
               {coveredCount}/{maps.length}
@@ -198,12 +197,7 @@ export const EventMapGrid = ({
     sumBy(locations, (location) => location.maps.length) + maps.length;
 
   if (totalMaps === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-        <MapPin className="w-10 h-10 mb-2 opacity-50" />
-        <p>{t("events.maps.noMaps")}</p>
-      </div>
-    );
+    return <EmptyState icon={MapPin} title={t("events.maps.noMaps")} />;
   }
 
   if (locations.length === 0 && maps.length > 0) {

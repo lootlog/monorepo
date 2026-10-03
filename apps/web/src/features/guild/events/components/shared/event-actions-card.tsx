@@ -43,7 +43,7 @@ export const EventActionsCard = ({
     <SectionCard className="gap-0 overflow-hidden border-border bg-card p-0">
       <SectionCardHeader
         icon={Settings2}
-        title={<> {t("events.actionsCard.subtitle")} </>}
+        title={t("events.actionsCard.subtitle")}
       />
 
       <SectionCardFooter

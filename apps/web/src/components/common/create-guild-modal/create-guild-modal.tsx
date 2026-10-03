@@ -91,7 +91,7 @@ export const CreateGuildModal: FC = () => {
         <EmptyState
           icon={TriangleAlert}
           title={t("ui.modals.createLootlog.loadError")}
-          className="min-h-0 py-8"
+          compact
           action={retryButton(t("ui.modals.createLootlog.retry"))}
         />
       );
@@ -103,7 +103,7 @@ export const CreateGuildModal: FC = () => {
           icon={ServerOff}
           title={t("ui.modals.createLootlog.empty.title")}
           description={t("ui.modals.createLootlog.empty.description")}
-          className="min-h-0 py-8"
+          compact
           action={retryButton(t("ui.modals.createLootlog.empty.action"))}
         />
       );
@@ -115,7 +115,7 @@ export const CreateGuildModal: FC = () => {
           icon={SearchX}
           title={t("ui.modals.createLootlog.emptySearch.title")}
           description={t("ui.modals.createLootlog.emptySearch.description")}
-          className="min-h-0 py-8"
+          compact
         />
       );
     }

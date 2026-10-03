@@ -873,6 +873,8 @@ function resolveSimpleRoute(
     path: string;
     label: string;
     backPath: string;
+    /** Breadcrumb parent when it differs from the back target, as for stats tabs. */
+    parentPath?: string;
   }> = [
     {
       path: routes.timers,
@@ -902,12 +904,14 @@ function resolveSimpleRoute(
     {
       path: routes.statsKills,
       label: t("common.stats.kills"),
-      backPath: routes.stats,
+      backPath: routes.base,
+      parentPath: routes.stats,
     },
     {
       path: routes.statsLoots,
       label: t("common.stats.loots"),
-      backPath: routes.stats,
+      backPath: routes.base,
+      parentPath: routes.stats,
     },
     {
       path: routes.events,
@@ -917,12 +921,14 @@ function resolveSimpleRoute(
     {
       path: routes.statsRanking,
       label: t("common.breadcrumbs.memberRanking"),
-      backPath: routes.stats,
+      backPath: routes.base,
+      parentPath: routes.stats,
     },
     {
       path: routes.statsNpcs,
       label: t("common.breadcrumbs.npcs"),
-      backPath: routes.stats,
+      backPath: routes.base,
+      parentPath: routes.stats,
     },
     {
       path: `${routes.events}/create`,
@@ -936,9 +942,11 @@ function resolveSimpleRoute(
 
     const breadcrumbs: Breadcrumb[] = [guildBreadcrumb];
 
-    if (route.backPath !== routes.base) {
+    const parentPath = route.parentPath ?? route.backPath;
+
+    if (parentPath !== routes.base) {
       // eslint-disable-next-line react-doctor/js-index-maps -- Only the matching route reaches this lookup, then the outer loop returns; the search runs once, not once per route.
-      const parentRoute = simpleRoutes.find((r) => r.path === route.backPath);
+      const parentRoute = simpleRoutes.find((r) => r.path === parentPath);
 
       if (parentRoute) {
         breadcrumbs.push({

@@ -1,3 +1,4 @@
+import { useId } from "react";
 import type { Control, UseFormRegister } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Input } from "@lootlog/ui/components/input";
@@ -22,13 +23,17 @@ export const ScoringGlobalSettings = ({
   register,
 }: ScoringGlobalSettingsProps) => {
   const { t } = useTranslation();
+  const idPrefix = useId();
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
       <div className="space-y-1">
         <div className="flex items-center gap-1.5">
           <Shield className="size-3 text-muted-foreground/50" />
-          <Label className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          <Label
+            htmlFor={`${idPrefix}-cap`}
+            className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground"
+          >
             {t("events.scoring.hardCapPoints")}
           </Label>
           <Tooltip>
@@ -43,6 +48,7 @@ export const ScoringGlobalSettings = ({
           </Tooltip>
         </div>
         <ScoringNumberInput
+          id={`${idPrefix}-cap`}
           control={control}
           register={register}
           name="scoringRules.hardCapPoints"
@@ -53,12 +59,16 @@ export const ScoringGlobalSettings = ({
       <div className="space-y-1">
         <div className="flex items-center gap-1.5">
           <Percent className="size-3 text-muted-foreground/50" />
-          <Label className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          <Label
+            htmlFor={`${idPrefix}-minTracking`}
+            className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground"
+          >
             {t("events.scoring.minTrackingPercentForBonuses")}
           </Label>
         </div>
         <div className="flex items-center gap-1">
           <ScoringNumberInput
+            id={`${idPrefix}-minTracking`}
             control={control}
             register={register}
             name="scoringRules.minTrackingPercentForBonuses"
@@ -75,11 +85,15 @@ export const ScoringGlobalSettings = ({
       <div className="space-y-1">
         <div className="flex items-center gap-1.5">
           <Globe className="size-3 text-muted-foreground/50" />
-          <Label className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          <Label
+            htmlFor={`${idPrefix}-timezone`}
+            className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground"
+          >
             {t("events.scoring.timezoneLabel")}
           </Label>
         </div>
         <Input
+          id={`${idPrefix}-timezone`}
           {...register("scoringRules.timezone")}
           className="h-8 text-sm"
           placeholder="Europe/Warsaw"

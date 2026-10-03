@@ -42,7 +42,7 @@ export const UserSidebarNav = () => {
     divided: item.id === "user-notifications",
     badge:
       item.id === "user-battles"
-        ? { content: "BETA", variant: "default" }
+        ? { content: t("layout.navigation.beta"), variant: "default" }
         : undefined,
   }));
 
@@ -54,5 +54,11 @@ export const UserSidebarNav = () => {
     </span>
   );
 
-  return <SidebarNav items={menuItems} header={header} />;
+  return (
+    <SidebarNav
+      items={menuItems}
+      header={header}
+      ariaLabel={t("layout.navigation.userAriaLabel")}
+    />
+  );
 };

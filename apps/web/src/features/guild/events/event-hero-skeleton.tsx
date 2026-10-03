@@ -1,45 +1,30 @@
-import { PageHeader } from "@/components/common/page-header";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { SkeletonPageHeader } from "./components/skeleton-page-header";
 import { SkeletonSectionCard } from "./components/skeleton-section-card";
+import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 
-export const EventHeroSkeleton = () => {
-  return (
-    <div className="flex flex-col gap-4 px-3 py-3">
-      <PageHeader
-        title=<Skeleton render={<span />} className="block h-5 w-40" />
-        description=<Skeleton
-          render={<span />}
-          className="block h-3 w-56 max-w-full"
-        />
-      />
+export const EventHeroSkeleton = () => (
+  <div aria-busy="true" className="flex flex-col gap-3 px-3 py-3">
+    <SkeletonPageHeader />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
-          <SkeletonSectionCard subtitleClassName="h-5 w-32">
-            <div className="flex flex-wrap gap-2">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-8 w-20 rounded-full" />
-              ))}
-            </div>
-          </SkeletonSectionCard>
-          <SkeletonSectionCard>
-            <div className="grid grid-cols-2 gap-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 rounded-lg" />
-              ))}
-            </div>
-          </SkeletonSectionCard>
-        </div>
-        <div className="space-y-4">
-          <SkeletonSectionCard>
-            <div className="space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-8 rounded-md" />
-              ))}
-            </div>
-          </SkeletonSectionCard>
-        </div>
+    <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+      <div className="lg:col-span-2">
+        <SkeletonSectionCard>
+          <div className="divide-y divide-border/70">
+            {Array.from({ length: 6 }, (_, index) => (
+              <Skeleton key={index} className="h-14 w-full rounded-none" />
+            ))}
+          </div>
+        </SkeletonSectionCard>
+      </div>
+      <div className="space-y-3">
+        <SkeletonSectionCard>
+          <TableRowsSkeleton rows={5} withHeader />
+        </SkeletonSectionCard>
+        <SkeletonSectionCard>
+          <TableRowsSkeleton rows={5} withHeader />
+        </SkeletonSectionCard>
       </div>
     </div>
-  );
-};
+  </div>
+);

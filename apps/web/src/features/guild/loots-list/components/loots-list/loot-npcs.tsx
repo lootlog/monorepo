@@ -1,3 +1,4 @@
+import { formatNpcLevel } from "@lootlog/domain/profession";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import type { LootNpc } from "@/lib/loots/loot-types";
 import { cn } from "cn";
@@ -99,10 +100,12 @@ export const LootNpcs: FC<LootNpcsProps> = ({
             size === "lg" ? "text-base" : "text-sm",
           )}
         >
-          {firstNpc.name}{" "}
-          {firstNpc.lvl !== 0
-            ? `(${firstNpc.lvl}${firstNpc.prof?.charAt(0).toLowerCase() ?? ""})`
-            : ""}
+          {firstNpc.name}
+          {firstNpc.lvl ? (
+            <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+              {formatNpcLevel(firstNpc.lvl, firstNpc.prof)}
+            </span>
+          ) : null}
         </span>
       )}
       {specialNpcType && (

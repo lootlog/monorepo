@@ -1,10 +1,5 @@
 import { sumBy } from "es-toolkit";
-import { SectionLoading } from "@/components/common/section-loading";
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Link } from "@tanstack/react-router";
-import { AlertCircle } from "lucide-react";
-import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   getEventsRankingControllerGetEventHeroStatsQueryKey,
@@ -15,7 +10,9 @@ import {
 } from "@lootlog/client/main";
 
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
-import { HeroKillsFilter } from "@/features/guild/events/components/shared/hero-kills-filter";
+import { EventLoadError } from "./components/event-load-error";
+import { HeroTabs } from "./components/shared/hero-tabs";
+import { EventKillsSkeleton } from "./event-kills-skeleton";
 import { EventKillsSummary } from "./components/kills/event-kills-summary";
 import { EventKillsTable } from "./components/kills/event-kills-table";
 import { useEventKillHistory } from "./hooks/queries/use-event-kill-history";
@@ -52,8 +49,6 @@ export const EventKillsHistoryContent = ({
   eventId,
   initialHeroId,
 }: EventKillsHistoryContentProps) => {
-  const { t } = useTranslation();
-
   const [selectedHeroId, setSelectedHeroId] = useState<string | undefined>(
     initialHeroId,
   );
@@ -69,6 +64,7 @@ export const EventKillsHistoryContent = ({
     data: event,
     isLoading: eventLoading,
     error: eventError,
+    refetch: refetchEvent,
   } = useShowEventOverview(
     {
       guildId: routeIds.guildId,
@@ -123,18 +119,18 @@ export const EventKillsHistoryContent = ({
   );
 
   if (eventLoading) {
-    return <SectionLoading />;
+    return <EventKillsSkeleton />;
   }
 
   if (eventError || !event) {
     return (
-      <div className="flex h-64 flex-col items-center justify-center gap-4 max-h-full overflow-y-auto [justify-content:safe_center]">
-        <AlertCircle className="size-12 text-destructive" />
-        <p className="text-muted-foreground">{t("events.error")}</p>
-        <Link to="/$guildId/events" params={{ guildId: routeIds.guildId }}>
-          <Button variant="outline">{t("events.common.backToEvent")}</Button>
-        </Link>
-      </div>
+      <EventLoadError
+        backTo="event"
+        guildId={routeIds.guildId}
+        eventId={routeIds.eventId}
+        error={eventError}
+        onRetry={() => refetchEvent()}
+      />
     );
   }
 
@@ -166,10 +162,12 @@ export const EventKillsHistoryContent = ({
             isKillCountLoading={heroStatsLoading}
           />
 
-          <HeroKillsFilter
+          <HeroTabs
+            placement="page"
             heroes={heroes}
-            selectedHeroId={selectedHeroId}
-            onSelectedHeroChange={setSelectedHeroId}
+            includeAll
+            value={selectedHeroId}
+            onValueChange={setSelectedHeroId}
           />
 
           <EventKillsTable

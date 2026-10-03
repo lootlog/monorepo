@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/common/page-header";
 import { useTranslation } from "react-i18next";
 import { Trophy } from "lucide-react";
+import { EventHeroContext } from "../shared/event-hero-context";
 
 type EventRankingSummaryProps = {
   eventName: string;
@@ -16,9 +17,9 @@ export const EventRankingSummary = ({
   return (
     <PageHeader
       icon={Trophy}
-      title={selectedHeroName ?? eventName}
-      description={t("events.ranking.title")}
-      metadata={selectedHeroName ? eventName : undefined}
+      title={t("events.ranking.title")}
+      description={eventName}
+      metadata={<EventHeroContext heroName={selectedHeroName} />}
     />
   );
 };

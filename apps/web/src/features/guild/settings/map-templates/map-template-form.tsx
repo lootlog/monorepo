@@ -2,11 +2,7 @@ import { SearchInput } from "@/components/ui/search-input";
 import type { MapTemplateResponseDtoMapsItem } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
-import {
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@lootlog/ui/components/dialog";
+import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import {
   Form,
   FormControl,
@@ -46,21 +42,11 @@ export const MapTemplateForm = (
 
   return (
     <>
-      <DialogHeader className="px-5 pt-5 pb-4 border-b bg-muted/30">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Icon className="size-4 text-primary" />
-          </div>
-          <div>
-            <DialogTitle className="text-base">
-              {t(`settings.mapTemplates.${dialogKey}.title`)}
-            </DialogTitle>
-            <DialogDescription className="text-xs mt-0.5">
-              {t(`settings.mapTemplates.${dialogKey}.description`)}
-            </DialogDescription>
-          </div>
-        </div>
-      </DialogHeader>
+      <IconDialogHeader
+        icon={Icon}
+        title={t(`settings.mapTemplates.${dialogKey}.title`)}
+        description={t(`settings.mapTemplates.${dialogKey}.description`)}
+      />
 
       <Form {...form}>
         <form

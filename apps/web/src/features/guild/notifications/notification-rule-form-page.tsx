@@ -93,7 +93,7 @@ export const NotificationRuleFormPage = () => {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <ScrollArea className="flex-1 min-h-0">
-        <div className="flex flex-col gap-4 px-3 py-3">
+        <div className="flex flex-col gap-3 px-3 py-3">
           <PageHeader
             title={t(
               isCreateMode
@@ -101,7 +101,7 @@ export const NotificationRuleFormPage = () => {
                 : "settings.notifications.ruleDialog.editTitle",
             )}
           />
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
             <SectionCard className="lg:col-span-2">
               <SectionCardContent className="flex flex-col gap-3">
                 <Form {...form}>
@@ -121,7 +121,7 @@ export const NotificationRuleFormPage = () => {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                          <FormLabel>
                             {t("settings.notifications.fields.name")}
                           </FormLabel>
                           <FormControl
@@ -163,7 +163,7 @@ export const NotificationRuleFormPage = () => {
                       name="contentTemplate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                          <FormLabel>
                             {t("settings.notifications.fields.contentTemplate")}
                           </FormLabel>
                           <FormControl
@@ -195,7 +195,7 @@ export const NotificationRuleFormPage = () => {
                         <FormItem>
                           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div>
-                              <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                              <FormLabel>
                                 {t("settings.notifications.fields.targets")}
                               </FormLabel>
                               <p className="mt-1 text-xs text-muted-foreground">

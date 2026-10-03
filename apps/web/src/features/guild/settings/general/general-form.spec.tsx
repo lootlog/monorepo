@@ -156,7 +156,7 @@ it.each(["50", "2024", "---", "Battles", "battles!"])(
     await renderForm(save);
 
     const textbox = screen.getByRole("textbox", {
-      name: "settings.general.vanityUrl.title",
+      name: "settings.general.vanityUrl.label",
     });
 
     fireEvent.change(textbox, { target: { value: vanityUrl } });

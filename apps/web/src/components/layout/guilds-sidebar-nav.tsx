@@ -1,4 +1,6 @@
 import { useSidebar } from "@lootlog/ui/components/sidebar";
+import { useTranslation } from "react-i18next";
+import { cn } from "cn";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   BarChart4,
@@ -41,12 +43,12 @@ function getEventsIcon(hasActiveEvents: boolean) {
   return (
     <div className="relative mr-1">
       <Trophy
-        className={`h-4 w-4 ${hasActiveEvents ? "text-yellow-500" : ""}`}
+        className={cn("size-4", hasActiveEvents && "text-signal-timer")}
       />
       {hasActiveEvents && (
         <span className="absolute -top-1 -right-1 flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500" />
+          <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-signal-timer opacity-75" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-signal-timer" />
         </span>
       )}
     </div>
@@ -57,6 +59,7 @@ export const GuildsSidebarNav: FC = () => {
   const guildId = useGuildId();
   const { data: accessPolicy } = useGuildPermissions();
   const { setOpenMobile } = useSidebar();
+  const { t } = useTranslation();
   const matches = useMatches();
   const navigation = resolveAppNavigation({ matches, accessPolicy });
 
@@ -129,7 +132,7 @@ export const GuildsSidebarNav: FC = () => {
           />
         ) : undefined
       }
-      onItemClick={handleItemClick}
+      ariaLabel={t("layout.navigation.guildAriaLabel")}
     />
   );
 };

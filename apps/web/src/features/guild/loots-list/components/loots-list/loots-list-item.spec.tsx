@@ -57,7 +57,7 @@ describe("LootsListItem presentation", () => {
     expect(screen.getByTestId("loot-list-item").dataset.presentation).toBe(
       "embedded",
     );
-    expect(screen.getByText("Potulny Berserker (284)")).toBeTruthy();
+    expect(screen.getByText("Potulny Berserker")).toBeTruthy();
     expect(screen.getByLabelText("Akcje: Tester")).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "Legendarny przedmiot" }),

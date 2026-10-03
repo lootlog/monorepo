@@ -1,14 +1,7 @@
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@lootlog/ui/components/select";
+import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Calendar } from "lucide-react";
 import {
   useKillsControllerGetUserKillAnalytics,
   useKillsControllerGetUserKillStats,
@@ -59,47 +52,32 @@ export function Statistics() {
           icon={BarChart3}
           title={t("statistics.title")}
           actions={
-            <div className="flex min-w-0 flex-wrap items-end gap-2">
-              <div className="flex flex-col gap-1">
-                <Select
-                  value={search.days}
-                  items={STATISTICS_DAYS.map((days) => ({
-                    value: days,
-                    label: t("statistics.days", { count: days }),
-                  }))}
-                  onValueChange={(days) => {
-                    if (days !== null) update({ days });
-                  }}
-                >
-                  <SelectTrigger
-                    id="statistics-period"
-                    size="lg"
-                    aria-label={t("statistics.period")}
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {STATISTICS_DAYS.map((days) => (
-                        <SelectItem key={days} value={days}>
-                          {t("statistics.days", { count: days })}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <WorldSwitcher
-                  value={search.world ?? null}
-                  onValueChange={(world) =>
-                    update({ world: world ?? undefined })
-                  }
-                  worlds={worlds}
-                  showAllOption
-                  triggerClassName="h-10"
-                />
-              </div>
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <FilterPopover
+                icon={Calendar}
+                options={STATISTICS_DAYS.map((days) => ({
+                  value: String(days),
+                  label: t("statistics.days", { count: days }),
+                }))}
+                value={String(search.days)}
+                onValueChange={(days) => {
+                  const next = STATISTICS_DAYS.find(
+                    (value) => String(value) === days,
+                  );
+
+                  if (next !== undefined) update({ days: next });
+                }}
+                placeholder={t("statistics.period")}
+                emptyMessage={t("common.noResults")}
+                width="w-[140px]"
+                showSearch={false}
+              />
+              <WorldSwitcher
+                value={search.world ?? null}
+                onValueChange={(world) => update({ world: world ?? undefined })}
+                worlds={worlds}
+                showAllOption
+              />
             </div>
           }
         />

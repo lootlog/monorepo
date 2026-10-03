@@ -60,7 +60,6 @@ export const LootStatsFilterBar = ({
               value={world}
               onValueChange={onWorldChange}
               width="w-full"
-              triggerClassName="h-10"
             />
           </div>
           <div className="space-y-2">
@@ -76,17 +75,8 @@ export const LootStatsFilterBar = ({
       </div>
 
       <div className="hidden flex-wrap items-center gap-2 md:flex">
-        <WorldSwitcher
-          value={world}
-          onValueChange={onWorldChange}
-          width="w-[200px]"
-          triggerClassName="h-10"
-        />
-        <PeriodSelector
-          value={period}
-          onValueChange={onPeriodChange}
-          width="w-[200px]"
-        />
+        <WorldSwitcher value={world} onValueChange={onWorldChange} />
+        <PeriodSelector value={period} onValueChange={onPeriodChange} />
         {renderExcludeColossus("exclude-colossus")}
       </div>
     </FilterBar>

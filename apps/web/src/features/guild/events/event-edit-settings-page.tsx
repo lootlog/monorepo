@@ -2,10 +2,9 @@ import { EventEditSkeleton } from "./event-edit-skeleton";
 import { EventLoadError } from "./components/event-load-error";
 import { useEventEditRoute } from "./hooks/queries/use-event-edit-route";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { PageHeader } from "@/components/common/page-header";
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -48,7 +47,8 @@ const toSettingsDefaults = (
 
 export const EventEditSettingsPage = () => {
   const { t } = useTranslation();
-  const { event, error, isLoading, routeParams } = useEventEditRoute();
+  const fieldIdPrefix = useId();
+  const { event, error, isLoading, refetch, routeParams } = useEventEditRoute();
 
   const queryClient = useQueryClient();
 
@@ -142,9 +142,9 @@ export const EventEditSettingsPage = () => {
           normalizedParticipationConfirmationMinutes,
         mapAssignmentCap: normalizedMapAssignmentCap,
       });
-      toast.success(t("events.scoring.saveSuccess"));
+      toast.success(t("events.settings.saveSuccess"));
     } catch {
-      toast.error(t("events.scoring.saveError"));
+      toast.error(t("events.settings.saveError"));
     }
   };
 
@@ -153,31 +153,38 @@ export const EventEditSettingsPage = () => {
   }
 
   if (error || !event) {
-    return <EventLoadError {...routeParams} />;
+    return (
+      <EventLoadError
+        backTo="event"
+        guildId={routeParams.guildId}
+        eventId={routeParams.eventId}
+        error={error}
+        onRetry={() => refetch()}
+      />
+    );
   }
 
   return (
     <ScrollArea className="h-full">
       <div className="flex flex-col gap-3 px-3 py-3">
-        <PageHeader
-          icon={Settings}
-          title={event.name}
-          description={t("events.editSections.settings")}
-        />
+        <PageHeader icon={Settings} title={event.name} />
 
         <form
           className="space-y-3 pb-24"
           onSubmit={form.handleSubmit(onSubmit)}
         >
-          <SectionCard className=" border-border bg-card ">
-            <SectionCardHeader title={t("events.editSections.settings")} />
+          <SectionCard>
             <SectionCardContent className="flex min-h-0 flex-col gap-3">
               <div className="grid gap-4">
                 <div className="space-y-2">
-                  <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <Label
+                    htmlFor={`${fieldIdPrefix}-name`}
+                    className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                  >
                     {t("events.settings.nameLabel")}
                   </Label>
                   <Input
+                    id={`${fieldIdPrefix}-name`}
                     {...form.register("name", { required: true })}
                     className="h-9 text-sm"
                   />
@@ -185,21 +192,29 @@ export const EventEditSettingsPage = () => {
 
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    <Label
+                      htmlFor={`${fieldIdPrefix}-startsAt`}
+                      className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                    >
                       {t("events.settings.startsAt")}
                     </Label>
                     <Input
                       type="datetime-local"
+                      id={`${fieldIdPrefix}-startsAt`}
                       {...form.register("startsAt")}
                       className="h-9 text-sm"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    <Label
+                      htmlFor={`${fieldIdPrefix}-endsAt`}
+                      className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                    >
                       {t("events.settings.endsAt")}
                     </Label>
                     <Input
                       type="datetime-local"
+                      id={`${fieldIdPrefix}-endsAt`}
                       {...form.register("endsAt")}
                       className="h-9 text-sm"
                     />
@@ -211,12 +226,16 @@ export const EventEditSettingsPage = () => {
 
                 <div className="grid gap-3 xl:grid-cols-3">
                   <div className="space-y-2">
-                    <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    <Label
+                      htmlFor={`${fieldIdPrefix}-assignmentTimeoutMinutes`}
+                      className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                    >
                       {t("events.settings.assignmentTimeout")}
                     </Label>
                     <Input
                       type="number"
                       min={0}
+                      id={`${fieldIdPrefix}-assignmentTimeoutMinutes`}
                       {...form.register("assignmentTimeoutMinutes", {
                         valueAsNumber: true,
                       })}
@@ -228,12 +247,16 @@ export const EventEditSettingsPage = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    <Label
+                      htmlFor={`${fieldIdPrefix}-participationConfirmationMinutes`}
+                      className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                    >
                       {t("events.settings.participationConfirmation")}
                     </Label>
                     <Input
                       type="number"
                       min={0}
+                      id={`${fieldIdPrefix}-participationConfirmationMinutes`}
                       {...form.register("participationConfirmationMinutes", {
                         valueAsNumber: true,
                       })}
@@ -247,12 +270,16 @@ export const EventEditSettingsPage = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    <Label
+                      htmlFor={`${fieldIdPrefix}-mapAssignmentCap`}
+                      className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                    >
                       {t("events.settings.mapAssignmentCap")}
                     </Label>
                     <Input
                       type="number"
                       min={0}
+                      id={`${fieldIdPrefix}-mapAssignmentCap`}
                       {...form.register("mapAssignmentCap", {
                         valueAsNumber: true,
                       })}

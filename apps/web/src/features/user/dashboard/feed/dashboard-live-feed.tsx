@@ -6,6 +6,7 @@ import { ArrowUp, Pause, Play, Radio } from "lucide-react";
 import { DEFAULT_ACTIVITY_FEED_SETTINGS } from "@lootlog/domain/activity-feed";
 import { Button } from "@lootlog/ui/components/button";
 import { LiveFeedSkeleton } from "./live-feed-skeleton";
+import { EmptyState } from "@/components/common/empty-state";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
@@ -163,32 +164,35 @@ export function DashboardLiveFeed() {
       ) : (
         <div aria-busy={state.isFetching} className="pb-2">
           {groups.length === 0 && !state.isError && (
-            <div className="flex flex-col items-center gap-3 px-3 py-10 text-center text-sm text-muted-foreground">
-              <p>
-                {t(
-                  isFiltered
-                    ? "statistics.feedEmptyFiltered"
-                    : "statistics.feedEmpty",
-                )}
-              </p>
-              {isFiltered && canSave && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    update({
-                      excludedGuildIds:
-                        DEFAULT_ACTIVITY_FEED_SETTINGS.excludedGuildIds,
-                      excludedNpcCategories:
-                        DEFAULT_ACTIVITY_FEED_SETTINGS.excludedNpcCategories,
-                      withLootOnly: DEFAULT_ACTIVITY_FEED_SETTINGS.withLootOnly,
-                    })
-                  }
-                >
-                  {t("statistics.feedClearFilters")}
-                </Button>
+            <EmptyState
+              icon={Radio}
+              title={t(
+                isFiltered
+                  ? "statistics.feedEmptyFiltered"
+                  : "statistics.feedEmpty",
               )}
-            </div>
+              compact
+              action={
+                isFiltered && canSave ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      update({
+                        excludedGuildIds:
+                          DEFAULT_ACTIVITY_FEED_SETTINGS.excludedGuildIds,
+                        excludedNpcCategories:
+                          DEFAULT_ACTIVITY_FEED_SETTINGS.excludedNpcCategories,
+                        withLootOnly:
+                          DEFAULT_ACTIVITY_FEED_SETTINGS.withLootOnly,
+                      })
+                    }
+                  >
+                    {t("statistics.feedClearFilters")}
+                  </Button>
+                ) : undefined
+              }
+            />
           )}
           {TIME_SECTIONS.map(({ key }) => {
             const sectionGroups = groups.filter(

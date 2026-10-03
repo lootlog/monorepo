@@ -206,7 +206,7 @@ export const NotificationJobDetailDialog = ({
 
             {job.blockedReason ? (
               <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-4">
-                <p className="text-xs font-medium uppercase tracking-[0.18em] text-amber-500">
+                <p className="text-sm font-medium text-amber-500">
                   {t("settings.notifications.jobDetail.blockedReason")}
                 </p>
                 <p className="mt-1.5 text-sm text-amber-500">
@@ -216,7 +216,7 @@ export const NotificationJobDetailDialog = ({
             ) : null}
             {job.lastError ? (
               <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-4">
-                <p className="text-xs font-medium uppercase tracking-[0.18em] text-destructive">
+                <p className="text-sm font-medium text-destructive">
                   {t("settings.notifications.jobDetail.lastError")}
                 </p>
                 <p className="mt-1.5 text-sm text-destructive">

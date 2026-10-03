@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/common/empty-state";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
@@ -111,11 +112,11 @@ export const NotificationsPendingJobsCard = ({
       <SectionCardContent className="flex flex-col gap-3">
         {pendingJobs.length > 0 ? (
           <ScrollArea className="max-h-[52rem]">
-            <div className="flex flex-col gap-3">
+            <div className="overflow-hidden rounded-xl border border-border/70">
               {pendingJobs.map((job) => (
                 <div
                   key={job.id}
-                  className="border-b border-border/70 py-3 last:border-b-0"
+                  className="border-b border-border/70 px-3 py-3 last:border-b-0"
                 >
                   <div className="flex flex-col gap-2">
                     <div className="flex flex-wrap items-center gap-2">
@@ -191,9 +192,11 @@ export const NotificationsPendingJobsCard = ({
             </div>
           </ScrollArea>
         ) : (
-          <div className="py-6 text-sm text-muted-foreground">
-            {t("settings.notifications.empty.pendingJobs")}
-          </div>
+          <EmptyState
+            icon={Clock3}
+            title={t("settings.notifications.empty.pendingJobs")}
+            compact
+          />
         )}
       </SectionCardContent>
     </SectionCard>

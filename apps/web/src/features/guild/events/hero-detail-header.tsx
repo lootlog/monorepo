@@ -1,5 +1,5 @@
+import { formatNpcLevel } from "@lootlog/domain/profession";
 import { PageHeader } from "@/components/common/page-header";
-import { NpcTile } from "@/components/tiles";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -7,8 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { cn } from "cn";
-import { Swords } from "lucide-react";
+import { HeroAvatar } from "./components/shared/hero-avatar";
 import { HeroTimerCountdown } from "./components/heroes/hero-timer-countdown";
 import type { useHeroDetail } from "./use-hero-detail";
 import { getWindowStatusConfig } from "./utils/window-status-presentation";
@@ -40,28 +39,16 @@ export const HeroDetailHeader = ({
   <PageHeader
     title={
       <>
-        {hero.npcName} {hero.npcLvl ? `(${hero.npcLvl})` : ""}
+        {hero.npcName}
+        {hero.npcLvl ? (
+          <span className="ml-2 text-base font-normal text-muted-foreground">
+            {formatNpcLevel(hero.npcLvl)}
+          </span>
+        ) : null}
       </>
     }
     description={event.name}
-    status={
-      <>
-        {hero.npcIcon ? (
-          <NpcTile
-            className="flex w-10 shrink-0 items-center justify-center"
-            npc={{
-              id: hero.npcId ?? undefined,
-              name: hero.npcName,
-              icon: hero.npcIcon,
-            }}
-          />
-        ) : (
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-yellow-500/10 ring-1 ring-border/70">
-            <Swords className="size-4 text-yellow-500" />
-          </div>
-        )}
-      </>
-    }
+    status={<HeroAvatar hero={hero} />}
     metadata={
       <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs leading-none text-muted-foreground">
         <HeroTimerCountdown timer={heroTimer} />
@@ -69,11 +56,8 @@ export const HeroDetailHeader = ({
           <>
             <span aria-hidden="true">·</span>
             <Badge
-              variant="outline"
-              className={cn(
-                "h-5 shrink-0 px-1.5 text-[11px]",
-                getWindowStatusConfig(windowStatus, t).className,
-              )}
+              variant={getWindowStatusConfig(windowStatus, t).variant}
+              className="h-5 shrink-0 px-1.5 text-[11px]"
             >
               {getWindowStatusConfig(windowStatus, t).label}
             </Badge>

@@ -87,7 +87,9 @@ export const createKillsColumns = (
     ),
     cell: ({ row }) => (
       <div className="text-center text-muted-foreground text-sm">
-        {getNpcTypeName(row.original.npcType)}
+        {i18n.t(`npcType.${row.original.npcType}`, {
+          defaultValue: getNpcTypeName(row.original.npcType),
+        })}
       </div>
     ),
     enableSorting: false,
@@ -109,7 +111,7 @@ export const createKillsColumns = (
     ),
     cell: ({ row }) => (
       <div className="text-center font-semibold tabular-nums">
-        {row.original.totalKills.toLocaleString()}
+        {row.original.totalKills.toLocaleString("pl-PL")}
       </div>
     ),
   },

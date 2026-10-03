@@ -36,18 +36,30 @@ export const SidebarNavItem = ({
     <Button
       variant={isActive ? "default" : "ghost"}
       size="sm"
+      render={
+        available ? (
+          <Link
+            to={url}
+            preload="intent"
+            aria-current={isActive ? "page" : undefined}
+            onClick={onItemClick}
+          />
+        ) : undefined
+      }
+      nativeButton={!available}
+      role={available ? "link" : undefined}
       className={cn(
         "justify-between w-full font-semibold transition-colors duration-200 relative",
-        isActive && "shadow-[0_0_12px_var(--primary)/0.25]",
+        isActive && "shadow-[0_0_12px] shadow-primary/25",
         !isActive &&
           "text-muted-foreground hover:text-primary hover:!bg-primary/10",
         highlight &&
           !isActive && [
             "overflow-hidden",
-            "bg-yellow-500/10 hover:bg-yellow-500/20",
-            "border border-yellow-500/30",
-            "shadow-[0_0_12px_rgba(234,179,8,0.3)]",
-            "animate-pulse",
+            "bg-signal-timer/10 hover:bg-signal-timer/20",
+            "border border-signal-timer/30",
+            "shadow-[0_0_12px] shadow-signal-timer/30",
+            "motion-safe:animate-pulse",
             "text-foreground",
           ],
       )}
@@ -85,29 +97,17 @@ export const SidebarNavItem = ({
   );
 
   return (
-    <div
-      className="relative w-full px-2"
+    <li
+      className="relative w-full list-none px-2"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {isActive && !isRukiaTheme ? (
         <div className="absolute inset-x-2 inset-y-0 rounded-md bg-primary/5" />
       ) : null}
-      <Link
-        to={url}
-        preload="intent"
-        onClick={(e) => {
-          if (!available) e.preventDefault();
-          onItemClick(e);
-        }}
-        className={cn({
-          "hover:cursor-not-allowed": !available,
-        })}
-      >
-        <ThemeInteractiveFrame isHovered={isHovered} isActive={isActive}>
-          {buttonContent}
-        </ThemeInteractiveFrame>
-      </Link>
-    </div>
+      <ThemeInteractiveFrame isHovered={isHovered} isActive={isActive}>
+        {buttonContent}
+      </ThemeInteractiveFrame>
+    </li>
   );
 };

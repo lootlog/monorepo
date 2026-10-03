@@ -60,7 +60,6 @@
       "source": "Źródło",
       "world": "Świat",
       "time": "Czas"
-    },
-    "loaded": "Wczytano: {{count}}"
+    }
   }
 }

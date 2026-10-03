@@ -14,6 +14,7 @@ interface ScoringNumberInputProps {
     | `scoringRules.rules.${number}.conditions.${number}.value`
     | `scoringRules.rules.${number}.action.points`;
   label: string;
+  id?: string;
   max?: number;
   step?: number;
   className?: string;
@@ -24,6 +25,7 @@ export const ScoringNumberInput = ({
   register,
   name,
   label,
+  id,
   max,
   step = 0.01,
   className = "h-8 text-[12px] font-mono",
@@ -38,6 +40,7 @@ export const ScoringNumberInput = ({
     <div className="min-w-0 flex-1">
       <Input
         {...register(name, { valueAsNumber: true })}
+        id={id}
         type="number"
         min={0}
         max={max}

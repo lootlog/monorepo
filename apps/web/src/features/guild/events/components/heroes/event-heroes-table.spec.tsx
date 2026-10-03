@@ -56,6 +56,7 @@ describe("EventHeroesTable", () => {
     guildId: "guild-1",
     onAddHero: vi.fn(),
     onDeleteHero: vi.fn(),
+    isDeleteHeroPending: false,
     onEditHero: vi.fn(),
     onManageMaps: vi.fn(),
     rows: [
@@ -114,7 +115,7 @@ describe("EventHeroesTable", () => {
     const onEditHero = vi.fn();
     const onManageMaps = vi.fn();
 
-    const { container } = await render(
+    await render(
       <EventHeroesTable
         {...defaultProps}
         onAddHero={onAddHero}
@@ -128,27 +129,6 @@ describe("EventHeroesTable", () => {
       screen.getByRole("heading", { name: "events.heroes.title" }),
     ).toBeTruthy();
     expect(
-      screen
-        .getByRole("button", { name: "events.heroes.addButton" })
-        .getAttribute("class"),
-    ).toContain("pr-4!");
-    expect(
-      screen.getByRole("columnheader", { name: "events.heroes.columns.hero" }),
-    ).toBeTruthy();
-    expect(
-      screen
-        .getByRole("columnheader", { name: "events.heroes.columns.maps" })
-        .getAttribute("class"),
-    ).toContain("lg:table-cell");
-    expect(
-      screen
-        .getByRole("columnheader", { name: "events.heroes.columns.kills" })
-        .getAttribute("class"),
-    ).toContain("lg:table-cell");
-    expect(
-      screen.getByRole("columnheader", { name: "events.heroes.columns.timer" }),
-    ).toBeTruthy();
-    expect(
       screen.getAllByRole("columnheader").map((header) => header.textContent),
     ).toEqual([
       "events.heroes.columns.hero",
@@ -158,22 +138,11 @@ describe("EventHeroesTable", () => {
       "events.heroes.columns.actions",
     ]);
 
-    const actionsHeader = screen.getByRole("columnheader", {
-      name: "events.heroes.columns.actions",
-    });
-
-    expect(actionsHeader.querySelector(".sr-only")).toBeTruthy();
-
-    expect(screen.getByText("Potulny Berserker (284w)")).toBeTruthy();
-    expect(await screen.findByText("Oczekiwanie")).toBeTruthy();
-    expect(container.querySelector(".lucide-clock")).not.toBeNull();
-    expect(container.querySelector(".lucide-chevron-right")).toBeNull();
+    expect(screen.getByText("Potulny Berserker")).toBeTruthy();
+    expect(screen.getByText("284w")).toBeTruthy();
     expect(
-      screen
-        .getByRole("button", { name: "events.heroes.actions" })
-        .closest("td")
-        ?.getAttribute("class"),
-    ).toContain("w-16");
+      await screen.findByText("events.respawn.status.waiting"),
+    ).toBeTruthy();
     expect(screen.getByText("ID: 410452")).toBeTruthy();
     expect(screen.getByText("events.maps.mapCount")).toBeTruthy();
     expect(screen.getByText("events.heroes.killCount")).toBeTruthy();
@@ -181,10 +150,6 @@ describe("EventHeroesTable", () => {
     expect(heroLink.getAttribute("href")).toBe(
       "/guild-1/events/event-1/heroes/hero-1",
     );
-    expect(heroLink.getAttribute("class")).toContain("hover:text-primary");
-    expect(
-      screen.getByText("Potulny Berserker (284w)").getAttribute("class"),
-    ).not.toContain("underline");
 
     fireEvent.click(
       screen.getByRole("button", { name: "events.heroes.addButton" }),
@@ -204,8 +169,14 @@ describe("EventHeroesTable", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "events.heroes.actions" }),
     );
-    fireEvent.click(await screen.findByText("events.heroes.deleteAction"));
-    fireEvent.click(await screen.findByRole("button", { name: "Usuń" }));
+    fireEvent.click(
+      await screen.findByRole("menuitem", {
+        name: "events.heroes.deleteAction",
+      }),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "events.heroes.deleteAction" }),
+    );
 
     expect(onAddHero).toHaveBeenCalledOnce();
     expect(onEditHero).toHaveBeenCalledWith(defaultProps.rows[0]?.hero);

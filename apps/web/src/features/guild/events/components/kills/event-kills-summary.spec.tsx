@@ -19,7 +19,10 @@ describe("EventKillsSummary", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Wakacje 2026" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "events.kills.title" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Wakacje 2026")).toBeTruthy();
     expect(screen.getByText("Zorin")).toBeTruthy();
     expect(screen.getByText("events.kills.killCount")).toBeTruthy();
     expect(screen.getByText("88")).toBeTruthy();

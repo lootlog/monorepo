@@ -35,7 +35,7 @@ describe("reservation error messages", () => {
     [{ code: "FORBIDDEN" }, "Nie masz uprawnień do wykonania tej operacji."],
     [
       { code: "GUILD_NOT_FOUND" },
-      "Organizacja nie istnieje lub nie masz do niej dostępu.",
+      "Ten Lootlog nie istnieje lub nie masz do niego dostępu.",
     ],
     [
       { code: "AUTHENTICATION_REQUIRED" },
@@ -71,7 +71,7 @@ describe("reservation error messages", () => {
     ],
     [
       { message: "RESERVATION_OVERLAP" },
-      "Ten termin koliduje z rezerwacją Twojej organizacji.",
+      "Ten termin koliduje z rezerwacją w Twoim Lootlogu.",
     ],
     [
       { code: "ACTIVE_LIMIT_REACHED", limit: "invalid" },

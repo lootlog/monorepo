@@ -10,13 +10,21 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@lootlog/ui/components/collapsible";
-import { FileText, MapPin, Trash2, Pencil, ChevronDown } from "lucide-react";
+import {
+  ChevronRight,
+  FileText,
+  MapPin,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import { cn } from "cn";
+import { EmptyState } from "@/components/common/empty-state";
 import { toast } from "sonner";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
-import { MapTemplatesHeader } from "./map-templates-header";
 import { MapTemplateFormDialog } from "./map-template-form-dialog";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { MapTemplateRowsSkeleton } from "./map-template-rows-skeleton";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
@@ -66,11 +74,7 @@ export const MapTemplatesSettings = () => {
     }));
   };
 
-  const handleEdit = (
-    template: MapTemplateResponseDto,
-    e: React.MouseEvent,
-  ) => {
-    e.stopPropagation();
+  const handleEdit = (template: MapTemplateResponseDto) => {
     setEditingTemplate(template);
     setEditDialogOpen(true);
   };
@@ -92,124 +96,134 @@ export const MapTemplatesSettings = () => {
     }
   };
 
+  const createButton = (
+    <Button onClick={() => setCreateDialogOpen(true)}>
+      <Plus data-icon="inline-start" aria-hidden />
+      {t("settings.mapTemplates.newTemplate")}
+    </Button>
+  );
+
+  const isEmpty = !isLoading && templates?.length === 0;
+
   return (
-    <div className="flex flex-col h-full min-h-0 overflow-y-auto">
-      <MapTemplatesHeader onAddClick={() => setCreateDialogOpen(true)} />
-      <ScrollArea className="flex-1 min-h-48">
-        <div className="p-3 flex flex-col gap-3">
-          {isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <SectionCard key={i}>
-                  <SectionCardContent className="flex flex-col gap-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Skeleton className="h-8 w-8 rounded-lg" />
-                        <Skeleton className="h-4 w-32" />
-                      </div>
-                      <Skeleton className="h-5 w-8 rounded-full" />
-                    </div>
-                  </SectionCardContent>
-                </SectionCard>
-              ))}
-            </div>
-          ) : templates?.length === 0 ? (
-            <SectionCard className="flex flex-col items-center justify-center h-64">
-              <SectionCardContent className="flex flex-col gap-3">
-                <FileText className="w-16 h-16 text-muted-foreground" />
-                <p className="text-muted-foreground">
-                  {t("settings.mapTemplates.noTemplates")}
-                </p>
-              </SectionCardContent>
-            </SectionCard>
-          ) : (
-            templates?.map((template: MapTemplateResponseDto) => (
-              <Collapsible
-                key={template.id}
-                open={expandedTemplates[template.id]}
-                onOpenChange={() => toggleExpanded(template.id)}
-              >
-                <SectionCard className="overflow-hidden">
-                  <SectionCardHeader
-                    icon={FileText}
-                    title={
-                      <CollapsibleTrigger className="text-left">
-                        {template.name}
-                      </CollapsibleTrigger>
-                    }
-                    description={t("settings.mapTemplates.mapCount", {
-                      count: template.maps.length,
-                    })}
-                    actions={
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label={t("settings.mapTemplates.editTemplate", {
-                            name: template.name,
-                          })}
-                          className="size-8"
-                          onClick={(e) => handleEdit(template, e)}
+    <div className="flex h-full min-h-0 flex-col overflow-y-auto">
+      <h1 className="sr-only">{t("settings.mapTemplates.title")}</h1>
+      <ScrollArea className="min-h-48 flex-1">
+        <div className="flex flex-col gap-3 px-3 pb-3">
+          <SectionCard>
+            <SectionCardHeader
+              icon={FileText}
+              title={t("settings.mapTemplates.title")}
+              description={t("settings.mapTemplates.description")}
+              actions={!isEmpty && createButton}
+            />
+            <SectionCardContent className="p-0">
+              {isLoading ? (
+                <div role="status" aria-label={t("common.loading")}>
+                  <MapTemplateRowsSkeleton />
+                </div>
+              ) : isEmpty ? (
+                <EmptyState
+                  icon={FileText}
+                  title={t("settings.mapTemplates.noTemplates")}
+                  description={t(
+                    "settings.mapTemplates.noTemplatesDescription",
+                  )}
+                  action={createButton}
+                />
+              ) : (
+                <ul className="divide-y divide-border">
+                  {templates?.map((template) => {
+                    const isExpanded = expandedTemplates[template.id] ?? false;
+
+                    return (
+                      <li key={template.id}>
+                        <Collapsible
+                          open={isExpanded}
+                          onOpenChange={() => toggleExpanded(template.id)}
                         >
-                          <Pencil className="size-4" />
-                        </Button>
-                        <ConfirmDeleteDialog
-                          onConfirm={() => handleDelete(template.id)}
-                          title={t("settings.mapTemplates.deleteConfirmTitle")}
-                          description={t(
-                            "settings.mapTemplates.deleteConfirmDescription",
-                            { name: template.name },
-                          )}
-                          trigger={
+                          <div className="flex min-h-14 items-center gap-1 pr-3 transition-colors hover:bg-muted/40">
+                            <CollapsibleTrigger className="flex min-w-0 flex-1 items-center gap-3 self-stretch py-2 pl-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
+                              <ChevronRight
+                                aria-hidden
+                                className={cn(
+                                  "size-4 shrink-0 text-muted-foreground transition-transform motion-reduce:transition-none",
+                                  isExpanded && "rotate-90",
+                                )}
+                              />
+                              <span className="min-w-0">
+                                <span className="block truncate text-sm font-semibold">
+                                  {template.name}
+                                </span>
+                                <span className="block text-xs text-muted-foreground">
+                                  {t("settings.mapTemplates.mapCount", {
+                                    count: template.maps.length,
+                                  })}
+                                </span>
+                              </span>
+                            </CollapsibleTrigger>
                             <Button
                               variant="ghost"
                               size="icon"
                               aria-label={t(
-                                "settings.mapTemplates.deleteTemplate",
+                                "settings.mapTemplates.editTemplate",
                                 {
                                   name: template.name,
                                 },
                               )}
-                              className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={(e) => e.stopPropagation()}
+                              className="size-8"
+                              onClick={() => handleEdit(template)}
                             >
-                              <Trash2 className="size-4" />
+                              <Pencil className="size-4" />
                             </Button>
-                          }
-                        />
-                        <CollapsibleTrigger
-                          aria-label={template.name}
-                          className="p-2"
-                        >
-                          <ChevronDown
-                            className={`size-4 text-muted-foreground transition-transform ${expandedTemplates[template.id] ? "rotate-180" : ""}`}
-                          />
-                        </CollapsibleTrigger>
-                      </div>
-                    }
-                  />
-                  <CollapsibleContent>
-                    <SectionCardContent>
-                      <div className="flex flex-wrap gap-2">
-                        {template.maps.map((map) => (
-                          <span
-                            key={map.id}
-                            className="inline-flex items-center gap-1.5 px-2 py-1 bg-primary/10 text-primary text-xs rounded"
-                          >
-                            <MapPin className="w-3 h-3" />
-                            {map.name}
-                            <span className="text-muted-foreground">
-                              ({map.id})
-                            </span>
-                          </span>
-                        ))}
-                      </div>
-                    </SectionCardContent>
-                  </CollapsibleContent>
-                </SectionCard>
-              </Collapsible>
-            ))
-          )}
+                            <ConfirmDeleteDialog
+                              onConfirm={() => handleDelete(template.id)}
+                              title={t(
+                                "settings.mapTemplates.deleteConfirmTitle",
+                              )}
+                              description={t(
+                                "settings.mapTemplates.deleteConfirmDescription",
+                                { name: template.name },
+                              )}
+                              trigger={
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  aria-label={t(
+                                    "settings.mapTemplates.deleteTemplate",
+                                    { name: template.name },
+                                  )}
+                                  className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                >
+                                  <Trash2 className="size-4" />
+                                </Button>
+                              }
+                            />
+                          </div>
+                          <CollapsibleContent>
+                            <ul className="flex flex-wrap gap-2 px-3 pb-3 pl-10">
+                              {template.maps.map((map) => (
+                                <li
+                                  key={map.id}
+                                  className="inline-flex items-center gap-1.5 rounded bg-primary/10 px-2 py-1 text-xs text-primary"
+                                >
+                                  <MapPin className="size-3" aria-hidden />
+                                  {map.name}
+                                  <span className="text-muted-foreground">
+                                    ({map.id})
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </SectionCardContent>
+          </SectionCard>
         </div>
       </ScrollArea>
 
