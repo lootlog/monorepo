@@ -14,7 +14,7 @@ export const Route = createFileRoute("/terms-of-service")({
     links: [
       {
         rel: "canonical",
-        href: "https://lootlog.pl/terms-of-service",
+        href: "https://lootlog.pl/terms-of-service/",
       },
     ],
   }),
