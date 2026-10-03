@@ -1,3 +1,4 @@
+import { isEqual } from "es-toolkit";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
 import { CHAT_MESSAGE_LIMIT } from "@lootlog/schema/chat";
 import type { ChatFilter } from "@/store/chat.store";
@@ -39,10 +40,6 @@ export type ChatRenderableMessage =
       message: ChatMessageType;
     };
 
-const areStringListsEqual = (left: string[], right: string[]) =>
-  left.length === right.length &&
-  left.every((value, index) => value === right[index]);
-
 /**
  * Row objects are rebuilt on every derivation pass, so memoized rows compare
  * content instead of identity: the same message reference, count and members.
@@ -65,7 +62,7 @@ export const areChatRenderablesEqual = (
     right.kind === "npc-group" &&
     left.message === right.message &&
     left.count === right.count &&
-    areStringListsEqual(left.messageIds, right.messageIds)
+    isEqual(left.messageIds, right.messageIds)
   );
 };
 
