@@ -19,9 +19,9 @@ export type MemberDiscordSyncIndicatorProps = {
 };
 
 const indicatorToneClassNames: Record<MemberDiscordSyncTone, string> = {
-  success: "bg-emerald-500/10 text-emerald-500",
-  warning: "bg-amber-500/10 text-amber-500",
-  danger: "bg-destructive/10 text-destructive",
+  success: "bg-signal-ready/10 text-signal-ready",
+  warning: "bg-signal-timer/10 text-signal-timer",
+  danger: "bg-signal-alert/10 text-signal-alert",
   neutral: "bg-muted text-muted-foreground",
 };
 

@@ -7,7 +7,7 @@ import { Spinner } from "@lootlog/ui/components/spinner";
 import { formatDistanceToNowStrict } from "date-fns";
 import { pl } from "date-fns/locale";
 import { AlertTriangle, Clock, ShieldCheck } from "lucide-react";
-import { formatDateTime } from "../../utils/format-date";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { useParticipationConfirmation } from "./use-participation-confirmation";
 
 interface EventParticipationConfirmationDialogProps {
@@ -96,12 +96,12 @@ export const EventParticipationConfirmationDialogContent = ({
                                   {item.heroNpc.npcName}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                  {formatDateTime(new Date(item.killedAt))}
+                                  {timestampToDate(item.killedAt)}
                                 </p>
                                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                                   <Clock className="size-3" />
                                   {t("events.confirmation.deadline")}:{" "}
-                                  {formatDateTime(deadline)} ({remaining})
+                                  {timestampToDate(deadline)} ({remaining})
                                 </p>
                               </div>
                             </div>
@@ -146,7 +146,7 @@ export const EventParticipationConfirmationDialogContent = ({
 
             {sortedExpiredItems.length > 0 && (
               <div className={sortedItems.length > 0 ? "mt-4" : undefined}>
-                <div className="mb-2 flex items-center gap-2 text-amber-500">
+                <div className="mb-2 flex items-center gap-2 text-signal-timer">
                   <AlertTriangle className="size-4" />
                   <p className="text-sm font-semibold">
                     {t("events.confirmation.expiredTitle")}
@@ -164,7 +164,7 @@ export const EventParticipationConfirmationDialogContent = ({
                       return (
                         <div
                           key={item.killId}
-                          className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2.5"
+                          className="rounded-lg border border-signal-timer/30 bg-signal-timer/5 px-3 py-2.5"
                         >
                           <div className="flex items-center gap-2 min-w-0">
                             {item.heroNpc.npcIcon ? (
@@ -181,11 +181,11 @@ export const EventParticipationConfirmationDialogContent = ({
                                 {item.heroNpc.npcName}
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                {formatDateTime(new Date(item.killedAt))}
+                                {timestampToDate(item.killedAt)}
                               </p>
                               <p className="text-xs text-muted-foreground">
                                 {t("events.confirmation.deadline")}:{" "}
-                                {formatDateTime(deadline)}
+                                {timestampToDate(deadline)}
                               </p>
                             </div>
                           </div>

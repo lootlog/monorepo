@@ -11,7 +11,7 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
-import { RefreshCcw, Trophy } from "lucide-react";
+import { RefreshCw, Trophy } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
@@ -191,7 +191,7 @@ const EventEditScoringForm = ({
             size="sm"
             onClick={handleRecalculate}
             loading={recalculatePoints.isPending}
-            icon=<RefreshCcw className="size-3.5" />
+            icon=<RefreshCw className="size-3.5" />
             title={t("events.scoring.recalculateHint")}
           >
             {t("events.scoring.recalculateButton")}

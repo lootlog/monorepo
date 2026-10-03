@@ -1,4 +1,4 @@
-import { formatNpcLevel } from "@lootlog/domain/profession";
+import { formatLevel } from "@lootlog/domain/profession";
 import { EmptyState } from "@/components/common/empty-state";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
@@ -7,12 +7,12 @@ import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { Ghost } from "lucide-react";
-import { KillStatsFilterBar } from "./components/kill-stats-filter-bar";
+import { KillStatsFilterBar } from "@/features/kills/components/kill-stats-filter-bar";
 import { MemberNameWithColor } from "./components/member-name-with-color";
 import { StatsCountCell } from "./components/stats-count-cell";
 import { StatsDetailHeader } from "./components/stats-detail-header";
 import { StatsMemberAvatar } from "./components/stats-member-avatar";
-import { StatsRank } from "./components/stats-rank";
+import { RankBadge } from "@/components/common/rank-badge";
 import {
   STATS_TABLE_COUNT_COLUMN_ID,
   STATS_TABLE_POSITION_COLUMN_ID,
@@ -52,7 +52,7 @@ export const NpcKillersPage = () => {
     {
       id: STATS_TABLE_POSITION_COLUMN_ID,
       header: () => t("kills.memberRanking.position"),
-      cell: ({ row }) => <StatsRank rank={cursor + row.index + 1} />,
+      cell: ({ row }) => <RankBadge rank={cursor + row.index + 1} />,
     },
     {
       id: "member",
@@ -133,7 +133,7 @@ export const NpcKillersPage = () => {
           )
         }
         title={npc.npcName}
-        subtitle={`${t(`npcType.${npc.npcType}`)} · ${t("kills.level", { level: formatNpcLevel(npc.npcLvl, npc.npcProf) })}`}
+        subtitle={`${t(`npcType.${npc.npcType}`)} · ${t("kills.level", { level: formatLevel(npc.npcLvl, npc.npcProf) })}`}
         metrics={[
           {
             key: "kills",

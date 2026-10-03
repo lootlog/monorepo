@@ -9,7 +9,7 @@ import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Separator } from "@lootlog/ui/components/separator";
 import { CollapsePresence } from "@/components/common/collapse-presence";
-import { X, Globe, Medal, Users, Award, ArrowRight } from "lucide-react";
+import { X, Globe, Medal, Users, Award } from "lucide-react";
 import { cn } from "cn";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
@@ -187,17 +187,12 @@ export const FiltersSidebar = ({
                 <Label className="text-xs text-muted-foreground">
                   {t("battlePanel.filters.levelRange")}
                 </Label>
-                <div className="flex items-center gap-2">
-                  <LevelRangeFilter
-                    minLevel={filters.minLevel}
-                    maxLevel={filters.maxLevel}
-                    onMinLevelChange={handleMinLevelChange}
-                    onMaxLevelChange={handleMaxLevelChange}
-                    inputClassName="w-full"
-                    containerClassName="flex-1"
-                    separator=<ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  />
-                </div>
+                <LevelRangeFilter
+                  minLevel={filters.minLevel}
+                  maxLevel={filters.maxLevel}
+                  onMinLevelChange={handleMinLevelChange}
+                  onMaxLevelChange={handleMaxLevelChange}
+                />
               </div>
             </div>
           </ScrollArea>

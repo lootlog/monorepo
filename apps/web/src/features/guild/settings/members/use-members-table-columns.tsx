@@ -137,7 +137,7 @@ export function useMembersTableColumns({
                     ({ category, activePermissions }) => {
                       return (
                         <PermissionCategoryTooltip
-                          key={category.name}
+                          key={category.groupKey}
                           category={category}
                           activePermissions={activePermissions}
                           side="top"

@@ -1,7 +1,7 @@
+import { formatLevel } from "@lootlog/domain/profession";
 import { Badge } from "@lootlog/ui/components/badge";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import type { UserNpcKillsResponseDtoOutputNpcsItem } from "@lootlog/client/main";
-import { getNpcTypeName } from "@/constants/npc";
 import { useTranslation } from "react-i18next";
 
 type KillsMobileListProps = {
@@ -40,12 +40,13 @@ export const KillsMobileList = ({ npcs, startRank }: KillsMobileListProps) => {
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-1.5">
                 <Badge variant="outline" className="max-w-full truncate">
-                  {t("common.levelShort", { level: npc.npcLvl })}
-                  {npc.npcProf}
+                  {t("common.levelShort", {
+                    level: formatLevel(npc.npcLvl, npc.npcProf),
+                  })}
                 </Badge>
                 <Badge variant="secondary" className="max-w-full truncate">
                   {t(`npcType.${npc.npcType}`, {
-                    defaultValue: getNpcTypeName(npc.npcType),
+                    defaultValue: npc.npcType,
                   })}
                 </Badge>
               </div>

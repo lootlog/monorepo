@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Button } from "@lootlog/ui/components/button";
-import { RotateCw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 type RouteRetryButtonProps = {
@@ -29,7 +29,7 @@ export const RouteRetryButton = ({ onRetry }: RouteRetryButtonProps) => {
       onClick={retry}
       loading={isPending}
       className="group/retry"
-      icon=<RotateCw className="size-4 transition-[rotate] duration-300 ease-emphasized group-hover/retry:rotate-90 motion-reduce:transition-none" />
+      icon=<RotateCcw className="size-4 transition-[rotate] duration-300 ease-emphasized group-hover/retry:-rotate-90 motion-reduce:transition-none" />
     >
       {t("common.routeErrors.actions.retry")}
     </Button>

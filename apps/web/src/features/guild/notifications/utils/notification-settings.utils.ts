@@ -22,18 +22,12 @@ export const getJobStatusBadgeProps = (
 ): Pick<BadgeProps, "variant" | "className"> => {
   switch (status) {
     case "SENT":
-      return {
-        variant: "outline",
-        className: "bg-emerald-500/15 text-emerald-500 border-emerald-500/20",
-      };
+      return { variant: "ready" };
     case "FAILED":
     case "CANCELED":
-      return { variant: "destructive" };
+      return { variant: "alert" };
     case "BLOCKED":
-      return {
-        variant: "outline",
-        className: "bg-amber-500/15 text-amber-500 border-amber-500/20",
-      };
+      return { variant: "timer" };
     default:
       return { variant: "outline" };
   }

@@ -10,19 +10,19 @@ export type MapStatus =
 
 export const STATUS_STYLES: Record<MapStatus, { bg: string }> = {
   ASSIGNED_PRESENT: {
-    bg: "bg-green-500/10",
+    bg: "bg-signal-ready/10",
   },
   ASSIGNED_ABSENT: {
-    bg: "bg-orange-500/10",
+    bg: "bg-signal-timer/10",
   },
   ASSIGNED_AFK: {
-    bg: "bg-orange-500/10",
+    bg: "bg-signal-timer/10",
   },
   ASSIGNED_UNKNOWN: {
-    bg: "bg-orange-500/10",
+    bg: "bg-signal-timer/10",
   },
   UNASSIGNED: {
-    bg: "bg-destructive/10",
+    bg: "bg-signal-alert/10",
   },
 };
 

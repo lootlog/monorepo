@@ -10,9 +10,8 @@ import type { Permission } from "@lootlog/schema/permissions";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";
-import { Badge } from "@lootlog/ui/components/badge";
+import { Badge, type BadgeProps } from "@lootlog/ui/components/badge";
 
-import { format } from "date-fns";
 import {
   Activity,
   AlertTriangle,
@@ -30,6 +29,7 @@ import {
 } from "@/features/guild/settings/members/member-list-item.utils";
 import { getMemberDiscordSyncPresentation } from "@/features/guild/settings/members/member-discord-sync.utils";
 import { getColorFromRoleColor } from "@/utils/get-color-from-role";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 export type MemberDataProps = {
   member: GuildMember;
@@ -57,7 +57,7 @@ const formatDateTime = (
     return fallback;
   }
 
-  return `${getRelativeTime(timestamp)} (${format(new Date(timestamp), "dd.MM.yyyy HH:mm")})`;
+  return `${getRelativeTime(timestamp)} (${timestampToDate(timestamp)})`;
 };
 
 const DetailSection = ({
@@ -184,32 +184,41 @@ export const MemberData = ({
     webActivityStats,
   });
 
-  const accessSummary = {
-    active: {
-      label: t("settings.members.access.ok"),
-      description: t("settings.members.access.okDescription"),
-      icon: ShieldCheck,
-      className: "border-emerald-500/25 bg-emerald-500/10 text-emerald-500",
-    },
-    inactive: {
-      label: t("settings.members.access.inactive"),
-      description: t("settings.members.access.inactiveDescription"),
-      icon: UserMinus,
-      className: "border-border bg-background text-muted-foreground",
-    },
-    online: {
-      label: t("settings.members.access.ok"),
-      description: t("settings.members.access.onlineDescription"),
-      icon: CheckCircle2,
-      className: "border-emerald-500/25 bg-emerald-500/10 text-emerald-500",
-    },
-    problem: {
-      label: t("settings.members.access.problem"),
-      description: t("settings.members.access.problemDescription"),
-      icon: AlertTriangle,
-      className: "border-amber-500/25 bg-amber-500/10 text-amber-500",
-    },
-  }[accessState];
+  const accessSummary: {
+    label: string;
+    description: string;
+    icon: typeof ShieldCheck;
+    variant: BadgeProps["variant"];
+    className?: string;
+  } = (
+    {
+      active: {
+        label: t("settings.members.access.ok"),
+        description: t("settings.members.access.okDescription"),
+        icon: ShieldCheck,
+        variant: "ready",
+      },
+      inactive: {
+        label: t("settings.members.access.inactive"),
+        description: t("settings.members.access.inactiveDescription"),
+        icon: UserMinus,
+        variant: "outline",
+        className: "bg-background text-muted-foreground",
+      },
+      online: {
+        label: t("settings.members.access.ok"),
+        description: t("settings.members.access.onlineDescription"),
+        icon: CheckCircle2,
+        variant: "ready",
+      },
+      problem: {
+        label: t("settings.members.access.problem"),
+        description: t("settings.members.access.problemDescription"),
+        icon: AlertTriangle,
+        variant: "timer",
+      },
+    } as const
+  )[accessState];
 
   const AccessIcon = accessSummary.icon;
   const syncRows = getMemberSyncRows(member, emptyValueLabel, t);
@@ -220,19 +229,15 @@ export const MemberData = ({
         <SectionCardContent className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <Badge
-              variant="outline"
+              variant={accessSummary.variant}
               className={cn("gap-1.5", accessSummary.className)}
             >
               <AccessIcon className="size-3.5" />
               {accessSummary.label}
             </Badge>
             <Badge
-              variant="outline"
-              className={cn(
-                "border-border bg-background text-muted-foreground",
-                isOnline &&
-                  "border-emerald-500/25 bg-emerald-500/10 text-emerald-500",
-              )}
+              variant={isOnline ? "live" : "outline"}
+              className={cn(!isOnline && "bg-background text-muted-foreground")}
             >
               {onlineStatusLabel}
             </Badge>

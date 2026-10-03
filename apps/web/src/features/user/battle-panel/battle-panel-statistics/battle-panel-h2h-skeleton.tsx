@@ -1,5 +1,5 @@
 import { SectionCardFooter } from "@/components/common/section-card/section-card-footer";
-import { PageHeader } from "@/components/common/page-header";
+import { PageHeaderSkeleton } from "@/components/common/page-header-skeleton";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { SectionCard } from "@/components/common/section-card/section-card";
@@ -9,10 +9,7 @@ export const BattlePanelH2hSkeleton = () => {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <div className="px-3 pt-3 pb-0">
-        <PageHeader
-          title=<Skeleton render={<span />} className="block h-5 w-40" />
-          description=<Skeleton render={<span />} className="block h-3 w-48" />
-        />
+        <PageHeaderSkeleton />
       </div>
 
       <div className="flex flex-1 overflow-hidden">
@@ -54,12 +51,17 @@ export const BattlePanelH2hSkeleton = () => {
                   <Skeleton className="h-3 w-24" />
                   {index === 3 ? (
                     <div className="flex items-center gap-2">
-                      <Skeleton className="h-10 flex-1 rounded-md" />
-                      <Skeleton className="size-4 rounded-sm" />
-                      <Skeleton className="h-10 flex-1 rounded-md" />
+                      <Skeleton className="h-10 flex-1 rounded-xl" />
+                      <span
+                        className="text-xs text-muted-foreground"
+                        aria-hidden="true"
+                      >
+                        –
+                      </span>
+                      <Skeleton className="h-10 flex-1 rounded-xl" />
                     </div>
                   ) : index === 4 ? (
-                    <div className="flex items-center justify-between rounded-md border p-3">
+                    <div className="flex items-center justify-between rounded-xl border p-3">
                       <div className="flex items-center gap-2">
                         <Skeleton className="size-4 rounded-sm" />
                         <Skeleton className="h-4 w-28" />
@@ -67,7 +69,7 @@ export const BattlePanelH2hSkeleton = () => {
                       <Skeleton className="size-4 rounded-sm" />
                     </div>
                   ) : (
-                    <Skeleton className="h-10 w-full rounded-md" />
+                    <Skeleton className="h-10 w-full rounded-xl" />
                   )}
                   {index < 4 ? <div className="h-px bg-border" /> : null}
                 </div>

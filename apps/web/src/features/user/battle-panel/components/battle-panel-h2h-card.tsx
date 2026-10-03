@@ -9,8 +9,8 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
-import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 type BattlePanelH2hCardProps = {
   record: HeadToHeadRecord;
@@ -24,7 +24,7 @@ export const BattlePanelH2hCard = ({
   onOpen,
 }: BattlePanelH2hCardProps) => {
   const { t } = useTranslation();
-  const exactTime = format(new Date(record.lastBattleDate), "dd.MM.yyyy HH:mm");
+  const exactTime = timestampToDate(record.lastBattleDate);
   const totalRatingDelta = record.totalRatingDelta ?? 0;
   const ratingDeltaSign = totalRatingDelta >= 0 ? "+" : "";
 

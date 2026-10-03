@@ -105,7 +105,11 @@ export const KillParticipantsCard = ({
       />
 
       {sortedParticipants.length === 0 ? (
-        <EmptyState icon={Users} title={t("events.kills.noParticipants")} />
+        <EmptyState
+          compact
+          icon={Users}
+          title={t("events.kills.noParticipants")}
+        />
       ) : (
         <>
           <div className="hidden h-10 grid-cols-[2rem_minmax(0,1fr)_7rem_5rem_6.5rem_5rem] items-center gap-2 border-b border-border bg-background px-3 text-xs font-semibold text-muted-foreground lg:grid">

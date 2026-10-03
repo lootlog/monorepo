@@ -6,7 +6,7 @@ import { Map } from "lucide-react";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useEventsMonitoringControllerGetKillTimelineData } from "@lootlog/client/main";
 import { KillMapsTimelineTable } from "./kill-maps-timeline-table";
-import { EventReadError } from "../shared/event-read-error";
+import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { COVERAGE_SEGMENT_BG_CLASS_NAMES } from "../../utils/get-map-coverage-color-class-name";
 import { cn } from "cn";
 
@@ -114,7 +114,7 @@ export const KillMapsTimelineSection = ({
 
       <div className="border-t border-border/70">
         {isError && (
-          <EventReadError
+          <QueryErrorNotice
             message={t("events.killDetail.mapCoverage.error")}
             onRetry={() => void refetch()}
             isRetrying={isFetching}

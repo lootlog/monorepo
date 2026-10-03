@@ -1,44 +1,52 @@
 import type { FC } from "react";
 import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { cn } from "cn";
 
 type ReservationCardSkeletonProps = {
   viewMode?: "list" | "grid";
 };
 
+/** Mirrors `ReservationCard`, so the loaded cards replace it without shifting. */
 export const ReservationCardSkeleton: FC<ReservationCardSkeletonProps> = ({
   viewMode = "grid",
-}) => {
-  if (viewMode === "list") {
-    return (
-      <Card className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2.5 border-border bg-card p-3 sm:grid-cols-[12rem_9.5rem_minmax(0,1fr)_13rem_auto]">
-        <div className="col-start-1 row-start-1 flex items-center gap-2 sm:flex-col sm:items-start sm:gap-1">
-          <Skeleton className="h-4 w-28" />
-          <Skeleton className="h-5 w-14 rounded-md" />
+}) => (
+  <Card
+    className={cn(
+      "gap-3 border-border bg-card p-3.5",
+      viewMode === "list" &&
+        "sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(14rem,1fr)] sm:items-center",
+    )}
+  >
+    <div className="flex min-w-0 items-start justify-between gap-3">
+      <div className="min-w-0">
+        <div className="flex h-5 items-center">
+          <Skeleton className="h-4 w-32" />
         </div>
-        <div className="col-span-2 col-start-1 row-start-2 flex items-center gap-2 overflow-hidden sm:col-span-1 sm:col-start-2 sm:row-start-1">
-          <Skeleton className="h-10 w-8 rounded-lg" />
-          <Skeleton className="h-10 w-8 rounded-lg" />
-          <Skeleton className="h-10 w-8 rounded-lg" />
+        <div className="mt-0.5 flex h-4 items-center">
+          <Skeleton className="h-3 w-16" />
         </div>
-        <Skeleton className="col-span-2 col-start-1 row-start-3 h-12 w-full rounded-lg sm:col-span-1 sm:col-start-4 sm:row-start-1" />
-        <Skeleton className="col-start-2 row-start-1 size-4 rounded-sm sm:col-start-5" />
-      </Card>
-    );
-  }
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
+        <Skeleton className="size-8 rounded-md" />
+        <Skeleton className="size-4 rounded-sm" />
+      </div>
+    </div>
 
-  return (
-    <Card className="flex min-h-40 h-full flex-col gap-3 border-border bg-card p-3.5">
-      <div className="flex items-center gap-2">
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-5 w-14 rounded-md" />
-      </div>
-      <div className="flex items-center gap-2">
+    {viewMode === "grid" && (
+      <div className="flex min-h-10 items-center gap-2 overflow-hidden">
         <Skeleton className="h-10 w-8 rounded-lg" />
         <Skeleton className="h-10 w-8 rounded-lg" />
         <Skeleton className="h-10 w-8 rounded-lg" />
       </div>
-      <Skeleton className="mt-auto h-12 w-full rounded-lg" />
-    </Card>
-  );
-};
+    )}
+
+    <div className="mt-auto flex min-w-0 items-center gap-2.5 rounded-lg border border-border/80 bg-muted/30 px-2.5 py-2">
+      <Skeleton className="size-4 shrink-0 rounded-sm" />
+      <div className="flex min-h-8 min-w-0 flex-1 flex-col justify-center gap-1">
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="h-3 w-32 max-w-full" />
+      </div>
+    </div>
+  </Card>
+);

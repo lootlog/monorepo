@@ -151,7 +151,11 @@ export function AbyssSeasonsTable({
       />
 
       {seasons.length === 0 && !isLoading ? (
-        <EmptyState icon={Trophy} title={t("battlePanel.abyss.noSeason")} />
+        <EmptyState
+          compact
+          icon={Trophy}
+          title={t("battlePanel.abyss.noSeason")}
+        />
       ) : isMobile ? (
         <ul className="flex flex-col">
           {seasons.map((season) => (
@@ -210,6 +214,8 @@ export function AbyssSeasonsTable({
           <Table className="min-w-[720px]">
             <TanStackTableHeader
               table={table}
+              className="sticky top-0 z-10 bg-background"
+              rowClassName="border-b-1! border-border"
               getHeadClassName={(header) =>
                 header.column.id === "range" || header.column.id === "action"
                   ? ""
@@ -218,7 +224,7 @@ export function AbyssSeasonsTable({
             />
             <TanStackTableBody
               table={table}
-              rowClassName="h-12 tabular-nums"
+              rowClassName="h-14 border-b border-border tabular-nums hover:bg-muted/40"
               getCellClassName={(cell) =>
                 cn(
                   getAbyssSeasonCellClassName(cell.column.id),

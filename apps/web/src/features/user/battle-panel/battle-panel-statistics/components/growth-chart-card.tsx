@@ -7,7 +7,7 @@ import {
   type ChartConfig,
 } from "@lootlog/ui/components/chart";
 import { BattlePanelChartFrame } from "./battle-panel-chart-frame";
-import { StatCard } from "./stat-card";
+import { ChartCard } from "@/components/common/chart-card";
 
 type GrowthChartCardProps<TData extends { date: string }> = {
   chartData: TData[];
@@ -39,12 +39,11 @@ export function GrowthChartCard<TData extends { date: string }>({
   } satisfies ChartConfig;
 
   return (
-    <StatCard
+    <ChartCard
       title={title}
       description={description}
       isLoading={isLoading}
-      isEmpty={chartData.length === 0}
-      emptyMessage={emptyMessage}
+      emptyMessage={chartData.length === 0 ? emptyMessage : undefined}
     >
       <BattlePanelChartFrame className="h-64 w-full">
         <ChartContainer config={chartConfig} className="h-full min-w-0 w-full">
@@ -93,6 +92,6 @@ export function GrowthChartCard<TData extends { date: string }>({
           </LineChart>
         </ChartContainer>
       </BattlePanelChartFrame>
-    </StatCard>
+    </ChartCard>
   );
 }

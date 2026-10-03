@@ -5,7 +5,8 @@ import { SectionCard } from "@/components/common/section-card/section-card";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTable } from "@tanstack/react-table";
-import { Skull } from "lucide-react";
+import { CircleAlert, RotateCcw, Skull } from "lucide-react";
+import { Button } from "@lootlog/ui/components/button";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
   Table,
@@ -21,7 +22,6 @@ import { useResetScrollTop } from "@/hooks/utils/use-virtual-infinite-scroll";
 import type { KillHistoryMemberEntry } from "@lootlog/client/main";
 import { MemberKillBreakdownRow } from "./member-kill-breakdown-row";
 import { createMemberKillsTableColumns } from "./member-kills-table-columns";
-import { EventReadError } from "../shared/event-read-error";
 import { EventHistoryPaginationStatus } from "../shared/event-history-pagination-status";
 
 type MemberKillsListProps = {
@@ -142,7 +142,23 @@ export const MemberKillsList = ({
     }
 
     if (hasError && allKills.length === 0) {
-      return <EventReadError onRetry={onRetry} isRetrying={isRetrying} />;
+      return (
+        <EmptyState
+          icon={CircleAlert}
+          title={t("events.error")}
+          action={
+            <Button
+              type="button"
+              variant="outline"
+              loading={isRetrying ?? false}
+              icon=<RotateCcw className="size-3.5" />
+              onClick={onRetry}
+            >
+              {t("common.actions.retry")}
+            </Button>
+          }
+        />
+      );
     }
 
     if (allKills.length === 0 && !hasNextPage) {

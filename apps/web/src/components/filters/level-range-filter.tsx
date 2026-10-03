@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useDebounceCallback } from "usehooks-ts";
 import { Input } from "@lootlog/ui/components/input";
 import { cn } from "cn";
@@ -8,12 +9,16 @@ export interface LevelRangeFilterProps {
   maxLevel?: number;
   onMinLevelChange: (value: number | undefined) => void;
   onMaxLevelChange: (value: number | undefined) => void;
+  /** Delay before a typed bound is committed. */
   debounceMs?: number;
-  minLevelPlaceholder?: string;
-  maxLevelPlaceholder?: string;
-  inputClassName?: string;
-  containerClassName?: string;
-  separator?: React.ReactNode;
+  /**
+   * `inline` sits in a filter bar row: the bounds stretch on mobile and are
+   * 72px wide from `md`. `fill` spans a side panel, popover, or drawer.
+   */
+  layout?: "inline" | "fill";
+  /** `sm` matches panels whose other controls use the 36px form size. */
+  size?: "default" | "sm";
+  className?: string;
 }
 
 const parseLevel = (value: string) => {
@@ -30,12 +35,11 @@ export function LevelRangeFilter({
   onMinLevelChange,
   onMaxLevelChange,
   debounceMs = 500,
-  minLevelPlaceholder = "Min. poziom",
-  maxLevelPlaceholder = "Max. poziom",
-  inputClassName,
-  containerClassName,
-  separator,
+  layout = "fill",
+  size = "default",
+  className,
 }: LevelRangeFilterProps) {
+  const { t } = useTranslation();
   const [localMinLevel, setLocalMinLevel] = useState(minLevel);
   const [localMaxLevel, setLocalMaxLevel] = useState(maxLevel);
 
@@ -88,33 +92,45 @@ export function LevelRangeFilter({
     commitMaxLevel(level);
   };
 
+  const inputClassName = cn(
+    "min-w-0 flex-1",
+    size === "sm" ? "h-9" : "h-10",
+    layout === "inline" && "md:w-[72px] md:flex-none",
+  );
+
   return (
-    <>
-      <div className={containerClassName}>
-        <Input
-          type="number"
-          min="1"
-          max="500"
-          placeholder={minLevelPlaceholder}
-          value={localMinLevel ?? ""}
-          onChange={(e) => handleMinLevelChange(e.target.value)}
-          className={cn("w-[80px] h-10", inputClassName)}
-        />
-      </div>
-
-      {separator}
-
-      <div className={containerClassName}>
-        <Input
-          type="number"
-          min="1"
-          max="500"
-          placeholder={maxLevelPlaceholder}
-          value={localMaxLevel ?? ""}
-          onChange={(e) => handleMaxLevelChange(e.target.value)}
-          className={cn("w-[80px] h-10", inputClassName)}
-        />
-      </div>
-    </>
+    <div
+      role="group"
+      aria-label={t("ui.levelRange.label")}
+      className={cn(
+        "flex w-full min-w-0 items-center gap-2",
+        layout === "inline" && "md:w-auto",
+        className,
+      )}
+    >
+      <Input
+        type="number"
+        min="1"
+        max="500"
+        aria-label={t("ui.levelRange.min")}
+        placeholder={t("ui.levelRange.minPlaceholder")}
+        value={localMinLevel ?? ""}
+        onChange={(e) => handleMinLevelChange(e.target.value)}
+        className={inputClassName}
+      />
+      <span className="text-xs text-muted-foreground" aria-hidden="true">
+        –
+      </span>
+      <Input
+        type="number"
+        min="1"
+        max="500"
+        aria-label={t("ui.levelRange.max")}
+        placeholder={t("ui.levelRange.maxPlaceholder")}
+        value={localMaxLevel ?? ""}
+        onChange={(e) => handleMaxLevelChange(e.target.value)}
+        className={inputClassName}
+      />
+    </div>
   );
 }

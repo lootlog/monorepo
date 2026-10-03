@@ -1,6 +1,4 @@
 import { PageHeader } from "@/components/common/page-header";
-import { format } from "date-fns";
-import { pl } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import { Hand, Skull } from "lucide-react";
 import {
@@ -14,6 +12,10 @@ import type {
   KillDetail,
 } from "../../hooks/queries/use-kill-detail";
 import { formatDurationHuman } from "../../utils/format-duration";
+import {
+  DATE_TIME_WITH_SECONDS_FORMAT,
+  timestampToDate,
+} from "@/utils/date/parse-timestamp-to-date";
 
 interface KillDetailSummaryProps {
   kill: KillDetail;
@@ -73,22 +75,19 @@ export const KillDetailSummary = ({
     .filter(Boolean)
     .join(", ");
 
-  const formattedMinSpawn = format(
-    new Date(kill.minSpawnTimeAtKill),
-    "d MMMM yyyy, HH:mm:ss",
-    { locale: pl },
+  const formattedMinSpawn = timestampToDate(
+    kill.minSpawnTimeAtKill,
+    DATE_TIME_WITH_SECONDS_FORMAT,
   );
 
-  const formattedMaxSpawn = format(
-    new Date(kill.maxSpawnTimeAtKill),
-    "d MMMM yyyy, HH:mm:ss",
-    { locale: pl },
+  const formattedMaxSpawn = timestampToDate(
+    kill.maxSpawnTimeAtKill,
+    DATE_TIME_WITH_SECONDS_FORMAT,
   );
 
-  const formattedKillTime = format(
-    new Date(kill.killedAt),
-    "d MMMM yyyy, HH:mm:ss",
-    { locale: pl },
+  const formattedKillTime = timestampToDate(
+    kill.killedAt,
+    DATE_TIME_WITH_SECONDS_FORMAT,
   );
 
   return (
@@ -121,7 +120,7 @@ export const KillDetailSummary = ({
               <TooltipTrigger
                 render={
                   <span
-                    className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 text-xs font-medium text-amber-500"
+                    className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border border-signal-timer/30 bg-signal-timer/10 px-2.5 text-xs font-medium text-signal-timer"
                     tabIndex={0}
                     aria-label={t("events.killDetail.manualCloseTitle")}
                   >
@@ -182,7 +181,7 @@ export const KillDetailSummary = ({
                       aria-hidden="true"
                       className={
                         overdueDurationText
-                          ? "shrink-0 text-[10px] font-medium text-amber-500"
+                          ? "shrink-0 text-[10px] font-medium text-signal-timer"
                           : "shrink-0 text-[10px] font-medium text-muted-foreground"
                       }
                     >

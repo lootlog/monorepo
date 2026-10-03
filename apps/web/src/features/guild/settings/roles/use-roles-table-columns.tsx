@@ -13,7 +13,6 @@ import { TextLink } from "@lootlog/ui/components/text-link";
 import { TooltipProvider } from "@lootlog/ui/components/tooltip";
 import { Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
-import { cn } from "cn";
 import { CheckCircle2, MoreHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { getActivePermissionCategories } from "./active-permission-categories";
@@ -84,34 +83,31 @@ export function useRolesTableColumns({
             className="flex min-h-7 min-w-0 items-center gap-1"
           >
             {activeCategories.length > 0 ? (
-              <TooltipProvider delay={100}>
-                {activeCategories.map(({ category, activePermissions }) => {
-                  return (
-                    <PermissionCategoryTooltip
-                      key={category.name}
-                      category={category}
-                      activePermissions={activePermissions}
-                      side="top"
-                      onClick={(event) => event.stopPropagation()}
-                    />
-                  );
-                })}
-              </TooltipProvider>
+              <>
+                <TooltipProvider delay={100}>
+                  {activeCategories.map(({ category, activePermissions }) => {
+                    return (
+                      <PermissionCategoryTooltip
+                        key={category.groupKey}
+                        category={category}
+                        activePermissions={activePermissions}
+                        side="top"
+                        onClick={(event) => event.stopPropagation()}
+                      />
+                    );
+                  })}
+                </TooltipProvider>
+                <span className="ml-1 truncate text-xs text-muted-foreground">
+                  {t("settings.roles.permissionCountCompact", {
+                    count: role.permissions.length,
+                  })}
+                </span>
+              </>
             ) : (
               <span className="truncate text-xs text-muted-foreground">
                 {t("settings.roles.noPermissions")}
               </span>
             )}
-            <span
-              className={cn(
-                "ml-1 truncate text-xs text-muted-foreground",
-                activeCategories.length === 0 && "ml-0",
-              )}
-            >
-              {t("settings.roles.permissionCountCompact", {
-                count: role.permissions.length,
-              })}
-            </span>
           </Link>
         );
       },

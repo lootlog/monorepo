@@ -1,3 +1,4 @@
+import { upperFirst } from "es-toolkit";
 import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
 import { ShieldAlert, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -93,7 +94,7 @@ export const WatchedItemCard = ({
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{displayName}</p>
               <p className="text-xs text-muted-foreground">
-                #{watchedItem.itemId} • {watchedItem.world}
+                #{watchedItem.itemId} • {upperFirst(watchedItem.world)}
               </p>
             </div>
           </div>
@@ -110,7 +111,7 @@ export const WatchedItemCard = ({
             ))}
           </div>
           {missingGuildIds.length > 0 ? (
-            <p className="flex items-center gap-1.5 text-xs text-amber-500">
+            <p className="flex items-center gap-1.5 text-xs text-signal-timer">
               <ShieldAlert className="size-3.5 shrink-0" />
               {t("settings.userNotifications.staleGuildWarning")}
             </p>

@@ -1,6 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown } from "lucide-react";
-import { Button } from "@lootlog/ui/components/button";
+import { SortableColumnHeader } from "@/components/ui/sortable-column-header";
 import { cn } from "cn";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import i18n from "@/i18n/config";
@@ -18,17 +17,9 @@ const matchmakingRatingColumns: ColumnDef<
   {
     accessorKey: "totalRatingDelta",
     header: ({ column }) => (
-      <div className="text-center">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8"
-        >
-          {i18n.t("battlePanel.statistics.columns.totalRatingDelta")}
-          <ArrowUpDown className="ml-2 h-3 w-3" />
-        </Button>
-      </div>
+      <SortableColumnHeader column={column}>
+        {i18n.t("battlePanel.statistics.columns.totalRatingDelta")}
+      </SortableColumnHeader>
     ),
     cell: ({ row }) => {
       const delta = row.original.totalRatingDelta ?? 0;
@@ -53,17 +44,9 @@ const matchmakingRatingColumns: ColumnDef<
   {
     accessorKey: "avgRatingDelta",
     header: ({ column }) => (
-      <div className="text-center">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8"
-        >
-          {i18n.t("battlePanel.statistics.columns.avgRating")}
-          <ArrowUpDown className="ml-2 h-3 w-3" />
-        </Button>
-      </div>
+      <SortableColumnHeader column={column}>
+        {i18n.t("battlePanel.statistics.columns.avgRating")}
+      </SortableColumnHeader>
     ),
     cell: ({ row }) => {
       const delta = row.original.avgRatingDelta ?? 0;

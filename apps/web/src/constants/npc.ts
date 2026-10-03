@@ -1,17 +1,5 @@
 import { NpcType } from "@lootlog/client/main";
 
-const NPC_TYPE_NAMES: Record<NpcType, string> = {
-  [NpcType.TITAN]: "Tytan",
-  [NpcType.COLOSSUS]: "Kolos",
-  [NpcType.HERO]: "Heros",
-  [NpcType.EVENT_HERO]: "Heros eventowy",
-  [NpcType.ELITE3]: "Elita III",
-  [NpcType.ELITE2]: "Elita II",
-  [NpcType.ELITE]: "Elita",
-  [NpcType.NPC]: "NPC",
-  [NpcType.COMMON]: "Zwykły",
-};
-
 export const NPC_TYPE_SORT_ORDER = [
   NpcType.TITAN,
   NpcType.COLOSSUS,
@@ -23,9 +11,3 @@ export const NPC_TYPE_SORT_ORDER = [
 
 export const findNpcType = (value: string | null) =>
   Object.values(NpcType).find((type) => type === value);
-
-export const getNpcTypeName = (value: string) => {
-  const type = findNpcType(value);
-
-  return type ? NPC_TYPE_NAMES[type] : value;
-};

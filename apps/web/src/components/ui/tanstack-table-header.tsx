@@ -6,6 +6,7 @@ import {
   type TableFeatures,
 } from "@tanstack/react-table";
 import { TableHead, TableHeader, TableRow } from "@lootlog/ui/components/table";
+import { getColumnAriaSort } from "./get-column-aria-sort";
 
 type TanStackTableHeaderProps<
   TFeatures extends TableFeatures,
@@ -37,7 +38,15 @@ export const TanStackTableHeader = <
               getHeadClassName?.(header) ?? headClassName;
 
             return (
-              <TableHead key={header.id} className={resolvedHeadClassName}>
+              <TableHead
+                key={header.id}
+                aria-sort={
+                  "getIsSorted" in header.column
+                    ? getColumnAriaSort(header.column)
+                    : undefined
+                }
+                className={resolvedHeadClassName}
+              >
                 {header.isPlaceholder
                   ? null
                   : flexRender(

@@ -8,12 +8,15 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { Link } from "@tanstack/react-router";
-import { format } from "date-fns";
 import { FlaskConical, Pencil, RefreshCw, TriangleAlert } from "lucide-react";
 
 import { getGuildNotificationTargetLabel } from "../utils/notification-settings.utils";
 
 import { useNotificationRuleActions } from "./use-notification-rule-actions";
+import {
+  DATE_TIME_WITH_SECONDS_FORMAT,
+  timestampToDate,
+} from "@/utils/date/parse-timestamp-to-date";
 
 export const NotificationRuleCard = (
   props: Parameters<typeof useNotificationRuleActions>[0],
@@ -82,7 +85,7 @@ export const NotificationRuleCard = (
               {rule.targets.map(({ target }, index) => (
                 <span
                   key={target.id}
-                  className={`inline-flex items-center gap-0.5 ${!target.active ? "text-amber-500" : ""}`}
+                  className={`inline-flex items-center gap-0.5 ${!target.active ? "text-signal-timer" : ""}`}
                 >
                   {!target.active ? (
                     <TriangleAlert className="size-3 shrink-0" />
@@ -99,9 +102,9 @@ export const NotificationRuleCard = (
           {rule.testTrigger.nextAvailableAt ? (
             <p className="text-xs text-muted-foreground">
               {t("settings.notifications.testTriggerNextAvailable", {
-                date: format(
-                  new Date(rule.testTrigger.nextAvailableAt),
-                  "dd.MM.yyyy HH:mm:ss",
+                date: timestampToDate(
+                  rule.testTrigger.nextAvailableAt,
+                  DATE_TIME_WITH_SECONDS_FORMAT,
                 ),
               })}
             </p>
@@ -125,7 +128,7 @@ export const NotificationRuleCard = (
                   loading={triggerRuleTest.isPending}
                   onClick={handleTriggerTest}
                 >
-                  <FlaskConical className="h-4 w-4" />
+                  <FlaskConical className="size-4" />
                 </Button>
               }
             />
@@ -154,7 +157,7 @@ export const NotificationRuleCard = (
                   loading={rebuildRuleJobs.isPending}
                   onClick={handleRebuildJobs}
                 >
-                  <RefreshCw className="h-4 w-4" />
+                  <RefreshCw className="size-4" />
                 </Button>
               }
             />
@@ -178,7 +181,7 @@ export const NotificationRuleCard = (
                       String(rule.id),
                     )}
                   >
-                    <Pencil className="h-4 w-4" />
+                    <Pencil className="size-4" />
                   </Link>
                 }
                 nativeButton={false}

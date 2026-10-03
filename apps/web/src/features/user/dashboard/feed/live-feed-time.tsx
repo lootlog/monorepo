@@ -1,11 +1,6 @@
 import { formatDistanceStrict } from "date-fns";
 import { pl } from "date-fns/locale";
-
-const dateFormatter = new Intl.DateTimeFormat("pl-PL", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "Europe/Warsaw",
-});
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 export const LiveFeedTime = ({
   occurredAt,
@@ -20,7 +15,7 @@ export const LiveFeedTime = ({
     <time
       className="shrink-0 text-xs text-muted-foreground"
       dateTime={occurredAt}
-      title={dateFormatter.format(date)}
+      title={timestampToDate(date)}
     >
       {formatDistanceStrict(date, new Date(now), {
         addSuffix: true,

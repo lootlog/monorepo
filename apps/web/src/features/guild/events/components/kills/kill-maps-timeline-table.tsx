@@ -25,6 +25,7 @@ import {
   getKillMapTimelineColumnWidthClassName,
 } from "./kill-map-timeline-table-utils";
 import { expandingTableFeatures } from "@/lib/tanstack-table-features";
+import { EMPTY_VALUE } from "@/constants/empty-value";
 
 interface KillMapsTimelineTableProps {
   maps: MapTimelineData[];
@@ -126,7 +127,9 @@ export const KillMapsTimelineTable = ({
 
         if (!diagnostics.isValidWindow) {
           return (
-            <span className="block text-right text-muted-foreground">-</span>
+            <span className="block text-right text-muted-foreground">
+              {EMPTY_VALUE}
+            </span>
           );
         }
 

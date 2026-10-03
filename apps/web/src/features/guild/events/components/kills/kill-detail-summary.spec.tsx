@@ -58,7 +58,7 @@ describe("KillDetailSummary", () => {
     expect(maximumWindowMetric.textContent).not.toContain("−41m 48s");
   });
 
-  it("prioritizes an accessible overdue delta and gives it amber emphasis", () => {
+  it("prioritizes an accessible overdue delta", () => {
     renderSummary(createKill({ resolvedAfterMaxSpawnTimeMs: 60_000 }));
 
     const respawnMetric = screen.getByLabelText(
@@ -69,9 +69,7 @@ describe("KillDetailSummary", () => {
       "events.killDetail.respawnWindowTime: 2h",
     );
 
-    const delta = screen.getByText("+1m");
-
-    expect(delta.className).toContain("text-amber-500");
+    expect(screen.getByText("+1m")).toBeDefined();
     expect(respawnMetric.textContent).not.toContain("−41m 48s");
     expect(maximumWindowMetric.textContent).not.toContain("+1m");
   });

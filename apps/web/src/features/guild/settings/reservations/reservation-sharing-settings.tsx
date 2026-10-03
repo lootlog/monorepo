@@ -1,9 +1,8 @@
+import { EmptyState } from "@/components/common/empty-state";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { useState } from "react";
-import { format } from "date-fns";
-import { pl } from "date-fns/locale";
 import { CircleAlert, Copy, Link2, Plus, Unlink, Users } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -28,6 +27,7 @@ import {
 } from "@lootlog/ui/components/alert";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { getReservationErrorMessage } from "@/features/guild/reservations/get-reservation-error-message";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 type CreatedInvitation = { id: string; inviteUrl: string };
 
@@ -232,13 +232,13 @@ export function ReservationSharingSettings() {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="size-9 text-destructive"
+                            className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
                             aria-label={t(
                               "settings.reservations.sharing.disconnectOrganization",
                               { name: share.partner.name },
                             )}
                           >
-                            <Unlink />
+                            <Unlink className="size-4" />
                           </Button>
                         }
                       />
@@ -246,9 +246,11 @@ export function ReservationSharingSettings() {
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  {t("settings.reservations.sharing.noPartners")}
-                </p>
+                <EmptyState
+                  compact
+                  icon={Users}
+                  title={t("settings.reservations.sharing.noPartners")}
+                />
               )}
             </section>
 
@@ -280,11 +282,7 @@ export function ReservationSharingSettings() {
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {t("settings.reservations.sharing.expires", {
-                            date: format(
-                              new Date(invitation.expiresAt),
-                              "d MMM, HH:mm",
-                              { locale: pl },
-                            ),
+                            date: timestampToDate(invitation.expiresAt),
                           })}
                         </p>
                       </div>
@@ -314,9 +312,11 @@ export function ReservationSharingSettings() {
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  {t("settings.reservations.sharing.noPending")}
-                </p>
+                <EmptyState
+                  compact
+                  icon={Link2}
+                  title={t("settings.reservations.sharing.noPending")}
+                />
               )}
             </section>
           </div>

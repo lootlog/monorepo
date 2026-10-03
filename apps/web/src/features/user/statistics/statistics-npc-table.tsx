@@ -1,3 +1,4 @@
+import { formatLevel } from "@lootlog/domain/profession";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { Table } from "@lootlog/ui/components/table";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
@@ -9,6 +10,7 @@ import { upperFirst } from "es-toolkit";
 import { Skull } from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { formatStatisticsDate } from "./format-statistics-date";
+import { EMPTY_VALUE } from "@/constants/empty-value";
 
 export function StatisticsNpcTable({
   npcs,
@@ -28,8 +30,8 @@ export function StatisticsNpcTable({
         <>
           <span className="font-medium">{npc.npcName}</span>
           <span className="block text-xs font-normal text-muted-foreground">
-            {npc.npcLvl}
-            {npc.npcProf} · {t(`npcType.${npc.npcType}`)}
+            {formatLevel(npc.npcLvl, npc.npcProf)} ·{" "}
+            {t(`npcType.${npc.npcType}`)}
           </span>
         </>
       ),
@@ -65,7 +67,7 @@ export function StatisticsNpcTable({
           {npc.deltaKills.toLocaleString("pl-PL")}
           <span className="block text-xs text-muted-foreground">
             {npc.deltaPercent === null
-              ? "—"
+              ? EMPTY_VALUE
               : `${npc.deltaPercent.toLocaleString("pl-PL", { maximumFractionDigits: 1 })}%`}
           </span>
         </>
@@ -88,7 +90,7 @@ export function StatisticsNpcTable({
       header: () => t("statistics.bestDay"),
       cell: ({ row: { original: npc } }) => (
         <>
-          {npc.bestDay ? formatStatisticsDate(npc.bestDay.date) : "—"}
+          {npc.bestDay ? formatStatisticsDate(npc.bestDay.date) : EMPTY_VALUE}
           <span className="block text-xs text-muted-foreground">
             {npc.bestDay && t("statistics.count", { count: npc.bestDay.kills })}
           </span>

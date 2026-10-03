@@ -5,7 +5,7 @@ import { Skull } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { NpcTile } from "@/components/tiles";
 import type { KillHistoryEntryHeroNpc } from "@lootlog/client/main";
-import { formatDateTime } from "../../utils/format-date";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 type KillMonsterCellProps = {
   eventId: string;
@@ -69,7 +69,7 @@ export const KillMonsterCell = ({
             !isDateAlwaysVisible && "sm:hidden",
           )}
         >
-          {formatDateTime(new Date(kill.killedAt))}
+          {timestampToDate(kill.killedAt)}
         </div>
       </div>
     </div>

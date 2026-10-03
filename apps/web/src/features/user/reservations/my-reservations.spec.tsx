@@ -9,7 +9,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { MyReservations } from "./my-reservations";
 
 await initializeTestTranslations({
-  "reservations.my.title": "Moje zapisy",
+  "reservations.my.title": "Moje rezerwacje",
   "reservations.my.description": "Opis",
   "reservations.my.tabsLabel": "Zakres rezerwacji",
   "reservations.my.upcoming": "Nadchodzące",
@@ -48,7 +48,7 @@ describe("MyReservations", () => {
     restore();
 
     expect(
-      screen.getByRole("heading", { level: 1, name: "Moje zapisy" }),
+      screen.getByRole("heading", { level: 1, name: "Moje rezerwacje" }),
     ).toBeTruthy();
     await waitFor(() => expect(requests).toHaveLength(1));
     expect(requests[0]?.searchParams.get("status")).toBe("upcoming");

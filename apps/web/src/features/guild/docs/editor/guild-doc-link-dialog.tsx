@@ -5,9 +5,8 @@ import {
   Dialog,
   DialogContent,
   DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from "@lootlog/ui/components/dialog";
+import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { useTranslation } from "react-i18next";
@@ -64,14 +63,9 @@ export const GuildDocLinkDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <LinkIcon className="size-4" />
-            {t("docs.linkDialog.title")}
-          </DialogTitle>
-        </DialogHeader>
+        <IconDialogHeader icon={LinkIcon} title={t("docs.linkDialog.title")} />
 
-        <form className="space-y-4 px-4 pb-4 pt-1" onSubmit={handleSubmit}>
+        <form className="space-y-4 p-5" onSubmit={handleSubmit}>
           {needsText && (
             <div className="space-y-2">
               <Label htmlFor="guild-doc-link-text">

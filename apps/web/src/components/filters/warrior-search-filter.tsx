@@ -1,3 +1,4 @@
+import { formatLevel } from "@lootlog/domain/profession";
 import { useEffect, useId, useState } from "react";
 import { Search, ChevronsUpDown, Check } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
@@ -139,8 +140,7 @@ export const WarriorSearchFilter = ({
                         {warrior.name}
                       </span>
                       <span className="text-xs tabular-nums opacity-70">
-                        {warrior.lvl}
-                        {warrior.prof}
+                        {formatLevel(warrior.lvl, warrior.prof)}
                       </span>
                     </span>
                     <Check

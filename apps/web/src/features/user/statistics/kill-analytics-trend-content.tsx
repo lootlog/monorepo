@@ -133,6 +133,7 @@ export function KillAnalyticsTrend({ title, data }: KillAnalyticsTrendProps) {
               <TanStackTableHeader
                 table={table}
                 className="sticky top-0 z-10 bg-background"
+                rowClassName="border-b-1! border-border"
                 getHeadClassName={(header) =>
                   header.column.id === "kills" ? "text-right" : ""
                 }
@@ -140,6 +141,7 @@ export function KillAnalyticsTrend({ title, data }: KillAnalyticsTrendProps) {
               <TanStackTableBody
                 table={table}
                 rowHeaderColumnId="date"
+                rowClassName="h-14 border-b border-border hover:bg-muted/40"
                 getCellClassName={(cell) =>
                   cell.column.id === "kills"
                     ? "text-right font-medium tabular-nums"

@@ -4,8 +4,8 @@ import type {
   ActivitiesControllerFindByGuildSourceItem as ActivitySource,
   ActivitiesControllerFindByGuildTypeItem as ActivityType,
 } from "@lootlog/client/activity";
-import { format } from "date-fns";
 import type { TFunction } from "i18next";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 type ActivityLogsChipFilters = {
   name: string;
@@ -26,9 +26,6 @@ type BuildActivityLogsFilterChipsOptions = {
   ) => void;
   translate: TFunction;
 };
-
-const formatChipDate = (value: string) =>
-  format(new Date(value), "dd.MM.yyyy HH:mm");
 
 export const buildActivityLogsFilterChips = ({
   filters,
@@ -88,7 +85,7 @@ export const buildActivityLogsFilterChips = ({
             {
               id: chip.id,
               label: t(`activityLogs.filters.chips.${chip.key}`, {
-                value: formatChipDate(chip.value),
+                value: timestampToDate(chip.value),
               }),
               onRemove: () => updateFilters({ [chip.id]: "" }),
             },

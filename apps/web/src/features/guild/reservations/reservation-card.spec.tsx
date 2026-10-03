@@ -71,34 +71,6 @@ describe("ReservationCard", () => {
     expect(onPinChange).toHaveBeenCalledWith(true);
   });
 
-  it("uses the same star treatment as event pin actions", () => {
-    const { container, rerender } = render(
-      <ReservationCard spot={spot} onOpen={vi.fn()} onPinChange={vi.fn()} />,
-    );
-
-    const unpinnedIcon = container.querySelector(
-      '[data-slot="reservation-card-pin-icon"]',
-    );
-
-    expect(unpinnedIcon?.classList.contains("text-yellow-500")).toBe(true);
-    expect(unpinnedIcon?.classList.contains("fill-yellow-500")).toBe(false);
-
-    rerender(
-      <ReservationCard
-        spot={{ ...spot, isPinned: true }}
-        onOpen={vi.fn()}
-        onPinChange={vi.fn()}
-      />,
-    );
-
-    const pinnedIcon = container.querySelector(
-      '[data-slot="reservation-card-pin-icon"]',
-    );
-
-    expect(pinnedIcon?.classList.contains("fill-yellow-500")).toBe(true);
-    expect(pinnedIcon?.classList.contains("text-yellow-500")).toBe(true);
-  });
-
   it("keeps occupied status with the next reservation to two text rows", () => {
     const occupiedSpot: ReservationSpotsResponseDtoItem = {
       ...spot,

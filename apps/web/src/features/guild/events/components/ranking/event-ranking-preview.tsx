@@ -78,7 +78,11 @@ export const EventRankingPreview = ({
         className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200"
       >
         {sortedRankings.length === 0 ? (
-          <EmptyState icon={Trophy} title={t("events.ranking.noRanking")} />
+          <EmptyState
+            compact
+            icon={Trophy}
+            title={t("events.ranking.noRanking")}
+          />
         ) : (
           <EventRankingTable
             rankings={sortedRankings}

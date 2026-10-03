@@ -1,3 +1,4 @@
+import { formatLevel } from "@lootlog/domain/profession";
 import { PlayerTile } from "@/components/battle/player-tile";
 import {
   BATTLE_SURFACE_COLORS,
@@ -91,8 +92,7 @@ export const BattleCompactTeamMember: FC<BattleCompactTeamMemberProps> = ({
         </div>
         <div className="mt-0.5 flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground">
           <span className="tabular-nums">
-            {member.lvl}
-            {member.prof}
+            {formatLevel(member.lvl, member.prof)}
           </span>
           <BattleDamageTags team={[member]} opposingTeam={opposingTeam} />
         </div>

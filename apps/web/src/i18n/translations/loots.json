@@ -49,8 +49,6 @@
     "npcTypesLabel": "Typ potwora",
     "npcTypesPlaceholder": "Wybierz typ potwora",
     "common": {
-      "minLevel": "Min poziom",
-      "maxLevel": "Max poziom",
       "levelRange": "Zakres poziomów",
       "levelValue": "Lvl {{level}}"
     },
@@ -116,7 +114,7 @@
     "hidExample": "ITEM#identyfikator.świat",
     "hidInvalidTitle": "Nie rozpoznaję tego HID",
     "hidInvalidDescription": "Wklej pełny identyfikator razem z nazwą świata.",
-    "hidLoadingTitle": "Sprawdzamy przedmiot z HID…",
+    "hidLoadingTitle": "Sprawdzamy przedmiot z HID...",
     "hidNotFoundTitle": "Nie znaleziono przedmiotu",
     "hidNotFoundDescription": "Sprawdź identyfikator i nazwę świata, a następnie spróbuj ponownie.",
     "hidErrorTitle": "Nie udało się sprawdzić HID",

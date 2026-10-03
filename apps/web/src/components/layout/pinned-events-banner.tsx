@@ -60,7 +60,7 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
           >
             <div className="relative flex items-center gap-3 px-3 py-2.5 transition-[background-color,transform] duration-200 motion-safe:hover:translate-x-0.5 hover:bg-signal-timer/10">
               <div className="relative">
-                <Trophy className="h-4 w-4 text-signal-timer" />
+                <Trophy className="size-4 text-signal-timer" />
                 <m.div
                   key={String(prefersReducedMotion)}
                   animate={
@@ -77,7 +77,7 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
                     ease: "easeInOut",
                   }}
                 >
-                  <Sparkles className="absolute -top-1 -right-1 h-2.5 w-2.5 text-signal-timer" />
+                  <Sparkles className="absolute -top-1 -right-1 size-2.5 text-signal-timer" />
                 </m.div>
               </div>
               <div className="flex-1 min-w-0">
@@ -88,7 +88,7 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
                   {featuredEvent.name}
                 </p>
               </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+              <ChevronRight className="size-4 text-muted-foreground shrink-0" />
             </div>
           </Link>
 
@@ -116,7 +116,7 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
                 animate={{ rotate: isExpanded ? 180 : 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <ChevronDown className="h-3 w-3" />
+                <ChevronDown className="size-3" />
               </m.div>
             </m.button>
           )}
@@ -132,11 +132,11 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
                     className="block"
                   >
                     <div className="flex items-center gap-2 px-3 py-2 transition-[background-color,transform] duration-200 motion-safe:hover:translate-x-0.5 hover:bg-signal-timer/10">
-                      <Trophy className="h-3.5 w-3.5 text-signal-timer/70" />
+                      <Trophy className="size-3.5 text-signal-timer/70" />
                       <span className="text-sm truncate flex-1">
                         {event.name}
                       </span>
-                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <ChevronRight className="size-3.5 text-muted-foreground shrink-0" />
                     </div>
                   </Link>
                   <EventTimersList

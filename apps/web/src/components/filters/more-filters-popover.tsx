@@ -61,19 +61,12 @@ export const MoreFiltersPopover = ({
             <Label className="text-xs text-muted-foreground">
               {t("battlePanel.filters.levelRange")}
             </Label>
-            <div className="flex items-center gap-2">
-              <LevelRangeFilter
-                minLevel={minLevel}
-                maxLevel={maxLevel}
-                onMinLevelChange={onMinLevelChange}
-                onMaxLevelChange={onMaxLevelChange}
-                inputClassName="w-full"
-                containerClassName="flex-1"
-                separator={
-                  <span className="text-xs text-muted-foreground">-</span>
-                }
-              />
-            </div>
+            <LevelRangeFilter
+              minLevel={minLevel}
+              maxLevel={maxLevel}
+              onMinLevelChange={onMinLevelChange}
+              onMaxLevelChange={onMaxLevelChange}
+            />
           </div>
           {showPhFilter && (
             <div className="flex items-center justify-between rounded-xl border border-border/70 bg-background p-3">

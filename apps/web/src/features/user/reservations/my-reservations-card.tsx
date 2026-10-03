@@ -45,7 +45,7 @@ export function MyReservationsCard() {
       <SectionCardContent className="flex flex-1 flex-col p-0">
         <StatisticsQueryState
           query={query}
-          centered
+          compact
           errorMessage={t("reservations.loadError")}
           loading={
             <p

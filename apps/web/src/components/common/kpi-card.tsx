@@ -5,7 +5,9 @@ import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 type KpiCardProps = {
-  icon: LucideIcon;
+  icon?: LucideIcon;
+  /** Replaces the icon, for example with a tinted domain icon. */
+  media?: ReactNode;
   isLoading?: boolean;
   label: string;
   /** Context for the value, such as its unit or the share it is part of. */
@@ -18,6 +20,7 @@ type KpiCardProps = {
 export const KpiCard = ({
   detail,
   icon: Icon,
+  media,
   isLoading = false,
   label,
   value,
@@ -27,7 +30,10 @@ export const KpiCard = ({
   return (
     <SectionCard className={cn("flex min-w-0 flex-col gap-2 p-3", className)}>
       <div className="flex min-w-0 items-center gap-2 text-xs font-medium text-muted-foreground">
-        <Icon className="size-4 shrink-0 text-primary" aria-hidden="true" />
+        {media ??
+          (Icon ? (
+            <Icon className="size-4 shrink-0 text-primary" aria-hidden="true" />
+          ) : null)}
         <span className="truncate">{label}</span>
       </div>
       {isLoading ? (

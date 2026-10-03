@@ -13,6 +13,7 @@ import { AnimatePresence } from "framer-motion";
 import * as m from "framer-motion/m";
 import { Button } from "@lootlog/ui/components/button";
 import { LootDirectSearchNotice } from "./loot-direct-search-notice";
+import { EmptyState } from "@/components/common/empty-state";
 import {
   ArrowRight,
   CircleAlert,
@@ -86,24 +87,24 @@ export const LootSearchCommand = (
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
+              className="flex h-full flex-col"
             >
-              <div className="flex size-12 items-center justify-center rounded-xl border border-border bg-background">
-                <PackageSearch className="size-6 text-primary" />
-              </div>
-              <h3 className="mt-4 text-sm font-semibold text-foreground">
-                {t("loots.searchCommand.idleTitle")}
-              </h3>
-              <p className="mt-1 max-w-sm text-sm leading-5 text-muted-foreground">
-                {t("loots.searchCommand.startTyping")}
-              </p>
-              <div className="mt-5 grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-1.5 rounded-lg border border-border bg-background px-3 py-2 text-left text-xs text-muted-foreground sm:flex">
-                <ClipboardPaste className="size-4 text-primary" />
-                <span>{t("loots.searchCommand.hidHint")}</span>
-                <code className="col-span-2 font-mono text-foreground sm:col-auto">
-                  {t("loots.searchCommand.hidExample")}
-                </code>
-              </div>
+              <EmptyState
+                compact
+                icon={PackageSearch}
+                title={t("loots.searchCommand.idleTitle")}
+                description={t("loots.searchCommand.startTyping")}
+                className="flex-1"
+                action={
+                  <div className="grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-1.5 rounded-lg border border-border bg-background px-3 py-2 text-left text-xs text-muted-foreground sm:flex">
+                    <ClipboardPaste className="size-4 text-primary" />
+                    <span>{t("loots.searchCommand.hidHint")}</span>
+                    <code className="col-span-2 font-mono text-foreground sm:col-auto">
+                      {t("loots.searchCommand.hidExample")}
+                    </code>
+                  </div>
+                }
+              />
             </m.div>,
           )}
 
@@ -115,12 +116,14 @@ export const LootSearchCommand = (
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
+              className="flex h-full flex-col"
             >
-              <PackageSearch className="size-6 text-primary" />
-              <p className="mt-3 text-sm text-muted-foreground">
-                {t("loots.searchCommand.keepTyping")}
-              </p>
+              <EmptyState
+                compact
+                icon={PackageSearch}
+                title={t("loots.searchCommand.keepTyping")}
+                className="flex-1"
+              />
             </m.div>,
           )}
 
@@ -134,8 +137,8 @@ export const LootSearchCommand = (
               exit="exit"
               className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
             >
-              <div className="flex size-11 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/10">
-                <CircleAlert className="size-5 text-amber-400" />
+              <div className="flex size-11 items-center justify-center rounded-xl border border-signal-timer/30 bg-signal-timer/10">
+                <CircleAlert className="size-5 text-signal-timer" />
               </div>
               <h3 className="mt-4 text-sm font-semibold text-foreground">
                 {t("loots.searchCommand.hidInvalidTitle")}
@@ -274,10 +277,14 @@ export const LootSearchCommand = (
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="flex h-full flex-col items-center justify-center gap-3 px-6 py-8 text-center text-sm text-destructive"
+              className="flex h-full flex-col"
             >
-              <CircleAlert className="size-5" />
-              {t("common.searchUnavailable")}
+              <EmptyState
+                compact
+                icon={CircleAlert}
+                title={t("common.searchUnavailable")}
+                className="flex-1"
+              />
             </m.div>,
           )}
 
@@ -303,17 +310,15 @@ export const LootSearchCommand = (
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
+              className="flex h-full flex-col"
             >
-              <div className="flex size-11 items-center justify-center rounded-xl border border-border bg-background">
-                <SearchX className="size-5 text-muted-foreground" />
-              </div>
-              <h3 className="mt-4 text-sm font-semibold text-foreground">
-                {t("loots.searchCommand.noResults")}
-              </h3>
-              <p className="mt-1 max-w-sm text-sm leading-5 text-muted-foreground">
-                {t("loots.searchCommand.noResultsDescription")}
-              </p>
+              <EmptyState
+                compact
+                icon={SearchX}
+                title={t("loots.searchCommand.noResults")}
+                description={t("loots.searchCommand.noResultsDescription")}
+                className="flex-1"
+              />
             </m.div>,
           )}
         </AnimatePresence>

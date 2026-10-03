@@ -47,7 +47,7 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
         >
           <div className="pointer-events-auto w-full max-w-2xl rounded-xl border bg-background supports-[backdrop-filter]:bg-background/90 supports-[backdrop-filter]:backdrop-blur p-3 shadow-lg flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="size-2 rounded-full bg-amber-500 animate-pulse" />
+              <div className="size-2 rounded-full bg-signal-timer animate-pulse motion-reduce:animate-none" />
               <p className="text-sm font-medium">
                 {effectiveUnsavedChangesLabel}
               </p>

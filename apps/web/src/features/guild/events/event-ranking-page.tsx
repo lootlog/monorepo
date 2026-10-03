@@ -2,7 +2,7 @@ import { getRankingSelection } from "./components/ranking/event-ranking-selectio
 import { EventLoadError } from "./components/event-load-error";
 import { EventRankingSkeleton } from "./event-ranking-skeleton";
 import { SectionCard } from "@/components/common/section-card/section-card";
-import { EventReadError } from "./components/shared/event-read-error";
+import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { useTranslation } from "react-i18next";
 import { useParams } from "@tanstack/react-router";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -138,7 +138,7 @@ export const EventRankingPage = () => {
 
           {rankingError && (
             <SectionCard>
-              <EventReadError
+              <QueryErrorNotice
                 message={t("events.ranking.error")}
                 onRetry={() => void refetchRanking()}
                 isRetrying={isRankingFetching}

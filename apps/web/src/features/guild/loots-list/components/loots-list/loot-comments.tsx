@@ -12,7 +12,9 @@ import {
   useLootsControllerCreateComment,
   useLootsControllerGetComments,
 } from "@lootlog/client/main";
+import { EmptyState } from "@/components/common/empty-state";
 import { LoadingSlot } from "@/components/common/loading-slot";
+import { CircleAlert, MessageSquare, RotateCcw } from "lucide-react";
 
 const MAX_LENGTH = 256;
 
@@ -30,6 +32,8 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
     data: comments,
     isLoading,
     isError,
+    isFetching,
+    refetch,
   } = useLootsControllerGetComments(
     { guildId: guildId ?? "", lootId },
     {
@@ -118,14 +122,30 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
         </div>
       )}
       {isError && (
-        <p className="px-4 py-5 text-center text-sm text-destructive">
-          {t("loots.details.comments.error")}
-        </p>
+        <EmptyState
+          compact
+          icon={CircleAlert}
+          title={t("loots.details.comments.error")}
+          action={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              loading={isFetching}
+              icon=<RotateCcw className="size-3.5" />
+              onClick={() => void refetch()}
+            >
+              {t("common.actions.retry")}
+            </Button>
+          }
+        />
       )}
       {!isLoading && !isError && comments?.length === 0 && (
-        <p className="px-4 py-5 text-center text-sm text-muted-foreground">
-          {t("loots.details.comments.empty")}
-        </p>
+        <EmptyState
+          compact
+          icon={MessageSquare}
+          title={t("loots.details.comments.empty")}
+        />
       )}
       {!isLoading && !isError && comments && comments.length > 0 && (
         <ul className="m-0 p-0">
