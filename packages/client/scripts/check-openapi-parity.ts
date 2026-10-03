@@ -589,14 +589,9 @@ export const normalizeOpenApiRepresentation = (value: JsonValue): JsonValue => {
 
   return Object.fromEntries(
     Object.entries(value)
-      // Effect omits Schema.isPattern from OpenAPI, so a baseline `pattern`
-      // describes server validation the current document cannot express.
       .filter(
         ([key]) =>
-          key !== "description" &&
-          key !== "example" &&
-          key !== "examples" &&
-          key !== "pattern",
+          key !== "description" && key !== "example" && key !== "examples",
       )
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([key, item]) => [
@@ -1309,13 +1304,13 @@ const KILL_HISTORY_ADDITION: JsonValue = {
       name: "limit",
       in: "query",
       required: false,
-      schema: { type: "string" },
+      schema: { type: "string", pattern: "^(?:[1-9]\\d?|100)$" },
     },
     {
       name: "memberId",
       in: "query",
       required: false,
-      schema: { type: "string" },
+      schema: { type: "string", pattern: "^[1-9]\\d*$" },
     },
   ],
   security: [{ bearer: [] }],

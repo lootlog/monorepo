@@ -16,7 +16,7 @@ const SpawnWindowTimestamp = DateTimeString.check(
 );
 
 const ScoringClockTime = Schema.String.check(
-  Schema.isPattern(new RegExp("^([01]\\d|2[0-3]):([0-5]\\d)$")).annotate({
+  Schema.isPattern(new RegExp("^([01]\\d|2[0-3]):([0-5]\\d)$", "u")).annotate({
     expected: "a string matching the RegExp ^([01]\\d|2[0-3]):([0-5]\\d)$",
   }),
 );
