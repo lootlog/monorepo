@@ -1,6 +1,6 @@
 import { Effect, Layer, Schema } from "effect";
-import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
-import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { HttpServerRequest, HttpServerResponse } from "effect/http";
+import { HttpApiBuilder } from "effect/http-api";
 import { AuthService, HttpResponseError } from "#src/auth/auth-service";
 import { AuthApi } from "#src/http-api/auth-api";
 

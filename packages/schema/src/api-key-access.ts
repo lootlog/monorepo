@@ -2,7 +2,7 @@ import { Schema } from "effect";
 
 export const ApiKeyGrant = Schema.Struct({
   organizationIds: Schema.Array(
-    Schema.String.check(Schema.isPattern(/^\d{1,20}$/)),
+    Schema.String.check(Schema.isPattern(/^\d{1,20}$/u)),
   ).check(Schema.isMaxLength(100)),
   mode: Schema.Literals(["read", "read-write"]),
   personalData: Schema.Boolean,

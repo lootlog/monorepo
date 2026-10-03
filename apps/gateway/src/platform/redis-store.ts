@@ -6,7 +6,7 @@ import {
 } from "#src/realtime/npc-event-visibility";
 import { SubscriptionScope } from "@lootlog/protocol/realtime";
 import { Cause, Effect, Predicate, Queue, Schedule, Schema } from "effect";
-import * as Redis from "effect/unstable/persistence/Redis";
+import * as Redis from "effect/persistence/Redis";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import {
   type BackgroundTaskRunner,

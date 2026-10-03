@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, spyOn } from "bun:test";
 import { BunRedis } from "@effect/platform-bun";
 import { DiscordAPIError, type REST, type ResponseLike } from "@discordjs/rest";
 import { Effect, ManagedRuntime, Schema } from "effect";
-import { Redis } from "effect/unstable/persistence";
+import { Redis } from "effect/persistence";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { getCompleteUserGuildsCacheKey } from "#src/discord/discord-cache.util";

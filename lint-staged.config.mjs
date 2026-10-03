@@ -1,7 +1,15 @@
-// Generated API clients are ignored by .oxlintrc.json and .oxfmtrc.jsonc,
-// but oxlint still lints ignored files passed to it by path.
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+// Generated API clients and vendored reference repositories are ignored by
+// .oxlintrc.json and .oxfmtrc.jsonc, but oxlint still lints ignored files
+// passed to it by path.
 const generatedSourcePattern =
   /(?:^|\/)packages\/(?:client|sdk)\/src\/generated\//;
+
+const vendoredRepositoryDirectory = fileURLToPath(
+  new URL("./repos/", import.meta.url),
+);
 
 const ignoredFilePattern = /(?:^|\/)bun\.lock$/;
 
@@ -10,7 +18,9 @@ const quote = (file) => JSON.stringify(file);
 const filterIgnoredFiles = (files) => {
   return files.filter(
     (file) =>
-      !generatedSourcePattern.test(file) && !ignoredFilePattern.test(file),
+      !generatedSourcePattern.test(file) &&
+      !resolve(file).startsWith(vendoredRepositoryDirectory) &&
+      !ignoredFilePattern.test(file),
   );
 };
 

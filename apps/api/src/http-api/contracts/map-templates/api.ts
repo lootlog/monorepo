@@ -4,7 +4,7 @@ import {
   HttpApiGroup,
   HttpApiSchema,
   OpenApi,
-} from "effect/unstable/httpapi";
+} from "effect/http-api";
 import { BearerSecurityMiddleware } from "../shared.js";
 import {
   MapTemplateResponseSchema,

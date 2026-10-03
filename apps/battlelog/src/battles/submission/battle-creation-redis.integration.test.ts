@@ -16,7 +16,7 @@ import {
   Wait,
 } from "testcontainers";
 import { Effect, Exit, Layer, ManagedRuntime, Redacted } from "effect";
-import { Redis } from "effect/unstable/persistence";
+import { Redis } from "effect/persistence";
 import pg from "pg";
 import { drizzleDatabaseEffect } from "#src/database/database";
 import { makeBattleReadBudget } from "#src/database/battle-read-budget";

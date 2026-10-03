@@ -6,7 +6,7 @@ export const NonNegativeInt = Schema.Int.check(
   Schema.isGreaterThanOrEqualTo(0),
 );
 
-const isoDateTimePattern = new RegExp(DATE_TIME_STRING_PATTERN);
+const isoDateTimePattern = new RegExp(DATE_TIME_STRING_PATTERN, "u");
 
 /** A JavaScript Date encoded as the existing HTTP ISO-8601 string format. */
 export const IsoDateTime = Schema.String.annotate({

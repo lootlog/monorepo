@@ -4,7 +4,7 @@ import {
   HttpApiGroup,
   HttpApiSchema,
   OpenApi,
-} from "effect/unstable/httpapi";
+} from "effect/http-api";
 import { PublicStatsCardOrganizationPath } from "#src/contracts/public-guild-stats-card/schemas";
 
 export class PublicGuildStatsCardGroup extends HttpApiGroup.make(

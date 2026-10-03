@@ -20,7 +20,7 @@ import {
 } from "@lootlog/schema/permissions";
 import { Context, Effect, Layer, Metric, Schema } from "effect";
 import { applicationErrorResponse } from "../../application-error-response.js";
-import { HttpServerResponse } from "effect/unstable/http";
+import { HttpServerResponse } from "effect/http";
 import type { guildTable, roleTable } from "#src/database/drizzle/schema";
 import type {
   CreateKillResponse,

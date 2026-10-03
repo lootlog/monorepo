@@ -9,7 +9,7 @@ import { Schema } from "effect";
 
 export const KillHistoryQuery = Schema.Struct({
   limit: Schema.optionalKey(
-    Schema.String.check(Schema.isPattern(/^(?:[1-9]\d?|100)$/)).annotate({
+    Schema.String.check(Schema.isPattern(/^(?:[1-9]\d?|100)$/u)).annotate({
       description: "Page size from 1 to 100. Defaults to 20.",
     }),
   ),
@@ -24,7 +24,7 @@ export const KillHistoryQuery = Schema.Struct({
   ),
   heroId: Schema.optionalKey(Schema.String.check(Schema.isMinLength(1))),
   memberId: Schema.optionalKey(
-    Schema.String.check(Schema.isPattern(/^[1-9]\d*$/)),
+    Schema.String.check(Schema.isPattern(/^[1-9]\d*$/u)),
   ),
 }).annotate({ identifier: "KillHistoryQuery" });
 

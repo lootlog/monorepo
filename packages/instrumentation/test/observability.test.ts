@@ -8,12 +8,8 @@ import {
   Schema,
   Tracer,
 } from "effect";
-import {
-  HttpRouter,
-  HttpServer,
-  HttpServerResponse,
-} from "effect/unstable/http";
-import { OtlpExporter } from "effect/unstable/observability";
+import { HttpRouter, HttpServer, HttpServerResponse } from "effect/http";
+import { OtlpExporter } from "effect/observability";
 import {
   httpServerMetrics,
   httpServerRouteMetrics,

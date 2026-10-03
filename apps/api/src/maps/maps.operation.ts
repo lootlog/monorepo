@@ -1,7 +1,7 @@
 import { boundedHttpGet } from "@lootlog/instrumentation/bounded-http-get";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Schema } from "effect";
-import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
+import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
 import type { RedisService } from "#src/redis/redis.service";
 
 const cacheKey = "maps:all";

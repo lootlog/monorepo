@@ -1,11 +1,11 @@
 import { expect, test } from "bun:test";
 import { Effect, Layer, Metric } from "effect";
-import { HttpBody, HttpClient } from "effect/unstable/http";
+import { HttpBody, HttpClient } from "effect/http";
 import {
   OtlpExporter,
   OtlpMetrics,
   OtlpSerialization,
-} from "effect/unstable/observability";
+} from "effect/observability";
 import { httpClientFromResponses } from "../../test/http-fixtures.js";
 import { GatewayConnectionMetrics } from "./connection-metrics.js";
 import type { GatewaySocket } from "./session.js";

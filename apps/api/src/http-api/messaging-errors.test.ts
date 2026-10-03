@@ -5,8 +5,8 @@ import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { afterAll, expect, it } from "bun:test";
 import { BunHttpServer } from "@effect/platform-bun";
 import { Effect, Layer, Schema } from "effect";
-import { HttpApi, HttpApiBuilder } from "effect/unstable/httpapi";
-import { HttpRouter } from "effect/unstable/http";
+import { HttpApi, HttpApiBuilder } from "effect/http-api";
+import { HttpRouter } from "effect/http";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   ResourceConflictError,

@@ -6,8 +6,8 @@ import {
 } from "../../test/organization-fixtures.js";
 import { describe, expect, it } from "bun:test";
 import { Effect, FileSystem, Layer, Path } from "effect";
-import { Etag, HttpPlatform, HttpRouter } from "effect/unstable/http";
-import { HttpApiTest } from "effect/unstable/httpapi";
+import { Etag, HttpPlatform, HttpRouter } from "effect/http";
+import { HttpApiTest } from "effect/http-api";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { ResourceConflictError } from "#src/shared/http/http-errors";

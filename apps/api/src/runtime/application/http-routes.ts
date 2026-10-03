@@ -6,8 +6,8 @@ import {
   httpServerRouteMetrics,
 } from "@lootlog/instrumentation";
 import { Effect, Layer } from "effect";
-import { HttpRouter } from "effect/unstable/http";
-import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { HttpRouter } from "effect/http";
+import { HttpApiBuilder } from "effect/http-api";
 import { LootlogApiHandlers } from "#src/http-api/handlers/handlers-layer";
 import { LootlogApi } from "#src/http-api/lootlog-api";
 import { ForwardAuthMiddlewareLive } from "#src/runtime/auth/forward-auth-middleware";

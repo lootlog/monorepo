@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { Deferred, Effect, Scope } from "effect";
-import { Redis } from "effect/unstable/persistence";
+import { Redis } from "effect/persistence";
 import { RedisGatewayStore } from "./redis-store.js";
 
 test("federation backlog yields to timers while preserving order and isolating malformed messages", async () => {

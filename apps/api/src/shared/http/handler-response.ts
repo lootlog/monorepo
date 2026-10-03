@@ -1,5 +1,5 @@
 import { Effect, Schema } from "effect";
-import { HttpServerResponse } from "effect/unstable/http";
+import { HttpServerResponse } from "effect/http";
 import { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 
 export const statusCodeResponse = (error: {

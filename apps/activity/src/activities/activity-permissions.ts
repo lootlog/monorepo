@@ -4,7 +4,7 @@ import {
   UserGuildPermissionsDtoSchema,
 } from "@lootlog/schema/permissions";
 import { Context, Effect, Layer, Redacted, Schema } from "effect";
-import { Redis } from "effect/unstable/persistence";
+import { Redis } from "effect/persistence";
 import { ActivityConfig } from "#src/config/activity-config";
 import { ApiHttpClient } from "#src/http/api-http-client";
 

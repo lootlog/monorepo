@@ -2,7 +2,7 @@ import {
   getUserFeed,
   toRecordsHttpResponse,
 } from "../records/records.operations.js";
-import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { HttpApiBuilder } from "effect/http-api";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
   deleteCurrentAccountHttpResponse,

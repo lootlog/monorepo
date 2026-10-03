@@ -2,7 +2,7 @@ import {
   preserveOpenApi30Contract,
   setOpenApiCompatibilityValue,
 } from "@lootlog/schema/openapi-compatibility";
-import { OpenApi } from "effect/unstable/httpapi";
+import { OpenApi } from "effect/http-api";
 import { stringify } from "yaml";
 import { BattlelogApi } from "../http-api/battlelog-api.js";
 

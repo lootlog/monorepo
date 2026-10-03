@@ -6,7 +6,7 @@ export const FiniteNumber = Schema.Number.check(
 
 const dateTimeString = (pattern: string) =>
   Schema.String.annotate({ format: "date-time" }).check(
-    Schema.isPattern(new RegExp(pattern)).annotate({
+    Schema.isPattern(new RegExp(pattern, "u")).annotate({
       expected: `a string matching the RegExp ${pattern}`,
     }),
   );

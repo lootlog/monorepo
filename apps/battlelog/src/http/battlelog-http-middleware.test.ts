@@ -5,11 +5,7 @@ import {
   httpServerRequestCount,
 } from "@lootlog/instrumentation";
 import { Effect, Layer, Metric } from "effect";
-import {
-  HttpRouter,
-  HttpServer,
-  HttpServerResponse,
-} from "effect/unstable/http";
+import { HttpRouter, HttpServer, HttpServerResponse } from "effect/http";
 import { Logger } from "../infrastructure/logger.js";
 import { battlelogHttpMiddleware } from "./battlelog-http.js";
 

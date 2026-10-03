@@ -1,9 +1,5 @@
 /** Endpoints owned by the maps HTTP module. */
-import {
-  HttpApiEndpoint,
-  HttpApiGroup,
-  OpenApi,
-} from "effect/unstable/httpapi";
+import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/http-api";
 import { GameMapsResponse } from "#src/contracts/maps/schemas";
 
 export class MapsGroup extends HttpApiGroup.make("maps").add(

@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { BunRedis } from "@effect/platform-bun";
 import { MessagingError } from "@lootlog/messaging";
 import { Effect, ManagedRuntime, Schema } from "effect";
-import { Redis } from "effect/unstable/persistence";
+import { Redis } from "effect/persistence";
 import { RedisService, makeJsonCodec } from "#src/redis/redis.service";
 import {
   makeReadyRoomRepository,

@@ -31,8 +31,8 @@
       "packages/*"
     ],
     "catalog": {
-      "@effect/platform-bun": "4.0.0-rc.116",
-      "@effect/sql-pg": "4.0.0-rc.116",
+      "@effect/platform-bun": "4.0.0",
+      "@effect/sql-pg": "4.0.0",
       "@lexical/code": "0.51.0",
       "@lexical/code-prism": "0.51.0",
       "@lexical/link": "0.51.0",
@@ -57,7 +57,7 @@
       "cn": "^0.3.0",
       "drizzle-kit": "1.0.0-rc.4",
       "drizzle-orm": "1.0.0-rc.4",
-      "effect": "4.0.0-rc.116",
+      "effect": "4.0.0",
       "es-toolkit": "^1.52.0",
       "lexical": "0.51.0",
       "nanostores": "1.5.3",
@@ -169,7 +169,7 @@
   "packageManager": "bun@1.4.2",
   "patchedDependencies": {
     "drizzle-orm@1.0.0-rc.4": "patches/drizzle-orm@1.0.0-rc.4.patch",
-    "@effect/platform-bun@4.0.0-rc.116": "patches/@effect%2Fplatform-bun@4.0.0-rc.116.patch"
+    "@effect/platform-bun@4.0.0": "patches/@effect%2Fplatform-bun@4.0.0.patch"
   },
   "trustedDependencies": [
     "@scarf/scarf",

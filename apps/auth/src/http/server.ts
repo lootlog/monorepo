@@ -5,12 +5,8 @@ import {
   httpServerRouteMetrics,
 } from "@lootlog/instrumentation";
 import { Effect, Layer } from "effect";
-import {
-  HttpRouter,
-  HttpServerRequest,
-  HttpServerResponse,
-} from "effect/unstable/http";
-import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
+import { HttpApiBuilder } from "effect/http-api";
 import { BetterAuthRuntime } from "#src/auth/provider/better-auth";
 import { BETTER_AUTH_INTERNAL_PATH } from "#src/auth/provider/better-auth-url";
 import { AppConfig } from "#src/config/env";

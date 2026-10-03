@@ -1,7 +1,7 @@
 import { boundedHttpGet } from "@lootlog/instrumentation/bounded-http-get";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
-import { HttpClient } from "effect/unstable/http";
+import { HttpClient } from "effect/http";
 
 export class ApiHttpClientFailure extends TaggedErrorClass<ApiHttpClientFailure>()(
   "ApiHttpClientFailure",

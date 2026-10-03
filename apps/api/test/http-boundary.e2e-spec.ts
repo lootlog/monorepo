@@ -15,8 +15,8 @@ import {
 import { Permission } from "@lootlog/schema/permissions";
 import { BunRedis, BunHttpServer } from "@effect/platform-bun";
 import { Effect, Layer, ManagedRuntime, Schema } from "effect";
-import { FetchHttpClient, HttpRouter } from "effect/unstable/http";
-import { Redis } from "effect/unstable/persistence";
+import { FetchHttpClient, HttpRouter } from "effect/http";
+import { Redis } from "effect/persistence";
 import {
   getCompleteUserGuildsCacheKey,
   getGuildMemberCacheKeys,

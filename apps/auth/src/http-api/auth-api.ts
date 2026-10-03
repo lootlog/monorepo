@@ -1,6 +1,6 @@
 import { ApiKeysGroup } from "./contracts/auth/api-keys.js";
 /** Authoritative composition root for the auth HTTP contract. */
-import { HttpApi, OpenApi } from "effect/unstable/httpapi";
+import { HttpApi, OpenApi } from "effect/http-api";
 import { HealthGroup } from "./contracts/health/api.js";
 import { AuthGroup } from "./contracts/auth/api.js";
 

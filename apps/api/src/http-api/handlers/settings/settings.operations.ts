@@ -10,7 +10,7 @@ import {
   type SettingsDocumentsQuery,
 } from "@lootlog/schema/settings-documents";
 import { Context, Effect, Layer, Schema } from "effect";
-import { HttpServerResponse } from "effect/unstable/http";
+import { HttpServerResponse } from "effect/http";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import {

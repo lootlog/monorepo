@@ -5,7 +5,7 @@ import {
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import { Clock, Effect, Schema } from "effect";
-import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
+import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
 import { outboundHttpRequest } from "#src/shared/http/outbound-http";
 import sharp from "sharp";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";

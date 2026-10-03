@@ -1,7 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Cause, Effect, Schema } from "effect";
-import { HttpBody } from "effect/unstable/http";
-import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
+import { HttpBody } from "effect/http";
+import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
 
 export type OutboundHttpMethod = "GET" | "POST";
 

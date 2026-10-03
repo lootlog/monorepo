@@ -1,6 +1,6 @@
 import { Effect, Predicate, Schema, SchemaIssue } from "effect";
-import { HttpServerResponse } from "effect/unstable/http";
-import { HttpApiMiddleware, HttpApiSchema } from "effect/unstable/httpapi";
+import { HttpServerResponse } from "effect/http";
+import { HttpApiMiddleware, HttpApiSchema } from "effect/http-api";
 
 const RequestValidationError = Schema.Struct({
   code: Schema.Literal("VALIDATION_ERROR"),

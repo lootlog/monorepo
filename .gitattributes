@@ -4,3 +4,7 @@ yarn.lock linguist-generated=true
 
 # Generated files
 **/generated/** linguist-generated=true -whitespace
+
+# Vendored reference repositories for agents: excluded from language stats,
+# collapsed in pull request diffs.
+repos/** linguist-vendored=true linguist-generated=true

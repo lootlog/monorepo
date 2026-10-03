@@ -2,7 +2,7 @@ import { makeObservabilityLayer } from "@lootlog/instrumentation/observability";
 import { RabbitMessaging } from "@lootlog/messaging";
 import { BunRuntime } from "@effect/platform-bun";
 import { Layer } from "effect";
-import { FetchHttpClient } from "effect/unstable/http";
+import { FetchHttpClient } from "effect/http";
 import { ActivityConfig } from "#src/config/activity-config";
 import { ActivityApplication } from "./activity-application.js";
 

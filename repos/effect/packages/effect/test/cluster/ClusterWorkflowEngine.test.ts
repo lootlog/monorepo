@@ -9,14 +9,15 @@ import {
   Fiber,
   Latch,
   Layer,
+  Logger,
   Option,
   Result,
   Schema,
   Scope,
   Tracer
 } from "effect"
-import { TestClock } from "effect/testing"
 import {
+  ClusterError,
   ClusterSchema,
   ClusterWorkflowEngine,
   Entity,
@@ -27,17 +28,137 @@ import {
   Sharding,
   ShardingConfig,
   Snowflake
-} from "effect/unstable/cluster"
-import { CurrentActivationScope } from "effect/unstable/cluster/internal/entityActivation"
-import { Rpc } from "effect/unstable/rpc"
-import { Activity, DurableClock, DurableDeferred, Workflow } from "effect/unstable/workflow"
+} from "effect/cluster"
+import { CurrentActivationScope } from "effect/cluster/internal/entityActivation"
+import { Rpc } from "effect/rpc"
+import { TestClock } from "effect/testing"
+import { Activity, DurableClock, DurableDeferred, Workflow } from "effect/workflow"
 import {
   makeUnsafe as makeWorkflowEngineUnsafe,
   WorkflowEngine,
   WorkflowInstance
-} from "effect/unstable/workflow/WorkflowEngine"
+} from "effect/workflow/WorkflowEngine"
 
 describe.concurrent("ClusterWorkflowEngine", () => {
+  it.effect("retries a deferred wake after a transient run reset failure", () =>
+    Effect.gen(function*() {
+      const gate = DurableDeferred.make("ResetRetry/Gate", { success: Schema.String })
+      const workflow = Workflow.make("ResetRetry", {
+        payload: {},
+        success: Schema.String,
+        idempotencyKey: () => "one"
+      })
+      const shared = yield* Layer.build(
+        MessageStorage.layerMemory.pipe(Layer.provide(ShardingConfig.layerDefaults))
+      )
+      const storage = Context.get(shared, MessageStorage.MessageStorage)
+      const driver = Context.get(shared, MessageStorage.MemoryDriver)
+      let runRequestId: string | undefined
+      let resetAttempts = 0
+      const storageLayer = Layer.succeed(MessageStorage.MessageStorage, {
+        ...storage,
+        clearReplies: (requestId) => {
+          if (String(requestId) !== runRequestId) return storage.clearReplies(requestId)
+          resetAttempts++
+          return resetAttempts === 1
+            ? Effect.fail(new ClusterError.PersistenceError({ cause: "transient reset failure" }))
+            : storage.clearReplies(requestId)
+        }
+      })
+      const context = yield* Layer.build(
+        workflow.toLayer(() => DurableDeferred.await(gate)).pipe(
+          Layer.provideMerge(makeTestWorkflowEngine({ storageLayer }))
+        )
+      )
+      yield* Effect.gen(function*() {
+        const executionId = yield* workflow.execute({}, { discard: true })
+        yield* pollUntil(workflow, executionId, "Suspended")
+        const run = driver.journal.find((message) => message._tag === "Request" && message.tag === "run")
+        assert(run?._tag === "Request")
+        runRequestId = run.requestId
+
+        const completion = yield* DurableDeferred.succeed(gate, {
+          token: DurableDeferred.tokenFromExecutionId(gate, { workflow, executionId }),
+          value: "signal"
+        }).pipe(Effect.forkChild({ startImmediately: true }))
+        yield* advanceUntil(() => resetAttempts >= 2, "deferred wake must retry the failed reset", 200, 20)
+        yield* Fiber.join(completion)
+        assert.deepStrictEqual(
+          yield* workflow.poll(executionId),
+          Option.some(new Workflow.Complete({ exit: Exit.succeed("signal") }))
+        )
+      }).pipe(Effect.provide(context))
+    }), 20_000)
+
+  it.effect("keeps a completed reply when an older concurrent wake resets it", () =>
+    Effect.gen(function*() {
+      const firstReset = yield* Latch.make()
+      const allowStaleReset = yield* Latch.make()
+      const staleResetFinished = yield* Latch.make()
+      const allowPoll = yield* Latch.make()
+      const first = DurableDeferred.make("ConcurrentResume/First", { success: Schema.String })
+      const second = DurableDeferred.make("ConcurrentResume/Second", { success: Schema.String })
+      const workflow = Workflow.make("ConcurrentResume", {
+        payload: {},
+        success: Schema.String,
+        idempotencyKey: () => "one"
+      })
+      const shared = yield* Layer.build(
+        MessageStorage.layerMemory.pipe(Layer.provide(ShardingConfig.layerDefaults))
+      )
+      const storage = Context.get(shared, MessageStorage.MessageStorage)
+      const driver = Context.get(shared, MessageStorage.MemoryDriver)
+      let runRequestId: Snowflake.Snowflake | undefined
+      let runResets = 0
+      const storageLayer = Layer.succeed(MessageStorage.MessageStorage, {
+        ...storage,
+        clearReplies: (id, options) =>
+          id === runRequestId && options?.expectedReplyId !== undefined && ++runResets === 1
+            ? firstReset.open.pipe(
+              Effect.andThen(allowStaleReset.await),
+              Effect.andThen(storage.clearReplies(id, options)),
+              Effect.andThen(staleResetFinished.open),
+              // Do not let the stale wake poll storage and replay before inspecting the reply.
+              Effect.andThen(allowPoll.await)
+            )
+            : storage.clearReplies(id, options)
+      })
+      const context = yield* Layer.build(
+        workflow.toLayer(() =>
+          Effect.all([DurableDeferred.await(first), DurableDeferred.await(second)], { concurrency: "unbounded" }).pipe(
+            Effect.map(([a, b]) => a + "/" + b)
+          )
+        ).pipe(Layer.provideMerge(makeTestWorkflowEngine({ storageLayer })))
+      )
+      yield* Effect.addFinalizer(() => Effect.all([allowStaleReset.open, allowPoll.open], { discard: true }))
+      yield* Effect.gen(function*() {
+        const executionId = yield* workflow.execute({}, { discard: true })
+        yield* pollUntil(workflow, executionId, "Suspended")
+        const run = driver.journal.find((message) => message._tag === "Request" && message.tag === "run")!
+        runRequestId = Snowflake.Snowflake(run.requestId)
+        const complete = (deferred: typeof first, value: string) =>
+          DurableDeferred.succeed(deferred, {
+            token: DurableDeferred.tokenFromExecutionId(deferred, { workflow, executionId }),
+            value
+          })
+        const firstFiber = yield* complete(first, "first").pipe(Effect.forkChild({ startImmediately: true }))
+        yield* advanceUntil(() => firstReset.isOpen(), "first wake must reach reset")
+        yield* complete(second, "second")
+        assert.deepStrictEqual(
+          yield* pollUntil(workflow, executionId, "Complete"),
+          new Workflow.Complete({ exit: Exit.succeed("first/second") })
+        )
+        yield* allowStaleReset.open
+        yield* advanceUntil(() => staleResetFinished.isOpen(), "stale reset must finish")
+        assert.deepStrictEqual(
+          yield* workflow.poll(executionId),
+          Option.some(new Workflow.Complete({ exit: Exit.succeed("first/second") }))
+        )
+        yield* allowPoll.open
+        yield* Fiber.join(firstFiber)
+      }).pipe(Effect.provide(context))
+    }), 30_000)
+
   for (const entityMailboxCapacity of [2, 3]) {
     it.effect(
       `admits a required completion after an unrelated completion with mailbox capacity ${entityMailboxCapacity}`,
@@ -333,6 +454,8 @@ describe.concurrent("ClusterWorkflowEngine", () => {
       yield* TestClock.adjust("10 seconds")
       yield* sharding.pollStorage
       yield* TestClock.adjust(5000)
+      // The storage poll may return before the resumed run finishes unwinding.
+      yield* advanceUntil(() => flags.get("ensuring") === true, "suspended await must run ensuring")
 
       // --- the workflow is suspended at this point
 
@@ -949,6 +1072,64 @@ describe.concurrent("ClusterWorkflowEngine", () => {
       assert.isTrue(flags.get("child-end"))
     }).pipe(Effect.provide(TestWorkflowLayer)))
 
+  it.effect("bounds a durable clock notification when its workflow is absent after restart", () =>
+    Effect.gen(function*() {
+      const clockDuration = 3000
+      const registrationTimeout = 5000
+      const RemovedWorkflow = Workflow.make("RemovedWorkflow", {
+        payload: {},
+        success: Schema.Void,
+        idempotencyKey: () => "one"
+      })
+      const shared = yield* Layer.build(
+        MessageStorage.layerMemory.pipe(Layer.provide(ShardingConfig.layerDefaults))
+      )
+      const driver = Context.get(shared, MessageStorage.MemoryDriver)
+      const storageLayer = Layer.succeed(
+        MessageStorage.MessageStorage,
+        Context.get(shared, MessageStorage.MessageStorage)
+      )
+      const config = { entityRegistrationTimeout: registrationTimeout }
+      const clock = DurableClock.make({ name: "wait", duration: clockDuration })
+
+      const executionId = yield* Effect.gen(function*() {
+        const executionId = yield* RemovedWorkflow.execute({}, { discard: true })
+        yield* pollUntil(RemovedWorkflow, executionId, "Suspended")
+        return executionId
+      }).pipe(Effect.provide(
+        RemovedWorkflow.toLayer(() =>
+          DurableClock.sleep({ name: "wait", duration: clockDuration, inMemoryThreshold: Duration.zero })
+        ).pipe(Layer.provideMerge(makeTestWorkflowEngine({ storageLayer, config })))
+      ))
+      const clockRequest = driver.journal.find((message) =>
+        message._tag === "Request" && message.address.entityType === "Workflow/-/DurableClock"
+      )
+      assert(clockRequest !== undefined && clockRequest._tag === "Request")
+
+      yield* Effect.gen(function*() {
+        // Fire the persisted timer before the registration-start deadline.
+        yield* TestClock.adjust(clockDuration)
+        // This is the completion emitted by ClockEntity when the persisted timer fires.
+        // Calling it directly isolates the notifyLocal registration wait from storage claims.
+        const fiber = yield* DurableDeferred.done(clock.deferred, {
+          token: DurableDeferred.tokenFromExecutionId(clock.deferred, {
+            workflow: RemovedWorkflow,
+            executionId
+          }),
+          exit: Exit.void
+        }).pipe(Effect.forkDetach({ startImmediately: true }))
+        yield* Effect.yieldNow
+        assert.isUndefined(fiber.pollUnsafe())
+        yield* TestClock.adjust(registrationTimeout - clockDuration)
+
+        const exit = fiber.pollUnsafe()
+        assert(exit !== undefined, "the notifyLocal registration wait must be bounded")
+        const defect = Exit.findDefect(exit)
+        assert(Result.isSuccess(defect) && defect.success instanceof Error)
+        assert.strictEqual(defect.success.message, `Entity type 'Workflow/${RemovedWorkflow._tag}' not registered`)
+      }).pipe(Effect.provide(makeTestWorkflowEngine({ storageLayer, config })))
+    }))
+
   for (const [id, threshold] of [["number", 0], ["bigint", 0n]] as const) {
     it.effect(`DurableClock.sleep preserves an explicit ${id} zero threshold`, () => verifyZeroThreshold(id, threshold))
   }
@@ -1445,6 +1626,77 @@ describe.concurrent("ClusterWorkflowEngine", () => {
       assert(envelope)
       assert.strictEqual(envelope.address.shardId.group, "workflow")
     }).pipe(Effect.provide(TestWorkflowEngine)))
+
+  it.effect("warns for conflicting definitions and stays silent for the same definition", () => {
+    class FirstPayload extends Schema.Class<FirstPayload>("DuplicateClassPayload")({
+      organizationId: Schema.String
+    }) {}
+    class SecondPayload extends Schema.Class<SecondPayload>("DuplicateClassPayload")({
+      deploymentId: Schema.Number
+    }) {}
+    const first = Workflow.make("DuplicateClassPayloadWorkflow", {
+      payload: FirstPayload,
+      idempotencyKey: ({ organizationId }) => organizationId
+    })
+    const second = Workflow.make("DuplicateClassPayloadWorkflow", {
+      payload: SecondPayload,
+      idempotencyKey: ({ deploymentId }) => String(deploymentId)
+    })
+    const warnings: Array<unknown> = []
+    const logger = Logger.make<unknown, void>((options) => {
+      if (options.logLevel === "Warn") {
+        warnings.push(options.message)
+      }
+    })
+
+    return Effect.gen(function*() {
+      const engine = yield* WorkflowEngine
+      yield* engine.register(first, () => Effect.void)
+      yield* engine.register(first, () => Effect.void)
+
+      assert.deepStrictEqual(warnings, [])
+
+      yield* engine.register(second, () => Effect.void)
+
+      const warning = warnings
+        .map((message) => globalThis.Array.isArray(message) ? message.join(" ") : String(message))
+        .find((message) => message.includes("DuplicateClassPayloadWorkflow"))
+      assert(warning, "duplicate workflow registration must emit a warning containing its tag")
+      const normalized = warning.toLowerCase()
+      for (const fragment of ["organizationid", "string", "deploymentid", "number"]) {
+        assert.include(normalized, fragment, `warning must identify both class payload shapes: ${warning}`)
+      }
+    }).pipe(Effect.provide(TestWorkflowEngine), Effect.withLogger(logger))
+  })
+
+  it.effect("does not fail when duplicate workflow payload shapes cannot be rendered", () => {
+    const payloadKey = Symbol("payload")
+    const first = Workflow.make("UnavailablePayloadShapeWorkflow", {
+      payload: Schema.Struct({ [payloadKey]: Schema.String }),
+      idempotencyKey: () => "first"
+    })
+    const second = Workflow.make("UnavailablePayloadShapeWorkflow", {
+      payload: Schema.Struct({ [payloadKey]: Schema.Number }),
+      idempotencyKey: () => "second"
+    })
+    const warnings: Array<unknown> = []
+    const logger = Logger.make<unknown, void>((options) => {
+      if (options.logLevel === "Warn") {
+        warnings.push(options.message)
+      }
+    })
+
+    return Effect.gen(function*() {
+      const engine = yield* WorkflowEngine
+      yield* engine.register(first, () => Effect.void)
+      yield* engine.register(second, () => Effect.void)
+
+      const warning = warnings
+        .map((message) => globalThis.Array.isArray(message) ? message.join(" ") : String(message))
+        .find((message) => message.includes("UnavailablePayloadShapeWorkflow"))
+      assert(warning, "duplicate workflow registration must still warn when rendering a payload shape fails")
+    }).pipe(Effect.provide(TestWorkflowEngine), Effect.withLogger(logger))
+  })
 
   it.effect("propagates trace context to persisted workflow requests", () => {
     let callerSpan: Tracer.NativeSpan | undefined

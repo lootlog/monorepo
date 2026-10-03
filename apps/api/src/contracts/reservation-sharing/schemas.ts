@@ -35,7 +35,7 @@ export const CreatedReservationShareInvitationResponse = Schema.Struct({
   createdAt: DateTimeString,
   invitePath: Schema.String.check(
     Schema.isPattern(
-      new RegExp("^\\/reservation-sharing\\/invitations\\/[\\w-]+$"),
+      new RegExp("^\\/reservation-sharing\\/invitations\\/[\\w-]+$", "u"),
     ).annotate({
       expected:
         "a string matching the RegExp ^\\/reservation-sharing\\/invitations\\/[\\w-]+$",

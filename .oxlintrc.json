@@ -16,6 +16,7 @@
     ".roo/**",
     ".windsurf/**",
     ".codegraph/**",
+    "repos/**",
     "tools/oxlint/anti-slop/**",
     "**/node_modules",
     "**/dist",

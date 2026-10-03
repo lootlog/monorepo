@@ -4,7 +4,7 @@ import { applicationErrorResponse } from "../../application-error-response.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 
-import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { HttpApiBuilder } from "effect/http-api";
 import { DomainDateTime } from "#src/shared/schema/response-codecs";
 import { LootlogApi } from "../../lootlog-api.js";
 import {

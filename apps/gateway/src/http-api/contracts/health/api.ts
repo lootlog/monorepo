@@ -1,9 +1,5 @@
 /** Endpoints owned by the health HTTP module. */
-import {
-  HttpApiEndpoint,
-  HttpApiGroup,
-  OpenApi,
-} from "effect/unstable/httpapi";
+import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/http-api";
 import { GatewayHealth, GatewayReady, GatewayUnavailable } from "./schemas.js";
 
 export class HealthGroup extends HttpApiGroup.make("health")

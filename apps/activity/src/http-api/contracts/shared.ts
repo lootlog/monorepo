@@ -5,7 +5,7 @@ import {
   HttpApiSchema,
   HttpApiSecurity,
   OpenApi,
-} from "effect/unstable/httpapi";
+} from "effect/http-api";
 
 export const BearerSecurity = HttpApiSecurity.bearer.pipe(
   HttpApiSecurity.annotate(OpenApi.Format, "JWT"),

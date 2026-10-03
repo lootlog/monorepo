@@ -15,7 +15,7 @@ import {
   timestamp,
 } from "drizzle-orm/pg-core";
 import { Effect, ManagedRuntime, Predicate, Redacted } from "effect";
-import { SqlClient } from "effect/unstable/sql";
+import { SqlClient } from "effect/sql";
 import { makePostgresLayer } from "../src/postgres.js";
 
 const records = pgTable("database_contract", {

@@ -5,7 +5,7 @@ import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
 
-import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { HttpApiBuilder } from "effect/http-api";
 import { and, arrayOverlaps, desc, eq, or, sql } from "drizzle-orm";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";

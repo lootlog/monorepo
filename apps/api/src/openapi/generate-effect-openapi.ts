@@ -4,7 +4,7 @@ import {
   normalizeNullableSchema,
 } from "@lootlog/schema/openapi-compatibility";
 import { rename, unlink } from "node:fs/promises";
-import { OpenApi } from "effect/unstable/httpapi";
+import { OpenApi } from "effect/http-api";
 import { stringify } from "yaml";
 import { LootlogApi } from "../http-api/lootlog-api.js";
 
