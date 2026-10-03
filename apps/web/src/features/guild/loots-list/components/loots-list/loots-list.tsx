@@ -2,7 +2,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { WorldSelectionEmptyState } from "@/components/common/world-selection-empty-state";
 import { LootsListItem } from "@/features/guild/loots-list/components/loots-list/loots-list-item";
 import { LootsListSkeleton } from "@/features/guild/loots-list/components/loots-list/loots-list-skeleton";
-import { LootListSentinelRow } from "@/features/guild/loots-list/components/loots-list/loot-list-sentinel-row";
+import { InfiniteListStatusRow } from "@/components/common/infinite-list-status-row";
 import {
   LOOTS_GRID_CLASS,
   LOOTS_LIST_INSET_CLASS,
@@ -151,7 +151,7 @@ export const LootsList = () => {
                   }}
                 >
                   {isLoaderRow ? (
-                    <LootListSentinelRow
+                    <InfiniteListStatusRow
                       hasNextPage={hasNextPage}
                       hasError={isError}
                       onRetry={retry}
@@ -198,7 +198,7 @@ export const LootsList = () => {
                   }}
                 >
                   {isLoaderRow ? (
-                    <LootListSentinelRow
+                    <InfiniteListStatusRow
                       hasNextPage={hasNextPage}
                       hasError={isError}
                       onRetry={retry}
