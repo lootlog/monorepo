@@ -22,10 +22,12 @@
     "refreshError": "Nie udało się odświeżyć listy Lootlogów."
   },
   "userMenu": {
-    "account": "Konto",
-    "connected": "Połączono",
-    "disconnected": "Brak połączenia",
-    "connectionDescription": "Połączenie z aktualizacjami na żywo (WebSocket)"
+    "live": "Połączono",
+    "liveDescription": "Zmiany od innych graczy widzisz od razu.",
+    "connecting": "Łączenie…",
+    "connectingDescription": "Do czasu połączenia nowe zmiany mogą się spóźniać.",
+    "offline": "Brak połączenia",
+    "offlineDescription": "Widoczne dane mogą być nieaktualne."
   },
   "breadcrumbs": {
     "statistics": "Statystyki",

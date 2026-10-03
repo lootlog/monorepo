@@ -175,20 +175,19 @@ function normalizeOtherFromEvent(
 
 function normalizeParty(event: NonNullable<GameEvent["party"]>) {
   return Object.freeze(
-    Object.values(event.members ?? {}).map<RuntimePartyMember>((member) => {
-      const characterId = String(member.id);
-
-      return Object.freeze({
-        accountId: String(member.account),
-        characterId,
-        currentHp: member.hp_cur ?? 0,
-        icon: member.icon,
-        isLeader: member.commander === 1,
-        maxHp: member.hp_max ?? 0,
-        name: member.nick,
-        profession: null,
-      });
-    }),
+    Object.entries(event.members ?? {}).map<RuntimePartyMember>(
+      ([characterId, member]) =>
+        Object.freeze({
+          accountId: String(member.account),
+          characterId,
+          currentHp: member.hp_cur ?? 0,
+          icon: member.icon,
+          isLeader: Boolean(member.commander),
+          maxHp: member.hp_max ?? 0,
+          name: member.nick,
+          profession: member.prof ?? null,
+        }),
+    ),
   );
 }
 
