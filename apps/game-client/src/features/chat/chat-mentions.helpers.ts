@@ -1,3 +1,4 @@
+import { isEqual } from "es-toolkit";
 import type {
   ChatMessageResponseDtoOutput,
   MemberSummaryResponseDtoOutput,
@@ -414,39 +415,17 @@ export const buildChatMentionContext = ({
   };
 };
 
-const areStringListsEqual = (left?: string[], right?: string[]) => {
-  if (left === right) return true;
-
-  if (!left || !right || left.length !== right.length) return false;
-
-  return left.every((value, index) => value === right[index]);
-};
-
-const areColorMapsEqual = (
-  left?: Record<string, string | null>,
-  right?: Record<string, string | null>,
-) => {
-  if (left === right) return true;
-
-  if (!left || !right) return false;
-  const leftKeys = Object.keys(left);
-
-  if (leftKeys.length !== Object.keys(right).length) return false;
-
-  return leftKeys.every((key) => key in right && left[key] === right[key]);
-};
-
 /** Content equality lets callers keep one context object while its inputs are unchanged. */
 export const areChatMentionContextsEqual = (
   left: ChatMentionContext,
   right: ChatMentionContext,
 ) =>
-  areStringListsEqual(left.memberNames, right.memberNames) &&
-  areStringListsEqual(left.roleNames, right.roleNames) &&
-  areStringListsEqual(left.currentUserNames, right.currentUserNames) &&
-  areStringListsEqual(left.currentUserRoleNames, right.currentUserRoleNames) &&
-  areColorMapsEqual(left.memberColorsByName, right.memberColorsByName) &&
-  areColorMapsEqual(left.roleColorsByName, right.roleColorsByName);
+  isEqual(left.memberNames, right.memberNames) &&
+  isEqual(left.roleNames, right.roleNames) &&
+  isEqual(left.currentUserNames, right.currentUserNames) &&
+  isEqual(left.currentUserRoleNames, right.currentUserRoleNames) &&
+  isEqual(left.memberColorsByName, right.memberColorsByName) &&
+  isEqual(left.roleColorsByName, right.roleColorsByName);
 
 export const getChatMentionNotificationId = ({
   guildId,
