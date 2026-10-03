@@ -10,7 +10,9 @@ import { ApiDatabaseLive } from "../src/database/drizzle/database.js";
 import { migrateApiDatabase } from "../src/database/drizzle/migrate.js";
 
 export default async function setup() {
-  const postgres = await new PostgreSqlContainer("postgres:17-alpine")
+  const postgres = await new PostgreSqlContainer(
+    "timescale/timescaledb:2.24.0-pg17",
+  )
     .withDatabase("lootlog_e2e")
     .withUsername("lootlog")
     .withPassword("lootlog")

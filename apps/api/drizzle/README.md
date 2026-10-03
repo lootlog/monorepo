@@ -66,8 +66,8 @@ was installed; those require reconciliation from their owning data domains.
 The API owns `GuildKillActivity`, a 24-hour journal of accepted Organization
 kills and their publication state. `makeKillCreation` writes a row for `ELITE2`,
 `HERO`, `COLOSSUS`, or `TITAN` after the existing Organization Redis deduplication
-succeeds. The journal row, lifetime Organization kill counter, and hourly
-Organization bucket commit in one database transaction. The row contains the
+succeeds. The journal row and the hourly Organization bucket commit in one
+database transaction. The row contains the
 Organization, world, NPC identifier, display and visibility fields, and server
 time. It does not identify a first reporter or copy personal kill history.
 
@@ -107,8 +107,8 @@ during a history request are buffered and merged by version.
 The hourly cleanup runs at minute 15 and deletes expired rows in batches of
 5,000, up to 100 batches per run. Queries exclude entries older than 24 hours
 before physical cleanup. Hourly cleanup can leave roughly one additional hour
-of expired rows on disk; downtime can leave a larger backlog. The lifetime and
-hourly kill aggregates remain intact. This retention policy does not change
+of expired rows on disk; downtime can leave a larger backlog. The hourly kill
+buckets and lifetime baselines remain intact. This retention policy does not change
 existing aggregate or loot retention. Lost live publications remain available
 through the next HTTP history request until they expire.
 
@@ -917,6 +917,104 @@ because they lock the loot write path until the commit. Those statements use
 rolls back, and it can be run again.
 
 Deleted rows free space inside the tables for new rows; the files do not shrink
-until a rewrite such as `pg_repack`. The `id` columns of the kill statistics
-tables stay: `readNpcKillPage` and the top-NPC queries use them to choose one
-row's NPC metadata per page entry.
+until a rewrite such as `pg_repack`.
+
+## Kill statistics on TimescaleDB
+
+`20261003233734_kill_bucket_hypertables` replaces the six kill statistics
+tables with `UserKillBucket`, `MemberKillBucket` and `GuildKillBucket` (hourly
+buckets) and `UserKillTotal`, `MemberKillTotal` and `GuildKillTotal` (lifetime
+totals). Each kill increments the bucket and the total of its scope in one
+transaction. Period statistics read the buckets; all-time statistics read the
+totals. The new tables have natural primary keys and no surrogate ids. The
+totals have no other index and fillfactor 70, so increments are heap-only
+tuple updates. Personal rows are keyed by `discordUserId`, the identifier the
+old `userId` columns held.
+
+Where `shared_preload_libraries` contains `timescaledb`, the migration creates
+the extension, turns the three bucket tables into hypertables with 7-day chunks
+and compresses chunks two days after they close, segmented by `discordUserId`
+for personal buckets and `guildId` for Organization buckets. The production API
+cluster preloads TimescaleDB 2.24.0. PGlite test databases keep plain tables
+with the same keys; the queries are the same for both. Integration tests and
+the local `lootlog-db` run `timescale/timescaledb:2.24.0-pg17`.
+
+Kills always land in the current hour, so upserts never touch a compressed
+chunk. Account deletion deletes buckets by user inside compressed chunks. The
+member buckets are segmented by Organization, so the transaction lifts
+`timescaledb.max_tuples_decompressed_per_dml_transaction` for itself. Account
+deletion now also removes the old hourly buckets, which it used to leave behind.
+
+On a local production copy (October 2026, 106 days of buckets) the old tables
+took 13 GB without bloat. The buckets take 1.2 GB after compression and the
+totals 1.0 GB. Replaying the busiest recorded hour writes 42 MB of WAL instead
+of 98 MB, and 172 MB instead of 598 MB right after a checkpoint. Period queries
+for the largest Organization take 7–49 ms instead of 43–100 ms; all-time
+queries are unchanged.
+
+### Rollout
+
+1. Apply the migration before deploying the API, as usual. It reads the old
+   tables without blocking their writers, so the running API keeps counting
+   kills. It records the current UTC hour in `KillBucketCutover`, copies the
+   buckets before that hour, and copies the totals minus that hour's buckets.
+   On the local production copy it took 3.5 minutes.
+2. Deploy the API right after the migration. From then on, kills go to the
+   new tables only. Until step 3, statistics read by the new API miss the
+   kills the older API recorded from the cutover hour onwards.
+3. Once no older API process is running, apply the follow-up migration from
+   the next release. It adds the old buckets from the cutover hour onwards,
+   which only the older processes wrote, to the new buckets and totals. It also
+   replaces the hour before the cutover, in case a kill committed into it after
+   the copy:
+
+   ```sql
+   CREATE TEMPORARY TABLE "LateUserKill" AS
+   SELECT o."periodStart" AT TIME ZONE 'UTC' AS "periodStart", o."userId", o."world", o."npcId", o."npcName", o."npcType", o."npcLvl", o."npcProf", o."npcIcon",
+     o."totalKills" - coalesce(n."kills", 0) AS "kills", o."lastKilledAt" AT TIME ZONE 'UTC' AS "lastKilledAt"
+   FROM "UserKillStatsBucket" o
+   LEFT JOIN "UserKillBucket" n ON n."discordUserId" = o."userId" AND n."world" = o."world" AND n."npcId" = o."npcId"
+     AND n."periodStart" = o."periodStart" AT TIME ZONE 'UTC'
+     AND o."periodStart" < (SELECT "cutoverHour" FROM "KillBucketCutover")
+   WHERE o."periodStart" >= (SELECT "cutoverHour" - interval '1 hour' FROM "KillBucketCutover")
+     AND o."totalKills" <> coalesce(n."kills", 0);
+
+   INSERT INTO "UserKillBucket" ("periodStart", "discordUserId", "world", "npcId", "npcName", "npcType", "npcLvl", "npcProf", "npcIcon", "kills", "lastKilledAt")
+   SELECT * FROM "LateUserKill"
+   ON CONFLICT ("discordUserId", "world", "npcId", "periodStart") DO UPDATE SET
+     "kills" = "UserKillBucket"."kills" + excluded."kills",
+     "lastKilledAt" = greatest("UserKillBucket"."lastKilledAt", excluded."lastKilledAt");
+
+   INSERT INTO "UserKillTotal" ("discordUserId", "world", "npcId", "npcName", "npcType", "npcLvl", "npcProf", "npcIcon", "kills", "lastKilledAt")
+   SELECT DISTINCT ON ("userId", "world", "npcId") "userId", "world", "npcId", "npcName", "npcType", "npcLvl", "npcProf", "npcIcon",
+     sum("kills") OVER (PARTITION BY "userId", "world", "npcId"), max("lastKilledAt") OVER (PARTITION BY "userId", "world", "npcId")
+   FROM "LateUserKill" ORDER BY "userId", "world", "npcId", "periodStart" DESC
+   ON CONFLICT ("discordUserId", "world", "npcId") DO UPDATE SET
+     "kills" = "UserKillTotal"."kills" + excluded."kills",
+     "lastKilledAt" = greatest("UserKillTotal"."lastKilledAt", excluded."lastKilledAt");
+   ```
+
+   `NpcKillStatsBucket` (`memberKills`) and `GuildKillSummaryBucket`
+   (`uniqueKills`) follow the same pattern. It must not run while an older API
+   process can still write, and it must run exactly once; the migration
+   journal guarantees the latter.
+
+4. A later release drops the old tables, `KillBucketCutover`, and the
+   old-table deletes in account deletion.
+
+Rolling the API back leaves the old tables without the kills the new API
+recorded. Before rolling back, add the new buckets from the cutover hour
+onwards to the old buckets and to the old lifetime counters, for example for
+personal kills:
+
+```sql
+INSERT INTO "UserKillStatsBucket" ("id", "userId", "world", "npcId", "npcName", "npcType", "npcLvl", "npcProf", "npcIcon", "totalKills", "periodStart", "lastKilledAt", "updatedAt")
+SELECT gen_random_uuid()::text, "discordUserId", "world", "npcId", "npcName", "npcType", "npcLvl", "npcProf", "npcIcon", "kills", "periodStart" AT TIME ZONE 'UTC', "lastKilledAt" AT TIME ZONE 'UTC', now()
+FROM "UserKillBucket"
+WHERE "periodStart" >= (SELECT "cutoverHour" AT TIME ZONE 'UTC' FROM "KillBucketCutover")
+ON CONFLICT ("userId", "world", "npcId", "periodStart") DO UPDATE SET "totalKills" = "UserKillStatsBucket"."totalKills" + excluded."totalKills";
+```
+
+and increment `UserKillStats` by the same sums per `(userId, world, npcId)`.
+After step 3 the old buckets of those hours already hold the older API's
+kills, so add only the new API's share.

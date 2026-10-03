@@ -18,10 +18,10 @@ import {
   eventTable,
   guildTable,
   memberTable,
-  npcKillStatsTable,
-  npcKillStatsBucketTable,
-  guildKillSummaryTable,
-  guildKillSummaryBucketTable,
+  memberKillBucketTable,
+  memberKillTotalTable,
+  guildKillBucketTable,
+  guildKillTotalTable,
 } from "../src/database/drizzle/schema.js";
 import { makeEventPointsStore } from "../src/events/kills/event-points.repository.js";
 import { makeKillStatsPersistence } from "../src/kills/kill-stats-persistence.js";
@@ -84,104 +84,91 @@ beforeAll(async () => {
         npcLvl: 100,
         npcProf: "w",
         npcIcon: "low.gif",
-        updatedAt: new Date(),
+        periodStart: new Date(),
+        lastKilledAt: new Date(),
       };
 
       const stats = [
         {
           ...base,
-          id: randomUUID(),
           memberId: first.id,
-          userId: first.userId,
+          discordUserId: first.userId,
           world: "a",
-          memberKills: 7,
+          kills: 7,
         },
         {
           ...base,
-          id: randomUUID(),
           memberId: first.id,
-          userId: first.userId,
+          discordUserId: first.userId,
           world: "b",
-          memberKills: 5,
+          kills: 5,
         },
         {
           ...base,
-          id: randomUUID(),
           memberId: second.id,
-          userId: second.userId,
+          discordUserId: second.userId,
           world: "a",
-          memberKills: 3,
+          kills: 3,
           npcLvl: 200,
           npcName: "High",
           npcIcon: "high.gif",
         },
         {
           ...base,
-          id: randomUUID(),
           memberId: second.id,
-          userId: second.userId,
+          discordUserId: second.userId,
           world: "a",
           npcId: 2,
           npcType: NpcType.HERO,
-          memberKills: 50,
+          kills: 50,
         },
       ];
 
-      yield* db.insert(npcKillStatsTable).values(stats);
-      yield* db.insert(npcKillStatsBucketTable).values(
-        stats.map((row) => ({
-          ...row,
-          id: randomUUID(),
-          periodStart: new Date(),
-        })),
-      );
-      yield* db.insert(npcKillStatsBucketTable).values({
-        ...stats[0],
-        ...base,
-        id: randomUUID(),
+      const { periodStart: _periodStart, ...described } = base;
+
+      yield* db
+        .insert(memberKillTotalTable)
+        .values(stats.map(({ periodStart: _start, ...row }) => row));
+      yield* db.insert(memberKillBucketTable).values(stats);
+      // An old bucket outside the lifetime totals, as account deletion left them.
+      yield* db.insert(memberKillBucketTable).values({
+        ...described,
         memberId: first.id,
-        userId: first.userId,
+        discordUserId: first.userId,
         world: "old",
-        memberKills: 900,
+        kills: 900,
         periodStart: new Date("2000-01-01"),
       });
 
       const summaries = [
-        { ...base, id: randomUUID(), world: "a", uniqueKills: 7 },
+        { ...base, world: "a", kills: 7 },
         {
           ...base,
-          id: randomUUID(),
           world: "b",
-          uniqueKills: 5,
+          kills: 5,
           npcLvl: 200,
           npcName: "High",
           npcIcon: "high.gif",
         },
         {
           ...base,
-          id: randomUUID(),
           world: "a",
           npcId: 2,
           npcType: NpcType.HERO,
-          uniqueKills: 50,
+          kills: 50,
         },
         {
           ...base,
-          id: randomUUID(),
           guildId: otherGuildId,
           world: "a",
-          uniqueKills: 999,
+          kills: 999,
         },
       ];
 
-      yield* db.insert(guildKillSummaryTable).values(summaries);
-      yield* db.insert(guildKillSummaryBucketTable).values(
-        summaries.map((row) => ({
-          ...row,
-          id: randomUUID(),
-          periodStart: new Date(),
-        })),
-      );
+      yield* db
+        .insert(guildKillTotalTable)
+        .values(summaries.map(({ periodStart: _start, ...row }) => row));
+      yield* db.insert(guildKillBucketTable).values(summaries);
     }),
   );
 });
@@ -193,10 +180,10 @@ afterAll(async () => {
 
       for (const table of [
         eventTable,
-        npcKillStatsBucketTable,
-        npcKillStatsTable,
-        guildKillSummaryBucketTable,
-        guildKillSummaryTable,
+        memberKillBucketTable,
+        memberKillTotalTable,
+        guildKillBucketTable,
+        guildKillTotalTable,
         memberTable,
       ]) {
         yield* db
@@ -337,7 +324,6 @@ test("filters before ranking and keeps all-time metadata with zero counts for an
 
       const visible = yield* persistence.topMembersByType(
         { guildId, OR: [{ npcType: NpcType.ELITE2, npcLvl: { lte: 150 } }] },
-        false,
         1,
       );
 

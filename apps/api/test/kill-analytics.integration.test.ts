@@ -7,7 +7,6 @@ import {
   expect,
   it,
 } from "bun:test";
-import { randomUUID } from "node:crypto";
 import { Client } from "pg";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { DateTime, Effect, Schema } from "effect";
@@ -70,14 +69,15 @@ const bucket = async (
   npcId = 1,
 ) => {
   await client.query(
-    `insert into "UserKillStatsBucket" (id,"userId",world,"npcId","npcName","npcType","npcLvl","totalKills","periodStart","updatedAt") values ($1,$2,$3,$4,'NPC','HERO',100,$5,$6::timestamptz at time zone 'UTC',now())`,
-    [randomUUID(), user, world, npcId, kills, date],
+    `insert into "UserKillBucket" ("periodStart","discordUserId",world,"npcId","npcName","npcType","npcLvl",kills,"lastKilledAt") values ($1::timestamptz,$2,$3,$4,'NPC','HERO',100,$5,$1::timestamptz)`,
+    [date, user, world, npcId, kills],
   );
 };
 
+/** Lifetime totals of the buckets plus `extra` kills recorded before them. */
 const totals = async (user = "analytics-owner", extra = 0) => {
   await client.query(
-    `insert into "UserKillStats" (id,"userId",world,"npcId","npcName","npcType","npcLvl","totalKills","updatedAt") select gen_random_uuid()::text,"userId",world,"npcId",max("npcName"),'HERO',100,sum("totalKills")+$2,now() from "UserKillStatsBucket" where "userId"=$1 group by "userId",world,"npcId"`,
+    `insert into "UserKillTotal" ("discordUserId",world,"npcId","npcName","npcType","npcLvl",kills,"lastKilledAt") select "discordUserId",world,"npcId",max("npcName"),'HERO',100,sum(kills)+$2,now() from "UserKillBucket" where "discordUserId"=$1 group by "discordUserId",world,"npcId"`,
     [user, extra],
   );
 };
@@ -91,7 +91,7 @@ describe("personal kill analytics PostgreSQL boundary", () => {
   });
   beforeEach(async () => {
     requireIsolatedTestDatabase();
-    await client.query('truncate "UserKillStatsBucket", "UserKillStats"');
+    await client.query('truncate "UserKillBucket", "UserKillTotal"');
   });
   it("aggregates repeated Warsaw hours, isolates owners/worlds, and aligns all deltas", async () => {
     await bucket("2026-10-25T00:00:00Z", 3);
@@ -173,10 +173,10 @@ describe("personal kill analytics PostgreSQL boundary", () => {
   });
   it("bounds rankings and query response on populated account history", async () => {
     await client.query(
-      `insert into "UserKillStatsBucket" (id,"userId",world,"npcId","npcName","npcType","npcLvl","totalKills","periodStart","updatedAt") select gen_random_uuid()::text,case when i<=10000 then 'analytics-owner' else 'other-owner' end,'tempest',i%200,'NPC '||(i%200),'HERO',100,1,timestamp '2026-10-20 00:00:00' + (i/200)*interval '1 hour',now() from generate_series(1,30000) i`,
+      `insert into "UserKillBucket" ("periodStart","discordUserId",world,"npcId","npcName","npcType","npcLvl",kills,"lastKilledAt") select timestamptz '2026-10-20 00:00:00+00' + (i/200)*interval '1 hour',case when i<=10000 then 'analytics-owner' else 'other-owner' end,'tempest',i%200,'NPC '||(i%200),'HERO',100,1,timestamptz '2026-10-20 00:00:00+00' + (i/200)*interval '1 hour' from generate_series(1,30000) i`,
     );
     await totals();
-    await client.query('analyze "UserKillStatsBucket"');
+    await client.query('analyze "UserKillBucket"');
 
     const query = new PgDialect().sqlToQuery(
       userKillAnalyticsSql(
