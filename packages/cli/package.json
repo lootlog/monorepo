@@ -26,11 +26,11 @@
     "@lootlog/database": "workspace:*",
     "@lootlog/domain": "workspace:*",
     "@lootlog/schema": "workspace:*",
-    "amqplib": "^2.0.1",
+    "amqplib": "^2.2.0",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
     "node-html-parser": "^9.0.4",
-    "pg": "^8.23.0",
+    "pg": "^8.23.1",
     "random-words": "^2.0.1",
     "zx": "^8.8.5"
   },

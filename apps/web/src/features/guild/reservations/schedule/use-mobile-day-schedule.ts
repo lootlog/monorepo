@@ -2,6 +2,7 @@ import { animate, useMotionValue } from "framer-motion";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
+import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { LABEL_COLUMN_WIDTH, MIN_ROW_HEIGHT } from "./constants";
 import {
   getDaySwipeDirection,
@@ -61,7 +62,11 @@ export function useMobileDaySchedule({
   const suppressClickRef = useRef(false);
   const [selection, setSelection] = useState<DaySelection | null>(null);
   const daySegments = segments.filter((segment) => segment.dayIdx === dayIndex);
-  const isToday = date.toDateString() === new Date().toDateString();
+  const now = new Date(useMinuteTimestamp());
+  const isToday = date.toDateString() === now.toDateString();
+
+  const nowTop =
+    ((now.getHours() * 60 + now.getMinutes()) / 60) * MIN_ROW_HEIGHT;
 
   const updateSelection = (nextSelection: DaySelection | null) => {
     selectionRef.current = nextSelection;
@@ -444,6 +449,7 @@ export function useMobileDaySchedule({
     selectHour,
     isToday,
     nowRef,
+    nowTop,
     selectionStyle,
     daySegments,
     touchSessionRef,

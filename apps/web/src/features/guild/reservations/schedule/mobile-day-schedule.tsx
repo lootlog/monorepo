@@ -44,6 +44,7 @@ export function MobileDaySchedule({
     selectHour,
     isToday,
     nowRef,
+    nowTop,
     selectionStyle,
     daySegments,
     touchSessionRef,
@@ -211,11 +212,7 @@ export function MobileDaySchedule({
                     style={{
                       left: LABEL_COLUMN_WIDTH,
                       right: 0,
-                      top:
-                        ((new Date().getHours() * 60 +
-                          new Date().getMinutes()) /
-                          60) *
-                        MIN_ROW_HEIGHT,
+                      top: nowTop,
                     }}
                   />
                 )}
