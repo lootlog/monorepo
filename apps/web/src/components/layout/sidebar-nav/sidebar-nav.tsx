@@ -44,54 +44,56 @@ export const SidebarNav = ({
           {header}
         </div>
       )}
-      {beforeItems}
-      <nav key={basePath} aria-label={ariaLabel}>
-        <ul className="flex flex-col gap-1.5">
-          {items.map((item) => {
-            const {
-              active,
-              divided,
-              icon,
-              path,
-              label,
-              available,
-              enabled,
-              badge,
-              highlight,
-            } = item;
+      <div className="relative flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto overscroll-contain pb-2 [scrollbar-width:thin]">
+        {beforeItems}
+        <nav key={basePath} aria-label={ariaLabel}>
+          <ul className="flex flex-col gap-1.5">
+            {items.map((item) => {
+              const {
+                active,
+                divided,
+                icon,
+                path,
+                label,
+                available,
+                enabled,
+                badge,
+                highlight,
+              } = item;
 
-            if (!enabled) return null;
+              if (!enabled) return null;
 
-            const url = `${basePath}${path}`;
+              const url = `${basePath}${path}`;
 
-            return (
-              <Fragment key={path}>
-                {divided && (
-                  <li aria-hidden className="list-none">
-                    <Separator />
-                  </li>
-                )}
-                <SidebarNavItem
-                  url={url}
-                  available={available}
-                  isActive={active}
-                  icon={icon}
-                  label={label}
-                  badge={badge}
-                  highlight={highlight}
-                  isRukiaTheme={isRukiaTheme}
-                  isCatTheme={isCatTheme}
-                  onItemClick={() => {
-                    if (isMobile) setOpenMobile(false);
-                  }}
-                />
-              </Fragment>
-            );
-          })}
-        </ul>
-      </nav>
+              return (
+                <Fragment key={path}>
+                  {divided && (
+                    <li aria-hidden className="list-none">
+                      <Separator />
+                    </li>
+                  )}
+                  <SidebarNavItem
+                    url={url}
+                    available={available}
+                    isActive={active}
+                    icon={icon}
+                    label={label}
+                    badge={badge}
+                    highlight={highlight}
+                    isRukiaTheme={isRukiaTheme}
+                    isCatTheme={isCatTheme}
+                    onItemClick={() => {
+                      if (isMobile) setOpenMobile(false);
+                    }}
+                  />
+                </Fragment>
+              );
+            })}
+          </ul>
+        </nav>
+      </div>
       {footer ? (
-        <div className="relative mt-auto px-2 pb-2">{footer}</div>
+        <div className="relative shrink-0 px-2 pb-2">{footer}</div>
       ) : null}
       <ThemeSidebarFooterDecoration />
     </div>
