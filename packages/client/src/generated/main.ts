@@ -28,158 +28,6 @@ import type {
 
 import { mainFetch } from '../mutators';
 import type { ErrorType , BodyType } from '../mutators';
-export type UserFeedResponseDtoOutputItemsItem = {
-  id: string;
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  version: number;
-  groupKey?: string;
-  occurredAt: string;
-  world: string;
-  guild: {
-  id: string;
-  name: string;
-  /** @nullable */
-  vanityUrl: string | null;
-};
-  npc: {
-  id: number;
-  name: string;
-  /** @nullable */
-  type: string | null;
-  /** @nullable */
-  lvl: number | null;
-  /** @nullable */
-  icon: string | null;
-  /** @nullable */
-  prof?: string | null;
-};
-  type: 'kill';
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  count: number;
-} | {
-  id: string;
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  version: number;
-  groupKey?: string;
-  occurredAt: string;
-  world: string;
-  guild: {
-  id: string;
-  name: string;
-  /** @nullable */
-  vanityUrl: string | null;
-};
-  /** @nullable */
-  npc: {
-  id: number;
-  name: string;
-  /** @nullable */
-  type: string | null;
-  /** @nullable */
-  lvl: number | null;
-  /** @nullable */
-  icon: string | null;
-  /** @nullable */
-  prof?: string | null;
-} | null;
-  type: 'loot';
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  lootId: number;
-  summary?: {
-  items: ({
-  id: number;
-  hid: string;
-  name: string;
-  icon: string;
-  stat: string;
-  /** @nullable */
-  type: string | null;
-  /** @nullable */
-  rarity: 'UNIQUE' | 'HEROIC' | 'LEGENDARY' | 'UPGRADED' | null;
-  lvl: number;
-  prof: ('WARRIOR' | 'PALADIN' | 'HUNTER' | 'MAGE' | 'BLADE_DANCER' | 'TRACKER')[];
-})[];
-  players: ({
-  id: string | number;
-  name: string;
-  /** @nullable */
-  lvl: number | null;
-  /** @nullable */
-  prof: 'WARRIOR' | 'PALADIN' | 'HUNTER' | 'MAGE' | 'BLADE_DANCER' | 'TRACKER' | null;
-  /** @nullable */
-  icon: string | null;
-  /** @nullable */
-  characterId: number | null;
-  /** @nullable */
-  accountId: number | null;
-  /** @nullable */
-  hpp: number | null;
-})[];
-  npcs: ({
-  id: number;
-  name: string;
-  /** @nullable */
-  wt: number | null;
-  /** @nullable */
-  lvl: number | null;
-  /** @nullable */
-  prof: 'WARRIOR' | 'PALADIN' | 'HUNTER' | 'MAGE' | 'BLADE_DANCER' | 'TRACKER' | null;
-  /** @nullable */
-  icon: string | null;
-  /** @nullable */
-  type: 'COMMON' | 'ELITE' | 'ELITE2' | 'ELITE3' | 'HERO' | 'EVENT_HERO' | 'COLOSSUS' | 'TITAN' | 'NPC' | null;
-  /** @nullable */
-  margonemType: number | null;
-})[];
-  lootShare: {[key: string]: string[]};
-  location: string;
-};
-  additionalItemsCount: number;
-  items: ({
-  id: number;
-  name: string;
-  icon: string;
-  /** @nullable */
-  rarity: string | null;
-  stat?: string;
-  /** @nullable */
-  type?: string | null;
-  /** @nullable */
-  lvl?: number | null;
-})[];
-};
-
-export interface UserFeedResponseDtoOutput {
-  generatedAt: string;
-  windowStart: string;
-  items: UserFeedResponseDtoOutputItemsItem[];
-}
-
-export type _ReauthenticationRequiredEncodedTag = typeof _ReauthenticationRequiredEncodedTag[keyof typeof _ReauthenticationRequiredEncodedTag];
-
-
-export const _ReauthenticationRequiredEncodedTag = {
-  ReauthenticationRequired: 'ReauthenticationRequired',
-} as const;
-
-export interface ReauthenticationRequiredEncoded {
-  _tag: _ReauthenticationRequiredEncodedTag;
-  code: string;
-  requiresReauth: true;
-}
-
 export type RequestValidationErrorCode = typeof RequestValidationErrorCode[keyof typeof RequestValidationErrorCode];
 
 
@@ -198,6 +46,792 @@ export interface RequestValidationError {
   issues: RequestValidationErrorIssuesItem[];
 }
 
+export type _ReauthenticationRequiredEncodedTag = typeof _ReauthenticationRequiredEncodedTag[keyof typeof _ReauthenticationRequiredEncodedTag];
+
+
+export const _ReauthenticationRequiredEncodedTag = {
+  ReauthenticationRequired: 'ReauthenticationRequired',
+} as const;
+
+export interface ReauthenticationRequiredEncoded {
+  _tag: _ReauthenticationRequiredEncodedTag;
+  code: string;
+  requiresReauth: true;
+}
+
+export interface DocsMutationResponseDto {
+  success: boolean;
+}
+
+export type GuildDocumentResponseDtoSchema0 = string | number | boolean | (GuildDocumentResponseDtoSchema0 | null)[] | {[key: string]: GuildDocumentResponseDtoSchema0 | null} | null;
+
+export type UpdateGuildDocumentDtoSchema0 = string | number | boolean | (UpdateGuildDocumentDtoSchema0 | null)[] | {[key: string]: UpdateGuildDocumentDtoSchema0 | null} | null;
+
+export interface UpdateGuildDocumentDto {
+  content: UpdateGuildDocumentDtoSchema0 | null;
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  title: string;
+}
+
+export type GuildDocumentHistorySnapshotResponseDtoAction = typeof GuildDocumentHistorySnapshotResponseDtoAction[keyof typeof GuildDocumentHistorySnapshotResponseDtoAction];
+
+
+export const GuildDocumentHistorySnapshotResponseDtoAction = {
+  SAVE: 'SAVE',
+  DELETE: 'DELETE',
+  RESTORE: 'RESTORE',
+} as const;
+
+export type GuildDocumentHistorySnapshotResponseDtoActor = {
+  memberId: string;
+  /** @nullable */
+  name: string | null;
+};
+
+export type GuildDocumentHistorySnapshotResponseDtoSchema0 = string | number | boolean | (GuildDocumentHistorySnapshotResponseDtoSchema0 | null)[] | {[key: string]: GuildDocumentHistorySnapshotResponseDtoSchema0 | null} | null;
+
+export interface GuildDocumentHistorySnapshotResponseDto {
+  id: string;
+  documentId: string;
+  guildId: string;
+  version: number;
+  title: string;
+  action: GuildDocumentHistorySnapshotResponseDtoAction;
+  actorMemberId: string;
+  actor: GuildDocumentHistorySnapshotResponseDtoActor;
+  editedAt: string;
+  content: GuildDocumentHistorySnapshotResponseDtoSchema0 | null;
+}
+
+export type GuildDocumentHistoryResponseDtoItemsItemAction = typeof GuildDocumentHistoryResponseDtoItemsItemAction[keyof typeof GuildDocumentHistoryResponseDtoItemsItemAction];
+
+
+export const GuildDocumentHistoryResponseDtoItemsItemAction = {
+  SAVE: 'SAVE',
+  DELETE: 'DELETE',
+  RESTORE: 'RESTORE',
+} as const;
+
+export type GuildDocumentHistoryResponseDtoItemsItemActor = {
+  memberId: string;
+  /** @nullable */
+  name: string | null;
+};
+
+export type GuildDocumentHistoryResponseDtoItemsItem = {
+  id: string;
+  documentId: string;
+  guildId: string;
+  version: number;
+  title: string;
+  action: GuildDocumentHistoryResponseDtoItemsItemAction;
+  actorMemberId: string;
+  actor: GuildDocumentHistoryResponseDtoItemsItemActor;
+  editedAt: string;
+};
+
+export interface GuildDocumentHistoryResponseDto {
+  items: GuildDocumentHistoryResponseDtoItemsItem[];
+}
+
+export type GuildDocumentTrashResponseDtoItemsItemCreatedBy = {
+  memberId: string;
+  /** @nullable */
+  name: string | null;
+};
+
+export type GuildDocumentTrashResponseDtoItemsItemUpdatedBy = {
+  memberId: string;
+  /** @nullable */
+  name: string | null;
+};
+
+export type GuildDocumentTrashResponseDtoItemsItemDeletedBy = {
+  memberId: string;
+  /** @nullable */
+  name: string | null;
+};
+
+export type GuildDocumentTrashResponseDtoItemsItem = {
+  id: string;
+  guildId: string;
+  title: string;
+  version: number;
+  createdByMemberId: string;
+  createdBy: GuildDocumentTrashResponseDtoItemsItemCreatedBy;
+  updatedByMemberId: string;
+  updatedBy: GuildDocumentTrashResponseDtoItemsItemUpdatedBy;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string;
+  deletedByMemberId: string;
+  deletedBy: GuildDocumentTrashResponseDtoItemsItemDeletedBy;
+};
+
+export interface GuildDocumentTrashResponseDto {
+  items: GuildDocumentTrashResponseDtoItemsItem[];
+}
+
+export type GuildDocumentResponseDtoCreatedBy = {
+  memberId: string;
+  /** @nullable */
+  name: string | null;
+};
+
+export type GuildDocumentResponseDtoUpdatedBy = {
+  memberId: string;
+  /** @nullable */
+  name: string | null;
+};
+
+export interface GuildDocumentResponseDto {
+  id: string;
+  guildId: string;
+  title: string;
+  version: number;
+  createdByMemberId: string;
+  createdBy: GuildDocumentResponseDtoCreatedBy;
+  updatedByMemberId: string;
+  updatedBy: GuildDocumentResponseDtoUpdatedBy;
+  createdAt: string;
+  updatedAt: string;
+  content: GuildDocumentResponseDtoSchema0 | null;
+}
+
+export interface CreateGuildDocumentDto {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  title: string;
+}
+
+export type GuildDocumentListResponseDtoItemsItemCreatedBy = {
+  memberId: string;
+  /** @nullable */
+  name: string | null;
+};
+
+export type GuildDocumentListResponseDtoItemsItemUpdatedBy = {
+  memberId: string;
+  /** @nullable */
+  name: string | null;
+};
+
+export type GuildDocumentListResponseDtoItemsItem = {
+  id: string;
+  guildId: string;
+  title: string;
+  version: number;
+  createdByMemberId: string;
+  createdBy: GuildDocumentListResponseDtoItemsItemCreatedBy;
+  updatedByMemberId: string;
+  updatedBy: GuildDocumentListResponseDtoItemsItemUpdatedBy;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GuildDocumentListResponseDtoLimit = {
+  canCreate: boolean;
+  max: number;
+  trashed: number;
+  used: number;
+};
+
+export interface GuildDocumentListResponseDto {
+  items: GuildDocumentListResponseDtoItemsItem[];
+  limit: GuildDocumentListResponseDtoLimit;
+}
+
+export interface RefreshStatsCardResponseDtoOutput {
+  nextRefreshAt: string;
+}
+
+/**
+ * @nullable
+ */
+export type MemberKillsResponseDtoOutputMember = {[key: string]: unknown} & ({
+  memberId: number;
+  memberName: string;
+  /** @nullable */
+  memberAvatar: string | null;
+  memberUserId: string;
+} | null) | null;
+
+export type MemberKillsResponseDtoOutputOverviewParticipationsByType = {[key: string]: number};
+
+/**
+ * @nullable
+ */
+export type MemberKillsResponseDtoOutputOverview = {[key: string]: unknown} & ({
+  totalParticipations: number;
+  participationsByType: MemberKillsResponseDtoOutputOverviewParticipationsByType;
+} | null) | null;
+
+export type MemberKillsResponseDtoOutputNpcsItem = {
+  npcId: number;
+  npcName: string;
+  npcType: string;
+  npcLvl: number;
+  /** @nullable */
+  npcProf: string | null;
+  /** @nullable */
+  npcIcon: string | null;
+  totalKills: number;
+};
+
+/**
+ * @nullable
+ */
+export type MemberKillsResponseDtoOutputPagination = {[key: string]: unknown} & ({
+  total: number;
+  cursor: number;
+  limit: number;
+  hasNext: boolean;
+} | null) | null;
+
+export interface MemberKillsResponseDtoOutput {
+  /** @nullable */
+  member: MemberKillsResponseDtoOutputMember;
+  /** @nullable */
+  overview: MemberKillsResponseDtoOutputOverview;
+  npcs: MemberKillsResponseDtoOutputNpcsItem[];
+  /** @nullable */
+  pagination: MemberKillsResponseDtoOutputPagination;
+}
+
+/**
+ * @nullable
+ */
+export type NpcKillersResponseDtoOutputNpc = {[key: string]: unknown} & ({
+  npcId: number;
+  npcName: string;
+  npcType: string;
+  npcLvl: number;
+  /** @nullable */
+  npcProf: string | null;
+  /** @nullable */
+  npcIcon: string | null;
+  uniqueGuildKills: number;
+  totalMemberParticipations: number;
+} | null) | null;
+
+export type NpcKillersResponseDtoOutputKillersItem = {
+  memberId: number;
+  memberName: string;
+  /** @nullable */
+  memberAvatar: string | null;
+  memberUserId: string;
+  participationCount: number;
+};
+
+export interface NpcKillersResponseDtoOutput {
+  /** @nullable */
+  npc: NpcKillersResponseDtoOutputNpc;
+  killers: NpcKillersResponseDtoOutputKillersItem[];
+}
+
+export type GuildTopKillersByTypeResponseDtoOutputTITANItem = {
+  memberId: number;
+  memberName: string;
+  /** @nullable */
+  memberAvatar: string | null;
+  memberUserId: string;
+  totalParticipations: number;
+};
+
+export type GuildTopKillersByTypeResponseDtoOutputHEROItem = {
+  memberId: number;
+  memberName: string;
+  /** @nullable */
+  memberAvatar: string | null;
+  memberUserId: string;
+  totalParticipations: number;
+};
+
+export type GuildTopKillersByTypeResponseDtoOutputEVENTHEROItem = {
+  memberId: number;
+  memberName: string;
+  /** @nullable */
+  memberAvatar: string | null;
+  memberUserId: string;
+  totalParticipations: number;
+};
+
+export interface GuildTopKillersByTypeResponseDtoOutput {
+  TITAN?: GuildTopKillersByTypeResponseDtoOutputTITANItem[];
+  HERO?: GuildTopKillersByTypeResponseDtoOutputHEROItem[];
+  EVENT_HERO?: GuildTopKillersByTypeResponseDtoOutputEVENTHEROItem[];
+}
+
+export type GuildTopNpcsResponseDtoOutputTopNpcsItem = {
+  npcId: number;
+  npcName: string;
+  npcType: string;
+  npcLvl: number;
+  /** @nullable */
+  npcIcon: string | null;
+  uniqueKills: number;
+};
+
+export interface GuildTopNpcsResponseDtoOutput {
+  topNpcs: GuildTopNpcsResponseDtoOutputTopNpcsItem[];
+}
+
+export type NpcType = typeof NpcType[keyof typeof NpcType];
+
+
+export const NpcType = {
+  COMMON: 'COMMON',
+  ELITE: 'ELITE',
+  ELITE2: 'ELITE2',
+  ELITE3: 'ELITE3',
+  HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
+  COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
+  NPC: 'NPC',
+} as const;
+
+export type UserNpcKillsResponseDtoOutputNpcsItem = {
+  npcId: number;
+  npcName: string;
+  npcType: string;
+  npcLvl: number;
+  /** @nullable */
+  npcProf: string | null;
+  /** @nullable */
+  npcIcon: string | null;
+  totalKills: number;
+};
+
+export type UserNpcKillsResponseDtoOutputPagination = {
+  total: number;
+  cursor: number;
+  limit: number;
+  hasNext: boolean;
+};
+
+export interface UserNpcKillsResponseDtoOutput {
+  npcs: UserNpcKillsResponseDtoOutputNpcsItem[];
+  pagination: UserNpcKillsResponseDtoOutputPagination;
+}
+
+export type UserKillActivityResponseDtoOutputMetaTimezone = typeof UserKillActivityResponseDtoOutputMetaTimezone[keyof typeof UserKillActivityResponseDtoOutputMetaTimezone];
+
+
+export const UserKillActivityResponseDtoOutputMetaTimezone = {
+  'Europe/Warsaw': 'Europe/Warsaw',
+} as const;
+
+export type UserKillActivityResponseDtoOutputMetaCoverage = typeof UserKillActivityResponseDtoOutputMetaCoverage[keyof typeof UserKillActivityResponseDtoOutputMetaCoverage];
+
+
+export const UserKillActivityResponseDtoOutputMetaCoverage = {
+  complete: 'complete',
+  partial: 'partial',
+  unavailable: 'unavailable',
+} as const;
+
+export type UserKillActivityResponseDtoOutputMeta = {
+  timezone: UserKillActivityResponseDtoOutputMetaTimezone;
+  generatedAt: string;
+  /** @minimum 0 */
+  days: number;
+  /** @nullable */
+  world: string | null;
+  startDate: string;
+  endDate: string;
+  /** @nullable */
+  firstBucketAt: string | null;
+  coverage: UserKillActivityResponseDtoOutputMetaCoverage;
+  /** @minimum 0 */
+  allTimeKills: number;
+  /** @minimum 0 */
+  timedKills: number;
+  /** @minimum 0 */
+  untimedKills: number;
+  includesCurrentHour: true;
+};
+
+export type UserKillActivityResponseDtoOutputDailyItem = {
+  date: string;
+  worlds: string[];
+  /** @nullable */
+  kills: number | null;
+  partial: boolean;
+};
+
+export interface UserKillActivityResponseDtoOutput {
+  meta: UserKillActivityResponseDtoOutputMeta;
+  daily: UserKillActivityResponseDtoOutputDailyItem[];
+}
+
+export type UserKillAnalyticsResponseDtoOutputMetaTimezone = typeof UserKillAnalyticsResponseDtoOutputMetaTimezone[keyof typeof UserKillAnalyticsResponseDtoOutputMetaTimezone];
+
+
+export const UserKillAnalyticsResponseDtoOutputMetaTimezone = {
+  'Europe/Warsaw': 'Europe/Warsaw',
+} as const;
+
+export type UserKillAnalyticsResponseDtoOutputMetaCoverage = typeof UserKillAnalyticsResponseDtoOutputMetaCoverage[keyof typeof UserKillAnalyticsResponseDtoOutputMetaCoverage];
+
+
+export const UserKillAnalyticsResponseDtoOutputMetaCoverage = {
+  complete: 'complete',
+  partial: 'partial',
+  unavailable: 'unavailable',
+} as const;
+
+export type UserKillAnalyticsResponseDtoOutputMeta = {
+  timezone: UserKillAnalyticsResponseDtoOutputMetaTimezone;
+  generatedAt: string;
+  /** @minimum 0 */
+  days: number;
+  /** @nullable */
+  world: string | null;
+  startDate: string;
+  endDate: string;
+  /** @nullable */
+  firstBucketAt: string | null;
+  coverage: UserKillAnalyticsResponseDtoOutputMetaCoverage;
+  /** @minimum 0 */
+  allTimeKills: number;
+  /** @minimum 0 */
+  timedKills: number;
+  /** @minimum 0 */
+  untimedKills: number;
+  includesCurrentHour: true;
+};
+
+export type UserKillAnalyticsResponseDtoOutputOverview = {
+  /** @minimum 0 */
+  totalKills: number;
+  /** @minimum 0 */
+  activeDays: number;
+  /** @nullable */
+  averagePerDay: number | null;
+  /** @minimum 0 */
+  currentStreak: number;
+  /** @minimum 0 */
+  longestStreak: number;
+  /** @minimum 0 */
+  uniqueNpcs: number;
+};
+
+export type UserKillAnalyticsResponseDtoOutputDailyItem = {
+  date: string;
+  worlds: string[];
+  /** @nullable */
+  kills: number | null;
+  partial: boolean;
+};
+
+export type UserKillAnalyticsResponseDtoOutputWeeklyItem = {
+  startDate: string;
+  endDate: string;
+  /** @minimum 0 */
+  kills: number;
+  partial: boolean;
+};
+
+export type UserKillAnalyticsResponseDtoOutputComparison = {
+  /** @minimum 0 */
+  currentKills: number;
+  /** @minimum 0 */
+  previousKills: number;
+  deltaKills: number;
+  /** @nullable */
+  deltaPercent: number | null;
+  currentThrough: string;
+  previousThrough: string;
+  partial: boolean;
+};
+
+/**
+ * @nullable
+ */
+export type UserKillAnalyticsResponseDtoOutputRecordsBestDay = {
+  startDate: string;
+  endDate: string;
+  /** @minimum 0 */
+  kills: number;
+  partial: boolean;
+} | null;
+
+/**
+ * @nullable
+ */
+export type UserKillAnalyticsResponseDtoOutputRecordsBestWeek = {
+  startDate: string;
+  endDate: string;
+  /** @minimum 0 */
+  kills: number;
+  partial: boolean;
+} | null;
+
+/**
+ * @nullable
+ */
+export type UserKillAnalyticsResponseDtoOutputRecordsBestMonth = {
+  startDate: string;
+  endDate: string;
+  /** @minimum 0 */
+  kills: number;
+  partial: boolean;
+} | null;
+
+export type UserKillAnalyticsResponseDtoOutputRecords = {
+  /** @nullable */
+  bestDay: UserKillAnalyticsResponseDtoOutputRecordsBestDay;
+  /** @nullable */
+  bestWeek: UserKillAnalyticsResponseDtoOutputRecordsBestWeek;
+  /** @nullable */
+  bestMonth: UserKillAnalyticsResponseDtoOutputRecordsBestMonth;
+};
+
+export type UserKillAnalyticsResponseDtoOutputHourlyWeekdayItem = {
+  /** @minimum 0 */
+  weekday: number;
+  /** @minimum 0 */
+  hour: number;
+  /** @minimum 0 */
+  kills: number;
+};
+
+export type UserKillAnalyticsResponseDtoOutputTypesItem = {
+  npcType: string;
+  /** @minimum 0 */
+  totalKills: number;
+  /** @minimum 0 */
+  uniqueNpcs: number;
+  share: number;
+};
+
+/**
+ * @nullable
+ */
+export type UserKillAnalyticsResponseDtoOutputNpcsItemBestDay = {
+  date: string;
+  /** @nullable */
+  kills: number | null;
+} | null;
+
+export type UserKillAnalyticsResponseDtoOutputNpcsItem = {
+  world: string;
+  npcId: number;
+  npcName: string;
+  npcType: string;
+  npcLvl: number;
+  /** @nullable */
+  npcProf: string | null;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @minimum 0 */
+  totalKills: number;
+  /** @minimum 0 */
+  previousKills: number;
+  /** @minimum 0 */
+  comparisonKills: number;
+  deltaKills: number;
+  /** @nullable */
+  deltaPercent: number | null;
+  share: number;
+  /** @nullable */
+  bestDay: UserKillAnalyticsResponseDtoOutputNpcsItemBestDay;
+};
+
+/**
+ * @nullable
+ */
+export type UserKillAnalyticsResponseDtoOutputNpcGainsItemBestDay = {
+  date: string;
+  /** @nullable */
+  kills: number | null;
+} | null;
+
+export type UserKillAnalyticsResponseDtoOutputNpcGainsItem = {
+  world: string;
+  npcId: number;
+  npcName: string;
+  npcType: string;
+  npcLvl: number;
+  /** @nullable */
+  npcProf: string | null;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @minimum 0 */
+  totalKills: number;
+  /** @minimum 0 */
+  previousKills: number;
+  /** @minimum 0 */
+  comparisonKills: number;
+  deltaKills: number;
+  /** @nullable */
+  deltaPercent: number | null;
+  share: number;
+  /** @nullable */
+  bestDay: UserKillAnalyticsResponseDtoOutputNpcGainsItemBestDay;
+};
+
+export type UserKillAnalyticsResponseDtoOutputWorldsItemDailyItem = {
+  date: string;
+  /** @nullable */
+  kills: number | null;
+};
+
+export type UserKillAnalyticsResponseDtoOutputWorldsItem = {
+  world: string;
+  /** @minimum 0 */
+  totalKills: number;
+  /** @minimum 0 */
+  comparisonKills: number;
+  /** @minimum 0 */
+  previousKills: number;
+  deltaKills: number;
+  /** @nullable */
+  deltaPercent: number | null;
+  share: number;
+  daily: UserKillAnalyticsResponseDtoOutputWorldsItemDailyItem[];
+};
+
+export interface UserKillAnalyticsResponseDtoOutput {
+  meta: UserKillAnalyticsResponseDtoOutputMeta;
+  overview: UserKillAnalyticsResponseDtoOutputOverview;
+  daily: UserKillAnalyticsResponseDtoOutputDailyItem[];
+  weekly: UserKillAnalyticsResponseDtoOutputWeeklyItem[];
+  comparison: UserKillAnalyticsResponseDtoOutputComparison;
+  records: UserKillAnalyticsResponseDtoOutputRecords;
+  hourlyWeekday: UserKillAnalyticsResponseDtoOutputHourlyWeekdayItem[];
+  types: UserKillAnalyticsResponseDtoOutputTypesItem[];
+  npcs: UserKillAnalyticsResponseDtoOutputNpcsItem[];
+  npcGains: UserKillAnalyticsResponseDtoOutputNpcGainsItem[];
+  worlds: UserKillAnalyticsResponseDtoOutputWorldsItem[];
+}
+
+export type UserKillStatsResponseDtoOutputOverviewKillsByType = {
+  COMMON?: number;
+  ELITE?: number;
+  ELITE2?: number;
+  ELITE3?: number;
+  HERO?: number;
+  TITAN?: number;
+  COLOSSUS?: number;
+  NPC?: number;
+  EVENT_HERO?: number;
+};
+
+export type UserKillStatsResponseDtoOutputOverviewKillsByWorld = {[key: string]: number};
+
+export type UserKillStatsResponseDtoOutputOverview = {
+  totalKills: number;
+  killsByType: UserKillStatsResponseDtoOutputOverviewKillsByType;
+  killsByWorld: UserKillStatsResponseDtoOutputOverviewKillsByWorld;
+};
+
+export type UserKillStatsResponseDtoOutputTopNpcsItem = {
+  npcId: number;
+  npcName: string;
+  npcType: string;
+  npcLvl: number;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @nullable */
+  npcProf?: string | null;
+  totalKills: number;
+};
+
+export interface UserKillStatsResponseDtoOutput {
+  overview: UserKillStatsResponseDtoOutputOverview;
+  topNpcs: UserKillStatsResponseDtoOutputTopNpcsItem[];
+}
+
+export type GuildKillStatsResponseDtoOutputOverviewKillsByType = {
+  COMMON?: number;
+  ELITE?: number;
+  ELITE2?: number;
+  ELITE3?: number;
+  HERO?: number;
+  TITAN?: number;
+  COLOSSUS?: number;
+  NPC?: number;
+  EVENT_HERO?: number;
+};
+
+export type GuildKillStatsResponseDtoOutputOverviewParticipationsByType = {
+  COMMON?: number;
+  ELITE?: number;
+  ELITE2?: number;
+  ELITE3?: number;
+  HERO?: number;
+  TITAN?: number;
+  COLOSSUS?: number;
+  NPC?: number;
+  EVENT_HERO?: number;
+};
+
+export type GuildKillStatsResponseDtoOutputOverview = {
+  guildUniqueKills: number;
+  totalMemberParticipations: number;
+  killsByType: GuildKillStatsResponseDtoOutputOverviewKillsByType;
+  participationsByType: GuildKillStatsResponseDtoOutputOverviewParticipationsByType;
+};
+
+export type GuildKillStatsResponseDtoOutputMemberRankingItemParticipationsByType = {
+  COMMON?: number;
+  ELITE?: number;
+  ELITE2?: number;
+  ELITE3?: number;
+  HERO?: number;
+  TITAN?: number;
+  COLOSSUS?: number;
+  NPC?: number;
+  EVENT_HERO?: number;
+};
+
+export type GuildKillStatsResponseDtoOutputMemberRankingItem = {
+  memberId: number;
+  memberName: string;
+  /** @nullable */
+  memberAvatar: string | null;
+  memberUserId: string;
+  totalParticipations: number;
+  participationsByType: GuildKillStatsResponseDtoOutputMemberRankingItemParticipationsByType;
+};
+
+export interface GuildKillStatsResponseDtoOutput {
+  overview: GuildKillStatsResponseDtoOutputOverview;
+  memberRanking: GuildKillStatsResponseDtoOutputMemberRankingItem[];
+}
+
+export interface CreateKillResponseDtoOutput {
+  updated: number;
+  deduplicated?: boolean;
+}
+
+export type CreateKillDtoNpc = {
+  id: number;
+  /** @minLength 1 */
+  name: string;
+  lvl: number;
+  prof?: string;
+  wt: number;
+  icon?: string;
+};
+
+export interface CreateKillDto {
+  /** @minLength 1 */
+  world: string;
+  npc: CreateKillDtoNpc;
+  /** @minLength 1 */
+  characterId: string;
+  /** @minLength 1 */
+  accountId: string;
+}
+
 export type StatusOkResponseDtoOutputStatus = typeof StatusOkResponseDtoOutputStatus[keyof typeof StatusOkResponseDtoOutputStatus];
 
 
@@ -209,191 +843,7337 @@ export interface StatusOkResponseDtoOutput {
   status: StatusOkResponseDtoOutputStatus;
 }
 
-export type HttpErrorResponse = {[key: string]: unknown} & {
-  code?: string;
-  message?: unknown;
+export type MapTemplateResponseDtoMapsItem = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  name: string;
 };
 
-export type UserPreferencesResponseDtoOutputChatAppearanceNpcLayout = typeof UserPreferencesResponseDtoOutputChatAppearanceNpcLayout[keyof typeof UserPreferencesResponseDtoOutputChatAppearanceNpcLayout];
+export interface MapTemplateResponseDto {
+  id: string;
+  guildId: string;
+  name: string;
+  maps: MapTemplateResponseDtoMapsItem[];
+  createdAt: string;
+}
+
+export type CreateMapTemplateDtoMapsItem = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  name: string;
+};
+
+export interface CreateMapTemplateDto {
+  name: string;
+  /** @minItems 1 */
+  maps: CreateMapTemplateDtoMapsItem[];
+}
+
+export interface GameMapResponseDtoOutput {
+  id: number;
+  name: string;
+}
+
+export type PinnedEventResponseDtoEventHeroNpcsItem = {
+  id: string;
+  /** @nullable */
+  npcId: number | null;
+  npcName: string;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @nullable */
+  npcLvl: number | null;
+};
+
+export type PinnedEventResponseDtoEvent = {
+  id: string;
+  guildId: string;
+  name: string;
+  world: string;
+  active: boolean;
+  /** @nullable */
+  startsAt: string | null;
+  /** @nullable */
+  endsAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  heroNpcs: PinnedEventResponseDtoEventHeroNpcsItem[];
+};
+
+export interface PinnedEventResponseDto {
+  pinnedAt: string;
+  event: PinnedEventResponseDtoEvent;
+}
+
+export interface OpenRespawnWindowDto {
+  /** @minLength 1 */
+  minSpawnTime: string;
+  /** @minLength 1 */
+  maxSpawnTime: string;
+}
+
+export interface CloseRespawnWindowDto {
+  createNewWindow?: boolean;
+  newMinSpawnTime?: string;
+  newMaxSpawnTime?: string;
+}
+
+export type HeroRespawnConfigResponseDtoWindowStatus = typeof HeroRespawnConfigResponseDtoWindowStatus[keyof typeof HeroRespawnConfigResponseDtoWindowStatus];
 
 
-export const UserPreferencesResponseDtoOutputChatAppearanceNpcLayout = {
-  tile: 'tile',
-  inline: 'inline',
-  text: 'text',
+export const HeroRespawnConfigResponseDtoWindowStatus = {
+  OPEN: 'OPEN',
+  WAITING: 'WAITING',
+  OVERDUE: 'OVERDUE',
+  NONE: 'NONE',
 } as const;
 
-export type UserPreferencesResponseDtoOutputChatAppearance = {
-  npcLayout: UserPreferencesResponseDtoOutputChatAppearanceNpcLayout;
+export interface HeroRespawnConfigResponseDto {
+  hasTimer: boolean;
+  windowStatus: HeroRespawnConfigResponseDtoWindowStatus;
+  /** @nullable */
+  minSpawnTime: string | null;
+  /** @nullable */
+  maxSpawnTime: string | null;
+  /** @nullable */
+  overdueMs: number | null;
+}
+
+export type HeroPresenceStatsResponseDtoMemberStatsItem = {
+  memberId: number;
+  memberName: string;
+  /** @nullable */
+  memberAvatar: string | null;
+  totalTimeSeconds: number;
+  afkTimeSeconds: number;
+  afkPercentage: number;
+};
+
+export interface HeroPresenceStatsResponseDto {
+  totalCoverageSeconds: number;
+  totalEventSeconds: number;
+  presencePercentage: number;
+  memberStats: HeroPresenceStatsResponseDtoMemberStatsItem[];
+}
+
+export type CoverageGapResponseDtoGapType = typeof CoverageGapResponseDtoGapType[keyof typeof CoverageGapResponseDtoGapType];
+
+
+export const CoverageGapResponseDtoGapType = {
+  UNASSIGNED: 'UNASSIGNED',
+  UNCOVERED: 'UNCOVERED',
+} as const;
+
+export interface CoverageGapResponseDto {
+  id: string;
+  mapId: string;
+  heroNpcId: string;
+  gapType: CoverageGapResponseDtoGapType;
+  startedAt: string;
+  /** @nullable */
+  endedAt: string | null;
+  /** @nullable */
+  durationSeconds: number | null;
+}
+
+export type NullableCoverageGapResponseDtoGapType = typeof NullableCoverageGapResponseDtoGapType[keyof typeof NullableCoverageGapResponseDtoGapType];
+
+
+export const NullableCoverageGapResponseDtoGapType = {
+  UNASSIGNED: 'UNASSIGNED',
+  UNCOVERED: 'UNCOVERED',
+} as const;
+
+/**
+ * @nullable
+ */
+export type NullableCoverageGapResponseDto = {[key: string]: unknown} & ({
+  id: string;
+  mapId: string;
+  heroNpcId: string;
+  gapType: NullableCoverageGapResponseDtoGapType;
+  startedAt: string;
+  /** @nullable */
+  endedAt: string | null;
+  /** @nullable */
+  durationSeconds: number | null;
+} | null) | null;
+
+export type HeroCoverageGapResponseDtoGapType = typeof HeroCoverageGapResponseDtoGapType[keyof typeof HeroCoverageGapResponseDtoGapType];
+
+
+export const HeroCoverageGapResponseDtoGapType = {
+  UNASSIGNED: 'UNASSIGNED',
+  UNCOVERED: 'UNCOVERED',
+} as const;
+
+export type HeroCoverageGapResponseDtoMap = {
+  mapName: string;
+  mapId: number;
+};
+
+export interface HeroCoverageGapResponseDto {
+  id: string;
+  mapId: string;
+  heroNpcId: string;
+  gapType: HeroCoverageGapResponseDtoGapType;
+  startedAt: string;
+  /** @nullable */
+  endedAt: string | null;
+  /** @nullable */
+  durationSeconds: number | null;
+  map: HeroCoverageGapResponseDtoMap;
+}
+
+export type KillTimelineMapResponseDtoAssignmentsItem = {
+  memberId: number;
+  memberName: string;
+  /** @nullable */
+  memberAvatar: string | null;
+  memberUserId: string;
+  assignedAt: string;
+  /** @nullable */
+  unassignedAt: string | null;
+};
+
+export type KillTimelineMapResponseDtoGapsItemGapType = typeof KillTimelineMapResponseDtoGapsItemGapType[keyof typeof KillTimelineMapResponseDtoGapsItemGapType];
+
+
+export const KillTimelineMapResponseDtoGapsItemGapType = {
+  UNASSIGNED: 'UNASSIGNED',
+  UNCOVERED: 'UNCOVERED',
+} as const;
+
+export type KillTimelineMapResponseDtoGapsItem = {
+  id: string;
+  gapType: KillTimelineMapResponseDtoGapsItemGapType;
+  startedAt: string;
+  /** @nullable */
+  endedAt: string | null;
+  /** @nullable */
+  durationSeconds: number | null;
+};
+
+export interface KillTimelineMapResponseDto {
+  mapId: string;
+  mapName: string;
+  numericMapId: number;
+  assignments: KillTimelineMapResponseDtoAssignmentsItem[];
+  gaps: KillTimelineMapResponseDtoGapsItem[];
+}
+
+export type EventCoordinationResponseDtoSummary = {
+  criticalCount: number;
+  warningCount: number;
+  coveredMaps: number;
+  totalMaps: number;
+  /** @nullable */
+  nextSpawnAt: string | null;
+};
+
+export type EventCoordinationResponseDtoHeroesItemTimerStatus = typeof EventCoordinationResponseDtoHeroesItemTimerStatus[keyof typeof EventCoordinationResponseDtoHeroesItemTimerStatus];
+
+
+export const EventCoordinationResponseDtoHeroesItemTimerStatus = {
+  OPEN: 'OPEN',
+  WAITING: 'WAITING',
+  OVERDUE: 'OVERDUE',
+  NONE: 'NONE',
+} as const;
+
+/**
+ * @nullable
+ */
+export type EventCoordinationResponseDtoHeroesItemTimer = {[key: string]: unknown} & ({
+  npcId: number;
+  world: string;
+  minSpawnTime: string;
+  maxSpawnTime: string;
+  status: EventCoordinationResponseDtoHeroesItemTimerStatus;
+  /** @nullable */
+  overdueMs: number | null;
+} | null) | null;
+
+export type EventCoordinationResponseDtoHeroesItemCoverage = {
+  totalMaps: number;
+  assignedMaps: number;
+  coveredMaps: number;
+  unassignedMaps: number;
+  uncoveredMaps: number;
+  activeGapCount: number;
+};
+
+export type EventCoordinationResponseDtoHeroesItemActiveGapsItemGapType = typeof EventCoordinationResponseDtoHeroesItemActiveGapsItemGapType[keyof typeof EventCoordinationResponseDtoHeroesItemActiveGapsItemGapType];
+
+
+export const EventCoordinationResponseDtoHeroesItemActiveGapsItemGapType = {
+  UNASSIGNED: 'UNASSIGNED',
+  UNCOVERED: 'UNCOVERED',
+} as const;
+
+export type EventCoordinationResponseDtoHeroesItemActiveGapsItem = {
+  id: string;
+  mapId: string;
+  numericMapId: number;
+  mapName: string;
+  gapType: EventCoordinationResponseDtoHeroesItemActiveGapsItemGapType;
+  startedAt: string;
+  durationSeconds: number;
+};
+
+export type EventCoordinationResponseDtoHeroesItemPriority = typeof EventCoordinationResponseDtoHeroesItemPriority[keyof typeof EventCoordinationResponseDtoHeroesItemPriority];
+
+
+export const EventCoordinationResponseDtoHeroesItemPriority = {
+  CRITICAL: 'CRITICAL',
+  WARNING: 'WARNING',
+  OK: 'OK',
+  IDLE: 'IDLE',
+} as const;
+
+export type EventCoordinationResponseDtoHeroesItemRecommendedAction = typeof EventCoordinationResponseDtoHeroesItemRecommendedAction[keyof typeof EventCoordinationResponseDtoHeroesItemRecommendedAction];
+
+
+export const EventCoordinationResponseDtoHeroesItemRecommendedAction = {
+  CLOSE_WINDOW: 'CLOSE_WINDOW',
+  ASSIGN_MAPS: 'ASSIGN_MAPS',
+  JOIN_MAP: 'JOIN_MAP',
+  WAIT: 'WAIT',
+  NONE: 'NONE',
+} as const;
+
+export type EventCoordinationResponseDtoHeroesItem = {
+  heroId: string;
+  /** @nullable */
+  npcId: number | null;
+  npcName: string;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @nullable */
+  npcLvl: number | null;
+  /** @nullable */
+  timer: EventCoordinationResponseDtoHeroesItemTimer;
+  coverage: EventCoordinationResponseDtoHeroesItemCoverage;
+  activeGaps: EventCoordinationResponseDtoHeroesItemActiveGapsItem[];
+  priority: EventCoordinationResponseDtoHeroesItemPriority;
+  recommendedAction: EventCoordinationResponseDtoHeroesItemRecommendedAction;
+};
+
+export interface EventCoordinationResponseDto {
+  assignmentTimeoutMinutes: number;
+  generatedAt: string;
+  eventId: string;
+  world: string;
+  summary: EventCoordinationResponseDtoSummary;
+  heroes: EventCoordinationResponseDtoHeroesItem[];
+}
+
+export interface UpdateKillPointDto {
+  pointsDelta: number;
+  /** @maxLength 500 */
+  comment?: string;
+}
+
+export type KillDetailResponseDtoKillHeroNpcEvent = {
+  id: string;
+  name: string;
+  world: string;
+};
+
+export type KillDetailResponseDtoKillHeroNpc = {
+  id: string;
+  /** @nullable */
+  npcId: number | null;
+  npcName: string;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @nullable */
+  npcLvl: number | null;
+  event: KillDetailResponseDtoKillHeroNpcEvent;
+};
+
+/**
+ * @nullable
+ */
+export type KillDetailResponseDtoKillTimerCreatedBy = {[key: string]: unknown} & ({
+  id: number;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+  userId: string;
+} | null) | null;
+
+export type KillDetailResponseDtoKillPointsItemMemberRolesItem = {
+  /** @nullable */
+  position: number | null;
+  /** @nullable */
+  color: number | null;
+};
+
+export type KillDetailResponseDtoKillPointsItemMember = {
+  id: number;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+  userId: string;
+  roles: KillDetailResponseDtoKillPointsItemMemberRolesItem[];
+};
+
+export type KillDetailResponseDtoKillPointsItemMapDataItem = {
+  mapId: string;
+  mapName: string;
+  assignedAt: string;
+  /** @nullable */
+  unassignedAt: string | null;
+  assignmentDurationSeconds: number;
+  presenceTimeSeconds: number;
+  afkTimeSeconds: number;
+};
+
+export type KillDetailResponseDtoSchema0 = string | number | boolean | (KillDetailResponseDtoSchema0 | null)[] | {[key: string]: KillDetailResponseDtoSchema0 | null} | null;
+
+export type KillDetailResponseDtoKillPointsItem = {
+  id: string;
+  memberId: number;
+  points: number;
+  basePoints: number;
+  /** @nullable */
+  manualAdjustmentPoints?: number | null;
+  /** @nullable */
+  trackingDurationSeconds: number | null;
+  /** @nullable */
+  trackingDurationPercentage: number | null;
+  timeOnMapSeconds: number;
+  afkPercentage: number;
+  wasPresent: boolean;
+  bonusBreakdown?: KillDetailResponseDtoSchema0 | null;
+  member: KillDetailResponseDtoKillPointsItemMember;
+  mapData?: KillDetailResponseDtoKillPointsItemMapDataItem[];
+};
+
+export type KillDetailResponseDtoKill = {
+  id: string;
+  heroNpcId: string;
+  killedAt: string;
+  minSpawnTimeAtKill: string;
+  maxSpawnTimeAtKill: string;
+  /** @nullable */
+  timerCreatedById: number | null;
+  isManualClose: boolean;
+  /** @nullable */
+  respawnDurationSeconds: number | null;
+  /** @nullable */
+  windowDurationSeconds: number | null;
+  /** @nullable */
+  resolvedAfterMaxSpawnTimeMs: number | null;
+  heroNpc: KillDetailResponseDtoKillHeroNpc;
+  /** @nullable */
+  timerCreatedBy: KillDetailResponseDtoKillTimerCreatedBy;
+  points: KillDetailResponseDtoKillPointsItem[];
+};
+
+export type KillDetailResponseDtoEventConfigScoringMode = typeof KillDetailResponseDtoEventConfigScoringMode[keyof typeof KillDetailResponseDtoEventConfigScoringMode];
+
+
+export const KillDetailResponseDtoEventConfigScoringMode = {
+  SIMPLE: 'SIMPLE',
+  ADVANCED: 'ADVANCED',
+} as const;
+
+export type KillDetailResponseDtoEventConfig = {
+  scoringMode: KillDetailResponseDtoEventConfigScoringMode;
+  scoringRules: KillDetailResponseDtoSchema0 | null;
+};
+
+export interface KillDetailResponseDto {
+  kill: KillDetailResponseDtoKill;
+  eventConfig: KillDetailResponseDtoEventConfig;
+}
+
+export type EventKillHistoryResponseDtoDataItemHeroNpc = {
+  id: string;
+  /** @nullable */
+  npcId: number | null;
+  npcName: string;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @nullable */
+  npcLvl: number | null;
+};
+
+export type EventKillHistoryResponseDtoDataItemPointsItemMember = {
+  id: number;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+  userId: string;
+};
+
+export type EventKillHistoryResponseDtoDataItemPointsItemMapDataItem = {
+  mapId: string;
+  mapName: string;
+  assignedAt: string;
+  /** @nullable */
+  unassignedAt: string | null;
+  assignmentDurationSeconds: number;
+  presenceTimeSeconds: number;
+  afkTimeSeconds: number;
+};
+
+export type EventKillHistoryResponseDtoSchema0 = string | number | boolean | (EventKillHistoryResponseDtoSchema0 | null)[] | {[key: string]: EventKillHistoryResponseDtoSchema0 | null} | null;
+
+export type EventKillHistoryResponseDtoDataItemPointsItem = {
+  id: string;
+  memberId: number;
+  points: number;
+  basePoints: number;
+  /** @nullable */
+  manualAdjustmentPoints?: number | null;
+  /** @nullable */
+  trackingDurationSeconds: number | null;
+  /** @nullable */
+  trackingDurationPercentage: number | null;
+  timeOnMapSeconds: number;
+  afkPercentage: number;
+  wasPresent: boolean;
+  bonusBreakdown?: EventKillHistoryResponseDtoSchema0 | null;
+  member: EventKillHistoryResponseDtoDataItemPointsItemMember;
+  mapData?: EventKillHistoryResponseDtoDataItemPointsItemMapDataItem[];
+};
+
+export type EventKillHistoryResponseDtoDataItem = {
+  id: string;
+  heroNpcId: string;
+  killedAt: string;
+  minSpawnTimeAtKill: string;
+  maxSpawnTimeAtKill: string;
+  isManualClose: boolean;
+  heroNpc: EventKillHistoryResponseDtoDataItemHeroNpc;
+  points: EventKillHistoryResponseDtoDataItemPointsItem[];
+};
+
+export interface EventKillHistoryResponseDto {
+  data: EventKillHistoryResponseDtoDataItem[];
+  /** @nullable */
+  nextCursor: string | null;
+}
+
+export type EventMemberKillHistoryResponseDtoMember = {
+  id: number;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+  userId: string;
+};
+
+export type EventMemberKillHistoryResponseDtoDataItemHeroNpc = {
+  id: string;
+  /** @nullable */
+  npcId: number | null;
+  npcName: string;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @nullable */
+  npcLvl: number | null;
+};
+
+export type EventMemberKillHistoryResponseDtoDataItemMemberPointMember = {
+  id: number;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+  userId: string;
+};
+
+export type EventMemberKillHistoryResponseDtoDataItemMemberPointMapDataItem = {
+  mapId: string;
+  mapName: string;
+  assignedAt: string;
+  /** @nullable */
+  unassignedAt: string | null;
+  assignmentDurationSeconds: number;
+  presenceTimeSeconds: number;
+  afkTimeSeconds: number;
+};
+
+export type EventMemberKillHistoryResponseDtoSchema0 = string | number | boolean | (EventMemberKillHistoryResponseDtoSchema0 | null)[] | {[key: string]: EventMemberKillHistoryResponseDtoSchema0 | null} | null;
+
+/**
+ * @nullable
+ */
+export type EventMemberKillHistoryResponseDtoDataItemMemberPoint = {[key: string]: unknown} & ({
+  id: string;
+  memberId: number;
+  points: number;
+  basePoints: number;
+  /** @nullable */
+  manualAdjustmentPoints?: number | null;
+  /** @nullable */
+  trackingDurationSeconds: number | null;
+  /** @nullable */
+  trackingDurationPercentage: number | null;
+  timeOnMapSeconds: number;
+  afkPercentage: number;
+  wasPresent: boolean;
+  bonusBreakdown?: EventMemberKillHistoryResponseDtoSchema0 | null;
+  member: EventMemberKillHistoryResponseDtoDataItemMemberPointMember;
+  mapData?: EventMemberKillHistoryResponseDtoDataItemMemberPointMapDataItem[];
+} | null) | null;
+
+export type EventMemberKillHistoryResponseDtoDataItem = {
+  id: string;
+  heroNpcId: string;
+  killedAt: string;
+  minSpawnTimeAtKill: string;
+  maxSpawnTimeAtKill: string;
+  isManualClose: boolean;
+  heroNpc: EventMemberKillHistoryResponseDtoDataItemHeroNpc;
+  /** @nullable */
+  memberPoint: EventMemberKillHistoryResponseDtoDataItemMemberPoint;
+};
+
+export interface EventMemberKillHistoryResponseDto {
+  member: EventMemberKillHistoryResponseDtoMember;
+  data: EventMemberKillHistoryResponseDtoDataItem[];
+  /** @nullable */
+  nextCursor: string | null;
+}
+
+export type KillHistoryEventResponseKind = typeof KillHistoryEventResponseKind[keyof typeof KillHistoryEventResponseKind];
+
+
+export const KillHistoryEventResponseKind = {
+  event: 'event',
+} as const;
+
+export type KillHistoryEntryHeroNpc = {
+  id: string;
+  /** @nullable */
+  npcId: number | null;
+  npcName: string;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @nullable */
+  npcLvl: number | null;
+};
+
+export interface KillHistoryEntry {
+  id: string;
+  heroNpcId: string;
+  killedAt: string;
+  minSpawnTimeAtKill: string;
+  maxSpawnTimeAtKill: string;
+  isManualClose: boolean;
+  heroNpc: KillHistoryEntryHeroNpc;
   /**
-     * @minimum 70
-     * @maximum 150
+     * Number of recorded participants with a point record, including participants marked absent.
+     * @minimum 0
+     * @maximum 9007199254740991
      */
-  fontScalePercent: number;
+  participantCount: number;
+}
+
+export interface KillHistoryEventResponse {
+  kind: KillHistoryEventResponseKind;
+  data: KillHistoryEntry[];
+  /** @nullable */
+  nextCursor: string | null;
+}
+
+export type KillHistoryMemberResponseKind = typeof KillHistoryMemberResponseKind[keyof typeof KillHistoryMemberResponseKind];
+
+
+export const KillHistoryMemberResponseKind = {
+  member: 'member',
+} as const;
+
+export type KillHistoryBonusBreakdown = string | number | boolean | (KillHistoryBonusBreakdown | null)[] | {[key: string]: KillHistoryBonusBreakdown | null} | null;
+
+export interface KillHistoryMemberPoint {
+  points: number;
+  basePoints: number;
+  /** @nullable */
+  manualAdjustmentPoints: number | null;
+  bonusBreakdown: KillHistoryBonusBreakdown | null;
+  /** @nullable */
+  trackingDurationSeconds: number | null;
+  /** @nullable */
+  trackingDurationPercentage: number | null;
+}
+
+export type KillHistoryMemberEntryHeroNpc = {
+  id: string;
+  /** @nullable */
+  npcId: number | null;
+  npcName: string;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @nullable */
+  npcLvl: number | null;
+};
+
+export interface KillHistoryMemberEntry {
+  id: string;
+  heroNpcId: string;
+  killedAt: string;
+  minSpawnTimeAtKill: string;
+  maxSpawnTimeAtKill: string;
+  isManualClose: boolean;
+  heroNpc: KillHistoryMemberEntryHeroNpc;
+  /**
+     * Number of recorded participants with a point record, including participants marked absent.
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  participantCount: number;
+  memberPoint: KillHistoryMemberPoint;
+}
+
+export type KillHistoryMemberResponseMember = {
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  id: number;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+  userId: string;
+};
+
+export interface KillHistoryMemberResponse {
+  kind: KillHistoryMemberResponseKind;
+  member: KillHistoryMemberResponseMember;
+  data: KillHistoryMemberEntry[];
+  /** @nullable */
+  nextCursor: string | null;
+}
+
+export type KillHistoryResponse = KillHistoryEventResponse | KillHistoryMemberResponse;
+
+export interface EventHeroStatsResponseDto {
+  heroId: string;
+  /** @nullable */
+  npcId: number | null;
+  npcName: string;
+  /** @nullable */
+  npcLvl: number | null;
+  /** @nullable */
+  npcProf: string | null;
+  killCount: number;
+}
+
+export type EventTimerResponseDtoNpc = {
+  name: string;
+  /** @nullable */
+  icon: string | null;
+};
+
+export interface EventTimerResponseDto {
+  npcId: number;
+  world: string;
+  minSpawnTime: string;
+  maxSpawnTime: string;
+  npc: EventTimerResponseDtoNpc;
+}
+
+export interface UpdateRankingPointsDto {
+  pointsDelta: number;
+  /** @maxLength 500 */
+  comment?: string;
+}
+
+export type EventRankingEntryResponseDtoMemberRolesItem = {
+  position: number;
+  /** @nullable */
+  color: number | null;
+};
+
+export type EventRankingEntryResponseDtoMember = {
+  id: number;
+  name: string;
+  roles: EventRankingEntryResponseDtoMemberRolesItem[];
+};
+
+export type EventRankingEntryResponseDtoEditHistoryItemEditType = typeof EventRankingEntryResponseDtoEditHistoryItemEditType[keyof typeof EventRankingEntryResponseDtoEditHistoryItemEditType];
+
+
+export const EventRankingEntryResponseDtoEditHistoryItemEditType = {
+  KILL_POINT: 'KILL_POINT',
+  RANKING: 'RANKING',
+} as const;
+
+export type EventRankingEntryResponseDtoEditHistoryItem = {
+  id: string;
+  rankingId: string;
+  previousPoints: number;
+  newPoints: number;
+  deltaPoints: number;
+  editType: EventRankingEntryResponseDtoEditHistoryItemEditType;
+  editedByUserId: string;
+  /** @nullable */
+  editedByName: string | null;
+  /** @nullable */
+  comment: string | null;
+  editedAt: string;
+};
+
+export interface EventRankingEntryResponseDto {
+  id: string;
+  eventId: string;
+  memberId: number;
+  heroNpcName: string;
+  totalPoints: number;
+  totalKills: number;
+  totalTimeSeconds: number;
+  avgAfkPercentage: number;
+  pointsModified: boolean;
+  updatedAt: string;
+  member: EventRankingEntryResponseDtoMember;
+  editHistory: EventRankingEntryResponseDtoEditHistoryItem[];
+}
+
+export interface ConfirmParticipationForKillResponseDtoOutput {
+  success: boolean;
+  confirmedNow: boolean;
+}
+
+export interface AcknowledgeExpiredParticipationConfirmationsResponseDtoOutput {
   /**
      * @minimum 0
-     * @maximum 16
-     */
-  messageGapPx: number;
-  showTimestamp: boolean;
-  showGuildLabel: boolean;
-  showNpcAvatar: boolean;
-  showNpcLevel: boolean;
-  showNpcLocationAndCoordinates: boolean;
-};
-
-export type UserPreferencesResponseDtoOutputMutesPlayersItem = {
-  /** @minLength 1 */
-  discordId: string;
-  displayName: string;
-};
-
-export type UserPreferencesResponseDtoOutputMutesNpcsItemNpcType = typeof UserPreferencesResponseDtoOutputMutesNpcsItemNpcType[keyof typeof UserPreferencesResponseDtoOutputMutesNpcsItemNpcType];
-
-
-export const UserPreferencesResponseDtoOutputMutesNpcsItemNpcType = {
-  ELITE2: 'ELITE2',
-  HERO: 'HERO',
-  COLOSSUS: 'COLOSSUS',
-  TITAN: 'TITAN',
-} as const;
-
-export type UserPreferencesResponseDtoOutputMutesNpcsItem = {
-  /** @minLength 1 */
-  npcKey: string;
-  /**
-     * @minimum -9007199254740991
      * @maximum 9007199254740991
      */
-  npcId: number;
-  /** @minLength 1 */
-  name: string;
-  npcType: UserPreferencesResponseDtoOutputMutesNpcsItemNpcType;
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  lvl: number;
-  /** @nullable */
-  prof: string | null;
-  /** @nullable */
-  icon: string | null;
-};
-
-export type UserPreferencesResponseDtoOutputMutes = {
-  players: UserPreferencesResponseDtoOutputMutesPlayersItem[];
-  npcs: UserPreferencesResponseDtoOutputMutesNpcsItem[];
-};
-
-export interface UserPreferencesResponseDtoOutput {
-  userId: string;
-  guildsOrder: string[];
-  hiddenGuildIds: string[];
-  theme: string;
-  chatAppearance: UserPreferencesResponseDtoOutputChatAppearance;
-  mutes: UserPreferencesResponseDtoOutputMutes;
+  acknowledgedCount: number;
 }
 
-export type UpdateUserPreferencesDtoTheme = typeof UpdateUserPreferencesDtoTheme[keyof typeof UpdateUserPreferencesDtoTheme];
-
-
-export const UpdateUserPreferencesDtoTheme = {
-  default: 'default',
-  muted: 'muted',
-  cyberpunk: 'cyberpunk',
-  pastel: 'pastel',
-  fantasy: 'fantasy',
-  shonen: 'shonen',
-  onepiece: 'onepiece',
-  anime: 'anime',
-  goth: 'goth',
-  halloween: 'halloween',
-  realmadrid: 'realmadrid',
-  'realmadrid-3rd': 'realmadrid-3rd',
-  barcelona: 'barcelona',
-  waguri: 'waguri',
-  rukia: 'rukia',
-  rias: 'rias',
-  'cat-pink': 'cat-pink',
-  'cat-purple': 'cat-purple',
-  'cat-blue': 'cat-blue',
-  'cat-random': 'cat-random',
-} as const;
-
-export type UpdateUserPreferencesDtoChatAppearanceNpcLayout = typeof UpdateUserPreferencesDtoChatAppearanceNpcLayout[keyof typeof UpdateUserPreferencesDtoChatAppearanceNpcLayout];
-
-
-export const UpdateUserPreferencesDtoChatAppearanceNpcLayout = {
-  tile: 'tile',
-  inline: 'inline',
-  text: 'text',
-} as const;
-
-export type UpdateUserPreferencesDtoChatAppearance = {
-  npcLayout?: UpdateUserPreferencesDtoChatAppearanceNpcLayout;
-  fontScalePercent?: number;
-  messageGapPx?: number;
-  showTimestamp?: boolean;
-  showGuildLabel?: boolean;
-  showNpcAvatar?: boolean;
-  showNpcLevel?: boolean;
-  showNpcLocationAndCoordinates?: boolean;
-};
-
-export type UpdateUserPreferencesDtoMutesPlayersItem = {
-  /** @minLength 1 */
-  discordId: string;
-  displayName: string;
-};
-
-export type UpdateUserPreferencesDtoMutesNpcsItemNpcType = typeof UpdateUserPreferencesDtoMutesNpcsItemNpcType[keyof typeof UpdateUserPreferencesDtoMutesNpcsItemNpcType];
-
-
-export const UpdateUserPreferencesDtoMutesNpcsItemNpcType = {
-  ELITE2: 'ELITE2',
-  HERO: 'HERO',
-  COLOSSUS: 'COLOSSUS',
-  TITAN: 'TITAN',
-} as const;
-
-export type UpdateUserPreferencesDtoMutesNpcsItem = {
-  /** @minLength 1 */
-  npcKey: string;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  npcId: number;
-  /** @minLength 1 */
-  name: string;
-  npcType: UpdateUserPreferencesDtoMutesNpcsItemNpcType;
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  lvl: number;
-  /** @nullable */
-  prof: string | null;
-  /** @nullable */
-  icon: string | null;
-};
-
-export type UpdateUserPreferencesDtoMutes = {
-  players?: UpdateUserPreferencesDtoMutesPlayersItem[];
-  npcs?: UpdateUserPreferencesDtoMutesNpcsItem[];
-};
-
-export interface UpdateUserPreferencesDto {
+export interface AcknowledgeExpiredParticipationConfirmationsDto {
   /** @minItems 1 */
-  guildsOrder?: string[];
-  /** @items.minLength 1 */
-  hiddenGuildIds?: string[];
-  theme?: UpdateUserPreferencesDtoTheme;
-  chatAppearance?: UpdateUserPreferencesDtoChatAppearance;
-  mutes?: UpdateUserPreferencesDtoMutes;
+  killIds: string[];
 }
 
-export interface UserCurrentGuildResponseDtoOutput {
+export type PendingParticipationConfirmationsResponseDtoItemsItemHeroNpc = {
+  id: string;
+  /** @nullable */
+  npcId: number | null;
+  npcName: string;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @nullable */
+  npcLvl: number | null;
+};
+
+export type PendingParticipationConfirmationsResponseDtoItemsItem = {
+  killId: string;
+  killedAt: string;
+  confirmationDeadlineAt: string;
+  heroNpc: PendingParticipationConfirmationsResponseDtoItemsItemHeroNpc;
+};
+
+export type PendingParticipationConfirmationsResponseDtoExpiredItemsItemHeroNpc = {
+  id: string;
+  /** @nullable */
+  npcId: number | null;
+  npcName: string;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @nullable */
+  npcLvl: number | null;
+};
+
+export type PendingParticipationConfirmationsResponseDtoExpiredItemsItem = {
+  killId: string;
+  killedAt: string;
+  confirmationDeadlineAt: string;
+  heroNpc: PendingParticipationConfirmationsResponseDtoExpiredItemsItemHeroNpc;
+};
+
+export interface PendingParticipationConfirmationsResponseDto {
+  items: PendingParticipationConfirmationsResponseDtoItemsItem[];
+  expiredItems: PendingParticipationConfirmationsResponseDtoExpiredItemsItem[];
+}
+
+export interface AssignMapLocationDto {
+  /** @nullable */
+  locationId?: string | null;
+}
+
+export interface ReorderLocationsDto {
+  locationIds: string[];
+}
+
+export interface UpdateLocationDto {
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  name?: string;
+}
+
+export interface CreateLocationDto {
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  name: string;
+}
+
+export type EventMapResponseDtoOutputAssignedMembersItemRolesItem = {
+  position: number;
+  /** @nullable */
+  color: number | null;
+};
+
+export type EventMapResponseDtoOutputAssignedMembersItem = {
+  id: number;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+  userId: string;
+  roles: EventMapResponseDtoOutputAssignedMembersItemRolesItem[];
+};
+
+export interface EventMapResponseDtoOutput {
+  id: string;
+  mapId: number;
+  mapName: string;
+  /** @nullable */
+  locationId: string | null;
+  assignedMembers: EventMapResponseDtoOutputAssignedMembersItem[];
+}
+
+export interface CreateMapDto {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  mapId: number;
+  mapName: string;
+}
+
+export interface UpdateHeroDto {
+  npcName: string;
+  npcId?: number;
+}
+
+export type CreateHeroDtoMapsItem = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  mapId: number;
+  mapName: string;
+};
+
+export interface CreateHeroDto {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcId?: number;
+  npcName: string;
+  maps?: CreateHeroDtoMapsItem[];
+}
+
+export interface AssignMemberDto {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  memberId: number;
+}
+
+export interface SuccessResponseDtoOutput {
+  success: boolean;
+}
+
+export type EventMapsResponseDtoOutputHeroNpcsItemLocationsItemMapsItemAssignedMembersItemRolesItem = {
+  position: number;
+  /** @nullable */
+  color: number | null;
+};
+
+export type EventMapsResponseDtoOutputHeroNpcsItemLocationsItemMapsItemAssignedMembersItem = {
+  id: number;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+  userId: string;
+  roles: EventMapsResponseDtoOutputHeroNpcsItemLocationsItemMapsItemAssignedMembersItemRolesItem[];
+};
+
+export type EventMapsResponseDtoOutputHeroNpcsItemLocationsItemMapsItem = {
+  id: string;
+  mapId: number;
+  mapName: string;
+  /** @nullable */
+  locationId: string | null;
+  assignedMembers: EventMapsResponseDtoOutputHeroNpcsItemLocationsItemMapsItemAssignedMembersItem[];
+};
+
+export type EventMapsResponseDtoOutputHeroNpcsItemLocationsItem = {
+  id: string;
+  name: string;
+  order: number;
+  maps: EventMapsResponseDtoOutputHeroNpcsItemLocationsItemMapsItem[];
+};
+
+export type EventMapsResponseDtoOutputHeroNpcsItemMapsItemAssignedMembersItemRolesItem = {
+  position: number;
+  /** @nullable */
+  color: number | null;
+};
+
+export type EventMapsResponseDtoOutputHeroNpcsItemMapsItemAssignedMembersItem = {
+  id: number;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+  userId: string;
+  roles: EventMapsResponseDtoOutputHeroNpcsItemMapsItemAssignedMembersItemRolesItem[];
+};
+
+export type EventMapsResponseDtoOutputHeroNpcsItemMapsItem = {
+  id: string;
+  mapId: number;
+  mapName: string;
+  /** @nullable */
+  locationId: string | null;
+  assignedMembers: EventMapsResponseDtoOutputHeroNpcsItemMapsItemAssignedMembersItem[];
+};
+
+export type EventMapsResponseDtoOutputHeroNpcsItem = {
+  id: string;
+  /** @nullable */
+  npcId: number | null;
+  npcName: string;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @nullable */
+  npcLvl: number | null;
+  locations: EventMapsResponseDtoOutputHeroNpcsItemLocationsItem[];
+  maps: EventMapsResponseDtoOutputHeroNpcsItemMapsItem[];
+};
+
+export interface EventMapsResponseDtoOutput {
+  id: string;
+  heroNpcs: EventMapsResponseDtoOutputHeroNpcsItem[];
+}
+
+export type EventWrappedApiResponseDtoOutputEvent = {
+  id: string;
+  name: string;
+  world: string;
+  /** @nullable */
+  startsAt: string | null;
+  /** @nullable */
+  endsAt: string | null;
+  heroCount: number;
+  mapCount: number;
+  spawnCount: number;
+};
+
+export type EventWrappedApiResponseDtoOutputOverviewRarityTotals = {
+  unique: number;
+  heroic: number;
+  legendary: number;
+};
+
+export type EventWrappedApiResponseDtoOutputOverview = {
+  totalKills: number;
+  participantCount: number;
+  totalPoints: number;
+  totalTrackedSeconds: number;
+  totalAfkSeconds: number;
+  coveragePercentage: number;
+  avgMapsPerSpawnWindow: number;
+  /** @nullable */
+  busiestHour: number | null;
+  busiestHourKills: number;
+  totalLoots: number;
+  rarityTotals: EventWrappedApiResponseDtoOutputOverviewRarityTotals;
+};
+
+/**
+ * @nullable
+ */
+export type EventWrappedApiResponseDtoOutputLeadersTopHunterWinner = {[key: string]: unknown} & ({
+  memberId: number;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+  primaryValue: number;
+  /** @nullable */
+  secondaryValue?: number | null;
+} | null) | null;
+
+export type EventWrappedApiResponseDtoOutputLeadersTopHunter = {
+  /** @nullable */
+  winner: EventWrappedApiResponseDtoOutputLeadersTopHunterWinner;
+  candidateCount: number;
+  tiedWinnerCount: number;
+};
+
+/**
+ * @nullable
+ */
+export type EventWrappedApiResponseDtoOutputLeadersTopScorerWinner = {[key: string]: unknown} & ({
+  memberId: number;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+  primaryValue: number;
+  /** @nullable */
+  secondaryValue?: number | null;
+} | null) | null;
+
+export type EventWrappedApiResponseDtoOutputLeadersTopScorer = {
+  /** @nullable */
+  winner: EventWrappedApiResponseDtoOutputLeadersTopScorerWinner;
+  candidateCount: number;
+  tiedWinnerCount: number;
+};
+
+/**
+ * @nullable
+ */
+export type EventWrappedApiResponseDtoOutputLeadersLongestDutyWinner = {[key: string]: unknown} & ({
+  memberId: number;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+  primaryValue: number;
+  /** @nullable */
+  secondaryValue?: number | null;
+} | null) | null;
+
+export type EventWrappedApiResponseDtoOutputLeadersLongestDuty = {
+  /** @nullable */
+  winner: EventWrappedApiResponseDtoOutputLeadersLongestDutyWinner;
+  candidateCount: number;
+  tiedWinnerCount: number;
+};
+
+/**
+ * @nullable
+ */
+export type EventWrappedApiResponseDtoOutputLeadersTopAfkWinner = {[key: string]: unknown} & ({
+  memberId: number;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+  primaryValue: number;
+  /** @nullable */
+  secondaryValue?: number | null;
+} | null) | null;
+
+export type EventWrappedApiResponseDtoOutputLeadersTopAfk = {
+  /** @nullable */
+  winner: EventWrappedApiResponseDtoOutputLeadersTopAfkWinner;
+  candidateCount: number;
+  tiedWinnerCount: number;
+};
+
+/**
+ * @nullable
+ */
+export type EventWrappedApiResponseDtoOutputLeadersMostFlexibleWinner = {[key: string]: unknown} & ({
+  memberId: number;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+  primaryValue: number;
+  /** @nullable */
+  secondaryValue?: number | null;
+} | null) | null;
+
+export type EventWrappedApiResponseDtoOutputLeadersMostFlexible = {
+  /** @nullable */
+  winner: EventWrappedApiResponseDtoOutputLeadersMostFlexibleWinner;
+  candidateCount: number;
+  tiedWinnerCount: number;
+};
+
+/**
+ * @nullable
+ */
+export type EventWrappedApiResponseDtoOutputLeadersTopEfficiencyWinner = {[key: string]: unknown} & ({
+  memberId: number;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+  primaryValue: number;
+  /** @nullable */
+  secondaryValue?: number | null;
+} | null) | null;
+
+export type EventWrappedApiResponseDtoOutputLeadersTopEfficiency = {
+  /** @nullable */
+  winner: EventWrappedApiResponseDtoOutputLeadersTopEfficiencyWinner;
+  candidateCount: number;
+  tiedWinnerCount: number;
+};
+
+export type EventWrappedApiResponseDtoOutputLeaders = {
+  topHunter: EventWrappedApiResponseDtoOutputLeadersTopHunter;
+  topScorer: EventWrappedApiResponseDtoOutputLeadersTopScorer;
+  longestDuty: EventWrappedApiResponseDtoOutputLeadersLongestDuty;
+  topAfk: EventWrappedApiResponseDtoOutputLeadersTopAfk;
+  mostFlexible: EventWrappedApiResponseDtoOutputLeadersMostFlexible;
+  topEfficiency: EventWrappedApiResponseDtoOutputLeadersTopEfficiency;
+};
+
+/**
+ * @nullable
+ */
+export type EventWrappedApiResponseDtoOutputCoverageBestHeroCoverage = {[key: string]: unknown} & ({
+  heroNpcId: string;
+  npcName: string;
+  /** @nullable */
+  npcIcon: string | null;
+  mapCount: number;
+  totalKills: number;
+  coveragePercentage: number;
+} | null) | null;
+
+/**
+ * @nullable
+ */
+export type EventWrappedApiResponseDtoOutputCoverageRoughestHeroCoverage = {[key: string]: unknown} & ({
+  heroNpcId: string;
+  npcName: string;
+  /** @nullable */
+  npcIcon: string | null;
+  mapCount: number;
+  totalKills: number;
+  coveragePercentage: number;
+} | null) | null;
+
+export type EventWrappedApiResponseDtoOutputCoverage = {
+  totalWindowCount: number;
+  totalWindowSeconds: number;
+  totalCoverageSeconds: number;
+  totalUncoveredSeconds: number;
+  totalUnassignedSeconds: number;
+  coveragePercentage: number;
+  avgMapsPerSpawnWindow: number;
+  /** @nullable */
+  bestHeroCoverage: EventWrappedApiResponseDtoOutputCoverageBestHeroCoverage;
+  /** @nullable */
+  roughestHeroCoverage: EventWrappedApiResponseDtoOutputCoverageRoughestHeroCoverage;
+};
+
+export type EventWrappedApiResponseDtoOutputHeroesItemRarityTotals = {
+  unique: number;
+  heroic: number;
+  legendary: number;
+};
+
+/**
+ * @nullable
+ */
+export type EventWrappedApiResponseDtoOutputHeroesItemTopHunterWinner = {[key: string]: unknown} & ({
+  memberId: number;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+  primaryValue: number;
+  /** @nullable */
+  secondaryValue?: number | null;
+} | null) | null;
+
+export type EventWrappedApiResponseDtoOutputHeroesItemTopHunter = {
+  /** @nullable */
+  winner: EventWrappedApiResponseDtoOutputHeroesItemTopHunterWinner;
+  candidateCount: number;
+  tiedWinnerCount: number;
+};
+
+export type EventWrappedApiResponseDtoOutputHeroesItem = {
+  heroNpcId: string;
+  /** @nullable */
+  npcId: number | null;
+  npcName: string;
+  /** @nullable */
+  npcIcon: string | null;
+  mapCount: number;
+  totalKills: number;
+  totalPoints: number;
+  coveragePercentage: number;
+  rarityTotals: EventWrappedApiResponseDtoOutputHeroesItemRarityTotals;
+  topHunter: EventWrappedApiResponseDtoOutputHeroesItemTopHunter;
+};
+
+export type EventWrappedApiResponseDtoOutputLootRarityTotals = {
+  unique: number;
+  heroic: number;
+  legendary: number;
+};
+
+export type EventWrappedApiResponseDtoOutputLootHeroBreakdownItemRarityTotals = {
+  unique: number;
+  heroic: number;
+  legendary: number;
+};
+
+export type EventWrappedApiResponseDtoOutputLootHeroBreakdownItem = {
+  heroNpcId: string;
+  npcName: string;
+  /** @nullable */
+  npcIcon: string | null;
+  totalLoots: number;
+  rarityTotals: EventWrappedApiResponseDtoOutputLootHeroBreakdownItemRarityTotals;
+};
+
+export type EventWrappedApiResponseDtoOutputLoot = {
+  totalLoots: number;
+  rarityTotals: EventWrappedApiResponseDtoOutputLootRarityTotals;
+  heroBreakdown: EventWrappedApiResponseDtoOutputLootHeroBreakdownItem[];
+};
+
+export interface EventWrappedApiResponseDtoOutput {
+  generatedAt: string;
+  event: EventWrappedApiResponseDtoOutputEvent;
+  overview: EventWrappedApiResponseDtoOutputOverview;
+  leaders: EventWrappedApiResponseDtoOutputLeaders;
+  coverage: EventWrappedApiResponseDtoOutputCoverage;
+  heroes: EventWrappedApiResponseDtoOutputHeroesItem[];
+  loot: EventWrappedApiResponseDtoOutputLoot;
+}
+
+export type EventOverviewResponseDtoScoringMode = typeof EventOverviewResponseDtoScoringMode[keyof typeof EventOverviewResponseDtoScoringMode];
+
+
+export const EventOverviewResponseDtoScoringMode = {
+  SIMPLE: 'SIMPLE',
+  ADVANCED: 'ADVANCED',
+} as const;
+
+export type EventOverviewResponseDtoHeroNpcsItem = {
+  id: string;
+  /** @nullable */
+  npcId: number | null;
+  npcName: string;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @nullable */
+  npcLvl: number | null;
+};
+
+export type EventOverviewResponseDtoSchema0 = string | number | boolean | (EventOverviewResponseDtoSchema0 | null)[] | {[key: string]: EventOverviewResponseDtoSchema0 | null} | null;
+
+export interface EventOverviewResponseDto {
+  id: string;
+  guildId: string;
+  name: string;
+  world: string;
+  active: boolean;
+  /** @nullable */
+  startsAt: string | null;
+  /** @nullable */
+  endsAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  /** @nullable */
+  basePointsPerKill?: number | null;
+  /** @nullable */
+  assignmentTimeoutMinutes?: number | null;
+  /** @nullable */
+  participationConfirmationMinutes?: number | null;
+  /** @nullable */
+  mapAssignmentCap?: number | null;
+  /** @nullable */
+  rulebookMarkdown?: string | null;
+  scoringMode: EventOverviewResponseDtoScoringMode;
+  scoringRules: EventOverviewResponseDtoSchema0 | null;
+  heroNpcs: EventOverviewResponseDtoHeroNpcsItem[];
+}
+
+export type EventMutationResponseDtoSchema0 = string | number | boolean | (EventMutationResponseDtoSchema0 | null)[] | {[key: string]: EventMutationResponseDtoSchema0 | null} | null;
+
+export type UpdateEventDtoHeroNpcsItemMapsItem = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  mapId: number;
+  mapName: string;
+};
+
+export type UpdateEventDtoHeroNpcsItem = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcId?: number;
+  npcName: string;
+  maps: UpdateEventDtoHeroNpcsItemMapsItem[];
+};
+
+export type UpdateEventDtoScoringRulesRulesItemConditionsItem = {
+  type: 'NUMERIC';
+  factor: 'trackingDurationPercentage' | 'trackingDurationSeconds' | 'assignedMembersCount' | 'minutesSinceLeaveToKill' | 'timeOnMapSeconds' | 'afkPercentage' | 'respawnDurationSeconds' | 'respawnProgressPercentage';
+  operator: '>' | '>=' | '<' | '<=' | '==' | '!=';
+  value: number;
+} | {
+  type: 'BOOLEAN';
+  factor: 'eligible' | 'memberPresentAtKill' | 'wasPresent';
+  value: boolean;
+} | {
+  type: 'KILL_TIME_IN_WINDOW';
+  from: string;
+  to: string;
+} | {
+  type: 'RESPAWN_WINDOW_COVERAGE';
+  from: string;
+  to: string;
+  operator: '>' | '>=' | '<' | '<=' | '==' | '!=';
+  value: number;
+};
+
+export type UpdateEventDtoScoringRulesRulesItemActionType = typeof UpdateEventDtoScoringRulesRulesItemActionType[keyof typeof UpdateEventDtoScoringRulesRulesItemActionType];
+
+
+export const UpdateEventDtoScoringRulesRulesItemActionType = {
+  SET_BASE: 'SET_BASE',
+  ADD_BONUS: 'ADD_BONUS',
+  ZERO_BASE: 'ZERO_BASE',
+} as const;
+
+export type UpdateEventDtoScoringRulesRulesItemAction = {
+  type: UpdateEventDtoScoringRulesRulesItemActionType;
+  /** @minimum 0 */
+  points?: number;
+};
+
+export type UpdateEventDtoScoringRulesRulesItem = {
+  id: string;
+  name?: string;
+  enabled?: boolean;
+  conditions: UpdateEventDtoScoringRulesRulesItemConditionsItem[];
+  action: UpdateEventDtoScoringRulesRulesItemAction;
+};
+
+export type UpdateEventDtoScoringRules = {
+  /**
+     * @minimum 1
+     * @maximum 1
+     */
+  version: number;
+  timezone: string;
+  /** @minimum 0 */
+  hardCapPoints: number;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  minTrackingPercentForBonuses?: number;
+  rules: UpdateEventDtoScoringRulesRulesItem[];
+};
+
+export type UpdateEventDtoScoringMode = typeof UpdateEventDtoScoringMode[keyof typeof UpdateEventDtoScoringMode];
+
+
+export const UpdateEventDtoScoringMode = {
+  SIMPLE: 'SIMPLE',
+  ADVANCED: 'ADVANCED',
+} as const;
+
+export interface UpdateEventDto {
+  name?: string;
+  startsAt?: string;
+  /** @nullable */
+  endsAt?: string | null;
+  heroNpcs?: UpdateEventDtoHeroNpcsItem[];
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  basePointsPerKill?: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  assignmentTimeoutMinutes?: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  participationConfirmationMinutes?: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  mapAssignmentCap?: number;
+  /** @maxLength 10000 */
+  rulebookMarkdown?: string;
+  scoringRules?: UpdateEventDtoScoringRules;
+  scoringMode?: UpdateEventDtoScoringMode;
+}
+
+export type EventMutationResponseDtoScoringMode = typeof EventMutationResponseDtoScoringMode[keyof typeof EventMutationResponseDtoScoringMode];
+
+
+export const EventMutationResponseDtoScoringMode = {
+  SIMPLE: 'SIMPLE',
+  ADVANCED: 'ADVANCED',
+} as const;
+
+export type EventMutationResponseDtoHeroNpcsItemMapsItemAssignedMembersItemRolesItem = {
+  position: number;
+  /** @nullable */
+  color: number | null;
+};
+
+export type EventMutationResponseDtoHeroNpcsItemMapsItemAssignedMembersItem = {
+  id: number;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+  userId: string;
+  roles: EventMutationResponseDtoHeroNpcsItemMapsItemAssignedMembersItemRolesItem[];
+};
+
+export type EventMutationResponseDtoHeroNpcsItemMapsItem = {
+  id: string;
+  mapId: number;
+  mapName: string;
+  /** @nullable */
+  locationId: string | null;
+  assignedMembers: EventMutationResponseDtoHeroNpcsItemMapsItemAssignedMembersItem[];
+};
+
+export type EventMutationResponseDtoHeroNpcsItem = {
+  id: string;
+  /** @nullable */
+  npcId: number | null;
+  npcName: string;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @nullable */
+  npcLvl: number | null;
+  maps: EventMutationResponseDtoHeroNpcsItemMapsItem[];
+};
+
+export interface EventMutationResponseDto {
+  id: string;
+  guildId: string;
+  name: string;
+  world: string;
+  active: boolean;
+  /** @nullable */
+  startsAt: string | null;
+  /** @nullable */
+  endsAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  /** @nullable */
+  basePointsPerKill?: number | null;
+  /** @nullable */
+  assignmentTimeoutMinutes?: number | null;
+  /** @nullable */
+  participationConfirmationMinutes?: number | null;
+  /** @nullable */
+  mapAssignmentCap?: number | null;
+  /** @nullable */
+  rulebookMarkdown?: string | null;
+  scoringMode: EventMutationResponseDtoScoringMode;
+  scoringRules: EventMutationResponseDtoSchema0 | null;
+  heroNpcs: EventMutationResponseDtoHeroNpcsItem[];
+}
+
+export type CreateEventDtoScoringRulesRulesItemConditionsItem = {
+  type: 'NUMERIC';
+  factor: 'trackingDurationPercentage' | 'trackingDurationSeconds' | 'assignedMembersCount' | 'minutesSinceLeaveToKill' | 'timeOnMapSeconds' | 'afkPercentage' | 'respawnDurationSeconds' | 'respawnProgressPercentage';
+  operator: '>' | '>=' | '<' | '<=' | '==' | '!=';
+  value: number;
+} | {
+  type: 'BOOLEAN';
+  factor: 'eligible' | 'memberPresentAtKill' | 'wasPresent';
+  value: boolean;
+} | {
+  type: 'KILL_TIME_IN_WINDOW';
+  from: string;
+  to: string;
+} | {
+  type: 'RESPAWN_WINDOW_COVERAGE';
+  from: string;
+  to: string;
+  operator: '>' | '>=' | '<' | '<=' | '==' | '!=';
+  value: number;
+};
+
+export type CreateEventDtoScoringRulesRulesItemActionType = typeof CreateEventDtoScoringRulesRulesItemActionType[keyof typeof CreateEventDtoScoringRulesRulesItemActionType];
+
+
+export const CreateEventDtoScoringRulesRulesItemActionType = {
+  SET_BASE: 'SET_BASE',
+  ADD_BONUS: 'ADD_BONUS',
+  ZERO_BASE: 'ZERO_BASE',
+} as const;
+
+export type CreateEventDtoScoringRulesRulesItemAction = {
+  type: CreateEventDtoScoringRulesRulesItemActionType;
+  /** @minimum 0 */
+  points?: number;
+};
+
+export type CreateEventDtoScoringRulesRulesItem = {
+  id: string;
+  name?: string;
+  enabled?: boolean;
+  conditions: CreateEventDtoScoringRulesRulesItemConditionsItem[];
+  action: CreateEventDtoScoringRulesRulesItemAction;
+};
+
+export type CreateEventDtoScoringRules = {
+  /**
+     * @minimum 1
+     * @maximum 1
+     */
+  version: number;
+  timezone: string;
+  /** @minimum 0 */
+  hardCapPoints: number;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  minTrackingPercentForBonuses?: number;
+  rules: CreateEventDtoScoringRulesRulesItem[];
+};
+
+export type CreateEventDtoScoringMode = typeof CreateEventDtoScoringMode[keyof typeof CreateEventDtoScoringMode];
+
+
+export const CreateEventDtoScoringMode = {
+  SIMPLE: 'SIMPLE',
+  ADVANCED: 'ADVANCED',
+} as const;
+
+export type CreateEventDtoHeroNpcsItemMapsItem = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  mapId: number;
+  mapName: string;
+};
+
+export type CreateEventDtoHeroNpcsItem = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcId?: number;
+  npcName: string;
+  maps: CreateEventDtoHeroNpcsItemMapsItem[];
+};
+
+export interface CreateEventDto {
+  name: string;
+  world: string;
+  startsAt?: string;
+  endsAt?: string;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  basePointsPerKill?: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  assignmentTimeoutMinutes?: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  participationConfirmationMinutes?: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  mapAssignmentCap?: number;
+  /** @maxLength 10000 */
+  rulebookMarkdown?: string;
+  scoringRules?: CreateEventDtoScoringRules;
+  scoringMode?: CreateEventDtoScoringMode;
+  heroNpcs?: CreateEventDtoHeroNpcsItem[];
+}
+
+export type EventListItemResponseDtoHeroNpcsItem = {
+  id: string;
+  /** @nullable */
+  npcId: number | null;
+  npcName: string;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @nullable */
+  npcLvl: number | null;
+};
+
+export interface EventListItemResponseDto {
+  id: string;
+  guildId: string;
+  name: string;
+  world: string;
+  active: boolean;
+  /** @nullable */
+  startsAt: string | null;
+  /** @nullable */
+  endsAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  heroNpcs: EventListItemResponseDtoHeroNpcsItem[];
+}
+
+export type SoundSettingsResponseDtoSchema0 = string | number | boolean | (SoundSettingsResponseDtoSchema0 | null)[] | {[key: string]: SoundSettingsResponseDtoSchema0 | null} | null;
+
+export interface SoundSettingsResponseDto {
+  userId: string;
+  masterVolume: number;
+  notificationsVolume: number;
+  detectorVolume: number;
+  timersVolume: number;
+  pingsVolume: number;
+  notificationsConfig: SoundSettingsResponseDtoSchema0 | null;
+  detectorConfig: SoundSettingsResponseDtoSchema0 | null;
+  timersConfig: SoundSettingsResponseDtoSchema0 | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type UpdateSoundSettingsDtoNotificationsConfigELITE2 = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  volume?: number;
+  soundUrl?: '' | string;
+};
+
+export type UpdateSoundSettingsDtoNotificationsConfigHERO = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  volume?: number;
+  soundUrl?: '' | string;
+};
+
+export type UpdateSoundSettingsDtoNotificationsConfigTITAN = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  volume?: number;
+  soundUrl?: '' | string;
+};
+
+export type UpdateSoundSettingsDtoNotificationsConfigCOLOSSUS = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  volume?: number;
+  soundUrl?: '' | string;
+};
+
+export type UpdateSoundSettingsDtoNotificationsConfigMessage = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  volume?: number;
+  soundUrl?: '' | string;
+};
+
+export type UpdateSoundSettingsDtoNotificationsConfig = {
+  ELITE2?: UpdateSoundSettingsDtoNotificationsConfigELITE2;
+  HERO?: UpdateSoundSettingsDtoNotificationsConfigHERO;
+  TITAN?: UpdateSoundSettingsDtoNotificationsConfigTITAN;
+  COLOSSUS?: UpdateSoundSettingsDtoNotificationsConfigCOLOSSUS;
+  message?: UpdateSoundSettingsDtoNotificationsConfigMessage;
+};
+
+export type UpdateSoundSettingsDtoDetectorConfigELITE2 = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  volume?: number;
+  soundUrl?: '' | string;
+};
+
+export type UpdateSoundSettingsDtoDetectorConfigHERO = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  volume?: number;
+  soundUrl?: '' | string;
+};
+
+export type UpdateSoundSettingsDtoDetectorConfigTITAN = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  volume?: number;
+  soundUrl?: '' | string;
+};
+
+export type UpdateSoundSettingsDtoDetectorConfigCOLOSSUS = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  volume?: number;
+  soundUrl?: '' | string;
+};
+
+export type UpdateSoundSettingsDtoDetectorConfigMessage = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  volume?: number;
+  soundUrl?: '' | string;
+};
+
+export type UpdateSoundSettingsDtoDetectorConfig = {
+  ELITE2?: UpdateSoundSettingsDtoDetectorConfigELITE2;
+  HERO?: UpdateSoundSettingsDtoDetectorConfigHERO;
+  TITAN?: UpdateSoundSettingsDtoDetectorConfigTITAN;
+  COLOSSUS?: UpdateSoundSettingsDtoDetectorConfigCOLOSSUS;
+  message?: UpdateSoundSettingsDtoDetectorConfigMessage;
+};
+
+export type UpdateSoundSettingsDtoTimersConfigELITE2 = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  volume?: number;
+  soundUrl?: '' | string;
+};
+
+export type UpdateSoundSettingsDtoTimersConfigHERO = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  volume?: number;
+  soundUrl?: '' | string;
+};
+
+export type UpdateSoundSettingsDtoTimersConfigTITAN = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  volume?: number;
+  soundUrl?: '' | string;
+};
+
+export type UpdateSoundSettingsDtoTimersConfigCOLOSSUS = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  volume?: number;
+  soundUrl?: '' | string;
+};
+
+export type UpdateSoundSettingsDtoTimersConfigMessage = {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  volume?: number;
+  soundUrl?: '' | string;
+};
+
+export type UpdateSoundSettingsDtoTimersConfig = {
+  ELITE2?: UpdateSoundSettingsDtoTimersConfigELITE2;
+  HERO?: UpdateSoundSettingsDtoTimersConfigHERO;
+  TITAN?: UpdateSoundSettingsDtoTimersConfigTITAN;
+  COLOSSUS?: UpdateSoundSettingsDtoTimersConfigCOLOSSUS;
+  message?: UpdateSoundSettingsDtoTimersConfigMessage;
+};
+
+export interface UpdateSoundSettingsDto {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  masterVolume?: number;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  notificationsVolume?: number;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  detectorVolume?: number;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  timersVolume?: number;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  pingsVolume?: number;
+  notificationsConfig?: UpdateSoundSettingsDtoNotificationsConfig;
+  detectorConfig?: UpdateSoundSettingsDtoDetectorConfig;
+  timersConfig?: UpdateSoundSettingsDtoTimersConfig;
+}
+
+export interface PartyReadyRoomExpectedRevisionDto {
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  expectedRevision: number;
+}
+
+export type PartyReadyRoomObservationDtoMembersItem = {
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /** @maxLength 255 */
+  nick?: string;
+  /** @maxLength 2048 */
+  icon?: string;
+  lvl?: number;
+  /** @maxLength 100 */
+  prof?: string;
+};
+
+export interface PartyReadyRoomObservationDto {
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  expectedRevision?: number;
+  /** @maxItems 20 */
+  members?: PartyReadyRoomObservationDtoMembersItem[];
+  /**
+     * @maxItems 20
+     * @items.minLength 1
+     * @items.maxLength 255
+     */
+  memberCharacterIds: string[];
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  organizerAccountId: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  organizerCharacterId: string;
+}
+
+export type PartyReadyRoomInvitationTargetsDtoOutputTargetsItem = {
+  participantId: string;
+  characterId: string;
+};
+
+export interface PartyReadyRoomInvitationTargetsDtoOutput {
+  targets: PartyReadyRoomInvitationTargetsDtoOutputTargetsItem[];
+}
+
+export interface PartyReadyRoomResolveInvitationTargetsDto {
+  /**
+     * @minItems 1
+     * @maxItems 100
+     * @items.minLength 1
+     * @items.maxLength 100
+     */
+  participantIds: string[];
+}
+
+export type PartyReadyRoomClientUpdateDtoOutputSchemaVersion = typeof PartyReadyRoomClientUpdateDtoOutputSchemaVersion[keyof typeof PartyReadyRoomClientUpdateDtoOutputSchemaVersion];
+
+
+export const PartyReadyRoomClientUpdateDtoOutputSchemaVersion = {
+  NUMBER_3: 3,
+} as const;
+
+export type PartyReadyRoomClientUpdateDtoOutputType = typeof PartyReadyRoomClientUpdateDtoOutputType[keyof typeof PartyReadyRoomClientUpdateDtoOutputType];
+
+
+export const PartyReadyRoomClientUpdateDtoOutputType = {
+  UPSERT: 'UPSERT',
+  REMOVE: 'REMOVE',
+} as const;
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionNpc = {
+  prof?: string;
+  icon?: string;
+  name: string;
+  location: string;
+  lvl: number | 'Infinity' | '-Infinity' | 'NaN';
+  type: string;
+  x?: number | 'Infinity' | '-Infinity' | 'NaN';
+  y?: number | 'Infinity' | '-Infinity' | 'NaN';
+};
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion = typeof PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion];
+
+
+export const PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion = {
+  NUMBER_3: 3,
+} as const;
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionOrganizerCharacterClan = {
+  id?: number;
+  /** @maxLength 255 */
+  name?: string;
+};
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionOrganizerCharacter = {
+  lvl: number;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  nick: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  accountId: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  prof: string;
+  /**
+     * @minLength 1
+     * @maxLength 2048
+     */
+  icon: string;
+  clan?: PartyReadyRoomClientUpdateDtoOutputProjectionOrganizerCharacterClan;
+};
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionPartyState = {
+  status: 'UNKNOWN';
+} | {
+  status: 'OBSERVED';
+  observedAt: string;
+  /** @maxItems 20 */
+  members: {
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /** @maxLength 255 */
+  nick?: string;
+  /** @maxLength 2048 */
+  icon?: string;
+  lvl?: number;
+  /** @maxLength 100 */
+  prof?: string;
+}[];
+};
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence = typeof PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence];
+
+
+export const PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence = {
+  OUTSIDE: 'OUTSIDE',
+  IN_PARTY: 'IN_PARTY',
+} as const;
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItem = {
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /** @maxLength 255 */
+  nick: string;
+  /** @maxLength 2048 */
+  icon: string;
+  lvl: number;
+  /** @maxLength 100 */
+  prof: string;
+  partyPresence: PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence;
+};
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionStatus = typeof PartyReadyRoomClientUpdateDtoOutputProjectionStatus[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionStatus];
+
+
+export const PartyReadyRoomClientUpdateDtoOutputProjectionStatus = {
+  ACTIVE: 'ACTIVE',
+} as const;
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionViewer = typeof PartyReadyRoomClientUpdateDtoOutputProjectionViewer[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionViewer];
+
+
+export const PartyReadyRoomClientUpdateDtoOutputProjectionViewer = {
+  ORGANIZER: 'ORGANIZER',
+  PARTICIPANT: 'PARTICIPANT',
+} as const;
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsCharacterClan = {
+  id?: number;
+  /** @maxLength 255 */
+  name?: string;
+};
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsCharacter = {
+  lvl: number;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  nick: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  accountId: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  prof: string;
+  /**
+     * @minLength 1
+     * @maxLength 2048
+     */
+  icon: string;
+  clan?: PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsCharacterClan;
+};
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsPartyPresence = typeof PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsPartyPresence[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsPartyPresence];
+
+
+export const PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsPartyPresence = {
+  OUTSIDE: 'OUTSIDE',
+  IN_PARTY: 'IN_PARTY',
+} as const;
+
+export type PartyReadyRoomClientUpdateDtoOutputProjectionParticipants = {[key: string]: {
+  participantId: string;
+  discordId: string;
+  character: PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsCharacter;
+  partyPresence: PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsPartyPresence;
+  createdAt: string;
+  updatedAt: string;
+}};
+
+export type PartyReadyRoomClientUpdateDtoOutputProjection = {
+  npc?: PartyReadyRoomClientUpdateDtoOutputProjectionNpc;
+  schemaVersion: PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion;
+  notificationId: string;
+  organizerDiscordId: string;
+  organizerCharacter: PartyReadyRoomClientUpdateDtoOutputProjectionOrganizerCharacter;
+  guildIds: string[];
+  world: string;
+  description?: string;
+  minLvl?: number;
+  maxLvl?: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  partyMemberCount?: number;
+  partyState?: PartyReadyRoomClientUpdateDtoOutputProjectionPartyState;
+  volunteers?: PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItem[];
+  status: PartyReadyRoomClientUpdateDtoOutputProjectionStatus;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  revision: number;
+  createdAt: string;
+  updatedAt: string;
+  expiresAt: string;
+  viewer: PartyReadyRoomClientUpdateDtoOutputProjectionViewer;
+  participants: PartyReadyRoomClientUpdateDtoOutputProjectionParticipants;
+  ownedParticipantIds?: string[];
+};
+
+export interface PartyReadyRoomClientUpdateDtoOutput {
+  schemaVersion: PartyReadyRoomClientUpdateDtoOutputSchemaVersion;
+  type: PartyReadyRoomClientUpdateDtoOutputType;
+  projection?: PartyReadyRoomClientUpdateDtoOutputProjection;
+  notificationId?: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  revision?: number;
+}
+
+export interface PartyReadyRoomParticipantActionDto {
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  expectedRevision: number;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  participantId: string;
+}
+
+export interface PartyReadyRoomParticipantIdentityDto {
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  participantId: string;
+}
+
+export type PartyReadyRoomApplicationDtoCharacterClan = {
+  id?: number;
+  /** @maxLength 255 */
+  name?: string;
+};
+
+export type PartyReadyRoomApplicationDtoCharacter = {
+  lvl: number;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  nick: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  accountId: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  prof: string;
+  /**
+     * @minLength 1
+     * @maxLength 2048
+     */
+  icon: string;
+  clan?: PartyReadyRoomApplicationDtoCharacterClan;
+};
+
+export interface PartyReadyRoomApplicationDto {
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  world: string;
+  character: PartyReadyRoomApplicationDtoCharacter;
+}
+
+export type PartyReadyRoomProjectionDtoOutputNpc = {
+  prof?: string;
+  icon?: string;
+  name: string;
+  location: string;
+  lvl: number | 'Infinity' | '-Infinity' | 'NaN';
+  type: string;
+  x?: number | 'Infinity' | '-Infinity' | 'NaN';
+  y?: number | 'Infinity' | '-Infinity' | 'NaN';
+};
+
+export type PartyReadyRoomProjectionDtoOutputSchemaVersion = typeof PartyReadyRoomProjectionDtoOutputSchemaVersion[keyof typeof PartyReadyRoomProjectionDtoOutputSchemaVersion];
+
+
+export const PartyReadyRoomProjectionDtoOutputSchemaVersion = {
+  NUMBER_3: 3,
+} as const;
+
+export type PartyReadyRoomProjectionDtoOutputOrganizerCharacterClan = {
+  id?: number;
+  /** @maxLength 255 */
+  name?: string;
+};
+
+export type PartyReadyRoomProjectionDtoOutputOrganizerCharacter = {
+  lvl: number;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  nick: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  accountId: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  prof: string;
+  /**
+     * @minLength 1
+     * @maxLength 2048
+     */
+  icon: string;
+  clan?: PartyReadyRoomProjectionDtoOutputOrganizerCharacterClan;
+};
+
+export type PartyReadyRoomProjectionDtoOutputPartyState = {
+  status: 'UNKNOWN';
+} | {
+  status: 'OBSERVED';
+  observedAt: string;
+  /** @maxItems 20 */
+  members: {
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /** @maxLength 255 */
+  nick?: string;
+  /** @maxLength 2048 */
+  icon?: string;
+  lvl?: number;
+  /** @maxLength 100 */
+  prof?: string;
+}[];
+};
+
+export type PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence = typeof PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence[keyof typeof PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence];
+
+
+export const PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence = {
+  OUTSIDE: 'OUTSIDE',
+  IN_PARTY: 'IN_PARTY',
+} as const;
+
+export type PartyReadyRoomProjectionDtoOutputVolunteersItem = {
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /** @maxLength 255 */
+  nick: string;
+  /** @maxLength 2048 */
+  icon: string;
+  lvl: number;
+  /** @maxLength 100 */
+  prof: string;
+  partyPresence: PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence;
+};
+
+export type PartyReadyRoomProjectionDtoOutputStatus = typeof PartyReadyRoomProjectionDtoOutputStatus[keyof typeof PartyReadyRoomProjectionDtoOutputStatus];
+
+
+export const PartyReadyRoomProjectionDtoOutputStatus = {
+  ACTIVE: 'ACTIVE',
+} as const;
+
+export type PartyReadyRoomProjectionDtoOutputViewer = typeof PartyReadyRoomProjectionDtoOutputViewer[keyof typeof PartyReadyRoomProjectionDtoOutputViewer];
+
+
+export const PartyReadyRoomProjectionDtoOutputViewer = {
+  ORGANIZER: 'ORGANIZER',
+  PARTICIPANT: 'PARTICIPANT',
+} as const;
+
+export type PartyReadyRoomProjectionDtoOutputParticipantsCharacterClan = {
+  id?: number;
+  /** @maxLength 255 */
+  name?: string;
+};
+
+export type PartyReadyRoomProjectionDtoOutputParticipantsCharacter = {
+  lvl: number;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  nick: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  accountId: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  prof: string;
+  /**
+     * @minLength 1
+     * @maxLength 2048
+     */
+  icon: string;
+  clan?: PartyReadyRoomProjectionDtoOutputParticipantsCharacterClan;
+};
+
+export type PartyReadyRoomProjectionDtoOutputParticipantsPartyPresence = typeof PartyReadyRoomProjectionDtoOutputParticipantsPartyPresence[keyof typeof PartyReadyRoomProjectionDtoOutputParticipantsPartyPresence];
+
+
+export const PartyReadyRoomProjectionDtoOutputParticipantsPartyPresence = {
+  OUTSIDE: 'OUTSIDE',
+  IN_PARTY: 'IN_PARTY',
+} as const;
+
+export type PartyReadyRoomProjectionDtoOutputParticipants = {[key: string]: {
+  participantId: string;
+  discordId: string;
+  character: PartyReadyRoomProjectionDtoOutputParticipantsCharacter;
+  partyPresence: PartyReadyRoomProjectionDtoOutputParticipantsPartyPresence;
+  createdAt: string;
+  updatedAt: string;
+}};
+
+export interface PartyReadyRoomProjectionDtoOutput {
+  npc?: PartyReadyRoomProjectionDtoOutputNpc;
+  schemaVersion: PartyReadyRoomProjectionDtoOutputSchemaVersion;
+  notificationId: string;
+  organizerDiscordId: string;
+  organizerCharacter: PartyReadyRoomProjectionDtoOutputOrganizerCharacter;
+  guildIds: string[];
+  world: string;
+  description?: string;
+  minLvl?: number;
+  maxLvl?: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  partyMemberCount?: number;
+  partyState?: PartyReadyRoomProjectionDtoOutputPartyState;
+  volunteers?: PartyReadyRoomProjectionDtoOutputVolunteersItem[];
+  status: PartyReadyRoomProjectionDtoOutputStatus;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  revision: number;
+  createdAt: string;
+  updatedAt: string;
+  expiresAt: string;
+  viewer: PartyReadyRoomProjectionDtoOutputViewer;
+  participants: PartyReadyRoomProjectionDtoOutputParticipants;
+  ownedParticipantIds?: string[];
+}
+
+export type CreatePartyGatheringDtoCharacterClan = {
+  id?: number;
+  /** @maxLength 255 */
+  name?: string;
+};
+
+export type CreatePartyGatheringDtoCharacter = {
+  lvl: number;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  nick: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  accountId: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  prof: string;
+  /**
+     * @minLength 1
+     * @maxLength 2048
+     */
+  icon: string;
+  clan?: CreatePartyGatheringDtoCharacterClan;
+};
+
+export interface CreatePartyGatheringDto {
+  /**
+     * @minItems 1
+     * @maxItems 10
+     * @items.maxLength 50
+     */
+  guildIds: string[];
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  world: string;
+  character: CreatePartyGatheringDtoCharacter;
+  /** @maxLength 200 */
+  description?: string;
+  /**
+     * @minimum 1
+     * @maximum 500
+     */
+  minLvl?: number;
+  /**
+     * @minimum 1
+     * @maximum 500
+     */
+  maxLvl?: number;
+}
+
+export type ActivePartyGatheringSummaryVolunteersItemPartyPresence = typeof ActivePartyGatheringSummaryVolunteersItemPartyPresence[keyof typeof ActivePartyGatheringSummaryVolunteersItemPartyPresence];
+
+
+export const ActivePartyGatheringSummaryVolunteersItemPartyPresence = {
+  OUTSIDE: 'OUTSIDE',
+  IN_PARTY: 'IN_PARTY',
+} as const;
+
+export type ActivePartyGatheringSummaryVolunteersItem = {
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /** @maxLength 255 */
+  nick: string;
+  /** @maxLength 2048 */
+  icon: string;
+  lvl: number;
+  /** @maxLength 100 */
+  prof: string;
+  partyPresence: ActivePartyGatheringSummaryVolunteersItemPartyPresence;
+};
+
+export type ActivePartyGatheringSummaryPartyState = {
+  status: 'UNKNOWN';
+} | {
+  status: 'OBSERVED';
+  observedAt: string;
+  /** @maxItems 20 */
+  members: {
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /** @maxLength 255 */
+  nick?: string;
+  /** @maxLength 2048 */
+  icon?: string;
+  lvl?: number;
+  /** @maxLength 100 */
+  prof?: string;
+}[];
+};
+
+export type ActivePartyGatheringSummaryNpc = {
+  prof?: string;
+  icon?: string;
+  name: string;
+  location: string;
+  lvl: number | 'Infinity' | '-Infinity' | 'NaN';
+  type?: string;
+  x?: number | 'Infinity' | '-Infinity' | 'NaN';
+  y?: number | 'Infinity' | '-Infinity' | 'NaN';
+};
+
+export interface ActivePartyGatheringSummary {
+  notificationId: string;
+  organizerName: string;
+  organizerDiscordId?: string;
+  organizerLvl?: number;
+  organizerProf?: string;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  applicantCount: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  inPartyCount: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  partyMemberCount?: number;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  revision?: number;
+  volunteers?: ActivePartyGatheringSummaryVolunteersItem[];
+  partyState?: ActivePartyGatheringSummaryPartyState;
+  guildIds: string[];
+  world: string;
+  description?: string;
+  minLvl?: number;
+  maxLvl?: number;
+  npc?: ActivePartyGatheringSummaryNpc;
+  createdAt: string;
+  expiresAt: string;
+}
+
+export type CreateVolunteerDtoCharacterClan = {
+  id?: number;
+  /** @maxLength 255 */
+  name?: string;
+};
+
+export type CreateVolunteerDtoCharacter = {
+  lvl: number;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  nick: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  accountId: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  prof: string;
+  /**
+     * @minLength 1
+     * @maxLength 2048
+     */
+  icon: string;
+  clan?: CreateVolunteerDtoCharacterClan;
+};
+
+export interface CreateVolunteerDto {
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  world: string;
+  /**
+     * @minLength 1
+     * @maxLength 20
+     */
+  targetDiscordId: string;
+  character: CreateVolunteerDtoCharacter;
+}
+
+export type NotificationRateLimitResponseDtoMessage = typeof NotificationRateLimitResponseDtoMessage[keyof typeof NotificationRateLimitResponseDtoMessage];
+
+
+export const NotificationRateLimitResponseDtoMessage = {
+  NOTIFICATION_RATE_LIMITED: 'NOTIFICATION_RATE_LIMITED',
+} as const;
+
+export interface NotificationRateLimitResponseDto {
+  message: NotificationRateLimitResponseDtoMessage;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  retryAfterMs: number;
+}
+
+export interface NotificationResponseDtoOutput {
+  /** @minLength 1 */
+  notificationId: string;
+  /** @items.minLength 1 */
+  guildIds: string[];
+}
+
+export type CreateNotificationDtoNpc = {
+  id: number;
+  /** @minLength 1 */
+  name: string;
+  /** @minLength 1 */
+  location: string;
+  lvl: number;
+  prof?: string;
+  wt: number;
+  hpp?: number;
+  x?: number;
+  y?: number;
+  /** @minLength 1 */
+  icon: string;
+  type: number;
+};
+
+export type CreateNotificationDtoCharacterClan = {
+  id?: number;
+  /** @maxLength 255 */
+  name?: string;
+};
+
+export type CreateNotificationDtoCharacter = {
+  lvl: number;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  nick: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  accountId: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  prof: string;
+  /**
+     * @minLength 1
+     * @maxLength 2048
+     */
+  icon: string;
+  clan?: CreateNotificationDtoCharacterClan;
+};
+
+export interface CreateNotificationDto {
+  /** @maxLength 500 */
+  message?: string;
+  npc?: CreateNotificationDtoNpc;
+  /**
+     * @minItems 1
+     * @maxItems 10
+     * @items.maxLength 50
+     */
+  guildIds: string[];
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  world: string;
+  isGatheringParty?: boolean;
+  character?: CreateNotificationDtoCharacter;
+}
+
+export type WatchedItemResponseDtoSchema0 = string | number | boolean | (WatchedItemResponseDtoSchema0 | null)[] | {[key: string]: WatchedItemResponseDtoSchema0 | null} | null;
+
+export interface CreateWatchedItemQuickAddDto {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  itemId: number;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  itemName: string;
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  world: string;
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  guildId: string;
+}
+
+export interface CreateWatchedItemDto {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  itemId: number;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  itemName: string;
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  world: string;
+  /**
+     * @minItems 1
+     * @maxItems 20
+     * @items.maxLength 50
+     */
+  guildIds: string[];
+}
+
+/**
+ * @nullable
+ */
+export type WatchedItemResponseDtoItemSnapshot = {[key: string]: unknown} & ({
+  name: string;
+  icon: string;
+  /** @nullable */
+  rarity: string | null;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  lvl: number | null;
+  /** @nullable */
+  type: string | null;
+  stat: string;
+} | null) | null;
+
+export type WatchedItemResponseDtoNotificationRuleOwnerType = typeof WatchedItemResponseDtoNotificationRuleOwnerType[keyof typeof WatchedItemResponseDtoNotificationRuleOwnerType];
+
+
+export const WatchedItemResponseDtoNotificationRuleOwnerType = {
+  GUILD: 'GUILD',
+  USER: 'USER',
+} as const;
+
+export type WatchedItemResponseDtoNotificationRuleTriggerType = typeof WatchedItemResponseDtoNotificationRuleTriggerType[keyof typeof WatchedItemResponseDtoNotificationRuleTriggerType];
+
+
+export const WatchedItemResponseDtoNotificationRuleTriggerType = {
+  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
+  NPC_SPAWNED: 'NPC_SPAWNED',
+  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
+  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+} as const;
+
+/**
+ * @nullable
+ */
+export type WatchedItemResponseDtoNotificationRuleFilters = {[key: string]: unknown} & ({
+  guildIds?: string[];
+  world?: string;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  npcId?: number | null;
+  /**
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  npcIds?: number[];
+  /**
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  npcTemplateIds?: number[];
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  itemId?: number | null;
+  /**
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  itemIds?: number[];
+} | null) | null;
+
+/**
+ * @nullable
+ */
+export type WatchedItemResponseDtoNotificationRuleScheduleStrategy = typeof WatchedItemResponseDtoNotificationRuleScheduleStrategy[keyof typeof WatchedItemResponseDtoNotificationRuleScheduleStrategy] | null;
+
+
+export const WatchedItemResponseDtoNotificationRuleScheduleStrategy = {
+  SPAWN_WINDOW_RELATIVE: 'SPAWN_WINDOW_RELATIVE',
+  FIXED_DATETIME: 'FIXED_DATETIME',
+} as const;
+
+/**
+ * @nullable
+ */
+export type WatchedItemResponseDtoNotificationRuleScheduleAnchor = typeof WatchedItemResponseDtoNotificationRuleScheduleAnchor[keyof typeof WatchedItemResponseDtoNotificationRuleScheduleAnchor] | null;
+
+
+export const WatchedItemResponseDtoNotificationRuleScheduleAnchor = {
+  MIN_SPAWN: 'MIN_SPAWN',
+  MAX_SPAWN: 'MAX_SPAWN',
+} as const;
+
+/**
+ * @nullable
+ */
+export type WatchedItemResponseDtoNotificationRuleScheduleIntervalType = typeof WatchedItemResponseDtoNotificationRuleScheduleIntervalType[keyof typeof WatchedItemResponseDtoNotificationRuleScheduleIntervalType] | null;
+
+
+export const WatchedItemResponseDtoNotificationRuleScheduleIntervalType = {
+  ONCE: 'ONCE',
+  HOURLY: 'HOURLY',
+  DAILY: 'DAILY',
+  WEEKLY: 'WEEKLY',
+} as const;
+
+export type WatchedItemResponseDtoNotificationRuleTargetsItemTargetOwnerType = typeof WatchedItemResponseDtoNotificationRuleTargetsItemTargetOwnerType[keyof typeof WatchedItemResponseDtoNotificationRuleTargetsItemTargetOwnerType];
+
+
+export const WatchedItemResponseDtoNotificationRuleTargetsItemTargetOwnerType = {
+  GUILD: 'GUILD',
+  USER: 'USER',
+} as const;
+
+export type WatchedItemResponseDtoNotificationRuleTargetsItemTargetProvider = typeof WatchedItemResponseDtoNotificationRuleTargetsItemTargetProvider[keyof typeof WatchedItemResponseDtoNotificationRuleTargetsItemTargetProvider];
+
+
+export const WatchedItemResponseDtoNotificationRuleTargetsItemTargetProvider = {
+  DISCORD: 'DISCORD',
+} as const;
+
+export type WatchedItemResponseDtoNotificationRuleTargetsItemTargetTargetType = typeof WatchedItemResponseDtoNotificationRuleTargetsItemTargetTargetType[keyof typeof WatchedItemResponseDtoNotificationRuleTargetsItemTargetTargetType];
+
+
+export const WatchedItemResponseDtoNotificationRuleTargetsItemTargetTargetType = {
+  CHANNEL: 'CHANNEL',
+  DM: 'DM',
+} as const;
+
+export type WatchedItemResponseDtoNotificationRuleTargetsItemTarget = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  ownerType: WatchedItemResponseDtoNotificationRuleTargetsItemTargetOwnerType;
+  ownerId: string;
+  provider: WatchedItemResponseDtoNotificationRuleTargetsItemTargetProvider;
+  targetType: WatchedItemResponseDtoNotificationRuleTargetsItemTargetTargetType;
+  externalId: string;
+  /** @nullable */
+  displayName: string | null;
+  /** @nullable */
+  guildName: string | null;
+  metadata: WatchedItemResponseDtoSchema0 | null;
+  active: boolean;
+  canSend: boolean;
+  /** @nullable */
+  lastSyncedAt: string | null;
+  /** @nullable */
+  lastDeliveryAt: string | null;
+  /** @nullable */
+  lastDeliveryError: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type WatchedItemResponseDtoNotificationRuleTargetsItem = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  ruleId: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  targetId: number;
+  createdAt: string;
+  target: WatchedItemResponseDtoNotificationRuleTargetsItemTarget;
+};
+
+/**
+ * @nullable
+ */
+export type WatchedItemResponseDtoNotificationRule = {[key: string]: unknown} & ({
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  ownerType: WatchedItemResponseDtoNotificationRuleOwnerType;
+  ownerId: string;
+  triggerType: WatchedItemResponseDtoNotificationRuleTriggerType;
+  /** @nullable */
+  guildId: string | null;
+  /** @nullable */
+  world: string | null;
+  /** @nullable */
+  name: string | null;
+  /** @nullable */
+  filters: WatchedItemResponseDtoNotificationRuleFilters;
+  /** @nullable */
+  contentTemplate: string | null;
+  /** @nullable */
+  scheduleStrategy: WatchedItemResponseDtoNotificationRuleScheduleStrategy;
+  /** @nullable */
+  scheduleAnchor: WatchedItemResponseDtoNotificationRuleScheduleAnchor;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  scheduleOffsetMinutes: number | null;
+  /** @nullable */
+  scheduledAt: string | null;
+  /** @nullable */
+  scheduleIntervalType: WatchedItemResponseDtoNotificationRuleScheduleIntervalType;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  scheduleIntervalValue: number | null;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  scheduleWeekday: number | null;
+  /** @nullable */
+  scheduleTimeOfDay: string | null;
+  /** @nullable */
+  scheduledUntil: string | null;
+  /** @nullable */
+  scheduleTimezone: string | null;
+  enabled: boolean;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  dedupeWindowSeconds: number;
+  createdAt: string;
+  updatedAt: string;
+  targets: WatchedItemResponseDtoNotificationRuleTargetsItem[];
+} | null) | null;
+
+export interface WatchedItemResponseDto {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  userId: string;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  itemId: number;
+  itemName: string;
+  world: string;
+  enabled: boolean;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  notificationRuleId: number | null;
+  createdAt: string;
+  updatedAt: string;
+  /** @nullable */
+  itemSnapshot: WatchedItemResponseDtoItemSnapshot;
+  /** @nullable */
+  notificationRule: WatchedItemResponseDtoNotificationRule;
+}
+
+export type NotificationJobsResponseDtoPendingItemOwnerType = typeof NotificationJobsResponseDtoPendingItemOwnerType[keyof typeof NotificationJobsResponseDtoPendingItemOwnerType];
+
+
+export const NotificationJobsResponseDtoPendingItemOwnerType = {
+  GUILD: 'GUILD',
+  USER: 'USER',
+} as const;
+
+export type NotificationJobsResponseDtoPendingItemJobKind = typeof NotificationJobsResponseDtoPendingItemJobKind[keyof typeof NotificationJobsResponseDtoPendingItemJobKind];
+
+
+export const NotificationJobsResponseDtoPendingItemJobKind = {
+  SCHEDULED: 'SCHEDULED',
+  INSTANT: 'INSTANT',
+  TEST: 'TEST',
+} as const;
+
+export type NotificationJobsResponseDtoPendingItemStatus = typeof NotificationJobsResponseDtoPendingItemStatus[keyof typeof NotificationJobsResponseDtoPendingItemStatus];
+
+
+export const NotificationJobsResponseDtoPendingItemStatus = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  SENT: 'SENT',
+  FAILED: 'FAILED',
+  BLOCKED: 'BLOCKED',
+  CANCELED: 'CANCELED',
+} as const;
+
+export type NotificationJobsResponseDtoPendingItemPayloadSnapshotAllowedMentionsParseItem = typeof NotificationJobsResponseDtoPendingItemPayloadSnapshotAllowedMentionsParseItem[keyof typeof NotificationJobsResponseDtoPendingItemPayloadSnapshotAllowedMentionsParseItem];
+
+
+export const NotificationJobsResponseDtoPendingItemPayloadSnapshotAllowedMentionsParseItem = {
+  roles: 'roles',
+  users: 'users',
+  everyone: 'everyone',
+} as const;
+
+export type NotificationJobsResponseDtoPendingItemPayloadSnapshotAllowedMentions = {
+  parse?: NotificationJobsResponseDtoPendingItemPayloadSnapshotAllowedMentionsParseItem[];
+  roles?: string[];
+  users?: string[];
+  repliedUser?: boolean;
+};
+
+/**
+ * @nullable
+ */
+export type NotificationJobsResponseDtoPendingItemPayloadSnapshotTriggerType = typeof NotificationJobsResponseDtoPendingItemPayloadSnapshotTriggerType[keyof typeof NotificationJobsResponseDtoPendingItemPayloadSnapshotTriggerType] | null;
+
+
+export const NotificationJobsResponseDtoPendingItemPayloadSnapshotTriggerType = {
+  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
+  NPC_SPAWNED: 'NPC_SPAWNED',
+  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
+  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+} as const;
+
+/**
+ * @nullable
+ */
+export type NotificationJobsResponseDtoPendingItemPayloadSnapshotScheduleStrategy = typeof NotificationJobsResponseDtoPendingItemPayloadSnapshotScheduleStrategy[keyof typeof NotificationJobsResponseDtoPendingItemPayloadSnapshotScheduleStrategy] | null;
+
+
+export const NotificationJobsResponseDtoPendingItemPayloadSnapshotScheduleStrategy = {
+  SPAWN_WINDOW_RELATIVE: 'SPAWN_WINDOW_RELATIVE',
+  FIXED_DATETIME: 'FIXED_DATETIME',
+} as const;
+
+/**
+ * @nullable
+ */
+export type NotificationJobsResponseDtoPendingItemPayloadSnapshotScheduleAnchor = typeof NotificationJobsResponseDtoPendingItemPayloadSnapshotScheduleAnchor[keyof typeof NotificationJobsResponseDtoPendingItemPayloadSnapshotScheduleAnchor] | null;
+
+
+export const NotificationJobsResponseDtoPendingItemPayloadSnapshotScheduleAnchor = {
+  MIN_SPAWN: 'MIN_SPAWN',
+  MAX_SPAWN: 'MAX_SPAWN',
+} as const;
+
+/**
+ * @nullable
+ */
+export type NotificationJobsResponseDtoPendingItemPayloadSnapshot = {[key: string]: unknown} & ({
+  /** @nullable */
+  title?: string | null;
+  /** @nullable */
+  message?: string | null;
+  /** @nullable */
+  content?: string | null;
+  allowedMentions?: NotificationJobsResponseDtoPendingItemPayloadSnapshotAllowedMentions;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  ruleId?: number | null;
+  /** @nullable */
+  ruleName?: string | null;
+  /** @nullable */
+  triggerType?: NotificationJobsResponseDtoPendingItemPayloadSnapshotTriggerType;
+  /** @nullable */
+  world?: string | null;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  npcId?: number | null;
+  /** @nullable */
+  npcName?: string | null;
+  /** @nullable */
+  timerKey?: string | null;
+  /** @nullable */
+  minSpawnTime?: string | null;
+  /** @nullable */
+  maxSpawnTime?: string | null;
+  /** @nullable */
+  scheduledFor?: string | null;
+  /** @nullable */
+  scheduleStrategy?: NotificationJobsResponseDtoPendingItemPayloadSnapshotScheduleStrategy;
+  /** @nullable */
+  scheduleAnchor?: NotificationJobsResponseDtoPendingItemPayloadSnapshotScheduleAnchor;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  scheduleOffsetMinutes?: number | null;
+  /** @nullable */
+  contentTemplate?: string | null;
+  /** @nullable */
+  testTriggeredAt?: string | null;
+} | null) | null;
+
+export type NotificationJobsResponseDtoPendingItemRuleOwnerType = typeof NotificationJobsResponseDtoPendingItemRuleOwnerType[keyof typeof NotificationJobsResponseDtoPendingItemRuleOwnerType];
+
+
+export const NotificationJobsResponseDtoPendingItemRuleOwnerType = {
+  GUILD: 'GUILD',
+  USER: 'USER',
+} as const;
+
+export type NotificationJobsResponseDtoPendingItemRuleTriggerType = typeof NotificationJobsResponseDtoPendingItemRuleTriggerType[keyof typeof NotificationJobsResponseDtoPendingItemRuleTriggerType];
+
+
+export const NotificationJobsResponseDtoPendingItemRuleTriggerType = {
+  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
+  NPC_SPAWNED: 'NPC_SPAWNED',
+  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
+  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+} as const;
+
+/**
+ * @nullable
+ */
+export type NotificationJobsResponseDtoPendingItemRuleFilters = {[key: string]: unknown} & ({
+  guildIds?: string[];
+  world?: string;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  npcId?: number | null;
+  /**
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  npcIds?: number[];
+  /**
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  npcTemplateIds?: number[];
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  itemId?: number | null;
+  /**
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  itemIds?: number[];
+} | null) | null;
+
+/**
+ * @nullable
+ */
+export type NotificationJobsResponseDtoPendingItemRuleScheduleStrategy = typeof NotificationJobsResponseDtoPendingItemRuleScheduleStrategy[keyof typeof NotificationJobsResponseDtoPendingItemRuleScheduleStrategy] | null;
+
+
+export const NotificationJobsResponseDtoPendingItemRuleScheduleStrategy = {
+  SPAWN_WINDOW_RELATIVE: 'SPAWN_WINDOW_RELATIVE',
+  FIXED_DATETIME: 'FIXED_DATETIME',
+} as const;
+
+/**
+ * @nullable
+ */
+export type NotificationJobsResponseDtoPendingItemRuleScheduleAnchor = typeof NotificationJobsResponseDtoPendingItemRuleScheduleAnchor[keyof typeof NotificationJobsResponseDtoPendingItemRuleScheduleAnchor] | null;
+
+
+export const NotificationJobsResponseDtoPendingItemRuleScheduleAnchor = {
+  MIN_SPAWN: 'MIN_SPAWN',
+  MAX_SPAWN: 'MAX_SPAWN',
+} as const;
+
+/**
+ * @nullable
+ */
+export type NotificationJobsResponseDtoPendingItemRuleScheduleIntervalType = typeof NotificationJobsResponseDtoPendingItemRuleScheduleIntervalType[keyof typeof NotificationJobsResponseDtoPendingItemRuleScheduleIntervalType] | null;
+
+
+export const NotificationJobsResponseDtoPendingItemRuleScheduleIntervalType = {
+  ONCE: 'ONCE',
+  HOURLY: 'HOURLY',
+  DAILY: 'DAILY',
+  WEEKLY: 'WEEKLY',
+} as const;
+
+export type NotificationJobsResponseDtoPendingItemRule = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  ownerType: NotificationJobsResponseDtoPendingItemRuleOwnerType;
+  ownerId: string;
+  triggerType: NotificationJobsResponseDtoPendingItemRuleTriggerType;
+  /** @nullable */
+  guildId: string | null;
+  /** @nullable */
+  world: string | null;
+  /** @nullable */
+  name: string | null;
+  /** @nullable */
+  filters: NotificationJobsResponseDtoPendingItemRuleFilters;
+  /** @nullable */
+  contentTemplate: string | null;
+  /** @nullable */
+  scheduleStrategy: NotificationJobsResponseDtoPendingItemRuleScheduleStrategy;
+  /** @nullable */
+  scheduleAnchor: NotificationJobsResponseDtoPendingItemRuleScheduleAnchor;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  scheduleOffsetMinutes: number | null;
+  /** @nullable */
+  scheduledAt: string | null;
+  /** @nullable */
+  scheduleIntervalType: NotificationJobsResponseDtoPendingItemRuleScheduleIntervalType;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  scheduleIntervalValue: number | null;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  scheduleWeekday: number | null;
+  /** @nullable */
+  scheduleTimeOfDay: string | null;
+  /** @nullable */
+  scheduledUntil: string | null;
+  /** @nullable */
+  scheduleTimezone: string | null;
+  enabled: boolean;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  dedupeWindowSeconds: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type NotificationJobsResponseDtoPendingItemTargetOwnerType = typeof NotificationJobsResponseDtoPendingItemTargetOwnerType[keyof typeof NotificationJobsResponseDtoPendingItemTargetOwnerType];
+
+
+export const NotificationJobsResponseDtoPendingItemTargetOwnerType = {
+  GUILD: 'GUILD',
+  USER: 'USER',
+} as const;
+
+export type NotificationJobsResponseDtoPendingItemTargetProvider = typeof NotificationJobsResponseDtoPendingItemTargetProvider[keyof typeof NotificationJobsResponseDtoPendingItemTargetProvider];
+
+
+export const NotificationJobsResponseDtoPendingItemTargetProvider = {
+  DISCORD: 'DISCORD',
+} as const;
+
+export type NotificationJobsResponseDtoPendingItemTargetTargetType = typeof NotificationJobsResponseDtoPendingItemTargetTargetType[keyof typeof NotificationJobsResponseDtoPendingItemTargetTargetType];
+
+
+export const NotificationJobsResponseDtoPendingItemTargetTargetType = {
+  CHANNEL: 'CHANNEL',
+  DM: 'DM',
+} as const;
+
+export type NotificationJobsResponseDtoSchema0 = string | number | boolean | (NotificationJobsResponseDtoSchema0 | null)[] | {[key: string]: NotificationJobsResponseDtoSchema0 | null} | null;
+
+export type NotificationJobsResponseDtoPendingItemTarget = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  ownerType: NotificationJobsResponseDtoPendingItemTargetOwnerType;
+  ownerId: string;
+  provider: NotificationJobsResponseDtoPendingItemTargetProvider;
+  targetType: NotificationJobsResponseDtoPendingItemTargetTargetType;
+  externalId: string;
+  /** @nullable */
+  displayName: string | null;
+  /** @nullable */
+  guildName: string | null;
+  metadata: NotificationJobsResponseDtoSchema0 | null;
+  active: boolean;
+  canSend: boolean;
+  /** @nullable */
+  lastSyncedAt: string | null;
+  /** @nullable */
+  lastDeliveryAt: string | null;
+  /** @nullable */
+  lastDeliveryError: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type NotificationJobsResponseDtoPendingItem = {
+  id: string;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  ruleId: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  targetId: number;
+  ownerType: NotificationJobsResponseDtoPendingItemOwnerType;
+  ownerId: string;
+  jobKind: NotificationJobsResponseDtoPendingItemJobKind;
+  scheduledFor: string;
+  status: NotificationJobsResponseDtoPendingItemStatus;
+  idempotencyKey: string;
+  /** @nullable */
+  sourceEntityType: string | null;
+  /** @nullable */
+  sourceEntityId: string | null;
+  /** @nullable */
+  sourceEventId: string | null;
+  /** @nullable */
+  payloadSnapshot: NotificationJobsResponseDtoPendingItemPayloadSnapshot;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  attemptCount: number;
+  /** @nullable */
+  lastError: string | null;
+  /** @nullable */
+  blockedReason: string | null;
+  /** @nullable */
+  providerMessageId: string | null;
+  /** @nullable */
+  processedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  rule: NotificationJobsResponseDtoPendingItemRule;
+  target: NotificationJobsResponseDtoPendingItemTarget;
+};
+
+export type NotificationJobsResponseDtoHistoryItemOwnerType = typeof NotificationJobsResponseDtoHistoryItemOwnerType[keyof typeof NotificationJobsResponseDtoHistoryItemOwnerType];
+
+
+export const NotificationJobsResponseDtoHistoryItemOwnerType = {
+  GUILD: 'GUILD',
+  USER: 'USER',
+} as const;
+
+export type NotificationJobsResponseDtoHistoryItemJobKind = typeof NotificationJobsResponseDtoHistoryItemJobKind[keyof typeof NotificationJobsResponseDtoHistoryItemJobKind];
+
+
+export const NotificationJobsResponseDtoHistoryItemJobKind = {
+  SCHEDULED: 'SCHEDULED',
+  INSTANT: 'INSTANT',
+  TEST: 'TEST',
+} as const;
+
+export type NotificationJobsResponseDtoHistoryItemStatus = typeof NotificationJobsResponseDtoHistoryItemStatus[keyof typeof NotificationJobsResponseDtoHistoryItemStatus];
+
+
+export const NotificationJobsResponseDtoHistoryItemStatus = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  SENT: 'SENT',
+  FAILED: 'FAILED',
+  BLOCKED: 'BLOCKED',
+  CANCELED: 'CANCELED',
+} as const;
+
+export type NotificationJobsResponseDtoHistoryItemPayloadSnapshotAllowedMentionsParseItem = typeof NotificationJobsResponseDtoHistoryItemPayloadSnapshotAllowedMentionsParseItem[keyof typeof NotificationJobsResponseDtoHistoryItemPayloadSnapshotAllowedMentionsParseItem];
+
+
+export const NotificationJobsResponseDtoHistoryItemPayloadSnapshotAllowedMentionsParseItem = {
+  roles: 'roles',
+  users: 'users',
+  everyone: 'everyone',
+} as const;
+
+export type NotificationJobsResponseDtoHistoryItemPayloadSnapshotAllowedMentions = {
+  parse?: NotificationJobsResponseDtoHistoryItemPayloadSnapshotAllowedMentionsParseItem[];
+  roles?: string[];
+  users?: string[];
+  repliedUser?: boolean;
+};
+
+/**
+ * @nullable
+ */
+export type NotificationJobsResponseDtoHistoryItemPayloadSnapshotTriggerType = typeof NotificationJobsResponseDtoHistoryItemPayloadSnapshotTriggerType[keyof typeof NotificationJobsResponseDtoHistoryItemPayloadSnapshotTriggerType] | null;
+
+
+export const NotificationJobsResponseDtoHistoryItemPayloadSnapshotTriggerType = {
+  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
+  NPC_SPAWNED: 'NPC_SPAWNED',
+  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
+  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+} as const;
+
+/**
+ * @nullable
+ */
+export type NotificationJobsResponseDtoHistoryItemPayloadSnapshotScheduleStrategy = typeof NotificationJobsResponseDtoHistoryItemPayloadSnapshotScheduleStrategy[keyof typeof NotificationJobsResponseDtoHistoryItemPayloadSnapshotScheduleStrategy] | null;
+
+
+export const NotificationJobsResponseDtoHistoryItemPayloadSnapshotScheduleStrategy = {
+  SPAWN_WINDOW_RELATIVE: 'SPAWN_WINDOW_RELATIVE',
+  FIXED_DATETIME: 'FIXED_DATETIME',
+} as const;
+
+/**
+ * @nullable
+ */
+export type NotificationJobsResponseDtoHistoryItemPayloadSnapshotScheduleAnchor = typeof NotificationJobsResponseDtoHistoryItemPayloadSnapshotScheduleAnchor[keyof typeof NotificationJobsResponseDtoHistoryItemPayloadSnapshotScheduleAnchor] | null;
+
+
+export const NotificationJobsResponseDtoHistoryItemPayloadSnapshotScheduleAnchor = {
+  MIN_SPAWN: 'MIN_SPAWN',
+  MAX_SPAWN: 'MAX_SPAWN',
+} as const;
+
+/**
+ * @nullable
+ */
+export type NotificationJobsResponseDtoHistoryItemPayloadSnapshot = {[key: string]: unknown} & ({
+  /** @nullable */
+  title?: string | null;
+  /** @nullable */
+  message?: string | null;
+  /** @nullable */
+  content?: string | null;
+  allowedMentions?: NotificationJobsResponseDtoHistoryItemPayloadSnapshotAllowedMentions;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  ruleId?: number | null;
+  /** @nullable */
+  ruleName?: string | null;
+  /** @nullable */
+  triggerType?: NotificationJobsResponseDtoHistoryItemPayloadSnapshotTriggerType;
+  /** @nullable */
+  world?: string | null;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  npcId?: number | null;
+  /** @nullable */
+  npcName?: string | null;
+  /** @nullable */
+  timerKey?: string | null;
+  /** @nullable */
+  minSpawnTime?: string | null;
+  /** @nullable */
+  maxSpawnTime?: string | null;
+  /** @nullable */
+  scheduledFor?: string | null;
+  /** @nullable */
+  scheduleStrategy?: NotificationJobsResponseDtoHistoryItemPayloadSnapshotScheduleStrategy;
+  /** @nullable */
+  scheduleAnchor?: NotificationJobsResponseDtoHistoryItemPayloadSnapshotScheduleAnchor;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  scheduleOffsetMinutes?: number | null;
+  /** @nullable */
+  contentTemplate?: string | null;
+  /** @nullable */
+  testTriggeredAt?: string | null;
+} | null) | null;
+
+export type NotificationJobsResponseDtoHistoryItemRuleOwnerType = typeof NotificationJobsResponseDtoHistoryItemRuleOwnerType[keyof typeof NotificationJobsResponseDtoHistoryItemRuleOwnerType];
+
+
+export const NotificationJobsResponseDtoHistoryItemRuleOwnerType = {
+  GUILD: 'GUILD',
+  USER: 'USER',
+} as const;
+
+export type NotificationJobsResponseDtoHistoryItemRuleTriggerType = typeof NotificationJobsResponseDtoHistoryItemRuleTriggerType[keyof typeof NotificationJobsResponseDtoHistoryItemRuleTriggerType];
+
+
+export const NotificationJobsResponseDtoHistoryItemRuleTriggerType = {
+  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
+  NPC_SPAWNED: 'NPC_SPAWNED',
+  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
+  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+} as const;
+
+/**
+ * @nullable
+ */
+export type NotificationJobsResponseDtoHistoryItemRuleFilters = {[key: string]: unknown} & ({
+  guildIds?: string[];
+  world?: string;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  npcId?: number | null;
+  /**
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  npcIds?: number[];
+  /**
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  npcTemplateIds?: number[];
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  itemId?: number | null;
+  /**
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  itemIds?: number[];
+} | null) | null;
+
+/**
+ * @nullable
+ */
+export type NotificationJobsResponseDtoHistoryItemRuleScheduleStrategy = typeof NotificationJobsResponseDtoHistoryItemRuleScheduleStrategy[keyof typeof NotificationJobsResponseDtoHistoryItemRuleScheduleStrategy] | null;
+
+
+export const NotificationJobsResponseDtoHistoryItemRuleScheduleStrategy = {
+  SPAWN_WINDOW_RELATIVE: 'SPAWN_WINDOW_RELATIVE',
+  FIXED_DATETIME: 'FIXED_DATETIME',
+} as const;
+
+/**
+ * @nullable
+ */
+export type NotificationJobsResponseDtoHistoryItemRuleScheduleAnchor = typeof NotificationJobsResponseDtoHistoryItemRuleScheduleAnchor[keyof typeof NotificationJobsResponseDtoHistoryItemRuleScheduleAnchor] | null;
+
+
+export const NotificationJobsResponseDtoHistoryItemRuleScheduleAnchor = {
+  MIN_SPAWN: 'MIN_SPAWN',
+  MAX_SPAWN: 'MAX_SPAWN',
+} as const;
+
+/**
+ * @nullable
+ */
+export type NotificationJobsResponseDtoHistoryItemRuleScheduleIntervalType = typeof NotificationJobsResponseDtoHistoryItemRuleScheduleIntervalType[keyof typeof NotificationJobsResponseDtoHistoryItemRuleScheduleIntervalType] | null;
+
+
+export const NotificationJobsResponseDtoHistoryItemRuleScheduleIntervalType = {
+  ONCE: 'ONCE',
+  HOURLY: 'HOURLY',
+  DAILY: 'DAILY',
+  WEEKLY: 'WEEKLY',
+} as const;
+
+export type NotificationJobsResponseDtoHistoryItemRule = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  ownerType: NotificationJobsResponseDtoHistoryItemRuleOwnerType;
+  ownerId: string;
+  triggerType: NotificationJobsResponseDtoHistoryItemRuleTriggerType;
+  /** @nullable */
+  guildId: string | null;
+  /** @nullable */
+  world: string | null;
+  /** @nullable */
+  name: string | null;
+  /** @nullable */
+  filters: NotificationJobsResponseDtoHistoryItemRuleFilters;
+  /** @nullable */
+  contentTemplate: string | null;
+  /** @nullable */
+  scheduleStrategy: NotificationJobsResponseDtoHistoryItemRuleScheduleStrategy;
+  /** @nullable */
+  scheduleAnchor: NotificationJobsResponseDtoHistoryItemRuleScheduleAnchor;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  scheduleOffsetMinutes: number | null;
+  /** @nullable */
+  scheduledAt: string | null;
+  /** @nullable */
+  scheduleIntervalType: NotificationJobsResponseDtoHistoryItemRuleScheduleIntervalType;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  scheduleIntervalValue: number | null;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  scheduleWeekday: number | null;
+  /** @nullable */
+  scheduleTimeOfDay: string | null;
+  /** @nullable */
+  scheduledUntil: string | null;
+  /** @nullable */
+  scheduleTimezone: string | null;
+  enabled: boolean;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  dedupeWindowSeconds: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type NotificationJobsResponseDtoHistoryItemTargetOwnerType = typeof NotificationJobsResponseDtoHistoryItemTargetOwnerType[keyof typeof NotificationJobsResponseDtoHistoryItemTargetOwnerType];
+
+
+export const NotificationJobsResponseDtoHistoryItemTargetOwnerType = {
+  GUILD: 'GUILD',
+  USER: 'USER',
+} as const;
+
+export type NotificationJobsResponseDtoHistoryItemTargetProvider = typeof NotificationJobsResponseDtoHistoryItemTargetProvider[keyof typeof NotificationJobsResponseDtoHistoryItemTargetProvider];
+
+
+export const NotificationJobsResponseDtoHistoryItemTargetProvider = {
+  DISCORD: 'DISCORD',
+} as const;
+
+export type NotificationJobsResponseDtoHistoryItemTargetTargetType = typeof NotificationJobsResponseDtoHistoryItemTargetTargetType[keyof typeof NotificationJobsResponseDtoHistoryItemTargetTargetType];
+
+
+export const NotificationJobsResponseDtoHistoryItemTargetTargetType = {
+  CHANNEL: 'CHANNEL',
+  DM: 'DM',
+} as const;
+
+export type NotificationJobsResponseDtoHistoryItemTarget = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  ownerType: NotificationJobsResponseDtoHistoryItemTargetOwnerType;
+  ownerId: string;
+  provider: NotificationJobsResponseDtoHistoryItemTargetProvider;
+  targetType: NotificationJobsResponseDtoHistoryItemTargetTargetType;
+  externalId: string;
+  /** @nullable */
+  displayName: string | null;
+  /** @nullable */
+  guildName: string | null;
+  metadata: NotificationJobsResponseDtoSchema0 | null;
+  active: boolean;
+  canSend: boolean;
+  /** @nullable */
+  lastSyncedAt: string | null;
+  /** @nullable */
+  lastDeliveryAt: string | null;
+  /** @nullable */
+  lastDeliveryError: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type NotificationJobsResponseDtoHistoryItem = {
+  id: string;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  ruleId: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  targetId: number;
+  ownerType: NotificationJobsResponseDtoHistoryItemOwnerType;
+  ownerId: string;
+  jobKind: NotificationJobsResponseDtoHistoryItemJobKind;
+  scheduledFor: string;
+  status: NotificationJobsResponseDtoHistoryItemStatus;
+  idempotencyKey: string;
+  /** @nullable */
+  sourceEntityType: string | null;
+  /** @nullable */
+  sourceEntityId: string | null;
+  /** @nullable */
+  sourceEventId: string | null;
+  /** @nullable */
+  payloadSnapshot: NotificationJobsResponseDtoHistoryItemPayloadSnapshot;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  attemptCount: number;
+  /** @nullable */
+  lastError: string | null;
+  /** @nullable */
+  blockedReason: string | null;
+  /** @nullable */
+  providerMessageId: string | null;
+  /** @nullable */
+  processedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  rule: NotificationJobsResponseDtoHistoryItemRule;
+  target: NotificationJobsResponseDtoHistoryItemTarget;
+};
+
+export interface NotificationJobsResponseDto {
+  pending: NotificationJobsResponseDtoPendingItem[];
+  history: NotificationJobsResponseDtoHistoryItem[];
+}
+
+export type NotificationRuleResponseDtoSchema0 = string | number | boolean | (NotificationRuleResponseDtoSchema0 | null)[] | {[key: string]: NotificationRuleResponseDtoSchema0 | null} | null;
+
+export type UpdateNotificationRuleDtoScheduleStrategy = typeof UpdateNotificationRuleDtoScheduleStrategy[keyof typeof UpdateNotificationRuleDtoScheduleStrategy];
+
+
+export const UpdateNotificationRuleDtoScheduleStrategy = {
+  SPAWN_WINDOW_RELATIVE: 'SPAWN_WINDOW_RELATIVE',
+  FIXED_DATETIME: 'FIXED_DATETIME',
+} as const;
+
+export type UpdateNotificationRuleDtoScheduleAnchor = typeof UpdateNotificationRuleDtoScheduleAnchor[keyof typeof UpdateNotificationRuleDtoScheduleAnchor];
+
+
+export const UpdateNotificationRuleDtoScheduleAnchor = {
+  MIN_SPAWN: 'MIN_SPAWN',
+  MAX_SPAWN: 'MAX_SPAWN',
+} as const;
+
+export type UpdateNotificationRuleDtoScheduleIntervalType = typeof UpdateNotificationRuleDtoScheduleIntervalType[keyof typeof UpdateNotificationRuleDtoScheduleIntervalType];
+
+
+export const UpdateNotificationRuleDtoScheduleIntervalType = {
+  ONCE: 'ONCE',
+  HOURLY: 'HOURLY',
+  DAILY: 'DAILY',
+  WEEKLY: 'WEEKLY',
+} as const;
+
+export type UpdateNotificationRuleDtoTriggerType = typeof UpdateNotificationRuleDtoTriggerType[keyof typeof UpdateNotificationRuleDtoTriggerType];
+
+
+export const UpdateNotificationRuleDtoTriggerType = {
+  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
+  NPC_SPAWNED: 'NPC_SPAWNED',
+  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
+  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+} as const;
+
+export interface UpdateNotificationRuleDto {
+  /**
+     * @maxLength 255
+     * @nullable
+     */
+  name?: string | null;
+  /**
+     * @maxLength 4000
+     * @nullable
+     */
+  contentTemplate?: string | null;
+  /** @maxLength 50 */
+  world?: string;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcId?: number;
+  /**
+     * @maxItems 5
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  npcIds?: number[];
+  /**
+     * Margonem template ids (`tpl`). Matches every timer observed with one of these templates; `npcId` and `npcIds` match a timer's own NPC id.
+     * @maxItems 5
+     * @items.minimum 1
+     * @items.maximum 9007199254740991
+     */
+  npcTemplateIds?: number[];
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  itemId?: number;
+  /**
+     * @maxItems 20
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  itemIds?: number[];
+  scheduleStrategy?: UpdateNotificationRuleDtoScheduleStrategy;
+  scheduleAnchor?: UpdateNotificationRuleDtoScheduleAnchor;
+  /**
+     * @minimum 0
+     * @maximum 1440
+     */
+  scheduleOffsetMinutes?: number;
+  scheduledAt?: string;
+  scheduleIntervalType?: UpdateNotificationRuleDtoScheduleIntervalType;
+  /**
+     * @minimum 1
+     * @maximum 24
+     */
+  scheduleIntervalValue?: number;
+  /**
+     * @minimum 0
+     * @maximum 6
+     */
+  scheduleWeekday?: number;
+  scheduleTimeOfDay?: string;
+  /** @nullable */
+  scheduledUntil?: string | null;
+  /** @maxLength 50 */
+  scheduleTimezone?: string;
+  enabled?: boolean;
+  triggerType?: UpdateNotificationRuleDtoTriggerType;
+  /**
+     * @maxItems 3
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  targetIds?: number[];
+}
+
+export type CreateNotificationRuleDtoScheduleStrategy = typeof CreateNotificationRuleDtoScheduleStrategy[keyof typeof CreateNotificationRuleDtoScheduleStrategy];
+
+
+export const CreateNotificationRuleDtoScheduleStrategy = {
+  SPAWN_WINDOW_RELATIVE: 'SPAWN_WINDOW_RELATIVE',
+  FIXED_DATETIME: 'FIXED_DATETIME',
+} as const;
+
+export type CreateNotificationRuleDtoScheduleAnchor = typeof CreateNotificationRuleDtoScheduleAnchor[keyof typeof CreateNotificationRuleDtoScheduleAnchor];
+
+
+export const CreateNotificationRuleDtoScheduleAnchor = {
+  MIN_SPAWN: 'MIN_SPAWN',
+  MAX_SPAWN: 'MAX_SPAWN',
+} as const;
+
+export type CreateNotificationRuleDtoScheduleIntervalType = typeof CreateNotificationRuleDtoScheduleIntervalType[keyof typeof CreateNotificationRuleDtoScheduleIntervalType];
+
+
+export const CreateNotificationRuleDtoScheduleIntervalType = {
+  ONCE: 'ONCE',
+  HOURLY: 'HOURLY',
+  DAILY: 'DAILY',
+  WEEKLY: 'WEEKLY',
+} as const;
+
+export type CreateNotificationRuleDtoTriggerType = typeof CreateNotificationRuleDtoTriggerType[keyof typeof CreateNotificationRuleDtoTriggerType];
+
+
+export const CreateNotificationRuleDtoTriggerType = {
+  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
+  NPC_SPAWNED: 'NPC_SPAWNED',
+  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
+  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+} as const;
+
+export interface CreateNotificationRuleDto {
+  /**
+     * @maxLength 255
+     * @nullable
+     */
+  name?: string | null;
+  /**
+     * @maxLength 4000
+     * @nullable
+     */
+  contentTemplate?: string | null;
+  /** @maxLength 50 */
+  world?: string;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcId?: number;
+  /**
+     * @maxItems 5
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  npcIds?: number[];
+  /**
+     * Margonem template ids (`tpl`). Matches every timer observed with one of these templates; `npcId` and `npcIds` match a timer's own NPC id.
+     * @maxItems 5
+     * @items.minimum 1
+     * @items.maximum 9007199254740991
+     */
+  npcTemplateIds?: number[];
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  itemId?: number;
+  /**
+     * @maxItems 20
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  itemIds?: number[];
+  scheduleStrategy?: CreateNotificationRuleDtoScheduleStrategy;
+  scheduleAnchor?: CreateNotificationRuleDtoScheduleAnchor;
+  /**
+     * @minimum 0
+     * @maximum 1440
+     */
+  scheduleOffsetMinutes?: number;
+  scheduledAt?: string;
+  scheduleIntervalType?: CreateNotificationRuleDtoScheduleIntervalType;
+  /**
+     * @minimum 1
+     * @maximum 24
+     */
+  scheduleIntervalValue?: number;
+  /**
+     * @minimum 0
+     * @maximum 6
+     */
+  scheduleWeekday?: number;
+  scheduleTimeOfDay?: string;
+  /** @nullable */
+  scheduledUntil?: string | null;
+  /** @maxLength 50 */
+  scheduleTimezone?: string;
+  enabled?: boolean;
+  triggerType: CreateNotificationRuleDtoTriggerType;
+  /**
+     * @maxItems 3
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  targetIds: number[];
+}
+
+export type NotificationTargetResponseDtoOwnerType = typeof NotificationTargetResponseDtoOwnerType[keyof typeof NotificationTargetResponseDtoOwnerType];
+
+
+export const NotificationTargetResponseDtoOwnerType = {
+  GUILD: 'GUILD',
+  USER: 'USER',
+} as const;
+
+export type NotificationTargetResponseDtoProvider = typeof NotificationTargetResponseDtoProvider[keyof typeof NotificationTargetResponseDtoProvider];
+
+
+export const NotificationTargetResponseDtoProvider = {
+  DISCORD: 'DISCORD',
+} as const;
+
+export type NotificationTargetResponseDtoTargetType = typeof NotificationTargetResponseDtoTargetType[keyof typeof NotificationTargetResponseDtoTargetType];
+
+
+export const NotificationTargetResponseDtoTargetType = {
+  CHANNEL: 'CHANNEL',
+  DM: 'DM',
+} as const;
+
+export type JsonValue = string | number | boolean | (JsonValue | null)[] | {[key: string]: JsonValue | null} | null;
+
+export interface NotificationTargetResponseDto {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  ownerType: NotificationTargetResponseDtoOwnerType;
+  ownerId: string;
+  provider: NotificationTargetResponseDtoProvider;
+  targetType: NotificationTargetResponseDtoTargetType;
+  externalId: string;
+  /** @nullable */
+  displayName: string | null;
+  /** @nullable */
+  guildName: string | null;
+  metadata: JsonValue | null;
+  active: boolean;
+  canSend: boolean;
+  /** @nullable */
+  lastSyncedAt: string | null;
+  /** @nullable */
+  lastDeliveryAt: string | null;
+  /** @nullable */
+  lastDeliveryError: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateNotificationTargetDto {
+  /**
+     * @maxLength 255
+     * @nullable
+     */
+  displayName?: string | null;
+  active?: boolean;
+}
+
+export type CreateNotificationTargetDtoTargetType = typeof CreateNotificationTargetDtoTargetType[keyof typeof CreateNotificationTargetDtoTargetType];
+
+
+export const CreateNotificationTargetDtoTargetType = {
+  CHANNEL: 'CHANNEL',
+  DM: 'DM',
+} as const;
+
+export interface CreateNotificationTargetDto {
+  targetType: CreateNotificationTargetDtoTargetType;
+  /** @maxLength 100 */
+  externalId?: string;
+  /** @maxLength 255 */
+  displayName?: string;
+}
+
+export type NotificationTargetWithTestTriggerResponseDtoOwnerType = typeof NotificationTargetWithTestTriggerResponseDtoOwnerType[keyof typeof NotificationTargetWithTestTriggerResponseDtoOwnerType];
+
+
+export const NotificationTargetWithTestTriggerResponseDtoOwnerType = {
+  GUILD: 'GUILD',
+  USER: 'USER',
+} as const;
+
+export type NotificationTargetWithTestTriggerResponseDtoProvider = typeof NotificationTargetWithTestTriggerResponseDtoProvider[keyof typeof NotificationTargetWithTestTriggerResponseDtoProvider];
+
+
+export const NotificationTargetWithTestTriggerResponseDtoProvider = {
+  DISCORD: 'DISCORD',
+} as const;
+
+export type NotificationTargetWithTestTriggerResponseDtoTargetType = typeof NotificationTargetWithTestTriggerResponseDtoTargetType[keyof typeof NotificationTargetWithTestTriggerResponseDtoTargetType];
+
+
+export const NotificationTargetWithTestTriggerResponseDtoTargetType = {
+  CHANNEL: 'CHANNEL',
+  DM: 'DM',
+} as const;
+
+export type NotificationTargetWithTestTriggerResponseDtoTestTrigger = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  limit: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  used: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  remaining: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  windowSeconds: number;
+  /** @nullable */
+  nextAvailableAt: string | null;
+};
+
+export type NotificationTargetWithTestTriggerResponseDtoSchema0 = string | number | boolean | (NotificationTargetWithTestTriggerResponseDtoSchema0 | null)[] | {[key: string]: NotificationTargetWithTestTriggerResponseDtoSchema0 | null} | null;
+
+export interface NotificationTargetWithTestTriggerResponseDto {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  ownerType: NotificationTargetWithTestTriggerResponseDtoOwnerType;
+  ownerId: string;
+  provider: NotificationTargetWithTestTriggerResponseDtoProvider;
+  targetType: NotificationTargetWithTestTriggerResponseDtoTargetType;
+  externalId: string;
+  /** @nullable */
+  displayName: string | null;
+  /** @nullable */
+  guildName: string | null;
+  metadata: NotificationTargetWithTestTriggerResponseDtoSchema0 | null;
+  active: boolean;
+  canSend: boolean;
+  /** @nullable */
+  lastSyncedAt: string | null;
+  /** @nullable */
+  lastDeliveryAt: string | null;
+  /** @nullable */
+  lastDeliveryError: string | null;
+  createdAt: string;
+  updatedAt: string;
+  testTrigger: NotificationTargetWithTestTriggerResponseDtoTestTrigger;
+}
+
+export type NotificationRuleResponseDtoOwnerType = typeof NotificationRuleResponseDtoOwnerType[keyof typeof NotificationRuleResponseDtoOwnerType];
+
+
+export const NotificationRuleResponseDtoOwnerType = {
+  GUILD: 'GUILD',
+  USER: 'USER',
+} as const;
+
+export type NotificationRuleResponseDtoTriggerType = typeof NotificationRuleResponseDtoTriggerType[keyof typeof NotificationRuleResponseDtoTriggerType];
+
+
+export const NotificationRuleResponseDtoTriggerType = {
+  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
+  NPC_SPAWNED: 'NPC_SPAWNED',
+  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
+  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+} as const;
+
+/**
+ * @nullable
+ */
+export type NotificationRuleResponseDtoFilters = {[key: string]: unknown} & ({
+  guildIds?: string[];
+  world?: string;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  npcId?: number | null;
+  /**
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  npcIds?: number[];
+  /**
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  npcTemplateIds?: number[];
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  itemId?: number | null;
+  /**
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  itemIds?: number[];
+} | null) | null;
+
+/**
+ * @nullable
+ */
+export type NotificationRuleResponseDtoScheduleStrategy = typeof NotificationRuleResponseDtoScheduleStrategy[keyof typeof NotificationRuleResponseDtoScheduleStrategy] | null;
+
+
+export const NotificationRuleResponseDtoScheduleStrategy = {
+  SPAWN_WINDOW_RELATIVE: 'SPAWN_WINDOW_RELATIVE',
+  FIXED_DATETIME: 'FIXED_DATETIME',
+} as const;
+
+/**
+ * @nullable
+ */
+export type NotificationRuleResponseDtoScheduleAnchor = typeof NotificationRuleResponseDtoScheduleAnchor[keyof typeof NotificationRuleResponseDtoScheduleAnchor] | null;
+
+
+export const NotificationRuleResponseDtoScheduleAnchor = {
+  MIN_SPAWN: 'MIN_SPAWN',
+  MAX_SPAWN: 'MAX_SPAWN',
+} as const;
+
+/**
+ * @nullable
+ */
+export type NotificationRuleResponseDtoScheduleIntervalType = typeof NotificationRuleResponseDtoScheduleIntervalType[keyof typeof NotificationRuleResponseDtoScheduleIntervalType] | null;
+
+
+export const NotificationRuleResponseDtoScheduleIntervalType = {
+  ONCE: 'ONCE',
+  HOURLY: 'HOURLY',
+  DAILY: 'DAILY',
+  WEEKLY: 'WEEKLY',
+} as const;
+
+export type NotificationRuleResponseDtoTargetsItemTargetOwnerType = typeof NotificationRuleResponseDtoTargetsItemTargetOwnerType[keyof typeof NotificationRuleResponseDtoTargetsItemTargetOwnerType];
+
+
+export const NotificationRuleResponseDtoTargetsItemTargetOwnerType = {
+  GUILD: 'GUILD',
+  USER: 'USER',
+} as const;
+
+export type NotificationRuleResponseDtoTargetsItemTargetProvider = typeof NotificationRuleResponseDtoTargetsItemTargetProvider[keyof typeof NotificationRuleResponseDtoTargetsItemTargetProvider];
+
+
+export const NotificationRuleResponseDtoTargetsItemTargetProvider = {
+  DISCORD: 'DISCORD',
+} as const;
+
+export type NotificationRuleResponseDtoTargetsItemTargetTargetType = typeof NotificationRuleResponseDtoTargetsItemTargetTargetType[keyof typeof NotificationRuleResponseDtoTargetsItemTargetTargetType];
+
+
+export const NotificationRuleResponseDtoTargetsItemTargetTargetType = {
+  CHANNEL: 'CHANNEL',
+  DM: 'DM',
+} as const;
+
+export type NotificationRuleResponseDtoTargetsItemTarget = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  ownerType: NotificationRuleResponseDtoTargetsItemTargetOwnerType;
+  ownerId: string;
+  provider: NotificationRuleResponseDtoTargetsItemTargetProvider;
+  targetType: NotificationRuleResponseDtoTargetsItemTargetTargetType;
+  externalId: string;
+  /** @nullable */
+  displayName: string | null;
+  /** @nullable */
+  guildName: string | null;
+  metadata: NotificationRuleResponseDtoSchema0 | null;
+  active: boolean;
+  canSend: boolean;
+  /** @nullable */
+  lastSyncedAt: string | null;
+  /** @nullable */
+  lastDeliveryAt: string | null;
+  /** @nullable */
+  lastDeliveryError: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type NotificationRuleResponseDtoTargetsItem = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  ruleId: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  targetId: number;
+  createdAt: string;
+  target: NotificationRuleResponseDtoTargetsItemTarget;
+};
+
+export interface NotificationRuleResponseDto {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  ownerType: NotificationRuleResponseDtoOwnerType;
+  ownerId: string;
+  triggerType: NotificationRuleResponseDtoTriggerType;
+  /** @nullable */
+  guildId: string | null;
+  /** @nullable */
+  world: string | null;
+  /** @nullable */
+  name: string | null;
+  /** @nullable */
+  filters: NotificationRuleResponseDtoFilters;
+  /** @nullable */
+  contentTemplate: string | null;
+  /** @nullable */
+  scheduleStrategy: NotificationRuleResponseDtoScheduleStrategy;
+  /** @nullable */
+  scheduleAnchor: NotificationRuleResponseDtoScheduleAnchor;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  scheduleOffsetMinutes: number | null;
+  /** @nullable */
+  scheduledAt: string | null;
+  /** @nullable */
+  scheduleIntervalType: NotificationRuleResponseDtoScheduleIntervalType;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  scheduleIntervalValue: number | null;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  scheduleWeekday: number | null;
+  /** @nullable */
+  scheduleTimeOfDay: string | null;
+  /** @nullable */
+  scheduledUntil: string | null;
+  /** @nullable */
+  scheduleTimezone: string | null;
+  enabled: boolean;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  dedupeWindowSeconds: number;
+  createdAt: string;
+  updatedAt: string;
+  targets: NotificationRuleResponseDtoTargetsItem[];
+}
+
+export type GuildNotificationRulesResponseDtoItemsItemOwnerType = typeof GuildNotificationRulesResponseDtoItemsItemOwnerType[keyof typeof GuildNotificationRulesResponseDtoItemsItemOwnerType];
+
+
+export const GuildNotificationRulesResponseDtoItemsItemOwnerType = {
+  GUILD: 'GUILD',
+  USER: 'USER',
+} as const;
+
+export type GuildNotificationRulesResponseDtoItemsItemTriggerType = typeof GuildNotificationRulesResponseDtoItemsItemTriggerType[keyof typeof GuildNotificationRulesResponseDtoItemsItemTriggerType];
+
+
+export const GuildNotificationRulesResponseDtoItemsItemTriggerType = {
+  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
+  NPC_SPAWNED: 'NPC_SPAWNED',
+  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
+  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
+} as const;
+
+/**
+ * @nullable
+ */
+export type GuildNotificationRulesResponseDtoItemsItemFilters = {[key: string]: unknown} & ({
+  guildIds?: string[];
+  world?: string;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  npcId?: number | null;
+  /**
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  npcIds?: number[];
+  /**
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  npcTemplateIds?: number[];
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  itemId?: number | null;
+  /**
+     * @items.minimum -9007199254740991
+     * @items.maximum 9007199254740991
+     */
+  itemIds?: number[];
+} | null) | null;
+
+/**
+ * @nullable
+ */
+export type GuildNotificationRulesResponseDtoItemsItemScheduleStrategy = typeof GuildNotificationRulesResponseDtoItemsItemScheduleStrategy[keyof typeof GuildNotificationRulesResponseDtoItemsItemScheduleStrategy] | null;
+
+
+export const GuildNotificationRulesResponseDtoItemsItemScheduleStrategy = {
+  SPAWN_WINDOW_RELATIVE: 'SPAWN_WINDOW_RELATIVE',
+  FIXED_DATETIME: 'FIXED_DATETIME',
+} as const;
+
+/**
+ * @nullable
+ */
+export type GuildNotificationRulesResponseDtoItemsItemScheduleAnchor = typeof GuildNotificationRulesResponseDtoItemsItemScheduleAnchor[keyof typeof GuildNotificationRulesResponseDtoItemsItemScheduleAnchor] | null;
+
+
+export const GuildNotificationRulesResponseDtoItemsItemScheduleAnchor = {
+  MIN_SPAWN: 'MIN_SPAWN',
+  MAX_SPAWN: 'MAX_SPAWN',
+} as const;
+
+/**
+ * @nullable
+ */
+export type GuildNotificationRulesResponseDtoItemsItemScheduleIntervalType = typeof GuildNotificationRulesResponseDtoItemsItemScheduleIntervalType[keyof typeof GuildNotificationRulesResponseDtoItemsItemScheduleIntervalType] | null;
+
+
+export const GuildNotificationRulesResponseDtoItemsItemScheduleIntervalType = {
+  ONCE: 'ONCE',
+  HOURLY: 'HOURLY',
+  DAILY: 'DAILY',
+  WEEKLY: 'WEEKLY',
+} as const;
+
+export type GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetOwnerType = typeof GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetOwnerType[keyof typeof GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetOwnerType];
+
+
+export const GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetOwnerType = {
+  GUILD: 'GUILD',
+  USER: 'USER',
+} as const;
+
+export type GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetProvider = typeof GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetProvider[keyof typeof GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetProvider];
+
+
+export const GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetProvider = {
+  DISCORD: 'DISCORD',
+} as const;
+
+export type GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetTargetType = typeof GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetTargetType[keyof typeof GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetTargetType];
+
+
+export const GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetTargetType = {
+  CHANNEL: 'CHANNEL',
+  DM: 'DM',
+} as const;
+
+export type GuildNotificationRulesResponseDtoSchema0 = string | number | boolean | (GuildNotificationRulesResponseDtoSchema0 | null)[] | {[key: string]: GuildNotificationRulesResponseDtoSchema0 | null} | null;
+
+export type GuildNotificationRulesResponseDtoItemsItemTargetsItemTarget = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  ownerType: GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetOwnerType;
+  ownerId: string;
+  provider: GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetProvider;
+  targetType: GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetTargetType;
+  externalId: string;
+  /** @nullable */
+  displayName: string | null;
+  /** @nullable */
+  guildName: string | null;
+  metadata: GuildNotificationRulesResponseDtoSchema0 | null;
+  active: boolean;
+  canSend: boolean;
+  /** @nullable */
+  lastSyncedAt: string | null;
+  /** @nullable */
+  lastDeliveryAt: string | null;
+  /** @nullable */
+  lastDeliveryError: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GuildNotificationRulesResponseDtoItemsItemTargetsItem = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  ruleId: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  targetId: number;
+  createdAt: string;
+  target: GuildNotificationRulesResponseDtoItemsItemTargetsItemTarget;
+};
+
+export type GuildNotificationRulesResponseDtoItemsItemTestTrigger = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  limit: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  used: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  remaining: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  windowSeconds: number;
+  /** @nullable */
+  nextAvailableAt: string | null;
+};
+
+export type GuildNotificationRulesResponseDtoItemsItem = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  ownerType: GuildNotificationRulesResponseDtoItemsItemOwnerType;
+  ownerId: string;
+  triggerType: GuildNotificationRulesResponseDtoItemsItemTriggerType;
+  /** @nullable */
+  guildId: string | null;
+  /** @nullable */
+  world: string | null;
+  /** @nullable */
+  name: string | null;
+  /** @nullable */
+  filters: GuildNotificationRulesResponseDtoItemsItemFilters;
+  /** @nullable */
+  contentTemplate: string | null;
+  /** @nullable */
+  scheduleStrategy: GuildNotificationRulesResponseDtoItemsItemScheduleStrategy;
+  /** @nullable */
+  scheduleAnchor: GuildNotificationRulesResponseDtoItemsItemScheduleAnchor;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  scheduleOffsetMinutes: number | null;
+  /** @nullable */
+  scheduledAt: string | null;
+  /** @nullable */
+  scheduleIntervalType: GuildNotificationRulesResponseDtoItemsItemScheduleIntervalType;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  scheduleIntervalValue: number | null;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  scheduleWeekday: number | null;
+  /** @nullable */
+  scheduleTimeOfDay: string | null;
+  /** @nullable */
+  scheduledUntil: string | null;
+  /** @nullable */
+  scheduleTimezone: string | null;
+  enabled: boolean;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  dedupeWindowSeconds: number;
+  createdAt: string;
+  updatedAt: string;
+  targets: GuildNotificationRulesResponseDtoItemsItemTargetsItem[];
+  testTrigger: GuildNotificationRulesResponseDtoItemsItemTestTrigger;
+};
+
+export type GuildNotificationRulesResponseDtoLimits = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  ruleLimit: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  ruleCount: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  maxNpcsPerRule: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  testTriggerLimit: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  testTriggerWindowSeconds: number;
+};
+
+export interface GuildNotificationRulesResponseDto {
+  items: GuildNotificationRulesResponseDtoItemsItem[];
+  limits: GuildNotificationRulesResponseDtoLimits;
+}
+
+export type GuildAvailableNotificationTargetsResponseDtoChannelsItem = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  guildId: string;
+  channelId: string;
+  name: string;
+  channelType: string;
+  /** @nullable */
+  parentId: string | null;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  position: number;
+  active: boolean;
+  canView: boolean;
+  canSend: boolean;
+  hasRequiredPermissions: boolean;
+  requiredPermissions: string[];
+  grantedPermissions: string[];
+  missingPermissions: string[];
+  lastSyncedAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GuildAvailableNotificationTargetsResponseDtoSyncStateStatus = typeof GuildAvailableNotificationTargetsResponseDtoSyncStateStatus[keyof typeof GuildAvailableNotificationTargetsResponseDtoSyncStateStatus];
+
+
+export const GuildAvailableNotificationTargetsResponseDtoSyncStateStatus = {
+  SYNCED: 'SYNCED',
+  SYNCING: 'SYNCING',
+  FAILED: 'FAILED',
+  STALE: 'STALE',
+  NOT_FOUND: 'NOT_FOUND',
+} as const;
+
+/**
+ * @nullable
+ */
+export type GuildAvailableNotificationTargetsResponseDtoSyncState = {[key: string]: unknown} & ({
+  guildId: string;
+  status: GuildAvailableNotificationTargetsResponseDtoSyncStateStatus;
+  hasRequiredPermissions: boolean;
+  requiredPermissions: string[];
+  grantedPermissions: string[];
+  missingPermissions: string[];
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  channelCount: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  selectableChannelCount: number;
+  /** @nullable */
+  lastAttemptAt: string | null;
+  /** @nullable */
+  lastSuccessAt: string | null;
+  /** @nullable */
+  lastError: string | null;
+  createdAt: string;
+  updatedAt: string;
+} | null) | null;
+
+export interface GuildAvailableNotificationTargetsResponseDto {
+  channels: GuildAvailableNotificationTargetsResponseDtoChannelsItem[];
+  /** @nullable */
+  syncState: GuildAvailableNotificationTargetsResponseDtoSyncState;
+}
+
+export type AcceptReservationShareInvitationResponseDtoPartner = {
+  name: string;
+  /** @nullable */
+  iconUrl: string | null;
+};
+
+export interface AcceptReservationShareInvitationResponseDto {
+  id: string;
+  partner: AcceptReservationShareInvitationResponseDtoPartner;
+  createdAt: string;
+}
+
+export interface AcceptReservationShareInvitationDto {
+  /** @minLength 1 */
+  targetGuildId: string;
+}
+
+export type ReservationShareInvitationPreviewResponseDtoSourceOrganization = {
+  name: string;
+  /** @nullable */
+  iconUrl: string | null;
+};
+
+export type ReservationShareInvitationPreviewResponseDtoEligibleTargetOrganizationsItem = {
+  name: string;
+  /** @nullable */
+  iconUrl: string | null;
+  id: string;
+};
+
+export interface ReservationShareInvitationPreviewResponseDto {
+  sourceOrganization: ReservationShareInvitationPreviewResponseDtoSourceOrganization;
+  expiresAt: string;
+  eligibleTargetOrganizations: ReservationShareInvitationPreviewResponseDtoEligibleTargetOrganizationsItem[];
+}
+
+export interface CreateReservationShareInvitationResponseDto {
+  id: string;
+  expiresAt: string;
+  createdAt: string;
+  invitePath: string;
+}
+
+export type ReservationSharesResponseDtoSharesItemPartner = {
+  name: string;
+  /** @nullable */
+  iconUrl: string | null;
+};
+
+export type ReservationSharesResponseDtoSharesItem = {
+  id: string;
+  partner: ReservationSharesResponseDtoSharesItemPartner;
+  createdAt: string;
+};
+
+export type ReservationSharesResponseDtoPendingInvitationsItem = {
+  id: string;
+  expiresAt: string;
+  createdAt: string;
+};
+
+export interface ReservationSharesResponseDto {
+  shares: ReservationSharesResponseDtoSharesItem[];
+  pendingInvitations: ReservationSharesResponseDtoPendingInvitationsItem[];
+}
+
+/**
+ * @nullable
+ */
+export type UpdateReservationDtoReminderMinutesBefore = typeof UpdateReservationDtoReminderMinutesBefore[keyof typeof UpdateReservationDtoReminderMinutesBefore] | null;
+
+
+export const UpdateReservationDtoReminderMinutesBefore = {
+  NUMBER_0: 0,
+  NUMBER_5: 5,
+  NUMBER_15: 15,
+  NUMBER_30: 30,
+} as const;
+
+export interface UpdateReservationDto {
+  startsAt?: string;
+  endsAt?: string;
+  /**
+     * @maxLength 128
+     * @nullable
+     */
+  comment?: string | null;
+  /** @nullable */
+  reminderMinutesBefore?: UpdateReservationDtoReminderMinutesBefore;
+}
+
+export type MyReservationsResponseDtoItemsItemAuthor = {
+  displayName: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type MyReservationsResponseDtoItemsItemSourceOrganization = {
+  name: string;
+  /** @nullable */
+  iconUrl: string | null;
+  isCurrent: boolean;
+  calendarPath: string;
+};
+
+/**
+ * @nullable
+ */
+export type MyReservationsResponseDtoItemsItemEditingConstraints = {[key: string]: unknown} & ({
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  reservationMaxDurationMinutes: number;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  reservationMinDurationMinutes: number;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  reservationTimeGranularityMinutes: number;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  reservationMaxAdvanceDays: number;
+} | null) | null;
+
+/**
+ * @nullable
+ */
+export type MyReservationsResponseDtoItemsItemReminderMinutesBefore = typeof MyReservationsResponseDtoItemsItemReminderMinutesBefore[keyof typeof MyReservationsResponseDtoItemsItemReminderMinutesBefore] | null;
+
+
+export const MyReservationsResponseDtoItemsItemReminderMinutesBefore = {
+  NUMBER_0: 0,
+  NUMBER_5: 5,
+  NUMBER_15: 15,
+  NUMBER_30: 30,
+} as const;
+
+export type MyReservationsResponseDtoItemsItem = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  spotId: string;
+  spotName: string;
+  startsAt: string;
+  endsAt: string;
+  /** @nullable */
+  comment: string | null;
+  createdAt: string;
+  author: MyReservationsResponseDtoItemsItemAuthor;
+  sourceOrganization: MyReservationsResponseDtoItemsItemSourceOrganization;
+  isMine: boolean;
+  canEdit: boolean;
+  canCancel: boolean;
+  /** @nullable */
+  editingConstraints: MyReservationsResponseDtoItemsItemEditingConstraints;
+  /** @nullable */
+  reminderMinutesBefore: MyReservationsResponseDtoItemsItemReminderMinutesBefore;
+};
+
+export interface MyReservationsResponseDto {
+  items: MyReservationsResponseDtoItemsItem[];
+}
+
+export type ReservationResponseDtoAuthor = {
+  displayName: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type ReservationResponseDtoSourceOrganization = {
+  name: string;
+  /** @nullable */
+  iconUrl: string | null;
+  isCurrent: boolean;
+  calendarPath: string;
+};
+
+/**
+ * @nullable
+ */
+export type ReservationResponseDtoEditingConstraints = {[key: string]: unknown} & ({
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  reservationMaxDurationMinutes: number;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  reservationMinDurationMinutes: number;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  reservationTimeGranularityMinutes: number;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  reservationMaxAdvanceDays: number;
+} | null) | null;
+
+/**
+ * @nullable
+ */
+export type ReservationResponseDtoReminderMinutesBefore = typeof ReservationResponseDtoReminderMinutesBefore[keyof typeof ReservationResponseDtoReminderMinutesBefore] | null;
+
+
+export const ReservationResponseDtoReminderMinutesBefore = {
+  NUMBER_0: 0,
+  NUMBER_5: 5,
+  NUMBER_15: 15,
+  NUMBER_30: 30,
+} as const;
+
+export interface ReservationResponseDto {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  spotId: string;
+  spotName: string;
+  startsAt: string;
+  endsAt: string;
+  /** @nullable */
+  comment: string | null;
+  createdAt: string;
+  author: ReservationResponseDtoAuthor;
+  sourceOrganization: ReservationResponseDtoSourceOrganization;
+  isMine: boolean;
+  canEdit: boolean;
+  canCancel: boolean;
+  /** @nullable */
+  editingConstraints: ReservationResponseDtoEditingConstraints;
+  /** @nullable */
+  reminderMinutesBefore: ReservationResponseDtoReminderMinutesBefore;
+}
+
+/**
+ * @nullable
+ */
+export type CreateReservationDtoReminderMinutesBefore = typeof CreateReservationDtoReminderMinutesBefore[keyof typeof CreateReservationDtoReminderMinutesBefore] | null;
+
+
+export const CreateReservationDtoReminderMinutesBefore = {
+  NUMBER_0: 0,
+  NUMBER_5: 5,
+  NUMBER_15: 15,
+  NUMBER_30: 30,
+} as const;
+
+export interface CreateReservationDto {
+  startsAt: string;
+  endsAt: string;
+  /** @maxLength 128 */
+  comment?: string;
+  /** @nullable */
+  reminderMinutesBefore?: CreateReservationDtoReminderMinutesBefore;
+}
+
+export type ReservationWindowResponseDtoItemsItemAuthor = {
+  displayName: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type ReservationWindowResponseDtoItemsItemSourceOrganization = {
+  name: string;
+  /** @nullable */
+  iconUrl: string | null;
+  isCurrent: boolean;
+  calendarPath: string;
+};
+
+/**
+ * @nullable
+ */
+export type ReservationWindowResponseDtoItemsItemEditingConstraints = {[key: string]: unknown} & ({
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  reservationMaxDurationMinutes: number;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  reservationMinDurationMinutes: number;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  reservationTimeGranularityMinutes: number;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  reservationMaxAdvanceDays: number;
+} | null) | null;
+
+/**
+ * @nullable
+ */
+export type ReservationWindowResponseDtoItemsItemReminderMinutesBefore = typeof ReservationWindowResponseDtoItemsItemReminderMinutesBefore[keyof typeof ReservationWindowResponseDtoItemsItemReminderMinutesBefore] | null;
+
+
+export const ReservationWindowResponseDtoItemsItemReminderMinutesBefore = {
+  NUMBER_0: 0,
+  NUMBER_5: 5,
+  NUMBER_15: 15,
+  NUMBER_30: 30,
+} as const;
+
+export type ReservationWindowResponseDtoItemsItem = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  spotId: string;
+  spotName: string;
+  startsAt: string;
+  endsAt: string;
+  /** @nullable */
+  comment: string | null;
+  createdAt: string;
+  author: ReservationWindowResponseDtoItemsItemAuthor;
+  sourceOrganization: ReservationWindowResponseDtoItemsItemSourceOrganization;
+  isMine: boolean;
+  canEdit: boolean;
+  canCancel: boolean;
+  /** @nullable */
+  editingConstraints: ReservationWindowResponseDtoItemsItemEditingConstraints;
+  /** @nullable */
+  reminderMinutesBefore: ReservationWindowResponseDtoItemsItemReminderMinutesBefore;
+};
+
+export type ReservationWindowResponseDtoWindow = {
+  from: string;
+  to: string;
+};
+
+export interface ReservationWindowResponseDto {
+  items: ReservationWindowResponseDtoItemsItem[];
+  window: ReservationWindowResponseDtoWindow;
+}
+
+export type OrganizationWorkspaceErrorResponse = {[key: string]: unknown} & {
+  code: string;
+};
+
+export type ReservationSpotsResponseDtoItemCurrentReservationAuthor = {
+  displayName: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type ReservationSpotsResponseDtoItemCurrentReservationSourceOrganization = {
+  name: string;
+  /** @nullable */
+  iconUrl: string | null;
+  isCurrent: boolean;
+  calendarPath: string;
+};
+
+/**
+ * @nullable
+ */
+export type ReservationSpotsResponseDtoItemCurrentReservationEditingConstraints = {[key: string]: unknown} & ({
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  reservationMaxDurationMinutes: number;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  reservationMinDurationMinutes: number;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  reservationTimeGranularityMinutes: number;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  reservationMaxAdvanceDays: number;
+} | null) | null;
+
+/**
+ * @nullable
+ */
+export type ReservationSpotsResponseDtoItemCurrentReservationReminderMinutesBefore = typeof ReservationSpotsResponseDtoItemCurrentReservationReminderMinutesBefore[keyof typeof ReservationSpotsResponseDtoItemCurrentReservationReminderMinutesBefore] | null;
+
+
+export const ReservationSpotsResponseDtoItemCurrentReservationReminderMinutesBefore = {
+  NUMBER_0: 0,
+  NUMBER_5: 5,
+  NUMBER_15: 15,
+  NUMBER_30: 30,
+} as const;
+
+/**
+ * @nullable
+ */
+export type ReservationSpotsResponseDtoItemCurrentReservation = {[key: string]: unknown} & ({
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  spotId: string;
+  spotName: string;
+  startsAt: string;
+  endsAt: string;
+  /** @nullable */
+  comment: string | null;
+  createdAt: string;
+  author: ReservationSpotsResponseDtoItemCurrentReservationAuthor;
+  sourceOrganization: ReservationSpotsResponseDtoItemCurrentReservationSourceOrganization;
+  isMine: boolean;
+  canEdit: boolean;
+  canCancel: boolean;
+  /** @nullable */
+  editingConstraints: ReservationSpotsResponseDtoItemCurrentReservationEditingConstraints;
+  /** @nullable */
+  reminderMinutesBefore: ReservationSpotsResponseDtoItemCurrentReservationReminderMinutesBefore;
+} | null) | null;
+
+export type ReservationSpotsResponseDtoItemNextReservationAuthor = {
+  displayName: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type ReservationSpotsResponseDtoItemNextReservationSourceOrganization = {
+  name: string;
+  /** @nullable */
+  iconUrl: string | null;
+  isCurrent: boolean;
+  calendarPath: string;
+};
+
+/**
+ * @nullable
+ */
+export type ReservationSpotsResponseDtoItemNextReservationEditingConstraints = {[key: string]: unknown} & ({
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  reservationMaxDurationMinutes: number;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  reservationMinDurationMinutes: number;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  reservationTimeGranularityMinutes: number;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  reservationMaxAdvanceDays: number;
+} | null) | null;
+
+/**
+ * @nullable
+ */
+export type ReservationSpotsResponseDtoItemNextReservationReminderMinutesBefore = typeof ReservationSpotsResponseDtoItemNextReservationReminderMinutesBefore[keyof typeof ReservationSpotsResponseDtoItemNextReservationReminderMinutesBefore] | null;
+
+
+export const ReservationSpotsResponseDtoItemNextReservationReminderMinutesBefore = {
+  NUMBER_0: 0,
+  NUMBER_5: 5,
+  NUMBER_15: 15,
+  NUMBER_30: 30,
+} as const;
+
+/**
+ * @nullable
+ */
+export type ReservationSpotsResponseDtoItemNextReservation = {[key: string]: unknown} & ({
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  spotId: string;
+  spotName: string;
+  startsAt: string;
+  endsAt: string;
+  /** @nullable */
+  comment: string | null;
+  createdAt: string;
+  author: ReservationSpotsResponseDtoItemNextReservationAuthor;
+  sourceOrganization: ReservationSpotsResponseDtoItemNextReservationSourceOrganization;
+  isMine: boolean;
+  canEdit: boolean;
+  canCancel: boolean;
+  /** @nullable */
+  editingConstraints: ReservationSpotsResponseDtoItemNextReservationEditingConstraints;
+  /** @nullable */
+  reminderMinutesBefore: ReservationSpotsResponseDtoItemNextReservationReminderMinutesBefore;
+} | null) | null;
+
+export type ReservationSpotsResponseDtoItem = {
+  id: string;
+  name: string;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  level: number;
+  images: string[];
+  maps: string[];
+  isPinned: boolean;
+  isAvailableNow: boolean;
+  /** @nullable */
+  availableUntil: string | null;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  activeReservationCount: number;
+  hasPartnerReservations: boolean;
+  /** @nullable */
+  currentReservation: ReservationSpotsResponseDtoItemCurrentReservation;
+  /** @nullable */
+  nextReservation: ReservationSpotsResponseDtoItemNextReservation;
+};
+
+export type ReservationSpotsResponseDto = ReservationSpotsResponseDtoItem[];
+
+export interface ChatMessageActionResponseDtoOutput {
+  success: boolean;
+}
+
+export type SendMessageDtoType = typeof SendMessageDtoType[keyof typeof SendMessageDtoType];
+
+
+export const SendMessageDtoType = {
+  NORMAL: 'NORMAL',
+  NOTIFICATION: 'NOTIFICATION',
+  NPC: 'NPC',
+  PARTY_GATHERING: 'PARTY_GATHERING',
+} as const;
+
+export type SendMessageDtoCharacterData = {
+  /** @minLength 1 */
+  nick: string;
+  id: number;
+  acc: number;
+  lvl: number;
+  /** @minLength 1 */
+  prof: string;
+  /** @minLength 1 */
+  icon: string;
+};
+
+export type SendMessageDtoNpc = {
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  world?: string;
+  id: number;
+  /** @minLength 1 */
+  name: string;
+  /** @minLength 1 */
+  location: string;
+  lvl: number;
+  /** @minLength 1 */
+  prof: string;
+  wt: number;
+  hpp?: number;
+  /** @minLength 1 */
+  icon: string;
+  type: number;
+  x?: number;
+  y?: number;
+};
+
+export type SendMessageDtoPartyGathering = {
+  /** @minLength 1 */
+  notificationId: string;
+  /** @minLength 1 */
+  discordId: string;
+  /** @maxLength 200 */
+  description?: string;
+  /**
+     * @minimum 1
+     * @maximum 500
+     */
+  minLvl?: number;
+  /**
+     * @minimum 1
+     * @maximum 500
+     */
+  maxLvl?: number;
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  world: string;
+};
+
+export type SendMessageDtoReplyToType = typeof SendMessageDtoReplyToType[keyof typeof SendMessageDtoReplyToType];
+
+
+export const SendMessageDtoReplyToType = {
+  NORMAL: 'NORMAL',
+  NOTIFICATION: 'NOTIFICATION',
+} as const;
+
+export type SendMessageDtoReplyTo = {
+  /** @minLength 1 */
+  messageId: string;
+  /** @minLength 1 */
+  senderNick: string;
+  /** @maxLength 128 */
+  message: string;
+  type: SendMessageDtoReplyToType;
+};
+
+export interface SendMessageDto {
+  /** @maxLength 128 */
+  message: string;
+  type: SendMessageDtoType;
+  characterData: SendMessageDtoCharacterData;
+  npc?: SendMessageDtoNpc;
+  partyGathering?: SendMessageDtoPartyGathering;
+  replyTo?: SendMessageDtoReplyTo;
+}
+
+export type ChatMessageResponseDtoOutputType = typeof ChatMessageResponseDtoOutputType[keyof typeof ChatMessageResponseDtoOutputType];
+
+
+export const ChatMessageResponseDtoOutputType = {
+  NORMAL: 'NORMAL',
+  NOTIFICATION: 'NOTIFICATION',
+  NPC: 'NPC',
+  PARTY_GATHERING: 'PARTY_GATHERING',
+} as const;
+
+export type ChatMessageResponseDtoOutputCharacterData = {
+  /** @minLength 1 */
+  nick: string;
+  id: number;
+  acc: number;
+  lvl: number;
+  /** @minLength 1 */
+  prof: string;
+  /** @minLength 1 */
+  icon: string;
+};
+
+export type ChatMessageResponseDtoOutputNpc = {
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  world?: string;
+  id: number;
+  /** @minLength 1 */
+  name: string;
+  /** @minLength 1 */
+  location: string;
+  lvl: number;
+  /** @minLength 1 */
+  prof: string;
+  wt: number;
+  hpp?: number;
+  /** @minLength 1 */
+  icon: string;
+  type: number;
+  x?: number;
+  y?: number;
+};
+
+export type ChatMessageResponseDtoOutputPartyGathering = {
+  /** @minLength 1 */
+  notificationId: string;
+  /** @minLength 1 */
+  discordId: string;
+  /** @maxLength 200 */
+  description?: string;
+  /**
+     * @minimum 1
+     * @maximum 500
+     */
+  minLvl?: number;
+  /**
+     * @minimum 1
+     * @maximum 500
+     */
+  maxLvl?: number;
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  world: string;
+};
+
+export type ChatMessageResponseDtoOutputReplyToType = typeof ChatMessageResponseDtoOutputReplyToType[keyof typeof ChatMessageResponseDtoOutputReplyToType];
+
+
+export const ChatMessageResponseDtoOutputReplyToType = {
+  NORMAL: 'NORMAL',
+  NOTIFICATION: 'NOTIFICATION',
+} as const;
+
+export type ChatMessageResponseDtoOutputReplyTo = {
+  /** @minLength 1 */
+  messageId: string;
+  /** @minLength 1 */
+  senderNick: string;
+  /** @maxLength 128 */
+  message: string;
+  type: ChatMessageResponseDtoOutputReplyToType;
+};
+
+export interface ChatMessageResponseDtoOutput {
+  /** @minLength 1 */
+  id: string;
+  /** @minLength 1 */
+  guildId: string;
+  /** @maxLength 128 */
+  message: string;
+  /** @minLength 1 */
+  senderId: string;
+  timestamp: string;
+  type: ChatMessageResponseDtoOutputType;
+  characterData: ChatMessageResponseDtoOutputCharacterData;
+  npc?: ChatMessageResponseDtoOutputNpc;
+  partyGathering?: ChatMessageResponseDtoOutputPartyGathering;
+  replyTo?: ChatMessageResponseDtoOutputReplyTo;
+  canDelete: boolean;
+}
+
+export type LootlogConfigNpcResponseDtoOutputNpcType = typeof LootlogConfigNpcResponseDtoOutputNpcType[keyof typeof LootlogConfigNpcResponseDtoOutputNpcType];
+
+
+export const LootlogConfigNpcResponseDtoOutputNpcType = {
+  COMMON: 'COMMON',
+  ELITE: 'ELITE',
+  ELITE2: 'ELITE2',
+  ELITE3: 'ELITE3',
+  HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
+  TITAN: 'TITAN',
+  COLOSSUS: 'COLOSSUS',
+  NPC: 'NPC',
+} as const;
+
+export type LootlogConfigNpcResponseDtoOutputAllowedRaritiesItem = typeof LootlogConfigNpcResponseDtoOutputAllowedRaritiesItem[keyof typeof LootlogConfigNpcResponseDtoOutputAllowedRaritiesItem];
+
+
+export const LootlogConfigNpcResponseDtoOutputAllowedRaritiesItem = {
+  UNIQUE: 'UNIQUE',
+  HEROIC: 'HEROIC',
+  LEGENDARY: 'LEGENDARY',
+  UPGRADED: 'UPGRADED',
+} as const;
+
+export interface LootlogConfigNpcResponseDtoOutput {
+  id: number;
+  npcType: LootlogConfigNpcResponseDtoOutputNpcType;
+  allowedRarities: LootlogConfigNpcResponseDtoOutputAllowedRaritiesItem[];
+}
+
+export type UpdateLootlogConfigNpcDtoAllowedRaritiesItem = typeof UpdateLootlogConfigNpcDtoAllowedRaritiesItem[keyof typeof UpdateLootlogConfigNpcDtoAllowedRaritiesItem];
+
+
+export const UpdateLootlogConfigNpcDtoAllowedRaritiesItem = {
+  UNIQUE: 'UNIQUE',
+  HEROIC: 'HEROIC',
+  LEGENDARY: 'LEGENDARY',
+  UPGRADED: 'UPGRADED',
+} as const;
+
+export interface UpdateLootlogConfigNpcDto {
+  allowedRarities: UpdateLootlogConfigNpcDtoAllowedRaritiesItem[];
+}
+
+export type NullableLootlogConfigResponseDtoOutputNpcsItemNpcType = typeof NullableLootlogConfigResponseDtoOutputNpcsItemNpcType[keyof typeof NullableLootlogConfigResponseDtoOutputNpcsItemNpcType];
+
+
+export const NullableLootlogConfigResponseDtoOutputNpcsItemNpcType = {
+  COMMON: 'COMMON',
+  ELITE: 'ELITE',
+  ELITE2: 'ELITE2',
+  ELITE3: 'ELITE3',
+  HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
+  TITAN: 'TITAN',
+  COLOSSUS: 'COLOSSUS',
+  NPC: 'NPC',
+} as const;
+
+export type NullableLootlogConfigResponseDtoOutputNpcsItemAllowedRaritiesItem = typeof NullableLootlogConfigResponseDtoOutputNpcsItemAllowedRaritiesItem[keyof typeof NullableLootlogConfigResponseDtoOutputNpcsItemAllowedRaritiesItem];
+
+
+export const NullableLootlogConfigResponseDtoOutputNpcsItemAllowedRaritiesItem = {
+  UNIQUE: 'UNIQUE',
+  HEROIC: 'HEROIC',
+  LEGENDARY: 'LEGENDARY',
+  UPGRADED: 'UPGRADED',
+} as const;
+
+export type NullableLootlogConfigResponseDtoOutputNpcsItem = {
+  id: number;
+  npcType: NullableLootlogConfigResponseDtoOutputNpcsItemNpcType;
+  allowedRarities: NullableLootlogConfigResponseDtoOutputNpcsItemAllowedRaritiesItem[];
+};
+
+/**
+ * @nullable
+ */
+export type NullableLootlogConfigResponseDtoOutput = {[key: string]: unknown} & ({
+  id: string;
+  npcs: NullableLootlogConfigResponseDtoOutputNpcsItem[];
+} | null) | null;
+
+export interface UpdateLootDto {
+  msg: string;
+}
+
+export interface CreateCommentDto {
+  /** @minLength 1 */
+  content: string;
+}
+
+export type LootCommentResponseDtoMemberRolesItem = {
+  /** @nullable */
+  color?: number | null;
+};
+
+export type LootCommentResponseDtoMember = {
+  name: string;
+  /** @nullable */
+  avatar?: string | null;
+  userId: string;
+  roles?: LootCommentResponseDtoMemberRolesItem[];
+};
+
+export interface LootCommentResponseDto {
+  id: number;
+  lootId: number;
+  guildId: string;
+  content: string;
+  member: LootCommentResponseDtoMember;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CreateLootResponseDtoOutputSubmittedGuildsItem = {
+  guildId: string;
+  guildName: string;
+};
+
+export type CreateLootResponseDtoOutputRejectedGuildsItemReason = typeof CreateLootResponseDtoOutputRejectedGuildsItemReason[keyof typeof CreateLootResponseDtoOutputRejectedGuildsItemReason];
+
+
+export const CreateLootResponseDtoOutputRejectedGuildsItemReason = {
+  NOT_ON_CHARACTER_WHITELIST: 'NOT_ON_CHARACTER_WHITELIST',
+  MISSING_LOOTLOG_CONFIG: 'MISSING_LOOTLOG_CONFIG',
+  LOOT_NOT_ACCEPTED_BY_CONFIG: 'LOOT_NOT_ACCEPTED_BY_CONFIG',
+  MISSING_MEMBER: 'MISSING_MEMBER',
+} as const;
+
+export type CreateLootResponseDtoOutputRejectedGuildsItem = {
+  guildId: string;
+  guildName: string;
+  reason: CreateLootResponseDtoOutputRejectedGuildsItemReason;
+};
+
+export interface CreateLootResponseDtoOutput {
+  id: number;
+  submittedGuilds: CreateLootResponseDtoOutputSubmittedGuildsItem[];
+  rejectedGuilds: CreateLootResponseDtoOutputRejectedGuildsItem[];
+}
+
+/**
+ * @nullable
+ */
+export type CreateLootDtoMapPlayersSnapshotItemProf = typeof CreateLootDtoMapPlayersSnapshotItemProf[keyof typeof CreateLootDtoMapPlayersSnapshotItemProf] | null;
+
+
+export const CreateLootDtoMapPlayersSnapshotItemProf = {
+  WARRIOR: 'WARRIOR',
+  PALADIN: 'PALADIN',
+  HUNTER: 'HUNTER',
+  MAGE: 'MAGE',
+  BLADE_DANCER: 'BLADE_DANCER',
+  TRACKER: 'TRACKER',
+} as const;
+
+export type CreateLootDtoMapPlayersSnapshotItem = {
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  accountId: number;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  characterId: number;
+  /** @minLength 1 */
+  name: string;
+  /** @nullable */
+  prof: CreateLootDtoMapPlayersSnapshotItemProf;
+  /** @nullable */
+  icon: string | null;
+};
+
+export type CreateLootDtoLootsItem = {
+  /** @minLength 1 */
+  hid: string;
+  /** @minLength 1 */
+  name: string;
+  /** @minLength 1 */
+  icon: string;
+  pr: number;
+  /** @minLength 1 */
+  prc: string;
+  /** @minLength 1 */
+  stat: string;
+  id: number;
+  cl: number;
+  own?: number;
+};
+
+export type CreateLootDtoNpcsItem = {
+  /** Deprecated overloaded NPC id: a template id or a runtime id. Ignored for identity when `runtimeId` or `templateId` is present. */
+  id: number;
+  /**
+     * Margonem runtime NPC id (`npc.id`, battle `originalId`) of the looted spawn.
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  runtimeId?: number;
+  /**
+     * Margonem template id (`npc.tpl`); null when the client did not observe it.
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  templateId?: number | null;
+  /** @minLength 1 */
+  name: string;
+  /** @minLength 1 */
+  location: string;
+  lvl: number;
+  prof?: string;
+  wt: number;
+  hpp?: number;
+  /** @minLength 1 */
+  icon: string;
+  type: number;
+  x?: number;
+  y?: number;
+};
+
+export type CreateLootDtoPlayersItem = {
+  id: number;
+  accountId: number;
+  /** @minLength 1 */
+  name: string;
+  lvl: number;
+  /** @minLength 1 */
+  prof: string;
+  /** @minLength 1 */
+  icon: string;
+  hpp?: number;
+};
+
+/**
+ * Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API.
+ */
+export type CreateLootDtoGameVersion = typeof CreateLootDtoGameVersion[keyof typeof CreateLootDtoGameVersion];
+
+
+export const CreateLootDtoGameVersion = {
+  en: 'en',
+  pl: 'pl',
+} as const;
+
+export type CreateLootDtoSource = typeof CreateLootDtoSource[keyof typeof CreateLootDtoSource];
+
+
+export const CreateLootDtoSource = {
+  LOOTBOX: 'LOOTBOX',
+  DIALOG: 'DIALOG',
+  FIGHT: 'FIGHT',
+} as const;
+
+export interface CreateLootDto {
+  /** @minItems 1 */
+  mapPlayersSnapshot?: CreateLootDtoMapPlayersSnapshotItem[];
+  /**
+     * @minItems 1
+     * @maxItems 10
+     */
+  loots: CreateLootDtoLootsItem[];
+  /** @minItems 1 */
+  npcs: CreateLootDtoNpcsItem[];
+  /** @minItems 1 */
+  players: CreateLootDtoPlayersItem[];
+  /** @minLength 1 */
+  world: string;
+  /** Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API. */
+  gameVersion: CreateLootDtoGameVersion;
+  source: CreateLootDtoSource;
+  /** @minLength 1 */
+  location: string;
+  /** @minLength 1 */
+  accountId: string;
+  /** @minLength 1 */
+  characterId: string;
+}
+
+export type NullableLootResponseDtoSource = typeof NullableLootResponseDtoSource[keyof typeof NullableLootResponseDtoSource];
+
+
+export const NullableLootResponseDtoSource = {
+  LOOTBOX: 'LOOTBOX',
+  DIALOG: 'DIALOG',
+  FIGHT: 'FIGHT',
+} as const;
+
+/**
+ * @nullable
+ */
+export type NullableLootResponseDtoItemsItemRarity = typeof NullableLootResponseDtoItemsItemRarity[keyof typeof NullableLootResponseDtoItemsItemRarity] | null;
+
+
+export const NullableLootResponseDtoItemsItemRarity = {
+  UNIQUE: 'UNIQUE',
+  HEROIC: 'HEROIC',
+  LEGENDARY: 'LEGENDARY',
+  UPGRADED: 'UPGRADED',
+} as const;
+
+export type NullableLootResponseDtoItemsItemProfItem = typeof NullableLootResponseDtoItemsItemProfItem[keyof typeof NullableLootResponseDtoItemsItemProfItem];
+
+
+export const NullableLootResponseDtoItemsItemProfItem = {
+  WARRIOR: 'WARRIOR',
+  PALADIN: 'PALADIN',
+  HUNTER: 'HUNTER',
+  MAGE: 'MAGE',
+  BLADE_DANCER: 'BLADE_DANCER',
+  TRACKER: 'TRACKER',
+} as const;
+
+export type NullableLootResponseDtoItemsItem = {
+  id: number;
+  hid: string;
+  name: string;
+  icon: string;
+  stat: string;
+  /** @nullable */
+  type: string | null;
+  /** @nullable */
+  rarity: NullableLootResponseDtoItemsItemRarity;
+  lvl: number;
+  prof: NullableLootResponseDtoItemsItemProfItem[];
+};
+
+/**
+ * @nullable
+ */
+export type NullableLootResponseDtoPlayersItemProf = typeof NullableLootResponseDtoPlayersItemProf[keyof typeof NullableLootResponseDtoPlayersItemProf] | null;
+
+
+export const NullableLootResponseDtoPlayersItemProf = {
+  WARRIOR: 'WARRIOR',
+  PALADIN: 'PALADIN',
+  HUNTER: 'HUNTER',
+  MAGE: 'MAGE',
+  BLADE_DANCER: 'BLADE_DANCER',
+  TRACKER: 'TRACKER',
+} as const;
+
+export type NullableLootResponseDtoPlayersItem = {
+  id: string | number;
+  name: string;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  prof: NullableLootResponseDtoPlayersItemProf;
+  /** @nullable */
+  icon: string | null;
+  /** @nullable */
+  characterId: number | null;
+  /** @nullable */
+  accountId: number | null;
+  /** @nullable */
+  hpp: number | null;
+};
+
+/**
+ * @nullable
+ */
+export type NullableLootResponseDtoMapPlayersSnapshotItemProf = typeof NullableLootResponseDtoMapPlayersSnapshotItemProf[keyof typeof NullableLootResponseDtoMapPlayersSnapshotItemProf] | null;
+
+
+export const NullableLootResponseDtoMapPlayersSnapshotItemProf = {
+  WARRIOR: 'WARRIOR',
+  PALADIN: 'PALADIN',
+  HUNTER: 'HUNTER',
+  MAGE: 'MAGE',
+  BLADE_DANCER: 'BLADE_DANCER',
+  TRACKER: 'TRACKER',
+} as const;
+
+export type NullableLootResponseDtoMapPlayersSnapshotItem = {
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  accountId: number;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  characterId: number;
+  /** @minLength 1 */
+  name: string;
+  /** @nullable */
+  prof: NullableLootResponseDtoMapPlayersSnapshotItemProf;
+  /** @nullable */
+  icon: string | null;
+};
+
+/**
+ * @nullable
+ */
+export type NullableLootResponseDtoNpcsItemProf = typeof NullableLootResponseDtoNpcsItemProf[keyof typeof NullableLootResponseDtoNpcsItemProf] | null;
+
+
+export const NullableLootResponseDtoNpcsItemProf = {
+  WARRIOR: 'WARRIOR',
+  PALADIN: 'PALADIN',
+  HUNTER: 'HUNTER',
+  MAGE: 'MAGE',
+  BLADE_DANCER: 'BLADE_DANCER',
+  TRACKER: 'TRACKER',
+} as const;
+
+/**
+ * @nullable
+ */
+export type NullableLootResponseDtoNpcsItemType = typeof NullableLootResponseDtoNpcsItemType[keyof typeof NullableLootResponseDtoNpcsItemType] | null;
+
+
+export const NullableLootResponseDtoNpcsItemType = {
+  COMMON: 'COMMON',
+  ELITE: 'ELITE',
+  ELITE2: 'ELITE2',
+  ELITE3: 'ELITE3',
+  HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
+  COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
+  NPC: 'NPC',
+} as const;
+
+export type NullableLootResponseDtoNpcsItem = {
+  id: number;
+  name: string;
+  /** @nullable */
+  wt: number | null;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  prof: NullableLootResponseDtoNpcsItemProf;
+  /** @nullable */
+  icon: string | null;
+  /** @nullable */
+  type: NullableLootResponseDtoNpcsItemType;
+  /** @nullable */
+  margonemType: number | null;
+};
+
+export type NullableLootResponseDtoLootShare = {[key: string]: string[]};
+
+export type NullableLootResponseDtoSubmissionsItemMember = {
+  name: string;
+  /** @nullable */
+  avatar?: string | null;
+  userId: string;
+};
+
+export type NullableLootResponseDtoSubmissionsItem = {
+  guildId: string;
+  memberId: number;
+  lootId: number;
+  member: NullableLootResponseDtoSubmissionsItemMember;
+};
+
+/**
+ * @nullable
+ */
+export type NullableLootResponseDto = {[key: string]: unknown} & ({
+  id: number;
+  uniqueId: string;
+  world: string;
+  source: NullableLootResponseDtoSource;
+  location: string;
+  items: NullableLootResponseDtoItemsItem[];
+  players: NullableLootResponseDtoPlayersItem[];
+  /**
+     * @minItems 1
+     * @nullable
+     */
+  mapPlayersSnapshot: NullableLootResponseDtoMapPlayersSnapshotItem[] | null;
+  npcs: NullableLootResponseDtoNpcsItem[];
+  lootShare: NullableLootResponseDtoLootShare;
+  createdAt: string;
+  updatedAt: string;
+  submissions?: NullableLootResponseDtoSubmissionsItem[];
+  commentsCount: number;
+} | null) | null;
+
+/**
+ * @nullable
+ */
+export type NullableLootItemResponseDtoOutputRarity = typeof NullableLootItemResponseDtoOutputRarity[keyof typeof NullableLootItemResponseDtoOutputRarity] | null;
+
+
+export const NullableLootItemResponseDtoOutputRarity = {
+  UNIQUE: 'UNIQUE',
+  HEROIC: 'HEROIC',
+  LEGENDARY: 'LEGENDARY',
+  UPGRADED: 'UPGRADED',
+} as const;
+
+export type NullableLootItemResponseDtoOutputProfItem = typeof NullableLootItemResponseDtoOutputProfItem[keyof typeof NullableLootItemResponseDtoOutputProfItem];
+
+
+export const NullableLootItemResponseDtoOutputProfItem = {
+  WARRIOR: 'WARRIOR',
+  PALADIN: 'PALADIN',
+  HUNTER: 'HUNTER',
+  MAGE: 'MAGE',
+  BLADE_DANCER: 'BLADE_DANCER',
+  TRACKER: 'TRACKER',
+} as const;
+
+export interface NullableLootItemResponseDtoOutput {
+  id: number;
+  hid: string;
+  name: string;
+  icon: string;
+  stat: string;
+  /** @nullable */
+  type: string | null;
+  /** @nullable */
+  rarity: NullableLootItemResponseDtoOutputRarity;
+  lvl: number;
+  prof: NullableLootItemResponseDtoOutputProfItem[];
+}
+
+export type LootStatsResponseDtoOutputOverview = {
+  totalLoots: number;
+  totalItems: number;
+  legendaryItems: number;
+  heroicItems: number;
+  avgItemLevel: number;
+};
+
+export type LootStatsResponseDtoOutputByRarity = {[key: string]: {
+  count: number;
+  percentage: number;
+}};
+
+export type LootStatsResponseDtoOutputTimelineItemByRarity = {[key: string]: number};
+
+export type LootStatsResponseDtoOutputTimelineItem = {
+  date: string;
+  total: number;
+  byRarity: LootStatsResponseDtoOutputTimelineItemByRarity;
+};
+
+/**
+ * @nullable
+ */
+export type LootStatsResponseDtoOutputTopNpcsItemType = typeof LootStatsResponseDtoOutputTopNpcsItemType[keyof typeof LootStatsResponseDtoOutputTopNpcsItemType] | null;
+
+
+export const LootStatsResponseDtoOutputTopNpcsItemType = {
+  COMMON: 'COMMON',
+  ELITE: 'ELITE',
+  ELITE2: 'ELITE2',
+  ELITE3: 'ELITE3',
+  HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
+  COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
+  NPC: 'NPC',
+} as const;
+
+export type LootStatsResponseDtoOutputTopNpcsItemByRarity = {[key: string]: number};
+
+export type LootStatsResponseDtoOutputTopNpcsItem = {
+  npcId: number;
+  name: string;
+  /** @nullable */
+  type: LootStatsResponseDtoOutputTopNpcsItemType;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  icon: string | null;
+  count: number;
+  byRarity: LootStatsResponseDtoOutputTopNpcsItemByRarity;
+};
+
+export type LootStatsResponseDtoOutputTopContributorsItemByRarity = {[key: string]: number};
+
+export type LootStatsResponseDtoOutputTopContributorsItem = {
+  memberId: number;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+  userId: string;
+  count: number;
+  byRarity: LootStatsResponseDtoOutputTopContributorsItemByRarity;
+};
+
+export type LootStatsResponseDtoOutputTopItemsItemRarity = typeof LootStatsResponseDtoOutputTopItemsItemRarity[keyof typeof LootStatsResponseDtoOutputTopItemsItemRarity];
+
+
+export const LootStatsResponseDtoOutputTopItemsItemRarity = {
+  UNIQUE: 'UNIQUE',
+  HEROIC: 'HEROIC',
+  LEGENDARY: 'LEGENDARY',
+  UPGRADED: 'UPGRADED',
+} as const;
+
+export type LootStatsResponseDtoOutputTopItemsItem = {
+  itemId: number;
+  hid: string;
+  name: string;
+  icon: string;
+  rarity: LootStatsResponseDtoOutputTopItemsItemRarity;
+  lvl: number;
+  count: number;
+};
+
+export interface LootStatsResponseDtoOutput {
+  overview: LootStatsResponseDtoOutputOverview;
+  byRarity: LootStatsResponseDtoOutputByRarity;
+  timeline: LootStatsResponseDtoOutputTimelineItem[];
+  topNpcs: LootStatsResponseDtoOutputTopNpcsItem[];
+  topContributors: LootStatsResponseDtoOutputTopContributorsItem[];
+  topItems: LootStatsResponseDtoOutputTopItemsItem[];
+}
+
+export type LootResponseDtoSource = typeof LootResponseDtoSource[keyof typeof LootResponseDtoSource];
+
+
+export const LootResponseDtoSource = {
+  LOOTBOX: 'LOOTBOX',
+  DIALOG: 'DIALOG',
+  FIGHT: 'FIGHT',
+} as const;
+
+/**
+ * @nullable
+ */
+export type LootResponseDtoItemsItemRarity = typeof LootResponseDtoItemsItemRarity[keyof typeof LootResponseDtoItemsItemRarity] | null;
+
+
+export const LootResponseDtoItemsItemRarity = {
+  UNIQUE: 'UNIQUE',
+  HEROIC: 'HEROIC',
+  LEGENDARY: 'LEGENDARY',
+  UPGRADED: 'UPGRADED',
+} as const;
+
+export type LootResponseDtoItemsItemProfItem = typeof LootResponseDtoItemsItemProfItem[keyof typeof LootResponseDtoItemsItemProfItem];
+
+
+export const LootResponseDtoItemsItemProfItem = {
+  WARRIOR: 'WARRIOR',
+  PALADIN: 'PALADIN',
+  HUNTER: 'HUNTER',
+  MAGE: 'MAGE',
+  BLADE_DANCER: 'BLADE_DANCER',
+  TRACKER: 'TRACKER',
+} as const;
+
+export type LootResponseDtoItemsItem = {
+  id: number;
+  hid: string;
+  name: string;
+  icon: string;
+  stat: string;
+  /** @nullable */
+  type: string | null;
+  /** @nullable */
+  rarity: LootResponseDtoItemsItemRarity;
+  lvl: number;
+  prof: LootResponseDtoItemsItemProfItem[];
+};
+
+/**
+ * @nullable
+ */
+export type LootResponseDtoPlayersItemProf = typeof LootResponseDtoPlayersItemProf[keyof typeof LootResponseDtoPlayersItemProf] | null;
+
+
+export const LootResponseDtoPlayersItemProf = {
+  WARRIOR: 'WARRIOR',
+  PALADIN: 'PALADIN',
+  HUNTER: 'HUNTER',
+  MAGE: 'MAGE',
+  BLADE_DANCER: 'BLADE_DANCER',
+  TRACKER: 'TRACKER',
+} as const;
+
+export type LootResponseDtoPlayersItem = {
+  id: string | number;
+  name: string;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  prof: LootResponseDtoPlayersItemProf;
+  /** @nullable */
+  icon: string | null;
+  /** @nullable */
+  characterId: number | null;
+  /** @nullable */
+  accountId: number | null;
+  /** @nullable */
+  hpp: number | null;
+};
+
+/**
+ * @nullable
+ */
+export type LootResponseDtoMapPlayersSnapshotItemProf = typeof LootResponseDtoMapPlayersSnapshotItemProf[keyof typeof LootResponseDtoMapPlayersSnapshotItemProf] | null;
+
+
+export const LootResponseDtoMapPlayersSnapshotItemProf = {
+  WARRIOR: 'WARRIOR',
+  PALADIN: 'PALADIN',
+  HUNTER: 'HUNTER',
+  MAGE: 'MAGE',
+  BLADE_DANCER: 'BLADE_DANCER',
+  TRACKER: 'TRACKER',
+} as const;
+
+export type LootResponseDtoMapPlayersSnapshotItem = {
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  accountId: number;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  characterId: number;
+  /** @minLength 1 */
+  name: string;
+  /** @nullable */
+  prof: LootResponseDtoMapPlayersSnapshotItemProf;
+  /** @nullable */
+  icon: string | null;
+};
+
+/**
+ * @nullable
+ */
+export type LootResponseDtoNpcsItemProf = typeof LootResponseDtoNpcsItemProf[keyof typeof LootResponseDtoNpcsItemProf] | null;
+
+
+export const LootResponseDtoNpcsItemProf = {
+  WARRIOR: 'WARRIOR',
+  PALADIN: 'PALADIN',
+  HUNTER: 'HUNTER',
+  MAGE: 'MAGE',
+  BLADE_DANCER: 'BLADE_DANCER',
+  TRACKER: 'TRACKER',
+} as const;
+
+/**
+ * @nullable
+ */
+export type LootResponseDtoNpcsItemType = typeof LootResponseDtoNpcsItemType[keyof typeof LootResponseDtoNpcsItemType] | null;
+
+
+export const LootResponseDtoNpcsItemType = {
+  COMMON: 'COMMON',
+  ELITE: 'ELITE',
+  ELITE2: 'ELITE2',
+  ELITE3: 'ELITE3',
+  HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
+  COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
+  NPC: 'NPC',
+} as const;
+
+export type LootResponseDtoNpcsItem = {
+  id: number;
+  name: string;
+  /** @nullable */
+  wt: number | null;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  prof: LootResponseDtoNpcsItemProf;
+  /** @nullable */
+  icon: string | null;
+  /** @nullable */
+  type: LootResponseDtoNpcsItemType;
+  /** @nullable */
+  margonemType: number | null;
+};
+
+export type LootResponseDtoLootShare = {[key: string]: string[]};
+
+export type LootResponseDtoSubmissionsItemMember = {
+  name: string;
+  /** @nullable */
+  avatar?: string | null;
+  userId: string;
+};
+
+export type LootResponseDtoSubmissionsItem = {
+  guildId: string;
+  memberId: number;
+  lootId: number;
+  member: LootResponseDtoSubmissionsItemMember;
+};
+
+export interface LootResponseDto {
+  id: number;
+  uniqueId: string;
+  world: string;
+  source: LootResponseDtoSource;
+  location: string;
+  items: LootResponseDtoItemsItem[];
+  players: LootResponseDtoPlayersItem[];
+  /**
+     * @minItems 1
+     * @nullable
+     */
+  mapPlayersSnapshot: LootResponseDtoMapPlayersSnapshotItem[] | null;
+  npcs: LootResponseDtoNpcsItem[];
+  lootShare: LootResponseDtoLootShare;
+  createdAt: string;
+  updatedAt: string;
+  submissions?: LootResponseDtoSubmissionsItem[];
+  commentsCount: number;
+}
+
+export type SettingsDocumentsResponseDtoOutputDomainsEffective = { [key: string]: unknown };
+
+export type SettingsDocumentsResponseDtoOutputDomainsLayersItemScopeType = typeof SettingsDocumentsResponseDtoOutputDomainsLayersItemScopeType[keyof typeof SettingsDocumentsResponseDtoOutputDomainsLayersItemScopeType];
+
+
+export const SettingsDocumentsResponseDtoOutputDomainsLayersItemScopeType = {
+  USER: 'USER',
+  GAME_ACCOUNT: 'GAME_ACCOUNT',
+  CHARACTER: 'CHARACTER',
+  GUILD: 'GUILD',
+} as const;
+
+export type SettingsDocumentsResponseDtoOutputDomainsLayersItemScope = {
+  type: SettingsDocumentsResponseDtoOutputDomainsLayersItemScopeType;
+  /** @minLength 1 */
+  id: string;
+};
+
+export type SettingsDocumentsResponseDtoOutputDomainsLayersItemOverrides = { [key: string]: unknown };
+
+export type SettingsDocumentsResponseDtoOutputDomainsLayersItem = {
+  scope: SettingsDocumentsResponseDtoOutputDomainsLayersItemScope;
+  overrides: SettingsDocumentsResponseDtoOutputDomainsLayersItemOverrides;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  schemaVersion?: number;
+  updatedAt?: string;
+};
+
+export type SettingsDocumentsResponseDtoOutputDomainsSources = {[key: string]: 'DEFAULT' | {
+  type: 'USER' | 'GAME_ACCOUNT' | 'CHARACTER' | 'GUILD';
+  /** @minLength 1 */
+  id: string;
+}};
+
+export type SettingsDocumentsResponseDtoOutputDomains = {[key: string]: {
+  effective: SettingsDocumentsResponseDtoOutputDomainsEffective;
+  layers: SettingsDocumentsResponseDtoOutputDomainsLayersItem[];
+  sources: SettingsDocumentsResponseDtoOutputDomainsSources;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  schemaVersion: number;
+  updatedAt?: string;
+}};
+
+export interface SettingsDocumentsResponseDtoOutput {
+  domains: SettingsDocumentsResponseDtoOutputDomains;
+}
+
+export type PatchSettingsDocumentsDtoOperationsItemDomain = typeof PatchSettingsDocumentsDtoOperationsItemDomain[keyof typeof PatchSettingsDocumentsDtoOperationsItemDomain];
+
+
+export const PatchSettingsDocumentsDtoOperationsItemDomain = {
+  general: 'general',
+  appearance: 'appearance',
+  chat: 'chat',
+  timers: 'timers',
+  gameData: 'gameData',
+  notifications: 'notifications',
+  sounds: 'sounds',
+  controls: 'controls',
+} as const;
+
+export type PatchSettingsDocumentsDtoOperationsItemScopeType = typeof PatchSettingsDocumentsDtoOperationsItemScopeType[keyof typeof PatchSettingsDocumentsDtoOperationsItemScopeType];
+
+
+export const PatchSettingsDocumentsDtoOperationsItemScopeType = {
+  USER: 'USER',
+  GAME_ACCOUNT: 'GAME_ACCOUNT',
+  CHARACTER: 'CHARACTER',
+  GUILD: 'GUILD',
+} as const;
+
+export type PatchSettingsDocumentsDtoOperationsItemScope = {
+  type: PatchSettingsDocumentsDtoOperationsItemScopeType;
+  /** @minLength 1 */
+  id: string;
+};
+
+export type PatchSettingsDocumentsDtoOperationsItemSet = { [key: string]: unknown };
+
+export type PatchSettingsDocumentsDtoOperationsItem = {
+  domain: PatchSettingsDocumentsDtoOperationsItemDomain;
+  scope: PatchSettingsDocumentsDtoOperationsItemScope;
+  set?: PatchSettingsDocumentsDtoOperationsItemSet;
+  /** @items.minLength 1 */
+  unset?: string[];
+};
+
+export interface SettingsDocumentsContextDto {
+  /** @minLength 1 */
+  gameAccountId?: string;
+  /** @minLength 1 */
+  characterId?: string;
+  /** @minLength 1 */
+  guildId?: string;
+}
+
+export interface PatchSettingsDocumentsDto {
+  /** @minItems 1 */
+  operations: PatchSettingsDocumentsDtoOperationsItem[];
+  context?: SettingsDocumentsContextDto;
+}
+
+export type GuildSettingsDocumentsResponseDtoOutputGuilds = {[key: string]: SettingsDocumentsResponseDtoOutput};
+
+export interface GuildSettingsDocumentsResponseDtoOutput {
+  guilds: GuildSettingsDocumentsResponseDtoOutputGuilds;
+}
+
+export type MigrateTimerSettingsDtoLocalData = { [key: string]: unknown };
+
+export type MigrateTimerSettingsDtoConflictResolution = typeof MigrateTimerSettingsDtoConflictResolution[keyof typeof MigrateTimerSettingsDtoConflictResolution];
+
+
+export const MigrateTimerSettingsDtoConflictResolution = {
+  local: 'local',
+  remote: 'remote',
+  merge: 'merge',
+} as const;
+
+export interface MigrateTimerSettingsDto {
+  localData: MigrateTimerSettingsDtoLocalData;
+  conflictResolution?: MigrateTimerSettingsDtoConflictResolution;
+}
+
+export interface GuildTimerSettingsResponseDto {
+  userId: string;
+  guildId: string;
+  hiddenTimers: string[];
+  pinnedTimers: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateGuildTimerSettingsDto {
+  hiddenTimers?: string[];
+  pinnedTimers?: string[];
+}
+
+export type TimerSettingsResponseDtoTimersSortOrder = typeof TimerSettingsResponseDtoTimersSortOrder[keyof typeof TimerSettingsResponseDtoTimersSortOrder];
+
+
+export const TimerSettingsResponseDtoTimersSortOrder = {
+  asc: 'asc',
+  desc: 'desc',
+} as const;
+
+export type TimerSettingsResponseDtoSchema0 = string | number | boolean | (TimerSettingsResponseDtoSchema0 | null)[] | {[key: string]: TimerSettingsResponseDtoSchema0 | null} | null;
+
+export interface TimerSettingsResponseDto {
+  userId: string;
+  generalConfig: TimerSettingsResponseDtoSchema0 | null;
+  displayConfig: TimerSettingsResponseDtoSchema0 | null;
+  customColors: TimerSettingsResponseDtoSchema0 | null;
+  timersColors: TimerSettingsResponseDtoSchema0 | null;
+  alwaysVisibleExpiredTimers: TimerSettingsResponseDtoSchema0 | null;
+  defaultColorNames: TimerSettingsResponseDtoSchema0 | null;
+  overriddenDefaultColors: TimerSettingsResponseDtoSchema0 | null;
+  hiddenDefaultColors: string[];
+  timerFiltersEnabled: boolean;
+  colorFiltersEnabled: boolean;
+  timersSortOrder: TimerSettingsResponseDtoTimersSortOrder;
+  syncEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type UpdateTimerSettingsDtoGeneralConfigCountdownMode = typeof UpdateTimerSettingsDtoGeneralConfigCountdownMode[keyof typeof UpdateTimerSettingsDtoGeneralConfigCountdownMode];
+
+
+export const UpdateTimerSettingsDtoGeneralConfigCountdownMode = {
+  min: 'min',
+  max: 'max',
+} as const;
+
+export type UpdateTimerSettingsDtoGeneralConfig = {
+  /** @minimum 0 */
+  removeTimerAfterMs?: number;
+  compactView?: boolean;
+  timersGrouping?: boolean;
+  timersUnderBag?: boolean;
+  countdownMode?: UpdateTimerSettingsDtoGeneralConfigCountdownMode;
+};
+
+export type UpdateTimerSettingsDtoDisplayConfigSingleTimerDisplayMode = typeof UpdateTimerSettingsDtoDisplayConfigSingleTimerDisplayMode[keyof typeof UpdateTimerSettingsDtoDisplayConfigSingleTimerDisplayMode];
+
+
+export const UpdateTimerSettingsDtoDisplayConfigSingleTimerDisplayMode = {
+  column: 'column',
+  row: 'row',
+} as const;
+
+export type UpdateTimerSettingsDtoDisplayConfig = {
+  legacyAppearance?: boolean;
+  showType?: boolean;
+  showLevel?: boolean;
+  /**
+     * @minimum 8
+     * @maximum 24
+     */
+  fontSize?: number;
+  /**
+     * @minimum 50
+     * @maximum 500
+     */
+  minColumnWidth?: number;
+  singleTimerDisplayMode?: UpdateTimerSettingsDtoDisplayConfigSingleTimerDisplayMode;
+};
+
+export type UpdateTimerSettingsDtoCustomColors = {[key: string]: {
+  id: string;
+  name: string;
+  borderColor: string;
+  backgroundColor: string;
+}};
+
+export type UpdateTimerSettingsDtoTimersColors = {[key: string]: string};
+
+export type UpdateTimerSettingsDtoAlwaysVisibleExpiredTimers = {[key: string]: string[]};
+
+export type UpdateTimerSettingsDtoDefaultColorNames = {[key: string]: string};
+
+export type UpdateTimerSettingsDtoOverriddenDefaultColors = {[key: string]: {
+  borderColor: string;
+  backgroundColor: string;
+}};
+
+export type UpdateTimerSettingsDtoTimersSortOrder = typeof UpdateTimerSettingsDtoTimersSortOrder[keyof typeof UpdateTimerSettingsDtoTimersSortOrder];
+
+
+export const UpdateTimerSettingsDtoTimersSortOrder = {
+  asc: 'asc',
+  desc: 'desc',
+} as const;
+
+export interface UpdateTimerSettingsDto {
+  generalConfig?: UpdateTimerSettingsDtoGeneralConfig;
+  displayConfig?: UpdateTimerSettingsDtoDisplayConfig;
+  customColors?: UpdateTimerSettingsDtoCustomColors;
+  timersColors?: UpdateTimerSettingsDtoTimersColors;
+  alwaysVisibleExpiredTimers?: UpdateTimerSettingsDtoAlwaysVisibleExpiredTimers;
+  defaultColorNames?: UpdateTimerSettingsDtoDefaultColorNames;
+  overriddenDefaultColors?: UpdateTimerSettingsDtoOverriddenDefaultColors;
+  hiddenDefaultColors?: string[];
+  timerFiltersEnabled?: boolean;
+  colorFiltersEnabled?: boolean;
+  timersSortOrder?: UpdateTimerSettingsDtoTimersSortOrder;
+  syncEnabled?: boolean;
+}
+
+export type UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItemGuildsItem = {
+  id: string;
+  name: string;
+};
+
+export type UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItem = {
+  userId: string;
+  accountId: string;
+  characterId: string;
+  guilds: UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItemGuildsItem[];
+};
+
+export interface UserLootlogPlayersCatchingGuildsResponseDtoOutput {
+  players: UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItem[];
+}
+
+export type UserLootlogPlayersCatchingGuildsRequestDtoPlayersItem = {
+  userId: string;
+  accountId: string;
+  characterId: string;
+};
+
+export interface UserLootlogPlayersCatchingGuildsRequestDto {
+  /** @maxItems 100 */
+  players: UserLootlogPlayersCatchingGuildsRequestDtoPlayersItem[];
+}
+
+export interface UserLootlogConfigResponseDtoOutput {
+  userId: string;
+  accountId: string;
+  characterId: string;
+  catchingGuildIds: string[];
+}
+
+export interface CreateOrUpdateLootlogCharacterConfigDto {
+  /** @minLength 1 */
+  characterId: string;
+  /** Guild IDs used for catching-related actions */
+  catchingGuildIds: string[];
+}
+
+export interface UserLootlogConfigAccountResponseDtoOutput {[key: string]: {
+  userId: string;
+  accountId: string;
+  characterId: string;
+  catchingGuildIds: string[];
+}}
+
+export type CreateManualTimerDtoType = typeof CreateManualTimerDtoType[keyof typeof CreateManualTimerDtoType];
+
+
+export const CreateManualTimerDtoType = {
+  ELITE2: 'ELITE2',
+  ELITE3: 'ELITE3',
+  HERO: 'HERO',
+  TITAN: 'TITAN',
+} as const;
+
+export type CreateManualTimerDtoActorCharacter = {
+  /** @minLength 1 */
+  accountId: string;
+  /** @minLength 1 */
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  name: string;
+  prof?: string;
+  icon?: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  lvl?: number;
+};
+
+export interface CreateManualTimerDto {
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  name: string;
+  /** @minimum 1 */
+  minSeconds?: number;
+  /** @minimum 1 */
+  maxSeconds?: number;
+  lvl?: number;
+  prof?: string;
+  type?: CreateManualTimerDtoType;
+  customMinSpawnTime?: string;
+  customMaxSpawnTime?: string;
+  /** @minLength 1 */
+  world: string;
+  actorCharacter?: CreateManualTimerDtoActorCharacter;
+}
+
+export type TimerHistoryResponseDtoNpcType = typeof TimerHistoryResponseDtoNpcType[keyof typeof TimerHistoryResponseDtoNpcType];
+
+
+export const TimerHistoryResponseDtoNpcType = {
+  COMMON: 'COMMON',
+  ELITE: 'ELITE',
+  ELITE2: 'ELITE2',
+  ELITE3: 'ELITE3',
+  HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
+  COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
+  NPC: 'NPC',
+} as const;
+
+export type TimerHistoryResponseDtoNpc = {
+  id: number;
+  /**
+     * Margonem template id (`tpl`) observed with this timer's NPC, or null when no client reported one.
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  templateId: number | null;
+  name: string;
+  prof: string;
+  location: string;
+  wt: string;
+  lvl: number;
+  type: TimerHistoryResponseDtoNpcType;
+  /** @nullable */
+  icon: string | null;
+  margonemType: string;
+};
+
+export type TimerHistoryResponseDtoAction = typeof TimerHistoryResponseDtoAction[keyof typeof TimerHistoryResponseDtoAction];
+
+
+export const TimerHistoryResponseDtoAction = {
+  CREATE: 'CREATE',
+  RESET: 'RESET',
+  DELETE: 'DELETE',
+  RESTORE: 'RESTORE',
+} as const;
+
+export type TimerHistoryResponseDtoMemberType = typeof TimerHistoryResponseDtoMemberType[keyof typeof TimerHistoryResponseDtoMemberType];
+
+
+export const TimerHistoryResponseDtoMemberType = {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  USER: 'USER',
+  BOT: 'BOT',
+} as const;
+
+export type TimerHistoryResponseDtoMemberRolesItemPermissionsItem = typeof TimerHistoryResponseDtoMemberRolesItemPermissionsItem[keyof typeof TimerHistoryResponseDtoMemberRolesItemPermissionsItem];
+
+
+export const TimerHistoryResponseDtoMemberRolesItemPermissionsItem = {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  LOOTLOG_MANAGE: 'LOOTLOG_MANAGE',
+  LOOTLOG_ACCESS: 'LOOTLOG_ACCESS',
+  LOOTLOG_LOOTS_READ: 'LOOTLOG_LOOTS_READ',
+  LOOTLOG_LOOTS_WRITE: 'LOOTLOG_LOOTS_WRITE',
+  LOOTLOG_LOOTS_ARCHIVE: 'LOOTLOG_LOOTS_ARCHIVE',
+  LOOTLOG_LOOTS_TITANS_READ: 'LOOTLOG_LOOTS_TITANS_READ',
+  LOOTLOG_LOOTS_HEROES_READ: 'LOOTLOG_LOOTS_HEROES_READ',
+  LOOTLOG_TIMERS_READ: 'LOOTLOG_TIMERS_READ',
+  LOOTLOG_TIMERS_WRITE: 'LOOTLOG_TIMERS_WRITE',
+  LOOTLOG_TIMERS_RESET: 'LOOTLOG_TIMERS_RESET',
+  LOOTLOG_TIMERS_DELETE: 'LOOTLOG_TIMERS_DELETE',
+  LOOTLOG_TIMERS_TITANS_READ: 'LOOTLOG_TIMERS_TITANS_READ',
+  LOOTLOG_TIMERS_HEROES_READ: 'LOOTLOG_TIMERS_HEROES_READ',
+  LOOTLOG_RESERVATIONS_READ: 'LOOTLOG_RESERVATIONS_READ',
+  LOOTLOG_RESERVATIONS_WRITE: 'LOOTLOG_RESERVATIONS_WRITE',
+  LOOTLOG_MEMBERS_READ: 'LOOTLOG_MEMBERS_READ',
+  LOOTLOG_ONLINE_PLAYERS_READ: 'LOOTLOG_ONLINE_PLAYERS_READ',
+  LOOTLOG_PRESENCE_LOCATION_READ: 'LOOTLOG_PRESENCE_LOCATION_READ',
+  LOOTLOG_CHAT_READ: 'LOOTLOG_CHAT_READ',
+  LOOTLOG_CHAT_WRITE: 'LOOTLOG_CHAT_WRITE',
+  LOOTLOG_CHAT_TITANS_READ: 'LOOTLOG_CHAT_TITANS_READ',
+  LOOTLOG_CHAT_HEROES_READ: 'LOOTLOG_CHAT_HEROES_READ',
+  LOOTLOG_NOTIFICATIONS_READ: 'LOOTLOG_NOTIFICATIONS_READ',
+  LOOTLOG_NOTIFICATIONS_SEND: 'LOOTLOG_NOTIFICATIONS_SEND',
+  LOOTLOG_NOTIFICATIONS_TITANS_READ: 'LOOTLOG_NOTIFICATIONS_TITANS_READ',
+  LOOTLOG_NOTIFICATIONS_HEROES_READ: 'LOOTLOG_NOTIFICATIONS_HEROES_READ',
+  LOOTLOG_EVENTS_MANAGE: 'LOOTLOG_EVENTS_MANAGE',
+  LOOTLOG_EVENTS_READ: 'LOOTLOG_EVENTS_READ',
+  LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
+  LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
+  LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+} as const;
+
+export type TimerHistoryResponseDtoMemberRolesItem = {
+  id: string;
+  guildId: string;
+  name: string;
+  /** @nullable */
+  color: number | null;
+  /** @nullable */
+  position?: number | null;
+  permissions: TimerHistoryResponseDtoMemberRolesItemPermissionsItem[];
+  /** @nullable */
+  lvlRangeFrom?: number | null;
+  /** @nullable */
+  lvlRangeTo?: number | null;
+};
+
+export type TimerHistoryResponseDtoMember = {
+  id: number;
+  userId: string;
+  guildId: string;
+  type: TimerHistoryResponseDtoMemberType;
+  name: string;
+  /** @nullable */
+  avatar?: string | null;
+  /** @nullable */
+  banner?: string | null;
+  active: boolean;
+  roles: TimerHistoryResponseDtoMemberRolesItem[];
+  /** @nullable */
+  globalUserId?: string | null;
+  /** @nullable */
+  lastDiscordSyncAt?: string | null;
+  /** @nullable */
+  lastDiscordAttemptAt?: string | null;
+  /** @nullable */
+  lastDiscordStatus?: string | null;
+  isStale?: boolean;
+  staleWarning?: string;
+  refreshQueued?: boolean;
+  /** @nullable */
+  nextRefreshAt?: string | null;
+  updatedAt: string;
+};
+
+/**
+ * @nullable
+ */
+export type TimerHistoryResponseDtoActorCharacterProf = typeof TimerHistoryResponseDtoActorCharacterProf[keyof typeof TimerHistoryResponseDtoActorCharacterProf] | null;
+
+
+export const TimerHistoryResponseDtoActorCharacterProf = {
+  WARRIOR: 'WARRIOR',
+  PALADIN: 'PALADIN',
+  HUNTER: 'HUNTER',
+  MAGE: 'MAGE',
+  BLADE_DANCER: 'BLADE_DANCER',
+  TRACKER: 'TRACKER',
+} as const;
+
+export type TimerHistoryResponseDtoActorCharacter = {
+  name: string;
+  /** @nullable */
+  prof: TimerHistoryResponseDtoActorCharacterProf;
+  /** @nullable */
+  icon: string | null;
+  /** @nullable */
+  lvl: number | null;
+  characterId: number;
+  accountId: number;
+};
+
+export interface TimerHistoryResponseDto {
+  id: number;
+  guildId: string;
+  guildName: string;
+  world: string;
+  timerKey: string;
+  npcId: number;
+  npc: TimerHistoryResponseDtoNpc;
+  action: TimerHistoryResponseDtoAction;
+  member: TimerHistoryResponseDtoMember;
+  actorCharacter?: TimerHistoryResponseDtoActorCharacter;
+  /** @nullable */
+  minSpawnTime: string | null;
+  /** @nullable */
+  maxSpawnTime: string | null;
+  /** Whether this entry can restore a deleted timer or undo the latest timer reset. */
+  canRestore: boolean;
+  createdAt: string;
+}
+
+export type TimerResponseDtoNpcType = typeof TimerResponseDtoNpcType[keyof typeof TimerResponseDtoNpcType];
+
+
+export const TimerResponseDtoNpcType = {
+  COMMON: 'COMMON',
+  ELITE: 'ELITE',
+  ELITE2: 'ELITE2',
+  ELITE3: 'ELITE3',
+  HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
+  COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
+  NPC: 'NPC',
+} as const;
+
+export type TimerResponseDtoNpc = {
+  id: number;
+  /**
+     * Margonem template id (`tpl`) observed with this timer's NPC, or null when no client reported one.
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  templateId: number | null;
+  name: string;
+  prof: string;
+  location: string;
+  wt: string;
+  lvl: number;
+  type: TimerResponseDtoNpcType;
+  /** @nullable */
+  icon: string | null;
+  margonemType: string;
+};
+
+export type TimerResponseDtoMemberType = typeof TimerResponseDtoMemberType[keyof typeof TimerResponseDtoMemberType];
+
+
+export const TimerResponseDtoMemberType = {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  USER: 'USER',
+  BOT: 'BOT',
+} as const;
+
+export type TimerResponseDtoMemberRolesItemPermissionsItem = typeof TimerResponseDtoMemberRolesItemPermissionsItem[keyof typeof TimerResponseDtoMemberRolesItemPermissionsItem];
+
+
+export const TimerResponseDtoMemberRolesItemPermissionsItem = {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  LOOTLOG_MANAGE: 'LOOTLOG_MANAGE',
+  LOOTLOG_ACCESS: 'LOOTLOG_ACCESS',
+  LOOTLOG_LOOTS_READ: 'LOOTLOG_LOOTS_READ',
+  LOOTLOG_LOOTS_WRITE: 'LOOTLOG_LOOTS_WRITE',
+  LOOTLOG_LOOTS_ARCHIVE: 'LOOTLOG_LOOTS_ARCHIVE',
+  LOOTLOG_LOOTS_TITANS_READ: 'LOOTLOG_LOOTS_TITANS_READ',
+  LOOTLOG_LOOTS_HEROES_READ: 'LOOTLOG_LOOTS_HEROES_READ',
+  LOOTLOG_TIMERS_READ: 'LOOTLOG_TIMERS_READ',
+  LOOTLOG_TIMERS_WRITE: 'LOOTLOG_TIMERS_WRITE',
+  LOOTLOG_TIMERS_RESET: 'LOOTLOG_TIMERS_RESET',
+  LOOTLOG_TIMERS_DELETE: 'LOOTLOG_TIMERS_DELETE',
+  LOOTLOG_TIMERS_TITANS_READ: 'LOOTLOG_TIMERS_TITANS_READ',
+  LOOTLOG_TIMERS_HEROES_READ: 'LOOTLOG_TIMERS_HEROES_READ',
+  LOOTLOG_RESERVATIONS_READ: 'LOOTLOG_RESERVATIONS_READ',
+  LOOTLOG_RESERVATIONS_WRITE: 'LOOTLOG_RESERVATIONS_WRITE',
+  LOOTLOG_MEMBERS_READ: 'LOOTLOG_MEMBERS_READ',
+  LOOTLOG_ONLINE_PLAYERS_READ: 'LOOTLOG_ONLINE_PLAYERS_READ',
+  LOOTLOG_PRESENCE_LOCATION_READ: 'LOOTLOG_PRESENCE_LOCATION_READ',
+  LOOTLOG_CHAT_READ: 'LOOTLOG_CHAT_READ',
+  LOOTLOG_CHAT_WRITE: 'LOOTLOG_CHAT_WRITE',
+  LOOTLOG_CHAT_TITANS_READ: 'LOOTLOG_CHAT_TITANS_READ',
+  LOOTLOG_CHAT_HEROES_READ: 'LOOTLOG_CHAT_HEROES_READ',
+  LOOTLOG_NOTIFICATIONS_READ: 'LOOTLOG_NOTIFICATIONS_READ',
+  LOOTLOG_NOTIFICATIONS_SEND: 'LOOTLOG_NOTIFICATIONS_SEND',
+  LOOTLOG_NOTIFICATIONS_TITANS_READ: 'LOOTLOG_NOTIFICATIONS_TITANS_READ',
+  LOOTLOG_NOTIFICATIONS_HEROES_READ: 'LOOTLOG_NOTIFICATIONS_HEROES_READ',
+  LOOTLOG_EVENTS_MANAGE: 'LOOTLOG_EVENTS_MANAGE',
+  LOOTLOG_EVENTS_READ: 'LOOTLOG_EVENTS_READ',
+  LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
+  LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
+  LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+} as const;
+
+export type TimerResponseDtoMemberRolesItem = {
+  id: string;
+  guildId: string;
+  name: string;
+  /** @nullable */
+  color: number | null;
+  /** @nullable */
+  position?: number | null;
+  permissions: TimerResponseDtoMemberRolesItemPermissionsItem[];
+  /** @nullable */
+  lvlRangeFrom?: number | null;
+  /** @nullable */
+  lvlRangeTo?: number | null;
+};
+
+export type TimerResponseDtoMember = {
+  id: number;
+  userId: string;
+  guildId: string;
+  type: TimerResponseDtoMemberType;
+  name: string;
+  /** @nullable */
+  avatar?: string | null;
+  /** @nullable */
+  banner?: string | null;
+  active: boolean;
+  roles: TimerResponseDtoMemberRolesItem[];
+  /** @nullable */
+  globalUserId?: string | null;
+  /** @nullable */
+  lastDiscordSyncAt?: string | null;
+  /** @nullable */
+  lastDiscordAttemptAt?: string | null;
+  /** @nullable */
+  lastDiscordStatus?: string | null;
+  isStale?: boolean;
+  staleWarning?: string;
+  refreshQueued?: boolean;
+  /** @nullable */
+  nextRefreshAt?: string | null;
+  updatedAt: string;
+};
+
+/**
+ * @nullable
+ */
+export type TimerResponseDtoActorCharacterProf = typeof TimerResponseDtoActorCharacterProf[keyof typeof TimerResponseDtoActorCharacterProf] | null;
+
+
+export const TimerResponseDtoActorCharacterProf = {
+  WARRIOR: 'WARRIOR',
+  PALADIN: 'PALADIN',
+  HUNTER: 'HUNTER',
+  MAGE: 'MAGE',
+  BLADE_DANCER: 'BLADE_DANCER',
+  TRACKER: 'TRACKER',
+} as const;
+
+export type TimerResponseDtoActorCharacter = {
+  name: string;
+  /** @nullable */
+  prof: TimerResponseDtoActorCharacterProf;
+  /** @nullable */
+  icon: string | null;
+  /** @nullable */
+  lvl: number | null;
+  characterId: number;
+  accountId: number;
+};
+
+export interface TimerResponseDto {
+  guildId: string;
+  npcId: number;
+  timerKey: string;
+  world: string;
+  minSpawnTime: string;
+  maxSpawnTime: string;
+  npc: TimerResponseDtoNpc;
+  wasReset: boolean;
+  member?: TimerResponseDtoMember;
+  actorCharacter?: TimerResponseDtoActorCharacter;
+  /** @nullable */
+  deletedAt?: string | null;
+  updatedAt: string;
+}
+
+export type ResetTimerDtoActorCharacter = {
+  /** @minLength 1 */
+  accountId: string;
+  /** @minLength 1 */
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  name: string;
+  prof?: string;
+  icon?: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  lvl?: number;
+};
+
+export interface ResetTimerDto {
+  /** @minLength 1 */
+  world: string;
+  actorCharacter?: ResetTimerDtoActorCharacter;
+}
+
+export type CreateAutoTimerResponseDtoOutputSubmittedGuildsItem = {
+  guildId: string;
+  guildName: string;
+};
+
+export type CreateAutoTimerResponseDtoOutputRejectedGuildsItemReason = typeof CreateAutoTimerResponseDtoOutputRejectedGuildsItemReason[keyof typeof CreateAutoTimerResponseDtoOutputRejectedGuildsItemReason];
+
+
+export const CreateAutoTimerResponseDtoOutputRejectedGuildsItemReason = {
+  NOT_ON_CATCHING_WHITELIST: 'NOT_ON_CATCHING_WHITELIST',
+  TIMER_CREATE_FAILED: 'TIMER_CREATE_FAILED',
+} as const;
+
+export type CreateAutoTimerResponseDtoOutputRejectedGuildsItem = {
+  guildId: string;
+  guildName: string;
+  reason: CreateAutoTimerResponseDtoOutputRejectedGuildsItemReason;
+};
+
+export interface CreateAutoTimerResponseDtoOutput {
+  submittedGuilds: CreateAutoTimerResponseDtoOutputSubmittedGuildsItem[];
+  rejectedGuilds: CreateAutoTimerResponseDtoOutputRejectedGuildsItem[];
+}
+
+export type CreateTimerFromGameClientDtoNpc = {
+  /** Margonem runtime NPC id (`npc.id`) of the removed spawn. */
+  id: number;
+  /**
+     * Margonem template id (`npc.tpl`); null when the client did not observe it.
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  templateId?: number | null;
+  name: string;
+  location: string;
+  lvl: number;
+  prof?: string;
+  wt: number;
+  hpp?: number;
+  icon: string;
+  type: number;
+  x?: number;
+  y?: number;
+};
+
+export type CreateTimerFromGameClientDtoActorCharacter = {
+  /** @minLength 1 */
+  accountId: string;
+  /** @minLength 1 */
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  name: string;
+  prof?: string;
+  icon?: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  lvl?: number;
+};
+
+export interface CreateTimerFromGameClientDto {
+  /** @minimum 2 */
+  respBaseSeconds: number;
+  respawnRandomness?: number;
+  customMinSpawnTime?: string;
+  customMaxSpawnTime?: string;
+  /** @minLength 1 */
+  world: string;
+  npc: CreateTimerFromGameClientDtoNpc;
+  /** @minLength 1 */
+  characterId: string;
+  /** @minLength 1 */
+  accountId: string;
+  actorCharacter?: CreateTimerFromGameClientDtoActorCharacter;
+}
+
+export type SearchTimersNpcResponseDtoOutputType = typeof SearchTimersNpcResponseDtoOutputType[keyof typeof SearchTimersNpcResponseDtoOutputType];
+
+
+export const SearchTimersNpcResponseDtoOutputType = {
+  COMMON: 'COMMON',
+  ELITE: 'ELITE',
+  ELITE2: 'ELITE2',
+  ELITE3: 'ELITE3',
+  HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
+  COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
+  NPC: 'NPC',
+} as const;
+
+export interface SearchTimersNpcResponseDtoOutput {
+  npcId: number;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  templateId: number | null;
+  timerKey: string;
+  world: string;
+  name: string;
+  lvl: number;
+  type: SearchTimersNpcResponseDtoOutputType;
+  prof: string;
+  location: string;
+  wt: string | number;
+  icon: string;
+  /** @nullable */
+  latestRespBaseSeconds: number | null;
+  /** @nullable */
+  latestRespawnRandomness: number | null;
+}
+
+export type RoleResponseDtoOutputPermissionsItem = typeof RoleResponseDtoOutputPermissionsItem[keyof typeof RoleResponseDtoOutputPermissionsItem];
+
+
+export const RoleResponseDtoOutputPermissionsItem = {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  LOOTLOG_MANAGE: 'LOOTLOG_MANAGE',
+  LOOTLOG_ACCESS: 'LOOTLOG_ACCESS',
+  LOOTLOG_LOOTS_READ: 'LOOTLOG_LOOTS_READ',
+  LOOTLOG_LOOTS_WRITE: 'LOOTLOG_LOOTS_WRITE',
+  LOOTLOG_LOOTS_ARCHIVE: 'LOOTLOG_LOOTS_ARCHIVE',
+  LOOTLOG_LOOTS_TITANS_READ: 'LOOTLOG_LOOTS_TITANS_READ',
+  LOOTLOG_LOOTS_HEROES_READ: 'LOOTLOG_LOOTS_HEROES_READ',
+  LOOTLOG_TIMERS_READ: 'LOOTLOG_TIMERS_READ',
+  LOOTLOG_TIMERS_WRITE: 'LOOTLOG_TIMERS_WRITE',
+  LOOTLOG_TIMERS_RESET: 'LOOTLOG_TIMERS_RESET',
+  LOOTLOG_TIMERS_DELETE: 'LOOTLOG_TIMERS_DELETE',
+  LOOTLOG_TIMERS_TITANS_READ: 'LOOTLOG_TIMERS_TITANS_READ',
+  LOOTLOG_TIMERS_HEROES_READ: 'LOOTLOG_TIMERS_HEROES_READ',
+  LOOTLOG_RESERVATIONS_READ: 'LOOTLOG_RESERVATIONS_READ',
+  LOOTLOG_RESERVATIONS_WRITE: 'LOOTLOG_RESERVATIONS_WRITE',
+  LOOTLOG_MEMBERS_READ: 'LOOTLOG_MEMBERS_READ',
+  LOOTLOG_ONLINE_PLAYERS_READ: 'LOOTLOG_ONLINE_PLAYERS_READ',
+  LOOTLOG_PRESENCE_LOCATION_READ: 'LOOTLOG_PRESENCE_LOCATION_READ',
+  LOOTLOG_CHAT_READ: 'LOOTLOG_CHAT_READ',
+  LOOTLOG_CHAT_WRITE: 'LOOTLOG_CHAT_WRITE',
+  LOOTLOG_CHAT_TITANS_READ: 'LOOTLOG_CHAT_TITANS_READ',
+  LOOTLOG_CHAT_HEROES_READ: 'LOOTLOG_CHAT_HEROES_READ',
+  LOOTLOG_NOTIFICATIONS_READ: 'LOOTLOG_NOTIFICATIONS_READ',
+  LOOTLOG_NOTIFICATIONS_SEND: 'LOOTLOG_NOTIFICATIONS_SEND',
+  LOOTLOG_NOTIFICATIONS_TITANS_READ: 'LOOTLOG_NOTIFICATIONS_TITANS_READ',
+  LOOTLOG_NOTIFICATIONS_HEROES_READ: 'LOOTLOG_NOTIFICATIONS_HEROES_READ',
+  LOOTLOG_EVENTS_MANAGE: 'LOOTLOG_EVENTS_MANAGE',
+  LOOTLOG_EVENTS_READ: 'LOOTLOG_EVENTS_READ',
+  LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
+  LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
+  LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+} as const;
+
+export interface RoleResponseDtoOutput {
+  id: string;
+  guildId: string;
+  name: string;
+  /** @nullable */
+  color: number | null;
+  /** @nullable */
+  position?: number | null;
+  permissions: RoleResponseDtoOutputPermissionsItem[];
+  /** @nullable */
+  lvlRangeFrom?: number | null;
+  /** @nullable */
+  lvlRangeTo?: number | null;
+}
+
+export type UpdateRolePermissionsDtoPermissionsItem = typeof UpdateRolePermissionsDtoPermissionsItem[keyof typeof UpdateRolePermissionsDtoPermissionsItem];
+
+
+export const UpdateRolePermissionsDtoPermissionsItem = {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  LOOTLOG_MANAGE: 'LOOTLOG_MANAGE',
+  LOOTLOG_ACCESS: 'LOOTLOG_ACCESS',
+  LOOTLOG_LOOTS_READ: 'LOOTLOG_LOOTS_READ',
+  LOOTLOG_LOOTS_WRITE: 'LOOTLOG_LOOTS_WRITE',
+  LOOTLOG_LOOTS_ARCHIVE: 'LOOTLOG_LOOTS_ARCHIVE',
+  LOOTLOG_LOOTS_TITANS_READ: 'LOOTLOG_LOOTS_TITANS_READ',
+  LOOTLOG_LOOTS_HEROES_READ: 'LOOTLOG_LOOTS_HEROES_READ',
+  LOOTLOG_TIMERS_READ: 'LOOTLOG_TIMERS_READ',
+  LOOTLOG_TIMERS_WRITE: 'LOOTLOG_TIMERS_WRITE',
+  LOOTLOG_TIMERS_RESET: 'LOOTLOG_TIMERS_RESET',
+  LOOTLOG_TIMERS_DELETE: 'LOOTLOG_TIMERS_DELETE',
+  LOOTLOG_TIMERS_TITANS_READ: 'LOOTLOG_TIMERS_TITANS_READ',
+  LOOTLOG_TIMERS_HEROES_READ: 'LOOTLOG_TIMERS_HEROES_READ',
+  LOOTLOG_RESERVATIONS_READ: 'LOOTLOG_RESERVATIONS_READ',
+  LOOTLOG_RESERVATIONS_WRITE: 'LOOTLOG_RESERVATIONS_WRITE',
+  LOOTLOG_MEMBERS_READ: 'LOOTLOG_MEMBERS_READ',
+  LOOTLOG_ONLINE_PLAYERS_READ: 'LOOTLOG_ONLINE_PLAYERS_READ',
+  LOOTLOG_PRESENCE_LOCATION_READ: 'LOOTLOG_PRESENCE_LOCATION_READ',
+  LOOTLOG_CHAT_READ: 'LOOTLOG_CHAT_READ',
+  LOOTLOG_CHAT_WRITE: 'LOOTLOG_CHAT_WRITE',
+  LOOTLOG_CHAT_TITANS_READ: 'LOOTLOG_CHAT_TITANS_READ',
+  LOOTLOG_CHAT_HEROES_READ: 'LOOTLOG_CHAT_HEROES_READ',
+  LOOTLOG_NOTIFICATIONS_READ: 'LOOTLOG_NOTIFICATIONS_READ',
+  LOOTLOG_NOTIFICATIONS_SEND: 'LOOTLOG_NOTIFICATIONS_SEND',
+  LOOTLOG_NOTIFICATIONS_TITANS_READ: 'LOOTLOG_NOTIFICATIONS_TITANS_READ',
+  LOOTLOG_NOTIFICATIONS_HEROES_READ: 'LOOTLOG_NOTIFICATIONS_HEROES_READ',
+  LOOTLOG_EVENTS_MANAGE: 'LOOTLOG_EVENTS_MANAGE',
+  LOOTLOG_EVENTS_READ: 'LOOTLOG_EVENTS_READ',
+  LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
+  LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
+  LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+} as const;
+
+export interface UpdateRolePermissionsDto {
+  permissions: UpdateRolePermissionsDtoPermissionsItem[];
+  /**
+     * @minimum 0
+     * @maximum 500
+     */
+  lvlRangeFrom: number;
+  /**
+     * @minimum 0
+     * @maximum 500
+     */
+  lvlRangeTo: number;
+}
+
+export interface GuildResponseDtoOutput {
   id: string;
   name: string;
   /** @nullable */
@@ -402,9 +8182,507 @@ export interface UserCurrentGuildResponseDtoOutput {
   vanityUrl?: string | null;
   ownerId: string;
   publicStatsCardEnabled: boolean;
-  hasLootlogAccess: boolean;
-  isAccessDataStale: boolean;
+  reservationMaxDurationMinutes: number;
+  reservationMinDurationMinutes: number;
+  reservationTimeGranularityMinutes: number;
+  reservationMaxAdvanceDays: number;
+  reservationActiveLimitPerSpot: number;
 }
+
+export type UserGuildPermissionsDtoGuild = {
+  id: string;
+  ownerId: string;
+};
+
+export type UserGuildPermissionsDtoRolesItemPermissionsItem = typeof UserGuildPermissionsDtoRolesItemPermissionsItem[keyof typeof UserGuildPermissionsDtoRolesItemPermissionsItem];
+
+
+export const UserGuildPermissionsDtoRolesItemPermissionsItem = {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  LOOTLOG_MANAGE: 'LOOTLOG_MANAGE',
+  LOOTLOG_ACCESS: 'LOOTLOG_ACCESS',
+  LOOTLOG_LOOTS_READ: 'LOOTLOG_LOOTS_READ',
+  LOOTLOG_LOOTS_WRITE: 'LOOTLOG_LOOTS_WRITE',
+  LOOTLOG_LOOTS_ARCHIVE: 'LOOTLOG_LOOTS_ARCHIVE',
+  LOOTLOG_LOOTS_TITANS_READ: 'LOOTLOG_LOOTS_TITANS_READ',
+  LOOTLOG_LOOTS_HEROES_READ: 'LOOTLOG_LOOTS_HEROES_READ',
+  LOOTLOG_TIMERS_READ: 'LOOTLOG_TIMERS_READ',
+  LOOTLOG_TIMERS_WRITE: 'LOOTLOG_TIMERS_WRITE',
+  LOOTLOG_TIMERS_RESET: 'LOOTLOG_TIMERS_RESET',
+  LOOTLOG_TIMERS_DELETE: 'LOOTLOG_TIMERS_DELETE',
+  LOOTLOG_TIMERS_TITANS_READ: 'LOOTLOG_TIMERS_TITANS_READ',
+  LOOTLOG_TIMERS_HEROES_READ: 'LOOTLOG_TIMERS_HEROES_READ',
+  LOOTLOG_RESERVATIONS_READ: 'LOOTLOG_RESERVATIONS_READ',
+  LOOTLOG_RESERVATIONS_WRITE: 'LOOTLOG_RESERVATIONS_WRITE',
+  LOOTLOG_MEMBERS_READ: 'LOOTLOG_MEMBERS_READ',
+  LOOTLOG_ONLINE_PLAYERS_READ: 'LOOTLOG_ONLINE_PLAYERS_READ',
+  LOOTLOG_PRESENCE_LOCATION_READ: 'LOOTLOG_PRESENCE_LOCATION_READ',
+  LOOTLOG_CHAT_READ: 'LOOTLOG_CHAT_READ',
+  LOOTLOG_CHAT_WRITE: 'LOOTLOG_CHAT_WRITE',
+  LOOTLOG_CHAT_TITANS_READ: 'LOOTLOG_CHAT_TITANS_READ',
+  LOOTLOG_CHAT_HEROES_READ: 'LOOTLOG_CHAT_HEROES_READ',
+  LOOTLOG_NOTIFICATIONS_READ: 'LOOTLOG_NOTIFICATIONS_READ',
+  LOOTLOG_NOTIFICATIONS_SEND: 'LOOTLOG_NOTIFICATIONS_SEND',
+  LOOTLOG_NOTIFICATIONS_TITANS_READ: 'LOOTLOG_NOTIFICATIONS_TITANS_READ',
+  LOOTLOG_NOTIFICATIONS_HEROES_READ: 'LOOTLOG_NOTIFICATIONS_HEROES_READ',
+  LOOTLOG_EVENTS_MANAGE: 'LOOTLOG_EVENTS_MANAGE',
+  LOOTLOG_EVENTS_READ: 'LOOTLOG_EVENTS_READ',
+  LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
+  LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
+  LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+} as const;
+
+export type UserGuildPermissionsDtoRolesItem = {
+  id: string;
+  lvlRangeFrom: number;
+  lvlRangeTo: number;
+  permissions: UserGuildPermissionsDtoRolesItemPermissionsItem[];
+};
+
+export interface UserGuildPermissionsDto {
+  guild: UserGuildPermissionsDtoGuild;
+  roles: UserGuildPermissionsDtoRolesItem[];
+}
+
+export type DiscordGuildSyncStateResponseDtoStatus = typeof DiscordGuildSyncStateResponseDtoStatus[keyof typeof DiscordGuildSyncStateResponseDtoStatus];
+
+
+export const DiscordGuildSyncStateResponseDtoStatus = {
+  SYNCED: 'SYNCED',
+  SYNCING: 'SYNCING',
+  FAILED: 'FAILED',
+  STALE: 'STALE',
+  NOT_FOUND: 'NOT_FOUND',
+} as const;
+
+export interface DiscordGuildSyncStateResponseDto {
+  guildId: string;
+  status: DiscordGuildSyncStateResponseDtoStatus;
+  hasRequiredPermissions: boolean;
+  requiredPermissions: string[];
+  grantedPermissions: string[];
+  missingPermissions: string[];
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  channelCount: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  selectableChannelCount: number;
+  /** @nullable */
+  lastAttemptAt: string | null;
+  /** @nullable */
+  lastSuccessAt: string | null;
+  /** @nullable */
+  lastError: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateGuildConfigDto {
+  /**
+     * @minLength 1
+     * @nullable
+     */
+  vanityUrl?: string | null;
+  publicStatsCardEnabled?: boolean;
+  /**
+     * @minimum 30
+     * @maximum 720
+     */
+  reservationMaxDurationMinutes?: number;
+  /**
+     * @minimum 5
+     * @maximum 240
+     */
+  reservationMinDurationMinutes?: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  reservationTimeGranularityMinutes?: number;
+  /**
+     * @minimum 1
+     * @maximum 30
+     */
+  reservationMaxAdvanceDays?: number;
+  /**
+     * @minimum 1
+     * @maximum 10
+     */
+  reservationActiveLimitPerSpot?: number;
+}
+
+export interface ManageableOrganizationResponse {
+  id: string;
+  name: string;
+  /** @nullable */
+  icon?: string | null;
+}
+
+export type UserGuildPermissionsDtoOutputGuild = {
+  id: string;
+  ownerId: string;
+};
+
+export type UserGuildPermissionsDtoOutputRolesItemPermissionsItem = typeof UserGuildPermissionsDtoOutputRolesItemPermissionsItem[keyof typeof UserGuildPermissionsDtoOutputRolesItemPermissionsItem];
+
+
+export const UserGuildPermissionsDtoOutputRolesItemPermissionsItem = {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  LOOTLOG_MANAGE: 'LOOTLOG_MANAGE',
+  LOOTLOG_ACCESS: 'LOOTLOG_ACCESS',
+  LOOTLOG_LOOTS_READ: 'LOOTLOG_LOOTS_READ',
+  LOOTLOG_LOOTS_WRITE: 'LOOTLOG_LOOTS_WRITE',
+  LOOTLOG_LOOTS_ARCHIVE: 'LOOTLOG_LOOTS_ARCHIVE',
+  LOOTLOG_LOOTS_TITANS_READ: 'LOOTLOG_LOOTS_TITANS_READ',
+  LOOTLOG_LOOTS_HEROES_READ: 'LOOTLOG_LOOTS_HEROES_READ',
+  LOOTLOG_TIMERS_READ: 'LOOTLOG_TIMERS_READ',
+  LOOTLOG_TIMERS_WRITE: 'LOOTLOG_TIMERS_WRITE',
+  LOOTLOG_TIMERS_RESET: 'LOOTLOG_TIMERS_RESET',
+  LOOTLOG_TIMERS_DELETE: 'LOOTLOG_TIMERS_DELETE',
+  LOOTLOG_TIMERS_TITANS_READ: 'LOOTLOG_TIMERS_TITANS_READ',
+  LOOTLOG_TIMERS_HEROES_READ: 'LOOTLOG_TIMERS_HEROES_READ',
+  LOOTLOG_RESERVATIONS_READ: 'LOOTLOG_RESERVATIONS_READ',
+  LOOTLOG_RESERVATIONS_WRITE: 'LOOTLOG_RESERVATIONS_WRITE',
+  LOOTLOG_MEMBERS_READ: 'LOOTLOG_MEMBERS_READ',
+  LOOTLOG_ONLINE_PLAYERS_READ: 'LOOTLOG_ONLINE_PLAYERS_READ',
+  LOOTLOG_PRESENCE_LOCATION_READ: 'LOOTLOG_PRESENCE_LOCATION_READ',
+  LOOTLOG_CHAT_READ: 'LOOTLOG_CHAT_READ',
+  LOOTLOG_CHAT_WRITE: 'LOOTLOG_CHAT_WRITE',
+  LOOTLOG_CHAT_TITANS_READ: 'LOOTLOG_CHAT_TITANS_READ',
+  LOOTLOG_CHAT_HEROES_READ: 'LOOTLOG_CHAT_HEROES_READ',
+  LOOTLOG_NOTIFICATIONS_READ: 'LOOTLOG_NOTIFICATIONS_READ',
+  LOOTLOG_NOTIFICATIONS_SEND: 'LOOTLOG_NOTIFICATIONS_SEND',
+  LOOTLOG_NOTIFICATIONS_TITANS_READ: 'LOOTLOG_NOTIFICATIONS_TITANS_READ',
+  LOOTLOG_NOTIFICATIONS_HEROES_READ: 'LOOTLOG_NOTIFICATIONS_HEROES_READ',
+  LOOTLOG_EVENTS_MANAGE: 'LOOTLOG_EVENTS_MANAGE',
+  LOOTLOG_EVENTS_READ: 'LOOTLOG_EVENTS_READ',
+  LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
+  LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
+  LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+} as const;
+
+export type UserGuildPermissionsDtoOutputRolesItem = {
+  id: string;
+  lvlRangeFrom: number;
+  lvlRangeTo: number;
+  permissions: UserGuildPermissionsDtoOutputRolesItemPermissionsItem[];
+};
+
+export interface UserGuildPermissionsDtoOutput {
+  guild: UserGuildPermissionsDtoOutputGuild;
+  roles: UserGuildPermissionsDtoOutputRolesItem[];
+}
+
+export interface UserGuildListResponseDtoOutput {
+  id: string;
+  name: string;
+  /** @nullable */
+  icon?: string | null;
+  /** @nullable */
+  vanityUrl?: string | null;
+  ownerId: string;
+  publicStatsCardEnabled: boolean;
+  reservationMaxDurationMinutes?: number;
+  reservationMinDurationMinutes?: number;
+  reservationTimeGranularityMinutes?: number;
+  reservationMaxAdvanceDays?: number;
+  reservationActiveLimitPerSpot?: number;
+}
+
+export type NullableMemberRefreshJobResponseDtoStatus = typeof NullableMemberRefreshJobResponseDtoStatus[keyof typeof NullableMemberRefreshJobResponseDtoStatus];
+
+
+export const NullableMemberRefreshJobResponseDtoStatus = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+} as const;
+
+/**
+ * @nullable
+ */
+export type NullableMemberRefreshJobResponseDto = {[key: string]: unknown} & ({
+  id: number;
+  guildId: string;
+  status: NullableMemberRefreshJobResponseDtoStatus;
+  totalMembers: number;
+  processedMembers: number;
+  failedMembers: number;
+  createdAt: string;
+  nextAvailableAt: string;
+  /** @nullable */
+  completedAt?: string | null;
+} | null) | null;
+
+export type MemberRefreshJobResponseDtoStatus = typeof MemberRefreshJobResponseDtoStatus[keyof typeof MemberRefreshJobResponseDtoStatus];
+
+
+export const MemberRefreshJobResponseDtoStatus = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+} as const;
+
+export interface MemberRefreshJobResponseDto {
+  id: number;
+  guildId: string;
+  status: MemberRefreshJobResponseDtoStatus;
+  totalMembers: number;
+  processedMembers: number;
+  failedMembers: number;
+  createdAt: string;
+  nextAvailableAt: string;
+  /** @nullable */
+  completedAt?: string | null;
+}
+
+export interface MemberSummaryResponseDtoOutput {
+  id: number;
+  userId: string;
+  name: string;
+  /** @nullable */
+  avatar?: string | null;
+  /** @nullable */
+  color?: number | null;
+}
+
+export interface MemberReferenceResponseDtoOutput {
+  id: number;
+  userId: string;
+  name: string;
+  /** @nullable */
+  avatar?: string | null;
+  /** @nullable */
+  color: number | null;
+  active: boolean;
+}
+
+export type MemberResponseDtoType = typeof MemberResponseDtoType[keyof typeof MemberResponseDtoType];
+
+
+export const MemberResponseDtoType = {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  USER: 'USER',
+  BOT: 'BOT',
+} as const;
+
+export type MemberResponseDtoRolesItemPermissionsItem = typeof MemberResponseDtoRolesItemPermissionsItem[keyof typeof MemberResponseDtoRolesItemPermissionsItem];
+
+
+export const MemberResponseDtoRolesItemPermissionsItem = {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  LOOTLOG_MANAGE: 'LOOTLOG_MANAGE',
+  LOOTLOG_ACCESS: 'LOOTLOG_ACCESS',
+  LOOTLOG_LOOTS_READ: 'LOOTLOG_LOOTS_READ',
+  LOOTLOG_LOOTS_WRITE: 'LOOTLOG_LOOTS_WRITE',
+  LOOTLOG_LOOTS_ARCHIVE: 'LOOTLOG_LOOTS_ARCHIVE',
+  LOOTLOG_LOOTS_TITANS_READ: 'LOOTLOG_LOOTS_TITANS_READ',
+  LOOTLOG_LOOTS_HEROES_READ: 'LOOTLOG_LOOTS_HEROES_READ',
+  LOOTLOG_TIMERS_READ: 'LOOTLOG_TIMERS_READ',
+  LOOTLOG_TIMERS_WRITE: 'LOOTLOG_TIMERS_WRITE',
+  LOOTLOG_TIMERS_RESET: 'LOOTLOG_TIMERS_RESET',
+  LOOTLOG_TIMERS_DELETE: 'LOOTLOG_TIMERS_DELETE',
+  LOOTLOG_TIMERS_TITANS_READ: 'LOOTLOG_TIMERS_TITANS_READ',
+  LOOTLOG_TIMERS_HEROES_READ: 'LOOTLOG_TIMERS_HEROES_READ',
+  LOOTLOG_RESERVATIONS_READ: 'LOOTLOG_RESERVATIONS_READ',
+  LOOTLOG_RESERVATIONS_WRITE: 'LOOTLOG_RESERVATIONS_WRITE',
+  LOOTLOG_MEMBERS_READ: 'LOOTLOG_MEMBERS_READ',
+  LOOTLOG_ONLINE_PLAYERS_READ: 'LOOTLOG_ONLINE_PLAYERS_READ',
+  LOOTLOG_PRESENCE_LOCATION_READ: 'LOOTLOG_PRESENCE_LOCATION_READ',
+  LOOTLOG_CHAT_READ: 'LOOTLOG_CHAT_READ',
+  LOOTLOG_CHAT_WRITE: 'LOOTLOG_CHAT_WRITE',
+  LOOTLOG_CHAT_TITANS_READ: 'LOOTLOG_CHAT_TITANS_READ',
+  LOOTLOG_CHAT_HEROES_READ: 'LOOTLOG_CHAT_HEROES_READ',
+  LOOTLOG_NOTIFICATIONS_READ: 'LOOTLOG_NOTIFICATIONS_READ',
+  LOOTLOG_NOTIFICATIONS_SEND: 'LOOTLOG_NOTIFICATIONS_SEND',
+  LOOTLOG_NOTIFICATIONS_TITANS_READ: 'LOOTLOG_NOTIFICATIONS_TITANS_READ',
+  LOOTLOG_NOTIFICATIONS_HEROES_READ: 'LOOTLOG_NOTIFICATIONS_HEROES_READ',
+  LOOTLOG_EVENTS_MANAGE: 'LOOTLOG_EVENTS_MANAGE',
+  LOOTLOG_EVENTS_READ: 'LOOTLOG_EVENTS_READ',
+  LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
+  LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
+  LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+} as const;
+
+export type MemberResponseDtoRolesItem = {
+  id: string;
+  guildId: string;
+  name: string;
+  /** @nullable */
+  color: number | null;
+  /** @nullable */
+  position?: number | null;
+  permissions: MemberResponseDtoRolesItemPermissionsItem[];
+  /** @nullable */
+  lvlRangeFrom?: number | null;
+  /** @nullable */
+  lvlRangeTo?: number | null;
+};
+
+export interface MemberResponseDto {
+  id: number;
+  userId: string;
+  guildId: string;
+  type: MemberResponseDtoType;
+  name: string;
+  /** @nullable */
+  avatar?: string | null;
+  /** @nullable */
+  banner?: string | null;
+  active: boolean;
+  roles: MemberResponseDtoRolesItem[];
+  /** @nullable */
+  globalUserId?: string | null;
+  /** @nullable */
+  lastDiscordSyncAt?: string | null;
+  /** @nullable */
+  lastDiscordAttemptAt?: string | null;
+  /** @nullable */
+  lastDiscordStatus?: string | null;
+  isStale?: boolean;
+  staleWarning?: string;
+  refreshQueued?: boolean;
+  /** @nullable */
+  nextRefreshAt?: string | null;
+  updatedAt: string;
+}
+
+export type MemberLootlogConfigSummaryResponseDtoOutputCharactersItemMetadataStatus = typeof MemberLootlogConfigSummaryResponseDtoOutputCharactersItemMetadataStatus[keyof typeof MemberLootlogConfigSummaryResponseDtoOutputCharactersItemMetadataStatus];
+
+
+export const MemberLootlogConfigSummaryResponseDtoOutputCharactersItemMetadataStatus = {
+  resolved: 'resolved',
+  missing_snapshot: 'missing_snapshot',
+  invalid_character_ref: 'invalid_character_ref',
+} as const;
+
+export type MemberLootlogConfigSummaryResponseDtoOutputCharactersItem = {
+  accountId: string;
+  characterId: string;
+  enabledForGuild: boolean;
+  /** @nullable */
+  characterName: string | null;
+  /** @nullable */
+  world: string | null;
+  /** @nullable */
+  icon: string | null;
+  metadataStatus: MemberLootlogConfigSummaryResponseDtoOutputCharactersItemMetadataStatus;
+};
+
+export interface MemberLootlogConfigSummaryResponseDtoOutput {
+  memberUserId: string;
+  guildId: string;
+  isActive: boolean;
+  configuredCharacterCount: number;
+  enabledCharacterCount: number;
+  characters: MemberLootlogConfigSummaryResponseDtoOutputCharactersItem[];
+}
+
+export type NullableMemberResponseDtoType = typeof NullableMemberResponseDtoType[keyof typeof NullableMemberResponseDtoType];
+
+
+export const NullableMemberResponseDtoType = {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  USER: 'USER',
+  BOT: 'BOT',
+} as const;
+
+export type NullableMemberResponseDtoRolesItemPermissionsItem = typeof NullableMemberResponseDtoRolesItemPermissionsItem[keyof typeof NullableMemberResponseDtoRolesItemPermissionsItem];
+
+
+export const NullableMemberResponseDtoRolesItemPermissionsItem = {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  LOOTLOG_MANAGE: 'LOOTLOG_MANAGE',
+  LOOTLOG_ACCESS: 'LOOTLOG_ACCESS',
+  LOOTLOG_LOOTS_READ: 'LOOTLOG_LOOTS_READ',
+  LOOTLOG_LOOTS_WRITE: 'LOOTLOG_LOOTS_WRITE',
+  LOOTLOG_LOOTS_ARCHIVE: 'LOOTLOG_LOOTS_ARCHIVE',
+  LOOTLOG_LOOTS_TITANS_READ: 'LOOTLOG_LOOTS_TITANS_READ',
+  LOOTLOG_LOOTS_HEROES_READ: 'LOOTLOG_LOOTS_HEROES_READ',
+  LOOTLOG_TIMERS_READ: 'LOOTLOG_TIMERS_READ',
+  LOOTLOG_TIMERS_WRITE: 'LOOTLOG_TIMERS_WRITE',
+  LOOTLOG_TIMERS_RESET: 'LOOTLOG_TIMERS_RESET',
+  LOOTLOG_TIMERS_DELETE: 'LOOTLOG_TIMERS_DELETE',
+  LOOTLOG_TIMERS_TITANS_READ: 'LOOTLOG_TIMERS_TITANS_READ',
+  LOOTLOG_TIMERS_HEROES_READ: 'LOOTLOG_TIMERS_HEROES_READ',
+  LOOTLOG_RESERVATIONS_READ: 'LOOTLOG_RESERVATIONS_READ',
+  LOOTLOG_RESERVATIONS_WRITE: 'LOOTLOG_RESERVATIONS_WRITE',
+  LOOTLOG_MEMBERS_READ: 'LOOTLOG_MEMBERS_READ',
+  LOOTLOG_ONLINE_PLAYERS_READ: 'LOOTLOG_ONLINE_PLAYERS_READ',
+  LOOTLOG_PRESENCE_LOCATION_READ: 'LOOTLOG_PRESENCE_LOCATION_READ',
+  LOOTLOG_CHAT_READ: 'LOOTLOG_CHAT_READ',
+  LOOTLOG_CHAT_WRITE: 'LOOTLOG_CHAT_WRITE',
+  LOOTLOG_CHAT_TITANS_READ: 'LOOTLOG_CHAT_TITANS_READ',
+  LOOTLOG_CHAT_HEROES_READ: 'LOOTLOG_CHAT_HEROES_READ',
+  LOOTLOG_NOTIFICATIONS_READ: 'LOOTLOG_NOTIFICATIONS_READ',
+  LOOTLOG_NOTIFICATIONS_SEND: 'LOOTLOG_NOTIFICATIONS_SEND',
+  LOOTLOG_NOTIFICATIONS_TITANS_READ: 'LOOTLOG_NOTIFICATIONS_TITANS_READ',
+  LOOTLOG_NOTIFICATIONS_HEROES_READ: 'LOOTLOG_NOTIFICATIONS_HEROES_READ',
+  LOOTLOG_EVENTS_MANAGE: 'LOOTLOG_EVENTS_MANAGE',
+  LOOTLOG_EVENTS_READ: 'LOOTLOG_EVENTS_READ',
+  LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
+  LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
+  LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+} as const;
+
+export type NullableMemberResponseDtoRolesItem = {
+  id: string;
+  guildId: string;
+  name: string;
+  /** @nullable */
+  color: number | null;
+  /** @nullable */
+  position?: number | null;
+  permissions: NullableMemberResponseDtoRolesItemPermissionsItem[];
+  /** @nullable */
+  lvlRangeFrom?: number | null;
+  /** @nullable */
+  lvlRangeTo?: number | null;
+};
+
+/**
+ * @nullable
+ */
+export type NullableMemberResponseDto = {[key: string]: unknown} & ({
+  id: number;
+  userId: string;
+  guildId: string;
+  type: NullableMemberResponseDtoType;
+  name: string;
+  /** @nullable */
+  avatar?: string | null;
+  /** @nullable */
+  banner?: string | null;
+  active: boolean;
+  roles: NullableMemberResponseDtoRolesItem[];
+  /** @nullable */
+  globalUserId?: string | null;
+  /** @nullable */
+  lastDiscordSyncAt?: string | null;
+  /** @nullable */
+  lastDiscordAttemptAt?: string | null;
+  /** @nullable */
+  lastDiscordStatus?: string | null;
+  isStale?: boolean;
+  staleWarning?: string;
+  refreshQueued?: boolean;
+  /** @nullable */
+  nextRefreshAt?: string | null;
+  updatedAt: string;
+} | null) | null;
 
 export type UserGameAccountPreferencesResponseDtoOutputNotificationsELITE2 = {
   show: boolean;
@@ -699,325 +8977,7 @@ export interface UpdateUserGameAccountPreferencesDto {
   airTags?: UpdateUserGameAccountPreferencesDtoAirTags;
 }
 
-export type NullableMemberResponseDtoType = typeof NullableMemberResponseDtoType[keyof typeof NullableMemberResponseDtoType];
-
-
-export const NullableMemberResponseDtoType = {
-  OWNER: 'OWNER',
-  ADMIN: 'ADMIN',
-  USER: 'USER',
-  BOT: 'BOT',
-} as const;
-
-export type NullableMemberResponseDtoRolesItemPermissionsItem = typeof NullableMemberResponseDtoRolesItemPermissionsItem[keyof typeof NullableMemberResponseDtoRolesItemPermissionsItem];
-
-
-export const NullableMemberResponseDtoRolesItemPermissionsItem = {
-  OWNER: 'OWNER',
-  ADMIN: 'ADMIN',
-  LOOTLOG_MANAGE: 'LOOTLOG_MANAGE',
-  LOOTLOG_ACCESS: 'LOOTLOG_ACCESS',
-  LOOTLOG_LOOTS_READ: 'LOOTLOG_LOOTS_READ',
-  LOOTLOG_LOOTS_WRITE: 'LOOTLOG_LOOTS_WRITE',
-  LOOTLOG_LOOTS_ARCHIVE: 'LOOTLOG_LOOTS_ARCHIVE',
-  LOOTLOG_LOOTS_TITANS_READ: 'LOOTLOG_LOOTS_TITANS_READ',
-  LOOTLOG_LOOTS_HEROES_READ: 'LOOTLOG_LOOTS_HEROES_READ',
-  LOOTLOG_TIMERS_READ: 'LOOTLOG_TIMERS_READ',
-  LOOTLOG_TIMERS_WRITE: 'LOOTLOG_TIMERS_WRITE',
-  LOOTLOG_TIMERS_RESET: 'LOOTLOG_TIMERS_RESET',
-  LOOTLOG_TIMERS_DELETE: 'LOOTLOG_TIMERS_DELETE',
-  LOOTLOG_TIMERS_TITANS_READ: 'LOOTLOG_TIMERS_TITANS_READ',
-  LOOTLOG_TIMERS_HEROES_READ: 'LOOTLOG_TIMERS_HEROES_READ',
-  LOOTLOG_RESERVATIONS_READ: 'LOOTLOG_RESERVATIONS_READ',
-  LOOTLOG_RESERVATIONS_WRITE: 'LOOTLOG_RESERVATIONS_WRITE',
-  LOOTLOG_MEMBERS_READ: 'LOOTLOG_MEMBERS_READ',
-  LOOTLOG_ONLINE_PLAYERS_READ: 'LOOTLOG_ONLINE_PLAYERS_READ',
-  LOOTLOG_PRESENCE_LOCATION_READ: 'LOOTLOG_PRESENCE_LOCATION_READ',
-  LOOTLOG_CHAT_READ: 'LOOTLOG_CHAT_READ',
-  LOOTLOG_CHAT_WRITE: 'LOOTLOG_CHAT_WRITE',
-  LOOTLOG_CHAT_TITANS_READ: 'LOOTLOG_CHAT_TITANS_READ',
-  LOOTLOG_CHAT_HEROES_READ: 'LOOTLOG_CHAT_HEROES_READ',
-  LOOTLOG_NOTIFICATIONS_READ: 'LOOTLOG_NOTIFICATIONS_READ',
-  LOOTLOG_NOTIFICATIONS_SEND: 'LOOTLOG_NOTIFICATIONS_SEND',
-  LOOTLOG_NOTIFICATIONS_TITANS_READ: 'LOOTLOG_NOTIFICATIONS_TITANS_READ',
-  LOOTLOG_NOTIFICATIONS_HEROES_READ: 'LOOTLOG_NOTIFICATIONS_HEROES_READ',
-  LOOTLOG_EVENTS_MANAGE: 'LOOTLOG_EVENTS_MANAGE',
-  LOOTLOG_EVENTS_READ: 'LOOTLOG_EVENTS_READ',
-  LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
-  LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
-  LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
-} as const;
-
-export type NullableMemberResponseDtoRolesItem = {
-  id: string;
-  guildId: string;
-  name: string;
-  /** @nullable */
-  color: number | null;
-  /** @nullable */
-  position?: number | null;
-  permissions: NullableMemberResponseDtoRolesItemPermissionsItem[];
-  /** @nullable */
-  lvlRangeFrom?: number | null;
-  /** @nullable */
-  lvlRangeTo?: number | null;
-};
-
-/**
- * @nullable
- */
-export type NullableMemberResponseDto = {[key: string]: unknown} & ({
-  id: number;
-  userId: string;
-  guildId: string;
-  type: NullableMemberResponseDtoType;
-  name: string;
-  /** @nullable */
-  avatar?: string | null;
-  /** @nullable */
-  banner?: string | null;
-  active: boolean;
-  roles: NullableMemberResponseDtoRolesItem[];
-  /** @nullable */
-  globalUserId?: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastDiscordSyncAt?: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastDiscordAttemptAt?: string | null;
-  /** @nullable */
-  lastDiscordStatus?: string | null;
-  isStale?: boolean;
-  staleWarning?: string;
-  refreshQueued?: boolean;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  nextRefreshAt?: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-} | null) | null;
-
-export type MemberResponseDtoType = typeof MemberResponseDtoType[keyof typeof MemberResponseDtoType];
-
-
-export const MemberResponseDtoType = {
-  OWNER: 'OWNER',
-  ADMIN: 'ADMIN',
-  USER: 'USER',
-  BOT: 'BOT',
-} as const;
-
-export type MemberResponseDtoRolesItemPermissionsItem = typeof MemberResponseDtoRolesItemPermissionsItem[keyof typeof MemberResponseDtoRolesItemPermissionsItem];
-
-
-export const MemberResponseDtoRolesItemPermissionsItem = {
-  OWNER: 'OWNER',
-  ADMIN: 'ADMIN',
-  LOOTLOG_MANAGE: 'LOOTLOG_MANAGE',
-  LOOTLOG_ACCESS: 'LOOTLOG_ACCESS',
-  LOOTLOG_LOOTS_READ: 'LOOTLOG_LOOTS_READ',
-  LOOTLOG_LOOTS_WRITE: 'LOOTLOG_LOOTS_WRITE',
-  LOOTLOG_LOOTS_ARCHIVE: 'LOOTLOG_LOOTS_ARCHIVE',
-  LOOTLOG_LOOTS_TITANS_READ: 'LOOTLOG_LOOTS_TITANS_READ',
-  LOOTLOG_LOOTS_HEROES_READ: 'LOOTLOG_LOOTS_HEROES_READ',
-  LOOTLOG_TIMERS_READ: 'LOOTLOG_TIMERS_READ',
-  LOOTLOG_TIMERS_WRITE: 'LOOTLOG_TIMERS_WRITE',
-  LOOTLOG_TIMERS_RESET: 'LOOTLOG_TIMERS_RESET',
-  LOOTLOG_TIMERS_DELETE: 'LOOTLOG_TIMERS_DELETE',
-  LOOTLOG_TIMERS_TITANS_READ: 'LOOTLOG_TIMERS_TITANS_READ',
-  LOOTLOG_TIMERS_HEROES_READ: 'LOOTLOG_TIMERS_HEROES_READ',
-  LOOTLOG_RESERVATIONS_READ: 'LOOTLOG_RESERVATIONS_READ',
-  LOOTLOG_RESERVATIONS_WRITE: 'LOOTLOG_RESERVATIONS_WRITE',
-  LOOTLOG_MEMBERS_READ: 'LOOTLOG_MEMBERS_READ',
-  LOOTLOG_ONLINE_PLAYERS_READ: 'LOOTLOG_ONLINE_PLAYERS_READ',
-  LOOTLOG_PRESENCE_LOCATION_READ: 'LOOTLOG_PRESENCE_LOCATION_READ',
-  LOOTLOG_CHAT_READ: 'LOOTLOG_CHAT_READ',
-  LOOTLOG_CHAT_WRITE: 'LOOTLOG_CHAT_WRITE',
-  LOOTLOG_CHAT_TITANS_READ: 'LOOTLOG_CHAT_TITANS_READ',
-  LOOTLOG_CHAT_HEROES_READ: 'LOOTLOG_CHAT_HEROES_READ',
-  LOOTLOG_NOTIFICATIONS_READ: 'LOOTLOG_NOTIFICATIONS_READ',
-  LOOTLOG_NOTIFICATIONS_SEND: 'LOOTLOG_NOTIFICATIONS_SEND',
-  LOOTLOG_NOTIFICATIONS_TITANS_READ: 'LOOTLOG_NOTIFICATIONS_TITANS_READ',
-  LOOTLOG_NOTIFICATIONS_HEROES_READ: 'LOOTLOG_NOTIFICATIONS_HEROES_READ',
-  LOOTLOG_EVENTS_MANAGE: 'LOOTLOG_EVENTS_MANAGE',
-  LOOTLOG_EVENTS_READ: 'LOOTLOG_EVENTS_READ',
-  LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
-  LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
-  LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
-} as const;
-
-export type MemberResponseDtoRolesItem = {
-  id: string;
-  guildId: string;
-  name: string;
-  /** @nullable */
-  color: number | null;
-  /** @nullable */
-  position?: number | null;
-  permissions: MemberResponseDtoRolesItemPermissionsItem[];
-  /** @nullable */
-  lvlRangeFrom?: number | null;
-  /** @nullable */
-  lvlRangeTo?: number | null;
-};
-
-export interface MemberResponseDto {
-  id: number;
-  userId: string;
-  guildId: string;
-  type: MemberResponseDtoType;
-  name: string;
-  /** @nullable */
-  avatar?: string | null;
-  /** @nullable */
-  banner?: string | null;
-  active: boolean;
-  roles: MemberResponseDtoRolesItem[];
-  /** @nullable */
-  globalUserId?: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastDiscordSyncAt?: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastDiscordAttemptAt?: string | null;
-  /** @nullable */
-  lastDiscordStatus?: string | null;
-  isStale?: boolean;
-  staleWarning?: string;
-  refreshQueued?: boolean;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  nextRefreshAt?: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-}
-
-export type MemberLootlogConfigSummaryResponseDtoOutputCharactersItemMetadataStatus = typeof MemberLootlogConfigSummaryResponseDtoOutputCharactersItemMetadataStatus[keyof typeof MemberLootlogConfigSummaryResponseDtoOutputCharactersItemMetadataStatus];
-
-
-export const MemberLootlogConfigSummaryResponseDtoOutputCharactersItemMetadataStatus = {
-  resolved: 'resolved',
-  missing_snapshot: 'missing_snapshot',
-  invalid_character_ref: 'invalid_character_ref',
-} as const;
-
-export type MemberLootlogConfigSummaryResponseDtoOutputCharactersItem = {
-  accountId: string;
-  characterId: string;
-  enabledForGuild: boolean;
-  /** @nullable */
-  characterName: string | null;
-  /** @nullable */
-  world: string | null;
-  /** @nullable */
-  icon: string | null;
-  metadataStatus: MemberLootlogConfigSummaryResponseDtoOutputCharactersItemMetadataStatus;
-};
-
-export interface MemberLootlogConfigSummaryResponseDtoOutput {
-  memberUserId: string;
-  guildId: string;
-  isActive: boolean;
-  configuredCharacterCount: number;
-  enabledCharacterCount: number;
-  characters: MemberLootlogConfigSummaryResponseDtoOutputCharactersItem[];
-}
-
-export interface MemberReferenceResponseDtoOutput {
-  id: number;
-  userId: string;
-  name: string;
-  /** @nullable */
-  avatar?: string | null;
-  /** @nullable */
-  color: number | null;
-  active: boolean;
-}
-
-export interface MemberSummaryResponseDtoOutput {
-  id: number;
-  userId: string;
-  name: string;
-  /** @nullable */
-  avatar?: string | null;
-  /** @nullable */
-  color?: number | null;
-}
-
-export type MemberRefreshJobResponseDtoStatus = typeof MemberRefreshJobResponseDtoStatus[keyof typeof MemberRefreshJobResponseDtoStatus];
-
-
-export const MemberRefreshJobResponseDtoStatus = {
-  PENDING: 'PENDING',
-  PROCESSING: 'PROCESSING',
-  COMPLETED: 'COMPLETED',
-  FAILED: 'FAILED',
-} as const;
-
-export interface MemberRefreshJobResponseDto {
-  id: number;
-  guildId: string;
-  status: MemberRefreshJobResponseDtoStatus;
-  totalMembers: number;
-  processedMembers: number;
-  failedMembers: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  nextAvailableAt: string;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  completedAt?: string | null;
-}
-
-export type NullableMemberRefreshJobResponseDtoStatus = typeof NullableMemberRefreshJobResponseDtoStatus[keyof typeof NullableMemberRefreshJobResponseDtoStatus];
-
-
-export const NullableMemberRefreshJobResponseDtoStatus = {
-  PENDING: 'PENDING',
-  PROCESSING: 'PROCESSING',
-  COMPLETED: 'COMPLETED',
-  FAILED: 'FAILED',
-} as const;
-
-/**
- * @nullable
- */
-export type NullableMemberRefreshJobResponseDto = {[key: string]: unknown} & ({
-  id: number;
-  guildId: string;
-  status: NullableMemberRefreshJobResponseDtoStatus;
-  totalMembers: number;
-  processedMembers: number;
-  failedMembers: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  nextAvailableAt: string;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  completedAt?: string | null;
-} | null) | null;
-
-export interface UserGuildListResponseDtoOutput {
+export interface UserCurrentGuildResponseDtoOutput {
   id: string;
   name: string;
   /** @nullable */
@@ -1026,1263 +8986,265 @@ export interface UserGuildListResponseDtoOutput {
   vanityUrl?: string | null;
   ownerId: string;
   publicStatsCardEnabled: boolean;
-  reservationMaxDurationMinutes?: number;
-  reservationMinDurationMinutes?: number;
-  reservationTimeGranularityMinutes?: number;
-  reservationMaxAdvanceDays?: number;
-  reservationActiveLimitPerSpot?: number;
+  hasLootlogAccess: boolean;
+  isAccessDataStale: boolean;
 }
 
-export type UserGuildPermissionsDtoOutputGuild = {
-  id: string;
-  ownerId: string;
-};
-
-export type UserGuildPermissionsDtoOutputRolesItemPermissionsItem = typeof UserGuildPermissionsDtoOutputRolesItemPermissionsItem[keyof typeof UserGuildPermissionsDtoOutputRolesItemPermissionsItem];
+export type UserPreferencesResponseDtoOutputChatAppearanceNpcLayout = typeof UserPreferencesResponseDtoOutputChatAppearanceNpcLayout[keyof typeof UserPreferencesResponseDtoOutputChatAppearanceNpcLayout];
 
 
-export const UserGuildPermissionsDtoOutputRolesItemPermissionsItem = {
-  OWNER: 'OWNER',
-  ADMIN: 'ADMIN',
-  LOOTLOG_MANAGE: 'LOOTLOG_MANAGE',
-  LOOTLOG_ACCESS: 'LOOTLOG_ACCESS',
-  LOOTLOG_LOOTS_READ: 'LOOTLOG_LOOTS_READ',
-  LOOTLOG_LOOTS_WRITE: 'LOOTLOG_LOOTS_WRITE',
-  LOOTLOG_LOOTS_ARCHIVE: 'LOOTLOG_LOOTS_ARCHIVE',
-  LOOTLOG_LOOTS_TITANS_READ: 'LOOTLOG_LOOTS_TITANS_READ',
-  LOOTLOG_LOOTS_HEROES_READ: 'LOOTLOG_LOOTS_HEROES_READ',
-  LOOTLOG_TIMERS_READ: 'LOOTLOG_TIMERS_READ',
-  LOOTLOG_TIMERS_WRITE: 'LOOTLOG_TIMERS_WRITE',
-  LOOTLOG_TIMERS_RESET: 'LOOTLOG_TIMERS_RESET',
-  LOOTLOG_TIMERS_DELETE: 'LOOTLOG_TIMERS_DELETE',
-  LOOTLOG_TIMERS_TITANS_READ: 'LOOTLOG_TIMERS_TITANS_READ',
-  LOOTLOG_TIMERS_HEROES_READ: 'LOOTLOG_TIMERS_HEROES_READ',
-  LOOTLOG_RESERVATIONS_READ: 'LOOTLOG_RESERVATIONS_READ',
-  LOOTLOG_RESERVATIONS_WRITE: 'LOOTLOG_RESERVATIONS_WRITE',
-  LOOTLOG_MEMBERS_READ: 'LOOTLOG_MEMBERS_READ',
-  LOOTLOG_ONLINE_PLAYERS_READ: 'LOOTLOG_ONLINE_PLAYERS_READ',
-  LOOTLOG_PRESENCE_LOCATION_READ: 'LOOTLOG_PRESENCE_LOCATION_READ',
-  LOOTLOG_CHAT_READ: 'LOOTLOG_CHAT_READ',
-  LOOTLOG_CHAT_WRITE: 'LOOTLOG_CHAT_WRITE',
-  LOOTLOG_CHAT_TITANS_READ: 'LOOTLOG_CHAT_TITANS_READ',
-  LOOTLOG_CHAT_HEROES_READ: 'LOOTLOG_CHAT_HEROES_READ',
-  LOOTLOG_NOTIFICATIONS_READ: 'LOOTLOG_NOTIFICATIONS_READ',
-  LOOTLOG_NOTIFICATIONS_SEND: 'LOOTLOG_NOTIFICATIONS_SEND',
-  LOOTLOG_NOTIFICATIONS_TITANS_READ: 'LOOTLOG_NOTIFICATIONS_TITANS_READ',
-  LOOTLOG_NOTIFICATIONS_HEROES_READ: 'LOOTLOG_NOTIFICATIONS_HEROES_READ',
-  LOOTLOG_EVENTS_MANAGE: 'LOOTLOG_EVENTS_MANAGE',
-  LOOTLOG_EVENTS_READ: 'LOOTLOG_EVENTS_READ',
-  LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
-  LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
-  LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+export const UserPreferencesResponseDtoOutputChatAppearanceNpcLayout = {
+  tile: 'tile',
+  inline: 'inline',
+  text: 'text',
 } as const;
 
-export type UserGuildPermissionsDtoOutputRolesItem = {
-  id: string;
-  lvlRangeFrom: number;
-  lvlRangeTo: number;
-  permissions: UserGuildPermissionsDtoOutputRolesItemPermissionsItem[];
-};
-
-export interface UserGuildPermissionsDtoOutput {
-  guild: UserGuildPermissionsDtoOutputGuild;
-  roles: UserGuildPermissionsDtoOutputRolesItem[];
-}
-
-export interface ManageableOrganizationResponse {
-  id: string;
-  name: string;
-  /** @nullable */
-  icon?: string | null;
-}
-
-export interface GuildResponseDtoOutput {
-  id: string;
-  name: string;
-  /** @nullable */
-  icon?: string | null;
-  /** @nullable */
-  vanityUrl?: string | null;
-  ownerId: string;
-  publicStatsCardEnabled: boolean;
-  reservationMaxDurationMinutes: number;
-  reservationMinDurationMinutes: number;
-  reservationTimeGranularityMinutes: number;
-  reservationMaxAdvanceDays: number;
-  reservationActiveLimitPerSpot: number;
-}
-
-export interface UpdateGuildConfigDto {
+export type UserPreferencesResponseDtoOutputChatAppearance = {
+  npcLayout: UserPreferencesResponseDtoOutputChatAppearanceNpcLayout;
   /**
-     * @minLength 1
-     * @nullable
+     * @minimum 70
+     * @maximum 150
      */
-  vanityUrl?: string | null;
-  publicStatsCardEnabled?: boolean;
-  /**
-     * @minimum 30
-     * @maximum 720
-     */
-  reservationMaxDurationMinutes?: number;
-  /**
-     * @minimum 5
-     * @maximum 240
-     */
-  reservationMinDurationMinutes?: number;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  reservationTimeGranularityMinutes?: number;
-  /**
-     * @minimum 1
-     * @maximum 30
-     */
-  reservationMaxAdvanceDays?: number;
-  /**
-     * @minimum 1
-     * @maximum 10
-     */
-  reservationActiveLimitPerSpot?: number;
-}
-
-export type DiscordGuildSyncStateResponseDtoStatus = typeof DiscordGuildSyncStateResponseDtoStatus[keyof typeof DiscordGuildSyncStateResponseDtoStatus];
-
-
-export const DiscordGuildSyncStateResponseDtoStatus = {
-  SYNCED: 'SYNCED',
-  SYNCING: 'SYNCING',
-  FAILED: 'FAILED',
-  STALE: 'STALE',
-  NOT_FOUND: 'NOT_FOUND',
-} as const;
-
-export interface DiscordGuildSyncStateResponseDto {
-  guildId: string;
-  status: DiscordGuildSyncStateResponseDtoStatus;
-  hasRequiredPermissions: boolean;
-  requiredPermissions: string[];
-  grantedPermissions: string[];
-  missingPermissions: string[];
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  channelCount: number;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  selectableChannelCount: number;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastAttemptAt: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastSuccessAt: string | null;
-  /** @nullable */
-  lastError: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-}
-
-export type UserGuildPermissionsDtoGuild = {
-  id: string;
-  ownerId: string;
-};
-
-export type UserGuildPermissionsDtoRolesItemPermissionsItem = typeof UserGuildPermissionsDtoRolesItemPermissionsItem[keyof typeof UserGuildPermissionsDtoRolesItemPermissionsItem];
-
-
-export const UserGuildPermissionsDtoRolesItemPermissionsItem = {
-  OWNER: 'OWNER',
-  ADMIN: 'ADMIN',
-  LOOTLOG_MANAGE: 'LOOTLOG_MANAGE',
-  LOOTLOG_ACCESS: 'LOOTLOG_ACCESS',
-  LOOTLOG_LOOTS_READ: 'LOOTLOG_LOOTS_READ',
-  LOOTLOG_LOOTS_WRITE: 'LOOTLOG_LOOTS_WRITE',
-  LOOTLOG_LOOTS_ARCHIVE: 'LOOTLOG_LOOTS_ARCHIVE',
-  LOOTLOG_LOOTS_TITANS_READ: 'LOOTLOG_LOOTS_TITANS_READ',
-  LOOTLOG_LOOTS_HEROES_READ: 'LOOTLOG_LOOTS_HEROES_READ',
-  LOOTLOG_TIMERS_READ: 'LOOTLOG_TIMERS_READ',
-  LOOTLOG_TIMERS_WRITE: 'LOOTLOG_TIMERS_WRITE',
-  LOOTLOG_TIMERS_RESET: 'LOOTLOG_TIMERS_RESET',
-  LOOTLOG_TIMERS_DELETE: 'LOOTLOG_TIMERS_DELETE',
-  LOOTLOG_TIMERS_TITANS_READ: 'LOOTLOG_TIMERS_TITANS_READ',
-  LOOTLOG_TIMERS_HEROES_READ: 'LOOTLOG_TIMERS_HEROES_READ',
-  LOOTLOG_RESERVATIONS_READ: 'LOOTLOG_RESERVATIONS_READ',
-  LOOTLOG_RESERVATIONS_WRITE: 'LOOTLOG_RESERVATIONS_WRITE',
-  LOOTLOG_MEMBERS_READ: 'LOOTLOG_MEMBERS_READ',
-  LOOTLOG_ONLINE_PLAYERS_READ: 'LOOTLOG_ONLINE_PLAYERS_READ',
-  LOOTLOG_PRESENCE_LOCATION_READ: 'LOOTLOG_PRESENCE_LOCATION_READ',
-  LOOTLOG_CHAT_READ: 'LOOTLOG_CHAT_READ',
-  LOOTLOG_CHAT_WRITE: 'LOOTLOG_CHAT_WRITE',
-  LOOTLOG_CHAT_TITANS_READ: 'LOOTLOG_CHAT_TITANS_READ',
-  LOOTLOG_CHAT_HEROES_READ: 'LOOTLOG_CHAT_HEROES_READ',
-  LOOTLOG_NOTIFICATIONS_READ: 'LOOTLOG_NOTIFICATIONS_READ',
-  LOOTLOG_NOTIFICATIONS_SEND: 'LOOTLOG_NOTIFICATIONS_SEND',
-  LOOTLOG_NOTIFICATIONS_TITANS_READ: 'LOOTLOG_NOTIFICATIONS_TITANS_READ',
-  LOOTLOG_NOTIFICATIONS_HEROES_READ: 'LOOTLOG_NOTIFICATIONS_HEROES_READ',
-  LOOTLOG_EVENTS_MANAGE: 'LOOTLOG_EVENTS_MANAGE',
-  LOOTLOG_EVENTS_READ: 'LOOTLOG_EVENTS_READ',
-  LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
-  LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
-  LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
-} as const;
-
-export type UserGuildPermissionsDtoRolesItem = {
-  id: string;
-  lvlRangeFrom: number;
-  lvlRangeTo: number;
-  permissions: UserGuildPermissionsDtoRolesItemPermissionsItem[];
-};
-
-export interface UserGuildPermissionsDto {
-  guild: UserGuildPermissionsDtoGuild;
-  roles: UserGuildPermissionsDtoRolesItem[];
-}
-
-export type RoleResponseDtoOutputPermissionsItem = typeof RoleResponseDtoOutputPermissionsItem[keyof typeof RoleResponseDtoOutputPermissionsItem];
-
-
-export const RoleResponseDtoOutputPermissionsItem = {
-  OWNER: 'OWNER',
-  ADMIN: 'ADMIN',
-  LOOTLOG_MANAGE: 'LOOTLOG_MANAGE',
-  LOOTLOG_ACCESS: 'LOOTLOG_ACCESS',
-  LOOTLOG_LOOTS_READ: 'LOOTLOG_LOOTS_READ',
-  LOOTLOG_LOOTS_WRITE: 'LOOTLOG_LOOTS_WRITE',
-  LOOTLOG_LOOTS_ARCHIVE: 'LOOTLOG_LOOTS_ARCHIVE',
-  LOOTLOG_LOOTS_TITANS_READ: 'LOOTLOG_LOOTS_TITANS_READ',
-  LOOTLOG_LOOTS_HEROES_READ: 'LOOTLOG_LOOTS_HEROES_READ',
-  LOOTLOG_TIMERS_READ: 'LOOTLOG_TIMERS_READ',
-  LOOTLOG_TIMERS_WRITE: 'LOOTLOG_TIMERS_WRITE',
-  LOOTLOG_TIMERS_RESET: 'LOOTLOG_TIMERS_RESET',
-  LOOTLOG_TIMERS_DELETE: 'LOOTLOG_TIMERS_DELETE',
-  LOOTLOG_TIMERS_TITANS_READ: 'LOOTLOG_TIMERS_TITANS_READ',
-  LOOTLOG_TIMERS_HEROES_READ: 'LOOTLOG_TIMERS_HEROES_READ',
-  LOOTLOG_RESERVATIONS_READ: 'LOOTLOG_RESERVATIONS_READ',
-  LOOTLOG_RESERVATIONS_WRITE: 'LOOTLOG_RESERVATIONS_WRITE',
-  LOOTLOG_MEMBERS_READ: 'LOOTLOG_MEMBERS_READ',
-  LOOTLOG_ONLINE_PLAYERS_READ: 'LOOTLOG_ONLINE_PLAYERS_READ',
-  LOOTLOG_PRESENCE_LOCATION_READ: 'LOOTLOG_PRESENCE_LOCATION_READ',
-  LOOTLOG_CHAT_READ: 'LOOTLOG_CHAT_READ',
-  LOOTLOG_CHAT_WRITE: 'LOOTLOG_CHAT_WRITE',
-  LOOTLOG_CHAT_TITANS_READ: 'LOOTLOG_CHAT_TITANS_READ',
-  LOOTLOG_CHAT_HEROES_READ: 'LOOTLOG_CHAT_HEROES_READ',
-  LOOTLOG_NOTIFICATIONS_READ: 'LOOTLOG_NOTIFICATIONS_READ',
-  LOOTLOG_NOTIFICATIONS_SEND: 'LOOTLOG_NOTIFICATIONS_SEND',
-  LOOTLOG_NOTIFICATIONS_TITANS_READ: 'LOOTLOG_NOTIFICATIONS_TITANS_READ',
-  LOOTLOG_NOTIFICATIONS_HEROES_READ: 'LOOTLOG_NOTIFICATIONS_HEROES_READ',
-  LOOTLOG_EVENTS_MANAGE: 'LOOTLOG_EVENTS_MANAGE',
-  LOOTLOG_EVENTS_READ: 'LOOTLOG_EVENTS_READ',
-  LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
-  LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
-  LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
-} as const;
-
-export interface RoleResponseDtoOutput {
-  id: string;
-  guildId: string;
-  name: string;
-  /** @nullable */
-  color: number | null;
-  /** @nullable */
-  position?: number | null;
-  permissions: RoleResponseDtoOutputPermissionsItem[];
-  /** @nullable */
-  lvlRangeFrom?: number | null;
-  /** @nullable */
-  lvlRangeTo?: number | null;
-}
-
-export type UpdateRolePermissionsDtoPermissionsItem = typeof UpdateRolePermissionsDtoPermissionsItem[keyof typeof UpdateRolePermissionsDtoPermissionsItem];
-
-
-export const UpdateRolePermissionsDtoPermissionsItem = {
-  OWNER: 'OWNER',
-  ADMIN: 'ADMIN',
-  LOOTLOG_MANAGE: 'LOOTLOG_MANAGE',
-  LOOTLOG_ACCESS: 'LOOTLOG_ACCESS',
-  LOOTLOG_LOOTS_READ: 'LOOTLOG_LOOTS_READ',
-  LOOTLOG_LOOTS_WRITE: 'LOOTLOG_LOOTS_WRITE',
-  LOOTLOG_LOOTS_ARCHIVE: 'LOOTLOG_LOOTS_ARCHIVE',
-  LOOTLOG_LOOTS_TITANS_READ: 'LOOTLOG_LOOTS_TITANS_READ',
-  LOOTLOG_LOOTS_HEROES_READ: 'LOOTLOG_LOOTS_HEROES_READ',
-  LOOTLOG_TIMERS_READ: 'LOOTLOG_TIMERS_READ',
-  LOOTLOG_TIMERS_WRITE: 'LOOTLOG_TIMERS_WRITE',
-  LOOTLOG_TIMERS_RESET: 'LOOTLOG_TIMERS_RESET',
-  LOOTLOG_TIMERS_DELETE: 'LOOTLOG_TIMERS_DELETE',
-  LOOTLOG_TIMERS_TITANS_READ: 'LOOTLOG_TIMERS_TITANS_READ',
-  LOOTLOG_TIMERS_HEROES_READ: 'LOOTLOG_TIMERS_HEROES_READ',
-  LOOTLOG_RESERVATIONS_READ: 'LOOTLOG_RESERVATIONS_READ',
-  LOOTLOG_RESERVATIONS_WRITE: 'LOOTLOG_RESERVATIONS_WRITE',
-  LOOTLOG_MEMBERS_READ: 'LOOTLOG_MEMBERS_READ',
-  LOOTLOG_ONLINE_PLAYERS_READ: 'LOOTLOG_ONLINE_PLAYERS_READ',
-  LOOTLOG_PRESENCE_LOCATION_READ: 'LOOTLOG_PRESENCE_LOCATION_READ',
-  LOOTLOG_CHAT_READ: 'LOOTLOG_CHAT_READ',
-  LOOTLOG_CHAT_WRITE: 'LOOTLOG_CHAT_WRITE',
-  LOOTLOG_CHAT_TITANS_READ: 'LOOTLOG_CHAT_TITANS_READ',
-  LOOTLOG_CHAT_HEROES_READ: 'LOOTLOG_CHAT_HEROES_READ',
-  LOOTLOG_NOTIFICATIONS_READ: 'LOOTLOG_NOTIFICATIONS_READ',
-  LOOTLOG_NOTIFICATIONS_SEND: 'LOOTLOG_NOTIFICATIONS_SEND',
-  LOOTLOG_NOTIFICATIONS_TITANS_READ: 'LOOTLOG_NOTIFICATIONS_TITANS_READ',
-  LOOTLOG_NOTIFICATIONS_HEROES_READ: 'LOOTLOG_NOTIFICATIONS_HEROES_READ',
-  LOOTLOG_EVENTS_MANAGE: 'LOOTLOG_EVENTS_MANAGE',
-  LOOTLOG_EVENTS_READ: 'LOOTLOG_EVENTS_READ',
-  LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
-  LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
-  LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
-} as const;
-
-export interface UpdateRolePermissionsDto {
-  permissions: UpdateRolePermissionsDtoPermissionsItem[];
+  fontScalePercent: number;
   /**
      * @minimum 0
-     * @maximum 500
+     * @maximum 16
      */
-  lvlRangeFrom: number;
-  /**
-     * @minimum 0
-     * @maximum 500
-     */
-  lvlRangeTo: number;
-}
+  messageGapPx: number;
+  showTimestamp: boolean;
+  showGuildLabel: boolean;
+  showNpcAvatar: boolean;
+  showNpcLevel: boolean;
+  showNpcLocationAndCoordinates: boolean;
+};
 
-export type TimerResponseDtoNpcType = typeof TimerResponseDtoNpcType[keyof typeof TimerResponseDtoNpcType];
+export type UserPreferencesResponseDtoOutputMutesPlayersItem = {
+  /** @minLength 1 */
+  discordId: string;
+  displayName: string;
+};
+
+export type UserPreferencesResponseDtoOutputMutesNpcsItemNpcType = typeof UserPreferencesResponseDtoOutputMutesNpcsItemNpcType[keyof typeof UserPreferencesResponseDtoOutputMutesNpcsItemNpcType];
 
 
-export const TimerResponseDtoNpcType = {
-  COMMON: 'COMMON',
-  ELITE: 'ELITE',
+export const UserPreferencesResponseDtoOutputMutesNpcsItemNpcType = {
   ELITE2: 'ELITE2',
-  ELITE3: 'ELITE3',
   HERO: 'HERO',
-  EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
-  NPC: 'NPC',
 } as const;
 
-export type TimerResponseDtoNpc = {
-  id: number;
+export type UserPreferencesResponseDtoOutputMutesNpcsItem = {
+  /** @minLength 1 */
+  npcKey: string;
   /**
-     * Margonem template id (`tpl`) observed with this timer's NPC, or null when no client reported one.
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcId: number;
+  /** @minLength 1 */
+  name: string;
+  npcType: UserPreferencesResponseDtoOutputMutesNpcsItemNpcType;
+  /**
      * @minimum 1
      * @maximum 9007199254740991
-     * @nullable
      */
-  templateId: number | null;
-  name: string;
-  prof: string;
-  location: string;
-  wt: string;
   lvl: number;
-  type: TimerResponseDtoNpcType;
+  /** @nullable */
+  prof: string | null;
   /** @nullable */
   icon: string | null;
-  margonemType: string;
 };
 
-export type TimerResponseDtoMemberType = typeof TimerResponseDtoMemberType[keyof typeof TimerResponseDtoMemberType];
-
-
-export const TimerResponseDtoMemberType = {
-  OWNER: 'OWNER',
-  ADMIN: 'ADMIN',
-  USER: 'USER',
-  BOT: 'BOT',
-} as const;
-
-export type TimerResponseDtoMemberRolesItemPermissionsItem = typeof TimerResponseDtoMemberRolesItemPermissionsItem[keyof typeof TimerResponseDtoMemberRolesItemPermissionsItem];
-
-
-export const TimerResponseDtoMemberRolesItemPermissionsItem = {
-  OWNER: 'OWNER',
-  ADMIN: 'ADMIN',
-  LOOTLOG_MANAGE: 'LOOTLOG_MANAGE',
-  LOOTLOG_ACCESS: 'LOOTLOG_ACCESS',
-  LOOTLOG_LOOTS_READ: 'LOOTLOG_LOOTS_READ',
-  LOOTLOG_LOOTS_WRITE: 'LOOTLOG_LOOTS_WRITE',
-  LOOTLOG_LOOTS_ARCHIVE: 'LOOTLOG_LOOTS_ARCHIVE',
-  LOOTLOG_LOOTS_TITANS_READ: 'LOOTLOG_LOOTS_TITANS_READ',
-  LOOTLOG_LOOTS_HEROES_READ: 'LOOTLOG_LOOTS_HEROES_READ',
-  LOOTLOG_TIMERS_READ: 'LOOTLOG_TIMERS_READ',
-  LOOTLOG_TIMERS_WRITE: 'LOOTLOG_TIMERS_WRITE',
-  LOOTLOG_TIMERS_RESET: 'LOOTLOG_TIMERS_RESET',
-  LOOTLOG_TIMERS_DELETE: 'LOOTLOG_TIMERS_DELETE',
-  LOOTLOG_TIMERS_TITANS_READ: 'LOOTLOG_TIMERS_TITANS_READ',
-  LOOTLOG_TIMERS_HEROES_READ: 'LOOTLOG_TIMERS_HEROES_READ',
-  LOOTLOG_RESERVATIONS_READ: 'LOOTLOG_RESERVATIONS_READ',
-  LOOTLOG_RESERVATIONS_WRITE: 'LOOTLOG_RESERVATIONS_WRITE',
-  LOOTLOG_MEMBERS_READ: 'LOOTLOG_MEMBERS_READ',
-  LOOTLOG_ONLINE_PLAYERS_READ: 'LOOTLOG_ONLINE_PLAYERS_READ',
-  LOOTLOG_PRESENCE_LOCATION_READ: 'LOOTLOG_PRESENCE_LOCATION_READ',
-  LOOTLOG_CHAT_READ: 'LOOTLOG_CHAT_READ',
-  LOOTLOG_CHAT_WRITE: 'LOOTLOG_CHAT_WRITE',
-  LOOTLOG_CHAT_TITANS_READ: 'LOOTLOG_CHAT_TITANS_READ',
-  LOOTLOG_CHAT_HEROES_READ: 'LOOTLOG_CHAT_HEROES_READ',
-  LOOTLOG_NOTIFICATIONS_READ: 'LOOTLOG_NOTIFICATIONS_READ',
-  LOOTLOG_NOTIFICATIONS_SEND: 'LOOTLOG_NOTIFICATIONS_SEND',
-  LOOTLOG_NOTIFICATIONS_TITANS_READ: 'LOOTLOG_NOTIFICATIONS_TITANS_READ',
-  LOOTLOG_NOTIFICATIONS_HEROES_READ: 'LOOTLOG_NOTIFICATIONS_HEROES_READ',
-  LOOTLOG_EVENTS_MANAGE: 'LOOTLOG_EVENTS_MANAGE',
-  LOOTLOG_EVENTS_READ: 'LOOTLOG_EVENTS_READ',
-  LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
-  LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
-  LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
-} as const;
-
-export type TimerResponseDtoMemberRolesItem = {
-  id: string;
-  guildId: string;
-  name: string;
-  /** @nullable */
-  color: number | null;
-  /** @nullable */
-  position?: number | null;
-  permissions: TimerResponseDtoMemberRolesItemPermissionsItem[];
-  /** @nullable */
-  lvlRangeFrom?: number | null;
-  /** @nullable */
-  lvlRangeTo?: number | null;
+export type UserPreferencesResponseDtoOutputMutes = {
+  players: UserPreferencesResponseDtoOutputMutesPlayersItem[];
+  npcs: UserPreferencesResponseDtoOutputMutesNpcsItem[];
 };
 
-export type TimerResponseDtoMember = {
-  id: number;
+export interface UserPreferencesResponseDtoOutput {
   userId: string;
-  guildId: string;
-  type: TimerResponseDtoMemberType;
-  name: string;
-  /** @nullable */
-  avatar?: string | null;
-  /** @nullable */
-  banner?: string | null;
-  active: boolean;
-  roles: TimerResponseDtoMemberRolesItem[];
-  /** @nullable */
-  globalUserId?: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastDiscordSyncAt?: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastDiscordAttemptAt?: string | null;
-  /** @nullable */
-  lastDiscordStatus?: string | null;
-  isStale?: boolean;
-  staleWarning?: string;
-  refreshQueued?: boolean;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  nextRefreshAt?: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-};
-
-/**
- * @nullable
- */
-export type TimerResponseDtoActorCharacterProf = typeof TimerResponseDtoActorCharacterProf[keyof typeof TimerResponseDtoActorCharacterProf] | null;
-
-
-export const TimerResponseDtoActorCharacterProf = {
-  WARRIOR: 'WARRIOR',
-  PALADIN: 'PALADIN',
-  HUNTER: 'HUNTER',
-  MAGE: 'MAGE',
-  BLADE_DANCER: 'BLADE_DANCER',
-  TRACKER: 'TRACKER',
-} as const;
-
-export type TimerResponseDtoActorCharacter = {
-  name: string;
-  /** @nullable */
-  prof: TimerResponseDtoActorCharacterProf;
-  /** @nullable */
-  icon: string | null;
-  /** @nullable */
-  lvl: number | null;
-  characterId: number;
-  accountId: number;
-};
-
-export interface TimerResponseDto {
-  guildId: string;
-  npcId: number;
-  timerKey: string;
-  world: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  minSpawnTime: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  maxSpawnTime: string;
-  npc: TimerResponseDtoNpc;
-  wasReset: boolean;
-  member?: TimerResponseDtoMember;
-  actorCharacter?: TimerResponseDtoActorCharacter;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  deletedAt?: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
+  guildsOrder: string[];
+  hiddenGuildIds: string[];
+  theme: string;
+  chatAppearance: UserPreferencesResponseDtoOutputChatAppearance;
+  mutes: UserPreferencesResponseDtoOutputMutes;
 }
 
-export type TimerHistoryResponseDtoNpcType = typeof TimerHistoryResponseDtoNpcType[keyof typeof TimerHistoryResponseDtoNpcType];
+export type UpdateUserPreferencesDtoTheme = typeof UpdateUserPreferencesDtoTheme[keyof typeof UpdateUserPreferencesDtoTheme];
 
 
-export const TimerHistoryResponseDtoNpcType = {
-  COMMON: 'COMMON',
-  ELITE: 'ELITE',
+export const UpdateUserPreferencesDtoTheme = {
+  default: 'default',
+  muted: 'muted',
+  cyberpunk: 'cyberpunk',
+  pastel: 'pastel',
+  fantasy: 'fantasy',
+  shonen: 'shonen',
+  onepiece: 'onepiece',
+  anime: 'anime',
+  goth: 'goth',
+  halloween: 'halloween',
+  realmadrid: 'realmadrid',
+  'realmadrid-3rd': 'realmadrid-3rd',
+  barcelona: 'barcelona',
+  waguri: 'waguri',
+  rukia: 'rukia',
+  rias: 'rias',
+  'cat-pink': 'cat-pink',
+  'cat-purple': 'cat-purple',
+  'cat-blue': 'cat-blue',
+  'cat-random': 'cat-random',
+} as const;
+
+export type UpdateUserPreferencesDtoChatAppearanceNpcLayout = typeof UpdateUserPreferencesDtoChatAppearanceNpcLayout[keyof typeof UpdateUserPreferencesDtoChatAppearanceNpcLayout];
+
+
+export const UpdateUserPreferencesDtoChatAppearanceNpcLayout = {
+  tile: 'tile',
+  inline: 'inline',
+  text: 'text',
+} as const;
+
+export type UpdateUserPreferencesDtoChatAppearance = {
+  npcLayout?: UpdateUserPreferencesDtoChatAppearanceNpcLayout;
+  fontScalePercent?: number;
+  messageGapPx?: number;
+  showTimestamp?: boolean;
+  showGuildLabel?: boolean;
+  showNpcAvatar?: boolean;
+  showNpcLevel?: boolean;
+  showNpcLocationAndCoordinates?: boolean;
+};
+
+export type UpdateUserPreferencesDtoMutesPlayersItem = {
+  /** @minLength 1 */
+  discordId: string;
+  displayName: string;
+};
+
+export type UpdateUserPreferencesDtoMutesNpcsItemNpcType = typeof UpdateUserPreferencesDtoMutesNpcsItemNpcType[keyof typeof UpdateUserPreferencesDtoMutesNpcsItemNpcType];
+
+
+export const UpdateUserPreferencesDtoMutesNpcsItemNpcType = {
   ELITE2: 'ELITE2',
-  ELITE3: 'ELITE3',
   HERO: 'HERO',
-  EVENT_HERO: 'EVENT_HERO',
   COLOSSUS: 'COLOSSUS',
   TITAN: 'TITAN',
-  NPC: 'NPC',
 } as const;
 
-export type TimerHistoryResponseDtoNpc = {
-  id: number;
+export type UpdateUserPreferencesDtoMutesNpcsItem = {
+  /** @minLength 1 */
+  npcKey: string;
   /**
-     * Margonem template id (`tpl`) observed with this timer's NPC, or null when no client reported one.
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  npcId: number;
+  /** @minLength 1 */
+  name: string;
+  npcType: UpdateUserPreferencesDtoMutesNpcsItemNpcType;
+  /**
      * @minimum 1
      * @maximum 9007199254740991
-     * @nullable
      */
-  templateId: number | null;
-  name: string;
-  prof: string;
-  location: string;
-  wt: string;
   lvl: number;
-  type: TimerHistoryResponseDtoNpcType;
+  /** @nullable */
+  prof: string | null;
   /** @nullable */
   icon: string | null;
-  margonemType: string;
 };
 
-export type TimerHistoryResponseDtoAction = typeof TimerHistoryResponseDtoAction[keyof typeof TimerHistoryResponseDtoAction];
-
-
-export const TimerHistoryResponseDtoAction = {
-  CREATE: 'CREATE',
-  RESET: 'RESET',
-  DELETE: 'DELETE',
-  RESTORE: 'RESTORE',
-} as const;
-
-export type TimerHistoryResponseDtoMemberType = typeof TimerHistoryResponseDtoMemberType[keyof typeof TimerHistoryResponseDtoMemberType];
-
-
-export const TimerHistoryResponseDtoMemberType = {
-  OWNER: 'OWNER',
-  ADMIN: 'ADMIN',
-  USER: 'USER',
-  BOT: 'BOT',
-} as const;
-
-export type TimerHistoryResponseDtoMemberRolesItemPermissionsItem = typeof TimerHistoryResponseDtoMemberRolesItemPermissionsItem[keyof typeof TimerHistoryResponseDtoMemberRolesItemPermissionsItem];
-
-
-export const TimerHistoryResponseDtoMemberRolesItemPermissionsItem = {
-  OWNER: 'OWNER',
-  ADMIN: 'ADMIN',
-  LOOTLOG_MANAGE: 'LOOTLOG_MANAGE',
-  LOOTLOG_ACCESS: 'LOOTLOG_ACCESS',
-  LOOTLOG_LOOTS_READ: 'LOOTLOG_LOOTS_READ',
-  LOOTLOG_LOOTS_WRITE: 'LOOTLOG_LOOTS_WRITE',
-  LOOTLOG_LOOTS_ARCHIVE: 'LOOTLOG_LOOTS_ARCHIVE',
-  LOOTLOG_LOOTS_TITANS_READ: 'LOOTLOG_LOOTS_TITANS_READ',
-  LOOTLOG_LOOTS_HEROES_READ: 'LOOTLOG_LOOTS_HEROES_READ',
-  LOOTLOG_TIMERS_READ: 'LOOTLOG_TIMERS_READ',
-  LOOTLOG_TIMERS_WRITE: 'LOOTLOG_TIMERS_WRITE',
-  LOOTLOG_TIMERS_RESET: 'LOOTLOG_TIMERS_RESET',
-  LOOTLOG_TIMERS_DELETE: 'LOOTLOG_TIMERS_DELETE',
-  LOOTLOG_TIMERS_TITANS_READ: 'LOOTLOG_TIMERS_TITANS_READ',
-  LOOTLOG_TIMERS_HEROES_READ: 'LOOTLOG_TIMERS_HEROES_READ',
-  LOOTLOG_RESERVATIONS_READ: 'LOOTLOG_RESERVATIONS_READ',
-  LOOTLOG_RESERVATIONS_WRITE: 'LOOTLOG_RESERVATIONS_WRITE',
-  LOOTLOG_MEMBERS_READ: 'LOOTLOG_MEMBERS_READ',
-  LOOTLOG_ONLINE_PLAYERS_READ: 'LOOTLOG_ONLINE_PLAYERS_READ',
-  LOOTLOG_PRESENCE_LOCATION_READ: 'LOOTLOG_PRESENCE_LOCATION_READ',
-  LOOTLOG_CHAT_READ: 'LOOTLOG_CHAT_READ',
-  LOOTLOG_CHAT_WRITE: 'LOOTLOG_CHAT_WRITE',
-  LOOTLOG_CHAT_TITANS_READ: 'LOOTLOG_CHAT_TITANS_READ',
-  LOOTLOG_CHAT_HEROES_READ: 'LOOTLOG_CHAT_HEROES_READ',
-  LOOTLOG_NOTIFICATIONS_READ: 'LOOTLOG_NOTIFICATIONS_READ',
-  LOOTLOG_NOTIFICATIONS_SEND: 'LOOTLOG_NOTIFICATIONS_SEND',
-  LOOTLOG_NOTIFICATIONS_TITANS_READ: 'LOOTLOG_NOTIFICATIONS_TITANS_READ',
-  LOOTLOG_NOTIFICATIONS_HEROES_READ: 'LOOTLOG_NOTIFICATIONS_HEROES_READ',
-  LOOTLOG_EVENTS_MANAGE: 'LOOTLOG_EVENTS_MANAGE',
-  LOOTLOG_EVENTS_READ: 'LOOTLOG_EVENTS_READ',
-  LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
-  LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
-  LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
-} as const;
-
-export type TimerHistoryResponseDtoMemberRolesItem = {
-  id: string;
-  guildId: string;
-  name: string;
-  /** @nullable */
-  color: number | null;
-  /** @nullable */
-  position?: number | null;
-  permissions: TimerHistoryResponseDtoMemberRolesItemPermissionsItem[];
-  /** @nullable */
-  lvlRangeFrom?: number | null;
-  /** @nullable */
-  lvlRangeTo?: number | null;
+export type UpdateUserPreferencesDtoMutes = {
+  players?: UpdateUserPreferencesDtoMutesPlayersItem[];
+  npcs?: UpdateUserPreferencesDtoMutesNpcsItem[];
 };
 
-export type TimerHistoryResponseDtoMember = {
-  id: number;
-  userId: string;
-  guildId: string;
-  type: TimerHistoryResponseDtoMemberType;
-  name: string;
-  /** @nullable */
-  avatar?: string | null;
-  /** @nullable */
-  banner?: string | null;
-  active: boolean;
-  roles: TimerHistoryResponseDtoMemberRolesItem[];
-  /** @nullable */
-  globalUserId?: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastDiscordSyncAt?: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastDiscordAttemptAt?: string | null;
-  /** @nullable */
-  lastDiscordStatus?: string | null;
-  isStale?: boolean;
-  staleWarning?: string;
-  refreshQueued?: boolean;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  nextRefreshAt?: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-};
-
-/**
- * @nullable
- */
-export type TimerHistoryResponseDtoActorCharacterProf = typeof TimerHistoryResponseDtoActorCharacterProf[keyof typeof TimerHistoryResponseDtoActorCharacterProf] | null;
-
-
-export const TimerHistoryResponseDtoActorCharacterProf = {
-  WARRIOR: 'WARRIOR',
-  PALADIN: 'PALADIN',
-  HUNTER: 'HUNTER',
-  MAGE: 'MAGE',
-  BLADE_DANCER: 'BLADE_DANCER',
-  TRACKER: 'TRACKER',
-} as const;
-
-export type TimerHistoryResponseDtoActorCharacter = {
-  name: string;
-  /** @nullable */
-  prof: TimerHistoryResponseDtoActorCharacterProf;
-  /** @nullable */
-  icon: string | null;
-  /** @nullable */
-  lvl: number | null;
-  characterId: number;
-  accountId: number;
-};
-
-export interface TimerHistoryResponseDto {
-  id: number;
-  guildId: string;
-  guildName: string;
-  world: string;
-  timerKey: string;
-  npcId: number;
-  npc: TimerHistoryResponseDtoNpc;
-  action: TimerHistoryResponseDtoAction;
-  member: TimerHistoryResponseDtoMember;
-  actorCharacter?: TimerHistoryResponseDtoActorCharacter;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  minSpawnTime: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  maxSpawnTime: string | null;
-  /** Whether this entry can restore a deleted timer or undo the latest timer reset. */
-  canRestore: boolean;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-}
-
-export type SearchTimersNpcResponseDtoOutputType = typeof SearchTimersNpcResponseDtoOutputType[keyof typeof SearchTimersNpcResponseDtoOutputType];
-
-
-export const SearchTimersNpcResponseDtoOutputType = {
-  COMMON: 'COMMON',
-  ELITE: 'ELITE',
-  ELITE2: 'ELITE2',
-  ELITE3: 'ELITE3',
-  HERO: 'HERO',
-  EVENT_HERO: 'EVENT_HERO',
-  COLOSSUS: 'COLOSSUS',
-  TITAN: 'TITAN',
-  NPC: 'NPC',
-} as const;
-
-export interface SearchTimersNpcResponseDtoOutput {
-  npcId: number;
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  templateId: number | null;
-  timerKey: string;
-  world: string;
-  name: string;
-  lvl: number;
-  type: SearchTimersNpcResponseDtoOutputType;
-  prof: string;
-  location: string;
-  wt: string | number;
-  icon: string;
-  /** @nullable */
-  latestRespBaseSeconds: number | null;
-  /** @nullable */
-  latestRespawnRandomness: number | null;
-}
-
-export type CreateTimerFromGameClientDtoNpc = {
-  /** Margonem runtime NPC id (`npc.id`) of the removed spawn. */
-  id: number;
-  /**
-     * Margonem template id (`npc.tpl`); null when the client did not observe it.
-     * @minimum 1
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  templateId?: number | null;
-  name: string;
-  location: string;
-  lvl: number;
-  prof?: string;
-  wt: number;
-  hpp?: number;
-  icon: string;
-  type: number;
-  x?: number;
-  y?: number;
-};
-
-export type CreateTimerFromGameClientDtoActorCharacter = {
-  /** @minLength 1 */
-  accountId: string;
-  /** @minLength 1 */
-  characterId: string;
-  /**
-     * @minLength 1
-     * @maxLength 50
-     */
-  name: string;
-  prof?: string;
-  icon?: string;
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  lvl?: number;
-};
-
-export interface CreateTimerFromGameClientDto {
-  /** @minimum 2 */
-  respBaseSeconds: number;
-  respawnRandomness?: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  customMinSpawnTime?: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  customMaxSpawnTime?: string;
-  /** @minLength 1 */
-  world: string;
-  npc: CreateTimerFromGameClientDtoNpc;
-  /** @minLength 1 */
-  characterId: string;
-  /** @minLength 1 */
-  accountId: string;
-  actorCharacter?: CreateTimerFromGameClientDtoActorCharacter;
-}
-
-export type CreateAutoTimerResponseDtoOutputSubmittedGuildsItem = {
-  guildId: string;
-  guildName: string;
-};
-
-export type CreateAutoTimerResponseDtoOutputRejectedGuildsItemReason = typeof CreateAutoTimerResponseDtoOutputRejectedGuildsItemReason[keyof typeof CreateAutoTimerResponseDtoOutputRejectedGuildsItemReason];
-
-
-export const CreateAutoTimerResponseDtoOutputRejectedGuildsItemReason = {
-  NOT_ON_CATCHING_WHITELIST: 'NOT_ON_CATCHING_WHITELIST',
-  TIMER_CREATE_FAILED: 'TIMER_CREATE_FAILED',
-} as const;
-
-export type CreateAutoTimerResponseDtoOutputRejectedGuildsItem = {
-  guildId: string;
-  guildName: string;
-  reason: CreateAutoTimerResponseDtoOutputRejectedGuildsItemReason;
-};
-
-export interface CreateAutoTimerResponseDtoOutput {
-  submittedGuilds: CreateAutoTimerResponseDtoOutputSubmittedGuildsItem[];
-  rejectedGuilds: CreateAutoTimerResponseDtoOutputRejectedGuildsItem[];
-}
-
-export type ResetTimerDtoActorCharacter = {
-  /** @minLength 1 */
-  accountId: string;
-  /** @minLength 1 */
-  characterId: string;
-  /**
-     * @minLength 1
-     * @maxLength 50
-     */
-  name: string;
-  prof?: string;
-  icon?: string;
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  lvl?: number;
-};
-
-export interface ResetTimerDto {
-  /** @minLength 1 */
-  world: string;
-  actorCharacter?: ResetTimerDtoActorCharacter;
-}
-
-export type CreateManualTimerDtoType = typeof CreateManualTimerDtoType[keyof typeof CreateManualTimerDtoType];
-
-
-export const CreateManualTimerDtoType = {
-  ELITE2: 'ELITE2',
-  ELITE3: 'ELITE3',
-  HERO: 'HERO',
-  TITAN: 'TITAN',
-} as const;
-
-export type CreateManualTimerDtoActorCharacter = {
-  /** @minLength 1 */
-  accountId: string;
-  /** @minLength 1 */
-  characterId: string;
-  /**
-     * @minLength 1
-     * @maxLength 50
-     */
-  name: string;
-  prof?: string;
-  icon?: string;
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  lvl?: number;
-};
-
-export interface CreateManualTimerDto {
-  /**
-     * @minLength 1
-     * @maxLength 50
-     */
-  name: string;
-  /** @minimum 1 */
-  minSeconds?: number;
-  /** @minimum 1 */
-  maxSeconds?: number;
-  lvl?: number;
-  prof?: string;
-  type?: CreateManualTimerDtoType;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  customMinSpawnTime?: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  customMaxSpawnTime?: string;
-  /** @minLength 1 */
-  world: string;
-  actorCharacter?: CreateManualTimerDtoActorCharacter;
-}
-
-export interface UserLootlogConfigAccountResponseDtoOutput {[key: string]: {
-  userId: string;
-  accountId: string;
-  characterId: string;
-  catchingGuildIds: string[];
-}}
-
-export interface CreateOrUpdateLootlogCharacterConfigDto {
-  /** @minLength 1 */
-  characterId: string;
-  /** Guild IDs used for catching-related actions */
-  catchingGuildIds: string[];
-}
-
-export interface UserLootlogConfigResponseDtoOutput {
-  userId: string;
-  accountId: string;
-  characterId: string;
-  catchingGuildIds: string[];
-}
-
-export type UserLootlogPlayersCatchingGuildsRequestDtoPlayersItem = {
-  userId: string;
-  accountId: string;
-  characterId: string;
-};
-
-export interface UserLootlogPlayersCatchingGuildsRequestDto {
-  /** @maxItems 100 */
-  players: UserLootlogPlayersCatchingGuildsRequestDtoPlayersItem[];
-}
-
-export type UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItemGuildsItem = {
-  id: string;
-  name: string;
-};
-
-export type UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItem = {
-  userId: string;
-  accountId: string;
-  characterId: string;
-  guilds: UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItemGuildsItem[];
-};
-
-export interface UserLootlogPlayersCatchingGuildsResponseDtoOutput {
-  players: UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItem[];
-}
-
-export type TimerSettingsResponseDtoSchema0 = string | number | boolean | (TimerSettingsResponseDtoSchema0 | null)[] | {[key: string]: TimerSettingsResponseDtoSchema0 | null} | null;
-
-export type TimerSettingsResponseDtoTimersSortOrder = typeof TimerSettingsResponseDtoTimersSortOrder[keyof typeof TimerSettingsResponseDtoTimersSortOrder];
-
-
-export const TimerSettingsResponseDtoTimersSortOrder = {
-  asc: 'asc',
-  desc: 'desc',
-} as const;
-
-export interface TimerSettingsResponseDto {
-  userId: string;
-  generalConfig: TimerSettingsResponseDtoSchema0 | null;
-  displayConfig: TimerSettingsResponseDtoSchema0 | null;
-  customColors: TimerSettingsResponseDtoSchema0 | null;
-  timersColors: TimerSettingsResponseDtoSchema0 | null;
-  alwaysVisibleExpiredTimers: TimerSettingsResponseDtoSchema0 | null;
-  defaultColorNames: TimerSettingsResponseDtoSchema0 | null;
-  overriddenDefaultColors: TimerSettingsResponseDtoSchema0 | null;
-  hiddenDefaultColors: string[];
-  timerFiltersEnabled: boolean;
-  colorFiltersEnabled: boolean;
-  timersSortOrder: TimerSettingsResponseDtoTimersSortOrder;
-  syncEnabled: boolean;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-}
-
-export type UpdateTimerSettingsDtoGeneralConfigCountdownMode = typeof UpdateTimerSettingsDtoGeneralConfigCountdownMode[keyof typeof UpdateTimerSettingsDtoGeneralConfigCountdownMode];
-
-
-export const UpdateTimerSettingsDtoGeneralConfigCountdownMode = {
-  min: 'min',
-  max: 'max',
-} as const;
-
-export type UpdateTimerSettingsDtoGeneralConfig = {
-  /** @minimum 0 */
-  removeTimerAfterMs?: number;
-  compactView?: boolean;
-  timersGrouping?: boolean;
-  timersUnderBag?: boolean;
-  countdownMode?: UpdateTimerSettingsDtoGeneralConfigCountdownMode;
-};
-
-export type UpdateTimerSettingsDtoDisplayConfigSingleTimerDisplayMode = typeof UpdateTimerSettingsDtoDisplayConfigSingleTimerDisplayMode[keyof typeof UpdateTimerSettingsDtoDisplayConfigSingleTimerDisplayMode];
-
-
-export const UpdateTimerSettingsDtoDisplayConfigSingleTimerDisplayMode = {
-  column: 'column',
-  row: 'row',
-} as const;
-
-export type UpdateTimerSettingsDtoDisplayConfig = {
-  legacyAppearance?: boolean;
-  showType?: boolean;
-  showLevel?: boolean;
-  /**
-     * @minimum 8
-     * @maximum 24
-     */
-  fontSize?: number;
-  /**
-     * @minimum 50
-     * @maximum 500
-     */
-  minColumnWidth?: number;
-  singleTimerDisplayMode?: UpdateTimerSettingsDtoDisplayConfigSingleTimerDisplayMode;
-};
-
-export type UpdateTimerSettingsDtoCustomColors = {[key: string]: {
-  id: string;
-  name: string;
-  borderColor: string;
-  backgroundColor: string;
-}};
-
-export type UpdateTimerSettingsDtoTimersColors = {[key: string]: string};
-
-export type UpdateTimerSettingsDtoAlwaysVisibleExpiredTimers = {[key: string]: string[]};
-
-export type UpdateTimerSettingsDtoDefaultColorNames = {[key: string]: string};
-
-export type UpdateTimerSettingsDtoOverriddenDefaultColors = {[key: string]: {
-  borderColor: string;
-  backgroundColor: string;
-}};
-
-export type UpdateTimerSettingsDtoTimersSortOrder = typeof UpdateTimerSettingsDtoTimersSortOrder[keyof typeof UpdateTimerSettingsDtoTimersSortOrder];
-
-
-export const UpdateTimerSettingsDtoTimersSortOrder = {
-  asc: 'asc',
-  desc: 'desc',
-} as const;
-
-export interface UpdateTimerSettingsDto {
-  generalConfig?: UpdateTimerSettingsDtoGeneralConfig;
-  displayConfig?: UpdateTimerSettingsDtoDisplayConfig;
-  customColors?: UpdateTimerSettingsDtoCustomColors;
-  timersColors?: UpdateTimerSettingsDtoTimersColors;
-  alwaysVisibleExpiredTimers?: UpdateTimerSettingsDtoAlwaysVisibleExpiredTimers;
-  defaultColorNames?: UpdateTimerSettingsDtoDefaultColorNames;
-  overriddenDefaultColors?: UpdateTimerSettingsDtoOverriddenDefaultColors;
-  hiddenDefaultColors?: string[];
-  timerFiltersEnabled?: boolean;
-  colorFiltersEnabled?: boolean;
-  timersSortOrder?: UpdateTimerSettingsDtoTimersSortOrder;
-  syncEnabled?: boolean;
-}
-
-export interface GuildTimerSettingsResponseDto {
-  userId: string;
-  guildId: string;
-  hiddenTimers: string[];
-  pinnedTimers: string[];
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-}
-
-export interface UpdateGuildTimerSettingsDto {
-  hiddenTimers?: string[];
-  pinnedTimers?: string[];
-}
-
-export type MigrateTimerSettingsDtoLocalData = { [key: string]: unknown };
-
-export type MigrateTimerSettingsDtoConflictResolution = typeof MigrateTimerSettingsDtoConflictResolution[keyof typeof MigrateTimerSettingsDtoConflictResolution];
-
-
-export const MigrateTimerSettingsDtoConflictResolution = {
-  local: 'local',
-  remote: 'remote',
-  merge: 'merge',
-} as const;
-
-export interface MigrateTimerSettingsDto {
-  localData: MigrateTimerSettingsDtoLocalData;
-  conflictResolution?: MigrateTimerSettingsDtoConflictResolution;
-}
-
-export type SettingsDocumentsResponseDtoOutputDomainsEffective = { [key: string]: unknown };
-
-export type SettingsDocumentsResponseDtoOutputDomainsLayersItemScopeType = typeof SettingsDocumentsResponseDtoOutputDomainsLayersItemScopeType[keyof typeof SettingsDocumentsResponseDtoOutputDomainsLayersItemScopeType];
-
-
-export const SettingsDocumentsResponseDtoOutputDomainsLayersItemScopeType = {
-  USER: 'USER',
-  GAME_ACCOUNT: 'GAME_ACCOUNT',
-  CHARACTER: 'CHARACTER',
-  GUILD: 'GUILD',
-} as const;
-
-export type SettingsDocumentsResponseDtoOutputDomainsLayersItemScope = {
-  type: SettingsDocumentsResponseDtoOutputDomainsLayersItemScopeType;
-  /** @minLength 1 */
-  id: string;
-};
-
-export type SettingsDocumentsResponseDtoOutputDomainsLayersItemOverrides = { [key: string]: unknown };
-
-export type SettingsDocumentsResponseDtoOutputDomainsLayersItem = {
-  scope: SettingsDocumentsResponseDtoOutputDomainsLayersItemScope;
-  overrides: SettingsDocumentsResponseDtoOutputDomainsLayersItemOverrides;
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  schemaVersion?: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt?: string;
-};
-
-export type SettingsDocumentsResponseDtoOutputDomainsSources = {[key: string]: 'DEFAULT' | {
-  type: 'USER' | 'GAME_ACCOUNT' | 'CHARACTER' | 'GUILD';
-  /** @minLength 1 */
-  id: string;
-}};
-
-export type SettingsDocumentsResponseDtoOutputDomains = {[key: string]: {
-  effective: SettingsDocumentsResponseDtoOutputDomainsEffective;
-  layers: SettingsDocumentsResponseDtoOutputDomainsLayersItem[];
-  sources: SettingsDocumentsResponseDtoOutputDomainsSources;
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  schemaVersion: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt?: string;
-}};
-
-export interface SettingsDocumentsResponseDtoOutput {
-  domains: SettingsDocumentsResponseDtoOutputDomains;
-}
-
-export type GuildSettingsDocumentsResponseDtoOutputGuilds = {[key: string]: SettingsDocumentsResponseDtoOutput};
-
-export interface GuildSettingsDocumentsResponseDtoOutput {
-  guilds: GuildSettingsDocumentsResponseDtoOutputGuilds;
-}
-
-export interface SettingsDocumentsContextDto {
-  /** @minLength 1 */
-  gameAccountId?: string;
-  /** @minLength 1 */
-  characterId?: string;
-  /** @minLength 1 */
-  guildId?: string;
-}
-
-export type PatchSettingsDocumentsDtoOperationsItemDomain = typeof PatchSettingsDocumentsDtoOperationsItemDomain[keyof typeof PatchSettingsDocumentsDtoOperationsItemDomain];
-
-
-export const PatchSettingsDocumentsDtoOperationsItemDomain = {
-  general: 'general',
-  appearance: 'appearance',
-  chat: 'chat',
-  timers: 'timers',
-  gameData: 'gameData',
-  notifications: 'notifications',
-  sounds: 'sounds',
-  controls: 'controls',
-} as const;
-
-export type PatchSettingsDocumentsDtoOperationsItemScopeType = typeof PatchSettingsDocumentsDtoOperationsItemScopeType[keyof typeof PatchSettingsDocumentsDtoOperationsItemScopeType];
-
-
-export const PatchSettingsDocumentsDtoOperationsItemScopeType = {
-  USER: 'USER',
-  GAME_ACCOUNT: 'GAME_ACCOUNT',
-  CHARACTER: 'CHARACTER',
-  GUILD: 'GUILD',
-} as const;
-
-export type PatchSettingsDocumentsDtoOperationsItemScope = {
-  type: PatchSettingsDocumentsDtoOperationsItemScopeType;
-  /** @minLength 1 */
-  id: string;
-};
-
-export type PatchSettingsDocumentsDtoOperationsItemSet = { [key: string]: unknown };
-
-export type PatchSettingsDocumentsDtoOperationsItem = {
-  domain: PatchSettingsDocumentsDtoOperationsItemDomain;
-  scope: PatchSettingsDocumentsDtoOperationsItemScope;
-  set?: PatchSettingsDocumentsDtoOperationsItemSet;
+export interface UpdateUserPreferencesDto {
+  /** @minItems 1 */
+  guildsOrder?: string[];
   /** @items.minLength 1 */
-  unset?: string[];
-};
-
-export interface PatchSettingsDocumentsDto {
-  /** @minItems 1 */
-  operations: PatchSettingsDocumentsDtoOperationsItem[];
-  context?: SettingsDocumentsContextDto;
+  hiddenGuildIds?: string[];
+  theme?: UpdateUserPreferencesDtoTheme;
+  chatAppearance?: UpdateUserPreferencesDtoChatAppearance;
+  mutes?: UpdateUserPreferencesDtoMutes;
 }
 
-export type LootResponseDtoSource = typeof LootResponseDtoSource[keyof typeof LootResponseDtoSource];
+export type HttpErrorResponse = {[key: string]: unknown} & {
+  code?: string;
+  message?: unknown;
+};
 
-
-export const LootResponseDtoSource = {
-  LOOTBOX: 'LOOTBOX',
-  DIALOG: 'DIALOG',
-  FIGHT: 'FIGHT',
-} as const;
-
-/**
- * @nullable
- */
-export type LootResponseDtoItemsItemRarity = typeof LootResponseDtoItemsItemRarity[keyof typeof LootResponseDtoItemsItemRarity] | null;
-
-
-export const LootResponseDtoItemsItemRarity = {
-  UNIQUE: 'UNIQUE',
-  HEROIC: 'HEROIC',
-  LEGENDARY: 'LEGENDARY',
-  UPGRADED: 'UPGRADED',
-} as const;
-
-export type LootResponseDtoItemsItemProfItem = typeof LootResponseDtoItemsItemProfItem[keyof typeof LootResponseDtoItemsItemProfItem];
-
-
-export const LootResponseDtoItemsItemProfItem = {
-  WARRIOR: 'WARRIOR',
-  PALADIN: 'PALADIN',
-  HUNTER: 'HUNTER',
-  MAGE: 'MAGE',
-  BLADE_DANCER: 'BLADE_DANCER',
-  TRACKER: 'TRACKER',
-} as const;
-
-export type LootResponseDtoItemsItem = {
+export type UserFeedResponseDtoOutputItemsItem = {
+  id: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  version: number;
+  groupKey?: string;
+  occurredAt: string;
+  world: string;
+  guild: {
+  id: string;
+  name: string;
+  /** @nullable */
+  vanityUrl: string | null;
+};
+  npc: {
+  id: number;
+  name: string;
+  /** @nullable */
+  type: string | null;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  icon: string | null;
+  /** @nullable */
+  prof?: string | null;
+};
+  type: 'kill';
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  count: number;
+} | {
+  id: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  version: number;
+  groupKey?: string;
+  occurredAt: string;
+  world: string;
+  guild: {
+  id: string;
+  name: string;
+  /** @nullable */
+  vanityUrl: string | null;
+};
+  /** @nullable */
+  npc: {
+  id: number;
+  name: string;
+  /** @nullable */
+  type: string | null;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  icon: string | null;
+  /** @nullable */
+  prof?: string | null;
+} | null;
+  type: 'loot';
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  lootId: number;
+  summary?: {
+  items: ({
   id: number;
   hid: string;
   name: string;
@@ -2291,33 +9253,17 @@ export type LootResponseDtoItemsItem = {
   /** @nullable */
   type: string | null;
   /** @nullable */
-  rarity: LootResponseDtoItemsItemRarity;
+  rarity: 'UNIQUE' | 'HEROIC' | 'LEGENDARY' | 'UPGRADED' | null;
   lvl: number;
-  prof: LootResponseDtoItemsItemProfItem[];
-};
-
-/**
- * @nullable
- */
-export type LootResponseDtoPlayersItemProf = typeof LootResponseDtoPlayersItemProf[keyof typeof LootResponseDtoPlayersItemProf] | null;
-
-
-export const LootResponseDtoPlayersItemProf = {
-  WARRIOR: 'WARRIOR',
-  PALADIN: 'PALADIN',
-  HUNTER: 'HUNTER',
-  MAGE: 'MAGE',
-  BLADE_DANCER: 'BLADE_DANCER',
-  TRACKER: 'TRACKER',
-} as const;
-
-export type LootResponseDtoPlayersItem = {
+  prof: ('WARRIOR' | 'PALADIN' | 'HUNTER' | 'MAGE' | 'BLADE_DANCER' | 'TRACKER')[];
+})[];
+  players: ({
   id: string | number;
   name: string;
   /** @nullable */
   lvl: number | null;
   /** @nullable */
-  prof: LootResponseDtoPlayersItemProf;
+  prof: 'WARRIOR' | 'PALADIN' | 'HUNTER' | 'MAGE' | 'BLADE_DANCER' | 'TRACKER' | null;
   /** @nullable */
   icon: string | null;
   /** @nullable */
@@ -2326,76 +9272,8 @@ export type LootResponseDtoPlayersItem = {
   accountId: number | null;
   /** @nullable */
   hpp: number | null;
-};
-
-/**
- * @nullable
- */
-export type LootResponseDtoMapPlayersSnapshotItemProf = typeof LootResponseDtoMapPlayersSnapshotItemProf[keyof typeof LootResponseDtoMapPlayersSnapshotItemProf] | null;
-
-
-export const LootResponseDtoMapPlayersSnapshotItemProf = {
-  WARRIOR: 'WARRIOR',
-  PALADIN: 'PALADIN',
-  HUNTER: 'HUNTER',
-  MAGE: 'MAGE',
-  BLADE_DANCER: 'BLADE_DANCER',
-  TRACKER: 'TRACKER',
-} as const;
-
-export type LootResponseDtoMapPlayersSnapshotItem = {
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  accountId: number;
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  characterId: number;
-  /** @minLength 1 */
-  name: string;
-  /** @nullable */
-  prof: LootResponseDtoMapPlayersSnapshotItemProf;
-  /** @nullable */
-  icon: string | null;
-};
-
-/**
- * @nullable
- */
-export type LootResponseDtoNpcsItemProf = typeof LootResponseDtoNpcsItemProf[keyof typeof LootResponseDtoNpcsItemProf] | null;
-
-
-export const LootResponseDtoNpcsItemProf = {
-  WARRIOR: 'WARRIOR',
-  PALADIN: 'PALADIN',
-  HUNTER: 'HUNTER',
-  MAGE: 'MAGE',
-  BLADE_DANCER: 'BLADE_DANCER',
-  TRACKER: 'TRACKER',
-} as const;
-
-/**
- * @nullable
- */
-export type LootResponseDtoNpcsItemType = typeof LootResponseDtoNpcsItemType[keyof typeof LootResponseDtoNpcsItemType] | null;
-
-
-export const LootResponseDtoNpcsItemType = {
-  COMMON: 'COMMON',
-  ELITE: 'ELITE',
-  ELITE2: 'ELITE2',
-  ELITE3: 'ELITE3',
-  HERO: 'HERO',
-  EVENT_HERO: 'EVENT_HERO',
-  COLOSSUS: 'COLOSSUS',
-  TITAN: 'TITAN',
-  NPC: 'NPC',
-} as const;
-
-export type LootResponseDtoNpcsItem = {
+})[];
+  npcs: ({
   id: number;
   name: string;
   /** @nullable */
@@ -2403,7360 +9281,36 @@ export type LootResponseDtoNpcsItem = {
   /** @nullable */
   lvl: number | null;
   /** @nullable */
-  prof: LootResponseDtoNpcsItemProf;
+  prof: 'WARRIOR' | 'PALADIN' | 'HUNTER' | 'MAGE' | 'BLADE_DANCER' | 'TRACKER' | null;
   /** @nullable */
   icon: string | null;
   /** @nullable */
-  type: LootResponseDtoNpcsItemType;
+  type: 'COMMON' | 'ELITE' | 'ELITE2' | 'ELITE3' | 'HERO' | 'EVENT_HERO' | 'COLOSSUS' | 'TITAN' | 'NPC' | null;
   /** @nullable */
   margonemType: number | null;
-};
-
-export type LootResponseDtoLootShare = {[key: string]: string[]};
-
-export type LootResponseDtoSubmissionsItemMember = {
-  name: string;
-  /** @nullable */
-  avatar?: string | null;
-  userId: string;
-};
-
-export type LootResponseDtoSubmissionsItem = {
-  guildId: string;
-  memberId: number;
-  lootId: number;
-  member: LootResponseDtoSubmissionsItemMember;
-};
-
-export interface LootResponseDto {
-  id: number;
-  uniqueId: string;
-  world: string;
-  source: LootResponseDtoSource;
+})[];
+  lootShare: {[key: string]: string[]};
   location: string;
-  items: LootResponseDtoItemsItem[];
-  players: LootResponseDtoPlayersItem[];
-  /**
-     * @minItems 1
-     * @nullable
-     */
-  mapPlayersSnapshot: LootResponseDtoMapPlayersSnapshotItem[] | null;
-  npcs: LootResponseDtoNpcsItem[];
-  lootShare: LootResponseDtoLootShare;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-  submissions?: LootResponseDtoSubmissionsItem[];
-  commentsCount: number;
-}
-
-export type LootStatsResponseDtoOutputOverview = {
-  totalLoots: number;
-  totalItems: number;
-  legendaryItems: number;
-  heroicItems: number;
-  avgItemLevel: number;
 };
-
-export type LootStatsResponseDtoOutputByRarity = {[key: string]: {
-  count: number;
-  percentage: number;
-}};
-
-export type LootStatsResponseDtoOutputTimelineItemByRarity = {[key: string]: number};
-
-export type LootStatsResponseDtoOutputTimelineItem = {
-  date: string;
-  total: number;
-  byRarity: LootStatsResponseDtoOutputTimelineItemByRarity;
-};
-
-/**
- * @nullable
- */
-export type LootStatsResponseDtoOutputTopNpcsItemType = typeof LootStatsResponseDtoOutputTopNpcsItemType[keyof typeof LootStatsResponseDtoOutputTopNpcsItemType] | null;
-
-
-export const LootStatsResponseDtoOutputTopNpcsItemType = {
-  COMMON: 'COMMON',
-  ELITE: 'ELITE',
-  ELITE2: 'ELITE2',
-  ELITE3: 'ELITE3',
-  HERO: 'HERO',
-  EVENT_HERO: 'EVENT_HERO',
-  COLOSSUS: 'COLOSSUS',
-  TITAN: 'TITAN',
-  NPC: 'NPC',
-} as const;
-
-export type LootStatsResponseDtoOutputTopNpcsItemByRarity = {[key: string]: number};
-
-export type LootStatsResponseDtoOutputTopNpcsItem = {
-  npcId: number;
-  name: string;
-  /** @nullable */
-  type: LootStatsResponseDtoOutputTopNpcsItemType;
-  /** @nullable */
-  lvl: number | null;
-  /** @nullable */
-  icon: string | null;
-  count: number;
-  byRarity: LootStatsResponseDtoOutputTopNpcsItemByRarity;
-};
-
-export type LootStatsResponseDtoOutputTopContributorsItemByRarity = {[key: string]: number};
-
-export type LootStatsResponseDtoOutputTopContributorsItem = {
-  memberId: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
-  userId: string;
-  count: number;
-  byRarity: LootStatsResponseDtoOutputTopContributorsItemByRarity;
-};
-
-export type LootStatsResponseDtoOutputTopItemsItemRarity = typeof LootStatsResponseDtoOutputTopItemsItemRarity[keyof typeof LootStatsResponseDtoOutputTopItemsItemRarity];
-
-
-export const LootStatsResponseDtoOutputTopItemsItemRarity = {
-  UNIQUE: 'UNIQUE',
-  HEROIC: 'HEROIC',
-  LEGENDARY: 'LEGENDARY',
-  UPGRADED: 'UPGRADED',
-} as const;
-
-export type LootStatsResponseDtoOutputTopItemsItem = {
-  itemId: number;
-  hid: string;
-  name: string;
-  icon: string;
-  rarity: LootStatsResponseDtoOutputTopItemsItemRarity;
-  lvl: number;
-  count: number;
-};
-
-export interface LootStatsResponseDtoOutput {
-  overview: LootStatsResponseDtoOutputOverview;
-  byRarity: LootStatsResponseDtoOutputByRarity;
-  timeline: LootStatsResponseDtoOutputTimelineItem[];
-  topNpcs: LootStatsResponseDtoOutputTopNpcsItem[];
-  topContributors: LootStatsResponseDtoOutputTopContributorsItem[];
-  topItems: LootStatsResponseDtoOutputTopItemsItem[];
-}
-
-/**
- * @nullable
- */
-export type NullableLootItemResponseDtoOutputRarity = typeof NullableLootItemResponseDtoOutputRarity[keyof typeof NullableLootItemResponseDtoOutputRarity] | null;
-
-
-export const NullableLootItemResponseDtoOutputRarity = {
-  UNIQUE: 'UNIQUE',
-  HEROIC: 'HEROIC',
-  LEGENDARY: 'LEGENDARY',
-  UPGRADED: 'UPGRADED',
-} as const;
-
-export type NullableLootItemResponseDtoOutputProfItem = typeof NullableLootItemResponseDtoOutputProfItem[keyof typeof NullableLootItemResponseDtoOutputProfItem];
-
-
-export const NullableLootItemResponseDtoOutputProfItem = {
-  WARRIOR: 'WARRIOR',
-  PALADIN: 'PALADIN',
-  HUNTER: 'HUNTER',
-  MAGE: 'MAGE',
-  BLADE_DANCER: 'BLADE_DANCER',
-  TRACKER: 'TRACKER',
-} as const;
-
-export interface NullableLootItemResponseDtoOutput {
+  additionalItemsCount: number;
+  items: ({
   id: number;
-  hid: string;
-  name: string;
-  icon: string;
-  stat: string;
-  /** @nullable */
-  type: string | null;
-  /** @nullable */
-  rarity: NullableLootItemResponseDtoOutputRarity;
-  lvl: number;
-  prof: NullableLootItemResponseDtoOutputProfItem[];
-}
-
-export type NullableLootResponseDtoSource = typeof NullableLootResponseDtoSource[keyof typeof NullableLootResponseDtoSource];
-
-
-export const NullableLootResponseDtoSource = {
-  LOOTBOX: 'LOOTBOX',
-  DIALOG: 'DIALOG',
-  FIGHT: 'FIGHT',
-} as const;
-
-/**
- * @nullable
- */
-export type NullableLootResponseDtoItemsItemRarity = typeof NullableLootResponseDtoItemsItemRarity[keyof typeof NullableLootResponseDtoItemsItemRarity] | null;
-
-
-export const NullableLootResponseDtoItemsItemRarity = {
-  UNIQUE: 'UNIQUE',
-  HEROIC: 'HEROIC',
-  LEGENDARY: 'LEGENDARY',
-  UPGRADED: 'UPGRADED',
-} as const;
-
-export type NullableLootResponseDtoItemsItemProfItem = typeof NullableLootResponseDtoItemsItemProfItem[keyof typeof NullableLootResponseDtoItemsItemProfItem];
-
-
-export const NullableLootResponseDtoItemsItemProfItem = {
-  WARRIOR: 'WARRIOR',
-  PALADIN: 'PALADIN',
-  HUNTER: 'HUNTER',
-  MAGE: 'MAGE',
-  BLADE_DANCER: 'BLADE_DANCER',
-  TRACKER: 'TRACKER',
-} as const;
-
-export type NullableLootResponseDtoItemsItem = {
-  id: number;
-  hid: string;
-  name: string;
-  icon: string;
-  stat: string;
-  /** @nullable */
-  type: string | null;
-  /** @nullable */
-  rarity: NullableLootResponseDtoItemsItemRarity;
-  lvl: number;
-  prof: NullableLootResponseDtoItemsItemProfItem[];
-};
-
-/**
- * @nullable
- */
-export type NullableLootResponseDtoPlayersItemProf = typeof NullableLootResponseDtoPlayersItemProf[keyof typeof NullableLootResponseDtoPlayersItemProf] | null;
-
-
-export const NullableLootResponseDtoPlayersItemProf = {
-  WARRIOR: 'WARRIOR',
-  PALADIN: 'PALADIN',
-  HUNTER: 'HUNTER',
-  MAGE: 'MAGE',
-  BLADE_DANCER: 'BLADE_DANCER',
-  TRACKER: 'TRACKER',
-} as const;
-
-export type NullableLootResponseDtoPlayersItem = {
-  id: string | number;
-  name: string;
-  /** @nullable */
-  lvl: number | null;
-  /** @nullable */
-  prof: NullableLootResponseDtoPlayersItemProf;
-  /** @nullable */
-  icon: string | null;
-  /** @nullable */
-  characterId: number | null;
-  /** @nullable */
-  accountId: number | null;
-  /** @nullable */
-  hpp: number | null;
-};
-
-/**
- * @nullable
- */
-export type NullableLootResponseDtoMapPlayersSnapshotItemProf = typeof NullableLootResponseDtoMapPlayersSnapshotItemProf[keyof typeof NullableLootResponseDtoMapPlayersSnapshotItemProf] | null;
-
-
-export const NullableLootResponseDtoMapPlayersSnapshotItemProf = {
-  WARRIOR: 'WARRIOR',
-  PALADIN: 'PALADIN',
-  HUNTER: 'HUNTER',
-  MAGE: 'MAGE',
-  BLADE_DANCER: 'BLADE_DANCER',
-  TRACKER: 'TRACKER',
-} as const;
-
-export type NullableLootResponseDtoMapPlayersSnapshotItem = {
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  accountId: number;
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  characterId: number;
-  /** @minLength 1 */
-  name: string;
-  /** @nullable */
-  prof: NullableLootResponseDtoMapPlayersSnapshotItemProf;
-  /** @nullable */
-  icon: string | null;
-};
-
-/**
- * @nullable
- */
-export type NullableLootResponseDtoNpcsItemProf = typeof NullableLootResponseDtoNpcsItemProf[keyof typeof NullableLootResponseDtoNpcsItemProf] | null;
-
-
-export const NullableLootResponseDtoNpcsItemProf = {
-  WARRIOR: 'WARRIOR',
-  PALADIN: 'PALADIN',
-  HUNTER: 'HUNTER',
-  MAGE: 'MAGE',
-  BLADE_DANCER: 'BLADE_DANCER',
-  TRACKER: 'TRACKER',
-} as const;
-
-/**
- * @nullable
- */
-export type NullableLootResponseDtoNpcsItemType = typeof NullableLootResponseDtoNpcsItemType[keyof typeof NullableLootResponseDtoNpcsItemType] | null;
-
-
-export const NullableLootResponseDtoNpcsItemType = {
-  COMMON: 'COMMON',
-  ELITE: 'ELITE',
-  ELITE2: 'ELITE2',
-  ELITE3: 'ELITE3',
-  HERO: 'HERO',
-  EVENT_HERO: 'EVENT_HERO',
-  COLOSSUS: 'COLOSSUS',
-  TITAN: 'TITAN',
-  NPC: 'NPC',
-} as const;
-
-export type NullableLootResponseDtoNpcsItem = {
-  id: number;
-  name: string;
-  /** @nullable */
-  wt: number | null;
-  /** @nullable */
-  lvl: number | null;
-  /** @nullable */
-  prof: NullableLootResponseDtoNpcsItemProf;
-  /** @nullable */
-  icon: string | null;
-  /** @nullable */
-  type: NullableLootResponseDtoNpcsItemType;
-  /** @nullable */
-  margonemType: number | null;
-};
-
-export type NullableLootResponseDtoLootShare = {[key: string]: string[]};
-
-export type NullableLootResponseDtoSubmissionsItemMember = {
-  name: string;
-  /** @nullable */
-  avatar?: string | null;
-  userId: string;
-};
-
-export type NullableLootResponseDtoSubmissionsItem = {
-  guildId: string;
-  memberId: number;
-  lootId: number;
-  member: NullableLootResponseDtoSubmissionsItemMember;
-};
-
-/**
- * @nullable
- */
-export type NullableLootResponseDto = {[key: string]: unknown} & ({
-  id: number;
-  uniqueId: string;
-  world: string;
-  source: NullableLootResponseDtoSource;
-  location: string;
-  items: NullableLootResponseDtoItemsItem[];
-  players: NullableLootResponseDtoPlayersItem[];
-  /**
-     * @minItems 1
-     * @nullable
-     */
-  mapPlayersSnapshot: NullableLootResponseDtoMapPlayersSnapshotItem[] | null;
-  npcs: NullableLootResponseDtoNpcsItem[];
-  lootShare: NullableLootResponseDtoLootShare;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-  submissions?: NullableLootResponseDtoSubmissionsItem[];
-  commentsCount: number;
-} | null) | null;
-
-/**
- * @nullable
- */
-export type CreateLootDtoMapPlayersSnapshotItemProf = typeof CreateLootDtoMapPlayersSnapshotItemProf[keyof typeof CreateLootDtoMapPlayersSnapshotItemProf] | null;
-
-
-export const CreateLootDtoMapPlayersSnapshotItemProf = {
-  WARRIOR: 'WARRIOR',
-  PALADIN: 'PALADIN',
-  HUNTER: 'HUNTER',
-  MAGE: 'MAGE',
-  BLADE_DANCER: 'BLADE_DANCER',
-  TRACKER: 'TRACKER',
-} as const;
-
-export type CreateLootDtoMapPlayersSnapshotItem = {
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  accountId: number;
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  characterId: number;
-  /** @minLength 1 */
-  name: string;
-  /** @nullable */
-  prof: CreateLootDtoMapPlayersSnapshotItemProf;
-  /** @nullable */
-  icon: string | null;
-};
-
-export type CreateLootDtoLootsItem = {
-  /** @minLength 1 */
-  hid: string;
-  /** @minLength 1 */
-  name: string;
-  /** @minLength 1 */
-  icon: string;
-  pr: number;
-  /** @minLength 1 */
-  prc: string;
-  /** @minLength 1 */
-  stat: string;
-  id: number;
-  cl: number;
-  own?: number;
-};
-
-export type CreateLootDtoNpcsItem = {
-  /** Deprecated overloaded NPC id: a template id or a runtime id. Ignored for identity when `runtimeId` or `templateId` is present. */
-  id: number;
-  /**
-     * Margonem runtime NPC id (`npc.id`, battle `originalId`) of the looted spawn.
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  runtimeId?: number;
-  /**
-     * Margonem template id (`npc.tpl`); null when the client did not observe it.
-     * @minimum 1
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  templateId?: number | null;
-  /** @minLength 1 */
-  name: string;
-  /** @minLength 1 */
-  location: string;
-  lvl: number;
-  prof?: string;
-  wt: number;
-  hpp?: number;
-  /** @minLength 1 */
-  icon: string;
-  type: number;
-  x?: number;
-  y?: number;
-};
-
-export type CreateLootDtoPlayersItem = {
-  id: number;
-  accountId: number;
-  /** @minLength 1 */
-  name: string;
-  lvl: number;
-  /** @minLength 1 */
-  prof: string;
-  /** @minLength 1 */
-  icon: string;
-  hpp?: number;
-};
-
-/**
- * Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API.
- */
-export type CreateLootDtoGameVersion = typeof CreateLootDtoGameVersion[keyof typeof CreateLootDtoGameVersion];
-
-
-export const CreateLootDtoGameVersion = {
-  en: 'en',
-  pl: 'pl',
-} as const;
-
-export type CreateLootDtoSource = typeof CreateLootDtoSource[keyof typeof CreateLootDtoSource];
-
-
-export const CreateLootDtoSource = {
-  LOOTBOX: 'LOOTBOX',
-  DIALOG: 'DIALOG',
-  FIGHT: 'FIGHT',
-} as const;
-
-export interface CreateLootDto {
-  /** @minItems 1 */
-  mapPlayersSnapshot?: CreateLootDtoMapPlayersSnapshotItem[];
-  /**
-     * @minItems 1
-     * @maxItems 10
-     */
-  loots: CreateLootDtoLootsItem[];
-  /** @minItems 1 */
-  npcs: CreateLootDtoNpcsItem[];
-  /** @minItems 1 */
-  players: CreateLootDtoPlayersItem[];
-  /** @minLength 1 */
-  world: string;
-  /** Margonem edition the client ran on: `pl` for margonem.pl, `en` for margonem.com. Declared by the client and not verified by the API. */
-  gameVersion: CreateLootDtoGameVersion;
-  source: CreateLootDtoSource;
-  /** @minLength 1 */
-  location: string;
-  /** @minLength 1 */
-  accountId: string;
-  /** @minLength 1 */
-  characterId: string;
-}
-
-export type CreateLootResponseDtoOutputSubmittedGuildsItem = {
-  guildId: string;
-  guildName: string;
-};
-
-export type CreateLootResponseDtoOutputRejectedGuildsItemReason = typeof CreateLootResponseDtoOutputRejectedGuildsItemReason[keyof typeof CreateLootResponseDtoOutputRejectedGuildsItemReason];
-
-
-export const CreateLootResponseDtoOutputRejectedGuildsItemReason = {
-  NOT_ON_CHARACTER_WHITELIST: 'NOT_ON_CHARACTER_WHITELIST',
-  MISSING_LOOTLOG_CONFIG: 'MISSING_LOOTLOG_CONFIG',
-  LOOT_NOT_ACCEPTED_BY_CONFIG: 'LOOT_NOT_ACCEPTED_BY_CONFIG',
-  MISSING_MEMBER: 'MISSING_MEMBER',
-} as const;
-
-export type CreateLootResponseDtoOutputRejectedGuildsItem = {
-  guildId: string;
-  guildName: string;
-  reason: CreateLootResponseDtoOutputRejectedGuildsItemReason;
-};
-
-export interface CreateLootResponseDtoOutput {
-  id: number;
-  submittedGuilds: CreateLootResponseDtoOutputSubmittedGuildsItem[];
-  rejectedGuilds: CreateLootResponseDtoOutputRejectedGuildsItem[];
-}
-
-export type LootCommentResponseDtoMemberRolesItem = {
-  /** @nullable */
-  color?: number | null;
-};
-
-export type LootCommentResponseDtoMember = {
-  name: string;
-  /** @nullable */
-  avatar?: string | null;
-  userId: string;
-  roles?: LootCommentResponseDtoMemberRolesItem[];
-};
-
-export interface LootCommentResponseDto {
-  id: number;
-  lootId: number;
-  guildId: string;
-  content: string;
-  member: LootCommentResponseDtoMember;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-}
-
-export interface CreateCommentDto {
-  /** @minLength 1 */
-  content: string;
-}
-
-export interface UpdateLootDto {
-  msg: string;
-}
-
-export type NullableLootlogConfigResponseDtoOutputNpcsItemNpcType = typeof NullableLootlogConfigResponseDtoOutputNpcsItemNpcType[keyof typeof NullableLootlogConfigResponseDtoOutputNpcsItemNpcType];
-
-
-export const NullableLootlogConfigResponseDtoOutputNpcsItemNpcType = {
-  COMMON: 'COMMON',
-  ELITE: 'ELITE',
-  ELITE2: 'ELITE2',
-  ELITE3: 'ELITE3',
-  HERO: 'HERO',
-  EVENT_HERO: 'EVENT_HERO',
-  TITAN: 'TITAN',
-  COLOSSUS: 'COLOSSUS',
-  NPC: 'NPC',
-} as const;
-
-export type NullableLootlogConfigResponseDtoOutputNpcsItemAllowedRaritiesItem = typeof NullableLootlogConfigResponseDtoOutputNpcsItemAllowedRaritiesItem[keyof typeof NullableLootlogConfigResponseDtoOutputNpcsItemAllowedRaritiesItem];
-
-
-export const NullableLootlogConfigResponseDtoOutputNpcsItemAllowedRaritiesItem = {
-  UNIQUE: 'UNIQUE',
-  HEROIC: 'HEROIC',
-  LEGENDARY: 'LEGENDARY',
-  UPGRADED: 'UPGRADED',
-} as const;
-
-export type NullableLootlogConfigResponseDtoOutputNpcsItem = {
-  id: number;
-  npcType: NullableLootlogConfigResponseDtoOutputNpcsItemNpcType;
-  allowedRarities: NullableLootlogConfigResponseDtoOutputNpcsItemAllowedRaritiesItem[];
-};
-
-/**
- * @nullable
- */
-export type NullableLootlogConfigResponseDtoOutput = {[key: string]: unknown} & ({
-  id: string;
-  npcs: NullableLootlogConfigResponseDtoOutputNpcsItem[];
-} | null) | null;
-
-export type UpdateLootlogConfigNpcDtoAllowedRaritiesItem = typeof UpdateLootlogConfigNpcDtoAllowedRaritiesItem[keyof typeof UpdateLootlogConfigNpcDtoAllowedRaritiesItem];
-
-
-export const UpdateLootlogConfigNpcDtoAllowedRaritiesItem = {
-  UNIQUE: 'UNIQUE',
-  HEROIC: 'HEROIC',
-  LEGENDARY: 'LEGENDARY',
-  UPGRADED: 'UPGRADED',
-} as const;
-
-export interface UpdateLootlogConfigNpcDto {
-  allowedRarities: UpdateLootlogConfigNpcDtoAllowedRaritiesItem[];
-}
-
-export type LootlogConfigNpcResponseDtoOutputNpcType = typeof LootlogConfigNpcResponseDtoOutputNpcType[keyof typeof LootlogConfigNpcResponseDtoOutputNpcType];
-
-
-export const LootlogConfigNpcResponseDtoOutputNpcType = {
-  COMMON: 'COMMON',
-  ELITE: 'ELITE',
-  ELITE2: 'ELITE2',
-  ELITE3: 'ELITE3',
-  HERO: 'HERO',
-  EVENT_HERO: 'EVENT_HERO',
-  TITAN: 'TITAN',
-  COLOSSUS: 'COLOSSUS',
-  NPC: 'NPC',
-} as const;
-
-export type LootlogConfigNpcResponseDtoOutputAllowedRaritiesItem = typeof LootlogConfigNpcResponseDtoOutputAllowedRaritiesItem[keyof typeof LootlogConfigNpcResponseDtoOutputAllowedRaritiesItem];
-
-
-export const LootlogConfigNpcResponseDtoOutputAllowedRaritiesItem = {
-  UNIQUE: 'UNIQUE',
-  HEROIC: 'HEROIC',
-  LEGENDARY: 'LEGENDARY',
-  UPGRADED: 'UPGRADED',
-} as const;
-
-export interface LootlogConfigNpcResponseDtoOutput {
-  id: number;
-  npcType: LootlogConfigNpcResponseDtoOutputNpcType;
-  allowedRarities: LootlogConfigNpcResponseDtoOutputAllowedRaritiesItem[];
-}
-
-export type ChatMessageResponseDtoOutputType = typeof ChatMessageResponseDtoOutputType[keyof typeof ChatMessageResponseDtoOutputType];
-
-
-export const ChatMessageResponseDtoOutputType = {
-  NORMAL: 'NORMAL',
-  NOTIFICATION: 'NOTIFICATION',
-  NPC: 'NPC',
-  PARTY_GATHERING: 'PARTY_GATHERING',
-} as const;
-
-export type ChatMessageResponseDtoOutputCharacterData = {
-  /** @minLength 1 */
-  nick: string;
-  id: number;
-  acc: number;
-  lvl: number;
-  /** @minLength 1 */
-  prof: string;
-  /** @minLength 1 */
-  icon: string;
-};
-
-export type ChatMessageResponseDtoOutputNpc = {
-  /**
-     * @minLength 1
-     * @maxLength 50
-     */
-  world?: string;
-  id: number;
-  /** @minLength 1 */
-  name: string;
-  /** @minLength 1 */
-  location: string;
-  lvl: number;
-  /** @minLength 1 */
-  prof: string;
-  wt: number;
-  hpp?: number;
-  /** @minLength 1 */
-  icon: string;
-  type: number;
-  x?: number;
-  y?: number;
-};
-
-export type ChatMessageResponseDtoOutputPartyGathering = {
-  /** @minLength 1 */
-  notificationId: string;
-  /** @minLength 1 */
-  discordId: string;
-  /** @maxLength 200 */
-  description?: string;
-  /**
-     * @minimum 1
-     * @maximum 500
-     */
-  minLvl?: number;
-  /**
-     * @minimum 1
-     * @maximum 500
-     */
-  maxLvl?: number;
-  /**
-     * @minLength 1
-     * @maxLength 50
-     */
-  world: string;
-};
-
-export type ChatMessageResponseDtoOutputReplyToType = typeof ChatMessageResponseDtoOutputReplyToType[keyof typeof ChatMessageResponseDtoOutputReplyToType];
-
-
-export const ChatMessageResponseDtoOutputReplyToType = {
-  NORMAL: 'NORMAL',
-  NOTIFICATION: 'NOTIFICATION',
-} as const;
-
-export type ChatMessageResponseDtoOutputReplyTo = {
-  /** @minLength 1 */
-  messageId: string;
-  /** @minLength 1 */
-  senderNick: string;
-  /** @maxLength 128 */
-  message: string;
-  type: ChatMessageResponseDtoOutputReplyToType;
-};
-
-export interface ChatMessageResponseDtoOutput {
-  /** @minLength 1 */
-  id: string;
-  /** @minLength 1 */
-  guildId: string;
-  /** @maxLength 128 */
-  message: string;
-  /** @minLength 1 */
-  senderId: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  timestamp: string;
-  type: ChatMessageResponseDtoOutputType;
-  characterData: ChatMessageResponseDtoOutputCharacterData;
-  npc?: ChatMessageResponseDtoOutputNpc;
-  partyGathering?: ChatMessageResponseDtoOutputPartyGathering;
-  replyTo?: ChatMessageResponseDtoOutputReplyTo;
-  canDelete: boolean;
-}
-
-export type SendMessageDtoType = typeof SendMessageDtoType[keyof typeof SendMessageDtoType];
-
-
-export const SendMessageDtoType = {
-  NORMAL: 'NORMAL',
-  NOTIFICATION: 'NOTIFICATION',
-  NPC: 'NPC',
-  PARTY_GATHERING: 'PARTY_GATHERING',
-} as const;
-
-export type SendMessageDtoCharacterData = {
-  /** @minLength 1 */
-  nick: string;
-  id: number;
-  acc: number;
-  lvl: number;
-  /** @minLength 1 */
-  prof: string;
-  /** @minLength 1 */
-  icon: string;
-};
-
-export type SendMessageDtoNpc = {
-  /**
-     * @minLength 1
-     * @maxLength 50
-     */
-  world?: string;
-  id: number;
-  /** @minLength 1 */
-  name: string;
-  /** @minLength 1 */
-  location: string;
-  lvl: number;
-  /** @minLength 1 */
-  prof: string;
-  wt: number;
-  hpp?: number;
-  /** @minLength 1 */
-  icon: string;
-  type: number;
-  x?: number;
-  y?: number;
-};
-
-export type SendMessageDtoPartyGathering = {
-  /** @minLength 1 */
-  notificationId: string;
-  /** @minLength 1 */
-  discordId: string;
-  /** @maxLength 200 */
-  description?: string;
-  /**
-     * @minimum 1
-     * @maximum 500
-     */
-  minLvl?: number;
-  /**
-     * @minimum 1
-     * @maximum 500
-     */
-  maxLvl?: number;
-  /**
-     * @minLength 1
-     * @maxLength 50
-     */
-  world: string;
-};
-
-export type SendMessageDtoReplyToType = typeof SendMessageDtoReplyToType[keyof typeof SendMessageDtoReplyToType];
-
-
-export const SendMessageDtoReplyToType = {
-  NORMAL: 'NORMAL',
-  NOTIFICATION: 'NOTIFICATION',
-} as const;
-
-export type SendMessageDtoReplyTo = {
-  /** @minLength 1 */
-  messageId: string;
-  /** @minLength 1 */
-  senderNick: string;
-  /** @maxLength 128 */
-  message: string;
-  type: SendMessageDtoReplyToType;
-};
-
-export interface SendMessageDto {
-  /** @maxLength 128 */
-  message: string;
-  type: SendMessageDtoType;
-  characterData: SendMessageDtoCharacterData;
-  npc?: SendMessageDtoNpc;
-  partyGathering?: SendMessageDtoPartyGathering;
-  replyTo?: SendMessageDtoReplyTo;
-}
-
-export interface ChatMessageActionResponseDtoOutput {
-  success: boolean;
-}
-
-export type ReservationSpotsResponseDtoItemCurrentReservationAuthor = {
-  displayName: string;
-  /** @nullable */
-  avatarUrl: string | null;
-};
-
-export type ReservationSpotsResponseDtoItemCurrentReservationSourceOrganization = {
-  name: string;
-  /** @nullable */
-  iconUrl: string | null;
-  isCurrent: boolean;
-  /** @pattern ^\/.* */
-  calendarPath: string;
-};
-
-/**
- * @nullable
- */
-export type ReservationSpotsResponseDtoItemCurrentReservationEditingConstraints = {[key: string]: unknown} & ({
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  reservationMaxDurationMinutes: number;
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  reservationMinDurationMinutes: number;
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  reservationTimeGranularityMinutes: number;
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  reservationMaxAdvanceDays: number;
-} | null) | null;
-
-/**
- * @nullable
- */
-export type ReservationSpotsResponseDtoItemCurrentReservationReminderMinutesBefore = typeof ReservationSpotsResponseDtoItemCurrentReservationReminderMinutesBefore[keyof typeof ReservationSpotsResponseDtoItemCurrentReservationReminderMinutesBefore] | null;
-
-
-export const ReservationSpotsResponseDtoItemCurrentReservationReminderMinutesBefore = {
-  NUMBER_0: 0,
-  NUMBER_5: 5,
-  NUMBER_15: 15,
-  NUMBER_30: 30,
-} as const;
-
-/**
- * @nullable
- */
-export type ReservationSpotsResponseDtoItemCurrentReservation = {[key: string]: unknown} & ({
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  id: number;
-  spotId: string;
-  spotName: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  startsAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  endsAt: string;
-  /** @nullable */
-  comment: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  author: ReservationSpotsResponseDtoItemCurrentReservationAuthor;
-  sourceOrganization: ReservationSpotsResponseDtoItemCurrentReservationSourceOrganization;
-  isMine: boolean;
-  canEdit: boolean;
-  canCancel: boolean;
-  /** @nullable */
-  editingConstraints: ReservationSpotsResponseDtoItemCurrentReservationEditingConstraints;
-  /** @nullable */
-  reminderMinutesBefore: ReservationSpotsResponseDtoItemCurrentReservationReminderMinutesBefore;
-} | null) | null;
-
-export type ReservationSpotsResponseDtoItemNextReservationAuthor = {
-  displayName: string;
-  /** @nullable */
-  avatarUrl: string | null;
-};
-
-export type ReservationSpotsResponseDtoItemNextReservationSourceOrganization = {
-  name: string;
-  /** @nullable */
-  iconUrl: string | null;
-  isCurrent: boolean;
-  /** @pattern ^\/.* */
-  calendarPath: string;
-};
-
-/**
- * @nullable
- */
-export type ReservationSpotsResponseDtoItemNextReservationEditingConstraints = {[key: string]: unknown} & ({
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  reservationMaxDurationMinutes: number;
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  reservationMinDurationMinutes: number;
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  reservationTimeGranularityMinutes: number;
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  reservationMaxAdvanceDays: number;
-} | null) | null;
-
-/**
- * @nullable
- */
-export type ReservationSpotsResponseDtoItemNextReservationReminderMinutesBefore = typeof ReservationSpotsResponseDtoItemNextReservationReminderMinutesBefore[keyof typeof ReservationSpotsResponseDtoItemNextReservationReminderMinutesBefore] | null;
-
-
-export const ReservationSpotsResponseDtoItemNextReservationReminderMinutesBefore = {
-  NUMBER_0: 0,
-  NUMBER_5: 5,
-  NUMBER_15: 15,
-  NUMBER_30: 30,
-} as const;
-
-/**
- * @nullable
- */
-export type ReservationSpotsResponseDtoItemNextReservation = {[key: string]: unknown} & ({
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  id: number;
-  spotId: string;
-  spotName: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  startsAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  endsAt: string;
-  /** @nullable */
-  comment: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  author: ReservationSpotsResponseDtoItemNextReservationAuthor;
-  sourceOrganization: ReservationSpotsResponseDtoItemNextReservationSourceOrganization;
-  isMine: boolean;
-  canEdit: boolean;
-  canCancel: boolean;
-  /** @nullable */
-  editingConstraints: ReservationSpotsResponseDtoItemNextReservationEditingConstraints;
-  /** @nullable */
-  reminderMinutesBefore: ReservationSpotsResponseDtoItemNextReservationReminderMinutesBefore;
-} | null) | null;
-
-export type ReservationSpotsResponseDtoItem = {
-  id: string;
-  name: string;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  level: number;
-  images: string[];
-  maps: string[];
-  isPinned: boolean;
-  isAvailableNow: boolean;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  availableUntil: string | null;
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  activeReservationCount: number;
-  hasPartnerReservations: boolean;
-  /** @nullable */
-  currentReservation: ReservationSpotsResponseDtoItemCurrentReservation;
-  /** @nullable */
-  nextReservation: ReservationSpotsResponseDtoItemNextReservation;
-};
-
-export type ReservationSpotsResponseDto = ReservationSpotsResponseDtoItem[];
-
-export type OrganizationWorkspaceErrorResponse = {[key: string]: unknown} & {
-  code: string;
-};
-
-export type ReservationWindowResponseDtoItemsItemAuthor = {
-  displayName: string;
-  /** @nullable */
-  avatarUrl: string | null;
-};
-
-export type ReservationWindowResponseDtoItemsItemSourceOrganization = {
-  name: string;
-  /** @nullable */
-  iconUrl: string | null;
-  isCurrent: boolean;
-  /** @pattern ^\/.* */
-  calendarPath: string;
-};
-
-/**
- * @nullable
- */
-export type ReservationWindowResponseDtoItemsItemEditingConstraints = {[key: string]: unknown} & ({
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  reservationMaxDurationMinutes: number;
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  reservationMinDurationMinutes: number;
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  reservationTimeGranularityMinutes: number;
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  reservationMaxAdvanceDays: number;
-} | null) | null;
-
-/**
- * @nullable
- */
-export type ReservationWindowResponseDtoItemsItemReminderMinutesBefore = typeof ReservationWindowResponseDtoItemsItemReminderMinutesBefore[keyof typeof ReservationWindowResponseDtoItemsItemReminderMinutesBefore] | null;
-
-
-export const ReservationWindowResponseDtoItemsItemReminderMinutesBefore = {
-  NUMBER_0: 0,
-  NUMBER_5: 5,
-  NUMBER_15: 15,
-  NUMBER_30: 30,
-} as const;
-
-export type ReservationWindowResponseDtoItemsItem = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  id: number;
-  spotId: string;
-  spotName: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  startsAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  endsAt: string;
-  /** @nullable */
-  comment: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  author: ReservationWindowResponseDtoItemsItemAuthor;
-  sourceOrganization: ReservationWindowResponseDtoItemsItemSourceOrganization;
-  isMine: boolean;
-  canEdit: boolean;
-  canCancel: boolean;
-  /** @nullable */
-  editingConstraints: ReservationWindowResponseDtoItemsItemEditingConstraints;
-  /** @nullable */
-  reminderMinutesBefore: ReservationWindowResponseDtoItemsItemReminderMinutesBefore;
-};
-
-export type ReservationWindowResponseDtoWindow = {
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  from: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  to: string;
-};
-
-export interface ReservationWindowResponseDto {
-  items: ReservationWindowResponseDtoItemsItem[];
-  window: ReservationWindowResponseDtoWindow;
-}
-
-/**
- * @nullable
- */
-export type CreateReservationDtoReminderMinutesBefore = typeof CreateReservationDtoReminderMinutesBefore[keyof typeof CreateReservationDtoReminderMinutesBefore] | null;
-
-
-export const CreateReservationDtoReminderMinutesBefore = {
-  NUMBER_0: 0,
-  NUMBER_5: 5,
-  NUMBER_15: 15,
-  NUMBER_30: 30,
-} as const;
-
-export interface CreateReservationDto {
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$ */
-  startsAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$ */
-  endsAt: string;
-  /** @maxLength 128 */
-  comment?: string;
-  /** @nullable */
-  reminderMinutesBefore?: CreateReservationDtoReminderMinutesBefore;
-}
-
-export type ReservationResponseDtoAuthor = {
-  displayName: string;
-  /** @nullable */
-  avatarUrl: string | null;
-};
-
-export type ReservationResponseDtoSourceOrganization = {
-  name: string;
-  /** @nullable */
-  iconUrl: string | null;
-  isCurrent: boolean;
-  /** @pattern ^\/.* */
-  calendarPath: string;
-};
-
-/**
- * @nullable
- */
-export type ReservationResponseDtoEditingConstraints = {[key: string]: unknown} & ({
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  reservationMaxDurationMinutes: number;
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  reservationMinDurationMinutes: number;
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  reservationTimeGranularityMinutes: number;
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  reservationMaxAdvanceDays: number;
-} | null) | null;
-
-/**
- * @nullable
- */
-export type ReservationResponseDtoReminderMinutesBefore = typeof ReservationResponseDtoReminderMinutesBefore[keyof typeof ReservationResponseDtoReminderMinutesBefore] | null;
-
-
-export const ReservationResponseDtoReminderMinutesBefore = {
-  NUMBER_0: 0,
-  NUMBER_5: 5,
-  NUMBER_15: 15,
-  NUMBER_30: 30,
-} as const;
-
-export interface ReservationResponseDto {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  id: number;
-  spotId: string;
-  spotName: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  startsAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  endsAt: string;
-  /** @nullable */
-  comment: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  author: ReservationResponseDtoAuthor;
-  sourceOrganization: ReservationResponseDtoSourceOrganization;
-  isMine: boolean;
-  canEdit: boolean;
-  canCancel: boolean;
-  /** @nullable */
-  editingConstraints: ReservationResponseDtoEditingConstraints;
-  /** @nullable */
-  reminderMinutesBefore: ReservationResponseDtoReminderMinutesBefore;
-}
-
-export type MyReservationsResponseDtoItemsItemAuthor = {
-  displayName: string;
-  /** @nullable */
-  avatarUrl: string | null;
-};
-
-export type MyReservationsResponseDtoItemsItemSourceOrganization = {
-  name: string;
-  /** @nullable */
-  iconUrl: string | null;
-  isCurrent: boolean;
-  /** @pattern ^\/.* */
-  calendarPath: string;
-};
-
-/**
- * @nullable
- */
-export type MyReservationsResponseDtoItemsItemEditingConstraints = {[key: string]: unknown} & ({
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  reservationMaxDurationMinutes: number;
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  reservationMinDurationMinutes: number;
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  reservationTimeGranularityMinutes: number;
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  reservationMaxAdvanceDays: number;
-} | null) | null;
-
-/**
- * @nullable
- */
-export type MyReservationsResponseDtoItemsItemReminderMinutesBefore = typeof MyReservationsResponseDtoItemsItemReminderMinutesBefore[keyof typeof MyReservationsResponseDtoItemsItemReminderMinutesBefore] | null;
-
-
-export const MyReservationsResponseDtoItemsItemReminderMinutesBefore = {
-  NUMBER_0: 0,
-  NUMBER_5: 5,
-  NUMBER_15: 15,
-  NUMBER_30: 30,
-} as const;
-
-export type MyReservationsResponseDtoItemsItem = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  id: number;
-  spotId: string;
-  spotName: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  startsAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  endsAt: string;
-  /** @nullable */
-  comment: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  author: MyReservationsResponseDtoItemsItemAuthor;
-  sourceOrganization: MyReservationsResponseDtoItemsItemSourceOrganization;
-  isMine: boolean;
-  canEdit: boolean;
-  canCancel: boolean;
-  /** @nullable */
-  editingConstraints: MyReservationsResponseDtoItemsItemEditingConstraints;
-  /** @nullable */
-  reminderMinutesBefore: MyReservationsResponseDtoItemsItemReminderMinutesBefore;
-};
-
-export interface MyReservationsResponseDto {
-  items: MyReservationsResponseDtoItemsItem[];
-}
-
-/**
- * @nullable
- */
-export type UpdateReservationDtoReminderMinutesBefore = typeof UpdateReservationDtoReminderMinutesBefore[keyof typeof UpdateReservationDtoReminderMinutesBefore] | null;
-
-
-export const UpdateReservationDtoReminderMinutesBefore = {
-  NUMBER_0: 0,
-  NUMBER_5: 5,
-  NUMBER_15: 15,
-  NUMBER_30: 30,
-} as const;
-
-export interface UpdateReservationDto {
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$ */
-  startsAt?: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$ */
-  endsAt?: string;
-  /**
-     * @maxLength 128
-     * @nullable
-     */
-  comment?: string | null;
-  /** @nullable */
-  reminderMinutesBefore?: UpdateReservationDtoReminderMinutesBefore;
-}
-
-export type ReservationSharesResponseDtoSharesItemPartner = {
-  name: string;
-  /** @nullable */
-  iconUrl: string | null;
-};
-
-export type ReservationSharesResponseDtoSharesItem = {
-  id: string;
-  partner: ReservationSharesResponseDtoSharesItemPartner;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-};
-
-export type ReservationSharesResponseDtoPendingInvitationsItem = {
-  id: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  expiresAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-};
-
-export interface ReservationSharesResponseDto {
-  shares: ReservationSharesResponseDtoSharesItem[];
-  pendingInvitations: ReservationSharesResponseDtoPendingInvitationsItem[];
-}
-
-export interface CreateReservationShareInvitationResponseDto {
-  id: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  expiresAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^\/reservation-sharing\/invitations\/[\w-]+$ */
-  invitePath: string;
-}
-
-export type ReservationShareInvitationPreviewResponseDtoSourceOrganization = {
-  name: string;
-  /** @nullable */
-  iconUrl: string | null;
-};
-
-export type ReservationShareInvitationPreviewResponseDtoEligibleTargetOrganizationsItem = {
-  name: string;
-  /** @nullable */
-  iconUrl: string | null;
-  id: string;
-};
-
-export interface ReservationShareInvitationPreviewResponseDto {
-  sourceOrganization: ReservationShareInvitationPreviewResponseDtoSourceOrganization;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  expiresAt: string;
-  eligibleTargetOrganizations: ReservationShareInvitationPreviewResponseDtoEligibleTargetOrganizationsItem[];
-}
-
-export interface AcceptReservationShareInvitationDto {
-  /** @minLength 1 */
-  targetGuildId: string;
-}
-
-export type AcceptReservationShareInvitationResponseDtoPartner = {
-  name: string;
-  /** @nullable */
-  iconUrl: string | null;
-};
-
-export interface AcceptReservationShareInvitationResponseDto {
-  id: string;
-  partner: AcceptReservationShareInvitationResponseDtoPartner;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-}
-
-export type NotificationTargetResponseDtoOwnerType = typeof NotificationTargetResponseDtoOwnerType[keyof typeof NotificationTargetResponseDtoOwnerType];
-
-
-export const NotificationTargetResponseDtoOwnerType = {
-  GUILD: 'GUILD',
-  USER: 'USER',
-} as const;
-
-export type NotificationTargetResponseDtoProvider = typeof NotificationTargetResponseDtoProvider[keyof typeof NotificationTargetResponseDtoProvider];
-
-
-export const NotificationTargetResponseDtoProvider = {
-  DISCORD: 'DISCORD',
-} as const;
-
-export type NotificationTargetResponseDtoTargetType = typeof NotificationTargetResponseDtoTargetType[keyof typeof NotificationTargetResponseDtoTargetType];
-
-
-export const NotificationTargetResponseDtoTargetType = {
-  CHANNEL: 'CHANNEL',
-  DM: 'DM',
-} as const;
-
-export type JsonValue = string | number | boolean | (JsonValue | null)[] | {[key: string]: JsonValue | null} | null;
-
-export interface NotificationTargetResponseDto {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  id: number;
-  ownerType: NotificationTargetResponseDtoOwnerType;
-  ownerId: string;
-  provider: NotificationTargetResponseDtoProvider;
-  targetType: NotificationTargetResponseDtoTargetType;
-  externalId: string;
-  /** @nullable */
-  displayName: string | null;
-  /** @nullable */
-  guildName: string | null;
-  metadata: JsonValue | null;
-  active: boolean;
-  canSend: boolean;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastSyncedAt: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastDeliveryAt: string | null;
-  /** @nullable */
-  lastDeliveryError: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-}
-
-export type CreateNotificationTargetDtoTargetType = typeof CreateNotificationTargetDtoTargetType[keyof typeof CreateNotificationTargetDtoTargetType];
-
-
-export const CreateNotificationTargetDtoTargetType = {
-  CHANNEL: 'CHANNEL',
-  DM: 'DM',
-} as const;
-
-export interface CreateNotificationTargetDto {
-  targetType: CreateNotificationTargetDtoTargetType;
-  /** @maxLength 100 */
-  externalId?: string;
-  /** @maxLength 255 */
-  displayName?: string;
-}
-
-export type GuildAvailableNotificationTargetsResponseDtoChannelsItem = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  id: number;
-  guildId: string;
-  channelId: string;
-  name: string;
-  channelType: string;
-  /** @nullable */
-  parentId: string | null;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  position: number;
-  active: boolean;
-  canView: boolean;
-  canSend: boolean;
-  hasRequiredPermissions: boolean;
-  requiredPermissions: string[];
-  grantedPermissions: string[];
-  missingPermissions: string[];
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  lastSyncedAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-};
-
-export type GuildAvailableNotificationTargetsResponseDtoSyncStateStatus = typeof GuildAvailableNotificationTargetsResponseDtoSyncStateStatus[keyof typeof GuildAvailableNotificationTargetsResponseDtoSyncStateStatus];
-
-
-export const GuildAvailableNotificationTargetsResponseDtoSyncStateStatus = {
-  SYNCED: 'SYNCED',
-  SYNCING: 'SYNCING',
-  FAILED: 'FAILED',
-  STALE: 'STALE',
-  NOT_FOUND: 'NOT_FOUND',
-} as const;
-
-/**
- * @nullable
- */
-export type GuildAvailableNotificationTargetsResponseDtoSyncState = {[key: string]: unknown} & ({
-  guildId: string;
-  status: GuildAvailableNotificationTargetsResponseDtoSyncStateStatus;
-  hasRequiredPermissions: boolean;
-  requiredPermissions: string[];
-  grantedPermissions: string[];
-  missingPermissions: string[];
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  channelCount: number;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  selectableChannelCount: number;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastAttemptAt: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastSuccessAt: string | null;
-  /** @nullable */
-  lastError: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-} | null) | null;
-
-export interface GuildAvailableNotificationTargetsResponseDto {
-  channels: GuildAvailableNotificationTargetsResponseDtoChannelsItem[];
-  /** @nullable */
-  syncState: GuildAvailableNotificationTargetsResponseDtoSyncState;
-}
-
-export interface SuccessResponseDtoOutput {
-  success: boolean;
-}
-
-export interface UpdateNotificationTargetDto {
-  /**
-     * @maxLength 255
-     * @nullable
-     */
-  displayName?: string | null;
-  active?: boolean;
-}
-
-export type GuildNotificationRulesResponseDtoSchema0 = string | number | boolean | (GuildNotificationRulesResponseDtoSchema0 | null)[] | {[key: string]: GuildNotificationRulesResponseDtoSchema0 | null} | null;
-
-export type GuildNotificationRulesResponseDtoItemsItemOwnerType = typeof GuildNotificationRulesResponseDtoItemsItemOwnerType[keyof typeof GuildNotificationRulesResponseDtoItemsItemOwnerType];
-
-
-export const GuildNotificationRulesResponseDtoItemsItemOwnerType = {
-  GUILD: 'GUILD',
-  USER: 'USER',
-} as const;
-
-export type GuildNotificationRulesResponseDtoItemsItemTriggerType = typeof GuildNotificationRulesResponseDtoItemsItemTriggerType[keyof typeof GuildNotificationRulesResponseDtoItemsItemTriggerType];
-
-
-export const GuildNotificationRulesResponseDtoItemsItemTriggerType = {
-  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
-  NPC_SPAWNED: 'NPC_SPAWNED',
-  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
-  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
-} as const;
-
-/**
- * @nullable
- */
-export type GuildNotificationRulesResponseDtoItemsItemFilters = {[key: string]: unknown} & ({
-  guildIds?: string[];
-  world?: string;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  npcId?: number | null;
-  /**
-     * @items.minimum -9007199254740991
-     * @items.maximum 9007199254740991
-     */
-  npcIds?: number[];
-  /**
-     * @items.minimum -9007199254740991
-     * @items.maximum 9007199254740991
-     */
-  npcTemplateIds?: number[];
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  itemId?: number | null;
-  /**
-     * @items.minimum -9007199254740991
-     * @items.maximum 9007199254740991
-     */
-  itemIds?: number[];
-} | null) | null;
-
-/**
- * @nullable
- */
-export type GuildNotificationRulesResponseDtoItemsItemScheduleStrategy = typeof GuildNotificationRulesResponseDtoItemsItemScheduleStrategy[keyof typeof GuildNotificationRulesResponseDtoItemsItemScheduleStrategy] | null;
-
-
-export const GuildNotificationRulesResponseDtoItemsItemScheduleStrategy = {
-  SPAWN_WINDOW_RELATIVE: 'SPAWN_WINDOW_RELATIVE',
-  FIXED_DATETIME: 'FIXED_DATETIME',
-} as const;
-
-/**
- * @nullable
- */
-export type GuildNotificationRulesResponseDtoItemsItemScheduleAnchor = typeof GuildNotificationRulesResponseDtoItemsItemScheduleAnchor[keyof typeof GuildNotificationRulesResponseDtoItemsItemScheduleAnchor] | null;
-
-
-export const GuildNotificationRulesResponseDtoItemsItemScheduleAnchor = {
-  MIN_SPAWN: 'MIN_SPAWN',
-  MAX_SPAWN: 'MAX_SPAWN',
-} as const;
-
-/**
- * @nullable
- */
-export type GuildNotificationRulesResponseDtoItemsItemScheduleIntervalType = typeof GuildNotificationRulesResponseDtoItemsItemScheduleIntervalType[keyof typeof GuildNotificationRulesResponseDtoItemsItemScheduleIntervalType] | null;
-
-
-export const GuildNotificationRulesResponseDtoItemsItemScheduleIntervalType = {
-  ONCE: 'ONCE',
-  HOURLY: 'HOURLY',
-  DAILY: 'DAILY',
-  WEEKLY: 'WEEKLY',
-} as const;
-
-export type GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetOwnerType = typeof GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetOwnerType[keyof typeof GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetOwnerType];
-
-
-export const GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetOwnerType = {
-  GUILD: 'GUILD',
-  USER: 'USER',
-} as const;
-
-export type GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetProvider = typeof GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetProvider[keyof typeof GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetProvider];
-
-
-export const GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetProvider = {
-  DISCORD: 'DISCORD',
-} as const;
-
-export type GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetTargetType = typeof GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetTargetType[keyof typeof GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetTargetType];
-
-
-export const GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetTargetType = {
-  CHANNEL: 'CHANNEL',
-  DM: 'DM',
-} as const;
-
-export type GuildNotificationRulesResponseDtoItemsItemTargetsItemTarget = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  id: number;
-  ownerType: GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetOwnerType;
-  ownerId: string;
-  provider: GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetProvider;
-  targetType: GuildNotificationRulesResponseDtoItemsItemTargetsItemTargetTargetType;
-  externalId: string;
-  /** @nullable */
-  displayName: string | null;
-  /** @nullable */
-  guildName: string | null;
-  metadata: GuildNotificationRulesResponseDtoSchema0 | null;
-  active: boolean;
-  canSend: boolean;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastSyncedAt: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastDeliveryAt: string | null;
-  /** @nullable */
-  lastDeliveryError: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-};
-
-export type GuildNotificationRulesResponseDtoItemsItemTargetsItem = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  ruleId: number;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  targetId: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  target: GuildNotificationRulesResponseDtoItemsItemTargetsItemTarget;
-};
-
-export type GuildNotificationRulesResponseDtoItemsItemTestTrigger = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  limit: number;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  used: number;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  remaining: number;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  windowSeconds: number;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-     */
-  nextAvailableAt: string | null;
-};
-
-export type GuildNotificationRulesResponseDtoItemsItem = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  id: number;
-  ownerType: GuildNotificationRulesResponseDtoItemsItemOwnerType;
-  ownerId: string;
-  triggerType: GuildNotificationRulesResponseDtoItemsItemTriggerType;
-  /** @nullable */
-  guildId: string | null;
-  /** @nullable */
-  world: string | null;
-  /** @nullable */
-  name: string | null;
-  /** @nullable */
-  filters: GuildNotificationRulesResponseDtoItemsItemFilters;
-  /** @nullable */
-  contentTemplate: string | null;
-  /** @nullable */
-  scheduleStrategy: GuildNotificationRulesResponseDtoItemsItemScheduleStrategy;
-  /** @nullable */
-  scheduleAnchor: GuildNotificationRulesResponseDtoItemsItemScheduleAnchor;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  scheduleOffsetMinutes: number | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  scheduledAt: string | null;
-  /** @nullable */
-  scheduleIntervalType: GuildNotificationRulesResponseDtoItemsItemScheduleIntervalType;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  scheduleIntervalValue: number | null;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  scheduleWeekday: number | null;
-  /** @nullable */
-  scheduleTimeOfDay: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  scheduledUntil: string | null;
-  /** @nullable */
-  scheduleTimezone: string | null;
-  enabled: boolean;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  dedupeWindowSeconds: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-  targets: GuildNotificationRulesResponseDtoItemsItemTargetsItem[];
-  testTrigger: GuildNotificationRulesResponseDtoItemsItemTestTrigger;
-};
-
-export type GuildNotificationRulesResponseDtoLimits = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  ruleLimit: number;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  ruleCount: number;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  maxNpcsPerRule: number;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  testTriggerLimit: number;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  testTriggerWindowSeconds: number;
-};
-
-export interface GuildNotificationRulesResponseDto {
-  items: GuildNotificationRulesResponseDtoItemsItem[];
-  limits: GuildNotificationRulesResponseDtoLimits;
-}
-
-export type CreateNotificationRuleDtoScheduleStrategy = typeof CreateNotificationRuleDtoScheduleStrategy[keyof typeof CreateNotificationRuleDtoScheduleStrategy];
-
-
-export const CreateNotificationRuleDtoScheduleStrategy = {
-  SPAWN_WINDOW_RELATIVE: 'SPAWN_WINDOW_RELATIVE',
-  FIXED_DATETIME: 'FIXED_DATETIME',
-} as const;
-
-export type CreateNotificationRuleDtoScheduleAnchor = typeof CreateNotificationRuleDtoScheduleAnchor[keyof typeof CreateNotificationRuleDtoScheduleAnchor];
-
-
-export const CreateNotificationRuleDtoScheduleAnchor = {
-  MIN_SPAWN: 'MIN_SPAWN',
-  MAX_SPAWN: 'MAX_SPAWN',
-} as const;
-
-export type CreateNotificationRuleDtoScheduleIntervalType = typeof CreateNotificationRuleDtoScheduleIntervalType[keyof typeof CreateNotificationRuleDtoScheduleIntervalType];
-
-
-export const CreateNotificationRuleDtoScheduleIntervalType = {
-  ONCE: 'ONCE',
-  HOURLY: 'HOURLY',
-  DAILY: 'DAILY',
-  WEEKLY: 'WEEKLY',
-} as const;
-
-export type CreateNotificationRuleDtoTriggerType = typeof CreateNotificationRuleDtoTriggerType[keyof typeof CreateNotificationRuleDtoTriggerType];
-
-
-export const CreateNotificationRuleDtoTriggerType = {
-  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
-  NPC_SPAWNED: 'NPC_SPAWNED',
-  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
-  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
-} as const;
-
-export interface CreateNotificationRuleDto {
-  /**
-     * @maxLength 255
-     * @nullable
-     */
-  name?: string | null;
-  /**
-     * @maxLength 4000
-     * @nullable
-     */
-  contentTemplate?: string | null;
-  /** @maxLength 50 */
-  world?: string;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  npcId?: number;
-  /**
-     * @maxItems 5
-     * @items.minimum -9007199254740991
-     * @items.maximum 9007199254740991
-     */
-  npcIds?: number[];
-  /**
-     * Margonem template ids (`tpl`). Matches every timer observed with one of these templates; `npcId` and `npcIds` match a timer's own NPC id.
-     * @maxItems 5
-     * @items.minimum 1
-     * @items.maximum 9007199254740991
-     */
-  npcTemplateIds?: number[];
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  itemId?: number;
-  /**
-     * @maxItems 20
-     * @items.minimum -9007199254740991
-     * @items.maximum 9007199254740991
-     */
-  itemIds?: number[];
-  scheduleStrategy?: CreateNotificationRuleDtoScheduleStrategy;
-  scheduleAnchor?: CreateNotificationRuleDtoScheduleAnchor;
-  /**
-     * @minimum 0
-     * @maximum 1440
-     */
-  scheduleOffsetMinutes?: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$ */
-  scheduledAt?: string;
-  scheduleIntervalType?: CreateNotificationRuleDtoScheduleIntervalType;
-  /**
-     * @minimum 1
-     * @maximum 24
-     */
-  scheduleIntervalValue?: number;
-  /**
-     * @minimum 0
-     * @maximum 6
-     */
-  scheduleWeekday?: number;
-  /** @pattern ^\d{2}:\d{2}$ */
-  scheduleTimeOfDay?: string;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-     */
-  scheduledUntil?: string | null;
-  /** @maxLength 50 */
-  scheduleTimezone?: string;
-  enabled?: boolean;
-  triggerType: CreateNotificationRuleDtoTriggerType;
-  /**
-     * @maxItems 3
-     * @items.minimum -9007199254740991
-     * @items.maximum 9007199254740991
-     */
-  targetIds: number[];
-}
-
-export type NotificationRuleResponseDtoSchema0 = string | number | boolean | (NotificationRuleResponseDtoSchema0 | null)[] | {[key: string]: NotificationRuleResponseDtoSchema0 | null} | null;
-
-export type NotificationRuleResponseDtoOwnerType = typeof NotificationRuleResponseDtoOwnerType[keyof typeof NotificationRuleResponseDtoOwnerType];
-
-
-export const NotificationRuleResponseDtoOwnerType = {
-  GUILD: 'GUILD',
-  USER: 'USER',
-} as const;
-
-export type NotificationRuleResponseDtoTriggerType = typeof NotificationRuleResponseDtoTriggerType[keyof typeof NotificationRuleResponseDtoTriggerType];
-
-
-export const NotificationRuleResponseDtoTriggerType = {
-  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
-  NPC_SPAWNED: 'NPC_SPAWNED',
-  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
-  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
-} as const;
-
-/**
- * @nullable
- */
-export type NotificationRuleResponseDtoFilters = {[key: string]: unknown} & ({
-  guildIds?: string[];
-  world?: string;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  npcId?: number | null;
-  /**
-     * @items.minimum -9007199254740991
-     * @items.maximum 9007199254740991
-     */
-  npcIds?: number[];
-  /**
-     * @items.minimum -9007199254740991
-     * @items.maximum 9007199254740991
-     */
-  npcTemplateIds?: number[];
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  itemId?: number | null;
-  /**
-     * @items.minimum -9007199254740991
-     * @items.maximum 9007199254740991
-     */
-  itemIds?: number[];
-} | null) | null;
-
-/**
- * @nullable
- */
-export type NotificationRuleResponseDtoScheduleStrategy = typeof NotificationRuleResponseDtoScheduleStrategy[keyof typeof NotificationRuleResponseDtoScheduleStrategy] | null;
-
-
-export const NotificationRuleResponseDtoScheduleStrategy = {
-  SPAWN_WINDOW_RELATIVE: 'SPAWN_WINDOW_RELATIVE',
-  FIXED_DATETIME: 'FIXED_DATETIME',
-} as const;
-
-/**
- * @nullable
- */
-export type NotificationRuleResponseDtoScheduleAnchor = typeof NotificationRuleResponseDtoScheduleAnchor[keyof typeof NotificationRuleResponseDtoScheduleAnchor] | null;
-
-
-export const NotificationRuleResponseDtoScheduleAnchor = {
-  MIN_SPAWN: 'MIN_SPAWN',
-  MAX_SPAWN: 'MAX_SPAWN',
-} as const;
-
-/**
- * @nullable
- */
-export type NotificationRuleResponseDtoScheduleIntervalType = typeof NotificationRuleResponseDtoScheduleIntervalType[keyof typeof NotificationRuleResponseDtoScheduleIntervalType] | null;
-
-
-export const NotificationRuleResponseDtoScheduleIntervalType = {
-  ONCE: 'ONCE',
-  HOURLY: 'HOURLY',
-  DAILY: 'DAILY',
-  WEEKLY: 'WEEKLY',
-} as const;
-
-export type NotificationRuleResponseDtoTargetsItemTargetOwnerType = typeof NotificationRuleResponseDtoTargetsItemTargetOwnerType[keyof typeof NotificationRuleResponseDtoTargetsItemTargetOwnerType];
-
-
-export const NotificationRuleResponseDtoTargetsItemTargetOwnerType = {
-  GUILD: 'GUILD',
-  USER: 'USER',
-} as const;
-
-export type NotificationRuleResponseDtoTargetsItemTargetProvider = typeof NotificationRuleResponseDtoTargetsItemTargetProvider[keyof typeof NotificationRuleResponseDtoTargetsItemTargetProvider];
-
-
-export const NotificationRuleResponseDtoTargetsItemTargetProvider = {
-  DISCORD: 'DISCORD',
-} as const;
-
-export type NotificationRuleResponseDtoTargetsItemTargetTargetType = typeof NotificationRuleResponseDtoTargetsItemTargetTargetType[keyof typeof NotificationRuleResponseDtoTargetsItemTargetTargetType];
-
-
-export const NotificationRuleResponseDtoTargetsItemTargetTargetType = {
-  CHANNEL: 'CHANNEL',
-  DM: 'DM',
-} as const;
-
-export type NotificationRuleResponseDtoTargetsItemTarget = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  id: number;
-  ownerType: NotificationRuleResponseDtoTargetsItemTargetOwnerType;
-  ownerId: string;
-  provider: NotificationRuleResponseDtoTargetsItemTargetProvider;
-  targetType: NotificationRuleResponseDtoTargetsItemTargetTargetType;
-  externalId: string;
-  /** @nullable */
-  displayName: string | null;
-  /** @nullable */
-  guildName: string | null;
-  metadata: NotificationRuleResponseDtoSchema0 | null;
-  active: boolean;
-  canSend: boolean;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastSyncedAt: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastDeliveryAt: string | null;
-  /** @nullable */
-  lastDeliveryError: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-};
-
-export type NotificationRuleResponseDtoTargetsItem = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  ruleId: number;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  targetId: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  target: NotificationRuleResponseDtoTargetsItemTarget;
-};
-
-export interface NotificationRuleResponseDto {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  id: number;
-  ownerType: NotificationRuleResponseDtoOwnerType;
-  ownerId: string;
-  triggerType: NotificationRuleResponseDtoTriggerType;
-  /** @nullable */
-  guildId: string | null;
-  /** @nullable */
-  world: string | null;
-  /** @nullable */
-  name: string | null;
-  /** @nullable */
-  filters: NotificationRuleResponseDtoFilters;
-  /** @nullable */
-  contentTemplate: string | null;
-  /** @nullable */
-  scheduleStrategy: NotificationRuleResponseDtoScheduleStrategy;
-  /** @nullable */
-  scheduleAnchor: NotificationRuleResponseDtoScheduleAnchor;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  scheduleOffsetMinutes: number | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  scheduledAt: string | null;
-  /** @nullable */
-  scheduleIntervalType: NotificationRuleResponseDtoScheduleIntervalType;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  scheduleIntervalValue: number | null;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  scheduleWeekday: number | null;
-  /** @nullable */
-  scheduleTimeOfDay: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  scheduledUntil: string | null;
-  /** @nullable */
-  scheduleTimezone: string | null;
-  enabled: boolean;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  dedupeWindowSeconds: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-  targets: NotificationRuleResponseDtoTargetsItem[];
-}
-
-export type UpdateNotificationRuleDtoScheduleStrategy = typeof UpdateNotificationRuleDtoScheduleStrategy[keyof typeof UpdateNotificationRuleDtoScheduleStrategy];
-
-
-export const UpdateNotificationRuleDtoScheduleStrategy = {
-  SPAWN_WINDOW_RELATIVE: 'SPAWN_WINDOW_RELATIVE',
-  FIXED_DATETIME: 'FIXED_DATETIME',
-} as const;
-
-export type UpdateNotificationRuleDtoScheduleAnchor = typeof UpdateNotificationRuleDtoScheduleAnchor[keyof typeof UpdateNotificationRuleDtoScheduleAnchor];
-
-
-export const UpdateNotificationRuleDtoScheduleAnchor = {
-  MIN_SPAWN: 'MIN_SPAWN',
-  MAX_SPAWN: 'MAX_SPAWN',
-} as const;
-
-export type UpdateNotificationRuleDtoScheduleIntervalType = typeof UpdateNotificationRuleDtoScheduleIntervalType[keyof typeof UpdateNotificationRuleDtoScheduleIntervalType];
-
-
-export const UpdateNotificationRuleDtoScheduleIntervalType = {
-  ONCE: 'ONCE',
-  HOURLY: 'HOURLY',
-  DAILY: 'DAILY',
-  WEEKLY: 'WEEKLY',
-} as const;
-
-export type UpdateNotificationRuleDtoTriggerType = typeof UpdateNotificationRuleDtoTriggerType[keyof typeof UpdateNotificationRuleDtoTriggerType];
-
-
-export const UpdateNotificationRuleDtoTriggerType = {
-  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
-  NPC_SPAWNED: 'NPC_SPAWNED',
-  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
-  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
-} as const;
-
-export interface UpdateNotificationRuleDto {
-  /**
-     * @maxLength 255
-     * @nullable
-     */
-  name?: string | null;
-  /**
-     * @maxLength 4000
-     * @nullable
-     */
-  contentTemplate?: string | null;
-  /** @maxLength 50 */
-  world?: string;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  npcId?: number;
-  /**
-     * @maxItems 5
-     * @items.minimum -9007199254740991
-     * @items.maximum 9007199254740991
-     */
-  npcIds?: number[];
-  /**
-     * Margonem template ids (`tpl`). Matches every timer observed with one of these templates; `npcId` and `npcIds` match a timer's own NPC id.
-     * @maxItems 5
-     * @items.minimum 1
-     * @items.maximum 9007199254740991
-     */
-  npcTemplateIds?: number[];
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  itemId?: number;
-  /**
-     * @maxItems 20
-     * @items.minimum -9007199254740991
-     * @items.maximum 9007199254740991
-     */
-  itemIds?: number[];
-  scheduleStrategy?: UpdateNotificationRuleDtoScheduleStrategy;
-  scheduleAnchor?: UpdateNotificationRuleDtoScheduleAnchor;
-  /**
-     * @minimum 0
-     * @maximum 1440
-     */
-  scheduleOffsetMinutes?: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$ */
-  scheduledAt?: string;
-  scheduleIntervalType?: UpdateNotificationRuleDtoScheduleIntervalType;
-  /**
-     * @minimum 1
-     * @maximum 24
-     */
-  scheduleIntervalValue?: number;
-  /**
-     * @minimum 0
-     * @maximum 6
-     */
-  scheduleWeekday?: number;
-  /** @pattern ^\d{2}:\d{2}$ */
-  scheduleTimeOfDay?: string;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-     */
-  scheduledUntil?: string | null;
-  /** @maxLength 50 */
-  scheduleTimezone?: string;
-  enabled?: boolean;
-  triggerType?: UpdateNotificationRuleDtoTriggerType;
-  /**
-     * @maxItems 3
-     * @items.minimum -9007199254740991
-     * @items.maximum 9007199254740991
-     */
-  targetIds?: number[];
-}
-
-export type NotificationJobsResponseDtoSchema0 = string | number | boolean | (NotificationJobsResponseDtoSchema0 | null)[] | {[key: string]: NotificationJobsResponseDtoSchema0 | null} | null;
-
-export type NotificationJobsResponseDtoPendingItemOwnerType = typeof NotificationJobsResponseDtoPendingItemOwnerType[keyof typeof NotificationJobsResponseDtoPendingItemOwnerType];
-
-
-export const NotificationJobsResponseDtoPendingItemOwnerType = {
-  GUILD: 'GUILD',
-  USER: 'USER',
-} as const;
-
-export type NotificationJobsResponseDtoPendingItemJobKind = typeof NotificationJobsResponseDtoPendingItemJobKind[keyof typeof NotificationJobsResponseDtoPendingItemJobKind];
-
-
-export const NotificationJobsResponseDtoPendingItemJobKind = {
-  SCHEDULED: 'SCHEDULED',
-  INSTANT: 'INSTANT',
-  TEST: 'TEST',
-} as const;
-
-export type NotificationJobsResponseDtoPendingItemStatus = typeof NotificationJobsResponseDtoPendingItemStatus[keyof typeof NotificationJobsResponseDtoPendingItemStatus];
-
-
-export const NotificationJobsResponseDtoPendingItemStatus = {
-  PENDING: 'PENDING',
-  PROCESSING: 'PROCESSING',
-  SENT: 'SENT',
-  FAILED: 'FAILED',
-  BLOCKED: 'BLOCKED',
-  CANCELED: 'CANCELED',
-} as const;
-
-export type NotificationJobsResponseDtoPendingItemPayloadSnapshotAllowedMentionsParseItem = typeof NotificationJobsResponseDtoPendingItemPayloadSnapshotAllowedMentionsParseItem[keyof typeof NotificationJobsResponseDtoPendingItemPayloadSnapshotAllowedMentionsParseItem];
-
-
-export const NotificationJobsResponseDtoPendingItemPayloadSnapshotAllowedMentionsParseItem = {
-  roles: 'roles',
-  users: 'users',
-  everyone: 'everyone',
-} as const;
-
-export type NotificationJobsResponseDtoPendingItemPayloadSnapshotAllowedMentions = {
-  parse?: NotificationJobsResponseDtoPendingItemPayloadSnapshotAllowedMentionsParseItem[];
-  roles?: string[];
-  users?: string[];
-  repliedUser?: boolean;
-};
-
-/**
- * @nullable
- */
-export type NotificationJobsResponseDtoPendingItemPayloadSnapshotTriggerType = typeof NotificationJobsResponseDtoPendingItemPayloadSnapshotTriggerType[keyof typeof NotificationJobsResponseDtoPendingItemPayloadSnapshotTriggerType] | null;
-
-
-export const NotificationJobsResponseDtoPendingItemPayloadSnapshotTriggerType = {
-  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
-  NPC_SPAWNED: 'NPC_SPAWNED',
-  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
-  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
-} as const;
-
-/**
- * @nullable
- */
-export type NotificationJobsResponseDtoPendingItemPayloadSnapshotScheduleStrategy = typeof NotificationJobsResponseDtoPendingItemPayloadSnapshotScheduleStrategy[keyof typeof NotificationJobsResponseDtoPendingItemPayloadSnapshotScheduleStrategy] | null;
-
-
-export const NotificationJobsResponseDtoPendingItemPayloadSnapshotScheduleStrategy = {
-  SPAWN_WINDOW_RELATIVE: 'SPAWN_WINDOW_RELATIVE',
-  FIXED_DATETIME: 'FIXED_DATETIME',
-} as const;
-
-/**
- * @nullable
- */
-export type NotificationJobsResponseDtoPendingItemPayloadSnapshotScheduleAnchor = typeof NotificationJobsResponseDtoPendingItemPayloadSnapshotScheduleAnchor[keyof typeof NotificationJobsResponseDtoPendingItemPayloadSnapshotScheduleAnchor] | null;
-
-
-export const NotificationJobsResponseDtoPendingItemPayloadSnapshotScheduleAnchor = {
-  MIN_SPAWN: 'MIN_SPAWN',
-  MAX_SPAWN: 'MAX_SPAWN',
-} as const;
-
-/**
- * @nullable
- */
-export type NotificationJobsResponseDtoPendingItemPayloadSnapshot = {[key: string]: unknown} & ({
-  /** @nullable */
-  title?: string | null;
-  /** @nullable */
-  message?: string | null;
-  /** @nullable */
-  content?: string | null;
-  allowedMentions?: NotificationJobsResponseDtoPendingItemPayloadSnapshotAllowedMentions;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  ruleId?: number | null;
-  /** @nullable */
-  ruleName?: string | null;
-  /** @nullable */
-  triggerType?: NotificationJobsResponseDtoPendingItemPayloadSnapshotTriggerType;
-  /** @nullable */
-  world?: string | null;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  npcId?: number | null;
-  /** @nullable */
-  npcName?: string | null;
-  /** @nullable */
-  timerKey?: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-     */
-  minSpawnTime?: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-     */
-  maxSpawnTime?: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-     */
-  scheduledFor?: string | null;
-  /** @nullable */
-  scheduleStrategy?: NotificationJobsResponseDtoPendingItemPayloadSnapshotScheduleStrategy;
-  /** @nullable */
-  scheduleAnchor?: NotificationJobsResponseDtoPendingItemPayloadSnapshotScheduleAnchor;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  scheduleOffsetMinutes?: number | null;
-  /** @nullable */
-  contentTemplate?: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-     */
-  testTriggeredAt?: string | null;
-} | null) | null;
-
-export type NotificationJobsResponseDtoPendingItemRuleOwnerType = typeof NotificationJobsResponseDtoPendingItemRuleOwnerType[keyof typeof NotificationJobsResponseDtoPendingItemRuleOwnerType];
-
-
-export const NotificationJobsResponseDtoPendingItemRuleOwnerType = {
-  GUILD: 'GUILD',
-  USER: 'USER',
-} as const;
-
-export type NotificationJobsResponseDtoPendingItemRuleTriggerType = typeof NotificationJobsResponseDtoPendingItemRuleTriggerType[keyof typeof NotificationJobsResponseDtoPendingItemRuleTriggerType];
-
-
-export const NotificationJobsResponseDtoPendingItemRuleTriggerType = {
-  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
-  NPC_SPAWNED: 'NPC_SPAWNED',
-  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
-  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
-} as const;
-
-/**
- * @nullable
- */
-export type NotificationJobsResponseDtoPendingItemRuleFilters = {[key: string]: unknown} & ({
-  guildIds?: string[];
-  world?: string;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  npcId?: number | null;
-  /**
-     * @items.minimum -9007199254740991
-     * @items.maximum 9007199254740991
-     */
-  npcIds?: number[];
-  /**
-     * @items.minimum -9007199254740991
-     * @items.maximum 9007199254740991
-     */
-  npcTemplateIds?: number[];
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  itemId?: number | null;
-  /**
-     * @items.minimum -9007199254740991
-     * @items.maximum 9007199254740991
-     */
-  itemIds?: number[];
-} | null) | null;
-
-/**
- * @nullable
- */
-export type NotificationJobsResponseDtoPendingItemRuleScheduleStrategy = typeof NotificationJobsResponseDtoPendingItemRuleScheduleStrategy[keyof typeof NotificationJobsResponseDtoPendingItemRuleScheduleStrategy] | null;
-
-
-export const NotificationJobsResponseDtoPendingItemRuleScheduleStrategy = {
-  SPAWN_WINDOW_RELATIVE: 'SPAWN_WINDOW_RELATIVE',
-  FIXED_DATETIME: 'FIXED_DATETIME',
-} as const;
-
-/**
- * @nullable
- */
-export type NotificationJobsResponseDtoPendingItemRuleScheduleAnchor = typeof NotificationJobsResponseDtoPendingItemRuleScheduleAnchor[keyof typeof NotificationJobsResponseDtoPendingItemRuleScheduleAnchor] | null;
-
-
-export const NotificationJobsResponseDtoPendingItemRuleScheduleAnchor = {
-  MIN_SPAWN: 'MIN_SPAWN',
-  MAX_SPAWN: 'MAX_SPAWN',
-} as const;
-
-/**
- * @nullable
- */
-export type NotificationJobsResponseDtoPendingItemRuleScheduleIntervalType = typeof NotificationJobsResponseDtoPendingItemRuleScheduleIntervalType[keyof typeof NotificationJobsResponseDtoPendingItemRuleScheduleIntervalType] | null;
-
-
-export const NotificationJobsResponseDtoPendingItemRuleScheduleIntervalType = {
-  ONCE: 'ONCE',
-  HOURLY: 'HOURLY',
-  DAILY: 'DAILY',
-  WEEKLY: 'WEEKLY',
-} as const;
-
-export type NotificationJobsResponseDtoPendingItemRule = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  id: number;
-  ownerType: NotificationJobsResponseDtoPendingItemRuleOwnerType;
-  ownerId: string;
-  triggerType: NotificationJobsResponseDtoPendingItemRuleTriggerType;
-  /** @nullable */
-  guildId: string | null;
-  /** @nullable */
-  world: string | null;
-  /** @nullable */
-  name: string | null;
-  /** @nullable */
-  filters: NotificationJobsResponseDtoPendingItemRuleFilters;
-  /** @nullable */
-  contentTemplate: string | null;
-  /** @nullable */
-  scheduleStrategy: NotificationJobsResponseDtoPendingItemRuleScheduleStrategy;
-  /** @nullable */
-  scheduleAnchor: NotificationJobsResponseDtoPendingItemRuleScheduleAnchor;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  scheduleOffsetMinutes: number | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  scheduledAt: string | null;
-  /** @nullable */
-  scheduleIntervalType: NotificationJobsResponseDtoPendingItemRuleScheduleIntervalType;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  scheduleIntervalValue: number | null;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  scheduleWeekday: number | null;
-  /** @nullable */
-  scheduleTimeOfDay: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  scheduledUntil: string | null;
-  /** @nullable */
-  scheduleTimezone: string | null;
-  enabled: boolean;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  dedupeWindowSeconds: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-};
-
-export type NotificationJobsResponseDtoPendingItemTargetOwnerType = typeof NotificationJobsResponseDtoPendingItemTargetOwnerType[keyof typeof NotificationJobsResponseDtoPendingItemTargetOwnerType];
-
-
-export const NotificationJobsResponseDtoPendingItemTargetOwnerType = {
-  GUILD: 'GUILD',
-  USER: 'USER',
-} as const;
-
-export type NotificationJobsResponseDtoPendingItemTargetProvider = typeof NotificationJobsResponseDtoPendingItemTargetProvider[keyof typeof NotificationJobsResponseDtoPendingItemTargetProvider];
-
-
-export const NotificationJobsResponseDtoPendingItemTargetProvider = {
-  DISCORD: 'DISCORD',
-} as const;
-
-export type NotificationJobsResponseDtoPendingItemTargetTargetType = typeof NotificationJobsResponseDtoPendingItemTargetTargetType[keyof typeof NotificationJobsResponseDtoPendingItemTargetTargetType];
-
-
-export const NotificationJobsResponseDtoPendingItemTargetTargetType = {
-  CHANNEL: 'CHANNEL',
-  DM: 'DM',
-} as const;
-
-export type NotificationJobsResponseDtoPendingItemTarget = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  id: number;
-  ownerType: NotificationJobsResponseDtoPendingItemTargetOwnerType;
-  ownerId: string;
-  provider: NotificationJobsResponseDtoPendingItemTargetProvider;
-  targetType: NotificationJobsResponseDtoPendingItemTargetTargetType;
-  externalId: string;
-  /** @nullable */
-  displayName: string | null;
-  /** @nullable */
-  guildName: string | null;
-  metadata: NotificationJobsResponseDtoSchema0 | null;
-  active: boolean;
-  canSend: boolean;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastSyncedAt: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastDeliveryAt: string | null;
-  /** @nullable */
-  lastDeliveryError: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-};
-
-export type NotificationJobsResponseDtoPendingItem = {
-  id: string;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  ruleId: number;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  targetId: number;
-  ownerType: NotificationJobsResponseDtoPendingItemOwnerType;
-  ownerId: string;
-  jobKind: NotificationJobsResponseDtoPendingItemJobKind;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  scheduledFor: string;
-  status: NotificationJobsResponseDtoPendingItemStatus;
-  idempotencyKey: string;
-  /** @nullable */
-  sourceEntityType: string | null;
-  /** @nullable */
-  sourceEntityId: string | null;
-  /** @nullable */
-  sourceEventId: string | null;
-  /** @nullable */
-  payloadSnapshot: NotificationJobsResponseDtoPendingItemPayloadSnapshot;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  attemptCount: number;
-  /** @nullable */
-  lastError: string | null;
-  /** @nullable */
-  blockedReason: string | null;
-  /** @nullable */
-  providerMessageId: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  processedAt: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-  rule: NotificationJobsResponseDtoPendingItemRule;
-  target: NotificationJobsResponseDtoPendingItemTarget;
-};
-
-export type NotificationJobsResponseDtoHistoryItemOwnerType = typeof NotificationJobsResponseDtoHistoryItemOwnerType[keyof typeof NotificationJobsResponseDtoHistoryItemOwnerType];
-
-
-export const NotificationJobsResponseDtoHistoryItemOwnerType = {
-  GUILD: 'GUILD',
-  USER: 'USER',
-} as const;
-
-export type NotificationJobsResponseDtoHistoryItemJobKind = typeof NotificationJobsResponseDtoHistoryItemJobKind[keyof typeof NotificationJobsResponseDtoHistoryItemJobKind];
-
-
-export const NotificationJobsResponseDtoHistoryItemJobKind = {
-  SCHEDULED: 'SCHEDULED',
-  INSTANT: 'INSTANT',
-  TEST: 'TEST',
-} as const;
-
-export type NotificationJobsResponseDtoHistoryItemStatus = typeof NotificationJobsResponseDtoHistoryItemStatus[keyof typeof NotificationJobsResponseDtoHistoryItemStatus];
-
-
-export const NotificationJobsResponseDtoHistoryItemStatus = {
-  PENDING: 'PENDING',
-  PROCESSING: 'PROCESSING',
-  SENT: 'SENT',
-  FAILED: 'FAILED',
-  BLOCKED: 'BLOCKED',
-  CANCELED: 'CANCELED',
-} as const;
-
-export type NotificationJobsResponseDtoHistoryItemPayloadSnapshotAllowedMentionsParseItem = typeof NotificationJobsResponseDtoHistoryItemPayloadSnapshotAllowedMentionsParseItem[keyof typeof NotificationJobsResponseDtoHistoryItemPayloadSnapshotAllowedMentionsParseItem];
-
-
-export const NotificationJobsResponseDtoHistoryItemPayloadSnapshotAllowedMentionsParseItem = {
-  roles: 'roles',
-  users: 'users',
-  everyone: 'everyone',
-} as const;
-
-export type NotificationJobsResponseDtoHistoryItemPayloadSnapshotAllowedMentions = {
-  parse?: NotificationJobsResponseDtoHistoryItemPayloadSnapshotAllowedMentionsParseItem[];
-  roles?: string[];
-  users?: string[];
-  repliedUser?: boolean;
-};
-
-/**
- * @nullable
- */
-export type NotificationJobsResponseDtoHistoryItemPayloadSnapshotTriggerType = typeof NotificationJobsResponseDtoHistoryItemPayloadSnapshotTriggerType[keyof typeof NotificationJobsResponseDtoHistoryItemPayloadSnapshotTriggerType] | null;
-
-
-export const NotificationJobsResponseDtoHistoryItemPayloadSnapshotTriggerType = {
-  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
-  NPC_SPAWNED: 'NPC_SPAWNED',
-  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
-  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
-} as const;
-
-/**
- * @nullable
- */
-export type NotificationJobsResponseDtoHistoryItemPayloadSnapshotScheduleStrategy = typeof NotificationJobsResponseDtoHistoryItemPayloadSnapshotScheduleStrategy[keyof typeof NotificationJobsResponseDtoHistoryItemPayloadSnapshotScheduleStrategy] | null;
-
-
-export const NotificationJobsResponseDtoHistoryItemPayloadSnapshotScheduleStrategy = {
-  SPAWN_WINDOW_RELATIVE: 'SPAWN_WINDOW_RELATIVE',
-  FIXED_DATETIME: 'FIXED_DATETIME',
-} as const;
-
-/**
- * @nullable
- */
-export type NotificationJobsResponseDtoHistoryItemPayloadSnapshotScheduleAnchor = typeof NotificationJobsResponseDtoHistoryItemPayloadSnapshotScheduleAnchor[keyof typeof NotificationJobsResponseDtoHistoryItemPayloadSnapshotScheduleAnchor] | null;
-
-
-export const NotificationJobsResponseDtoHistoryItemPayloadSnapshotScheduleAnchor = {
-  MIN_SPAWN: 'MIN_SPAWN',
-  MAX_SPAWN: 'MAX_SPAWN',
-} as const;
-
-/**
- * @nullable
- */
-export type NotificationJobsResponseDtoHistoryItemPayloadSnapshot = {[key: string]: unknown} & ({
-  /** @nullable */
-  title?: string | null;
-  /** @nullable */
-  message?: string | null;
-  /** @nullable */
-  content?: string | null;
-  allowedMentions?: NotificationJobsResponseDtoHistoryItemPayloadSnapshotAllowedMentions;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  ruleId?: number | null;
-  /** @nullable */
-  ruleName?: string | null;
-  /** @nullable */
-  triggerType?: NotificationJobsResponseDtoHistoryItemPayloadSnapshotTriggerType;
-  /** @nullable */
-  world?: string | null;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  npcId?: number | null;
-  /** @nullable */
-  npcName?: string | null;
-  /** @nullable */
-  timerKey?: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-     */
-  minSpawnTime?: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-     */
-  maxSpawnTime?: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-     */
-  scheduledFor?: string | null;
-  /** @nullable */
-  scheduleStrategy?: NotificationJobsResponseDtoHistoryItemPayloadSnapshotScheduleStrategy;
-  /** @nullable */
-  scheduleAnchor?: NotificationJobsResponseDtoHistoryItemPayloadSnapshotScheduleAnchor;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  scheduleOffsetMinutes?: number | null;
-  /** @nullable */
-  contentTemplate?: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-     */
-  testTriggeredAt?: string | null;
-} | null) | null;
-
-export type NotificationJobsResponseDtoHistoryItemRuleOwnerType = typeof NotificationJobsResponseDtoHistoryItemRuleOwnerType[keyof typeof NotificationJobsResponseDtoHistoryItemRuleOwnerType];
-
-
-export const NotificationJobsResponseDtoHistoryItemRuleOwnerType = {
-  GUILD: 'GUILD',
-  USER: 'USER',
-} as const;
-
-export type NotificationJobsResponseDtoHistoryItemRuleTriggerType = typeof NotificationJobsResponseDtoHistoryItemRuleTriggerType[keyof typeof NotificationJobsResponseDtoHistoryItemRuleTriggerType];
-
-
-export const NotificationJobsResponseDtoHistoryItemRuleTriggerType = {
-  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
-  NPC_SPAWNED: 'NPC_SPAWNED',
-  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
-  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
-} as const;
-
-/**
- * @nullable
- */
-export type NotificationJobsResponseDtoHistoryItemRuleFilters = {[key: string]: unknown} & ({
-  guildIds?: string[];
-  world?: string;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  npcId?: number | null;
-  /**
-     * @items.minimum -9007199254740991
-     * @items.maximum 9007199254740991
-     */
-  npcIds?: number[];
-  /**
-     * @items.minimum -9007199254740991
-     * @items.maximum 9007199254740991
-     */
-  npcTemplateIds?: number[];
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  itemId?: number | null;
-  /**
-     * @items.minimum -9007199254740991
-     * @items.maximum 9007199254740991
-     */
-  itemIds?: number[];
-} | null) | null;
-
-/**
- * @nullable
- */
-export type NotificationJobsResponseDtoHistoryItemRuleScheduleStrategy = typeof NotificationJobsResponseDtoHistoryItemRuleScheduleStrategy[keyof typeof NotificationJobsResponseDtoHistoryItemRuleScheduleStrategy] | null;
-
-
-export const NotificationJobsResponseDtoHistoryItemRuleScheduleStrategy = {
-  SPAWN_WINDOW_RELATIVE: 'SPAWN_WINDOW_RELATIVE',
-  FIXED_DATETIME: 'FIXED_DATETIME',
-} as const;
-
-/**
- * @nullable
- */
-export type NotificationJobsResponseDtoHistoryItemRuleScheduleAnchor = typeof NotificationJobsResponseDtoHistoryItemRuleScheduleAnchor[keyof typeof NotificationJobsResponseDtoHistoryItemRuleScheduleAnchor] | null;
-
-
-export const NotificationJobsResponseDtoHistoryItemRuleScheduleAnchor = {
-  MIN_SPAWN: 'MIN_SPAWN',
-  MAX_SPAWN: 'MAX_SPAWN',
-} as const;
-
-/**
- * @nullable
- */
-export type NotificationJobsResponseDtoHistoryItemRuleScheduleIntervalType = typeof NotificationJobsResponseDtoHistoryItemRuleScheduleIntervalType[keyof typeof NotificationJobsResponseDtoHistoryItemRuleScheduleIntervalType] | null;
-
-
-export const NotificationJobsResponseDtoHistoryItemRuleScheduleIntervalType = {
-  ONCE: 'ONCE',
-  HOURLY: 'HOURLY',
-  DAILY: 'DAILY',
-  WEEKLY: 'WEEKLY',
-} as const;
-
-export type NotificationJobsResponseDtoHistoryItemRule = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  id: number;
-  ownerType: NotificationJobsResponseDtoHistoryItemRuleOwnerType;
-  ownerId: string;
-  triggerType: NotificationJobsResponseDtoHistoryItemRuleTriggerType;
-  /** @nullable */
-  guildId: string | null;
-  /** @nullable */
-  world: string | null;
-  /** @nullable */
-  name: string | null;
-  /** @nullable */
-  filters: NotificationJobsResponseDtoHistoryItemRuleFilters;
-  /** @nullable */
-  contentTemplate: string | null;
-  /** @nullable */
-  scheduleStrategy: NotificationJobsResponseDtoHistoryItemRuleScheduleStrategy;
-  /** @nullable */
-  scheduleAnchor: NotificationJobsResponseDtoHistoryItemRuleScheduleAnchor;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  scheduleOffsetMinutes: number | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  scheduledAt: string | null;
-  /** @nullable */
-  scheduleIntervalType: NotificationJobsResponseDtoHistoryItemRuleScheduleIntervalType;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  scheduleIntervalValue: number | null;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  scheduleWeekday: number | null;
-  /** @nullable */
-  scheduleTimeOfDay: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  scheduledUntil: string | null;
-  /** @nullable */
-  scheduleTimezone: string | null;
-  enabled: boolean;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  dedupeWindowSeconds: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-};
-
-export type NotificationJobsResponseDtoHistoryItemTargetOwnerType = typeof NotificationJobsResponseDtoHistoryItemTargetOwnerType[keyof typeof NotificationJobsResponseDtoHistoryItemTargetOwnerType];
-
-
-export const NotificationJobsResponseDtoHistoryItemTargetOwnerType = {
-  GUILD: 'GUILD',
-  USER: 'USER',
-} as const;
-
-export type NotificationJobsResponseDtoHistoryItemTargetProvider = typeof NotificationJobsResponseDtoHistoryItemTargetProvider[keyof typeof NotificationJobsResponseDtoHistoryItemTargetProvider];
-
-
-export const NotificationJobsResponseDtoHistoryItemTargetProvider = {
-  DISCORD: 'DISCORD',
-} as const;
-
-export type NotificationJobsResponseDtoHistoryItemTargetTargetType = typeof NotificationJobsResponseDtoHistoryItemTargetTargetType[keyof typeof NotificationJobsResponseDtoHistoryItemTargetTargetType];
-
-
-export const NotificationJobsResponseDtoHistoryItemTargetTargetType = {
-  CHANNEL: 'CHANNEL',
-  DM: 'DM',
-} as const;
-
-export type NotificationJobsResponseDtoHistoryItemTarget = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  id: number;
-  ownerType: NotificationJobsResponseDtoHistoryItemTargetOwnerType;
-  ownerId: string;
-  provider: NotificationJobsResponseDtoHistoryItemTargetProvider;
-  targetType: NotificationJobsResponseDtoHistoryItemTargetTargetType;
-  externalId: string;
-  /** @nullable */
-  displayName: string | null;
-  /** @nullable */
-  guildName: string | null;
-  metadata: NotificationJobsResponseDtoSchema0 | null;
-  active: boolean;
-  canSend: boolean;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastSyncedAt: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastDeliveryAt: string | null;
-  /** @nullable */
-  lastDeliveryError: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-};
-
-export type NotificationJobsResponseDtoHistoryItem = {
-  id: string;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  ruleId: number;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  targetId: number;
-  ownerType: NotificationJobsResponseDtoHistoryItemOwnerType;
-  ownerId: string;
-  jobKind: NotificationJobsResponseDtoHistoryItemJobKind;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  scheduledFor: string;
-  status: NotificationJobsResponseDtoHistoryItemStatus;
-  idempotencyKey: string;
-  /** @nullable */
-  sourceEntityType: string | null;
-  /** @nullable */
-  sourceEntityId: string | null;
-  /** @nullable */
-  sourceEventId: string | null;
-  /** @nullable */
-  payloadSnapshot: NotificationJobsResponseDtoHistoryItemPayloadSnapshot;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  attemptCount: number;
-  /** @nullable */
-  lastError: string | null;
-  /** @nullable */
-  blockedReason: string | null;
-  /** @nullable */
-  providerMessageId: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  processedAt: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-  rule: NotificationJobsResponseDtoHistoryItemRule;
-  target: NotificationJobsResponseDtoHistoryItemTarget;
-};
-
-export interface NotificationJobsResponseDto {
-  pending: NotificationJobsResponseDtoPendingItem[];
-  history: NotificationJobsResponseDtoHistoryItem[];
-}
-
-export type NotificationTargetWithTestTriggerResponseDtoSchema0 = string | number | boolean | (NotificationTargetWithTestTriggerResponseDtoSchema0 | null)[] | {[key: string]: NotificationTargetWithTestTriggerResponseDtoSchema0 | null} | null;
-
-export type NotificationTargetWithTestTriggerResponseDtoOwnerType = typeof NotificationTargetWithTestTriggerResponseDtoOwnerType[keyof typeof NotificationTargetWithTestTriggerResponseDtoOwnerType];
-
-
-export const NotificationTargetWithTestTriggerResponseDtoOwnerType = {
-  GUILD: 'GUILD',
-  USER: 'USER',
-} as const;
-
-export type NotificationTargetWithTestTriggerResponseDtoProvider = typeof NotificationTargetWithTestTriggerResponseDtoProvider[keyof typeof NotificationTargetWithTestTriggerResponseDtoProvider];
-
-
-export const NotificationTargetWithTestTriggerResponseDtoProvider = {
-  DISCORD: 'DISCORD',
-} as const;
-
-export type NotificationTargetWithTestTriggerResponseDtoTargetType = typeof NotificationTargetWithTestTriggerResponseDtoTargetType[keyof typeof NotificationTargetWithTestTriggerResponseDtoTargetType];
-
-
-export const NotificationTargetWithTestTriggerResponseDtoTargetType = {
-  CHANNEL: 'CHANNEL',
-  DM: 'DM',
-} as const;
-
-export type NotificationTargetWithTestTriggerResponseDtoTestTrigger = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  limit: number;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  used: number;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  remaining: number;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  windowSeconds: number;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-     */
-  nextAvailableAt: string | null;
-};
-
-export interface NotificationTargetWithTestTriggerResponseDto {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  id: number;
-  ownerType: NotificationTargetWithTestTriggerResponseDtoOwnerType;
-  ownerId: string;
-  provider: NotificationTargetWithTestTriggerResponseDtoProvider;
-  targetType: NotificationTargetWithTestTriggerResponseDtoTargetType;
-  externalId: string;
-  /** @nullable */
-  displayName: string | null;
-  /** @nullable */
-  guildName: string | null;
-  metadata: NotificationTargetWithTestTriggerResponseDtoSchema0 | null;
-  active: boolean;
-  canSend: boolean;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastSyncedAt: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastDeliveryAt: string | null;
-  /** @nullable */
-  lastDeliveryError: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-  testTrigger: NotificationTargetWithTestTriggerResponseDtoTestTrigger;
-}
-
-export type WatchedItemResponseDtoSchema0 = string | number | boolean | (WatchedItemResponseDtoSchema0 | null)[] | {[key: string]: WatchedItemResponseDtoSchema0 | null} | null;
-
-/**
- * @nullable
- */
-export type WatchedItemResponseDtoItemSnapshot = {[key: string]: unknown} & ({
   name: string;
   icon: string;
   /** @nullable */
   rarity: string | null;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  lvl: number | null;
+  stat?: string;
   /** @nullable */
-  type: string | null;
-  stat: string;
-} | null) | null;
-
-export type WatchedItemResponseDtoNotificationRuleOwnerType = typeof WatchedItemResponseDtoNotificationRuleOwnerType[keyof typeof WatchedItemResponseDtoNotificationRuleOwnerType];
-
-
-export const WatchedItemResponseDtoNotificationRuleOwnerType = {
-  GUILD: 'GUILD',
-  USER: 'USER',
-} as const;
-
-export type WatchedItemResponseDtoNotificationRuleTriggerType = typeof WatchedItemResponseDtoNotificationRuleTriggerType[keyof typeof WatchedItemResponseDtoNotificationRuleTriggerType];
-
-
-export const WatchedItemResponseDtoNotificationRuleTriggerType = {
-  TIMER_BEFORE_SPAWN: 'TIMER_BEFORE_SPAWN',
-  NPC_SPAWNED: 'NPC_SPAWNED',
-  WATCHED_ITEM_DROPPED: 'WATCHED_ITEM_DROPPED',
-  SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
-} as const;
-
-/**
- * @nullable
- */
-export type WatchedItemResponseDtoNotificationRuleFilters = {[key: string]: unknown} & ({
-  guildIds?: string[];
-  world?: string;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  npcId?: number | null;
-  /**
-     * @items.minimum -9007199254740991
-     * @items.maximum 9007199254740991
-     */
-  npcIds?: number[];
-  /**
-     * @items.minimum -9007199254740991
-     * @items.maximum 9007199254740991
-     */
-  npcTemplateIds?: number[];
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  itemId?: number | null;
-  /**
-     * @items.minimum -9007199254740991
-     * @items.maximum 9007199254740991
-     */
-  itemIds?: number[];
-} | null) | null;
-
-/**
- * @nullable
- */
-export type WatchedItemResponseDtoNotificationRuleScheduleStrategy = typeof WatchedItemResponseDtoNotificationRuleScheduleStrategy[keyof typeof WatchedItemResponseDtoNotificationRuleScheduleStrategy] | null;
-
-
-export const WatchedItemResponseDtoNotificationRuleScheduleStrategy = {
-  SPAWN_WINDOW_RELATIVE: 'SPAWN_WINDOW_RELATIVE',
-  FIXED_DATETIME: 'FIXED_DATETIME',
-} as const;
-
-/**
- * @nullable
- */
-export type WatchedItemResponseDtoNotificationRuleScheduleAnchor = typeof WatchedItemResponseDtoNotificationRuleScheduleAnchor[keyof typeof WatchedItemResponseDtoNotificationRuleScheduleAnchor] | null;
-
-
-export const WatchedItemResponseDtoNotificationRuleScheduleAnchor = {
-  MIN_SPAWN: 'MIN_SPAWN',
-  MAX_SPAWN: 'MAX_SPAWN',
-} as const;
-
-/**
- * @nullable
- */
-export type WatchedItemResponseDtoNotificationRuleScheduleIntervalType = typeof WatchedItemResponseDtoNotificationRuleScheduleIntervalType[keyof typeof WatchedItemResponseDtoNotificationRuleScheduleIntervalType] | null;
-
-
-export const WatchedItemResponseDtoNotificationRuleScheduleIntervalType = {
-  ONCE: 'ONCE',
-  HOURLY: 'HOURLY',
-  DAILY: 'DAILY',
-  WEEKLY: 'WEEKLY',
-} as const;
-
-export type WatchedItemResponseDtoNotificationRuleTargetsItemTargetOwnerType = typeof WatchedItemResponseDtoNotificationRuleTargetsItemTargetOwnerType[keyof typeof WatchedItemResponseDtoNotificationRuleTargetsItemTargetOwnerType];
-
-
-export const WatchedItemResponseDtoNotificationRuleTargetsItemTargetOwnerType = {
-  GUILD: 'GUILD',
-  USER: 'USER',
-} as const;
-
-export type WatchedItemResponseDtoNotificationRuleTargetsItemTargetProvider = typeof WatchedItemResponseDtoNotificationRuleTargetsItemTargetProvider[keyof typeof WatchedItemResponseDtoNotificationRuleTargetsItemTargetProvider];
-
-
-export const WatchedItemResponseDtoNotificationRuleTargetsItemTargetProvider = {
-  DISCORD: 'DISCORD',
-} as const;
-
-export type WatchedItemResponseDtoNotificationRuleTargetsItemTargetTargetType = typeof WatchedItemResponseDtoNotificationRuleTargetsItemTargetTargetType[keyof typeof WatchedItemResponseDtoNotificationRuleTargetsItemTargetTargetType];
-
-
-export const WatchedItemResponseDtoNotificationRuleTargetsItemTargetTargetType = {
-  CHANNEL: 'CHANNEL',
-  DM: 'DM',
-} as const;
-
-export type WatchedItemResponseDtoNotificationRuleTargetsItemTarget = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  id: number;
-  ownerType: WatchedItemResponseDtoNotificationRuleTargetsItemTargetOwnerType;
-  ownerId: string;
-  provider: WatchedItemResponseDtoNotificationRuleTargetsItemTargetProvider;
-  targetType: WatchedItemResponseDtoNotificationRuleTargetsItemTargetTargetType;
-  externalId: string;
-  /** @nullable */
-  displayName: string | null;
-  /** @nullable */
-  guildName: string | null;
-  metadata: WatchedItemResponseDtoSchema0 | null;
-  active: boolean;
-  canSend: boolean;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastSyncedAt: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastDeliveryAt: string | null;
-  /** @nullable */
-  lastDeliveryError: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-};
-
-export type WatchedItemResponseDtoNotificationRuleTargetsItem = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  ruleId: number;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  targetId: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  target: WatchedItemResponseDtoNotificationRuleTargetsItemTarget;
-};
-
-/**
- * @nullable
- */
-export type WatchedItemResponseDtoNotificationRule = {[key: string]: unknown} & ({
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  id: number;
-  ownerType: WatchedItemResponseDtoNotificationRuleOwnerType;
-  ownerId: string;
-  triggerType: WatchedItemResponseDtoNotificationRuleTriggerType;
-  /** @nullable */
-  guildId: string | null;
-  /** @nullable */
-  world: string | null;
-  /** @nullable */
-  name: string | null;
-  /** @nullable */
-  filters: WatchedItemResponseDtoNotificationRuleFilters;
-  /** @nullable */
-  contentTemplate: string | null;
-  /** @nullable */
-  scheduleStrategy: WatchedItemResponseDtoNotificationRuleScheduleStrategy;
-  /** @nullable */
-  scheduleAnchor: WatchedItemResponseDtoNotificationRuleScheduleAnchor;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  scheduleOffsetMinutes: number | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  scheduledAt: string | null;
-  /** @nullable */
-  scheduleIntervalType: WatchedItemResponseDtoNotificationRuleScheduleIntervalType;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  scheduleIntervalValue: number | null;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  scheduleWeekday: number | null;
-  /** @nullable */
-  scheduleTimeOfDay: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  scheduledUntil: string | null;
-  /** @nullable */
-  scheduleTimezone: string | null;
-  enabled: boolean;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  dedupeWindowSeconds: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-  targets: WatchedItemResponseDtoNotificationRuleTargetsItem[];
-} | null) | null;
-
-export interface WatchedItemResponseDto {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  id: number;
-  userId: string;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  itemId: number;
-  itemName: string;
-  world: string;
-  enabled: boolean;
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     * @nullable
-     */
-  notificationRuleId: number | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-  /** @nullable */
-  itemSnapshot: WatchedItemResponseDtoItemSnapshot;
-  /** @nullable */
-  notificationRule: WatchedItemResponseDtoNotificationRule;
-}
-
-export interface CreateWatchedItemDto {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  itemId: number;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  itemName: string;
-  /**
-     * @minLength 1
-     * @maxLength 50
-     */
-  world: string;
-  /**
-     * @minItems 1
-     * @maxItems 20
-     * @items.maxLength 50
-     */
-  guildIds: string[];
-}
-
-export interface CreateWatchedItemQuickAddDto {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  itemId: number;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  itemName: string;
-  /**
-     * @minLength 1
-     * @maxLength 50
-     */
-  world: string;
-  /**
-     * @minLength 1
-     * @maxLength 50
-     */
-  guildId: string;
-}
-
-export type CreateNotificationDtoNpc = {
-  id: number;
-  /** @minLength 1 */
-  name: string;
-  /** @minLength 1 */
-  location: string;
-  lvl: number;
-  prof?: string;
-  wt: number;
-  hpp?: number;
-  x?: number;
-  y?: number;
-  /** @minLength 1 */
-  icon: string;
-  type: number;
-};
-
-export type CreateNotificationDtoCharacterClan = {
-  id?: number;
-  /** @maxLength 255 */
-  name?: string;
-};
-
-export type CreateNotificationDtoCharacter = {
-  lvl: number;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  nick: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  accountId: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  characterId: string;
-  /**
-     * @minLength 1
-     * @maxLength 100
-     */
-  prof: string;
-  /**
-     * @minLength 1
-     * @maxLength 2048
-     */
-  icon: string;
-  clan?: CreateNotificationDtoCharacterClan;
-};
-
-export interface CreateNotificationDto {
-  /** @maxLength 500 */
-  message?: string;
-  npc?: CreateNotificationDtoNpc;
-  /**
-     * @minItems 1
-     * @maxItems 10
-     * @items.maxLength 50
-     */
-  guildIds: string[];
-  /**
-     * @minLength 1
-     * @maxLength 50
-     */
-  world: string;
-  isGatheringParty?: boolean;
-  character?: CreateNotificationDtoCharacter;
-}
-
-export interface NotificationResponseDtoOutput {
-  /** @minLength 1 */
-  notificationId: string;
-  /** @items.minLength 1 */
-  guildIds: string[];
-}
-
-export type NotificationRateLimitResponseDtoMessage = typeof NotificationRateLimitResponseDtoMessage[keyof typeof NotificationRateLimitResponseDtoMessage];
-
-
-export const NotificationRateLimitResponseDtoMessage = {
-  NOTIFICATION_RATE_LIMITED: 'NOTIFICATION_RATE_LIMITED',
-} as const;
-
-export interface NotificationRateLimitResponseDto {
-  message: NotificationRateLimitResponseDtoMessage;
-  /**
-     * @maximum 9007199254740991
-     * @exclusiveMinimum 0
-     */
-  retryAfterMs: number;
-}
-
-export type CreateVolunteerDtoCharacterClan = {
-  id?: number;
-  /** @maxLength 255 */
-  name?: string;
-};
-
-export type CreateVolunteerDtoCharacter = {
-  lvl: number;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  nick: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  accountId: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  characterId: string;
-  /**
-     * @minLength 1
-     * @maxLength 100
-     */
-  prof: string;
-  /**
-     * @minLength 1
-     * @maxLength 2048
-     */
-  icon: string;
-  clan?: CreateVolunteerDtoCharacterClan;
-};
-
-export interface CreateVolunteerDto {
-  /**
-     * @minLength 1
-     * @maxLength 50
-     */
-  world: string;
-  /**
-     * @minLength 1
-     * @maxLength 20
-     */
-  targetDiscordId: string;
-  character: CreateVolunteerDtoCharacter;
-}
-
-export type ActivePartyGatheringSummaryVolunteersItemPartyPresence = typeof ActivePartyGatheringSummaryVolunteersItemPartyPresence[keyof typeof ActivePartyGatheringSummaryVolunteersItemPartyPresence];
-
-
-export const ActivePartyGatheringSummaryVolunteersItemPartyPresence = {
-  OUTSIDE: 'OUTSIDE',
-  IN_PARTY: 'IN_PARTY',
-} as const;
-
-export type ActivePartyGatheringSummaryVolunteersItem = {
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  characterId: string;
-  /** @maxLength 255 */
-  nick: string;
-  /** @maxLength 2048 */
-  icon: string;
-  lvl: number;
-  /** @maxLength 100 */
-  prof: string;
-  partyPresence: ActivePartyGatheringSummaryVolunteersItemPartyPresence;
-};
-
-export type ActivePartyGatheringSummaryPartyState = {
-  status: 'UNKNOWN';
-} | {
-  status: 'OBSERVED';
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  observedAt: string;
-  /** @maxItems 20 */
-  members: {
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  characterId: string;
-  /** @maxLength 255 */
-  nick?: string;
-  /** @maxLength 2048 */
-  icon?: string;
-  lvl?: number;
-  /** @maxLength 100 */
-  prof?: string;
-}[];
-};
-
-export type ActivePartyGatheringSummaryNpc = {
-  prof?: string;
-  icon?: string;
-  name: string;
-  location: string;
-  lvl: number | 'Infinity' | '-Infinity' | 'NaN';
-  type?: string;
-  x?: number | 'Infinity' | '-Infinity' | 'NaN';
-  y?: number | 'Infinity' | '-Infinity' | 'NaN';
-};
-
-export interface ActivePartyGatheringSummary {
-  notificationId: string;
-  organizerName: string;
-  organizerDiscordId?: string;
-  organizerLvl?: number;
-  organizerProf?: string;
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  applicantCount: number;
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  inPartyCount: number;
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  partyMemberCount?: number;
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  revision?: number;
-  volunteers?: ActivePartyGatheringSummaryVolunteersItem[];
-  partyState?: ActivePartyGatheringSummaryPartyState;
-  guildIds: string[];
-  world: string;
-  description?: string;
-  minLvl?: number;
-  maxLvl?: number;
-  npc?: ActivePartyGatheringSummaryNpc;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  expiresAt: string;
-}
-
-export type PartyReadyRoomProjectionDtoOutputNpc = {
-  prof?: string;
-  icon?: string;
-  name: string;
-  location: string;
-  lvl: number | 'Infinity' | '-Infinity' | 'NaN';
-  type: string;
-  x?: number | 'Infinity' | '-Infinity' | 'NaN';
-  y?: number | 'Infinity' | '-Infinity' | 'NaN';
-};
-
-export type PartyReadyRoomProjectionDtoOutputSchemaVersion = typeof PartyReadyRoomProjectionDtoOutputSchemaVersion[keyof typeof PartyReadyRoomProjectionDtoOutputSchemaVersion];
-
-
-export const PartyReadyRoomProjectionDtoOutputSchemaVersion = {
-  NUMBER_3: 3,
-} as const;
-
-export type PartyReadyRoomProjectionDtoOutputOrganizerCharacterClan = {
-  id?: number;
-  /** @maxLength 255 */
-  name?: string;
-};
-
-export type PartyReadyRoomProjectionDtoOutputOrganizerCharacter = {
-  lvl: number;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  nick: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  accountId: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  characterId: string;
-  /**
-     * @minLength 1
-     * @maxLength 100
-     */
-  prof: string;
-  /**
-     * @minLength 1
-     * @maxLength 2048
-     */
-  icon: string;
-  clan?: PartyReadyRoomProjectionDtoOutputOrganizerCharacterClan;
-};
-
-export type PartyReadyRoomProjectionDtoOutputPartyState = {
-  status: 'UNKNOWN';
-} | {
-  status: 'OBSERVED';
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  observedAt: string;
-  /** @maxItems 20 */
-  members: {
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  characterId: string;
-  /** @maxLength 255 */
-  nick?: string;
-  /** @maxLength 2048 */
-  icon?: string;
-  lvl?: number;
-  /** @maxLength 100 */
-  prof?: string;
-}[];
-};
-
-export type PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence = typeof PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence[keyof typeof PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence];
-
-
-export const PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence = {
-  OUTSIDE: 'OUTSIDE',
-  IN_PARTY: 'IN_PARTY',
-} as const;
-
-export type PartyReadyRoomProjectionDtoOutputVolunteersItem = {
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  characterId: string;
-  /** @maxLength 255 */
-  nick: string;
-  /** @maxLength 2048 */
-  icon: string;
-  lvl: number;
-  /** @maxLength 100 */
-  prof: string;
-  partyPresence: PartyReadyRoomProjectionDtoOutputVolunteersItemPartyPresence;
-};
-
-export type PartyReadyRoomProjectionDtoOutputStatus = typeof PartyReadyRoomProjectionDtoOutputStatus[keyof typeof PartyReadyRoomProjectionDtoOutputStatus];
-
-
-export const PartyReadyRoomProjectionDtoOutputStatus = {
-  ACTIVE: 'ACTIVE',
-} as const;
-
-export type PartyReadyRoomProjectionDtoOutputViewer = typeof PartyReadyRoomProjectionDtoOutputViewer[keyof typeof PartyReadyRoomProjectionDtoOutputViewer];
-
-
-export const PartyReadyRoomProjectionDtoOutputViewer = {
-  ORGANIZER: 'ORGANIZER',
-  PARTICIPANT: 'PARTICIPANT',
-} as const;
-
-export type PartyReadyRoomProjectionDtoOutputParticipantsCharacterClan = {
-  id?: number;
-  /** @maxLength 255 */
-  name?: string;
-};
-
-export type PartyReadyRoomProjectionDtoOutputParticipantsCharacter = {
-  lvl: number;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  nick: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  accountId: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  characterId: string;
-  /**
-     * @minLength 1
-     * @maxLength 100
-     */
-  prof: string;
-  /**
-     * @minLength 1
-     * @maxLength 2048
-     */
-  icon: string;
-  clan?: PartyReadyRoomProjectionDtoOutputParticipantsCharacterClan;
-};
-
-export type PartyReadyRoomProjectionDtoOutputParticipantsPartyPresence = typeof PartyReadyRoomProjectionDtoOutputParticipantsPartyPresence[keyof typeof PartyReadyRoomProjectionDtoOutputParticipantsPartyPresence];
-
-
-export const PartyReadyRoomProjectionDtoOutputParticipantsPartyPresence = {
-  OUTSIDE: 'OUTSIDE',
-  IN_PARTY: 'IN_PARTY',
-} as const;
-
-export type PartyReadyRoomProjectionDtoOutputParticipants = {[key: string]: {
-  participantId: string;
-  discordId: string;
-  character: PartyReadyRoomProjectionDtoOutputParticipantsCharacter;
-  partyPresence: PartyReadyRoomProjectionDtoOutputParticipantsPartyPresence;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-}};
-
-export interface PartyReadyRoomProjectionDtoOutput {
-  npc?: PartyReadyRoomProjectionDtoOutputNpc;
-  schemaVersion: PartyReadyRoomProjectionDtoOutputSchemaVersion;
-  notificationId: string;
-  organizerDiscordId: string;
-  organizerCharacter: PartyReadyRoomProjectionDtoOutputOrganizerCharacter;
-  guildIds: string[];
-  world: string;
-  description?: string;
-  minLvl?: number;
-  maxLvl?: number;
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  partyMemberCount?: number;
-  partyState?: PartyReadyRoomProjectionDtoOutputPartyState;
-  volunteers?: PartyReadyRoomProjectionDtoOutputVolunteersItem[];
-  status: PartyReadyRoomProjectionDtoOutputStatus;
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  revision: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  expiresAt: string;
-  viewer: PartyReadyRoomProjectionDtoOutputViewer;
-  participants: PartyReadyRoomProjectionDtoOutputParticipants;
-  ownedParticipantIds?: string[];
-}
-
-export type CreatePartyGatheringDtoCharacterClan = {
-  id?: number;
-  /** @maxLength 255 */
-  name?: string;
-};
-
-export type CreatePartyGatheringDtoCharacter = {
-  lvl: number;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  nick: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  accountId: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  characterId: string;
-  /**
-     * @minLength 1
-     * @maxLength 100
-     */
-  prof: string;
-  /**
-     * @minLength 1
-     * @maxLength 2048
-     */
-  icon: string;
-  clan?: CreatePartyGatheringDtoCharacterClan;
-};
-
-export interface CreatePartyGatheringDto {
-  /**
-     * @minItems 1
-     * @maxItems 10
-     * @items.maxLength 50
-     */
-  guildIds: string[];
-  /**
-     * @minLength 1
-     * @maxLength 50
-     */
-  world: string;
-  character: CreatePartyGatheringDtoCharacter;
-  /** @maxLength 200 */
-  description?: string;
-  /**
-     * @minimum 1
-     * @maximum 500
-     */
-  minLvl?: number;
-  /**
-     * @minimum 1
-     * @maximum 500
-     */
-  maxLvl?: number;
-}
-
-export type PartyReadyRoomApplicationDtoCharacterClan = {
-  id?: number;
-  /** @maxLength 255 */
-  name?: string;
-};
-
-export type PartyReadyRoomApplicationDtoCharacter = {
-  lvl: number;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  nick: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  accountId: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  characterId: string;
-  /**
-     * @minLength 1
-     * @maxLength 100
-     */
-  prof: string;
-  /**
-     * @minLength 1
-     * @maxLength 2048
-     */
-  icon: string;
-  clan?: PartyReadyRoomApplicationDtoCharacterClan;
-};
-
-export interface PartyReadyRoomApplicationDto {
-  /**
-     * @minLength 1
-     * @maxLength 50
-     */
-  world: string;
-  character: PartyReadyRoomApplicationDtoCharacter;
-}
-
-export interface PartyReadyRoomParticipantIdentityDto {
-  /**
-     * @minLength 1
-     * @maxLength 100
-     */
-  participantId: string;
-}
-
-export type PartyReadyRoomClientUpdateDtoOutputSchemaVersion = typeof PartyReadyRoomClientUpdateDtoOutputSchemaVersion[keyof typeof PartyReadyRoomClientUpdateDtoOutputSchemaVersion];
-
-
-export const PartyReadyRoomClientUpdateDtoOutputSchemaVersion = {
-  NUMBER_3: 3,
-} as const;
-
-export type PartyReadyRoomClientUpdateDtoOutputType = typeof PartyReadyRoomClientUpdateDtoOutputType[keyof typeof PartyReadyRoomClientUpdateDtoOutputType];
-
-
-export const PartyReadyRoomClientUpdateDtoOutputType = {
-  UPSERT: 'UPSERT',
-  REMOVE: 'REMOVE',
-} as const;
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionNpc = {
-  prof?: string;
-  icon?: string;
-  name: string;
-  location: string;
-  lvl: number | 'Infinity' | '-Infinity' | 'NaN';
-  type: string;
-  x?: number | 'Infinity' | '-Infinity' | 'NaN';
-  y?: number | 'Infinity' | '-Infinity' | 'NaN';
-};
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion = typeof PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion];
-
-
-export const PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion = {
-  NUMBER_3: 3,
-} as const;
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionOrganizerCharacterClan = {
-  id?: number;
-  /** @maxLength 255 */
-  name?: string;
-};
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionOrganizerCharacter = {
-  lvl: number;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  nick: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  accountId: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  characterId: string;
-  /**
-     * @minLength 1
-     * @maxLength 100
-     */
-  prof: string;
-  /**
-     * @minLength 1
-     * @maxLength 2048
-     */
-  icon: string;
-  clan?: PartyReadyRoomClientUpdateDtoOutputProjectionOrganizerCharacterClan;
-};
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionPartyState = {
-  status: 'UNKNOWN';
-} | {
-  status: 'OBSERVED';
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  observedAt: string;
-  /** @maxItems 20 */
-  members: {
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  characterId: string;
-  /** @maxLength 255 */
-  nick?: string;
-  /** @maxLength 2048 */
-  icon?: string;
-  lvl?: number;
-  /** @maxLength 100 */
-  prof?: string;
-}[];
-};
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence = typeof PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence];
-
-
-export const PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence = {
-  OUTSIDE: 'OUTSIDE',
-  IN_PARTY: 'IN_PARTY',
-} as const;
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItem = {
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  characterId: string;
-  /** @maxLength 255 */
-  nick: string;
-  /** @maxLength 2048 */
-  icon: string;
-  lvl: number;
-  /** @maxLength 100 */
-  prof: string;
-  partyPresence: PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItemPartyPresence;
-};
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionStatus = typeof PartyReadyRoomClientUpdateDtoOutputProjectionStatus[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionStatus];
-
-
-export const PartyReadyRoomClientUpdateDtoOutputProjectionStatus = {
-  ACTIVE: 'ACTIVE',
-} as const;
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionViewer = typeof PartyReadyRoomClientUpdateDtoOutputProjectionViewer[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionViewer];
-
-
-export const PartyReadyRoomClientUpdateDtoOutputProjectionViewer = {
-  ORGANIZER: 'ORGANIZER',
-  PARTICIPANT: 'PARTICIPANT',
-} as const;
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsCharacterClan = {
-  id?: number;
-  /** @maxLength 255 */
-  name?: string;
-};
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsCharacter = {
-  lvl: number;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  nick: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  accountId: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  characterId: string;
-  /**
-     * @minLength 1
-     * @maxLength 100
-     */
-  prof: string;
-  /**
-     * @minLength 1
-     * @maxLength 2048
-     */
-  icon: string;
-  clan?: PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsCharacterClan;
-};
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsPartyPresence = typeof PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsPartyPresence[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsPartyPresence];
-
-
-export const PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsPartyPresence = {
-  OUTSIDE: 'OUTSIDE',
-  IN_PARTY: 'IN_PARTY',
-} as const;
-
-export type PartyReadyRoomClientUpdateDtoOutputProjectionParticipants = {[key: string]: {
-  participantId: string;
-  discordId: string;
-  character: PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsCharacter;
-  partyPresence: PartyReadyRoomClientUpdateDtoOutputProjectionParticipantsPartyPresence;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-}};
-
-export type PartyReadyRoomClientUpdateDtoOutputProjection = {
-  npc?: PartyReadyRoomClientUpdateDtoOutputProjectionNpc;
-  schemaVersion: PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion;
-  notificationId: string;
-  organizerDiscordId: string;
-  organizerCharacter: PartyReadyRoomClientUpdateDtoOutputProjectionOrganizerCharacter;
-  guildIds: string[];
-  world: string;
-  description?: string;
-  minLvl?: number;
-  maxLvl?: number;
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  partyMemberCount?: number;
-  partyState?: PartyReadyRoomClientUpdateDtoOutputProjectionPartyState;
-  volunteers?: PartyReadyRoomClientUpdateDtoOutputProjectionVolunteersItem[];
-  status: PartyReadyRoomClientUpdateDtoOutputProjectionStatus;
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  revision: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  expiresAt: string;
-  viewer: PartyReadyRoomClientUpdateDtoOutputProjectionViewer;
-  participants: PartyReadyRoomClientUpdateDtoOutputProjectionParticipants;
-  ownedParticipantIds?: string[];
-};
-
-export interface PartyReadyRoomClientUpdateDtoOutput {
-  schemaVersion: PartyReadyRoomClientUpdateDtoOutputSchemaVersion;
-  type: PartyReadyRoomClientUpdateDtoOutputType;
-  projection?: PartyReadyRoomClientUpdateDtoOutputProjection;
-  notificationId?: string;
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  revision?: number;
-}
-
-export interface PartyReadyRoomParticipantActionDto {
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  expectedRevision: number;
-  /**
-     * @minLength 1
-     * @maxLength 100
-     */
-  participantId: string;
-}
-
-export interface PartyReadyRoomResolveInvitationTargetsDto {
-  /**
-     * @minItems 1
-     * @maxItems 100
-     * @items.minLength 1
-     * @items.maxLength 100
-     */
-  participantIds: string[];
-}
-
-export type PartyReadyRoomInvitationTargetsDtoOutputTargetsItem = {
-  participantId: string;
-  characterId: string;
-};
-
-export interface PartyReadyRoomInvitationTargetsDtoOutput {
-  targets: PartyReadyRoomInvitationTargetsDtoOutputTargetsItem[];
-}
-
-export type PartyReadyRoomObservationDtoMembersItem = {
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  characterId: string;
-  /** @maxLength 255 */
-  nick?: string;
-  /** @maxLength 2048 */
-  icon?: string;
-  lvl?: number;
-  /** @maxLength 100 */
-  prof?: string;
-};
-
-export interface PartyReadyRoomObservationDto {
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  expectedRevision?: number;
-  /** @maxItems 20 */
-  members?: PartyReadyRoomObservationDtoMembersItem[];
-  /**
-     * @maxItems 20
-     * @items.minLength 1
-     * @items.maxLength 255
-     */
-  memberCharacterIds: string[];
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  organizerAccountId: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  organizerCharacterId: string;
-}
-
-export interface PartyReadyRoomExpectedRevisionDto {
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  expectedRevision: number;
-}
-
-export type SoundSettingsResponseDtoSchema0 = string | number | boolean | (SoundSettingsResponseDtoSchema0 | null)[] | {[key: string]: SoundSettingsResponseDtoSchema0 | null} | null;
-
-export interface SoundSettingsResponseDto {
-  userId: string;
-  masterVolume: number;
-  notificationsVolume: number;
-  detectorVolume: number;
-  timersVolume: number;
-  pingsVolume: number;
-  notificationsConfig: SoundSettingsResponseDtoSchema0 | null;
-  detectorConfig: SoundSettingsResponseDtoSchema0 | null;
-  timersConfig: SoundSettingsResponseDtoSchema0 | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-}
-
-export type UpdateSoundSettingsDtoNotificationsConfigELITE2 = {
-  /**
-     * @minimum 0
-     * @maximum 1
-     */
-  volume?: number;
-  soundUrl?: '' | string;
-};
-
-export type UpdateSoundSettingsDtoNotificationsConfigHERO = {
-  /**
-     * @minimum 0
-     * @maximum 1
-     */
-  volume?: number;
-  soundUrl?: '' | string;
-};
-
-export type UpdateSoundSettingsDtoNotificationsConfigTITAN = {
-  /**
-     * @minimum 0
-     * @maximum 1
-     */
-  volume?: number;
-  soundUrl?: '' | string;
-};
-
-export type UpdateSoundSettingsDtoNotificationsConfigCOLOSSUS = {
-  /**
-     * @minimum 0
-     * @maximum 1
-     */
-  volume?: number;
-  soundUrl?: '' | string;
-};
-
-export type UpdateSoundSettingsDtoNotificationsConfigMessage = {
-  /**
-     * @minimum 0
-     * @maximum 1
-     */
-  volume?: number;
-  soundUrl?: '' | string;
-};
-
-export type UpdateSoundSettingsDtoNotificationsConfig = {
-  ELITE2?: UpdateSoundSettingsDtoNotificationsConfigELITE2;
-  HERO?: UpdateSoundSettingsDtoNotificationsConfigHERO;
-  TITAN?: UpdateSoundSettingsDtoNotificationsConfigTITAN;
-  COLOSSUS?: UpdateSoundSettingsDtoNotificationsConfigCOLOSSUS;
-  message?: UpdateSoundSettingsDtoNotificationsConfigMessage;
-};
-
-export type UpdateSoundSettingsDtoDetectorConfigELITE2 = {
-  /**
-     * @minimum 0
-     * @maximum 1
-     */
-  volume?: number;
-  soundUrl?: '' | string;
-};
-
-export type UpdateSoundSettingsDtoDetectorConfigHERO = {
-  /**
-     * @minimum 0
-     * @maximum 1
-     */
-  volume?: number;
-  soundUrl?: '' | string;
-};
-
-export type UpdateSoundSettingsDtoDetectorConfigTITAN = {
-  /**
-     * @minimum 0
-     * @maximum 1
-     */
-  volume?: number;
-  soundUrl?: '' | string;
-};
-
-export type UpdateSoundSettingsDtoDetectorConfigCOLOSSUS = {
-  /**
-     * @minimum 0
-     * @maximum 1
-     */
-  volume?: number;
-  soundUrl?: '' | string;
-};
-
-export type UpdateSoundSettingsDtoDetectorConfigMessage = {
-  /**
-     * @minimum 0
-     * @maximum 1
-     */
-  volume?: number;
-  soundUrl?: '' | string;
-};
-
-export type UpdateSoundSettingsDtoDetectorConfig = {
-  ELITE2?: UpdateSoundSettingsDtoDetectorConfigELITE2;
-  HERO?: UpdateSoundSettingsDtoDetectorConfigHERO;
-  TITAN?: UpdateSoundSettingsDtoDetectorConfigTITAN;
-  COLOSSUS?: UpdateSoundSettingsDtoDetectorConfigCOLOSSUS;
-  message?: UpdateSoundSettingsDtoDetectorConfigMessage;
-};
-
-export type UpdateSoundSettingsDtoTimersConfigELITE2 = {
-  /**
-     * @minimum 0
-     * @maximum 1
-     */
-  volume?: number;
-  soundUrl?: '' | string;
-};
-
-export type UpdateSoundSettingsDtoTimersConfigHERO = {
-  /**
-     * @minimum 0
-     * @maximum 1
-     */
-  volume?: number;
-  soundUrl?: '' | string;
-};
-
-export type UpdateSoundSettingsDtoTimersConfigTITAN = {
-  /**
-     * @minimum 0
-     * @maximum 1
-     */
-  volume?: number;
-  soundUrl?: '' | string;
-};
-
-export type UpdateSoundSettingsDtoTimersConfigCOLOSSUS = {
-  /**
-     * @minimum 0
-     * @maximum 1
-     */
-  volume?: number;
-  soundUrl?: '' | string;
-};
-
-export type UpdateSoundSettingsDtoTimersConfigMessage = {
-  /**
-     * @minimum 0
-     * @maximum 1
-     */
-  volume?: number;
-  soundUrl?: '' | string;
-};
-
-export type UpdateSoundSettingsDtoTimersConfig = {
-  ELITE2?: UpdateSoundSettingsDtoTimersConfigELITE2;
-  HERO?: UpdateSoundSettingsDtoTimersConfigHERO;
-  TITAN?: UpdateSoundSettingsDtoTimersConfigTITAN;
-  COLOSSUS?: UpdateSoundSettingsDtoTimersConfigCOLOSSUS;
-  message?: UpdateSoundSettingsDtoTimersConfigMessage;
-};
-
-export interface UpdateSoundSettingsDto {
-  /**
-     * @minimum 0
-     * @maximum 1
-     */
-  masterVolume?: number;
-  /**
-     * @minimum 0
-     * @maximum 1
-     */
-  notificationsVolume?: number;
-  /**
-     * @minimum 0
-     * @maximum 1
-     */
-  detectorVolume?: number;
-  /**
-     * @minimum 0
-     * @maximum 1
-     */
-  timersVolume?: number;
-  /**
-     * @minimum 0
-     * @maximum 1
-     */
-  pingsVolume?: number;
-  notificationsConfig?: UpdateSoundSettingsDtoNotificationsConfig;
-  detectorConfig?: UpdateSoundSettingsDtoDetectorConfig;
-  timersConfig?: UpdateSoundSettingsDtoTimersConfig;
-}
-
-export type EventListItemResponseDtoHeroNpcsItem = {
-  id: string;
-  /** @nullable */
-  npcId: number | null;
-  npcName: string;
-  /** @nullable */
-  npcIcon: string | null;
-  /** @nullable */
-  npcLvl: number | null;
-};
-
-export interface EventListItemResponseDto {
-  id: string;
-  guildId: string;
-  name: string;
-  world: string;
-  active: boolean;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  startsAt: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  endsAt: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-  heroNpcs: EventListItemResponseDtoHeroNpcsItem[];
-}
-
-export type CreateEventDtoScoringRulesRulesItemConditionsItem = {
-  type: 'NUMERIC';
-  factor: 'trackingDurationPercentage' | 'trackingDurationSeconds' | 'assignedMembersCount' | 'minutesSinceLeaveToKill' | 'timeOnMapSeconds' | 'afkPercentage' | 'respawnDurationSeconds' | 'respawnProgressPercentage';
-  operator: '>' | '>=' | '<' | '<=' | '==' | '!=';
-  value: number;
-} | {
-  type: 'BOOLEAN';
-  factor: 'eligible' | 'memberPresentAtKill' | 'wasPresent';
-  value: boolean;
-} | {
-  type: 'KILL_TIME_IN_WINDOW';
-  /** @pattern ^([01]\d|2[0-3]):([0-5]\d)$ */
-  from: string;
-  /** @pattern ^([01]\d|2[0-3]):([0-5]\d)$ */
-  to: string;
-} | {
-  type: 'RESPAWN_WINDOW_COVERAGE';
-  /** @pattern ^([01]\d|2[0-3]):([0-5]\d)$ */
-  from: string;
-  /** @pattern ^([01]\d|2[0-3]):([0-5]\d)$ */
-  to: string;
-  operator: '>' | '>=' | '<' | '<=' | '==' | '!=';
-  value: number;
-};
-
-export type CreateEventDtoScoringRulesRulesItemActionType = typeof CreateEventDtoScoringRulesRulesItemActionType[keyof typeof CreateEventDtoScoringRulesRulesItemActionType];
-
-
-export const CreateEventDtoScoringRulesRulesItemActionType = {
-  SET_BASE: 'SET_BASE',
-  ADD_BONUS: 'ADD_BONUS',
-  ZERO_BASE: 'ZERO_BASE',
-} as const;
-
-export type CreateEventDtoScoringRulesRulesItemAction = {
-  type: CreateEventDtoScoringRulesRulesItemActionType;
-  /** @minimum 0 */
-  points?: number;
-};
-
-export type CreateEventDtoScoringRulesRulesItem = {
-  id: string;
-  name?: string;
-  enabled?: boolean;
-  conditions: CreateEventDtoScoringRulesRulesItemConditionsItem[];
-  action: CreateEventDtoScoringRulesRulesItemAction;
-};
-
-export type CreateEventDtoScoringRules = {
-  /**
-     * @minimum 1
-     * @maximum 1
-     */
-  version: number;
-  timezone: string;
-  /** @minimum 0 */
-  hardCapPoints: number;
-  /**
-     * @minimum 0
-     * @maximum 100
-     */
-  minTrackingPercentForBonuses?: number;
-  rules: CreateEventDtoScoringRulesRulesItem[];
-};
-
-export type CreateEventDtoScoringMode = typeof CreateEventDtoScoringMode[keyof typeof CreateEventDtoScoringMode];
-
-
-export const CreateEventDtoScoringMode = {
-  SIMPLE: 'SIMPLE',
-  ADVANCED: 'ADVANCED',
-} as const;
-
-export type CreateEventDtoHeroNpcsItemMapsItem = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  mapId: number;
-  mapName: string;
-};
-
-export type CreateEventDtoHeroNpcsItem = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  npcId?: number;
-  npcName: string;
-  maps: CreateEventDtoHeroNpcsItemMapsItem[];
-};
-
-export interface CreateEventDto {
-  name: string;
-  world: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  startsAt?: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  endsAt?: string;
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  basePointsPerKill?: number;
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  assignmentTimeoutMinutes?: number;
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  participationConfirmationMinutes?: number;
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  mapAssignmentCap?: number;
-  /** @maxLength 10000 */
-  rulebookMarkdown?: string;
-  scoringRules?: CreateEventDtoScoringRules;
-  scoringMode?: CreateEventDtoScoringMode;
-  heroNpcs?: CreateEventDtoHeroNpcsItem[];
-}
-
-export type EventMutationResponseDtoSchema0 = string | number | boolean | (EventMutationResponseDtoSchema0 | null)[] | {[key: string]: EventMutationResponseDtoSchema0 | null} | null;
-
-export type EventMutationResponseDtoScoringMode = typeof EventMutationResponseDtoScoringMode[keyof typeof EventMutationResponseDtoScoringMode];
-
-
-export const EventMutationResponseDtoScoringMode = {
-  SIMPLE: 'SIMPLE',
-  ADVANCED: 'ADVANCED',
-} as const;
-
-export type EventMutationResponseDtoHeroNpcsItemMapsItemAssignedMembersItemRolesItem = {
-  position: number;
-  /** @nullable */
-  color: number | null;
-};
-
-export type EventMutationResponseDtoHeroNpcsItemMapsItemAssignedMembersItem = {
-  id: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
-  userId: string;
-  roles: EventMutationResponseDtoHeroNpcsItemMapsItemAssignedMembersItemRolesItem[];
-};
-
-export type EventMutationResponseDtoHeroNpcsItemMapsItem = {
-  id: string;
-  mapId: number;
-  mapName: string;
-  /** @nullable */
-  locationId: string | null;
-  assignedMembers: EventMutationResponseDtoHeroNpcsItemMapsItemAssignedMembersItem[];
-};
-
-export type EventMutationResponseDtoHeroNpcsItem = {
-  id: string;
-  /** @nullable */
-  npcId: number | null;
-  npcName: string;
-  /** @nullable */
-  npcIcon: string | null;
-  /** @nullable */
-  npcLvl: number | null;
-  maps: EventMutationResponseDtoHeroNpcsItemMapsItem[];
-};
-
-export interface EventMutationResponseDto {
-  id: string;
-  guildId: string;
-  name: string;
-  world: string;
-  active: boolean;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  startsAt: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  endsAt: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-  /** @nullable */
-  basePointsPerKill?: number | null;
-  /** @nullable */
-  assignmentTimeoutMinutes?: number | null;
-  /** @nullable */
-  participationConfirmationMinutes?: number | null;
-  /** @nullable */
-  mapAssignmentCap?: number | null;
-  /** @nullable */
-  rulebookMarkdown?: string | null;
-  scoringMode: EventMutationResponseDtoScoringMode;
-  scoringRules: EventMutationResponseDtoSchema0 | null;
-  heroNpcs: EventMutationResponseDtoHeroNpcsItem[];
-}
-
-export type EventOverviewResponseDtoSchema0 = string | number | boolean | (EventOverviewResponseDtoSchema0 | null)[] | {[key: string]: EventOverviewResponseDtoSchema0 | null} | null;
-
-export type EventOverviewResponseDtoScoringMode = typeof EventOverviewResponseDtoScoringMode[keyof typeof EventOverviewResponseDtoScoringMode];
-
-
-export const EventOverviewResponseDtoScoringMode = {
-  SIMPLE: 'SIMPLE',
-  ADVANCED: 'ADVANCED',
-} as const;
-
-export type EventOverviewResponseDtoHeroNpcsItem = {
-  id: string;
-  /** @nullable */
-  npcId: number | null;
-  npcName: string;
-  /** @nullable */
-  npcIcon: string | null;
-  /** @nullable */
-  npcLvl: number | null;
-};
-
-export interface EventOverviewResponseDto {
-  id: string;
-  guildId: string;
-  name: string;
-  world: string;
-  active: boolean;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  startsAt: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  endsAt: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-  /** @nullable */
-  basePointsPerKill?: number | null;
-  /** @nullable */
-  assignmentTimeoutMinutes?: number | null;
-  /** @nullable */
-  participationConfirmationMinutes?: number | null;
-  /** @nullable */
-  mapAssignmentCap?: number | null;
-  /** @nullable */
-  rulebookMarkdown?: string | null;
-  scoringMode: EventOverviewResponseDtoScoringMode;
-  scoringRules: EventOverviewResponseDtoSchema0 | null;
-  heroNpcs: EventOverviewResponseDtoHeroNpcsItem[];
-}
-
-export type UpdateEventDtoHeroNpcsItemMapsItem = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  mapId: number;
-  mapName: string;
-};
-
-export type UpdateEventDtoHeroNpcsItem = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  npcId?: number;
-  npcName: string;
-  maps: UpdateEventDtoHeroNpcsItemMapsItem[];
-};
-
-export type UpdateEventDtoScoringRulesRulesItemConditionsItem = {
-  type: 'NUMERIC';
-  factor: 'trackingDurationPercentage' | 'trackingDurationSeconds' | 'assignedMembersCount' | 'minutesSinceLeaveToKill' | 'timeOnMapSeconds' | 'afkPercentage' | 'respawnDurationSeconds' | 'respawnProgressPercentage';
-  operator: '>' | '>=' | '<' | '<=' | '==' | '!=';
-  value: number;
-} | {
-  type: 'BOOLEAN';
-  factor: 'eligible' | 'memberPresentAtKill' | 'wasPresent';
-  value: boolean;
-} | {
-  type: 'KILL_TIME_IN_WINDOW';
-  /** @pattern ^([01]\d|2[0-3]):([0-5]\d)$ */
-  from: string;
-  /** @pattern ^([01]\d|2[0-3]):([0-5]\d)$ */
-  to: string;
-} | {
-  type: 'RESPAWN_WINDOW_COVERAGE';
-  /** @pattern ^([01]\d|2[0-3]):([0-5]\d)$ */
-  from: string;
-  /** @pattern ^([01]\d|2[0-3]):([0-5]\d)$ */
-  to: string;
-  operator: '>' | '>=' | '<' | '<=' | '==' | '!=';
-  value: number;
-};
-
-export type UpdateEventDtoScoringRulesRulesItemActionType = typeof UpdateEventDtoScoringRulesRulesItemActionType[keyof typeof UpdateEventDtoScoringRulesRulesItemActionType];
-
-
-export const UpdateEventDtoScoringRulesRulesItemActionType = {
-  SET_BASE: 'SET_BASE',
-  ADD_BONUS: 'ADD_BONUS',
-  ZERO_BASE: 'ZERO_BASE',
-} as const;
-
-export type UpdateEventDtoScoringRulesRulesItemAction = {
-  type: UpdateEventDtoScoringRulesRulesItemActionType;
-  /** @minimum 0 */
-  points?: number;
-};
-
-export type UpdateEventDtoScoringRulesRulesItem = {
-  id: string;
-  name?: string;
-  enabled?: boolean;
-  conditions: UpdateEventDtoScoringRulesRulesItemConditionsItem[];
-  action: UpdateEventDtoScoringRulesRulesItemAction;
-};
-
-export type UpdateEventDtoScoringRules = {
-  /**
-     * @minimum 1
-     * @maximum 1
-     */
-  version: number;
-  timezone: string;
-  /** @minimum 0 */
-  hardCapPoints: number;
-  /**
-     * @minimum 0
-     * @maximum 100
-     */
-  minTrackingPercentForBonuses?: number;
-  rules: UpdateEventDtoScoringRulesRulesItem[];
-};
-
-export type UpdateEventDtoScoringMode = typeof UpdateEventDtoScoringMode[keyof typeof UpdateEventDtoScoringMode];
-
-
-export const UpdateEventDtoScoringMode = {
-  SIMPLE: 'SIMPLE',
-  ADVANCED: 'ADVANCED',
-} as const;
-
-export interface UpdateEventDto {
-  name?: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  startsAt?: string;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  endsAt?: string | null;
-  heroNpcs?: UpdateEventDtoHeroNpcsItem[];
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  basePointsPerKill?: number;
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  assignmentTimeoutMinutes?: number;
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  participationConfirmationMinutes?: number;
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  mapAssignmentCap?: number;
-  /** @maxLength 10000 */
-  rulebookMarkdown?: string;
-  scoringRules?: UpdateEventDtoScoringRules;
-  scoringMode?: UpdateEventDtoScoringMode;
-}
-
-export type EventWrappedApiResponseDtoOutputEvent = {
-  id: string;
-  name: string;
-  world: string;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  startsAt: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  endsAt: string | null;
-  heroCount: number;
-  mapCount: number;
-  spawnCount: number;
-};
-
-export type EventWrappedApiResponseDtoOutputOverviewRarityTotals = {
-  unique: number;
-  heroic: number;
-  legendary: number;
-};
-
-export type EventWrappedApiResponseDtoOutputOverview = {
-  totalKills: number;
-  participantCount: number;
-  totalPoints: number;
-  totalTrackedSeconds: number;
-  totalAfkSeconds: number;
-  coveragePercentage: number;
-  avgMapsPerSpawnWindow: number;
-  /** @nullable */
-  busiestHour: number | null;
-  busiestHourKills: number;
-  totalLoots: number;
-  rarityTotals: EventWrappedApiResponseDtoOutputOverviewRarityTotals;
-};
-
-/**
- * @nullable
- */
-export type EventWrappedApiResponseDtoOutputLeadersTopHunterWinner = {[key: string]: unknown} & ({
-  memberId: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
-  primaryValue: number;
-  /** @nullable */
-  secondaryValue?: number | null;
-} | null) | null;
-
-export type EventWrappedApiResponseDtoOutputLeadersTopHunter = {
-  /** @nullable */
-  winner: EventWrappedApiResponseDtoOutputLeadersTopHunterWinner;
-  candidateCount: number;
-  tiedWinnerCount: number;
-};
-
-/**
- * @nullable
- */
-export type EventWrappedApiResponseDtoOutputLeadersTopScorerWinner = {[key: string]: unknown} & ({
-  memberId: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
-  primaryValue: number;
-  /** @nullable */
-  secondaryValue?: number | null;
-} | null) | null;
-
-export type EventWrappedApiResponseDtoOutputLeadersTopScorer = {
-  /** @nullable */
-  winner: EventWrappedApiResponseDtoOutputLeadersTopScorerWinner;
-  candidateCount: number;
-  tiedWinnerCount: number;
-};
-
-/**
- * @nullable
- */
-export type EventWrappedApiResponseDtoOutputLeadersLongestDutyWinner = {[key: string]: unknown} & ({
-  memberId: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
-  primaryValue: number;
-  /** @nullable */
-  secondaryValue?: number | null;
-} | null) | null;
-
-export type EventWrappedApiResponseDtoOutputLeadersLongestDuty = {
-  /** @nullable */
-  winner: EventWrappedApiResponseDtoOutputLeadersLongestDutyWinner;
-  candidateCount: number;
-  tiedWinnerCount: number;
-};
-
-/**
- * @nullable
- */
-export type EventWrappedApiResponseDtoOutputLeadersTopAfkWinner = {[key: string]: unknown} & ({
-  memberId: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
-  primaryValue: number;
+  type?: string | null;
   /** @nullable */
-  secondaryValue?: number | null;
-} | null) | null;
-
-export type EventWrappedApiResponseDtoOutputLeadersTopAfk = {
-  /** @nullable */
-  winner: EventWrappedApiResponseDtoOutputLeadersTopAfkWinner;
-  candidateCount: number;
-  tiedWinnerCount: number;
-};
-
-/**
- * @nullable
- */
-export type EventWrappedApiResponseDtoOutputLeadersMostFlexibleWinner = {[key: string]: unknown} & ({
-  memberId: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
-  primaryValue: number;
-  /** @nullable */
-  secondaryValue?: number | null;
-} | null) | null;
-
-export type EventWrappedApiResponseDtoOutputLeadersMostFlexible = {
-  /** @nullable */
-  winner: EventWrappedApiResponseDtoOutputLeadersMostFlexibleWinner;
-  candidateCount: number;
-  tiedWinnerCount: number;
-};
-
-/**
- * @nullable
- */
-export type EventWrappedApiResponseDtoOutputLeadersTopEfficiencyWinner = {[key: string]: unknown} & ({
-  memberId: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
-  primaryValue: number;
-  /** @nullable */
-  secondaryValue?: number | null;
-} | null) | null;
-
-export type EventWrappedApiResponseDtoOutputLeadersTopEfficiency = {
-  /** @nullable */
-  winner: EventWrappedApiResponseDtoOutputLeadersTopEfficiencyWinner;
-  candidateCount: number;
-  tiedWinnerCount: number;
-};
-
-export type EventWrappedApiResponseDtoOutputLeaders = {
-  topHunter: EventWrappedApiResponseDtoOutputLeadersTopHunter;
-  topScorer: EventWrappedApiResponseDtoOutputLeadersTopScorer;
-  longestDuty: EventWrappedApiResponseDtoOutputLeadersLongestDuty;
-  topAfk: EventWrappedApiResponseDtoOutputLeadersTopAfk;
-  mostFlexible: EventWrappedApiResponseDtoOutputLeadersMostFlexible;
-  topEfficiency: EventWrappedApiResponseDtoOutputLeadersTopEfficiency;
-};
-
-/**
- * @nullable
- */
-export type EventWrappedApiResponseDtoOutputCoverageBestHeroCoverage = {[key: string]: unknown} & ({
-  heroNpcId: string;
-  npcName: string;
-  /** @nullable */
-  npcIcon: string | null;
-  mapCount: number;
-  totalKills: number;
-  coveragePercentage: number;
-} | null) | null;
-
-/**
- * @nullable
- */
-export type EventWrappedApiResponseDtoOutputCoverageRoughestHeroCoverage = {[key: string]: unknown} & ({
-  heroNpcId: string;
-  npcName: string;
-  /** @nullable */
-  npcIcon: string | null;
-  mapCount: number;
-  totalKills: number;
-  coveragePercentage: number;
-} | null) | null;
-
-export type EventWrappedApiResponseDtoOutputCoverage = {
-  totalWindowCount: number;
-  totalWindowSeconds: number;
-  totalCoverageSeconds: number;
-  totalUncoveredSeconds: number;
-  totalUnassignedSeconds: number;
-  coveragePercentage: number;
-  avgMapsPerSpawnWindow: number;
-  /** @nullable */
-  bestHeroCoverage: EventWrappedApiResponseDtoOutputCoverageBestHeroCoverage;
-  /** @nullable */
-  roughestHeroCoverage: EventWrappedApiResponseDtoOutputCoverageRoughestHeroCoverage;
-};
-
-export type EventWrappedApiResponseDtoOutputHeroesItemRarityTotals = {
-  unique: number;
-  heroic: number;
-  legendary: number;
-};
-
-/**
- * @nullable
- */
-export type EventWrappedApiResponseDtoOutputHeroesItemTopHunterWinner = {[key: string]: unknown} & ({
-  memberId: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
-  primaryValue: number;
-  /** @nullable */
-  secondaryValue?: number | null;
-} | null) | null;
-
-export type EventWrappedApiResponseDtoOutputHeroesItemTopHunter = {
-  /** @nullable */
-  winner: EventWrappedApiResponseDtoOutputHeroesItemTopHunterWinner;
-  candidateCount: number;
-  tiedWinnerCount: number;
-};
-
-export type EventWrappedApiResponseDtoOutputHeroesItem = {
-  heroNpcId: string;
-  /** @nullable */
-  npcId: number | null;
-  npcName: string;
-  /** @nullable */
-  npcIcon: string | null;
-  mapCount: number;
-  totalKills: number;
-  totalPoints: number;
-  coveragePercentage: number;
-  rarityTotals: EventWrappedApiResponseDtoOutputHeroesItemRarityTotals;
-  topHunter: EventWrappedApiResponseDtoOutputHeroesItemTopHunter;
-};
-
-export type EventWrappedApiResponseDtoOutputLootRarityTotals = {
-  unique: number;
-  heroic: number;
-  legendary: number;
-};
-
-export type EventWrappedApiResponseDtoOutputLootHeroBreakdownItemRarityTotals = {
-  unique: number;
-  heroic: number;
-  legendary: number;
-};
-
-export type EventWrappedApiResponseDtoOutputLootHeroBreakdownItem = {
-  heroNpcId: string;
-  npcName: string;
-  /** @nullable */
-  npcIcon: string | null;
-  totalLoots: number;
-  rarityTotals: EventWrappedApiResponseDtoOutputLootHeroBreakdownItemRarityTotals;
-};
-
-export type EventWrappedApiResponseDtoOutputLoot = {
-  totalLoots: number;
-  rarityTotals: EventWrappedApiResponseDtoOutputLootRarityTotals;
-  heroBreakdown: EventWrappedApiResponseDtoOutputLootHeroBreakdownItem[];
+  lvl?: number | null;
+})[];
 };
 
-export interface EventWrappedApiResponseDtoOutput {
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+export interface UserFeedResponseDtoOutput {
   generatedAt: string;
-  event: EventWrappedApiResponseDtoOutputEvent;
-  overview: EventWrappedApiResponseDtoOutputOverview;
-  leaders: EventWrappedApiResponseDtoOutputLeaders;
-  coverage: EventWrappedApiResponseDtoOutputCoverage;
-  heroes: EventWrappedApiResponseDtoOutputHeroesItem[];
-  loot: EventWrappedApiResponseDtoOutputLoot;
-}
-
-export type EventMapsResponseDtoOutputHeroNpcsItemLocationsItemMapsItemAssignedMembersItemRolesItem = {
-  position: number;
-  /** @nullable */
-  color: number | null;
-};
-
-export type EventMapsResponseDtoOutputHeroNpcsItemLocationsItemMapsItemAssignedMembersItem = {
-  id: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
-  userId: string;
-  roles: EventMapsResponseDtoOutputHeroNpcsItemLocationsItemMapsItemAssignedMembersItemRolesItem[];
-};
-
-export type EventMapsResponseDtoOutputHeroNpcsItemLocationsItemMapsItem = {
-  id: string;
-  mapId: number;
-  mapName: string;
-  /** @nullable */
-  locationId: string | null;
-  assignedMembers: EventMapsResponseDtoOutputHeroNpcsItemLocationsItemMapsItemAssignedMembersItem[];
-};
-
-export type EventMapsResponseDtoOutputHeroNpcsItemLocationsItem = {
-  id: string;
-  name: string;
-  order: number;
-  maps: EventMapsResponseDtoOutputHeroNpcsItemLocationsItemMapsItem[];
-};
-
-export type EventMapsResponseDtoOutputHeroNpcsItemMapsItemAssignedMembersItemRolesItem = {
-  position: number;
-  /** @nullable */
-  color: number | null;
-};
-
-export type EventMapsResponseDtoOutputHeroNpcsItemMapsItemAssignedMembersItem = {
-  id: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
-  userId: string;
-  roles: EventMapsResponseDtoOutputHeroNpcsItemMapsItemAssignedMembersItemRolesItem[];
-};
-
-export type EventMapsResponseDtoOutputHeroNpcsItemMapsItem = {
-  id: string;
-  mapId: number;
-  mapName: string;
-  /** @nullable */
-  locationId: string | null;
-  assignedMembers: EventMapsResponseDtoOutputHeroNpcsItemMapsItemAssignedMembersItem[];
-};
-
-export type EventMapsResponseDtoOutputHeroNpcsItem = {
-  id: string;
-  /** @nullable */
-  npcId: number | null;
-  npcName: string;
-  /** @nullable */
-  npcIcon: string | null;
-  /** @nullable */
-  npcLvl: number | null;
-  locations: EventMapsResponseDtoOutputHeroNpcsItemLocationsItem[];
-  maps: EventMapsResponseDtoOutputHeroNpcsItemMapsItem[];
-};
-
-export interface EventMapsResponseDtoOutput {
-  id: string;
-  heroNpcs: EventMapsResponseDtoOutputHeroNpcsItem[];
-}
-
-export interface AssignMemberDto {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  memberId: number;
-}
-
-export type CreateHeroDtoMapsItem = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  mapId: number;
-  mapName: string;
-};
-
-export interface CreateHeroDto {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  npcId?: number;
-  npcName: string;
-  maps?: CreateHeroDtoMapsItem[];
-}
-
-export interface UpdateHeroDto {
-  npcName: string;
-  npcId?: number;
-}
-
-export interface CreateMapDto {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  mapId: number;
-  mapName: string;
-}
-
-export type EventMapResponseDtoOutputAssignedMembersItemRolesItem = {
-  position: number;
-  /** @nullable */
-  color: number | null;
-};
-
-export type EventMapResponseDtoOutputAssignedMembersItem = {
-  id: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
-  userId: string;
-  roles: EventMapResponseDtoOutputAssignedMembersItemRolesItem[];
-};
-
-export interface EventMapResponseDtoOutput {
-  id: string;
-  mapId: number;
-  mapName: string;
-  /** @nullable */
-  locationId: string | null;
-  assignedMembers: EventMapResponseDtoOutputAssignedMembersItem[];
-}
-
-export interface CreateLocationDto {
-  /**
-     * @minLength 1
-     * @maxLength 50
-     */
-  name: string;
-}
-
-export interface UpdateLocationDto {
-  /**
-     * @minLength 1
-     * @maxLength 50
-     */
-  name?: string;
-}
-
-export interface ReorderLocationsDto {
-  locationIds: string[];
-}
-
-export interface AssignMapLocationDto {
-  /** @nullable */
-  locationId?: string | null;
-}
-
-export type PendingParticipationConfirmationsResponseDtoItemsItemHeroNpc = {
-  id: string;
-  /** @nullable */
-  npcId: number | null;
-  npcName: string;
-  /** @nullable */
-  npcIcon: string | null;
-  /** @nullable */
-  npcLvl: number | null;
-};
-
-export type PendingParticipationConfirmationsResponseDtoItemsItem = {
-  killId: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  killedAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  confirmationDeadlineAt: string;
-  heroNpc: PendingParticipationConfirmationsResponseDtoItemsItemHeroNpc;
-};
-
-export type PendingParticipationConfirmationsResponseDtoExpiredItemsItemHeroNpc = {
-  id: string;
-  /** @nullable */
-  npcId: number | null;
-  npcName: string;
-  /** @nullable */
-  npcIcon: string | null;
-  /** @nullable */
-  npcLvl: number | null;
-};
-
-export type PendingParticipationConfirmationsResponseDtoExpiredItemsItem = {
-  killId: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  killedAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  confirmationDeadlineAt: string;
-  heroNpc: PendingParticipationConfirmationsResponseDtoExpiredItemsItemHeroNpc;
-};
-
-export interface PendingParticipationConfirmationsResponseDto {
-  items: PendingParticipationConfirmationsResponseDtoItemsItem[];
-  expiredItems: PendingParticipationConfirmationsResponseDtoExpiredItemsItem[];
-}
-
-export interface AcknowledgeExpiredParticipationConfirmationsDto {
-  /** @minItems 1 */
-  killIds: string[];
-}
-
-export interface AcknowledgeExpiredParticipationConfirmationsResponseDtoOutput {
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  acknowledgedCount: number;
-}
-
-export interface ConfirmParticipationForKillResponseDtoOutput {
-  success: boolean;
-  confirmedNow: boolean;
-}
-
-export type EventRankingEntryResponseDtoMemberRolesItem = {
-  position: number;
-  /** @nullable */
-  color: number | null;
-};
-
-export type EventRankingEntryResponseDtoMember = {
-  id: number;
-  name: string;
-  roles: EventRankingEntryResponseDtoMemberRolesItem[];
-};
-
-export type EventRankingEntryResponseDtoEditHistoryItemEditType = typeof EventRankingEntryResponseDtoEditHistoryItemEditType[keyof typeof EventRankingEntryResponseDtoEditHistoryItemEditType];
-
-
-export const EventRankingEntryResponseDtoEditHistoryItemEditType = {
-  KILL_POINT: 'KILL_POINT',
-  RANKING: 'RANKING',
-} as const;
-
-export type EventRankingEntryResponseDtoEditHistoryItem = {
-  id: string;
-  rankingId: string;
-  previousPoints: number;
-  newPoints: number;
-  deltaPoints: number;
-  editType: EventRankingEntryResponseDtoEditHistoryItemEditType;
-  editedByUserId: string;
-  /** @nullable */
-  editedByName: string | null;
-  /** @nullable */
-  comment: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  editedAt: string;
-};
-
-export interface EventRankingEntryResponseDto {
-  id: string;
-  eventId: string;
-  memberId: number;
-  heroNpcName: string;
-  totalPoints: number;
-  totalKills: number;
-  totalTimeSeconds: number;
-  avgAfkPercentage: number;
-  pointsModified: boolean;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-  member: EventRankingEntryResponseDtoMember;
-  editHistory: EventRankingEntryResponseDtoEditHistoryItem[];
-}
-
-export interface UpdateRankingPointsDto {
-  pointsDelta: number;
-  /** @maxLength 500 */
-  comment?: string;
-}
-
-export type EventTimerResponseDtoNpc = {
-  name: string;
-  /** @nullable */
-  icon: string | null;
-};
-
-export interface EventTimerResponseDto {
-  npcId: number;
-  world: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  minSpawnTime: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  maxSpawnTime: string;
-  npc: EventTimerResponseDtoNpc;
-}
-
-export interface EventHeroStatsResponseDto {
-  heroId: string;
-  /** @nullable */
-  npcId: number | null;
-  npcName: string;
-  /** @nullable */
-  npcLvl: number | null;
-  /** @nullable */
-  npcProf: string | null;
-  killCount: number;
-}
-
-export type KillHistoryEntryHeroNpc = {
-  id: string;
-  /** @nullable */
-  npcId: number | null;
-  npcName: string;
-  /** @nullable */
-  npcIcon: string | null;
-  /** @nullable */
-  npcLvl: number | null;
-};
-
-export interface KillHistoryEntry {
-  id: string;
-  heroNpcId: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  killedAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  minSpawnTimeAtKill: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  maxSpawnTimeAtKill: string;
-  isManualClose: boolean;
-  heroNpc: KillHistoryEntryHeroNpc;
-  /**
-     * Number of recorded participants with a point record, including participants marked absent.
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  participantCount: number;
-}
-
-export type KillHistoryEventResponseKind = typeof KillHistoryEventResponseKind[keyof typeof KillHistoryEventResponseKind];
-
-
-export const KillHistoryEventResponseKind = {
-  event: 'event',
-} as const;
-
-export interface KillHistoryEventResponse {
-  kind: KillHistoryEventResponseKind;
-  data: KillHistoryEntry[];
-  /** @nullable */
-  nextCursor: string | null;
-}
-
-export type KillHistoryBonusBreakdown = string | number | boolean | (KillHistoryBonusBreakdown | null)[] | {[key: string]: KillHistoryBonusBreakdown | null} | null;
-
-export interface KillHistoryMemberPoint {
-  points: number;
-  basePoints: number;
-  /** @nullable */
-  manualAdjustmentPoints: number | null;
-  bonusBreakdown: KillHistoryBonusBreakdown | null;
-  /** @nullable */
-  trackingDurationSeconds: number | null;
-  /** @nullable */
-  trackingDurationPercentage: number | null;
-}
-
-export type KillHistoryMemberEntryHeroNpc = {
-  id: string;
-  /** @nullable */
-  npcId: number | null;
-  npcName: string;
-  /** @nullable */
-  npcIcon: string | null;
-  /** @nullable */
-  npcLvl: number | null;
-};
-
-export interface KillHistoryMemberEntry {
-  id: string;
-  heroNpcId: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  killedAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  minSpawnTimeAtKill: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  maxSpawnTimeAtKill: string;
-  isManualClose: boolean;
-  heroNpc: KillHistoryMemberEntryHeroNpc;
-  /**
-     * Number of recorded participants with a point record, including participants marked absent.
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  participantCount: number;
-  memberPoint: KillHistoryMemberPoint;
-}
-
-export type KillHistoryMemberResponseKind = typeof KillHistoryMemberResponseKind[keyof typeof KillHistoryMemberResponseKind];
-
-
-export const KillHistoryMemberResponseKind = {
-  member: 'member',
-} as const;
-
-export type KillHistoryMemberResponseMember = {
-  /**
-     * @minimum 1
-     * @maximum 9007199254740991
-     */
-  id: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
-  userId: string;
-};
-
-export interface KillHistoryMemberResponse {
-  kind: KillHistoryMemberResponseKind;
-  member: KillHistoryMemberResponseMember;
-  data: KillHistoryMemberEntry[];
-  /** @nullable */
-  nextCursor: string | null;
-}
-
-export type KillHistoryResponse = KillHistoryEventResponse | KillHistoryMemberResponse;
-
-export type EventKillHistoryResponseDtoSchema0 = string | number | boolean | (EventKillHistoryResponseDtoSchema0 | null)[] | {[key: string]: EventKillHistoryResponseDtoSchema0 | null} | null;
-
-export type EventKillHistoryResponseDtoDataItemHeroNpc = {
-  id: string;
-  /** @nullable */
-  npcId: number | null;
-  npcName: string;
-  /** @nullable */
-  npcIcon: string | null;
-  /** @nullable */
-  npcLvl: number | null;
-};
-
-export type EventKillHistoryResponseDtoDataItemPointsItemMember = {
-  id: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
-  userId: string;
-};
-
-export type EventKillHistoryResponseDtoDataItemPointsItemMapDataItem = {
-  mapId: string;
-  mapName: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  assignedAt: string;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  unassignedAt: string | null;
-  assignmentDurationSeconds: number;
-  presenceTimeSeconds: number;
-  afkTimeSeconds: number;
-};
-
-export type EventKillHistoryResponseDtoDataItemPointsItem = {
-  id: string;
-  memberId: number;
-  points: number;
-  basePoints: number;
-  /** @nullable */
-  manualAdjustmentPoints?: number | null;
-  /** @nullable */
-  trackingDurationSeconds: number | null;
-  /** @nullable */
-  trackingDurationPercentage: number | null;
-  timeOnMapSeconds: number;
-  afkPercentage: number;
-  wasPresent: boolean;
-  bonusBreakdown?: EventKillHistoryResponseDtoSchema0 | null;
-  member: EventKillHistoryResponseDtoDataItemPointsItemMember;
-  mapData?: EventKillHistoryResponseDtoDataItemPointsItemMapDataItem[];
-};
-
-export type EventKillHistoryResponseDtoDataItem = {
-  id: string;
-  heroNpcId: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  killedAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  minSpawnTimeAtKill: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  maxSpawnTimeAtKill: string;
-  isManualClose: boolean;
-  heroNpc: EventKillHistoryResponseDtoDataItemHeroNpc;
-  points: EventKillHistoryResponseDtoDataItemPointsItem[];
-};
-
-export interface EventKillHistoryResponseDto {
-  data: EventKillHistoryResponseDtoDataItem[];
-  /** @nullable */
-  nextCursor: string | null;
-}
-
-export type EventMemberKillHistoryResponseDtoSchema0 = string | number | boolean | (EventMemberKillHistoryResponseDtoSchema0 | null)[] | {[key: string]: EventMemberKillHistoryResponseDtoSchema0 | null} | null;
-
-export type EventMemberKillHistoryResponseDtoMember = {
-  id: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
-  userId: string;
-};
-
-export type EventMemberKillHistoryResponseDtoDataItemHeroNpc = {
-  id: string;
-  /** @nullable */
-  npcId: number | null;
-  npcName: string;
-  /** @nullable */
-  npcIcon: string | null;
-  /** @nullable */
-  npcLvl: number | null;
-};
-
-export type EventMemberKillHistoryResponseDtoDataItemMemberPointMember = {
-  id: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
-  userId: string;
-};
-
-export type EventMemberKillHistoryResponseDtoDataItemMemberPointMapDataItem = {
-  mapId: string;
-  mapName: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  assignedAt: string;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  unassignedAt: string | null;
-  assignmentDurationSeconds: number;
-  presenceTimeSeconds: number;
-  afkTimeSeconds: number;
-};
-
-/**
- * @nullable
- */
-export type EventMemberKillHistoryResponseDtoDataItemMemberPoint = {[key: string]: unknown} & ({
-  id: string;
-  memberId: number;
-  points: number;
-  basePoints: number;
-  /** @nullable */
-  manualAdjustmentPoints?: number | null;
-  /** @nullable */
-  trackingDurationSeconds: number | null;
-  /** @nullable */
-  trackingDurationPercentage: number | null;
-  timeOnMapSeconds: number;
-  afkPercentage: number;
-  wasPresent: boolean;
-  bonusBreakdown?: EventMemberKillHistoryResponseDtoSchema0 | null;
-  member: EventMemberKillHistoryResponseDtoDataItemMemberPointMember;
-  mapData?: EventMemberKillHistoryResponseDtoDataItemMemberPointMapDataItem[];
-} | null) | null;
-
-export type EventMemberKillHistoryResponseDtoDataItem = {
-  id: string;
-  heroNpcId: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  killedAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  minSpawnTimeAtKill: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  maxSpawnTimeAtKill: string;
-  isManualClose: boolean;
-  heroNpc: EventMemberKillHistoryResponseDtoDataItemHeroNpc;
-  /** @nullable */
-  memberPoint: EventMemberKillHistoryResponseDtoDataItemMemberPoint;
-};
-
-export interface EventMemberKillHistoryResponseDto {
-  member: EventMemberKillHistoryResponseDtoMember;
-  data: EventMemberKillHistoryResponseDtoDataItem[];
-  /** @nullable */
-  nextCursor: string | null;
-}
-
-export type KillDetailResponseDtoSchema0 = string | number | boolean | (KillDetailResponseDtoSchema0 | null)[] | {[key: string]: KillDetailResponseDtoSchema0 | null} | null;
-
-export type KillDetailResponseDtoKillHeroNpcEvent = {
-  id: string;
-  name: string;
-  world: string;
-};
-
-export type KillDetailResponseDtoKillHeroNpc = {
-  id: string;
-  /** @nullable */
-  npcId: number | null;
-  npcName: string;
-  /** @nullable */
-  npcIcon: string | null;
-  /** @nullable */
-  npcLvl: number | null;
-  event: KillDetailResponseDtoKillHeroNpcEvent;
-};
-
-/**
- * @nullable
- */
-export type KillDetailResponseDtoKillTimerCreatedBy = {[key: string]: unknown} & ({
-  id: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
-  userId: string;
-} | null) | null;
-
-export type KillDetailResponseDtoKillPointsItemMemberRolesItem = {
-  /** @nullable */
-  position: number | null;
-  /** @nullable */
-  color: number | null;
-};
-
-export type KillDetailResponseDtoKillPointsItemMember = {
-  id: number;
-  name: string;
-  /** @nullable */
-  avatar: string | null;
-  userId: string;
-  roles: KillDetailResponseDtoKillPointsItemMemberRolesItem[];
-};
-
-export type KillDetailResponseDtoKillPointsItemMapDataItem = {
-  mapId: string;
-  mapName: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  assignedAt: string;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  unassignedAt: string | null;
-  assignmentDurationSeconds: number;
-  presenceTimeSeconds: number;
-  afkTimeSeconds: number;
-};
-
-export type KillDetailResponseDtoKillPointsItem = {
-  id: string;
-  memberId: number;
-  points: number;
-  basePoints: number;
-  /** @nullable */
-  manualAdjustmentPoints?: number | null;
-  /** @nullable */
-  trackingDurationSeconds: number | null;
-  /** @nullable */
-  trackingDurationPercentage: number | null;
-  timeOnMapSeconds: number;
-  afkPercentage: number;
-  wasPresent: boolean;
-  bonusBreakdown?: KillDetailResponseDtoSchema0 | null;
-  member: KillDetailResponseDtoKillPointsItemMember;
-  mapData?: KillDetailResponseDtoKillPointsItemMapDataItem[];
-};
-
-export type KillDetailResponseDtoKill = {
-  id: string;
-  heroNpcId: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  killedAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  minSpawnTimeAtKill: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  maxSpawnTimeAtKill: string;
-  /** @nullable */
-  timerCreatedById: number | null;
-  isManualClose: boolean;
-  /** @nullable */
-  respawnDurationSeconds: number | null;
-  /** @nullable */
-  windowDurationSeconds: number | null;
-  /** @nullable */
-  resolvedAfterMaxSpawnTimeMs: number | null;
-  heroNpc: KillDetailResponseDtoKillHeroNpc;
-  /** @nullable */
-  timerCreatedBy: KillDetailResponseDtoKillTimerCreatedBy;
-  points: KillDetailResponseDtoKillPointsItem[];
-};
-
-export type KillDetailResponseDtoEventConfigScoringMode = typeof KillDetailResponseDtoEventConfigScoringMode[keyof typeof KillDetailResponseDtoEventConfigScoringMode];
-
-
-export const KillDetailResponseDtoEventConfigScoringMode = {
-  SIMPLE: 'SIMPLE',
-  ADVANCED: 'ADVANCED',
-} as const;
-
-export type KillDetailResponseDtoEventConfig = {
-  scoringMode: KillDetailResponseDtoEventConfigScoringMode;
-  scoringRules: KillDetailResponseDtoSchema0 | null;
-};
-
-export interface KillDetailResponseDto {
-  kill: KillDetailResponseDtoKill;
-  eventConfig: KillDetailResponseDtoEventConfig;
-}
-
-export interface UpdateKillPointDto {
-  pointsDelta: number;
-  /** @maxLength 500 */
-  comment?: string;
-}
-
-export type EventCoordinationResponseDtoSummary = {
-  criticalCount: number;
-  warningCount: number;
-  coveredMaps: number;
-  totalMaps: number;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  nextSpawnAt: string | null;
-};
-
-export type EventCoordinationResponseDtoHeroesItemTimerStatus = typeof EventCoordinationResponseDtoHeroesItemTimerStatus[keyof typeof EventCoordinationResponseDtoHeroesItemTimerStatus];
-
-
-export const EventCoordinationResponseDtoHeroesItemTimerStatus = {
-  OPEN: 'OPEN',
-  WAITING: 'WAITING',
-  OVERDUE: 'OVERDUE',
-  NONE: 'NONE',
-} as const;
-
-/**
- * @nullable
- */
-export type EventCoordinationResponseDtoHeroesItemTimer = {[key: string]: unknown} & ({
-  npcId: number;
-  world: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  minSpawnTime: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  maxSpawnTime: string;
-  status: EventCoordinationResponseDtoHeroesItemTimerStatus;
-  /** @nullable */
-  overdueMs: number | null;
-} | null) | null;
-
-export type EventCoordinationResponseDtoHeroesItemCoverage = {
-  totalMaps: number;
-  assignedMaps: number;
-  coveredMaps: number;
-  unassignedMaps: number;
-  uncoveredMaps: number;
-  activeGapCount: number;
-};
-
-export type EventCoordinationResponseDtoHeroesItemActiveGapsItemGapType = typeof EventCoordinationResponseDtoHeroesItemActiveGapsItemGapType[keyof typeof EventCoordinationResponseDtoHeroesItemActiveGapsItemGapType];
-
-
-export const EventCoordinationResponseDtoHeroesItemActiveGapsItemGapType = {
-  UNASSIGNED: 'UNASSIGNED',
-  UNCOVERED: 'UNCOVERED',
-} as const;
-
-export type EventCoordinationResponseDtoHeroesItemActiveGapsItem = {
-  id: string;
-  mapId: string;
-  numericMapId: number;
-  mapName: string;
-  gapType: EventCoordinationResponseDtoHeroesItemActiveGapsItemGapType;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  startedAt: string;
-  durationSeconds: number;
-};
-
-export type EventCoordinationResponseDtoHeroesItemPriority = typeof EventCoordinationResponseDtoHeroesItemPriority[keyof typeof EventCoordinationResponseDtoHeroesItemPriority];
-
-
-export const EventCoordinationResponseDtoHeroesItemPriority = {
-  CRITICAL: 'CRITICAL',
-  WARNING: 'WARNING',
-  OK: 'OK',
-  IDLE: 'IDLE',
-} as const;
-
-export type EventCoordinationResponseDtoHeroesItemRecommendedAction = typeof EventCoordinationResponseDtoHeroesItemRecommendedAction[keyof typeof EventCoordinationResponseDtoHeroesItemRecommendedAction];
-
-
-export const EventCoordinationResponseDtoHeroesItemRecommendedAction = {
-  CLOSE_WINDOW: 'CLOSE_WINDOW',
-  ASSIGN_MAPS: 'ASSIGN_MAPS',
-  JOIN_MAP: 'JOIN_MAP',
-  WAIT: 'WAIT',
-  NONE: 'NONE',
-} as const;
-
-export type EventCoordinationResponseDtoHeroesItem = {
-  heroId: string;
-  /** @nullable */
-  npcId: number | null;
-  npcName: string;
-  /** @nullable */
-  npcIcon: string | null;
-  /** @nullable */
-  npcLvl: number | null;
-  /** @nullable */
-  timer: EventCoordinationResponseDtoHeroesItemTimer;
-  coverage: EventCoordinationResponseDtoHeroesItemCoverage;
-  activeGaps: EventCoordinationResponseDtoHeroesItemActiveGapsItem[];
-  priority: EventCoordinationResponseDtoHeroesItemPriority;
-  recommendedAction: EventCoordinationResponseDtoHeroesItemRecommendedAction;
-};
-
-export interface EventCoordinationResponseDto {
-  assignmentTimeoutMinutes: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  generatedAt: string;
-  eventId: string;
-  world: string;
-  summary: EventCoordinationResponseDtoSummary;
-  heroes: EventCoordinationResponseDtoHeroesItem[];
-}
-
-export type KillTimelineMapResponseDtoAssignmentsItem = {
-  memberId: number;
-  memberName: string;
-  /** @nullable */
-  memberAvatar: string | null;
-  memberUserId: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  assignedAt: string;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  unassignedAt: string | null;
-};
-
-export type KillTimelineMapResponseDtoGapsItemGapType = typeof KillTimelineMapResponseDtoGapsItemGapType[keyof typeof KillTimelineMapResponseDtoGapsItemGapType];
-
-
-export const KillTimelineMapResponseDtoGapsItemGapType = {
-  UNASSIGNED: 'UNASSIGNED',
-  UNCOVERED: 'UNCOVERED',
-} as const;
-
-export type KillTimelineMapResponseDtoGapsItem = {
-  id: string;
-  gapType: KillTimelineMapResponseDtoGapsItemGapType;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  startedAt: string;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  endedAt: string | null;
-  /** @nullable */
-  durationSeconds: number | null;
-};
-
-export interface KillTimelineMapResponseDto {
-  mapId: string;
-  mapName: string;
-  numericMapId: number;
-  assignments: KillTimelineMapResponseDtoAssignmentsItem[];
-  gaps: KillTimelineMapResponseDtoGapsItem[];
-}
-
-export type HeroCoverageGapResponseDtoGapType = typeof HeroCoverageGapResponseDtoGapType[keyof typeof HeroCoverageGapResponseDtoGapType];
-
-
-export const HeroCoverageGapResponseDtoGapType = {
-  UNASSIGNED: 'UNASSIGNED',
-  UNCOVERED: 'UNCOVERED',
-} as const;
-
-export type HeroCoverageGapResponseDtoMap = {
-  mapName: string;
-  mapId: number;
-};
-
-export interface HeroCoverageGapResponseDto {
-  id: string;
-  mapId: string;
-  heroNpcId: string;
-  gapType: HeroCoverageGapResponseDtoGapType;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  startedAt: string;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  endedAt: string | null;
-  /** @nullable */
-  durationSeconds: number | null;
-  map: HeroCoverageGapResponseDtoMap;
-}
-
-export type CoverageGapResponseDtoGapType = typeof CoverageGapResponseDtoGapType[keyof typeof CoverageGapResponseDtoGapType];
-
-
-export const CoverageGapResponseDtoGapType = {
-  UNASSIGNED: 'UNASSIGNED',
-  UNCOVERED: 'UNCOVERED',
-} as const;
-
-export interface CoverageGapResponseDto {
-  id: string;
-  mapId: string;
-  heroNpcId: string;
-  gapType: CoverageGapResponseDtoGapType;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  startedAt: string;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  endedAt: string | null;
-  /** @nullable */
-  durationSeconds: number | null;
-}
-
-export type NullableCoverageGapResponseDtoGapType = typeof NullableCoverageGapResponseDtoGapType[keyof typeof NullableCoverageGapResponseDtoGapType];
-
-
-export const NullableCoverageGapResponseDtoGapType = {
-  UNASSIGNED: 'UNASSIGNED',
-  UNCOVERED: 'UNCOVERED',
-} as const;
-
-/**
- * @nullable
- */
-export type NullableCoverageGapResponseDto = {[key: string]: unknown} & ({
-  id: string;
-  mapId: string;
-  heroNpcId: string;
-  gapType: NullableCoverageGapResponseDtoGapType;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  startedAt: string;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  endedAt: string | null;
-  /** @nullable */
-  durationSeconds: number | null;
-} | null) | null;
-
-export type HeroPresenceStatsResponseDtoMemberStatsItem = {
-  memberId: number;
-  memberName: string;
-  /** @nullable */
-  memberAvatar: string | null;
-  totalTimeSeconds: number;
-  afkTimeSeconds: number;
-  afkPercentage: number;
-};
-
-export interface HeroPresenceStatsResponseDto {
-  totalCoverageSeconds: number;
-  totalEventSeconds: number;
-  presencePercentage: number;
-  memberStats: HeroPresenceStatsResponseDtoMemberStatsItem[];
-}
-
-export type HeroRespawnConfigResponseDtoWindowStatus = typeof HeroRespawnConfigResponseDtoWindowStatus[keyof typeof HeroRespawnConfigResponseDtoWindowStatus];
-
-
-export const HeroRespawnConfigResponseDtoWindowStatus = {
-  OPEN: 'OPEN',
-  WAITING: 'WAITING',
-  OVERDUE: 'OVERDUE',
-  NONE: 'NONE',
-} as const;
-
-export interface HeroRespawnConfigResponseDto {
-  hasTimer: boolean;
-  windowStatus: HeroRespawnConfigResponseDtoWindowStatus;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  minSpawnTime: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  maxSpawnTime: string | null;
-  /** @nullable */
-  overdueMs: number | null;
-}
-
-export interface CloseRespawnWindowDto {
-  createNewWindow?: boolean;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  newMinSpawnTime?: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  newMaxSpawnTime?: string;
-}
-
-export interface OpenRespawnWindowDto {
-  /**
-     * @minLength 1
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  minSpawnTime: string;
-  /**
-     * @minLength 1
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  maxSpawnTime: string;
-}
-
-export type PinnedEventResponseDtoEventHeroNpcsItem = {
-  id: string;
-  /** @nullable */
-  npcId: number | null;
-  npcName: string;
-  /** @nullable */
-  npcIcon: string | null;
-  /** @nullable */
-  npcLvl: number | null;
-};
-
-export type PinnedEventResponseDtoEvent = {
-  id: string;
-  guildId: string;
-  name: string;
-  world: string;
-  active: boolean;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  startsAt: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  endsAt: string | null;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-  heroNpcs: PinnedEventResponseDtoEventHeroNpcsItem[];
-};
-
-export interface PinnedEventResponseDto {
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  pinnedAt: string;
-  event: PinnedEventResponseDtoEvent;
-}
-
-export interface GameMapResponseDtoOutput {
-  id: number;
-  name: string;
-}
-
-export type MapTemplateResponseDtoMapsItem = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  id: number;
-  name: string;
-};
-
-export interface MapTemplateResponseDto {
-  id: string;
-  guildId: string;
-  name: string;
-  maps: MapTemplateResponseDtoMapsItem[];
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-}
-
-export type CreateMapTemplateDtoMapsItem = {
-  /**
-     * @minimum -9007199254740991
-     * @maximum 9007199254740991
-     */
-  id: number;
-  name: string;
-};
-
-export interface CreateMapTemplateDto {
-  name: string;
-  /** @minItems 1 */
-  maps: CreateMapTemplateDtoMapsItem[];
-}
-
-export type CreateKillDtoNpc = {
-  id: number;
-  /** @minLength 1 */
-  name: string;
-  lvl: number;
-  prof?: string;
-  wt: number;
-  icon?: string;
-};
-
-export interface CreateKillDto {
-  /** @minLength 1 */
-  world: string;
-  npc: CreateKillDtoNpc;
-  /** @minLength 1 */
-  characterId: string;
-  /** @minLength 1 */
-  accountId: string;
-}
-
-export interface CreateKillResponseDtoOutput {
-  updated: number;
-  deduplicated?: boolean;
-}
-
-export type GuildKillStatsResponseDtoOutputOverviewKillsByType = {
-  COMMON?: number;
-  ELITE?: number;
-  ELITE2?: number;
-  ELITE3?: number;
-  HERO?: number;
-  TITAN?: number;
-  COLOSSUS?: number;
-  NPC?: number;
-  EVENT_HERO?: number;
-};
-
-export type GuildKillStatsResponseDtoOutputOverviewParticipationsByType = {
-  COMMON?: number;
-  ELITE?: number;
-  ELITE2?: number;
-  ELITE3?: number;
-  HERO?: number;
-  TITAN?: number;
-  COLOSSUS?: number;
-  NPC?: number;
-  EVENT_HERO?: number;
-};
-
-export type GuildKillStatsResponseDtoOutputOverview = {
-  guildUniqueKills: number;
-  totalMemberParticipations: number;
-  killsByType: GuildKillStatsResponseDtoOutputOverviewKillsByType;
-  participationsByType: GuildKillStatsResponseDtoOutputOverviewParticipationsByType;
-};
-
-export type GuildKillStatsResponseDtoOutputMemberRankingItemParticipationsByType = {
-  COMMON?: number;
-  ELITE?: number;
-  ELITE2?: number;
-  ELITE3?: number;
-  HERO?: number;
-  TITAN?: number;
-  COLOSSUS?: number;
-  NPC?: number;
-  EVENT_HERO?: number;
-};
-
-export type GuildKillStatsResponseDtoOutputMemberRankingItem = {
-  memberId: number;
-  memberName: string;
-  /** @nullable */
-  memberAvatar: string | null;
-  memberUserId: string;
-  totalParticipations: number;
-  participationsByType: GuildKillStatsResponseDtoOutputMemberRankingItemParticipationsByType;
-};
-
-export interface GuildKillStatsResponseDtoOutput {
-  overview: GuildKillStatsResponseDtoOutputOverview;
-  memberRanking: GuildKillStatsResponseDtoOutputMemberRankingItem[];
-}
-
-export type UserKillStatsResponseDtoOutputOverviewKillsByType = {
-  COMMON?: number;
-  ELITE?: number;
-  ELITE2?: number;
-  ELITE3?: number;
-  HERO?: number;
-  TITAN?: number;
-  COLOSSUS?: number;
-  NPC?: number;
-  EVENT_HERO?: number;
-};
-
-export type UserKillStatsResponseDtoOutputOverviewKillsByWorld = {[key: string]: number};
-
-export type UserKillStatsResponseDtoOutputOverview = {
-  totalKills: number;
-  killsByType: UserKillStatsResponseDtoOutputOverviewKillsByType;
-  killsByWorld: UserKillStatsResponseDtoOutputOverviewKillsByWorld;
-};
-
-export type UserKillStatsResponseDtoOutputTopNpcsItem = {
-  npcId: number;
-  npcName: string;
-  npcType: string;
-  npcLvl: number;
-  /** @nullable */
-  npcIcon: string | null;
-  /** @nullable */
-  npcProf?: string | null;
-  totalKills: number;
-};
-
-export interface UserKillStatsResponseDtoOutput {
-  overview: UserKillStatsResponseDtoOutputOverview;
-  topNpcs: UserKillStatsResponseDtoOutputTopNpcsItem[];
-}
-
-export type UserKillAnalyticsResponseDtoOutputMetaTimezone = typeof UserKillAnalyticsResponseDtoOutputMetaTimezone[keyof typeof UserKillAnalyticsResponseDtoOutputMetaTimezone];
-
-
-export const UserKillAnalyticsResponseDtoOutputMetaTimezone = {
-  'Europe/Warsaw': 'Europe/Warsaw',
-} as const;
-
-export type UserKillAnalyticsResponseDtoOutputMetaCoverage = typeof UserKillAnalyticsResponseDtoOutputMetaCoverage[keyof typeof UserKillAnalyticsResponseDtoOutputMetaCoverage];
-
-
-export const UserKillAnalyticsResponseDtoOutputMetaCoverage = {
-  complete: 'complete',
-  partial: 'partial',
-  unavailable: 'unavailable',
-} as const;
-
-export type UserKillAnalyticsResponseDtoOutputMeta = {
-  timezone: UserKillAnalyticsResponseDtoOutputMetaTimezone;
-  generatedAt: string;
-  /** @minimum 0 */
-  days: number;
-  /** @nullable */
-  world: string | null;
-  startDate: string;
-  endDate: string;
-  /** @nullable */
-  firstBucketAt: string | null;
-  coverage: UserKillAnalyticsResponseDtoOutputMetaCoverage;
-  /** @minimum 0 */
-  allTimeKills: number;
-  /** @minimum 0 */
-  timedKills: number;
-  /** @minimum 0 */
-  untimedKills: number;
-  includesCurrentHour: true;
-};
-
-export type UserKillAnalyticsResponseDtoOutputOverview = {
-  /** @minimum 0 */
-  totalKills: number;
-  /** @minimum 0 */
-  activeDays: number;
-  /** @nullable */
-  averagePerDay: number | null;
-  /** @minimum 0 */
-  currentStreak: number;
-  /** @minimum 0 */
-  longestStreak: number;
-  /** @minimum 0 */
-  uniqueNpcs: number;
-};
-
-export type UserKillAnalyticsResponseDtoOutputDailyItem = {
-  date: string;
-  worlds: string[];
-  /** @nullable */
-  kills: number | null;
-  partial: boolean;
-};
-
-export type UserKillAnalyticsResponseDtoOutputWeeklyItem = {
-  startDate: string;
-  endDate: string;
-  /** @minimum 0 */
-  kills: number;
-  partial: boolean;
-};
-
-export type UserKillAnalyticsResponseDtoOutputComparison = {
-  /** @minimum 0 */
-  currentKills: number;
-  /** @minimum 0 */
-  previousKills: number;
-  deltaKills: number;
-  /** @nullable */
-  deltaPercent: number | null;
-  currentThrough: string;
-  previousThrough: string;
-  partial: boolean;
-};
-
-/**
- * @nullable
- */
-export type UserKillAnalyticsResponseDtoOutputRecordsBestDay = {
-  startDate: string;
-  endDate: string;
-  /** @minimum 0 */
-  kills: number;
-  partial: boolean;
-} | null;
-
-/**
- * @nullable
- */
-export type UserKillAnalyticsResponseDtoOutputRecordsBestWeek = {
-  startDate: string;
-  endDate: string;
-  /** @minimum 0 */
-  kills: number;
-  partial: boolean;
-} | null;
-
-/**
- * @nullable
- */
-export type UserKillAnalyticsResponseDtoOutputRecordsBestMonth = {
-  startDate: string;
-  endDate: string;
-  /** @minimum 0 */
-  kills: number;
-  partial: boolean;
-} | null;
-
-export type UserKillAnalyticsResponseDtoOutputRecords = {
-  /** @nullable */
-  bestDay: UserKillAnalyticsResponseDtoOutputRecordsBestDay;
-  /** @nullable */
-  bestWeek: UserKillAnalyticsResponseDtoOutputRecordsBestWeek;
-  /** @nullable */
-  bestMonth: UserKillAnalyticsResponseDtoOutputRecordsBestMonth;
-};
-
-export type UserKillAnalyticsResponseDtoOutputHourlyWeekdayItem = {
-  /** @minimum 0 */
-  weekday: number;
-  /** @minimum 0 */
-  hour: number;
-  /** @minimum 0 */
-  kills: number;
-};
-
-export type UserKillAnalyticsResponseDtoOutputTypesItem = {
-  npcType: string;
-  /** @minimum 0 */
-  totalKills: number;
-  /** @minimum 0 */
-  uniqueNpcs: number;
-  share: number;
-};
-
-/**
- * @nullable
- */
-export type UserKillAnalyticsResponseDtoOutputNpcsItemBestDay = {
-  date: string;
-  /** @nullable */
-  kills: number | null;
-} | null;
-
-export type UserKillAnalyticsResponseDtoOutputNpcsItem = {
-  world: string;
-  npcId: number;
-  npcName: string;
-  npcType: string;
-  npcLvl: number;
-  /** @nullable */
-  npcProf: string | null;
-  /** @nullable */
-  npcIcon: string | null;
-  /** @minimum 0 */
-  totalKills: number;
-  /** @minimum 0 */
-  previousKills: number;
-  /** @minimum 0 */
-  comparisonKills: number;
-  deltaKills: number;
-  /** @nullable */
-  deltaPercent: number | null;
-  share: number;
-  /** @nullable */
-  bestDay: UserKillAnalyticsResponseDtoOutputNpcsItemBestDay;
-};
-
-/**
- * @nullable
- */
-export type UserKillAnalyticsResponseDtoOutputNpcGainsItemBestDay = {
-  date: string;
-  /** @nullable */
-  kills: number | null;
-} | null;
-
-export type UserKillAnalyticsResponseDtoOutputNpcGainsItem = {
-  world: string;
-  npcId: number;
-  npcName: string;
-  npcType: string;
-  npcLvl: number;
-  /** @nullable */
-  npcProf: string | null;
-  /** @nullable */
-  npcIcon: string | null;
-  /** @minimum 0 */
-  totalKills: number;
-  /** @minimum 0 */
-  previousKills: number;
-  /** @minimum 0 */
-  comparisonKills: number;
-  deltaKills: number;
-  /** @nullable */
-  deltaPercent: number | null;
-  share: number;
-  /** @nullable */
-  bestDay: UserKillAnalyticsResponseDtoOutputNpcGainsItemBestDay;
-};
-
-export type UserKillAnalyticsResponseDtoOutputWorldsItemDailyItem = {
-  date: string;
-  /** @nullable */
-  kills: number | null;
-};
-
-export type UserKillAnalyticsResponseDtoOutputWorldsItem = {
-  world: string;
-  /** @minimum 0 */
-  totalKills: number;
-  /** @minimum 0 */
-  comparisonKills: number;
-  /** @minimum 0 */
-  previousKills: number;
-  deltaKills: number;
-  /** @nullable */
-  deltaPercent: number | null;
-  share: number;
-  daily: UserKillAnalyticsResponseDtoOutputWorldsItemDailyItem[];
-};
-
-export interface UserKillAnalyticsResponseDtoOutput {
-  meta: UserKillAnalyticsResponseDtoOutputMeta;
-  overview: UserKillAnalyticsResponseDtoOutputOverview;
-  daily: UserKillAnalyticsResponseDtoOutputDailyItem[];
-  weekly: UserKillAnalyticsResponseDtoOutputWeeklyItem[];
-  comparison: UserKillAnalyticsResponseDtoOutputComparison;
-  records: UserKillAnalyticsResponseDtoOutputRecords;
-  hourlyWeekday: UserKillAnalyticsResponseDtoOutputHourlyWeekdayItem[];
-  types: UserKillAnalyticsResponseDtoOutputTypesItem[];
-  npcs: UserKillAnalyticsResponseDtoOutputNpcsItem[];
-  npcGains: UserKillAnalyticsResponseDtoOutputNpcGainsItem[];
-  worlds: UserKillAnalyticsResponseDtoOutputWorldsItem[];
-}
-
-export type UserKillActivityResponseDtoOutputMetaTimezone = typeof UserKillActivityResponseDtoOutputMetaTimezone[keyof typeof UserKillActivityResponseDtoOutputMetaTimezone];
-
-
-export const UserKillActivityResponseDtoOutputMetaTimezone = {
-  'Europe/Warsaw': 'Europe/Warsaw',
-} as const;
-
-export type UserKillActivityResponseDtoOutputMetaCoverage = typeof UserKillActivityResponseDtoOutputMetaCoverage[keyof typeof UserKillActivityResponseDtoOutputMetaCoverage];
-
-
-export const UserKillActivityResponseDtoOutputMetaCoverage = {
-  complete: 'complete',
-  partial: 'partial',
-  unavailable: 'unavailable',
-} as const;
-
-export type UserKillActivityResponseDtoOutputMeta = {
-  timezone: UserKillActivityResponseDtoOutputMetaTimezone;
-  generatedAt: string;
-  /** @minimum 0 */
-  days: number;
-  /** @nullable */
-  world: string | null;
-  startDate: string;
-  endDate: string;
-  /** @nullable */
-  firstBucketAt: string | null;
-  coverage: UserKillActivityResponseDtoOutputMetaCoverage;
-  /** @minimum 0 */
-  allTimeKills: number;
-  /** @minimum 0 */
-  timedKills: number;
-  /** @minimum 0 */
-  untimedKills: number;
-  includesCurrentHour: true;
-};
-
-export type UserKillActivityResponseDtoOutputDailyItem = {
-  date: string;
-  worlds: string[];
-  /** @nullable */
-  kills: number | null;
-  partial: boolean;
-};
-
-export interface UserKillActivityResponseDtoOutput {
-  meta: UserKillActivityResponseDtoOutputMeta;
-  daily: UserKillActivityResponseDtoOutputDailyItem[];
-}
-
-export type UserNpcKillsResponseDtoOutputNpcsItem = {
-  npcId: number;
-  npcName: string;
-  npcType: string;
-  npcLvl: number;
-  /** @nullable */
-  npcProf: string | null;
-  /** @nullable */
-  npcIcon: string | null;
-  totalKills: number;
-};
-
-export type UserNpcKillsResponseDtoOutputPagination = {
-  total: number;
-  cursor: number;
-  limit: number;
-  hasNext: boolean;
-};
-
-export interface UserNpcKillsResponseDtoOutput {
-  npcs: UserNpcKillsResponseDtoOutputNpcsItem[];
-  pagination: UserNpcKillsResponseDtoOutputPagination;
-}
-
-export type NpcType = typeof NpcType[keyof typeof NpcType];
-
-
-export const NpcType = {
-  COMMON: 'COMMON',
-  ELITE: 'ELITE',
-  ELITE2: 'ELITE2',
-  ELITE3: 'ELITE3',
-  HERO: 'HERO',
-  EVENT_HERO: 'EVENT_HERO',
-  COLOSSUS: 'COLOSSUS',
-  TITAN: 'TITAN',
-  NPC: 'NPC',
-} as const;
-
-export type GuildTopNpcsResponseDtoOutputTopNpcsItem = {
-  npcId: number;
-  npcName: string;
-  npcType: string;
-  npcLvl: number;
-  /** @nullable */
-  npcIcon: string | null;
-  uniqueKills: number;
-};
-
-export interface GuildTopNpcsResponseDtoOutput {
-  topNpcs: GuildTopNpcsResponseDtoOutputTopNpcsItem[];
-}
-
-export type GuildTopKillersByTypeResponseDtoOutputTITANItem = {
-  memberId: number;
-  memberName: string;
-  /** @nullable */
-  memberAvatar: string | null;
-  memberUserId: string;
-  totalParticipations: number;
-};
-
-export type GuildTopKillersByTypeResponseDtoOutputHEROItem = {
-  memberId: number;
-  memberName: string;
-  /** @nullable */
-  memberAvatar: string | null;
-  memberUserId: string;
-  totalParticipations: number;
-};
-
-export type GuildTopKillersByTypeResponseDtoOutputEVENTHEROItem = {
-  memberId: number;
-  memberName: string;
-  /** @nullable */
-  memberAvatar: string | null;
-  memberUserId: string;
-  totalParticipations: number;
-};
-
-export interface GuildTopKillersByTypeResponseDtoOutput {
-  TITAN?: GuildTopKillersByTypeResponseDtoOutputTITANItem[];
-  HERO?: GuildTopKillersByTypeResponseDtoOutputHEROItem[];
-  EVENT_HERO?: GuildTopKillersByTypeResponseDtoOutputEVENTHEROItem[];
-}
-
-/**
- * @nullable
- */
-export type NpcKillersResponseDtoOutputNpc = {[key: string]: unknown} & ({
-  npcId: number;
-  npcName: string;
-  npcType: string;
-  npcLvl: number;
-  /** @nullable */
-  npcProf: string | null;
-  /** @nullable */
-  npcIcon: string | null;
-  uniqueGuildKills: number;
-  totalMemberParticipations: number;
-} | null) | null;
-
-export type NpcKillersResponseDtoOutputKillersItem = {
-  memberId: number;
-  memberName: string;
-  /** @nullable */
-  memberAvatar: string | null;
-  memberUserId: string;
-  participationCount: number;
-};
-
-export interface NpcKillersResponseDtoOutput {
-  /** @nullable */
-  npc: NpcKillersResponseDtoOutputNpc;
-  killers: NpcKillersResponseDtoOutputKillersItem[];
-}
-
-/**
- * @nullable
- */
-export type MemberKillsResponseDtoOutputMember = {[key: string]: unknown} & ({
-  memberId: number;
-  memberName: string;
-  /** @nullable */
-  memberAvatar: string | null;
-  memberUserId: string;
-} | null) | null;
-
-export type MemberKillsResponseDtoOutputOverviewParticipationsByType = {[key: string]: number};
-
-/**
- * @nullable
- */
-export type MemberKillsResponseDtoOutputOverview = {[key: string]: unknown} & ({
-  totalParticipations: number;
-  participationsByType: MemberKillsResponseDtoOutputOverviewParticipationsByType;
-} | null) | null;
-
-export type MemberKillsResponseDtoOutputNpcsItem = {
-  npcId: number;
-  npcName: string;
-  npcType: string;
-  npcLvl: number;
-  /** @nullable */
-  npcProf: string | null;
-  /** @nullable */
-  npcIcon: string | null;
-  totalKills: number;
-};
-
-/**
- * @nullable
- */
-export type MemberKillsResponseDtoOutputPagination = {[key: string]: unknown} & ({
-  total: number;
-  cursor: number;
-  limit: number;
-  hasNext: boolean;
-} | null) | null;
-
-export interface MemberKillsResponseDtoOutput {
-  /** @nullable */
-  member: MemberKillsResponseDtoOutputMember;
-  /** @nullable */
-  overview: MemberKillsResponseDtoOutputOverview;
-  npcs: MemberKillsResponseDtoOutputNpcsItem[];
-  /** @nullable */
-  pagination: MemberKillsResponseDtoOutputPagination;
-}
-
-export interface RefreshStatsCardResponseDtoOutput {
-  nextRefreshAt: string;
-}
-
-export type GuildDocumentListResponseDtoItemsItemCreatedBy = {
-  memberId: string;
-  /** @nullable */
-  name: string | null;
-};
-
-export type GuildDocumentListResponseDtoItemsItemUpdatedBy = {
-  memberId: string;
-  /** @nullable */
-  name: string | null;
-};
-
-export type GuildDocumentListResponseDtoItemsItem = {
-  id: string;
-  guildId: string;
-  title: string;
-  version: number;
-  createdByMemberId: string;
-  createdBy: GuildDocumentListResponseDtoItemsItemCreatedBy;
-  updatedByMemberId: string;
-  updatedBy: GuildDocumentListResponseDtoItemsItemUpdatedBy;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-};
-
-export type GuildDocumentListResponseDtoLimit = {
-  canCreate: boolean;
-  max: number;
-  trashed: number;
-  used: number;
-};
-
-export interface GuildDocumentListResponseDto {
-  items: GuildDocumentListResponseDtoItemsItem[];
-  limit: GuildDocumentListResponseDtoLimit;
-}
-
-export interface CreateGuildDocumentDto {
-  /**
-     * @minLength 1
-     * @maxLength 120
-     */
-  title: string;
-}
-
-export type GuildDocumentResponseDtoSchema0 = string | number | boolean | (GuildDocumentResponseDtoSchema0 | null)[] | {[key: string]: GuildDocumentResponseDtoSchema0 | null} | null;
-
-export type GuildDocumentResponseDtoCreatedBy = {
-  memberId: string;
-  /** @nullable */
-  name: string | null;
-};
-
-export type GuildDocumentResponseDtoUpdatedBy = {
-  memberId: string;
-  /** @nullable */
-  name: string | null;
-};
-
-export interface GuildDocumentResponseDto {
-  id: string;
-  guildId: string;
-  title: string;
-  version: number;
-  createdByMemberId: string;
-  createdBy: GuildDocumentResponseDtoCreatedBy;
-  updatedByMemberId: string;
-  updatedBy: GuildDocumentResponseDtoUpdatedBy;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-  content: GuildDocumentResponseDtoSchema0 | null;
-}
-
-export type GuildDocumentTrashResponseDtoItemsItemCreatedBy = {
-  memberId: string;
-  /** @nullable */
-  name: string | null;
-};
-
-export type GuildDocumentTrashResponseDtoItemsItemUpdatedBy = {
-  memberId: string;
-  /** @nullable */
-  name: string | null;
-};
-
-export type GuildDocumentTrashResponseDtoItemsItemDeletedBy = {
-  memberId: string;
-  /** @nullable */
-  name: string | null;
-};
-
-export type GuildDocumentTrashResponseDtoItemsItem = {
-  id: string;
-  guildId: string;
-  title: string;
-  version: number;
-  createdByMemberId: string;
-  createdBy: GuildDocumentTrashResponseDtoItemsItemCreatedBy;
-  updatedByMemberId: string;
-  updatedBy: GuildDocumentTrashResponseDtoItemsItemUpdatedBy;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  deletedAt: string;
-  deletedByMemberId: string;
-  deletedBy: GuildDocumentTrashResponseDtoItemsItemDeletedBy;
-};
-
-export interface GuildDocumentTrashResponseDto {
-  items: GuildDocumentTrashResponseDtoItemsItem[];
-}
-
-export type GuildDocumentHistoryResponseDtoItemsItemAction = typeof GuildDocumentHistoryResponseDtoItemsItemAction[keyof typeof GuildDocumentHistoryResponseDtoItemsItemAction];
-
-
-export const GuildDocumentHistoryResponseDtoItemsItemAction = {
-  SAVE: 'SAVE',
-  DELETE: 'DELETE',
-  RESTORE: 'RESTORE',
-} as const;
-
-export type GuildDocumentHistoryResponseDtoItemsItemActor = {
-  memberId: string;
-  /** @nullable */
-  name: string | null;
-};
-
-export type GuildDocumentHistoryResponseDtoItemsItem = {
-  id: string;
-  documentId: string;
-  guildId: string;
-  version: number;
-  title: string;
-  action: GuildDocumentHistoryResponseDtoItemsItemAction;
-  actorMemberId: string;
-  actor: GuildDocumentHistoryResponseDtoItemsItemActor;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  editedAt: string;
-};
-
-export interface GuildDocumentHistoryResponseDto {
-  items: GuildDocumentHistoryResponseDtoItemsItem[];
-}
-
-export type GuildDocumentHistorySnapshotResponseDtoSchema0 = string | number | boolean | (GuildDocumentHistorySnapshotResponseDtoSchema0 | null)[] | {[key: string]: GuildDocumentHistorySnapshotResponseDtoSchema0 | null} | null;
-
-export type GuildDocumentHistorySnapshotResponseDtoAction = typeof GuildDocumentHistorySnapshotResponseDtoAction[keyof typeof GuildDocumentHistorySnapshotResponseDtoAction];
-
-
-export const GuildDocumentHistorySnapshotResponseDtoAction = {
-  SAVE: 'SAVE',
-  DELETE: 'DELETE',
-  RESTORE: 'RESTORE',
-} as const;
-
-export type GuildDocumentHistorySnapshotResponseDtoActor = {
-  memberId: string;
-  /** @nullable */
-  name: string | null;
-};
-
-export interface GuildDocumentHistorySnapshotResponseDto {
-  id: string;
-  documentId: string;
-  guildId: string;
-  version: number;
-  title: string;
-  action: GuildDocumentHistorySnapshotResponseDtoAction;
-  actorMemberId: string;
-  actor: GuildDocumentHistorySnapshotResponseDtoActor;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  editedAt: string;
-  content: GuildDocumentHistorySnapshotResponseDtoSchema0 | null;
-}
-
-export type UpdateGuildDocumentDtoSchema0 = string | number | boolean | (UpdateGuildDocumentDtoSchema0 | null)[] | {[key: string]: UpdateGuildDocumentDtoSchema0 | null} | null;
-
-export interface UpdateGuildDocumentDto {
-  content: UpdateGuildDocumentDtoSchema0 | null;
-  /**
-     * @minLength 1
-     * @maxLength 120
-     */
-  title: string;
-}
-
-export interface DocsMutationResponseDto {
-  success: boolean;
+  windowStart: string;
+  items: UserFeedResponseDtoOutputItemsItem[];
 }
 
 export type TimerNpcResponseDtoType = typeof TimerNpcResponseDtoType[keyof typeof TimerNpcResponseDtoType];
@@ -10091,20 +9645,11 @@ export type NotificationJobPayloadSnapshotResponseDto = {[key: string]: unknown}
   npcName?: string | null;
   /** @nullable */
   timerKey?: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-     */
+  /** @nullable */
   minSpawnTime?: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-     */
+  /** @nullable */
   maxSpawnTime?: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-     */
+  /** @nullable */
   scheduledFor?: string | null;
   /** @nullable */
   scheduleStrategy?: NotificationJobPayloadSnapshotResponseDtoScheduleStrategy;
@@ -10118,10 +9663,7 @@ export type NotificationJobPayloadSnapshotResponseDto = {[key: string]: unknown}
   scheduleOffsetMinutes?: number | null;
   /** @nullable */
   contentTemplate?: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-     */
+  /** @nullable */
   testTriggeredAt?: string | null;
 } | null) | null;
 
@@ -11113,13 +10655,7 @@ playerLevelMax?: number;
 search?: string;
 hid?: string;
 itemNames?: string[];
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
- */
 createdAtMin?: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
- */
 createdAtMax?: string;
 };
 
@@ -11409,13 +10945,7 @@ export type ListSpotReservationsPathParameters = {
     spotId: string,
  }
 export type ListSpotReservationsParams = {
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
- */
 from: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
- */
 to: string;
 };
 
@@ -12763,7 +12293,6 @@ export type ListEventKillHistoryPathParameters = {
 export type ListEventKillHistoryParams = {
 /**
  * Page size from 1 to 100. Defaults to 20.
- * @pattern ^(?:[1-9]\d?|100)$
  */
 limit?: string;
 /**
@@ -12776,9 +12305,6 @@ cursor?: string;
  * @minLength 1
  */
 heroId?: string;
-/**
- * @pattern ^[1-9]\d*$
- */
 memberId?: string;
 };
 

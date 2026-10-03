@@ -1,4 +1,4 @@
-import { HttpClient, HttpClientResponse } from "effect/unstable/http";
+import { HttpClient, HttpClientResponse } from "effect/http";
 import { hasServiceAuthorization } from "@lootlog/protocol/http/service-auth";
 import { and, eq, inArray } from "drizzle-orm";
 import { Context, Effect, Layer, Option, Schema } from "effect";

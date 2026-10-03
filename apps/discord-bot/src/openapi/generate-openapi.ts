@@ -1,5 +1,5 @@
 import { preserveOpenApi30Contract } from "@lootlog/schema/openapi-compatibility";
-import { OpenApi } from "effect/unstable/httpapi";
+import { OpenApi } from "effect/http-api";
 import { stringify } from "yaml";
 import { DiscordBotApi } from "#src/http-api/discord-bot-api";
 

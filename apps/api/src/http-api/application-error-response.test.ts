@@ -1,6 +1,6 @@
 import { expect, it } from "bun:test";
 import { Effect, Exit } from "effect";
-import { HttpServerResponse } from "effect/unstable/http";
+import { HttpServerResponse } from "effect/http";
 import {
   DependencyUnavailableError,
   InvalidRequestError,

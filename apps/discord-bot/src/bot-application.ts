@@ -23,12 +23,8 @@ import {
   Redacted,
   Schema,
 } from "effect";
-import {
-  HttpRouter,
-  HttpServer,
-  HttpServerResponse,
-} from "effect/unstable/http";
-import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { HttpRouter, HttpServer, HttpServerResponse } from "effect/http";
+import { HttpApiBuilder } from "effect/http-api";
 import { registerDiscordEventHandlers } from "#src/bot/bot-discord-events.handler";
 import {
   makeDiscordDelivery,

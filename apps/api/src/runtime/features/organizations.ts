@@ -8,7 +8,7 @@ import { outboundHttpRequest } from "#src/shared/http/outbound-http";
 import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Context, Effect, Layer, Redacted } from "effect";
-import { HttpClient } from "effect/unstable/http";
+import { HttpClient } from "effect/http";
 import {
   GuildSummaryCacheSchema,
   makeAccessibleGuilds,

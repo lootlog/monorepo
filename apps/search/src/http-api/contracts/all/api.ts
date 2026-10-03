@@ -5,7 +5,7 @@ import {
   HttpApiGroup,
   HttpApiSchema,
   OpenApi,
-} from "effect/unstable/httpapi";
+} from "effect/http-api";
 import {
   AllControllerSearchAll200,
   AllControllerSearchAllQuery,

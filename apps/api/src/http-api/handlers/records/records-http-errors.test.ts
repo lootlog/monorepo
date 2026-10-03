@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Cause, Effect, Exit } from "effect";
-import { HttpServerResponse } from "effect/unstable/http";
-import { SqlError, UniqueViolation } from "effect/unstable/sql/SqlError";
+import { HttpServerResponse } from "effect/http";
+import { SqlError, UniqueViolation } from "effect/sql/SqlError";
 import { EffectDrizzleQueryError } from "drizzle-orm/effect-core/errors";
 import {
   InvalidRequestError,

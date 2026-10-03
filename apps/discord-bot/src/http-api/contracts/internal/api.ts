@@ -1,5 +1,5 @@
 /** Endpoints owned by the internal HTTP module. */
-import { HttpApiEndpoint, HttpApiGroup } from "effect/unstable/httpapi";
+import { HttpApiEndpoint, HttpApiGroup } from "effect/http-api";
 import {
   DiscordGuildChannels,
   DiscordGuildSyncState,

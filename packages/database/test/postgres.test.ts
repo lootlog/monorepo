@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { createServer, type AddressInfo, type Socket } from "node:net";
 import { ManagedRuntime } from "effect";
-import { SqlError } from "effect/unstable/sql/SqlError";
+import { SqlError } from "effect/sql/SqlError";
 import { PgClient } from "@effect/sql-pg";
 import { makePostgresLayer } from "../src/postgres.js";
 

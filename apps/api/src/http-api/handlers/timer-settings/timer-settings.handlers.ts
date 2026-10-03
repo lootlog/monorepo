@@ -1,6 +1,6 @@
 import { Effect } from "effect";
-import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
-import { HttpApiBuilder } from "effect/unstable/httpapi";
+import * as HttpServerResponse from "effect/http/HttpServerResponse";
+import { HttpApiBuilder } from "effect/http-api";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
   getGlobalTimerSettings,

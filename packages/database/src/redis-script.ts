@@ -1,4 +1,4 @@
-import * as Redis from "effect/unstable/persistence/Redis";
+import * as Redis from "effect/persistence/Redis";
 
 /** One cache per Redis adapter; key count is part of the Lua descriptor identity. */
 export class RedisScriptCache {

@@ -1,6 +1,6 @@
 import { Effect, Layer } from "effect";
-import { HttpRouter, HttpServer } from "effect/unstable/http";
-import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { HttpRouter, HttpServer } from "effect/http";
+import { HttpApiBuilder } from "effect/http-api";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import { GatewayApi } from "./gateway-api.js";
 

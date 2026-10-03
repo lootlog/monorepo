@@ -7,7 +7,7 @@ import { applicationErrorResponse } from "../../application-error-response.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 
-import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { HttpApiBuilder } from "effect/http-api";
 import { decodeDomainJson } from "../../domain-json.schema.js";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";

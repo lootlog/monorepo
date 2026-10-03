@@ -6,7 +6,7 @@ import { createDatabaseBoundary } from "./database-fixtures.js";
 import { randomUUID } from "node:crypto";
 import { BunRedis } from "@effect/platform-bun";
 import { Effect, ManagedRuntime, Schema } from "effect";
-import { Redis } from "effect/unstable/persistence";
+import { Redis } from "effect/persistence";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { makeJsonCodec, RedisService } from "#src/redis/redis.service";

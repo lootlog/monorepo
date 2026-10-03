@@ -6,7 +6,7 @@ import {
   HttpApiGroup,
   HttpApiSchema,
   OpenApi,
-} from "effect/unstable/httpapi";
+} from "effect/http-api";
 import {
   InternalControllerDeleteUserData201,
   InternalControllerDeleteUserDataRequestJson,

@@ -2,7 +2,7 @@ import { boundedHttpGet } from "@lootlog/instrumentation/bounded-http-get";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { UserGuildPermissionsDtoSchema } from "@lootlog/schema/permissions";
 import { Clock, Effect, Option, Result, Schema } from "effect";
-import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
+import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import type { GetUserGuildsOptions, UserGuildData } from "#src/guilds/guild";
 import { CACHE_TTL, getUserGuildsCacheKey } from "#src/guilds/cache-keys";

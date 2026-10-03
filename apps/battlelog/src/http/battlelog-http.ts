@@ -21,8 +21,8 @@ import {
   HttpServerRequest,
   HttpServerError,
   HttpServerResponse,
-} from "effect/unstable/http";
-import { HttpApiBuilder } from "effect/unstable/httpapi";
+} from "effect/http";
+import { HttpApiBuilder } from "effect/http-api";
 import { BattlelogApplication } from "#src/battlelog-application";
 import type { BattlelogOperations } from "#src/battles/battlelog-operations";
 import { BattlelogOperationFailure } from "../battles/battlelog-operation.js";

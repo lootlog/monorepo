@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { encode } from "@msgpack/msgpack";
 import { Effect, Redacted, Schema } from "effect";
-import { HttpClient, HttpClientResponse } from "effect/unstable/http";
+import { HttpClient, HttpClientResponse } from "effect/http";
 import type {
   RabbitDelivery,
   RabbitMessagingService,

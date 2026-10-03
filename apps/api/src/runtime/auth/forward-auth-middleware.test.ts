@@ -5,10 +5,10 @@ import {
   HttpApiBuilder,
   HttpApiEndpoint,
   HttpApiGroup,
-} from "effect/unstable/httpapi";
+} from "effect/http-api";
 import { expect, test } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
-import { HttpRouter, HttpServerResponse } from "effect/unstable/http";
+import { HttpRouter, HttpServerResponse } from "effect/http";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   ForwardAuthMiddlewareLive,

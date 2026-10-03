@@ -1,10 +1,10 @@
 import { Config, Effect, Layer, Logger, Option, Tracer } from "effect";
-import { FetchHttpClient, HttpMiddleware } from "effect/unstable/http";
+import { FetchHttpClient, HttpMiddleware } from "effect/http";
 import {
   OtlpMetrics,
   OtlpSerialization,
   OtlpTracer,
-} from "effect/unstable/observability";
+} from "effect/observability";
 import { isHealthcheck } from "./instrumentation.js";
 import { logSpanContext, makeJsonLogger, makeLocalLogger } from "./logging.js";
 import { startRuntimeMetrics } from "./runtime-metrics.js";

@@ -2,7 +2,7 @@ import { BunRedis } from "@effect/platform-bun";
 import { reveal, type AuthConfig } from "#src/config/env";
 import type { SecondaryStorage } from "better-auth";
 import { Context, Effect, FiberSet, Layer } from "effect";
-import { Redis } from "effect/unstable/persistence";
+import { Redis } from "effect/persistence";
 import { createFailOpenSecondaryStorage } from "./secondary-storage-fail-open.js";
 
 const AUTH_REDIS_KEY_PREFIX = "auth:better-auth:";

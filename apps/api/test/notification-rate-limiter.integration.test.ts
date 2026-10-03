@@ -9,7 +9,7 @@ import {
 import { setTimeout as sleep } from "node:timers/promises";
 import { BunRedis } from "@effect/platform-bun";
 import { Effect, ManagedRuntime } from "effect";
-import { Redis } from "effect/unstable/persistence";
+import { Redis } from "effect/persistence";
 import { RedisService } from "#src/redis/redis.service";
 import { ExecutionError, RedlockService } from "#src/redis/redlock";
 import {

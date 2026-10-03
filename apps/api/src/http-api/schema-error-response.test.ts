@@ -5,8 +5,8 @@ import {
 import { afterAll, expect, it } from "bun:test";
 import { BunHttpServer } from "@effect/platform-bun";
 import { Effect, Layer } from "effect";
-import { HttpRouter, HttpServerResponse } from "effect/unstable/http";
-import { HttpApi, HttpApiBuilder, HttpApiGroup } from "effect/unstable/httpapi";
+import { HttpRouter, HttpServerResponse } from "effect/http";
+import { HttpApi, HttpApiBuilder, HttpApiGroup } from "effect/http-api";
 import { TimersGroup } from "./contracts/timers/api.js";
 import { MessagingGroup } from "./contracts/messaging/api.js";
 import { LootsGroup } from "./contracts/loots/api.js";

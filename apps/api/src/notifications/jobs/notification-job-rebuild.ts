@@ -231,7 +231,7 @@ export const makeNotificationJobRebuild = (
     const permittedFor = yield* permittedByOwner(schedulable);
     const now = new Date(yield* Clock.currentTimeMillis);
 
-    const [failures] = yield* Effect.partition(
+    const [, failures] = yield* Effect.partition(
       schedulable,
       (rule) => {
         const schedule = timerSchedule(rule, event, now);

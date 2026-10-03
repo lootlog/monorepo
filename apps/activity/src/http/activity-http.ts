@@ -25,13 +25,9 @@ import {
   Schema,
   Semaphore,
 } from "effect";
-import {
-  HttpRouter,
-  HttpServerRequest,
-  HttpServerResponse,
-} from "effect/unstable/http";
-import { HttpApiBuilder } from "effect/unstable/httpapi";
-import { SqlClient } from "effect/unstable/sql";
+import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
+import { HttpApiBuilder } from "effect/http-api";
+import { SqlClient } from "effect/sql";
 import { ActivityRepository } from "#src/activities/activity-repository";
 import { ActivityConfig } from "#src/config/activity-config";
 import { ActivityApi } from "#src/http-api/activity-api";

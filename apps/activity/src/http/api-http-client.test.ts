@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from "bun:test";
 import { Effect, Layer } from "effect";
-import { FetchHttpClient } from "effect/unstable/http";
+import { FetchHttpClient } from "effect/http";
 import { ApiHttpClient, ApiHttpClientFailure } from "./api-http-client.js";
 
 type FetchImplementation = (

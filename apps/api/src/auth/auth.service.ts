@@ -1,6 +1,6 @@
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import { Effect, Redacted, Schema } from "effect";
-import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
+import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
 import type { GetIdpTokenResponse } from "#src/auth/get-idp-token-response";
 import { AccountNotFoundError } from "#src/auth/errors/account-not-found.error";
 import { AuthBadRequestError } from "#src/auth/errors/auth-bad-request.error";

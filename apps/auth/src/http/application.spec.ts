@@ -2,13 +2,13 @@ import { ApiKeyService } from "#src/auth/api-key-service";
 import { afterAll, describe, expect, it, mock } from "bun:test";
 import { betterAuth } from "better-auth";
 import { Effect, Layer, Redacted } from "effect";
-import { HttpRouter, HttpServer } from "effect/unstable/http";
+import { HttpRouter, HttpServer } from "effect/http";
 import { AuthService, createAuthService } from "#src/auth/auth-service";
 import { BetterAuthRuntime } from "#src/auth/provider/better-auth";
 import { resolveBetterAuthBaseURL } from "#src/auth/provider/better-auth-url";
 import { normalizeBetterAuthRequest } from "./application.js";
 import { AuthRoutes } from "./server.js";
-import { OpenApi } from "effect/unstable/httpapi";
+import { OpenApi } from "effect/http-api";
 import { AuthApi } from "#src/http-api/auth-api";
 
 const makeRuntime = (

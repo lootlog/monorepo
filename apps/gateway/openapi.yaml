@@ -42,24 +42,6 @@ paths:
       summary: Readiness check
 components:
   schemas:
-    GatewayHealth:
-      type: object
-      properties:
-        status:
-          type: string
-          enum:
-            - ok
-      required:
-        - status
-    GatewayReady:
-      type: object
-      properties:
-        status:
-          type: string
-          enum:
-            - ready
-      required:
-        - status
     GatewayUnavailable:
       type: object
       properties:
@@ -75,4 +57,22 @@ components:
       required:
         - status
         - reason
+    GatewayReady:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - ready
+      required:
+        - status
+    GatewayHealth:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - ok
+      required:
+        - status
 tags: []

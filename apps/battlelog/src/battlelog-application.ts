@@ -2,7 +2,7 @@ import { BunRedis } from "@effect/platform-bun";
 import { RedisClient } from "bun";
 import { createBunRedisClient, Queue, RedisConnection, Worker } from "bullmq";
 import { Context, Effect, FiberSet, Layer, Redacted, Schedule } from "effect";
-import { Redis } from "effect/unstable/persistence";
+import { Redis } from "effect/persistence";
 import {
   makeBattlelogOperations,
   type BattlelogOperations,

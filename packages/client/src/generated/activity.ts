@@ -28,105 +28,43 @@ import type {
 
 import { activityFetch } from '../mutators';
 import type { ErrorType } from '../mutators';
-export type PaginatedActivitiesResponseDtoDataItemType = typeof PaginatedActivitiesResponseDtoDataItemType[keyof typeof PaginatedActivitiesResponseDtoDataItemType];
+export type UserOnlineResponseDtoTimezone = typeof UserOnlineResponseDtoTimezone[keyof typeof UserOnlineResponseDtoTimezone];
 
 
-export const PaginatedActivitiesResponseDtoDataItemType = {
-  CONNECT_EVENT: 'CONNECT_EVENT',
-  DISCONNECT_EVENT: 'DISCONNECT_EVENT',
+export const UserOnlineResponseDtoTimezone = {
+  'Europe/Warsaw': 'Europe/Warsaw',
 } as const;
 
-export type PaginatedActivitiesResponseDtoDataItemSource = typeof PaginatedActivitiesResponseDtoDataItemSource[keyof typeof PaginatedActivitiesResponseDtoDataItemSource];
+export type UserOnlineResponseDtoStatus = typeof UserOnlineResponseDtoStatus[keyof typeof UserOnlineResponseDtoStatus];
 
 
-export const PaginatedActivitiesResponseDtoDataItemSource = {
-  GAME: 'GAME',
-  WEB_APP: 'WEB_APP',
+export const UserOnlineResponseDtoStatus = {
+  fresh: 'fresh',
+  stale: 'stale',
+  unavailable: 'unavailable',
 } as const;
 
-export type PaginatedActivitiesResponseDtoDataItemDetails = {[key: string]: unknown};
-
-export type PaginatedActivitiesResponseDtoDataItemActorSnapshotSource = typeof PaginatedActivitiesResponseDtoDataItemActorSnapshotSource[keyof typeof PaginatedActivitiesResponseDtoDataItemActorSnapshotSource];
-
-
-export const PaginatedActivitiesResponseDtoDataItemActorSnapshotSource = {
-  GAME: 'GAME',
-  WEB_APP: 'WEB_APP',
-} as const;
-
-export type PaginatedActivitiesResponseDtoDataItemActorSnapshot = {
-  id: string;
-  accountId: number;
-  characterId: number;
-  name: string;
+export type UserOnlineResponseDtoDaysItem = {
+  date: string;
   /** @nullable */
-  clanName?: string | null;
-  /** @nullable */
-  clanId?: number | null;
-  icon: string;
-  lvl: number;
-  prof: string;
-  source: PaginatedActivitiesResponseDtoDataItemActorSnapshotSource;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-};
-
-export type PaginatedActivitiesResponseDtoDataItem = {
-  id: string;
-  userId: string;
-  guildId: string;
-  discordId: string;
-  type: PaginatedActivitiesResponseDtoDataItemType;
-  source: PaginatedActivitiesResponseDtoDataItemSource;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @nullable */
-  world?: string | null;
-  details?: PaginatedActivitiesResponseDtoDataItemDetails;
-  actorSnapshot?: PaginatedActivitiesResponseDtoDataItemActorSnapshot;
-};
-
-export interface PaginatedActivitiesResponseDto {
-  data: PaginatedActivitiesResponseDtoDataItem[];
-  nextCursor?: string;
-  hasMore: boolean;
-}
-
-export interface ActorNameSuggestionsResponseDtoOutput {
-  suggestions: string[];
-}
-
-export interface WorldSuggestionsResponseDtoOutput {
+  onlineSeconds: number | null;
+  partial: boolean;
   worlds: string[];
+  worldsComplete: boolean;
+};
+
+export interface UserOnlineResponseDto {
+  timezone: UserOnlineResponseDtoTimezone;
+  /** @nullable */
+  trackingStartedAt: string | null;
+  /** @nullable */
+  lastObservedAt: string | null;
+  status: UserOnlineResponseDtoStatus;
+  days: UserOnlineResponseDtoDaysItem[];
 }
 
-export interface ClanNameSuggestionsResponseDtoOutput {
-  suggestions: string[];
-}
-
-export type MemberActivityStatsResponseDtoSource = typeof MemberActivityStatsResponseDtoSource[keyof typeof MemberActivityStatsResponseDtoSource];
-
-
-export const MemberActivityStatsResponseDtoSource = {
-  GAME: 'GAME',
-  WEB_APP: 'WEB_APP',
-} as const;
-
-export interface MemberActivityStatsResponseDto {
-  guildId: string;
-  discordId: string;
-  source: MemberActivityStatsResponseDtoSource;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  lastSeenAt?: string | null;
-  visitCount: number;
-  activeSessionCount: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
+export interface DeleteActivityResponseDtoOutput {
+  count: number;
 }
 
 export type ActivityResponseDtoType = typeof ActivityResponseDtoType[keyof typeof ActivityResponseDtoType];
@@ -168,7 +106,6 @@ export type ActivityResponseDtoActorSnapshot = {
   lvl: number;
   prof: string;
   source: ActivityResponseDtoActorSnapshotSource;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   createdAt: string;
 };
 
@@ -179,7 +116,6 @@ export interface ActivityResponseDto {
   discordId: string;
   type: ActivityResponseDtoType;
   source: ActivityResponseDtoSource;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   createdAt: string;
   /** @nullable */
   world?: string | null;
@@ -187,49 +123,98 @@ export interface ActivityResponseDto {
   actorSnapshot?: ActivityResponseDtoActorSnapshot;
 }
 
-export interface DeleteActivityResponseDtoOutput {
-  count: number;
+export type MemberActivityStatsResponseDtoSource = typeof MemberActivityStatsResponseDtoSource[keyof typeof MemberActivityStatsResponseDtoSource];
+
+
+export const MemberActivityStatsResponseDtoSource = {
+  GAME: 'GAME',
+  WEB_APP: 'WEB_APP',
+} as const;
+
+export interface MemberActivityStatsResponseDto {
+  guildId: string;
+  discordId: string;
+  source: MemberActivityStatsResponseDtoSource;
+  /** @nullable */
+  lastSeenAt?: string | null;
+  visitCount: number;
+  activeSessionCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export type UserOnlineResponseDtoTimezone = typeof UserOnlineResponseDtoTimezone[keyof typeof UserOnlineResponseDtoTimezone];
+export type PaginatedActivitiesResponseDtoDataItemType = typeof PaginatedActivitiesResponseDtoDataItemType[keyof typeof PaginatedActivitiesResponseDtoDataItemType];
 
 
-export const UserOnlineResponseDtoTimezone = {
-  'Europe/Warsaw': 'Europe/Warsaw',
+export const PaginatedActivitiesResponseDtoDataItemType = {
+  CONNECT_EVENT: 'CONNECT_EVENT',
+  DISCONNECT_EVENT: 'DISCONNECT_EVENT',
 } as const;
 
-export type UserOnlineResponseDtoStatus = typeof UserOnlineResponseDtoStatus[keyof typeof UserOnlineResponseDtoStatus];
+export type PaginatedActivitiesResponseDtoDataItemSource = typeof PaginatedActivitiesResponseDtoDataItemSource[keyof typeof PaginatedActivitiesResponseDtoDataItemSource];
 
 
-export const UserOnlineResponseDtoStatus = {
-  fresh: 'fresh',
-  stale: 'stale',
-  unavailable: 'unavailable',
+export const PaginatedActivitiesResponseDtoDataItemSource = {
+  GAME: 'GAME',
+  WEB_APP: 'WEB_APP',
 } as const;
 
-export type UserOnlineResponseDtoDaysItem = {
-  date: string;
+export type PaginatedActivitiesResponseDtoDataItemDetails = {[key: string]: unknown};
+
+export type PaginatedActivitiesResponseDtoDataItemActorSnapshotSource = typeof PaginatedActivitiesResponseDtoDataItemActorSnapshotSource[keyof typeof PaginatedActivitiesResponseDtoDataItemActorSnapshotSource];
+
+
+export const PaginatedActivitiesResponseDtoDataItemActorSnapshotSource = {
+  GAME: 'GAME',
+  WEB_APP: 'WEB_APP',
+} as const;
+
+export type PaginatedActivitiesResponseDtoDataItemActorSnapshot = {
+  id: string;
+  accountId: number;
+  characterId: number;
+  name: string;
   /** @nullable */
-  onlineSeconds: number | null;
-  partial: boolean;
-  worlds: string[];
-  worldsComplete: boolean;
+  clanName?: string | null;
+  /** @nullable */
+  clanId?: number | null;
+  icon: string;
+  lvl: number;
+  prof: string;
+  source: PaginatedActivitiesResponseDtoDataItemActorSnapshotSource;
+  createdAt: string;
 };
 
-export interface UserOnlineResponseDto {
-  timezone: UserOnlineResponseDtoTimezone;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-     */
-  trackingStartedAt: string | null;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
-     */
-  lastObservedAt: string | null;
-  status: UserOnlineResponseDtoStatus;
-  days: UserOnlineResponseDtoDaysItem[];
+export type PaginatedActivitiesResponseDtoDataItem = {
+  id: string;
+  userId: string;
+  guildId: string;
+  discordId: string;
+  type: PaginatedActivitiesResponseDtoDataItemType;
+  source: PaginatedActivitiesResponseDtoDataItemSource;
+  createdAt: string;
+  /** @nullable */
+  world?: string | null;
+  details?: PaginatedActivitiesResponseDtoDataItemDetails;
+  actorSnapshot?: PaginatedActivitiesResponseDtoDataItemActorSnapshot;
+};
+
+export interface PaginatedActivitiesResponseDto {
+  data: PaginatedActivitiesResponseDtoDataItem[];
+  nextCursor?: string;
+  hasMore: boolean;
+}
+
+export interface ClanNameSuggestionsResponseDtoOutput {
+  suggestions: string[];
+}
+
+export interface WorldSuggestionsResponseDtoOutput {
+  worlds: string[];
+}
+
+export interface ActorNameSuggestionsResponseDtoOutput {
+  suggestions: string[];
 }
 
 /**
@@ -400,13 +385,7 @@ source?: ActivitiesControllerFindByGuildSourceItem[];
 playerName?: string;
 clanName?: string;
 world?: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
- */
 startDate?: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
- */
 endDate?: string;
 cursor?: string;
 /**
@@ -583,13 +562,7 @@ source?: ActivitiesControllerFindByUserSourceItem[];
 playerName?: string;
 clanName?: string;
 world?: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
- */
 startDate?: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
- */
 endDate?: string;
 cursor?: string;
 /**

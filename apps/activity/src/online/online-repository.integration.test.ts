@@ -25,7 +25,7 @@ import {
 } from "@testcontainers/postgresql";
 import { makePostgresLayer } from "@lootlog/database";
 import { Effect, Layer, Redacted } from "effect";
-import { HttpRouter, HttpServer } from "effect/unstable/http";
+import { HttpRouter, HttpServer } from "effect/http";
 import { PgClient } from "@effect/sql-pg";
 import { OnlineRepository } from "./online-repository.js";
 import type { UserOnlineCheckpointV1 } from "@lootlog/protocol/rabbit/events";

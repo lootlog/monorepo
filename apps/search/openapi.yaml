@@ -374,35 +374,6 @@ paths:
       summary: Search across all categories
 components:
   schemas:
-    PlayerHitDto_Output:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        lvl:
-          type: number
-        prof:
-          type: string
-        icon:
-          type: string
-        characterId:
-          type: number
-        accountId:
-          type: number
-        world:
-          type: string
-      required:
-        - id
-        - name
-        - lvl
-        - prof
-        - icon
-        - characterId
-        - accountId
-        - world
-      description: Player search hit
     SearchUnavailableEncoded:
       type: object
       properties:
@@ -415,135 +386,6 @@ components:
       required:
         - _tag
         - message
-    NpcHitDto_Output:
-      type: object
-      properties:
-        id:
-          type: number
-        identityNamespace:
-          type: string
-          enum:
-            - legacy
-            - runtime
-            - template
-          description: "Meaning of `id`: a Margonem template id, a runtime spawn id observed without a template, or an overloaded legacy id."
-        prof:
-          type: string
-        icon:
-          type: string
-        name:
-          type: string
-        lvl:
-          type: number
-        wt:
-          type: number
-        type:
-          type: string
-          enum:
-            - COMMON
-            - ELITE
-            - ELITE2
-            - ELITE3
-            - HERO
-            - EVENT_HERO
-            - COLOSSUS
-            - TITAN
-            - NPC
-        margonemType:
-          type: number
-        worlds:
-          type: array
-          items:
-            type: string
-          description: Worlds of the edition where this NPC was observed.
-          default: &a2 []
-        gameVersion:
-          type: string
-          enum:
-            - en
-            - pl
-          description: "Margonem edition of the NPC: `pl` for margonem.pl, `en` for margonem.com. Equal ids in different editions are unrelated."
-      required:
-        - id
-        - identityNamespace
-        - prof
-        - icon
-        - name
-        - lvl
-        - wt
-        - type
-        - margonemType
-        - worlds
-        - gameVersion
-      description: NPC search hit
-    SearchItemsResponseDto_Output:
-      type: object
-      properties:
-        hits:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: number
-              name:
-                type: string
-              icon:
-                type: string
-              stat:
-                type: string
-                default: ""
-              lvl:
-                type: number
-              rarity:
-                nullable: true
-                type: string
-              type:
-                nullable: true
-                type: string
-              worlds:
-                type: array
-                items:
-                  type: string
-                default: &a1 []
-            required:
-              - id
-              - name
-              - icon
-              - stat
-              - lvl
-              - rarity
-              - type
-              - worlds
-            description: Item search hit
-        estimatedTotalHits:
-          type: number
-        facetDistribution:
-          type: object
-          additionalProperties:
-            type: object
-            additionalProperties:
-              type: number
-          default: {}
-        facetStats:
-          type: object
-          additionalProperties:
-            type: object
-            properties:
-              min:
-                type: number
-              max:
-                type: number
-            required:
-              - min
-              - max
-          default: {}
-      required:
-        - hits
-        - estimatedTotalHits
-        - facetDistribution
-        - facetStats
-      description: Item search results
     SearchAllResponseDto_Output:
       type: object
       properties:
@@ -573,7 +415,7 @@ components:
                 type: array
                 items:
                   type: string
-                default: *a1
+                default: &a1 []
             required:
               - id
               - name
@@ -658,7 +500,7 @@ components:
                 items:
                   type: string
                 description: Worlds of the edition where this NPC was observed.
-                default: *a2
+                default: &a2 []
               gameVersion:
                 type: string
                 enum:
@@ -683,5 +525,163 @@ components:
         - players
         - npcs
       description: Aggregated search results
+    SearchItemsResponseDto_Output:
+      type: object
+      properties:
+        hits:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: number
+              name:
+                type: string
+              icon:
+                type: string
+              stat:
+                type: string
+                default: ""
+              lvl:
+                type: number
+              rarity:
+                nullable: true
+                type: string
+              type:
+                nullable: true
+                type: string
+              worlds:
+                type: array
+                items:
+                  type: string
+                default: *a1
+            required:
+              - id
+              - name
+              - icon
+              - stat
+              - lvl
+              - rarity
+              - type
+              - worlds
+            description: Item search hit
+        estimatedTotalHits:
+          type: number
+        facetDistribution:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: number
+          default: {}
+        facetStats:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              min:
+                type: number
+              max:
+                type: number
+            required:
+              - min
+              - max
+          default: {}
+      required:
+        - hits
+        - estimatedTotalHits
+        - facetDistribution
+        - facetStats
+      description: Item search results
+    NpcHitDto_Output:
+      type: object
+      properties:
+        id:
+          type: number
+        identityNamespace:
+          type: string
+          enum:
+            - legacy
+            - runtime
+            - template
+          description: "Meaning of `id`: a Margonem template id, a runtime spawn id observed without a template, or an overloaded legacy id."
+        prof:
+          type: string
+        icon:
+          type: string
+        name:
+          type: string
+        lvl:
+          type: number
+        wt:
+          type: number
+        type:
+          type: string
+          enum:
+            - COMMON
+            - ELITE
+            - ELITE2
+            - ELITE3
+            - HERO
+            - EVENT_HERO
+            - COLOSSUS
+            - TITAN
+            - NPC
+        margonemType:
+          type: number
+        worlds:
+          type: array
+          items:
+            type: string
+          description: Worlds of the edition where this NPC was observed.
+          default: *a2
+        gameVersion:
+          type: string
+          enum:
+            - en
+            - pl
+          description: "Margonem edition of the NPC: `pl` for margonem.pl, `en` for margonem.com. Equal ids in different editions are unrelated."
+      required:
+        - id
+        - identityNamespace
+        - prof
+        - icon
+        - name
+        - lvl
+        - wt
+        - type
+        - margonemType
+        - worlds
+        - gameVersion
+      description: NPC search hit
+    PlayerHitDto_Output:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        lvl:
+          type: number
+        prof:
+          type: string
+        icon:
+          type: string
+        characterId:
+          type: number
+        accountId:
+          type: number
+        world:
+          type: string
+      required:
+        - id
+        - name
+        - lvl
+        - prof
+        - icon
+        - characterId
+        - accountId
+        - world
+      description: Player search hit
 tags: []
 servers: []

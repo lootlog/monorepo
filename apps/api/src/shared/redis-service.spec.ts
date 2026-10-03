@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "bun:test";
 import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
 import { Effect, Queue, Schema } from "effect";
-import { Redis } from "effect/unstable/persistence";
+import { Redis } from "effect/persistence";
 
 type RedisReply = string | number | null | ReadonlyArray<RedisReply>;
 

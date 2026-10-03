@@ -3,7 +3,7 @@ import { RabbitMessaging } from "@lootlog/messaging";
 import { BunRuntime } from "@effect/platform-bun";
 import { installScopedLogRunner } from "@lootlog/instrumentation";
 import { Effect, Layer } from "effect";
-import { FetchHttpClient } from "effect/unstable/http";
+import { FetchHttpClient } from "effect/http";
 import { GatewayServer } from "#src/app";
 import { GatewayConfig } from "#src/config/gateway-config";
 

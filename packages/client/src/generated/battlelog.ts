@@ -28,754 +28,19 @@ import type {
 
 import { battlelogFetch } from '../mutators';
 import type { ErrorType , BodyType } from '../mutators';
-export type CreateBattleDtoEventsItemPartyMembers = {[key: string]: {
-  id: number;
-  account: number;
-  nick: string;
-  icon: string;
-  commander?: number;
-}};
+export type BattleAcceptedResponseDtoOutputStatus = typeof BattleAcceptedResponseDtoOutputStatus[keyof typeof BattleAcceptedResponseDtoOutputStatus];
 
-export type CreateBattleDtoEventsItemParty = {
-  members: CreateBattleDtoEventsItemPartyMembers;
-};
 
-export type CreateBattleDtoEventsItemFW = {[key: string]: {
-  originalId: number;
-  name: string;
-  lvl: number;
-  prof: string;
-  icon: string;
-  team: number;
-}};
+export const BattleAcceptedResponseDtoOutputStatus = {
+  ACCEPTED: 'ACCEPTED',
+} as const;
 
-export type CreateBattleDtoEventsItemF = {
-  m?: string[];
-  endBattle?: number;
-  init?: string;
-  auto?: string;
-  w?: CreateBattleDtoEventsItemFW;
-};
-
-export type CreateBattleDtoEventsItemMatchSummaryDailyStage = {
-  id: number;
-  points_cur: number;
-  points_max: number;
-  points_step: number;
-  rewards_last: number;
-  rewards_cur: number;
-  rewards_max: number;
-};
-
-export type CreateBattleDtoEventsItemMatchSummary = {
-  difficulty_rank: number;
-  result: number;
-  rating_delta: number;
-  opponent_lvl: number;
-  opponent_oplvl: number;
-  opponent_rating: number;
-  rating: number;
-  status: number;
-  placement_cur?: number;
-  placement_max?: number;
-  points_gained?: number;
-  daily_stage?: CreateBattleDtoEventsItemMatchSummaryDailyStage;
-};
-
-export type CreateBattleDtoEventsItem = {
-  party?: CreateBattleDtoEventsItemParty;
-  f: CreateBattleDtoEventsItemF;
-  ev?: number;
-  match_summary?: CreateBattleDtoEventsItemMatchSummary;
-  matchmaking_state?: number;
-};
-
-export interface CreateBattleDto {
-  accountId: string;
-  characterId: string;
-  /**
-     * @minLength 1
-     * @maxLength 128
-     */
-  submissionId?: string;
-  world: string;
-  matchmaking?: boolean;
-  /** @minItems 1 */
-  events: CreateBattleDtoEventsItem[];
+export interface BattleAcceptedResponseDtoOutput {
+  status: BattleAcceptedResponseDtoOutputStatus;
 }
 
-export interface BattleCreatedResponseDtoOutput {
-  battleId: string;
-}
-
-/**
- * @nullable
- */
-export type BattlesListResponseDtoOutputBattlesItemStatisticsTopDamageDealer = {
-  warriorId: string;
-  name: string;
-  value: number;
-  formattedValue?: string;
-} | null;
-
-/**
- * @nullable
- */
-export type BattlesListResponseDtoOutputBattlesItemStatisticsTopTank = {
-  warriorId: string;
-  name: string;
-  value: number;
-  formattedValue?: string;
-} | null;
-
-/**
- * @nullable
- */
-export type BattlesListResponseDtoOutputBattlesItemStatisticsBestEfficiency = {
-  warriorId: string;
-  name: string;
-  value: number;
-  formattedValue?: string;
-} | null;
-
-/**
- * @nullable
- */
-export type BattlesListResponseDtoOutputBattlesItemStatisticsCriticalMaster = {
-  warriorId: string;
-  name: string;
-  value: number;
-  formattedValue?: string;
-} | null;
-
-/**
- * @nullable
- */
-export type BattlesListResponseDtoOutputBattlesItemStatisticsEvasionExpert = {
-  warriorId: string;
-  name: string;
-  value: number;
-  formattedValue?: string;
-} | null;
-
-/**
- * @nullable
- */
-export type BattlesListResponseDtoOutputBattlesItemStatisticsShieldWall = {
-  warriorId: string;
-  name: string;
-  value: number;
-  formattedValue?: string;
-} | null;
-
-/**
- * @nullable
- */
-export type BattlesListResponseDtoOutputBattlesItemStatisticsDamagePerTurn = {
-  warriorId: string;
-  name: string;
-  value: number;
-  formattedValue?: string;
-} | null;
-
-/**
- * @nullable
- */
-export type BattlesListResponseDtoOutputBattlesItemStatisticsMostActive = {
-  warriorId: string;
-  name: string;
-  value: number;
-  formattedValue?: string;
-} | null;
-
-/**
- * @nullable
- */
-export type BattlesListResponseDtoOutputBattlesItemStatisticsLegendaryWarrior = {
-  warriorId: string;
-  name: string;
-  value: number;
-  formattedValue?: string;
-} | null;
-
-/**
- * @nullable
- */
-export type BattlesListResponseDtoOutputBattlesItemStatisticsUntouchable = {
-  warriorId: string;
-  name: string;
-  value: number;
-  formattedValue?: string;
-} | null;
-
-export type BattlesListResponseDtoOutputBattlesItemStatistics = {
-  /** @nullable */
-  topDamageDealer: BattlesListResponseDtoOutputBattlesItemStatisticsTopDamageDealer;
-  /** @nullable */
-  topTank: BattlesListResponseDtoOutputBattlesItemStatisticsTopTank;
-  /** @nullable */
-  bestEfficiency: BattlesListResponseDtoOutputBattlesItemStatisticsBestEfficiency;
-  /** @nullable */
-  criticalMaster: BattlesListResponseDtoOutputBattlesItemStatisticsCriticalMaster;
-  /** @nullable */
-  evasionExpert: BattlesListResponseDtoOutputBattlesItemStatisticsEvasionExpert;
-  /** @nullable */
-  shieldWall: BattlesListResponseDtoOutputBattlesItemStatisticsShieldWall;
-  /** @nullable */
-  damagePerTurn: BattlesListResponseDtoOutputBattlesItemStatisticsDamagePerTurn;
-  /** @nullable */
-  mostActive: BattlesListResponseDtoOutputBattlesItemStatisticsMostActive;
-  /** @nullable */
-  legendaryWarrior: BattlesListResponseDtoOutputBattlesItemStatisticsLegendaryWarrior;
-  /** @nullable */
-  untouchable: BattlesListResponseDtoOutputBattlesItemStatisticsUntouchable;
-};
-
-export type BattlesListResponseDtoOutputBattlesItemWarriorsItemSpellsUsedMap = {[key: string]: number};
-
-export type BattlesListResponseDtoOutputBattlesItemWarriorsItem = {
-  id: string;
-  battleId: string;
-  originalId: string;
-  name: string;
-  lvl: number;
-  prof: string;
-  icon: string;
-  team: number;
-  turns: number;
-  turnsLost: number;
-  steps: number;
-  normalAttacks: number;
-  spellsUsed: number;
-  spellsUsedMap: BattlesListResponseDtoOutputBattlesItemWarriorsItemSpellsUsedMap;
-  isDead: boolean;
-  surrendered: boolean;
-  fled: boolean;
-  maxHp: number;
-  damageDealt: number;
-  distanceDamage: number;
-  meleeDamage: number;
-  auxiliaryDamage: number;
-  fireDamage: number;
-  frostDamage: number;
-  lightningDamage: number;
-  thirdAttDamage: number;
-  damageDealtAfterDefensive: number;
-  damageDealtAfterDefensivePercentage: number;
-  damageTaken: number;
-  distanceDamageTaken: number;
-  meleeDamageTaken: number;
-  auxiliaryDamageTaken: number;
-  fireDamageTaken: number;
-  frostDamageTaken: number;
-  lightningDamageTaken: number;
-  thirdAttDamageTaken: number;
-  flatDamageTaken: number;
-  rageDamageDealt: number;
-  trueDamageDealt: number;
-  trueDamageTaken: number;
-  stigmaDamageDealt: number;
-  stigmaDamageTaken: number;
-  passiveHealing: number;
-  activeHealing: number;
-  armorPierces: number;
-  criticalHits: number;
-  reducedArmor: number;
-  reducedPoisonResistance: number;
-  magicResistanceDestroyed: number;
-  evasions: number;
-  attacksEvaded: number;
-  counters: number;
-  fastArrows: number;
-  blocks: number;
-  attacksBlocked: number;
-  blockedDamage: number;
-  woundDamageTaken: number;
-  poisonDamageTaken: number;
-  injureDamageTaken: number;
-  injures: number;
-  critWoundDamageTaken: number;
-  firePassiveDamageTaken: number;
-  lightningPassiveDamageTaken: number;
-  destroyedEnergy: number;
-  destroyedMana: number;
-  regeneratedEnergy: number;
-  regeneratedMana: number;
-  reflectedDamage: number;
-  reflectedDamageTaken: number;
-  legbons: number;
-  legbonCurse: number;
-  legbonCleanse: number;
-  legbonLastheal: number;
-  legbonLasthealValue: number;
-  legbonGlare: number;
-  legbonHolytouch: number;
-  legbonHolytouchValue: number;
-  legbonCritredValue: number;
-  legbonFacadeValue: number;
-  legbonPunctureValue: number;
-  legbonVerycrit: number;
-  legbonAnguish: number;
-  legbonAnguishDamageTaken: number;
-  ph: number;
-};
-
-export type BattlesListResponseDtoOutputBattlesItem = {
-  id: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  updatedAt: string;
-  public: boolean;
+export interface DeleteUserDataDto {
   userId: string;
-  accountId: string;
-  characterId: string;
-  world: string;
-  duration: number;
-  type: string;
-  winner: string;
-  loser: string;
-  winningTeam: number;
-  losingTeam: number;
-  honorPoints: number;
-  hasFlee: boolean;
-  matchmaking: boolean;
-  statistics: BattlesListResponseDtoOutputBattlesItemStatistics;
-  /** @nullable */
-  difficultyRank: number | null;
-  /** @nullable */
-  result: number | null;
-  /** @nullable */
-  ratingDelta: number | null;
-  /** @nullable */
-  opponentLvl: number | null;
-  /** @nullable */
-  opponentOplvl: number | null;
-  /** @nullable */
-  opponentRating: number | null;
-  /** @nullable */
-  rating: number | null;
-  /** @nullable */
-  status: number | null;
-  /** @nullable */
-  pointsGained: number | null;
-  /** @nullable */
-  placementCur: number | null;
-  /** @nullable */
-  placementMax: number | null;
-  /** @nullable */
-  dailyStageId: number | null;
-  /** @nullable */
-  dailyPointsCur: number | null;
-  /** @nullable */
-  dailyPointsMax: number | null;
-  /** @nullable */
-  dailyPointsStep: number | null;
-  /** @nullable */
-  dailyRewardsLast: number | null;
-  /** @nullable */
-  dailyRewardsCur: number | null;
-  /** @nullable */
-  dailyRewardsMax: number | null;
-  warriors: BattlesListResponseDtoOutputBattlesItemWarriorsItem[];
-};
-
-export type BattlesListResponseDtoOutputPagination = {
-  size: number;
-  hasNext: boolean;
-  hasPrev: boolean;
-  nextCursor?: string;
-  previousCursor?: string;
-  total?: number;
-};
-
-export type BattlesListResponseDtoOutputMetaPerformance = {
-  queryTime: number;
-  countTime?: number;
-  totalItems?: number;
-  estimatedTotal?: boolean;
-};
-
-export type BattlesListResponseDtoOutputMeta = {
-  performance: BattlesListResponseDtoOutputMetaPerformance;
-};
-
-export interface BattlesListResponseDtoOutput {
-  battles: BattlesListResponseDtoOutputBattlesItem[];
-  pagination: BattlesListResponseDtoOutputPagination;
-  meta: BattlesListResponseDtoOutputMeta;
-}
-
-export type BattleCharactersResponseDtoOutputCharactersItem = {
-  id: string;
-  name: string;
-  world: string;
-  icon: string;
-  /** @nullable */
-  lvl: number | null;
-  /** @nullable */
-  prof: string | null;
-};
-
-export interface BattleCharactersResponseDtoOutput {
-  characters: BattleCharactersResponseDtoOutputCharactersItem[];
-}
-
-export interface BattleAnalyticsResponseDtoOutput {
-  totalBattles: number;
-  wins: number;
-  losses: number;
-  winRatio: number;
-  totalPH: number;
-}
-
-export interface AbyssSeasonResponseDtoOutput {
-  id: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  startedAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  endedAt: string;
-  totalBattles: number;
-  wins: number;
-  losses: number;
-  winRate: number;
-  totalRatingDelta: number;
-  /** @nullable */
-  peakRating: number | null;
-  /** @nullable */
-  totalPointsGained: number | null;
-}
-
-export type CombatProfileResponseDtoOutputSummary = {
-  totalBattles: number;
-  wins: number;
-  losses: number;
-  winRate: number;
-  totalPH: number;
-  totalRatingDelta: number;
-  avgTurns: number;
-  avgDuration: number;
-  damagePerTurn: number;
-  mitigationRate: number;
-  controlRate: number;
-};
-
-export type CombatProfileResponseDtoOutputDamageMixItem = {
-  key: string;
-  label: string;
-  value: number;
-  share: number;
-};
-
-export type CombatProfileResponseDtoOutputMitigationMixItem = {
-  key: string;
-  label: string;
-  value: number;
-  share: number;
-};
-
-export type CombatProfileResponseDtoOutputSpellUsageItem = {
-  spell: string;
-  /** @nullable */
-  skillId: number | null;
-  casts: number;
-  share: number;
-};
-
-export type CombatProfileResponseDtoOutputMatchupByProfessionItem = {
-  prof: string;
-  wins: number;
-  losses: number;
-  totalBattles: number;
-  winRate: number;
-};
-
-export type CombatProfileResponseDtoOutputPhTrendItem = {
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  date: string;
-  value: number;
-  cumulativeValue: number;
-  battleId: string;
-};
-
-export type CombatProfileResponseDtoOutputRatingTrendItem = {
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  date: string;
-  value: number;
-  cumulativeValue: number;
-  battleId: string;
-};
-
-export type CombatProfileResponseDtoOutputHighlightsItem = {
-  battleId: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  type: string;
-  label: string;
-  value: number;
-};
-
-export interface CombatProfileResponseDtoOutput {
-  summary: CombatProfileResponseDtoOutputSummary;
-  damageMix: CombatProfileResponseDtoOutputDamageMixItem[];
-  mitigationMix: CombatProfileResponseDtoOutputMitigationMixItem[];
-  spellUsage: CombatProfileResponseDtoOutputSpellUsageItem[];
-  matchupByProfession: CombatProfileResponseDtoOutputMatchupByProfessionItem[];
-  phTrend: CombatProfileResponseDtoOutputPhTrendItem[];
-  ratingTrend: CombatProfileResponseDtoOutputRatingTrendItem[];
-  highlights: CombatProfileResponseDtoOutputHighlightsItem[];
-}
-
-export interface ProfessionWinRateResponseDtoOutput {
-  prof: string;
-  wins: number;
-  losses: number;
-  totalBattles: number;
-  winRate: number;
-}
-
-export type HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleResult = typeof HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleResult[keyof typeof HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleResult];
-
-
-export const HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleResult = {
-  won: 'won',
-  lost: 'lost',
-  flee: 'flee',
-} as const;
-
-export type HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleUserWarrior = {
-  name: string;
-  lvl: number;
-  prof: string;
-  icon: string;
-  fireDamage: number;
-  frostDamage: number;
-  lightningDamage: number;
-  poisonDamageTaken: number;
-  woundDamageTaken: number;
-  critWoundDamageTaken: number;
-};
-
-export type HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleOpponentWarrior = {
-  name: string;
-  lvl: number;
-  prof: string;
-  icon: string;
-  fireDamage: number;
-  frostDamage: number;
-  lightningDamage: number;
-  poisonDamageTaken: number;
-  woundDamageTaken: number;
-  critWoundDamageTaken: number;
-};
-
-export type HeadToHeadPaginatedResponseDtoOutputRecordsItem = {
-  opponentId: string;
-  opponentName: string;
-  opponentIcon: string;
-  opponentProf: string;
-  opponentLvl: number;
-  lastBattleResult: HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleResult;
-  lastBattleUserWarrior: HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleUserWarrior;
-  lastBattleOpponentWarrior: HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleOpponentWarrior;
-  wins: number;
-  losses: number;
-  totalBattles: number;
-  winRate: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  lastBattleDate: string;
-  totalRatingDelta?: number;
-  avgRatingDelta?: number;
-};
-
-export type HeadToHeadPaginatedResponseDtoOutputPagination = {
-  size: number;
-  hasNext: boolean;
-  hasPrev: boolean;
-  nextCursor?: string;
-  previousCursor?: string;
-  total?: number;
-};
-
-export type HeadToHeadPaginatedResponseDtoOutputMetaPerformance = {
-  queryTime: number;
-  countTime?: number;
-  totalItems?: number;
-  estimatedTotal?: boolean;
-};
-
-export type HeadToHeadPaginatedResponseDtoOutputMeta = {
-  performance: HeadToHeadPaginatedResponseDtoOutputMetaPerformance;
-};
-
-export interface HeadToHeadPaginatedResponseDtoOutput {
-  records: HeadToHeadPaginatedResponseDtoOutputRecordsItem[];
-  pagination: HeadToHeadPaginatedResponseDtoOutputPagination;
-  meta: HeadToHeadPaginatedResponseDtoOutputMeta;
-}
-
-export type StreakResponseDtoOutputCurrentType = typeof StreakResponseDtoOutputCurrentType[keyof typeof StreakResponseDtoOutputCurrentType];
-
-
-export const StreakResponseDtoOutputCurrentType = {
-  wins: 'wins',
-  losses: 'losses',
-  none: 'none',
-} as const;
-
-export type StreakResponseDtoOutputCurrent = {
-  type: StreakResponseDtoOutputCurrentType;
-  count: number;
-};
-
-export type StreakResponseDtoOutputLongest = {
-  wins: number;
-  losses: number;
-};
-
-export interface StreakResponseDtoOutput {
-  current: StreakResponseDtoOutputCurrent;
-  longest: StreakResponseDtoOutputLongest;
-}
-
-/**
- * @nullable
- */
-export type BattleDurationStatsResponseDtoOutputFastest = {
-  duration: number;
-  battleId: string;
-} | null;
-
-/**
- * @nullable
- */
-export type BattleDurationStatsResponseDtoOutputLongest = {
-  duration: number;
-  battleId: string;
-} | null;
-
-export interface BattleDurationStatsResponseDtoOutput {
-  avgWinDuration: number;
-  avgLossDuration: number;
-  /** @nullable */
-  fastest: BattleDurationStatsResponseDtoOutputFastest;
-  /** @nullable */
-  longest: BattleDurationStatsResponseDtoOutputLongest;
-}
-
-export interface PhGrowthDataPointResponseDtoOutput {
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  date: string;
-  ph: number;
-  cumulativePh: number;
-  battleId: string;
-}
-
-export interface RatingGrowthDataPointResponseDtoOutput {
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  date: string;
-  ratingDelta: number;
-  rating: number;
-  battleId: string;
-}
-
-export interface RatingDeltaByOpponentResponseDtoOutput {
-  opponentId: string;
-  opponentName: string;
-  opponentIcon: string;
-  opponentProf: string;
-  opponentLvl: number;
-  totalRatingDelta: number;
-  wins: number;
-  losses: number;
-  totalBattles: number;
-  avgRatingDelta: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  lastBattleDate: string;
-}
-
-export type PlayerVsPlayerPaginatedResponseDtoOutputBattlesItemUserWarrior = {
-  name: string;
-  lvl: number;
-  prof: string;
-  icon: string;
-  fireDamage: number;
-  frostDamage: number;
-  lightningDamage: number;
-  poisonDamageTaken: number;
-  woundDamageTaken: number;
-  critWoundDamageTaken: number;
-};
-
-export type PlayerVsPlayerPaginatedResponseDtoOutputBattlesItemOpponentWarrior = {
-  name: string;
-  lvl: number;
-  prof: string;
-  icon: string;
-  fireDamage: number;
-  frostDamage: number;
-  lightningDamage: number;
-  poisonDamageTaken: number;
-  woundDamageTaken: number;
-  critWoundDamageTaken: number;
-};
-
-export type PlayerVsPlayerPaginatedResponseDtoOutputBattlesItem = {
-  battleId: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  createdAt: string;
-  duration: number;
-  winner: string;
-  loser: string;
-  hasFlee: boolean;
-  matchmaking: boolean;
-  /** @nullable */
-  ratingDelta: number | null;
-  /** @nullable */
-  userRating: number | null;
-  /** @nullable */
-  opponentRating: number | null;
-  userWarrior: PlayerVsPlayerPaginatedResponseDtoOutputBattlesItemUserWarrior;
-  opponentWarrior: PlayerVsPlayerPaginatedResponseDtoOutputBattlesItemOpponentWarrior;
-};
-
-export type PlayerVsPlayerPaginatedResponseDtoOutputPagination = {
-  size: number;
-  hasNext: boolean;
-  hasPrev: boolean;
-  nextCursor?: string;
-  previousCursor?: string;
-  total?: number;
-};
-
-export type PlayerVsPlayerPaginatedResponseDtoOutputMetaPerformance = {
-  queryTime: number;
-  totalItems?: number;
-};
-
-export type PlayerVsPlayerPaginatedResponseDtoOutputMeta = {
-  performance: PlayerVsPlayerPaginatedResponseDtoOutputMetaPerformance;
-};
-
-export interface PlayerVsPlayerPaginatedResponseDtoOutput {
-  battles: PlayerVsPlayerPaginatedResponseDtoOutputBattlesItem[];
-  pagination: PlayerVsPlayerPaginatedResponseDtoOutputPagination;
-  meta: PlayerVsPlayerPaginatedResponseDtoOutputMeta;
-}
-
-export type BattleWarriorsSearchResponseDtoOutputWarriorsItem = {
-  name: string;
-  icon: string;
-  prof: string;
-  lvl: number;
-};
-
-export interface BattleWarriorsSearchResponseDtoOutput {
-  warriors: BattleWarriorsSearchResponseDtoOutputWarriorsItem[];
-}
-
-export interface BattleUserWorldsResponseDtoOutput {
-  worlds: string[];
 }
 
 export type BattleTimelineResponseDtoOutputTimelineItemHpByWarrior = {[key: string]: number};
@@ -955,10 +220,40 @@ export type BattleTimelineResponseDtoOutputWarriorsItem = {
 
 export interface BattleTimelineResponseDtoOutput {
   battleId: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   generatedAt: string;
   timeline: BattleTimelineResponseDtoOutputTimelineItem[];
   warriors: BattleTimelineResponseDtoOutputWarriorsItem[];
+}
+
+export type BattleRawResponseDtoOutputRawDataEventsItemActionsItem = {
+  actionType: string;
+  param: string;
+};
+
+export type BattleRawResponseDtoOutputRawDataEventsItem = {
+  /** @nullable */
+  attackerId: string | null;
+  /** @nullable */
+  defenderId: string | null;
+  /** @nullable */
+  attackerHpPercentage: number | null;
+  /** @nullable */
+  defenderHpPercentage: number | null;
+  actions: BattleRawResponseDtoOutputRawDataEventsItemActionsItem[];
+};
+
+export type BattleRawResponseDtoOutputRawData = {
+  accountId: string;
+  characterId: string;
+  world: string;
+  events: BattleRawResponseDtoOutputRawDataEventsItem[];
+  sourceEvents?: unknown[];
+};
+
+export interface BattleRawResponseDtoOutput {
+  battleId: string;
+  timestamp: string;
+  rawData: BattleRawResponseDtoOutputRawData;
 }
 
 /**
@@ -1175,9 +470,7 @@ export type BattleResponseDtoOutputWarriorsItem = {
 
 export interface BattleResponseDtoOutput {
   id: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   createdAt: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   updatedAt: string;
   public: boolean;
   userId: string;
@@ -1233,59 +526,750 @@ export interface BattleResponseDtoOutput {
   warriors: BattleResponseDtoOutputWarriorsItem[];
 }
 
-export interface BattleDeletedResponseDtoOutput {
-  message: string;
-}
-
 export interface UpdateBattleDto {
   public: boolean;
 }
 
-export type BattleRawResponseDtoOutputRawDataEventsItemActionsItem = {
-  actionType: string;
-  param: string;
+export interface BattleDeletedResponseDtoOutput {
+  message: string;
+}
+
+export interface BattleUserWorldsResponseDtoOutput {
+  worlds: string[];
+}
+
+export type BattleWarriorsSearchResponseDtoOutputWarriorsItem = {
+  name: string;
+  icon: string;
+  prof: string;
+  lvl: number;
 };
 
-export type BattleRawResponseDtoOutputRawDataEventsItem = {
-  /** @nullable */
-  attackerId: string | null;
-  /** @nullable */
-  defenderId: string | null;
-  /** @nullable */
-  attackerHpPercentage: number | null;
-  /** @nullable */
-  defenderHpPercentage: number | null;
-  actions: BattleRawResponseDtoOutputRawDataEventsItemActionsItem[];
+export interface BattleWarriorsSearchResponseDtoOutput {
+  warriors: BattleWarriorsSearchResponseDtoOutputWarriorsItem[];
+}
+
+export type PlayerVsPlayerPaginatedResponseDtoOutputBattlesItemUserWarrior = {
+  name: string;
+  lvl: number;
+  prof: string;
+  icon: string;
+  fireDamage: number;
+  frostDamage: number;
+  lightningDamage: number;
+  poisonDamageTaken: number;
+  woundDamageTaken: number;
+  critWoundDamageTaken: number;
 };
 
-export type BattleRawResponseDtoOutputRawData = {
+export type PlayerVsPlayerPaginatedResponseDtoOutputBattlesItemOpponentWarrior = {
+  name: string;
+  lvl: number;
+  prof: string;
+  icon: string;
+  fireDamage: number;
+  frostDamage: number;
+  lightningDamage: number;
+  poisonDamageTaken: number;
+  woundDamageTaken: number;
+  critWoundDamageTaken: number;
+};
+
+export type PlayerVsPlayerPaginatedResponseDtoOutputBattlesItem = {
+  battleId: string;
+  createdAt: string;
+  duration: number;
+  winner: string;
+  loser: string;
+  hasFlee: boolean;
+  matchmaking: boolean;
+  /** @nullable */
+  ratingDelta: number | null;
+  /** @nullable */
+  userRating: number | null;
+  /** @nullable */
+  opponentRating: number | null;
+  userWarrior: PlayerVsPlayerPaginatedResponseDtoOutputBattlesItemUserWarrior;
+  opponentWarrior: PlayerVsPlayerPaginatedResponseDtoOutputBattlesItemOpponentWarrior;
+};
+
+export type PlayerVsPlayerPaginatedResponseDtoOutputPagination = {
+  size: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+  nextCursor?: string;
+  previousCursor?: string;
+  total?: number;
+};
+
+export type PlayerVsPlayerPaginatedResponseDtoOutputMetaPerformance = {
+  queryTime: number;
+  totalItems?: number;
+};
+
+export type PlayerVsPlayerPaginatedResponseDtoOutputMeta = {
+  performance: PlayerVsPlayerPaginatedResponseDtoOutputMetaPerformance;
+};
+
+export interface PlayerVsPlayerPaginatedResponseDtoOutput {
+  battles: PlayerVsPlayerPaginatedResponseDtoOutputBattlesItem[];
+  pagination: PlayerVsPlayerPaginatedResponseDtoOutputPagination;
+  meta: PlayerVsPlayerPaginatedResponseDtoOutputMeta;
+}
+
+export interface RatingDeltaByOpponentResponseDtoOutput {
+  opponentId: string;
+  opponentName: string;
+  opponentIcon: string;
+  opponentProf: string;
+  opponentLvl: number;
+  totalRatingDelta: number;
+  wins: number;
+  losses: number;
+  totalBattles: number;
+  avgRatingDelta: number;
+  lastBattleDate: string;
+}
+
+export interface RatingGrowthDataPointResponseDtoOutput {
+  date: string;
+  ratingDelta: number;
+  rating: number;
+  battleId: string;
+}
+
+export interface PhGrowthDataPointResponseDtoOutput {
+  date: string;
+  ph: number;
+  cumulativePh: number;
+  battleId: string;
+}
+
+/**
+ * @nullable
+ */
+export type BattleDurationStatsResponseDtoOutputFastest = {
+  duration: number;
+  battleId: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type BattleDurationStatsResponseDtoOutputLongest = {
+  duration: number;
+  battleId: string;
+} | null;
+
+export interface BattleDurationStatsResponseDtoOutput {
+  avgWinDuration: number;
+  avgLossDuration: number;
+  /** @nullable */
+  fastest: BattleDurationStatsResponseDtoOutputFastest;
+  /** @nullable */
+  longest: BattleDurationStatsResponseDtoOutputLongest;
+}
+
+export type StreakResponseDtoOutputCurrentType = typeof StreakResponseDtoOutputCurrentType[keyof typeof StreakResponseDtoOutputCurrentType];
+
+
+export const StreakResponseDtoOutputCurrentType = {
+  wins: 'wins',
+  losses: 'losses',
+  none: 'none',
+} as const;
+
+export type StreakResponseDtoOutputCurrent = {
+  type: StreakResponseDtoOutputCurrentType;
+  count: number;
+};
+
+export type StreakResponseDtoOutputLongest = {
+  wins: number;
+  losses: number;
+};
+
+export interface StreakResponseDtoOutput {
+  current: StreakResponseDtoOutputCurrent;
+  longest: StreakResponseDtoOutputLongest;
+}
+
+export type HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleResult = typeof HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleResult[keyof typeof HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleResult];
+
+
+export const HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleResult = {
+  won: 'won',
+  lost: 'lost',
+  flee: 'flee',
+} as const;
+
+export type HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleUserWarrior = {
+  name: string;
+  lvl: number;
+  prof: string;
+  icon: string;
+  fireDamage: number;
+  frostDamage: number;
+  lightningDamage: number;
+  poisonDamageTaken: number;
+  woundDamageTaken: number;
+  critWoundDamageTaken: number;
+};
+
+export type HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleOpponentWarrior = {
+  name: string;
+  lvl: number;
+  prof: string;
+  icon: string;
+  fireDamage: number;
+  frostDamage: number;
+  lightningDamage: number;
+  poisonDamageTaken: number;
+  woundDamageTaken: number;
+  critWoundDamageTaken: number;
+};
+
+export type HeadToHeadPaginatedResponseDtoOutputRecordsItem = {
+  opponentId: string;
+  opponentName: string;
+  opponentIcon: string;
+  opponentProf: string;
+  opponentLvl: number;
+  lastBattleResult: HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleResult;
+  lastBattleUserWarrior: HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleUserWarrior;
+  lastBattleOpponentWarrior: HeadToHeadPaginatedResponseDtoOutputRecordsItemLastBattleOpponentWarrior;
+  wins: number;
+  losses: number;
+  totalBattles: number;
+  winRate: number;
+  lastBattleDate: string;
+  totalRatingDelta?: number;
+  avgRatingDelta?: number;
+};
+
+export type HeadToHeadPaginatedResponseDtoOutputPagination = {
+  size: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+  nextCursor?: string;
+  previousCursor?: string;
+  total?: number;
+};
+
+export type HeadToHeadPaginatedResponseDtoOutputMetaPerformance = {
+  queryTime: number;
+  countTime?: number;
+  totalItems?: number;
+  estimatedTotal?: boolean;
+};
+
+export type HeadToHeadPaginatedResponseDtoOutputMeta = {
+  performance: HeadToHeadPaginatedResponseDtoOutputMetaPerformance;
+};
+
+export interface HeadToHeadPaginatedResponseDtoOutput {
+  records: HeadToHeadPaginatedResponseDtoOutputRecordsItem[];
+  pagination: HeadToHeadPaginatedResponseDtoOutputPagination;
+  meta: HeadToHeadPaginatedResponseDtoOutputMeta;
+}
+
+export interface ProfessionWinRateResponseDtoOutput {
+  prof: string;
+  wins: number;
+  losses: number;
+  totalBattles: number;
+  winRate: number;
+}
+
+export type CombatProfileResponseDtoOutputSummary = {
+  totalBattles: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  totalPH: number;
+  totalRatingDelta: number;
+  avgTurns: number;
+  avgDuration: number;
+  damagePerTurn: number;
+  mitigationRate: number;
+  controlRate: number;
+};
+
+export type CombatProfileResponseDtoOutputDamageMixItem = {
+  key: string;
+  label: string;
+  value: number;
+  share: number;
+};
+
+export type CombatProfileResponseDtoOutputMitigationMixItem = {
+  key: string;
+  label: string;
+  value: number;
+  share: number;
+};
+
+export type CombatProfileResponseDtoOutputSpellUsageItem = {
+  spell: string;
+  /** @nullable */
+  skillId: number | null;
+  casts: number;
+  share: number;
+};
+
+export type CombatProfileResponseDtoOutputMatchupByProfessionItem = {
+  prof: string;
+  wins: number;
+  losses: number;
+  totalBattles: number;
+  winRate: number;
+};
+
+export type CombatProfileResponseDtoOutputPhTrendItem = {
+  date: string;
+  value: number;
+  cumulativeValue: number;
+  battleId: string;
+};
+
+export type CombatProfileResponseDtoOutputRatingTrendItem = {
+  date: string;
+  value: number;
+  cumulativeValue: number;
+  battleId: string;
+};
+
+export type CombatProfileResponseDtoOutputHighlightsItem = {
+  battleId: string;
+  createdAt: string;
+  type: string;
+  label: string;
+  value: number;
+};
+
+export interface CombatProfileResponseDtoOutput {
+  summary: CombatProfileResponseDtoOutputSummary;
+  damageMix: CombatProfileResponseDtoOutputDamageMixItem[];
+  mitigationMix: CombatProfileResponseDtoOutputMitigationMixItem[];
+  spellUsage: CombatProfileResponseDtoOutputSpellUsageItem[];
+  matchupByProfession: CombatProfileResponseDtoOutputMatchupByProfessionItem[];
+  phTrend: CombatProfileResponseDtoOutputPhTrendItem[];
+  ratingTrend: CombatProfileResponseDtoOutputRatingTrendItem[];
+  highlights: CombatProfileResponseDtoOutputHighlightsItem[];
+}
+
+export interface AbyssSeasonResponseDtoOutput {
+  id: string;
+  startedAt: string;
+  endedAt: string;
+  totalBattles: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  totalRatingDelta: number;
+  /** @nullable */
+  peakRating: number | null;
+  /** @nullable */
+  totalPointsGained: number | null;
+}
+
+export interface BattleAnalyticsResponseDtoOutput {
+  totalBattles: number;
+  wins: number;
+  losses: number;
+  winRatio: number;
+  totalPH: number;
+}
+
+export type BattleCharactersResponseDtoOutputCharactersItem = {
+  id: string;
+  name: string;
+  world: string;
+  icon: string;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  prof: string | null;
+};
+
+export interface BattleCharactersResponseDtoOutput {
+  characters: BattleCharactersResponseDtoOutputCharactersItem[];
+}
+
+/**
+ * @nullable
+ */
+export type BattlesListResponseDtoOutputBattlesItemStatisticsTopDamageDealer = {
+  warriorId: string;
+  name: string;
+  value: number;
+  formattedValue?: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type BattlesListResponseDtoOutputBattlesItemStatisticsTopTank = {
+  warriorId: string;
+  name: string;
+  value: number;
+  formattedValue?: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type BattlesListResponseDtoOutputBattlesItemStatisticsBestEfficiency = {
+  warriorId: string;
+  name: string;
+  value: number;
+  formattedValue?: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type BattlesListResponseDtoOutputBattlesItemStatisticsCriticalMaster = {
+  warriorId: string;
+  name: string;
+  value: number;
+  formattedValue?: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type BattlesListResponseDtoOutputBattlesItemStatisticsEvasionExpert = {
+  warriorId: string;
+  name: string;
+  value: number;
+  formattedValue?: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type BattlesListResponseDtoOutputBattlesItemStatisticsShieldWall = {
+  warriorId: string;
+  name: string;
+  value: number;
+  formattedValue?: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type BattlesListResponseDtoOutputBattlesItemStatisticsDamagePerTurn = {
+  warriorId: string;
+  name: string;
+  value: number;
+  formattedValue?: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type BattlesListResponseDtoOutputBattlesItemStatisticsMostActive = {
+  warriorId: string;
+  name: string;
+  value: number;
+  formattedValue?: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type BattlesListResponseDtoOutputBattlesItemStatisticsLegendaryWarrior = {
+  warriorId: string;
+  name: string;
+  value: number;
+  formattedValue?: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type BattlesListResponseDtoOutputBattlesItemStatisticsUntouchable = {
+  warriorId: string;
+  name: string;
+  value: number;
+  formattedValue?: string;
+} | null;
+
+export type BattlesListResponseDtoOutputBattlesItemStatistics = {
+  /** @nullable */
+  topDamageDealer: BattlesListResponseDtoOutputBattlesItemStatisticsTopDamageDealer;
+  /** @nullable */
+  topTank: BattlesListResponseDtoOutputBattlesItemStatisticsTopTank;
+  /** @nullable */
+  bestEfficiency: BattlesListResponseDtoOutputBattlesItemStatisticsBestEfficiency;
+  /** @nullable */
+  criticalMaster: BattlesListResponseDtoOutputBattlesItemStatisticsCriticalMaster;
+  /** @nullable */
+  evasionExpert: BattlesListResponseDtoOutputBattlesItemStatisticsEvasionExpert;
+  /** @nullable */
+  shieldWall: BattlesListResponseDtoOutputBattlesItemStatisticsShieldWall;
+  /** @nullable */
+  damagePerTurn: BattlesListResponseDtoOutputBattlesItemStatisticsDamagePerTurn;
+  /** @nullable */
+  mostActive: BattlesListResponseDtoOutputBattlesItemStatisticsMostActive;
+  /** @nullable */
+  legendaryWarrior: BattlesListResponseDtoOutputBattlesItemStatisticsLegendaryWarrior;
+  /** @nullable */
+  untouchable: BattlesListResponseDtoOutputBattlesItemStatisticsUntouchable;
+};
+
+export type BattlesListResponseDtoOutputBattlesItemWarriorsItemSpellsUsedMap = {[key: string]: number};
+
+export type BattlesListResponseDtoOutputBattlesItemWarriorsItem = {
+  id: string;
+  battleId: string;
+  originalId: string;
+  name: string;
+  lvl: number;
+  prof: string;
+  icon: string;
+  team: number;
+  turns: number;
+  turnsLost: number;
+  steps: number;
+  normalAttacks: number;
+  spellsUsed: number;
+  spellsUsedMap: BattlesListResponseDtoOutputBattlesItemWarriorsItemSpellsUsedMap;
+  isDead: boolean;
+  surrendered: boolean;
+  fled: boolean;
+  maxHp: number;
+  damageDealt: number;
+  distanceDamage: number;
+  meleeDamage: number;
+  auxiliaryDamage: number;
+  fireDamage: number;
+  frostDamage: number;
+  lightningDamage: number;
+  thirdAttDamage: number;
+  damageDealtAfterDefensive: number;
+  damageDealtAfterDefensivePercentage: number;
+  damageTaken: number;
+  distanceDamageTaken: number;
+  meleeDamageTaken: number;
+  auxiliaryDamageTaken: number;
+  fireDamageTaken: number;
+  frostDamageTaken: number;
+  lightningDamageTaken: number;
+  thirdAttDamageTaken: number;
+  flatDamageTaken: number;
+  rageDamageDealt: number;
+  trueDamageDealt: number;
+  trueDamageTaken: number;
+  stigmaDamageDealt: number;
+  stigmaDamageTaken: number;
+  passiveHealing: number;
+  activeHealing: number;
+  armorPierces: number;
+  criticalHits: number;
+  reducedArmor: number;
+  reducedPoisonResistance: number;
+  magicResistanceDestroyed: number;
+  evasions: number;
+  attacksEvaded: number;
+  counters: number;
+  fastArrows: number;
+  blocks: number;
+  attacksBlocked: number;
+  blockedDamage: number;
+  woundDamageTaken: number;
+  poisonDamageTaken: number;
+  injureDamageTaken: number;
+  injures: number;
+  critWoundDamageTaken: number;
+  firePassiveDamageTaken: number;
+  lightningPassiveDamageTaken: number;
+  destroyedEnergy: number;
+  destroyedMana: number;
+  regeneratedEnergy: number;
+  regeneratedMana: number;
+  reflectedDamage: number;
+  reflectedDamageTaken: number;
+  legbons: number;
+  legbonCurse: number;
+  legbonCleanse: number;
+  legbonLastheal: number;
+  legbonLasthealValue: number;
+  legbonGlare: number;
+  legbonHolytouch: number;
+  legbonHolytouchValue: number;
+  legbonCritredValue: number;
+  legbonFacadeValue: number;
+  legbonPunctureValue: number;
+  legbonVerycrit: number;
+  legbonAnguish: number;
+  legbonAnguishDamageTaken: number;
+  ph: number;
+};
+
+export type BattlesListResponseDtoOutputBattlesItem = {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  public: boolean;
+  userId: string;
   accountId: string;
   characterId: string;
   world: string;
-  events: BattleRawResponseDtoOutputRawDataEventsItem[];
-  sourceEvents?: unknown[];
+  duration: number;
+  type: string;
+  winner: string;
+  loser: string;
+  winningTeam: number;
+  losingTeam: number;
+  honorPoints: number;
+  hasFlee: boolean;
+  matchmaking: boolean;
+  statistics: BattlesListResponseDtoOutputBattlesItemStatistics;
+  /** @nullable */
+  difficultyRank: number | null;
+  /** @nullable */
+  result: number | null;
+  /** @nullable */
+  ratingDelta: number | null;
+  /** @nullable */
+  opponentLvl: number | null;
+  /** @nullable */
+  opponentOplvl: number | null;
+  /** @nullable */
+  opponentRating: number | null;
+  /** @nullable */
+  rating: number | null;
+  /** @nullable */
+  status: number | null;
+  /** @nullable */
+  pointsGained: number | null;
+  /** @nullable */
+  placementCur: number | null;
+  /** @nullable */
+  placementMax: number | null;
+  /** @nullable */
+  dailyStageId: number | null;
+  /** @nullable */
+  dailyPointsCur: number | null;
+  /** @nullable */
+  dailyPointsMax: number | null;
+  /** @nullable */
+  dailyPointsStep: number | null;
+  /** @nullable */
+  dailyRewardsLast: number | null;
+  /** @nullable */
+  dailyRewardsCur: number | null;
+  /** @nullable */
+  dailyRewardsMax: number | null;
+  warriors: BattlesListResponseDtoOutputBattlesItemWarriorsItem[];
 };
 
-export interface BattleRawResponseDtoOutput {
+export type BattlesListResponseDtoOutputPagination = {
+  size: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+  nextCursor?: string;
+  previousCursor?: string;
+  total?: number;
+};
+
+export type BattlesListResponseDtoOutputMetaPerformance = {
+  queryTime: number;
+  countTime?: number;
+  totalItems?: number;
+  estimatedTotal?: boolean;
+};
+
+export type BattlesListResponseDtoOutputMeta = {
+  performance: BattlesListResponseDtoOutputMetaPerformance;
+};
+
+export interface BattlesListResponseDtoOutput {
+  battles: BattlesListResponseDtoOutputBattlesItem[];
+  pagination: BattlesListResponseDtoOutputPagination;
+  meta: BattlesListResponseDtoOutputMeta;
+}
+
+export interface BattleCreatedResponseDtoOutput {
   battleId: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  timestamp: string;
-  rawData: BattleRawResponseDtoOutputRawData;
 }
 
-export interface DeleteUserDataDto {
-  userId: string;
-}
+export type CreateBattleDtoEventsItemPartyMembers = {[key: string]: {
+  id: number;
+  account: number;
+  nick: string;
+  icon: string;
+  commander?: number;
+}};
 
-export type BattleAcceptedResponseDtoOutputStatus = typeof BattleAcceptedResponseDtoOutputStatus[keyof typeof BattleAcceptedResponseDtoOutputStatus];
+export type CreateBattleDtoEventsItemParty = {
+  members: CreateBattleDtoEventsItemPartyMembers;
+};
 
+export type CreateBattleDtoEventsItemFW = {[key: string]: {
+  originalId: number;
+  name: string;
+  lvl: number;
+  prof: string;
+  icon: string;
+  team: number;
+}};
 
-export const BattleAcceptedResponseDtoOutputStatus = {
-  ACCEPTED: 'ACCEPTED',
-} as const;
+export type CreateBattleDtoEventsItemF = {
+  m?: string[];
+  endBattle?: number;
+  init?: string;
+  auto?: string;
+  w?: CreateBattleDtoEventsItemFW;
+};
 
-export interface BattleAcceptedResponseDtoOutput {
-  status: BattleAcceptedResponseDtoOutputStatus;
+export type CreateBattleDtoEventsItemMatchSummaryDailyStage = {
+  id: number;
+  points_cur: number;
+  points_max: number;
+  points_step: number;
+  rewards_last: number;
+  rewards_cur: number;
+  rewards_max: number;
+};
+
+export type CreateBattleDtoEventsItemMatchSummary = {
+  difficulty_rank: number;
+  result: number;
+  rating_delta: number;
+  opponent_lvl: number;
+  opponent_oplvl: number;
+  opponent_rating: number;
+  rating: number;
+  status: number;
+  placement_cur?: number;
+  placement_max?: number;
+  points_gained?: number;
+  daily_stage?: CreateBattleDtoEventsItemMatchSummaryDailyStage;
+};
+
+export type CreateBattleDtoEventsItem = {
+  party?: CreateBattleDtoEventsItemParty;
+  f: CreateBattleDtoEventsItemF;
+  ev?: number;
+  match_summary?: CreateBattleDtoEventsItemMatchSummary;
+  matchmaking_state?: number;
+};
+
+export interface CreateBattleDto {
+  accountId: string;
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 128
+     */
+  submissionId?: string;
+  world: string;
+  matchmaking?: boolean;
+  /** @minItems 1 */
+  events: CreateBattleDtoEventsItem[];
 }
 
 export type HealthzControllerHealthCheck401 = {
@@ -1348,13 +1332,7 @@ search?: string;
 result?: BattlesControllerGetDashboardBattlesResultItem[];
 ph?: boolean;
 matchmaking?: boolean;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 startDate?: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 endDate?: string;
 /**
  * @minimum 1
@@ -1431,13 +1409,7 @@ minLevel?: number;
  * @maximum 9007199254740991
  */
 maxLevel?: number;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 startDate?: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 endDate?: string;
 ph?: boolean;
 matchmaking?: boolean;
@@ -1499,13 +1471,7 @@ minLevel?: number;
  * @maximum 9007199254740991
  */
 maxLevel?: number;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 startDate?: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 endDate?: string;
 cursor?: string;
 /**
@@ -1587,13 +1553,7 @@ minLevel?: number;
  * @maximum 9007199254740991
  */
 maxLevel?: number;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 startDate?: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 endDate?: string;
 cursor?: string;
 /**
@@ -1675,13 +1635,7 @@ minLevel?: number;
  * @maximum 9007199254740991
  */
 maxLevel?: number;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 startDate?: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 endDate?: string;
 cursor?: string;
 /**
@@ -1763,13 +1717,7 @@ minLevel?: number;
  * @maximum 9007199254740991
  */
 maxLevel?: number;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 startDate?: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 endDate?: string;
 cursor?: string;
 /**
@@ -1851,13 +1799,7 @@ minLevel?: number;
  * @maximum 9007199254740991
  */
 maxLevel?: number;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 startDate?: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 endDate?: string;
 cursor?: string;
 /**
@@ -1939,13 +1881,7 @@ minLevel?: number;
  * @maximum 9007199254740991
  */
 maxLevel?: number;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 startDate?: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 endDate?: string;
 cursor?: string;
 /**
@@ -2027,13 +1963,7 @@ minLevel?: number;
  * @maximum 9007199254740991
  */
 maxLevel?: number;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 startDate?: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 endDate?: string;
 cursor?: string;
 /**
@@ -2115,13 +2045,7 @@ minLevel?: number;
  * @maximum 9007199254740991
  */
 maxLevel?: number;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 startDate?: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 endDate?: string;
 cursor?: string;
 /**
@@ -2203,13 +2127,7 @@ minLevel?: number;
  * @maximum 9007199254740991
  */
 maxLevel?: number;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 startDate?: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
- */
 endDate?: string;
 cursor?: string;
 /**
