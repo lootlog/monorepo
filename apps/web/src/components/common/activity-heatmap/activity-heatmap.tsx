@@ -66,7 +66,18 @@ export function ActivityHeatmap({
   useEffect(() => {
     const element = scroller.current;
 
-    if (element) element.scrollLeft = element.scrollWidth;
+    if (!element) return;
+
+    // Keep the latest weeks in view when the card narrows, e.g. on rotation.
+    const pinToLatest = () => {
+      element.scrollLeft = element.scrollWidth;
+    };
+
+    pinToLatest();
+    const observer = new ResizeObserver(pinToLatest);
+    observer.observe(element);
+
+    return () => observer.disconnect();
   }, [lastDate, days.length]);
   const maximum = Math.max(1, ...days.map(({ value }) => value ?? 0));
   const offset = days[0] ? calendarOffset(days[0].date) : 0;

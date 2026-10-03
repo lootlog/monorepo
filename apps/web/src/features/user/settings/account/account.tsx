@@ -38,7 +38,7 @@ export const AccountSettings: FC = () => {
 
   return (
     <ScrollArea className="h-full">
-      <div className="px-3 pb-3 flex flex-col gap-4">
+      <div className="flex flex-col gap-3 px-3 pb-3">
         <h1 className="sr-only">{t("settings.account.title")}</h1>
         <SectionCard>
           <SectionCardHeader

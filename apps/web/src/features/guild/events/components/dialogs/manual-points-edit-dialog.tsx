@@ -1,17 +1,16 @@
 import { useId, useState, type ComponentProps } from "react";
 import { useTranslation } from "react-i18next";
+import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from "@lootlog/ui/components/dialog";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { Textarea } from "@lootlog/ui/components/textarea";
+import { Pencil } from "lucide-react";
 import { formatPoints, formatSignedPoints } from "../../utils/format-points";
 import { parseEditablePoints } from "../../utils/parse-editable-points";
 
@@ -94,11 +93,12 @@ export const ManualPointsEditDialog = ({
         className="sm:max-w-md gap-0 overflow-hidden p-0"
         finalFocus={finalFocus}
       >
-        <DialogHeader className="gap-2 px-4 pt-4 pb-3">
-          <DialogTitle className="px-0 pt-0">{title}</DialogTitle>
-          <DialogDescription className="px-0">{description}</DialogDescription>
-        </DialogHeader>
-        <form className="space-y-4 px-4 pb-4" onSubmit={handleSubmit}>
+        <IconDialogHeader
+          icon={Pencil}
+          title={title}
+          description={description}
+        />
+        <form className="space-y-4 p-5" onSubmit={handleSubmit}>
           <div className="space-y-2">
             <Label
               htmlFor={pointsInputId}

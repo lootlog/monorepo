@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { ScoringFactorSelect } from "./scoring-factor-select";
 import { ScoringOperatorSelect } from "./scoring-operator-select";
 import {
@@ -26,11 +27,15 @@ export const ScoringConditionNumeric = ({
   conditionIndex,
 }: ScoringConditionNumericProps) => {
   const { t } = useTranslation();
+  const idPrefix = useId();
 
   return (
     <div className="grid grid-cols-[1fr_80px_80px] gap-1.5">
       <div className="space-y-0.5">
-        <Label className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60">
+        <Label
+          htmlFor={`${idPrefix}-factor`}
+          className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60"
+        >
           {t("events.scoring.conditionLabel.factor")}
         </Label>
         <Controller
@@ -38,6 +43,7 @@ export const ScoringConditionNumeric = ({
           name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.factor`}
           render={({ field }) => (
             <ScoringFactorSelect
+              id={`${idPrefix}-factor`}
               factors={EVENT_SCORING_NUMERIC_FACTORS}
               value={field.value}
               onChange={field.onChange}
@@ -46,7 +52,10 @@ export const ScoringConditionNumeric = ({
         />
       </div>
       <div className="space-y-0.5">
-        <Label className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60">
+        <Label
+          htmlFor={`${idPrefix}-operator`}
+          className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60"
+        >
           {t("events.scoring.conditionLabel.operator")}
         </Label>
         <Controller
@@ -54,6 +63,7 @@ export const ScoringConditionNumeric = ({
           name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.operator`}
           render={({ field }) => (
             <ScoringOperatorSelect
+              id={`${idPrefix}-operator`}
               value={field.value}
               onChange={field.onChange}
             />
@@ -61,10 +71,14 @@ export const ScoringConditionNumeric = ({
         />
       </div>
       <div className="space-y-0.5">
-        <Label className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60">
+        <Label
+          htmlFor={`${idPrefix}-value`}
+          className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60"
+        >
           {t("events.scoring.conditionLabel.value")}
         </Label>
         <ScoringNumberInput
+          id={`${idPrefix}-value`}
           control={control}
           register={register}
           name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.value`}

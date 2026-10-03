@@ -96,7 +96,7 @@ async function renderPage(
 
 describe("EventCoordinationPage", () => {
   it("renders the loading state", async () => {
-    expect(await renderPage("loading")).toContain("common.loading");
+    expect(await renderPage("loading")).toContain('aria-busy="true"');
   });
   it("renders the empty state", async () => {
     expect(await renderPage(createCoordination([]))).toContain(
@@ -105,8 +105,9 @@ describe("EventCoordinationPage", () => {
   });
   it("renders the forbidden error state", async () => {
     const html = await renderPage("forbidden");
-    expect(html).toContain("events.coordination.error");
-    expect(html).toContain("common.routeErrors.actions.retry");
+    expect(html).toContain("events.accessDenied");
+    expect(html).toContain("events.common.backToEvent");
+    expect(html).not.toContain("common.routeErrors.actions.retry");
   });
   it("renders the normal state with coordinator actions", async () => {
     const html = await renderPage(createCoordination([createHero()]), [

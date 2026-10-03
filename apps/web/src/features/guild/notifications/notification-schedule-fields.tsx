@@ -51,7 +51,7 @@ export const NotificationScheduleFields = ({ form, t }: Props) => {
             name="scheduleIntervalType"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                <FormLabel>
                   {t("settings.notifications.fields.scheduleIntervalType")}
                 </FormLabel>
                 <Select
@@ -120,7 +120,7 @@ export const NotificationScheduleFields = ({ form, t }: Props) => {
               name="scheduleIntervalValue"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  <FormLabel>
                     {t("settings.notifications.fields.scheduleIntervalValue")}
                   </FormLabel>
                   <FormControl
@@ -145,7 +145,7 @@ export const NotificationScheduleFields = ({ form, t }: Props) => {
               name="scheduleWeekday"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  <FormLabel>
                     {t("settings.notifications.fields.scheduleWeekday")}
                   </FormLabel>
                   <Select
@@ -186,7 +186,7 @@ export const NotificationScheduleFields = ({ form, t }: Props) => {
               name="scheduleTimeOfDay"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  <FormLabel>
                     {t("settings.notifications.fields.scheduleTimeOfDay")}
                   </FormLabel>
                   <FormControl
@@ -210,7 +210,7 @@ export const NotificationScheduleFields = ({ form, t }: Props) => {
               name="scheduledAt"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  <FormLabel>
                     {t("settings.notifications.fields.scheduledAt")}
                   </FormLabel>
                   <FormControl
@@ -235,7 +235,7 @@ export const NotificationScheduleFields = ({ form, t }: Props) => {
               name="scheduledUntil"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  <FormLabel>
                     {t("settings.notifications.fields.scheduledUntil")}
                   </FormLabel>
                   <FormControl

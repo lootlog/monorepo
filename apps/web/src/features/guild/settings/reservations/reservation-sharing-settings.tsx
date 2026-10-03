@@ -99,23 +99,20 @@ export function ReservationSharingSettings() {
         icon={Users}
         description={t("settings.reservations.sharing.description")}
         actions={
-          <div className="flex flex-col gap-4 border-b border-border p-4 lg:flex-row lg:items-start">
-            <Button
-              type="button"
-              className="w-full lg:w-auto"
-              loading={createMutation.isPending}
-              icon=<Plus />
-              onClick={() => createMutation.mutate({ pathParams: { guildId } })}
-            >
-              {t("settings.reservations.sharing.createInvite")}
-            </Button>
-          </div>
+          <Button
+            type="button"
+            loading={createMutation.isPending}
+            icon=<Plus />
+            onClick={() => createMutation.mutate({ pathParams: { guildId } })}
+          >
+            {t("settings.reservations.sharing.createInvite")}
+          </Button>
         }
       />
-      <SectionCardContent className="flex flex-col gap-3">
+      <SectionCardContent className="p-0">
         {createdInvitation && (
           <div
-            className="space-y-3 border-b border-border bg-primary/5 p-4"
+            className="space-y-3 border-b border-border bg-primary/5 p-3"
             aria-live="polite"
           >
             <div className="flex items-center gap-2 text-sm font-medium">
@@ -164,7 +161,7 @@ export function ReservationSharingSettings() {
         )}
 
         {sharesQuery.isError ? (
-          <Alert variant="destructive" className="m-4 w-auto">
+          <Alert variant="destructive" className="m-3 w-auto">
             <CircleAlert />
             <AlertTitle>
               {t("settings.reservations.sharing.loadError")}
@@ -190,7 +187,7 @@ export function ReservationSharingSettings() {
             aria-busy={sharesQuery.isPending}
           >
             <section
-              className="border-b border-border p-4 md:border-r md:border-b-0"
+              className="border-b border-border p-3 md:border-r md:border-b-0"
               aria-labelledby="reservation-partners-title"
             >
               <h3
@@ -256,7 +253,7 @@ export function ReservationSharingSettings() {
             </section>
 
             <section
-              className="p-4"
+              className="p-3"
               aria-labelledby="reservation-invitations-title"
             >
               <h3

@@ -5,7 +5,7 @@ import { SectionCard } from "@/components/common/section-card/section-card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const NotificationFormSkeleton = () => (
-  <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+  <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
     <div className="lg:col-span-2">
       <SectionCard>
         <SectionCardContent className="flex flex-col gap-3">
@@ -22,7 +22,9 @@ export const NotificationFormSkeleton = () => (
     </div>
     <div className="hidden lg:block">
       <SectionCard>
-        <SectionCardHeader title=<Skeleton className="mb-3 h-5 w-24" /> />
+        <SectionCardHeader
+          title=<Skeleton render={<span />} className="block mb-3 h-5 w-24" />
+        />
         <SectionCardContent className="flex flex-col gap-3">
           <Skeleton className="h-40 w-full rounded-lg" />
         </SectionCardContent>

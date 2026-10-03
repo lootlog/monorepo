@@ -38,19 +38,15 @@ export function MemberTableRow({
   isLastMember,
   openMemberDetails,
 }: MemberTableRowProps) {
-  const { member, displayData } = row.original;
-  const isOnline = displayData.onlineSources.length > 0;
+  const { member } = row.original;
 
   return (
     <TableRow
       data-member-id={member.id}
       {...getSettingsRowLinkProps(() => openMemberDetails(member))}
       className={cn(
-        "relative h-16 cursor-pointer border-b transition-colors",
+        "relative h-14 cursor-pointer border-b border-border transition-colors hover:bg-muted/40",
         isLastMember && "border-b-0",
-        isOnline
-          ? "border-emerald-500/20 bg-emerald-500/[0.045] hover:bg-emerald-500/[0.075]"
-          : "border-border hover:bg-accent/35",
       )}
     >
       {row.getVisibleCells().map((cell) => (

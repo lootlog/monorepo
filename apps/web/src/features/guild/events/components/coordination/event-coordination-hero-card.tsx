@@ -1,20 +1,24 @@
+import { formatNpcLevel } from "@lootlog/domain/profession";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { ArrowRight, MapPin, Timer, UserPlus, X } from "lucide-react";
+import { MapPin, Timer, UserPlus, X } from "lucide-react";
+import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { Button } from "@lootlog/ui/components/button";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Progress } from "@lootlog/ui/components/progress";
-import { NpcTile } from "@/components/tiles";
+import { HeroAvatar } from "../shared/hero-avatar";
 import { formatDurationHuman } from "../../utils/format-duration";
 import {
   findSelfAssignGap,
   getCoordinationActionLabelKey,
+  getCoordinationPriorityTone,
   getCoordinationStatusLabelKey,
   getCoveragePercentage,
 } from "../../utils/coordination-utils";
+import { formatTimeShort } from "../../utils/format-date";
 import { getAssignmentAvailability } from "../../utils/get-assignment-availability";
 import { useAssignmentCountdown } from "../../hooks/utils/use-assignment-countdown";
 import { EventCoordinationPriorityBadge } from "./event-coordination-priority-badge";
@@ -73,33 +77,42 @@ export const EventCoordinationHeroCard = ({
     <SectionCard>
       <SectionCardHeader
         title={
-          <span className="flex flex-wrap items-center gap-2">
-            {hero.npcIcon ? (
-              <NpcTile
-                npc={{
-                  id: hero.npcId ?? undefined,
-                  name: hero.npcName,
-                  icon: hero.npcIcon,
-                }}
-              />
-            ) : (
-              <div className="rounded-xl bg-yellow-500/10 p-2.5">
-                <Timer className="size-4 text-yellow-500" />
-              </div>
-            )}
-            {hero.npcName} {hero.npcLvl ? `(${hero.npcLvl})` : ""}
-            <EventCoordinationPriorityBadge priority={hero.priority} />
-          </span>
-        }
-        description={
           <>
+            {hero.npcName}
+            {hero.npcLvl ? (
+              <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                {formatNpcLevel(hero.npcLvl)}
+              </span>
+            ) : null}
+          </>
+        }
+        actions={
+          <ChevronLink
+            render=<Link
+              to="/$guildId/events/$eventId/heroes/$heroId"
+              params={{
+                guildId,
+                eventId,
+                heroId: hero.heroId,
+              }}
+            />
+          >
+            {t("events.coordination.actions.openMaps")}
+          </ChevronLink>
+        }
+      />
+      <SectionCardContent className="space-y-3">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+            <HeroAvatar hero={hero} />
+            <EventCoordinationPriorityBadge priority={hero.priority} />
             <Badge variant="outline" className="gap-1 text-xs">
-              <Timer className="size-3" />
+              <Timer className="size-3" aria-hidden="true" />
               {t(getCoordinationStatusLabelKey(timerStatus))}
               {timerTime && <span>{timerTime}</span>}
             </Badge>
             <Badge variant="outline" className="gap-1 text-xs">
-              <MapPin className="size-3" />
+              <MapPin className="size-3" aria-hidden="true" />
               {t("events.coordination.hero.coverageShort", {
                 covered: hero.coverage.coveredMaps,
                 total: hero.coverage.totalMaps,
@@ -109,103 +122,81 @@ export const EventCoordinationHeroCard = ({
             <span className="text-xs text-muted-foreground">
               {t(getCoordinationActionLabelKey(hero.recommendedAction))}
             </span>
-          </>
-        }
-        actions={
-          <div className="flex flex-wrap gap-2 lg:justify-end">
-            <Button
-              size="sm"
-              variant="outline"
-              className="shrink-0"
-              render={
-                <Link
-                  to="/$guildId/events/$eventId/heroes/$heroId"
-                  params={{
-                    guildId,
-                    eventId,
-                    heroId: hero.heroId,
-                  }}
-                >
-                  <ArrowRight className="size-3.5" />
-                  {t("events.coordination.actions.openMaps")}
-                </Link>
-              }
-              nativeButton={false}
-            />
-
-            {canWrite && targetGap && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="shrink-0"
-                loading={isAssigning}
-                disabled={!isAssignmentEnabled}
-                icon=<UserPlus className="size-3.5" />
-                onClick={() => onSelfAssign(targetGap.mapId, hero)}
-              >
-                {!isAssignmentEnabled && assignmentCountdownTime
-                  ? t("events.maps.assignmentDisabledWithTime", {
-                      time: assignmentCountdownTime,
-                    })
-                  : t("events.coordination.actions.selfAssign")}
-              </Button>
-            )}
-
-            {canManage && hero.timer && (
-              <Button
-                size="sm"
-                variant="destructive"
-                className="shrink-0"
-                loading={isClosing}
-                icon=<X className="size-3.5" />
-                onClick={() => onCloseWindow(hero)}
-              >
-                {t("events.coordination.actions.close_window")}
-              </Button>
-            )}
           </div>
-        }
-      />
-      <SectionCardContent className="space-y-3">
-        <div className="flex flex-col gap-2">
-          <Progress
-            value={coveragePercentage}
-            variant={getProgressVariant(hero)}
-            aria-label={t("events.coordination.hero.coverageShort", {
-              covered: hero.coverage.coveredMaps,
-              total: hero.coverage.totalMaps,
-              percentage: coveragePercentage,
-            })}
-            className="[&_[data-slot=progress-track]]:h-2"
-          />
 
-          {hero.activeGaps.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {hero.activeGaps.slice(0, 4).map((gap) => (
-                <Badge
-                  key={gap.id}
+          {(canWrite && targetGap) || (canManage && hero.timer) ? (
+            <div className="flex flex-wrap gap-2">
+              {canWrite && targetGap && (
+                <Button
+                  size="sm"
                   variant="outline"
-                  className="max-w-full gap-1 text-xs"
+                  className="shrink-0"
+                  loading={isAssigning}
+                  disabled={!isAssignmentEnabled}
+                  icon=<UserPlus className="size-3.5" />
+                  onClick={() => onSelfAssign(targetGap.mapId, hero)}
                 >
-                  <span className="truncate">{gap.mapName}</span>
-                  <span className="text-muted-foreground">
-                    {t(getGapLabelKey(gap.gapType))}
-                  </span>
-                  <span className="font-mono text-muted-foreground">
-                    {formatDurationHuman(gap.durationSeconds)}
-                  </span>
-                </Badge>
-              ))}
-              {hero.activeGaps.length > 4 && (
-                <Badge variant="outline" className="text-xs">
-                  {t("events.coordination.hero.moreGaps", {
-                    count: hero.activeGaps.length - 4,
-                  })}
-                </Badge>
+                  {!isAssignmentEnabled && assignmentCountdownTime
+                    ? t("events.maps.assignmentDisabledWithTime", {
+                        time: assignmentCountdownTime,
+                      })
+                    : t("events.coordination.actions.selfAssign")}
+                </Button>
+              )}
+
+              {canManage && hero.timer && (
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="shrink-0"
+                  loading={isClosing}
+                  icon=<X className="size-3.5" />
+                  onClick={() => onCloseWindow(hero)}
+                >
+                  {t("events.coordination.actions.close_window")}
+                </Button>
               )}
             </div>
-          )}
+          ) : null}
         </div>
+
+        <Progress
+          value={coveragePercentage}
+          variant={getCoordinationPriorityTone(hero.priority) ?? "default"}
+          aria-label={t("events.coordination.hero.coverageShort", {
+            covered: hero.coverage.coveredMaps,
+            total: hero.coverage.totalMaps,
+            percentage: coveragePercentage,
+          })}
+          className="[&_[data-slot=progress-track]]:h-2"
+        />
+
+        {hero.activeGaps.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {hero.activeGaps.slice(0, 4).map((gap) => (
+              <Badge
+                key={gap.id}
+                variant="outline"
+                className="max-w-full gap-1 text-xs"
+              >
+                <span className="truncate">{gap.mapName}</span>
+                <span className="text-muted-foreground">
+                  {t(getGapLabelKey(gap.gapType))}
+                </span>
+                <span className="font-mono text-muted-foreground">
+                  {formatDurationHuman(gap.durationSeconds)}
+                </span>
+              </Badge>
+            ))}
+            {hero.activeGaps.length > 4 && (
+              <Badge variant="outline" className="text-xs">
+                {t("events.coordination.hero.moreGaps", {
+                  count: hero.activeGaps.length - 4,
+                })}
+              </Badge>
+            )}
+          </div>
+        )}
       </SectionCardContent>
     </SectionCard>
   );
@@ -221,10 +212,7 @@ function getTimerDisplayTime(hero: EventCoordinationResponseDtoHeroesItem) {
       ? hero.timer.minSpawnTime
       : hero.timer.maxSpawnTime;
 
-  return new Date(timeSource).toLocaleTimeString("pl-PL", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatTimeShort(new Date(timeSource));
 }
 
 function getGapLabelKey(gapType: "UNASSIGNED" | "UNCOVERED") {
@@ -233,20 +221,4 @@ function getGapLabelKey(gapType: "UNASSIGNED" | "UNCOVERED") {
   }
 
   return "events.maps.gap.uncovered";
-}
-
-function getProgressVariant(hero: EventCoordinationResponseDtoHeroesItem) {
-  if (hero.priority === "CRITICAL") {
-    return "alert" as const;
-  }
-
-  if (hero.priority === "WARNING") {
-    return "timer" as const;
-  }
-
-  if (hero.priority === "OK") {
-    return "ready" as const;
-  }
-
-  return "default" as const;
 }

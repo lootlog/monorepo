@@ -6,6 +6,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import type { TFunction } from "i18next";
 import { formatTime } from "../../utils/format-date";
+import { COVERAGE_SEGMENT_BG_CLASS_NAMES } from "../../utils/get-map-coverage-color-class-name";
 import { formatDurationFromMs } from "../../utils/format-duration";
 import { calculateTimelineSegments } from "../../utils/timeline-segments";
 import type { MapGap } from "../../types/api";
@@ -27,7 +28,12 @@ export const MapCoverageTimeline = ({
 
   if (segments.length === 0) {
     return (
-      <div className="relative h-3 w-full rounded-full bg-green-500 overflow-hidden" />
+      <div
+        className={cn(
+          "relative h-3 w-full overflow-hidden rounded-full",
+          COVERAGE_SEGMENT_BG_CLASS_NAMES.COVERED,
+        )}
+      />
     );
   }
 
@@ -41,9 +47,7 @@ export const MapCoverageTimeline = ({
             render=<div
               className={cn(
                 "absolute h-full cursor-pointer transition-opacity hover:opacity-80",
-                segment.type === "COVERED" && "bg-green-500",
-                segment.type === "UNCOVERED" && "bg-yellow-500",
-                segment.type === "UNASSIGNED" && "bg-destructive",
+                COVERAGE_SEGMENT_BG_CLASS_NAMES[segment.type],
               )}
               style={{
                 left: `${segment.startPercent}%`,

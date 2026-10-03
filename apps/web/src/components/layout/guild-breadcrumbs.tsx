@@ -3,12 +3,10 @@ import {
   getRouteApi,
   useLocation,
   useMatches,
-  useNavigate,
   useParams,
 } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Button } from "@lootlog/ui/components/button";
-import { ArrowLeft } from "lucide-react";
+import { TopBarBackButton } from "./top-bar-back-button";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
 import { AppBreadcrumbs } from "@/components/layout/app-breadcrumbs";
 import { AppTopBar } from "@/components/layout/app-top-bar";
@@ -146,7 +144,6 @@ const useBreadcrumbLookupData = ({
 export const GuildBreadcrumbs: FC = () => {
   const { t } = useTranslation();
   const location = useLocation();
-  const navigate = useNavigate();
   const params = useParams({ strict: false });
   const guildRouteData = guildRouteApi.useLoaderData();
   const matches = useMatches();
@@ -221,17 +218,7 @@ export const GuildBreadcrumbs: FC = () => {
       <div className="flex w-full min-w-0 flex-row items-center justify-between gap-2 overflow-hidden">
         <div className="flex min-w-0 shrink-0 flex-row gap-2 items-center">
           <SidebarTrigger className="size-8!" />
-          {parentPath && (
-            <Button
-              aria-label={t("common.actions.back")}
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate({ to: parentPath })}
-              className="p-1 h-8 w-8 rounded-full hover:bg-muted/50 transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          )}
+          {parentPath && <TopBarBackButton to={parentPath} />}
         </div>
 
         <AppBreadcrumbs breadcrumbs={navInfo.breadcrumbs} />

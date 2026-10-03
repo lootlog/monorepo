@@ -75,7 +75,7 @@ export const NotificationTargetDialog = (
                 name="externalId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                    <FormLabel>
                       {t("settings.notifications.fields.channel")}
                     </FormLabel>
                     <Select
@@ -143,7 +143,7 @@ export const NotificationTargetDialog = (
               name="displayName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  <FormLabel>
                     {t("settings.notifications.fields.displayName")}
                   </FormLabel>
                   <FormControl

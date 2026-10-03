@@ -172,7 +172,7 @@ it("recovers from initial and background failures without losing the last loaded
     );
 
   const { client } = await mount(fetchTimers);
-  await screen.findByRole("alert");
+  await screen.findByText("Nie udało się pobrać timerów");
   fireEvent.click(screen.getByRole("button", { name: "Spróbuj ponownie" }));
   await screen.findByText("Original NPC");
   expect(screen.queryByRole("alert")).toBeNull();

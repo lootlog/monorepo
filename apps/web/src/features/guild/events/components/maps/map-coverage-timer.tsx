@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { Clock } from "lucide-react";
 import { cn } from "cn";
 import type { CoverageGap } from "../../hooks/queries/use-map-coverage-timer";
+import { COVERAGE_SEGMENT_TEXT_CLASS_NAMES } from "../../utils/get-map-coverage-color-class-name";
 import {
   isWindowActive,
   type WindowStatus,
@@ -38,6 +39,10 @@ export const MapCoverageTimer = ({
   );
 
   const isUnassigned = gapType === "UNASSIGNED";
+
+  const gapTextClassName = isUnassigned
+    ? COVERAGE_SEGMENT_TEXT_CLASS_NAMES.UNASSIGNED
+    : COVERAGE_SEGMENT_TEXT_CLASS_NAMES.UNCOVERED;
 
   const tooltipContent = isUnassigned
     ? t("events.maps.gap.unassignedTooltip")
@@ -86,18 +91,10 @@ export const MapCoverageTimer = ({
       title={tooltipContent}
       aria-label={`${tooltipContent}: ${formattedDuration}`}
     >
-      <Clock
-        className={cn(
-          "size-3",
-          isUnassigned ? "text-destructive" : "text-yellow-500",
-        )}
-      />
+      <Clock className={cn("size-3", gapTextClassName)} />
       <span
         ref={timerValueRef}
-        className={cn(
-          "font-mono text-xs",
-          isUnassigned ? "text-destructive" : "text-yellow-500",
-        )}
+        className={cn("font-mono text-xs", gapTextClassName)}
       >
         {formattedDuration}
       </span>

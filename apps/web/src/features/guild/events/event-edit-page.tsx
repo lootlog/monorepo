@@ -12,17 +12,17 @@ export const EventEditPage = () => {
   const navItems = [
     {
       id: "settings",
-      label: t("events.editSections.settings", "Ustawienia eventu"),
+      label: t("events.editSections.settings"),
       href: `/events/${eventIdPath}/edit/settings`,
     },
     {
       id: "rulebook",
-      label: t("events.editSections.rulebook", "Regulamin"),
+      label: t("events.editSections.rulebook"),
       href: `/events/${eventIdPath}/edit/rulebook`,
     },
     {
       id: "scoring",
-      label: t("events.editSections.scoring", "Ustawienia punktów"),
+      label: t("events.editSections.scoring"),
       href: `/events/${eventIdPath}/edit/scoring`,
     },
   ];
@@ -32,8 +32,8 @@ export const EventEditPage = () => {
       <HorizontalMenu
         items={navItems}
         basePath={basePath}
-        ariaLabel={t("events.editSections.ariaLabel", "Edycja eventu")}
-        className="shrink-0"
+        ariaLabel={t("events.editSections.ariaLabel")}
+        className="shrink-0 pb-0"
       />
       <div className="flex-1 min-h-0 overflow-hidden">
         <Outlet />

@@ -16,6 +16,7 @@ import type { ReservationSettings } from "@lootlog/domain/reservations";
 import { Button } from "@lootlog/ui/components/button";
 import { cn } from "cn";
 import { ReservationSettingsInfoDialog } from "./reservation-settings-info-dialog";
+import { ScheduleIconButton } from "./schedule-icon-button";
 
 type ScheduleHeaderProps = {
   spotName: string;
@@ -80,14 +81,8 @@ export function ScheduleHeader({
     isCompact,
   );
 
-  const nearestFreeSlotLabel = t(
-    "reservations.schedule.header.findNearestSlot",
-  );
-
-  const iconButtonClassName = compactValue(isCompact, "size-11", "size-8");
-
-  const compactTitleFor = (key: string) =>
-    compactValue(isCompact, t(key), undefined);
+  // Icon buttons match the height of the labelled desktop buttons.
+  const iconButtonClassName = compactValue(isCompact, "size-11", "size-9");
 
   const actionToolbar = (
     <div
@@ -109,49 +104,36 @@ export function ScheduleHeader({
         className={compactValue(isCompact, "size-11", undefined)}
         onClick={onToday}
         aria-label={t("reservations.schedule.header.today")}
-        title={compactTitleFor("reservations.schedule.header.today")}
       >
         <CalendarDays />
         <span className={compactValue(isCompact, "sr-only", undefined)}>
           {t("reservations.schedule.header.today")}
         </span>
       </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
+      <ScheduleIconButton
+        label={t("reservations.schedule.header.findNearestSlot")}
         className={iconButtonClassName}
         loading={isFindingNearestFreeSlot}
         onClick={onFindNearestFreeSlot}
-        aria-label={nearestFreeSlotLabel}
-        title={nearestFreeSlotLabel}
       >
         <WandSparkles />
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
+      </ScheduleIconButton>
+      <ScheduleIconButton
+        label={t("reservations.schedule.header.info")}
         className={iconButtonClassName}
         onClick={() => setInfoOpen(true)}
-        aria-label={t("reservations.schedule.header.info")}
-        title={compactTitleFor("reservations.schedule.header.info")}
       >
         <Info />
-      </Button>
+      </ScheduleIconButton>
       {canManageReservationSettings && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
+        <ScheduleIconButton
+          label={t("reservations.schedule.header.settings")}
           className={iconButtonClassName}
           disabled={!settingsHref}
           onClick={() => settingsHref && navigate({ to: settingsHref })}
-          aria-label={t("reservations.schedule.header.settings")}
-          title={compactTitleFor("reservations.schedule.header.settings")}
         >
           <Settings />
-        </Button>
+        </ScheduleIconButton>
       )}
       <Button
         type="button"
@@ -159,7 +141,6 @@ export function ScheduleHeader({
         className={compactValue(isCompact, "size-11", undefined)}
         onClick={onAddReservation}
         aria-label={t("reservations.schedule.header.addReservation")}
-        title={compactTitleFor("reservations.schedule.header.addReservation")}
       >
         <Plus />
         <span
@@ -196,21 +177,17 @@ export function ScheduleHeader({
             ),
           )}
         >
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className={iconButtonClassName}
-            onClick={onPrevious}
-            title={compactTitleFor("reservations.schedule.header.previousDay")}
-            aria-label={compactValue(
+          <ScheduleIconButton
+            label={compactValue(
               isCompact,
               t("reservations.schedule.header.previousDay"),
               t("reservations.schedule.header.previousWeek"),
             )}
+            className={iconButtonClassName}
+            onClick={onPrevious}
           >
             <ChevronLeft />
-          </Button>
+          </ScheduleIconButton>
           <div className="min-w-0 text-center">
             <h1 className="truncate text-sm font-semibold" title={spotName}>
               {spotName}
@@ -243,21 +220,17 @@ export function ScheduleHeader({
               )}
             </p>
           </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className={iconButtonClassName}
-            onClick={onNext}
-            title={compactTitleFor("reservations.schedule.header.nextDay")}
-            aria-label={compactValue(
+          <ScheduleIconButton
+            label={compactValue(
               isCompact,
               t("reservations.schedule.header.nextDay"),
               t("reservations.schedule.header.nextWeek"),
             )}
+            className={iconButtonClassName}
+            onClick={onNext}
           >
             <ChevronRight />
-          </Button>
+          </ScheduleIconButton>
         </div>
 
         {!isCompact && actionToolbar}

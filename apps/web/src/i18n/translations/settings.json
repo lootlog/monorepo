@@ -1,10 +1,13 @@
 {
   "navigationLabel": "Ustawienia",
+  "filtersLabel": "Filtry",
+  "resetFilters": "Wyczyść filtry",
   "servers": {
-    "navigation": "Serwery",
-    "title": "Widoczność serwerów",
-    "description": "Wybierz serwery pokazywane w grze. Ukrycie nie wycisza powiadomień ani działania w tle.",
-    "searchPlaceholder": "Szukaj serwera",
+    "navigation": "Lootlogi",
+    "title": "Widoczność Lootlogów",
+    "description": "Wybierz Lootlogi pokazywane w grze. Ukrycie nie wycisza powiadomień ani działania w tle.",
+    "searchPlaceholder": "Szukaj Lootloga",
+    "visibilityFilterLabel": "Widoczność w grze",
     "filters": {
       "all": "Wszystkie",
       "visible": "Widoczne",
@@ -26,10 +29,10 @@
     "showInGameClient": "Pokaż w grze",
     "hiddenToast": "Ukryto {{name}} w grze",
     "shownToast": "Pokazano {{name}} w grze",
-    "loading": "Ładowanie serwerów…",
-    "loadError": "Nie udało się pobrać serwerów.",
-    "noGuilds": "Nie masz jeszcze dostępu do żadnego serwera Lootloga.",
-    "noResults": "Nie znaleziono serwerów pasujących do wyszukiwania i filtra.",
+    "loading": "Ładowanie Lootlogów…",
+    "loadError": "Nie udało się pobrać Lootlogów.",
+    "noGuilds": "Nie masz jeszcze dostępu do żadnego Lootloga.",
+    "noResults": "Nie znaleziono Lootlogów pasujących do wyszukiwania i filtra.",
     "saving": "Zapisywanie…",
     "saved": "Zapisano",
     "saveError": "Nie udało się zapisać zmiany. Przywróciliśmy ostatni zapisany stan."
@@ -37,7 +40,7 @@
   "guildNavigation": {
     "general": "Ogólne",
     "roles": "Role",
-    "npcs": "Ustawienia potworów i NPC",
+    "npcs": "Potwory i NPC",
     "mapTemplates": "Szablony map",
     "reservations": "Rezerwacje",
     "members": "Członkowie",
@@ -45,17 +48,18 @@
   },
   "general": {
     "title": "Ustawienia ogólne",
-    "description": "Zarządzaj konfiguracją lootloga",
+    "description": "Zarządzaj konfiguracją Lootloga",
     "toasts": {
-      "updateSuccess": "Zaktualizowano konfigurację lootloga",
-      "updateError": "Nie udało się zaktualizować konfiguracji lootloga"
+      "updateSuccess": "Zaktualizowano konfigurację Lootloga",
+      "updateError": "Nie udało się zaktualizować konfiguracji Lootloga"
     },
     "vanityUrl": {
       "title": "Skrócony link",
-      "description": "Pozwoli dostać się do lootloga z łatwiejszego do zapamiętania adresu",
-      "placeholder": "np. nazwa twojego klanu",
+      "description": "Pozwoli dostać się do Lootloga z łatwiejszego do zapamiętania adresu.",
+      "label": "Adres Lootloga",
+      "placeholder": "np. nazwa Twojej grupy",
       "example": "Przykład:",
-      "exampleSlug": "nazwa-klanu",
+      "exampleSlug": "nazwa-grupy",
       "restricted": "Ta nazwa jest zarezerwowana i nie może być użyta.",
       "invalid": "Skrócony link musi zawierać litery lub cyfry i nie może składać się z samych cyfr.",
       "taken": "Ten skrócony link jest już zajęty. Wybierz inną nazwę."
@@ -65,7 +69,7 @@
       "description": "Obraz PNG z podstawowymi statystykami lootów z ostatnich 30 dni.",
       "toggleLabel": "Włącz publiczny obraz statystyk",
       "toggleDescription": "Po włączeniu obraz będzie dostępny pod publicznym linkiem i może być używany w podglądach oraz udostępnieniach.",
-      "previewAlt": "Podgląd publicznego obrazu statystyk gildii",
+      "previewAlt": "Podgląd publicznego obrazu statystyk Lootloga",
       "disabledPreview": "Obraz jest wyłączony",
       "disabledPreviewDescription": "Włącz opcję i zapisz ustawienia, aby udostępnić publiczny obraz statystyk.",
       "saveToEnablePreview": "Zapisz ustawienia, aby włączyć podgląd",
@@ -90,16 +94,14 @@
     },
     "title": "Ustawienia ról",
     "description": "Zarządzaj uprawnieniami dla ról Discord",
-    "searchPlaceholder": "Szukaj roli...",
+    "searchPlaceholder": "Szukaj roli",
     "emptyTitle": "Nie znaleziono ról",
     "emptyDescription": "Brak ról do wyświetlenia.",
     "emptyFilteredDescription": "Nie znaleziono ról pasujących do wyszukiwania.",
-    "emptyGuildTitle": "Brak ról w tej gildii",
-    "resetFilters": "Wyczyść filtry",
+    "emptyGuildTitle": "Brak ról w tym Lootlogu",
     "details": "Szczegóły roli",
-    "backToRoles": "Wróć do ról",
     "roleNotFound": "Nie znaleziono roli",
-    "roleNotFoundDescription": "Ta rola nie istnieje w tej gildii albo nie ma jej już w pobranej liście.",
+    "roleNotFoundDescription": "Ta rola nie istnieje w tym Lootlogu albo nie ma jej już w pobranej liście.",
     "levelRange": "Poziom {{from}} - {{to}}",
     "levelRangeTitle": "Przedział levelowy",
     "levelRangeDescription": "Ogranicza widoczność danych do określonego zakresu poziomów.",
@@ -119,18 +121,16 @@
     }
   },
   "npcs": {
-    "title": "Ustawienia potworów i NPC",
+    "title": "Potwory i NPC",
     "description": "Jakie przedmioty ma zbierać dla jakiego potwora",
-    "searchPlaceholder": "Szukaj potwora...",
+    "searchPlaceholder": "Szukaj potwora",
     "emptyTitle": "Nie znaleziono potworów",
     "emptyDescription": "Brak potworów do wyświetlenia.",
     "emptyFilteredDescription": "Nie znaleziono potworów pasujących do wyszukiwania.",
-    "emptyGuildTitle": "Brak konfiguracji potworów w tej gildii",
-    "resetFilters": "Wyczyść filtry",
+    "emptyGuildTitle": "Brak konfiguracji potworów w tym Lootlogu",
     "details": "Szczegóły konfiguracji",
-    "backToNpcs": "Wróć do potworów",
     "npcNotFound": "Nie znaleziono potwora",
-    "npcNotFoundDescription": "Ten wpis konfiguracji nie istnieje w tej gildii albo nie ma go już w pobranej konfiguracji.",
+    "npcNotFoundDescription": "Ten wpis konfiguracji nie istnieje w tym Lootlogu albo nie ma go już w pobranej konfiguracji.",
     "raritiesTitle": "Zbierane rzadkości",
     "raritiesDescription": "Wybierz, które rzadkości mają być zbierane dla tego potwora.",
     "rarityCountCompact": "{{count}}/{{total}} rzadkości",
@@ -192,7 +192,7 @@
     },
     "sharing": {
       "title": "Współdzielone rezerwacje",
-      "description": "Połącz kalendarze dwóch organizacji w trybie podglądu. Rezerwacje sojusznika są widoczne, ale nie blokują zapisów.",
+      "description": "Połącz kalendarze dwóch Lootlogów w trybie podglądu. Rezerwacje sojusznika są widoczne, ale nie blokują zapisów.",
       "createInvite": "Utwórz zaproszenie",
       "inviteReady": "Jednorazowe zaproszenie jest gotowe",
       "inviteLink": "Link zaproszenia",
@@ -200,28 +200,28 @@
       "copied": "Skopiowano link zaproszenia.",
       "copyError": "Nie udało się skopiować linku. Skopiuj go ręcznie.",
       "singleUseNotice": "Link jest ważny przez 7 dni i znika po pierwszym użyciu. Po zamknięciu tej strony nie będzie można go ponownie odczytać.",
-      "partners": "Organizacje w sojuszu",
+      "partners": "Lootlogi w sojuszu",
       "pending": "Oczekujące zaproszenia",
       "pendingInvite": "Niewykorzystane zaproszenie",
       "expires": "Wygasa {{date}}",
       "revoke": "Wycofaj",
       "loadError": "Nie udało się pobrać współdzielonych rezerwacji",
-      "loadErrorDescription": "Spróbuj ponownie, aby odświeżyć organizacje w sojuszu i oczekujące zaproszenia.",
-      "noPartners": "Brak organizacji w sojuszu.",
+      "loadErrorDescription": "Spróbuj ponownie, aby odświeżyć Lootlogi w sojuszu i oczekujące zaproszenia.",
+      "noPartners": "Brak Lootlogów w sojuszu.",
       "noPending": "Brak oczekujących zaproszeń.",
       "disconnect": "Odłącz",
       "disconnectTitle": "Odłączyć współdzielone kalendarze?",
-      "disconnectDescription": "Rezerwacje organizacji {{name}} natychmiast przestaną być widoczne. Żadne wpisy ani przypomnienia nie zostaną usunięte.",
-      "disconnectOrganization": "Odłącz organizację {{name}}"
+      "disconnectDescription": "Rezerwacje Lootloga {{name}} natychmiast przestaną być widoczne. Żadne wpisy ani przypomnienia nie zostaną usunięte.",
+      "disconnectOrganization": "Odłącz Lootlog {{name}}"
     },
     "durationRangeInvalid": "Minimalny czas rezerwacji nie może przekraczać maksymalnego."
   },
   "members": {
     "title": "Członkowie",
-    "description": "Zarządzaj dostępem członków lootloga",
-    "searchPlaceholder": "Szukaj członka, nick lub Discord ID...",
+    "description": "Zarządzaj dostępem członków Lootloga",
+    "searchPlaceholder": "Szukaj członka po nicku lub Discord ID",
     "details": "Szczegóły członka",
-    "owner": "Właściciel serwera",
+    "owner": "Właściciel Lootloga",
     "summary": {
       "total": "{{count}} członków",
       "active": "{{count}} aktywnych",
@@ -239,7 +239,7 @@
     "table": {
       "member": "Członek",
       "status": "Status",
-      "discord": "Sync",
+      "discord": "Synchronizacja",
       "activity": "Aktywność",
       "visits": "Wejścia",
       "roles": "Role",
@@ -254,7 +254,7 @@
     "refreshSuccess": "Odświeżono pomyślnie",
     "refreshSuccessWithCooldown": "Odświeżono. Kolejne odświeżenie za {{minutes}}:{{seconds}}",
     "refreshAccessDisabled": "Odświeżenie dezaktywowało dostęp członka",
-    "refreshNotFound": "API Discorda nie zwróciło członkostwa dla tego serwera",
+    "refreshNotFound": "Discord nie potwierdził członkostwa na serwerze tego Lootloga",
     "refreshError": "Błąd odświeżania",
     "refreshErrorWithCooldown": "Błąd odświeżania. Kolejna próba za {{minutes}}:{{seconds}}",
     "refreshUnavailable": "Nie można odświeżyć tego członka",
@@ -300,7 +300,7 @@
         },
         "notFound": {
           "title": "Brak członkostwa na serwerze Discord",
-          "description": "API Discorda zwróciło brak członkostwa dla tej gildii. Ten status blokuje dostęp i czyści role."
+          "description": "Discord nie potwierdził członkostwa na serwerze tego Lootloga. Ten status blokuje dostęp i czyści role."
         },
         "unauthorized": {
           "title": "Nie można potwierdzić konta Discord",
@@ -331,12 +331,12 @@
           "description": "Administrator wyłączył dostęp lokalnie. Odświeżenie z Discorda może ponownie aktywować członka."
         },
         "guildNotInDiscordList": {
-          "title": "Użytkownik nie jest już na tym serwerze",
-          "description": "Ostatnia poprawna lista serwerów użytkownika z Discorda nie zawiera tej gildii."
+          "title": "Użytkownik opuścił serwer Discord",
+          "description": "Ostatnia poprawna lista serwerów użytkownika z Discorda nie zawiera serwera tego Lootloga."
         },
         "guildDeactivated": {
-          "title": "Serwer został dezaktywowany",
-          "description": "Dostęp członków został wyłączony, bo serwer jest nieaktywny w Lootlogu."
+          "title": "Lootlog został dezaktywowany",
+          "description": "Dostęp członków został wyłączony, bo ten Lootlog jest nieaktywny."
         },
         "accountDeleted": {
           "title": "Konto użytkownika zostało usunięte",
@@ -384,18 +384,16 @@
     "emptyTitle": "Nie znaleziono członków",
     "emptyDescription": "Brak członków do wyświetlenia.",
     "emptyFilteredDescription": "Nie znaleziono członków pasujących do filtrów.",
-    "emptyGuildTitle": "Brak członków w tej gildii",
-    "resetFilters": "Wyczyść filtry",
-    "backToMembers": "Wróć do członków",
+    "emptyGuildTitle": "Brak członków w tym Lootlogu",
     "memberNotFound": "Nie znaleziono członka",
-    "memberNotFoundDescription": "Ten członek nie istnieje w tej gildii albo nie ma go już w pobranej liście.",
+    "memberNotFoundDescription": "Ten członek nie należy do tego Lootloga albo nie ma go już w pobranej liście.",
     "statusActive": "Aktywny",
     "statusAccessOk": "Dostęp OK",
     "statusInactive": "Nieaktywny",
     "statusProblem": "Problem",
     "statusNoRoles": "Brak ról",
-    "statusSyncStale": "Sync stale",
-    "statusActiveDescription": "Członek jest aktywny i może korzystać z konfiguracji lootloga w tej gildii.",
+    "statusSyncStale": "Nieaktualna synchronizacja",
+    "statusActiveDescription": "Członek jest aktywny i może korzystać z tego Lootloga.",
     "statusInactiveDescription": "Członek został lokalnie dezaktywowany. Ponowna aktywacja nastąpi po odświeżeniu danych z Discorda.",
     "access": {
       "title": "Dostęp",
@@ -405,10 +403,10 @@
       "ok": "Dostęp: OK",
       "problem": "Dostęp: problem",
       "inactive": "Dostęp: nieaktywny",
-      "okDescription": "Członek jest aktywny i ma potwierdzony dostęp do tej gildii.",
+      "okDescription": "Członek jest aktywny i ma potwierdzony dostęp do tego Lootloga.",
       "onlineDescription": "Członek jest aktywny i aktualnie widoczny w Lootlogu lub grze.",
       "problemDescription": "Dostęp wymaga sprawdzenia synchronizacji albo kolejki odświeżania.",
-      "inactiveDescription": "Członek nie ma aktywnego dostępu do tej gildii."
+      "inactiveDescription": "Członek nie ma aktywnego dostępu do tego Lootloga."
     },
     "rolesTitle": "Role i uprawnienia",
     "noRoles": "Brak przypisanych ról. Może być potrzebna synchronizacja członka.",
@@ -447,7 +445,7 @@
       },
       "limits": {
         "title": "Limity",
-        "description": "Każdy lootlog ma limit reguł i testów. Możesz filtrować maksymalnie 5 NPC na regułę."
+        "description": "Każdy Lootlog ma limit reguł i testów. Możesz filtrować maksymalnie 5 NPC na regułę."
       }
     },
     "notificationsHistory": {
@@ -486,7 +484,7 @@
     "triggers": {
       "timerBeforeSpawn": "Przypomnienie przed spawnem",
       "npcSpawned": "Spawn potwora",
-      "watchedItemDropped": "Drop obserwowanego itemu",
+      "watchedItemDropped": "Drop obserwowanego przedmiotu",
       "scheduledMessage": "Zaplanowana wiadomość"
     },
     "jobStatuses": {
@@ -591,10 +589,10 @@
       "lastError": "Ostatni błąd"
     },
     "empty": {
-      "targets": "Brak skonfigurowanych kanałów docelowych.",
-      "rules": "Brak skonfigurowanych reguł.",
-      "pendingJobs": "Brak oczekujących powiadomień.",
-      "historyJobs": "Brak historii powiadomień.",
+      "targets": "Brak skonfigurowanych kanałów docelowych",
+      "rules": "Brak skonfigurowanych reguł",
+      "pendingJobs": "Brak oczekujących powiadomień",
+      "historyJobs": "Brak historii powiadomień",
       "availableChannels": "Wszystkie dostępne kanały są już dodane.",
       "npcs": "Brak pasujących NPC.",
       "targetsSelect": "Brak dostępnych kanałów docelowych."
@@ -764,48 +762,48 @@
   },
   "userNotifications": {
     "title": "Powiadomienia",
-    "description": "Obserwuj itemy dla wybranego świata i swoich lootlogów, a dropy dostaniesz jako prywatną wiadomość na Discordzie.",
+    "description": "Obserwuj przedmioty na wybranym świecie w swoich Lootlogach, a informację o dropie dostaniesz w prywatnej wiadomości na Discordzie.",
     "dm": {
       "title": "Prywatna wiadomość",
       "active": "Aktywne",
       "actionRequired": "Wymaga konfiguracji",
       "configure": "Włącz powiadomienia",
       "test": "Testuj powiadomienie",
-      "deactivate": "Deaktywuj",
-      "deactivateHint": "Wstrzymuje wszystkie powiadomienia. Obserwowane itemy pozostaną zapisane - możesz je włączyć ponownie w dowolnym momencie.",
-      "requiredHint": "Włącz powiadomienia, aby otrzymywać informacje o obserwowanych itemach.",
-      "reactivateHint": "Powiadomienia są obecnie wyłączone. Aktywuj je ponownie, aby odbierać informacje o obserwowanych itemach.",
+      "deactivate": "Wyłącz powiadomienia",
+      "deactivateHint": "Wstrzymuje wszystkie powiadomienia. Obserwowane przedmioty pozostaną zapisane – możesz je włączyć ponownie w dowolnym momencie.",
+      "requiredHint": "Włącz powiadomienia, aby otrzymywać informacje o obserwowanych przedmiotach.",
+      "reactivateHint": "Powiadomienia są obecnie wyłączone. Włącz je ponownie, aby otrzymywać informacje o obserwowanych przedmiotach.",
       "cannotSendHint": "Nie udało się dostarczyć wiadomości. Sprawdź ustawienia prywatności na Discordzie lub połączenie konta.",
       "targetLabel": "Odbiorca: {{name}}",
       "testUsage": "{{used}}/{{limit}} testów ({{minutes}} min)",
       "testNextAvailable": "Następny test dostępny: {{date}}"
     },
     "watchForm": {
-      "title": "Dodaj obserwowany item",
-      "footer": "Jedna obserwacja działa dla jednego świata i wielu lootlogów.",
-      "limitStatus": "Masz {{count}} z {{limit}} obserwowanych itemów."
+      "title": "Dodaj obserwowany przedmiot",
+      "footer": "Jedna obserwacja działa na jednym świecie i w wielu Lootlogach.",
+      "limitStatus": "Masz {{count}} z {{limit}} obserwowanych przedmiotów."
     },
     "watchList": {
-      "title": "Obserwowane itemy",
+      "title": "Obserwowane przedmioty",
       "description": "Lista aktywnych obserwacji przypiętych do Twojego konta."
     },
     "infoDialog": {
-      "title": "Jak działa obserwowanie itemów?",
+      "title": "Jak działa obserwowanie przedmiotów?",
       "howItWorks": {
         "title": "Jak to działa",
-        "description": "Wybierz item, świat i lootlogi. Gdy wybrany item dropnie na danym świecie w jednym z wybranych lootlogów, natychmiast otrzymasz powiadomienie jako prywatną wiadomość na Discordzie."
+        "description": "Wybierz przedmiot, świat i Lootlogi. Gdy przedmiot dropnie na tym świecie w jednym z wybranych Lootlogów, od razu dostaniesz prywatną wiadomość na Discordzie."
       },
       "limits": {
         "title": "Limity",
-        "description": "Możesz obserwować maksymalnie {{limit}} itemów. Jedna obserwacja to jeden item na jednym świecie - ten sam item na różnych światach to osobne obserwacje. Każda obserwacja może obejmować wiele lootlogów."
+        "description": "Możesz obserwować maksymalnie {{limit}} przedmiotów. Jedna obserwacja to jeden przedmiot na jednym świecie – ten sam przedmiot na różnych światach to osobne obserwacje. Każda obserwacja może obejmować wiele Lootlogów."
       },
       "scope": {
         "title": "Zakres i bezpieczeństwo",
-        "description": "Powiadomienie zostanie wysłane tylko wtedy, gdy loot pochodzi z wybranego świata i przynajmniej jednego z wybranych lootlogów, a Ty nadal masz na nim aktywne członkostwo."
+        "description": "Powiadomienie zostanie wysłane tylko wtedy, gdy łup pochodzi z wybranego świata i co najmniej jednego z wybranych Lootlogów, a Ty nadal masz w nim aktywne członkostwo."
       },
       "quickAdd": {
         "title": "Szybkie dodawanie",
-        "description": "Itemy możesz dodawać również bezpośrednio z listy lootów klikając ikonę oka. Jeśli item jest już obserwowany na danym świecie, lootlog zostanie dołączony do istniejącej obserwacji."
+        "description": "Przedmioty możesz dodawać także bezpośrednio z listy łupów, klikając ikonę oka. Jeśli przedmiot jest już obserwowany na danym świecie, Lootlog zostanie dołączony do istniejącej obserwacji."
       }
     },
     "actions": {
@@ -816,39 +814,40 @@
       "add": "Dodaj do obserwowanych",
       "remove": "Przestań obserwować",
       "dmRequired": "Najpierw włącz powiadomienia w ustawieniach.",
-      "limitReached": "Osiągnięto limit {{limit}} obserwowanych itemów.",
+      "limitReached": "Osiągnięto limit {{limit}} obserwowanych przedmiotów.",
       "loading": "Ładowanie obserwacji...",
       "loadError": "Nie udało się załadować obserwacji.",
-      "scopeUnavailable": "Nie udało się ustalić lootlogów dla tej obserwacji.",
+      "scopeUnavailable": "Nie udało się ustalić Lootlogów dla tej obserwacji.",
       "openNotifications": "Przejdź do powiadomień",
       "configureDm": "Włącz powiadomienia",
-      "indicatorLabel": "Item jest już obserwowany",
+      "indicatorLabel": "Przedmiot jest już obserwowany",
       "toasts": {
         "adding": "Dodawanie {{itemName}} do obserwowanych ({{count}} / {{limit}})...",
         "added": "{{itemName}} został dodany do obserwowanych ({{count}} / {{limit}}).",
-        "error": "Nie udało się dodać itemu do obserwowanych.",
+        "error": "Nie udało się dodać przedmiotu do obserwowanych.",
         "removing": "Usuwanie {{itemName}} z obserwowanych...",
         "removed": "{{itemName}} został usunięty z obserwowanych.",
-        "removeError": "Nie udało się usunąć itemu z obserwowanych."
+        "removeError": "Nie udało się usunąć przedmiotu z obserwowanych."
       }
     },
     "fields": {
       "guilds": "Lootlogi",
-      "item": "Item"
+      "item": "Przedmiot"
     },
     "placeholders": {
-      "guilds": "Wybierz lootlogi",
-      "searchGuilds": "Szukaj lootlogów",
-      "item": "Wybierz item",
-      "searchItems": "Szukaj itemu po nazwie lub ID"
+      "guilds": "Wybierz Lootlogi",
+      "searchGuilds": "Szukaj Lootlogów",
+      "item": "Wybierz przedmiot",
+      "searchItems": "Szukaj przedmiotu po nazwie lub ID"
     },
     "empty": {
-      "guilds": "Brak dostępnych lootlogów.",
-      "items": "Brak pasujących itemów.",
-      "watchedItems": "Nie masz jeszcze żadnych obserwowanych itemów."
+      "guilds": "Brak dostępnych Lootlogów.",
+      "items": "Brak pasujących przedmiotów.",
+      "watchedItems": "Nie masz jeszcze żadnych obserwowanych przedmiotów.",
+      "watchedItemsDescription": "Dodaj przedmiot, a gdy dropnie w Twoim Lootlogu, dostaniesz prywatną wiadomość na Discordzie."
     },
     "loading": {
-      "items": "Pobieranie itemów..."
+      "items": "Pobieranie przedmiotów…"
     },
     "manualEntry": {
       "checkbox": "Mój przedmiot nie pojawia się w wyszukiwarce",
@@ -860,14 +859,14 @@
     },
     "validation": {
       "dmRequired": "Najpierw włącz powiadomienia w ustawieniach.",
-      "guildRequired": "Wybierz przynajmniej jeden lootlog.",
-      "guildSelectionUnavailable": "Nie możesz dodać obserwacji dla wybranych lootlogów.",
-      "itemRequired": "Wybierz item do obserwowania.",
+      "guildRequired": "Wybierz co najmniej jeden Lootlog.",
+      "guildSelectionUnavailable": "Nie możesz dodać obserwacji dla wybranych Lootlogów.",
+      "itemRequired": "Wybierz przedmiot do obserwowania.",
       "manualItemIdRequired": "Podaj ID przedmiotu.",
       "manualItemNameRequired": "Podaj nazwę przedmiotu.",
       "manualItemIdInvalid": "ID przedmiotu musi być liczbą.",
       "worldRequired": "Najpierw wybierz świat.",
-      "watchLimitReached": "Osiągnąłeś limit {{limit}} obserwowanych itemów. Usuń jedną obserwację, aby dodać kolejną.",
+      "watchLimitReached": "Osiągnięto limit {{limit}} obserwowanych przedmiotów. Usuń jedną obserwację, aby dodać kolejną.",
       "dmTestLimitReached": "Osiągnięto limit testowych wiadomości. Spróbuj ponownie za kilka minut."
     },
     "toasts": {
@@ -877,26 +876,26 @@
       "dmDisableError": "Nie udało się wyłączyć powiadomień.",
       "dmTestTriggered": "Testowe powiadomienie zostało wysłane.",
       "dmTestTriggerError": "Nie udało się wysłać testowego powiadomienia.",
-      "watchCreating": "Dodawanie obserwowanego itemu ({{count}} / {{limit}})...",
-      "watchCreated": "Obserwowany item został dodany ({{count}} / {{limit}}).",
-      "watchCreateError": "Nie udało się dodać obserwowanego itemu.",
-      "watchDeleted": "Obserwowany item został usunięty.",
-      "watchDeleteError": "Nie udało się usunąć obserwowanego itemu."
+      "watchCreating": "Dodawanie obserwowanego przedmiotu ({{count}} / {{limit}})…",
+      "watchCreated": "Obserwowany przedmiot został dodany ({{count}} / {{limit}}).",
+      "watchCreateError": "Nie udało się dodać obserwowanego przedmiotu.",
+      "watchDeleted": "Obserwowany przedmiot został usunięty.",
+      "watchDeleteError": "Nie udało się usunąć obserwowanego przedmiotu."
     },
     "watchCount_one": "{{count}} obserwacja",
     "watchCount_few": "{{count}} obserwacje",
     "watchCount_many": "{{count}} obserwacji",
     "watchLimitStatus": "{{count}} / {{limit}}",
     "missingGuild": "Brak dostępu: {{guildId}}",
-    "staleGuildWarning": "Ta obserwacja zawiera lootlogi, do których nie masz już dostępu w aktualnej sesji.",
+    "staleGuildWarning": "Ta obserwacja zawiera Lootlogi, do których nie masz już dostępu.",
     "itemSelector": {
       "selectedLabel": "{{name}} (#{{id}})",
       "itemId": "#{{id}}",
       "itemLevel": "Lvl {{level}}"
     },
     "deleteWatchDialog": {
-      "title": "Usunąć obserwowany item?",
-      "description": "Ta operacja usunie obserwację dla itemu {{itemName}} i zatrzyma przyszłe powiadomienia."
+      "title": "Usunąć obserwowany przedmiot?",
+      "description": "Ta operacja usunie obserwację przedmiotu {{itemName}} i zatrzyma przyszłe powiadomienia."
     }
   },
   "guildInfo": {
@@ -904,7 +903,7 @@
     "refresh": "Odśwież status",
     "refreshing": "Odświeżanie...",
     "syncStatus": "Status synchronizacji Discorda",
-    "syncStatusDescription": "Ten widok pokazuje aktualny stan połączenia bota z serwerem i kanałami.",
+    "syncStatusDescription": "Ten widok pokazuje aktualny stan połączenia bota z serwerem Discord i kanałami.",
     "syncUnknown": {
       "title": "Uprawnienia bota nie są jeszcze potwierdzone",
       "description": "Brak aktualnego wyniku synchronizacji z Discordem. Odśwież status, aby sprawdzić uprawnienia bota.",
@@ -917,7 +916,7 @@
       "SYNCING": "Synchronizowanie",
       "STALE": "Dane nieaktualne",
       "FAILED": "Błąd synchronizacji",
-      "NOT_FOUND": "Bot nie ma dostępu do serwera"
+      "NOT_FOUND": "Bot nie ma dostępu do serwera Discord"
     },
     "channelCounts": "{{selectable}} z {{total}} kanałów jest dostępnych do wyboru",
     "fields": {
@@ -932,6 +931,13 @@
       "ok": "Kompletne",
       "missing": "Brakujące",
       "unknown": "Niepotwierdzone"
+    },
+    "discordPermissions": {
+      "ViewChannel": "Wyświetlanie kanałów",
+      "SendMessages": "Wysyłanie wiadomości",
+      "EmbedLinks": "Osadzanie linków",
+      "AttachFiles": "Załączanie plików",
+      "ReadMessageHistory": "Czytanie historii wiadomości"
     },
     "permissionSection": {
       "title": "Wymagane uprawnienia",
@@ -962,6 +968,7 @@
     "searchHint": "Wpisz nazwę lub ID mapy, aby wyszukać",
     "saveTemplate": "Zapisz szablon",
     "noTemplates": "Brak szablonów",
+    "noTemplatesDescription": "Szablon zapisuje zestaw map, który dodasz do wydarzenia jednym kliknięciem.",
     "mapCount_one": "{{count}} mapa",
     "mapCount_few": "{{count}} mapy",
     "mapCount_many": "{{count}} map",
@@ -1003,10 +1010,10 @@
     },
     "dangerZone": {
       "title": "Usuwanie konta",
-      "description": "Trwale usuwa Twoje dane - ustawienia, statystyki bić i zapisane walki. Looty, timery i dane klanu pozostaną nienaruszone, bo są częścią wspólnej historii klanu.",
+      "description": "Trwale usuwa Twoje dane – ustawienia, statystyki bić i zapisane walki. Łupy, timery i inne dane Lootlogów pozostaną nienaruszone, bo są częścią ich wspólnej historii.",
       "deleteAccount": "Usuń konto",
       "deleteConfirmTitle": "Na pewno chcesz usunąć konto?",
-      "deleteConfirmDescription": "To nieodwracalne. Twoje ustawienia, statystyki bić i walki zostaną trwale usunięte. Dane klanu (looty, timery) nie zostaną ruszone - są powiązane z klanem, nie z Twoim kontem.",
+      "deleteConfirmDescription": "To nieodwracalne. Twoje ustawienia, statystyki bić i walki zostaną trwale usunięte. Dane Lootlogów (łupy, timery) nie zostaną ruszone – należą do Lootlogów, nie do Twojego konta.",
       "deleteConfirmLabel": "Wpisz \"{{name}}\" żeby potwierdzić",
       "deleteConfirmButton": "Tak, usuń moje konto"
     }

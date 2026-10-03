@@ -24,10 +24,12 @@ import type {
 type ScoringFactor = EventScoringNumericFactor | EventScoringBooleanFactor;
 
 export const ScoringFactorSelect = ({
+  id,
   value,
   onChange,
   factors,
 }: {
+  id?: string;
   value: ScoringFactor;
   onChange: (value: string | null) => void;
   factors: readonly ScoringFactor[];
@@ -44,7 +46,7 @@ export const ScoringFactorSelect = ({
           label: <>{getScoringFactorLabel(factor, t)}</>,
         }))}
       >
-        <SelectTrigger size="sm" className="h-8 text-[12px]">
+        <SelectTrigger id={id} size="sm" className="h-8 text-[12px]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

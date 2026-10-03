@@ -8,7 +8,6 @@ import {
   DrawerTrigger,
 } from "@lootlog/ui/components/drawer";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Filter } from "lucide-react";
 import type { ReactElement, ReactNode } from "react";
 import { cn } from "cn";
 
@@ -16,7 +15,7 @@ type MobileFiltersDrawerProps = {
   title: string;
   closeLabel?: string;
   children: ReactNode;
-  trigger?: "floating" | "inline" | ReactElement | null;
+  trigger: ReactElement | null;
   footer?: ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -28,39 +27,16 @@ export const MobileFiltersDrawer = ({
   title,
   closeLabel,
   children,
-  trigger = "inline",
+  trigger,
   footer,
   open,
   onOpenChange,
   contentClassName,
   childrenClassName,
 }: MobileFiltersDrawerProps) => {
-  const isPresetTrigger = trigger === "floating" || trigger === "inline";
-
-  const triggerClassName =
-    trigger === "floating"
-      ? "fixed bottom-4 right-4 size-14 rounded-full shadow-lg z-20"
-      : "shrink-0";
-
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      {trigger !== null ? (
-        <DrawerTrigger
-          render={
-            isPresetTrigger ? (
-              <Button
-                variant={trigger === "inline" ? "outline" : undefined}
-                size="icon"
-                className={triggerClassName}
-              >
-                <Filter />
-              </Button>
-            ) : (
-              trigger
-            )
-          }
-        />
-      ) : null}
+      {trigger !== null ? <DrawerTrigger render={trigger} /> : null}
       <DrawerContent
         className={cn(
           "flex max-h-[85vh] flex-col overflow-hidden p-0",

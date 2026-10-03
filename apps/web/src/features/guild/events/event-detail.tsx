@@ -15,7 +15,9 @@ import { EventDetailSkeleton } from "./event-detail-skeleton";
 import { EventStatusDialogs } from "./event-status-dialogs";
 import { findEventHeroTimer } from "./utils/find-event-hero-timer";
 
-import { hasEventDetailErrors, useEventDetail } from "./use-event-detail";
+import { useEventDetail } from "./use-event-detail";
+import { EventReadError } from "./components/shared/event-read-error";
+import { SectionCard } from "@/components/common/section-card/section-card";
 
 export const EventDetail = () => {
   const {
@@ -58,8 +60,13 @@ export const EventDetail = () => {
     canDeleteEvent,
     navigateToEventEdit,
     openEventStatusDialog,
+    refetchEvent,
     mapsError,
     rankingError,
+    refetchMaps,
+    refetchRanking,
+    isMapsFetching,
+    isRankingFetching,
     heroes,
     heroTimers,
     heroStats,
@@ -67,6 +74,7 @@ export const EventDetail = () => {
     handleEditHero,
     handleManageMaps,
     handleDeleteHero,
+    isDeleteHeroPending,
     rankings,
     isLoading,
     isMapsLoading,
@@ -77,7 +85,14 @@ export const EventDetail = () => {
   }
 
   if (error || !event) {
-    return <EventLoadError guildId={queryGuildId} />;
+    return (
+      <EventLoadError
+        backTo="list"
+        guildId={queryGuildId}
+        error={error}
+        onRetry={() => refetchEvent()}
+      />
+    );
   }
 
   return (
@@ -174,11 +189,23 @@ export const EventDetail = () => {
             />
           </div>
 
-          {hasEventDetailErrors(mapsError, rankingError) && (
-            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {mapsError && <p>{t("events.maps.error")}</p>}
-              {rankingError && <p>{t("events.ranking.error")}</p>}
-            </div>
+          {mapsError && (
+            <SectionCard>
+              <EventReadError
+                message={t("events.maps.error")}
+                onRetry={() => void refetchMaps()}
+                isRetrying={isMapsFetching}
+              />
+            </SectionCard>
+          )}
+          {rankingError && (
+            <SectionCard>
+              <EventReadError
+                message={t("events.ranking.error")}
+                onRetry={() => void refetchRanking()}
+                isRetrying={isRankingFetching}
+              />
+            </SectionCard>
           )}
           <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
             <div className="contents xl:block xl:min-w-0 xl:space-y-3">
@@ -205,6 +232,7 @@ export const EventDetail = () => {
                   onEditHero={handleEditHero}
                   onManageMaps={handleManageMaps}
                   onDeleteHero={handleDeleteHero}
+                  isDeleteHeroPending={isDeleteHeroPending}
                 />
               </div>
 

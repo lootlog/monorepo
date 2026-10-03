@@ -1,5 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { LootOverviewCards } from "./components/loot-overview-cards";
+import { LootTopContributors } from "./components/loot-top-contributors";
+import { LootTopItems } from "./components/loot-top-items";
 import { StatsChartCard } from "./components/stats-chart-card";
 import { StatsFilterBarSkeleton } from "./components/stats-filter-bar-skeleton";
 
@@ -21,6 +23,10 @@ export const LootStatsPageSkeleton = () => {
         <StatsChartCard title={t("loots.stats.topNpcs.title")} isLoading>
           {null}
         </StatsChartCard>
+      </div>
+      <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-2">
+        <LootTopContributors isLoading />
+        <LootTopItems isLoading />
       </div>
     </div>
   );

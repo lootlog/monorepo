@@ -46,7 +46,6 @@ export function RecentOpponentBattlesCard({
         })}
         actions={
           <ChevronLink
-            className="inline-flex h-8 shrink-0 items-center gap-1 text-xs"
             aria-label={t("battlePanel.single.recentOpponent.viewAllAria", {
               opponent: context.opponentName,
             })}

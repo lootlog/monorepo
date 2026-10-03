@@ -6,7 +6,9 @@ import { useTranslation } from "react-i18next";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { NotificationJobDetailDialog } from "./components/notification-job-detail-dialog";
 import { History } from "lucide-react";
+import { EmptyState } from "@/components/common/empty-state";
 import { PageHeader } from "@/components/common/page-header";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getNotificationsGuildControllerGetGuildJobsQueryKey,
@@ -46,7 +48,7 @@ export const NotificationsHistoryPage = () => {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <ScrollArea className="min-h-0 flex-1">
-        <div className="flex flex-col gap-4 px-3 py-3">
+        <div className="flex flex-col gap-3 px-3 py-3">
           <PageHeader
             icon={History}
             title={t("settings.notifications.notificationsHistory.title")}
@@ -58,7 +60,7 @@ export const NotificationsHistoryPage = () => {
           {isLoading ? (
             <NotificationHistoryRowsSkeleton />
           ) : historyJobs.length > 0 ? (
-            <div className="flex flex-col gap-3">
+            <SectionCard className="overflow-hidden">
               {historyJobs.map((job) => (
                 <NotificationHistoryRow
                   key={job.id}
@@ -66,11 +68,13 @@ export const NotificationsHistoryPage = () => {
                   openJobDetails={openJobDetails}
                 />
               ))}
-            </div>
+            </SectionCard>
           ) : (
-            <div className="py-6 text-sm text-muted-foreground">
-              {t("settings.notifications.empty.historyJobs")}
-            </div>
+            <EmptyState
+              framed
+              icon={History}
+              title={t("settings.notifications.empty.historyJobs")}
+            />
           )}
         </div>
       </ScrollArea>

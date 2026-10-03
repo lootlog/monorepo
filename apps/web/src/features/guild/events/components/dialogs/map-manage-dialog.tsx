@@ -1,13 +1,8 @@
+import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { SearchInput } from "@/components/ui/search-input";
 import { Button } from "@lootlog/ui/components/button";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@lootlog/ui/components/dialog";
+import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -20,6 +15,7 @@ import {
 } from "@lootlog/ui/components/select";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { Reorder } from "framer-motion";
+import { useId } from "react";
 import { FolderPlus, MapPin, Search } from "lucide-react";
 import { AssignedEventMaps } from "./assigned-event-maps";
 import { EventMapTemplates } from "./event-map-templates";
@@ -68,34 +64,31 @@ export const MapManageDialog = ({
     handleAddMapFromGame,
   } = useMapManageDialog({ open, onOpenChange, guildId, eventId, hero });
 
+  const locationNameInputId = useId();
+  const mapSearchInputId = useId();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
-        <DialogHeader className="px-5 pt-5 pb-4 border-b bg-muted/30 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <MapPin className="size-4 text-primary" />
-            </div>
-            <div>
-              <DialogTitle className="text-base">
-                {t("events.maps.manage")}
-              </DialogTitle>
-              <DialogDescription className="text-xs mt-0.5">
-                {hero.npcName}
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
+        <IconDialogHeader
+          icon={MapPin}
+          title={t("events.maps.manage")}
+          description={hero.npcName}
+        />
 
         <div className="flex-1 overflow-y-auto custom-scrollbar [scrollbar-gutter:stable]">
           <div className="p-5 space-y-5">
             <div className="space-y-2">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <Label
+                htmlFor={locationNameInputId}
+                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+              >
                 {t("events.locations.title")}
               </Label>
 
               <div className="flex gap-2">
                 <Input
+                  id={locationNameInputId}
                   value={newLocationName}
                   onChange={(e) => setNewLocationName(e.target.value)}
                   placeholder={t("events.locations.namePlaceholder")}
@@ -164,7 +157,10 @@ export const MapManageDialog = ({
               handleLoadTemplate={handleLoadTemplate}
             />
             <div className="space-y-2">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <Label
+                htmlFor={mapSearchInputId}
+                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+              >
                 {t("events.maps.searchMaps")}
               </Label>
 
@@ -207,6 +203,7 @@ export const MapManageDialog = ({
               )}
 
               <SearchInput
+                id={mapSearchInputId}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t("events.maps.searchPlaceholder")}

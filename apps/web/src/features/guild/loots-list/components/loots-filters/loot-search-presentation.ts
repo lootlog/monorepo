@@ -18,21 +18,6 @@ export const containerVariants: Variants = {
   },
 };
 
-export const getRarityStyle = (rarity: string | null) => {
-  switch (rarity) {
-    case "LEGENDARY":
-      return "text-orange-400";
-    case "HEROIC":
-      return "text-blue-500";
-    case "UNIQUE":
-      return "text-amber-300";
-    case "UPGRADED":
-      return "text-primary";
-    default:
-      return "text-muted-foreground";
-  }
-};
-
 export const allTrue = (...values: boolean[]) => values.every(Boolean);
 
 export const anyTrue = (...values: boolean[]) => values.some(Boolean);

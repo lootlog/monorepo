@@ -1,15 +1,12 @@
 import { NpcSearchTile, PlayerSearchTile } from "@/components/tiles";
-import { ITEM_RARITY_NAMES, NPC_TYPE_NAMES } from "@/constants/npc";
+import { formatNpcLevel } from "@lootlog/domain/profession";
+import { LOOT_RARITY_TEXT_CLASS } from "@/features/guild/loots-list/loot-rarity-colors";
 import { CommandGroup, CommandItem } from "@lootlog/ui/components/command";
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { cn } from "cn";
 import * as m from "framer-motion/m";
-import {
-  containerVariants,
-  getRarityStyle,
-  renderIf,
-} from "./loot-search-presentation";
+import { containerVariants, renderIf } from "./loot-search-presentation";
 import type { useLootSearchCommand } from "./use-loot-search-command";
 
 type Props = Pick<
@@ -53,13 +50,13 @@ export const LootSearchResults = ({
             <div className="min-w-0 flex-1">
               <div className="truncate font-semibold">{npc.name}</div>
               <div className="text-xs text-muted-foreground">
-                {NPC_TYPE_NAMES[npc.type]}
+                {t(`npcType.${npc.type}`)}
               </div>
             </div>
             {npc.lvl > 0 && (
               <span className="text-xs text-muted-foreground">
                 {t("loots.searchCommand.level", {
-                  level: npc.lvl,
+                  level: formatNpcLevel(npc.lvl, npc.prof),
                 })}
               </span>
             )}
@@ -88,10 +85,12 @@ export const LootSearchResults = ({
                 <div
                   className={cn(
                     "text-xs font-semibold",
-                    getRarityStyle(item.rarity),
+                    LOOT_RARITY_TEXT_CLASS[resolveItemRarity(item.rarity)],
                   )}
                 >
-                  {ITEM_RARITY_NAMES.get(item.rarity) ?? item.rarity}
+                  {t(`itemRarity.${item.rarity}`, {
+                    defaultValue: item.rarity,
+                  })}
                 </div>
               )}
             </div>

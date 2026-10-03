@@ -85,13 +85,13 @@ export const LootFiltersHeader = ({
           <div
             className={cn(
               "min-w-0 flex-1",
-              isMobile ? "basis-0" : "min-w-48 basis-48",
+              isMobile ? "basis-full" : "min-w-48 basis-48",
             )}
           >
             <Button
               variant="outline"
               onClick={() => setIsCommandOpen(true)}
-              className="relative h-9 w-full justify-start font-normal text-muted-foreground hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground"
+              className="relative h-10 w-full justify-start font-normal text-muted-foreground hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground"
             >
               <Search className="size-4 shrink-0" />
               <span className={cn("truncate", !usesStackedControls && "pr-16")}>
@@ -120,7 +120,7 @@ export const LootFiltersHeader = ({
           </div>
 
           {!usesStackedControls && (
-            <div aria-hidden className="relative h-9 w-3 shrink-0">
+            <div aria-hidden className="relative h-10 w-3 shrink-0">
               <div className="absolute inset-y-1 left-1/2 w-px -translate-x-1/2 bg-border" />
             </div>
           )}
@@ -163,9 +163,9 @@ export const LootFiltersHeader = ({
                     size="icon"
                     aria-label={t("loots.header.mobileFiltersTitle")}
                     aria-expanded={isFiltersOpen}
-                    className="relative size-9 shrink-0"
+                    className="relative shrink-0"
                   >
-                    <Filter className="h-4 w-4" />
+                    <Filter className="size-4" aria-hidden="true" />
                     {/* The responsive toolbar owns this button; filter changes keep the presence boundary mounted. */}
                     {/* eslint-disable-next-line react-doctor/motion-animate-presence-must-outlive-child */}
                     <AnimatePresence>
@@ -185,12 +185,30 @@ export const LootFiltersHeader = ({
           )}
 
           {isMobile && (
-            <div className="w-[42%] min-w-28 shrink-0">
-              <WorldSwitcher
-                width="w-full"
-                triggerClassName="w-full justify-between"
-              />
-            </div>
+            <>
+              <div className="min-w-0 flex-1">
+                <WorldSwitcher
+                  width="w-full"
+                  triggerClassName="w-full justify-between"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onToggleFilters}
+                aria-expanded={isFiltersOpen}
+                className="relative h-10 shrink-0 gap-2"
+              >
+                <Filter className="size-4" aria-hidden="true" />
+                {t("loots.header.filtersButton")}
+                {hasActiveFilters && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -top-1 -right-1 size-3 rounded-full border-2 border-background bg-primary"
+                  />
+                )}
+              </Button>
+            </>
           )}
         </FilterBar>
       )}

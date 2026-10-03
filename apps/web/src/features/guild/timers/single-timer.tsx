@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import type { TimerResponseDto } from "@lootlog/client/main";
+import { formatNpcLevel } from "@lootlog/domain/profession";
 import { TimerCountdown } from "./timer-countdown";
 
 type SingleTimerProps = {
@@ -21,9 +22,9 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
   const npcName = timer.npc?.name ?? "";
   const npcIcon = timer.npc?.icon ?? null;
 
-  const npcDetails =
-    timer.npc && timer.npc.lvl > 0 && timer.npc.prof
-      ? `(${timer.npc.lvl}${timer.npc.prof.charAt(0).toLowerCase()})`
+  const npcLevel =
+    timer.npc && timer.npc.lvl > 0
+      ? formatNpcLevel(timer.npc.lvl, timer.npc.prof)
       : null;
 
   const imageHasDomain = npcIcon?.startsWith("https://"); // @TODO: temporary fix for icons with full URL
@@ -32,37 +33,40 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
     <Tooltip>
       <TooltipTrigger
         render={
-          <div className="group flex cursor-pointer items-center gap-3 rounded-lg border border-border/50 bg-card px-3 py-2.5 transition-all hover:border-primary/50 hover:bg-card">
+          <button
+            type="button"
+            className="flex w-full items-center gap-3 rounded-lg border border-border/50 bg-card px-3 py-2.5 text-left transition-colors outline-none hover:border-primary/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none"
+          >
             {npcIcon && (
-              <div className="flex size-8 shrink-0 items-center justify-center">
+              <span className="flex size-8 shrink-0 items-center justify-center">
                 {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
                 <img
                   className="max-h-8 max-w-8 rounded"
                   src={`${imageHasDomain ? "" : MARGONEM_CDN_NPCS_URL}${npcIcon}`}
-                  alt={npcName}
+                  alt=""
                 />
-              </div>
+              </span>
             )}
-            <div className="min-w-0 flex-1">
-              <div className="flex min-w-0 items-baseline gap-1">
+            <span className="min-w-0 flex-1">
+              <span className="flex min-w-0 items-baseline gap-1.5">
                 <span className="min-w-0 truncate text-sm font-medium">
                   {npcName}
                 </span>
-                {npcDetails && (
+                {npcLevel && (
                   <span className="shrink-0 text-xs text-muted-foreground">
-                    {npcDetails}
+                    {npcLevel}
                   </span>
                 )}
-              </div>
+              </span>
               <span className="block truncate text-xs text-muted-foreground">
                 {timer.member?.name ?? ""}
               </span>
-            </div>
+            </span>
             <TimerCountdown
               minSpawnTime={minSpawnTime}
               maxSpawnTime={maxSpawnTime}
             />
-          </div>
+          </button>
         }
       />
       <TooltipContent className="grid gap-2">
@@ -71,7 +75,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
             {t("timers.details.minSpawnTime")}
           </span>
           <span className="block text-sm font-semibold tabular-nums">
-            {format(new Date(minSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
+            {format(new Date(minSpawnTime), "dd.MM.yyyy HH:mm:ss")}
           </span>
         </div>
         <div>
@@ -79,7 +83,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
             {t("timers.details.maxSpawnTime")}
           </span>
           <span className="block text-sm font-semibold tabular-nums">
-            {format(new Date(maxSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
+            {format(new Date(maxSpawnTime), "dd.MM.yyyy HH:mm:ss")}
           </span>
         </div>
       </TooltipContent>

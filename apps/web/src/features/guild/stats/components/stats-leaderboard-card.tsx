@@ -1,3 +1,5 @@
+import { EmptyState } from "@/components/common/empty-state";
+import { Inbox } from "lucide-react";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
@@ -43,9 +45,12 @@ export const StatsLeaderboardCard = ({
           ))}
         </div>
       ) : emptyMessage ? (
-        <p className="flex min-h-40 flex-1 items-center justify-center px-4 text-center text-sm text-muted-foreground">
-          {emptyMessage}
-        </p>
+        <EmptyState
+          icon={Inbox}
+          title={emptyMessage}
+          compact
+          className="min-h-40 flex-1"
+        />
       ) : (
         <ol className="flex flex-col gap-1">{children}</ol>
       )}

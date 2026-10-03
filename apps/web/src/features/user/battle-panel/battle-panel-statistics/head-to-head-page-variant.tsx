@@ -1,5 +1,5 @@
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
-import { SectionHeader } from "@/components/layout/section-header";
+import { PageHeader } from "@/components/common/page-header";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
@@ -197,10 +197,10 @@ export function HeadToHeadPageVariant({
 
       <div className="flex h-full w-full flex-col overflow-hidden">
         <div className="px-3 pb-0 pt-3">
-          <SectionHeader
+          <PageHeader
             icon={Swords}
             title={t(titleKey)}
-            subtitle={t(subtitleKey)}
+            description={t(subtitleKey)}
           />
         </div>
 

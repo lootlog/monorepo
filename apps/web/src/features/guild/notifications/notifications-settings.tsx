@@ -128,9 +128,10 @@ export const NotificationsSettings = () => {
                       <Button
                         size="icon"
                         variant="ghost"
+                        aria-label={t("settings.notifications.info.title")}
                         onClick={() => setIsInfoDialogOpen(true)}
                       >
-                        <Info className="h-4 w-4" />
+                        <Info className="size-4" aria-hidden="true" />
                       </Button>
                     }
                   />
@@ -156,7 +157,7 @@ export const NotificationsSettings = () => {
                 </div>
 
                 <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-                  <div className="space-y-4 lg:col-span-2">
+                  <div className="flex flex-col gap-3 lg:col-span-2">
                     <NotificationsTargetsCard
                       targets={targets}
                       rules={visibleRules}
@@ -170,7 +171,7 @@ export const NotificationsSettings = () => {
                     />
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="flex flex-col gap-3">
                     <div className="hidden lg:block">
                       <NotificationsActionsCard
                         hasRequiredPermissions={hasRequiredPermissions}

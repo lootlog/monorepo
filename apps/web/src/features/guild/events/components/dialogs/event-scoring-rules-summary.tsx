@@ -19,7 +19,7 @@ export const EventScoringRulesSummary = ({
   rules,
   t,
 }: EventScoringRulesSummaryProps) => {
-  const andLabel = t("events.scoring.andLabel", "i");
+  const andLabel = t("events.scoring.andLabel");
 
   if (scoringMode === "SIMPLE") {
     return (
@@ -34,17 +34,13 @@ export const EventScoringRulesSummary = ({
   return (
     <div className="space-y-3 text-sm">
       <div className="text-muted-foreground">
-        {t("events.scoring.summary.cap", "Maksymalnie {{points}} pkt za kill", {
+        {t("events.scoring.summary.cap", {
           points: rules?.hardCapPoints ?? 2,
         })}
         {" · "}
-        {t(
-          "events.scoring.summary.minTrackingForBonuses",
-          "Min. pokrycie dla bonusów: {{percentage}}%",
-          {
-            percentage: rules?.minTrackingPercentForBonuses ?? 50,
-          },
-        )}
+        {t("events.scoring.summary.minTrackingForBonuses", {
+          percentage: rules?.minTrackingPercentForBonuses ?? 50,
+        })}
       </div>
       <div className="space-y-2">
         {normalizedRules.map((rule) => (
@@ -55,17 +51,17 @@ export const EventScoringRulesSummary = ({
             <p className="font-medium text-xs">
               {rule.name || rule.id}{" "}
               {rule.enabled === false
-                ? t("events.scoring.ruleDisabledSuffix", "(WYŁ.)")
+                ? t("events.scoring.ruleDisabledSuffix")
                 : ""}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              {t("events.scoring.ifLabel", "JEŻELI")}{" "}
+              {t("events.scoring.ifLabel")}{" "}
               {rule.conditions.length > 0
                 ? rule.conditions
                     .map((condition) => formatScoringCondition(condition, t))
                     .join(` ${andLabel} `)
-                : t("events.scoring.always", "zawsze")}{" "}
-              {t("events.scoring.thenLabel", "WTEDY")}{" "}
+                : t("events.scoring.always")}{" "}
+              {t("events.scoring.thenLabel")}{" "}
               {formatScoringAction(rule.action, t)}
             </p>
           </div>

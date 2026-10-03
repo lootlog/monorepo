@@ -1,3 +1,4 @@
+import { formatNpcLevel } from "@lootlog/domain/profession";
 import {
   ChartContainer,
   ChartTooltip,
@@ -10,10 +11,8 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useTranslation } from "react-i18next";
 import type { LootStatsResponseDtoOutputTopNpcsItem } from "@lootlog/client/main";
-import {
-  getLootRarityChartConfig,
-  LOOT_RARITY_COLORS,
-} from "./loot-rarity-chart-config";
+import { LOOT_RARITY_CHART_COLORS } from "@/features/guild/loots-list/loot-rarity-colors";
+import { getLootRarityChartConfig } from "./loot-rarity-chart-config";
 import { StatsChartCard } from "./stats-chart-card";
 
 type LootTopNpcsChartProps = {
@@ -31,7 +30,10 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
     data?.map((npc) => ({
       name: npc.name.length > 20 ? `${npc.name.slice(0, 18)}...` : npc.name,
       // Several monsters share a name across level brackets.
-      fullName: `${npc.name} · ${t("kills.level", { level: npc.lvl })}`,
+      fullName:
+        npc.lvl === null
+          ? npc.name
+          : `${npc.name} · ${t("kills.level", { level: formatNpcLevel(npc.lvl) })}`,
       type: npc.type,
       lvl: npc.lvl,
       LEGENDARY: npc.byRarity?.LEGENDARY ?? 0,
@@ -83,13 +85,13 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
           <Bar
             dataKey="LEGENDARY"
             stackId="a"
-            fill={LOOT_RARITY_COLORS.LEGENDARY}
+            fill={LOOT_RARITY_CHART_COLORS.LEGENDARY}
             radius={[0, 0, 0, 0]}
           />
           <Bar
             dataKey="HEROIC"
             stackId="a"
-            fill={LOOT_RARITY_COLORS.HEROIC}
+            fill={LOOT_RARITY_CHART_COLORS.HEROIC}
             radius={[0, 4, 4, 0]}
           />
         </BarChart>

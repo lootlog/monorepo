@@ -15,7 +15,7 @@ import {
   SearchCombobox,
   type SearchComboboxOption,
 } from "@/components/filters/search-combobox";
-import { getRarityStyle } from "./loot-search-presentation";
+import { LOOT_RARITY_TEXT_CLASS } from "@/features/guild/loots-list/loot-rarity-colors";
 import { LootFilterSectionBadge } from "./loot-filter-section-badge";
 import { LootLevelRangeFilter } from "./loot-level-range-filter";
 import type { useLootFiltersSidebar } from "./use-loot-filters-sidebar";
@@ -62,7 +62,12 @@ export const LootItemFilters = ({
     value: item.name,
     label: item.name,
     description: item.rarity ? (
-      <span className={cn("font-semibold", getRarityStyle(item.rarity))}>
+      <span
+        className={cn(
+          "font-semibold",
+          LOOT_RARITY_TEXT_CLASS[resolveItemRarity(item.rarity)],
+        )}
+      >
         {t(`itemRarity.${item.rarity}`, { defaultValue: item.rarity })}
       </span>
     ) : undefined,

@@ -134,7 +134,7 @@ export function AbyssHub() {
                 </TabsList>
 
                 <ChevronLink
-                  className="inline-flex h-8 shrink-0 items-center gap-1 px-1 text-xs sm:ml-auto"
+                  className="px-1 sm:ml-auto"
                   render=<Link
                     to={ROUTES.user.battlePanel.matchmakingH2h}
                     search={h2hSearch}

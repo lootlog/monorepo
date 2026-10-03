@@ -100,12 +100,17 @@ export const UserNotifications = () => {
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-              <div className="space-y-4 lg:col-span-2">
-                <WatchedItemsList watchedItems={watchedItems} guilds={guilds} />
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+              <div className="space-y-3 lg:col-span-2">
+                <WatchedItemsList
+                  watchedItems={watchedItems}
+                  guilds={guilds}
+                  canAddWatch={hasActiveDm}
+                  onAddWatch={() => setIsWatchFormOpen(true)}
+                />
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="hidden lg:block">
                   <DmActionsCard
                     dmTarget={dmTarget}

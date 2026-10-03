@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/common/empty-state";
 import { useBattleTableActions } from "@/features/user/battle-panel/battle-panel-battles-list/hooks/use-battle-table-actions";
 import { BattleTableDeleteDialogs } from "@/features/user/battle-panel/battle-panel-battles-list/components/battle-table-delete-dialogs";
 import { DashboardRecentBattleActions } from "./dashboard-recent-battle-actions";
@@ -59,9 +60,11 @@ export function DashboardRecentBattles() {
         }
       >
         {query.data?.battles.length === 0 ? (
-          <p className="p-4 text-sm text-muted-foreground">
-            {t("statistics.recentBattles.empty")}
-          </p>
+          <EmptyState
+            icon={Swords}
+            title={t("statistics.recentBattles.empty")}
+            compact
+          />
         ) : (
           <ul>
             {query.data?.battles.map((battle) => (

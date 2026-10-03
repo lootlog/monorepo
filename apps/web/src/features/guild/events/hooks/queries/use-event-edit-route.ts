@@ -23,6 +23,7 @@ export const useEventEditRoute = () => {
     data: event,
     isLoading,
     error,
+    refetch,
   } = useShowEventOverview(routeParams, {
     query: {
       enabled: hasEventRouteParams,
@@ -30,5 +31,5 @@ export const useEventEditRoute = () => {
     },
   });
 
-  return { event, error, isLoading, routeParams };
+  return { event, error, isLoading, refetch, routeParams };
 };

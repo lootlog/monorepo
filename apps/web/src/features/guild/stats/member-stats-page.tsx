@@ -1,3 +1,4 @@
+import { formatNpcLevel } from "@lootlog/domain/profession";
 import { EmptyState } from "@/components/common/empty-state";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
@@ -111,7 +112,7 @@ export const MemberStatsPage = () => {
                 {npc.npcName}
               </TextLink>
             }
-            subtitle={`${t(`npcType.${npc.npcType}`)} · ${npc.npcLvl}${npc.npcProf ?? ""}`}
+            subtitle={`${t(`npcType.${npc.npcType}`)} · ${t("kills.level", { level: formatNpcLevel(npc.npcLvl, npc.npcProf) })}`}
           />
         ),
       },

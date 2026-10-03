@@ -1,17 +1,13 @@
-import { Button } from "@lootlog/ui/components/button";
+import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { DateTimePicker } from "@lootlog/ui/components/date-time-picker";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@lootlog/ui/components/dialog";
+import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { Textarea } from "@lootlog/ui/components/textarea";
 import { BookOpenText, Settings, Trophy } from "lucide-react";
+import { useId } from "react";
 import { Controller } from "react-hook-form";
+import { DialogActionFooter } from "./dialog-action-footer";
 import {
   useEventCreateDialog,
   type EventCreateDialogProps,
@@ -36,6 +32,11 @@ export const EventCreateDialog = ({
     setStep,
   } = useEventCreateDialog({ open, onOpenChange });
 
+  const nameInputId = useId();
+  const worldInputId = useId();
+  const participationInputId = useId();
+  const rulebookInputId = useId();
+
   return (
     <Dialog
       open={open}
@@ -44,29 +45,15 @@ export const EventCreateDialog = ({
       }}
     >
       <DialogContent className="sm:max-w-3xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
-        <DialogHeader className="px-5 pt-5 pb-4 border-b bg-muted/30 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Trophy className="size-4 text-primary" />
-            </div>
-            <div>
-              <DialogTitle className="text-base">
-                {t("events.createDialog.title")}
-              </DialogTitle>
-              <DialogDescription className="text-xs mt-0.5">
-                {step === 1
-                  ? t(
-                      "events.scoring.chooseMode",
-                      "Krok 1/2: wybierz tryb punktacji",
-                    )
-                  : t(
-                      "events.scoring.configureEvent",
-                      "Krok 2/2: skonfiguruj event",
-                    )}
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
+        <IconDialogHeader
+          icon={Trophy}
+          title={t("events.createDialog.title")}
+          description={
+            step === 1
+              ? t("events.scoring.chooseMode")
+              : t("events.scoring.configureEvent")
+          }
+        />
 
         {step === 1 ? (
           <div className="p-5 space-y-4 overflow-y-auto">
@@ -89,10 +76,14 @@ export const EventCreateDialog = ({
             className="p-5 space-y-5 overflow-y-auto"
           >
             <div className="space-y-2">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <Label
+                htmlFor={nameInputId}
+                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+              >
                 {t("events.createDialog.nameLabel")}
               </Label>
               <Input
+                id={nameInputId}
                 {...form.register("name")}
                 placeholder={t("events.createDialog.namePlaceholder")}
                 className="h-9 text-sm"
@@ -100,10 +91,14 @@ export const EventCreateDialog = ({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <Label
+                htmlFor={worldInputId}
+                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+              >
                 {t("events.createDialog.worldLabel")}
               </Label>
               <Input
+                id={worldInputId}
                 {...form.register("world")}
                 placeholder={t("events.createDialog.worldPlaceholder")}
                 className="h-9 text-sm"
@@ -136,13 +131,14 @@ export const EventCreateDialog = ({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t(
-                  "events.settings.participationConfirmation",
-                  "Potwierdzenie udziału (minuty)",
-                )}
+              <Label
+                htmlFor={participationInputId}
+                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+              >
+                {t("events.settings.participationConfirmation")}
               </Label>
               <Input
+                id={participationInputId}
                 type="number"
                 min={0}
                 {...form.register("participationConfirmationMinutes", {
@@ -153,16 +149,17 @@ export const EventCreateDialog = ({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+              <Label
+                htmlFor={rulebookInputId}
+                className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5"
+              >
                 <BookOpenText className="size-3" />
-                {t("events.rulebook.label", "Regulamin eventu")}
+                {t("events.rulebook.label")}
               </Label>
               <Textarea
+                id={rulebookInputId}
                 {...form.register("rulebookMarkdown")}
-                placeholder={t(
-                  "events.rulebook.placeholder",
-                  "Wpisz regulamin eventu, zasady uczestnictwa i dodatkowe informacje.",
-                )}
+                placeholder={t("events.rulebook.placeholder")}
                 className="min-h-[140px] text-sm"
               />
             </div>
@@ -195,49 +192,25 @@ export const EventCreateDialog = ({
           </form>
         )}
 
-        <div className="px-5 py-3 border-t bg-muted/30 shrink-0 flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={createEvent.isPending}
-            onClick={() => {
-              if (step === 1) {
-                handleClose(false);
-
-                return;
-              }
-
-              setStep(1);
-            }}
-            className="flex-1"
-            size="sm"
-          >
-            {step === 1
-              ? t("events.createDialog.cancel")
-              : t("events.createDialog.back", "Wstecz")}
-          </Button>
-
-          {step === 1 ? (
-            <Button
-              type="button"
-              size="sm"
-              className="flex-1"
-              onClick={() => setStep(2)}
-            >
-              {t("events.createDialog.next", "Dalej")}
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              size="sm"
-              className="flex-1"
-              loading={createEvent.isPending}
-              onClick={form.handleSubmit(onSubmit)}
-            >
-              {t("events.createDialog.create")}
-            </Button>
-          )}
-        </div>
+        {step === 1 ? (
+          <DialogActionFooter
+            cancelLabel={t("events.createDialog.cancel")}
+            confirmLabel={t("events.createDialog.next")}
+            confirmType="button"
+            isPending={false}
+            onCancel={() => handleClose(false)}
+            onConfirm={() => setStep(2)}
+          />
+        ) : (
+          <DialogActionFooter
+            cancelLabel={t("events.createDialog.back")}
+            confirmLabel={t("events.createDialog.create")}
+            confirmType="button"
+            isPending={createEvent.isPending}
+            onCancel={() => setStep(1)}
+            onConfirm={form.handleSubmit(onSubmit)}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

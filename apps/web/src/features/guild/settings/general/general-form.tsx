@@ -10,6 +10,7 @@ import {
   FormDescription,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from "@lootlog/ui/components/form";
 import { Input } from "@lootlog/ui/components/input";
@@ -123,7 +124,7 @@ export const GeneralForm = () => {
         onSubmit={form.handleSubmit(onSubmit)}
         className="w-full mx-auto pb-24"
       >
-        <div className="px-3 pb-3">
+        <div className="flex flex-col gap-3 px-3 pb-3">
           <SectionCard>
             <SectionCardHeader
               title={t("settings.general.vanityUrl.title")}
@@ -131,44 +132,40 @@ export const GeneralForm = () => {
               icon={Link2}
             />
             <SectionCardContent>
-              <div>
-                <FormField
-                  control={form.control}
-                  name="vanityUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl
-                        render=<Input
-                          aria-label={t("settings.general.vanityUrl.title")}
-                          placeholder={t(
-                            "settings.general.vanityUrl.placeholder",
-                          )}
-                          className="h-9 max-w-xs"
-                          {...field}
-                        />
+              <FormField
+                control={form.control}
+                name="vanityUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("settings.general.vanityUrl.label")}
+                    </FormLabel>
+                    <FormControl
+                      render=<Input
+                        placeholder={t(
+                          "settings.general.vanityUrl.placeholder",
+                        )}
+                        className="max-w-xs"
+                        {...field}
                       />
-                      <FormDescription className="text-xs mt-2">
-                        {t("settings.general.vanityUrl.example")}{" "}
-                        <span className="text-foreground font-medium">
-                          {window.location.origin}/
-                          {normalizeVanityUrl(field.value) ||
-                            t("settings.general.vanityUrl.exampleSlug")}
-                        </span>
-                      </FormDescription>
-                      <FormMessage role="alert" />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                    />
+                    <FormDescription>
+                      {t("settings.general.vanityUrl.example")}{" "}
+                      <span className="font-medium text-foreground">
+                        {window.location.origin}/
+                        {normalizeVanityUrl(field.value) ||
+                          t("settings.general.vanityUrl.exampleSlug")}
+                      </span>
+                    </FormDescription>
+                    <FormMessage role="alert" />
+                  </FormItem>
+                )}
+              />
             </SectionCardContent>
           </SectionCard>
-        </div>
 
-        {guild && (
-          <div className="p-3 pt-0">
-            <StatsCardSettingsCard form={form} guild={guild} />
-          </div>
-        )}
+          {guild && <StatsCardSettingsCard form={form} guild={guild} />}
+        </div>
 
         <UnsavedChangesBar
           isDirty={form.formState.isDirty}

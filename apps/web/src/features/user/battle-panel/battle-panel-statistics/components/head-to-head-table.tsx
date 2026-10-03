@@ -114,7 +114,6 @@ export function HeadToHeadTable({
       emptyMessage={t("battlePanel.statistics.directMatchups.emptyTitle")}
       actions={
         <ChevronLink
-          className="inline-flex h-8 shrink-0 items-center gap-1 text-xs"
           render=<Link to={ROUTES.user.battlePanel.h2h} search={search} />
         >
           {t("battlePanel.statistics.directMatchups.link")}

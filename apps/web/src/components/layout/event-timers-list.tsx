@@ -48,7 +48,12 @@ const TimerItem: FC<TimerItemProps> = ({
 }) => {
   const timeLeftMilliseconds = timer.maxSpawnTimestamp - currentTimestamp;
 
-  const isCloseToRespawn = timeLeftMilliseconds < 60000;
+  const isWindowOpen =
+    currentTimestamp >= new Date(timer.minSpawnTime).getTime();
+
+  const signalClassName = isWindowOpen
+    ? "text-signal-ready"
+    : "text-signal-timer";
 
   const minimumSpawnTimeLabel = format(
     new Date(timer.minSpawnTime),
@@ -80,20 +85,18 @@ const TimerItem: FC<TimerItemProps> = ({
             onClick={onNavigate}
             className="group block"
           >
-            <div className="flex items-center gap-2 px-2 py-1 rounded transition-[background-color,transform] duration-200 hover:translate-x-0.5 hover:bg-yellow-500/10">
+            <div className="flex items-center gap-2 px-2 py-1 rounded transition-[background-color,transform] duration-200 motion-safe:hover:translate-x-0.5 hover:bg-signal-timer/10">
               <Clock
-                className={cn(
-                  "h-3 w-3 shrink-0",
-                  isCloseToRespawn ? "text-orange-400" : "text-green-400",
-                )}
+                aria-hidden="true"
+                className={cn("size-3 shrink-0", signalClassName)}
               />
               <span className="text-xs truncate flex-1 text-muted-foreground">
                 {timer.npc.name}
               </span>
               <span
                 className={cn(
-                  "text-xs font-mono font-medium",
-                  isCloseToRespawn ? "text-orange-400" : "text-green-400",
+                  "text-xs font-mono font-medium tabular-nums",
+                  signalClassName,
                 )}
               >
                 {parseMsToTime(timeLeftMilliseconds)}
@@ -105,7 +108,7 @@ const TimerItem: FC<TimerItemProps> = ({
       <TooltipContent side="right" className="text-xs">
         <p className="font-medium">{timer.npc.name}</p>
         <p className="text-muted-foreground">
-          {minimumSpawnTimeLabel} - {maximumSpawnTimeLabel}
+          {minimumSpawnTimeLabel} – {maximumSpawnTimeLabel}
         </p>
       </TooltipContent>
     </Tooltip>

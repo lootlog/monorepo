@@ -29,10 +29,7 @@ export function NotificationHistoryRow({
     <div
       role="button"
       tabIndex={0}
-      className={cn(
-        "border-b border-border/70 py-3 text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors hover:bg-muted/30 last:border-b-0",
-        compact ? "gap-1" : "gap-2",
-      )}
+      className="cursor-pointer border-b border-border/70 px-3 py-3 text-left transition-colors last:border-b-0 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring motion-reduce:transition-none"
       onClick={() => openJobDetails(job)}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {

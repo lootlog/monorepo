@@ -1,5 +1,5 @@
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { Outlet } from "@tanstack/react-router";
+import { Outlet, useLocation } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { HorizontalMenu } from "@/components/layout/horizontal-menu";
 import { ROUTE_SEGMENTS } from "@/config/routes";
@@ -9,6 +9,7 @@ import { canManageGuild } from "@/lib/guild-permissions";
 export const SettingsLayout: React.FC = () => {
   const guildId = useGuildId();
   const { t } = useTranslation();
+  const { pathname } = useLocation();
   const { data: accessPolicy } = useGuildPermissions();
   const canManageReservationSettings = canManageGuild(accessPolicy);
 
@@ -54,14 +55,29 @@ export const SettingsLayout: React.FC = () => {
     },
   ];
 
+  const basePath = `/${guildId}`;
+
+  const listPaths = [
+    ROUTE_SEGMENTS.guild.roles,
+    ROUTE_SEGMENTS.guild.npcs,
+    ROUTE_SEGMENTS.guild.members,
+  ].map((segment) => `${basePath}${ROUTE_SEGMENTS.guild.settings}${segment}/`);
+
+  // Role, monster and member pages are reached from a list, so they keep the back arrow instead.
+  const showNavigation = !listPaths.some((listPath) =>
+    pathname.replace(/\/$/, "").startsWith(listPath),
+  );
+
   return (
     <div className="w-full flex-1 flex flex-col min-h-0 min-w-0">
-      <HorizontalMenu
-        items={navElements}
-        basePath={`/${guildId}`}
-        ariaLabel={t("settings.navigationLabel")}
-        className="shrink-0"
-      />
+      {showNavigation && (
+        <HorizontalMenu
+          items={navElements}
+          basePath={basePath}
+          ariaLabel={t("settings.navigationLabel")}
+          className="shrink-0"
+        />
+      )}
       <div className="flex flex-col flex-1 min-h-0 min-w-0 overflow-hidden">
         <Outlet />
       </div>

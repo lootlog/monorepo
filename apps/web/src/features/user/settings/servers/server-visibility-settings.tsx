@@ -17,11 +17,21 @@ import { SectionCard } from "@/components/common/section-card/section-card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Switch } from "@lootlog/ui/components/switch";
 import { useUsersControllerGetCurrentUserGuilds } from "@lootlog/client/main";
-import { Eye, EyeOff, RotateCcw, Server } from "lucide-react";
+import {
+  CircleAlert,
+  Eye,
+  EyeOff,
+  RotateCcw,
+  SearchX,
+  Server,
+} from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SearchInput } from "@/components/ui/search-input";
-import { LoadingSlot } from "@/components/common/loading-slot";
+import { EmptyState } from "@/components/common/empty-state";
+import { TableFilterToolbar } from "@/components/ui/table-filter-toolbar";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 type VisibilityFilter = "all" | "visible" | "hidden";
 
@@ -102,74 +112,91 @@ export const ServerVisibilitySettings = () => {
     <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("settings.servers.title")}</h1>
       <ScrollArea className="min-h-0 flex-1">
-        <div className="flex flex-col gap-4 px-3 pb-3">
+        <div className="flex flex-col gap-3 px-3 pb-3">
           <span aria-live="polite" className="sr-only">
             {updatePreferences.isPending ? t("settings.servers.saving") : null}
             {isSaved ? t("settings.servers.saved") : null}
           </span>
 
           {isLoading ? (
-            <SectionCard className="flex h-64 items-center justify-center bg-card">
-              <LoadingSlot size="small" />
-              <span className="sr-only">{t("settings.servers.loading")}</span>
+            <SectionCard
+              role="status"
+              aria-label={t("settings.servers.loading")}
+            >
+              <div className="flex min-h-12 items-center border-b border-border/70 px-3 py-2">
+                <Skeleton className="h-5 w-48" />
+              </div>
+              <div className="divide-y divide-border">
+                {Array.from({ length: 4 }, (_, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-3 px-3 py-2.5"
+                  >
+                    <Skeleton className="size-9 rounded-lg" />
+                    <div className="flex-1 space-y-1.5">
+                      <Skeleton className="h-4 w-40" />
+                      <Skeleton className="h-3 w-28" />
+                    </div>
+                    <Skeleton className="h-5 w-9 rounded-full" />
+                  </div>
+                ))}
+              </div>
             </SectionCard>
           ) : null}
 
           {showLoadError ? (
-            <SectionCard
-              className="flex h-64 flex-col items-center justify-center gap-3 bg-card"
-              role="alert"
-            >
-              <p className="text-sm text-muted-foreground">
-                {t("settings.servers.loadError")}
-              </p>
-              <Button
-                size="sm"
-                variant="outline"
-                loading={guildsQuery.isFetching || preferencesQuery.isFetching}
-                icon=<RotateCcw className="size-3.5" />
-                onClick={() => {
-                  void guildsQuery.refetch();
-                  void preferencesQuery.refetch();
-                }}
-              >
-                {t("common.actions.retry")}
-              </Button>
-            </SectionCard>
+            <div role="alert">
+              <EmptyState
+                framed
+                icon={CircleAlert}
+                title={t("settings.servers.loadError")}
+                action={
+                  <Button
+                    variant="outline"
+                    loading={
+                      guildsQuery.isFetching || preferencesQuery.isFetching
+                    }
+                    icon=<RotateCcw />
+                    onClick={() => {
+                      void guildsQuery.refetch();
+                      void preferencesQuery.refetch();
+                    }}
+                  >
+                    {t("common.actions.retry")}
+                  </Button>
+                }
+              />
+            </div>
           ) : null}
 
           {showEmpty ? (
-            <SectionCard className="flex h-64 flex-col items-center justify-center gap-3 bg-card">
-              <Server className="size-10 text-muted-foreground opacity-50" />
-              <p className="text-sm text-muted-foreground">
-                {t("settings.servers.noGuilds")}
-              </p>
-            </SectionCard>
+            <EmptyState
+              framed
+              icon={Server}
+              title={t("settings.servers.noGuilds")}
+            />
           ) : null}
 
           {showGuilds ? (
-            <SectionCard className="gap-0 overflow-hidden border-border bg-card p-0">
-              <header className="flex flex-col gap-4 border-b border-border p-3 sm:p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="min-w-0 space-y-1">
-                    <h2 className="text-sm font-semibold">
-                      {t("settings.servers.title")}
-                    </h2>
-                    <p className="text-xs tabular-nums text-muted-foreground">
-                      {t("settings.servers.visibleCount", {
-                        count: visibleCount,
-                      })}
-                      {" · "}
-                      {t("settings.servers.hiddenCount", {
-                        count: hiddenCount,
-                      })}
-                    </p>
-                  </div>
+            <SectionCard className="overflow-hidden">
+              <SectionCardHeader
+                icon={Server}
+                title={t("settings.servers.title")}
+                description={
+                  <span className="tabular-nums">
+                    {t("settings.servers.visibleCount", {
+                      count: visibleCount,
+                    })}
+                    {" · "}
+                    {t("settings.servers.hiddenCount", {
+                      count: hiddenCount,
+                    })}
+                  </span>
+                }
+                actions={
                   <Button
-                    size="sm"
                     variant="outline"
-                    className="shrink-0"
-                    icon=<Eye className="size-3.5" />
+                    icon=<Eye />
                     disabled={hiddenCount === 0 || updatePreferences.isPending}
                     loading={isShowingAll}
                     onClick={() => {
@@ -187,30 +214,33 @@ export const ServerVisibilitySettings = () => {
                   >
                     {t("settings.servers.showAll")}
                   </Button>
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <SearchInput
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    placeholder={t("settings.servers.searchPlaceholder")}
-                    aria-label={t("settings.servers.searchPlaceholder")}
-                    className="h-9"
-                    wrapperClassName="min-w-0 flex-1"
-                  />
-                  <AnimatedToggleGroup
-                    label={t("settings.servers.title")}
-                    value={visibilityFilter}
-                    onValueChange={setVisibilityFilter}
-                    className="w-full shrink-0 sm:w-auto"
-                    options={(["all", "visible", "hidden"] as const).map(
-                      (filter) => ({
-                        value: filter,
-                        label: t(`settings.servers.filters.${filter}`),
-                      }),
-                    )}
-                  />
-                </div>
-              </header>
+                }
+              />
+              <TableFilterToolbar
+                role="group"
+                aria-label={t("settings.filtersLabel")}
+              >
+                <SearchInput
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder={t("settings.servers.searchPlaceholder")}
+                  aria-label={t("settings.servers.searchPlaceholder")}
+                  wrapperClassName="h-10 w-full min-w-0 sm:min-w-[200px] sm:flex-1"
+                />
+                <AnimatedToggleGroup
+                  label={t("settings.servers.visibilityFilterLabel")}
+                  value={visibilityFilter}
+                  onValueChange={setVisibilityFilter}
+                  size="large"
+                  className="w-full shrink-0 sm:w-auto"
+                  options={(["all", "visible", "hidden"] as const).map(
+                    (filter) => ({
+                      value: filter,
+                      label: t(`settings.servers.filters.${filter}`),
+                    }),
+                  )}
+                />
+              </TableFilterToolbar>
 
               {updatePreferences.isError || isRetrying ? (
                 <div
@@ -239,9 +269,11 @@ export const ServerVisibilitySettings = () => {
               ) : null}
 
               {filteredGuilds.length === 0 ? (
-                <div className="flex min-h-40 items-center justify-center p-6 text-sm text-muted-foreground">
-                  {t("settings.servers.noResults")}
-                </div>
+                <EmptyState
+                  icon={SearchX}
+                  title={t("settings.servers.noResults")}
+                  className="min-h-48"
+                />
               ) : (
                 <div className="divide-y divide-border">
                   {filteredGuilds.map((guild) => {

@@ -28,6 +28,9 @@ await initializeTestTranslations({
   "reservations.my.cancel": "Anuluj rezerwację na {{spot}}",
   "reservations.my.edit": "Edytuj rezerwację na {{spot}}",
   "reservations.details.cancel": "Anuluj rezerwację",
+  "reservations.my.cancelConfirmTitle": "Anulować rezerwację na {{spot}}?",
+  "reservations.my.cancelConfirmDescription": "Tej operacji nie można cofnąć.",
+  "reservations.my.keep": "Zostaw rezerwację",
 });
 
 const reservation: MyReservationsResponseDtoItemsItem = {
@@ -127,8 +130,8 @@ describe("MyReservationListItem", () => {
     );
   });
 
-  it("shows the cancel action for a cancellable upcoming reservation", () => {
-    const onCancel = vi.fn();
+  it("cancels a reservation only after the player confirms", async () => {
+    const onCancel = vi.fn(async () => undefined);
     renderItem(
       <MyReservationListItem
         reservation={reservation}
@@ -143,12 +146,39 @@ describe("MyReservationListItem", () => {
       }),
     );
 
-    expect(onCancel).toHaveBeenCalledOnce();
+    expect(onCancel).not.toHaveBeenCalled();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Anuluj rezerwację" }),
+    );
+
+    await waitFor(() => expect(onCancel).toHaveBeenCalledOnce());
+  });
+
+  it("keeps the reservation when the player dismisses the confirmation", async () => {
+    const onCancel = vi.fn(async () => undefined);
+    renderItem(
+      <MyReservationListItem
+        reservation={reservation}
+        showCancel
+        onCancel={onCancel}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Anuluj rezerwację na potepione-zamczysko",
+      }),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Zostaw rezerwację" }),
+    );
+
+    expect(onCancel).not.toHaveBeenCalled();
   });
 
   it("exposes compact icon actions for editing and cancellation", () => {
     const onEdit = vi.fn();
-    const onCancel = vi.fn();
+    const onCancel = vi.fn(async () => undefined);
     renderItem(
       <MyReservationListItem
         reservation={reservation}
@@ -171,7 +201,6 @@ describe("MyReservationListItem", () => {
     );
 
     expect(onEdit).toHaveBeenCalledOnce();
-    expect(onCancel).toHaveBeenCalledOnce();
-    expect(screen.queryByText("Anuluj rezerwację")).toBeNull();
+    expect(onCancel).not.toHaveBeenCalled();
   });
 });

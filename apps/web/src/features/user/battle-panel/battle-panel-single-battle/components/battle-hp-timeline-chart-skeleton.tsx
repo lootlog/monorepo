@@ -25,7 +25,7 @@ export function BattleHpTimelineChartSkeleton() {
   return (
     <SectionCard aria-hidden="true">
       <SectionCardHeader
-        title=<Skeleton className="h-5 w-40" />
+        title=<Skeleton render={<span />} className="block h-5 w-40" />
         actions={
           <div className="flex items-center gap-2">
             {chartActions.map((_, index) => (

@@ -91,8 +91,7 @@ export const ScoringRuleCard = ({
                   </p>
                   {!open && conditionCount > 1 && (
                     <span className="text-[10px] text-muted-foreground/60 shrink-0">
-                      {conditionCount}{" "}
-                      {t("events.scoring.conditionsCount", "war.")}
+                      {conditionCount} {t("events.scoring.conditionsCount")}
                     </span>
                   )}
                 </div>
