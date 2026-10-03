@@ -93,11 +93,18 @@ const RATE_LIMIT_SCRIPT = slidingWindowRateLimitScript({
   includeTimestamp: false,
 });
 
-// Shared by the merge and threat snapshot scripts.
+// Shared by the observation and snapshot scripts.
 const LUA_COMMON = `
 local function nowMs()
   local time = redis.call("TIME")
   return (tonumber(time[1]) * 1000) + math.floor(tonumber(time[2]) / 1000)
+end
+local function public(target)
+  local result = { targetId=target.targetId, nickname=target.nickname, relation=target.relation, x=target.x, y=target.y, lvl=target.lvl, prof=target.prof, stasis=target.stasis, observedAt=target.observedAt }
+  if target.clan ~= nil then result.clan=target.clan end
+  if target.enemyObservedAt ~= nil then result.enemyObservedAt=target.enemyObservedAt end
+  if target.clanEnemyObservedAt ~= nil then result.clanEnemyObservedAt=target.clanEnemyObservedAt end
+  return result
 end
 local function clanId(target)
   if target.clan == nil then return "" end
@@ -134,13 +141,6 @@ local function effective(target, now, ttl, enemy, clanEnemy)
   return tonumber(target.relation)
 end
 local function isThreat(relation, enemy, clanEnemy) return relation == enemy or relation == clanEnemy end
-local function public(target)
-  local result = { targetId=target.targetId, nickname=target.nickname, relation=target.relation, x=target.x, y=target.y, lvl=target.lvl, prof=target.prof, stasis=target.stasis, observedAt=target.observedAt }
-  if target.clan ~= nil then result.clan=target.clan end
-  if target.enemyObservedAt ~= nil then result.enemyObservedAt=target.enemyObservedAt end
-  if target.clanEnemyObservedAt ~= nil then result.clanEnemyObservedAt=target.clanEnemyObservedAt end
-  return result
-end
 -- Older game clients omit level, profession and stasis; keep the last reported value instead of erasing it.
 local function carry(target, observation, existing, field)
   if observation[field] ~= nil then target[field]=observation[field] elseif existing ~= nil then target[field]=existing[field] end
@@ -321,15 +321,7 @@ local interested=othersInterested(KEYS[6])+othersInterested(KEYS[7])
 return withArrays(cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,revision=metadata.revision,acceptedTargets=accepted,targets=updates,removed=removed,threat=threatResult,threatPendingMs=threatPendingMs,remoteRecipients=interested > 0}),{"targets","removed","enemies"})
 `;
 
-const SNAPSHOT_SCRIPT = `
-local function nowMs() local time=redis.call("TIME"); return (tonumber(time[1])*1000)+math.floor(tonumber(time[2])/1000) end
-local function public(target)
-  local result={targetId=target.targetId,nickname=target.nickname,relation=target.relation,x=target.x,y=target.y,lvl=target.lvl,prof=target.prof,stasis=target.stasis,observedAt=target.observedAt}
-  if target.clan ~= nil then result.clan=target.clan end
-  if target.enemyObservedAt ~= nil then result.enemyObservedAt=target.enemyObservedAt end
-  if target.clanEnemyObservedAt ~= nil then result.clanEnemyObservedAt=target.clanEnemyObservedAt end
-  return result
-end
+const SNAPSHOT_SCRIPT = `${LUA_COMMON}
 local now=nowMs(); local idle=tonumber(ARGV[2]); local raw=redis.call("GET",KEYS[3]); local metadata
 -- Registered with the snapshot: an update merged later sees this replica, one merged earlier is in the snapshot.
 redis.call("ZADD",KEYS[4],now+tonumber(ARGV[4]),ARGV[3]); redis.call("PEXPIRE",KEYS[4],ARGV[4])
