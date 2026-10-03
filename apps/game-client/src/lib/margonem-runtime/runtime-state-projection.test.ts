@@ -591,6 +591,45 @@ describe("RuntimeStateProjection", () => {
     expect(runtimeOtherHandles.getAll()).toEqual({});
   });
 
+  it("identifies party members by their packet keys and recognizes a boolean leader", () => {
+    const projection = new RuntimeStateProjection({ adapter: createAdapter() });
+    projection.bootstrap();
+
+    projection.apply(
+      createEnvelope({
+        party: {
+          members: {
+            "101": { account: 201, icon: "a.gif", nick: "Member", prof: "m" },
+            "102": {
+              account: 202,
+              commander: true,
+              icon: "b.gif",
+              nick: "Leader",
+              prof: "w",
+            },
+          },
+        },
+      }),
+    );
+
+    expect(
+      usePartyStore
+        .getState()
+        .members.map(({ characterId, isLeader, profession }) => ({
+          characterId,
+          isLeader,
+          profession,
+        })),
+    ).toEqual([
+      { characterId: "101", isLeader: false, profession: "m" },
+      { characterId: "102", isLeader: true, profession: "w" },
+    ]);
+    expect(
+      renderHook(() => usePlayerRelations({ characterId: "102" })).result
+        .current,
+    ).toContain("party");
+  });
+
   describe("social relations", () => {
     const clanGame = Object.freeze({
       ...game,

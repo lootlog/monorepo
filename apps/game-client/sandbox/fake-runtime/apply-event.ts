@@ -96,15 +96,17 @@ function applyParty(
 ): void {
   world.party.clear();
 
-  for (const member of Object.values(party.members)) {
-    world.party.set(member.id, {
-      id: member.id,
+  for (const [key, member] of Object.entries(party.members)) {
+    const id = Number(key);
+
+    world.party.set(id, {
+      id,
       accountId: member.account,
       icon: member.icon,
-      leader: member.commander === 1,
+      leader: Boolean(member.commander),
       hp: [member.hp_cur ?? 0, member.hp_max ?? 0],
       nick: member.nick,
-      profession: null,
+      profession: member.prof ?? null,
     });
   }
 }
