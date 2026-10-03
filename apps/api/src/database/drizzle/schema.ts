@@ -2504,6 +2504,224 @@ export const guildKillSummaryBucketTable = pgTable(
   ],
 );
 
+const killTime = (name: string) =>
+  timestamp(name, { mode: "date", precision: 3, withTimezone: true });
+
+/**
+ * Hourly personal kills. A TimescaleDB hypertable on `periodStart` where the
+ * extension is loaded (see drizzle/README.md); a plain table elsewhere.
+ */
+export const userKillBucketTable = pgTable(
+  "UserKillBucket",
+  {
+    periodStart: killTime("periodStart").notNull(),
+    discordUserId: text("discordUserId").notNull(),
+    world: text("world").notNull(),
+    npcId: integer("npcId").notNull(),
+    npcName: text("npcName").notNull(),
+    npcType: npcTypeEnum("npcType").notNull(),
+    npcLvl: integer("npcLvl").notNull(),
+    npcProf: text("npcProf"),
+    npcIcon: text("npcIcon"),
+    kills: integer("kills").notNull(),
+    lastKilledAt: killTime("lastKilledAt").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [
+        table.discordUserId,
+        table.world,
+        table.npcId,
+        table.periodStart,
+      ],
+      name: "UserKillBucket_pkey",
+    }),
+    index("UserKillBucket_discordUserId_periodStart_idx").on(
+      table.discordUserId,
+      table.periodStart.desc(),
+    ),
+  ],
+);
+
+/** Hourly kills reported by an Organization member. */
+export const memberKillBucketTable = pgTable(
+  "MemberKillBucket",
+  {
+    periodStart: killTime("periodStart").notNull(),
+    guildId: text("guildId").notNull(),
+    memberId: integer("memberId").notNull(),
+    discordUserId: text("discordUserId").notNull(),
+    world: text("world").notNull(),
+    npcId: integer("npcId").notNull(),
+    npcName: text("npcName").notNull(),
+    npcType: npcTypeEnum("npcType").notNull(),
+    npcLvl: integer("npcLvl").notNull(),
+    npcProf: text("npcProf"),
+    npcIcon: text("npcIcon"),
+    kills: integer("kills").notNull(),
+    lastKilledAt: killTime("lastKilledAt").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [
+        table.guildId,
+        table.memberId,
+        table.world,
+        table.npcId,
+        table.periodStart,
+      ],
+      name: "MemberKillBucket_pkey",
+    }),
+    index("MemberKillBucket_guildId_periodStart_idx").on(
+      table.guildId,
+      table.periodStart.desc(),
+    ),
+    foreignKey({
+      columns: [table.guildId],
+      foreignColumns: [guildTable.id],
+      name: "MemberKillBucket_guildId_fkey",
+    })
+      .onDelete("restrict")
+      .onUpdate("cascade"),
+    foreignKey({
+      columns: [table.memberId],
+      foreignColumns: [memberTable.id],
+      name: "MemberKillBucket_memberId_fkey",
+    })
+      .onDelete("restrict")
+      .onUpdate("cascade"),
+  ],
+);
+
+/** Hourly kills counted once per Organization, however many members reported them. */
+export const guildKillBucketTable = pgTable(
+  "GuildKillBucket",
+  {
+    periodStart: killTime("periodStart").notNull(),
+    guildId: text("guildId").notNull(),
+    world: text("world").notNull(),
+    npcId: integer("npcId").notNull(),
+    npcName: text("npcName").notNull(),
+    npcType: npcTypeEnum("npcType").notNull(),
+    npcLvl: integer("npcLvl").notNull(),
+    npcProf: text("npcProf"),
+    npcIcon: text("npcIcon"),
+    kills: integer("kills").notNull(),
+    lastKilledAt: killTime("lastKilledAt").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.guildId, table.world, table.npcId, table.periodStart],
+      name: "GuildKillBucket_pkey",
+    }),
+    index("GuildKillBucket_guildId_periodStart_idx").on(
+      table.guildId,
+      table.periodStart.desc(),
+    ),
+    foreignKey({
+      columns: [table.guildId],
+      foreignColumns: [guildTable.id],
+      name: "GuildKillBucket_guildId_fkey",
+    })
+      .onDelete("restrict")
+      .onUpdate("cascade"),
+  ],
+);
+
+/**
+ * Lifetime kills per scope, incremented in the same transaction as the hourly
+ * bucket. Only the natural key is indexed and the migration sets fillfactor 70,
+ * so increments are heap-only tuple updates.
+ */
+export const userKillTotalTable = pgTable(
+  "UserKillTotal",
+  {
+    discordUserId: text("discordUserId").notNull(),
+    world: text("world").notNull(),
+    npcId: integer("npcId").notNull(),
+    npcName: text("npcName").notNull(),
+    npcType: npcTypeEnum("npcType").notNull(),
+    npcLvl: integer("npcLvl").notNull(),
+    npcProf: text("npcProf"),
+    npcIcon: text("npcIcon"),
+    kills: integer("kills").notNull(),
+    lastKilledAt: killTime("lastKilledAt").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.discordUserId, table.world, table.npcId],
+      name: "UserKillTotal_pkey",
+    }),
+  ],
+);
+
+export const memberKillTotalTable = pgTable(
+  "MemberKillTotal",
+  {
+    guildId: text("guildId").notNull(),
+    memberId: integer("memberId").notNull(),
+    discordUserId: text("discordUserId").notNull(),
+    world: text("world").notNull(),
+    npcId: integer("npcId").notNull(),
+    npcName: text("npcName").notNull(),
+    npcType: npcTypeEnum("npcType").notNull(),
+    npcLvl: integer("npcLvl").notNull(),
+    npcProf: text("npcProf"),
+    npcIcon: text("npcIcon"),
+    kills: integer("kills").notNull(),
+    lastKilledAt: killTime("lastKilledAt").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.guildId, table.memberId, table.world, table.npcId],
+      name: "MemberKillTotal_pkey",
+    }),
+    foreignKey({
+      columns: [table.guildId],
+      foreignColumns: [guildTable.id],
+      name: "MemberKillTotal_guildId_fkey",
+    })
+      .onDelete("restrict")
+      .onUpdate("cascade"),
+    foreignKey({
+      columns: [table.memberId],
+      foreignColumns: [memberTable.id],
+      name: "MemberKillTotal_memberId_fkey",
+    })
+      .onDelete("restrict")
+      .onUpdate("cascade"),
+  ],
+);
+
+export const guildKillTotalTable = pgTable(
+  "GuildKillTotal",
+  {
+    guildId: text("guildId").notNull(),
+    world: text("world").notNull(),
+    npcId: integer("npcId").notNull(),
+    npcName: text("npcName").notNull(),
+    npcType: npcTypeEnum("npcType").notNull(),
+    npcLvl: integer("npcLvl").notNull(),
+    npcProf: text("npcProf"),
+    npcIcon: text("npcIcon"),
+    kills: integer("kills").notNull(),
+    lastKilledAt: killTime("lastKilledAt").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.guildId, table.world, table.npcId],
+      name: "GuildKillTotal_pkey",
+    }),
+    foreignKey({
+      columns: [table.guildId],
+      foreignColumns: [guildTable.id],
+      name: "GuildKillTotal_guildId_fkey",
+    })
+      .onDelete("restrict")
+      .onUpdate("cascade"),
+  ],
+);
+
 export const memberToRoleTable = pgTable(
   "_MemberToRole",
   { A: integer("A").notNull(), B: text("B").notNull() },

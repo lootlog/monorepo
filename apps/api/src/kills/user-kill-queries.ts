@@ -5,14 +5,10 @@ import type {
 } from "#src/contracts/kills/analytics-schemas";
 import { readNpcKillPage } from "./npc-kill-page.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, eq, gte, ilike, inArray, lte, type SQL } from "drizzle-orm";
-import type { AnyPgColumn } from "drizzle-orm/pg-core";
+import { and, desc, eq, gte, ilike, inArray, lte, sql } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import {
-  userKillStatsBucketTable,
-  userKillStatsTable,
-} from "#src/database/drizzle/schema";
+import type { userKillBucketTable } from "#src/database/drizzle/schema";
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import {
   UserKillStatsResponse,
@@ -26,6 +22,7 @@ import {
   type KillQueryCache,
 } from "./kill-query-support.js";
 import { getKillStatsPeriodStart } from "./kill-stats-period.js";
+import { userKillSource, type UserKillSource } from "./kill-source.js";
 
 const CACHE_TTL_SECONDS = 30;
 
@@ -34,9 +31,7 @@ export class UserKillQueriesError extends TaggedErrorClass<UserKillQueriesError>
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
 
-type UserStat =
-  | typeof userKillStatsTable.$inferSelect
-  | typeof userKillStatsBucketTable.$inferSelect;
+type NpcType = (typeof userKillBucketTable.npcType.enumValues)[number];
 
 export const makeUserKillQueries = (
   database: typeof ApiDatabase.Service,
@@ -54,60 +49,58 @@ export const makeUserKillQueries = (
     );
 
   const statsCondition = (
+    source: UserKillSource,
     userId: string,
     options: {
       readonly world?: string;
-      readonly npcTypes?: ReadonlyArray<UserStat["npcType"]>;
+      readonly npcTypes?: ReadonlyArray<NpcType>;
       readonly search?: string;
       readonly minLvl?: number;
       readonly maxLvl?: number;
+    },
+  ) =>
+    and(
+      eq(source.discordUserId, userId),
+      options.world ? eq(source.world, options.world) : undefined,
+      options.npcTypes && options.npcTypes.length > 0
+        ? inArray(source.npcType, [...options.npcTypes])
+        : undefined,
+      options.search ? ilike(source.npcName, `%${options.search}%`) : undefined,
+      options.minLvl !== undefined && options.minLvl > 0
+        ? gte(source.npcLvl, options.minLvl)
+        : undefined,
+      options.maxLvl !== undefined && options.maxLvl > 0
+        ? lte(source.npcLvl, options.maxLvl)
+        : undefined,
+    );
+
+  /** One row per world and NPC, described by its latest kill. */
+  const readStats = (
+    userId: string,
+    options: Parameters<typeof statsCondition>[2] & {
       readonly periodStart?: Date;
     },
   ) => {
-    const conditions = (
-      table: {
-        userId: AnyPgColumn;
-        world: AnyPgColumn;
-        npcType: AnyPgColumn;
-        npcName: AnyPgColumn;
-        npcLvl: AnyPgColumn;
-      },
-      periodCondition?: SQL,
-    ) =>
-      and(
-        eq(table.userId, userId),
-        options.world ? eq(table.world, options.world) : undefined,
-        options.npcTypes && options.npcTypes.length > 0
-          ? inArray(table.npcType, [...options.npcTypes])
-          : undefined,
-        options.search
-          ? ilike(table.npcName, `%${options.search}%`)
-          : undefined,
-        options.minLvl !== undefined && options.minLvl > 0
-          ? gte(table.npcLvl, options.minLvl)
-          : undefined,
-        options.maxLvl !== undefined && options.maxLvl > 0
-          ? lte(table.npcLvl, options.maxLvl)
-          : undefined,
-        periodCondition,
-      );
+    const source = userKillSource(options.periodStart);
 
-    return options.periodStart
-      ? conditions(
-          userKillStatsBucketTable,
-          gte(userKillStatsBucketTable.periodStart, options.periodStart),
-        )
-      : conditions(userKillStatsTable);
+    return database
+      .selectDistinctOn([source.world, source.npcId], {
+        world: source.world,
+        npcId: source.npcId,
+        npcName: source.npcName,
+        npcType: source.npcType,
+        npcLvl: source.npcLvl,
+        npcProf: source.npcProf,
+        npcIcon: source.npcIcon,
+        totalKills:
+          sql<number>`sum(${source.kills}) over (partition by ${source.world}, ${source.npcId})`.mapWith(
+            Number,
+          ),
+      })
+      .from(source)
+      .where(statsCondition(source, userId, options))
+      .orderBy(source.world, source.npcId, desc(source.lastKilledAt));
   };
-
-  const readStats = (
-    userId: string,
-    options: Parameters<typeof statsCondition>[1],
-  ) =>
-    database
-      .select()
-      .from(options.periodStart ? userKillStatsBucketTable : userKillStatsTable)
-      .where(statsCondition(userId, options));
 
   const cached = <S extends Schema.ConstraintDecoder<unknown>>(
     userId: string,
@@ -147,47 +140,18 @@ export const makeUserKillQueries = (
             const killsByWorld: Record<string, number> = {};
             let totalKills = 0;
 
-            const npcMap = new Map<
-              string,
-              {
-                npcId: number;
-                npcName: string;
-                npcType: string;
-                npcLvl: number;
-                npcProf: string | null;
-                npcIcon: string | null;
-                totalKills: number;
-              }
-            >();
-
             for (const stat of stats) {
               killsByType[stat.npcType] =
                 (killsByType[stat.npcType] ?? 0) + stat.totalKills;
               killsByWorld[stat.world] =
                 (killsByWorld[stat.world] ?? 0) + stat.totalKills;
               totalKills += stat.totalKills;
-
-              const key = `${stat.world}:${stat.npcId}`;
-              const existing = npcMap.get(key);
-
-              if (existing) {
-                existing.totalKills += stat.totalKills;
-              } else {
-                npcMap.set(key, {
-                  npcId: stat.npcId,
-                  npcName: stat.npcName,
-                  npcType: stat.npcType,
-                  npcLvl: stat.npcLvl,
-                  npcProf: stat.npcProf,
-                  npcIcon: stat.npcIcon,
-                  totalKills: stat.totalKills,
-                });
-              }
             }
 
             return {
               overview: { totalKills, killsByType, killsByWorld },
-              topNpcs: Array.from(npcMap.values())
+              topNpcs: stats
+                .map(({ world: _world, ...npc }) => npc)
                 .sort((left, right) => right.totalKills - left.totalKills)
                 .slice(0, query.topNpcsLimit ?? 5),
             };
@@ -209,19 +173,22 @@ export const makeUserKillQueries = (
       UserNpcKillsResponse,
       protect(
         "kills.user-npcs.query",
-        readNpcKillPage(
-          database,
-          periodStart ? userKillStatsBucketTable : userKillStatsTable,
-          statsCondition(userId, {
-            world: query.world,
-            npcTypes: query.npcTypes,
-            search: query.search,
-            minLvl: query.minLvl,
-            maxLvl: query.maxLvl,
-            periodStart,
-          }),
-          { limit, cursor, sortBy: query.sortBy, sortOrder: query.sortOrder },
-        ).pipe(
+        Effect.suspend(() => {
+          const source = userKillSource(periodStart);
+
+          return readNpcKillPage(
+            database,
+            source,
+            statsCondition(source, userId, {
+              world: query.world,
+              npcTypes: query.npcTypes,
+              search: query.search,
+              minLvl: query.minLvl,
+              maxLvl: query.maxLvl,
+            }),
+            { limit, cursor, sortBy: query.sortBy, sortOrder: query.sortOrder },
+          );
+        }).pipe(
           Effect.map(({ npcs, total }) => ({
             npcs,
             pagination: {

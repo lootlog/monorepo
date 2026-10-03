@@ -1,31 +1,9 @@
-import {
-  and,
-  asc,
-  count,
-  desc,
-  eq,
-  max,
-  min,
-  sql,
-  sum,
-  type SQL,
-} from "drizzle-orm";
-import { alias, QueryBuilder } from "drizzle-orm/pg-core";
+import { asc, count, desc, eq, max, sql, sum, type SQL } from "drizzle-orm";
+import { QueryBuilder } from "drizzle-orm/pg-core";
 import { Effect, Schema } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
-import type {
-  npcKillStatsTable,
-  npcKillStatsBucketTable,
-  userKillStatsTable,
-  userKillStatsBucketTable,
-} from "#src/database/drizzle/schema";
 import { UserNpcKillsResponse } from "#src/contracts/kills/schemas";
-
-type KillTable =
-  | typeof npcKillStatsTable
-  | typeof npcKillStatsBucketTable
-  | typeof userKillStatsTable
-  | typeof userKillStatsBucketTable;
+import type { MemberKillSource, UserKillSource } from "./kill-source.js";
 
 type PageOptions = {
   readonly limit: number;
@@ -43,28 +21,28 @@ const NpcKillPage = Schema.Struct({
 });
 
 export const buildNpcKillPageSql = (
-  table: KillTable,
+  source: UserKillSource | MemberKillSource,
   condition: SQL | undefined,
   options: PageOptions,
 ) => {
   const query = new QueryBuilder();
-  const kills = "memberKills" in table ? table.memberKills : table.totalKills;
   const direction = options.sortOrder === "asc" ? asc : desc;
-  const metadata = alias(table, "metadata");
-  const first = alias(table, "first_source");
 
   // PostgreSQL materializes this multiply referenced CTE, keeping the page and
   // its unpaginated overview on the same filtered rows in one MVCC snapshot.
   const filtered = query.$with("filtered").as(
     query
       .select({
-        id: table.id,
-        npcId: table.npcId,
-        npcType: table.npcType,
-        npcLvl: table.npcLvl,
-        kills,
+        npcId: source.npcId,
+        npcName: source.npcName,
+        npcType: source.npcType,
+        npcLvl: source.npcLvl,
+        npcProf: source.npcProf,
+        npcIcon: source.npcIcon,
+        kills: source.kills,
+        lastKilledAt: source.lastKilledAt,
       })
-      .from(table)
+      .from(source)
       .where(condition),
   );
 
@@ -76,7 +54,6 @@ export const buildNpcKillPageSql = (
           "totalKills",
         ),
         npcLvl: max(filtered.npcLvl).as("npcLvl"),
-        firstId: min(filtered.id).as("first_id"),
       })
       .from(filtered)
       .groupBy(filtered.npcId),
@@ -96,17 +73,24 @@ export const buildNpcKillPageSql = (
       .offset(options.cursor),
   );
 
-  // Rank before fetching snapshots so only the requested page needs PK lookups.
-  // Highest-level metadata wins, then source ID; type comes from the lowest ID.
-  const metadataIds = query.$with("metadata_ids").as(
+  // Rank before reading descriptions so only the requested page is sorted.
+  // The latest row at the highest level describes the NPC.
+  const metadata = query.$with("metadata").as(
     query
-      .select({ npcId: filtered.npcId, id: min(filtered.id).as("id") })
+      .selectDistinctOn([filtered.npcId], {
+        npcId: filtered.npcId,
+        npcName: filtered.npcName,
+        npcType: filtered.npcType,
+        npcProf: filtered.npcProf,
+        npcIcon: filtered.npcIcon,
+      })
       .from(filtered)
-      .innerJoin(
-        page,
-        and(eq(page.npcId, filtered.npcId), eq(page.npcLvl, filtered.npcLvl)),
-      )
-      .groupBy(filtered.npcId),
+      .innerJoin(page, eq(page.npcId, filtered.npcId))
+      .orderBy(
+        filtered.npcId,
+        desc(filtered.npcLvl),
+        desc(filtered.lastKilledAt),
+      ),
   );
 
   const ranked = query.$with("ranked").as(
@@ -114,16 +98,14 @@ export const buildNpcKillPageSql = (
       .select({
         npcId: page.npcId,
         npcName: metadata.npcName,
-        npcType: first.npcType,
+        npcType: metadata.npcType,
         npcLvl: page.npcLvl,
         npcProf: metadata.npcProf,
         npcIcon: metadata.npcIcon,
         totalKills: page.totalKills,
       })
       .from(page)
-      .innerJoin(metadataIds, eq(metadataIds.npcId, page.npcId))
-      .innerJoin(metadata, eq(metadata.id, metadataIds.id))
-      .innerJoin(first, eq(first.id, page.firstId)),
+      .innerJoin(metadata, eq(metadata.npcId, page.npcId)),
   );
 
   const npcs = query
@@ -148,7 +130,7 @@ export const buildNpcKillPageSql = (
     .from(types);
 
   return query
-    .with(filtered, totals, page, metadataIds, ranked)
+    .with(filtered, totals, page, metadata, ranked)
     .select({
       payload: sql`json_build_object(
       'npcs', (${npcs}),
@@ -163,12 +145,12 @@ export const buildNpcKillPageSql = (
 
 export const readNpcKillPage = Effect.fn("kills.npc-page")(function* (
   database: typeof ApiDatabase.Service,
-  table: KillTable,
+  source: UserKillSource | MemberKillSource,
   condition: SQL | undefined,
   options: PageOptions,
 ) {
   const result = yield* database.execute(
-    buildNpcKillPageSql(table, condition, options),
+    buildNpcKillPageSql(source, condition, options),
   );
 
   const decoded = yield* Schema.decodeUnknownEffect(

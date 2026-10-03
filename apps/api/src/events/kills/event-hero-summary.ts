@@ -10,13 +10,15 @@ import {
   eventHeroKillTable,
   eventHeroNpcTable,
   eventTable,
-  npcKillStatsTable,
 } from "#src/database/drizzle/schema";
+import { guildKillSource } from "#src/kills/kill-source";
 import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
 import { EventHeroStatsResponse } from "#src/events/kills/event-kill-response.schema";
+
+const organizationKills = guildKillSource();
 
 class EventHeroSummaryError extends TaggedErrorClass<EventHeroSummaryError>()(
   "EventHeroSummaryError",
@@ -153,22 +155,22 @@ export const makeEventHeroSummary = (
               : yield* query(
                   "events.heroSummary.npcStats",
                   database
-                    .selectDistinctOn([npcKillStatsTable.npcId], {
-                      npcId: npcKillStatsTable.npcId,
-                      npcProf: npcKillStatsTable.npcProf,
+                    .selectDistinctOn([organizationKills.npcId], {
+                      npcId: organizationKills.npcId,
+                      npcProf: organizationKills.npcProf,
                     })
-                    .from(npcKillStatsTable)
+                    .from(organizationKills)
                     .where(
                       and(
-                        eq(npcKillStatsTable.guildId, guild.id),
-                        eq(npcKillStatsTable.world, event.world),
-                        inArray(npcKillStatsTable.npcId, npcIds),
-                        isNotNull(npcKillStatsTable.npcProf),
+                        eq(organizationKills.guildId, guild.id),
+                        eq(organizationKills.world, event.world),
+                        inArray(organizationKills.npcId, npcIds),
+                        isNotNull(organizationKills.npcProf),
                       ),
                     )
                     .orderBy(
-                      npcKillStatsTable.npcId,
-                      desc(npcKillStatsTable.updatedAt),
+                      organizationKills.npcId,
+                      desc(organizationKills.lastKilledAt),
                     ),
                 );
 

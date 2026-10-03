@@ -92,11 +92,8 @@ export const makeGuildKillQueries = (
         load: Effect.gen(function* () {
           const [memberStats, guildSummary] = yield* Effect.all(
             [
-              persistence.groupMemberStats(filter, periodStart !== undefined),
-              persistence.groupGuildSummaries(
-                filter,
-                periodStart !== undefined,
-              ),
+              persistence.groupMemberStats(filter),
+              persistence.groupGuildSummaries(filter),
             ],
             { concurrency: "unbounded" },
           );
@@ -226,7 +223,6 @@ export const makeGuildKillQueries = (
               ...visibility.filter,
               ...(periodStart && { periodStart: { gte: periodStart } }),
             },
-            periodStart !== undefined,
             limit,
           )
           .pipe(Effect.map((topNpcs) => ({ topNpcs }))),
@@ -267,7 +263,6 @@ export const makeGuildKillQueries = (
               ...visibility.filter,
               ...(periodStart && { periodStart: { gte: periodStart } }),
             },
-            periodStart !== undefined,
             limit,
           )
           .pipe(
@@ -327,16 +322,9 @@ export const makeGuildKillQueries = (
         load: Effect.gen(function* () {
           const [killers, summaries, memberNpc] = yield* Effect.all(
             [
-              persistence.topNpcKillers(
-                filter,
-                periodStart !== undefined,
-                limit,
-              ),
-              persistence.topGuildNpcs(filter, periodStart !== undefined, 1),
-              persistence.findMemberNpcMetadata(
-                filter,
-                periodStart !== undefined,
-              ),
+              persistence.topNpcKillers(filter, limit),
+              persistence.topGuildNpcs(filter, 1),
+              persistence.findMemberNpcMetadata(filter),
             ],
             { concurrency: "unbounded" },
           );
@@ -345,7 +333,6 @@ export const makeGuildKillQueries = (
             !memberNpc && summaries.length === 0
               ? yield* persistence.topGuildNpcs(
                   { guildId, npcId, ...visibility.filter },
-                  false,
                   1,
                 )
               : [];

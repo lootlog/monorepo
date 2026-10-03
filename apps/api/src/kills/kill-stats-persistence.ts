@@ -14,19 +14,22 @@ import {
   or,
   sum,
   type SQL,
+  type SQLWrapper,
 } from "drizzle-orm";
-import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
-  guildKillSummaryBucketTable,
-  guildKillSummaryTable,
+  memberKillBucketTable,
   memberTable,
-  npcKillStatsBucketTable,
-  npcKillStatsTable,
 } from "#src/database/drizzle/schema";
+import {
+  guildKillSource,
+  memberKillSource,
+  type GuildKillSource,
+  type MemberKillSource,
+} from "./kill-source.js";
 
-type NpcType = (typeof npcKillStatsTable.npcType.enumValues)[number];
+type NpcType = (typeof memberKillBucketTable.npcType.enumValues)[number];
 
 export type KillStatsFilter = {
   readonly guildId?: string;
@@ -52,15 +55,14 @@ export type KillStatsFilter = {
 };
 
 type FilterColumns = {
-  readonly guildId?: AnyPgColumn;
-  readonly userId?: AnyPgColumn;
-  readonly memberId?: AnyPgColumn;
-  readonly npcId?: AnyPgColumn;
-  readonly world: AnyPgColumn;
-  readonly npcType: AnyPgColumn;
-  readonly npcLvl: AnyPgColumn;
-  readonly periodStart?: AnyPgColumn;
-  readonly npcName: AnyPgColumn;
+  readonly guildId?: SQLWrapper;
+  readonly userId?: SQLWrapper;
+  readonly memberId?: SQLWrapper;
+  readonly npcId?: SQLWrapper;
+  readonly world: SQLWrapper;
+  readonly npcType: SQLWrapper;
+  readonly npcLvl: SQLWrapper;
+  readonly npcName: SQLWrapper;
 };
 
 const scalarConditions = (
@@ -110,9 +112,6 @@ const rangeConditions = (
   filter.npcLvl?.lte !== undefined
     ? lte(columns.npcLvl, filter.npcLvl.lte)
     : undefined,
-  filter.periodStart?.gte && columns.periodStart
-    ? gte(columns.periodStart, filter.periodStart.gte)
-    : undefined,
   filter.npcName?.contains
     ? ilike(columns.npcName, `%${filter.npcName.contains}%`)
     : undefined,
@@ -136,35 +135,32 @@ export const buildKillStatsCondition = (
       : undefined,
   );
 
-const memberColumns = (bucket: boolean): FilterColumns => {
-  const table = bucket ? npcKillStatsBucketTable : npcKillStatsTable;
+// The kill source applies `filter.periodStart`.
+const memberColumns = (source: MemberKillSource): FilterColumns => ({
+  guildId: source.guildId,
+  userId: source.discordUserId,
+  memberId: source.memberId,
+  npcId: source.npcId,
+  world: source.world,
+  npcType: source.npcType,
+  npcLvl: source.npcLvl,
+  npcName: source.npcName,
+});
 
-  return {
-    guildId: table.guildId,
-    userId: table.userId,
-    memberId: table.memberId,
-    npcId: table.npcId,
-    world: table.world,
-    npcType: table.npcType,
-    npcLvl: table.npcLvl,
-    periodStart: bucket ? npcKillStatsBucketTable.periodStart : undefined,
-    npcName: table.npcName,
-  };
-};
+const guildColumns = (source: GuildKillSource): FilterColumns => ({
+  guildId: source.guildId,
+  npcId: source.npcId,
+  world: source.world,
+  npcType: source.npcType,
+  npcLvl: source.npcLvl,
+  npcName: source.npcName,
+});
 
-const guildColumns = (bucket: boolean): FilterColumns => {
-  const table = bucket ? guildKillSummaryBucketTable : guildKillSummaryTable;
+const memberSource = (filter: KillStatsFilter) =>
+  memberKillSource(filter.periodStart?.gte);
 
-  return {
-    guildId: table.guildId,
-    npcId: table.npcId,
-    world: table.world,
-    npcType: table.npcType,
-    npcLvl: table.npcLvl,
-    periodStart: bucket ? guildKillSummaryBucketTable.periodStart : undefined,
-    npcName: table.npcName,
-  };
-};
+const guildSource = (filter: KillStatsFilter) =>
+  guildKillSource(filter.periodStart?.gte);
 
 export class KillStatsPersistenceError extends TaggedErrorClass<KillStatsPersistenceError>()(
   "KillStatsPersistenceError",
@@ -221,57 +217,41 @@ export const makeKillStatsPersistence = (
 
   const findMemberNpcPage = (
     filter: KillStatsFilter,
-    bucket: boolean,
     limit: number,
     cursor: number,
-  ) =>
-    protect(
+  ) => {
+    const source = memberSource(filter);
+
+    return protect(
       "kills.stats.member-page",
       readNpcKillPage(
         database,
-        bucket ? npcKillStatsBucketTable : npcKillStatsTable,
-        buildKillStatsCondition(memberColumns(bucket), filter),
+        source,
+        buildKillStatsCondition(memberColumns(source), filter),
         { limit, cursor, includeOverview: true },
       ),
     );
+  };
 
-  const findGuildSummaries = (filter: KillStatsFilter, bucket: boolean) =>
-    protect(
-      "kills.stats.guild-summaries",
-      bucket
-        ? database
-            .select()
-            .from(guildKillSummaryBucketTable)
-            .where(buildKillStatsCondition(guildColumns(true), filter))
-        : database
-            .select()
-            .from(guildKillSummaryTable)
-            .where(buildKillStatsCondition(guildColumns(false), filter)),
-    );
-
-  const topGuildNpcs = (
-    filter: KillStatsFilter,
-    bucket: boolean,
-    limit: number,
-  ) => {
-    const table = bucket ? guildKillSummaryBucketTable : guildKillSummaryTable;
+  const topGuildNpcs = (filter: KillStatsFilter, limit: number) => {
+    const source = guildSource(filter);
 
     const ranked = database
-      .selectDistinctOn([table.npcId], {
-        npcId: table.npcId,
-        npcName: table.npcName,
-        npcType: table.npcType,
-        npcLvl: table.npcLvl,
-        npcProf: table.npcProf,
-        npcIcon: table.npcIcon,
+      .selectDistinctOn([source.npcId], {
+        npcId: source.npcId,
+        npcName: source.npcName,
+        npcType: source.npcType,
+        npcLvl: source.npcLvl,
+        npcProf: source.npcProf,
+        npcIcon: source.npcIcon,
         uniqueKills:
-          sql<number>`sum(${table.uniqueKills}) over (partition by ${table.npcId})`
+          sql<number>`sum(${source.kills}) over (partition by ${source.npcId})`
             .mapWith(Number)
             .as("uniqueKills"),
       })
-      .from(table)
-      .where(buildKillStatsCondition(guildColumns(bucket), filter))
-      .orderBy(table.npcId, desc(table.npcLvl), table.id)
+      .from(source)
+      .where(buildKillStatsCondition(guildColumns(source), filter))
+      .orderBy(source.npcId, desc(source.npcLvl), desc(source.lastKilledAt))
       .as("ranked");
 
     const query = database
@@ -289,31 +269,27 @@ export const makeKillStatsPersistence = (
     );
   };
 
-  const topMembersByType = (
-    filter: KillStatsFilter,
-    bucket: boolean,
-    limit: number,
-  ) => {
-    const table = bucket ? npcKillStatsBucketTable : npcKillStatsTable;
+  const topMembersByType = (filter: KillStatsFilter, limit: number) => {
+    const source = memberSource(filter);
 
     const grouped = database
       .select({
-        npcType: table.npcType,
-        memberId: table.memberId,
+        npcType: source.npcType,
+        memberId: source.memberId,
         memberName: memberTable.name,
         memberAvatar: memberTable.avatar,
         memberUserId: memberTable.userId,
-        totalParticipations: sum(table.memberKills)
+        totalParticipations: sum(source.kills)
           .mapWith(Number)
           .as("totalParticipations"),
-        rank: sql<number>`row_number() over (partition by ${table.npcType} order by sum(${table.memberKills}) desc, ${table.memberId})`.as(
+        rank: sql<number>`row_number() over (partition by ${source.npcType} order by sum(${source.kills}) desc, ${source.memberId})`.as(
           "rank",
         ),
       })
-      .from(table)
-      .innerJoin(memberTable, eq(memberTable.id, table.memberId))
-      .where(buildKillStatsCondition(memberColumns(bucket), filter))
-      .groupBy(table.npcType, table.memberId, memberTable.id)
+      .from(source)
+      .innerJoin(memberTable, eq(memberTable.id, source.memberId))
+      .where(buildKillStatsCondition(memberColumns(source), filter))
+      .groupBy(source.npcType, source.memberId, memberTable.id)
       .as("ranked");
 
     const sqlLimit = Math.trunc(limit);
@@ -332,72 +308,68 @@ export const makeKillStatsPersistence = (
     );
   };
 
-  const topNpcKillers = (
-    filter: KillStatsFilter,
-    bucket: boolean,
-    limit: number,
-  ) => {
-    const table = bucket ? npcKillStatsBucketTable : npcKillStatsTable;
-    const participationCount = sum(table.memberKills).mapWith(Number);
+  const topNpcKillers = (filter: KillStatsFilter, limit: number) => {
+    const source = memberSource(filter);
+    const participationCount = sum(source.kills).mapWith(Number);
 
     return protect(
       "kills.stats.npc-killers",
       database
         .select({
-          memberId: table.memberId,
+          memberId: source.memberId,
           memberName: memberTable.name,
           memberAvatar: memberTable.avatar,
           memberUserId: memberTable.userId,
           participationCount,
           totalMemberParticipations:
-            sql<number>`sum(sum(${table.memberKills})) over ()`.mapWith(Number),
+            sql<number>`sum(sum(${source.kills})) over ()`.mapWith(Number),
         })
-        .from(table)
-        .innerJoin(memberTable, eq(memberTable.id, table.memberId))
-        .where(buildKillStatsCondition(memberColumns(bucket), filter))
-        .groupBy(table.memberId, memberTable.id)
-        .orderBy(desc(participationCount), table.memberId)
+        .from(source)
+        .innerJoin(memberTable, eq(memberTable.id, source.memberId))
+        .where(buildKillStatsCondition(memberColumns(source), filter))
+        .groupBy(source.memberId, memberTable.id)
+        .orderBy(desc(participationCount), source.memberId)
         .limit(limit),
     );
   };
 
-  const findMemberNpcMetadata = (filter: KillStatsFilter, bucket: boolean) => {
-    const table = bucket ? npcKillStatsBucketTable : npcKillStatsTable;
+  const findMemberNpcMetadata = (filter: KillStatsFilter) => {
+    const source = memberSource(filter);
 
     return protect(
       "kills.stats.npc-metadata",
       database
         .select({
-          npcId: table.npcId,
-          npcName: table.npcName,
-          npcType: table.npcType,
-          npcLvl: table.npcLvl,
-          npcProf: table.npcProf,
-          npcIcon: table.npcIcon,
+          npcId: source.npcId,
+          npcName: source.npcName,
+          npcType: source.npcType,
+          npcLvl: source.npcLvl,
+          npcProf: source.npcProf,
+          npcIcon: source.npcIcon,
         })
-        .from(table)
-        .innerJoin(memberTable, eq(memberTable.id, table.memberId))
-        .where(buildKillStatsCondition(memberColumns(bucket), filter))
-        .orderBy(desc(table.npcLvl), table.id)
+        .from(source)
+        .innerJoin(memberTable, eq(memberTable.id, source.memberId))
+        .where(buildKillStatsCondition(memberColumns(source), filter))
+        .orderBy(desc(source.npcLvl), desc(source.lastKilledAt))
         .limit(1)
         .pipe(Effect.map((rows) => rows[0] ?? null)),
     );
   };
 
-  const groupMemberStats = (filter: KillStatsFilter, bucket: boolean) => {
-    const table = bucket ? npcKillStatsBucketTable : npcKillStatsTable;
+  const groupMemberStats = (filter: KillStatsFilter) => {
+    const source = memberSource(filter);
 
     return protect(
       "kills.stats.member-groups",
       database
         .select({
-          memberId: table.memberId,
-          npcType: table.npcType,
-          memberKills: sum(table.memberKills).mapWith(Number),
+          memberId: source.memberId,
+          npcType: source.npcType,
+          memberKills: sum(source.kills).mapWith(Number),
         })
-        .from(table)
-        .where(buildKillStatsCondition(memberColumns(bucket), filter))
-        .groupBy(table.memberId, table.npcType)
+        .from(source)
+        .where(buildKillStatsCondition(memberColumns(source), filter))
+        .groupBy(source.memberId, source.npcType)
         .pipe(
           Effect.map((rows) =>
             rows.map((row) => ({
@@ -410,19 +382,19 @@ export const makeKillStatsPersistence = (
     );
   };
 
-  const groupGuildSummaries = (filter: KillStatsFilter, bucket: boolean) => {
-    const table = bucket ? guildKillSummaryBucketTable : guildKillSummaryTable;
+  const groupGuildSummaries = (filter: KillStatsFilter) => {
+    const source = guildSource(filter);
 
     return protect(
       "kills.stats.guild-groups",
       database
         .select({
-          npcType: table.npcType,
-          uniqueKills: sum(table.uniqueKills).mapWith(Number),
+          npcType: source.npcType,
+          uniqueKills: sum(source.kills).mapWith(Number),
         })
-        .from(table)
-        .where(buildKillStatsCondition(guildColumns(bucket), filter))
-        .groupBy(table.npcType)
+        .from(source)
+        .where(buildKillStatsCondition(guildColumns(source), filter))
+        .groupBy(source.npcType)
         .pipe(
           Effect.map((rows) =>
             rows.map((row) => ({
@@ -442,7 +414,6 @@ export const makeKillStatsPersistence = (
     findMembers,
     findMember,
     findMemberNpcPage,
-    findGuildSummaries,
     groupMemberStats,
     groupGuildSummaries,
   } as const;

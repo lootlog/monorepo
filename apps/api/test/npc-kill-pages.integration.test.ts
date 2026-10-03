@@ -10,11 +10,11 @@ import {
 } from "../src/database/drizzle/database.js";
 import {
   guildTable,
+  memberKillBucketTable,
+  memberKillTotalTable,
   memberTable,
-  npcKillStatsTable,
-  npcKillStatsBucketTable,
-  userKillStatsTable,
-  userKillStatsBucketTable,
+  userKillBucketTable,
+  userKillTotalTable,
 } from "../src/database/drizzle/schema.js";
 import { makeKillStatsPersistence } from "../src/kills/kill-stats-persistence.js";
 import { makeMemberKillQuery } from "../src/kills/member-kill-query.js";
@@ -106,17 +106,21 @@ beforeAll(async () => {
         npcLvl: 100,
         npcProf: "w",
         npcIcon: "first.gif",
-        updatedAt: new Date(),
+        periodStart: periodBoundary,
       };
 
+      // Descriptions come from the latest row at the highest level.
+      const killedAt = (secondsAgo: number) =>
+        new Date(periodBoundary.getTime() - secondsAgo * 1000);
+
       const rows = [
-        { ...base, id: `${guildId}-01`, world: "a", npcId: 7, totalKills: 2 },
+        { ...base, lastKilledAt: killedAt(1), world: "a", npcId: 7, kills: 2 },
         {
           ...base,
-          id: `${guildId}-02`,
+          lastKilledAt: killedAt(2),
           world: "b",
           npcId: 7,
-          totalKills: 3,
+          kills: 3,
           npcName: "Higher",
           npcType: NpcType.HERO,
           npcLvl: 110,
@@ -125,28 +129,28 @@ beforeAll(async () => {
         },
         {
           ...base,
-          id: `${guildId}-03`,
+          lastKilledAt: killedAt(3),
           world: "c",
           npcId: 7,
-          totalKills: 5,
+          kills: 5,
           npcName: "Tie",
           npcLvl: 110,
         },
         {
           ...base,
-          id: `${guildId}-04`,
+          lastKilledAt: killedAt(4),
           world: "d",
           npcId: 7,
-          totalKills: 1,
+          kills: 1,
           npcName: "Lower",
           npcLvl: 90,
         },
         {
           ...base,
-          id: `${guildId}-05`,
+          lastKilledAt: killedAt(5),
           world: "a",
           npcId: 8,
-          totalKills: 11,
+          kills: 11,
           npcName: "Higher",
           npcLvl: 80,
           npcProf: null,
@@ -154,89 +158,87 @@ beforeAll(async () => {
         },
         {
           ...base,
-          id: `${guildId}-06`,
+          lastKilledAt: killedAt(6),
           world: "a",
           npcId: 9,
-          totalKills: 30,
+          kills: 30,
           npcName: "Titan",
           npcType: NpcType.TITAN,
           npcLvl: 300,
         },
       ];
 
-      const memberRows = rows.map(({ totalKills, ...row }) => ({
+      const memberRows = rows.map((row) => ({
         ...row,
         guildId,
         memberId: owner.id,
-        userId,
-        memberKills: totalKills,
+        discordUserId: userId,
       }));
 
-      yield* db.insert(npcKillStatsTable).values(memberRows);
+      const userRows = rows.map((row) => ({ ...row, discordUserId: userId }));
+
+      yield* db.insert(memberKillBucketTable).values(memberRows);
       yield* db
-        .insert(npcKillStatsBucketTable)
-        .values(
-          memberRows.map((row) => ({ ...row, periodStart: periodBoundary })),
-        );
+        .insert(memberKillTotalTable)
+        .values(memberRows.map(({ periodStart: _start, ...row }) => row));
+      yield* db.insert(userKillBucketTable).values(userRows);
       yield* db
-        .insert(userKillStatsTable)
-        .values(rows.map((row) => ({ ...row, userId })));
-      yield* db
-        .insert(userKillStatsBucketTable)
-        .values(
-          rows.map((row) => ({ ...row, userId, periodStart: periodBoundary })),
-        );
+        .insert(userKillTotalTable)
+        .values(userRows.map(({ periodStart: _start, ...row }) => row));
+
+      const { periodStart: _periodStart, ...described } = base;
 
       for (const member of members.filter((member) => member.id !== owner.id)) {
         const foreign = {
-          ...base,
-          id: crypto.randomUUID(),
+          ...described,
+          lastKilledAt: killedAt(1),
           world: "a",
           npcId: 99,
           guildId: member.guildId,
           memberId: member.id,
-          userId: member.userId,
-          memberKills: 999,
+          discordUserId: member.userId,
+          kills: 999,
         };
 
-        yield* db.insert(npcKillStatsTable).values(foreign);
+        yield* db.insert(memberKillTotalTable).values(foreign);
         yield* db
-          .insert(npcKillStatsBucketTable)
+          .insert(memberKillBucketTable)
           .values({ ...foreign, periodStart: periodBoundary });
       }
 
       const foreignUser = {
-        ...base,
-        id: crypto.randomUUID(),
+        ...described,
+        lastKilledAt: killedAt(1),
         world: "a",
         npcId: 99,
-        userId: otherUserId,
-        totalKills: 999,
+        discordUserId: otherUserId,
+        kills: 999,
       };
 
-      yield* db.insert(userKillStatsTable).values(foreignUser);
+      yield* db.insert(userKillTotalTable).values(foreignUser);
       yield* db
-        .insert(userKillStatsBucketTable)
+        .insert(userKillBucketTable)
         .values({ ...foreignUser, periodStart: periodBoundary });
 
+      // Old buckets outside the lifetime totals, as account deletion left them.
       const old = {
-        ...base,
-        id: crypto.randomUUID(),
+        ...described,
+        lastKilledAt: new Date("2000-01-01"),
+        periodStart: new Date("2000-01-01"),
         world: "old",
         npcId: 7,
-        periodStart: new Date("2000-01-01"),
+        kills: 900,
       };
 
-      yield* db.insert(npcKillStatsBucketTable).values({
+      yield* db.insert(memberKillBucketTable).values({
         ...old,
         guildId,
         memberId: owner.id,
-        userId,
-        memberKills: 900,
+        discordUserId: userId,
       });
       yield* db
-        .insert(userKillStatsBucketTable)
-        .values({ ...old, userId, totalKills: 900 });
+        .insert(userKillBucketTable)
+        .values({ ...old, discordUserId: userId });
     }),
   );
 });
@@ -247,8 +249,8 @@ afterAll(async () => {
       const db = yield* ApiDatabase;
 
       for (const table of [
-        npcKillStatsBucketTable,
-        npcKillStatsTable,
+        memberKillBucketTable,
+        memberKillTotalTable,
         memberTable,
       ]) {
         yield* db
@@ -256,10 +258,10 @@ afterAll(async () => {
           .where(inArray(table.guildId, [guildId, otherGuildId]));
       }
 
-      for (const table of [userKillStatsBucketTable, userKillStatsTable]) {
+      for (const table of [userKillBucketTable, userKillTotalTable]) {
         yield* db
           .delete(table)
-          .where(inArray(table.userId, [userId, otherUserId]));
+          .where(inArray(table.discordUserId, [userId, otherUserId]));
       }
 
       yield* db
@@ -291,7 +293,7 @@ for (const period of ["all", "24h"] as const) {
           {
             npcId: 7,
             npcName: "Higher",
-            npcType: NpcType.ELITE2,
+            npcType: NpcType.HERO,
             npcLvl: 110,
             npcProf: "m",
             npcIcon: "higher.gif",
@@ -571,12 +573,7 @@ test("member bucket pages include the exact period boundary and exclude earlier 
         periodStart: { gte: periodBoundary },
       };
 
-      const atBoundary = yield* persistence.findMemberNpcPage(
-        filter,
-        true,
-        20,
-        0,
-      );
+      const atBoundary = yield* persistence.findMemberNpcPage(filter, 20, 0);
 
       expect(atBoundary.totalParticipations).toBe(52);
       expect(atBoundary.total).toBe(3);
@@ -586,7 +583,6 @@ test("member bucket pages include the exact period boundary and exclude earlier 
           ...filter,
           periodStart: { gte: new Date(periodBoundary.getTime() + 1) },
         },
-        true,
         20,
         0,
       );
