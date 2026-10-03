@@ -94,6 +94,18 @@ const mapDetails = Function.compose(
   Option.getOrUndefined,
 );
 
+const mapActivityRow = ({
+  activity,
+  actorSnapshot,
+}: {
+  activity: typeof activities.$inferSelect;
+  actorSnapshot: typeof activityActorSnapshots.$inferSelect | null;
+}) => ({
+  ...activity,
+  details: mapDetails(activity.details),
+  actorSnapshot: actorSnapshot ?? undefined,
+});
+
 const encodeCursor = (activity: {
   readonly createdAt: Date;
   readonly id: string;
@@ -227,11 +239,7 @@ export class ActivityRepository extends Context.Service<
               .limit(1);
 
             if (existing[0]) {
-              return {
-                ...existing[0].activity,
-                details: mapDetails(existing[0].activity.details),
-                actorSnapshot: existing[0].actorSnapshot ?? undefined,
-              };
+              return mapActivityRow(existing[0]);
             }
 
             const createdRows = yield* tx
@@ -453,11 +461,7 @@ export class ActivityRepository extends Context.Service<
         const lastActivity = page.at(-1)?.activity;
 
         return {
-          data: page.map(({ activity, actorSnapshot }) => ({
-            ...activity,
-            details: mapDetails(activity.details),
-            actorSnapshot: actorSnapshot ?? undefined,
-          })),
+          data: page.map(mapActivityRow),
           nextCursor:
             hasMore && lastActivity ? encodeCursor(lastActivity) : undefined,
           hasMore,
@@ -483,11 +487,7 @@ export class ActivityRepository extends Context.Service<
 
         if (!rows[0]) return yield* new ActivityNotFound({ id });
 
-        return {
-          ...rows[0].activity,
-          details: mapDetails(rows[0].activity.details),
-          actorSnapshot: rows[0].actorSnapshot ?? undefined,
-        };
+        return mapActivityRow(rows[0]);
       });
 
       const deleteOne = Effect.fn("ActivityRepository.deleteOne")(function* (
