@@ -1,5 +1,5 @@
 import { CancelledError } from "@tanstack/react-query";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   rethrowNotFoundOrError,
   withRouteLoaderCancellation,
@@ -27,15 +27,32 @@ describe("withRouteLoaderCancellation", () => {
     ).rejects.toMatchObject({ name: "AbortError" });
   });
 
-  it("rethrows cancelled route loader errors when the route is not aborted", async () => {
+  it("loads again when a query is cancelled while the route is still active", async () => {
+    const abortController = new AbortController();
+
+    const loader = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(new CancelledError({ revert: true }))
+      .mockResolvedValueOnce("ok");
+
+    await expect(
+      withRouteLoaderCancellation(abortController, loader),
+    ).resolves.toBe("ok");
+    expect(loader).toHaveBeenCalledTimes(2);
+  });
+
+  it("rethrows the cancellation when every attempt is cancelled", async () => {
     const abortController = new AbortController();
     const error = new CancelledError();
 
+    const loader = vi.fn(async () => {
+      throw error;
+    });
+
     await expect(
-      withRouteLoaderCancellation(abortController, async () => {
-        throw error;
-      }),
+      withRouteLoaderCancellation(abortController, loader),
     ).rejects.toBe(error);
+    expect(loader).toHaveBeenCalledTimes(3);
   });
 
   it("rethrows non-cancelled errors", async () => {
