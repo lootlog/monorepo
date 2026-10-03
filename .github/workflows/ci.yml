@@ -42,19 +42,17 @@ jobs:
         run: |
           if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
             affected_packages="$(bunx turbo@2.11.2 ls --output=json | jq -c '[.packages.items[].name]')"
-            changed_files="[]"
+            list_changed_files() { :; }
           else
             affected="$(bunx turbo@2.11.2 query affected --base "$BASE_SHA" --head "$HEAD_SHA" --packages)"
             affected_packages="$(jq -c '[.data.affectedPackages.items[].name]' <<< "$affected")"
-            # Split the NUL-delimited paths before command substitution, which drops NUL bytes.
-            changed_files="$(
-              git diff --name-only -z "$BASE_SHA" "$HEAD_SHA" |
-                jq -Rsc 'split("\u0000") | map(select(length > 0))'
-            )"
+            list_changed_files() { git diff --name-only -z "$BASE_SHA" "$HEAD_SHA"; }
           fi
+          # Stream the paths through stdin: large diffs exceed the argument size limit.
           plan="$(
-            jq -nc --argjson affectedPackages "$affected_packages" --argjson changedFiles "$changed_files" \
-              '{mode: "ci", affectedPackages: $affectedPackages, changedFiles: $changedFiles}' |
+            list_changed_files |
+              jq -Rsc --argjson affectedPackages "$affected_packages" \
+                '{mode: "ci", affectedPackages: $affectedPackages, changedFiles: (split("\u0000") | map(select(length > 0)))}' |
               bun scripts/deployment-targets.mjs
           )"
           {
