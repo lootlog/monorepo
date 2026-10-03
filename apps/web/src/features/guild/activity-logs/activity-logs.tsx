@@ -1,4 +1,5 @@
 import { EmptyState } from "@/components/common/empty-state";
+import { InfiniteListStatusRow } from "@/components/common/infinite-list-status-row";
 import { ResultsSurface } from "@/components/common/results-surface";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import {
@@ -7,7 +8,6 @@ import {
 } from "@/hooks/utils/use-virtual-infinite-scroll";
 import { useThemedKey } from "@/themes";
 import { useMembersControllerGetGuildMemberReferences } from "@lootlog/client/main";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import {
   getVirtualListPadding,
@@ -52,6 +52,7 @@ export const ActivityLogs = () => {
     isFetchingNextPage,
     isLoading,
     error,
+    isFetchNextPageError,
   } = useInfiniteQuery(
     activityLogsInfiniteQueryOptions({
       guildId,
@@ -99,7 +100,7 @@ export const ActivityLogs = () => {
   });
 
   const renderResults = () => {
-    if (error) {
+    if (error && activities.length === 0) {
       return (
         <EmptyState
           icon={AlertCircle}
@@ -122,17 +123,30 @@ export const ActivityLogs = () => {
     }
 
     return (
-      <ActivityLogsTable
-        activities={activities}
-        isMobile={isMobile}
-        memberNameByDiscordId={memberNameByDiscordId}
-        virtualRows={virtualRows}
-        padding={getVirtualListPadding(
-          virtualRows,
-          virtualizer.getTotalSize(),
-          virtualizer.options.scrollMargin,
-        )}
-      />
+      <>
+        <ActivityLogsTable
+          activities={activities}
+          isMobile={isMobile}
+          memberNameByDiscordId={memberNameByDiscordId}
+          virtualRows={virtualRows}
+          padding={getVirtualListPadding(
+            virtualRows,
+            virtualizer.getTotalSize(),
+            virtualizer.options.scrollMargin,
+          )}
+        />
+        <div className="p-3">
+          <InfiniteListStatusRow
+            hasNextPage={hasNextPage}
+            hasError={isFetchNextPageError}
+            onRetry={() => void fetchNextPage()}
+            loadingLabel={t(themedKey("common.activityLogs.loadingMore"))}
+            endLabel={t(themedKey("common.activityLogs.end"))}
+            errorLabel={t("common.activityLogs.loadError")}
+            retryLabel={t("common.actions.retry")}
+          />
+        </div>
+      </>
     );
   };
 
@@ -147,31 +161,6 @@ export const ActivityLogs = () => {
         toolbar={<ActivityLogsFilterToolbar model={filterModel} />}
         toolbarLabel={t("activityLogs.filters.title")}
         withHorizontalScroll={!isMobile}
-        footer={
-          <div
-            aria-live="polite"
-            className="flex h-14 shrink-0 items-center justify-between gap-3 border-t border-border px-4 text-sm text-muted-foreground"
-          >
-            <span className="whitespace-nowrap">
-              {t("activityLogs.table.loaded", { count: activities.length })}
-            </span>
-            {isFetchingNextPage ? (
-              <span className="flex min-w-0 items-center gap-2">
-                <Spinner className="size-4" />
-                <span className="truncate">
-                  {t(themedKey("common.activityLogs.loadingMore"))}
-                </span>
-              </span>
-            ) : (
-              !hasNextPage &&
-              activities.length > 0 && (
-                <span className="truncate">
-                  {t(themedKey("common.activityLogs.end"))}
-                </span>
-              )
-            )}
-          </div>
-        }
       >
         {renderResults()}
       </ResultsSurface>
