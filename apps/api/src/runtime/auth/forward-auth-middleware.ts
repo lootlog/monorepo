@@ -1,6 +1,6 @@
 import { Effect, Layer } from "effect";
 import { readApiKeyAccess } from "@lootlog/schema/api-key-policy";
-import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
+import { HttpServerRequest, HttpServerResponse } from "effect/http";
 import { BearerSecurityMiddleware } from "#src/http-api/contracts/shared";
 import {
   ForwardAuthIdentity,

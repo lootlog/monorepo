@@ -6,18 +6,14 @@ import {
 import { expect, it } from "bun:test";
 import { and, eq } from "drizzle-orm";
 import { Effect, Layer, Schema } from "effect";
-import {
-  HttpRouter,
-  HttpServer,
-  HttpServerResponse,
-} from "effect/unstable/http";
+import { HttpRouter, HttpServer, HttpServerResponse } from "effect/http";
 import {
   HttpApi,
   HttpApiBuilder,
   HttpApiEndpoint,
   HttpApiGroup,
   OpenApi,
-} from "effect/unstable/httpapi";
+} from "effect/http-api";
 import { Permission } from "@lootlog/schema/permissions";
 import { BearerSecurityMiddleware } from "#src/http-api/contracts/shared";
 import { ForwardAuthMiddlewareLive } from "#src/runtime/auth/forward-auth-middleware";

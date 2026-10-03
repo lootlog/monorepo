@@ -5,7 +5,7 @@ import {
   fillJsonCache,
 } from "@lootlog/database/redis-cache-fill";
 import { type Cause, Effect, Exit, Schema } from "effect";
-import * as Redis from "effect/unstable/persistence/Redis";
+import * as Redis from "effect/persistence/Redis";
 import { chunk } from "es-toolkit";
 
 export interface JsonCodec<T> {

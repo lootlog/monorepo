@@ -1,5 +1,5 @@
 /** Authoritative composition root for the gateway HTTP contract. */
-import { HttpApi, OpenApi } from "effect/unstable/httpapi";
+import { HttpApi, OpenApi } from "effect/http-api";
 import { HealthGroup } from "./contracts/health/api.js";
 
 export class GatewayApi extends HttpApi.make("GatewayApi")

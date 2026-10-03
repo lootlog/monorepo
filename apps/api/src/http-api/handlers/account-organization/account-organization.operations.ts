@@ -13,7 +13,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Cause, Context, Effect, Layer, Predicate, Schema } from "effect";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { EffectDrizzleQueryError } from "drizzle-orm/effect-core/errors";
-import { SqlError } from "effect/unstable/sql/SqlError";
+import { SqlError } from "effect/sql/SqlError";
 
 import { DiscordGuildSyncStateResponse as DiscordGuildSyncStateCodec } from "#src/shared/schema/discord-guild-sync";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";

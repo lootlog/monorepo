@@ -1,6 +1,6 @@
 import { BunRedis } from "@effect/platform-bun";
 import { Effect, ManagedRuntime } from "effect";
-import { Redis } from "effect/unstable/persistence";
+import { Redis } from "effect/persistence";
 import { GenericContainer, Wait } from "testcontainers";
 import {
   RedisGatewayStore,

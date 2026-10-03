@@ -20,7 +20,7 @@ import {
   spyOn,
 } from "bun:test";
 import { Effect, ManagedRuntime, Schema } from "effect";
-import { ConnectionError, SqlError } from "effect/unstable/sql/SqlError";
+import { ConnectionError, SqlError } from "effect/sql/SqlError";
 import type { RawBattleData } from "#src/battles/battle-service";
 import { BattleResponseSchemas } from "#src/battles/catalog/battle-response";
 import { battles } from "#src/database/schema";

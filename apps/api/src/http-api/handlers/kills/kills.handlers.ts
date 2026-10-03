@@ -1,5 +1,5 @@
 import { optionalPathString } from "#src/shared/http/handler-response";
-import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { HttpApiBuilder } from "effect/http-api";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
   createKill,

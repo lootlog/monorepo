@@ -20,7 +20,7 @@ import {
 } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
-import { HttpServerResponse } from "effect/unstable/http";
+import { HttpServerResponse } from "effect/http";
 import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Permission,

@@ -220,7 +220,6 @@ paths:
                           type: array
                           items:
                             type: string
-                            pattern: ^\d{1,20}$
                           maxItems: 100
                         mode:
                           type: string
@@ -346,7 +345,6 @@ paths:
                     type: array
                     items:
                       type: string
-                      pattern: ^\d{1,20}$
                     maxItems: 100
                   mode:
                     type: string
@@ -466,7 +464,6 @@ paths:
                   type: array
                   items:
                     type: string
-                    pattern: ^\d{1,20}$
                   maxItems: 100
                 mode:
                   type: string
@@ -515,7 +512,6 @@ paths:
                     type: array
                     items:
                       type: string
-                      pattern: ^\d{1,20}$
                     maxItems: 100
                   mode:
                     type: string
@@ -781,7 +777,6 @@ paths:
                                   type: array
                                   items:
                                     type: string
-                                    pattern: ^\d{1,20}$
                                   maxItems: 100
                                 mode:
                                   type: string

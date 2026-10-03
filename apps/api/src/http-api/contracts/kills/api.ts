@@ -10,7 +10,7 @@ import {
   HttpApiGroup,
   HttpApiSchema,
   OpenApi,
-} from "effect/unstable/httpapi";
+} from "effect/http-api";
 import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
   CreateKillResponse,

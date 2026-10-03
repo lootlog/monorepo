@@ -51,7 +51,7 @@ import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Queue } from "bullmq";
 import { Context, Effect, FiberSet, Layer } from "effect";
-import { HttpClient } from "effect/unstable/http";
+import { HttpClient } from "effect/http";
 import {
   makeMembersDataLayer,
   type MemberCommandsPorts,

@@ -2,7 +2,7 @@ import {
   preserveOpenApi30Contract,
   setOpenApiCompatibilityValue,
 } from "@lootlog/schema/openapi-compatibility";
-import { OpenApi } from "effect/unstable/httpapi";
+import { OpenApi } from "effect/http-api";
 import { stringify } from "yaml";
 import { ActivityApi } from "#src/http-api/activity-api";
 

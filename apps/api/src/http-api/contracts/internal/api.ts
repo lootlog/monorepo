@@ -1,9 +1,5 @@
 /** Endpoints owned by the internal HTTP module. */
-import {
-  HttpApiEndpoint,
-  HttpApiGroup,
-  OpenApi,
-} from "effect/unstable/httpapi";
+import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/http-api";
 import { OrganizationSummary } from "#src/contracts/shared";
 import {
   OrganizationLookupPath,

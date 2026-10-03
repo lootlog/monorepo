@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { Effect, Fiber, Layer, Random, Result } from "effect";
-import { FetchHttpClient, HttpClient } from "effect/unstable/http";
+import { FetchHttpClient, HttpClient } from "effect/http";
 import { TestClock } from "effect/testing";
 import { boundedHttpGet } from "../src/bounded-http-get.js";
 

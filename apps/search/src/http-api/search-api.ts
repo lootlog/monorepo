@@ -1,6 +1,6 @@
 import { ApiKeyEndpointPolicy } from "@lootlog/schema/api-key-http";
 /** Authoritative composition root for the search HTTP contract. */
-import { HttpApi, OpenApi } from "effect/unstable/httpapi";
+import { HttpApi, OpenApi } from "effect/http-api";
 import { HealthGroup } from "./contracts/health/api.js";
 import { PlayersGroup } from "./contracts/players/api.js";
 import { NPCsGroup } from "./contracts/npcs/api.js";

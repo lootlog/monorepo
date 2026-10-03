@@ -1,10 +1,6 @@
 import { Context, Effect, Layer, Schema } from "effect";
-import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
-import {
-  HttpApiMiddleware,
-  HttpApiSchema,
-  OpenApi,
-} from "effect/unstable/httpapi";
+import { HttpServerRequest, HttpServerResponse } from "effect/http";
+import { HttpApiMiddleware, HttpApiSchema, OpenApi } from "effect/http-api";
 import { apiKeyAllowsOperation, readApiKeyAccess } from "./api-key-policy.js";
 
 const ApiKeyHttpErrors = [401, 403, 429].map((status) =>

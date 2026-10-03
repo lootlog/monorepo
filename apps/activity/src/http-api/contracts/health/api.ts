@@ -4,7 +4,7 @@ import {
   HttpApiGroup,
   HttpApiSchema,
   OpenApi,
-} from "effect/unstable/httpapi";
+} from "effect/http-api";
 import {
   HealthzControllerCheck200,
   ReadyzControllerCheck200,

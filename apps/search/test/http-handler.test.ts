@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { SearchOperationFailure } from "../src/meilisearch/search-operation-failure.js";
 import { Context, Effect, Layer, Predicate } from "effect";
-import { HttpRouter, HttpServer } from "effect/unstable/http";
+import { HttpRouter, HttpServer } from "effect/http";
 import {
   SearchOperations,
   type SearchOperationsValue,

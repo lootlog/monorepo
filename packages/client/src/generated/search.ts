@@ -24,20 +24,6 @@ import type {
 
 import { searchFetch } from '../mutators';
 import type { ErrorType } from '../mutators';
-/**
- * Player search hit
- */
-export interface PlayerHitDtoOutput {
-  id: string;
-  name: string;
-  lvl: number;
-  prof: string;
-  icon: string;
-  characterId: number;
-  accountId: number;
-  world: string;
-}
-
 export type _SearchUnavailableEncodedTag = typeof _SearchUnavailableEncodedTag[keyof typeof _SearchUnavailableEncodedTag];
 
 
@@ -48,97 +34,6 @@ export const _SearchUnavailableEncodedTag = {
 export interface SearchUnavailableEncoded {
   _tag: _SearchUnavailableEncodedTag;
   message: string;
-}
-
-/**
- * Meaning of `id`: a Margonem template id, a runtime spawn id observed without a template, or an overloaded legacy id.
- */
-export type NpcHitDtoOutputIdentityNamespace = typeof NpcHitDtoOutputIdentityNamespace[keyof typeof NpcHitDtoOutputIdentityNamespace];
-
-
-export const NpcHitDtoOutputIdentityNamespace = {
-  legacy: 'legacy',
-  runtime: 'runtime',
-  template: 'template',
-} as const;
-
-export type NpcHitDtoOutputType = typeof NpcHitDtoOutputType[keyof typeof NpcHitDtoOutputType];
-
-
-export const NpcHitDtoOutputType = {
-  COMMON: 'COMMON',
-  ELITE: 'ELITE',
-  ELITE2: 'ELITE2',
-  ELITE3: 'ELITE3',
-  HERO: 'HERO',
-  EVENT_HERO: 'EVENT_HERO',
-  COLOSSUS: 'COLOSSUS',
-  TITAN: 'TITAN',
-  NPC: 'NPC',
-} as const;
-
-/**
- * Margonem edition of the NPC: `pl` for margonem.pl, `en` for margonem.com. Equal ids in different editions are unrelated.
- */
-export type NpcHitDtoOutputGameVersion = typeof NpcHitDtoOutputGameVersion[keyof typeof NpcHitDtoOutputGameVersion];
-
-
-export const NpcHitDtoOutputGameVersion = {
-  en: 'en',
-  pl: 'pl',
-} as const;
-
-/**
- * NPC search hit
- */
-export interface NpcHitDtoOutput {
-  id: number;
-  /** Meaning of `id`: a Margonem template id, a runtime spawn id observed without a template, or an overloaded legacy id. */
-  identityNamespace: NpcHitDtoOutputIdentityNamespace;
-  prof: string;
-  icon: string;
-  name: string;
-  lvl: number;
-  wt: number;
-  type: NpcHitDtoOutputType;
-  margonemType: number;
-  /** Worlds of the edition where this NPC was observed. */
-  worlds: string[];
-  /** Margonem edition of the NPC: `pl` for margonem.pl, `en` for margonem.com. Equal ids in different editions are unrelated. */
-  gameVersion: NpcHitDtoOutputGameVersion;
-}
-
-/**
- * Item search hit
- */
-export type SearchItemsResponseDtoOutputHitsItem = {
-  id: number;
-  name: string;
-  icon: string;
-  stat: string;
-  lvl: number;
-  /** @nullable */
-  rarity: string | null;
-  /** @nullable */
-  type: string | null;
-  worlds: string[];
-};
-
-export type SearchItemsResponseDtoOutputFacetDistribution = {[key: string]: {[key: string]: number}};
-
-export type SearchItemsResponseDtoOutputFacetStats = {[key: string]: {
-  min: number;
-  max: number;
-}};
-
-/**
- * Item search results
- */
-export interface SearchItemsResponseDtoOutput {
-  hits: SearchItemsResponseDtoOutputHitsItem[];
-  estimatedTotalHits: number;
-  facetDistribution: SearchItemsResponseDtoOutputFacetDistribution;
-  facetStats: SearchItemsResponseDtoOutputFacetStats;
 }
 
 /**
@@ -236,6 +131,111 @@ export interface SearchAllResponseDtoOutput {
   items: SearchAllResponseDtoOutputItemsItem[];
   players: SearchAllResponseDtoOutputPlayersItem[];
   npcs: SearchAllResponseDtoOutputNpcsItem[];
+}
+
+/**
+ * Item search hit
+ */
+export type SearchItemsResponseDtoOutputHitsItem = {
+  id: number;
+  name: string;
+  icon: string;
+  stat: string;
+  lvl: number;
+  /** @nullable */
+  rarity: string | null;
+  /** @nullable */
+  type: string | null;
+  worlds: string[];
+};
+
+export type SearchItemsResponseDtoOutputFacetDistribution = {[key: string]: {[key: string]: number}};
+
+export type SearchItemsResponseDtoOutputFacetStats = {[key: string]: {
+  min: number;
+  max: number;
+}};
+
+/**
+ * Item search results
+ */
+export interface SearchItemsResponseDtoOutput {
+  hits: SearchItemsResponseDtoOutputHitsItem[];
+  estimatedTotalHits: number;
+  facetDistribution: SearchItemsResponseDtoOutputFacetDistribution;
+  facetStats: SearchItemsResponseDtoOutputFacetStats;
+}
+
+/**
+ * Meaning of `id`: a Margonem template id, a runtime spawn id observed without a template, or an overloaded legacy id.
+ */
+export type NpcHitDtoOutputIdentityNamespace = typeof NpcHitDtoOutputIdentityNamespace[keyof typeof NpcHitDtoOutputIdentityNamespace];
+
+
+export const NpcHitDtoOutputIdentityNamespace = {
+  legacy: 'legacy',
+  runtime: 'runtime',
+  template: 'template',
+} as const;
+
+export type NpcHitDtoOutputType = typeof NpcHitDtoOutputType[keyof typeof NpcHitDtoOutputType];
+
+
+export const NpcHitDtoOutputType = {
+  COMMON: 'COMMON',
+  ELITE: 'ELITE',
+  ELITE2: 'ELITE2',
+  ELITE3: 'ELITE3',
+  HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
+  COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
+  NPC: 'NPC',
+} as const;
+
+/**
+ * Margonem edition of the NPC: `pl` for margonem.pl, `en` for margonem.com. Equal ids in different editions are unrelated.
+ */
+export type NpcHitDtoOutputGameVersion = typeof NpcHitDtoOutputGameVersion[keyof typeof NpcHitDtoOutputGameVersion];
+
+
+export const NpcHitDtoOutputGameVersion = {
+  en: 'en',
+  pl: 'pl',
+} as const;
+
+/**
+ * NPC search hit
+ */
+export interface NpcHitDtoOutput {
+  id: number;
+  /** Meaning of `id`: a Margonem template id, a runtime spawn id observed without a template, or an overloaded legacy id. */
+  identityNamespace: NpcHitDtoOutputIdentityNamespace;
+  prof: string;
+  icon: string;
+  name: string;
+  lvl: number;
+  wt: number;
+  type: NpcHitDtoOutputType;
+  margonemType: number;
+  /** Worlds of the edition where this NPC was observed. */
+  worlds: string[];
+  /** Margonem edition of the NPC: `pl` for margonem.pl, `en` for margonem.com. Equal ids in different editions are unrelated. */
+  gameVersion: NpcHitDtoOutputGameVersion;
+}
+
+/**
+ * Player search hit
+ */
+export interface PlayerHitDtoOutput {
+  id: string;
+  name: string;
+  lvl: number;
+  prof: string;
+  icon: string;
+  characterId: number;
+  accountId: number;
+  world: string;
 }
 
 export type HealthzControllerHealthCheck401 = {

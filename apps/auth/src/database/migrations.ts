@@ -2,8 +2,8 @@ import { fileURLToPath } from "node:url";
 import { migrate } from "drizzle-orm/effect-postgres/migrator";
 import { readMigrationFiles } from "drizzle-orm/migrator";
 import { Effect } from "effect";
-import type { SqlClient } from "effect/unstable/sql/SqlClient";
-import type { SqlError } from "effect/unstable/sql/SqlError";
+import type { SqlClient } from "effect/sql/SqlClient";
+import type { SqlError } from "effect/sql/SqlError";
 import type { AuthDatabaseValue } from "./drizzle.js";
 
 export interface AuthMigrationClient {

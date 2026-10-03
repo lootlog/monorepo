@@ -1,6 +1,6 @@
 import { expect, spyOn, test } from "bun:test";
 import { ConfigProvider, Context, Layer } from "effect";
-import { HttpRouter, HttpServer } from "effect/unstable/http";
+import { HttpRouter, HttpServer } from "effect/http";
 import { SearchOperations } from "../src/http-api/search-operations.js";
 import { SearchRoutes } from "../src/http-api/search-http.js";
 

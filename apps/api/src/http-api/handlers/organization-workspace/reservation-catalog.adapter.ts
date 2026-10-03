@@ -1,5 +1,5 @@
 import { Effect, Schema } from "effect";
-import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
+import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
 import {
   parseReservationCatalogPayload,
   type ReservationSpot,

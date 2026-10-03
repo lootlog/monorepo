@@ -17,6 +17,8 @@ paths:
             text/plain:
               schema:
                 type: string
+                enum:
+                  - OK
       summary: Health check
   /internal/guilds/{guildId}/channels:
     get:
@@ -113,59 +115,6 @@ paths:
                   - message
 components:
   schemas:
-    DiscordGuildChannel:
-      type: object
-      properties:
-        guildId:
-          type: string
-        channelId:
-          type: string
-        name:
-          type: string
-        channelType:
-          type: string
-        parentId:
-          nullable: true
-          type: string
-        position:
-          type: integer
-        active:
-          type: boolean
-        canView:
-          type: boolean
-        canSend:
-          type: boolean
-        hasRequiredPermissions:
-          type: boolean
-        requiredPermissions:
-          type: array
-          items:
-            type: string
-        grantedPermissions:
-          type: array
-          items:
-            type: string
-        missingPermissions:
-          type: array
-          items:
-            type: string
-        lastSyncedAt:
-          type: string
-      required:
-        - guildId
-        - channelId
-        - name
-        - channelType
-        - parentId
-        - position
-        - active
-        - canView
-        - canSend
-        - hasRequiredPermissions
-        - requiredPermissions
-        - grantedPermissions
-        - missingPermissions
-        - lastSyncedAt
     DiscordGuildSyncState:
       type: object
       properties:
@@ -236,4 +185,57 @@ components:
         - guildId
         - channels
         - syncState
+    DiscordGuildChannel:
+      type: object
+      properties:
+        guildId:
+          type: string
+        channelId:
+          type: string
+        name:
+          type: string
+        channelType:
+          type: string
+        parentId:
+          nullable: true
+          type: string
+        position:
+          type: integer
+        active:
+          type: boolean
+        canView:
+          type: boolean
+        canSend:
+          type: boolean
+        hasRequiredPermissions:
+          type: boolean
+        requiredPermissions:
+          type: array
+          items:
+            type: string
+        grantedPermissions:
+          type: array
+          items:
+            type: string
+        missingPermissions:
+          type: array
+          items:
+            type: string
+        lastSyncedAt:
+          type: string
+      required:
+        - guildId
+        - channelId
+        - name
+        - channelType
+        - parentId
+        - position
+        - active
+        - canView
+        - canSend
+        - hasRequiredPermissions
+        - requiredPermissions
+        - grantedPermissions
+        - missingPermissions
+        - lastSyncedAt
 tags: []

@@ -1,6 +1,6 @@
 /** Transport schemas owned by the health HTTP module. */
 import { Schema } from "effect";
-import { HttpApiSchema } from "effect/unstable/httpapi";
+import { HttpApiSchema } from "effect/http-api";
 
 export const GatewayHealth = Schema.Struct({
   status: Schema.Literal("ok"),

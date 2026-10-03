@@ -7,7 +7,7 @@ import {
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Layer, ManagedRuntime, Schema } from "effect";
 import { and, eq } from "drizzle-orm";
-import { FetchHttpClient, HttpRouter } from "effect/unstable/http";
+import { FetchHttpClient, HttpRouter } from "effect/http";
 import {
   TimerHistoryListResponse,
   TimerResponse,
