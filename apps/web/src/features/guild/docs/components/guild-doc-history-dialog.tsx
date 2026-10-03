@@ -21,7 +21,7 @@ import {
 
 import { GuildDocEditor } from "../editor/guild-doc-editor";
 import { normalizeGuildDocEditorContent } from "../editor/guild-doc-editor-content";
-import { formatGuildDocDateTime } from "../docs-date-format";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { useTranslation } from "react-i18next";
 
 type GuildDocHistoryDialogProps = {
@@ -87,7 +87,7 @@ export const GuildDocHistoryDialog = ({
     const actorName = history.actor.name ?? t("docs.list.unknownEditor");
     const actionLabel = t(`docs.history.actions.${history.action}`);
     const isSelected = history.id === selectedHistoryId;
-    const editedAt = formatGuildDocDateTime(history.editedAt);
+    const editedAt = timestampToDate(history.editedAt);
 
     return (
       <button

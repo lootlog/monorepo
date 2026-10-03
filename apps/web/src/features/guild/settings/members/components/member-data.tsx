@@ -57,7 +57,7 @@ const formatDateTime = (
     return fallback;
   }
 
-  return `${getRelativeTime(timestamp)} (${format(new Date(timestamp), "yyyy-MM-dd HH:mm")})`;
+  return `${getRelativeTime(timestamp)} (${format(new Date(timestamp), "dd.MM.yyyy HH:mm")})`;
 };
 
 const DetailSection = ({

@@ -1,6 +1,8 @@
 {
   "searchPlaceholder": "Szukaj timerów...",
-  "loadError": "Nie udało się pobrać timerów. Spróbuj ponownie.",
+  "toolbarLabel": "Wyszukiwanie i widok timerów",
+  "loadError": "Nie udało się pobrać timerów",
+  "loadErrorDescription": "Sprawdź połączenie i spróbuj ponownie.",
   "refreshError": "Nie udało się odświeżyć timerów. Widoczne dane mogą być nieaktualne. Spróbuj ponownie.",
   "view": {
     "list": "Widok listy",
@@ -17,7 +19,10 @@
     "manual": "Dodane ręcznie"
   },
   "details": {
-    "minSpawnTime": "Min. czas spawnu:",
-    "maxSpawnTime": "Max. czas spawnu:"
+    "minSpawnTime": "Min. czas respawnu",
+    "maxSpawnTime": "Max. czas respawnu"
+  },
+  "status": {
+    "expired": "Po czasie"
   }
 }

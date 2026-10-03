@@ -1,5 +1,7 @@
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Separator } from "@lootlog/ui/components/separator";
-import type { MouseEvent, ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
+import { useSidebar } from "@lootlog/ui/components/sidebar";
 import type { MenuItem } from "./types";
 import { SidebarNavItem } from "./sidebar-nav-item";
 import { useWarmRouteChunks } from "@/lib/router/use-warm-route-chunks";
@@ -15,7 +17,7 @@ interface SidebarNavProps {
   header?: ReactNode;
   beforeItems?: ReactNode;
   footer?: ReactNode;
-  onItemClick?: (item: MenuItem, event: MouseEvent) => void;
+  ariaLabel: string;
 }
 
 export const SidebarNav = ({
@@ -24,9 +26,10 @@ export const SidebarNav = ({
   header,
   beforeItems,
   footer,
-  onItemClick,
+  ariaLabel,
 }: SidebarNavProps) => {
   const { isRukiaTheme, isCatTheme } = useThemeMeta();
+  const { isMobile, setOpenMobile } = useSidebar();
 
   useWarmRouteChunks(
     items
@@ -42,48 +45,61 @@ export const SidebarNav = ({
           {header}
         </div>
       )}
-      {beforeItems}
-      <div key={basePath} className="flex flex-col gap-1.5">
-        {items.map((item) => {
-          const {
-            active,
-            divided,
-            icon,
-            path,
-            label,
-            available,
-            enabled,
-            badge,
-            highlight,
-          } = item;
+      <ScrollArea
+        orientation="vertical"
+        className="relative min-h-0 flex-1 [&>[data-slot=scroll-area-viewport]]:overscroll-contain"
+      >
+        <div className="flex flex-col gap-1.5 pb-2">
+          {beforeItems}
+          <nav key={basePath} aria-label={ariaLabel}>
+            <ul className="flex flex-col gap-1.5">
+              {items.map((item) => {
+                const {
+                  active,
+                  divided,
+                  icon,
+                  path,
+                  label,
+                  available,
+                  enabled,
+                  badge,
+                  highlight,
+                } = item;
 
-          if (!enabled) return null;
+                if (!enabled) return null;
 
-          const url = `${basePath}${path}`;
+                const url = `${basePath}${path}`;
 
-          return (
-            <div key={path}>
-              {divided && <Separator className="mb-1.5" />}
-              <SidebarNavItem
-                url={url}
-                available={available}
-                isActive={active}
-                icon={icon}
-                label={label}
-                badge={badge}
-                highlight={highlight}
-                isRukiaTheme={isRukiaTheme}
-                isCatTheme={isCatTheme}
-                onItemClick={(e) => {
-                  onItemClick?.(item, e);
-                }}
-              />
-            </div>
-          );
-        })}
-      </div>
+                return (
+                  <Fragment key={path}>
+                    {divided && (
+                      <li aria-hidden className="list-none">
+                        <Separator />
+                      </li>
+                    )}
+                    <SidebarNavItem
+                      url={url}
+                      available={available}
+                      isActive={active}
+                      icon={icon}
+                      label={label}
+                      badge={badge}
+                      highlight={highlight}
+                      isRukiaTheme={isRukiaTheme}
+                      isCatTheme={isCatTheme}
+                      onItemClick={() => {
+                        if (isMobile) setOpenMobile(false);
+                      }}
+                    />
+                  </Fragment>
+                );
+              })}
+            </ul>
+          </nav>
+        </div>
+      </ScrollArea>
       {footer ? (
-        <div className="relative mt-auto px-2 pb-2">{footer}</div>
+        <div className="relative shrink-0 px-2 pb-2">{footer}</div>
       ) : null}
       <ThemeSidebarFooterDecoration />
     </div>

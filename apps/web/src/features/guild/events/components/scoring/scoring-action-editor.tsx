@@ -1,3 +1,4 @@
+import { useId } from "react";
 import {
   Controller,
   useWatch,
@@ -31,6 +32,7 @@ export const ScoringActionEditor = ({
   ruleIndex,
 }: ScoringActionEditorProps) => {
   const { t } = useTranslation();
+  const idPrefix = useId();
 
   const actionType = useWatch({
     control,
@@ -42,7 +44,10 @@ export const ScoringActionEditor = ({
   return (
     <div className={showPoints ? "grid grid-cols-[1fr_120px] gap-2" : ""}>
       <div className="space-y-0.5">
-        <Label className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60">
+        <Label
+          htmlFor={`${idPrefix}-action`}
+          className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60"
+        >
           {t("events.scoring.conditionLabel.action")}
         </Label>
         <Controller
@@ -57,7 +62,11 @@ export const ScoringActionEditor = ({
                 label: <>{getScoringActionTypeLabel(actionTypeOption, t)}</>,
               }))}
             >
-              <SelectTrigger size="sm" className="h-8 text-[12px]">
+              <SelectTrigger
+                id={`${idPrefix}-action`}
+                size="sm"
+                className="h-8 text-[12px]"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -74,11 +83,15 @@ export const ScoringActionEditor = ({
 
       {showPoints && (
         <div className="space-y-0.5">
-          <Label className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60">
+          <Label
+            htmlFor={`${idPrefix}-points`}
+            className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60"
+          >
             {t("events.scoring.conditionLabel.points")}
           </Label>
           <div className="flex items-center gap-1">
             <ScoringNumberInput
+              id={`${idPrefix}-points`}
               control={control}
               register={register}
               name={`scoringRules.rules.${ruleIndex}.action.points`}
@@ -87,7 +100,7 @@ export const ScoringActionEditor = ({
               })}
             />
             <span className="text-[11px] text-muted-foreground/50 shrink-0">
-              pkt
+              {t("events.common.pointsShort")}
             </span>
           </div>
         </div>

@@ -63,30 +63,12 @@ describe("EventKillsTable", () => {
     expect(screen.getByText("events.kills.noKills")).toBeTruthy();
   });
 
-  it("renders responsive columns, kill data, and detail links", () => {
+  it("renders kill data and detail links", () => {
     renderTable(<EventKillsTable {...defaultProps} kills={[createKill()]} />);
 
-    expect(screen.getByRole("table").getAttribute("class")).toContain(
-      "table-auto xl:table-fixed",
-    );
     expect(
       screen.getByRole("columnheader", { name: "events.kills.monster" }),
     ).toBeTruthy();
-    expect(
-      screen
-        .getByRole("columnheader", { name: "events.kills.date" })
-        .getAttribute("class"),
-    ).toContain("sm:table-cell");
-    expect(
-      screen
-        .getByRole("columnheader", { name: "events.kills.respawnTime" })
-        .getAttribute("class"),
-    ).toContain("xl:table-cell");
-    expect(
-      screen
-        .getByRole("columnheader", { name: "events.kills.participants" })
-        .getAttribute("class"),
-    ).toContain("lg:table-cell");
     expect(
       screen.queryByRole("columnheader", { name: "events.kills.actions" }),
     ).toBeNull();
@@ -102,7 +84,6 @@ describe("EventKillsTable", () => {
     expect(detailLinks[0]?.getAttribute("href")).toBe(
       "/guild-1/events/event-1/heroes/hero-1/kills/kill-1",
     );
-    expect(document.querySelector(".lucide-external-link")).toBeNull();
   });
 
   it("shows the manual-close label instead of a respawn duration", () => {

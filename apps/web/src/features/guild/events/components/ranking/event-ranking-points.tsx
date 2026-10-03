@@ -35,7 +35,7 @@ export const EventRankingPoints = ({
         {formatPoints(ranking.totalPoints)}
       </span>
       <span className="text-[10px] font-medium text-primary/75 @md/ranking:text-xs">
-        {t("events.common.pointsShort", "pkt")}
+        {t("events.common.pointsShort")}
       </span>
     </>
   );

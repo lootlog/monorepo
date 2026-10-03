@@ -3,7 +3,6 @@ import { useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Permission } from "@lootlog/schema/permissions";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useSession } from "@/hooks/auth/use-session";
 import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
@@ -19,7 +18,8 @@ import { useMatchingLoots } from "./hooks/queries/use-matching-loots";
 import { formatDurationHuman } from "./utils/format-duration";
 import { normalizeBonusBreakdown } from "./utils/normalize-bonus-breakdown";
 import { EventReadError } from "./components/shared/event-read-error";
-import { KillDetailLoadError } from "./components/kills/kill-detail-load-error";
+import { EventLoadError } from "./components/event-load-error";
+import { EventKillDetailSkeleton } from "./event-kill-detail-skeleton";
 import { getKillDetailErrorKind } from "./utils/kill-detail-error";
 import { getAppliedRuleIdsForParticipant } from "./utils/scoring-applied-rules";
 
@@ -70,50 +70,25 @@ export const KillDetail = () => {
   const loots = matchingLoots ?? [];
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col gap-3 px-3 py-3">
-        <section className="overflow-hidden rounded-2xl border border-border bg-card">
-          <div className="flex items-center gap-3 p-3">
-            <Skeleton className="size-10 shrink-0 rounded-lg" />
-            <div className="flex-1 space-y-1.5">
-              <Skeleton className="h-4 w-48 max-w-full" />
-              <Skeleton className="h-3 w-32" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 border-t border-border/70 sm:grid-cols-3 xl:grid-cols-6">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <Skeleton key={index} className="m-3 h-8 rounded-md" />
-            ))}
-          </div>
-        </section>
-        {Array.from({ length: 2 }).map((_, sectionIndex) => (
-          <section
-            key={sectionIndex}
-            className="overflow-hidden rounded-2xl border border-border bg-card p-3"
-          >
-            <Skeleton className="mb-3 h-4 w-36" />
-            <div className="space-y-2">
-              {Array.from({ length: 4 }).map((_, rowIndex) => (
-                <Skeleton key={rowIndex} className="h-11 rounded-md" />
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
-    );
+    return <EventKillDetailSkeleton />;
   }
 
   const isUnavailable = getKillDetailErrorKind(error) !== "failure";
 
   if (!data || isUnavailable) {
     return (
-      <KillDetailLoadError
-        error={error}
+      <EventLoadError
+        backTo="hero"
         guildId={queryGuildId}
         eventId={queryEventId}
         heroId={queryHeroId}
-        onRetry={() => void refetch()}
-        isRetrying={isFetching}
+        error={error}
+        titles={{
+          403: t("events.killDetail.accessDenied"),
+          404: t("events.killDetail.notFound"),
+          500: t("events.killDetail.error"),
+        }}
+        onRetry={() => refetch()}
       />
     );
   }

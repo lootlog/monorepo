@@ -74,7 +74,7 @@ export const MemberKillBreakdownRow = ({
             <span className="text-lg font-bold text-primary tabular-nums">
               {formatPoints(point.points)}
               <span className="ml-1 text-xs font-medium text-primary/75">
-                {t("events.common.pointsShort", "pkt")}
+                {t("events.common.pointsShort")}
               </span>
             </span>
           </div>

@@ -1,16 +1,15 @@
 import { useRef, type ReactNode } from "react";
 import { useHorizontalWheelScroll } from "@lootlog/ui/hooks/use-horizontal-wheel-scroll";
 import { TabsList } from "@lootlog/ui/components/tabs";
-import { cn } from "cn";
 
 interface EventScrollableTabsListProps {
+  ariaLabel: string;
   children: ReactNode;
-  className?: string;
 }
 
 export const EventScrollableTabsList = ({
+  ariaLabel,
   children,
-  className,
 }: EventScrollableTabsListProps) => {
   const viewportRef = useRef<HTMLDivElement>(null);
   useHorizontalWheelScroll(viewportRef);
@@ -21,10 +20,8 @@ export const EventScrollableTabsList = ({
       ref={viewportRef}
     >
       <TabsList
-        className={cn(
-          "grid h-auto min-w-full w-max grid-flow-col auto-cols-[minmax(max-content,1fr)] gap-1 bg-muted/50 p-1",
-          className,
-        )}
+        aria-label={ariaLabel}
+        className="grid h-auto min-w-full w-max grid-flow-col auto-cols-[minmax(max-content,1fr)] gap-1 bg-muted/50 p-1"
       >
         {children}
       </TabsList>

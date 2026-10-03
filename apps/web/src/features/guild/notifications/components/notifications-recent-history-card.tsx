@@ -6,7 +6,8 @@ import { useState } from "react";
 import { History } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
-import { Button } from "@lootlog/ui/components/button";
+import { ChevronLink } from "@lootlog/ui/components/chevron-link";
+import { EmptyState } from "@/components/common/empty-state";
 
 import type { NotificationJobsResponseDto } from "@lootlog/client/main";
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -43,10 +44,23 @@ export const NotificationsRecentHistoryCard = ({
         title={t("settings.notifications.jobs.history")}
         icon={History}
         description={t("settings.notifications.sections.historyDescription")}
+        actions={
+          recentJobs.length > 0 && (
+            <ChevronLink
+              render=<Link
+                to={ROUTES.guild.notifications.history(guildId ?? "")}
+              />
+            >
+              {t("settings.notifications.actions.showAllHistory", {
+                count: historyJobs.length,
+              })}
+            </ChevronLink>
+          )
+        }
       />
       <SectionCardContent className="flex flex-col gap-3">
         {recentJobs.length > 0 ? (
-          <div className="flex flex-col gap-3">
+          <div className="overflow-hidden rounded-xl border border-border/70">
             {recentJobs.map((job) => (
               <NotificationHistoryRow
                 key={job.id}
@@ -55,24 +69,13 @@ export const NotificationsRecentHistoryCard = ({
                 compact
               />
             ))}
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-full"
-              render={
-                <Link to={ROUTES.guild.notifications.history(guildId ?? "")}>
-                  {t("settings.notifications.actions.showAllHistory", {
-                    count: historyJobs.length,
-                  })}
-                </Link>
-              }
-              nativeButton={false}
-            />
           </div>
         ) : (
-          <div className="py-6 text-sm text-muted-foreground">
-            {t("settings.notifications.empty.historyJobs")}
-          </div>
+          <EmptyState
+            icon={History}
+            title={t("settings.notifications.empty.historyJobs")}
+            compact
+          />
         )}
         <NotificationJobDetailDialog
           job={selectedJob}

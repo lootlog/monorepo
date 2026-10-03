@@ -3,14 +3,22 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 type TableRowsSkeletonProps = {
   rows?: number;
   trailingColumns?: number;
+  /** Stands in for a table header that is not rendered while loading. */
+  withHeader?: boolean;
 };
 
 export const TableRowsSkeleton = ({
   rows = 10,
   trailingColumns = 4,
+  withHeader = false,
 }: TableRowsSkeletonProps) => {
   return (
     <div>
+      {withHeader && (
+        <div className="flex h-10 items-center gap-4 border-b border-border px-4">
+          <Skeleton className="h-3 w-24" />
+        </div>
+      )}
       {Array.from({ length: rows }).map((_, rowIndex) => (
         <div
           key={rowIndex}

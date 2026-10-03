@@ -1,4 +1,5 @@
 import { cn } from "cn";
+import { useTranslation } from "react-i18next";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
@@ -12,11 +13,15 @@ export function StatisticsDistribution({
   title,
   rows,
 }: StatisticsDistributionProps) {
+  const { t } = useTranslation();
   const maximum = Math.max(1, ...rows.map((row) => row.kills));
 
   return (
     <SectionCard>
-      <SectionCardHeader title={title} description="Europe/Warsaw" />
+      <SectionCardHeader
+        title={title}
+        description={t("statistics.polishTime")}
+      />
       <SectionCardContent>
         <dl
           aria-label={title}

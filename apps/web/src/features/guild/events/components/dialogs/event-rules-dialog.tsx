@@ -1,14 +1,9 @@
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useTranslation } from "react-i18next";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@lootlog/ui/components/dialog";
+import { IconDialogHeader } from "@/components/common/icon-dialog-header";
+import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { BookOpen, Scale } from "lucide-react";
+import { BookOpen, BookText, Scale } from "lucide-react";
 import { EventScoringRulesSummary } from "./event-scoring-rules-summary";
 import type {
   EventScoringMode,
@@ -41,14 +36,11 @@ export const EventRulesDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
-        <DialogHeader className="px-5 pt-5 pb-4 border-b bg-muted/30 shrink-0">
-          <DialogTitle className="text-base">
-            {t("events.rulesDialog.title", "Zasady eventu")}
-          </DialogTitle>
-          <DialogDescription className="text-xs mt-0.5">
-            {eventName}
-          </DialogDescription>
-        </DialogHeader>
+        <IconDialogHeader
+          icon={BookText}
+          title={t("events.rulesDialog.title")}
+          description={eventName}
+        />
 
         <ScrollArea className="flex-1">
           <div className="p-5 space-y-5">
@@ -65,10 +57,7 @@ export const EventRulesDialog = ({
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  {t(
-                    "events.rulesDialog.noRulebook",
-                    "Brak opisanego regulaminu dla tego eventu.",
-                  )}
+                  {t("events.rulesDialog.noRulebook")}
                 </p>
               )}
             </div>

@@ -1,3 +1,4 @@
+import { formatNpcLevel } from "@lootlog/domain/profession";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { TextLink } from "@lootlog/ui/components/text-link";
@@ -71,7 +72,7 @@ export const StatsNpcsList = () => {
               {npc.npcName}
             </TextLink>
           }
-          subtitle={t("kills.level", { level: npc.npcLvl })}
+          subtitle={t("kills.level", { level: formatNpcLevel(npc.npcLvl) })}
         />
       ),
     },
@@ -163,7 +164,7 @@ export const StatsNpcsList = () => {
                       icon: npc.npcIcon,
                     }}
                     name={npc.npcName}
-                    subtitle={`${t(`npcType.${npc.npcType}`)} · ${t("kills.level", { level: npc.npcLvl })}`}
+                    subtitle={`${t(`npcType.${npc.npcType}`)} · ${t("kills.level", { level: formatNpcLevel(npc.npcLvl) })}`}
                   />
                 </span>
                 <span className="shrink-0 text-sm font-semibold tabular-nums">

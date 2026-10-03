@@ -1,13 +1,13 @@
 import { useMemberActivity } from "@/features/guild/settings/members/use-member-activity";
 import { PageHeader } from "@/components/common/page-header";
-import { Button } from "@lootlog/ui/components/button";
+import { EmptyState } from "@/components/common/empty-state";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { ArrowLeft, UserRoundX } from "lucide-react";
+import { UserRoundX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "@tanstack/react-router";
@@ -90,25 +90,12 @@ const MemberSettingsDetailPageContent = () => {
 
   if (members && !member) {
     return (
-      <div className="flex h-full min-h-0 flex-col">
-        <header className="shrink-0 border-b border-border bg-background px-4 py-3">
-          <Button type="button" variant="ghost" size="sm" onClick={handleBack}>
-            <ArrowLeft className="size-4" />
-            {t("settings.members.backToMembers")}
-          </Button>
-        </header>
-        <div className="flex min-h-0 flex-1 [align-items:safe_center] justify-center overflow-y-auto p-6 text-center">
-          <div className="max-w-sm text-muted-foreground">
-            <UserRoundX className="mx-auto mb-3 size-10 opacity-50" />
-            <p className="text-sm font-medium text-foreground">
-              {t("settings.members.memberNotFound")}
-            </p>
-            <p className="mt-1 text-xs">
-              {t("settings.members.memberNotFoundDescription")}
-            </p>
-          </div>
-        </div>
-      </div>
+      <EmptyState
+        icon={UserRoundX}
+        title={t("settings.members.memberNotFound")}
+        description={t("settings.members.memberNotFoundDescription")}
+        className="h-full"
+      />
     );
   }
 
@@ -119,45 +106,37 @@ const MemberSettingsDetailPageContent = () => {
   const memberColor = getColorFromRole(member.roles);
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto px-3 custom-scrollbar [scrollbar-gutter:stable]">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto p-3 custom-scrollbar [scrollbar-gutter:stable]">
       <PageHeader
+        media={
+          <Avatar className="size-9 shrink-0 rounded-lg" aria-hidden>
+            <AvatarImage
+              src={getDiscordAvatarUrl(member.userId, member.avatar)}
+              alt=""
+            />
+            <AvatarFallback className="rounded-lg">
+              {member.name.slice(0, 1)}
+            </AvatarFallback>
+          </Avatar>
+        }
         title={<span style={{ color: memberColor }}>{member.name}</span>}
         description={t("settings.members.details")}
         actions={
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={handleBack}
-              aria-label={t("settings.members.backToMembers")}
-            >
-              <ArrowLeft className="size-4" />
-            </Button>
-            <div className="flex min-w-0 items-center gap-3">
-              <Avatar className="size-10 shrink-0 rounded-lg">
-                <AvatarImage
-                  src={getDiscordAvatarUrl(member.userId, member.avatar)}
-                />
-                <AvatarFallback>{member.name.slice(0, 1)}</AvatarFallback>
-              </Avatar>
-            </div>
-            <div className="flex shrink-0 flex-wrap items-center gap-2 pl-12 sm:pl-0">
-              <MemberSyncButton
+          <>
+            <MemberSyncButton
+              member={member}
+              variant="secondary"
+              onMemberUpdated={handleMemberUpdated}
+            />
+            {canManageMembers && (
+              <MemberDeactivationButton
                 member={member}
-                variant="secondary"
-                onMemberUpdated={handleMemberUpdated}
+                onDeactivated={(updatedMember) =>
+                  handleMemberUpdated(updatedMember)
+                }
               />
-              {canManageMembers && (
-                <MemberDeactivationButton
-                  member={member}
-                  onDeactivated={(updatedMember) =>
-                    handleMemberUpdated(updatedMember)
-                  }
-                />
-              )}
-            </div>
-          </div>
+            )}
+          </>
         }
       />
       <ScrollArea className="min-h-48 flex-1">

@@ -1,8 +1,6 @@
 import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
 import { useState, useEffect } from "react";
 import { Clock } from "lucide-react";
-import { format } from "date-fns";
-import { pl } from "date-fns/locale";
 import {
   Tooltip,
   TooltipContent,
@@ -11,6 +9,7 @@ import {
 import { parseMsToTime } from "@lootlog/datetime";
 import { cn } from "cn";
 import type { EventTimer } from "../../types/api";
+import { formatTime } from "../../utils/format-date";
 import type { TFunction } from "i18next";
 
 interface HeroTimerDisplayProps {
@@ -100,10 +99,10 @@ const HeroTimerDisplayContent = ({
             className={cn(
               "inline-flex items-center gap-1 text-[11px] font-medium whitespace-nowrap",
               isOverdue
-                ? "text-orange-500"
+                ? "text-signal-alert"
                 : isClose
-                  ? "text-orange-400"
-                  : "text-green-400",
+                  ? "text-signal-timer"
+                  : "text-signal-ready",
               className,
             )}
           >
@@ -114,8 +113,7 @@ const HeroTimerDisplayContent = ({
       />
       <TooltipContent>
         <p className="text-sm">
-          {label}:{" "}
-          {format(new Date(timer.maxSpawnTime), "HH:mm:ss", { locale: pl })}
+          {label}: {formatTime(new Date(timer.maxSpawnTime))}
         </p>
       </TooltipContent>
     </Tooltip>

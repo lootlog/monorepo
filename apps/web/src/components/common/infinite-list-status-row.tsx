@@ -13,10 +13,10 @@ type Props = {
 };
 
 /**
- * The final virtual row: a loader while pages remain, a retry row when the
- * last request failed, otherwise the end note. Loaded cards stay above it.
+ * The last row of an infinite list: a loader while pages remain, a retry row
+ * when the next page failed, otherwise the end note. Loaded items stay above.
  */
-export const LootListSentinelRow = ({
+export const InfiniteListStatusRow = ({
   hasNextPage,
   hasError,
   onRetry,

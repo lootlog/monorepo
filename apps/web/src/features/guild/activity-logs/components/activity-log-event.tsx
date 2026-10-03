@@ -6,11 +6,11 @@ import { useTranslation } from "react-i18next";
 const EVENT_PRESENTATION = {
   CONNECT_EVENT: {
     icon: LogIn,
-    className: "bg-emerald-500/10 text-emerald-500",
+    className: "bg-signal-ready/10 text-signal-ready",
   },
   DISCONNECT_EVENT: {
     icon: LogOut,
-    className: "bg-red-500/10 text-red-500",
+    className: "bg-destructive/10 text-destructive",
   },
 } as const;
 

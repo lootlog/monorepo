@@ -110,7 +110,6 @@ export function RatingDeltaByOpponentCard({
       emptyMessage={t("battlePanel.statistics.matchmaking.empty")}
       actions={
         <ChevronLink
-          className="inline-flex h-8 shrink-0 items-center gap-1 text-xs"
           render=<Link
             to={ROUTES.user.battlePanel.matchmakingH2h}
             search={search}

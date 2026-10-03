@@ -115,7 +115,9 @@ it.each(["create", "edit"] as const)(
           name: /events.scoring.modeAdvancedTitle/,
         }),
       );
-      fireEvent.click(screen.getByRole("button", { name: "Dalej" }));
+      fireEvent.click(
+        screen.getByRole("button", { name: "events.createDialog.next" }),
+      );
       fireEvent.change(
         screen.getByPlaceholderText("events.createDialog.namePlaceholder"),
         { target: { value: "Event" } },

@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { ScoringFactorSelect } from "./scoring-factor-select";
 import { Controller, type Control } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -25,11 +26,15 @@ export const ScoringConditionBoolean = ({
   conditionIndex,
 }: ScoringConditionBooleanProps) => {
   const { t } = useTranslation();
+  const idPrefix = useId();
 
   return (
     <div className="grid grid-cols-[1fr_100px] gap-1.5">
       <div className="space-y-0.5">
-        <Label className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60">
+        <Label
+          htmlFor={`${idPrefix}-factor`}
+          className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60"
+        >
           {t("events.scoring.conditionLabel.factor")}
         </Label>
         <Controller
@@ -37,6 +42,7 @@ export const ScoringConditionBoolean = ({
           name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.factor`}
           render={({ field }) => (
             <ScoringFactorSelect
+              id={`${idPrefix}-factor`}
               factors={EVENT_SCORING_BOOLEAN_FACTORS}
               value={field.value}
               onChange={field.onChange}
@@ -45,7 +51,10 @@ export const ScoringConditionBoolean = ({
         />
       </div>
       <div className="space-y-0.5">
-        <Label className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60">
+        <Label
+          htmlFor={`${idPrefix}-value`}
+          className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60"
+        >
           {t("events.scoring.conditionLabel.value")}
         </Label>
         <Controller
@@ -66,7 +75,11 @@ export const ScoringConditionBoolean = ({
                 },
               ]}
             >
-              <SelectTrigger size="sm" className="h-8 text-[12px]">
+              <SelectTrigger
+                id={`${idPrefix}-value`}
+                size="sm"
+                className="h-8 text-[12px]"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

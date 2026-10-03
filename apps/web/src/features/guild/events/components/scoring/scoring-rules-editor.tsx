@@ -11,7 +11,6 @@ import { isEqual } from "es-toolkit";
 import { useFieldArray, useWatch, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
-import { Label } from "@lootlog/ui/components/label";
 import { Separator } from "@lootlog/ui/components/separator";
 import { Plus, ListChecks, FlaskConical } from "lucide-react";
 import type { EventScoringRules } from "@lootlog/domain/scoring";
@@ -108,9 +107,9 @@ export const ScoringRulesEditor = ({
       <div className="space-y-2.5">
         <div className="flex items-center gap-1.5">
           <ListChecks className="size-3.5 text-muted-foreground/50" />
-          <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {t("events.scoring.rules")}
-          </Label>
+          </h3>
           <span className="text-[10px] text-muted-foreground/40 font-mono ml-1">
             ({fields.length})
           </span>

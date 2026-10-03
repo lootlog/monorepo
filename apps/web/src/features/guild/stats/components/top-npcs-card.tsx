@@ -1,3 +1,4 @@
+import { formatNpcLevel } from "@lootlog/domain/profession";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import {
   getKillsControllerGetGuildTopNpcsQueryKey,
@@ -82,7 +83,6 @@ export const TopNpcsCard = ({
       }
       actions={
         <ChevronLink
-          className="inline-flex h-8 shrink-0 items-center gap-1 text-xs"
           render=<Link to="/$guildId/stats/npcs" params={{ guildId }} />
         >
           {t("kills.topNpcs.viewAll")}
@@ -108,7 +108,7 @@ export const TopNpcsCard = ({
             )
           }
           title={npc.npcName}
-          subtitle={t("kills.level", { level: npc.npcLvl })}
+          subtitle={t("kills.level", { level: formatNpcLevel(npc.npcLvl) })}
           value={npc.uniqueKills}
           maxValue={topNpcs[0]?.uniqueKills ?? 0}
           link={{

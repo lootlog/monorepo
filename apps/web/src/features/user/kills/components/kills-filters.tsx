@@ -1,7 +1,5 @@
-import { upperFirst } from "es-toolkit";
 import { findTrackableNpcType } from "../npc-types";
 import { useTranslation } from "react-i18next";
-import { Globe } from "lucide-react";
 import { Input } from "@lootlog/ui/components/input";
 import {
   Select,
@@ -23,6 +21,8 @@ import {
   type KillStatsPeriod,
 } from "@/features/kills/components/kill-stats-period-select";
 import { SearchInput } from "@/components/ui/search-input";
+import { FilterBar } from "@/components/common/filter-bar";
+import { WorldSwitcher } from "@/components/common/world-switcher";
 
 export type KillsFiltersState = {
   world?: string;
@@ -65,11 +65,6 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
     ? Object.keys(data.overview.killsByWorld).sort()
     : [];
 
-  const handleWorldChange = (value: string | null) => {
-    if (value === null) return;
-    onWorldChange(value === "all" ? undefined : value);
-  };
-
   const handleNpcTypeChange = (value: string | null) => {
     if (value === null) return;
     const npcType = findTrackableNpcType(value);
@@ -87,97 +82,84 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
   };
 
   return (
-    <div className="sticky top-0 z-10 w-full max-w-full overflow-hidden border-b bg-background px-3 py-3 md:px-4">
-      <div className="flex min-w-0 flex-col items-stretch gap-2 md:flex-row md:flex-wrap md:items-center">
-        <SearchInput
-          placeholder={t("kills.ranking.search")}
-          value={filters.search ?? ""}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="h-9"
-          wrapperClassName="min-w-0 md:w-[200px]"
-        />
+    <FilterBar ariaLabel={t("kills.filters.title")}>
+      <SearchInput
+        placeholder={t("kills.ranking.search")}
+        aria-label={t("kills.ranking.search")}
+        value={filters.search ?? ""}
+        onChange={(e) => onSearchChange(e.target.value)}
+        wrapperClassName="h-10 w-full min-w-0 md:w-[220px]"
+      />
 
-        <Select
-          value={filters.world ?? "all"}
-          onValueChange={handleWorldChange}
-          items={[
-            { value: null, label: <>{t("kills.home.filters.allWorlds")}</> },
-            { value: "all", label: <>{t("kills.home.filters.allWorlds")}</> },
-            ...worlds.map((world) => ({
-              value: world,
-              label: <>{upperFirst(world)}</>,
-            })),
-          ]}
+      <WorldSwitcher
+        value={filters.world ?? null}
+        onValueChange={(world) => onWorldChange(world ?? undefined)}
+        worlds={worlds}
+        showAllOption
+      />
+
+      <Select
+        value={filters.npcTypes?.[0] ?? "all"}
+        onValueChange={handleNpcTypeChange}
+        items={[
+          { value: null, label: <>{t("kills.filters.allTypes")}</> },
+          { value: "all", label: <>{t("kills.filters.allTypes")}</> },
+          ...TRACKABLE_NPC_TYPES.map((type) => ({
+            value: type,
+            label: <>{t(`npcType.${type}`)}</>,
+          })),
+        ]}
+      >
+        <SelectTrigger
+          size="lg"
+          aria-label={t("kills.filters.npcType")}
+          className="w-[160px] min-w-0"
         >
-          <SelectTrigger className="h-9 w-full min-w-0 md:w-[170px]">
-            <div className="flex items-center gap-2">
-              <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
-              <SelectValue placeholder={t("kills.home.filters.allWorlds")} />
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">
-              {t("kills.home.filters.allWorlds")}
+          <SelectValue placeholder={t("kills.filters.allTypes")} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">{t("kills.filters.allTypes")}</SelectItem>
+          {TRACKABLE_NPC_TYPES.map((type) => (
+            <SelectItem key={type} value={type}>
+              {t(`npcType.${type}`)}
             </SelectItem>
-            {worlds.map((world) => (
-              <SelectItem key={world} value={world}>
-                {upperFirst(world)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          ))}
+        </SelectContent>
+      </Select>
 
-        <Select
-          value={filters.npcTypes?.[0] ?? "all"}
-          onValueChange={handleNpcTypeChange}
-          items={[
-            { value: null, label: <>{t("kills.filters.allTypes")}</> },
-            { value: "all", label: <>{t("kills.filters.allTypes")}</> },
-            ...TRACKABLE_NPC_TYPES.map((type) => ({
-              value: type,
-              label: <>{t(`npcType.${type}`)}</>,
-            })),
-          ]}
-        >
-          <SelectTrigger className="h-9 w-full min-w-0 md:w-[140px]">
-            <SelectValue placeholder={t("kills.filters.allTypes")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("kills.filters.allTypes")}</SelectItem>
-            {TRACKABLE_NPC_TYPES.map((type) => (
-              <SelectItem key={type} value={type}>
-                {t(`npcType.${type}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <KillStatsPeriodSelect
+        value={filters.period}
+        onValueChange={onPeriodChange}
+        className="w-[200px]"
+      />
 
-        <KillStatsPeriodSelect
-          value={filters.period}
-          onValueChange={onPeriodChange}
-          className="h-9 w-full min-w-0 md:w-[140px]"
+      <div
+        role="group"
+        aria-label={t("kills.filters.levelRange")}
+        className="flex items-center gap-2"
+      >
+        <Input
+          type="number"
+          placeholder={t("kills.filters.minLevelShort")}
+          aria-label={t("kills.filters.minLevel")}
+          value={filters.minLvl ?? ""}
+          onChange={handleMinLvlChange}
+          className="h-10 w-[72px]"
+          min={0}
         />
-
-        <div className="flex min-w-0 items-center gap-1.5 md:w-auto">
-          <Input
-            type="number"
-            placeholder={t("kills.filters.minLevel")}
-            value={filters.minLvl ?? ""}
-            onChange={handleMinLvlChange}
-            className="h-9 min-w-0 flex-1 md:w-[70px]"
-            min={0}
-          />
-          <span className="text-muted-foreground text-sm">-</span>
-          <Input
-            type="number"
-            placeholder={t("kills.filters.maxLevel")}
-            value={filters.maxLvl ?? ""}
-            onChange={handleMaxLvlChange}
-            className="h-9 min-w-0 flex-1 md:w-[70px]"
-            min={0}
-          />
-        </div>
+        <span className="text-xs text-muted-foreground" aria-hidden="true">
+          –
+        </span>
+        <Input
+          type="number"
+          placeholder={t("kills.filters.maxLevelShort")}
+          aria-label={t("kills.filters.maxLevel")}
+          value={filters.maxLvl ?? ""}
+          onChange={handleMaxLvlChange}
+          className="h-10 w-[72px]"
+          min={0}
+        />
       </div>
-    </div>
+    </FilterBar>
   );
 };

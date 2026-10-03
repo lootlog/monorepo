@@ -8,23 +8,23 @@ export const getWindowStatusConfig = (
     case "OPEN":
       return {
         label: t("events.respawn.status.open"),
-        className: "bg-green-500/10 text-green-500 border-green-500/20",
+        variant: "ready" as const,
       };
     case "WAITING":
       return {
         label: t("events.respawn.status.waiting"),
-        className: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+        variant: "timer" as const,
       };
     case "OVERDUE":
       return {
         label: t("events.respawn.status.overdue"),
-        className: "bg-orange-500/10 text-orange-500 border-orange-500/20",
+        variant: "alert" as const,
       };
     case "NONE":
     default:
       return {
         label: t("events.respawn.status.none"),
-        className: "bg-muted text-muted-foreground border-border",
+        variant: "secondary" as const,
       };
   }
 };

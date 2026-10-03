@@ -14,6 +14,7 @@ import type { EventScoringMode } from "@lootlog/domain/scoring";
 interface ScoringModeSelectorProps {
   value: EventScoringMode;
   onChange: (mode: EventScoringMode) => void;
+  "aria-labelledby"?: string;
 }
 
 const modes = [
@@ -40,11 +41,13 @@ const modes = [
 export const ScoringModeSelector = ({
   value,
   onChange,
+  "aria-labelledby": ariaLabelledBy,
 }: ScoringModeSelectorProps) => {
   const { t } = useTranslation();
 
   return (
     <RadioGroup
+      aria-labelledby={ariaLabelledBy}
       value={value}
       onValueChange={(nextValue) => onChange(nextValue)}
       className="grid grid-cols-1 gap-3 sm:grid-cols-2"

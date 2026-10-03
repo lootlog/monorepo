@@ -34,7 +34,7 @@ export const NotificationTimerFields = ({
           name="scheduleAnchor"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              <FormLabel>
                 {t("settings.notifications.fields.scheduleAnchor")}
               </FormLabel>
               <Select
@@ -88,7 +88,7 @@ export const NotificationTimerFields = ({
           name="scheduleOffsetMinutes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              <FormLabel>
                 {t("settings.notifications.fields.scheduleOffsetMinutes")}
               </FormLabel>
               <FormControl

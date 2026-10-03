@@ -18,7 +18,9 @@ export const BattlePanelH2hSkeleton = () => {
       <div className="flex flex-1 overflow-hidden">
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-3">
           <SectionCard className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <SectionCardHeader title=<Skeleton className="h-4 w-32" /> />
+            <SectionCardHeader
+              title=<Skeleton render={<span />} className="block h-4 w-32" />
+            />
             <SectionCardContent className="flex min-h-0 flex-1 flex-col p-0">
               <div className="min-h-0 flex-1">
                 {Array.from({ length: 8 }).map((_, rowIndex) => (

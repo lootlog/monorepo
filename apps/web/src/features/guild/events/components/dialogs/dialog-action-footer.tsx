@@ -24,7 +24,7 @@ export const DialogActionFooter = ({
   onCancel,
   onConfirm,
 }: DialogActionFooterProps) => (
-  <div className="px-5 py-3 border-t bg-muted/30 flex gap-2">
+  <div className="px-5 py-3 border-t bg-muted/30 shrink-0 flex gap-2">
     <Button
       type="button"
       variant="outline"

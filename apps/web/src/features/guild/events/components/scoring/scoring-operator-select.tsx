@@ -8,9 +8,11 @@ import {
 import { EVENT_SCORING_NUMERIC_OPERATORS } from "@lootlog/domain/scoring";
 
 export const ScoringOperatorSelect = ({
+  id,
   value,
   onChange,
 }: {
+  id?: string;
   value: string;
   onChange: (value: string | null) => void;
 }) => (
@@ -22,7 +24,7 @@ export const ScoringOperatorSelect = ({
       label: <>{operator}</>,
     }))}
   >
-    <SelectTrigger size="sm" className="h-8 text-[12px] font-mono">
+    <SelectTrigger id={id} size="sm" className="h-8 text-[12px] font-mono">
       <SelectValue />
     </SelectTrigger>
     <SelectContent>

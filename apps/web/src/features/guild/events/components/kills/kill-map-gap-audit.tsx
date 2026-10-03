@@ -7,6 +7,7 @@ import { cn } from "cn";
 import { formatTimeShort } from "../../utils/format-date";
 import { formatDurationHuman } from "../../utils/format-duration";
 import type { NormalizedMapGap } from "../../utils/kill-map-timeline-data";
+import { COVERAGE_SEGMENT_BG_CLASS_NAMES } from "../../utils/get-map-coverage-color-class-name";
 
 interface KillMapGapAuditProps {
   gaps: NormalizedMapGap[];
@@ -57,9 +58,7 @@ export const KillMapGapAudit = ({ gaps, t }: KillMapGapAuditProps) => {
               <span
                 className={cn(
                   "size-2 shrink-0 rounded-full",
-                  gap.gapType === "UNASSIGNED"
-                    ? "bg-destructive"
-                    : "bg-amber-500",
+                  COVERAGE_SEGMENT_BG_CLASS_NAMES[gap.gapType],
                 )}
               />
               <span className="truncate text-xs font-medium">{typeLabel}</span>

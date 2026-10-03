@@ -34,7 +34,7 @@ export const NotificationTriggerField = ({
       name="triggerType"
       render={({ field }) => (
         <FormItem>
-          <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          <FormLabel>
             {t("settings.notifications.fields.triggerType")}
           </FormLabel>
           <Select

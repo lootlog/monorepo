@@ -1,29 +1,19 @@
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { WorldSelectionEmptyState } from "@/components/common/world-selection-empty-state";
-import {
-  findNpcType,
-  NPC_TYPE_NAMES,
-  NPC_TYPE_SORT_ORDER,
-} from "@/constants/npc";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCard } from "@/components/common/section-card/section-card";
+import { findNpcType, NPC_TYPE_SORT_ORDER } from "@/constants/npc";
+import { EmptyState } from "@/components/common/empty-state";
+import { FilterBar } from "@/components/common/filter-bar";
 import { ViewModeToggle } from "@/components/ui/view-mode-toggle";
 import { useTimerExpiry } from "./use-timer-expiry";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Button } from "@lootlog/ui/components/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@lootlog/ui/components/empty";
+import { EmptyMedia } from "@lootlog/ui/components/empty";
 import { groupBy, sortBy } from "es-toolkit";
-import { Clock3, RotateCcw, SearchX } from "lucide-react";
+import { CircleAlert, Clock3, RotateCcw, SearchX } from "lucide-react";
 import { useState } from "react";
 import { SingleTimer } from "./single-timer";
+import { TimersListSkeleton } from "./timers-list-skeleton";
+import { getTimerGroupClassName, TIMERS_VIEW_MODE_KEY } from "./timers-layout";
 
 import { SearchInput } from "@/components/ui/search-input";
 import { WorldSwitcher } from "@/components/common/world-switcher";
@@ -59,19 +49,6 @@ const getTimerListState = <Timer extends { npc?: { name: string } | null }>(
   };
 };
 
-const getTimerGroupClassName = (viewMode: "grid" | "list") =>
-  viewMode === "grid"
-    ? "grid grid-cols-1 gap-1.5 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
-    : "flex flex-col gap-1.5";
-
-const getEmptyTimerTranslationKeys = (showsNoSearchResults: boolean) =>
-  showsNoSearchResults
-    ? {
-        title: "timers.noResults",
-        description: "timers.noResultsDescription",
-      }
-    : { title: "timers.empty", description: "timers.emptyDescription" };
-
 export const Timers = () => {
   const guildId = useGuildId();
   const { world } = useGuildContext();
@@ -102,14 +79,11 @@ export const Timers = () => {
 
   useTimerExpiry(timers, guildId, world, dataUpdatedAt);
   const [search, setSearch] = useState("");
-  const { viewMode, setViewMode } = useViewMode("timers-view-mode", "list");
+  const { viewMode, setViewMode } = useViewMode(TIMERS_VIEW_MODE_KEY, "list");
   const { t } = useTranslation();
 
   const { filtered, hasFilteredTimers, showsNoSearchResults } =
     getTimerListState(timers, search);
-
-  const emptyTranslationKeys =
-    getEmptyTimerTranslationKeys(showsNoSearchResults);
 
   const sorted = sortBy(filtered ?? [], [
     (timer) =>
@@ -119,135 +93,151 @@ export const Timers = () => {
 
   const groups = groupBy(sorted, (timer) => timer.npc?.type ?? "");
 
+  const retryButton = (
+    <Button
+      type="button"
+      variant="outline"
+      loading={isFetching}
+      icon=<RotateCcw className="size-3.5" />
+      onClick={() => void refetch()}
+    >
+      {t("common.actions.retry")}
+    </Button>
+  );
+
+  const renderContent = () => {
+    if (!world) {
+      return (
+        <WorldSelectionEmptyState
+          title={t("timers.selectWorldTitle")}
+          description={t("timers.noWorldSelected")}
+        />
+      );
+    }
+
+    if (isError && timers === undefined) {
+      return (
+        <div className="px-3 pb-3">
+          <EmptyState
+            framed
+            icon={CircleAlert}
+            title={t("timers.loadError")}
+            description={t("timers.loadErrorDescription")}
+            action={retryButton}
+          />
+        </div>
+      );
+    }
+
+    if (isPending) {
+      return (
+        <ScrollArea className="min-h-0 flex-1">
+          <TimersListSkeleton viewMode={viewMode} />
+        </ScrollArea>
+      );
+    }
+
+    if (!hasFilteredTimers) {
+      return (
+        <div className="px-3 pb-3">
+          {showsNoSearchResults ? (
+            <EmptyState
+              framed
+              icon={SearchX}
+              title={t("timers.noResults")}
+              description={t("timers.noResultsDescription")}
+              action={
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setSearch("")}
+                >
+                  {t("timers.clearSearch")}
+                </Button>
+              }
+            />
+          ) : (
+            <EmptyState
+              framed
+              media={
+                <EmptyMedia variant="icon">
+                  <ThemeEmptyStateIcon fallback=<Clock3 /> />
+                </EmptyMedia>
+              }
+              title={t("timers.empty")}
+              description={t("timers.emptyDescription")}
+            />
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="flex flex-col gap-4 px-3 pb-3">
+          {Object.entries(groups).map(([key, groupTimers]) => {
+            const npcType = findNpcType(key);
+
+            return (
+              <section key={key} aria-labelledby={`timers-group-${key}`}>
+                <h2
+                  id={`timers-group-${key}`}
+                  className="mb-2 px-1 text-xs font-medium text-muted-foreground"
+                >
+                  {npcType
+                    ? t(`npcType.${npcType}`)
+                    : t("timers.npcType.manual")}{" "}
+                  ({groupTimers.length})
+                </h2>
+                <div className={getTimerGroupClassName(viewMode)}>
+                  {groupTimers.map((timer) => (
+                    <SingleTimer
+                      key={timer.npc?.id ?? timer.timerKey}
+                      timer={timer}
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      </ScrollArea>
+    );
+  };
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("layout.navigation.timers")}</h1>
       <div className="px-3 pt-3">
-        <SectionCard className="rounded-xl">
-          <SectionCardContent className="p-2">
-            <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
-              <SearchInput
-                placeholder={t("timers.searchPlaceholder")}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="h-9"
-                wrapperClassName="min-w-0 basis-full sm:flex-1"
-                aria-label={t("timers.searchPlaceholder")}
-              />
-              <div className="flex flex-1 items-center sm:flex-none sm:border-l sm:border-border sm:pl-2">
-                <WorldSwitcher />
-              </div>
-              <ViewModeToggle
-                value={viewMode}
-                onChange={setViewMode}
-                listLabel={t("timers.view.list")}
-                gridLabel={t("timers.view.grid")}
-              />
-            </div>
-          </SectionCardContent>
-        </SectionCard>
+        <FilterBar ariaLabel={t("timers.toolbarLabel")}>
+          <SearchInput
+            placeholder={t("timers.searchPlaceholder")}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            wrapperClassName="h-10 min-w-0 basis-full sm:flex-1 sm:basis-0"
+            aria-label={t("timers.searchPlaceholder")}
+          />
+          <WorldSwitcher />
+          <ViewModeToggle
+            value={viewMode}
+            onChange={setViewMode}
+            listLabel={t("timers.view.list")}
+            gridLabel={t("timers.view.grid")}
+          />
+        </FilterBar>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col pt-3">
-        {world && isError && (
+        {world && isError && timers !== undefined && (
           <Alert
             variant="destructive"
-            className="mx-3 mb-3 w-auto flex flex-wrap items-center justify-between gap-3"
+            className="mx-3 mb-3 flex w-auto flex-wrap items-center justify-between gap-3"
           >
-            <AlertDescription>
-              {t(
-                timers === undefined
-                  ? "timers.loadError"
-                  : "timers.refreshError",
-              )}
-            </AlertDescription>
-            <Button
-              variant="outline"
-              size="sm"
-              loading={isFetching}
-              icon=<RotateCcw className="size-3.5" />
-              onClick={() => void refetch()}
-            >
-              {t("common.actions.retry")}
-            </Button>
+            <AlertDescription>{t("timers.refreshError")}</AlertDescription>
+            {retryButton}
           </Alert>
         )}
-        {!world ? (
-          <WorldSelectionEmptyState
-            title={t("timers.selectWorldTitle")}
-            description={t("timers.noWorldSelected")}
-          />
-        ) : !isPending && timers && !hasFilteredTimers ? (
-          <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-3 pb-3 md:[align-items:safe_center]">
-            <Empty className="min-h-56 w-full max-w-xl">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  {showsNoSearchResults ? (
-                    <SearchX />
-                  ) : (
-                    <ThemeEmptyStateIcon fallback=<Clock3 /> />
-                  )}
-                </EmptyMedia>
-                <EmptyTitle>{t(emptyTranslationKeys.title)}</EmptyTitle>
-                <EmptyDescription>
-                  {t(emptyTranslationKeys.description)}
-                </EmptyDescription>
-              </EmptyHeader>
-              {showsNoSearchResults && (
-                <EmptyContent>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSearch("")}
-                  >
-                    {t("timers.clearSearch")}
-                  </Button>
-                </EmptyContent>
-              )}
-            </Empty>
-          </div>
-        ) : (
-          <ScrollArea className="min-h-0 flex-1">
-            <div className="flex flex-col gap-4 px-3 pb-3">
-              {isPending && (
-                <div className="flex flex-col gap-3">
-                  {Array.from({ length: 8 }).map((_, index) => (
-                    <Skeleton key={index} className="h-20 w-full rounded-xl" />
-                  ))}
-                </div>
-              )}
-              {hasFilteredTimers && (
-                <div className="flex flex-col gap-4">
-                  {Object.entries(groups).map(([key, timers]) => {
-                    const npcType = findNpcType(key);
-
-                    return (
-                      <div key={key}>
-                        <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground px-1 mb-2">
-                          {npcType
-                            ? NPC_TYPE_NAMES[npcType]
-                            : t("timers.npcType.manual")}{" "}
-                          ({timers.length})
-                        </p>
-                        <div className={getTimerGroupClassName(viewMode)}>
-                          {timers.map((timer) => {
-                            return (
-                              <SingleTimer
-                                key={timer.npc?.id ?? timer.timerKey}
-                                timer={timer}
-                              />
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </ScrollArea>
-        )}
+        {renderContent()}
       </div>
     </div>
   );

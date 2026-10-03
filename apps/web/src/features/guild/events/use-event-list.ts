@@ -82,6 +82,7 @@ export const useEventList = () => {
     data: events,
     isLoading,
     error,
+    refetch,
   } = useListEvents(
     {
       guildId: guildId ?? "",
@@ -129,5 +130,6 @@ export const useEventList = () => {
     eventToDelete,
     deleteEvent,
     error,
+    refetch,
   };
 };

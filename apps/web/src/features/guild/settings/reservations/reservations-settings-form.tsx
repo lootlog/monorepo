@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { ListChecks, TimerReset } from "lucide-react";
+import { CalendarClock, ListChecks, TimerReset } from "lucide-react";
 
 import {
   Form,
@@ -196,6 +196,7 @@ export const ReservationsSettingsForm = ({
             <SectionCardHeader
               title={t("settings.reservations.schedule.title")}
               description={t("settings.reservations.schedule.description")}
+              icon={CalendarClock}
             />
             <SectionCardContent>
               <div className="grid gap-4 md:grid-cols-2">

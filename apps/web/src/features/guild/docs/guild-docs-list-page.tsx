@@ -1,8 +1,6 @@
-import {
-  SectionCard as Card,
-  SectionCard,
-} from "@/components/common/section-card/section-card";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { EmptyState } from "@/components/common/empty-state";
+import { FilterBar } from "@/components/common/filter-bar";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,23 +15,23 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
-import { Archive, FileText, FileX2, Plus, SearchX, Trash2 } from "lucide-react";
-
 import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@lootlog/ui/components/empty";
+  Archive,
+  FileText,
+  FileX2,
+  Plus,
+  RotateCcw,
+  SearchX,
+  Trash2,
+} from "lucide-react";
+
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 
 import { SearchInput } from "@/components/ui/search-input";
 import { GuildDocCreateDialog } from "./components/guild-doc-create-dialog";
 import { GuildDocTrashDialog } from "./components/guild-doc-trash-dialog";
-import { formatGuildDocDateTime } from "./docs-date-format";
-import { GuildDocsListSkeleton } from "./guild-docs-list-skeleton";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
+import { GuildDocsGridSkeleton } from "./guild-docs-grid-skeleton";
 
 import { useGuildDocsList } from "./use-guild-docs-list";
 
@@ -65,131 +63,124 @@ export const GuildDocsListPage = () => {
     <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("docs.list.title")}</h1>
       <div className="px-3 pt-3">
-        <SectionCard className="rounded-xl">
-          <SectionCardContent className="p-2">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <SearchInput
-                name="guild-doc-search"
-                aria-label={t("docs.list.searchLabel")}
-                value={searchValue}
-                onChange={(event) => setSearchValue(event.target.value)}
-                placeholder={t("docs.list.searchPlaceholder")}
-                className="h-9"
-                wrapperClassName="min-w-0 flex-1"
-                disabled={documentsQuery.isLoading}
-              />
+        <FilterBar ariaLabel={t("docs.list.toolbarLabel")}>
+          <SearchInput
+            name="guild-doc-search"
+            aria-label={t("docs.list.searchLabel")}
+            value={searchValue}
+            onChange={(event) => setSearchValue(event.target.value)}
+            placeholder={t("docs.list.searchPlaceholder")}
+            wrapperClassName="h-10 min-w-0 flex-1 basis-full sm:basis-48"
+            disabled={documentsQuery.isLoading}
+          />
 
-              <div className="flex items-center gap-2">
-                <Badge
-                  variant="outline"
-                  className="ml-auto h-9 shrink-0 gap-1.5 rounded-md px-3 text-xs font-medium text-muted-foreground"
-                  aria-label={t("docs.list.limit", {
-                    max: limit.max,
-                    used: limit.used,
-                  })}
-                  title={t("docs.list.limit", {
-                    max: limit.max,
-                    used: limit.used,
-                  })}
-                >
-                  <FileText className="size-3.5" />
-                  {t("docs.list.limitShort", {
-                    max: limit.max,
-                    used: limit.used,
-                  })}
-                </Badge>
-                {canWrite && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="h-9 shrink-0"
-                    onClick={() => setTrashOpen(true)}
-                  >
-                    <Archive className="size-3.5" />
-                    {limit.trashed > 0
-                      ? t("docs.trash.openWithCount", {
-                          count: limit.trashed,
-                        })
-                      : t("docs.trash.open")}
-                  </Button>
-                )}
-                {canWrite && (
-                  <Button
-                    size="sm"
-                    className="h-9 shrink-0"
-                    disabled={!limit.canCreate}
-                    onClick={() => setCreateOpen(true)}
-                  >
-                    <Plus className="size-3.5" />
-                    {limit.canCreate
-                      ? t("docs.list.create")
-                      : t("docs.list.limitReached")}
-                  </Button>
-                )}
-              </div>
-            </div>
-          </SectionCardContent>
-        </SectionCard>
+          <div className="flex flex-1 items-center justify-end gap-2 sm:flex-none">
+            <Badge
+              variant="outline"
+              className="mr-auto shrink-0 gap-1.5 sm:mr-0"
+              aria-label={t("docs.list.limit", {
+                max: limit.max,
+                used: limit.used,
+              })}
+              title={t("docs.list.limit", {
+                max: limit.max,
+                used: limit.used,
+              })}
+            >
+              <FileText className="size-3.5" aria-hidden="true" />
+              {t("docs.list.limitShort", {
+                max: limit.max,
+                used: limit.used,
+              })}
+            </Badge>
+            {canWrite && (
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10 shrink-0"
+                onClick={() => setTrashOpen(true)}
+              >
+                <Archive className="size-4" aria-hidden="true" />
+                {limit.trashed > 0
+                  ? t("docs.trash.openWithCount", {
+                      count: limit.trashed,
+                    })
+                  : t("docs.trash.open")}
+              </Button>
+            )}
+            {canWrite && (
+              <Button
+                className="h-10 shrink-0"
+                disabled={!limit.canCreate}
+                onClick={() => setCreateOpen(true)}
+              >
+                <Plus className="size-4" aria-hidden="true" />
+                {limit.canCreate
+                  ? t("docs.list.create")
+                  : t("docs.list.limitReached")}
+              </Button>
+            )}
+          </div>
+        </FilterBar>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col pt-3">
         {documentsQuery.isLoading ? (
-          <GuildDocsListSkeleton />
+          <GuildDocsGridSkeleton />
         ) : documentsQuery.isError ? (
-          <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-3 pb-3 md:[align-items:safe_center]">
-            <Card className="flex flex-col items-center justify-center gap-3 border-border bg-card py-12">
-              <FileX2 className="size-12 text-muted-foreground opacity-50" />
-              <p className="text-sm text-muted-foreground">
-                {t("docs.list.loadError")}
-              </p>
-            </Card>
-          </div>
-        ) : !hasDocuments ? (
-          <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-3 pb-3 md:[align-items:safe_center]">
-            <Empty className="min-h-56 w-full max-w-xl">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <FileText />
-                </EmptyMedia>
-                <EmptyTitle>{t("docs.list.emptyTitle")}</EmptyTitle>
-                <EmptyDescription>
-                  {t("docs.list.emptyDescription")}
-                </EmptyDescription>
-              </EmptyHeader>
-              {canCreate && (
-                <EmptyContent>
-                  <Button size="sm" onClick={() => setCreateOpen(true)}>
-                    <Plus className="size-4" />
-                    {t("docs.list.create")}
-                  </Button>
-                </EmptyContent>
-              )}
-            </Empty>
-          </div>
-        ) : !hasFilteredDocuments ? (
-          <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-3 pb-3 md:[align-items:safe_center]">
-            <Empty className="min-h-56 w-full max-w-xl">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <SearchX />
-                </EmptyMedia>
-                <EmptyTitle>{t("docs.list.emptySearchTitle")}</EmptyTitle>
-                <EmptyDescription>
-                  {t("docs.list.emptySearchDescription")}
-                </EmptyDescription>
-              </EmptyHeader>
-              <EmptyContent>
+          <div className="px-3 pb-3">
+            <EmptyState
+              framed
+              icon={FileX2}
+              title={t("docs.list.loadError")}
+              description={t("docs.list.loadErrorDescription")}
+              action={
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
+                  loading={documentsQuery.isFetching}
+                  icon=<RotateCcw className="size-3.5" />
+                  onClick={() => void documentsQuery.refetch()}
+                >
+                  {t("common.actions.retry")}
+                </Button>
+              }
+            />
+          </div>
+        ) : !hasDocuments ? (
+          <div className="px-3 pb-3">
+            <EmptyState
+              framed
+              icon={FileText}
+              title={t("docs.list.emptyTitle")}
+              description={t("docs.list.emptyDescription")}
+              action={
+                canCreate ? (
+                  <Button onClick={() => setCreateOpen(true)}>
+                    <Plus className="size-4" aria-hidden="true" />
+                    {t("docs.list.create")}
+                  </Button>
+                ) : undefined
+              }
+            />
+          </div>
+        ) : !hasFilteredDocuments ? (
+          <div className="px-3 pb-3">
+            <EmptyState
+              framed
+              icon={SearchX}
+              title={t("docs.list.emptySearchTitle")}
+              description={t("docs.list.emptySearchDescription")}
+              action={
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => setSearchValue("")}
                 >
                   {t("docs.list.clearSearch")}
                 </Button>
-              </EmptyContent>
-            </Empty>
+              }
+            />
           </div>
         ) : (
           <ScrollArea className="min-h-0 flex-1">
@@ -199,10 +190,7 @@ export const GuildDocsListPage = () => {
                   document.updatedBy.name ?? t("docs.list.unknownEditor");
 
                 return (
-                  <Card
-                    key={document.id}
-                    className="gap-3 border-border bg-card p-4  transition-colors hover:bg-card"
-                  >
+                  <SectionCard key={document.id} className="gap-3 p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 space-y-1">
                         <TextLink
@@ -225,7 +213,7 @@ export const GuildDocsListPage = () => {
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {formatGuildDocDateTime(document.updatedAt)}
+                      {timestampToDate(document.updatedAt)}
                     </p>
                     <div className="mt-1 flex gap-2">
                       <Button
@@ -250,14 +238,14 @@ export const GuildDocsListPage = () => {
                           disabled={deleteDocument.isPending}
                           aria-label={t("docs.trash.move")}
                           title={t("docs.trash.move")}
-                          className="size-8 shrink-0 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          className="size-9 shrink-0 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
                           onClick={() => setDocumentPendingTrash(document)}
                         >
-                          <Trash2 className="size-3.5" />
+                          <Trash2 className="size-4" aria-hidden="true" />
                         </Button>
                       )}
                     </div>
-                  </Card>
+                  </SectionCard>
                 );
               })}
             </div>
@@ -301,9 +289,11 @@ export const GuildDocsListPage = () => {
               {t("common.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
-              render=<Button loading={deleteDocument.isPending} />
+              render=<Button
+                variant="destructive"
+                loading={deleteDocument.isPending}
+              />
               disabled={deleteDocument.isPending || !documentPendingTrash}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={(event) => {
                 event.preventBaseUIHandler();
 

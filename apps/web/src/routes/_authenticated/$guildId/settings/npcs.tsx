@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { NpcSettings } from "@/features/guild/settings/npcs/npcs";
-import { NpcSettingsSkeleton } from "@/features/guild/settings/npcs/npcs-skeleton";
+import { SettingsTableSkeleton } from "@/features/guild/settings/components/settings-table-skeleton";
 
 export const Route = createFileRoute("/_authenticated/$guildId/settings/npcs")({
   component: NpcSettings,
-  pendingComponent: NpcSettingsSkeleton,
+  pendingComponent: SettingsTableSkeleton,
 });

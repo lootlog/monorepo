@@ -1,12 +1,14 @@
 import { getRankingSelection } from "./components/ranking/event-ranking-selection";
 import { EventLoadError } from "./components/event-load-error";
-import { SectionLoading } from "@/components/common/section-loading";
+import { EventRankingSkeleton } from "./event-ranking-skeleton";
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { EventReadError } from "./components/shared/event-read-error";
 import { useTranslation } from "react-i18next";
 import { useParams } from "@tanstack/react-router";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Permission } from "@lootlog/schema/permissions";
 import { EventRankingTable } from "./components/ranking/event-ranking-table";
-import { EventRankingFilter } from "./components/ranking/event-ranking-filter";
+import { HeroTabs } from "./components/shared/hero-tabs";
 import { EventRankingSummary } from "./components/ranking/event-ranking-summary";
 import { useState } from "react";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
@@ -51,6 +53,7 @@ export const EventRankingPage = () => {
     data: event,
     isLoading: isEventLoading,
     error: eventError,
+    refetch: refetchEvent,
   } = useShowEventOverview(
     {
       guildId: queryGuildId,
@@ -71,6 +74,8 @@ export const EventRankingPage = () => {
     data: rankings = [],
     isLoading: isRankingLoading,
     error: rankingError,
+    refetch: refetchRanking,
+    isFetching: isRankingFetching,
   } = useListEventRanking(
     {
       guildId: queryGuildId,
@@ -88,11 +93,19 @@ export const EventRankingPage = () => {
   );
 
   if (isEventLoading || isRankingLoading) {
-    return <SectionLoading />;
+    return <EventRankingSkeleton />;
   }
 
   if (eventError || !event) {
-    return <EventLoadError guildId={queryGuildId} />;
+    return (
+      <EventLoadError
+        backTo="event"
+        guildId={queryGuildId}
+        eventId={queryEventId}
+        error={eventError}
+        onRetry={() => refetchEvent()}
+      />
+    );
   }
 
   const heroes = event.heroNpcs ?? [];
@@ -115,28 +128,34 @@ export const EventRankingPage = () => {
             eventName={event.name}
             selectedHeroName={effectiveSelectedHeroName}
           />
-          <EventRankingFilter
+          <HeroTabs
+            placement="page"
             heroes={heroes}
-            selectedHeroName={effectiveSelectedHeroName}
-            onSelectedHeroChange={setSelectedHeroName}
+            valueKey="npcName"
+            value={effectiveSelectedHeroName ?? undefined}
+            onValueChange={(heroName) => setSelectedHeroName(heroName ?? null)}
           />
 
           {rankingError && (
-            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {t(
-                "events.ranking.error",
-                "Nie udało się pobrać rankingu. Dane mogą być niepełne.",
-              )}
-            </div>
+            <SectionCard>
+              <EventReadError
+                message={t("events.ranking.error")}
+                onRetry={() => void refetchRanking()}
+                isRetrying={isRankingFetching}
+              />
+            </SectionCard>
           )}
 
-          <EventRankingTable
-            rankings={filteredRankings}
-            guildId={guildId}
-            eventId={eventId}
-            canEdit={canEditPoints}
-            currentMemberId={currentMember?.id}
-          />
+          {/* A failed refresh keeps the last ranking; a failed first load has none to show. */}
+          {(!rankingError || rankings.length > 0) && (
+            <EventRankingTable
+              rankings={filteredRankings}
+              guildId={guildId}
+              eventId={eventId}
+              canEdit={canEditPoints}
+              currentMemberId={currentMember?.id}
+            />
+          )}
         </div>
       </ScrollArea>
     </div>

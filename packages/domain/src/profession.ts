@@ -22,3 +22,21 @@ export const getProfByShortname = (
 
 export const getShortnameByProf = (profession: string): string | undefined =>
   SHORTNAME_BY_PROFESSION.get(profession);
+
+/**
+ * Formats a level the way Margonem writes it: the level followed by the
+ * profession's shortname, for example `300m`. Accepts a profession enum, a
+ * shortname, or nothing when the profession is unknown.
+ */
+export const formatNpcLevel = (
+  level: number,
+  profession?: string | null,
+): string => {
+  if (!profession) return String(level);
+
+  const shortname =
+    getShortnameByProf(profession.toUpperCase()) ??
+    profession.charAt(0).toLowerCase();
+
+  return `${level}${shortname}`;
+};

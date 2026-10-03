@@ -4,8 +4,6 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { Link } from "@tanstack/react-router";
 import { cn } from "cn";
-import { format } from "date-fns";
-import { pl } from "date-fns/locale";
 import {
   CalendarDays,
   ChevronRight,
@@ -16,7 +14,11 @@ import {
   Trophy,
 } from "lucide-react";
 import type { useEventList } from "./use-event-list";
-import { getEventStatusAtTimestamp } from "./utils/event-activity";
+import {
+  EVENT_STATUS_PRESENTATION,
+  getEventStatusAtTimestamp,
+} from "./utils/event-activity";
+import { formatDateRange } from "./utils/format-date";
 
 type Props = Pick<
   ReturnType<typeof useEventList>,
@@ -44,19 +46,8 @@ export const EventListCard = ({
   const eventStatus = getEventStatusAtTimestamp(event, currentTimestamp);
   const isEventActive = eventStatus === "active";
 
-  const eventStatusLabel =
-    eventStatus === "upcoming"
-      ? t("events.upcoming")
-      : eventStatus === "ended"
-        ? t("events.ended")
-        : t("events.active");
-
-  const eventStatusVariant =
-    eventStatus === "active"
-      ? "default"
-      : eventStatus === "upcoming"
-        ? "outline"
-        : "secondary";
+  const { labelKey: eventStatusLabelKey, badgeVariant: eventStatusVariant } =
+    EVENT_STATUS_PRESENTATION[eventStatus];
 
   const formattedWorld = upperFirst(event.world);
 
@@ -72,7 +63,7 @@ export const EventListCard = ({
     <Card
       className={cn(
         "flex-row items-stretch gap-0 overflow-hidden border-border bg-card p-0 transition-colors",
-        isEventActive && "border-yellow-500/40 bg-yellow-500/[0.025]",
+        isEventActive && "border-signal-live/40 bg-signal-live/[0.025]",
       )}
     >
       <Link
@@ -83,19 +74,19 @@ export const EventListCard = ({
         <div
           className={cn(
             "relative flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted",
-            isEventActive && "bg-yellow-500/10",
+            isEventActive && "bg-signal-live/10",
           )}
         >
           <Trophy
             className={cn(
               "size-4 text-muted-foreground",
-              isEventActive && "text-yellow-500",
+              isEventActive && "text-signal-live",
             )}
           />
           {isEventActive && (
             <span className="absolute -right-0.5 -top-0.5 flex size-2">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-yellow-400 opacity-75" />
-              <span className="relative inline-flex size-2 rounded-full bg-yellow-500" />
+              <span className="absolute inline-flex size-full rounded-full bg-signal-live opacity-75 motion-safe:animate-ping" />
+              <span className="relative inline-flex size-2 rounded-full bg-signal-live" />
             </span>
           )}
         </div>
@@ -109,7 +100,7 @@ export const EventListCard = ({
               variant={eventStatusVariant}
               className="h-5 px-2 text-[11px]"
             >
-              {eventStatusLabel}
+              {t(eventStatusLabelKey)}
             </Badge>
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
@@ -126,19 +117,11 @@ export const EventListCard = ({
             <span className="inline-flex min-w-0 items-center gap-1.5">
               <CalendarDays className="size-3.5 shrink-0" />
               <span>
-                {format(
+                {formatDateRange(
                   new Date(event.startsAt ?? event.createdAt),
-                  "d MMM yyyy",
-                  {
-                    locale: pl,
-                  },
+                  event.endsAt ? new Date(event.endsAt) : null,
+                  t("events.ongoing"),
                 )}
-                {" – "}
-                {event.endsAt
-                  ? format(new Date(event.endsAt), "d MMM yyyy", {
-                      locale: pl,
-                    })
-                  : t("events.ongoing")}
               </span>
             </span>
           </div>
@@ -170,8 +153,8 @@ export const EventListCard = ({
             variant="ghost"
             size="icon"
             className="size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-            aria-label={t("events.delete")}
-            title={t("events.delete")}
+            aria-label={t("events.deleteNamed", { name: event.name })}
+            title={t("events.deleteNamed", { name: event.name })}
             onClick={() => setEventToDelete(event)}
           >
             <Trash2 className="size-4" />

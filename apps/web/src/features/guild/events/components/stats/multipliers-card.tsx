@@ -31,7 +31,7 @@ export const MultipliersCard = ({
     <SectionCard className="overflow-hidden bg-card">
       <SectionCardHeader
         icon={Calculator}
-        title={<> {t("events.killDetail.multipliers.title")} </>}
+        title={t("events.killDetail.multipliers.title")}
         actions={
           <>
             {eventConfig.scoringMode === "ADVANCED" ? (

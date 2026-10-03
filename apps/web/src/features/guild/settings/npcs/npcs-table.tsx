@@ -118,7 +118,7 @@ export const NpcsTable = ({ guildId, isMobile, npcs }: NpcsTableProps) => {
         table={table}
         getRowClassName={(row) =>
           cn(
-            "relative h-14 cursor-pointer border-b border-border transition-colors hover:bg-accent/35",
+            "relative h-14 cursor-pointer border-b border-border transition-colors hover:bg-muted/40",
             row.index === npcs.length - 1 && "border-b-0",
           )
         }

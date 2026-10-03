@@ -1,19 +1,21 @@
-import { SectionCard as Card } from "@/components/common/section-card/section-card";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { FilterBar } from "@/components/common/filter-bar";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { GuildDocsGridSkeleton } from "./guild-docs-grid-skeleton";
 
+/** Route-level stand-in for the documents page: its toolbar above the cards. */
 export const GuildDocsListSkeleton = () => {
   return (
-    <ScrollArea className="min-h-0 flex-1">
-      <div className="grid grid-cols-1 gap-3 px-3 pb-3 lg:grid-cols-2 xl:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, index) => (
-          <Card key={index} className="gap-3 border-border bg-card p-4">
-            <Skeleton className="h-4 w-2/3" />
-            <Skeleton className="h-3 w-1/2" />
-            <Skeleton className="h-3 w-24" />
-          </Card>
-        ))}
+    <div aria-busy="true" className="flex h-full min-h-0 flex-col">
+      <div className="px-3 pt-3">
+        <FilterBar>
+          <Skeleton className="h-10 min-w-0 flex-1 basis-full rounded-xl sm:basis-48" />
+          <Skeleton className="h-5 w-16 rounded-full" />
+          <Skeleton className="h-10 w-28 rounded-xl" />
+        </FilterBar>
       </div>
-    </ScrollArea>
+      <div className="flex min-h-0 flex-1 flex-col pt-3">
+        <GuildDocsGridSkeleton />
+      </div>
+    </div>
   );
 };

@@ -1,22 +1,22 @@
 import type { ReactNode } from "react";
-import { cn } from "cn";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
+type SkeletonSectionCardProps = {
+  children: ReactNode;
+  className?: string;
+};
+
+/** A section card whose header and content are still loading. */
 export const SkeletonSectionCard = ({
   children,
-  subtitleClassName = "h-5 w-24",
-}: {
-  children: ReactNode;
-  subtitleClassName?: string;
-}) => (
-  <SectionCard className="border-border bg-card ">
-    <SectionCardHeader title=<Skeleton className="h-4 w-32" /> />
-    <SectionCardContent>
-      <Skeleton className={cn("mb-3", subtitleClassName)} />
-      {children}
-    </SectionCardContent>
+  className,
+}: SkeletonSectionCardProps) => (
+  <SectionCard className={className}>
+    <div className="flex min-h-12 items-center gap-2 border-b border-border/70 px-3 py-2">
+      <Skeleton className="size-5 shrink-0 rounded-md" />
+      <Skeleton className="h-4 w-32" />
+    </div>
+    {children}
   </SectionCard>
 );

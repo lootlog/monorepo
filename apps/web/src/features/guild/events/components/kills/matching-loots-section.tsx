@@ -3,8 +3,9 @@ import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
-import { Frown, Package } from "lucide-react";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { Package } from "lucide-react";
+import { EmptyState } from "@/components/common/empty-state";
+import { EmbeddedLootRowsSkeleton } from "../shared/embedded-loot-rows-skeleton";
 import type { Loot } from "@/lib/loots/loot-types";
 import { LootsListItem } from "@/features/guild/loots-list/components/loots-list/loots-list-item";
 import { EventReadError } from "../shared/event-read-error";
@@ -31,26 +32,20 @@ export const MatchingLootsSection = ({
   const { t } = useTranslation();
 
   return (
-    <SectionCard
-      data-testid="matching-loots-card"
-      className="min-w-0 overflow-hidden bg-card"
-    >
+    <SectionCard data-testid="matching-loots-card" className="overflow-hidden">
       <SectionCardHeader
         icon={Package}
         title={t("events.killDetail.matchingLoots")}
         actions={
-          <>
-            <ChevronLink
-              className="inline-flex h-8 shrink-0 items-center gap-1 text-xs"
-              render=<Link
-                to="/$guildId"
-                params={{ guildId }}
-                search={{ npcs: npcName }}
-              />
-            >
-              {t("events.loots.showAll")}
-            </ChevronLink>
-          </>
+          <ChevronLink
+            render=<Link
+              to="/$guildId"
+              params={{ guildId }}
+              search={{ npcs: npcName }}
+            />
+          >
+            {t("events.loots.showAll")}
+          </ChevronLink>
         }
       />
 
@@ -62,18 +57,9 @@ export const MatchingLootsSection = ({
         />
       )}
       {isLoading ? (
-        <div className="divide-y divide-border/70">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="px-3 py-3">
-              <Skeleton className="h-24 rounded-lg" />
-            </div>
-          ))}
-        </div>
+        <EmbeddedLootRowsSkeleton rows={3} />
       ) : loots.length === 0 && !hasError ? (
-        <div className="flex min-h-28 flex-col items-center justify-center px-4 py-6 text-center text-muted-foreground">
-          <Frown className="mb-2 size-6 opacity-50" />
-          <p className="text-sm">{t("events.killDetail.noLoots")}</p>
-        </div>
+        <EmptyState icon={Package} title={t("events.killDetail.noLoots")} />
       ) : (
         <div className="divide-y divide-border/70">
           {loots.map((loot) => (

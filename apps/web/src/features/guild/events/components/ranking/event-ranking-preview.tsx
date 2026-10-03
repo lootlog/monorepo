@@ -1,14 +1,14 @@
 import { getRankingSelection } from "./event-ranking-selection";
+import { EmptyState } from "@/components/common/empty-state";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Trophy } from "lucide-react";
-import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
 import type { EventRanking, EventHeroNpc } from "../../types/api";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { useState } from "react";
-import { EventScrollableTabsList } from "../shared/event-scrollable-tabs-list";
+import { HeroTabs } from "../shared/hero-tabs";
 import { EventRankingTable } from "./event-ranking-table";
 
 interface EventRankingPreviewProps {
@@ -47,56 +47,38 @@ export const EventRankingPreview = ({
   }
 
   return (
-    <SectionCard className="gap-0 overflow-hidden border-border bg-card p-0">
+    <SectionCard className="overflow-hidden">
       <SectionCardHeader
         icon={Trophy}
         title={t("events.ranking.title")}
         actions={
-          <>
-            {rankings.length > 0 ? (
-              <ChevronLink
-                className="inline-flex h-8 shrink-0 items-center gap-1 text-xs"
-                render=<Link
-                  to="/$guildId/events/$eventId/ranking"
-                  params={{ guildId, eventId }}
-                />
-              >
-                {t("events.ranking.viewAll")}
-              </ChevronLink>
-            ) : null}
-          </>
+          rankings.length > 0 ? (
+            <ChevronLink
+              render=<Link
+                to="/$guildId/events/$eventId/ranking"
+                params={{ guildId, eventId }}
+              />
+            >
+              {t("events.ranking.viewAll")}
+            </ChevronLink>
+          ) : null
         }
       />
 
-      {heroNpcs.length > 1 && (
-        <Tabs
-          value={effectiveSelectedHeroName ?? heroNpcs[0]?.npcName}
-          onValueChange={setSelectedHeroName}
-          className="border-b border-border/70 px-3 py-2"
-        >
-          <EventScrollableTabsList>
-            {heroNpcs.map((hero) => (
-              <TabsTrigger
-                key={hero.id}
-                value={hero.npcName}
-                className="flex-shrink-0 text-xs"
-              >
-                {hero.npcName}
-              </TabsTrigger>
-            ))}
-          </EventScrollableTabsList>
-        </Tabs>
-      )}
+      <HeroTabs
+        placement="section"
+        heroes={heroNpcs}
+        valueKey="npcName"
+        value={effectiveSelectedHeroName ?? undefined}
+        onValueChange={(heroName) => setSelectedHeroName(heroName ?? null)}
+      />
 
       <div
         key={effectiveSelectedHeroName}
-        className="flex min-h-[180px] flex-col animate-in fade-in-0 duration-200"
+        className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200"
       >
         {sortedRankings.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
-            <Trophy className="w-6 h-6 mb-1.5 opacity-50" />
-            <p className="text-xs">{t("events.ranking.noRanking")}</p>
-          </div>
+          <EmptyState icon={Trophy} title={t("events.ranking.noRanking")} />
         ) : (
           <EventRankingTable
             rankings={sortedRankings}

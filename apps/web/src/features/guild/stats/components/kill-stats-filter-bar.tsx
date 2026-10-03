@@ -99,7 +99,6 @@ export const KillStatsFilterBar = ({
               onValueChange={onWorldChange}
               showAllOption
               width="w-full"
-              triggerClassName="h-10"
             />
           </div>
           <div className="space-y-2">
@@ -108,7 +107,6 @@ export const KillStatsFilterBar = ({
               value={period}
               onValueChange={onPeriodChange}
               className="w-full"
-              triggerClassName="h-10"
             />
           </div>
           {npcType && (
@@ -142,14 +140,11 @@ export const KillStatsFilterBar = ({
           value={world}
           onValueChange={onWorldChange}
           showAllOption
-          width="w-[200px]"
-          triggerClassName="h-10"
         />
         <KillStatsPeriodSelect
           value={period}
           onValueChange={onPeriodChange}
           className="w-[200px]"
-          triggerClassName="h-10"
         />
         {npcType && (
           <StatsNpcTypeSelect

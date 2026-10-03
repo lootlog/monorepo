@@ -428,7 +428,13 @@ export const useHeroDetail = () => {
   );
 
   if (isHeroDetailMissing(error, event, hero))
-    return { status: "missing" as const, t, queryGuildId, queryEventId };
+    return {
+      status: "missing" as const,
+      t,
+      error,
+      queryGuildId,
+      queryEventId,
+    };
 
   assertDefined(event);
   assertDefined(hero);

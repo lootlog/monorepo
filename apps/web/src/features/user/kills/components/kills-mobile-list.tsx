@@ -52,7 +52,7 @@ export const KillsMobileList = ({ npcs, startRank }: KillsMobileListProps) => {
             </div>
             <div className="shrink-0 text-right">
               <div className="text-base font-semibold tabular-nums">
-                {npc.totalKills.toLocaleString()}
+                {npc.totalKills.toLocaleString("pl-PL")}
               </div>
               <div className="text-xs text-muted-foreground">
                 {t("kills.columns.kills")}

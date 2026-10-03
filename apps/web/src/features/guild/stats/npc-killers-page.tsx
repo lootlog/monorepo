@@ -1,3 +1,4 @@
+import { formatNpcLevel } from "@lootlog/domain/profession";
 import { EmptyState } from "@/components/common/empty-state";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
@@ -132,7 +133,7 @@ export const NpcKillersPage = () => {
           )
         }
         title={npc.npcName}
-        subtitle={`${t(`npcType.${npc.npcType}`)} · ${npc.npcLvl}${npc.npcProf ?? ""}`}
+        subtitle={`${t(`npcType.${npc.npcType}`)} · ${t("kills.level", { level: formatNpcLevel(npc.npcLvl, npc.npcProf) })}`}
         metrics={[
           {
             key: "kills",

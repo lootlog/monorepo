@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/common/empty-state";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
@@ -52,7 +53,7 @@ export const NotificationsRulesCard = ({
           </p>
         ) : null}
         {rules.length > 0 ? (
-          <div className="flex flex-col gap-3">
+          <div className="overflow-hidden rounded-xl border border-border/70">
             {rules.map((rule) => (
               <NotificationRuleCard
                 key={rule.id}
@@ -62,9 +63,11 @@ export const NotificationsRulesCard = ({
             ))}
           </div>
         ) : (
-          <div className="py-6 text-sm text-muted-foreground">
-            {t("settings.notifications.empty.rules")}
-          </div>
+          <EmptyState
+            icon={ListChecks}
+            title={t("settings.notifications.empty.rules")}
+            compact
+          />
         )}
       </SectionCardContent>
     </SectionCard>

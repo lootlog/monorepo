@@ -1,7 +1,8 @@
+import { EmptyState } from "@/components/common/empty-state";
 import { WorldSelectionEmptyState } from "@/components/common/world-selection-empty-state";
 import { LootsListItem } from "@/features/guild/loots-list/components/loots-list/loots-list-item";
 import { LootsListSkeleton } from "@/features/guild/loots-list/components/loots-list/loots-list-skeleton";
-import { LootListSentinelRow } from "@/features/guild/loots-list/components/loots-list/loot-list-sentinel-row";
+import { InfiniteListStatusRow } from "@/components/common/infinite-list-status-row";
 import {
   LOOTS_GRID_CLASS,
   LOOTS_LIST_INSET_CLASS,
@@ -12,26 +13,12 @@ import { SharedTooltipProvider } from "@lootlog/ui/components/shared-tooltip-pro
 
 import { ThemeEmptyStateIcon } from "@/themes";
 import { Button } from "@lootlog/ui/components/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@lootlog/ui/components/empty";
+import { EmptyMedia } from "@lootlog/ui/components/empty";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { CircleAlert, PackageOpen, SearchX } from "lucide-react";
+import { CircleAlert, PackageOpen, RotateCcw, SearchX } from "lucide-react";
 
 import { useLiveLootList } from "./use-live-loot-list";
 import { LootListItemStacksProvider } from "./loot-list-item-stacks-provider";
-
-// The empty states share the world-selection card: a fixed-size card near
-// the top instead of a panel stretched over the whole list.
-const EMPTY_STATE_WRAPPER_CLASS =
-  "flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-4 pb-8 pt-5 sm:px-6 md:[align-items:safe_center] md:py-8";
-
-const EMPTY_STATE_CLASS = "w-full max-w-sm flex-none bg-card";
 
 // Dimming the current page signals a reload without moving anything.
 const REFRESHABLE_LIST_CLASS =
@@ -77,65 +64,54 @@ export const LootsList = () => {
 
   if (isFailed) {
     return (
-      <div className={EMPTY_STATE_WRAPPER_CLASS}>
-        <Empty className={EMPTY_STATE_CLASS}>
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <CircleAlert />
-            </EmptyMedia>
-            <EmptyTitle>{t("loots.list.loadError")}</EmptyTitle>
-            <EmptyDescription>
-              {t("loots.list.loadErrorDescription")}
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Button type="button" variant="outline" size="sm" onClick={retry}>
+      <div className="px-3 pb-3">
+        <EmptyState
+          framed
+          icon={CircleAlert}
+          title={t("loots.list.loadError")}
+          description={t("loots.list.loadErrorDescription")}
+          action={
+            <Button
+              type="button"
+              variant="outline"
+              icon=<RotateCcw className="size-3.5" />
+              onClick={retry}
+            >
               {t("common.actions.retry")}
             </Button>
-          </EmptyContent>
-        </Empty>
+          }
+        />
       </div>
     );
   }
 
   if (isEmpty) {
     return (
-      <div className={EMPTY_STATE_WRAPPER_CLASS}>
-        <Empty className={EMPTY_STATE_CLASS}>
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              {hasActiveFilters ? (
-                <SearchX />
-              ) : (
-                <ThemeEmptyStateIcon fallback=<PackageOpen /> />
-              )}
-            </EmptyMedia>
-            <EmptyTitle>
-              {hasActiveFilters
-                ? t("loots.list.noResults")
-                : t(themedKey("loots.list.empty"))}
-            </EmptyTitle>
-            <EmptyDescription>
-              {t(
-                hasActiveFilters
-                  ? "loots.list.noResultsDescription"
-                  : "loots.list.emptyDescription",
-              )}
-            </EmptyDescription>
-          </EmptyHeader>
-          {hasActiveFilters && (
-            <EmptyContent>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={clearFilters}
-              >
+      <div className="px-3 pb-3">
+        {hasActiveFilters ? (
+          <EmptyState
+            framed
+            icon={SearchX}
+            title={t("loots.list.noResults")}
+            description={t("loots.list.noResultsDescription")}
+            action={
+              <Button type="button" variant="outline" onClick={clearFilters}>
                 {t("loots.list.clearFilters")}
               </Button>
-            </EmptyContent>
-          )}
-        </Empty>
+            }
+          />
+        ) : (
+          <EmptyState
+            framed
+            media={
+              <EmptyMedia variant="icon">
+                <ThemeEmptyStateIcon fallback=<PackageOpen /> />
+              </EmptyMedia>
+            }
+            title={t(themedKey("loots.list.empty"))}
+            description={t("loots.list.emptyDescription")}
+          />
+        )}
       </div>
     );
   }
@@ -175,7 +151,7 @@ export const LootsList = () => {
                   }}
                 >
                   {isLoaderRow ? (
-                    <LootListSentinelRow
+                    <InfiniteListStatusRow
                       hasNextPage={hasNextPage}
                       hasError={isError}
                       onRetry={retry}
@@ -222,7 +198,7 @@ export const LootsList = () => {
                   }}
                 >
                   {isLoaderRow ? (
-                    <LootListSentinelRow
+                    <InfiniteListStatusRow
                       hasNextPage={hasNextPage}
                       hasError={isError}
                       onRetry={retry}
