@@ -1,7 +1,7 @@
 import { selectNotificationJobsWithRelations } from "./notification-job-query.js";
 import { readNotificationRuleTargets } from "#src/notifications/targets/notification-target-store";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, lt, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
@@ -176,6 +176,56 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       )
       .pipe(Effect.mapError(failure("notifications.jobStore.block")));
 
+  const findOverdue = (before: Date, limit: number) =>
+    database
+      .select({
+        id: notificationJobTable.id,
+        ruleId: notificationJobTable.ruleId,
+        ownerType: notificationJobTable.ownerType,
+        ownerId: notificationJobTable.ownerId,
+        sourceEntityType: notificationJobTable.sourceEntityType,
+        scheduledFor: notificationJobTable.scheduledFor,
+        // Drizzle has no jsonb field accessor.
+        maxSpawnTime: sql<
+          string | null
+        >`${notificationJobTable.payloadSnapshot}->>'maxSpawnTime'`,
+      })
+      .from(notificationJobTable)
+      .where(
+        and(
+          eq(notificationJobTable.status, "PENDING"),
+          lt(notificationJobTable.scheduledFor, before),
+        ),
+      )
+      .orderBy(asc(notificationJobTable.scheduledFor))
+      .limit(limit)
+      .pipe(Effect.mapError(failure("notifications.jobStore.findOverdue")));
+
+  // Only a job nobody claimed meanwhile is closed, so a send in progress wins.
+  const closeMissed = (jobId: string, reason: string) =>
+    Effect.gen(function* () {
+      const now = new Date(yield* Clock.currentTimeMillis);
+
+      return yield* database
+        .update(notificationJobTable)
+        .set({
+          status: "FAILED",
+          lastError: reason,
+          processedAt: now,
+          updatedAt: now,
+        })
+        .where(
+          and(
+            eq(notificationJobTable.id, jobId),
+            eq(notificationJobTable.status, "PENDING"),
+          ),
+        )
+        .returning({ id: notificationJobTable.id });
+    }).pipe(
+      Effect.mapError(failure("notifications.jobStore.closeMissed")),
+      Effect.map((rows) => rows.length > 0),
+    );
+
   const recordDelivery = (options: NotificationDeliveryUpdate) =>
     database
       .transaction((transaction) =>
@@ -321,10 +371,12 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
     advanceRule,
     blockJob,
     claimJob,
+    closeMissed,
     cycleStatuses,
     failClaim,
     findJob,
     findJobWithRelations,
+    findOverdue,
     findRule,
     findRules,
     findTimers,

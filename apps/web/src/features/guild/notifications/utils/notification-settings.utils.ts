@@ -183,10 +183,22 @@ export const getJobStatusLabel = (status: string, t: (key: string) => string) =>
 export const getJobKindLabel = (kind: string, t: (key: string) => string) =>
   t(`settings.notifications.jobKinds.${kind.toLowerCase()}`);
 
+const JOB_ERROR_TRANSLATION_KEYS = new Map([
+  [
+    "Loot source is no longer visible",
+    "settings.notifications.jobErrors.lootSourceNotVisible",
+  ],
+  [
+    "Missed delivery window",
+    "settings.notifications.jobErrors.missedDeliveryWindow",
+  ],
+]);
+
 export const getJobErrorMessage = (
   message: string,
   t: (key: string) => string,
-) =>
-  message === "Loot source is no longer visible"
-    ? t("settings.notifications.jobErrors.lootSourceNotVisible")
-    : message;
+) => {
+  const key = JOB_ERROR_TRANSLATION_KEYS.get(message);
+
+  return key ? t(key) : message;
+};
