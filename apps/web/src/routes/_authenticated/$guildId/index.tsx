@@ -6,6 +6,7 @@ import {
 } from "@lootlog/client/main";
 import { LootsListPage } from "@/features/guild/loots-list/loots-list";
 import { LootsListPageSkeleton } from "@/features/guild/loots-list/loots-list-page-skeleton";
+import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import { ensureRouteQueryData } from "@/lib/router/route-prefetch";
 import {
   getOrganizationLandingItemId,
@@ -31,20 +32,22 @@ const isLandingRoute = (
 export const Route = createFileRoute("/_authenticated/$guildId/")({
   component: LootsListPage,
   pendingComponent: LootsListPageSkeleton,
-  loader: async ({ context, params }) => {
+  loader: async ({ abortController, context, params }) => {
     // The parent route ensures the same query, so this is a cache read.
-    const permissions = await ensureRouteQueryData(
-      context.queryClient,
-      getGuildsControllerGetGuildPermissionsQueryOptions(
-        { guildId: params.guildId },
-        {
-          query: {
-            queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
-              guildId: params.guildId,
-            }),
-            staleTime: 30_000,
+    const permissions = await withRouteLoaderCancellation(abortController, () =>
+      ensureRouteQueryData(
+        context.queryClient,
+        getGuildsControllerGetGuildPermissionsQueryOptions(
+          { guildId: params.guildId },
+          {
+            query: {
+              queryKey: getGuildsControllerGetGuildPermissionsQueryKey({
+                guildId: params.guildId,
+              }),
+              staleTime: 30_000,
+            },
           },
-        },
+        ),
       ),
     );
 
