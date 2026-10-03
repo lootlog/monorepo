@@ -15,13 +15,13 @@
   },
   "dependencies": {
     "@lootlog/protocol": "workspace:*",
-    "amqplib": "^2.0.1",
+    "amqplib": "^2.2.0",
     "effect": "catalog:"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
     "@types/node": "catalog:",
-    "testcontainers": "^12.1.0",
+    "testcontainers": "^12.2.0",
     "typescript": "catalog:"
   }
 }

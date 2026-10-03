@@ -38,7 +38,7 @@ jobs:
           HEAD_SHA: ${{ github.sha }}
         run: |
           if [[ "$BASE_SHA" =~ ^0+$ ]]; then BASE_SHA="$(git rev-parse "$HEAD_SHA^")"; fi
-          affected="$(bunx turbo@2.11.2 query affected --base "$BASE_SHA" --head "$HEAD_SHA" --packages)"
+          affected="$(bunx turbo@2.11.7 query affected --base "$BASE_SHA" --head "$HEAD_SHA" --packages)"
           packages="$(jq -c '[.data.affectedPackages.items[].name]' <<< "$affected")"
           plan="$(
             git diff --name-only -z "$BASE_SHA" "$HEAD_SHA" |

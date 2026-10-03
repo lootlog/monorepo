@@ -41,10 +41,10 @@ jobs:
           HEAD_SHA: ${{ github.sha }}
         run: |
           if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
-            affected_packages="$(bunx turbo@2.11.2 ls --output=json | jq -c '[.packages.items[].name]')"
+            affected_packages="$(bunx turbo@2.11.7 ls --output=json | jq -c '[.packages.items[].name]')"
             list_changed_files() { :; }
           else
-            affected="$(bunx turbo@2.11.2 query affected --base "$BASE_SHA" --head "$HEAD_SHA" --packages)"
+            affected="$(bunx turbo@2.11.7 query affected --base "$BASE_SHA" --head "$HEAD_SHA" --packages)"
             affected_packages="$(jq -c '[.data.affectedPackages.items[].name]' <<< "$affected")"
             list_changed_files() { git diff --name-only -z "$BASE_SHA" "$HEAD_SHA"; }
           fi

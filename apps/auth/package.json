@@ -26,27 +26,27 @@
     "db:studio": "bunx drizzle-kit studio"
   },
   "dependencies": {
-    "@better-auth/api-key": "1.7.5",
+    "@better-auth/api-key": "1.7.7",
     "@effect/platform-bun": "catalog:",
     "@effect/sql-pg": "catalog:",
     "@lootlog/database": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
-    "better-auth": "1.7.5",
+    "better-auth": "1.7.7",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
     "jose": "^6.2.12",
-    "pg": "^8.23.0"
+    "pg": "^8.23.1"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
-    "@testcontainers/postgresql": "^12.1.0",
+    "@testcontainers/postgresql": "^12.2.0",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "@types/pg": "^8.23.1",
     "drizzle-kit": "catalog:",
-    "testcontainers": "^12.1.0",
+    "testcontainers": "^12.2.0",
     "typescript": "catalog:",
     "yaml": "catalog:"
   }

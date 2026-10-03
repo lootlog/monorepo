@@ -1,8 +1,8 @@
 import { t } from "@/i18n/messages";
 
-export default function Footer() {
-  const year = new Date().getFullYear();
+const year = new Date().getFullYear();
 
+export default function Footer() {
   return (
     <footer className="site-footer mt-20 px-4 pb-14 pt-10 text-[var(--sea-ink-soft)]">
       <div className="page-wrap flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">

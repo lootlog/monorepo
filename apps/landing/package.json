@@ -16,14 +16,14 @@
   "dependencies": {
     "@lootlog/ui": "workspace:*",
     "@tanstack/react-router": "catalog:",
-    "@tanstack/react-start": "^1.168.56",
-    "better-auth": "1.7.5",
-    "framer-motion": "^13.4.0",
+    "@tanstack/react-start": "^1.168.60",
+    "better-auth": "1.7.7",
+    "framer-motion": "^14.0.0",
     "i18next": "^26.4.2",
-    "lucide-react": "^1.47.0",
+    "lucide-react": "^1.51.0",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-i18next": "^17.0.14"
+    "react-i18next": "^17.0.15"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",

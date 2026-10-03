@@ -9,6 +9,7 @@ import {
   FormMessage,
 } from "@lootlog/ui/components/form";
 import { Input } from "@lootlog/ui/components/input";
+import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import {
   Select,
   SelectContent,
@@ -25,6 +26,8 @@ import {
 type Props = Pick<ReturnType<typeof useNotificationRuleForm>, "form" | "t">;
 
 export const NotificationScheduleFields = ({ form, t }: Props) => {
+  const now = useMinuteTimestamp();
+
   const [triggerType, intervalType] = useWatch({
     control: form.control,
     name: ["triggerType", "scheduleIntervalType"],
@@ -215,7 +218,7 @@ export const NotificationScheduleFields = ({ form, t }: Props) => {
                       {...field}
                       type="datetime-local"
                       min={formatDateTimeLocalInputValue(
-                        new Date().toISOString(),
+                        new Date(now).toISOString(),
                         GUILD_NOTIFICATION_TIMEZONE,
                       )}
                     />

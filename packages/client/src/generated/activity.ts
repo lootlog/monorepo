@@ -293,15 +293,6 @@ export type ReadyzControllerCheck200Info = {
   database: ReadyzControllerCheck200InfoDatabase;
 };
 
-/**
- * @nullable
- */
-export type ReadyzControllerCheck200Error = typeof ReadyzControllerCheck200Error[keyof typeof ReadyzControllerCheck200Error] | null;
-
-
-export const ReadyzControllerCheck200Error = {
-} as const;
-
 export type ReadyzControllerCheck200DetailsDatabaseStatus = typeof ReadyzControllerCheck200DetailsDatabaseStatus[keyof typeof ReadyzControllerCheck200DetailsDatabaseStatus];
 
 
@@ -321,7 +312,7 @@ export type ReadyzControllerCheck200 = {
   status: ReadyzControllerCheck200Status;
   info: ReadyzControllerCheck200Info;
   /** @nullable */
-  error: ReadyzControllerCheck200Error;
+  error: null;
   details: ReadyzControllerCheck200Details;
 };
 
@@ -342,15 +333,6 @@ export type ReadyzControllerCheck503Status = typeof ReadyzControllerCheck503Stat
 
 export const ReadyzControllerCheck503Status = {
   error: 'error',
-} as const;
-
-/**
- * @nullable
- */
-export type ReadyzControllerCheck503Info = typeof ReadyzControllerCheck503Info[keyof typeof ReadyzControllerCheck503Info] | null;
-
-
-export const ReadyzControllerCheck503Info = {
 } as const;
 
 export type ReadyzControllerCheck503ErrorDatabaseStatus = typeof ReadyzControllerCheck503ErrorDatabaseStatus[keyof typeof ReadyzControllerCheck503ErrorDatabaseStatus];
@@ -386,7 +368,7 @@ export type ReadyzControllerCheck503Details = {
 export type ReadyzControllerCheck503 = {
   status: ReadyzControllerCheck503Status;
   /** @nullable */
-  info: ReadyzControllerCheck503Info;
+  info: null;
   error: ReadyzControllerCheck503Error;
   details: ReadyzControllerCheck503Details;
 };

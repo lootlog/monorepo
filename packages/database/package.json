@@ -23,11 +23,11 @@
     "@effect/sql-pg": "catalog:",
     "@lootlog/schema": "workspace:*",
     "effect": "catalog:",
-    "pg": "^8.23.0"
+    "pg": "^8.23.1"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
-    "@testcontainers/postgresql": "^12.1.0",
+    "@testcontainers/postgresql": "^12.2.0",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "@types/pg": "^8.23.1",
