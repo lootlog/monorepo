@@ -480,7 +480,7 @@ export const ChatView = ({
       contentClassName="ll:-mx-1 ll:-mb-1"
       title={t("window.title")}
       onClose={() => useWindowsStore.getState().setOpen("chat", false)}
-      minHeight={260}
+      minHeight={180}
       // minWidth={260}
       actions={actions}
     >
