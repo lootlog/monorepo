@@ -1,6 +1,9 @@
-import { expect, spyOn, test } from "bun:test";
-import { ConfigProvider, Context, Layer } from "effect";
+import { expect, mock, spyOn, test } from "bun:test";
+import { ConfigProvider, Context, Effect, Layer, Result } from "effect";
 import { HttpRouter, HttpServer } from "effect/http";
+import { Meilisearch } from "meilisearch";
+import { makeItemsModule } from "../src/items/items.service.js";
+import type { AppLogger } from "../src/shared/logger.js";
 import { SearchOperations } from "../src/http-api/search-operations.js";
 import { SearchRoutes } from "../src/http-api/search-http.js";
 
@@ -155,3 +158,74 @@ test("individual endpoints preserve text search and repeated exact-name filters 
     fetch.mockRestore();
   }
 });
+
+for (const scenario of [
+  "primary failure",
+  "fallback failure",
+  "fallback success",
+] as const) {
+  test(`item search reports only the final failure: ${scenario}`, async () => {
+    const terminalError = {
+      code: "index_not_found",
+      message: "Items index unavailable",
+    };
+
+    const staleSettingsError = {
+      code: "invalid_search_attributes_to_search_on",
+    };
+
+    const queries: { q: string; attributesToSearchOn: string[] }[] = [];
+    const error = mock<AppLogger["error"]>(() => {});
+    const warn = mock<AppLogger["warn"]>(() => {});
+
+    const client = new Meilisearch({
+      host: "http://search.invalid",
+      httpClient: async (_input, init) => {
+        queries.push(JSON.parse(String(init?.body)));
+
+        if (scenario === "primary failure") throw terminalError;
+
+        if (queries.length === 1) throw staleSettingsError;
+
+        if (scenario === "fallback failure") throw terminalError;
+
+        return { hits: [{ id: 42, name: "Sword" }], totalHits: 8 };
+      },
+    });
+
+    const items = makeItemsModule(client, { error, warn, info: () => {} });
+
+    const result = await Effect.runPromise(
+      items
+        .searchItems({ limit: 5, offset: 0, search: "Sword" })
+        .pipe(Effect.result),
+    );
+
+    expect(queries.map((query) => query.attributesToSearchOn)).toEqual(
+      scenario === "primary failure"
+        ? [["name", "stat"]]
+        : [["name", "stat"], ["name"]],
+    );
+    expect(queries.every((query) => query.q === "Sword")).toBe(true);
+    expect(warn).toHaveBeenCalledTimes(scenario === "primary failure" ? 0 : 1);
+
+    if (scenario === "fallback success") {
+      expect(Result.getOrThrow(result)).toMatchObject({
+        hits: [{ id: 42, name: "Sword" }],
+        estimatedTotalHits: 8,
+      });
+      expect(error).not.toHaveBeenCalled();
+    } else {
+      const failure = Result.getOrThrow(Result.flip(result));
+      expect(failure).toMatchObject({
+        operation:
+          scenario === "primary failure"
+            ? "search.items"
+            : "search.items.fallback",
+        cause: { cause: terminalError },
+      });
+      expect(error).toHaveBeenCalledTimes(1);
+      expect(error.mock.calls[0]?.[1]).toEqual({ error: failure });
+    }
+  });
+}
