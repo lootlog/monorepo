@@ -122,11 +122,10 @@ const combinedEvent = {
   other: {},
   party: {
     members: {
-      "1": {
+      "12345": {
         account: 67_890,
         commander: 1,
         icon: "hero.gif",
-        id: 12_345,
         nick: "Hero",
       },
     },

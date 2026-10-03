@@ -135,14 +135,12 @@ export const createPartyJoinEvent = (): GameEvent => ({
   party: {
     members: {
       "617": {
-        id: 617,
         nick: "cashtelan",
         icon: "/kuf/her_xxxiii_nymph_cold_k2.gif",
-        commander: 1,
+        commander: true,
         account: 9822301,
       },
       "12345": {
-        id: 12345,
         nick: "Debug Player",
         icon: "/eve/kup23-elf-k.gif",
         account: 1234567,
