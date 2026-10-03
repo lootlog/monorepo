@@ -3,6 +3,7 @@ import { SignIn } from "@/features/signin/signin";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 import { SigninPageSkeleton } from "@/features/signin/signin-page-skeleton";
 import { restoreLastOrganization } from "@/lib/router/restore-last-organization";
+import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 
 import { z } from "zod";
 
@@ -16,7 +17,9 @@ export const Route = createFileRoute("/signin")({
   pendingComponent: SigninPageSkeleton,
   validateSearch: signinSearch.parse,
   beforeLoad: async ({ context, search, preload, abortController }) => {
-    const session = await context.queryClient.fetchQuery(sessionQueryOptions);
+    const session = await withRouteLoaderCancellation(abortController, () =>
+      context.queryClient.fetchQuery(sessionQueryOptions),
+    );
 
     if (session?.data?.session && !search.error) {
       if (search.redirect) {

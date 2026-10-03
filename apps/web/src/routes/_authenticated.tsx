@@ -23,9 +23,10 @@ function AuthenticatedLayout() {
 }
 
 export const Route = createFileRoute("/_authenticated")({
-  beforeLoad: async ({ context, location }) => {
-    const session =
-      await context.queryClient.ensureQueryData(sessionQueryOptions);
+  beforeLoad: async ({ abortController, context, location }) => {
+    const session = await withRouteLoaderCancellation(abortController, () =>
+      context.queryClient.ensureQueryData(sessionQueryOptions),
+    );
 
     if (!session || !session.data?.session) {
       throw redirect({
