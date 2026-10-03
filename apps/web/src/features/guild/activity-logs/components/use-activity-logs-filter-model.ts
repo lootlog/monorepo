@@ -11,6 +11,7 @@ import {
 
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useActivityLogsFilters } from "@/hooks/use-activity-logs-filters";
+import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { useGuildsControllerGetGuildById } from "@lootlog/client/main";
 import { useQuery } from "@tanstack/react-query";
 import { isAfter, isBefore, startOfDay, subDays } from "date-fns";
@@ -105,7 +106,8 @@ export const useActivityLogsFilterModel = () => {
 
   const startDateValue = getDateValue(filters.startDate);
   const endDateValue = getDateValue(filters.endDate);
-  const today = startOfDay(new Date());
+  const now = useMinuteTimestamp();
+  const today = startOfDay(now);
   const minSelectableDate = startOfDay(subDays(today, 7));
 
   const normalizedStartDate = startDateValue

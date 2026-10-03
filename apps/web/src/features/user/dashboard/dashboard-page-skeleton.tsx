@@ -9,14 +9,16 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { useTranslation } from "react-i18next";
+import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 
 export function DashboardPageSkeleton() {
   const { t } = useTranslation();
+  const now = useMinuteTimestamp();
 
   const calendarStyle: CSSProperties & { "--activity-weeks": number } = {
     containerType: "inline-size",
     "--activity-weeks": Math.ceil(
-      (112 + calendarOffset(calendarRange(new Date(), 112).from)) / 7,
+      (112 + calendarOffset(calendarRange(new Date(now), 112).from)) / 7,
     ),
   };
 
