@@ -197,7 +197,7 @@ export const EventTimersList: FC<EventTimersListProps> = ({
   const hasMore = activeTimers.length > 3;
 
   return (
-    <div className="border-t border-yellow-500/20">
+    <div className="border-t border-signal-timer/20">
       <div className="py-1">
         {visibleTimers.map((timer) => (
           <TimerItem
@@ -219,7 +219,8 @@ export const EventTimersList: FC<EventTimersListProps> = ({
             e.stopPropagation();
             setIsExpanded((currentValue) => !currentValue);
           }}
-          className="w-full px-2 py-1 flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:bg-yellow-500/10 transition-colors"
+          className="w-full px-2 py-1 flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:bg-signal-timer/10 transition-colors"
+          aria-expanded={isExpanded}
         >
           <span>
             {isExpanded
@@ -233,7 +234,7 @@ export const EventTimersList: FC<EventTimersListProps> = ({
               isExpanded ? "rotate-180" : ""
             }`}
           >
-            <ChevronDown className="h-3 w-3" />
+            <ChevronDown className="size-3" />
           </div>
         </button>
       )}

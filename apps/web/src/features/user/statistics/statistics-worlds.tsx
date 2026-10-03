@@ -14,6 +14,7 @@ import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { KillAnalyticsTrend } from "./kill-analytics-trend";
+import { EMPTY_VALUE } from "@/constants/empty-value";
 
 export function StatisticsWorlds({
   data,
@@ -82,7 +83,7 @@ export function StatisticsWorlds({
                     <TableCell>
                       {world.deltaKills.toLocaleString("pl-PL")} ·{" "}
                       {world.deltaPercent === null
-                        ? "—"
+                        ? EMPTY_VALUE
                         : `${world.deltaPercent.toLocaleString("pl-PL", { maximumFractionDigits: 1 })}%`}
                     </TableCell>
                     <TableCell>

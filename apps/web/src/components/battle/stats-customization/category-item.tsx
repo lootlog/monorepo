@@ -70,7 +70,7 @@ export const CategoryItem = ({
   return (
     <div className="border-b border-border/70 overflow-hidden">
       <div className="flex items-center gap-2 p-3">
-        <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab active:cursor-grabbing flex-shrink-0" />
+        <GripVertical className="size-5 text-muted-foreground cursor-grab active:cursor-grabbing flex-shrink-0" />
 
         <Checkbox
           checked={category.visible}
@@ -87,31 +87,31 @@ export const CategoryItem = ({
 
         <Button
           variant="ghost"
-          size="sm"
+          size="icon"
           onClick={onRemoveCategory}
           aria-label={t("battleUi.customization.removeCategory", {
             name: localName,
           })}
-          className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive flex-shrink-0"
+          className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className="size-4" />
         </Button>
 
         <Button
           variant="ghost"
-          size="sm"
+          size="icon"
           onClick={() => setIsExpanded(!isExpanded)}
           aria-expanded={isExpanded}
           aria-label={t("battleUi.customization.toggleCategory", {
             name: localName,
           })}
-          className="flex-shrink-0"
+          className="size-8"
         >
           <m.div
             animate={{ rotate: isExpanded ? 0 : -90 }}
             transition={{ duration: 0.2, ease: "easeInOut" }}
           >
-            <ChevronDown className="h-4 w-4" />
+            <ChevronDown className="size-4" />
           </m.div>
         </Button>
       </div>

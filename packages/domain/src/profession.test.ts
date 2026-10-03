@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import {
-  formatNpcLevel,
+  formatLevel,
   getProfByShortname,
   getShortnameByProf,
 } from "./profession.js";
@@ -25,8 +25,8 @@ describe("Margonem professions", () => {
   });
 
   it("formats a level the same way from a profession or its shortname", () => {
-    expect(formatNpcLevel(300, "BLADE_DANCER")).toBe("300b");
-    expect(formatNpcLevel(300, "b")).toBe("300b");
-    expect(formatNpcLevel(300, null)).toBe("300");
+    expect(formatLevel(300, "BLADE_DANCER")).toBe("300b");
+    expect(formatLevel(300, "b")).toBe("300b");
+    expect(formatLevel(300, null)).toBe("300");
   });
 });

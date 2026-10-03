@@ -115,7 +115,12 @@ export function HeadToHeadPageVariant({
 
   const renderResults = () => {
     if (isLoading) {
-      return <TableRowsSkeleton trailingColumns={trailingSkeletonColumns} />;
+      return (
+        <TableRowsSkeleton
+          withHeader
+          trailingColumns={trailingSkeletonColumns}
+        />
+      );
     }
 
     if (isError) {

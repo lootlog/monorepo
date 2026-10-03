@@ -1,6 +1,6 @@
 import { Label } from "@lootlog/ui/components/label";
 import { CharacterSelector } from "@/components/filters/character-selector";
-import { BattlePanelLevelRange } from "@/features/user/battle-panel/components/battle-panel-level-range";
+import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import { PeriodSelector } from "@/components/filters/period-selector";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Award } from "lucide-react";
@@ -41,7 +41,8 @@ export const StatisticsFiltersDesktop = ({
         />
       </div>
 
-      <BattlePanelLevelRange
+      <LevelRangeFilter
+        layout="inline"
         minLevel={minLevel}
         maxLevel={maxLevel}
         onMinLevelChange={onMinLevelChange}

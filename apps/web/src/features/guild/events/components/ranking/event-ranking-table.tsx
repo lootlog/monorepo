@@ -1,4 +1,5 @@
 import { EmptyState } from "@/components/common/empty-state";
+import { RankBadge } from "@/components/common/rank-badge";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { useState, type ReactNode } from "react";
@@ -24,6 +25,7 @@ import { EventRankingPoints } from "./event-ranking-points";
 import { EventRankingPointsDialog } from "./event-ranking-points-dialog";
 import { getRankingMemberName } from "./get-ranking-member-name";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
+import { EMPTY_VALUE } from "@/constants/empty-value";
 
 type EventRankingTableProps = {
   rankings: EventRanking[];
@@ -39,15 +41,6 @@ const LINK_COLUMN_IDS = new Set(["position", "member", "kills", "time", "afk"]);
 const PRIMARY_LINK_COLUMN_ID = "member";
 
 const RIGHT_ALIGNED_COLUMN_IDS = new Set(["kills", "time", "afk", "points"]);
-
-const getPositionClassName = (position: number) =>
-  cn(
-    "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums",
-    position === 1 && "bg-yellow-500 text-yellow-950",
-    position === 2 && "bg-gray-300 text-gray-800",
-    position === 3 && "bg-amber-700 text-amber-100",
-    position > 3 && "bg-muted text-muted-foreground",
-  );
 
 const getColumnClassName = (
   columnId: string,
@@ -158,11 +151,7 @@ export const EventRankingTable = ({
           #
         </span>
       ),
-      cell: ({ row }) => (
-        <span className={getPositionClassName(row.index + 1)}>
-          {row.index + 1}
-        </span>
-      ),
+      cell: ({ row }) => <RankBadge rank={row.index + 1} />,
       enableSorting: false,
     },
     {
@@ -219,7 +208,9 @@ export const EventRankingTable = ({
 
         if (afkPercentage === 0) {
           return (
-            <span className="block text-right text-muted-foreground">-</span>
+            <span className="block text-right text-muted-foreground">
+              {EMPTY_VALUE}
+            </span>
           );
         }
 

@@ -2,7 +2,7 @@ import { getOpponentSummaryColumns } from "./opponent-summary-columns";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { OpponentSummaryTable } from "./opponent-summary-table";
-import { StatCard } from "./stat-card";
+import { ChartCard } from "@/components/common/chart-card";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { ROUTES } from "@/config/routes";
 import type { RatingDeltaByOpponentRecord } from "@/lib/api/battlelog-types";
@@ -102,12 +102,15 @@ export function RatingDeltaByOpponentCard({
   });
 
   return (
-    <StatCard
+    <ChartCard
       title={t("battlePanel.statistics.matchmaking.title")}
       description={t("battlePanel.statistics.matchmaking.description")}
       isLoading={isLoading}
-      isEmpty={data.length === 0}
-      emptyMessage={t("battlePanel.statistics.matchmaking.empty")}
+      emptyMessage={
+        data.length === 0
+          ? t("battlePanel.statistics.matchmaking.empty")
+          : undefined
+      }
       actions={
         <ChevronLink
           render=<Link
@@ -120,6 +123,6 @@ export function RatingDeltaByOpponentCard({
       }
     >
       <OpponentSummaryTable table={table} onOpponentOpen={handleOpponentOpen} />
-    </StatCard>
+    </ChartCard>
   );
 }

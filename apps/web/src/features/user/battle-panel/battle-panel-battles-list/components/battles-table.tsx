@@ -6,16 +6,10 @@ import { BattlePanelBattleCard } from "@/features/user/battle-panel/components/b
 import { BattlePanelBattleCardSkeleton } from "@/features/user/battle-panel/components/battle-panel-battle-card-skeleton";
 import type { FilterChip } from "@/components/common/filter-chip-list";
 import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/components/battle-panel-pagination-footer";
+import { EmptyState } from "@/components/common/empty-state";
 import { ResultsSurface } from "@/components/common/results-surface";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@lootlog/ui/components/empty";
 import { Table } from "@lootlog/ui/components/table";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { Link } from "@tanstack/react-router";
@@ -260,24 +254,13 @@ export const BattlesTable = ({
         withHorizontalScroll={!isMobile}
       >
         {!isLoading && battles.length === 0 ? (
-          <div
-            className={cn(
-              "flex items-center justify-center",
-              pagination ? "min-h-[360px]" : "min-h-48",
-            )}
-          >
-            <Empty className="border-0">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <Shield />
-                </EmptyMedia>
-                <EmptyTitle>{t("battlePanel.list.empty")}</EmptyTitle>
-                <EmptyDescription>
-                  {t("battlePanel.list.emptyDescription")}
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          </div>
+          <EmptyState
+            icon={Shield}
+            title={t("battlePanel.list.empty")}
+            description={t("battlePanel.list.emptyDescription")}
+            compact={!pagination}
+            className={pagination ? "min-h-[360px]" : "min-h-48"}
+          />
         ) : isMobile ? (
           <div
             aria-busy={isLoading || isRefreshing}

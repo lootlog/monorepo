@@ -44,6 +44,7 @@ export function DashboardRecentBattles() {
       />
       <StatisticsQueryState
         query={query}
+        compact
         loading={
           <div
             role="status"

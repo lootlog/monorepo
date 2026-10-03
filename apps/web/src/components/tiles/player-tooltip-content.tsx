@@ -1,3 +1,4 @@
+import { formatLevel } from "@lootlog/domain/profession";
 import type { FC } from "react";
 
 type PlayerTooltipContentProps = {
@@ -12,10 +13,12 @@ export const PlayerTooltipContent: FC<PlayerTooltipContentProps> = ({
   prof,
 }) => (
   <p className="font-semibold text-foreground">
-    {name}{" "}
-    <span className="font-normal text-muted-foreground">
-      ({lvl}
-      {prof?.charAt(0).toLowerCase()})
-    </span>
+    {name}
+    {lvl !== undefined && (
+      <span className="font-normal text-muted-foreground">
+        {" "}
+        ({formatLevel(lvl, prof)})
+      </span>
+    )}
   </p>
 );

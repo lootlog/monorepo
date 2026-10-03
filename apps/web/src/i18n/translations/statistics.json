@@ -107,7 +107,9 @@
     "hour": "Ostatnia godzina",
     "earlier": "Wcześniej"
   },
-  "feedMoreItems": "+{{count}} kolejnych",
+  "feedMoreItems_one": "+{{count}} kolejny",
+  "feedMoreItems_few": "+{{count}} kolejne",
+  "feedMoreItems_many": "+{{count}} kolejnych",
   "recentBattles": {
     "title": "Ostatnie walki",
     "showAll": "Pokaż wszystkie",
@@ -128,7 +130,7 @@
     "steps": {
       "installAddon": {
         "title": "Zainstaluj dodatek do gry",
-        "description": "Dodatek zapisuje łupy, timery i walki podczas zwykłej gry. Instalujesz go jako skrypt Tampermonkey.",
+        "description": "Dodatek zapisuje łupy, timery i walki podczas zwykłej gry. Instalujesz go jako rozszerzenie przeglądarki lub skrypt Tampermonkey.",
         "action": "Wybierz sposób instalacji"
       },
       "joinOrganization": {

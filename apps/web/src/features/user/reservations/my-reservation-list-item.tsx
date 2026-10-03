@@ -158,7 +158,7 @@ export function MyReservationListItem({
                     spot: reservation.spotName,
                   })}
                 >
-                  <Trash2 className="size-3.5" />
+                  <Trash2 className="size-4" />
                 </Button>
               }
             />

@@ -16,7 +16,7 @@ import { EventStatusDialogs } from "./event-status-dialogs";
 import { findEventHeroTimer } from "./utils/find-event-hero-timer";
 
 import { useEventDetail } from "./use-event-detail";
-import { EventReadError } from "./components/shared/event-read-error";
+import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { SectionCard } from "@/components/common/section-card/section-card";
 
 export const EventDetail = () => {
@@ -191,7 +191,7 @@ export const EventDetail = () => {
 
           {mapsError && (
             <SectionCard>
-              <EventReadError
+              <QueryErrorNotice
                 message={t("events.maps.error")}
                 onRetry={() => void refetchMaps()}
                 isRetrying={isMapsFetching}
@@ -200,7 +200,7 @@ export const EventDetail = () => {
           )}
           {rankingError && (
             <SectionCard>
-              <EventReadError
+              <QueryErrorNotice
                 message={t("events.ranking.error")}
                 onRetry={() => void refetchRanking()}
                 isRetrying={isRankingFetching}

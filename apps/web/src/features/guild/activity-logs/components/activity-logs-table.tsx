@@ -147,7 +147,7 @@ export const ActivityLogsTable = ({
           return (
             <TableRow
               key={virtualRow.key}
-              className="h-14 border-b border-border hover:bg-muted/50"
+              className="h-14 border-b border-border hover:bg-muted/40"
             >
               {row.getVisibleCells().map((cell) => (
                 <TableCell

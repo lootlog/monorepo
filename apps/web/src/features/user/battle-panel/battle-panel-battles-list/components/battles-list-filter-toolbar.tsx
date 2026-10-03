@@ -64,7 +64,7 @@ export const BattlesListFilterToolbar = ({
         <Button
           type="button"
           variant="outline"
-          className="shrink-0 gap-2"
+          className="h-10 shrink-0 gap-2"
           onClick={onMobileFiltersOpen}
         >
           <Filter className="size-4" aria-hidden="true" />

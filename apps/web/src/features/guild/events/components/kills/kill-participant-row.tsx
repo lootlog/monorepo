@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/common/empty-state";
 import { sumBy } from "es-toolkit";
 import type { TOptions } from "i18next";
 import { TextLink } from "@lootlog/ui/components/text-link";
@@ -29,6 +30,7 @@ import {
   getScoringItems,
 } from "../../utils/scoring-presentation";
 import { ManualPointsEditDialog } from "../dialogs/manual-points-edit-dialog";
+import { EMPTY_VALUE } from "@/constants/empty-value";
 
 interface KillParticipantRowProps {
   participant: KillDetailParticipant;
@@ -71,12 +73,12 @@ const buildParticipantScoringView = (
       participant.trackingDurationSeconds !== null &&
       participant.trackingDurationSeconds !== undefined
         ? formatDurationHuman(participant.trackingDurationSeconds)
-        : "-",
+        : EMPTY_VALUE,
     trackingPercentage:
       participant.trackingDurationPercentage !== null &&
       participant.trackingDurationPercentage !== undefined
         ? `${Math.round(participant.trackingDurationPercentage)}%`
-        : "-",
+        : EMPTY_VALUE,
   };
 };
 
@@ -191,7 +193,7 @@ export const KillParticipantRow = ({
               {formatDurationHuman(totalAfkSeconds)}
             </span>
           ) : (
-            "-"
+            EMPTY_VALUE
           )}
         </span>
 
@@ -319,9 +321,11 @@ export const KillParticipantRow = ({
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground">
-                {t("events.kills.noMapBreakdown")}
-              </p>
+              <EmptyState
+                compact
+                icon={MapPin}
+                title={t("events.kills.noMapBreakdown")}
+              />
             )}
           </div>
         </div>

@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/common/empty-state";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import type { TFunction } from "i18next";
@@ -59,9 +60,11 @@ export const MultipliersCard = ({
           />
 
           {rules.length === 0 ? (
-            <p className="px-3 py-3 text-sm text-muted-foreground">
-              {t("events.killDetail.multipliers.noRules")}
-            </p>
+            <EmptyState
+              compact
+              icon={Calculator}
+              title={t("events.killDetail.multipliers.noRules")}
+            />
           ) : (
             <ScoringRulesList
               highlightedRuleIds={highlightedRuleIds}

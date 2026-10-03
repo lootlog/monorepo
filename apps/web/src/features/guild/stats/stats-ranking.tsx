@@ -3,11 +3,11 @@ import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
-import { KillStatsFilterBar } from "./components/kill-stats-filter-bar";
+import { KillStatsFilterBar } from "@/features/kills/components/kill-stats-filter-bar";
 import { MemberNameWithColor } from "./components/member-name-with-color";
 import { StatsCountCell } from "./components/stats-count-cell";
 import { StatsMemberAvatar } from "./components/stats-member-avatar";
-import { StatsRank } from "./components/stats-rank";
+import { RankBadge } from "@/components/common/rank-badge";
 import {
   STATS_TABLE_COUNT_COLUMN_ID,
   STATS_TABLE_POSITION_COLUMN_ID,
@@ -49,7 +49,7 @@ export const StatsRanking = () => {
     {
       id: STATS_TABLE_POSITION_COLUMN_ID,
       header: () => t("kills.memberRanking.position"),
-      cell: ({ row }) => <StatsRank rank={cursor + row.index + 1} />,
+      cell: ({ row }) => <RankBadge rank={cursor + row.index + 1} />,
     },
     {
       id: "member",
@@ -157,7 +157,7 @@ export const StatsRanking = () => {
                 className="block p-3 outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
               >
                 <span className="flex min-w-0 items-center gap-3">
-                  <StatsRank rank={cursor + index + 1} />
+                  <RankBadge rank={cursor + index + 1} />
                   <StatsMemberAvatar
                     userId={member.memberUserId}
                     avatar={member.memberAvatar}

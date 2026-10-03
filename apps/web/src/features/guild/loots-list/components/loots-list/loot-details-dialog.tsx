@@ -34,6 +34,7 @@ import {
   useLootsControllerFetchLootById,
 } from "@lootlog/client/main";
 import { cn } from "cn";
+import { EmptyState } from "@/components/common/empty-state";
 import { LoadingSlot } from "@/components/common/loading-slot";
 
 const ARCHIVE_LOOTS_PERMISSION = "LOOTLOG_LOOTS_ARCHIVE";
@@ -53,12 +54,12 @@ const NotFoundState: FC = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-16 text-center text-muted-foreground">
-      <div className="flex size-12 items-center justify-center rounded-xl border border-border bg-card">
-        <AlertCircle className="size-5" />
-      </div>
-      <p className="text-sm">{t("loots.details.notFound")}</p>
-    </div>
+    <EmptyState
+      compact
+      icon={AlertCircle}
+      title={t("loots.details.notFound")}
+      className="flex-1"
+    />
   );
 };
 

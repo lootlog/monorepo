@@ -1,4 +1,4 @@
-import { formatNpcLevel } from "@lootlog/domain/profession";
+import { formatLevel } from "@lootlog/domain/profession";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
@@ -81,7 +81,7 @@ export const EventCoordinationHeroCard = ({
             {hero.npcName}
             {hero.npcLvl ? (
               <span className="ml-1.5 text-xs font-normal text-muted-foreground">
-                {formatNpcLevel(hero.npcLvl)}
+                {formatLevel(hero.npcLvl)}
               </span>
             ) : null}
           </>

@@ -4,7 +4,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { format } from "date-fns";
 import {
   Award,
   Calendar,
@@ -23,6 +22,7 @@ import type { Battle } from "@/lib/api/battlelog-types";
 import { upperFirst } from "es-toolkit";
 import { cn } from "cn";
 import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 export type BattleMetadataProps = {
   battle: Battle;
@@ -51,7 +51,7 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
     {
       key: "startTime",
       icon: <Calendar size={14} />,
-      label: format(battle.createdAt, "dd.MM.yyyy HH:mm"),
+      label: timestampToDate(battle.createdAt),
       tooltip: t("battleUi.metadata.startTime"),
     },
     {

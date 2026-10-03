@@ -1,16 +1,10 @@
 import { CharacterSelector } from "@/components/filters/character-selector";
-import { BattlePanelLevelRange } from "@/features/user/battle-panel/components/battle-panel-level-range";
+import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import { ROUTES } from "@/config/routes";
 import type { AbyssSeason } from "@/lib/api/battlelog-types";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@lootlog/ui/components/select";
+import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import {
   Tabs,
   TabsContent,
@@ -31,8 +25,6 @@ import { AbyssSummaryCards } from "./abyss-summary-cards";
 import { useAbyssHub } from "./use-abyss-hub";
 
 const PAGE_SIZE = 20;
-
-const NO_SEASON_VALUE = "no-season";
 
 const getSeasonLabel = (
   season: AbyssSeason,
@@ -158,61 +150,33 @@ export function AbyssHub() {
                 className="h-10 w-full md:w-[240px]"
               />
 
-              <Select
-                value={selectedSeason?.id ?? NO_SEASON_VALUE}
+              <FilterPopover
+                icon={Trophy}
+                showSearch={false}
+                options={seasons.map((season, index) => ({
+                  value: season.id,
+                  label: getSeasonLabel(
+                    season,
+                    index,
+                    t("battlePanel.abyss.latestSeason"),
+                  ),
+                }))}
+                value={selectedSeason?.id}
                 onValueChange={handleSeasonChange}
                 disabled={isLoadingSeasons || seasons.length === 0}
-                items={[
-                  {
-                    value: null,
-                    label: <>{t("battlePanel.abyss.selectSeason")}</>,
-                  },
-                  {
-                    value: NO_SEASON_VALUE,
-                    label: <>{t("battlePanel.abyss.noSeason")}</>,
-                  },
-                  ...seasons.map((season, index) => ({
-                    value: season.id,
-                    label: (
-                      <>
-                        {getSeasonLabel(
-                          season,
-                          index,
-                          t("battlePanel.abyss.latestSeason"),
-                        )}
-                      </>
-                    ),
-                  })),
-                ]}
-              >
-                <SelectTrigger
-                  size="lg"
-                  className="w-full min-w-0 md:w-[260px]"
-                >
-                  <SelectValue
-                    placeholder={t("battlePanel.abyss.selectSeason")}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {seasons.length === 0 ? (
-                    <SelectItem value={NO_SEASON_VALUE} disabled>
-                      {t("battlePanel.abyss.noSeason")}
-                    </SelectItem>
-                  ) : (
-                    seasons.map((season, index) => (
-                      <SelectItem key={season.id} value={season.id}>
-                        {getSeasonLabel(
-                          season,
-                          index,
-                          t("battlePanel.abyss.latestSeason"),
-                        )}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+                placeholder={
+                  seasons.length === 0 && !isLoadingSeasons
+                    ? t("battlePanel.abyss.noSeason")
+                    : t("battlePanel.abyss.selectSeason")
+                }
+                emptyMessage={t("battlePanel.abyss.noSeason")}
+                width="w-full md:w-[260px]"
+                triggerClassName="h-10 min-w-0"
+                contentClassName="w-[260px]"
+              />
 
-              <BattlePanelLevelRange
+              <LevelRangeFilter
+                layout="inline"
                 minLevel={minLevel}
                 maxLevel={maxLevel}
                 onMinLevelChange={handleMinLevelChange}

@@ -1,7 +1,6 @@
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
-import { format } from "date-fns";
 import {
   BellOff,
   BellRing,
@@ -30,6 +29,10 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
 import { NotificationTargetType } from "@lootlog/schema/notifications";
+import {
+  DATE_TIME_WITH_SECONDS_FORMAT,
+  timestampToDate,
+} from "@/utils/date/parse-timestamp-to-date";
 
 type DmActionsCardProps = {
   dmTarget: NotificationTargetWithTestTriggerResponseDto | null;
@@ -194,7 +197,7 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
         ) : null}
 
         {!hasActiveDm ? (
-          <p className="flex items-center gap-1.5 text-xs text-amber-500">
+          <p className="flex items-center gap-1.5 text-xs text-signal-timer">
             <ShieldAlert className="size-3.5 shrink-0" />
             {getDmHint(hasDmTarget, dmTarget?.canSend, t)}
           </p>
@@ -241,9 +244,9 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
                   {dmTarget?.testTrigger.nextAvailableAt ? (
                     <p className="text-muted-foreground">
                       {t("settings.userNotifications.dm.testNextAvailable", {
-                        date: format(
-                          new Date(dmTarget.testTrigger.nextAvailableAt),
-                          "dd.MM.yyyy HH:mm:ss",
+                        date: timestampToDate(
+                          dmTarget.testTrigger.nextAvailableAt,
+                          DATE_TIME_WITH_SECONDS_FORMAT,
                         ),
                       })}
                     </p>

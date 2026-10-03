@@ -5,7 +5,6 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { cn } from "cn";
 import { Link } from "@tanstack/react-router";
-import { format } from "date-fns";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -14,6 +13,7 @@ import {
 } from "./battle-panel-battle-presentation";
 import { BattlePanelTeamSummary } from "./battle-panel-team-summary";
 import { BattleResultStatus } from "./battle-result-status";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 type BattlePanelBattleCardProps = {
   actions?: ReactNode;
@@ -31,7 +31,7 @@ export const BattlePanelBattleCard = ({
   const { t } = useTranslation();
   const { leftTeam, rightTeam, userWarrior } = getBattleTeams(battle);
   const result = getBattleResult(battle);
-  const exactTime = format(new Date(battle.createdAt), "dd.MM.yyyy HH:mm");
+  const exactTime = timestampToDate(battle.createdAt);
 
   return (
     <article

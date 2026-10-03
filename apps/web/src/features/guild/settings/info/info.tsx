@@ -7,12 +7,15 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { format } from "date-fns";
-import { History, Info, KeyRound, RefreshCcw, ShieldCheck } from "lucide-react";
+import { History, Info, KeyRound, RefreshCw, ShieldCheck } from "lucide-react";
 import { InfoField } from "./info-field";
 import { InfoSettingsSkeletonCards } from "./info-skeleton-cards";
 import { useTranslation } from "react-i18next";
 import type { DiscordGuildSyncStateResponseDto } from "@lootlog/client/main";
+import {
+  DATE_TIME_WITH_SECONDS_FORMAT,
+  timestampToDate,
+} from "@/utils/date/parse-timestamp-to-date";
 
 const getGuildSyncPresentation = (
   data: DiscordGuildSyncStateResponseDto | undefined,
@@ -22,11 +25,11 @@ const getGuildSyncPresentation = (
 ) => ({
   channelCount: data?.channelCount ?? 0,
   lastAttempt: data?.lastAttemptAt
-    ? format(new Date(data.lastAttemptAt), "dd.MM.yyyy HH:mm:ss")
+    ? timestampToDate(data.lastAttemptAt, DATE_TIME_WITH_SECONDS_FORMAT)
     : notAvailable,
   lastError: data?.lastError ? syncError : noErrors,
   lastSuccess: data?.lastSuccessAt
-    ? format(new Date(data.lastSuccessAt), "dd.MM.yyyy HH:mm:ss")
+    ? timestampToDate(data.lastSuccessAt, DATE_TIME_WITH_SECONDS_FORMAT)
     : notAvailable,
   requiredPermissions: data?.requiredPermissions ?? [],
   selectableChannelCount: data?.selectableChannelCount ?? 0,
@@ -89,7 +92,7 @@ export const InfoSettings = () => {
                         onClick={refresh}
                         disabled={!guildId || query.isFetching}
                         loading={isRefreshing}
-                        icon={<RefreshCcw />}
+                        icon={<RefreshCw />}
                       >
                         {t("settings.guildInfo.refresh")}
                       </Button>

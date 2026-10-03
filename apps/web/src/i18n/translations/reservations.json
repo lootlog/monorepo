@@ -90,7 +90,7 @@
         }
       },
       "failureReasons": {
-        "title": "Dlaczego zapis może nie działać?",
+        "title": "Dlaczego rezerwacja może nie działać?",
         "items": {
           "tooShort": "Wybrany zakres jest krótszy niż minimalna długość rezerwacji.",
           "tooLong": "Wybrany zakres przekracza maksymalną długość rezerwacji.",
@@ -131,7 +131,7 @@
       "timeRangeRequired": "Wybierz zakres czasowy rezerwacji.",
       "endAfterStart": "Data zakończenia musi być późniejsza niż rozpoczęcia.",
       "invalidTimeGrid": "Początek i koniec muszą wypadać co {{minutes}} minut.",
-      "startTooOld": "Godzina rozpoczęcia rezerwacji nie może być starsza niż 1 godzina od aktualnego czasu.",
+      "startTooOld": "Rezerwacja nie może zaczynać się wcześniej niż godzinę temu.",
       "minimumDuration": "Rezerwacja musi trwać co najmniej {{minutes}} minut.",
       "maximumDuration": "Rezerwacja może trwać maksymalnie {{minutes}} minut.",
       "maxAdvance": "Rezerwację można utworzyć maksymalnie {{days}} dni do przodu."
@@ -151,7 +151,7 @@
   },
   "details": {
     "title": "Szczegóły rezerwacji",
-    "description": "Szczegóły zapisu na {{spot}}",
+    "description": "Szczegóły rezerwacji na {{spot}}",
     "time": "Termin",
     "reminder": "Przypomnienie",
     "comment": "Komentarz",
@@ -160,7 +160,7 @@
     "cancelled": "Rezerwacja została anulowana."
   },
   "my": {
-    "title": "Moje zapisy",
+    "title": "Moje rezerwacje",
     "description": "Nadchodzące rezerwacje oraz historia z ostatnich 30 dni.",
     "showAll": "Pokaż wszystkie",
     "tabsLabel": "Zakres rezerwacji",
@@ -168,7 +168,7 @@
     "history": "Historia 30 dni",
     "emptyUpcoming": "Nie masz nadchodzących rezerwacji",
     "emptyHistory": "Brak rezerwacji w ostatnich 30 dniach",
-    "emptyDescription": "Nowe zapisy pojawią się tutaj automatycznie.",
+    "emptyDescription": "Nowe rezerwacje pojawią się tutaj automatycznie.",
     "cancel": "Anuluj rezerwację na {{spot}}",
     "cancelConfirmTitle": "Anulować rezerwację na {{spot}}?",
     "cancelConfirmDescription": "Termin zwolni się dla innych graczy. Tej operacji nie można cofnąć.",
@@ -188,7 +188,7 @@
     "noEligibleOrganizations": "Nie administrujesz żadnym innym Lootlogiem, który można połączyć.",
     "accept": "Połącz kalendarze",
     "acceptedTitle": "Kalendarze zostały połączone",
-    "acceptedDescription": "Oba Lootlogi widzą teraz wzajemnie swoje rezerwacje. Terminy sojusznika nie blokują zapisów.",
+    "acceptedDescription": "Oba Lootlogi widzą teraz wzajemnie swoje rezerwacje. Terminy sojusznika nie blokują rezerwacji.",
     "openSettings": "Otwórz ustawienia rezerwacji",
     "invalidTitle": "Zaproszenie jest niedostępne",
     "invalidDescription": "Link wygasł, został wycofany albo użyto go wcześniej."

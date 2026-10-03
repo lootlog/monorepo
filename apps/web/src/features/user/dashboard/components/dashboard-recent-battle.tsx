@@ -2,7 +2,9 @@ import type { ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { formatDistance } from "date-fns";
+import { upperFirst } from "es-toolkit";
 import { pl } from "date-fns/locale";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { useTranslation } from "react-i18next";
 import type { BattlesListResponseDtoOutputBattlesItem } from "@lootlog/client/battlelog";
 import {
@@ -40,10 +42,10 @@ export function DashboardRecentBattle({
             {opponents || t("statistics.recentBattles.unknownOpponent")}
           </p>
           <p className="mt-1 truncate text-xs text-muted-foreground">
-            {battle.world} ·{" "}
+            {upperFirst(battle.world)} ·{" "}
             <time
               dateTime={battle.createdAt}
-              title={new Date(battle.createdAt).toLocaleString("pl-PL")}
+              title={timestampToDate(battle.createdAt)}
             >
               {formatDistance(new Date(battle.createdAt), now, {
                 locale: pl,

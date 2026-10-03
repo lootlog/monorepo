@@ -1,4 +1,4 @@
-import { formatNpcLevel } from "@lootlog/domain/profession";
+import { formatLevel } from "@lootlog/domain/profession";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import type { LootNpc } from "@/lib/loots/loot-types";
 import { cn } from "cn";
@@ -103,7 +103,7 @@ export const LootNpcs: FC<LootNpcsProps> = ({
           {firstNpc.name}
           {firstNpc.lvl ? (
             <span className="ml-1.5 text-xs font-normal text-muted-foreground">
-              {formatNpcLevel(firstNpc.lvl, firstNpc.prof)}
+              {formatLevel(firstNpc.lvl, firstNpc.prof)}
             </span>
           ) : null}
         </span>

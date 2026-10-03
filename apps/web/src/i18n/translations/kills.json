@@ -8,13 +8,9 @@
     "world": "Świat",
     "npcType": "Typ potwora",
     "levelRange": "Zakres poziomów",
-    "minLevel": "Min. poziom",
-    "maxLevel": "Max. poziom",
     "period": "Okres",
     "allTypes": "Wszystkie typy",
-    "close": "Zamknij",
-    "minLevelShort": "Od",
-    "maxLevelShort": "Do"
+    "close": "Zamknij"
   },
   "memberRanking": {
     "title": "Najaktywniejsi członkowie",
@@ -34,7 +30,7 @@
     }
   },
   "ranking": {
-    "title": "Ranking zabitych potworów",
+    "title": "Ranking potworów",
     "description": "Kompletna lista statystyk zabitych potworów",
     "search": "Szukaj potwora...",
     "noData": "Nie znaleziono potworów",

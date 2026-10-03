@@ -84,7 +84,7 @@ export const WatchableItemTile = ({
               <span
                 aria-hidden="true"
                 title={t("settings.userNotifications.quickAdd.indicatorLabel")}
-                className="pointer-events-none absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-emerald-500 text-background shadow-sm ring-2 ring-background"
+                className="pointer-events-none absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-signal-ready text-background shadow-sm ring-2 ring-background"
               >
                 <Bell className="size-2.5" />
               </span>
@@ -100,7 +100,7 @@ export const WatchableItemTile = ({
           render=<Button
             variant="ghost"
             loading={isCopyPending}
-            icon={<Copy className="h-4 w-4 text-muted-foreground" />}
+            icon={<Copy className="size-4 text-muted-foreground" />}
           />
           onClick={() => {
             void handleCopyItemId();
@@ -113,7 +113,7 @@ export const WatchableItemTile = ({
           disabled={!effectiveGuildId}
           onClick={showLootsWithItem}
         >
-          <ListFilter className="h-4 w-4 text-primary" />
+          <ListFilter className="size-4 text-primary" />
           {t("loots.list.itemActions.showLoots")}
         </ContextMenuItem>
         <ContextMenuSeparator />
@@ -121,7 +121,7 @@ export const WatchableItemTile = ({
           <ContextMenuItem disabled className="gap-2">
             <Spinner
               aria-hidden="true"
-              className="h-4 w-4 text-muted-foreground motion-reduce:animate-none"
+              className="size-4 text-muted-foreground motion-reduce:animate-none"
             />
             {t("settings.userNotifications.quickAdd.loading")}
           </ContextMenuItem>
@@ -157,7 +157,7 @@ export const WatchableItemTile = ({
               render=<Button
                 variant="ghost"
                 loading={isRemovePending}
-                icon={<BellOff className="h-4 w-4 text-muted-foreground" />}
+                icon={<BellOff className="size-4 text-muted-foreground" />}
               />
               onClick={() => {
                 void handleRemove();
@@ -192,7 +192,7 @@ export const WatchableItemTile = ({
               render=<Button
                 variant="ghost"
                 loading={isAddingThisItem}
-                icon={<Plus className="h-4 w-4 text-muted-foreground" />}
+                icon={<Plus className="size-4 text-muted-foreground" />}
               />
               onClick={() => {
                 void handleQuickAdd();

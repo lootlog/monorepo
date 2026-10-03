@@ -70,7 +70,9 @@
     "empty": "Nie znaleziono postaci."
   },
   "searchCombobox": {
-    "selectedCount": "{{count}} wybranych",
+    "selectedCount_one": "{{count}} wybrany",
+    "selectedCount_few": "{{count}} wybrane",
+    "selectedCount_many": "{{count}} wybranych",
     "searching": "Wyszukiwanie..."
   },
   "warriorSearch": {
@@ -79,6 +81,15 @@
     "searching": "Wyszukiwanie...",
     "typeAtLeastTwoCharacters": "Wpisz przynajmniej 2 znaki",
     "empty": "Nie znaleziono",
-    "selectedCount": "{{count}} wybranych"
+    "selectedCount_one": "{{count}} wybrany",
+    "selectedCount_few": "{{count}} wybrane",
+    "selectedCount_many": "{{count}} wybranych"
+  },
+  "levelRange": {
+    "label": "Zakres poziomów",
+    "min": "Minimalny poziom",
+    "max": "Maksymalny poziom",
+    "minPlaceholder": "Min",
+    "maxPlaceholder": "Max"
   }
 }

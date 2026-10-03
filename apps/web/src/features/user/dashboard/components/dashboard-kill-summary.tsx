@@ -5,6 +5,7 @@ import { Link } from "@tanstack/react-router";
 import { Swords } from "lucide-react";
 import { NpcTypeIcon } from "@lootlog/ui/components/npc-type-icon";
 import { cn } from "cn";
+import { KpiCard } from "@/components/common/kpi-card";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { useTranslation } from "react-i18next";
 import { useKillsControllerGetUserKillStats } from "@lootlog/client/main";
@@ -90,10 +91,10 @@ export function DashboardKillSummary() {
         )}
         <div className="grid gap-5 @min-[800px]/kill-summary:grid-cols-[minmax(380px,1fr)_3fr] @min-[800px]/kill-summary:gap-6">
           <div className="flex flex-wrap items-center justify-between gap-4 @min-[800px]/kill-summary:flex-col @min-[800px]/kill-summary:items-start @min-[800px]/kill-summary:justify-center @min-[800px]/kill-summary:border-r @min-[800px]/kill-summary:pr-6">
-            <StatisticsQueryState query={query} loading={totalSummary}>
+            <StatisticsQueryState query={query} loading={totalSummary} compact>
               {totalSummary}
             </StatisticsQueryState>
-            <div className="grid w-full min-w-0 grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-2 [&>div]:min-w-0">
+            <div className="grid w-full min-w-0 grid-cols-1 gap-2 @min-[440px]/kill-summary:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] [&>div]:min-w-0">
               <KillStatsPeriodSelect
                 value={period}
                 onValueChange={setPeriod}
@@ -109,43 +110,25 @@ export function DashboardKillSummary() {
             </div>
           </div>
           {(query.isPending || query.data !== undefined) && (
-            <dl className="grid grid-cols-2 gap-3 @min-[600px]/kill-summary:grid-cols-4">
-              {KILL_SUMMARY_NPC_CATEGORIES.map((key) => {
-                const { color, surface } = NPC_CATEGORY_APPEARANCE[key];
-
-                const value = query.data?.overview.killsByType[key] ?? 0;
-
-                return (
-                  <div
-                    key={key}
-                    className="min-w-0 rounded-xl bg-muted/30 p-3 @min-[1000px]/kill-summary:p-4"
-                  >
-                    <dt className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                      <span
-                        className={cn(
-                          "flex size-8 shrink-0 items-center justify-center rounded-lg",
-                          color,
-                          surface,
-                        )}
-                      >
-                        <NpcTypeIcon type={key} className="size-4" />
-                      </span>
-                      {t(`npcType.${key}`)}
-                    </dt>
-                    <dd className="mt-4 flex h-8 items-center text-2xl font-semibold tracking-tight tabular-nums">
-                      {query.isPending ? (
-                        <Skeleton
-                          className="h-6 w-20 max-w-full motion-reduce:animate-none"
-                          aria-hidden="true"
-                        />
-                      ) : (
-                        value.toLocaleString("pl-PL")
-                      )}
-                    </dd>
-                  </div>
-                );
-              })}
-            </dl>
+            <div className="grid grid-cols-2 gap-3 @min-[600px]/kill-summary:grid-cols-4">
+              {KILL_SUMMARY_NPC_CATEGORIES.map((key) => (
+                <KpiCard
+                  key={key}
+                  media=<NpcTypeIcon
+                    type={key}
+                    className={cn(
+                      "size-4 shrink-0",
+                      NPC_CATEGORY_APPEARANCE[key].color,
+                    )}
+                  />
+                  label={t(`npcType.${key}`)}
+                  isLoading={query.isPending}
+                  value={(
+                    query.data?.overview.killsByType[key] ?? 0
+                  ).toLocaleString("pl-PL")}
+                />
+              ))}
+            </div>
           )}
         </div>
       </SectionCardContent>

@@ -1,3 +1,4 @@
+import { formatLevel } from "@lootlog/domain/profession";
 import { PlayerTile } from "@/components/tiles/player-tile";
 import { PlayerTooltipContent } from "@/components/tiles/player-tooltip-content";
 import type { BattleWarrior } from "@/lib/api/battlelog-types";
@@ -55,8 +56,7 @@ export const BattlePanelTeamSummary = ({
             {soloWarrior.name}
           </span>
           <span className="truncate text-[11px] tabular-nums text-muted-foreground">
-            {soloWarrior.lvl}
-            {soloWarrior.prof}
+            {formatLevel(soloWarrior.lvl, soloWarrior.prof)}
           </span>
         </div>
       </div>

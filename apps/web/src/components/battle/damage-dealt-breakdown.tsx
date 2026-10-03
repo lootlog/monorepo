@@ -3,6 +3,7 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { BattleBreakdownTable } from "./battle-breakdown-table";
 import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
+import { BreakdownEmptyMessage } from "./breakdown-empty-message";
 
 interface DamageDealtBreakdownProps {
   warrior: Warrior;
@@ -78,9 +79,9 @@ export const DamageDealtBreakdown: FC<DamageDealtBreakdownProps> = ({
 
   if (damageStats.length === 0) {
     return (
-      <div className="p-4 text-sm text-muted-foreground bg-background hover:bg-background">
+      <BreakdownEmptyMessage>
         {t("battleUi.breakdowns.damageDealt.empty")}
-      </div>
+      </BreakdownEmptyMessage>
     );
   }
 

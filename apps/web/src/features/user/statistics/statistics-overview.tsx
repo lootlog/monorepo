@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 import { KpiCard } from "@/components/common/kpi-card";
 import { KillAnalyticsTrend } from "./kill-analytics-trend";
 import { formatStatisticsDateRange } from "./format-statistics-date";
+import { EMPTY_VALUE } from "@/constants/empty-value";
 
 const getOverviewDateFormatter = createCachedFormatter("pl-PL", {});
 
@@ -74,7 +75,9 @@ export function StatisticsOverview({
               key={key}
               icon={icon}
               label={t(`statistics.${key}`)}
-              value={value === null ? "—" : countFormatter.format(value)}
+              value={
+                value === null ? EMPTY_VALUE : countFormatter.format(value)
+              }
             />
           ))}
         </div>
@@ -146,7 +149,9 @@ export function StatisticsOverview({
                 key={key}
                 icon={icon}
                 label={t(`statistics.${key}`)}
-                value={record ? countFormatter.format(record.kills) : "—"}
+                value={
+                  record ? countFormatter.format(record.kills) : EMPTY_VALUE
+                }
                 detail={
                   record &&
                   `${formatStatisticsDateRange(record.startDate, record.endDate)}${record.partial ? ` · ${t("statistics.partial")}` : ""}`

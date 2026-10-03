@@ -1,8 +1,10 @@
+import { EmptyState } from "@/components/common/empty-state";
 import { BattleResultStatus } from "@/features/user/battle-panel/components/battle-result-status";
 import { getPlayerVsPlayerBattleResult } from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
 import { BattlePanelPvpWarriorSummary } from "@/features/user/battle-panel/components/battle-panel-pvp-warrior-summary";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
+import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
@@ -12,9 +14,10 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
 import { Link } from "@tanstack/react-router";
-import { format } from "date-fns";
+import { CircleAlert, History, RotateCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useRecentOpponentBattles } from "../hooks/use-recent-opponent-battles";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 type RecentOpponentBattlesListProps = {
   battle: Battle | undefined;
@@ -27,16 +30,28 @@ export function RecentOpponentBattlesList({
 }: RecentOpponentBattlesListProps) {
   const { t } = useTranslation();
 
-  const { battleDetailsById, battles, context, isError, isLoading } =
-    useRecentOpponentBattles(battle);
+  const {
+    battleDetailsById,
+    battles,
+    context,
+    isError,
+    isFetching,
+    isLoading,
+    refetch,
+  } = useRecentOpponentBattles(battle);
 
   return (
     <ScrollArea className={cn("min-h-0 flex-1", className)}>
       <div className="divide-y divide-border/70">
         {!context ? (
-          <div className="p-3 text-sm text-muted-foreground">
-            {t("battlePanel.single.recentOpponent.unsupportedDescription")}
-          </div>
+          <EmptyState
+            compact
+            icon={History}
+            title={t("battlePanel.single.recentOpponent.unsupported")}
+            description={t(
+              "battlePanel.single.recentOpponent.unsupportedDescription",
+            )}
+          />
         ) : isLoading ? (
           Array.from({ length: 4 }).map((_, index) => (
             <div
@@ -52,21 +67,33 @@ export function RecentOpponentBattlesList({
             </div>
           ))
         ) : isError ? (
-          <div className="m-3 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-            {t("battlePanel.single.recentOpponent.error")}
-          </div>
+          <EmptyState
+            compact
+            icon={CircleAlert}
+            title={t("battlePanel.single.recentOpponent.error")}
+            action={
+              <Button
+                type="button"
+                variant="outline"
+                loading={isFetching}
+                icon=<RotateCcw className="size-3.5" />
+                onClick={() => void refetch()}
+              >
+                {t("common.actions.retry")}
+              </Button>
+            }
+          />
         ) : battles.length === 0 ? (
-          <div className="p-3 text-sm text-muted-foreground">
-            {t("battlePanel.single.recentOpponent.empty")}
-          </div>
+          <EmptyState
+            compact
+            icon={History}
+            title={t("battlePanel.single.recentOpponent.empty")}
+          />
         ) : (
           battles.map((recentBattle) => {
             const result = getPlayerVsPlayerBattleResult(recentBattle);
 
-            const exactTime = format(
-              new Date(recentBattle.createdAt),
-              "dd.MM.yyyy HH:mm",
-            );
+            const exactTime = timestampToDate(recentBattle.createdAt);
 
             const relativeTime = getRelativeTime(recentBattle.createdAt);
             const battleDetails = battleDetailsById[recentBattle.battleId];

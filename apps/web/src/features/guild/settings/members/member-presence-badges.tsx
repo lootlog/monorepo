@@ -35,7 +35,7 @@ export function MemberPresenceBadges({
               <TooltipTrigger
                 render={
                   <span
-                    className="inline-flex size-5 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-500"
+                    className="inline-flex size-5 items-center justify-center rounded-md bg-signal-live/10 text-signal-live"
                     onClick={(event) => event.stopPropagation()}
                   >
                     <Icon className="size-3.5" />
@@ -55,7 +55,7 @@ export function MemberPresenceBadges({
             <TooltipTrigger
               render={
                 <span
-                  className="inline-flex size-5 items-center justify-center rounded-md bg-sky-500/10 text-sky-500"
+                  className="inline-flex size-5 items-center justify-center rounded-md bg-signal-ready/10 text-signal-ready"
                   onClick={(event) => event.stopPropagation()}
                 >
                   <BadgeCheck className="size-3.5" />

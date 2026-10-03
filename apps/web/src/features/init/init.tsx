@@ -90,7 +90,7 @@ export const Init: React.FC = () => {
         <NoticeCard
           headingLevel="h1"
           icon=<TriangleAlert
-            className="size-8 text-amber-500"
+            className="size-8 text-signal-timer"
             aria-hidden="true"
           />
           title={t("common.init.missingGuild.title")}

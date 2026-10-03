@@ -4,7 +4,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { Button } from "@lootlog/ui/components/button";
-import { RefreshCcw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { useContext, type FC } from "react";
 import {
   type MemberResponseDto as GuildMember,
@@ -140,7 +140,7 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({
               size="sm"
               variant={variant}
               loading={isPending}
-              icon=<RefreshCcw className="size-4" />
+              icon=<RefreshCw className="size-4" />
               disabled={
                 isPending ||
                 !canRefresh ||

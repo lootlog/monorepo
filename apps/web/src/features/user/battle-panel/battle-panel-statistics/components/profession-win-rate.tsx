@@ -2,7 +2,7 @@ import { clamp } from "es-toolkit";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { getProfessionColor, getProfessionName } from "@/lib/utils/professions";
 import { useTranslation } from "react-i18next";
-import { StatCard } from "./stat-card";
+import { ChartCard } from "@/components/common/chart-card";
 
 interface ProfessionWinRate {
   prof: string;
@@ -29,12 +29,15 @@ export function ProfessionWinRateChart({
   const rows = [...data].sort((a, b) => b.totalBattles - a.totalBattles);
 
   return (
-    <StatCard
+    <ChartCard
       title={t("battlePanel.statistics.professionWinRate.title")}
       description={t("battlePanel.statistics.professionWinRate.description")}
       isLoading={isLoading}
-      isEmpty={data.length === 0}
-      emptyMessage={t("battlePanel.statistics.professionWinRate.empty")}
+      emptyMessage={
+        data.length === 0
+          ? t("battlePanel.statistics.professionWinRate.empty")
+          : undefined
+      }
     >
       <ul className="flex flex-col gap-3">
         {rows.map((row) => (
@@ -81,6 +84,6 @@ export function ProfessionWinRateChart({
           </li>
         ))}
       </ul>
-    </StatCard>
+    </ChartCard>
   );
 }

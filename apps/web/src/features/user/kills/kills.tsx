@@ -60,12 +60,6 @@ const ITEMS_PER_PAGE = 20;
 
 const DRAFT_PUBLISH_DELAY_MS = 500;
 
-type KillsDrafts = {
-  search: string;
-  minLvl: string;
-  maxLvl: string;
-};
-
 const getKillsFilters = (
   query: inferParserType<typeof killsSearchParsers>,
 ): KillsFiltersState => ({
@@ -90,15 +84,14 @@ export const KillsPage: React.FC = () => {
   const [query, setQuery] = useQueryStates(killsSearchParsers);
   const isMobile = useIsMobile();
 
-  // Text inputs keep a local draft; the URL (and with it the request) only
-  // follows once typing pauses.
-  const [drafts, setDrafts] = useState<KillsDrafts>({
-    search: query.search,
-    minLvl: query.minLvl,
-    maxLvl: query.maxLvl,
-  });
+  // The search keeps a local draft; the URL (and with it the request) only
+  // follows once typing pauses. The level range debounces its own drafts.
+  const [searchDraft, setSearchDraft] = useState(query.search);
 
-  const publishQuery = useDebounceCallback(setQuery, DRAFT_PUBLISH_DELAY_MS);
+  const publishSearch = useDebounceCallback(
+    (search: string) => setQuery({ search, cursor: null }),
+    DRAFT_PUBLISH_DELAY_MS,
+  );
 
   const [sorting, setSorting] = useState<SortingState>([
     { id: "totalKills", desc: true },
@@ -139,16 +132,14 @@ export const KillsPage: React.FC = () => {
     setQuery({ npcType: npcTypes ?? null, cursor: null });
   };
 
-  const handleDraftChange = (key: keyof KillsDrafts, value: string) => {
-    const nextDrafts = { ...drafts, [key]: value };
-
-    setDrafts(nextDrafts);
-    publishQuery({ ...nextDrafts, cursor: null });
+  const handleSearchChange = (search: string) => {
+    setSearchDraft(search);
+    publishSearch(search);
   };
 
   const handleResetFilters = () => {
-    publishQuery.cancel();
-    setDrafts({ search: "", minLvl: "", maxLvl: "" });
+    publishSearch.cancel();
+    setSearchDraft("");
     setQuery({
       world: null,
       npcType: null,
@@ -194,7 +185,7 @@ export const KillsPage: React.FC = () => {
 
   const renderResults = () => {
     if (isLoading) {
-      return <TableRowsSkeleton trailingColumns={2} />;
+      return <TableRowsSkeleton withHeader trailingColumns={2} />;
     }
 
     if (isError && !data) {
@@ -267,17 +258,18 @@ export const KillsPage: React.FC = () => {
         description={t("kills.ranking.description")}
       />
       <KillsFilters
-        filters={{
-          ...filters,
-          search: drafts.search,
-          minLvl: drafts.minLvl ? Number(drafts.minLvl) : undefined,
-          maxLvl: drafts.maxLvl ? Number(drafts.maxLvl) : undefined,
-        }}
+        filters={{ ...filters, search: searchDraft }}
+        minLvl={query.minLvl}
+        maxLvl={query.maxLvl}
         onWorldChange={handleWorldChange}
         onNpcTypeChange={handleNpcTypeChange}
-        onSearchChange={(search) => handleDraftChange("search", search)}
-        onMinLvlChange={(minLvl) => handleDraftChange("minLvl", minLvl)}
-        onMaxLvlChange={(maxLvl) => handleDraftChange("maxLvl", maxLvl)}
+        onSearchChange={handleSearchChange}
+        onMinLvlChange={(minLvl) =>
+          setQuery({ minLvl: minLvl || null, cursor: null })
+        }
+        onMaxLvlChange={(maxLvl) =>
+          setQuery({ maxLvl: maxLvl || null, cursor: null })
+        }
         onPeriodChange={handlePeriodChange}
       />
       <ResultsSurface

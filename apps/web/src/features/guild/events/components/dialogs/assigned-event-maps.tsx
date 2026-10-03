@@ -2,6 +2,8 @@ import { sumBy } from "es-toolkit";
 import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useTranslation } from "react-i18next";
+import { MapPin } from "lucide-react";
+import { EmptyState } from "@/components/common/empty-state";
 import type { MapManageDialogProps } from "./use-map-manage-dialog";
 
 import { MapChip } from "./map-chip";
@@ -92,11 +94,11 @@ export function AssignedEventMaps({
           </div>
         </ScrollArea>
       ) : (
-        <div className="px-3 py-3 text-center">
-          <p className="text-xs text-muted-foreground">
-            {t("events.maps.noMapsAssigned")}
-          </p>
-        </div>
+        <EmptyState
+          compact
+          icon={MapPin}
+          title={t("events.maps.noMapsAssigned")}
+        />
       )}
     </div>
   );

@@ -5,6 +5,7 @@ import { Label } from "@lootlog/ui/components/label";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Search, X, Users, UserPlus, AlertTriangle } from "lucide-react";
+import { EmptyState } from "@/components/common/empty-state";
 import { cn } from "cn";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -117,9 +118,9 @@ export const MemberAssignmentModal = ({
                   {assignedMembers.map((member) => (
                     <div
                       key={member.id}
-                      className="group inline-flex items-center gap-2 pl-1 pr-1.5 py-1 bg-green-500/10 hover:bg-green-500/15 rounded-full border border-green-500/20 transition-colors"
+                      className="group inline-flex items-center gap-2 pl-1 pr-1.5 py-1 bg-signal-ready/10 hover:bg-signal-ready/15 rounded-full border border-signal-ready/20 transition-colors"
                     >
-                      <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center overflow-hidden ring-2 ring-green-500/20">
+                      <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center overflow-hidden ring-2 ring-signal-ready/20">
                         {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
                         <img
                           src={getDiscordAvatarUrl(
@@ -150,19 +151,18 @@ export const MemberAssignmentModal = ({
                   ))}
                 </div>
               ) : (
-                <div className="px-3 py-3 text-center">
-                  <Users className="size-6 mx-auto mb-2 text-muted-foreground/40" />
-                  <p className="text-xs text-muted-foreground">
-                    {t("events.maps.noAssignedMembers")}
-                  </p>
-                </div>
+                <EmptyState
+                  compact
+                  icon={Users}
+                  title={t("events.maps.noAssignedMembers")}
+                />
               )}
             </div>
 
             <div className="space-y-2">
               {isAssignDisabled && disabledMessage && (
-                <div className="flex items-start gap-2 rounded-lg border border-orange-500/20 bg-orange-500/10 p-3">
-                  <AlertTriangle className="mt-0.5 size-4 shrink-0 text-orange-500" />
+                <div className="flex items-start gap-2 rounded-lg border border-signal-timer/20 bg-signal-timer/10 p-3">
+                  <AlertTriangle className="mt-0.5 size-4 shrink-0 text-signal-timer" />
                   <p className="text-xs text-muted-foreground">
                     {disabledMessage}
                   </p>
@@ -191,10 +191,11 @@ export const MemberAssignmentModal = ({
                     </p>
                   </div>
                 ) : filteredMembers?.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full py-8 text-muted-foreground">
-                    <Search className="size-8 mb-2 opacity-30" />
-                    <p className="text-xs">{t("events.maps.noMembersFound")}</p>
-                  </div>
+                  <EmptyState
+                    compact
+                    icon={Search}
+                    title={t("events.maps.noMembersFound")}
+                  />
                 ) : (
                   <div className="divide-y">
                     {filteredMembers?.map((member) => {
@@ -243,7 +244,7 @@ export const MemberAssignmentModal = ({
                             {member.name}
                           </span>
                           {isAssigned ? (
-                            <span className="text-[10px] font-medium text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] font-medium text-signal-ready bg-signal-ready/10 px-2 py-0.5 rounded-full">
                               {t("events.maps.alreadyAssigned")}
                             </span>
                           ) : (

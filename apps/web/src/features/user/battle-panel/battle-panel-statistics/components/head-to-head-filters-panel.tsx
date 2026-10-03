@@ -5,7 +5,7 @@ import { WarriorSearchFilter } from "@/components/filters/warrior-search-filter"
 import { Separator } from "@lootlog/ui/components/separator";
 import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
-import { Award, ArrowRight } from "lucide-react";
+import { Award } from "lucide-react";
 import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import type { SearchWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
@@ -90,17 +90,12 @@ export const HeadToHeadFiltersPanel = ({
         <Label className="text-xs text-muted-foreground">
           {t("battlePanel.filters.levelRange")}
         </Label>
-        <div className="flex items-center gap-2">
-          <LevelRangeFilter
-            minLevel={minLevel}
-            maxLevel={maxLevel}
-            onMinLevelChange={onMinLevelChange}
-            onMaxLevelChange={onMaxLevelChange}
-            inputClassName="w-full"
-            containerClassName="flex-1"
-            separator=<ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-          />
-        </div>
+        <LevelRangeFilter
+          minLevel={minLevel}
+          maxLevel={maxLevel}
+          onMinLevelChange={onMinLevelChange}
+          onMaxLevelChange={onMaxLevelChange}
+        />
       </div>
 
       {showPhFilter && (

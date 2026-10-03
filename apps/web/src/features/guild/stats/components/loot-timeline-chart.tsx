@@ -13,7 +13,7 @@ import type {
 } from "@lootlog/client/main";
 import { LOOT_RARITY_CHART_COLORS } from "@/features/guild/loots-list/loot-rarity-colors";
 import { getLootRarityChartConfig } from "./loot-rarity-chart-config";
-import { StatsChartCard } from "./stats-chart-card";
+import { ChartCard } from "@/components/common/chart-card";
 
 type LootTimelineChartProps = {
   data?: LootStatsResponseDtoOutputTimelineItem[];
@@ -63,7 +63,7 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
     })) ?? [];
 
   return (
-    <StatsChartCard
+    <ChartCard
       title={t("loots.stats.timeline.title")}
       description={t("loots.stats.timeline.description")}
       className={className}
@@ -131,6 +131,6 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
           />
         </AreaChart>
       </ChartContainer>
-    </StatsChartCard>
+    </ChartCard>
   );
 };

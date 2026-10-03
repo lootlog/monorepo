@@ -1,3 +1,4 @@
+import { formatLevel } from "@lootlog/domain/profession";
 import { cn } from "cn";
 import type { FC } from "react";
 import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
@@ -30,8 +31,7 @@ export const BattlePlayerRankingRow: FC<BattlePlayerRankingRowProps> = ({
         {entry.warrior.name}
       </span>
       <span className="shrink-0 text-[11px] text-muted-foreground">
-        {entry.warrior.lvl}
-        {entry.warrior.prof}
+        {formatLevel(entry.warrior.lvl, entry.warrior.prof)}
       </span>
     </span>
     <span

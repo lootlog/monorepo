@@ -1,7 +1,9 @@
 import { useBattleStatsSearchScroll } from "./use-battle-stats-search-scroll";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { SectionCard as Card } from "@/components/common/section-card/section-card";
+import { EmptyState } from "@/components/common/empty-state";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { Swords } from "lucide-react";
 import { Table } from "@lootlog/ui/components/table";
 import { useTable } from "@tanstack/react-table";
 import type { Battle } from "@/lib/api/battlelog-types";
@@ -187,9 +189,12 @@ export function OneVsOneStatsTable({
 
   if (!user || !opponent) {
     return (
-      <Card className="border-border bg-card  p-8 w-full text-center text-muted-foreground">
-        {t("battleUi.oneVsOne.empty")}
-      </Card>
+      <EmptyState
+        framed
+        compact
+        icon={Swords}
+        title={t("battleUi.oneVsOne.empty")}
+      />
     );
   }
 

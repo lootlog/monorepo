@@ -102,7 +102,7 @@ describe("resolveAppNavigation", () => {
       { label: "Nocna Straż", path: "/guild-1" },
       { label: "Ustawienia", path: null },
     ]);
-    expect(navigation.parentPath).toBe("/guild-1");
+    expect(navigation.parentPath).toBeNull();
     expect(navigation.documentTitle).toBe("Wystąpił błąd - Lootlog.pl");
     expect(
       navigation.sidebarItems.find(({ id }) => id === "organization-settings"),
@@ -164,7 +164,7 @@ describe("resolveAppNavigation", () => {
   it.each([
     {
       breadcrumbs: [{ label: "Powiadomienia", path: null }],
-      parentPath: "/guild-1",
+      parentPath: null,
       pathname: "/guild-1/notifications",
       routeId: "/_authenticated/$guildId/notifications/",
       title: "Powiadomienia - Nocna Straż - Lootlog.pl",
@@ -246,7 +246,7 @@ describe("resolveAppNavigation", () => {
     expect(navigation.scope).toBe("user");
     expect(navigation.breadcrumbs).toEqual([
       { label: "Panel walk", path: "/@me/battle-panel" },
-      { label: "Statystyki", path: "/@me/battle-panel/statistics" },
+      { label: "Analityka", path: "/@me/battle-panel/statistics" },
       { label: "Bilans H2H", path: null },
     ]);
     expect(navigation.parentPath).toBe("/@me/battle-panel/statistics");
@@ -258,7 +258,7 @@ describe("resolveAppNavigation", () => {
     ).toMatchObject({ active: true, visible: true });
   });
 
-  it("sends back from a statistics tab to the Organization, not the redirecting stats root", () => {
+  it("treats a statistics tab as a top-level section without a back target", () => {
     const navigation = resolveAppNavigation({
       matches: [
         createMatch({
@@ -281,7 +281,7 @@ describe("resolveAppNavigation", () => {
       { label: "Statystyki", path: "/guild-1/stats" },
       { label: "Statystyki bić", path: null },
     ]);
-    expect(navigation.parentPath).toBe("/guild-1");
+    expect(navigation.parentPath).toBeNull();
   });
 
   it("derives Organization sidebar visibility from Access policy permissions", () => {

@@ -11,11 +11,11 @@ import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import type { ColumnDef } from "@tanstack/react-table";
 import { cn } from "cn";
-import { format } from "date-fns";
 import { useId, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { stopBattleTableAction } from "./battle-table-events";
 import { BattleTableInfoBadges } from "./battle-table-info-badges";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 type ColumnsProps = Pick<
   ReturnType<typeof useBattleTableSelection>,
@@ -162,10 +162,7 @@ export function useBattleTableColumns({
       cell: ({ row }) => {
         const battle = row.original;
 
-        const exactTime = format(
-          new Date(battle.createdAt),
-          "dd.MM.yyyy HH:mm",
-        );
+        const exactTime = timestampToDate(battle.createdAt);
 
         return (
           <div className="flex min-w-0 flex-col gap-0.5 leading-tight md:min-w-[104px]">

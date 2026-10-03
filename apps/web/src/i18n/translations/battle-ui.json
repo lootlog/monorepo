@@ -1,4 +1,8 @@
 {
+  "header": {
+    "startedBetween": "Rozpoczęła się walka pomiędzy",
+    "and": "a"
+  },
   "team": {
     "userTeam": "Twoja drużyna",
     "enemyTeam": "Przeciwnicy",
@@ -90,7 +94,7 @@
     },
     "damageDealt": {
       "empty": "Brak szczegółowych informacji o zadanych obrażeniach",
-      "title": "Szczegółowy podział zadanych obrażeń - {{name}} - (nie bierze pod uwagę pasywnych obrażeń np. od trucizny lub gr)",
+      "title": "Szczegółowy podział zadanych obrażeń: {{name}} (bez obrażeń pasywnych, np. od trucizny lub ognia)",
       "note": "Uwaga: Piętno bestii to dodatkowe obrażenia (nie wliczone do sumy)",
       "all": "Wszystkie zadane obrażenia",
       "ranged": "Obrażenia dystansowe",
@@ -208,7 +212,7 @@
       "woundDamageTaken": "Głęboka rana",
       "poisonDamageTaken": "Trucizna",
       "injureDamageTaken": "Zranienie",
-      "critWoundDamageTaken": "Zranienie",
+      "critWoundDamageTaken": "Rana krytyczna",
       "firePassiveDamageTaken": "Pasywne obrażenia od ognia",
       "lightningPassiveDamageTaken": "Pasywne obrażenia od błyskawic",
       "legbonAnguishDamageTaken": "Udręka (otrzymane obrażenia)",

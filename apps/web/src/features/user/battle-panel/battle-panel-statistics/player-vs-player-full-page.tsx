@@ -14,7 +14,7 @@ import { getRouteErrorMessage } from "@/lib/router/route-errors";
 import { Label } from "@lootlog/ui/components/label";
 import { Separator } from "@lootlog/ui/components/separator";
 import { Table } from "@lootlog/ui/components/table";
-import { AlertCircle, ArrowRight, SearchX, Swords } from "lucide-react";
+import { AlertCircle, SearchX, Swords } from "lucide-react";
 import { usePlayerVsPlayerPage } from "./use-player-vs-player-page";
 
 import { PlayerVsPlayerFilterToolbar } from "./components/player-vs-player-filter-toolbar";
@@ -69,17 +69,12 @@ export function PlayerVsPlayerFullPage() {
         <Label className="text-xs text-muted-foreground">
           {t("battlePanel.filters.levelRange")}
         </Label>
-        <div className="flex items-center gap-2">
-          <LevelRangeFilter
-            minLevel={minLevel}
-            maxLevel={maxLevel}
-            onMinLevelChange={handleMinLevelChange}
-            onMaxLevelChange={handleMaxLevelChange}
-            inputClassName="w-full"
-            containerClassName="flex-1"
-            separator=<ArrowRight className="size-4 shrink-0 text-muted-foreground" />
-          />
-        </div>
+        <LevelRangeFilter
+          minLevel={minLevel}
+          maxLevel={maxLevel}
+          onMinLevelChange={handleMinLevelChange}
+          onMaxLevelChange={handleMaxLevelChange}
+        />
       </div>
     </div>
   );
