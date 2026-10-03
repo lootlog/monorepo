@@ -16,7 +16,7 @@ import {
   tryDecodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
 import { Result } from "effect";
-import { reportListenerError } from "./report-listener-error.js";
+import { notifyListeners } from "./notify-listeners.js";
 
 type CommandType = ClientCommand["type"];
 
@@ -262,13 +262,11 @@ export class RealtimeClient {
   private setHeartbeatLatency(latencyMs: number | null): void {
     this.heartbeatLatencyMs = latencyMs;
 
-    for (const listener of this.heartbeatLatencyListeners) {
-      try {
-        listener(latencyMs);
-      } catch (error) {
-        reportListenerError({ source: "heartbeat latency", error });
-      }
-    }
+    notifyListeners(
+      this.heartbeatLatencyListeners,
+      (listener) => listener(latencyMs),
+      "heartbeat latency",
+    );
   }
 
   setReconnectHandler(handler: (() => Promise<void>) | null): void {
@@ -536,13 +534,11 @@ export class RealtimeClient {
 
     if (!isServerEventFrame(frame)) return;
 
-    for (const listener of this.eventListeners) {
-      try {
-        listener(frame);
-      } catch (error) {
-        reportListenerError({ source: `server event ${frame.type}`, error });
-      }
-    }
+    notifyListeners(
+      this.eventListeners,
+      (listener) => listener(frame),
+      `server event ${frame.type}`,
+    );
   }
 
   private encodeFrame(frame: ClientCommand): string | Uint8Array<ArrayBuffer> {
@@ -715,13 +711,11 @@ export class RealtimeClient {
 
     if (state === "disconnected") this.setHeartbeatLatency(null);
 
-    for (const listener of this.stateListeners) {
-      try {
-        listener(state);
-      } catch (error) {
-        reportListenerError({ source: `connection state ${state}`, error });
-      }
-    }
+    notifyListeners(
+      this.stateListeners,
+      (listener) => listener(state),
+      `connection state ${state}`,
+    );
   }
 
   private clearReconnect(): void {
