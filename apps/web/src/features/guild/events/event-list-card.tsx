@@ -152,7 +152,7 @@ export const EventListCard = ({
           <Button
             variant="ghost"
             size="icon"
-            className="size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
             aria-label={t("events.deleteNamed", { name: event.name })}
             title={t("events.deleteNamed", { name: event.name })}
             onClick={() => setEventToDelete(event)}

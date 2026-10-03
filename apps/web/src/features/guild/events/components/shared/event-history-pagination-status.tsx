@@ -1,6 +1,6 @@
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useTranslation } from "react-i18next";
-import { EventReadError } from "./event-read-error";
+import { QueryErrorNotice } from "@/components/common/query-error-notice";
 
 type EventHistoryPaginationStatusProps = {
   hasError: boolean;
@@ -18,7 +18,13 @@ export const EventHistoryPaginationStatus = ({
   const { t } = useTranslation();
 
   if (hasError) {
-    return <EventReadError onRetry={onRetry} isRetrying={isFetching} />;
+    return (
+      <QueryErrorNotice
+        message={t("events.error")}
+        onRetry={onRetry}
+        isRetrying={isFetching}
+      />
+    );
   }
 
   if (!hasNextPage) return t("events.kills.endOfList");

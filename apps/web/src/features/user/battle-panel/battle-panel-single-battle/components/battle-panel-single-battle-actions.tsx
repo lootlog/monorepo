@@ -106,12 +106,12 @@ export const BattlePanelSingleBattleActions: FC<
                   aria-label={t("battlePanel.actions.copyLink")}
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
+                  className="size-8"
                   onClick={handleCopyClick}
                   loading={pendingAction?.action === "copy"}
                   disabled={isBusy}
                 >
-                  <Copy className="h-3.5 w-3.5" />
+                  <Copy className="size-3.5" />
                 </Button>
               }
             />
@@ -124,12 +124,12 @@ export const BattlePanelSingleBattleActions: FC<
                   aria-label={t("battlePanel.actions.hide")}
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
+                  className="size-8"
                   onClick={handleUnshareClick}
                   loading={pendingAction?.action === "unshare"}
                   disabled={isBusy}
                 >
-                  <Lock className="h-3.5 w-3.5" />
+                  <Lock className="size-3.5" />
                 </Button>
               }
             />
@@ -144,12 +144,12 @@ export const BattlePanelSingleBattleActions: FC<
                 aria-label={t("battlePanel.actions.share")}
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="size-8"
                 onClick={handleShareClick}
                 loading={pendingAction?.action === "share"}
                 disabled={isBusy}
               >
-                <Share2 className="h-3.5 w-3.5" />
+                <Share2 className="size-3.5" />
               </Button>
             }
           />
@@ -170,9 +170,9 @@ export const BattlePanelSingleBattleActions: FC<
             aria-label={t("battlePanel.actions.delete")}
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-destructive hover:text-destructive"
+            className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="size-3.5" />
           </Button>
         }
       />

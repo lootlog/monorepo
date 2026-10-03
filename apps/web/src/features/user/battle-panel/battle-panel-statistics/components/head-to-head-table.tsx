@@ -4,7 +4,7 @@ import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palet
 import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
 import { OpponentSummaryTable } from "./opponent-summary-table";
-import { StatCard } from "./stat-card";
+import { ChartCard } from "@/components/common/chart-card";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { ROUTES } from "@/config/routes";
 import { useTranslation } from "react-i18next";
@@ -106,12 +106,15 @@ export function HeadToHeadTable({
   });
 
   return (
-    <StatCard
+    <ChartCard
       title={t("battlePanel.statistics.directMatchups.title")}
       description={t("battlePanel.statistics.directMatchups.description")}
       isLoading={isLoading}
-      isEmpty={data.length === 0}
-      emptyMessage={t("battlePanel.statistics.directMatchups.emptyTitle")}
+      emptyMessage={
+        data.length === 0
+          ? t("battlePanel.statistics.directMatchups.emptyTitle")
+          : undefined
+      }
       actions={
         <ChevronLink
           render=<Link to={ROUTES.user.battlePanel.h2h} search={search} />
@@ -121,6 +124,6 @@ export function HeadToHeadTable({
       }
     >
       <OpponentSummaryTable table={table} onOpponentOpen={handleOpponentOpen} />
-    </StatCard>
+    </ChartCard>
   );
 }

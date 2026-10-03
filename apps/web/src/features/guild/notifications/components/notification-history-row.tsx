@@ -1,4 +1,3 @@
-import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@lootlog/ui/components/badge";
 
@@ -11,6 +10,10 @@ import {
   getJobStatusLabel,
   getNotificationTriggerTranslationKey,
 } from "../utils/notification-settings.utils";
+import {
+  DATE_TIME_WITH_SECONDS_FORMAT,
+  timestampToDate,
+} from "@/utils/date/parse-timestamp-to-date";
 
 type Job = NotificationJobsResponseDto["history"][number];
 
@@ -52,7 +55,7 @@ export function NotificationHistoryRow({
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          {format(new Date(job.updatedAt), "dd.MM.yyyy HH:mm:ss")}
+          {timestampToDate(job.updatedAt, DATE_TIME_WITH_SECONDS_FORMAT)}
         </p>
         {job.lastError ? (
           <p className="text-xs text-destructive">

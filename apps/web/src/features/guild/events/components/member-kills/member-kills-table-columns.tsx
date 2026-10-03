@@ -9,7 +9,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
 import type { KillHistoryMemberEntry } from "@lootlog/client/main";
-import { formatDateTime } from "../../utils/format-date";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { formatPoints } from "../../utils/format-points";
 import { KillMonsterCell } from "../kills/kill-monster-cell";
 import { getMemberKillScoringViewModel } from "./member-kills-view-model";
@@ -51,7 +51,7 @@ export const createMemberKillsTableColumns = ({
     header: t("events.kills.date"),
     cell: ({ row }) => (
       <div className="text-xs tabular-nums sm:text-sm">
-        {formatDateTime(new Date(row.original.killedAt))}
+        {timestampToDate(row.original.killedAt)}
       </div>
     ),
     enableSorting: false,

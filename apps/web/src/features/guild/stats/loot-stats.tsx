@@ -13,7 +13,7 @@ import { LootOverviewCards } from "./components/loot-overview-cards";
 import { LootStatsFilterBar } from "./components/loot-stats-filter-bar";
 import { LootTopContributors } from "./components/loot-top-contributors";
 import { LootTopItems } from "./components/loot-top-items";
-import { StatsChartCard } from "./components/stats-chart-card";
+import { ChartCard } from "@/components/common/chart-card";
 import { useLootStatsSettings } from "./hooks/use-loot-stats-settings";
 import { buildLootStatsParams } from "./utils/build-stats-query-params";
 
@@ -76,13 +76,13 @@ export const LootStats = () => {
             <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-3">
               <Suspense
                 fallback={
-                  <StatsChartCard
+                  <ChartCard
                     title={t("loots.stats.timeline.title")}
                     className="xl:col-span-2"
                     isLoading
                   >
                     {null}
-                  </StatsChartCard>
+                  </ChartCard>
                 }
               >
                 <LootTimelineChart
@@ -94,12 +94,9 @@ export const LootStats = () => {
               </Suspense>
               <Suspense
                 fallback={
-                  <StatsChartCard
-                    title={t("loots.stats.topNpcs.title")}
-                    isLoading
-                  >
+                  <ChartCard title={t("loots.stats.topNpcs.title")} isLoading>
                     {null}
-                  </StatsChartCard>
+                  </ChartCard>
                 }
               >
                 <LootTopNpcsChart data={data?.topNpcs} isLoading={isLoading} />

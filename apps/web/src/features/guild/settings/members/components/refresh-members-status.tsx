@@ -66,7 +66,7 @@ export const RefreshMembersStatus = ({
   if (!countdown.isExpired) {
     if (displayJob?.status === "COMPLETED") {
       return (
-        <div className="flex flex-wrap items-center gap-2 text-sm text-emerald-500">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-signal-ready">
           <RefreshCw className="size-4" />
           <span>
             {t("settings.members.refreshSuccessWithCooldown", {
@@ -80,7 +80,7 @@ export const RefreshMembersStatus = ({
 
     if (displayJob?.status === "FAILED") {
       return (
-        <div className="flex flex-wrap items-center gap-2 text-sm text-destructive">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-signal-alert">
           <Clock className="size-4" />
           <span>
             {t("settings.members.refreshErrorWithCooldown", {

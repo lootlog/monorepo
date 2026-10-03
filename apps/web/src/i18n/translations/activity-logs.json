@@ -26,7 +26,9 @@
     "worldSearchPlaceholder": "Szukaj świata...",
     "noWorlds": "Brak światów",
     "typeShort": "Typ",
-    "selectedCount": "{{count}} wybranych",
+    "selectedCount_one": "{{count}} wybrany",
+    "selectedCount_few": "{{count}} wybrane",
+    "selectedCount_many": "{{count}} wybranych",
     "chips": {
       "player": "Gracz: {{value}}",
       "clan": "Klan: {{value}}",

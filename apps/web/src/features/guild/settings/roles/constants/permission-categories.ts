@@ -15,7 +15,6 @@ import {
 
 export type PermissionCategory = {
   groupKey: string;
-  name: string;
   icon: LucideIcon;
   color: string;
   bgColor: string;
@@ -25,7 +24,6 @@ export type PermissionCategory = {
 export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   {
     groupKey: "access",
-    name: "Dostęp",
     icon: KeyRound,
     color: "text-emerald-500",
     bgColor: "bg-emerald-500/20",
@@ -33,7 +31,6 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   },
   {
     groupKey: "admin",
-    name: "Administracja",
     icon: Shield,
     color: "text-red-500",
     bgColor: "bg-red-500/20",
@@ -41,7 +38,6 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   },
   {
     groupKey: "loots",
-    name: "Łupy",
     icon: Package,
     color: "text-amber-500",
     bgColor: "bg-amber-500/20",
@@ -55,7 +51,6 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   },
   {
     groupKey: "timers",
-    name: "Timery",
     icon: Clock,
     color: "text-blue-500",
     bgColor: "bg-blue-500/20",
@@ -70,7 +65,6 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   },
   {
     groupKey: "reservations",
-    name: "Rezerwacje",
     icon: CalendarCheck,
     color: "text-purple-500",
     bgColor: "bg-purple-500/20",
@@ -81,7 +75,6 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   },
   {
     groupKey: "docs",
-    name: "Dokumenty",
     icon: FileText,
     color: "text-indigo-500",
     bgColor: "bg-indigo-500/20",
@@ -89,7 +82,6 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   },
   {
     groupKey: "members",
-    name: "Członkowie",
     icon: Users,
     color: "text-cyan-500",
     bgColor: "bg-cyan-500/20",
@@ -101,7 +93,6 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   },
   {
     groupKey: "chat",
-    name: "Czat",
     icon: MessageCircle,
     color: "text-green-500",
     bgColor: "bg-green-500/20",
@@ -114,7 +105,6 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   },
   {
     groupKey: "notifications",
-    name: "Powiadomienia",
     icon: Bell,
     color: "text-orange-500",
     bgColor: "bg-orange-500/20",
@@ -127,7 +117,6 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   },
   {
     groupKey: "events",
-    name: "Eventy",
     icon: Trophy,
     color: "text-fuchsia-500",
     bgColor: "bg-fuchsia-500/20",

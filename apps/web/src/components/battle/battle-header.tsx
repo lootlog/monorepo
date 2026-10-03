@@ -1,6 +1,8 @@
+import { formatLevel } from "@lootlog/domain/profession";
 import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { cn } from "cn";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 export type BattleHeaderProps = {
   warriors: Warrior[];
@@ -11,13 +13,14 @@ export const BattleHeader: FC<BattleHeaderProps> = ({
   warriors,
   characterId,
 }) => {
+  const { t } = useTranslation();
   const attackingTeam = warriors.filter((w) => w.team === 1);
   const defendingTeam = warriors.filter((w) => w.team === 2);
 
   return (
     <>
       <li className="border-b-2 border-solid border-background bg-gray-500/10 px-3 py-1.5 text-muted-foreground">
-        Rozpoczęła się walka pomiędzy{" "}
+        {t("battleUi.header.startedBetween")}{" "}
         {attackingTeam.map((w) => {
           const isLast = w === attackingTeam[attackingTeam.length - 1];
 
@@ -26,12 +29,11 @@ export const BattleHeader: FC<BattleHeaderProps> = ({
               key={w.originalId}
               className={cn({ "font-bold": w.originalId === characterId })}
             >
-              {w.name} ({w.lvl}
-              {w.prof}){!isLast && ", "}
+              {w.name} ({formatLevel(w.lvl, w.prof)}){!isLast && ", "}
             </span>
           );
         })}{" "}
-        a{" "}
+        {t("battleUi.header.and")}{" "}
         {defendingTeam.map((w) => {
           const isLast = w === defendingTeam[defendingTeam.length - 1];
 
@@ -40,8 +42,7 @@ export const BattleHeader: FC<BattleHeaderProps> = ({
               key={w.originalId}
               className={cn({ "font-bold": w.originalId === characterId })}
             >
-              {w.name} ({w.lvl}
-              {w.prof}){!isLast && ", "}
+              {w.name} ({formatLevel(w.lvl, w.prof)}){!isLast && ", "}
             </span>
           );
         })}

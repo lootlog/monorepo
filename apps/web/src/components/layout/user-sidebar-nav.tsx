@@ -18,11 +18,11 @@ import {
 } from "@/navigation/app-navigation";
 
 const userNavigationIcons: Partial<Record<AppNavigationItemId, ReactNode>> = {
-  "user-statistics": <BarChart3 className="mr-1 h-4 w-4" />,
-  "user-dashboard": <LayoutDashboard className="mr-1 h-4 w-4" />,
-  "user-battles": <Swords className="mr-1 h-4 w-4" />,
-  "user-notifications": <BellRing className="mr-1 h-4 w-4" />,
-  "user-settings": <Settings className="mr-1 h-4 w-4" />,
+  "user-statistics": <BarChart3 className="mr-1 size-4" />,
+  "user-dashboard": <LayoutDashboard className="mr-1 size-4" />,
+  "user-battles": <Swords className="mr-1 size-4" />,
+  "user-notifications": <BellRing className="mr-1 size-4" />,
+  "user-settings": <Settings className="mr-1 size-4" />,
 };
 
 export const UserSidebarNav = () => {

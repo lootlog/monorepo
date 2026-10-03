@@ -7,7 +7,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
 import { getPermissionRefreshInfo } from "@/utils/get-permission-refresh-info";
-import { RefreshCcw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import * as m from "framer-motion/m";
 import { useThemeMeta } from "@/themes";
@@ -141,7 +141,7 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
               aria-disabled={!canTriggerRefresh}
               loading={refreshMember.isPending}
             >
-              <RefreshCcw aria-hidden="true" className="size-4" />
+              <RefreshCw aria-hidden="true" className="size-4" />
             </Button>
           }
         />

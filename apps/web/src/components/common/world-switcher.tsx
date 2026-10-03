@@ -109,7 +109,7 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
 
   return (
     <div className="relative">
-      <ThemeSurfaceOverlay subtle rounded="rounded-md" />
+      <ThemeSurfaceOverlay subtle />
       <FilterPopover
         icon={Globe}
         options={options}

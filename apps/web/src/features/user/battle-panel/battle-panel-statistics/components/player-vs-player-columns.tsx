@@ -12,8 +12,8 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
 import type { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
 import type { coreTableFeatures } from "@/lib/tanstack-table-features";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 export const playerVsPlayerColumns: ColumnDef<
   typeof coreTableFeatures,
@@ -149,10 +149,7 @@ export const playerVsPlayerColumns: ColumnDef<
       </div>
     ),
     cell: ({ row }) => {
-      const exactTime = format(
-        new Date(row.original.createdAt),
-        "dd.MM.yyyy HH:mm",
-      );
+      const exactTime = timestampToDate(row.original.createdAt);
 
       return (
         <div className="flex min-w-0 justify-end">

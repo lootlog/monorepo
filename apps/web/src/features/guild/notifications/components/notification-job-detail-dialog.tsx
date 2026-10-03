@@ -1,13 +1,14 @@
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@lootlog/ui/components/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@lootlog/ui/components/dialog";
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@lootlog/ui/components/alert";
+import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
+import { IconDialogHeader } from "@/components/common/icon-dialog-header";
+import { Clock3 } from "lucide-react";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Separator } from "@lootlog/ui/components/separator";
 import type { NotificationJobsResponseDto } from "@lootlog/client/main";
@@ -20,6 +21,10 @@ import {
   getNotificationTriggerTranslationKey,
 } from "../utils/notification-settings.utils";
 import { NotificationJobDetailRow } from "./notification-job-detail-row";
+import {
+  DATE_TIME_WITH_SECONDS_FORMAT,
+  timestampToDate,
+} from "@/utils/date/parse-timestamp-to-date";
 
 type NotificationJobDetailDialogProps = {
   job: NotificationJobsResponseDto["pending"][number] | null;
@@ -62,11 +67,10 @@ export const NotificationJobDetailDialog = ({
   return (
     <Dialog open={job !== null} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-hidden sm:max-w-xl">
-        <DialogHeader className="border-b bg-muted/30 px-5 py-4">
-          <DialogTitle className="px-0 pt-0 text-base">
-            {t("settings.notifications.jobDetail.title")}
-          </DialogTitle>
-        </DialogHeader>
+        <IconDialogHeader
+          icon={Clock3}
+          title={t("settings.notifications.jobDetail.title")}
+        />
         <ScrollArea className="max-h-[calc(90vh-180px)]">
           <div className="flex flex-col gap-5 px-5 py-5">
             <section>
@@ -127,27 +131,33 @@ export const NotificationJobDetailDialog = ({
                 <Separator />
                 <NotificationJobDetailRow
                   label={t("settings.notifications.jobDetail.scheduledFor")}
-                  value={format(
-                    new Date(job.scheduledFor),
-                    "dd.MM.yyyy HH:mm:ss",
+                  value={timestampToDate(
+                    job.scheduledFor,
+                    DATE_TIME_WITH_SECONDS_FORMAT,
                   )}
                 />
                 <NotificationJobDetailRow
                   label={t("settings.notifications.jobDetail.createdAt")}
-                  value={format(new Date(job.createdAt), "dd.MM.yyyy HH:mm:ss")}
+                  value={timestampToDate(
+                    job.createdAt,
+                    DATE_TIME_WITH_SECONDS_FORMAT,
+                  )}
                 />
                 {job.processedAt ? (
                   <NotificationJobDetailRow
                     label={t("settings.notifications.jobDetail.processedAt")}
-                    value={format(
-                      new Date(job.processedAt),
-                      "dd.MM.yyyy HH:mm:ss",
+                    value={timestampToDate(
+                      job.processedAt,
+                      DATE_TIME_WITH_SECONDS_FORMAT,
                     )}
                   />
                 ) : null}
                 <NotificationJobDetailRow
                   label={t("settings.notifications.jobDetail.updatedAt")}
-                  value={format(new Date(job.updatedAt), "dd.MM.yyyy HH:mm:ss")}
+                  value={timestampToDate(
+                    job.updatedAt,
+                    DATE_TIME_WITH_SECONDS_FORMAT,
+                  )}
                 />
               </div>
             </section>
@@ -205,24 +215,24 @@ export const NotificationJobDetailDialog = ({
             ) : null}
 
             {job.blockedReason ? (
-              <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-4">
-                <p className="text-sm font-medium text-amber-500">
+              <Alert variant="timer">
+                <AlertTitle>
                   {t("settings.notifications.jobDetail.blockedReason")}
-                </p>
-                <p className="mt-1.5 text-sm text-amber-500">
+                </AlertTitle>
+                <AlertDescription>
                   {getJobErrorMessage(job.blockedReason, t)}
-                </p>
-              </div>
+                </AlertDescription>
+              </Alert>
             ) : null}
             {job.lastError ? (
-              <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-4">
-                <p className="text-sm font-medium text-destructive">
+              <Alert variant="alert">
+                <AlertTitle>
                   {t("settings.notifications.jobDetail.lastError")}
-                </p>
-                <p className="mt-1.5 text-sm text-destructive">
+                </AlertTitle>
+                <AlertDescription>
                   {getJobErrorMessage(job.lastError, t)}
-                </p>
-              </div>
+                </AlertDescription>
+              </Alert>
             ) : null}
           </div>
         </ScrollArea>

@@ -1,7 +1,9 @@
+import { formatLevel } from "@lootlog/domain/profession";
 import { PlayerTile } from "@/components/tiles/player-tile";
 import { MARGONEM_GUILD_URL } from "@/constants/margonem";
 import type { PaginatedActivitiesResponseDtoDataItem } from "@lootlog/client/activity";
 import { TextLink } from "@lootlog/ui/components/text-link";
+import { EMPTY_VALUE } from "@/constants/empty-value";
 
 type ActivityLogActorProps = {
   activity: PaginatedActivitiesResponseDtoDataItem;
@@ -11,10 +13,10 @@ export const ActivityLogActor = ({ activity }: ActivityLogActorProps) => {
   const actor = activity.actorSnapshot;
 
   if (!actor) {
-    return <span className="text-sm text-muted-foreground">—</span>;
+    return <span className="text-sm text-muted-foreground">{EMPTY_VALUE}</span>;
   }
 
-  const level = `${actor.lvl}${actor.prof?.[0]?.toLowerCase() ?? ""}`;
+  const level = formatLevel(actor.lvl, actor.prof);
 
   return (
     <span className="flex min-w-0 items-center gap-3">

@@ -1,15 +1,9 @@
-import { ArchiveRestore, FileX2, RotateCcw, Trash2 } from "lucide-react";
+import { ArchiveRestore, CircleAlert, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@lootlog/ui/components/dialog";
+import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useQueryClient } from "@tanstack/react-query";
@@ -22,6 +16,8 @@ import {
   guildDocsTrashQueryOptions,
   invalidateGuildDocsQueries,
 } from "../docs-api";
+import { EmptyState } from "@/components/common/empty-state";
+import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { useTranslation } from "react-i18next";
 
@@ -93,19 +89,16 @@ export const GuildDocTrashDialog = ({
       }}
     >
       <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden border-border/70 bg-background/95 p-0 shadow-2xl shadow-background/40  sm:max-w-2xl">
-        <DialogHeader className="border-b border-border/70 bg-card px-4 py-3 pr-12">
-          <DialogTitle className="flex items-center gap-2 text-base">
-            <span className="rounded-xl bg-destructive/10 p-2">
-              <Trash2 className="size-4 text-destructive" />
-            </span>
-            {t("docs.trash.title")}
-          </DialogTitle>
-          <DialogDescription className="text-xs">
-            {canManage
+        <IconDialogHeader
+          icon={Trash2}
+          tone="destructive"
+          title={t("docs.trash.title")}
+          description={
+            canManage
               ? t("docs.trash.descriptionAdmin")
-              : t("docs.trash.descriptionWriter")}
-          </DialogDescription>
-        </DialogHeader>
+              : t("docs.trash.descriptionWriter")
+          }
+        />
 
         <ScrollArea className="min-h-0 flex-1">
           <div className="flex flex-col gap-2 p-3">
@@ -114,24 +107,30 @@ export const GuildDocTrashDialog = ({
                 <Skeleton key={index} className="h-20 w-full rounded-md" />
               ))
             ) : trashQuery.isError ? (
-              <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-                <FileX2 className="size-10 text-muted-foreground opacity-50" />
-                <p className="text-sm text-muted-foreground">
-                  {t("docs.trash.loadError")}
-                </p>
-              </div>
+              <EmptyState
+                compact
+                icon={CircleAlert}
+                title={t("docs.trash.loadError")}
+                action={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    loading={trashQuery.isFetching}
+                    icon=<RotateCcw className="size-3.5" />
+                    onClick={() => void trashQuery.refetch()}
+                  >
+                    {t("common.actions.retry")}
+                  </Button>
+                }
+              />
             ) : trashItems.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-                <ArchiveRestore className="size-10 text-muted-foreground opacity-50" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">
-                    {t("docs.trash.emptyTitle")}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {t("docs.trash.emptyDescription")}
-                  </p>
-                </div>
-              </div>
+              <EmptyState
+                compact
+                icon={ArchiveRestore}
+                title={t("docs.trash.emptyTitle")}
+                description={t("docs.trash.emptyDescription")}
+              />
             ) : (
               trashItems.map((document) => {
                 const deletedByName =

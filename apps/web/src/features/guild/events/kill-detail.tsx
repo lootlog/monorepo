@@ -17,7 +17,7 @@ import { useKillDetail } from "./hooks/queries/use-kill-detail";
 import { useMatchingLoots } from "./hooks/queries/use-matching-loots";
 import { formatDurationHuman } from "./utils/format-duration";
 import { normalizeBonusBreakdown } from "./utils/normalize-bonus-breakdown";
-import { EventReadError } from "./components/shared/event-read-error";
+import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { EventLoadError } from "./components/event-load-error";
 import { EventKillDetailSkeleton } from "./event-kill-detail-skeleton";
 import { getKillDetailErrorKind } from "./utils/kill-detail-error";
@@ -202,7 +202,7 @@ export const KillDetail = () => {
       <ScrollArea className="min-h-0 min-w-0 max-w-full flex-1">
         <div className="flex w-full min-w-0 max-w-full flex-col gap-3 overflow-x-hidden px-3 py-3">
           {error && (
-            <EventReadError
+            <QueryErrorNotice
               message={t("events.killDetail.error")}
               onRetry={() => void refetch()}
               isRetrying={isFetching}

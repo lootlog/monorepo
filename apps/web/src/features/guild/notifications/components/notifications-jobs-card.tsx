@@ -4,7 +4,6 @@ import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
 import { Clock3 } from "lucide-react";
-import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
@@ -32,6 +31,10 @@ import {
   useNotificationsGuildControllerCancelGuildJob,
   type NotificationJobsResponseDto,
 } from "@lootlog/client/main";
+import {
+  DATE_TIME_WITH_SECONDS_FORMAT,
+  timestampToDate,
+} from "@/utils/date/parse-timestamp-to-date";
 
 type NotificationsPendingJobsCardProps = {
   pendingJobs: NotificationJobsResponseDto["pending"];
@@ -142,15 +145,15 @@ export const NotificationsPendingJobsCard = ({
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {t("settings.notifications.jobs.scheduledFor", {
-                        date: format(
-                          new Date(job.scheduledFor),
-                          "dd.MM.yyyy HH:mm:ss",
+                        date: timestampToDate(
+                          job.scheduledFor,
+                          DATE_TIME_WITH_SECONDS_FORMAT,
                         ),
                       })}
                     </p>
                     <NotificationJobCountdown scheduledFor={job.scheduledFor} />
                     {job.blockedReason ? (
-                      <p className="text-xs text-amber-500">
+                      <p className="text-xs text-signal-timer">
                         {getJobErrorMessage(job.blockedReason, t)}
                       </p>
                     ) : null}

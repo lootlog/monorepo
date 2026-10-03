@@ -1,8 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@lootlog/ui/components/button";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
-import { ArrowUpDown } from "lucide-react";
-import { format } from "date-fns";
+import { SortableColumnHeader } from "@/components/ui/sortable-column-header";
 import { BattlePanelH2hOpponentSummary } from "@/features/user/battle-panel/components/battle-panel-h2h-opponent-summary";
 import { BattleResultStatus } from "@/features/user/battle-panel/components/battle-result-status";
 import type { HeadToHeadRecord } from "@/lib/api/battlelog-types";
@@ -15,6 +13,7 @@ import {
 import { cn } from "cn";
 import i18n from "@/i18n/config";
 import type { sortingTableFeatures } from "@/lib/tanstack-table-features";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 export const headToHeadBaseColumns: ColumnDef<
   typeof sortingTableFeatures,
@@ -48,17 +47,9 @@ export const headToHeadBaseColumns: ColumnDef<
   {
     accessorKey: "wins",
     header: ({ column }) => (
-      <div className="text-center">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8"
-        >
-          {i18n.t("battlePanel.filters.results.won")}
-          <ArrowUpDown className="ml-2 h-3 w-3" />
-        </Button>
-      </div>
+      <SortableColumnHeader column={column}>
+        {i18n.t("battlePanel.filters.results.won")}
+      </SortableColumnHeader>
     ),
     cell: ({ row }) => (
       <div className="text-center">
@@ -71,17 +62,9 @@ export const headToHeadBaseColumns: ColumnDef<
   {
     accessorKey: "losses",
     header: ({ column }) => (
-      <div className="text-center">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8"
-        >
-          {i18n.t("battlePanel.filters.results.lost")}
-          <ArrowUpDown className="ml-2 h-3 w-3" />
-        </Button>
-      </div>
+      <SortableColumnHeader column={column}>
+        {i18n.t("battlePanel.filters.results.lost")}
+      </SortableColumnHeader>
     ),
     cell: ({ row }) => (
       <div className="text-center">
@@ -94,17 +77,9 @@ export const headToHeadBaseColumns: ColumnDef<
   {
     accessorKey: "totalBattles",
     header: ({ column }) => (
-      <div className="text-center">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8"
-        >
-          {i18n.t("battlePanel.statistics.columns.total")}
-          <ArrowUpDown className="ml-2 h-3 w-3" />
-        </Button>
-      </div>
+      <SortableColumnHeader column={column}>
+        {i18n.t("battlePanel.statistics.columns.total")}
+      </SortableColumnHeader>
     ),
     cell: ({ row }) => (
       <div className="text-center font-medium">{row.original.totalBattles}</div>
@@ -113,17 +88,9 @@ export const headToHeadBaseColumns: ColumnDef<
   {
     accessorKey: "winRate",
     header: ({ column }) => (
-      <div className="text-center">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8"
-        >
-          {i18n.t("battlePanel.statistics.columns.winRate")}
-          <ArrowUpDown className="ml-2 h-3 w-3" />
-        </Button>
-      </div>
+      <SortableColumnHeader column={column}>
+        {i18n.t("battlePanel.statistics.columns.winRate")}
+      </SortableColumnHeader>
     ),
     cell: ({ row }) => (
       <div className="text-center">
@@ -148,23 +115,12 @@ export const headToHeadLastBattleColumn: ColumnDef<
 > = {
   accessorKey: "lastBattleDate",
   header: ({ column }) => (
-    <div className="text-right">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8"
-      >
-        {i18n.t("battlePanel.statistics.columns.lastBattle")}
-        <ArrowUpDown className="ml-2 h-3 w-3" />
-      </Button>
-    </div>
+    <SortableColumnHeader column={column} align="end">
+      {i18n.t("battlePanel.statistics.columns.lastBattle")}
+    </SortableColumnHeader>
   ),
   cell: ({ row }) => {
-    const exactTime = format(
-      new Date(row.original.lastBattleDate),
-      "dd.MM.yyyy HH:mm",
-    );
+    const exactTime = timestampToDate(row.original.lastBattleDate);
 
     return (
       <div className="flex min-w-0 justify-end">

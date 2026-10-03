@@ -65,7 +65,7 @@ export function DashboardActivity() {
         {mode === "online" ? (
           <StatisticsQueryState
             query={online}
-            centered
+            compact
             loading=<DashboardActivitySkeleton />
           >
             {online.data && (
@@ -112,7 +112,7 @@ export function DashboardActivity() {
         ) : (
           <StatisticsQueryState
             query={kills}
-            centered
+            compact
             loading=<DashboardActivitySkeleton />
           >
             {kills.data && (

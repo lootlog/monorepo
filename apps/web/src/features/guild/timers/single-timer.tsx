@@ -3,13 +3,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { MARGONEM_CDN_NPCS_URL } from "@/constants/margonem";
-import { format } from "date-fns";
+import { NpcSearchTile } from "@/components/tiles/npc-search-tile";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import type { TimerResponseDto } from "@lootlog/client/main";
-import { formatNpcLevel } from "@lootlog/domain/profession";
+import { formatLevel } from "@lootlog/domain/profession";
 import { TimerCountdown } from "./timer-countdown";
+import {
+  DATE_TIME_WITH_SECONDS_FORMAT,
+  timestampToDate,
+} from "@/utils/date/parse-timestamp-to-date";
 
 type SingleTimerProps = {
   timer: TimerResponseDto;
@@ -24,10 +27,8 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
 
   const npcLevel =
     timer.npc && timer.npc.lvl > 0
-      ? formatNpcLevel(timer.npc.lvl, timer.npc.prof)
+      ? formatLevel(timer.npc.lvl, timer.npc.prof)
       : null;
-
-  const imageHasDomain = npcIcon?.startsWith("https://"); // @TODO: temporary fix for icons with full URL
 
   return (
     <Tooltip>
@@ -37,16 +38,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
             type="button"
             className="flex w-full items-center gap-3 rounded-lg border border-border/50 bg-card px-3 py-2.5 text-left transition-colors outline-none hover:border-primary/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none"
           >
-            {npcIcon && (
-              <span className="flex size-8 shrink-0 items-center justify-center">
-                {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
-                <img
-                  className="max-h-8 max-w-8 rounded"
-                  src={`${imageHasDomain ? "" : MARGONEM_CDN_NPCS_URL}${npcIcon}`}
-                  alt=""
-                />
-              </span>
-            )}
+            {npcIcon && <NpcSearchTile icon={npcIcon} />}
             <span className="min-w-0 flex-1">
               <span className="flex min-w-0 items-baseline gap-1.5">
                 <span className="min-w-0 truncate text-sm font-medium">
@@ -75,7 +67,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
             {t("timers.details.minSpawnTime")}
           </span>
           <span className="block text-sm font-semibold tabular-nums">
-            {format(new Date(minSpawnTime), "dd.MM.yyyy HH:mm:ss")}
+            {timestampToDate(minSpawnTime, DATE_TIME_WITH_SECONDS_FORMAT)}
           </span>
         </div>
         <div>
@@ -83,7 +75,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
             {t("timers.details.maxSpawnTime")}
           </span>
           <span className="block text-sm font-semibold tabular-nums">
-            {format(new Date(maxSpawnTime), "dd.MM.yyyy HH:mm:ss")}
+            {timestampToDate(maxSpawnTime, DATE_TIME_WITH_SECONDS_FORMAT)}
           </span>
         </div>
       </TooltipContent>

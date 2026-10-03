@@ -1,5 +1,5 @@
 import { NpcSearchTile, PlayerSearchTile } from "@/components/tiles";
-import { formatNpcLevel } from "@lootlog/domain/profession";
+import { formatLevel } from "@lootlog/domain/profession";
 import { LOOT_RARITY_TEXT_CLASS } from "@/features/guild/loots-list/loot-rarity-colors";
 import { CommandGroup, CommandItem } from "@lootlog/ui/components/command";
 import { ItemImage } from "@lootlog/ui/components/item-image";
@@ -56,7 +56,7 @@ export const LootSearchResults = ({
             {npc.lvl > 0 && (
               <span className="text-xs text-muted-foreground">
                 {t("loots.searchCommand.level", {
-                  level: formatNpcLevel(npc.lvl, npc.prof),
+                  level: formatLevel(npc.lvl, npc.prof),
                 })}
               </span>
             )}

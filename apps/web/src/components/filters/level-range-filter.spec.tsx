@@ -90,3 +90,40 @@ it("commits both bounds typed within one debounce window and follows an outside 
   expect(minInput).toHaveProperty("value", "");
   expect(maxInput).toHaveProperty("value", "");
 });
+
+// A caller whose callbacks close over its current range, so every commit
+// hands the level range new callbacks while the other bound is still pending.
+function ClosureRange({ onChange }: { onChange: (range: string) => void }) {
+  const [range, setRange] = useState<{ min?: number; max?: number }>({});
+
+  const commit = (next: { min?: number; max?: number }) => {
+    setRange(next);
+    onChange(`${next.min ?? ""}-${next.max ?? ""}`);
+  };
+
+  return (
+    <LevelRangeFilter
+      minLevel={range.min}
+      maxLevel={range.max}
+      onMinLevelChange={(min) => commit({ ...range, min })}
+      onMaxLevelChange={(max) => commit({ ...range, max })}
+    />
+  );
+}
+
+it("keeps a pending bound when the other bound's commit hands it new callbacks", () => {
+  vi.useFakeTimers();
+  const onChange = vi.fn();
+  render(<ClosureRange onChange={onChange} />);
+  const [minInput, maxInput] = screen.getAllByRole("spinbutton");
+
+  if (!minInput || !maxInput) throw new Error("Missing level inputs");
+  fireEvent.change(minInput, { target: { value: "100" } });
+  act(() => vi.advanceTimersByTime(300));
+  fireEvent.change(maxInput, { target: { value: "200" } });
+  // The minimum commits first and the caller re-renders before the maximum.
+  act(() => vi.advanceTimersByTime(200));
+  expect(onChange).toHaveBeenLastCalledWith("100-");
+  act(() => vi.advanceTimersByTime(300));
+  expect(onChange).toHaveBeenLastCalledWith("100-200");
+});

@@ -58,7 +58,7 @@ export const StatsTable = <TData extends RowData>({
     />
     <TanStackTableBody
       table={table}
-      rowClassName="h-14 border-b border-border hover:bg-muted/50"
+      rowClassName="h-14 border-b border-border hover:bg-muted/40"
       getCellClassName={(cell) => getCellClassName(cell.column.id)}
       getRowProps={
         onRowClick

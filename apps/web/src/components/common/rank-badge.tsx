@@ -1,11 +1,12 @@
 import { cn } from "cn";
 
-type StatsRankProps = {
+type RankBadgeProps = {
   rank: number;
   className?: string;
 };
 
-export const StatsRank = ({ rank, className }: StatsRankProps) => (
+/** A leaderboard position, with the podium places tinted. */
+export const RankBadge = ({ rank, className }: RankBadgeProps) => (
   <span
     className={cn(
       "inline-flex size-6 shrink-0 items-center justify-center rounded-md text-xs font-semibold tabular-nums",

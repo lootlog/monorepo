@@ -17,6 +17,7 @@ import { Spinner } from "@lootlog/ui/components/spinner";
 import { Reorder } from "framer-motion";
 import { useId } from "react";
 import { FolderPlus, MapPin, Search } from "lucide-react";
+import { EmptyState } from "@/components/common/empty-state";
 import { AssignedEventMaps } from "./assigned-event-maps";
 import { EventMapTemplates } from "./event-map-templates";
 import {
@@ -239,17 +240,17 @@ export const MapManageDialog = ({
                     ))}
                   </div>
                 ) : searchQuery ? (
-                  <div className="flex flex-col items-center justify-center h-full py-8 text-muted-foreground">
-                    <Search className="size-8 mb-2 opacity-30" />
-                    <p className="text-xs">
-                      {t("events.maps.noResults", { query: searchQuery })}
-                    </p>
-                  </div>
+                  <EmptyState
+                    compact
+                    icon={Search}
+                    title={t("events.maps.noResults", { query: searchQuery })}
+                  />
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-full py-8 text-muted-foreground">
-                    <MapPin className="size-8 mb-2 opacity-30" />
-                    <p className="text-xs">{t("events.maps.searchHint")}</p>
-                  </div>
+                  <EmptyState
+                    compact
+                    icon={MapPin}
+                    title={t("events.maps.searchHint")}
+                  />
                 )}
               </ScrollArea>
             </div>

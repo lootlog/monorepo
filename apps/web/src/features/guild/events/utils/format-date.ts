@@ -1,5 +1,9 @@
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
+import {
+  DATE_FORMAT,
+  timestampToDate,
+} from "@/utils/date/parse-timestamp-to-date";
 
 export const formatTime = (date: Date): string =>
   format(date, "HH:mm:ss", { locale: pl });
@@ -7,11 +11,7 @@ export const formatTime = (date: Date): string =>
 export const formatTimeShort = (date: Date): string =>
   format(date, "HH:mm", { locale: pl });
 
-export const formatDateTime = (date: Date): string =>
-  format(date, "d MMM, HH:mm", { locale: pl });
-
-const formatDate = (date: Date): string =>
-  format(date, "d MMM yyyy", { locale: pl });
+const formatDate = (date: Date): string => timestampToDate(date, DATE_FORMAT);
 
 /** Joins an event's dates with an en dash; an open end shows `openEndLabel`. */
 export const formatDateRange = (

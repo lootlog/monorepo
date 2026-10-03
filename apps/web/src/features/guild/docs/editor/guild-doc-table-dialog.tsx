@@ -7,11 +7,9 @@ import { Checkbox } from "@lootlog/ui/components/checkbox";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from "@lootlog/ui/components/dialog";
+import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { useTranslation } from "react-i18next";
@@ -82,17 +80,13 @@ export const GuildDocTableDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Table2 className="size-4" />
-            {t("docs.tableDialog.title")}
-          </DialogTitle>
-          <DialogDescription>
-            {t("docs.tableDialog.description")}
-          </DialogDescription>
-        </DialogHeader>
+        <IconDialogHeader
+          icon={Table2}
+          title={t("docs.tableDialog.title")}
+          description={t("docs.tableDialog.description")}
+        />
 
-        <form className="space-y-4 px-4 pb-4 pt-1" onSubmit={handleSubmit}>
+        <form className="space-y-4 p-5" onSubmit={handleSubmit}>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="guild-doc-table-rows">

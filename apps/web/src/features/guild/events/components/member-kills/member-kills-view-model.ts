@@ -34,12 +34,12 @@ export const getMemberKillScoringViewModel = (
     trackingPercentage:
       point.trackingDurationPercentage !== null
         ? `${Math.round(point.trackingDurationPercentage)}%`
-        : "-",
+        : EMPTY_VALUE,
     trackingTime:
       point.trackingDurationSeconds !== null &&
       point.trackingDurationSeconds >= 0
         ? formatDurationHuman(point.trackingDurationSeconds)
-        : "-",
+        : EMPTY_VALUE,
     scoringItems: getScoringItems({ ...scoring, t }),
   };
 };
@@ -52,3 +52,4 @@ import {
   getScoringBreakdown,
   getScoringItems,
 } from "../../utils/scoring-presentation";
+import { EMPTY_VALUE } from "@/constants/empty-value";

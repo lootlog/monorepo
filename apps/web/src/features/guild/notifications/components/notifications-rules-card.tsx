@@ -47,7 +47,7 @@ export const NotificationsRulesCard = ({
       />
       <SectionCardContent className="flex flex-col gap-3">
         {hasInactiveTargets ? (
-          <p className="flex items-center gap-1.5 text-xs text-amber-500">
+          <p className="flex items-center gap-1.5 text-xs text-signal-timer">
             <TriangleAlert className="size-3.5 shrink-0" />
             {t("settings.notifications.inactiveTargetsWarning")}
           </p>

@@ -1,4 +1,4 @@
-import { formatNpcLevel } from "@lootlog/domain/profession";
+import { formatLevel } from "@lootlog/domain/profession";
 import { PageHeader } from "@/components/common/page-header";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
@@ -42,7 +42,7 @@ export const HeroDetailHeader = ({
         {hero.npcName}
         {hero.npcLvl ? (
           <span className="ml-2 text-base font-normal text-muted-foreground">
-            {formatNpcLevel(hero.npcLvl)}
+            {formatLevel(hero.npcLvl)}
           </span>
         ) : null}
       </>

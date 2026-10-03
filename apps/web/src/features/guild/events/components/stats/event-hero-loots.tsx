@@ -81,7 +81,11 @@ export const EventHeroLoots = ({
         {isLoading ? (
           <EmbeddedLootRowsSkeleton rows={Math.min(limit, 3)} />
         ) : !loots || loots.length === 0 ? (
-          <EmptyState icon={Package} title={t("events.loots.noLoots")} />
+          <EmptyState
+            compact
+            icon={Package}
+            title={t("events.loots.noLoots")}
+          />
         ) : (
           <div
             key={activeHeroName}

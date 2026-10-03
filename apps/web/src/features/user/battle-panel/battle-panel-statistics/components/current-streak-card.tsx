@@ -1,7 +1,14 @@
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
-import { Flame, Snowflake, TrendingUp, TrendingDown } from "lucide-react";
+import { EmptyState } from "@/components/common/empty-state";
+import {
+  Flame,
+  Inbox,
+  Snowflake,
+  TrendingUp,
+  TrendingDown,
+} from "lucide-react";
 import type { Streak } from "@/lib/api/battlelog-types";
-import { StatCard } from "./stat-card";
+import { ChartCard } from "@/components/common/chart-card";
 import { StatCardMetric } from "./stat-card-metric";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
@@ -22,7 +29,7 @@ export function CurrentStreakCard({ data, isLoading }: CurrentStreakCardProps) {
     : BATTLE_TEXT_COLORS.metric.lossStreak;
 
   return (
-    <StatCard
+    <ChartCard
       title={t("battlePanel.statistics.currentStreak.title")}
       description={t("battlePanel.statistics.currentStreak.description")}
       isLoading={isLoading}
@@ -43,9 +50,11 @@ export function CurrentStreakCard({ data, isLoading }: CurrentStreakCardProps) {
             </p>
           </>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            {t("battlePanel.statistics.currentStreak.empty")}
-          </p>
+          <EmptyState
+            compact
+            icon={Inbox}
+            title={t("battlePanel.statistics.currentStreak.empty")}
+          />
         )}
       </div>
 
@@ -63,6 +72,6 @@ export function CurrentStreakCard({ data, isLoading }: CurrentStreakCardProps) {
           valueClassName={BATTLE_TEXT_COLORS.metric.negative}
         />
       </div>
-    </StatCard>
+    </ChartCard>
   );
 }

@@ -24,13 +24,13 @@ import {
 const SIGNAL_LABEL_COLOR: Record<LiveSignal, string> = {
   live: "text-sidebar-foreground/60",
   connecting: "text-sidebar-foreground/60",
-  offline: "text-amber-300",
+  offline: "text-signal-timer",
 };
 
 const SIGNAL_DOT_COLOR: Record<LiveSignal, string> = {
-  live: "bg-emerald-400",
+  live: "bg-signal-live",
   connecting: "bg-muted-foreground animate-pulse motion-reduce:animate-none",
-  offline: "bg-amber-400",
+  offline: "bg-signal-timer",
 };
 
 /** The avatar column continues the server rail above it. */

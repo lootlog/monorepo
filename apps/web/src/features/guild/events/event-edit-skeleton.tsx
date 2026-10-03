@@ -1,14 +1,12 @@
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { SectionCard } from "@/components/common/section-card/section-card";
-import { PageHeader } from "@/components/common/page-header";
+import { PageHeaderSkeleton } from "@/components/common/page-header-skeleton";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const EventEditSkeleton = () => {
   return (
     <div aria-busy="true" className="flex flex-col gap-3 px-3 py-3">
-      <PageHeader
-        title=<Skeleton render={<span />} className="block h-5 w-40" />
-      />
+      <PageHeaderSkeleton withDescription={false} />
 
       <SectionCard>
         <SectionCardContent>

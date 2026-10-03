@@ -9,9 +9,9 @@ import { User2 } from "lucide-react";
 export type LiveSignal = "live" | "connecting" | "offline";
 
 const SIGNAL_COLOR: Record<LiveSignal, string> = {
-  live: "text-emerald-400",
+  live: "text-signal-live",
   connecting: "text-sidebar-foreground/45",
-  offline: "text-amber-400",
+  offline: "text-signal-timer",
 };
 
 type UserSignalAvatarProps = {

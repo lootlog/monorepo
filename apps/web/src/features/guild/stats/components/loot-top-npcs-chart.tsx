@@ -1,4 +1,4 @@
-import { formatNpcLevel } from "@lootlog/domain/profession";
+import { formatLevel } from "@lootlog/domain/profession";
 import {
   ChartContainer,
   ChartTooltip,
@@ -13,7 +13,7 @@ import { useTranslation } from "react-i18next";
 import type { LootStatsResponseDtoOutputTopNpcsItem } from "@lootlog/client/main";
 import { LOOT_RARITY_CHART_COLORS } from "@/features/guild/loots-list/loot-rarity-colors";
 import { getLootRarityChartConfig } from "./loot-rarity-chart-config";
-import { StatsChartCard } from "./stats-chart-card";
+import { ChartCard } from "@/components/common/chart-card";
 
 type LootTopNpcsChartProps = {
   data?: LootStatsResponseDtoOutputTopNpcsItem[];
@@ -33,7 +33,7 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
       fullName:
         npc.lvl === null
           ? npc.name
-          : `${npc.name} · ${t("kills.level", { level: formatNpcLevel(npc.lvl) })}`,
+          : `${npc.name} · ${t("kills.level", { level: formatLevel(npc.lvl) })}`,
       type: npc.type,
       lvl: npc.lvl,
       LEGENDARY: npc.byRarity?.LEGENDARY ?? 0,
@@ -42,7 +42,7 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
     })) ?? [];
 
   return (
-    <StatsChartCard
+    <ChartCard
       title={t("loots.stats.topNpcs.title")}
       description={t("loots.stats.topNpcs.description")}
       isLoading={isLoading}
@@ -96,6 +96,6 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
           />
         </BarChart>
       </ChartContainer>
-    </StatsChartCard>
+    </ChartCard>
   );
 };

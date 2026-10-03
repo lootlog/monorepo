@@ -1,20 +1,22 @@
 import { FilterBar } from "@/components/common/filter-bar";
 import { WorldSwitcher } from "@/components/common/world-switcher";
+import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
 import { SearchInput } from "@/components/ui/search-input";
 import {
   KillStatsPeriodSelect,
   type KillStatsPeriod,
 } from "@/features/kills/components/kill-stats-period-select";
+import { KillStatsNpcTypeSelect } from "@/features/kills/components/kill-stats-npc-type-select";
 import { Button } from "@lootlog/ui/components/button";
 import { Label } from "@lootlog/ui/components/label";
 import { Filter } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { LevelFilters } from "./level-filters";
-import { StatsNpcTypeSelect } from "./stats-npc-type-select";
 
 type KillStatsFilterBarProps = {
   world: string | null;
+  /** Worlds to offer; omit to list the current guild's worlds. */
+  worlds?: string[];
   period: KillStatsPeriod | undefined;
   onWorldChange: (value: string | null) => void;
   onPeriodChange: (value: KillStatsPeriod) => void;
@@ -24,6 +26,7 @@ type KillStatsFilterBarProps = {
     placeholder: string;
     onChange: (value: string) => void;
   };
+  /** Bounds are kept as the persisted strings ("" when unset). */
   level?: {
     minLvl: string;
     maxLvl: string;
@@ -31,19 +34,28 @@ type KillStatsFilterBarProps = {
     onMaxLvlChange: (value: string) => void;
   };
   npcType?: {
+    types: readonly string[];
     value: string | null | undefined;
     onValueChange: (value: string | null) => void;
   };
 };
 
-const levelSeparator = (
-  <span className="text-xs text-muted-foreground" aria-hidden="true">
-    –
-  </span>
-);
+// Callers debounce the request on their own, so the inputs commit sooner than
+// the level range's default.
+const LEVEL_COMMIT_DELAY_MS = 300;
+
+const toLevel = (value: string) => {
+  const level = Number.parseInt(value, 10);
+
+  return Number.isNaN(level) ? undefined : level;
+};
+
+const toLevelParam = (value: number | undefined) =>
+  value === undefined ? "" : String(value);
 
 export const KillStatsFilterBar = ({
   world,
+  worlds,
   period = "all",
   onWorldChange,
   onPeriodChange,
@@ -53,10 +65,17 @@ export const KillStatsFilterBar = ({
 }: KillStatsFilterBarProps) => {
   const { t } = useTranslation();
 
-  const levelPlaceholders = {
-    minPlaceholder: t("kills.filters.minLevelShort"),
-    maxPlaceholder: t("kills.filters.maxLevelShort"),
-  };
+  const renderLevelRange = (layout: "inline" | "fill") =>
+    level && (
+      <LevelRangeFilter
+        layout={layout}
+        debounceMs={LEVEL_COMMIT_DELAY_MS}
+        minLevel={toLevel(level.minLvl)}
+        maxLevel={toLevel(level.maxLvl)}
+        onMinLevelChange={(value) => level.onMinLvlChange(toLevelParam(value))}
+        onMaxLevelChange={(value) => level.onMaxLvlChange(toLevelParam(value))}
+      />
+    );
 
   return (
     <FilterBar ariaLabel={t("kills.filters.title")}>
@@ -97,6 +116,7 @@ export const KillStatsFilterBar = ({
             <WorldSwitcher
               value={world}
               onValueChange={onWorldChange}
+              worlds={worlds}
               showAllOption
               width="w-full"
             />
@@ -112,24 +132,13 @@ export const KillStatsFilterBar = ({
           {npcType && (
             <div className="space-y-2">
               <Label>{t("kills.filters.npcType")}</Label>
-              <StatsNpcTypeSelect
-                value={npcType.value}
-                onValueChange={npcType.onValueChange}
-                width="w-full"
-              />
+              <KillStatsNpcTypeSelect {...npcType} width="w-full" />
             </div>
           )}
           {level && (
             <div className="space-y-2">
               <Label>{t("kills.filters.levelRange")}</Label>
-              <div className="flex items-center gap-2">
-                <LevelFilters
-                  {...level}
-                  {...levelPlaceholders}
-                  inputClassName="h-10 min-w-0 flex-1"
-                  separator={levelSeparator}
-                />
-              </div>
+              {renderLevelRange("fill")}
             </div>
           )}
         </MobileFiltersDrawer>
@@ -139,6 +148,7 @@ export const KillStatsFilterBar = ({
         <WorldSwitcher
           value={world}
           onValueChange={onWorldChange}
+          worlds={worlds}
           showAllOption
         />
         <KillStatsPeriodSelect
@@ -146,26 +156,8 @@ export const KillStatsFilterBar = ({
           onValueChange={onPeriodChange}
           className="w-[200px]"
         />
-        {npcType && (
-          <StatsNpcTypeSelect
-            value={npcType.value}
-            onValueChange={npcType.onValueChange}
-          />
-        )}
-        {level && (
-          <div
-            role="group"
-            aria-label={t("kills.filters.levelRange")}
-            className="flex items-center gap-2"
-          >
-            <LevelFilters
-              {...level}
-              {...levelPlaceholders}
-              inputClassName="h-10 w-[72px]"
-              separator={levelSeparator}
-            />
-          </div>
-        )}
+        {npcType && <KillStatsNpcTypeSelect {...npcType} />}
+        {renderLevelRange("inline")}
       </div>
     </FilterBar>
   );

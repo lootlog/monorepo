@@ -2,8 +2,8 @@ import { KpiCard } from "@/components/common/kpi-card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { AlertTriangle, Clock3, MapPinned, Timer } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { SkeletonPageHeader } from "./components/skeleton-page-header";
-import { SkeletonSectionCard } from "./components/skeleton-section-card";
+import { PageHeaderSkeleton } from "@/components/common/page-header-skeleton";
+import { SectionCardSkeleton } from "@/components/common/section-card/section-card-skeleton";
 
 const KPIS = [
   { icon: AlertTriangle, labelKey: "events.coordination.priority.critical" },
@@ -17,7 +17,7 @@ export const EventCoordinationSkeleton = () => {
 
   return (
     <div aria-busy="true" className="flex flex-col gap-3 px-3 py-3">
-      <SkeletonPageHeader />
+      <PageHeaderSkeleton />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {KPIS.map((kpi) => (
           <KpiCard
@@ -30,7 +30,7 @@ export const EventCoordinationSkeleton = () => {
         ))}
       </div>
       {Array.from({ length: 3 }, (_, index) => (
-        <SkeletonSectionCard key={index}>
+        <SectionCardSkeleton key={index} withIcon withDescription={false}>
           <div className="space-y-3 p-3">
             <div className="flex flex-wrap items-center gap-2">
               <Skeleton className="size-10 shrink-0 rounded-xl" />
@@ -40,7 +40,7 @@ export const EventCoordinationSkeleton = () => {
             </div>
             <Skeleton className="h-2 w-full rounded-full" />
           </div>
-        </SkeletonSectionCard>
+        </SectionCardSkeleton>
       ))}
     </div>
   );

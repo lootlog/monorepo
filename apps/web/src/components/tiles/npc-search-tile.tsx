@@ -19,7 +19,7 @@ export const NpcSearchTile: FC<NpcSearchTileProps> = ({
   const src = isFullUrl(icon) ? icon : `${MARGONEM_CDN_NPCS_URL}${icon}`;
 
   return (
-    <div className="flex h-10 w-8 items-center justify-center">
+    <div className="flex h-10 w-8 shrink-0 items-center justify-center">
       {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
       <img
         className={cn(
@@ -27,7 +27,7 @@ export const NpcSearchTile: FC<NpcSearchTileProps> = ({
           className,
         )}
         src={src}
-        alt={name}
+        alt={name ?? ""}
       />
     </div>
   );

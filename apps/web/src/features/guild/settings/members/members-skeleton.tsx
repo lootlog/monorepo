@@ -4,28 +4,19 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 const tableRows = Array.from({ length: 10 });
 
-const filterButtons = Array.from({ length: 5 });
-
 export const MembersSettingsSkeleton = () => {
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden px-3 pb-3">
       <SectionCard className="min-h-0 flex-1 overflow-hidden">
         <div className="flex shrink-0 flex-col gap-3 border-b border-border/70 bg-background/30 p-2 xl:flex-row xl:items-center xl:justify-between">
           <Skeleton className="h-10 w-full rounded-xl xl:max-w-md 2xl:max-w-xl" />
-          <div className="flex flex-wrap items-center gap-1.5 xl:justify-end">
-            {filterButtons.map((_, index) => (
-              <Skeleton
-                key={index}
-                className="h-10 w-20 rounded-md first:w-16"
-              />
-            ))}
-          </div>
-          <Skeleton className="h-10 w-40 shrink-0" />
+          <Skeleton className="h-10 w-full rounded-xl sm:w-96" />
+          <Skeleton className="h-10 w-40 shrink-0 rounded-xl" />
         </div>
 
         <div className="min-h-0 flex-1 overflow-hidden">
           <div className="min-w-[994px] border-b border-border">
-            <div className="grid h-10 grid-cols-[360px_130px_160px_150px_130px_64px] items-center border-b border-border bg-sidebar/95 px-4 text-sm">
+            <div className="grid h-10 grid-cols-[360px_130px_160px_150px_130px_64px] items-center border-b border-border bg-background px-4 text-sm">
               <Skeleton className="h-4 w-20" />
               <Skeleton className="h-4 w-16" />
               <Skeleton className="h-4 w-12" />
@@ -38,7 +29,7 @@ export const MembersSettingsSkeleton = () => {
               {tableRows.map((_, index) => (
                 <div
                   key={index}
-                  className="grid h-16 grid-cols-[360px_130px_160px_150px_130px_64px] items-center border-b border-border/70 px-4"
+                  className="grid h-14 grid-cols-[360px_130px_160px_150px_130px_64px] items-center border-b border-border px-4"
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     <Skeleton className="size-8 shrink-0 rounded-lg" />

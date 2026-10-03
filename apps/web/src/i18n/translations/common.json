@@ -10,7 +10,9 @@
   },
   "search": "Szukaj...",
   "startTypingToSearch": "Zacznij wpisywać, aby wyszukać.",
-  "searchMinimumCharacters": "Wpisz co najmniej {{count}} znaki, aby wyszukać.",
+  "searchMinimumCharacters_one": "Wpisz co najmniej {{count}} znak, aby wyszukać.",
+  "searchMinimumCharacters_few": "Wpisz co najmniej {{count}} znaki, aby wyszukać.",
+  "searchMinimumCharacters_many": "Wpisz co najmniej {{count}} znaków, aby wyszukać.",
   "noResults": "Brak wyników",
   "searchUnavailable": "Wyszukiwarka jest chwilowo niedostępna. Spróbuj ponownie.",
   "clear": "Wyczyść",
@@ -21,6 +23,11 @@
     "back": "Wróć",
     "retry": "Spróbuj ponownie",
     "undo": "Cofnij"
+  },
+  "permissionRefresh": {
+    "upToDate": "Uprawnienia są aktualne",
+    "available": "Odśwież swoje uprawnienia",
+    "retryIn": "Spróbuj ponownie za {{minutes}} min"
   },
   "boolean": {
     "yes": "Tak",
@@ -90,7 +97,7 @@
     "notificationEdit": "Edycja reguły",
     "notificationHistory": "Historia",
     "info": "Informacje",
-    "settingsNpcs": "Ustawienia potworów i NPC"
+    "settingsNpcs": "Potwory i NPC"
   },
   "greeting": "Cześć, {{name}}!",
   "init": {

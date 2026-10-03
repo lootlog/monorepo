@@ -243,8 +243,8 @@ export const WatchFormDialogContent = ({
             />
 
             {isManualEntry ? (
-              <div className="flex items-start gap-2 rounded-md bg-blue-500/10 px-3 py-2">
-                <Info className="mt-0.5 size-3.5 shrink-0 text-blue-500" />
+              <div className="flex items-start gap-2 rounded-lg border border-dashed bg-muted/20 px-3 py-2.5">
+                <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                 <p className="text-xs leading-relaxed text-muted-foreground">
                   {t("settings.userNotifications.manualEntry.hint")}
                 </p>

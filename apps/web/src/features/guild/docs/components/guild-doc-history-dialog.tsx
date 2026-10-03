@@ -1,13 +1,9 @@
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useState } from "react";
-import { FileClock } from "lucide-react";
+import { CircleAlert, FileClock, RotateCcw } from "lucide-react";
 import { Badge } from "@lootlog/ui/components/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@lootlog/ui/components/dialog";
+import { Button } from "@lootlog/ui/components/button";
+import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
@@ -19,6 +15,8 @@ import {
   type GuildDocumentHistoryResponseDtoItemsItem,
 } from "@lootlog/client/main";
 
+import { EmptyState } from "@/components/common/empty-state";
+import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { GuildDocEditor } from "../editor/guild-doc-editor";
 import { normalizeGuildDocEditorContent } from "../editor/guild-doc-editor-content";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
@@ -130,14 +128,7 @@ export const GuildDocHistoryDialog = ({
         aria-describedby={undefined}
         className="flex h-[calc(100vh-2rem)] max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-none flex-col gap-0 overflow-hidden border-border/70 bg-background/95 p-0 shadow-2xl shadow-background/40  sm:max-w-none lg:h-[min(92vh,860px)] lg:max-h-[min(92vh,860px)] xl:w-[1200px]"
       >
-        <DialogHeader className="shrink-0 border-b border-border/70 bg-card px-4 py-3 pr-12  sm:px-5">
-          <DialogTitle className="flex items-center gap-2 px-0 pt-0 text-base sm:text-lg">
-            <span className="rounded-xl bg-primary/10 p-2">
-              <FileClock className="size-4 text-primary" />
-            </span>
-            {t("docs.history.title")}
-          </DialogTitle>
-        </DialogHeader>
+        <IconDialogHeader icon={FileClock} title={t("docs.history.title")} />
 
         <div className="grid min-h-0 flex-1 grid-rows-[220px_minmax(0,1fr)] lg:grid-cols-[220px_minmax(0,1fr)] lg:grid-rows-1">
           <aside className="flex min-h-0 flex-col border-b border-border/70 bg-card/25 lg:border-b-0 lg:border-r">
@@ -157,13 +148,29 @@ export const GuildDocHistoryDialog = ({
                     <Skeleton key={index} className="h-12 w-full rounded-md" />
                   ))
                 ) : historyQuery.isError ? (
-                  <p className="p-3 text-sm text-muted-foreground">
-                    {t("docs.history.loadError")}
-                  </p>
+                  <EmptyState
+                    compact
+                    icon={CircleAlert}
+                    title={t("docs.history.loadError")}
+                    action={
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        loading={historyQuery.isFetching}
+                        icon=<RotateCcw className="size-3.5" />
+                        onClick={() => void historyQuery.refetch()}
+                      >
+                        {t("common.actions.retry")}
+                      </Button>
+                    }
+                  />
                 ) : historyItems.length === 0 ? (
-                  <p className="p-3 text-sm text-muted-foreground">
-                    {t("docs.history.empty")}
-                  </p>
+                  <EmptyState
+                    compact
+                    icon={FileClock}
+                    title={t("docs.history.empty")}
+                  />
                 ) : (
                   historyItems.map(renderHistoryButton)
                 )}
@@ -204,9 +211,12 @@ export const GuildDocHistoryDialog = ({
                 </div>
               </div>
             ) : (
-              <p className="p-3 text-sm text-muted-foreground">
-                {t("docs.history.empty")}
-              </p>
+              <EmptyState
+                compact
+                icon={FileClock}
+                title={t("docs.history.empty")}
+                className="flex-1"
+              />
             )}
           </section>
         </div>

@@ -29,11 +29,11 @@
     "showInGameClient": "Pokaż w grze",
     "hiddenToast": "Ukryto {{name}} w grze",
     "shownToast": "Pokazano {{name}} w grze",
-    "loading": "Ładowanie Lootlogów…",
+    "loading": "Ładowanie Lootlogów...",
     "loadError": "Nie udało się pobrać Lootlogów.",
     "noGuilds": "Nie masz jeszcze dostępu do żadnego Lootloga.",
     "noResults": "Nie znaleziono Lootlogów pasujących do wyszukiwania i filtra.",
-    "saving": "Zapisywanie…",
+    "saving": "Zapisywanie...",
     "saved": "Zapisano",
     "saveError": "Nie udało się zapisać zmiany. Przywróciliśmy ostatni zapisany stan."
   },
@@ -66,7 +66,7 @@
     },
     "statsCard": {
       "title": "Publiczny obraz statystyk",
-      "description": "Obraz PNG z podstawowymi statystykami lootów z ostatnich 30 dni.",
+      "description": "Obraz PNG z podstawowymi statystykami łupów z ostatnich 30 dni.",
       "toggleLabel": "Włącz publiczny obraz statystyk",
       "toggleDescription": "Po włączeniu obraz będzie dostępny pod publicznym linkiem i może być używany w podglądach oraz udostępnieniach.",
       "previewAlt": "Podgląd publicznego obrazu statystyk Lootloga",
@@ -106,7 +106,9 @@
     "levelRangeTitle": "Przedział levelowy",
     "levelRangeDescription": "Ogranicza widoczność danych do określonego zakresu poziomów.",
     "noPermissions": "Brak uprawnień",
-    "permissionCountCompact": "{{count}} uprawnień",
+    "permissionCountCompact_one": "{{count}} uprawnienie",
+    "permissionCountCompact_few": "{{count}} uprawnienia",
+    "permissionCountCompact_many": "{{count}} uprawnień",
     "updateSuccess": "Zaktualizowano ustawienia roli",
     "updateError": "Nie udało się zaktualizować ustawień roli",
     "table": {
@@ -122,7 +124,7 @@
   },
   "npcs": {
     "title": "Potwory i NPC",
-    "description": "Jakie przedmioty ma zbierać dla jakiego potwora",
+    "description": "Wybierz, jakie przedmioty Lootlog ma zapisywać dla każdego potwora",
     "searchPlaceholder": "Szukaj potwora",
     "emptyTitle": "Nie znaleziono potworów",
     "emptyDescription": "Brak potworów do wyświetlenia.",
@@ -154,7 +156,7 @@
     },
     "duration": {
       "title": "Długość rezerwacji",
-      "description": "Określ minimalny i maksymalny czas pojedynczego zapisu."
+      "description": "Określ minimalny i maksymalny czas pojedynczej rezerwacji."
     },
     "schedule": {
       "title": "Harmonogram",
@@ -162,7 +164,7 @@
     },
     "limits": {
       "title": "Limity graczy",
-      "description": "Ogranicz liczbę aktywnych zapisów jednej osoby na tym samym expowisku."
+      "description": "Ogranicz liczbę aktywnych rezerwacji jednej osoby na tym samym expowisku."
     },
     "fields": {
       "minDuration": {
@@ -175,7 +177,7 @@
       },
       "granularity": {
         "label": "Krok siatki kalendarza",
-        "description": "Początek i koniec każdego zapisu muszą pasować do tego kroku kalendarza.",
+        "description": "Początek i koniec każdej rezerwacji muszą pasować do tego kroku kalendarza.",
         "option": "Co {{minutes}} min"
       },
       "maxAdvance": {
@@ -192,7 +194,7 @@
     },
     "sharing": {
       "title": "Współdzielone rezerwacje",
-      "description": "Połącz kalendarze dwóch Lootlogów w trybie podglądu. Rezerwacje sojusznika są widoczne, ale nie blokują zapisów.",
+      "description": "Połącz kalendarze dwóch Lootlogów w trybie podglądu. Rezerwacje sojusznika są widoczne, ale nie blokują nowych rezerwacji.",
       "createInvite": "Utwórz zaproszenie",
       "inviteReady": "Jednorazowe zaproszenie jest gotowe",
       "inviteLink": "Link zaproszenia",
@@ -223,11 +225,19 @@
     "details": "Szczegóły członka",
     "owner": "Właściciel Lootloga",
     "summary": {
-      "total": "{{count}} członków",
-      "active": "{{count}} aktywnych",
-      "inactive": "{{count}} nieaktywnych",
+      "total_one": "{{count}} członek",
+      "total_few": "{{count}} członków",
+      "total_many": "{{count}} członków",
+      "active_one": "{{count}} aktywny",
+      "active_few": "{{count}} aktywnych",
+      "active_many": "{{count}} aktywnych",
+      "inactive_one": "{{count}} nieaktywny",
+      "inactive_few": "{{count}} nieaktywnych",
+      "inactive_many": "{{count}} nieaktywnych",
       "online": "{{count}} online",
-      "problems": "{{count}} problemów"
+      "problems_one": "{{count}} problem",
+      "problems_few": "{{count}} problemy",
+      "problems_many": "{{count}} problemów"
     },
     "filters": {
       "all": "Wszyscy",
@@ -410,8 +420,9 @@
     },
     "rolesTitle": "Role i uprawnienia",
     "noRoles": "Brak przypisanych ról. Może być potrzebna synchronizacja członka.",
-    "permissionsCount": "{{count}} uprawnień",
-    "roleCountCompact": "{{count}} role",
+    "permissionsCount_one": "{{count}} uprawnienie",
+    "permissionsCount_few": "{{count}} uprawnienia",
+    "permissionsCount_many": "{{count}} uprawnień",
     "actionsTitle": "Status i akcje",
     "deactivate": "Dezaktywuj",
     "deactivatePending": "Dezaktywowanie...",
@@ -847,7 +858,7 @@
       "watchedItemsDescription": "Dodaj przedmiot, a gdy dropnie w Twoim Lootlogu, dostaniesz prywatną wiadomość na Discordzie."
     },
     "loading": {
-      "items": "Pobieranie przedmiotów…"
+      "items": "Pobieranie przedmiotów..."
     },
     "manualEntry": {
       "checkbox": "Mój przedmiot nie pojawia się w wyszukiwarce",
@@ -876,7 +887,7 @@
       "dmDisableError": "Nie udało się wyłączyć powiadomień.",
       "dmTestTriggered": "Testowe powiadomienie zostało wysłane.",
       "dmTestTriggerError": "Nie udało się wysłać testowego powiadomienia.",
-      "watchCreating": "Dodawanie obserwowanego przedmiotu ({{count}} / {{limit}})…",
+      "watchCreating": "Dodawanie obserwowanego przedmiotu ({{count}} / {{limit}})...",
       "watchCreated": "Obserwowany przedmiot został dodany ({{count}} / {{limit}}).",
       "watchCreateError": "Nie udało się dodać obserwowanego przedmiotu.",
       "watchDeleted": "Obserwowany przedmiot został usunięty.",
@@ -964,11 +975,11 @@
     "selectedMaps": "Wybrane mapy",
     "searchAndAddMaps": "Wyszukaj i dodaj mapy",
     "searchPlaceholder": "Szukaj po nazwie lub ID mapy...",
-    "noMapsFound": "Nie znaleziono map pasujących do \"{{query}}\"",
+    "noMapsFound": "Nie znaleziono map pasujących do „{{query}}”",
     "searchHint": "Wpisz nazwę lub ID mapy, aby wyszukać",
     "saveTemplate": "Zapisz szablon",
     "noTemplates": "Brak szablonów",
-    "noTemplatesDescription": "Szablon zapisuje zestaw map, który dodasz do wydarzenia jednym kliknięciem.",
+    "noTemplatesDescription": "Szablon zapisuje zestaw map, który dodasz do eventu jednym kliknięciem.",
     "mapCount_one": "{{count}} mapa",
     "mapCount_few": "{{count}} mapy",
     "mapCount_many": "{{count}} map",
@@ -1014,7 +1025,7 @@
       "deleteAccount": "Usuń konto",
       "deleteConfirmTitle": "Na pewno chcesz usunąć konto?",
       "deleteConfirmDescription": "To nieodwracalne. Twoje ustawienia, statystyki bić i walki zostaną trwale usunięte. Dane Lootlogów (łupy, timery) nie zostaną ruszone – należą do Lootlogów, nie do Twojego konta.",
-      "deleteConfirmLabel": "Wpisz \"{{name}}\" żeby potwierdzić",
+      "deleteConfirmLabel": "Wpisz „{{name}}”, aby potwierdzić",
       "deleteConfirmButton": "Tak, usuń moje konto"
     }
   },
