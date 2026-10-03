@@ -139,6 +139,7 @@ export const authApiAdditions: AuthApiContracts = {
                         type: "array",
                         items: {
                           type: "string",
+                          pattern: "^\\d{1,20}$",
                         },
                         maxItems: 100,
                       },
@@ -202,6 +203,7 @@ export const authApiAdditions: AuthApiContracts = {
                   type: "array",
                   items: {
                     type: "string",
+                    pattern: "^\\d{1,20}$",
                   },
                   maxItems: 100,
                 },
@@ -259,6 +261,7 @@ export const authApiAdditions: AuthApiContracts = {
                 type: "array",
                 items: {
                   type: "string",
+                  pattern: "^\\d{1,20}$",
                 },
                 maxItems: 100,
               },
@@ -316,6 +319,7 @@ export const authApiAdditions: AuthApiContracts = {
                   type: "array",
                   items: {
                     type: "string",
+                    pattern: "^\\d{1,20}$",
                   },
                   maxItems: 100,
                 },
@@ -456,6 +460,7 @@ export const authApiAdditions: AuthApiContracts = {
                                 type: "array",
                                 items: {
                                   type: "string",
+                                  pattern: "^\\d{1,20}$",
                                 },
                                 maxItems: 100,
                               },

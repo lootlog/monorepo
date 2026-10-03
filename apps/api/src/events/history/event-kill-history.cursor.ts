@@ -11,14 +11,14 @@ const CursorScope = Schema.Struct({
 const CursorPayload = Schema.Struct({
   v: Schema.Literal(1),
   killedAt: Schema.String.check(
-    Schema.isPattern(/^(?!0000)\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/),
+    Schema.isPattern(/^(?!0000)\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u),
   ),
   id: Schema.String.check(Schema.isUUID()),
   scope: CursorScope,
 });
 
 const EncodedCursor = Schema.String.check(
-  Schema.isPattern(/^[A-Za-z0-9_-]+$/),
+  Schema.isPattern(/^[A-Za-z0-9_-]+$/u),
   Schema.isMaxLength(4096),
 );
 
@@ -71,7 +71,7 @@ export const decodeHistoryCursor = Effect.fnUntraced(function* (
 });
 
 const PositiveIntegerString = Schema.String.check(
-  Schema.isPattern(/^[1-9]\d*$/),
+  Schema.isPattern(/^[1-9]\d*$/u),
 );
 
 const decodeInteger = Effect.fnUntraced(function* (

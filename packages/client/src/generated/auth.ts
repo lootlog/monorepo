@@ -86,7 +86,10 @@ export const ApiKeysListApiKeys200KeysItemMode = {
 } as const;
 
 export type ApiKeysListApiKeys200KeysItem = {
-  /** @maxItems 100 */
+  /**
+     * @maxItems 100
+     * @items.pattern ^\d{1,20}$
+     */
   organizationIds: string[];
   mode: ApiKeysListApiKeys200KeysItemMode;
   personalData: boolean;
@@ -152,7 +155,10 @@ export const ApiKeysCreateApiKeyBodyExpiresIn = {
 } as const;
 
 export type ApiKeysCreateApiKeyBody = {
-  /** @maxItems 100 */
+  /**
+     * @maxItems 100
+     * @items.pattern ^\d{1,20}$
+     */
   organizationIds: string[];
   mode: ApiKeysCreateApiKeyBodyMode;
   personalData: boolean;
@@ -170,7 +176,10 @@ export const ApiKeysCreateApiKey200Mode = {
 } as const;
 
 export type ApiKeysCreateApiKey200 = {
-  /** @maxItems 100 */
+  /**
+     * @maxItems 100
+     * @items.pattern ^\d{1,20}$
+     */
   organizationIds: string[];
   mode: ApiKeysCreateApiKey200Mode;
   personalData: boolean;
@@ -228,7 +237,10 @@ export const ApiKeysRenameApiKey200Mode = {
 } as const;
 
 export type ApiKeysRenameApiKey200 = {
-  /** @maxItems 100 */
+  /**
+     * @maxItems 100
+     * @items.pattern ^\d{1,20}$
+     */
   organizationIds: string[];
   mode: ApiKeysRenameApiKey200Mode;
   personalData: boolean;
@@ -321,7 +333,10 @@ export type ApiKeysApiKeyStatuses200KeysItem = {
   keyId: string;
   valid: true;
   access: {
-  /** @maxItems 100 */
+  /**
+     * @maxItems 100
+     * @items.pattern ^\d{1,20}$
+     */
   organizationIds: string[];
   mode: 'read' | 'read-write';
   personalData: boolean;

@@ -58,7 +58,7 @@ const BattleWarriorIdSchema = Schema.Int.check(
 );
 
 const CharacterIdSchema = Schema.String.check(
-  Schema.isPattern(/^[1-9]\d{0,9}$/),
+  Schema.isPattern(/^[1-9]\d{0,9}$/u),
 );
 
 export const isBattlePingType = Schema.is(BattlePingTypeSchema);

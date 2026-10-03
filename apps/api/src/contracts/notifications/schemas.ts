@@ -334,7 +334,7 @@ const notificationRuleInputFields = {
   ),
   scheduleTimeOfDay: Schema.optionalKey(
     Schema.String.check(
-      Schema.isPattern(new RegExp("^\\d{2}:\\d{2}$")).annotate({
+      Schema.isPattern(new RegExp("^\\d{2}:\\d{2}$", "u")).annotate({
         expected: "a string matching the RegExp ^\\d{2}:\\d{2}$",
       }),
     ),
