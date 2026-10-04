@@ -1390,6 +1390,24 @@ export const BattlesControllerGetDashboardBattlesResultItem = {
   flee: 'flee',
 } as const;
 
+export type BattlesControllerGetDashboardBattles400Message = string | ({
+  path: (string | number | 'Infinity' | '-Infinity' | 'NaN')[];
+  message: string;
+})[];
+
+export type BattlesControllerGetDashboardBattles400StatusCode = typeof BattlesControllerGetDashboardBattles400StatusCode[keyof typeof BattlesControllerGetDashboardBattles400StatusCode];
+
+
+export const BattlesControllerGetDashboardBattles400StatusCode = {
+  NUMBER_400: 400,
+} as const;
+
+export type BattlesControllerGetDashboardBattles400 = {
+  error: string;
+  message: BattlesControllerGetDashboardBattles400Message;
+  statusCode: BattlesControllerGetDashboardBattles400StatusCode;
+};
+
 export type BattlesControllerGetDashboardBattles401 = {
   message: string;
 };
@@ -2775,7 +2793,7 @@ export const getBattlesControllerGetDashboardBattlesQueryKey = (params?: Battles
     }
 
 
-export const getBattlesControllerGetDashboardBattlesQueryOptions = <TData = Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError = ErrorType<BattlesControllerGetDashboardBattles401 | BattlesControllerGetDashboardBattles403 | BattlesControllerGetDashboardBattles429>>(params?: BattlesControllerGetDashboardBattlesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError, TData>>, request?: SecondParameter<typeof battlelogFetch>}
+export const getBattlesControllerGetDashboardBattlesQueryOptions = <TData = Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError = ErrorType<BattlesControllerGetDashboardBattles400 | BattlesControllerGetDashboardBattles401 | BattlesControllerGetDashboardBattles403 | BattlesControllerGetDashboardBattles429>>(params?: BattlesControllerGetDashboardBattlesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError, TData>>, request?: SecondParameter<typeof battlelogFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -2794,10 +2812,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type BattlesControllerGetDashboardBattlesQueryResult = NonNullable<Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>>
-export type BattlesControllerGetDashboardBattlesQueryError = ErrorType<BattlesControllerGetDashboardBattles401 | BattlesControllerGetDashboardBattles403 | BattlesControllerGetDashboardBattles429>
+export type BattlesControllerGetDashboardBattlesQueryError = ErrorType<BattlesControllerGetDashboardBattles400 | BattlesControllerGetDashboardBattles401 | BattlesControllerGetDashboardBattles403 | BattlesControllerGetDashboardBattles429>
 
 
-export function useBattlesControllerGetDashboardBattles<TData = Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError = ErrorType<BattlesControllerGetDashboardBattles401 | BattlesControllerGetDashboardBattles403 | BattlesControllerGetDashboardBattles429>>(
+export function useBattlesControllerGetDashboardBattles<TData = Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError = ErrorType<BattlesControllerGetDashboardBattles400 | BattlesControllerGetDashboardBattles401 | BattlesControllerGetDashboardBattles403 | BattlesControllerGetDashboardBattles429>>(
  params: undefined |  BattlesControllerGetDashboardBattlesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>,
@@ -2807,7 +2825,7 @@ export function useBattlesControllerGetDashboardBattles<TData = Awaited<ReturnTy
       >, request?: SecondParameter<typeof battlelogFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useBattlesControllerGetDashboardBattles<TData = Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError = ErrorType<BattlesControllerGetDashboardBattles401 | BattlesControllerGetDashboardBattles403 | BattlesControllerGetDashboardBattles429>>(
+export function useBattlesControllerGetDashboardBattles<TData = Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError = ErrorType<BattlesControllerGetDashboardBattles400 | BattlesControllerGetDashboardBattles401 | BattlesControllerGetDashboardBattles403 | BattlesControllerGetDashboardBattles429>>(
  params?: BattlesControllerGetDashboardBattlesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>,
@@ -2817,7 +2835,7 @@ export function useBattlesControllerGetDashboardBattles<TData = Awaited<ReturnTy
       >, request?: SecondParameter<typeof battlelogFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useBattlesControllerGetDashboardBattles<TData = Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError = ErrorType<BattlesControllerGetDashboardBattles401 | BattlesControllerGetDashboardBattles403 | BattlesControllerGetDashboardBattles429>>(
+export function useBattlesControllerGetDashboardBattles<TData = Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError = ErrorType<BattlesControllerGetDashboardBattles400 | BattlesControllerGetDashboardBattles401 | BattlesControllerGetDashboardBattles403 | BattlesControllerGetDashboardBattles429>>(
  params?: BattlesControllerGetDashboardBattlesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError, TData>>, request?: SecondParameter<typeof battlelogFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -2825,7 +2843,7 @@ export function useBattlesControllerGetDashboardBattles<TData = Awaited<ReturnTy
  * @summary Get authenticated user battles
  */
 
-export function useBattlesControllerGetDashboardBattles<TData = Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError = ErrorType<BattlesControllerGetDashboardBattles401 | BattlesControllerGetDashboardBattles403 | BattlesControllerGetDashboardBattles429>>(
+export function useBattlesControllerGetDashboardBattles<TData = Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError = ErrorType<BattlesControllerGetDashboardBattles400 | BattlesControllerGetDashboardBattles401 | BattlesControllerGetDashboardBattles403 | BattlesControllerGetDashboardBattles429>>(
  params?: BattlesControllerGetDashboardBattlesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError, TData>>, request?: SecondParameter<typeof battlelogFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -2840,7 +2858,7 @@ export function useBattlesControllerGetDashboardBattles<TData = Awaited<ReturnTy
 /**
  * @summary Get authenticated user battles
  */
-export const prefetchBattlesControllerGetDashboardBattlesQuery = async <TData = Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError = ErrorType<BattlesControllerGetDashboardBattles401 | BattlesControllerGetDashboardBattles403 | BattlesControllerGetDashboardBattles429>>(
+export const prefetchBattlesControllerGetDashboardBattlesQuery = async <TData = Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError = ErrorType<BattlesControllerGetDashboardBattles400 | BattlesControllerGetDashboardBattles401 | BattlesControllerGetDashboardBattles403 | BattlesControllerGetDashboardBattles429>>(
  queryClient: QueryClient, params?: BattlesControllerGetDashboardBattlesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>, TError, TData>>, request?: SecondParameter<typeof battlelogFetch>}
 
   ): Promise<QueryClient> => {

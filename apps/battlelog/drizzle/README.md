@@ -7,6 +7,31 @@ database introspection must not overwrite the source schema. The deploy command
 initializes empty databases and applies only pending migrations to databases
 already tracked by Drizzle.
 
+## Time-ordered battle IDs
+
+`20261004143306_battle_uuidv7_ids` replaces text battle IDs with UUIDv7
+values. The first 48 bits of an ID are the battle's `createdAt` in Unix
+milliseconds, and the `battles_id_createdAt_check` constraint keeps both
+equal, so the list, date filters and analytics order and filter by `id`
+alone. `createdAt` becomes `timestamptz(3)`.
+
+Every existing battle receives a new ID built from its `createdAt`. Battles
+saved in the same millisecond keep their previous ID order, so paging through
+a user's history returns the same order as before. `battle_legacy_ids` maps
+each old ID (Prisma CUID, cuid2 or UUIDv4) to the new one: paths that take a
+battle ID still accept old links, and R2 keeps timelines of these battles
+under their old ID. `battle_object_deletions` therefore records the R2 object
+ID, which is the old ID for migrated battles. Drop the table after timelines
+leave R2 (LOO-255); old links stop resolving then.
+
+The migration rewrites `battles`, `battle_warriors` and their indexes in one
+transaction and ships with the TimescaleDB migration (LOO-254). Released
+services still write text IDs, so stop them before applying it. On the local
+production copy (11.2 million battles, 0.5 CPU) it takes about 25
+minutes and shrinks the database from 59 GB to 32 GB, because the rewrite
+also drops the space of the columns `20261004114013_battle_derived_data`
+removed.
+
 ## Participant key and derived battle data
 
 `20261004114013_battle_derived_data` removes data that Battlelog can derive.

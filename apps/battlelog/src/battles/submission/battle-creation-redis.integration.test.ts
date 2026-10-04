@@ -31,6 +31,8 @@ import { makeBattleAnalyticsQuery } from "#src/battles/analytics/battle-analytic
 import { makeBattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
 import { makeBattlePagination } from "#src/battles/analytics/pagination.service";
 import { makeBattleListFilter } from "#src/battles/catalog/battle-list-filter.service";
+import { createBattleId } from "#src/battles/battle-id";
+import { InvalidRequestError } from "#src/infrastructure/http-error";
 import { makeBattleMetadata } from "#src/battles/catalog/battle-metadata.service";
 import {
   createBattleSemanticFingerprint,
@@ -379,11 +381,13 @@ it("aggregates battle summaries in SQL without losing flee PH, level filters or 
   ];
 
   for (const fixture of fixtures) {
+    const { id } = createBattleId(Date.now());
+
     await pool.query(
-      `INSERT INTO battles (id, "userId", "accountId", "characterId", world, duration, type, winner, loser, "winningTeam", "losingTeam", "hasFlee")
-      VALUES ($1,$2,'account','hero','world',10,$3,'Hero','Enemy',$4,$5,$6)`,
+      `INSERT INTO battles (id, "createdAt", "userId", "accountId", "characterId", world, duration, type, winner, loser, "winningTeam", "losingTeam", "hasFlee")
+      VALUES ($1,battle_id_created_at($1),$2,'account','hero','world',10,$3,'Hero','Enemy',$4,$5,$6)`,
       [
-        fixture.id,
+        id,
         fixture.owner ?? "owner",
         fixture.type ?? "1v1",
         fixture.winningTeam,
@@ -394,7 +398,7 @@ it("aggregates battle summaries in SQL without losing flee PH, level filters or 
     await pool.query(
       `INSERT INTO battle_warriors ("battleId","originalId",name,lvl,prof,icon,team,turns,ph)
       VALUES ($1,'hero','Hero',100,'w','hero.gif',1,1,$2), ($1,'enemy','Enemy',$3,'m','enemy.gif',2,1,0)`,
-      [fixture.id, fixture.ph, fixture.lvl ?? 100],
+      [id, fixture.ph, fixture.lvl ?? 100],
     );
   }
 
@@ -444,7 +448,7 @@ it("reloads corrupted metadata cache and shares invalidation with analytics", as
   await services.redis.set("battle-cache-generation:owner", "test-generation");
 
   const key =
-    "battle-cache:v3:owner:test-generation:battle-characters:list:owner";
+    "battle-cache:v4:owner:test-generation:battle-characters:list:owner";
 
   await services.redis.set(key, "{broken-json", 300);
   expect(
@@ -496,15 +500,17 @@ it("reports character metadata from the latest matching self warrior per owner a
   ];
 
   for (const fixture of fixtures) {
+    const { id } = createBattleId(Date.parse(fixture.createdAt));
+
     await pool.query(
       `INSERT INTO battles (id, "userId", "accountId", "characterId", world, duration, type, winner, loser, "winningTeam", "losingTeam", "hasFlee", "createdAt")
-      VALUES ($1,$2,'account','hero',$4,10,'1v1','Hero','Enemy',1,2,false,$3)`,
-      [fixture.id, fixture.owner, fixture.createdAt, fixture.world ?? "world"],
+      VALUES ($1,$2,'account','hero',$3,10,'1v1','Hero','Enemy',1,2,false,battle_id_created_at($1))`,
+      [id, fixture.owner, fixture.world ?? "world"],
     );
     await pool.query(
       `INSERT INTO battle_warriors ("battleId","originalId",name,lvl,prof,icon,team,turns,ph)
       VALUES ($1,$3,'Hero',$2,'w','hero.gif',1,1,0), ($1,'enemy','Enemy',300,'m','enemy.gif',2,1,0)`,
-      [fixture.id, fixture.lvl, fixture.missingSelf ? "unrelated" : "hero"],
+      [id, fixture.lvl, fixture.missingSelf ? "unrelated" : "hero"],
     );
   }
 
@@ -750,7 +756,7 @@ it("interrupts a coalesced analytics factory and permits a subsequent fill", asy
   expect(Exit.hasInterrupts(await reading)).toBe(true);
   await canceled;
   const generation = await services.redis.get("battle-cache-generation:abort");
-  const key = `battle-cache:v3:abort:${generation}:summary`;
+  const key = `battle-cache:v4:abort:${generation}:summary`;
   expect(await services.redis.get(key)).toBeNull();
   expect(
     await runtime.runPromise(
@@ -767,16 +773,19 @@ it("interrupts a coalesced analytics factory and permits a subsequent fill", asy
 });
 
 it("searches only owned warriors with trimmed ILIKE and preserves distinct names from their latest battle", async () => {
-  await pool.query(`INSERT INTO battles (id,"userId","accountId","characterId",world,duration,type,winner,loser,"winningTeam","losingTeam","createdAt") VALUES
-    ('latest','owner','account','hero','world',10,'1v1','Hero','Enemy',1,2,'2026-02-01'),
-    ('earlier','owner','account','hero','world',10,'1v1','Hero','Enemy',1,2,'2026-01-01'),
-    ('foreign','someone-else','account','hero','world',10,'1v1','Hero','Enemy',1,2,'2026-03-01')`);
+  const latest = createBattleId(Date.parse("2026-02-01")).id;
+  const earlier = createBattleId(Date.parse("2026-01-01")).id;
+  const foreign = createBattleId(Date.parse("2026-03-01")).id;
+
+  await pool.query(`INSERT INTO battles (id,"userId","accountId","characterId",world,duration,type,winner,loser,"winningTeam","losingTeam","createdAt")
+    SELECT id, owner,'account','hero','world',10,'1v1','Hero','Enemy',1,2,battle_id_created_at(id)
+    FROM (VALUES ('${latest}'::uuid,'owner'), ('${earlier}'::uuid,'owner'), ('${foreign}'::uuid,'someone-else')) AS seed(id, owner)`);
   await pool.query(`INSERT INTO battle_warriors ("battleId","originalId",name,lvl,prof,icon,team,turns,ph) VALUES
-    ('latest','9','Alpha',90,'w','latest.gif',1,1,0),
-    ('earlier','10','Alpha',100,'m','earlier.gif',1,1,0),
-    ('earlier','11','alpha',110,'p','case.gif',1,1,0),
-    ('foreign','9','Alpha',999,'m','private.gif',1,1,0),
-    ('foreign','12','Alpine',999,'m','private.gif',1,1,0)`);
+    ('${latest}','9','Alpha',90,'w','latest.gif',1,1,0),
+    ('${earlier}','10','Alpha',100,'m','earlier.gif',1,1,0),
+    ('${earlier}','11','alpha',110,'p','case.gif',1,1,0),
+    ('${foreign}','9','Alpha',999,'m','private.gif',1,1,0),
+    ('${foreign}','12','Alpine',999,'m','private.gif',1,1,0)`);
 
   const expected = [
     { name: "Alpha", lvl: 90, prof: "w", icon: "latest.gif" },
@@ -803,7 +812,7 @@ it("searches only owned warriors with trimmed ILIKE and preserves distinct names
   ).toEqual({ warriors: [] });
 
   await pool.query(`INSERT INTO battle_warriors ("battleId","originalId",name,lvl,prof,icon,team,turns,ph)
-    SELECT 'earlier', 'ordered-' || n, 'Ordered ' || lpad(n::text,2,'0'), 100, 'w', 'hero.gif', 1, 1, 0
+    SELECT '${earlier}'::uuid, 'ordered-' || n, 'Ordered ' || lpad(n::text,2,'0'), 100, 'w', 'hero.gif', 1, 1, 0
     FROM generate_series(12,1,-1) n`);
 
   const ordered = await runtime.runPromise(
@@ -840,12 +849,17 @@ it("applies combined dashboard filters and counts only the requesting owner's ma
     { id: "other-name", name: "Other" },
   ];
 
+  const ids = new Map<string, string>();
+
   for (const fixture of fixtures) {
+    const { id } = createBattleId(Date.parse("2026-01-01"));
+    ids.set(fixture.id, id);
+
     await pool.query(
       `INSERT INTO battles (id,"userId","accountId","characterId",world,duration,type,winner,loser,"winningTeam","losingTeam","hasFlee","createdAt")
-      VALUES ($1,$2,'account','hero','world',10,'1v1','Hero','Enemy',$3,$4,$5,'2026-01-01')`,
+      VALUES ($1,$2,'account','hero','world',10,'1v1','Hero','Enemy',$3,$4,$5,battle_id_created_at($1))`,
       [
-        fixture.id,
+        id,
         fixture.owner ?? "owner",
         fixture.winningTeam ?? 1,
         fixture.winningTeam === 2 ? 1 : 2,
@@ -855,7 +869,7 @@ it("applies combined dashboard filters and counts only the requesting owner's ma
     await pool.query(
       `INSERT INTO battle_warriors ("battleId","originalId",name,lvl,prof,icon,team,turns,ph)
       VALUES ($1,'hero','Hero',100,'w','hero.gif',1,1,0), ($1,'enemy',$2,$3,'m','enemy.gif',2,1,0)`,
-      [fixture.id, fixture.name ?? "Enemy", fixture.lvl ?? 100],
+      [id, fixture.name ?? "Enemy", fixture.lvl ?? 100],
     );
   }
 
@@ -875,9 +889,29 @@ it("applies combined dashboard filters and counts only the requesting owner's ma
     ),
   );
 
-  expect(result.battles.map((battle) => battle.id)).toEqual(["match-a"]);
+  expect(result.battles.map((battle) => battle.id)).toEqual([
+    ids.get("match-a"),
+  ]);
   expect(result.pagination.total).toBe(2);
   expect(result.pagination.hasNext).toBe(true);
+
+  const previousFormatCursor = `2026-01-01T00:00:00.000Z_${ids.get("match-a")}`;
+
+  expect(
+    await runtime.runPromise(
+      Effect.flip(
+        services.battles.getDashboardBattles(
+          {
+            cursor: previousFormatCursor,
+            size: 1,
+            sortOrder: "asc",
+            includeTotal: false,
+          },
+          "owner",
+        ),
+      ),
+    ),
+  ).toBeInstanceOf(InvalidRequestError);
 });
 
 it("rolls back the battle and skips object upload when participant storage fails", async () => {

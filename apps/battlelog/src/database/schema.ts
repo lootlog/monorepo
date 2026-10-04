@@ -1,6 +1,8 @@
 // Hand-maintained Battlelog database schema; Drizzle generates SQL migrations from it.
+import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   doublePrecision,
   index,
   integer,
@@ -10,15 +12,18 @@ import {
   text,
   timestamp,
   uniqueIndex,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 export const battles = pgTable(
   "battles",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    // UUIDv7 that encodes `createdAt`; see `createBattleId`.
+    id: uuid("id").primaryKey(),
+    createdAt: timestamp("createdAt", {
+      withTimezone: true,
+      precision: 3,
+    }).notNull(),
     updatedAt: timestamp("updatedAt")
       .defaultNow()
       .$onUpdateFn(() => new Date())
@@ -61,32 +66,46 @@ export const battles = pgTable(
     dailyRewardsMax: integer("dailyRewardsMax"),
   },
   (table) => [
-    index("battles_userId_createdAt_idx").on(table.userId, table.createdAt),
-    index("battles_world_createdAt_idx").on(table.world, table.createdAt),
-    index("battles_userId_world_createdAt_idx").on(
+    index("battles_userId_id_idx").on(table.userId, table.id),
+    index("battles_world_id_idx").on(table.world, table.id),
+    index("battles_userId_world_id_idx").on(
       table.userId,
       table.world,
-      table.createdAt,
+      table.id,
     ),
-    index("battles_characterId_createdAt_idx").on(
-      table.characterId,
-      table.createdAt,
-    ),
-    index("battles_semanticFingerprint_createdAt_idx").on(
+    index("battles_characterId_id_idx").on(table.characterId, table.id),
+    index("battles_semanticFingerprint_id_idx").on(
       table.semanticFingerprint,
-      table.createdAt,
+      table.id,
     ),
     uniqueIndex("battles_userId_submissionId_key").on(
       table.userId,
       table.submissionId,
     ),
-    index("battles_public_createdAt_idx").on(table.public, table.createdAt),
+    index("battles_public_id_idx").on(table.public, table.id),
+    check(
+      "battles_id_createdAt_check",
+      sql`battle_id_created_at(${table.id}) = ${table.createdAt}`,
+    ),
   ],
 );
+
+/**
+ * Battles saved before UUIDv7 IDs keep their old public links and R2 object
+ * keys here. Drop it once timelines leave R2 (LOO-255).
+ */
+export const battleLegacyIds = pgTable("battle_legacy_ids", {
+  legacyId: text("legacyId").primaryKey(),
+  battleId: uuid("battleId")
+    .notNull()
+    .unique("battle_legacy_ids_battleId_key")
+    .references(() => battles.id, { onDelete: "cascade" }),
+});
 
 export const battleObjectDeletions = pgTable(
   "battle_object_deletions",
   {
+    // The R2 object ID: the legacy ID for battles saved before UUIDv7 IDs.
     battleId: text("battleId").primaryKey(),
     userId: text("userId").notNull(),
     createdAt: timestamp("createdAt", { withTimezone: true })
@@ -134,7 +153,7 @@ export const userCharacters = pgTable(
 export const battleWarriors = pgTable(
   "battle_warriors",
   {
-    battleId: text("battleId")
+    battleId: uuid("battleId")
       .notNull()
       .references(() => battles.id, { onDelete: "cascade" }),
 

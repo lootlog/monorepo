@@ -2,6 +2,7 @@ import {
   selectedWarriorOrder,
   warriorExists,
 } from "#src/battles/battle-warrior-query";
+import { firstBattleIdAt, lastBattleIdAt } from "#src/battles/battle-id";
 import { ResourceNotFoundError } from "#src/infrastructure/http-error";
 import {
   and,
@@ -160,9 +161,11 @@ export const makeBattleAnalyticsQuery = (
       eq(battlesRef.userId, params.userId),
       ...(params.world ? [eq(battlesRef.world, params.world)] : []),
       ...(params.startDate
-        ? [gte(battlesRef.createdAt, params.startDate)]
+        ? [gte(battlesRef.id, firstBattleIdAt(params.startDate))]
         : []),
-      ...(params.endDate ? [lte(battlesRef.createdAt, params.endDate)] : []),
+      ...(params.endDate
+        ? [lte(battlesRef.id, lastBattleIdAt(params.endDate))]
+        : []),
       ...(params.matchmaking !== undefined
         ? [eq(battlesRef.matchmaking, params.matchmaking)]
         : []),

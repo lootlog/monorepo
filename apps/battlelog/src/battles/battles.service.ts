@@ -12,7 +12,7 @@ import {
   makeJsonCodec,
   type RedisStore,
 } from "#src/infrastructure/redis-store";
-import { and, eq, lt } from "drizzle-orm";
+import { and, eq, gte, lt } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { CreateBattleInput } from "#src/battles/submission/create-battle";
 import { BattleResponseSchemas } from "#src/battles/catalog/battle-response";
@@ -25,6 +25,11 @@ import type { BattleMetadata } from "#src/battles/catalog/battle-metadata.servic
 import type { BattlePagination } from "#src/battles/analytics/pagination.service";
 import type { DrizzleDatabase } from "#src/database/database";
 import { battles, battleWarriors } from "#src/database/schema";
+import {
+  createBattleId,
+  firstBattleIdAt,
+  isBattleId,
+} from "#src/battles/battle-id";
 import type { BattleObjectStorage } from "#src/infrastructure/battle-object-storage";
 import {
   createBattleSemanticFingerprint,
@@ -112,7 +117,13 @@ type BattleDeduplicationStore = Pick<
 };
 
 type BattlesDatabase = Parameters<typeof makeBattleDeletion>[0] & {
-  query: { battles: Pick<DrizzleDatabase["query"]["battles"], "findFirst"> };
+  query: {
+    battles: Pick<DrizzleDatabase["query"]["battles"], "findFirst">;
+    battleLegacyIds: Pick<
+      DrizzleDatabase["query"]["battleLegacyIds"],
+      "findFirst"
+    >;
+  };
 };
 
 export const makeBattles = (
@@ -219,7 +230,7 @@ export const makeBattles = (
             userId,
           );
           yield* battlesModule.storeRawBattleData(
-            canonicalBattleId,
+            yield* battlesModule.getBattleObjectId(canonicalBattleId),
             data,
             new BattleProcessor().extractAndParseMoves(data.events),
           );
@@ -444,16 +455,20 @@ export const makeBattles = (
           adapter("Battles_findRecentFingerprint", () =>
             drizzle.query.battles.findFirst({
               where: {
-                createdAt: {
-                  gte: new Date(
-                    now - deduplicationTiming.cacheTtlSeconds * 1_000,
-                  ),
-                },
                 semanticFingerprint,
                 userId,
+                RAW: (table) =>
+                  gte(
+                    table.id,
+                    firstBattleIdAt(
+                      new Date(
+                        now - deduplicationTiming.cacheTtlSeconds * 1_000,
+                      ),
+                    ),
+                  ),
               },
               columns: { id: true },
-              orderBy: { createdAt: "desc" },
+              orderBy: { id: "desc" },
             }),
           ),
         ),
@@ -521,6 +536,8 @@ export const makeBattles = (
         };
       }).pipe(
         Effect.mapError((error) => {
+          if (error instanceof ApplicationError) return error;
+
           logger.error("Failed to retrieve dashboard battles:", error);
 
           return new Error(
@@ -544,9 +561,11 @@ export const makeBattles = (
           yield* battlesModule.checkBattleAccess(battleId, requestingUserId);
         }
 
+        const objectId = yield* battlesModule.getBattleObjectId(battleId);
+
         const rawData = yield* adapter(
           "BattleObjectStorage_getBattleData",
-          () => r2Service.getBattleData(battleId, decodeRawBattleDataJson),
+          () => r2Service.getBattleData(objectId, decodeRawBattleDataJson),
         );
 
         return battlesModule.normalizeRawBattleData(rawData);
@@ -626,9 +645,12 @@ export const makeBattles = (
     },
 
     buildTimelineResponse(battle: BattleWithRelations) {
-      return adapter("BattleObjectStorage_getTimelineData", () =>
-        r2Service.getBattleData(battle.id, decodeRawBattleDataJson),
-      ).pipe(
+      return battlesModule.getBattleObjectId(battle.id).pipe(
+        Effect.flatMap((objectId) =>
+          adapter("BattleObjectStorage_getTimelineData", () =>
+            r2Service.getBattleData(objectId, decodeRawBattleDataJson),
+          ),
+        ),
         Effect.map((rawBattleData) => {
           const processor = new BattleProcessor();
 
@@ -789,8 +811,10 @@ export const makeBattles = (
             ),
           );
 
+        const objectId = yield* battlesModule.getBattleObjectId(battle.id);
+
         const rawData = yield* adapter("BattleObjectStorage_getPublicRaw", () =>
-          r2Service.getBattleData(battle.id, decodeRawBattleDataJson),
+          r2Service.getBattleData(objectId, decodeRawBattleDataJson),
         );
 
         return battlesModule.normalizeRawBattleData(rawData);
@@ -836,6 +860,38 @@ export const makeBattles = (
         cursor: query.cursor,
         size: query.size,
       };
+    },
+
+    /** Accepts a battle ID or an ID from before UUIDv7 IDs, which old links use. */
+    resolveBattleId(battleId: string) {
+      if (isBattleId(battleId)) return Effect.succeed(battleId.toLowerCase());
+
+      return adapter("Battles_resolveLegacyId", () =>
+        drizzle.query.battleLegacyIds.findFirst({
+          where: { legacyId: battleId },
+          columns: { battleId: true },
+        }),
+      ).pipe(
+        Effect.flatMap((legacy) =>
+          legacy
+            ? Effect.succeed(legacy.battleId)
+            : Effect.fail(
+                new ResourceNotFoundError(
+                  `Battle with ID ${battleId} not found`,
+                ),
+              ),
+        ),
+      );
+    },
+
+    /** R2 keeps timelines of battles saved before UUIDv7 IDs under their legacy ID. */
+    getBattleObjectId(battleId: string) {
+      return adapter("Battles_getObjectId", () =>
+        drizzle.query.battleLegacyIds.findFirst({
+          where: { battleId },
+          columns: { legacyId: true },
+        }),
+      ).pipe(Effect.map((legacy) => legacy?.legacyId ?? battleId));
     },
 
     checkBattleAccess(battleId: string, requestingUserId: string) {
@@ -912,11 +968,14 @@ export const makeBattles = (
         const battle = yield* adapter("Battles_storeTransaction", () =>
           drizzle.transaction((tx) =>
             Effect.gen(function* () {
+              const now = yield* Clock.currentTimeMillis;
+
               const [insertedBattle] = yield* tx
                 .insert(battles)
                 .values({
+                  ...createBattleId(now),
                   userId,
-                  updatedAt: new Date(yield* Clock.currentTimeMillis),
+                  updatedAt: new Date(now),
                   accountId: data.accountId,
                   characterId: data.characterId,
                   semanticFingerprint,
@@ -1159,6 +1218,7 @@ export type Battles = Pick<
   | "getPublicBattleTimeline"
   | "getUserCharacters"
   | "getUserWorlds"
+  | "resolveBattleId"
   | "searchWarriors"
   | "updateBattle"
 >;

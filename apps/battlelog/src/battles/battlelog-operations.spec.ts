@@ -33,23 +33,30 @@ describe("Battlelog operations", () => {
     expect(getBattleTimeline).toHaveBeenCalledWith("battle-1", "user-1");
   });
 
-  it("requires ownership before updating battle visibility", async () => {
+  it("requires ownership of the battle a legacy link resolves to before updating its visibility", async () => {
     const assertBattleOwner = mock(() => Effect.void);
 
     const updateBattle = mock(() =>
       Effect.succeed({ ...createBattleFixture(), warriors: [] }),
     );
 
+    const resolveBattleId = mock(() => Effect.succeed("battle-1"));
+
     const operations = makeBattlelogOperations(
-      { ...unusedBattles, assertBattleOwner, updateBattle },
+      { ...unusedBattles, assertBattleOwner, resolveBattleId, updateBattle },
       unusedBattleAnalytics,
       unusedDeleteQueue,
     );
 
     await Effect.runPromise(
-      operations.battles.updateBattle("battle-1", { public: true }, "user-1"),
+      operations.battles.updateBattle(
+        "cmglj0y2u0224qd0ioniw0lxa",
+        { public: true },
+        "user-1",
+      ),
     );
 
+    expect(resolveBattleId).toHaveBeenCalledWith("cmglj0y2u0224qd0ioniw0lxa");
     expect(assertBattleOwner).toHaveBeenCalledWith("battle-1", "user-1");
     expect(updateBattle).toHaveBeenCalledWith("battle-1", { public: true });
   });

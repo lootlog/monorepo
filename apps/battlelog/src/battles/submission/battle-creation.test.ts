@@ -19,6 +19,7 @@ import {
   mock,
   spyOn,
 } from "bun:test";
+import { sql } from "drizzle-orm";
 import { Effect, ManagedRuntime, Schema } from "effect";
 import { ConnectionError, SqlError } from "effect/sql/SqlError";
 import type { RawBattleData } from "#src/battles/battle-service";
@@ -139,6 +140,30 @@ const databaseRuntime = ManagedRuntime.make(PgliteClient.layer({}));
 const databaseEffect = makeWithDefaults({ relations });
 
 let sharedDatabase: Effect.Success<typeof databaseEffect>;
+
+// A battle's ID carries its time, so aging a battle gives it an older ID.
+const ageStoredBattles = async () => {
+  await databaseRuntime.runPromise(
+    sharedDatabase.execute(sql`
+      WITH moved AS (
+        SELECT id AS "oldId", ('00000000' || substr(replace(id::text, '-', ''), 9))::uuid AS "newId"
+        FROM battles
+      ), warriors AS (
+        UPDATE battle_warriors SET "battleId" = moved."newId"
+        FROM moved WHERE battle_warriors."battleId" = moved."oldId"
+      )
+      UPDATE battles SET id = moved."newId", "createdAt" = battle_id_created_at(moved."newId")
+      FROM moved WHERE battles.id = moved."oldId"
+    `),
+  );
+};
+
+const storedBattleIds = async () =>
+  (
+    await databaseRuntime.runPromise(
+      sharedDatabase.select({ id: battles.id }).from(battles),
+    )
+  ).map((battle) => battle.id);
 
 const createDatabaseBoundary = ({
   beforeTransaction,
@@ -475,14 +500,13 @@ describe("battle creation deduplication", () => {
       events: [battleEvent],
     };
 
-    const first = await postBattle(app.handler, data);
+    await postBattle(app.handler, data);
     redis.readCachedJson.mockResolvedValue(null);
-    await databaseRuntime.runPromise(
-      sharedDatabase.update(battles).set({ createdAt: new Date(0) }),
-    );
+    await ageStoredBattles();
+    const [stored] = await storedBattleIds();
     const retry = await postBattle(app.handler, data);
 
-    expect(retry.body).toEqual(first.body);
+    expect(retry.body).toEqual({ battleId: stored });
     expect(await testApplication.database.getStoredBattles()).toHaveLength(1);
     expect(testApplication.database.getTransactionCount()).toBe(1);
     expect(processBattle).toHaveBeenCalledTimes(1);
@@ -505,9 +529,8 @@ describe("battle creation deduplication", () => {
 
     const first = await postBattle(app.handler, data);
     now = 11_000;
-    await databaseRuntime.runPromise(
-      sharedDatabase.update(battles).set({ createdAt: new Date(0) }),
-    );
+    await ageStoredBattles();
+    const [older] = await storedBattleIds();
 
     const newer = await postBattle(app.handler, {
       ...data,
@@ -517,7 +540,7 @@ describe("battle creation deduplication", () => {
     expect(newer.body.battleId).not.toBe(first.body.battleId);
 
     const retry = await postBattle(app.handler, data);
-    expect(retry.body).toEqual(first.body);
+    expect(retry.body).toEqual({ battleId: older });
     expect(await testApplication.database.getStoredBattles()).toHaveLength(2);
   });
 
@@ -646,9 +669,7 @@ describe("battle creation deduplication", () => {
 
     await postBattle(app.handler, data);
     redis.readCachedJson.mockResolvedValue(null);
-    await databaseRuntime.runPromise(
-      sharedDatabase.update(battles).set({ createdAt: new Date(0) }),
-    );
+    await ageStoredBattles();
     failTransaction = true;
     await requestJson(
       app.handler,

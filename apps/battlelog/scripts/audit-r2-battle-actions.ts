@@ -83,8 +83,12 @@ const fetchLatestBattleIdsFromDb = async (): Promise<SampleSource | null> => {
   try {
     await client.connect();
 
+    // Battles saved before UUIDv7 IDs keep their R2 object under the legacy ID.
     const result = await client.query<{ id: string }>(
-      'select id from battles order by "createdAt" desc limit $1',
+      `select coalesce(legacy."legacyId", battles.id::text) as id
+       from battles
+       left join battle_legacy_ids legacy on legacy."battleId" = battles.id
+       order by battles.id desc limit $1`,
       [SAMPLE_SIZE],
     );
 
