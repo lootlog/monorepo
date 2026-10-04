@@ -2,11 +2,6 @@ import type { BattlePayload } from "@lootlog/battle-processor";
 import { Schema } from "effect";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-
-const __filename = fileURLToPath(import.meta.url);
-
-const __dirname = path.dirname(__filename);
 
 const WarriorSnapshot = Schema.StructWithRest(
   Schema.Struct({
@@ -93,7 +88,7 @@ export class BattlesGenerator {
 
   async initialize() {
     const samplePath = path.join(
-      __dirname,
+      import.meta.dirname,
       "../../../../../../example-data/sample-battlelog-payload.json",
     );
 
