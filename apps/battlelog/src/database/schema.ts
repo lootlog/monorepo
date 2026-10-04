@@ -1,7 +1,10 @@
 // Hand-maintained Battlelog database schema; Drizzle generates SQL migrations from it.
+// `battles`, `battle_warriors` and `battle_timelines` are TimescaleDB hypertables
+// partitioned by battle ID; the migration creates them, the schema cannot.
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  bytea,
   check,
   doublePrecision,
   index,
@@ -24,7 +27,7 @@ export const battles = pgTable(
       withTimezone: true,
       precision: 3,
     }).notNull(),
-    updatedAt: timestamp("updatedAt")
+    updatedAt: timestamp("updatedAt", { withTimezone: true })
       .defaultNow()
       .$onUpdateFn(() => new Date())
       .notNull(),
@@ -34,7 +37,6 @@ export const battles = pgTable(
     accountId: text("accountId").notNull(),
     characterId: text("characterId").notNull(),
     semanticFingerprint: text("semanticFingerprint"),
-    submissionId: text("submissionId"),
     world: text("world").notNull(),
     duration: doublePrecision("duration").notNull(),
     type: text("type").notNull(),
@@ -67,7 +69,6 @@ export const battles = pgTable(
   },
   (table) => [
     index("battles_userId_id_idx").on(table.userId, table.id),
-    index("battles_world_id_idx").on(table.world, table.id),
     index("battles_userId_world_id_idx").on(
       table.userId,
       table.world,
@@ -78,11 +79,6 @@ export const battles = pgTable(
       table.semanticFingerprint,
       table.id,
     ),
-    uniqueIndex("battles_userId_submissionId_key").on(
-      table.userId,
-      table.submissionId,
-    ),
-    index("battles_public_id_idx").on(table.public, table.id),
     check(
       "battles_id_createdAt_check",
       sql`battle_id_created_at(${table.id}) = ${table.createdAt}`,
@@ -91,21 +87,55 @@ export const battles = pgTable(
 );
 
 /**
+ * A unique index on a hypertable must contain the battle ID, so the owner's
+ * submission IDs live in this plain table. A retry finds its battle here.
+ */
+export const battleSubmissions = pgTable(
+  "battle_submissions",
+  {
+    userId: text("userId").notNull(),
+    submissionId: text("submissionId").notNull(),
+    battleId: uuid("battleId").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      name: "battle_submissions_pkey",
+      columns: [table.userId, table.submissionId],
+    }),
+    index("battle_submissions_battleId_idx").on(table.battleId),
+  ],
+);
+
+/** The submitted Margonem events of a battle, as zstd-compressed JSON. */
+export const battleTimelines = pgTable(
+  "battle_timelines",
+  {
+    battleId: uuid("battleId").primaryKey(),
+    userId: text("userId").notNull(),
+    events: bytea("events").notNull(),
+  },
+  (table) => [
+    index("battle_timelines_userId_battleId_idx").on(
+      table.userId,
+      table.battleId,
+    ),
+  ],
+);
+
+/**
  * Battles saved before UUIDv7 IDs keep their old public links and R2 object
- * keys here. Drop it once timelines leave R2 (LOO-255).
+ * keys here. Their timelines stay in R2 under the old ID; drop the table with
+ * the R2 bucket.
  */
 export const battleLegacyIds = pgTable("battle_legacy_ids", {
   legacyId: text("legacyId").primaryKey(),
-  battleId: uuid("battleId")
-    .notNull()
-    .unique("battle_legacy_ids_battleId_key")
-    .references(() => battles.id, { onDelete: "cascade" }),
+  battleId: uuid("battleId").notNull().unique("battle_legacy_ids_battleId_key"),
 });
 
 export const battleObjectDeletions = pgTable(
   "battle_object_deletions",
   {
-    // The R2 object ID: the legacy ID for battles saved before UUIDv7 IDs.
+    // The R2 object ID of a deleted battle saved before UUIDv7 IDs.
     battleId: text("battleId").primaryKey(),
     userId: text("userId").notNull(),
     createdAt: timestamp("createdAt", { withTimezone: true })
@@ -153,9 +183,9 @@ export const userCharacters = pgTable(
 export const battleWarriors = pgTable(
   "battle_warriors",
   {
-    battleId: uuid("battleId")
-      .notNull()
-      .references(() => battles.id, { onDelete: "cascade" }),
+    battleId: uuid("battleId").notNull(),
+    // The battle owner, so compression segments and deletions follow the owner.
+    userId: text("userId").notNull(),
 
     originalId: text("originalId").notNull(),
     name: text("name").notNull(),

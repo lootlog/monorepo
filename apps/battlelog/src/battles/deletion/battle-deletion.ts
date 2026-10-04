@@ -1,4 +1,5 @@
-import { asc, eq, inArray, lte, type SQL } from "drizzle-orm";
+import { and, asc, eq, inArray, lte, sql } from "drizzle-orm";
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { Clock, Effect, Result } from "effect";
 import { chunk } from "es-toolkit";
 import type { DrizzleDatabase } from "#src/database/database";
@@ -6,6 +7,9 @@ import {
   battleLegacyIds,
   battles,
   battleObjectDeletions,
+  battleSubmissions,
+  battleTimelines,
+  battleWarriors,
   userCharacters,
 } from "#src/database/schema";
 import type { BattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
@@ -80,10 +84,32 @@ export const makeBattleDeletion = (
     )
     .pipe(Effect.withSpan("BattleDeletion.drain"));
 
-  // Battles saved before UUIDv7 IDs keep their R2 object under the legacy ID.
-  // Their legacy rows cascade with the battle, so read them first.
-  const removeBattles = (transaction: DeletionTransaction, where: SQL) =>
+  // Battle hypertables have no foreign keys, so a battle's rows are removed
+  // together here. Only battles saved before UUIDv7 IDs still own an R2
+  // object, kept under their legacy ID.
+  const removeBattles = (
+    transaction: DeletionTransaction,
+    owner: { userId: string; battleId?: string },
+  ) =>
     Effect.gen(function* () {
+      const owned = (table: {
+        userId: AnyPgColumn;
+        battleId?: AnyPgColumn;
+        id?: AnyPgColumn;
+      }) =>
+        and(
+          eq(table.userId, owner.userId),
+          owner.battleId
+            ? eq(table.battleId ?? table.id, owner.battleId)
+            : undefined,
+        );
+
+      // A whole owner's deletion removes compressed batches without
+      // decompressing them; a single battle decompresses one batch.
+      yield* transaction.execute(
+        sql`SELECT set_config('timescaledb.max_tuples_decompressed_per_dml_transaction', '0', true)`,
+      );
+
       const legacy = yield* transaction
         .select({
           battleId: battleLegacyIds.battleId,
@@ -91,27 +117,33 @@ export const makeBattleDeletion = (
         })
         .from(battleLegacyIds)
         .innerJoin(battles, eq(battles.id, battleLegacyIds.battleId))
-        .where(where);
+        .where(owned(battles));
 
-      const legacyIds = new Map(
-        legacy.map((row) => [row.battleId, row.legacyId]),
-      );
+      yield* transaction.delete(battleWarriors).where(owned(battleWarriors));
+      yield* transaction.delete(battleTimelines).where(owned(battleTimelines));
+      yield* transaction
+        .delete(battleSubmissions)
+        .where(owned(battleSubmissions));
 
-      const removed = yield* transaction
-        .delete(battles)
-        .where(where)
-        .returning({ battleId: battles.id, userId: battles.userId });
-
-      const deletions = removed.map(({ battleId, userId }) => ({
-        battleId: legacyIds.get(battleId) ?? battleId,
-        userId,
-      }));
-
-      for (const batch of chunk(deletions, 1_000)) {
-        yield* transaction.insert(battleObjectDeletions).values(batch);
+      for (const batch of chunk(legacy, 1_000)) {
+        yield* transaction.delete(battleLegacyIds).where(
+          inArray(
+            battleLegacyIds.battleId,
+            batch.map((row) => row.battleId),
+          ),
+        );
+        yield* transaction.insert(battleObjectDeletions).values(
+          batch.map((row) => ({
+            battleId: row.legacyId,
+            userId: owner.userId,
+          })),
+        );
       }
 
-      return removed;
+      return yield* transaction
+        .delete(battles)
+        .where(owned(battles))
+        .returning({ battleId: battles.id, userId: battles.userId });
     });
 
   const deleteBattle = Effect.fn("BattleDeletion.deleteBattle")(function* (
@@ -119,10 +151,17 @@ export const makeBattleDeletion = (
   ) {
     const userId = yield* database.transaction((transaction) =>
       Effect.gen(function* () {
-        const removed = yield* removeBattles(
-          transaction,
-          eq(battles.id, battleId),
-        );
+        const [battle] = yield* transaction
+          .select({ userId: battles.userId })
+          .from(battles)
+          .where(eq(battles.id, battleId));
+
+        const removed = battle
+          ? yield* removeBattles(transaction, {
+              userId: battle.userId,
+              battleId,
+            })
+          : [];
 
         if (removed.length === 0) {
           return yield* Effect.fail(
@@ -149,10 +188,7 @@ export const makeBattleDeletion = (
     function* (userId: string) {
       const removed = yield* database.transaction((transaction) =>
         Effect.gen(function* () {
-          const removed = yield* removeBattles(
-            transaction,
-            eq(battles.userId, userId),
-          );
+          const removed = yield* removeBattles(transaction, { userId });
 
           yield* transaction
             .delete(userCharacters)

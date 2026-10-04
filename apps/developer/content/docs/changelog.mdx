@@ -12,8 +12,8 @@ version.
 - Every existing battle has a new ID. Battle, list, timeline, analytics and
   `POST /battles` responses return the new ID. Paths that take a battle ID,
   including `/battles/public/{battleId}`, still accept the old ID and return
-  the battle with its new ID. Store the new ID; old IDs are accepted only
-  while the migration's lookup table exists.
+  the battle with its new ID. Store the new ID: old IDs keep resolving only
+  until the timelines of those battles are removed from object storage.
 - `GET /battles/@me` cursors are opaque. Pass `nextCursor` or
   `previousCursor` back unchanged; do not build or parse them. Cursors issued
   before this change, and any other malformed cursor, are rejected with `400`
@@ -24,6 +24,9 @@ version.
   stays `true` until the newest battle is reached.
 - `createdAt` is unchanged: the time Battlelog saved the battle, with
   millisecond precision. `startDate` and `endDate` filters compare against it.
+- Raw battle data (`/battles/{battleId}/raw` and its public variant) keeps its
+  shape. For battles saved after this change, `timestamp` is the battle's
+  `createdAt`.
 
 ## Unreleased (breaking): Battle participants no longer return `id`
 

@@ -119,12 +119,16 @@ services:
     logging: *default-logging
 
   battle-log-db:
-    image: postgres:17-alpine
+    # The production Battlelog cluster runs TimescaleDB 2.24.0. The flag also
+    # loads the library into data directories created by the former plain image.
+    image: timescale/timescaledb:2.24.0-pg17
     container_name: "battle-log-db"
     restart: unless-stopped
     shm_size: 128mb
     command:
       - postgres
+      - -c
+      - shared_preload_libraries=timescaledb
       - -c
       - shared_buffers=128MB
       - -c

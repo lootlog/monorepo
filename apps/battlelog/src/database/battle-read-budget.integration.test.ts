@@ -33,7 +33,7 @@ let network: StartedNetwork;
 
 beforeAll(async () => {
   network = await new Network().start();
-  postgres = await new PostgreSqlContainer("postgres:17-alpine")
+  postgres = await new PostgreSqlContainer("timescale/timescaledb:2.24.0-pg17")
     .withNetwork(network)
     .withNetworkAliases("postgres")
     .start();

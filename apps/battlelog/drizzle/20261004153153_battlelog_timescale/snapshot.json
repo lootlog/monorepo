@@ -1,12 +1,30 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "e1469c6a-d507-4145-9487-ad9142ce6b68",
+  "id": "97c4bf97-c94d-4d28-9734-2c11ee92ddb3",
   "prevIds": ["9303edbc-0cd6-4cda-ad22-af5392cc8c16"],
   "ddl": [
     {
       "isRlsEnabled": false,
+      "name": "battle_legacy_ids",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "battle_object_deletions",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "battle_submissions",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "battle_timelines",
       "entityType": "tables",
       "schema": "public"
     },
@@ -27,6 +45,32 @@
       "name": "user_characters",
       "entityType": "tables",
       "schema": "public"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "legacyId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "battle_legacy_ids"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "battleId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "battle_legacy_ids"
     },
     {
       "type": "text",
@@ -88,7 +132,98 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "name": "userId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "battle_submissions"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "submissionId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "battle_submissions"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
       "name": "battleId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "battle_submissions"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "battleId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "battle_timelines"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "userId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "battle_timelines"
+    },
+    {
+      "type": "bytea",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "events",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "battle_timelines"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "battleId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "battle_warriors"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "userId",
       "entityType": "columns",
       "schema": "public",
       "table": "battle_warriors"
@@ -1160,7 +1295,7 @@
       "table": "battle_warriors"
     },
     {
-      "type": "text",
+      "type": "uuid",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -1173,11 +1308,11 @@
       "table": "battles"
     },
     {
-      "type": "timestamp",
+      "type": "timestamp(3) with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": "now()",
+      "default": null,
       "generated": null,
       "identity": null,
       "name": "createdAt",
@@ -1186,7 +1321,7 @@
       "table": "battles"
     },
     {
-      "type": "timestamp",
+      "type": "timestamp with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -1259,19 +1394,6 @@
       "generated": null,
       "identity": null,
       "name": "semanticFingerprint",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "battles"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "submissionId",
       "entityType": "columns",
       "schema": "public",
       "table": "battles"
@@ -1782,6 +1904,55 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "battleId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "battle_submissions_battleId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "battle_submissions"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "userId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "battleId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "battle_timelines_userId_battleId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "battle_timelines"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "originalId",
           "isExpression": false,
           "asc": true,
@@ -1817,7 +1988,7 @@
           "opclass": null
         },
         {
-          "value": "createdAt",
+          "value": "id",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -1829,35 +2000,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "battles_userId_createdAt_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "battles"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "world",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "createdAt",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "battles_world_createdAt_idx",
+      "name": "battles_userId_id_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "battles"
@@ -1880,7 +2023,7 @@
           "opclass": null
         },
         {
-          "value": "createdAt",
+          "value": "id",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -1892,7 +2035,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "battles_userId_world_createdAt_idx",
+      "name": "battles_userId_world_id_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "battles"
@@ -1908,7 +2051,7 @@
           "opclass": null
         },
         {
-          "value": "createdAt",
+          "value": "id",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -1920,7 +2063,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "battles_characterId_createdAt_idx",
+      "name": "battles_characterId_id_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "battles"
@@ -1936,7 +2079,7 @@
           "opclass": null
         },
         {
-          "value": "createdAt",
+          "value": "id",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -1948,63 +2091,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "battles_semanticFingerprint_createdAt_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "battles"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "userId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "submissionId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": true,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "battles_userId_submissionId_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "battles"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "public",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "createdAt",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "battles_public_createdAt_idx",
+      "name": "battles_semanticFingerprint_id_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "battles"
@@ -2066,17 +2153,12 @@
       "table": "user_characters"
     },
     {
-      "nameExplicit": false,
-      "columns": ["battleId"],
-      "schemaTo": "public",
-      "tableTo": "battles",
-      "columnsTo": ["id"],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
-      "name": "battle_warriors_battleId_battles_id_fkey",
-      "entityType": "fks",
+      "columns": ["userId", "submissionId"],
+      "nameExplicit": true,
+      "name": "battle_submissions_pkey",
+      "entityType": "pks",
       "schema": "public",
-      "table": "battle_warriors"
+      "table": "battle_submissions"
     },
     {
       "columns": ["battleId", "originalId"],
@@ -2087,11 +2169,27 @@
       "table": "battle_warriors"
     },
     {
+      "columns": ["legacyId"],
+      "nameExplicit": false,
+      "name": "battle_legacy_ids_pkey",
+      "schema": "public",
+      "table": "battle_legacy_ids",
+      "entityType": "pks"
+    },
+    {
       "columns": ["battleId"],
       "nameExplicit": false,
       "name": "battle_object_deletions_pkey",
       "schema": "public",
       "table": "battle_object_deletions",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["battleId"],
+      "nameExplicit": false,
+      "name": "battle_timelines_pkey",
+      "schema": "public",
+      "table": "battle_timelines",
       "entityType": "pks"
     },
     {
@@ -2109,6 +2207,22 @@
       "schema": "public",
       "table": "user_characters",
       "entityType": "pks"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["battleId"],
+      "nullsNotDistinct": false,
+      "name": "battle_legacy_ids_battleId_key",
+      "schema": "public",
+      "table": "battle_legacy_ids",
+      "entityType": "uniques"
+    },
+    {
+      "value": "battle_id_created_at(\"id\") = \"createdAt\"",
+      "name": "battles_id_createdAt_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "battles"
     }
   ],
   "renames": []

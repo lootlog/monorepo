@@ -13,14 +13,18 @@ export const createBattleId = (now: number) => ({
   createdAt: new Date(now),
 });
 
-const boundaryId = (time: Date, fill: "0" | "f") => {
+// TimescaleDB compares its UUID partition column only with UUIDv7 values, so a
+// bound is the smallest or largest UUIDv7 of its millisecond.
+const boundaryId = (time: Date, tail: string) => {
   const prefix = time.getTime().toString(16).padStart(12, "0");
 
-  return `${prefix.slice(0, 8)}-${prefix.slice(8)}-${fill.repeat(4)}-${fill.repeat(4)}-${fill.repeat(12)}`;
+  return `${prefix.slice(0, 8)}-${prefix.slice(8)}-${tail}`;
 };
 
 /** Every battle saved at or after `time` has an ID greater than or equal to this. */
-export const firstBattleIdAt = (time: Date) => boundaryId(time, "0");
+export const firstBattleIdAt = (time: Date) =>
+  boundaryId(time, "7000-8000-000000000000");
 
 /** Every battle saved at or before `time` has an ID less than or equal to this. */
-export const lastBattleIdAt = (time: Date) => boundaryId(time, "f");
+export const lastBattleIdAt = (time: Date) =>
+  boundaryId(time, "7fff-bfff-ffffffffffff");

@@ -24,7 +24,17 @@ import type { BattleListFilter } from "#src/battles/catalog/battle-list-filter.s
 import type { BattleMetadata } from "#src/battles/catalog/battle-metadata.service";
 import type { BattlePagination } from "#src/battles/analytics/pagination.service";
 import type { DrizzleDatabase } from "#src/database/database";
-import { battles, battleWarriors } from "#src/database/schema";
+import {
+  battles,
+  battleSubmissions,
+  battleTimelines,
+  battleWarriors,
+  type Battle,
+} from "#src/database/schema";
+import {
+  decodeBattleEvents,
+  encodeBattleEvents,
+} from "#src/battles/battle-timeline";
 import {
   createBattleId,
   firstBattleIdAt,
@@ -39,7 +49,6 @@ import {
   BattleProcessor,
   type Warrior,
   type BattleAnalysis,
-  type ParsedMove,
   type BattleWarriorSnapshot,
 } from "@lootlog/battle-processor";
 import {
@@ -123,8 +132,26 @@ type BattlesDatabase = Parameters<typeof makeBattleDeletion>[0] & {
       DrizzleDatabase["query"]["battleLegacyIds"],
       "findFirst"
     >;
+    battleTimelines: Pick<
+      DrizzleDatabase["query"]["battleTimelines"],
+      "findFirst"
+    >;
   };
 };
+
+type RawBattleSource = Pick<
+  Battle,
+  "id" | "userId" | "accountId" | "characterId" | "world" | "createdAt"
+>;
+
+const rawBattleSourceColumns = {
+  id: true,
+  userId: true,
+  accountId: true,
+  characterId: true,
+  world: true,
+  createdAt: true,
+} as const;
 
 export const makeBattles = (
   drizzle: BattlesDatabase,
@@ -229,11 +256,6 @@ export const makeBattles = (
             BattleProcessor.calculateBattleDuration(data.events),
             userId,
           );
-          yield* battlesModule.storeRawBattleData(
-            yield* battlesModule.getBattleObjectId(canonicalBattleId),
-            data,
-            new BattleProcessor().extractAndParseMoves(data.events),
-          );
 
           return { battleId: canonicalBattleId };
         }
@@ -247,11 +269,6 @@ export const makeBattles = (
           semanticFingerprint,
         )).id;
 
-        yield* battlesModule.storeRawBattleData(
-          battleId,
-          data,
-          analysis.parsedMoves,
-        );
         yield* battleAnalyticsService.invalidateAnalyticsCache(userId);
 
         return { battleId };
@@ -486,12 +503,28 @@ export const makeBattles = (
       }
 
       return adapter("Battles_findSubmission", () =>
-        drizzle.query.battles.findFirst({
-          where: { submissionId, userId },
-          columns: { id: true, semanticFingerprint: true },
-        }),
+        drizzle
+          .select({
+            id: battles.id,
+            semanticFingerprint: battles.semanticFingerprint,
+          })
+          .from(battleSubmissions)
+          .innerJoin(
+            battles,
+            and(
+              eq(battles.id, battleSubmissions.battleId),
+              eq(battles.userId, battleSubmissions.userId),
+            ),
+          )
+          .where(
+            and(
+              eq(battleSubmissions.userId, userId),
+              eq(battleSubmissions.submissionId, submissionId),
+            ),
+          )
+          .limit(1),
       ).pipe(
-        Effect.flatMap((battle) => {
+        Effect.flatMap(([battle]) => {
           if (
             battle &&
             battle.semanticFingerprint !== null &&
@@ -561,14 +594,21 @@ export const makeBattles = (
           yield* battlesModule.checkBattleAccess(battleId, requestingUserId);
         }
 
-        const objectId = yield* battlesModule.getBattleObjectId(battleId);
-
-        const rawData = yield* adapter(
-          "BattleObjectStorage_getBattleData",
-          () => r2Service.getBattleData(objectId, decodeRawBattleDataJson),
+        const battle = yield* adapter("Battles_getRawSource", () =>
+          drizzle.query.battles.findFirst({
+            where: { id: battleId },
+            columns: rawBattleSourceColumns,
+          }),
         );
 
-        return battlesModule.normalizeRawBattleData(rawData);
+        if (!battle)
+          return yield* Effect.fail(
+            new ResourceNotFoundError(`Battle with ID ${battleId} not found`),
+          );
+
+        return battlesModule.normalizeRawBattleData(
+          yield* battlesModule.loadRawBattleData(battle),
+        );
       }).pipe(
         Effect.tapError((error) =>
           Effect.sync(() => {
@@ -644,13 +684,48 @@ export const makeBattles = (
       });
     },
 
-    buildTimelineResponse(battle: BattleWithRelations) {
-      return battlesModule.getBattleObjectId(battle.id).pipe(
-        Effect.flatMap((objectId) =>
-          adapter("BattleObjectStorage_getTimelineData", () =>
-            r2Service.getBattleData(objectId, decodeRawBattleDataJson),
-          ),
+    /**
+     * Battles saved since timelines moved to Postgres keep their submitted
+     * events there. Older battles keep theirs in R2 under their object ID.
+     */
+    loadRawBattleData(battle: RawBattleSource) {
+      return adapter("Battles_getTimeline", () =>
+        drizzle.query.battleTimelines.findFirst({
+          where: { battleId: battle.id, userId: battle.userId },
+          columns: { events: true },
+        }),
+      ).pipe(
+        Effect.flatMap((timeline) =>
+          timeline
+            ? Effect.succeed<RawBattleData>({
+                battleId: battle.id,
+                timestamp: battle.createdAt.toISOString(),
+                rawData: {
+                  accountId: battle.accountId,
+                  characterId: battle.characterId,
+                  world: battle.world,
+                  events: [],
+                  sourceEvents: decodeBattleEvents(timeline.events),
+                },
+              })
+            : battlesModule
+                .getBattleObjectId(battle.id)
+                .pipe(
+                  Effect.flatMap((objectId) =>
+                    adapter("BattleObjectStorage_getBattleData", () =>
+                      r2Service.getBattleData(
+                        objectId,
+                        decodeRawBattleDataJson,
+                      ),
+                    ),
+                  ),
+                ),
         ),
+      );
+    },
+
+    buildTimelineResponse(battle: BattleWithRelations) {
+      return battlesModule.loadRawBattleData(battle).pipe(
         Effect.map((rawBattleData) => {
           const processor = new BattleProcessor();
 
@@ -800,7 +875,7 @@ export const makeBattles = (
         const battle = yield* adapter("Battles_getPublicRaw", () =>
           drizzle.query.battles.findFirst({
             where: { id: battleId, public: true },
-            columns: { id: true },
+            columns: rawBattleSourceColumns,
           }),
         );
 
@@ -811,13 +886,9 @@ export const makeBattles = (
             ),
           );
 
-        const objectId = yield* battlesModule.getBattleObjectId(battle.id);
-
-        const rawData = yield* adapter("BattleObjectStorage_getPublicRaw", () =>
-          r2Service.getBattleData(objectId, decodeRawBattleDataJson),
+        return battlesModule.normalizeRawBattleData(
+          yield* battlesModule.loadRawBattleData(battle),
         );
-
-        return battlesModule.normalizeRawBattleData(rawData);
       });
     },
 
@@ -969,19 +1040,33 @@ export const makeBattles = (
           drizzle.transaction((tx) =>
             Effect.gen(function* () {
               const now = yield* Clock.currentTimeMillis;
+              const battleId = createBattleId(now);
+
+              // The submission row claims the ID first; a concurrent retry
+              // that loses the claim reads the winner's battle instead.
+              if (data.submissionId) {
+                const [claimed] = yield* tx
+                  .insert(battleSubmissions)
+                  .values({
+                    userId,
+                    submissionId: data.submissionId,
+                    battleId: battleId.id,
+                  })
+                  .onConflictDoNothing()
+                  .returning({ battleId: battleSubmissions.battleId });
+
+                if (!claimed) return null;
+              }
 
               const [insertedBattle] = yield* tx
                 .insert(battles)
                 .values({
-                  ...createBattleId(now),
+                  ...battleId,
                   userId,
                   updatedAt: new Date(now),
                   accountId: data.accountId,
                   characterId: data.characterId,
                   semanticFingerprint,
-                  ...(data.submissionId && {
-                    submissionId: data.submissionId,
-                  }),
                   world: data.world,
                   duration: analysis.duration,
                   type: analysis.type,
@@ -1012,16 +1097,12 @@ export const makeBattles = (
                     dailyRewardsMax: analysis.matchmaking.dailyRewardsMax,
                   }),
                 })
-                .onConflictDoNothing({
-                  target: [battles.userId, battles.submissionId],
-                })
                 .returning({ id: battles.id });
-
-              if (!insertedBattle) return null;
 
               const warriorValues = analysis.warriors.map(
                 (warrior: Warrior) => ({
                   battleId: insertedBattle.id,
+                  userId,
                   originalId: warrior.originalId,
                   name: warrior.name,
                   lvl: warrior.lvl,
@@ -1110,6 +1191,11 @@ export const makeBattles = (
               );
 
               yield* tx.insert(battleWarriors).values(warriorValues);
+              yield* tx.insert(battleTimelines).values({
+                battleId: insertedBattle.id,
+                userId,
+                events: encodeBattleEvents(data.events),
+              });
 
               return insertedBattle;
             }),
@@ -1139,41 +1225,6 @@ export const makeBattles = (
 
           return new Error(
             `Database storage failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-          );
-        }),
-      );
-    },
-
-    storeRawBattleData(
-      battleId: string,
-      data: CreateBattleInput,
-      parsedMoves: ParsedMove[],
-    ) {
-      return Effect.suspend(() => {
-        const rawBattleData: RawBattleData = {
-          battleId,
-          timestamp: new Date().toISOString(),
-          rawData: {
-            events: parsedMoves,
-            sourceEvents: data.events,
-            accountId: data.accountId,
-            characterId: data.characterId,
-            world: data.world,
-          },
-        };
-
-        return adapter("BattleObjectStorage_upload", () =>
-          r2Service.uploadBattleData(battleId, rawBattleData),
-        );
-      }).pipe(
-        Effect.mapError((error) => {
-          logger.error(
-            `Failed to store raw battle data for ${battleId}:`,
-            error,
-          );
-
-          return new Error(
-            `R2 storage failed: ${error instanceof Error ? error.message : "Unknown error"}`,
           );
         }),
       );

@@ -30,7 +30,7 @@ export interface GetAllBattlesResult {
   };
 }
 
-// Raw battle data structure stored in R2
+// Raw battle data the raw endpoints return; R2 stores it for older battles
 const ParsedMoveSchema = Schema.Struct({
   attackerId: Schema.NullOr(Schema.String),
   defenderId: Schema.NullOr(Schema.String),
