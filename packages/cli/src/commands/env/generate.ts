@@ -1,6 +1,5 @@
-import { fileURLToPath } from "node:url";
 import { existsSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { question, chalk } from "zx";
 import type { CliOptions, EnvFile, EnvVariable } from "../../types.js";
 import {
@@ -16,11 +15,7 @@ import {
   enhanceVariablesWithDerivedValues,
 } from "../../utils/env-generator.js";
 
-const __filename = fileURLToPath(import.meta.url);
-
-const __dirname = dirname(__filename);
-
-const ROOT_PATH = join(__dirname, "../../../../..");
+const ROOT_PATH = join(import.meta.dirname, "../../../../..");
 
 interface ProcessEnvFileOptions {
   useGeneratedSharedValues?: boolean;
