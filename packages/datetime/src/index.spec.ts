@@ -78,6 +78,24 @@ describe("@lootlog/datetime", () => {
     },
   );
 
+  it.each([
+    ["2026-03-29T01:00:00Z", "2026-03-29T01:30:00Z", 0.5],
+    ["2026-03-28T01:00:00Z", "2026-03-29T02:00:00Z", 24.5],
+  ])(
+    "counts overlapping daily windows once across DST for %s to %s",
+    (start, end, expectedHours) => {
+      expect(
+        calculateLocalWindowOverlapMs({
+          startUtc: new Date(start),
+          endUtc: new Date(end),
+          timeZone: "Europe/Warsaw",
+          windowFrom: "03:00",
+          windowTo: "02:30",
+        }),
+      ).toBe(expectedHours * 60 * 60 * 1000);
+    },
+  );
+
   it("calculates overlap through the Warsaw DST forward transition", () => {
     expect(
       calculateLocalWindowOverlapMs({
