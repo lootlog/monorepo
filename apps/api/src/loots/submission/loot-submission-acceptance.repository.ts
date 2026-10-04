@@ -162,6 +162,34 @@ export interface LootSubmissionAcceptancePersistence {
   ) => Effect.Effect<number, unknown>;
 }
 
+const toLootSubmissionRows = (
+  records: Array<
+    Pick<typeof organizationLootRecordTable.$inferSelect, "id" | "guildId">
+  >,
+  submissions: PersistedLootSubmission[],
+  now: Date,
+) => {
+  const recordIdByGuildId = new Map(
+    records.map((record) => [record.guildId, record.id]),
+  );
+
+  return submissions.map((submission) => {
+    const organizationLootRecordId = recordIdByGuildId.get(submission.guildId);
+
+    if (organizationLootRecordId === undefined) {
+      throw new DependencyUnavailableError(
+        "Failed to resolve Organization Loot record",
+      );
+    }
+
+    return {
+      organizationLootRecordId,
+      memberId: submission.memberId,
+      updatedAt: now,
+    };
+  });
+};
+
 export const makeLootSubmissionAcceptancePersistence = (
   database: typeof ApiDatabase.Service,
 ): LootSubmissionAcceptancePersistence => ({
@@ -380,27 +408,7 @@ export const makeLootSubmissionAcceptancePersistence = (
             )
           : [];
 
-        const recordIdByGuildId = new Map(
-          records.map((record) => [record.guildId, record.id]),
-        );
-
-        const rows = submissions.map((submission) => {
-          const organizationLootRecordId = recordIdByGuildId.get(
-            submission.guildId,
-          );
-
-          if (organizationLootRecordId === undefined) {
-            throw new DependencyUnavailableError(
-              "Failed to resolve Organization Loot record",
-            );
-          }
-
-          return {
-            organizationLootRecordId,
-            memberId: submission.memberId,
-            updatedAt: now,
-          };
-        });
+        const rows = toLootSubmissionRows(records, submissions, now);
 
         if (rows.length > 0) {
           yield* transaction
@@ -554,29 +562,9 @@ export const makeLootSubmissionAcceptancePersistence = (
           );
         }
 
-        const recordIdByGuildId = new Map(
-          records.map((record) => [record.guildId, record.id]),
-        );
-
-        yield* transaction.insert(lootSubmissionTable).values(
-          data.submissions.map((submission) => {
-            const organizationLootRecordId = recordIdByGuildId.get(
-              submission.guildId,
-            );
-
-            if (organizationLootRecordId === undefined) {
-              throw new DependencyUnavailableError(
-                "Failed to resolve Organization Loot record",
-              );
-            }
-
-            return {
-              organizationLootRecordId,
-              memberId: submission.memberId,
-              updatedAt: now,
-            };
-          }),
-        );
+        yield* transaction
+          .insert(lootSubmissionTable)
+          .values(toLootSubmissionRows(records, data.submissions, now));
         const intents = publications(loot.id, acceptedNpcs);
 
         if (intents.length > 0) {
