@@ -29,7 +29,10 @@ import type {
 import { filterAndSortHeadToHeadRecords } from "./head-to-head-calculator.service.js";
 import { battleSummaryCalculator } from "./battle-summary-calculator.service.js";
 
-import { selectedWarriorOrder } from "#src/battles/battle-warrior-query";
+import {
+  selectedWarriorOrder,
+  warriorOfBattle,
+} from "#src/battles/battle-warrior-query";
 
 type WarriorSnapshotFields = keyof HeadToHeadRecord["lastBattleUserWarrior"];
 
@@ -100,7 +103,7 @@ export const makeBattleAnalyticsRead = (
       .from(battleWarriors)
       .where(
         and(
-          eq(battleWarriors.battleId, battles.id),
+          warriorOfBattle(battles),
           inArray(battleWarriors.originalId, characterIds),
         ),
       )
@@ -113,7 +116,7 @@ export const makeBattleAnalyticsRead = (
       .from(battleWarriors)
       .where(
         and(
-          eq(battleWarriors.battleId, battles.id),
+          warriorOfBattle(battles),
           notInArray(battleWarriors.originalId, characterIds),
         ),
       )
@@ -403,6 +406,7 @@ export const makeBattleAnalyticsRead = (
       .where(
         and(
           eq(battleWarriors.battleId, latest.lastBattleId),
+          eq(battleWarriors.userId, userId),
           eq(battleWarriors.originalId, latest.userOriginalId),
         ),
       )
@@ -414,6 +418,7 @@ export const makeBattleAnalyticsRead = (
       .where(
         and(
           eq(battleWarriors.battleId, latest.lastBattleId),
+          eq(battleWarriors.userId, userId),
           eq(battleWarriors.originalId, latest.opponentId),
         ),
       )
@@ -638,7 +643,7 @@ export const makeBattleAnalyticsRead = (
       .from(battleWarriors)
       .where(
         and(
-          eq(battleWarriors.battleId, battles.id),
+          warriorOfBattle(battles),
           eq(battleWarriors.originalId, query.opponentId),
         ),
       )

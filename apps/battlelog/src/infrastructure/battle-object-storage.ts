@@ -1,12 +1,9 @@
-import type { RawBattleData } from "#src/battles/battle-service";
 import {
   S3Client,
-  S3ServiceException,
-  PutObjectCommand,
   GetObjectCommand,
   DeleteObjectsCommand,
 } from "@aws-sdk/client-s3";
-import { gzipSync, gunzipSync } from "node:zlib";
+import { gunzipSync } from "node:zlib";
 import type { R2Config } from "#src/config/r2.config";
 import { Logger } from "#src/infrastructure/logger";
 import type { RedisStore } from "#src/infrastructure/redis-store";
@@ -53,44 +50,6 @@ export const makeBattleObjectStorage = (
   logger.log(`R2 client initialized for bucket: ${config.bucketName}`);
 
   const objectStorage = {
-    async uploadBattleData(
-      battleId: string,
-      data: RawBattleData,
-    ): Promise<void> {
-      try {
-        const key = `battles/${battleId}.json`;
-        const jsonString = JSON.stringify(data);
-        const compressedData = gzipSync(jsonString);
-
-        const command = new PutObjectCommand({
-          Bucket: config.bucketName,
-          Key: key,
-          Body: compressedData,
-          IfNoneMatch: "*",
-          ContentType: "application/json",
-          ContentEncoding: "gzip",
-          Metadata: {
-            "battle-id": battleId,
-            "uploaded-at": new Date().toISOString(),
-            compressed: "gzip",
-          },
-        });
-
-        await client.send(command);
-        logger.log(
-          `Battle data uploaded successfully for battle ${battleId} (compressed: ${jsonString.length} -> ${compressedData.length} bytes)`,
-        );
-      } catch (error) {
-        if (
-          error instanceof S3ServiceException &&
-          error.$metadata.httpStatusCode === 412
-        )
-          return;
-        logger.error(`Failed to upload battle data for ${battleId}:`, error);
-        throw error;
-      }
-    },
-
     async getBattleData<TData>(
       battleId: string,
       decodeJson: (value: string) => TData,
@@ -289,5 +248,5 @@ type BattleObjectStorageModule = ReturnType<typeof makeBattleObjectStorage>;
 
 export type BattleObjectStorage = Pick<
   BattleObjectStorageModule,
-  "deleteBattlesData" | "getBattleData" | "uploadBattleData"
+  "deleteBattlesData" | "getBattleData"
 >;

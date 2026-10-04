@@ -106,6 +106,7 @@ beforeAll(async () => {
       database.insert(battleWarriors).values([
         {
           battleId: battleId.id,
+          userId: fixture.userId ?? "owner",
           originalId: fixture.characterId,
           name: fixture.characterId,
           lvl: 100,
@@ -117,6 +118,7 @@ beforeAll(async () => {
         },
         {
           battleId: battleId.id,
+          userId: fixture.userId ?? "owner",
           originalId: fixture.opponentId ?? "enemy",
           name: fixture.opponentId ?? "enemy",
           lvl: 200,

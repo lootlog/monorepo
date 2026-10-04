@@ -1,13 +1,9 @@
 import { afterEach, expect, it, mock, spyOn } from "bun:test";
 import {
-  PutObjectCommand,
   DeleteObjectsCommand,
   GetObjectCommand,
   S3Client,
-  S3ServiceException,
 } from "@aws-sdk/client-s3";
-import { gunzipSync } from "node:zlib";
-import type { RawBattleData } from "#src/battles/battle-service";
 import { Redacted, Schema } from "effect";
 import { makeBattleObjectStorage } from "./battle-object-storage.js";
 
@@ -62,17 +58,6 @@ for (const failure of ["R2", "Redis"] as const) {
   });
 }
 
-const rawBattleData: RawBattleData = {
-  battleId: "one",
-  timestamp: "2026-09-09T00:00:00.000Z",
-  rawData: {
-    accountId: "account",
-    characterId: "character",
-    world: "world",
-    events: [],
-  },
-};
-
 const createStorage = (
   overrides: Partial<Parameters<typeof makeBattleObjectStorage>[0]> = {},
 ) =>
@@ -97,69 +82,6 @@ const createStorage = (
       secretAccessKey: Redacted.make("test"),
     },
   );
-
-it("keeps the first accepted object when the same battle is uploaded again", async () => {
-  const objects = new Map<string, Uint8Array>();
-  spyOn(S3Client.prototype, "send").mockImplementation(async (command) => {
-    if (!(command instanceof PutObjectCommand))
-      throw new Error("Unexpected command");
-    const { Key, Body, IfNoneMatch } = command.input;
-
-    if (!Key || !(Body instanceof Uint8Array))
-      throw new Error("Invalid object");
-
-    if (IfNoneMatch === "*" && objects.has(Key)) {
-      throw new S3ServiceException({
-        name: "PreconditionFailed",
-        $fault: "client",
-        $metadata: { httpStatusCode: 412 },
-      });
-    }
-
-    objects.set(Key, Body);
-
-    return {};
-  });
-  const storage = createStorage();
-  await storage.uploadBattleData("one", rawBattleData);
-  await storage.uploadBattleData("one", {
-    ...rawBattleData,
-    rawData: { ...rawBattleData.rawData, world: "changed" },
-  });
-
-  const stored = objects.get("battles/one.json");
-
-  if (!stored) throw new Error("Object not stored");
-  expect(JSON.parse(gunzipSync(stored).toString())).toEqual(rawBattleData);
-});
-
-for (const status of [409, 503]) {
-  it(`propagates object upload failure ${status} and permits a retry`, async () => {
-    let attempts = 0;
-
-    const send = spyOn(S3Client.prototype, "send").mockImplementation(
-      async () => {
-        if (++attempts === 1)
-          throw new S3ServiceException({
-            name: "StorageFailure",
-            $fault: "server",
-            $metadata: { httpStatusCode: status },
-          });
-
-        return {};
-      },
-    );
-
-    const storage = createStorage();
-    await expect(
-      storage.uploadBattleData("one", rawBattleData),
-    ).rejects.toThrow();
-    await expect(
-      storage.uploadBattleData("one", rawBattleData),
-    ).resolves.toBeUndefined();
-    expect(send).toHaveBeenCalledTimes(2);
-  });
-}
 
 it("batches object removal and returns partial failures for durable retry", async () => {
   const batches: string[][] = [];

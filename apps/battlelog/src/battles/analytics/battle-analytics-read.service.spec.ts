@@ -141,11 +141,12 @@ beforeAll(async () => {
     );
 
     const characterId = characters[index % 2];
+    const owner = index === 13 ? "foreign" : "owner";
     const isLoss = index % 3 === 0;
     await runtime.runPromise(
       db.insert(battles).values({
         id,
-        userId: index === 13 ? "foreign" : "owner",
+        userId: owner,
         accountId: "account",
         characterId,
         world: index === 10 ? "beta" : "alpha",
@@ -166,6 +167,7 @@ beforeAll(async () => {
     await runtime.runPromise(
       db.insert(battleWarriors).values({
         battleId: id,
+        userId: owner,
         originalId: characterId,
         name: "Hero",
         icon: "hero.png",
@@ -183,6 +185,7 @@ beforeAll(async () => {
       await runtime.runPromise(
         db.insert(battleWarriors).values({
           battleId: id,
+          userId: owner,
           originalId: `opponent-${index % 3}`,
           name: `Opponent ${index}`,
           icon: `${index}.png`,
@@ -426,6 +429,7 @@ it("folds combat history across tied-date batches without losing team matchups o
       battleRows.flatMap((battle, index) => [
         {
           battleId: battle.id,
+          userId: battle.userId,
           originalId: "hero-1",
           name: "Hero",
           icon: "hero.gif",
@@ -445,6 +449,7 @@ it("folds combat history across tied-date batches without losing team matchups o
         },
         {
           battleId: battle.id,
+          userId: battle.userId,
           originalId: "hero-2",
           name: "Ally",
           icon: "ally.gif",
@@ -455,6 +460,7 @@ it("folds combat history across tied-date batches without losing team matchups o
         },
         {
           battleId: battle.id,
+          userId: battle.userId,
           originalId: "combat-opponent",
           name: "Enemy",
           icon: "enemy.gif",
@@ -559,6 +565,7 @@ it("selects the recorder among multiple owned participants and uses character or
       db.insert(battleWarriors).values(
         ids.map((originalId) => ({
           battleId,
+          userId: "owner",
           originalId,
           name: originalId,
           icon: "hero.gif",
@@ -710,8 +717,13 @@ it("filters and sorts opponent records, breaking ties by latest battle", async (
     db.insert(battleWarriors).values(
       ["latest-older-win", "latest-newer-loss"].map(idOf).flatMap((battleId) =>
         [
-          { battleId, originalId: "hero-1", team: 1 },
-          { battleId, originalId: "latest-opponent", team: 2 },
+          { battleId, userId: "owner", originalId: "hero-1", team: 1 },
+          {
+            battleId,
+            userId: "owner",
+            originalId: "latest-opponent",
+            team: 2,
+          },
         ].map((warrior) => ({
           ...warrior,
           name: warrior.originalId,
@@ -926,6 +938,7 @@ it("keeps the strongest combat highlights, skips flees and admits battles with a
       combatBattles.flatMap((battle) => [
         {
           battleId: idOf(battle.id),
+          userId: "owner",
           originalId: "hero-1",
           name: "Hero",
           icon: "hero.gif",
@@ -941,6 +954,7 @@ it("keeps the strongest combat highlights, skips flees and admits battles with a
         },
         ...battle.levels.map((lvl, index) => ({
           battleId: idOf(battle.id),
+          userId: "owner",
           originalId: `explicit-opponent-${index}`,
           name: "Enemy",
           icon: "enemy.gif",

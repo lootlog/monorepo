@@ -7,58 +7,82 @@ database introspection must not overwrite the source schema. The deploy command
 initializes empty databases and applies only pending migrations to databases
 already tracked by Drizzle.
 
-## Time-ordered battle IDs
+## TimescaleDB battle tables
 
-`20261004143306_battle_uuidv7_ids` replaces text battle IDs with UUIDv7
-values. The first 48 bits of an ID are the battle's `createdAt` in Unix
-milliseconds, and the `battles_id_createdAt_check` constraint keeps both
-equal, so the list, date filters and analytics order and filter by `id`
-alone. `createdAt` becomes `timestamptz(3)`.
+`20261004153153_battlelog_timescale` gives Battlelog its TimescaleDB schema in
+one step:
 
-Every existing battle receives a new ID built from its `createdAt`. Battles
-saved in the same millisecond keep their previous ID order, so paging through
-a user's history returns the same order as before. `battle_legacy_ids` maps
-each old ID (Prisma CUID, cuid2 or UUIDv4) to the new one: paths that take a
-battle ID still accept old links, and R2 keeps timelines of these battles
-under their old ID. `battle_object_deletions` therefore records the R2 object
-ID, which is the old ID for migrated battles. Drop the table after timelines
-leave R2 (LOO-255); old links stop resolving then.
+- **Battle IDs are UUIDv7.** The first 48 bits of an ID are the battle's
+  `createdAt` in Unix milliseconds; `battles_id_createdAt_check` keeps both
+  equal, so the list, date filters and analytics order and filter by `id`.
+  `createdAt` and `updatedAt` are `timestamptz`.
+- **Hypertables.** `battles`, `battle_warriors` and `battle_timelines` are
+  partitioned by battle ID in 7-day chunks. `battles` and `battle_warriors`
+  are compressed 7 days after a chunk closes, segmented by `"userId"`, so every
+  participant row carries its battle's owner and joins on `("battleId",
+"userId")`. Timelines are zstd-compressed already and are not.
+- **No duplicated or derived data.** Participant statistics live only in their
+  columns; `battles.statistics` is computed when a battle is read. A
+  participant is identified by `("battleId", "originalId")`.
+- **Plain side tables.** A unique index on a hypertable must contain the
+  partition column, so `(userId, submissionId)` lives in `battle_submissions`.
+  Hypertables cannot reference each other, so the foreign keys are gone and
+  `BattleDeletion` removes a battle's rows from every table together.
+- **Timelines.** New battles store the submitted events in `battle_timelines`
+  in the same transaction as the battle. Battles saved before keep their R2
+  object; `battle_legacy_ids` maps their old ID (Prisma CUID, cuid2 or UUIDv4)
+  to the new one, so old links resolve and R2 reads and deletions use the old
+  key. Drop it together with the R2 bucket.
 
-The migration rewrites `battles`, `battle_warriors` and their indexes in one
-transaction and ships with the TimescaleDB migration (LOO-254). Released
-services still write text IDs, so stop them before applying it. On the local
-production copy (11.2 million battles, 0.5 CPU) it takes about 25
-minutes and shrinks the database from 59 GB to 32 GB, because the rewrite
-also drops the space of the columns `20261004114013_battle_derived_data`
-removed.
+The migration creates the tables on an empty database (tests, new
+environments) and refuses to run when `battles` holds rows. PGlite has no
+TimescaleDB, so tests there keep plain tables.
 
-## Participant key and derived battle data
+### Moving a database with battles
 
-`20261004114013_battle_derived_data` removes data that Battlelog can derive.
-Participant statistics live only in their columns; the `stats` JSON copy and
-`statsVersion` are dropped. `battles.statistics` is dropped: awards are
-computed from the participants when a battle is read. A participant is
-identified by `("battleId", "originalId")` instead of a random `id`. Redundant
-participant and battle indexes are dropped, and `user_characters` and
-`battle_object_deletions` store `timestamptz`.
+`scripts/battlelog-timescale-cutover.ts` builds the new tables in the
+`battlelog_next` schema from the migration's `BEGIN`/`END battle tables`
+section and copies the battles while the released service keeps reading and
+writing. Triggers on the old tables record every battle the service inserts,
+changes or deletes during the copy. Each step is manual:
 
-The migration ships with the TimescaleDB migration (LOO-254) and follows its
-cutover: released services still write the dropped columns, and the
-participant primary key is built inside the migration transaction. Dropping a
-column does not shrink existing rows; their space returns when the tables are
-rewritten.
+1. `prepare` creates the `timescaledb` extension, `battlelog_next`, the change
+   triggers and a `createdAt` index on the old battles. Compression policies
+   stay paused during the copy.
+2. `copy` copies battles in whole milliseconds of `createdAt`, one transaction
+   per batch (`CUTOVER_BATCH_SIZE`, 20,000 by default). Every battle gets a
+   UUIDv7 from its `createdAt`; battles saved in the same millisecond keep
+   their previous order. It resumes where it stopped and compresses the
+   finished chunks at the end. Run it again until it reports no new battles;
+   `status` shows its progress and the pending changes.
+3. `cutover` blocks writes to the old tables (reads continue), copies the
+   remaining battles, re-copies every recorded change, moves the old tables to
+   `battlelog_old` and the new ones to `public`, applies the rest of the
+   migration, resumes the compression policies and records the migration for
+   Drizzle. Release the new Battlelog service right after it: until the new
+   pods are ready, the released service fails against the new schema, and
+   battles submitted in that gap are rejected and lost, because the game
+   client retries for about a second.
+4. `verify` compares the old and new tables; `cleanup` drops `battlelog_old`.
 
-Submissions accept a warrior only under its own `originalId`, so a battle
-cannot hold the same participant twice. Rows accepted earlier are checked by
-the primary key: if the migration fails with a duplicate key, it rolls back
-completely. List the affected participants before deciding how to repair them:
+Until `cleanup`, rolling back means moving the tables back and releasing the
+previous service; battles saved after the cutover would have to be copied back
+by hand, so prefer a forward fix.
+
+### Backup and restore
+
+CNPG's barman backups are physical and restore TimescaleDB unchanged. For a
+logical copy, dump with `pg_dump -Fd` and restore into a database that already
+has the extension:
 
 ```sql
-SELECT "battleId", "originalId", count(*)
-FROM "battle_warriors"
-GROUP BY "battleId", "originalId"
-HAVING count(*) > 1;
+CREATE EXTENSION IF NOT EXISTS timescaledb;
+SELECT timescaledb_pre_restore();
+-- pg_restore -Fd -d battlelog <dump>
+SELECT timescaledb_post_restore();
 ```
+
+Restore with the same TimescaleDB version as the dump (2.24.0).
 
 ## Object cleanup
 

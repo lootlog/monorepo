@@ -33,8 +33,11 @@ import {
 } from "@lootlog/api/database/schema";
 import {
   battles as battlesTable,
+  battleTimelines as battleTimelinesTable,
   battleWarriors as battleWarriorsTable,
 } from "@lootlog/battlelog/database/schema";
+import { createBattleId } from "@lootlog/battlelog/battles/battle-id";
+import { encodeBattleEvents } from "@lootlog/battlelog/battles/battle-timeline";
 import { GuildGenerator } from "./generators/guild-generator.js";
 import { LootGenerator } from "./generators/loot-generator.js";
 import { BattlesGenerator } from "./generators/battles-generator.js";
@@ -842,6 +845,7 @@ async function seedBattles(count: number) {
 
       await battlelogDatabase.transaction(async (transaction) => {
         const battleValues: typeof battlesTable.$inferInsert = {
+          ...createBattleId(Date.now()),
           userId,
           accountId: battlePayload.accountId,
           characterId: battlePayload.characterId,
@@ -868,9 +872,15 @@ async function seedBattles(count: number) {
         await transaction.insert(battleWarriorsTable).values(
           analysis.warriors.map((warrior) => ({
             battleId: battle.id,
+            userId,
             ...toSeedBattleWarrior(warrior),
           })),
         );
+        await transaction.insert(battleTimelinesTable).values({
+          battleId: battle.id,
+          userId,
+          events: encodeBattleEvents(battlePayload.events),
+        });
       });
 
       createdCount++;

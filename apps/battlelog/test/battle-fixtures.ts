@@ -20,6 +20,7 @@ const createWarriorFixture = (
   ...(warriorStatDefaults as Omit<
     BattleWarrior,
     | "battleId"
+    | "userId"
     | "originalId"
     | "name"
     | "lvl"
@@ -29,6 +30,7 @@ const createWarriorFixture = (
     | "turns"
   >),
   battleId: "battle-1",
+  userId: "user-1",
   originalId: "character-1",
   name: "Character",
   lvl: 100,
@@ -53,7 +55,6 @@ export const createBattleFixture = ({
   world: "world-1",
   duration: 0,
   semanticFingerprint: null,
-  submissionId: null,
   public: false,
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
   updatedAt: new Date("2026-01-01T00:00:00.000Z"),

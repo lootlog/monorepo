@@ -32,7 +32,9 @@ const storedBattles = async () =>
 let pool: pg.Pool;
 
 beforeAll(async () => {
-  postgres = await new PostgreSqlContainer("postgres:17-alpine").start();
+  postgres = await new PostgreSqlContainer(
+    "timescale/timescaledb:2.24.0-pg17",
+  ).start();
   pool = new pg.Pool({ connectionString: postgres.getConnectionUri() });
 
   const child = Bun.spawn(["bun", "src/database/migrate.ts"], {
@@ -61,15 +63,19 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await pool.query(
-    "TRUNCATE battles, user_characters, battle_object_deletions CASCADE",
+    "TRUNCATE battles, battle_warriors, battle_timelines, battle_submissions, battle_legacy_ids, user_characters, battle_object_deletions",
   );
   await pool.query(`INSERT INTO battles (id, "createdAt", "userId", "accountId", "characterId", world, duration, type, winner, loser, "winningTeam", "losingTeam", public)
     SELECT id, battle_id_created_at(id), owner, 'account', 'character', 'world', 1, 'pvp', 'winner', 'loser', 1, 2, true
     FROM (VALUES ('${BATTLE_IDS.one}'::uuid, 'owner'), ('${BATTLE_IDS.two}'::uuid, 'owner'), ('${BATTLE_IDS.other}'::uuid, 'other-owner')) AS seed(id, owner);
     INSERT INTO battle_legacy_ids ("legacyId", "battleId") VALUES ('${LEGACY_ONE}', '${BATTLE_IDS.one}');
     INSERT INTO user_characters (id, "userId", "characterId", name, world) VALUES ('character', 'owner', 'character', 'name', 'world');
-    INSERT INTO battle_warriors ("battleId", "originalId", name, lvl, prof, icon, team, turns)
-    VALUES ('${BATTLE_IDS.one}', 'character', 'name', 1, 'w', 'icon', 1, 1);`);
+    INSERT INTO battle_warriors ("battleId", "userId", "originalId", name, lvl, prof, icon, team, turns)
+    SELECT id, "userId", 'character', 'name', 1, 'w', 'icon', 1, 1 FROM battles;
+    INSERT INTO battle_submissions ("userId", "submissionId", "battleId")
+    SELECT "userId", id::text, id FROM battles;
+    INSERT INTO battle_timelines ("battleId", "userId", events)
+    SELECT id, "userId", '\\x00' FROM battles WHERE id <> '${BATTLE_IDS.one}';`);
 });
 
 const run = <A, E>(effect: Effect.Effect<A, E, PgClient.PgClient>) =>
@@ -110,8 +116,8 @@ for (const mode of ["single", "user"] as const) {
       }),
     );
 
-    const expected =
-      mode === "single" ? [LEGACY_ONE] : [LEGACY_ONE, BATTLE_IDS.two];
+    // Only the battle saved before timelines moved to Postgres owns an object.
+    const expected = [LEGACY_ONE];
 
     expect(
       (
@@ -132,9 +138,19 @@ for (const mode of ["single", "user"] as const) {
         [],
       );
 
-    expect(
-      (await pool.query(`SELECT "battleId" FROM battle_warriors`)).rows,
-    ).toEqual([]);
+    // Battle hypertables have no cascading foreign keys.
+    for (const table of [
+      "battle_warriors",
+      "battle_timelines",
+      "battle_submissions",
+    ])
+      expect(
+        (
+          await pool.query(
+            `SELECT "battleId" FROM ${table} ORDER BY "battleId"`,
+          )
+        ).rows.map((row) => battleName(row.battleId)),
+      ).toEqual(mode === "single" ? ["two", "other"] : ["other"]);
     expect(
       (
         await pool.query(
@@ -192,29 +208,6 @@ it("rolls back database removal if durable cleanup cannot be recorded", async ()
       "ALTER TABLE battle_object_deletions DROP CONSTRAINT reject_cleanup",
     );
   }
-});
-
-it("scopes submission uniqueness to the owner and rejects duplicate retries for that owner", async () => {
-  await pool.query(
-    `UPDATE battles SET "submissionId" = 'shared-submission' WHERE id = '${BATTLE_IDS.one}'`,
-  );
-  await pool.query(
-    `UPDATE battles SET "submissionId" = 'shared-submission' WHERE id = '${BATTLE_IDS.other}'`,
-  );
-  await expect(
-    pool.query(
-      `UPDATE battles SET "submissionId" = 'shared-submission' WHERE id = '${BATTLE_IDS.two}'`,
-    ),
-  ).rejects.toMatchObject({ code: "23505" });
-  expect(
-    (
-      await pool.query('SELECT id, "submissionId" FROM battles ORDER BY id')
-    ).rows.map((row) => ({ ...row, id: battleName(row.id) })),
-  ).toEqual([
-    { id: "one", submissionId: "shared-submission" },
-    { id: "two", submissionId: null },
-    { id: "other", submissionId: "shared-submission" },
-  ]);
 });
 
 it("claims disjoint cleanup batches across workers and invalidates each owner once", async () => {
