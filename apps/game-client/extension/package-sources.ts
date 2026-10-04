@@ -16,15 +16,14 @@ const output = path.join(
 
 const ROOT_FILES = new Set([
   ".gitignore",
-  ".oxfmtrc.json",
+  ".oxfmtrc.jsonc",
   ".oxlintrc.json",
   "LICENSE",
-  "LICENSE.md",
   "README.md",
   "bun.lock",
   "bunfig.toml",
   "commitlint.config.js",
-  "lint-staged.config.js",
+  "lint-staged.config.mjs",
   "package.json",
   "tsconfig.json",
   "turbo.json",

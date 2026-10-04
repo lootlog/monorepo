@@ -8,8 +8,7 @@
     "**/build",
     "**/coverage",
     "**/.source",
-    "**/*.tsbuildinfo",
-    "src/lib/api/generated/**"
+    "**/*.tsbuildinfo"
   ],
   "env": {
     "browser": true,
