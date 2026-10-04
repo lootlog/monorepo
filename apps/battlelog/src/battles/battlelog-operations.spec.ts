@@ -53,4 +53,34 @@ describe("Battlelog operations", () => {
     expect(assertBattleOwner).toHaveBeenCalledWith("battle-1", "user-1");
     expect(updateBattle).toHaveBeenCalledWith("battle-1", { public: true });
   });
+
+  it("awards ties to the lowest warrior ID regardless of row order", async () => {
+    const getPublicBattle = mock(() =>
+      Effect.succeed(
+        createBattleFixture({
+          warriors: [
+            { originalId: "10", name: "Later", criticalHits: 2, turns: 3 },
+            { originalId: "9", name: "Earlier", criticalHits: 2, turns: 3 },
+          ],
+        }),
+      ),
+    );
+
+    const operations = makeBattlelogOperations(
+      { ...unusedBattles, getPublicBattle },
+      unusedBattleAnalytics,
+      unusedDeleteQueue,
+    );
+
+    const battle = await Effect.runPromise(
+      operations.publicBattles.getPublicBattle("battle-1"),
+    );
+
+    expect(battle.statistics.criticalMaster).toEqual({
+      warriorId: "9",
+      name: "Earlier",
+      value: 2,
+    });
+    expect(battle.statistics.mostActive?.warriorId).toBe("9");
+  });
 });

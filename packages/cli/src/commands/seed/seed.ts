@@ -854,7 +854,6 @@ async function seedBattles(count: number) {
           losingTeam,
           honorPoints: totalPH,
           hasFlee: analysis.outcome.hasFlee,
-          statistics: analysis.statistics,
         };
 
         const [battle] = await transaction

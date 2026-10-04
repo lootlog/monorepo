@@ -3,7 +3,6 @@ import * as Schema from "effect/Schema";
 import { DateTimeString, FiniteNumber } from "@lootlog/schema/http-scalars";
 
 const BattleWarriorResponse = Schema.Struct({
-  id: Schema.String,
   battleId: Schema.String,
   originalId: Schema.String,
   name: Schema.String,

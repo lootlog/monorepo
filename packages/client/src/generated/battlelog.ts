@@ -132,7 +132,6 @@ export type BattleTimelineResponseDtoOutputTimelineItem = {
 export type BattleTimelineResponseDtoOutputWarriorsItemSpellsUsedMap = {[key: string]: number};
 
 export type BattleTimelineResponseDtoOutputWarriorsItem = {
-  id: string;
   battleId: string;
   originalId: string;
   name: string;
@@ -384,7 +383,6 @@ export type BattleResponseDtoOutputStatistics = {
 export type BattleResponseDtoOutputWarriorsItemSpellsUsedMap = {[key: string]: number};
 
 export type BattleResponseDtoOutputWarriorsItem = {
-  id: string;
   battleId: string;
   originalId: string;
   name: string;
@@ -1036,7 +1034,6 @@ export type BattlesListResponseDtoOutputBattlesItemStatistics = {
 export type BattlesListResponseDtoOutputBattlesItemWarriorsItemSpellsUsedMap = {[key: string]: number};
 
 export type BattlesListResponseDtoOutputBattlesItemWarriorsItem = {
-  id: string;
   battleId: string;
   originalId: string;
   name: string;

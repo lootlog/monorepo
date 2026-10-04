@@ -3,16 +3,31 @@ import { Effect } from "effect";
 import type { Battles } from "../src/battles/battles.service.js";
 import type { BattleAnalytics } from "../src/battles/analytics/battle-analytics.service.js";
 import type { BattleWithRelations } from "#src/battles/battle-service";
-import {
-  buildBattleWarriorStats,
-  type InflatedBattleWarrior,
-} from "#src/battles/statistics/battle-warrior-stats";
+import { getColumns } from "drizzle-orm";
+import { battleWarriors, type BattleWarrior } from "#src/database/schema";
+
+const warriorStatDefaults = Object.fromEntries(
+  Object.entries(getColumns(battleWarriors)).flatMap(([key, column]) =>
+    column.hasDefault ? [[key, column.default]] : [],
+  ),
+);
 
 const createWarriorFixture = (
-  overrides: Partial<InflatedBattleWarrior> = {},
-): InflatedBattleWarrior => ({
-  ...buildBattleWarriorStats({}),
-  id: "warrior-1",
+  overrides: Partial<BattleWarrior> = {},
+): BattleWarrior => ({
+  // SAFETY: Every participant column except the identity fields and turns,
+  // assigned below, has a schema default.
+  ...(warriorStatDefaults as Omit<
+    BattleWarrior,
+    | "battleId"
+    | "originalId"
+    | "name"
+    | "lvl"
+    | "prof"
+    | "icon"
+    | "team"
+    | "turns"
+  >),
   battleId: "battle-1",
   originalId: "character-1",
   name: "Character",
@@ -20,6 +35,7 @@ const createWarriorFixture = (
   prof: "w",
   icon: "",
   team: 1,
+  turns: 0,
   ph: 0,
   ...overrides,
 });
@@ -28,7 +44,7 @@ export const createBattleFixture = ({
   warriors = [],
   ...overrides
 }: Omit<Partial<BattleWithRelations>, "warriors"> & {
-  warriors?: Array<Partial<InflatedBattleWarrior>>;
+  warriors?: Array<Partial<BattleWarrior>>;
 } = {}): BattleWithRelations => ({
   id: "battle-1",
   userId: "user-1",
@@ -49,18 +65,7 @@ export const createBattleFixture = ({
   honorPoints: 0,
   hasFlee: false,
   matchmaking: false,
-  statistics: {
-    topDamageDealer: null,
-    topTank: null,
-    bestEfficiency: null,
-    criticalMaster: null,
-    evasionExpert: null,
-    shieldWall: null,
-    damagePerTurn: null,
-    mostActive: null,
-    legendaryWarrior: null,
-    untouchable: null,
-  },
+
   difficultyRank: null,
   result: null,
   ratingDelta: null,

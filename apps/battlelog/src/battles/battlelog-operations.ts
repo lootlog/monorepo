@@ -1,4 +1,6 @@
+import { calculateBattleStatistics } from "@lootlog/battle-processor";
 import { Effect, Schema } from "effect";
+import { sortBy } from "es-toolkit";
 import { battlelogOperation } from "./battlelog-operation.js";
 import type { Battles } from "#src/battles/battles.service";
 import type { DeleteUserBattlesJobData } from "#src/battles/deletion/delete-user-battles.processor";
@@ -24,6 +26,11 @@ const normalizeBattleResponse = (battle: BattleWithRelations) =>
     ...battle,
     createdAt: battle.createdAt.toISOString(),
     updatedAt: battle.updatedAt.toISOString(),
+    // Awards break ties by the order the battle introduced its warriors: the
+    // game lists them in an object keyed by numeric ID, so ascending ID order.
+    statistics: calculateBattleStatistics(
+      sortBy(battle.warriors, [(warrior) => Number(warrior.originalId)]),
+    ),
   });
 
 const normalizeBattlesListResponse = (response: GetAllBattlesResult) => ({

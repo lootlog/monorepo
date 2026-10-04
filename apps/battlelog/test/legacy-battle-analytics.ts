@@ -3,7 +3,7 @@
 // the same PostgreSQL rows. Keep it semantically frozen: a change here moves
 // the golden expectation, not the production behavior. The combat profile
 // reference reuses the production accumulator, so its parity covers row
-// selection and packed-stat fallback, not the aggregation arithmetic.
+// selection, not the aggregation arithmetic.
 import { orderBy } from "es-toolkit";
 import type {
   AbyssSeason,
@@ -17,14 +17,11 @@ import type {
   RatingGrowthDataPoint,
 } from "#src/battles/analytics/battle-statistics-response";
 import { combatProfileCalculator } from "#src/battles/analytics/combat-profile-calculator.service";
-import type { InflatedBattleWarrior } from "#src/battles/statistics/battle-warrior-stats";
-import type { Battle } from "#src/database/schema";
+import type { Battle, BattleWarrior } from "#src/database/schema";
 
-export type InflatedBattleWithWarriors = Omit<Battle, "statistics"> & {
-  warriors: InflatedBattleWarrior[];
-};
+export type BattleWithWarriors = Battle & { warriors: BattleWarrior[] };
 
-type Battles = InflatedBattleWithWarriors[];
+type Battles = BattleWithWarriors[];
 
 const ABYSS_SEASON_GAP_MS = 14 * 24 * 60 * 60 * 1000;
 
@@ -42,30 +39,26 @@ const EMPTY_WARRIOR = {
 };
 
 const findUserWarrior = (
-  battle: InflatedBattleWithWarriors,
+  battle: BattleWithWarriors,
   characterIds: Set<string>,
-): InflatedBattleWarrior | undefined =>
+): BattleWarrior | undefined =>
   orderBy(
     battle.warriors.filter((warrior) => characterIds.has(warrior.originalId)),
-    [
-      (warrior) => warrior.originalId === battle.characterId,
-      "originalId",
-      "id",
-    ],
-    ["desc", "asc", "asc"],
+    [(warrior) => warrior.originalId === battle.characterId, "originalId"],
+    ["desc", "asc"],
   )[0];
 
 const findOpponentWarrior = (
-  battle: InflatedBattleWithWarriors,
+  battle: BattleWithWarriors,
   characterIds: Set<string>,
-): InflatedBattleWarrior | undefined =>
+): BattleWarrior | undefined =>
   orderBy(
     battle.warriors.filter((warrior) => !characterIds.has(warrior.originalId)),
-    ["originalId", "id"],
-    ["asc", "asc"],
+    ["originalId"],
+    ["asc"],
   )[0];
 
-const mapWarrior = (warrior: InflatedBattleWarrior | undefined) => {
+const mapWarrior = (warrior: BattleWarrior | undefined) => {
   const resolved = warrior ?? EMPTY_WARRIOR;
 
   return {
@@ -87,7 +80,7 @@ const isLevelInRange = (level: number, minLevel?: number, maxLevel?: number) =>
   (maxLevel === undefined || level <= maxLevel);
 
 const isOpponentLevelInRange = (
-  battle: InflatedBattleWithWarriors,
+  battle: BattleWithWarriors,
   characterIds: Set<string>,
   minLevel?: number,
   maxLevel?: number,
@@ -252,7 +245,7 @@ export const legacyBattleAnalytics = {
     const opponents = new Map<
       string,
       {
-        warrior: InflatedBattleWarrior;
+        warrior: BattleWarrior;
         totalRatingDelta: number;
         wins: number;
         losses: number;
@@ -317,9 +310,9 @@ export const legacyBattleAnalytics = {
     const opponents = new Map<
       string,
       {
-        battle: InflatedBattleWithWarriors;
-        userWarrior: InflatedBattleWarrior;
-        opponentWarrior: InflatedBattleWarrior;
+        battle: BattleWithWarriors;
+        userWarrior: BattleWarrior;
+        opponentWarrior: BattleWarrior;
         wins: number;
         losses: number;
         totalRatingDelta: number;

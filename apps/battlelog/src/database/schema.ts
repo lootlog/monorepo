@@ -6,11 +6,11 @@ import {
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import type { BattleWarriorStats } from "#src/battles/statistics/battle-warrior-stats.types";
 
 export const battles = pgTable(
   "battles",
@@ -40,7 +40,6 @@ export const battles = pgTable(
     honorPoints: integer("honorPoints").default(0).notNull(),
     hasFlee: boolean("hasFlee").default(false).notNull(),
     matchmaking: boolean("matchmaking").default(false).notNull(),
-    statistics: jsonb("statistics").notNull(),
 
     difficultyRank: integer("difficultyRank"),
     result: integer("result"),
@@ -82,7 +81,6 @@ export const battles = pgTable(
       table.submissionId,
     ),
     index("battles_public_createdAt_idx").on(table.public, table.createdAt),
-    index("battles_id_idx").on(table.id),
   ],
 );
 
@@ -91,8 +89,12 @@ export const battleObjectDeletions = pgTable(
   {
     battleId: text("battleId").primaryKey(),
     userId: text("userId").notNull(),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
-    retryAt: timestamp("retryAt").defaultNow().notNull(),
+    createdAt: timestamp("createdAt", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    retryAt: timestamp("retryAt", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
   (table) => [index("battle_object_deletions_retryAt_idx").on(table.retryAt)],
 );
@@ -108,9 +110,13 @@ export const userCharacters = pgTable(
     name: text("name").notNull(),
     world: text("world").notNull(),
     icon: text("icon").default("").notNull(),
-    lastSeenAt: timestamp("lastSeenAt").defaultNow().notNull(),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
-    updatedAt: timestamp("updatedAt")
+    lastSeenAt: timestamp("lastSeenAt", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp("createdAt", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updatedAt", { withTimezone: true })
       .defaultNow()
       .$onUpdateFn(() => new Date())
       .notNull(),
@@ -128,9 +134,6 @@ export const userCharacters = pgTable(
 export const battleWarriors = pgTable(
   "battle_warriors",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
     battleId: text("battleId")
       .notNull()
       .references(() => battles.id, { onDelete: "cascade" }),
@@ -146,12 +149,10 @@ export const battleWarriors = pgTable(
     steps: integer("steps").default(0).notNull(),
     normalAttacks: integer("normalAttacks").default(0).notNull(),
     spellsUsed: integer("spellsUsed").default(0).notNull(),
-    spellsUsedMap: jsonb("spellsUsedMap").default({}).notNull(),
-    stats: jsonb("stats")
-      .$type<Partial<BattleWarriorStats>>()
+    spellsUsedMap: jsonb("spellsUsedMap")
+      .$type<Record<string, number>>()
       .default({})
       .notNull(),
-    statsVersion: integer("statsVersion").default(1).notNull(),
 
     isDead: boolean("isDead").default(false).notNull(),
     surrendered: boolean("surrendered").default(false).notNull(),
@@ -249,13 +250,10 @@ export const battleWarriors = pgTable(
     ph: integer("ph").default(0).notNull(),
   },
   (table) => [
-    index("battle_warriors_originalId_idx").on(table.originalId),
-    index("battle_warriors_name_idx").on(table.name),
-    index("battle_warriors_battleId_team_idx").on(table.battleId, table.team),
-    index("battle_warriors_battleId_originalId_idx").on(
-      table.battleId,
-      table.originalId,
-    ),
+    primaryKey({
+      name: "battle_warriors_pkey",
+      columns: [table.battleId, table.originalId],
+    }),
     index("battle_warriors_originalId_battleId_idx").on(
       table.originalId,
       table.battleId,

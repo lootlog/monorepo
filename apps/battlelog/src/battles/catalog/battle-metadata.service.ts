@@ -210,7 +210,7 @@ export const makeBattleMetadata = (
         .from(battles)
         .innerJoinLateral(
           sql`(
-          SELECT ${battleWarriors.id}, ${battleWarriors.name},
+          SELECT ${battleWarriors.name},
                  ${battleWarriors.icon}, ${battleWarriors.prof}, ${battleWarriors.lvl}
           FROM ${battleWarriors}
           WHERE ${battleWarriors.battleId} = ${battles.id}
@@ -220,7 +220,8 @@ export const makeBattleMetadata = (
           sql`true`,
         )
         .where(eq(battles.userId, userId))
-        .orderBy(sql`w.name`, sql`w.id DESC`)
+        // The latest appearance supplies the icon, profession and level.
+        .orderBy(sql`w.name`, desc(battles.createdAt), desc(battles.id))
         .limit(10)
         .pipe(read);
 

@@ -15,19 +15,10 @@ import {
 import { and, eq, lt } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { CreateBattleInput } from "#src/battles/submission/create-battle";
-import {
-  BattleResponseSchemas,
-  type BattleTimelineResponseInput,
-} from "#src/battles/catalog/battle-response";
+import { BattleResponseSchemas } from "#src/battles/catalog/battle-response";
 import type { BattleListQuery } from "#src/battles/catalog/query-battles";
 import type { BattleUpdate } from "#src/battles/catalog/update-battle";
 import type { PaginationOptions } from "#src/battles/analytics/pagination";
-import { BATTLE_WARRIOR_STATS_VERSION } from "#src/battles/statistics/battle-warrior-stats.types";
-import {
-  buildBattleWarriorStats,
-  inflateBattleWarriorsInBattle,
-  inflateBattleWarriorsInBattles,
-} from "#src/battles/statistics/battle-warrior-stats";
 import type { BattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
 import type { BattleListFilter } from "#src/battles/catalog/battle-list-filter.service";
 import type { BattleMetadata } from "#src/battles/catalog/battle-metadata.service";
@@ -522,7 +513,7 @@ export const makeBattles = (
         );
 
         return {
-          battles: inflateBattleWarriorsInBattles(result.data),
+          battles: result.data,
           pagination: result.pagination,
           meta: {
             performance: result.performance,
@@ -601,7 +592,7 @@ export const makeBattles = (
             new ResourceNotFoundError(`Battle with ID ${battleId} not found`),
           );
 
-        return inflateBattleWarriorsInBattle(battle);
+        return battle;
       });
     },
 
@@ -667,7 +658,7 @@ export const makeBattles = (
             battleId: battle.id,
             generatedAt: new Date().toISOString(),
             timeline: analysis.battleTimeline,
-            warriors: battlesModule.normalizeTimelineWarriors(battle),
+            warriors: battle.warriors,
           };
         }),
       );
@@ -723,15 +714,6 @@ export const makeBattles = (
       );
     },
 
-    normalizeTimelineWarriors(
-      battle: BattleWithRelations,
-    ): BattleTimelineResponseInput["warriors"] {
-      return battle.warriors.map((warrior) => ({
-        ...warrior,
-        spellsUsedMap: warrior.spellsUsedMap,
-      }));
-    },
-
     updateBattle(battleId: string, updateData: BattleUpdate) {
       return Effect.gen(function* () {
         const updated = yield* adapter("Battles_update", () =>
@@ -762,7 +744,7 @@ export const makeBattles = (
             new ResourceNotFoundError(`Battle with ID ${battleId} not found`),
           );
 
-        return inflateBattleWarriorsInBattle(battle);
+        return battle;
       });
     },
 
@@ -786,7 +768,7 @@ export const makeBattles = (
             );
           }
 
-          return Effect.succeed(inflateBattleWarriorsInBattle(battle));
+          return Effect.succeed(battle);
         }),
       );
     },
@@ -950,7 +932,6 @@ export const makeBattles = (
                   losingTeam: analysis.outcome.losingTeam,
                   hasFlee: analysis.outcome.hasFlee,
                   matchmaking: !!analysis.matchmaking,
-                  statistics: analysis.statistics,
                   ...(analysis.matchmaking && {
                     difficultyRank: analysis.matchmaking.difficultyRank,
                     result: analysis.matchmaking.result,
@@ -998,8 +979,6 @@ export const makeBattles = (
                   normalAttacks: warrior.normalAttacks,
                   spellsUsed: warrior.spellsUsed,
                   spellsUsedMap: warrior.spellsUsedMap,
-                  stats: buildBattleWarriorStats(warrior),
-                  statsVersion: BATTLE_WARRIOR_STATS_VERSION,
                   damageDealt: warrior.damageDealt,
                   distanceDamage: warrior.distanceDamage,
                   meleeDamage: warrior.meleeDamage,

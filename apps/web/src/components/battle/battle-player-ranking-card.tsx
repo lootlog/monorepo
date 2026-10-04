@@ -47,7 +47,7 @@ export const BattlePlayerRankingCard: FC<BattlePlayerRankingCardProps> = ({
         <ol className="flex flex-col gap-1.5">
           {ranking.map((entry, index) => (
             <BattlePlayerRankingRow
-              key={entry.warrior.id}
+              key={entry.warrior.originalId}
               entry={entry}
               isCurrentCharacter={
                 entry.warrior.originalId === battle.characterId
