@@ -155,7 +155,7 @@ export async function scrapeNpcs(
     const typeNpcs = await scrapeNpcsByType(npcType);
     npcs.push(...typeNpcs);
 
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await Bun.sleep(100);
   }
 
   console.log(`Scraped ${npcs.length} NPCs successfully`);
