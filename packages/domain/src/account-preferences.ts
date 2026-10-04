@@ -275,12 +275,10 @@ export const normalizeDetector = flow(
   readPreferenceRecord,
   (settings): DetectorSettings => {
     const normalized = cloneDetector(defaultDetectorSettings);
-    normalized.routingRules = Array.isArray(settings?.routingRules)
-      ? normalizeRoutingRules(settings.routingRules)
-      : defaultDetectorSettings.routingRules.map((rule) => ({
-          ...rule,
-          guildIds: [...rule.guildIds],
-        }));
+
+    if (Array.isArray(settings?.routingRules)) {
+      normalized.routingRules = normalizeRoutingRules(settings.routingRules);
+    }
 
     for (const type of DETECTOR_NPC_TYPES) {
       normalized[type] = normalizeDetectorType(defaultDetectorSettings[type])(
