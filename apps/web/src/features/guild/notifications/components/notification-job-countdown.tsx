@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
 
 type NotificationJobCountdownProps = {
   scheduledFor: string;
@@ -55,9 +56,7 @@ export const NotificationJobCountdown = ({
 
     updateRemainingTime();
 
-    const interval = window.setInterval(updateRemainingTime, 1000);
-
-    return () => window.clearInterval(interval);
+    return subscribeToSecondClock(updateRemainingTime);
   }, [scheduledFor]);
 
   return (
