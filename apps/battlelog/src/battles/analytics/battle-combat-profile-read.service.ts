@@ -102,15 +102,13 @@ export const makeBattleCombatProfileRead = (
       or(eq(user.team, battles.winningTeam), eq(user.team, battles.losingTeam)),
     );
 
-    let cursor: { id: string; createdAt: string } | undefined;
+    let cursor: string | undefined;
 
     while (true) {
       const batch = yield* db
         .select({
           id: battles.id,
           createdAt: battles.createdAt,
-          // Preserve PostgreSQL microseconds at the keyset boundary; Date loses them.
-          cursorCreatedAt: sql<string>`${battles.createdAt}::text`,
           hasFlee: battles.hasFlee,
           winningTeam: battles.winningTeam,
           losingTeam: battles.losingTeam,
@@ -120,21 +118,8 @@ export const makeBattleCombatProfileRead = (
         })
         .from(battles)
         .innerJoinLateral(user, sql`true`)
-        .where(
-          and(
-            conditions,
-            cursor
-              ? or(
-                  gt(battles.createdAt, sql`${cursor.createdAt}::timestamp`),
-                  and(
-                    eq(battles.createdAt, sql`${cursor.createdAt}::timestamp`),
-                    gt(battles.id, cursor.id),
-                  ),
-                )
-              : undefined,
-          ),
-        )
-        .orderBy(asc(battles.createdAt), asc(battles.id))
+        .where(and(conditions, cursor ? gt(battles.id, cursor) : undefined))
+        .orderBy(asc(battles.id))
         .limit(BATCH_SIZE);
 
       if (batch.length === 0) break;
@@ -166,7 +151,7 @@ export const makeBattleCombatProfileRead = (
 
       if (batch.length < BATCH_SIZE) break;
       const last = batch[batch.length - 1];
-      cursor = { id: last.id, createdAt: last.cursorCreatedAt };
+      cursor = last.id;
     }
 
     return accumulator.result();

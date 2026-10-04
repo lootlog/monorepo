@@ -106,6 +106,7 @@ export const unusedBattles = {
   getPublicBattleTimeline: unexpectedOperation,
   getUserCharacters: unexpectedOperation,
   getUserWorlds: unexpectedOperation,
+  resolveBattleId: (battleId: string) => Effect.succeed(battleId),
   searchWarriors: unexpectedOperation,
   updateBattle: unexpectedOperation,
 } satisfies Battles;

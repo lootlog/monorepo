@@ -1,3 +1,4 @@
+import { firstBattleIdAt, lastBattleIdAt } from "#src/battles/battle-id";
 import { warriorExists } from "#src/battles/battle-warrior-query";
 import {
   and,
@@ -182,11 +183,15 @@ export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
         }
 
         if (query.startDate) {
-          conditions.push(gte(battlesRef.createdAt, new Date(query.startDate)));
+          conditions.push(
+            gte(battlesRef.id, firstBattleIdAt(new Date(query.startDate))),
+          );
         }
 
         if (query.endDate) {
-          conditions.push(lte(battlesRef.createdAt, new Date(query.endDate)));
+          conditions.push(
+            lte(battlesRef.id, lastBattleIdAt(new Date(query.endDate))),
+          );
         }
 
         if (query.search) {

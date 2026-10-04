@@ -1,20 +1,10 @@
-import { Logger } from "#src/infrastructure/logger";
 import { Clock, Effect } from "effect";
-import {
-  and,
-  count,
-  gt,
-  gte,
-  lt,
-  lte,
-  or,
-  eq,
-  sql,
-  type SQL,
-} from "drizzle-orm";
+import { and, count, gt, lt, sql, type SQL } from "drizzle-orm";
 import type { BattleReadBudget } from "#src/database/battle-read-budget";
 import type { DrizzleDatabase } from "#src/database/database";
 import { battles } from "#src/database/schema";
+import { isBattleId } from "#src/battles/battle-id";
+import { InvalidRequestError } from "#src/infrastructure/http-error";
 import type {
   CursorPagination,
   PaginationOptions,
@@ -22,8 +12,10 @@ import type {
 
 type WhereBuilder = (table: typeof battles) => SQL | undefined;
 
+type CursorDirection = "next" | "previous";
+
 interface DecodedCursor {
-  createdAt: Date;
+  direction: CursorDirection;
   id: string;
 }
 
@@ -31,72 +23,76 @@ type BattlePaginationDatabase = Pick<DrizzleDatabase, "select" | "execute"> & {
   query: { battles: Pick<DrizzleDatabase["query"]["battles"], "findMany"> };
 };
 
+const CURSOR_PREFIXES = { next: "n", previous: "p" } as const;
+
+// The cursor is opaque to clients: a direction and the battle ID that bounds
+// the page, exclusive.
+const encodeCursor = (direction: CursorDirection, id: string): string =>
+  Buffer.from(`${CURSOR_PREFIXES[direction]}:${id}`).toString("base64url");
+
+const decodeCursor = (cursor: string): DecodedCursor | null => {
+  const [prefix, id, ...rest] = Buffer.from(cursor, "base64url")
+    .toString("utf8")
+    .split(":");
+
+  if (rest.length > 0 || !id || !isBattleId(id)) return null;
+
+  if (prefix === CURSOR_PREFIXES.next) return { direction: "next", id };
+
+  if (prefix === CURSOR_PREFIXES.previous) return { direction: "previous", id };
+
+  return null;
+};
+
 export const makeBattlePagination = (
   drizzle: BattlePaginationDatabase,
   read: BattleReadBudget,
 ) => {
-  const logger = new Logger("BattlePagination");
-
-  const encodeCursor = (createdAt: Date, id: string): string =>
-    `${createdAt.toISOString()}_${id}`;
-
-  const decodeCursor = (cursor: string): DecodedCursor | null => {
-    const separatorIndex = cursor.indexOf("_");
-
-    if (separatorIndex === -1) {
-      return null;
-    }
-
-    const timestamp = cursor.slice(0, separatorIndex);
-    const id = cursor.slice(separatorIndex + 1);
-    const createdAt = new Date(timestamp);
-
-    if (Number.isNaN(createdAt.getTime())) {
-      return null;
-    }
-
-    return { createdAt, id };
-  };
-
   const paginateBattles = (
     whereBuilder: WhereBuilder,
     options: PaginationOptions,
-  ) =>
-    Effect.gen(function* () {
+  ) => {
+    const { size = 20, cursor, includeTotal } = options;
+    const decodedCursor = cursor ? decodeCursor(cursor) : null;
+
+    if (cursor && !decodedCursor) {
+      return Effect.fail(new InvalidRequestError("Invalid pagination cursor"));
+    }
+
+    return Effect.gen(function* () {
       const startTime = yield* Clock.currentTimeMillis;
-      const { size = 20, cursor, includeTotal } = options;
-      const decodedCursor = decodeOptionalCursor(cursor);
 
-      const order = options.sortOrder === "asc" ? "asc" : "desc";
+      // A previous page reads towards the start of the list from its cursor,
+      // then restores the list order. One extra row reports whether more
+      // battles lie in the direction read.
+      const backward = decodedCursor?.direction === "previous";
+      const descending = (options.sortOrder !== "asc") !== backward;
+      const order = descending ? "desc" : "asc";
 
-      const results = yield* drizzle.query.battles.findMany({
+      const rows = yield* drizzle.query.battles.findMany({
         where: {
-          RAW: (table: typeof battles) => {
-            const base = whereBuilder(table);
-
-            return buildCursorWhere(table, base, decodedCursor, options);
-          },
+          RAW: (table: typeof battles) =>
+            and(
+              whereBuilder(table),
+              decodedCursor
+                ? (descending ? lt : gt)(table.id, decodedCursor.id)
+                : undefined,
+            ),
         },
         limit: size + 1,
         with: { warriors: true },
-        orderBy: { createdAt: order, id: order },
+        orderBy: { id: order },
       });
 
-      const hasNext = results.length > size;
-      const items = hasNext ? results.slice(0, size) : results;
+      const hasMore = rows.length > size;
+      const items = rows.slice(0, size);
 
-      let nextCursor: string | undefined;
+      if (backward) items.reverse();
 
-      if (hasNext && items.length > 0) {
-        const lastItem = items[items.length - 1];
-        nextCursor = encodeCursor(lastItem.createdAt, lastItem.id);
-      }
-
-      const previousCursor = yield* getPreviousCursor(
-        whereBuilder,
-        decodedCursor,
-        options,
-      );
+      const hasNext = backward || hasMore;
+      const hasPrev = backward ? hasMore : decodedCursor !== null;
+      const first = items[0];
+      const last = items[items.length - 1];
 
       let total: number | undefined;
       const countStartTime = yield* Clock.currentTimeMillis;
@@ -111,9 +107,10 @@ export const makeBattlePagination = (
       const pagination: CursorPagination = {
         size,
         hasNext,
-        hasPrev: decodedCursor !== null,
-        nextCursor,
-        previousCursor,
+        hasPrev,
+        nextCursor: hasNext && last ? encodeCursor("next", last.id) : undefined,
+        previousCursor:
+          hasPrev && first ? encodeCursor("previous", first.id) : undefined,
         total,
       };
 
@@ -136,101 +133,6 @@ export const makeBattlePagination = (
         attributes: { adapter: "drizzle", retryCount: 0 },
       }),
     );
-
-  const buildCursorWhere = (
-    table: typeof battles,
-    where: SQL | undefined,
-    decoded: DecodedCursor | null,
-    options: PaginationOptions,
-  ): SQL | undefined => {
-    if (!decoded) {
-      return where;
-    }
-
-    const { createdAt, id } = decoded;
-    const cmp = options.sortOrder === "desc" ? lt : gt;
-
-    const cursorCondition = or(
-      cmp(table.createdAt, createdAt),
-      and(eq(table.createdAt, createdAt), cmp(table.id, id)),
-    );
-
-    return where ? and(where, cursorCondition) : cursorCondition;
-  };
-
-  const getPreviousCursor = (
-    whereBuilder: WhereBuilder,
-    decoded: DecodedCursor | null,
-    options: PaginationOptions,
-  ) =>
-    Effect.gen(function* () {
-      if (!decoded) {
-        return undefined;
-      }
-
-      const size = options.size ?? 20;
-      const reverseOrder = options.sortOrder === "asc" ? "desc" : "asc";
-
-      const previousWindow = yield* drizzle.query.battles.findMany({
-        columns: { id: true, createdAt: true },
-        where: {
-          RAW: (table: typeof battles) => {
-            const base = whereBuilder(table);
-
-            return buildPreviousCursorWhere(table, base, decoded, options);
-          },
-        },
-        limit: size + 1,
-        orderBy: { createdAt: reverseOrder, id: reverseOrder },
-      });
-
-      if (previousWindow.length <= size) {
-        return undefined;
-      }
-
-      const previousBoundary = previousWindow[size];
-
-      if (!previousBoundary) {
-        return undefined;
-      }
-
-      return encodeCursor(previousBoundary.createdAt, previousBoundary.id);
-    });
-
-  const buildPreviousCursorWhere = (
-    table: typeof battles,
-    where: SQL | undefined,
-    decoded: DecodedCursor,
-    options: PaginationOptions,
-  ): SQL | undefined => {
-    const { createdAt, id } = decoded;
-    const createdAtComparator = options.sortOrder === "desc" ? gt : lt;
-    const idComparator = options.sortOrder === "desc" ? gte : lte;
-
-    const previousCursorCondition = or(
-      createdAtComparator(table.createdAt, createdAt),
-      and(eq(table.createdAt, createdAt), idComparator(table.id, id)),
-    );
-
-    return where
-      ? and(where, previousCursorCondition)
-      : previousCursorCondition;
-  };
-
-  const decodeOptionalCursor = (
-    cursor: string | undefined,
-  ): DecodedCursor | null => {
-    if (!cursor) {
-      return null;
-    }
-
-    const decoded = decodeCursor(cursor);
-
-    if (!decoded) {
-      logger.warn(`Invalid cursor format: ${cursor}`);
-    }
-
-    return decoded;
   };
 
   const getEstimatedCount = (where: SQL | undefined) =>
