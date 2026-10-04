@@ -6,6 +6,60 @@ import {
   FiniteNumber,
 } from "@lootlog/schema/http-scalars";
 
+const ActivityListQuery = Schema.Struct({
+  type: Schema.optionalKey(
+    Schema.Array(Schema.Literals(["CONNECT_EVENT", "DISCONNECT_EVENT"])),
+  ),
+  source: Schema.optionalKey(
+    Schema.Array(Schema.Literals(["GAME", "WEB_APP"])),
+  ),
+  playerName: Schema.optionalKey(Schema.String),
+  clanName: Schema.optionalKey(Schema.String),
+  world: Schema.optionalKey(Schema.String),
+  startDate: Schema.optionalKey(DateTimeWithOffsetString),
+  endDate: Schema.optionalKey(DateTimeWithOffsetString),
+  cursor: Schema.optionalKey(Schema.String),
+  limit: Schema.optionalKey(
+    Schema.Number.annotate({ default: 50 })
+      .check(Schema.isInt().annotate({ expected: "an integer" }))
+      .check(
+        Schema.isGreaterThanOrEqualTo(1).annotate({
+          expected: "a value greater than or equal to 1",
+        }),
+      )
+      .check(
+        Schema.isLessThanOrEqualTo(100).annotate({
+          expected: "a value less than or equal to 100",
+        }),
+      ),
+  ),
+});
+
+const activitySuggestionsQuery = (defaultLimit: number) =>
+  Schema.Struct({
+    search: Schema.optionalKey(
+      Schema.String.check(
+        Schema.isMaxLength(50).annotate({
+          expected: "a value with a length of at most 50",
+        }),
+      ),
+    ),
+    limit: Schema.optionalKey(
+      Schema.Number.annotate({ default: defaultLimit })
+        .check(Schema.isInt().annotate({ expected: "an integer" }))
+        .check(
+          Schema.isGreaterThanOrEqualTo(1).annotate({
+            expected: "a value greater than or equal to 1",
+          }),
+        )
+        .check(
+          Schema.isLessThanOrEqualTo(50).annotate({
+            expected: "a value less than or equal to 50",
+          }),
+        ),
+    ),
+  });
+
 export type PaginatedActivitiesResponseDto =
   typeof PaginatedActivitiesResponseDto.Type;
 
@@ -150,34 +204,7 @@ export const ActivitiesControllerFindByGuildPathParams = Schema.Struct({
 export type ActivitiesControllerFindByGuildQuery =
   typeof ActivitiesControllerFindByGuildQuery.Type;
 
-export const ActivitiesControllerFindByGuildQuery = Schema.Struct({
-  type: Schema.optionalKey(
-    Schema.Array(Schema.Literals(["CONNECT_EVENT", "DISCONNECT_EVENT"])),
-  ),
-  source: Schema.optionalKey(
-    Schema.Array(Schema.Literals(["GAME", "WEB_APP"])),
-  ),
-  playerName: Schema.optionalKey(Schema.String),
-  clanName: Schema.optionalKey(Schema.String),
-  world: Schema.optionalKey(Schema.String),
-  startDate: Schema.optionalKey(DateTimeWithOffsetString),
-  endDate: Schema.optionalKey(DateTimeWithOffsetString),
-  cursor: Schema.optionalKey(Schema.String),
-  limit: Schema.optionalKey(
-    Schema.Number.annotate({ default: 50 })
-      .check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(100).annotate({
-          expected: "a value less than or equal to 100",
-        }),
-      ),
-  ),
-});
+export const ActivitiesControllerFindByGuildQuery = ActivityListQuery;
 
 export type ActivitiesControllerFindByGuild200 =
   typeof ActivitiesControllerFindByGuild200.Type;
@@ -195,29 +222,8 @@ export const ActivitiesControllerSuggestActorNamesPathParams = Schema.Struct({
 export type ActivitiesControllerSuggestActorNamesQuery =
   typeof ActivitiesControllerSuggestActorNamesQuery.Type;
 
-export const ActivitiesControllerSuggestActorNamesQuery = Schema.Struct({
-  search: Schema.optionalKey(
-    Schema.String.check(
-      Schema.isMaxLength(50).annotate({
-        expected: "a value with a length of at most 50",
-      }),
-    ),
-  ),
-  limit: Schema.optionalKey(
-    Schema.Number.annotate({ default: 10 })
-      .check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(50).annotate({
-          expected: "a value less than or equal to 50",
-        }),
-      ),
-  ),
-});
+export const ActivitiesControllerSuggestActorNamesQuery =
+  activitySuggestionsQuery(10);
 
 export type ActivitiesControllerSuggestActorNames200 =
   typeof ActivitiesControllerSuggestActorNames200.Type;
@@ -235,29 +241,8 @@ export const ActivitiesControllerSuggestWorldsPathParams = Schema.Struct({
 export type ActivitiesControllerSuggestWorldsQuery =
   typeof ActivitiesControllerSuggestWorldsQuery.Type;
 
-export const ActivitiesControllerSuggestWorldsQuery = Schema.Struct({
-  search: Schema.optionalKey(
-    Schema.String.check(
-      Schema.isMaxLength(50).annotate({
-        expected: "a value with a length of at most 50",
-      }),
-    ),
-  ),
-  limit: Schema.optionalKey(
-    Schema.Number.annotate({ default: 20 })
-      .check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(50).annotate({
-          expected: "a value less than or equal to 50",
-        }),
-      ),
-  ),
-});
+export const ActivitiesControllerSuggestWorldsQuery =
+  activitySuggestionsQuery(20);
 
 export type ActivitiesControllerSuggestWorlds200 =
   typeof ActivitiesControllerSuggestWorlds200.Type;
@@ -275,29 +260,8 @@ export const ActivitiesControllerSuggestClanNamesPathParams = Schema.Struct({
 export type ActivitiesControllerSuggestClanNamesQuery =
   typeof ActivitiesControllerSuggestClanNamesQuery.Type;
 
-export const ActivitiesControllerSuggestClanNamesQuery = Schema.Struct({
-  search: Schema.optionalKey(
-    Schema.String.check(
-      Schema.isMaxLength(50).annotate({
-        expected: "a value with a length of at most 50",
-      }),
-    ),
-  ),
-  limit: Schema.optionalKey(
-    Schema.Number.annotate({ default: 10 })
-      .check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(50).annotate({
-          expected: "a value less than or equal to 50",
-        }),
-      ),
-  ),
-});
+export const ActivitiesControllerSuggestClanNamesQuery =
+  activitySuggestionsQuery(10);
 
 export type ActivitiesControllerSuggestClanNames200 =
   typeof ActivitiesControllerSuggestClanNames200.Type;
@@ -316,34 +280,7 @@ export const ActivitiesControllerFindByUserPathParams = Schema.Struct({
 export type ActivitiesControllerFindByUserQuery =
   typeof ActivitiesControllerFindByUserQuery.Type;
 
-export const ActivitiesControllerFindByUserQuery = Schema.Struct({
-  type: Schema.optionalKey(
-    Schema.Array(Schema.Literals(["CONNECT_EVENT", "DISCONNECT_EVENT"])),
-  ),
-  source: Schema.optionalKey(
-    Schema.Array(Schema.Literals(["GAME", "WEB_APP"])),
-  ),
-  playerName: Schema.optionalKey(Schema.String),
-  clanName: Schema.optionalKey(Schema.String),
-  world: Schema.optionalKey(Schema.String),
-  startDate: Schema.optionalKey(DateTimeWithOffsetString),
-  endDate: Schema.optionalKey(DateTimeWithOffsetString),
-  cursor: Schema.optionalKey(Schema.String),
-  limit: Schema.optionalKey(
-    Schema.Number.annotate({ default: 50 })
-      .check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(100).annotate({
-          expected: "a value less than or equal to 100",
-        }),
-      ),
-  ),
-});
+export const ActivitiesControllerFindByUserQuery = ActivityListQuery;
 
 export type ActivitiesControllerFindByUser200 =
   typeof ActivitiesControllerFindByUser200.Type;
