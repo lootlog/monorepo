@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Query, QueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 import {
   getEventsMonitoringControllerGetActiveGapForMapQueryKey,
   getEventsMonitoringControllerGetMapCoverageGapsQueryKey,
@@ -7,18 +7,13 @@ import {
 } from "@lootlog/client/main";
 import { invalidateEventCoordinationQuery } from "./invalidate-event-queries";
 
-const getEventHeroPathPrefix = (guildId: string, eventId: string) =>
-  `/guilds/${guildId}/events/${eventId}/heroes/`;
-
-const isHeroGapQuery = (query: Query, guildId: string, eventId: string) => {
-  const path = z.string().safeParse(query.queryKey[0]).data;
-
-  return (
-    path !== undefined &&
-    path.startsWith(getEventHeroPathPrefix(guildId, eventId)) &&
-    (path.endsWith("/active-gaps") || path.endsWith("/coverage-gaps"))
-  );
-};
+export const isEventHeroGapPath = (
+  path: string,
+  guildId: string,
+  eventId: string,
+) =>
+  path.startsWith(`/guilds/${guildId}/events/${eventId}/heroes/`) &&
+  (path.endsWith("/active-gaps") || path.endsWith("/coverage-gaps"));
 
 export function invalidateMapQueries(
   queryClient: QueryClient,
@@ -62,7 +57,11 @@ export function invalidateGapQueries(
     }),
   });
   queryClient.invalidateQueries({
-    predicate: (query) => isHeroGapQuery(query, guildId, eventId),
+    predicate: (query) => {
+      const path = z.string().safeParse(query.queryKey[0]).data;
+
+      return path !== undefined && isEventHeroGapPath(path, guildId, eventId);
+    },
   });
 
   return invalidateEventCoordinationQuery(queryClient, guildId, eventId);
