@@ -154,20 +154,14 @@ export const makeItemsModule = (
               ...query,
               attributesToSearchOn: ["name"],
             }),
-          ).pipe(
-            Effect.map(mapSearchResponse),
-            Effect.catch((fallbackError) => {
-              logger.error("Items search error", { error: fallbackError });
-
-              return Effect.fail(fallbackError);
-            }),
-          );
+          ).pipe(Effect.map(mapSearchResponse));
         }
-
-        logger.error("Items search error", { error });
 
         return Effect.fail(error);
       }),
+      Effect.tapError((error) =>
+        Effect.sync(() => logger.error("Items search error", { error })),
+      ),
     );
   });
 
