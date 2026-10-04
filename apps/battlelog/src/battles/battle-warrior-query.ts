@@ -4,7 +4,6 @@ import { battleWarriors, battles } from "#src/database/schema";
 export const selectedWarriorOrder = (battlesRef: typeof battles) => [
   desc(eq(battleWarriors.originalId, battlesRef.characterId)),
   asc(battleWarriors.originalId),
-  asc(battleWarriors.id),
 ];
 
 export const warriorExists = (

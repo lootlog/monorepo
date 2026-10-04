@@ -67,7 +67,7 @@ export const BattleCompactTeam: FC<BattleCompactTeamProps> = ({
       >
         {team.map((member) => (
           <BattleCompactTeamMember
-            key={member.id}
+            key={member.originalId}
             cdnBaseUrl={cdnBaseUrl}
             compact={isGroup}
             isCurrentCharacter={member.originalId === characterId}

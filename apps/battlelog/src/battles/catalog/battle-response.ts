@@ -25,7 +25,6 @@ const BattleComputedStatisticsSchema = Schema.Struct({
 });
 
 const BattleWarriorResponseSchema = Schema.Struct({
-  id: Schema.String,
   battleId: Schema.String,
   originalId: Schema.String,
   name: Schema.String,

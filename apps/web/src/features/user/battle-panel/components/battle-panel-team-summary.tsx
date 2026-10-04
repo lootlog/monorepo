@@ -23,7 +23,7 @@ const getVisibleWarriorCount = (teamSize: number, maxVisible: number) =>
 
 const renderSprite = (warrior: BattleWarrior, isUserWarrior: boolean) => (
   <div
-    key={warrior.id}
+    key={warrior.originalId}
     className={cn(
       "relative h-9 w-6 shrink-0 rounded-sm",
       isUserWarrior && "bg-green-500/10 ring-1 ring-inset ring-green-500/40",
@@ -93,7 +93,7 @@ export const BattlePanelTeamSummary = ({
           <TooltipContent className="flex flex-col gap-0.5">
             {hiddenWarriors.map((warrior) => (
               <PlayerTooltipContent
-                key={warrior.id}
+                key={warrior.originalId}
                 name={warrior.name}
                 lvl={warrior.lvl}
                 prof={warrior.prof}

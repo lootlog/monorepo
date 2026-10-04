@@ -15,9 +15,8 @@ import { makeBattleAnalytics } from "./battle-analytics.service.js";
 import type { BattleStatisticsQuery } from "./query-battle-statistics.js";
 import {
   legacyBattleAnalytics as legacy,
-  type InflatedBattleWithWarriors,
+  type BattleWithWarriors,
 } from "../../../test/legacy-battle-analytics.js";
-import { inflateBattleWarriorsInBattles } from "#src/battles/statistics/battle-warrior-stats";
 import { sortBy } from "es-toolkit";
 
 const runtime = ManagedRuntime.make(PgliteClient.layer({}));
@@ -30,7 +29,7 @@ let reads: ReturnType<typeof makeBattleAnalyticsRead>;
 
 let service: ReturnType<typeof makeBattleAnalytics>;
 
-let fullHistory: InflatedBattleWithWarriors[];
+let fullHistory: BattleWithWarriors[];
 
 const characters = ["hero-1", "hero-2"];
 
@@ -146,7 +145,6 @@ beforeAll(async () => {
         rating: index === 1 ? null : 1400 + index * 10,
         ratingDelta: index === 3 ? null : index % 4 === 0 ? 0 : index - 5,
         pointsGained: index % 3 === 0 ? null : index,
-        statistics: { irrelevantWidePayload: "x".repeat(2048) },
       }),
     );
     await runtime.runPromise(
@@ -160,8 +158,8 @@ beforeAll(async () => {
         team: 1,
         turns: 10,
         ph: index % 3 === 0 ? 0 : 5,
-        fireDamage: 7,
-        stats: { fireDamage: 20 + index, woundDamageTaken: 3 },
+        fireDamage: 20 + index,
+        woundDamageTaken: 3,
       }),
     );
 
@@ -176,24 +174,18 @@ beforeAll(async () => {
           prof: index % 2 === 0 ? "m" : "p",
           team: 2,
           turns: 8,
-          frostDamage: 17,
-          stats:
-            index === 8
-              ? sql`'{"frostDamage":"malformed","fireDamage":99}'::jsonb`
-              : { frostDamage: 30 + index },
+          frostDamage: index === 8 ? 17 : 30 + index,
+          fireDamage: index === 8 ? 99 : 0,
         }),
       );
   }
 
-  fullHistory = inflateBattleWarriorsInBattles(
-    await runtime.runPromise(
-      db.query.battles.findMany({
-        where: { userId: "owner" },
-        columns: { statistics: false },
-        with: { warriors: true },
-        orderBy: { createdAt: "asc", id: "asc" },
-      }),
-    ),
+  fullHistory = await runtime.runPromise(
+    db.query.battles.findMany({
+      where: { userId: "owner" },
+      with: { warriors: true },
+      orderBy: { createdAt: "asc", id: "asc" },
+    }),
   );
 }, 60_000);
 
@@ -395,7 +387,7 @@ describe("SQL battle analytics parity", () => {
   });
 });
 
-it("folds combat history across tied-date batches without losing packed fallback, team matchups or visibility", async () => {
+it("folds combat history across tied-date batches without losing team matchups or visibility", async () => {
   const battleRows = Array.from({ length: 264 }, (_, index) => ({
     id: `combat-${String(index).padStart(3, "0")}`,
     createdAt: sql`${"2025-01-01T00:00:00.000123"}::timestamp`,
@@ -411,7 +403,6 @@ it("folds combat history across tied-date batches without losing packed fallback
     losingTeam: index === 260 ? 0 : index % 2 === 0 ? 2 : 1,
     hasFlee: index === 261,
     ratingDelta: index % 2 === 0 ? 5 : -4,
-    statistics: { unused: "x".repeat(2048) },
   }));
 
   await runtime.runPromise(db.insert(battles).values(battleRows));
@@ -429,20 +420,13 @@ it("folds combat history across tied-date batches without losing packed fallback
           turns: 5,
           turnsLost: 1,
           ph: 5,
-          damageDealtAfterDefensive: 100,
+          damageDealtAfterDefensive: index % 2 === 0 ? 300 : 100,
           meleeDamage: 100,
-          fireDamage: 10,
+          fireDamage: index % 2 === 0 ? 40 : 10,
           blockedDamage: 20,
           damageTaken: 200,
           blocks: 2,
-          spellsUsedMap: { "101": 3 },
-          stats: sql`${JSON.stringify({
-            damageDealtAfterDefensive: index % 2 === 0 ? 300 : "corrupt",
-            fireDamage: index % 2 === 0 ? 40 : null,
-            spellsUsedMap:
-              index % 2 === 0 ? { "102": 2 } : { "102": "corrupt" },
-            ph: 99999,
-          })}::jsonb`,
+          spellsUsedMap: index % 2 === 0 ? { "102": 2 } : { "101": 3 },
         },
         {
           battleId: battle.id,
@@ -475,15 +459,12 @@ it("folds combat history across tied-date batches without losing packed fallback
     ph: true,
   });
 
-  const fullRows: InflatedBattleWithWarriors[] = inflateBattleWarriorsInBattles(
-    await runtime.runPromise(
-      db.query.battles.findMany({
-        where: { userId: "owner", world: "combat-test" },
-        columns: { statistics: false },
-        with: { warriors: true },
-        orderBy: { createdAt: "asc", id: "asc" },
-      }),
-    ),
+  const fullRows: BattleWithWarriors[] = await runtime.runPromise(
+    db.query.battles.findMany({
+      where: { userId: "owner", world: "combat-test" },
+      with: { warriors: true },
+      orderBy: { createdAt: "asc", id: "asc" },
+    }),
   );
 
   const expected = legacy.combatProfile(
@@ -547,7 +528,6 @@ it("selects the recorder among multiple owned participants and uses character or
         duration: 100,
         winner: "Winner",
         loser: "Loser",
-        statistics: {},
       })),
     ),
   );
@@ -587,15 +567,12 @@ it("selects the recorder among multiple owned participants and uses character or
     ),
   );
 
-  const fullRows: InflatedBattleWithWarriors[] = inflateBattleWarriorsInBattles(
-    await runtime.runPromise(
-      db.query.battles.findMany({
-        where: { userId: "owner", world: "combat-selection" },
-        columns: { statistics: false },
-        with: { warriors: true },
-        orderBy: { createdAt: "asc", id: "asc" },
-      }),
-    ),
+  const fullRows: BattleWithWarriors[] = await runtime.runPromise(
+    db.query.battles.findMany({
+      where: { userId: "owner", world: "combat-selection" },
+      with: { warriors: true },
+      orderBy: { createdAt: "asc", id: "asc" },
+    }),
   );
 
   expect(actual.summary).toMatchObject({
@@ -709,7 +686,6 @@ it("filters and sorts opponent records, breaking ties by latest battle", async (
         winner: "Winner",
         loser: "Loser",
         matchmaking: true,
-        statistics: {},
       })),
     ),
   );
@@ -926,7 +902,6 @@ it("keeps the strongest combat highlights, skips flees and admits battles with a
         losingTeam: battle.won ? 2 : 1,
         hasFlee: battle.hasFlee ?? false,
         ratingDelta: 5,
-        statistics: {},
       })),
     ),
   );
