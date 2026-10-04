@@ -9,13 +9,11 @@ export const canDeleteChatMessage = (
   viewer: ChatMessageViewer,
   message: { readonly senderId: string },
 ) => {
+  const accessPolicy = createAccessPolicy({ capabilities: viewer.permissions });
+
   return (
     (viewer.discordId === message.senderId &&
-      createAccessPolicy({ capabilities: viewer.permissions }).allows(
-        Capability.LOOTLOG_CHAT_WRITE,
-      )) ||
-    createAccessPolicy({ capabilities: viewer.permissions }).allows(
-      Capability.ADMIN,
-    )
+      accessPolicy.allows(Capability.LOOTLOG_CHAT_WRITE)) ||
+    accessPolicy.allows(Capability.ADMIN)
   );
 };
