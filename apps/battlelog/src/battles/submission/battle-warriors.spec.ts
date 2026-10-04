@@ -8,7 +8,7 @@ import {
 describe("WarriorsRecordSchema", () => {
   it("should accept valid warriors record with two teams", () => {
     const result = Schema.decodeUnknownResult(WarriorsRecordSchema)({
-      "1": {
+      "101": {
         originalId: 101,
         name: "Warrior1",
         lvl: 50,
@@ -16,7 +16,7 @@ describe("WarriorsRecordSchema", () => {
         icon: "icon1",
         team: 1,
       },
-      "2": {
+      "102": {
         originalId: 102,
         name: "Warrior2",
         lvl: 45,
@@ -31,7 +31,7 @@ describe("WarriorsRecordSchema", () => {
 
   it("should reject warriors record with only one team", () => {
     const result = Schema.decodeUnknownResult(WarriorsRecordSchema)({
-      "1": {
+      "101": {
         originalId: 101,
         name: "Warrior1",
         lvl: 50,
@@ -39,7 +39,7 @@ describe("WarriorsRecordSchema", () => {
         icon: "icon1",
         team: 1,
       },
-      "2": {
+      "102": {
         originalId: 102,
         name: "Warrior2",
         lvl: 45,
@@ -62,7 +62,7 @@ describe("WarriorsRecordSchema", () => {
         icon: "icon1",
         team: 1,
       },
-      "2": {
+      "102": {
         originalId: 102,
         name: "Warrior2",
         lvl: 45,
@@ -77,7 +77,7 @@ describe("WarriorsRecordSchema", () => {
 
   it("should reject invalid warrior data", () => {
     const result = Schema.decodeUnknownResult(WarriorsRecordSchema)({
-      "1": {
+      "101": {
         originalId: 101,
         name: "Warrior1",
         lvl: 50,
@@ -85,12 +85,35 @@ describe("WarriorsRecordSchema", () => {
         icon: "icon1",
         team: 1,
       },
-      "2": {
+      "102": {
         originalId: 102,
         name: 123,
         lvl: 45,
         prof: "p",
         icon: "icon2",
+        team: 2,
+      },
+    });
+
+    expect(Result.isFailure(result)).toBe(true);
+  });
+
+  it("should reject a warrior keyed differently from its originalId", () => {
+    const result = Schema.decodeUnknownResult(WarriorsRecordSchema)({
+      "101": {
+        originalId: 101,
+        name: "Warrior1",
+        lvl: 50,
+        prof: "w",
+        icon: "icon1",
+        team: 1,
+      },
+      "102": {
+        originalId: 101,
+        name: "Warrior1 copy",
+        lvl: 50,
+        prof: "w",
+        icon: "icon1",
         team: 2,
       },
     });
@@ -107,7 +130,7 @@ describe("WarriorsRecordSchema", () => {
 
   it("should accept warriors from different teams", () => {
     const result = Schema.decodeUnknownResult(WarriorsRecordSchema)({
-      "1": {
+      "101": {
         originalId: 101,
         name: "Warrior1",
         lvl: 50,
@@ -115,7 +138,7 @@ describe("WarriorsRecordSchema", () => {
         icon: "icon1",
         team: 1,
       },
-      "2": {
+      "102": {
         originalId: 102,
         name: "Warrior2",
         lvl: 45,
@@ -123,7 +146,7 @@ describe("WarriorsRecordSchema", () => {
         icon: "icon2",
         team: 1,
       },
-      "3": {
+      "103": {
         originalId: 103,
         name: "Warrior3",
         lvl: 48,

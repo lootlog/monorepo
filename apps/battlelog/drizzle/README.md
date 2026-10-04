@@ -23,6 +23,18 @@ participant primary key is built inside the migration transaction. Dropping a
 column does not shrink existing rows; their space returns when the tables are
 rewritten.
 
+Submissions accept a warrior only under its own `originalId`, so a battle
+cannot hold the same participant twice. Rows accepted earlier are checked by
+the primary key: if the migration fails with a duplicate key, it rolls back
+completely. List the affected participants before deciding how to repair them:
+
+```sql
+SELECT "battleId", "originalId", count(*)
+FROM "battle_warriors"
+GROUP BY "battleId", "originalId"
+HAVING count(*) > 1;
+```
+
 ## Object cleanup
 
 Apply `20260904192453_pending_object_deletions` before deploying the Battlelog

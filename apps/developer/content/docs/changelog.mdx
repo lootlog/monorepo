@@ -13,6 +13,9 @@ separate participant ID is removed. Release the SDK as a breaking version.
   `originalId` is unique within a battle.
 - `statistics` is unchanged. Battlelog now derives it from the participants
   when it reads a battle instead of storing it, with the same values.
+- `POST /battles` rejects a fight event whose `f.w` key differs from the
+  warrior's `originalId` with `400`. Margonem keys player warriors by their ID,
+  so payloads captured from the game are unaffected.
 
 ## Unreleased: Relative NPC icons on loots, kills and timers
 

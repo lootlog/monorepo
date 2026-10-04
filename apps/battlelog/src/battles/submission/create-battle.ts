@@ -43,11 +43,19 @@ export const WarriorsRecordSchema = Schema.Record(
       if (entries.length === 0) return false;
 
       if (entries.some(([key]) => key.startsWith("-"))) return false;
+
+      // Margonem keys player warriors by their ID. Participants are stored per
+      // ID, and awards break ties in ID order, so a record must not diverge.
+      if (entries.some(([key, warrior]) => key !== String(warrior.originalId)))
+        return false;
       const teams = new Set(entries.map(([, warrior]) => warrior.team));
 
       return teams.size > 1;
     },
-    { expected: "a valid record of warriors from at least two teams" },
+    {
+      expected:
+        "a valid record of warriors keyed by their originalId from at least two teams",
+    },
   ),
 );
 
