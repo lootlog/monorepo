@@ -265,13 +265,14 @@ export class ActivityRepository extends Context.Service<
                 new Error("Activity insert did not return a row"),
               );
 
-            if (dto.type === ActivityType.CONNECT_EVENT) {
-              const sessionId = detailsString(dto, "sessionId");
+            const sessionId = detailsString(dto, "sessionId");
 
-              if (!sessionId)
-                return yield* Effect.fail(
-                  new Error("Activity session identifier is missing"),
-                );
+            if (!sessionId)
+              return yield* Effect.fail(
+                new Error("Activity session identifier is missing"),
+              );
+
+            if (dto.type === ActivityType.CONNECT_EVENT) {
               const now = new Date(yield* Clock.currentTimeMillis);
 
               const inserted = yield* tx
@@ -326,12 +327,6 @@ export class ActivityRepository extends Context.Service<
                   },
                 });
             } else {
-              const sessionId = detailsString(dto, "sessionId");
-
-              if (!sessionId)
-                return yield* Effect.fail(
-                  new Error("Activity session identifier is missing"),
-                );
               yield* tx
                 .delete(memberActivitySessions)
                 .where(
