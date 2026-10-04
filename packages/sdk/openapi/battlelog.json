@@ -4298,9 +4298,6 @@
                   "items": {
                     "type": "object",
                     "properties": {
-                      "id": {
-                        "type": "string"
-                      },
                       "battleId": {
                         "type": "string"
                       },
@@ -4555,7 +4552,6 @@
                       }
                     },
                     "required": [
-                      "id",
                       "battleId",
                       "originalId",
                       "name",
@@ -6012,9 +6008,6 @@
             "items": {
               "type": "object",
               "properties": {
-                "id": {
-                  "type": "string"
-                },
                 "battleId": {
                   "type": "string"
                 },
@@ -6269,7 +6262,6 @@
                 }
               },
               "required": [
-                "id",
                 "battleId",
                 "originalId",
                 "name",
@@ -6701,9 +6693,6 @@
             "items": {
               "type": "object",
               "properties": {
-                "id": {
-                  "type": "string"
-                },
                 "battleId": {
                   "type": "string"
                 },
@@ -6958,7 +6947,6 @@
                 }
               },
               "required": [
-                "id",
                 "battleId",
                 "originalId",
                 "name",

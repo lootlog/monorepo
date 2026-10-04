@@ -46,12 +46,12 @@ beforeEach(async () => {
   await pool.query(
     "TRUNCATE battles, user_characters, battle_object_deletions CASCADE",
   );
-  await pool.query(`INSERT INTO battles (id, "userId", "accountId", "characterId", world, duration, type, winner, loser, "winningTeam", "losingTeam", statistics, public)
-    SELECT id, owner, 'account', 'character', 'world', 1, 'pvp', 'winner', 'loser', 1, 2, '{}', true
+  await pool.query(`INSERT INTO battles (id, "userId", "accountId", "characterId", world, duration, type, winner, loser, "winningTeam", "losingTeam", public)
+    SELECT id, owner, 'account', 'character', 'world', 1, 'pvp', 'winner', 'loser', 1, 2, true
     FROM (VALUES ('one', 'owner'), ('two', 'owner'), ('other', 'other-owner')) AS seed(id, owner);
     INSERT INTO user_characters (id, "userId", "characterId", name, world) VALUES ('character', 'owner', 'character', 'name', 'world');
-    INSERT INTO battle_warriors (id, "battleId", "originalId", name, lvl, prof, icon, team, turns)
-    VALUES ('warrior', 'one', 'character', 'name', 1, 'w', 'icon', 1, 1);`);
+    INSERT INTO battle_warriors ("battleId", "originalId", name, lvl, prof, icon, team, turns)
+    VALUES ('one', 'character', 'name', 1, 'w', 'icon', 1, 1);`);
 });
 
 const run = <A, E>(effect: Effect.Effect<A, E, PgClient.PgClient>) =>
@@ -111,9 +111,9 @@ for (const mode of ["single", "user"] as const) {
         [],
       );
 
-    expect((await pool.query("SELECT id FROM battle_warriors")).rows).toEqual(
-      [],
-    );
+    expect(
+      (await pool.query(`SELECT "battleId" FROM battle_warriors`)).rows,
+    ).toEqual([]);
     expect(
       (
         await pool.query(

@@ -3,7 +3,6 @@ import type { Battle, BattleWarrior } from "@/lib/api/battlelog-types";
 export const createBattleWarrior = (
   overrides: Partial<BattleWarrior> = {},
 ): BattleWarrior => ({
-  id: "battle-1",
   battleId: "battle-1",
   originalId: "warrior-1",
   name: "Warrior",

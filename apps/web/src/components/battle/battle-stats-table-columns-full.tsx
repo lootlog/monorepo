@@ -76,8 +76,12 @@ export const getBattleStatsTableColumns = ({
           <BattleStatsExpandButton
             className="relative"
             dense
-            expanded={expandedRows.get(row.original.id) === expansionType}
-            onToggle={() => onToggleExpansion(row.original.id, expansionType)}
+            expanded={
+              expandedRows.get(row.original.originalId) === expansionType
+            }
+            onToggle={() =>
+              onToggleExpansion(row.original.originalId, expansionType)
+            }
           >
             {formatNumber(row.original[accessorKey])}
           </BattleStatsExpandButton>
@@ -116,8 +120,8 @@ export const getBattleStatsTableColumns = ({
         return (
           <BattleStatsExpandButton
             className="h-auto max-w-full justify-start py-1 text-left"
-            expanded={expandedRows.get(warrior.id) === "details"}
-            onToggle={() => onToggleExpansion(warrior.id, "details")}
+            expanded={expandedRows.get(warrior.originalId) === "details"}
+            onToggle={() => onToggleExpansion(warrior.originalId, "details")}
           >
             <span className="min-w-0">
               <span

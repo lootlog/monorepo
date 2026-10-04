@@ -92,7 +92,6 @@ beforeAll(async () => {
         winningTeam: fixture.winningTeam,
         losingTeam: fixture.losingTeam,
         hasFlee: fixture.hasFlee ?? false,
-        statistics: {},
       }),
     );
     await runtime.runPromise(

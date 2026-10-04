@@ -3,6 +3,20 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased (breaking): Battle participants no longer return `id`
+
+Battlelog identifies a participant by its battle and Margonem character, so the
+separate participant ID is removed. Release the SDK as a breaking version.
+
+- Battle, battle list, public battle and timeline responses no longer return
+  `warriors[].id`. Identify a participant by `battleId` and `originalId`;
+  `originalId` is unique within a battle.
+- `statistics` is unchanged. Battlelog now derives it from the participants
+  when it reads a battle instead of storing it, with the same values.
+- `POST /battles` rejects a fight event whose `f.w` key differs from the
+  warrior's `originalId` with `400`. Margonem keys player warriors by their ID,
+  so payloads captured from the game are unaffected.
+
 ## Unreleased: Relative NPC icons on loots, kills and timers
 
 Margonem stores an NPC icon relative to its NPC image directory and adds the

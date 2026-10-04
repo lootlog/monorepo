@@ -2931,8 +2931,6 @@ components:
           items:
             type: object
             properties:
-              id:
-                type: string
               battleId:
                 type: string
               originalId:
@@ -3102,7 +3100,6 @@ components:
               ph:
                 type: number
             required:
-              - id
               - battleId
               - originalId
               - name
@@ -3530,8 +3527,6 @@ components:
           items:
             type: object
             properties:
-              id:
-                type: string
               battleId:
                 type: string
               originalId:
@@ -3701,7 +3696,6 @@ components:
               ph:
                 type: number
             required:
-              - id
               - battleId
               - originalId
               - name
@@ -4898,8 +4892,6 @@ components:
                 items:
                   type: object
                   properties:
-                    id:
-                      type: string
                     battleId:
                       type: string
                     originalId:
@@ -5069,7 +5061,6 @@ components:
                     ph:
                       type: number
                   required:
-                    - id
                     - battleId
                     - originalId
                     - name

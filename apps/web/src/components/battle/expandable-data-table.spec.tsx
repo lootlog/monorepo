@@ -17,7 +17,7 @@ describe("ExpandableDataTable", () => {
   it("uses the shared expanded-detail table state for animated rows", () => {
     const columns: ColumnDef<typeof sortedTableFeatures, BattleWarrior>[] = [
       {
-        accessorKey: "id",
+        accessorKey: "originalId",
         header: "ID",
       },
     ];
@@ -25,7 +25,9 @@ describe("ExpandableDataTable", () => {
     render(
       <ExpandableDataTable
         columns={columns}
-        data={[createBattleWarrior({ id: "warrior-1", damageTaken: 100 })]}
+        data={[
+          createBattleWarrior({ originalId: "warrior-1", damageTaken: 100 }),
+        ]}
         expandedRows={new Map([["warrior-1", "damage"]])}
       />,
     );

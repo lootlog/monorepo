@@ -1,5 +1,4 @@
-import type { InflatedBattleWarrior } from "#src/battles/statistics/battle-warrior-stats";
-import type { Battle } from "#src/database/schema";
+import type { Battle, BattleWarrior } from "#src/database/schema";
 import {
   CreateBattleSchema,
   type CreateBattleInput,
@@ -9,7 +8,7 @@ import type { PaginationResult } from "#src/battles/analytics/pagination";
 
 // Complete battle with all relations
 export interface BattleWithRelations extends Battle {
-  warriors: InflatedBattleWarrior[];
+  warriors: BattleWarrior[];
 }
 
 // Service method parameters

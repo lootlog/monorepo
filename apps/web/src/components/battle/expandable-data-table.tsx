@@ -131,7 +131,7 @@ export function ExpandableDataTable<TData extends Warrior>({
         {table.getRowModel().rows?.length ? (
           table.getRowModel().rows.map((row) => {
             const warrior = row.original;
-            const expansionType = expandedRows.get(warrior.id);
+            const expansionType = expandedRows.get(warrior.originalId);
 
             return (
               <Fragment key={row.id}>
@@ -187,7 +187,7 @@ export function ExpandableDataTable<TData extends Warrior>({
                         >
                           <AnimatePresence mode="wait">
                             <m.div
-                              key={`${warrior.id}-${expansionType}`}
+                              key={`${warrior.originalId}-${expansionType}`}
                               initial={{ opacity: 0, scale: 0.95 }}
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 0.95 }}

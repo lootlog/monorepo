@@ -17,8 +17,6 @@ import {
   selectedWarriorOrder,
   warriorExists,
 } from "#src/battles/battle-warrior-query";
-import { resolveBattleWarriorSpells } from "#src/battles/statistics/battle-warrior-stats";
-import { battleWarriorNumberStat } from "#src/battles/statistics/battle-warrior-stats-query";
 import type { DrizzleDatabase } from "#src/database/database";
 import { battles, battleWarriors } from "#src/database/schema";
 import type { BattleAnalyticsQuery } from "./battle-analytics-query.service.js";
@@ -30,29 +28,24 @@ const BATCH_SIZE = 256;
 const userColumns = {
   team: battleWarriors.team,
   ph: battleWarriors.ph,
-  turns: battleWarriorNumberStat("turns"),
-  turnsLost: battleWarriorNumberStat("turnsLost"),
-  damageDealtAfterDefensive: battleWarriorNumberStat(
-    "damageDealtAfterDefensive",
-  ),
-  damageTaken: battleWarriorNumberStat("damageTaken"),
-  blockedDamage: battleWarriorNumberStat("blockedDamage"),
-  blocks: battleWarriorNumberStat("blocks"),
-  evasions: battleWarriorNumberStat("evasions"),
-  meleeDamage: battleWarriorNumberStat("meleeDamage"),
-  distanceDamage: battleWarriorNumberStat("distanceDamage"),
-  auxiliaryDamage: battleWarriorNumberStat("auxiliaryDamage"),
-  fireDamage: battleWarriorNumberStat("fireDamage"),
-  frostDamage: battleWarriorNumberStat("frostDamage"),
-  lightningDamage: battleWarriorNumberStat("lightningDamage"),
-  thirdAttDamage: battleWarriorNumberStat("thirdAttDamage"),
-  trueDamageDealt: battleWarriorNumberStat("trueDamageDealt"),
-  rageDamageDealt: battleWarriorNumberStat("rageDamageDealt"),
-  stigmaDamageDealt: battleWarriorNumberStat("stigmaDamageDealt"),
-  storedSpells: sql<unknown>`${battleWarriors.stats}->'spellsUsedMap'`.as(
-    "stored_spells",
-  ),
-  legacySpells: battleWarriors.spellsUsedMap,
+  turns: battleWarriors.turns,
+  turnsLost: battleWarriors.turnsLost,
+  damageDealtAfterDefensive: battleWarriors.damageDealtAfterDefensive,
+  damageTaken: battleWarriors.damageTaken,
+  blockedDamage: battleWarriors.blockedDamage,
+  blocks: battleWarriors.blocks,
+  evasions: battleWarriors.evasions,
+  meleeDamage: battleWarriors.meleeDamage,
+  distanceDamage: battleWarriors.distanceDamage,
+  auxiliaryDamage: battleWarriors.auxiliaryDamage,
+  fireDamage: battleWarriors.fireDamage,
+  frostDamage: battleWarriors.frostDamage,
+  lightningDamage: battleWarriors.lightningDamage,
+  thirdAttDamage: battleWarriors.thirdAttDamage,
+  trueDamageDealt: battleWarriors.trueDamageDealt,
+  rageDamageDealt: battleWarriors.rageDamageDealt,
+  stigmaDamageDealt: battleWarriors.stigmaDamageDealt,
+  spellsUsedMap: battleWarriors.spellsUsedMap,
 };
 
 export const makeBattleCombatProfileRead = (
@@ -163,20 +156,10 @@ export const makeBattleCombatProfileRead = (
       const warriorsByBattle = groupBy(warriors, (warrior) => warrior.battleId);
 
       for (const battle of batch) {
-        const { storedSpells, legacySpells, ...userWarrior } =
-          battle.userWarrior;
-
         accumulator.add({
           ...battle,
-          userWarrior: {
-            ...userWarrior,
-            spellsUsedMap: resolveBattleWarriorSpells(
-              storedSpells,
-              legacySpells,
-            ),
-          },
           opponents: (warriorsByBattle[battle.id] ?? []).filter(
-            (warrior) => warrior.team !== userWarrior.team,
+            (warrior) => warrior.team !== battle.userWarrior.team,
           ),
         });
       }
