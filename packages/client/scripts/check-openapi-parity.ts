@@ -8,8 +8,7 @@ import {
 } from "./openapi-document.js";
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import { parse } from "yaml";
 
 const BASELINE_SHA = "633f8f0157cca04ef2b609ba0e2f1903b1c28949";
@@ -463,10 +462,7 @@ const BATTLELOG_INVALID_REQUEST_SCHEMA: JsonValue = {
   required: ["error", "message", "statusCode"],
 };
 
-const repositoryRoot = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  "../../..",
-);
+const repositoryRoot = resolve(import.meta.dirname, "../../..");
 
 const services = [
   { baseline: "activity", current: "activity" },
