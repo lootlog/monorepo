@@ -8,17 +8,18 @@ afterEach(cleanup);
 it("returns to the first page only when the API rejects the cursor in the URL", () => {
   const reset = vi.fn();
 
-  const { rerender } = renderHook(
-    (props: { cursor: string | null; error: unknown }) =>
-      useResetRejectedBattlePanelCursor({ ...props, reset }),
-    { initialProps: { cursor: "stale", error: { status: 503 } } },
-  );
+  const { rerender } = renderHook<
+    void,
+    Parameters<typeof useResetRejectedBattlePanelCursor>[0]
+  >((props) => useResetRejectedBattlePanelCursor(props), {
+    initialProps: { cursor: "stale", error: { status: 503 }, reset },
+  });
 
   expect(reset).not.toHaveBeenCalled();
 
-  rerender({ cursor: null, error: { status: 400 } });
+  rerender({ cursor: null, error: { status: 400 }, reset });
   expect(reset).not.toHaveBeenCalled();
 
-  rerender({ cursor: "stale", error: { status: 400 } });
+  rerender({ cursor: "stale", error: { status: 400 }, reset });
   expect(reset).toHaveBeenCalledTimes(1);
 });
