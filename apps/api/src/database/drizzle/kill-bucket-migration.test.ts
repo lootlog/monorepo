@@ -5,7 +5,7 @@ import { pg_trgm } from "@electric-sql/pglite/contrib/pg_trgm";
 import { readMigrationFiles } from "drizzle-orm/migrator";
 
 describe("kill bucket migration", () => {
-  it("copies closed hours and the lifetime totals as of the cutover hour", async () => {
+  it("copies closed hours and totals, then the follow-up adds the kills recorded after the copy", async () => {
     const database = new PGlite({ extensions: { pg_trgm } });
 
     try {
@@ -17,12 +17,16 @@ describe("kill bucket migration", () => {
 
       const conversionIndex = migrations.findIndex((migration) =>
         migration.sql.some((statement) =>
-          statement.includes('"KillBucketCutover"'),
+          statement.includes('CREATE TABLE "KillBucketCutover"'),
         ),
       );
 
-      if (conversionIndex < 0)
-        throw new Error("Kill bucket migration is missing");
+      const reconcileIndex = migrations.findIndex((migration) =>
+        migration.sql.some((statement) => statement.includes('"LateUserKill"')),
+      );
+
+      if (conversionIndex < 0 || reconcileIndex !== conversionIndex + 1)
+        throw new Error("Kill bucket migrations are missing");
 
       for (const migration of migrations.slice(0, conversionIndex)) {
         await database.exec(migration.sql.join("\n"));
@@ -98,6 +102,63 @@ describe("kill bucket migration", () => {
           `SELECT "cutoverHour" = date_trunc('hour', now() AT TIME ZONE 'UTC') AS current FROM "KillBucketCutover"`,
         ),
       ).toEqual([{ current: true }]);
+
+      const reconcile = migrations[reconcileIndex]!.sql.join("\n");
+
+      // The older API wrote a moment ago, so the follow-up refuses to run.
+      await expect(database.exec(reconcile)).rejects.toThrow(
+        "wrote kills in the last 5 minutes",
+      );
+
+      // After the copy the older API added a member kill to the cutover hour and
+      // committed 2 personal kills into the hour before it; the new API recorded
+      // 1 personal kill. Then the older API stopped.
+      await database.exec(`
+        UPDATE "NpcKillStatsBucket" SET "memberKills" = 5 WHERE id = 'm2';
+        INSERT INTO "UserKillStatsBucket" (id, "userId", world, "npcId", "npcName", "npcType", "npcLvl", "totalKills", "periodStart", "lastKilledAt", "updatedAt")
+        SELECT 'u4', 'kept', 'w', 1, 'Npc', 'HERO'::"NpcType", 100, 2, cutover - interval '1 hour', cutover - interval '1 minute', now() FROM hours;
+        INSERT INTO "UserKillBucket" ("periodStart", "discordUserId", world, "npcId", "npcName", "npcType", "npcLvl", kills, "lastKilledAt")
+        SELECT cutover AT TIME ZONE 'UTC', 'kept', 'w', 1, 'Npc', 'HERO'::"NpcType", 100, 1, cutover AT TIME ZONE 'UTC' FROM hours;
+        UPDATE "UserKillTotal" SET kills = kills + 1;
+        UPDATE "UserKillStatsBucket" SET "updatedAt" = "updatedAt" - interval '10 minutes';
+        UPDATE "NpcKillStatsBucket" SET "updatedAt" = "updatedAt" - interval '10 minutes';
+        UPDATE "GuildKillSummaryBucket" SET "updatedAt" = "updatedAt" - interval '10 minutes';
+      `);
+      await database.exec(reconcile);
+
+      expect(
+        await rows(
+          `SELECT "discordUserId", kills FROM "UserKillBucket" ORDER BY "discordUserId", "periodStart"`,
+        ),
+      ).toEqual([
+        { discordUserId: "deleted", kills: 5 },
+        { discordUserId: "kept", kills: 3 },
+        { discordUserId: "kept", kills: 2 },
+        { discordUserId: "kept", kills: 5 },
+      ]);
+      expect(
+        await rows(`SELECT "discordUserId", kills FROM "UserKillTotal"`),
+      ).toEqual([{ discordUserId: "kept", kills: 12 }]);
+      expect(
+        await rows(
+          `SELECT "memberId", kills FROM "MemberKillBucket" ORDER BY "memberId", "periodStart"`,
+        ),
+      ).toEqual([
+        { memberId: 10, kills: 3 },
+        { memberId: 10, kills: 5 },
+        { memberId: 11, kills: 5 },
+      ]);
+      expect(await rows(`SELECT kills FROM "MemberKillTotal"`)).toEqual([
+        { kills: 10 },
+      ]);
+      expect(
+        await rows(
+          `SELECT kills FROM "GuildKillBucket" ORDER BY "periodStart"`,
+        ),
+      ).toEqual([{ kills: 3 }, { kills: 4 }]);
+      expect(await rows(`SELECT kills FROM "GuildKillTotal"`)).toEqual([
+        { kills: 9 },
+      ]);
     } finally {
       await database.close();
     }
