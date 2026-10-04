@@ -5,7 +5,6 @@ import {
   CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
   type CreateNotificationRuleDtoTriggerType,
   type GuildNotificationRulesResponseDto,
-  type NotificationJobsResponseDto,
   type NotificationTargetResponseDto,
 } from "@lootlog/client/main";
 import { toTemplateNpcSelection } from "./notification-rule-form-npc.utils";
@@ -13,9 +12,6 @@ import { toTemplateNpcSelection } from "./notification-rule-form-npc.utils";
 type GuildNotificationTarget = NotificationTargetResponseDto;
 
 type GuildNotificationRule = GuildNotificationRulesResponseDto["items"][number];
-
-export type GuildNotificationJob =
-  NotificationJobsResponseDto["pending"][number];
 
 export const getJobStatusBadgeProps = (
   status: string,

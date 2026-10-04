@@ -38,8 +38,6 @@ export const battleAnalyticsPaging = {
   },
 };
 
-export type BattleAnalyticsPaging = typeof battleAnalyticsPaging;
-
 function getPage(totalRecords: number, options: InMemoryPaginationOptions) {
   const size = options.size ?? 20;
   const startIndex = decodeCursor(options.cursor);

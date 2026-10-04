@@ -6,15 +6,9 @@ import {
   NpcTypeSchema,
 } from "@lootlog/schema/npc-type";
 import { Schema, Predicate } from "effect";
-import type { Member, PlayerSnapshot, Timer } from "#src/timers/timers.types";
 import { nullableIsoDatetimeCodec } from "#src/shared/schema/response-codecs";
 
 const isNpcType = Schema.is(NpcTypeSchema);
-
-export type TimerProjection = Timer & {
-  readonly member?: Member | null;
-  readonly actorCharacter?: PlayerSnapshot | null;
-};
 
 const CachedTimerMember = Schema.Struct({
   id: Schema.Number,

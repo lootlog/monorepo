@@ -10,7 +10,6 @@ type PartyState = {
   revision: number;
   status: RuntimeStatus;
   clearParty: () => void;
-  isMember: (characterId: number | string) => boolean;
   replaceParty: (members: readonly RuntimePartyMember[]) => void;
   setMembers: (members: readonly RuntimePartyMember[]) => void;
 };
@@ -42,8 +41,6 @@ export const usePartyStore = create<PartyState>()((set, get) => ({
         status: "uninitialized",
       };
     }),
-  isMember: (characterId) =>
-    get().members.some((member) => member.characterId === String(characterId)),
   replaceParty: (members) =>
     set((state) => {
       const reconciled = reconcileRuntimeArray(

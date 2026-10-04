@@ -8,7 +8,6 @@ export interface BattlelogConfiguration {
   readonly port: number;
   readonly serviceName: string;
   readonly serviceNamespace: string;
-  readonly postgresqlConnectionUri: Redacted.Redacted<string>;
   readonly redis: Omit<RedisOptions, "password"> & {
     readonly password: Redacted.Redacted<string>;
   };
@@ -28,10 +27,6 @@ const loadConfiguration = Effect.gen(function* () {
 
   const serviceNamespace = yield* Config.String("SERVICE_NAMESPACE").pipe(
     Config.withDefault("local"),
-  );
-
-  const postgresqlConnectionUri = yield* Config.Redacted(
-    "POSTGRESQL_CONNECTION_URI",
   );
 
   const redisHost = yield* Config.String("REDIS_HOST");
@@ -54,7 +49,6 @@ const loadConfiguration = Effect.gen(function* () {
     ).pipe(Config.map(Option.getOrUndefined)),
     environment,
     port,
-    postgresqlConnectionUri,
     serviceName,
     serviceNamespace,
     redis: {

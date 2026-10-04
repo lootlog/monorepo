@@ -10,8 +10,6 @@ const bonusBreakdownItem = z.object({
     .pipe(z.number().positive()),
 });
 
-export type NormalizedBonusBreakdownItem = z.output<typeof bonusBreakdownItem>;
-
 export const normalizeBonusBreakdown = z
   .array(bonusBreakdownItem.nullable().catch(null))
   .transform((entries) => entries.filter(isNotNil))

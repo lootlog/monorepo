@@ -18,8 +18,6 @@ export const CreateMapTemplateSchema = Schema.Struct({
 
 export type CreateMapTemplate = typeof CreateMapTemplateSchema.Type;
 
-export type EncodedCreateMapTemplate = typeof CreateMapTemplateSchema.Encoded;
-
 export const MapTemplateResponseSchema = Schema.Struct({
   id: Schema.String,
   guildId: Schema.String,
@@ -29,6 +27,3 @@ export const MapTemplateResponseSchema = Schema.Struct({
 }).annotate({ identifier: "MapTemplateResponseDto" });
 
 export type MapTemplateResponse = typeof MapTemplateResponseSchema.Type;
-
-export type EncodedMapTemplateResponse =
-  typeof MapTemplateResponseSchema.Encoded;

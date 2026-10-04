@@ -62,8 +62,6 @@ type BattlePanelBattlesRouteSearch = Partial<{
   maxLevel: number;
 }>;
 
-export type HeadToHeadSortBy = (typeof HEAD_TO_HEAD_SORT_BY_VALUES)[number];
-
 export type Period = (typeof PERIOD_VALUES)[number];
 
 const battlePanelBaseSearchParsers = {

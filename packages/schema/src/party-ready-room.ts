@@ -236,10 +236,6 @@ export const PartyGatheringUpdateEnvelopeSchema = Schema.Struct({
 export type PartyGatheringUpdateEnvelope =
   typeof PartyGatheringUpdateEnvelopeSchema.Type;
 
-export const decodePartyGatheringClientUpdate = Schema.decodeUnknownSync(
-  PartyGatheringClientUpdateSchema,
-);
-
 export const PartyReadyRoomAggregateSchema = Schema.Struct({
   schemaVersion: Schema.Literal(3),
   npc: Schema.optionalKey(PartyGatheringNpcSchema),

@@ -69,15 +69,6 @@ export interface UserTimerSettings {
   updatedAt?: Date;
 }
 
-export interface UserGuildTimerSettings {
-  userId: string;
-  guildId: string;
-  hiddenTimers: string[];
-  pinnedTimers: string[];
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
 export interface UpdateTimerSettingsPayload {
   generalConfig?: Partial<TimersGeneralConfig>;
   displayConfig?: Partial<TimersDisplayConfig>;

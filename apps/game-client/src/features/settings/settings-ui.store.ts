@@ -13,12 +13,10 @@ interface SettingsUiState {
   overlayOpen: boolean;
   highlightedControlId: SettingsControlId | null;
   pendingScrollControlId: SettingsControlId | null;
-  expandedGroups: Record<string, boolean>;
   setQuery: (query: string) => void;
   clearQuery: () => void;
   setSelectedResultIndex: (index: number) => void;
   setOverlayOpen: (open: boolean) => void;
-  setGroupExpanded: (groupId: string, expanded: boolean) => void;
   /** Navigates to the control's subsection, scrolls to it and highlights it. */
   openControl: (controlId: SettingsControlId) => void;
   clearPendingScroll: () => void;
@@ -34,15 +32,10 @@ export const useSettingsUiStore = create<SettingsUiState>()((set) => ({
   overlayOpen: false,
   highlightedControlId: null,
   pendingScrollControlId: null,
-  expandedGroups: {},
   setQuery: (query) => set({ query, selectedResultIndex: 0 }),
   clearQuery: () => set({ query: "", selectedResultIndex: 0 }),
   setSelectedResultIndex: (selectedResultIndex) => set({ selectedResultIndex }),
   setOverlayOpen: (overlayOpen) => set({ overlayOpen }),
-  setGroupExpanded: (groupId, expanded) =>
-    set((state) => ({
-      expandedGroups: { ...state.expandedGroups, [groupId]: expanded },
-    })),
   openControl: (controlId) => {
     const location = getControlLocation(controlId);
 

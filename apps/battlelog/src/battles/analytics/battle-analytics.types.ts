@@ -9,10 +9,6 @@ export type AnalyticsDateRange = {
   endDate?: Date;
 };
 
-export type AnalyticsBattleOrderBy = Partial<
-  Record<"createdAt" | "duration", "asc" | "desc">
->;
-
 export type InMemoryPaginationOptions = {
   cursor?: string;
   includeTotal?: boolean;

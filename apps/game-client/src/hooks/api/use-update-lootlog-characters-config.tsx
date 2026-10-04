@@ -8,9 +8,6 @@ import {
   type UserLootlogConfigAccountResponseDtoOutput,
 } from "@lootlog/client/main";
 
-export type UseUpdateLootlogCharacterSettings =
-  CreateOrUpdateLootlogCharacterConfigDto;
-
 const MUTATION_KEY = [
   "userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig",
 ];
