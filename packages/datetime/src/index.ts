@@ -197,7 +197,17 @@ export function calculateLocalWindowOverlapMs(params: {
 
   const fromClock = parseWindowClock(params.windowFrom);
   const toClock = parseWindowClock(params.windowTo);
+
+  const crossesMidnight =
+    toClock.hour * 60 + toClock.minute <=
+    fromClock.hour * 60 + fromClock.minute;
+
   let currentLocalDate = getLocalDate(params.startUtc, params.timeZone);
+
+  if (crossesMidnight) {
+    currentLocalDate = addDays(currentLocalDate, -1);
+  }
+
   const lastLocalDate = getLocalDate(params.endUtc, params.timeZone);
   let totalOverlapMs = 0;
 
@@ -208,10 +218,6 @@ export function calculateLocalWindowOverlapMs(params: {
       fromClock.minute,
       params.timeZone,
     );
-
-    const crossesMidnight =
-      toClock.hour * 60 + toClock.minute <=
-      fromClock.hour * 60 + fromClock.minute;
 
     const windowEndDate = crossesMidnight
       ? addDays(currentLocalDate, 1)
