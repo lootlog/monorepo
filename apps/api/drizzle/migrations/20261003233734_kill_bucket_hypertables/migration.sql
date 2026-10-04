@@ -95,12 +95,14 @@ CREATE INDEX "UserKillBucket_discordUserId_periodStart_idx" ON "UserKillBucket" 
 ALTER TABLE "UserKillTotal" SET (fillfactor = 70);--> statement-breakpoint
 ALTER TABLE "MemberKillTotal" SET (fillfactor = 70);--> statement-breakpoint
 ALTER TABLE "GuildKillTotal" SET (fillfactor = 70);--> statement-breakpoint
--- Hypertables and compression where the TimescaleDB library is loaded (the
--- production API cluster preloads it). PGlite test databases cannot load it and
--- keep plain tables with the same keys; the API reads and writes both the same way.
+-- Hypertables and compression where TimescaleDB is installed (the production
+-- API cluster preloads it). PGlite test databases do not have it and keep plain
+-- tables with the same keys; the API reads and writes both the same way. Only
+-- superusers may read shared_preload_libraries, so the check uses the catalog;
+-- an installed but unloaded library fails CREATE EXTENSION loudly.
 DO $$
 BEGIN
-  IF current_setting('shared_preload_libraries', true) ~ '(^|[ ,])timescaledb($|[ ,])' THEN
+  IF EXISTS (SELECT FROM pg_available_extensions WHERE name = 'timescaledb') THEN
     CREATE EXTENSION IF NOT EXISTS timescaledb;
     PERFORM create_hypertable('"UserKillBucket"', by_range('periodStart', INTERVAL '7 days'), create_default_indexes => false);
     PERFORM create_hypertable('"MemberKillBucket"', by_range('periodStart', INTERVAL '7 days'), create_default_indexes => false);
