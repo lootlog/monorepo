@@ -963,43 +963,12 @@ queries are unchanged.
 2. Deploy the API right after the migration. From then on, kills go to the
    new tables only. Until step 3, statistics read by the new API miss the
    kills the older API recorded from the cutover hour onwards.
-3. Once no older API process is running, apply the follow-up migration from
-   the next release. It adds the old buckets from the cutover hour onwards,
-   which only the older processes wrote, to the new buckets and totals. It also
-   replaces the hour before the cutover, in case a kill committed into it after
-   the copy:
-
-   ```sql
-   CREATE TEMPORARY TABLE "LateUserKill" AS
-   SELECT o."periodStart" AT TIME ZONE 'UTC' AS "periodStart", o."userId", o."world", o."npcId", o."npcName", o."npcType", o."npcLvl", o."npcProf", o."npcIcon",
-     o."totalKills" - coalesce(n."kills", 0) AS "kills", o."lastKilledAt" AT TIME ZONE 'UTC' AS "lastKilledAt"
-   FROM "UserKillStatsBucket" o
-   LEFT JOIN "UserKillBucket" n ON n."discordUserId" = o."userId" AND n."world" = o."world" AND n."npcId" = o."npcId"
-     AND n."periodStart" = o."periodStart" AT TIME ZONE 'UTC'
-     AND o."periodStart" < (SELECT "cutoverHour" FROM "KillBucketCutover")
-   WHERE o."periodStart" >= (SELECT "cutoverHour" - interval '1 hour' FROM "KillBucketCutover")
-     AND o."totalKills" <> coalesce(n."kills", 0);
-
-   INSERT INTO "UserKillBucket" ("periodStart", "discordUserId", "world", "npcId", "npcName", "npcType", "npcLvl", "npcProf", "npcIcon", "kills", "lastKilledAt")
-   SELECT * FROM "LateUserKill"
-   ON CONFLICT ("discordUserId", "world", "npcId", "periodStart") DO UPDATE SET
-     "kills" = "UserKillBucket"."kills" + excluded."kills",
-     "lastKilledAt" = greatest("UserKillBucket"."lastKilledAt", excluded."lastKilledAt");
-
-   INSERT INTO "UserKillTotal" ("discordUserId", "world", "npcId", "npcName", "npcType", "npcLvl", "npcProf", "npcIcon", "kills", "lastKilledAt")
-   SELECT DISTINCT ON ("userId", "world", "npcId") "userId", "world", "npcId", "npcName", "npcType", "npcLvl", "npcProf", "npcIcon",
-     sum("kills") OVER (PARTITION BY "userId", "world", "npcId"), max("lastKilledAt") OVER (PARTITION BY "userId", "world", "npcId")
-   FROM "LateUserKill" ORDER BY "userId", "world", "npcId", "periodStart" DESC
-   ON CONFLICT ("discordUserId", "world", "npcId") DO UPDATE SET
-     "kills" = "UserKillTotal"."kills" + excluded."kills",
-     "lastKilledAt" = greatest("UserKillTotal"."lastKilledAt", excluded."lastKilledAt");
-   ```
-
-   `NpcKillStatsBucket` (`memberKills`) and `GuildKillSummaryBucket`
-   (`uniqueKills`) follow the same pattern. It must not run while an older API
-   process can still write, and it must run exactly once; the migration
-   journal guarantees the latter.
-
+3. Once no older API process is running, apply
+   `20261004005422_kill_bucket_reconcile`. It adds the old buckets from the
+   cutover hour onwards, which only the older processes wrote, to the new
+   buckets and totals. It also adds kills that committed into the hour before
+   the cutover after the copy. It refuses to run while any old bucket was
+   written in the last five minutes; the migration journal makes it run once.
 4. A later release drops the old tables, `KillBucketCutover`, and the
    old-table deletes in account deletion.
 
