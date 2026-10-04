@@ -73,12 +73,16 @@ services:
     logging: *default-logging
 
   lootlog-db:
-    image: postgres:17-alpine
+    # The production API cluster runs TimescaleDB 2.24.0. The flag also loads
+    # the library into data directories created by the former plain image.
+    image: timescale/timescaledb:2.24.0-pg17
     container_name: "lootlog-db"
     restart: unless-stopped
     shm_size: 512mb
     command:
       - postgres
+      - -c
+      - shared_preload_libraries=timescaledb
       - -c
       - shared_buffers=512MB
       - -c

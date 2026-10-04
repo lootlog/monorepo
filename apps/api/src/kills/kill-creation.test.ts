@@ -7,12 +7,12 @@ import {
   guildTable,
   memberTable,
   userCharactersLootlogSettingsTable,
-  userKillStatsTable,
-  npcKillStatsTable,
-  guildKillSummaryTable,
-  npcKillStatsBucketTable,
-  userKillStatsBucketTable,
-  guildKillSummaryBucketTable,
+  userKillBucketTable,
+  userKillTotalTable,
+  memberKillBucketTable,
+  memberKillTotalTable,
+  guildKillBucketTable,
+  guildKillTotalTable,
 } from "#src/database/drizzle/schema";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import { applicationLogger as logger } from "#src/shared/application-logger";
@@ -142,7 +142,7 @@ it("a scoped key cannot suppress later personal or other-organization kill recor
 
     expect(await boundary.run(keyRequest)).toEqual({ updated: 1 });
     expect(
-      await boundary.run(database.select().from(userKillStatsTable)),
+      await boundary.run(database.select().from(userKillBucketTable)),
     ).toEqual([]);
     expect(await boundary.run(createKill("discord-1", payload))).toEqual({
       updated: 1,
@@ -155,21 +155,21 @@ it("a scoped key cannot suppress later personal or other-organization kill recor
       deduplicated: true,
       updated: 0,
     });
-    expect(
-      (await boundary.run(database.select().from(userKillStatsTable))).map(
-        ({ totalKills }) => totalKills,
-      ),
-    ).toEqual([1]);
-    expect(
-      (await boundary.run(database.select().from(npcKillStatsTable))).map(
-        ({ memberKills }) => memberKills,
-      ),
-    ).toEqual([1, 1]);
-    expect(
-      (await boundary.run(database.select().from(guildKillSummaryTable))).map(
-        ({ uniqueKills }) => uniqueKills,
-      ),
-    ).toEqual([1, 1]);
+
+    for (const [table, kills] of [
+      [userKillTotalTable, [1]],
+      [userKillBucketTable, [1]],
+      [memberKillTotalTable, [1, 1]],
+      [memberKillBucketTable, [1, 1]],
+      [guildKillTotalTable, [1, 1]],
+      [guildKillBucketTable, [1, 1]],
+    ] as const) {
+      expect(
+        (await boundary.run(database.select().from(table))).map(
+          (row) => row.kills,
+        ),
+      ).toEqual([...kills]);
+    }
   } finally {
     await boundary.dispose();
   }
@@ -226,12 +226,12 @@ it("stores the relative NPC icon when a sender reports its CDN URL", async () =>
     );
 
     for (const table of [
-      userKillStatsTable,
-      userKillStatsBucketTable,
-      npcKillStatsTable,
-      npcKillStatsBucketTable,
-      guildKillSummaryTable,
-      guildKillSummaryBucketTable,
+      userKillTotalTable,
+      userKillBucketTable,
+      memberKillTotalTable,
+      memberKillBucketTable,
+      guildKillTotalTable,
+      guildKillBucketTable,
     ]) {
       expect(
         (await boundary.run(database.select().from(table))).map(
@@ -247,13 +247,13 @@ it("stores the relative NPC icon when a sender reports its CDN URL", async () =>
 for (const { name, failingTable, failedTotalTable } of [
   {
     name: "personal",
-    failingTable: userKillStatsBucketTable,
-    failedTotalTable: userKillStatsTable,
+    failingTable: userKillBucketTable,
+    failedTotalTable: userKillTotalTable,
   },
   {
     name: "member",
-    failingTable: npcKillStatsBucketTable,
-    failedTotalTable: npcKillStatsTable,
+    failingTable: memberKillBucketTable,
+    failedTotalTable: memberKillTotalTable,
   },
 ]) {
   it(`retries rolled-back writes to ${name} stats without duplicating successful destinations`, async () => {
@@ -306,7 +306,7 @@ for (const { name, failingTable, failedTotalTable } of [
           sql`ALTER TABLE ${failingTable} ADD CONSTRAINT fail_write CHECK (false)`,
         ),
       );
-      const personalData = failingTable === userKillStatsBucketTable;
+      const personalData = failingTable === userKillBucketTable;
 
       const request = makeKillCreation(
         database,
@@ -327,9 +327,9 @@ for (const { name, failingTable, failedTotalTable } of [
       );
 
       await boundary.run(request);
-      expect(
-        await boundary.run(database.select().from(failedTotalTable)),
-      ).toEqual([]);
+      expect(await boundary.run(database.select().from(failingTable))).toEqual(
+        [],
+      );
       await boundary.run(
         database.execute(
           sql`ALTER TABLE ${failingTable} DROP CONSTRAINT fail_write`,
@@ -340,38 +340,21 @@ for (const { name, failingTable, failedTotalTable } of [
         deduplicated: true,
         updated: 0,
       });
-      expect(
-        (await boundary.run(database.select().from(npcKillStatsTable))).map(
-          (row) => row.memberKills,
-        ),
-      ).toEqual([1]);
-      expect(
-        (
-          await boundary.run(database.select().from(npcKillStatsBucketTable))
-        ).map((row) => row.memberKills),
-      ).toEqual([1]);
-      expect(
-        (await boundary.run(database.select().from(guildKillSummaryTable))).map(
-          (row) => row.uniqueKills,
-        ),
-      ).toEqual([1]);
-      expect(
-        (
-          await boundary.run(
-            database.select().from(guildKillSummaryBucketTable),
-          )
-        ).map((row) => row.uniqueKills),
-      ).toEqual([1]);
-      expect(
-        (await boundary.run(database.select().from(userKillStatsTable))).map(
-          (row) => row.totalKills,
-        ),
-      ).toEqual(personalData ? [1] : []);
-      expect(
-        (
-          await boundary.run(database.select().from(userKillStatsBucketTable))
-        ).map((row) => row.totalKills),
-      ).toEqual(personalData ? [1] : []);
+
+      for (const [table, kills] of [
+        [memberKillTotalTable, [1]],
+        [memberKillBucketTable, [1]],
+        [guildKillTotalTable, [1]],
+        [guildKillBucketTable, [1]],
+        [userKillTotalTable, personalData ? [1] : []],
+        [userKillBucketTable, personalData ? [1] : []],
+      ] as const) {
+        expect(
+          (await boundary.run(database.select().from(table))).map(
+            (row) => row.kills,
+          ),
+        ).toEqual([...kills]);
+      }
     } finally {
       await boundary.dispose();
     }
@@ -405,7 +388,7 @@ it("does not release a replacement claim when a failed write outlives its claim"
     const database = boundary.database;
     await boundary.run(
       database.execute(
-        sql`ALTER TABLE ${userKillStatsBucketTable} ADD CONSTRAINT fail_write CHECK (false)`,
+        sql`ALTER TABLE ${userKillBucketTable} ADD CONSTRAINT fail_write CHECK (false)`,
       ),
     );
 
@@ -419,7 +402,7 @@ it("does not release a replacement claim when a failed write outlives its claim"
     expect([...claims.values()]).toEqual([replacementToken]);
     await boundary.run(
       database.execute(
-        sql`ALTER TABLE ${userKillStatsBucketTable} DROP CONSTRAINT fail_write`,
+        sql`ALTER TABLE ${userKillBucketTable} DROP CONSTRAINT fail_write`,
       ),
     );
     expect(await boundary.run(request)).toEqual({
@@ -427,7 +410,7 @@ it("does not release a replacement claim when a failed write outlives its claim"
       updated: 0,
     });
     expect(
-      await boundary.run(database.select().from(userKillStatsTable)),
+      await boundary.run(database.select().from(userKillTotalTable)),
     ).toEqual([]);
   } finally {
     await boundary.dispose();

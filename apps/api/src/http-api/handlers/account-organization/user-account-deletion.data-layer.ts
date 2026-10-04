@@ -1,11 +1,17 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
+  memberKillTotalTable,
+  memberKillBucketTable,
   memberTable,
   memberToRoleTable,
+  npcKillStatsBucketTable,
   npcKillStatsTable,
   userCharactersLootlogSettingsTable,
+  userKillTotalTable,
+  userKillBucketTable,
+  userKillStatsBucketTable,
   userKillStatsTable,
   userPinnedEventTable,
   userSettingDocumentTable,
@@ -71,12 +77,36 @@ const deletePersistedAccount = (
 
       const memberIds = members.map(({ id }) => id);
 
+      // Compressed kill buckets are segmented by Organization, so removing one
+      // member decompresses that Organization's segments in each chunk.
+      yield* transaction.execute(
+        sql`select set_config('timescaledb.max_tuples_decompressed_per_dml_transaction', '0', true)`,
+      );
+
       if (memberIds.length > 0) {
+        yield* transaction
+          .delete(memberKillBucketTable)
+          .where(inArray(memberKillBucketTable.memberId, memberIds));
+        yield* transaction
+          .delete(memberKillTotalTable)
+          .where(inArray(memberKillTotalTable.memberId, memberIds));
+        yield* transaction
+          .delete(npcKillStatsBucketTable)
+          .where(inArray(npcKillStatsBucketTable.memberId, memberIds));
         yield* transaction
           .delete(npcKillStatsTable)
           .where(inArray(npcKillStatsTable.memberId, memberIds));
       }
 
+      yield* transaction
+        .delete(userKillBucketTable)
+        .where(eq(userKillBucketTable.discordUserId, identity.discordId));
+      yield* transaction
+        .delete(userKillTotalTable)
+        .where(eq(userKillTotalTable.discordUserId, identity.discordId));
+      yield* transaction
+        .delete(userKillStatsBucketTable)
+        .where(eq(userKillStatsBucketTable.userId, identity.discordId));
       yield* transaction
         .delete(userKillStatsTable)
         .where(eq(userKillStatsTable.userId, identity.discordId));

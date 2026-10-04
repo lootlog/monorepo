@@ -603,11 +603,11 @@ describe("personal Organization activity feed", () => {
     expect(publicationCount).toBe(1);
 
     const acceptedSums = await client.query(
-      `SELECT "uniqueKills" FROM "GuildKillSummary" WHERE "guildId"=$1`,
+      `SELECT kills FROM "GuildKillBucket" WHERE "guildId"=$1`,
       [guild.id],
     );
 
-    expect(acceptedSums.rows).toEqual([{ uniqueKills: 1 }]);
+    expect(acceptedSums.rows).toEqual([{ kills: 1 }]);
     expect((await run(makeUserFeed(database)(owner))).items[0]?.npc?.prof).toBe(
       "p",
     );
@@ -635,7 +635,7 @@ describe("personal Organization activity feed", () => {
       );
 
       const sums = await client.query(
-        `SELECT "uniqueKills" FROM "GuildKillSummary" WHERE "guildId"=$1 AND "npcName"='FAIL_FEED_TEST'`,
+        `SELECT kills FROM "GuildKillBucket" WHERE "guildId"=$1 AND "npcName"='FAIL_FEED_TEST'`,
         [guild.id],
       );
 
