@@ -48,7 +48,6 @@
   },
   "general": {
     "title": "Ustawienia ogólne",
-    "description": "Zarządzaj konfiguracją Lootloga",
     "toasts": {
       "updateSuccess": "Zaktualizowano konfigurację Lootloga",
       "updateError": "Nie udało się zaktualizować konfiguracji Lootloga"
@@ -93,7 +92,6 @@
       "levelOrder": "Poziom końcowy nie może być niższy od początkowego."
     },
     "title": "Ustawienia ról",
-    "description": "Zarządzaj uprawnieniami dla ról Discord",
     "searchPlaceholder": "Szukaj roli",
     "emptyTitle": "Nie znaleziono ról",
     "emptyDescription": "Brak ról do wyświetlenia.",
@@ -124,7 +122,6 @@
   },
   "npcs": {
     "title": "Potwory i NPC",
-    "description": "Wybierz, jakie przedmioty Lootlog ma zapisywać dla każdego potwora",
     "searchPlaceholder": "Szukaj potwora",
     "emptyTitle": "Nie znaleziono potworów",
     "emptyDescription": "Brak potworów do wyświetlenia.",
@@ -220,7 +217,6 @@
   },
   "members": {
     "title": "Członkowie",
-    "description": "Zarządzaj dostępem członków Lootloga",
     "searchPlaceholder": "Szukaj członka po nicku lub Discord ID",
     "details": "Szczegóły członka",
     "owner": "Właściciel Lootloga",
@@ -277,10 +273,8 @@
     "refreshStartError": "Nie udało się rozpocząć odświeżania.",
     "retry": "Spróbuj ponownie",
     "refreshAll": "Odśwież wszystkich",
-    "refreshedAt": "Odświeżono {{time}}",
     "discordSync": {
       "title": "Synchronizacja Discorda",
-      "lastConfirmedRelative": "Ostatnia synchronizacja: {{time}}",
       "lastConfirmedCompact": "{{time}}",
       "neverSyncedCompact": "nigdy",
       "staleAccessHint": "Dostęp opiera się na ostatnich poprawnych danych z Discorda. Jeśli kolejne odświeżenie zwróci brak członkostwa, dostęp zostanie zablokowany.",
@@ -364,7 +358,6 @@
     },
     "webActivity": {
       "title": "Aktywność",
-      "online": "Online na stronie",
       "offline": "Offline",
       "onlineSources": {
         "web": "Online na stronie",
@@ -372,10 +365,6 @@
         "webAndGame": "Online na stronie i w grze",
         "margonemVerified": "Zweryfikowane konto Margonem"
       },
-      "noVisits": "Ostatnio online: brak danych",
-      "lastSeenRelative": "Ostatnio online: {{time}}",
-      "webVisitCountCompact": "Strona: {{count}}",
-      "gameVisitCountCompact": "Gra: {{count}}",
       "webVisitCountShort": "Web {{count}}",
       "gameVisitCountShort": "Gra {{count}}",
       "onlineNowCompact": "Online teraz",
@@ -403,8 +392,6 @@
     "statusProblem": "Problem",
     "statusNoRoles": "Brak ról",
     "statusSyncStale": "Nieaktualna synchronizacja",
-    "statusActiveDescription": "Członek jest aktywny i może korzystać z tego Lootloga.",
-    "statusInactiveDescription": "Członek został lokalnie dezaktywowany. Ponowna aktywacja nastąpi po odświeżeniu danych z Discorda.",
     "access": {
       "title": "Dostęp",
       "status": "Status członka",
@@ -423,9 +410,7 @@
     "permissionsCount_one": "{{count}} uprawnienie",
     "permissionsCount_few": "{{count}} uprawnienia",
     "permissionsCount_many": "{{count}} uprawnień",
-    "actionsTitle": "Status i akcje",
     "deactivate": "Dezaktywuj",
-    "deactivatePending": "Dezaktywowanie...",
     "deactivateSuccess": "Członek został dezaktywowany",
     "deactivateError": "Nie udało się dezaktywować członka",
     "deactivateConfirmTitle": "Dezaktywować członka {{name}}?",
@@ -474,7 +459,6 @@
       "rebuildPending": "Przebuduj kolejkę",
       "save": "Zapisz",
       "create": "Utwórz",
-      "createTarget": "Utwórz kanał docelowy",
       "showAllHistory": "Pokaż ostatnie {{count}}"
     },
     "sections": {
@@ -483,7 +467,6 @@
       "targetsDescription": "Kanały Discorda używane do wysyłki powiadomień.",
       "rules": "Reguły",
       "rulesDescription": "Automatyzacje określające kiedy i gdzie wysyłać powiadomienia.",
-      "jobs": "Kolejka wysyłki",
       "jobsDescription": "Oczekujące wysyłki powiadomień.",
       "historyDescription": "Historia wysłanych i nieudanych powiadomień."
     },
@@ -627,7 +610,6 @@
       "manualNpcIdsInvalid": "ID NPC muszą być dodatnimi liczbami całkowitymi",
       "scheduledAtRequired": "Wybierz datę i godzinę wysyłki",
       "scheduledAtFuture": "Data wysyłki musi być w przyszłości",
-      "intervalValueRequired": "Podaj co ile godzin",
       "intervalValueRange": "Wartość musi być od 1 do 24",
       "timeOfDayRequired": "Podaj godzinę wysyłki",
       "weekdayRequired": "Wybierz dzień tygodnia"
@@ -638,7 +620,6 @@
       "active": "Aktywność kanału",
       "activeDescription": "Nieaktywny kanał nie będzie używany przez reguły.",
       "activeDeactivateWarning": "Dezaktywacja kanału spowoduje anulowanie wszystkich oczekujących wysyłek na ten kanał.",
-      "trigger": "Typ reguły",
       "triggerType": "Typ powiadomienia",
       "name": "Nazwa reguły",
       "scheduledAt": "Data i godzina pierwszej wysyłki",
@@ -665,7 +646,6 @@
       "manualNpcIds": "np. 101, 202, 303",
       "searchNpcs": "Szukaj NPC po nazwie lub ID",
       "scheduleOffsetMinutes": "np. 0",
-      "scheduledAt": "Wybierz datę i godzinę",
       "scheduleTimeOfDay": "np. 19:00",
       "scheduledUntil": "Opcjonalnie",
       "targets": "Wybierz kanały docelowe",
@@ -676,12 +656,8 @@
       "description": "Treść wiadomości wysyłanej na Discorda. Obsługiwany jest Markdown oraz wzmianki ról.",
       "placeholder": "Napisz treść powiadomienia...",
       "showPreview": "Podgląd",
-      "emptyRoles": "Brak ról do wstawienia.",
-      "emptyVariables": "Brak zmiennych do wstawienia.",
       "emptySuggestions": "Brak pasujących sugestii.",
       "availableVariables": "Dostępne zmienne",
-      "variablesSummary": "{{ruleName}}, {{npcName}}, {{npcId}}, {{world}}, {{minSpawnTime}}, {{maxSpawnTime}}, {{scheduledFor}}",
-      "variableSuggestions": "Sugestie zmiennych",
       "previewLabel": "Podgląd wiadomości",
       "previewDescription": "Podgląd wiadomości z przykładowymi danymi podstawionymi za zmienne.",
       "previewNotice": "Zmienne zostały zastąpione przykładowymi danymi. Wygląd może się nieznacznie różnić od wiadomości na Discordzie.",
@@ -713,9 +689,7 @@
     },
     "ruleDialog": {
       "createTitle": "Dodaj regułę",
-      "createDescription": "Skonfiguruj kiedy bot ma wysyłać przypomnienia przed spawnem.",
       "editTitle": "Edytuj regułę",
-      "editDescription": "Zmień warunki uruchamiania i targety dla tej reguły.",
       "triggerDescription": "Ten widok obsługuje tylko przypomnienia planowane przed spawnem.",
       "triggerDescriptionScheduledMessage": "Wyślij wiadomość jednorazowo lub cyklicznie w określonym czasie.",
       "targetsDescription": "Wybierz jeden lub więcej kanałów docelowych. Możesz też dodać nowy bez opuszczania formularza."
@@ -818,8 +792,7 @@
       }
     },
     "actions": {
-      "addWatch": "Dodaj przedmiot",
-      "addingWatch": "Dodawanie..."
+      "addWatch": "Dodaj przedmiot"
     },
     "quickAdd": {
       "add": "Dodaj do obserwowanych",
@@ -893,9 +866,6 @@
       "watchDeleted": "Obserwowany przedmiot został usunięty.",
       "watchDeleteError": "Nie udało się usunąć obserwowanego przedmiotu."
     },
-    "watchCount_one": "{{count}} obserwacja",
-    "watchCount_few": "{{count}} obserwacje",
-    "watchCount_many": "{{count}} obserwacji",
     "watchLimitStatus": "{{count}} / {{limit}}",
     "missingGuild": "Brak dostępu: {{guildId}}",
     "staleGuildWarning": "Ta obserwacja zawiera Lootlogi, do których nie masz już dostępu.",
@@ -912,7 +882,6 @@
   "guildInfo": {
     "title": "Informacje",
     "refresh": "Odśwież status",
-    "refreshing": "Odświeżanie...",
     "syncStatus": "Status synchronizacji Discorda",
     "syncStatusDescription": "Ten widok pokazuje aktualny stan połączenia bota z serwerem Discord i kanałami.",
     "syncUnknown": {
@@ -987,21 +956,17 @@
     "deleteConfirmDescription": "Czy na pewno chcesz usunąć szablon {{name}}?",
     "createDialog": {
       "title": "Nowy szablon map",
-      "description": "Utwórz nowy szablon z listą map",
-      "creating": "Tworzenie..."
+      "description": "Utwórz nowy szablon z listą map"
     },
     "editDialog": {
       "title": "Edytuj szablon",
-      "description": "Edytuj nazwę i mapy szablonu",
-      "saving": "Zapisywanie..."
+      "description": "Edytuj nazwę i mapy szablonu"
     },
     "form": {
       "nameRequired": "Nazwa szablonu jest wymagana",
       "mapsRequired": "Dodaj przynajmniej jedną mapę"
     },
     "toasts": {
-      "nameRequired": "Nazwa szablonu jest wymagana",
-      "addAtLeastOneMap": "Dodaj przynajmniej jedną mapę",
       "created": "Szablon utworzony pomyślnie",
       "updated": "Szablon zaktualizowany",
       "duplicateName": "Szablon o tej nazwie już istnieje",
@@ -1013,7 +978,6 @@
   },
   "account": {
     "title": "Konto",
-    "description": "Ustawienia konta i sesji",
     "session": {
       "title": "Sesja",
       "description": "Wyloguj się z bieżącej sesji na tym urządzeniu",
@@ -1031,8 +995,6 @@
   },
   "appearance": {
     "title": "Wygląd",
-    "description": "Dostosuj wygląd aplikacji według swoich preferencji.",
-    "themeLabel": "Motyw",
     "saveError": "Nie udało się zapisać motywu na koncie. Podgląd pozostaje aktywny. Wybierz motyw ponownie, aby spróbować jeszcze raz.",
     "themes": {
       "default": {

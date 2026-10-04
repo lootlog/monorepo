@@ -1,8 +1,6 @@
 {
   "messageActions": {
     "copy": "Kopiuj wiadomość",
-    "copied": "Skopiowano",
-    "copyFailed": "Nie udało się skopiować",
     "showOriginal": "Przejdź do wiadomości: {{name}}",
     "clearReply": "Anuluj odpowiedź",
     "copyLocation": "Kopiuj lokalizację"
@@ -132,9 +130,6 @@
     "showFilters": "Pokaż filtry",
     "openSettings": "Ustawienia czatu"
   },
-  "reply": {
-    "replyingTo": "Odpowiedź"
-  },
   "contextMenu": {
     "unknownUser": "Nieznany",
     "sendMessage": "Wyślij wiadomość",
@@ -163,7 +158,6 @@
     "position": "Pozycja",
     "helpMessage": "Potrzebuję pomocy! {{map}} ({{x}}, {{y}}).",
     "enemyCount": " Wrogowie: {{count}}.",
-    "helpSent": "Wysłano wezwanie pomocy",
     "partialDelivery": "Powiadomienie wysłano, ale nie udało się zapisać go w czacie. Nie wysyłaj ponownie.",
     "unassigned": "Nieprzypisany",
     "hotkeys": {
@@ -182,8 +176,7 @@
         "label": "Zgłoś się do zbiórki",
         "description": "Zapisuje na zbiórkę z paska czatu. Ponowne użycie wypisuje."
       }
-    },
-    "positionSent": "Wysłano pozycję"
+    }
   },
   "navigation": {
     "unread": "Nieprzeczytane wiadomości",

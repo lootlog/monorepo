@@ -148,19 +148,12 @@ const messages = {
     title: "Wyszukiwarka przedmiotów",
     description:
       "Znajdź przedmiot po nazwie. Zawęź wyniki według poziomu, rzadkości, typu i profesji.",
-    statsLabel: "Statystyki",
-    rarityLabel: "Rzadkość",
-    typeLabel: "Typ",
-    levelLabel: "Poziom",
-    professionsLabel: "Profy",
   },
   npcs: {
     eyebrow: "NPC i potwory",
     title: "Wyszukiwarka NPC",
     description:
       "Znajdź NPC-a lub potwora po nazwie i sprawdź jego typ oraz poziom.",
-    typeLabel: "Typ",
-    levelLabel: "Poziom",
     gameVersions: {
       pl: "margonem.pl",
       en: "margonem.com",
@@ -171,8 +164,6 @@ const messages = {
     title: "Wyszukiwarka graczy",
     description:
       "Znajdź postać po nazwie i świecie. Sprawdź jej poziom oraz profesję.",
-    professionLabel: "Profesja",
-    worldLabel: "Świat",
     characterIdLabel: "ID postaci",
   },
 } as const;

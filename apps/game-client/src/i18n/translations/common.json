@@ -12,7 +12,6 @@
     "reset": "Przywróć domyślny",
     "restore": "Przywróć",
     "clear": "Wyczyść",
-    "add": "Dodaj",
     "close": "Zamknij",
     "openSettings": "Otwórz ustawienia",
     "undo": "Cofnij",
@@ -113,7 +112,6 @@
     "noResults": "Nie znaleziono wyników"
   },
   "states": {
-    "unknown": "Nieznana",
     "unknownNeutral": "Nieznane"
   },
   "connection": {
