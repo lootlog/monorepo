@@ -104,19 +104,23 @@ const isSyncableGuildChannel = (
 const permissionState = (
   permissions: Readonly<PermissionsBitField> | null | undefined,
 ) => {
-  const grantedPermissions = REQUIRED_NOTIFICATION_PERMISSIONS.filter(
-    (permission) => permissions?.has(permission.flag) ?? false,
-  ).map((permission) => permission.name);
+  const requiredPermissions: string[] = [];
+  const grantedPermissions: string[] = [];
+  const missingPermissions: string[] = [];
 
-  const missingPermissions = REQUIRED_NOTIFICATION_PERMISSIONS.filter(
-    (permission) => !(permissions?.has(permission.flag) ?? false),
-  ).map((permission) => permission.name);
+  for (const permission of REQUIRED_NOTIFICATION_PERMISSIONS) {
+    requiredPermissions.push(permission.name);
+
+    if (permissions?.has(permission.flag)) {
+      grantedPermissions.push(permission.name);
+    } else {
+      missingPermissions.push(permission.name);
+    }
+  }
 
   return {
     hasRequiredPermissions: missingPermissions.length === 0,
-    requiredPermissions: REQUIRED_NOTIFICATION_PERMISSIONS.map(
-      (permission) => permission.name,
-    ),
+    requiredPermissions,
     grantedPermissions,
     missingPermissions,
   };
