@@ -46,36 +46,16 @@ export const parseEnvFile = (content: string): EnvVariable[] => {
   for (const line of lines) {
     const trimmedLine = line.trim();
 
-    if (trimmedLine === "") {
-      variables.push({
-        key: "",
-        value: "",
-        isComment: false,
-        isEmpty: true,
-        originalLine: line,
-      });
-      continue;
-    }
-
-    if (trimmedLine.startsWith("#")) {
-      variables.push({
-        key: "",
-        value: "",
-        isComment: true,
-        isEmpty: false,
-        originalLine: line,
-      });
-      continue;
-    }
-
+    const isEmpty = trimmedLine === "";
+    const isComment = trimmedLine.startsWith("#");
     const equalIndex = line.indexOf("=");
 
-    if (equalIndex === -1) {
+    if (isEmpty || isComment || equalIndex === -1) {
       variables.push({
         key: "",
         value: "",
-        isComment: false,
-        isEmpty: false,
+        isComment,
+        isEmpty,
         originalLine: line,
       });
       continue;
