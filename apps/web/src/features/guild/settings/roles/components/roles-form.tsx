@@ -49,6 +49,17 @@ const DEFAULT_LVL_RANGE_FROM = "0";
 
 const DEFAULT_LVL_RANGE_TO = "500";
 
+const toRolesFormValues = (role: GuildRole): RolesFormInput => ({
+  lvlRangeFrom: role.lvlRangeFrom?.toString() ?? DEFAULT_LVL_RANGE_FROM,
+  lvlRangeTo: role.lvlRangeTo?.toString() ?? DEFAULT_LVL_RANGE_TO,
+  permissions: Object.fromEntries(
+    PERMISSIONS.map((permission) => [
+      permission,
+      role.permissions.includes(permission),
+    ]),
+  ),
+});
+
 type RolesFormProps = {
   role: GuildRole;
 };
@@ -64,29 +75,11 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
 
   const form = useForm<RolesFormInput>({
     resolver: zodResolver(createRolesFormSchema(t), undefined, { raw: true }),
-    defaultValues: {
-      lvlRangeFrom: role.lvlRangeFrom?.toString() ?? DEFAULT_LVL_RANGE_FROM,
-      lvlRangeTo: role.lvlRangeTo?.toString() ?? DEFAULT_LVL_RANGE_TO,
-      permissions: Object.fromEntries(
-        PERMISSIONS.map((permission) => [
-          permission,
-          role.permissions.includes(permission),
-        ]),
-      ),
-    },
+    defaultValues: toRolesFormValues(role),
   });
 
   useEffect(() => {
-    form.reset({
-      lvlRangeFrom: role.lvlRangeFrom?.toString() ?? DEFAULT_LVL_RANGE_FROM,
-      lvlRangeTo: role.lvlRangeTo?.toString() ?? DEFAULT_LVL_RANGE_TO,
-      permissions: Object.fromEntries(
-        PERMISSIONS.map((permission) => [
-          permission,
-          role.permissions.includes(permission),
-        ]),
-      ),
-    });
+    form.reset(toRolesFormValues(role));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role]);
 
@@ -113,17 +106,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
           }
 
           toast.success(t("settings.roles.updateSuccess"));
-          form.reset({
-            lvlRangeFrom:
-              response.lvlRangeFrom?.toString() ?? DEFAULT_LVL_RANGE_FROM,
-            lvlRangeTo: response.lvlRangeTo?.toString() ?? DEFAULT_LVL_RANGE_TO,
-            permissions: Object.fromEntries(
-              PERMISSIONS.map((permission) => [
-                permission,
-                response.permissions.includes(permission),
-              ]),
-            ),
-          });
+          form.reset(toRolesFormValues(response));
         },
         onError: () => {
           toast.error(t("settings.roles.updateError"));
