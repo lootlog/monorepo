@@ -1,8 +1,9 @@
 import { defineConfig } from "orval";
+import { sdkServices } from "./scripts/sdk-services";
 
 export default defineConfig(
   Object.fromEntries(
-    ["main", "activity", "battlelog", "search"].map((service) => [
+    sdkServices.map(({ service }) => [
       service,
       {
         input: {
