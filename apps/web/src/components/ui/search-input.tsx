@@ -7,8 +7,6 @@ import {
   InputGroupInput,
 } from "@lootlog/ui/components/input-group";
 
-export type SearchProps = React.InputHTMLAttributes<HTMLInputElement>;
-
 const SearchInput = forwardRef<
   HTMLInputElement,
   React.ComponentProps<"input"> & {

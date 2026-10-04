@@ -31,10 +31,6 @@ export interface GetAllBattlesResult {
   };
 }
 
-export interface DeleteBattleResult {
-  message: string;
-}
-
 // Raw battle data structure stored in R2
 const ParsedMoveSchema = Schema.Struct({
   attackerId: Schema.NullOr(Schema.String),

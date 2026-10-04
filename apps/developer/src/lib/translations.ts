@@ -103,7 +103,6 @@ export const portalText = {
   dev: "Development environment",
   production: "Production environment",
   signedOut: "Sign in to manage your personal API keys.",
-  service: "Service",
   main: "Main API",
   activity: "Activity",
   battlelog: "Battles",

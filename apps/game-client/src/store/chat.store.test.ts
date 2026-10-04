@@ -87,7 +87,6 @@ it("migrates the saved filter once while retaining preferences, then persists la
   );
   await useChatStore.persist.rehydrate();
   expect(useChatStore.getState().chatFilter).toBe("all");
-  expect(useChatStore.getState().isNotificationEnabled).toBe(false);
   expect(useChatStore.getState().commandGuildId).toBe("a");
   useChatStore.getState().setDraft("a", "Keep this draft");
   useChatStore.getState().setChatFilter("reports");

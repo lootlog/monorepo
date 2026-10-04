@@ -120,7 +120,6 @@
         "test/**/*.ts",
         "test/**/*.e2e-spec.ts",
         "vitest.config.*",
-        "vitest.config.e2e.*",
         "tsconfig.json"
       ]
     },

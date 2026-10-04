@@ -4,8 +4,7 @@
   "private": true,
   "license": "MIT",
   "files": [
-    "dist",
-    "nginx.conf"
+    "dist"
   ],
   "type": "module",
   "scripts": {

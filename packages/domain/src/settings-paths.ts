@@ -61,9 +61,6 @@ export const getPath = (
   return result === MISSING_PATH ? undefined : result;
 };
 
-export const hasPath = (value: SettingsJsonRecord, path: string) =>
-  readPath(value, path) !== MISSING_PATH;
-
 export const setPath = (
   target: SettingsJsonRecord,
   path: string,

@@ -27,8 +27,6 @@ export type ChatReplyDraft = {
 interface ChatState {
   isIntegratedMode: boolean;
   toggleIntegratedMode: () => void;
-  isNotificationEnabled: boolean;
-  toggleNotificationEnabled: () => void;
   /** The Lootlog the console sends to; unset follows the character's Lootlog. */
   commandGuildId: string | null;
   setCommandGuildId: (guildId: string) => void;
@@ -40,7 +38,6 @@ interface ChatState {
   setDraft: (guildId: string, message: string) => void;
   replyDraftsByGuild: Record<string, ChatReplyDraft | undefined>;
   focusRequest: { guildId: string; sequence: number } | null;
-  requestComposeFocus: (guildId: string) => void;
   selectedGuildByCharacter: Record<string, string>;
   setSelectedChatGuildId: (guildId: string) => void;
   replyDraft: ChatReplyDraft | null;
@@ -55,12 +52,6 @@ export const useChatStore = create<ChatState>()(
       toggleIntegratedMode: () => {
         set((state) => ({
           isIntegratedMode: !state.isIntegratedMode,
-        }));
-      },
-      isNotificationEnabled: false,
-      toggleNotificationEnabled: () => {
-        set((state) => ({
-          isNotificationEnabled: !state.isNotificationEnabled,
         }));
       },
       commandGuildId: null,
@@ -83,17 +74,6 @@ export const useChatStore = create<ChatState>()(
         })),
       replyDraftsByGuild: {},
       focusRequest: null,
-      requestComposeFocus: (guildId) =>
-        set((state) => ({
-          selectedGuildByCharacter: {
-            ...state.selectedGuildByCharacter,
-            [getChatCharacterKey()]: guildId,
-          },
-          focusRequest: {
-            guildId,
-            sequence: (state.focusRequest?.sequence ?? 0) + 1,
-          },
-        })),
       selectedGuildByCharacter: {},
       setSelectedChatGuildId: (guildId) =>
         set((state) => ({
@@ -138,7 +118,6 @@ export const useChatStore = create<ChatState>()(
       partialize: (state) => ({
         selectedGuildByCharacter: state.selectedGuildByCharacter,
         isIntegratedMode: state.isIntegratedMode,
-        isNotificationEnabled: state.isNotificationEnabled,
         commandGuildId: state.commandGuildId,
         chatFilter: state.chatFilter,
         filtersVisible: state.filtersVisible,

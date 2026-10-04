@@ -239,5 +239,3 @@ export const makeNotificationsEvents = (options: {
     handleDiscordGuildChannelDeleted,
   };
 };
-
-export type NotificationsEvents = ReturnType<typeof makeNotificationsEvents>;

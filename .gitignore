@@ -38,10 +38,6 @@ npm-debug.log*
 .DS_Store
 *.pem
 
-**/battlelog-service/generated
-/apps/api/generated
-/apps/api/src/mocks/data/players.json
-
 .claude/settings.local.json
 analysis
 improvements
@@ -58,8 +54,6 @@ prompts
 prompts/**
 
 apps/api/scripts/**
-apps/api/src/metadata.ts
-apps/search/src/metadata.ts
 
 # Profiles & Performance
 apps/api/profiles/
