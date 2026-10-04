@@ -4,7 +4,6 @@
     "battles": "Walki",
     "analytics": "Analityka",
     "abyss": "Otchłań",
-    "statistics": "Statystyki",
     "battleDuel": "{{first}} vs {{second}}",
     "battleFallback": "Walka #{{id}}"
   },
@@ -16,7 +15,6 @@
     "clear": "Wyczyść filtry",
     "more": "Więcej",
     "moreWithCount": "Więcej ({{count}})",
-    "searchWarriors": "Szukaj wojowników",
     "searchOpponent": "Szukaj przeciwnika",
     "world": "Świat",
     "battleResult": "Wynik walki",
@@ -28,9 +26,6 @@
     "levelRange": "Zakres poziomów",
     "honorPoints": "Punkty honoru",
     "matchmaking": "Otchłań",
-    "allWorlds": "Wszystkie światy",
-    "allResults": "Wszystkie wyniki",
-    "allTypes": "Wszystkie typy",
     "selectedCount_one": "{{count}} wybrany",
     "selectedCount_few": "{{count}} wybrane",
     "selectedCount_many": "{{count}} wybranych",
@@ -140,7 +135,6 @@
     "latestSeason": "Najnowszy sezon",
     "noSeason": "Brak sezonów",
     "selectSeason": "Wybierz sezon",
-    "seasonRange": "{{from}} - {{to}}",
     "seasonsTitle": "Sezony Otchłani",
     "seasonsSubtitle": "Sezony wykrywamy po przerwach między walkami",
     "currentSeason": "Wybrany",
@@ -292,55 +286,18 @@
   },
   "statistics": {
     "title": "Analityka walk",
-    "loading": "Ładowanie...",
     "showingRecords": "Pokazano {{from}}-{{to}} z {{total}}",
     "empty": {
       "title": "Brak danych",
-      "description": "Nie znaleziono danych dla wybranych filtrów.",
       "errorTitle": "Nie udało się pobrać danych"
     },
-    "total": "Łącznie: {{count}}",
     "combatProfile": {
-      "value": "Wartość",
-      "wins": "Wygrane",
-      "losses": "Porażki",
-      "ph": "PH",
-      "rating": "Rating",
-      "damageMix": "Miks obrażeń",
-      "mitigationMix": "Miks defensywy",
-      "spellUsage": "Użycie umiejętności",
-      "matchups": "Matchupy po profesji",
-      "trends": "Trend PH i ratingu",
-      "highlights": "Największe zwroty",
       "cards": {
         "record": "Bilans",
         "honorPoints": "Punkty honoru",
         "turns": "Tury na walkę",
         "damage": "Obrażenia na turę",
         "control": "Stracone tury"
-      },
-      "damageTypes": {
-        "melee": "Fizyczne",
-        "distance": "Dystansowe",
-        "auxiliary": "Pomocnicze",
-        "fire": "Ogień",
-        "frost": "Zimno",
-        "lightning": "Błyskawice",
-        "third": "Trzeci cios",
-        "true": "Prawdziwe",
-        "rage": "Wściekłość",
-        "stigma": "Piętno"
-      },
-      "mitigationTypes": {
-        "blockedDamage": "Zablokowane obrażenia",
-        "blocks": "Bloki",
-        "evasions": "Uniki",
-        "counters": "Kontry"
-      },
-      "highlightTypes": {
-        "biggestDamage": "Największy burst",
-        "biggestMitigation": "Największa obrona",
-        "biggestComeback": "Największy comeback"
       },
       "details": {
         "winRate": "{{value}}% wygranych",
@@ -411,7 +368,6 @@
       "characterFallback": "Twoja postać",
       "opponentFallback": "Przeciwnik",
       "subtitle": "Poziom {{level}} • Historia walk rankingowych",
-      "open": "Przejdź do PvP",
       "emptyTitle": "Brak walk z tym przeciwnikiem",
       "emptyDescription": "Nie znaleziono walk dla wybranego pojedynku i filtrów."
     },
@@ -422,8 +378,6 @@
     },
     "columns": {
       "name": "Nazwa",
-      "nick": "Nick",
-      "level": "Poziom",
       "total": "Łącznie",
       "result": "Wynik",
       "ratingDelta": "Rating Δ",
