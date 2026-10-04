@@ -943,8 +943,7 @@ the local `lootlog-db` run `timescale/timescaledb:2.24.0-pg17`.
 Kills always land in the current hour, so upserts never touch a compressed
 chunk. Account deletion deletes buckets by user inside compressed chunks. The
 member buckets are segmented by Organization, so the transaction lifts
-`timescaledb.max_tuples_decompressed_per_dml_transaction` for itself. Account
-deletion now also removes the old hourly buckets, which it used to leave behind.
+`timescaledb.max_tuples_decompressed_per_dml_transaction` for itself.
 
 On a local production copy (October 2026, 106 days of buckets) the old tables
 took 13 GB without bloat. The buckets take 1.2 GB after compression and the
@@ -969,22 +968,18 @@ queries are unchanged.
    buckets and totals. It also adds kills that committed into the hour before
    the cutover after the copy. It refuses to run while any old bucket was
    written in the last five minutes; the migration journal makes it run once.
-4. A later release drops the old tables, `KillBucketCutover`, and the
-   old-table deletes in account deletion.
+4. Deploy the API that no longer deletes from the old tables during account
+   deletion, then apply `20261004010929_drop_old_kill_tables`. This reverses
+   the usual order: an API that still deletes from the old tables fails every
+   account deletion once they are gone. The migration drops the six old tables
+   and `KillBucketCutover`. Pending migrations run in name order in one
+   transaction, so a pending step 3 runs first, and its refusal rolls the drop
+   back too. Dropping the old foreign keys takes `ACCESS EXCLUSIVE` locks on
+   `Guild` and `Member`; the migration sets `lock_timeout = '3s'`, so a long
+   reader of either table rolls it back instead of queueing traffic behind it,
+   and it can be run again. On the local production copy the drops took 40 ms
+   and freed 15 GB.
 
-Rolling the API back leaves the old tables without the kills the new API
-recorded. Before rolling back, add the new buckets from the cutover hour
-onwards to the old buckets and to the old lifetime counters, for example for
-personal kills:
-
-```sql
-INSERT INTO "UserKillStatsBucket" ("id", "userId", "world", "npcId", "npcName", "npcType", "npcLvl", "npcProf", "npcIcon", "totalKills", "periodStart", "lastKilledAt", "updatedAt")
-SELECT gen_random_uuid()::text, "discordUserId", "world", "npcId", "npcName", "npcType", "npcLvl", "npcProf", "npcIcon", "kills", "periodStart" AT TIME ZONE 'UTC', "lastKilledAt" AT TIME ZONE 'UTC', now()
-FROM "UserKillBucket"
-WHERE "periodStart" >= (SELECT "cutoverHour" AT TIME ZONE 'UTC' FROM "KillBucketCutover")
-ON CONFLICT ("userId", "world", "npcId", "periodStart") DO UPDATE SET "totalKills" = "UserKillStatsBucket"."totalKills" + excluded."totalKills";
-```
-
-and increment `UserKillStats` by the same sums per `(userId, world, npcId)`.
-After step 3 the old buckets of those hours already hold the older API's
-kills, so add only the new API's share.
+After step 4 the API cannot be rolled back to a revision that reads or writes
+the old tables. Before step 4, rolling the API back to such a revision leaves
+the old tables without the kills the new API recorded.

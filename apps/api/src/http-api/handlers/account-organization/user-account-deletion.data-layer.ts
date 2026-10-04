@@ -6,13 +6,9 @@ import {
   memberKillBucketTable,
   memberTable,
   memberToRoleTable,
-  npcKillStatsBucketTable,
-  npcKillStatsTable,
   userCharactersLootlogSettingsTable,
   userKillTotalTable,
   userKillBucketTable,
-  userKillStatsBucketTable,
-  userKillStatsTable,
   userPinnedEventTable,
   userSettingDocumentTable,
   userSettingsTable,
@@ -90,12 +86,6 @@ const deletePersistedAccount = (
         yield* transaction
           .delete(memberKillTotalTable)
           .where(inArray(memberKillTotalTable.memberId, memberIds));
-        yield* transaction
-          .delete(npcKillStatsBucketTable)
-          .where(inArray(npcKillStatsBucketTable.memberId, memberIds));
-        yield* transaction
-          .delete(npcKillStatsTable)
-          .where(inArray(npcKillStatsTable.memberId, memberIds));
       }
 
       yield* transaction
@@ -104,12 +94,6 @@ const deletePersistedAccount = (
       yield* transaction
         .delete(userKillTotalTable)
         .where(eq(userKillTotalTable.discordUserId, identity.discordId));
-      yield* transaction
-        .delete(userKillStatsBucketTable)
-        .where(eq(userKillStatsBucketTable.userId, identity.discordId));
-      yield* transaction
-        .delete(userKillStatsTable)
-        .where(eq(userKillStatsTable.userId, identity.discordId));
       yield* transaction
         .delete(userCharactersLootlogSettingsTable)
         .where(
