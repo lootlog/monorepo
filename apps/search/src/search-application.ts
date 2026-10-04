@@ -64,7 +64,16 @@ export const SearchConsumers = Layer.effectDiscard(
             for (const { completed } of batch) {
               yield* Deferred.done(completed, outcome);
             }
-          }),
+          }).pipe(
+            // The batch loop outlives the consume span; give each batch its own trace.
+            Effect.withSpan("SearchConsumers.indexBatch", {
+              root: true,
+              attributes: {
+                "messaging.destination.name": queueName,
+                "messaging.batch.message_count": batch.length,
+              },
+            }),
+          ),
         ),
         Effect.forkScoped,
       );
@@ -95,11 +104,7 @@ export const SearchConsumers = Layer.effectDiscard(
             const completed = yield* Deferred.make<void, unknown>();
             yield* Queue.offer(pending, { items, completed });
             yield* Deferred.await(completed);
-          }).pipe(
-            Effect.withSpan(queueName, {
-              attributes: { adapter: "rabbitmq", retryCount: 0 },
-            }),
-          );
+          });
         },
       );
     });
