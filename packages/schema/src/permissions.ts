@@ -42,23 +42,6 @@ export const Permission = Capability;
 
 export type Permission = Capability;
 
-interface UserGuildPermissionsRole {
-  id: string;
-  lvlRangeFrom: number;
-  lvlRangeTo: number;
-  permissions: Permission[];
-}
-
-interface UserGuildPermissionsGuild {
-  id: string;
-  ownerId: string;
-}
-
-export interface UserGuildPermissionsDto {
-  guild: UserGuildPermissionsGuild;
-  roles: UserGuildPermissionsRole[];
-}
-
 export const CapabilitySchema = Schema.Literals(Object.values(Capability));
 
 export const PermissionSchema = CapabilitySchema;

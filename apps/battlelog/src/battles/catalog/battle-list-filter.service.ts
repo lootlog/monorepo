@@ -17,10 +17,6 @@ import type { BattleListQuery } from "#src/battles/catalog/query-battles";
 import type { DrizzleDatabase } from "#src/database/database";
 import { battles, battleWarriors } from "#src/database/schema";
 
-export type BattleListWhereBuilder = (
-  battlesRef: typeof battles,
-) => SQL | undefined;
-
 type BattleListFilterDatabase = {
   query: {
     userCharacters: Pick<

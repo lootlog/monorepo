@@ -511,5 +511,3 @@ export const makeGuildLifecycle = (
 
   return { createGuild, updateGuild, deleteGuild, upsertRole, deleteRole };
 };
-
-export type GuildLifecycle = ReturnType<typeof makeGuildLifecycle>;

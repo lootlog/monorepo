@@ -33,12 +33,6 @@ const BATTLE_PING_TYPES = [
   ...BATTLE_TEAM_PING_TYPES,
 ] as const;
 
-export type BattleEnemyPingType = (typeof BATTLE_ENEMY_PING_TYPES)[number];
-
-export type BattleRequestPingType = (typeof BATTLE_REQUEST_PING_TYPES)[number];
-
-export type BattleTeamPingType = (typeof BATTLE_TEAM_PING_TYPES)[number];
-
 export type BattlePingType = (typeof BATTLE_PING_TYPES)[number];
 
 /** A Margonem party holds at most ten characters, so nine other recipients. */

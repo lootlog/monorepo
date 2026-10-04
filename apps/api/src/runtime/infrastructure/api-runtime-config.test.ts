@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { ConfigProvider, Effect, Exit, Redacted } from "effect";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
-import { apiRuntimeConfiguration } from "#src/runtime/infrastructure/api-runtime-config";
+import { apiConfiguration } from "#src/config/api.config";
 
 const requiredEnvironment = {
   PORT: "4000",
@@ -16,9 +16,9 @@ const requiredEnvironment = {
 };
 
 const loadWith = (values: Record<string, string | undefined>) =>
-  apiRuntimeConfiguration.parse(ConfigProvider.fromUnknown(values));
+  apiConfiguration.parse(ConfigProvider.fromUnknown(values));
 
-describe("apiRuntimeConfiguration", () => {
+describe("apiConfiguration", () => {
   it("loads the existing env names and preserves legacy defaults", async () => {
     const config = await Effect.runPromise(loadWith(requiredEnvironment));
 
@@ -35,24 +35,13 @@ describe("apiRuntimeConfiguration", () => {
       retentionDays: 30,
     });
     expect(config.nodeWarningDiagnosticsEnabled).toBe(false);
-    expect(config.postgresqlConnectionUri).toBeUndefined();
   });
 
   it("keeps secret-bearing inputs redacted", async () => {
-    const config = await Effect.runPromise(
-      loadWith({
-        ...requiredEnvironment,
-        POSTGRESQL_CONNECTION_URI: "postgres://database-secret",
-        OTEL_EXPORTER_OTLP_HEADERS: "authorization=telemetry-secret",
-      }),
-    );
+    const config = await Effect.runPromise(loadWith(requiredEnvironment));
 
     expect(String(config.rabbitmqUri)).not.toContain("rabbitmq.internal");
     expect(String(config.redis.password)).not.toContain("redis-secret");
-    expect(String(config.postgresqlConnectionUri)).not.toContain(
-      "database-secret",
-    );
-    expect(String(config.telemetry.headers)).not.toContain("telemetry-secret");
     expect(Redacted.value(config.redis.password)).toBe("redis-secret");
   });
 

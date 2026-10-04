@@ -1,14 +1,5 @@
-import type {
-  eventHeroNpcTable,
-  eventTable,
-} from "#src/database/drizzle/schema";
 import type { ActiveEventHeroStore } from "#src/events/kills/active-event-hero.repository";
 import { Effect } from "effect";
-
-export type ActiveEventHeroMatch = {
-  eventHero: typeof eventHeroNpcTable.$inferSelect;
-  event: typeof eventTable.$inferSelect;
-};
 
 export function findActiveEventHeroesByNpc(
   repository: ActiveEventHeroStore,

@@ -5,14 +5,6 @@ type GuildMemberRole = {
   color: number | null;
 };
 
-export type GameGuildMember = {
-  id: number;
-  userId: string;
-  name: string;
-  avatar?: string | null;
-  color?: number | null;
-};
-
 export type GuildMember = {
   id: number;
   userId: string;

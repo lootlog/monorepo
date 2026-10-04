@@ -49,37 +49,13 @@ export const SETTINGS_SCOPE_TYPES = [
 
 export type SettingsScopeType = (typeof SETTINGS_SCOPE_TYPES)[number];
 
-export interface SettingsScope {
-  type: SettingsScopeType;
-  id: string;
-}
-
 export const getCharacterSettingsScopeId = (
   gameAccountId: string,
   characterId: string,
 ) => `${gameAccountId}:${characterId}`;
 
-export type SettingsValueSource = "DEFAULT" | SettingsScope;
-
-export type SettingsPersistence = "SERVER_DOCUMENT" | "DEVICE";
-
 // Values arrive from versioned storage and are validated per catalog field before use.
 type RawSettingsValues = Record<string, typeof Schema.Json.Type>;
-
-export interface SettingsDocumentLayer {
-  scope: SettingsScope;
-  overrides: RawSettingsValues;
-  schemaVersion?: number;
-  updatedAt?: string;
-}
-
-export interface SettingsDomainResolution {
-  effective: RawSettingsValues;
-  layers: SettingsDocumentLayer[];
-  sources: Record<string, SettingsValueSource>;
-  schemaVersion: number;
-  updatedAt?: string;
-}
 
 export interface SettingsFieldDefinition<TValue = unknown> {
   defaultValue: TValue;
