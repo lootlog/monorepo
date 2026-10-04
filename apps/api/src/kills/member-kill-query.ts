@@ -77,12 +77,7 @@ export const makeMemberKillQuery =
         if (!member) return null;
 
         const { npcs, total, totalParticipations, participationsByType } =
-          yield* persistence.findMemberNpcPage(
-            filter,
-            periodStart !== undefined,
-            limit,
-            cursor,
-          );
+          yield* persistence.findMemberNpcPage(filter, limit, cursor);
 
         return {
           member: {
