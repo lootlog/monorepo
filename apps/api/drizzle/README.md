@@ -968,17 +968,25 @@ queries are unchanged.
    buckets and totals. It also adds kills that committed into the hour before
    the cutover after the copy. It refuses to run while any old bucket was
    written in the last five minutes; the migration journal makes it run once.
-4. Deploy the API that no longer deletes from the old tables during account
-   deletion, then apply `20261004010929_drop_old_kill_tables`. This reverses
-   the usual order: an API that still deletes from the old tables fails every
-   account deletion once they are gone. The migration drops the six old tables
-   and `KillBucketCutover`. Pending migrations run in name order in one
-   transaction, so a pending step 3 runs first, and its refusal rolls the drop
-   back too. Dropping the old foreign keys takes `ACCESS EXCLUSIVE` locks on
-   `Guild` and `Member`; the migration sets `lock_timeout = '3s'`, so a long
-   reader of either table rolls it back instead of queueing traffic behind it,
-   and it can be run again. On the local production copy the drops took 40 ms
-   and freed 15 GB.
+4. After step 3 has committed, deploy the API that no longer deletes from the
+   old tables during account deletion, then apply
+   `20261004010929_drop_old_kill_tables`. Step 3 must come first: it copies
+   old buckets into the new tables, so after the new API deletes an account
+   only from the new tables, step 3 would restore that account's kills. The
+   drop migration refuses to run in the same migration run as step 3 while the
+   old buckets hold rows. The deploy must also precede the drop: an API that
+   still deletes from the old tables fails every account deletion once they
+   are gone. The migration drops the six old tables and `KillBucketCutover`.
+   Dropping the old foreign keys takes `ACCESS EXCLUSIVE` locks on `Guild` and
+   `Member`; the migration sets `lock_timeout = '3s'`, so a long reader of
+   either table rolls it back instead of queueing traffic behind it, and it can
+   be run again. On the local production copy the drops took 40 ms and freed
+   15 GB.
+
+   If the drop refuses, the API went out before step 3. Delete the old rows of
+   the accounts deleted since that deploy (members whose `lastDiscordStatus`
+   is `ACCOUNT_DELETED`, by `memberId` and by their `userId`), apply step 3
+   with the previous release, and then apply the drop.
 
 After step 4 the API cannot be rolled back to a revision that reads or writes
 the old tables. Before step 4, rolling the API back to such a revision leaves

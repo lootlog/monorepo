@@ -5,7 +5,7 @@ import { pg_trgm } from "@electric-sql/pglite/contrib/pg_trgm";
 import { readMigrationFiles } from "drizzle-orm/migrator";
 
 describe("kill bucket migration", () => {
-  it("copies closed hours and totals, then the follow-up adds the kills recorded after the copy", async () => {
+  it("copies closed hours and totals, the follow-up adds the kills recorded after the copy, and the drop requires the follow-up to have committed", async () => {
     const database = new PGlite({ extensions: { pg_trgm } });
 
     try {
@@ -159,6 +159,35 @@ describe("kill bucket migration", () => {
       expect(await rows(`SELECT kills FROM "GuildKillTotal"`)).toEqual([
         { kills: 9 },
       ]);
+
+      // A reconcile that runs with the drop ran after the API stopped deleting
+      // old rows, so it may have restored deleted accounts' kills.
+      const drop = migrations[reconcileIndex + 1]!.sql.join("\n");
+
+      const recordReconcile = (appliedAt: string) => `
+        CREATE SCHEMA IF NOT EXISTS drizzle;
+        CREATE TABLE IF NOT EXISTS drizzle."__drizzle_migrations" (name text, applied_at timestamptz);
+        INSERT INTO drizzle."__drizzle_migrations" VALUES ('20261004005422_kill_bucket_reconcile', ${appliedAt});
+      `;
+
+      await expect(
+        database.transaction(async (transaction) => {
+          await transaction.exec(recordReconcile("now()"));
+          await transaction.exec(drop);
+        }),
+      ).rejects.toThrow("Apply 20261004005422_kill_bucket_reconcile before");
+      expect(
+        await rows(`SELECT to_regclass('"UserKillStats"') IS NOT NULL AS kept`),
+      ).toEqual([{ kept: true }]);
+
+      await database.exec(recordReconcile("now() - interval '1 minute'"));
+      await database.exec(drop);
+
+      expect(
+        await rows(
+          `SELECT to_regclass('"UserKillStats"') IS NULL AND to_regclass('"KillBucketCutover"') IS NULL AS dropped`,
+        ),
+      ).toEqual([{ dropped: true }]);
     } finally {
       await database.close();
     }
