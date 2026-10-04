@@ -20,7 +20,6 @@ export interface ApiConfiguration {
   readonly port: number;
   readonly serviceName: string;
   readonly serviceNamespace: string;
-  readonly postgresqlConnectionUri: Redacted.Redacted<string> | undefined;
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly redis: {
     readonly host: string;
@@ -33,12 +32,6 @@ export interface ApiConfiguration {
   readonly discordBotServiceUrl: URL;
   readonly reservationsCardsUrl: URL;
   readonly mapsApiUrl: URL;
-  readonly telemetry: {
-    readonly endpoint: Redacted.Redacted<string> | undefined;
-    readonly headers: Redacted.Redacted<string> | undefined;
-    readonly nodeResourceDetectors: string;
-    readonly tracesExporter: string;
-  };
   readonly timerCleanup: {
     readonly enabled: string;
     readonly retentionDays: number;
@@ -69,7 +62,6 @@ export const apiConfiguration = Config.all({
   serviceNamespace: Config.String("SERVICE_NAMESPACE").pipe(
     Config.withDefault("local"),
   ),
-  postgresqlConnectionUri: optionalRedacted("POSTGRESQL_CONNECTION_URI"),
   rabbitmqUri: Config.Redacted("RABBITMQ_URI"),
   redis: Config.all({
     host: Config.String("REDIS_HOST"),
@@ -91,16 +83,6 @@ export const apiConfiguration = Config.all({
     "RESERVATIONS_CARDS_URL",
   ),
   mapsApiUrl: Config.schema(Schema.URLFromString, "MAPS_API_URL"),
-  telemetry: Config.all({
-    endpoint: optionalRedacted("OTEL_EXPORTER_OTLP_ENDPOINT"),
-    headers: optionalRedacted("OTEL_EXPORTER_OTLP_HEADERS"),
-    nodeResourceDetectors: Config.String("OTEL_NODE_RESOURCE_DETECTORS").pipe(
-      Config.withDefault("env,host,os,process"),
-    ),
-    tracesExporter: Config.String("OTEL_TRACES_EXPORTER").pipe(
-      Config.withDefault("otlp"),
-    ),
-  }),
   timerCleanup: Config.all({
     enabled: Config.String("TIMER_CLEANUP_ENABLED").pipe(
       Config.withDefault("true"),

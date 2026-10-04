@@ -3,12 +3,6 @@
   "tasks": {
     "build": {
       "inputs": ["$TURBO_EXTENDS$", "tools/clean-build.mjs"]
-    },
-    "test": {
-      "dependsOn": ["$TURBO_EXTENDS$"]
-    },
-    "test:e2e": {
-      "dependsOn": ["$TURBO_EXTENDS$"]
     }
   }
 }

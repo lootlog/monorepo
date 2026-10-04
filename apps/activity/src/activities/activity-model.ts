@@ -29,8 +29,6 @@ const BaseActivity = Schema.Struct({
   idempotencyKey: Schema.NonEmptyString,
 });
 
-export type ActorSnapshotInput = typeof ActorSnapshot.Type;
-
 export type CreateActivity = typeof BaseActivity.Type;
 
 const decodeBase = Schema.decodeUnknownSync(BaseActivity);

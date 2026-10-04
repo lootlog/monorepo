@@ -4,7 +4,6 @@ export const GATEWAY_SOCKET_PATH = import.meta.env.VITE_GATEWAY_SOCKET_PATH;
 
 export enum GatewayEvent {
   // connection
-  DISCONNECTING = "disconnecting",
   DISCONNECT = "disconnect",
   CONNECT = "connect",
 

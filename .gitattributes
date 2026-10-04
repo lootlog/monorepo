@@ -1,6 +1,5 @@
 # Lock files should be treated as generated
-package-lock.json linguist-generated=true
-yarn.lock linguist-generated=true
+bun.lock linguist-generated=true
 
 # Generated files
 **/generated/** linguist-generated=true -whitespace

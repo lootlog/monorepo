@@ -4,8 +4,6 @@ import {
   type ApiConfiguration,
 } from "#src/config/api.config";
 
-export { apiConfiguration as apiRuntimeConfiguration } from "#src/config/api.config";
-
 export class ApiRuntimeConfig extends Context.Service<
   ApiRuntimeConfig,
   ApiConfiguration

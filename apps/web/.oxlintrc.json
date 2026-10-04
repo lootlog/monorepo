@@ -63,7 +63,6 @@
         "src/features/user/battle-panel/battle-panel-single-battle/components/use-battle-detail-view.ts",
         "src/features/guild/events/components/dialogs/event-summary/use-wrapped-autoplay.ts",
         "src/features/guild/events/hooks/socket/use-event-presence.ts",
-        "src/features/guild/settings/members/use-member-presence.ts",
         "src/contexts/gateway-provider.tsx",
         "src/contexts/theme-provider.tsx"
       ],

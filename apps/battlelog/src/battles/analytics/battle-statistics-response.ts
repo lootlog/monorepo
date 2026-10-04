@@ -235,14 +235,6 @@ const CombatProfileResponseSchema = Schema.Struct({
   highlights: Schema.Array(CombatProfileHighlightResponseSchema),
 });
 
-export type BattleAnalyticsSummary = DeepMutable<
-  typeof BattleAnalyticsResponseSchema.Type
->;
-
-export type ProfessionWinRate = DeepMutable<
-  typeof ProfessionWinRateResponseSchema.Type
->;
-
 export type HeadToHeadRecord = DeepMutable<
   typeof HeadToHeadRecordResponseSchema.Type
 >;

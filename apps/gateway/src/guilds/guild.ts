@@ -17,11 +17,6 @@ export interface UserGuildData {
   readonly roles: ReadonlyArray<GuildRole>;
 }
 
-export interface CachedGuildData {
-  readonly guilds: ReadonlyArray<UserGuildData>;
-  readonly cachedAt: number;
-}
-
 export interface GetUserGuildsOptions {
   discordId: string;
   userId: string;

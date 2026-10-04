@@ -21,21 +21,9 @@ export enum NotificationTriggerType {
   SCHEDULED_MESSAGE = "SCHEDULED_MESSAGE",
 }
 
-export enum NotificationScheduleStrategy {
-  SPAWN_WINDOW_RELATIVE = "SPAWN_WINDOW_RELATIVE",
-  FIXED_DATETIME = "FIXED_DATETIME",
-}
-
 export enum NotificationScheduleAnchor {
   MIN_SPAWN = "MIN_SPAWN",
   MAX_SPAWN = "MAX_SPAWN",
-}
-
-export enum NotificationScheduleIntervalType {
-  ONCE = "ONCE",
-  HOURLY = "HOURLY",
-  DAILY = "DAILY",
-  WEEKLY = "WEEKLY",
 }
 
 export enum NotificationJobKind {

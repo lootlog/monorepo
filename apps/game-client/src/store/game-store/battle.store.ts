@@ -44,9 +44,6 @@ interface BattleActions {
     overflowed: boolean;
     turns: string[];
   };
-  setBattleState: (state: "idle" | "in-battle") => void;
-  setLastBattleHash: (hash: string) => void;
-  setLastKillHash: (hash: string) => void;
   startBattle: (hash: string) => void;
   endBattle: () => void;
   updateBattleWarriors: (warriors: BattleWarriorsWithAccountId | null) => void;
@@ -156,12 +153,6 @@ export const useBattleStore = create<BattleState & BattleActions>(
         overflowed: captureOverflowed,
         turns: [...capturedTurns],
       }),
-
-      setBattleState: (battleState) => set({ battleState }),
-
-      setLastBattleHash: (hash) => set({ lastBattleHash: hash }),
-
-      setLastKillHash: (hash) => set({ lastKillHash: hash }),
 
       startBattle: (hash) =>
         set({

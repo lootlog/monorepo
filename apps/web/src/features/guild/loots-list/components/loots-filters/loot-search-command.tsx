@@ -24,11 +24,6 @@ import {
 } from "lucide-react";
 import { useLootSearchCommand } from "./use-loot-search-command";
 
-export type LootSearchCommandProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-};
-
 import {
   allTrue,
   containerVariants,

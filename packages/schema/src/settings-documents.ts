@@ -46,8 +46,6 @@ const SettingsPersistenceSchema = Schema.Literals([
   "DEVICE",
 ]);
 
-export type SettingsPersistence = typeof SettingsPersistenceSchema.Type;
-
 const PositiveSafeInt = Schema.Int.check(
   Schema.isGreaterThanOrEqualTo(1),
   Schema.isLessThanOrEqualTo(Number.MAX_SAFE_INTEGER),
@@ -103,9 +101,6 @@ const SettingsDocumentsContextSchema = Schema.Struct({
   characterId: Schema.optionalKey(Schema.NonEmptyString),
   guildId: Schema.optionalKey(Schema.NonEmptyString),
 }).annotate({ identifier: "SettingsDocumentsContextDto" });
-
-export type SettingsDocumentsContext =
-  typeof SettingsDocumentsContextSchema.Type;
 
 export const PatchSettingsDocumentsSchema = Schema.Struct({
   operations: Schema.Array(SettingsPatchOperationSchema).check(

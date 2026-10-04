@@ -4,9 +4,7 @@ import {
   getEventsRankingControllerGetKillDetailQueryKey,
   type KillDetailResponseDto,
   type KillDetailResponseDtoKill,
-  type KillDetailResponseDtoKillHeroNpc,
   type KillDetailResponseDtoKillPointsItem,
-  type KillDetailResponseDtoKillTimerCreatedBy,
 } from "@lootlog/client/main";
 
 import {
@@ -14,11 +12,7 @@ import {
   normalizeEventScoringRules,
 } from "@lootlog/domain/scoring";
 
-export type KillDetailMember = KillDetailResponseDtoKillTimerCreatedBy;
-
 export type KillDetailParticipant = KillDetailResponseDtoKillPointsItem;
-
-export type KillDetailHeroNpc = KillDetailResponseDtoKillHeroNpc;
 
 export type KillDetail = KillDetailResponseDtoKill;
 

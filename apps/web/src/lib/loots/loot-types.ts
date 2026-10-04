@@ -2,11 +2,8 @@ import {
   LootItemResponseDtoRarity,
   type LootItemResponseDto,
   type LootNpcResponseDto,
-  type LootPlayerResponseDto,
-  type LootResponseDtoSource,
   type LootCommentResponseDto,
   type LootResponseDto,
-  type LootShareResponseDto,
 } from "@lootlog/client/main";
 
 export type Loot = LootResponseDto;
@@ -15,15 +12,9 @@ export type Item = LootItemResponseDto;
 
 export type LootNpc = LootNpcResponseDto;
 
-export type LootPlayer = LootPlayerResponseDto;
-
 export type LootComment = LootCommentResponseDto;
 
-export type LootShare = LootShareResponseDto;
-
 export type ItemRarity = NonNullable<LootItemResponseDtoRarity> | "COMMON";
-
-export type LootSource = LootResponseDtoSource;
 
 export const ItemRarity = {
   ...LootItemResponseDtoRarity,
