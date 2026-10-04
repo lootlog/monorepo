@@ -9,6 +9,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parse } from "yaml";
 import { projectOpenApi } from "./project-openapi";
+import { sdkServices } from "./sdk-services";
 
 const root = resolve(import.meta.dirname, "..");
 
@@ -18,19 +19,7 @@ mkdirSync(`${root}/openapi`, { recursive: true });
 
 mkdirSync(`${root}/src/generated`, { recursive: true });
 
-for (const [service, app] of Object.entries({
-  main: "api",
-  activity: "activity",
-  battlelog: "battlelog",
-  search: "search",
-})) {
-  if (
-    service !== "main" &&
-    service !== "activity" &&
-    service !== "battlelog" &&
-    service !== "search"
-  )
-    throw new Error("Unknown service");
+for (const { service, app } of sdkServices) {
   const specPath = `${root}/openapi/${service}.json`;
   writeFileSync(
     specPath,
@@ -46,7 +35,7 @@ const result = spawnSync(
 
 if (result.status !== 0) throw new Error("Public SDK generation failed");
 
-for (const service of ["main", "activity", "battlelog", "search"]) {
+for (const { service } of sdkServices) {
   const path = `${root}/src/generated/${service}.ts`;
   writeFileSync(
     path,
@@ -62,9 +51,7 @@ const formatting = spawnSync(
   [
     "x",
     "oxfmt",
-    ...["main", "activity", "battlelog", "search"].map(
-      (service) => `${root}/openapi/${service}.json`,
-    ),
+    ...sdkServices.map(({ service }) => `${root}/openapi/${service}.json`),
   ],
   { cwd: root, stdio: "inherit" },
 );
