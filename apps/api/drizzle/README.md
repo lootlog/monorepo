@@ -931,12 +931,13 @@ totals have no other index and fillfactor 70, so increments are heap-only
 tuple updates. Personal rows are keyed by `discordUserId`, the identifier the
 old `userId` columns held.
 
-Where `shared_preload_libraries` contains `timescaledb`, the migration creates
-the extension, turns the three bucket tables into hypertables with 7-day chunks
+Where the `timescaledb` extension is installed, the migration creates it,
+turns the three bucket tables into hypertables with 7-day chunks
 and compresses chunks two days after they close, segmented by `discordUserId`
 for personal buckets and `guildId` for Organization buckets. The production API
-cluster preloads TimescaleDB 2.24.0. PGlite test databases keep plain tables
-with the same keys; the queries are the same for both. Integration tests and
+cluster preloads TimescaleDB 2.24.0. The extension is trusted, so the database
+owner creates it without superuser rights. PGlite test databases keep plain
+tables with the same keys; the queries are the same for both. Integration tests and
 the local `lootlog-db` run `timescale/timescaledb:2.24.0-pg17`.
 
 Kills always land in the current hour, so upserts never touch a compressed
