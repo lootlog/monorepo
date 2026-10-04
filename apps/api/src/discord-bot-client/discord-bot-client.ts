@@ -1,3 +1,4 @@
+import { discordPermissionFields } from "@lootlog/schema/discord";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   DiscordGuildSyncStatusSchema,
@@ -11,6 +12,19 @@ import {
   type OutboundHttpFailure,
 } from "#src/shared/http/outbound-http";
 
+const mutableDiscordPermissionFields = {
+  ...discordPermissionFields,
+  requiredPermissions: Schema.mutable(
+    discordPermissionFields.requiredPermissions,
+  ),
+  grantedPermissions: Schema.mutable(
+    discordPermissionFields.grantedPermissions,
+  ),
+  missingPermissions: Schema.mutable(
+    discordPermissionFields.missingPermissions,
+  ),
+};
+
 const DiscordGuildChannelSnapshotSchema = Schema.Struct({
   guildId: Schema.String,
   channelId: Schema.String,
@@ -21,20 +35,14 @@ const DiscordGuildChannelSnapshotSchema = Schema.Struct({
   active: Schema.Boolean,
   canView: Schema.Boolean,
   canSend: Schema.Boolean,
-  hasRequiredPermissions: Schema.Boolean,
-  requiredPermissions: Schema.mutable(Schema.Array(Schema.String)),
-  grantedPermissions: Schema.mutable(Schema.Array(Schema.String)),
-  missingPermissions: Schema.mutable(Schema.Array(Schema.String)),
+  ...mutableDiscordPermissionFields,
   lastSyncedAt: Schema.String,
 });
 
 const DiscordGuildSyncStateSchema = Schema.Struct({
   guildId: Schema.String,
   status: DiscordGuildSyncStatusSchema,
-  hasRequiredPermissions: Schema.Boolean,
-  requiredPermissions: Schema.mutable(Schema.Array(Schema.String)),
-  grantedPermissions: Schema.mutable(Schema.Array(Schema.String)),
-  missingPermissions: Schema.mutable(Schema.Array(Schema.String)),
+  ...mutableDiscordPermissionFields,
   channelCount: Schema.Number,
   selectableChannelCount: Schema.Number,
   lastAttemptAt: Schema.NullOr(Schema.String),
