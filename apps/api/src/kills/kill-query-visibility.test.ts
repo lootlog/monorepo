@@ -4,7 +4,7 @@ import { createAccessPolicy, Capability } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { Schema } from "effect";
 import { PgDialect } from "drizzle-orm/pg-core";
-import { npcKillStatsTable } from "#src/database/drizzle/schema";
+import { guildKillTotalTable } from "#src/database/drizzle/schema";
 import {
   readableRoles,
   visibilityFilter,
@@ -36,10 +36,10 @@ const visibleNpcIds = (roles: KillQueryRole[], administrative = false) => {
 
   try {
     database.exec(`
-      CREATE TABLE "NpcKillStats" (
+      CREATE TABLE "GuildKillTotal" (
         "guildId" TEXT, "npcId" INTEGER, "npcLvl" INTEGER, "npcType" TEXT
       );
-      INSERT INTO "NpcKillStats" VALUES
+      INSERT INTO "GuildKillTotal" VALUES
         ('organization', 1, 105, 'ELITE2'),
         ('organization', 2, 200, 'ELITE2'),
         ('organization', 3, 500, 'ELITE2'),
@@ -56,11 +56,11 @@ const visibleNpcIds = (roles: KillQueryRole[], administrative = false) => {
 
     const condition = buildKillStatsCondition(
       {
-        guildId: npcKillStatsTable.guildId,
-        world: npcKillStatsTable.world,
-        npcLvl: npcKillStatsTable.npcLvl,
-        npcName: npcKillStatsTable.npcName,
-        npcType: npcKillStatsTable.npcType,
+        guildId: guildKillTotalTable.guildId,
+        world: guildKillTotalTable.world,
+        npcLvl: guildKillTotalTable.npcLvl,
+        npcName: guildKillTotalTable.npcName,
+        npcType: guildKillTotalTable.npcType,
       },
       {
         guildId: "organization",
@@ -77,7 +77,7 @@ const visibleNpcIds = (roles: KillQueryRole[], administrative = false) => {
 
     return database
       .query<{ npcId: number }, SQLQueryBindings[]>(
-        `SELECT "npcId" FROM "NpcKillStats" WHERE ${query.sql} ORDER BY "npcId"`,
+        `SELECT "npcId" FROM "GuildKillTotal" WHERE ${query.sql} ORDER BY "npcId"`,
       )
       .all(...parameters)
       .map(({ npcId }) => npcId);
