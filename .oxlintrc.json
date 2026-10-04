@@ -200,22 +200,6 @@
       }
     },
     {
-      "files": ["apps/battlelog-service/**/*.{ts,tsx}"],
-      "rules": {
-        "@typescript-eslint/consistent-type-imports": "off",
-        "@typescript-eslint/no-explicit-any": "off",
-        "@typescript-eslint/no-non-null-assertion": "off",
-        // Polling, pagination, migrations and rate-limited work are sequential.
-        "no-await-in-loop": "off",
-        "no-unused-vars": "off",
-        "require-await": "off",
-        // Typed implementations infer signatures; assertion-only spies need no signature.
-        "vitest/require-mock-type-parameters": "off",
-        "unicorn/prefer-number-properties": "off",
-        "unicorn/prefer-string-slice": "off"
-      }
-    },
-    {
       "files": ["apps/gateway/**/*.{ts,tsx}", "apps/activity/**/*.{ts,tsx}"],
       "rules": {
         "@typescript-eslint/consistent-type-imports": "off",

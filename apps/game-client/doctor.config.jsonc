@@ -42,13 +42,6 @@
         ],
       },
       {
-        // React Hook Form changes feed a debounced server autosave, not parent render state.
-        "files": [
-          "src/features/settings/components/notifications/notification-category-form.tsx",
-        ],
-        "rules": ["react-doctor/no-pass-data-to-parent"],
-      },
-      {
         // The window handshake checks source and origin before accepting a transferred MessagePort.
         // MessagePort messages have no origin; possession of the accepted port authorizes this channel.
         "files": ["extension/entrypoints/bridge.content.ts"],

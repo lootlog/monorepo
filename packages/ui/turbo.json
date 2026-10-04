@@ -1,4 +1,4 @@
 {
   "extends": ["//"],
-  "tasks": { "build": { "outputs": ["*.tsbuildinfo"] } }
+  "tasks": { "build": { "outputs": [] } }
 }

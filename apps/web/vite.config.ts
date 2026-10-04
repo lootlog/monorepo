@@ -31,15 +31,9 @@ const vendorChunkGroups = {
     "/node_modules/react-day-picker/",
   ],
   "vendor-icons": ["/node_modules/lucide-react/"],
-  "vendor-motion": [
-    "/node_modules/gsap/",
-    "/node_modules/three/",
-    "/node_modules/ogl/",
-  ],
   "vendor-ui": [
     "/node_modules/@radix-ui/",
     "/node_modules/cmdk/",
-    "/node_modules/vaul/",
     "/node_modules/sonner/",
   ],
   "vendor-style": [
@@ -102,14 +96,6 @@ export default defineConfig({
         replacement: path.resolve(import.meta.dirname, "./src/contexts"),
       },
       {
-        find: "@/enums",
-        replacement: path.resolve(import.meta.dirname, "./src/enums"),
-      },
-      {
-        find: "@/eventEmitter",
-        replacement: path.resolve(import.meta.dirname, "./src/eventEmitter"),
-      },
-      {
         find: "@/features",
         replacement: path.resolve(import.meta.dirname, "./src/features"),
       },
@@ -122,20 +108,12 @@ export default defineConfig({
         replacement: path.resolve(import.meta.dirname, "./src/i18n"),
       },
       {
-        find: "@/layout",
-        replacement: path.resolve(import.meta.dirname, "./src/layout"),
-      },
-      {
         find: "@/lib",
         replacement: path.resolve(import.meta.dirname, "./src/lib"),
       },
       {
         find: "@/navigation",
         replacement: path.resolve(import.meta.dirname, "./src/navigation"),
-      },
-      {
-        find: "@/providers",
-        replacement: path.resolve(import.meta.dirname, "./src/providers"),
       },
       {
         find: "@/store",

@@ -4,18 +4,15 @@
     ".": {
       "entry": ["tools/**/*.{js,mjs}"],
       "project": ["tools/**/*.{js,mjs}"],
-      "ignoreDependencies": ["k6", "zod"]
+      "ignoreDependencies": ["k6"]
     },
     "apps/*": {
       "entry": [
         "src/index.ts",
         "src/main.ts",
         "src/main.tsx",
-        "src/app.tsx",
         "src/App.tsx",
-        "src/instrumentation.ts",
         "src/openapi/generate-openapi.ts",
-        "src/generated/**/*.{ts,tsx}",
         "scripts/**/*.{ts,mjs}",
         "server.js"
       ],
@@ -32,14 +29,11 @@
       "entry": [
         "src/main.tsx",
         "sandbox/main.ts",
-        "scripts/**/*.{ts,mjs}",
         "extension/entrypoints/**/*.ts"
       ],
       "project": [
         "src/**/*.{ts,tsx}",
-        "test/**/*.{ts,tsx}",
         "sandbox/**/*.{ts,tsx}",
-        "scripts/**/*.{ts,mjs}",
         "*.{ts,mts,js,mjs}",
         "*.config.{ts,mts,js,mjs}",
         "**/*.{spec,test,e2e-spec}.{ts,tsx,js}",
@@ -59,12 +53,7 @@
       "includeEntryExports": true
     },
     "packages/client": {
-      "entry": [
-        "src/index.ts",
-        "index.ts",
-        "src/generated/**/*.{ts,tsx}",
-        "scripts/**/*.{ts,mjs}"
-      ],
+      "entry": ["src/generated/**/*.{ts,tsx}", "scripts/**/*.{ts,mjs}"],
       "project": [
         "src/**/*.{ts,tsx}",
         "scripts/**/*.{ts,mjs}",
@@ -76,7 +65,6 @@
     "packages/sdk": {
       "entry": [
         "src/index.ts",
-        "index.ts",
         "src/generated/**/*.{ts,tsx}",
         "scripts/**/*.{ts,mjs}"
       ],
@@ -90,12 +78,10 @@
       "ignoreDependencies": ["@msgpack/msgpack", "@lootlog/protocol"]
     }
   },
-  "ignore": ["**/dist/**", "**/build/**", "**/node_modules/**"],
   "ignoreWorkspaces": ["repos/**"],
   "ignoreDependencies": [
     "@fontsource-variable/geist",
     "@fontsource-variable/geist-mono",
-    "@lootlog/ui",
     "@tailwindcss/postcss",
     "@types/mdx",
     "husky",
