@@ -47,14 +47,14 @@ const truncateToDiscordLimit = (content: string) =>
 
 const notificationContent = (command: DiscordNotificationSendCommand) => {
   if (command.content !== undefined && command.content.trim().length > 0) {
-    return truncateToDiscordLimit(command.content);
+    return command.content;
   }
 
   if (command.title.trim().length === 0) {
-    return truncateToDiscordLimit(command.message);
+    return command.message;
   }
 
-  return truncateToDiscordLimit(`**${command.title}**\n${command.message}`);
+  return `**${command.title}**\n${command.message}`;
 };
 
 /**
@@ -70,7 +70,7 @@ const messageNonce = (notificationJobId: string) =>
     .slice(0, 25);
 
 const messageOptions = (command: DiscordNotificationSendCommand) => ({
-  content: notificationContent(command),
+  content: truncateToDiscordLimit(notificationContent(command)),
   allowedMentions:
     command.target.targetType === NotificationTargetType.DM
       ? undefined
