@@ -332,12 +332,102 @@ export type BattleAnalysis = {
     hasFlee: boolean;
   };
   type: string;
-  statistics: BattleStatistics;
   battleTimeline: BattleTimelineTurn[];
   warriorMechanics: WarriorMechanicsAggregate[];
   actionCoverage: BattleActionCoverage;
   matchmaking?: MatchmakingInfo;
 };
+
+type LegendaryTotalStat =
+  | "legbonCurse"
+  | "legbonCleanse"
+  | "legbonLastheal"
+  | "legbonGlare"
+  | "legbonHolytouch"
+  | "legbonVerycrit"
+  | "legbonAnguish";
+
+export type BattleStatisticsWarrior = Pick<
+  Warrior,
+  | "originalId"
+  | "name"
+  | "turns"
+  | "damageDealt"
+  | "damageDealtAfterDefensive"
+  | "damageDealtAfterDefensivePercentage"
+  | "damageTaken"
+  | "criticalHits"
+  | "evasions"
+  | "blocks"
+  | LegendaryTotalStat
+>;
+
+const getLegendaryTotal = (w: Pick<Warrior, LegendaryTotalStat>) =>
+  w.legbonCurse +
+  w.legbonCleanse +
+  w.legbonLastheal +
+  w.legbonGlare +
+  w.legbonHolytouch +
+  w.legbonVerycrit +
+  w.legbonAnguish;
+
+/**
+ * Derives the battle awards from participant totals. A tie goes to the
+ * warrior listed first, so pass warriors in the order the battle introduced
+ * them.
+ */
+export function calculateBattleStatistics(
+  warriors: readonly BattleStatisticsWarrior[],
+): BattleStatistics {
+  const activeWarriors = warriors.filter((w) => w.turns > 0);
+
+  const findTop = (
+    candidates: readonly BattleStatisticsWarrior[],
+    getValue: (w: BattleStatisticsWarrior) => number,
+    format?: (value: number) => string,
+  ): StatisticEntry | null => {
+    const [first, ...rest] = candidates;
+
+    if (!first) return null;
+
+    const top = rest.reduce(
+      (best, current) => (getValue(current) > getValue(best) ? current : best),
+      first,
+    );
+
+    const value = getValue(top);
+
+    return value > 0
+      ? {
+          warriorId: top.originalId,
+          name: top.name,
+          value,
+          formattedValue: format ? format(value) : undefined,
+        }
+      : null;
+  };
+
+  return {
+    topDamageDealer: findTop(warriors, (w) => w.damageDealtAfterDefensive),
+    topTank: findTop(warriors, (w) => w.damageTaken),
+    bestEfficiency: findTop(
+      warriors.filter((w) => w.damageDealt > 0),
+      (w) => w.damageDealtAfterDefensivePercentage,
+      (v) => `${v.toFixed(2)}%`,
+    ),
+    criticalMaster: findTop(warriors, (w) => w.criticalHits),
+    evasionExpert: findTop(warriors, (w) => w.evasions),
+    shieldWall: findTop(warriors, (w) => w.blocks),
+    damagePerTurn: findTop(
+      activeWarriors,
+      (w) => (w.turns > 0 ? w.damageDealtAfterDefensive / w.turns : 0),
+      (v) => v.toFixed(1),
+    ),
+    mostActive: findTop(warriors, (w) => w.turns),
+    legendaryWarrior: findTop(warriors, getLegendaryTotal),
+    untouchable: findTop(warriors, (w) => w.evasions + w.blocks),
+  };
+}
 
 const DAMAGE_DEALT_ACTIONS = new Map<string, NumericWarriorStat>(
   Object.entries({
@@ -791,15 +881,12 @@ export class BattleProcessor {
     this.determineOutcomeTeams();
     this.calculateDerivedStats();
 
-    const statistics = this.calculateBattleStatistics();
-
     return {
       duration,
       warriors: Array.from(this.warriors.values()),
       parsedMoves: moves,
       outcome: this.battleOutcome,
       type: this.battleType,
-      statistics,
       battleTimeline: this.battleTimeline,
       warriorMechanics: this.getWarriorMechanics(),
       actionCoverage: this.getActionCoverage(),
@@ -818,15 +905,12 @@ export class BattleProcessor {
     this.determineOutcomeTeams();
     this.calculateDerivedStats();
 
-    const statistics = this.calculateBattleStatistics();
-
     return {
       duration: battleData.duration ?? 0,
       warriors: Array.from(this.warriors.values()),
       parsedMoves: battleData.events,
       outcome: this.battleOutcome,
       type: this.battleType,
-      statistics,
       battleTimeline: this.battleTimeline,
       warriorMechanics: this.getWarriorMechanics(),
       actionCoverage: this.getActionCoverage(),
@@ -2551,7 +2635,7 @@ export class BattleProcessor {
               (warrior.damageDealtAfterDefensive / warrior.damageDealt) * 10000,
             ) / 100
           : 0;
-      warrior.legbons = this.getLegendaryTotal(warrior);
+      warrior.legbons = getLegendaryTotal(warrior);
 
       if (warrior.ph !== 0) {
         const isWinning = warrior.team === this.battleOutcome.winningTeam;
@@ -2612,69 +2696,5 @@ export class BattleProcessor {
         warrior.maxHp = calculatedMaxHp;
       }
     }
-  }
-
-  private calculateBattleStatistics(): BattleStatistics {
-    const warriors = Array.from(this.warriors.values());
-    const activeWarriors = warriors.filter((w) => w.turns > 0);
-
-    const findTop = (
-      warriors: Warrior[],
-      getValue: (w: Warrior) => number,
-      format?: (value: number) => string,
-    ): StatisticEntry | null => {
-      if (warriors.length === 0) return null;
-
-      const top = warriors.reduce((best, current) => {
-        const bestValue = getValue(best);
-        const currentValue = getValue(current);
-
-        return currentValue > bestValue ? current : best;
-      });
-
-      const value = getValue(top);
-
-      return value > 0
-        ? {
-            warriorId: top.originalId,
-            name: top.name,
-            value,
-            formattedValue: format ? format(value) : undefined,
-          }
-        : null;
-    };
-
-    return {
-      topDamageDealer: findTop(warriors, (w) => w.damageDealtAfterDefensive),
-      topTank: findTop(warriors, (w) => w.damageTaken),
-      bestEfficiency: findTop(
-        warriors.filter((w) => w.damageDealt > 0),
-        (w) => w.damageDealtAfterDefensivePercentage,
-        (v) => `${v.toFixed(2)}%`,
-      ),
-      criticalMaster: findTop(warriors, (w) => w.criticalHits),
-      evasionExpert: findTop(warriors, (w) => w.evasions),
-      shieldWall: findTop(warriors, (w) => w.blocks),
-      damagePerTurn: findTop(
-        activeWarriors,
-        (w) => (w.turns > 0 ? w.damageDealtAfterDefensive / w.turns : 0),
-        (v) => v.toFixed(1),
-      ),
-      mostActive: findTop(warriors, (w) => w.turns),
-      legendaryWarrior: findTop(warriors, this.getLegendaryTotal),
-      untouchable: findTop(warriors, (w) => w.evasions + w.blocks),
-    };
-  }
-
-  private getLegendaryTotal(w: Warrior) {
-    return (
-      w.legbonCurse +
-      w.legbonCleanse +
-      w.legbonLastheal +
-      w.legbonGlare +
-      w.legbonHolytouch +
-      w.legbonVerycrit +
-      w.legbonAnguish
-    );
   }
 }

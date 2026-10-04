@@ -380,8 +380,8 @@ it("aggregates battle summaries in SQL without losing flee PH, level filters or 
 
   for (const fixture of fixtures) {
     await pool.query(
-      `INSERT INTO battles (id, "userId", "accountId", "characterId", world, duration, type, winner, loser, "winningTeam", "losingTeam", "hasFlee", statistics)
-      VALUES ($1,$2,'account','hero','world',10,$3,'Hero','Enemy',$4,$5,$6,'{}')`,
+      `INSERT INTO battles (id, "userId", "accountId", "characterId", world, duration, type, winner, loser, "winningTeam", "losingTeam", "hasFlee")
+      VALUES ($1,$2,'account','hero','world',10,$3,'Hero','Enemy',$4,$5,$6)`,
       [
         fixture.id,
         fixture.owner ?? "owner",
@@ -392,15 +392,9 @@ it("aggregates battle summaries in SQL without losing flee PH, level filters or 
       ],
     );
     await pool.query(
-      `INSERT INTO battle_warriors (id,"battleId","originalId",name,lvl,prof,icon,team,turns,ph)
-      VALUES ($1,$2,'hero','Hero',100,'w','hero.gif',1,1,$3), ($4,$2,'enemy','Enemy',$5,'m','enemy.gif',2,1,0)`,
-      [
-        `${fixture.id}-hero`,
-        fixture.id,
-        fixture.ph,
-        `${fixture.id}-enemy`,
-        fixture.lvl ?? 100,
-      ],
+      `INSERT INTO battle_warriors ("battleId","originalId",name,lvl,prof,icon,team,turns,ph)
+      VALUES ($1,'hero','Hero',100,'w','hero.gif',1,1,$2), ($1,'enemy','Enemy',$3,'m','enemy.gif',2,1,0)`,
+      [fixture.id, fixture.ph, fixture.lvl ?? 100],
     );
   }
 
@@ -503,20 +497,14 @@ it("reports character metadata from the latest matching self warrior per owner a
 
   for (const fixture of fixtures) {
     await pool.query(
-      `INSERT INTO battles (id, "userId", "accountId", "characterId", world, duration, type, winner, loser, "winningTeam", "losingTeam", "hasFlee", statistics, "createdAt")
-      VALUES ($1,$2,'account','hero',$4,10,'1v1','Hero','Enemy',1,2,false,'{}',$3)`,
+      `INSERT INTO battles (id, "userId", "accountId", "characterId", world, duration, type, winner, loser, "winningTeam", "losingTeam", "hasFlee", "createdAt")
+      VALUES ($1,$2,'account','hero',$4,10,'1v1','Hero','Enemy',1,2,false,$3)`,
       [fixture.id, fixture.owner, fixture.createdAt, fixture.world ?? "world"],
     );
     await pool.query(
-      `INSERT INTO battle_warriors (id,"battleId","originalId",name,lvl,prof,icon,team,turns,ph)
-      VALUES ($1,$2,$5,'Hero',$3,'w','hero.gif',1,1,0), ($4,$2,'enemy','Enemy',300,'m','enemy.gif',2,1,0)`,
-      [
-        `${fixture.id}-hero`,
-        fixture.id,
-        fixture.lvl,
-        `${fixture.id}-enemy`,
-        fixture.missingSelf ? "unrelated" : "hero",
-      ],
+      `INSERT INTO battle_warriors ("battleId","originalId",name,lvl,prof,icon,team,turns,ph)
+      VALUES ($1,$3,'Hero',$2,'w','hero.gif',1,1,0), ($1,'enemy','Enemy',300,'m','enemy.gif',2,1,0)`,
+      [fixture.id, fixture.lvl, fixture.missingSelf ? "unrelated" : "hero"],
     );
   }
 
@@ -778,20 +766,20 @@ it("interrupts a coalesced analytics factory and permits a subsequent fill", asy
   expect(await services.redis.get(key)).toBe("9");
 });
 
-it("searches only owned warriors with trimmed ILIKE and preserves distinct names and highest text ID", async () => {
-  await pool.query(`INSERT INTO battles (id,"userId","accountId","characterId",world,duration,type,winner,loser,"winningTeam","losingTeam",statistics,"createdAt") VALUES
-    ('old','owner','account','hero','world',10,'1v1','Hero','Enemy',1,2,'{}','2026-01-01'),
-    ('new','owner','account','hero','world',10,'1v1','Hero','Enemy',1,2,'{}','2026-02-01'),
-    ('foreign','someone-else','account','hero','world',10,'1v1','Hero','Enemy',1,2,'{}','2026-03-01')`);
-  await pool.query(`INSERT INTO battle_warriors (id,"battleId","originalId",name,lvl,prof,icon,team,turns,ph) VALUES
-    ('9','old','hero','Alpha',90,'w','old.gif',1,1,0),
-    ('10','new','hero','Alpha',100,'m','new.gif',1,1,0),
-    ('case','new','hero','alpha',110,'p','case.gif',1,1,0),
-    ('foreign','foreign','hero','Alpha',999,'m','private.gif',1,1,0),
-    ('foreign-only','foreign','hero','Alpine',999,'m','private.gif',1,1,0)`);
+it("searches only owned warriors with trimmed ILIKE and preserves distinct names from their latest battle", async () => {
+  await pool.query(`INSERT INTO battles (id,"userId","accountId","characterId",world,duration,type,winner,loser,"winningTeam","losingTeam","createdAt") VALUES
+    ('latest','owner','account','hero','world',10,'1v1','Hero','Enemy',1,2,'2026-02-01'),
+    ('earlier','owner','account','hero','world',10,'1v1','Hero','Enemy',1,2,'2026-01-01'),
+    ('foreign','someone-else','account','hero','world',10,'1v1','Hero','Enemy',1,2,'2026-03-01')`);
+  await pool.query(`INSERT INTO battle_warriors ("battleId","originalId",name,lvl,prof,icon,team,turns,ph) VALUES
+    ('latest','9','Alpha',90,'w','latest.gif',1,1,0),
+    ('earlier','10','Alpha',100,'m','earlier.gif',1,1,0),
+    ('earlier','11','alpha',110,'p','case.gif',1,1,0),
+    ('foreign','9','Alpha',999,'m','private.gif',1,1,0),
+    ('foreign','12','Alpine',999,'m','private.gif',1,1,0)`);
 
   const expected = [
-    { name: "Alpha", lvl: 90, prof: "w", icon: "old.gif" },
+    { name: "Alpha", lvl: 90, prof: "w", icon: "latest.gif" },
     { name: "alpha", lvl: 110, prof: "p", icon: "case.gif" },
   ];
 
@@ -814,8 +802,8 @@ it("searches only owned warriors with trimmed ILIKE and preserves distinct names
     await runtime.runPromise(services.metadata.searchWarriors(" a ", "owner")),
   ).toEqual({ warriors: [] });
 
-  await pool.query(`INSERT INTO battle_warriors (id,"battleId","originalId",name,lvl,prof,icon,team,turns,ph)
-    SELECT 'ordered-' || n, 'new', 'hero', 'Ordered ' || lpad(n::text,2,'0'), 100, 'w', 'hero.gif', 1, 1, 0
+  await pool.query(`INSERT INTO battle_warriors ("battleId","originalId",name,lvl,prof,icon,team,turns,ph)
+    SELECT 'earlier', 'ordered-' || n, 'Ordered ' || lpad(n::text,2,'0'), 100, 'w', 'hero.gif', 1, 1, 0
     FROM generate_series(12,1,-1) n`);
 
   const ordered = await runtime.runPromise(
@@ -854,8 +842,8 @@ it("applies combined dashboard filters and counts only the requesting owner's ma
 
   for (const fixture of fixtures) {
     await pool.query(
-      `INSERT INTO battles (id,"userId","accountId","characterId",world,duration,type,winner,loser,"winningTeam","losingTeam","hasFlee",statistics,"createdAt")
-      VALUES ($1,$2,'account','hero','world',10,'1v1','Hero','Enemy',$3,$4,$5,'{}','2026-01-01')`,
+      `INSERT INTO battles (id,"userId","accountId","characterId",world,duration,type,winner,loser,"winningTeam","losingTeam","hasFlee","createdAt")
+      VALUES ($1,$2,'account','hero','world',10,'1v1','Hero','Enemy',$3,$4,$5,'2026-01-01')`,
       [
         fixture.id,
         fixture.owner ?? "owner",
@@ -865,15 +853,9 @@ it("applies combined dashboard filters and counts only the requesting owner's ma
       ],
     );
     await pool.query(
-      `INSERT INTO battle_warriors (id,"battleId","originalId",name,lvl,prof,icon,team,turns,ph)
-      VALUES ($1,$2,'hero','Hero',100,'w','hero.gif',1,1,0), ($3,$2,'enemy',$4,$5,'m','enemy.gif',2,1,0)`,
-      [
-        `${fixture.id}-hero`,
-        fixture.id,
-        `${fixture.id}-enemy`,
-        fixture.name ?? "Enemy",
-        fixture.lvl ?? 100,
-      ],
+      `INSERT INTO battle_warriors ("battleId","originalId",name,lvl,prof,icon,team,turns,ph)
+      VALUES ($1,'hero','Hero',100,'w','hero.gif',1,1,0), ($1,'enemy',$2,$3,'m','enemy.gif',2,1,0)`,
+      [fixture.id, fixture.name ?? "Enemy", fixture.lvl ?? 100],
     );
   }
 
@@ -914,9 +896,9 @@ it("rolls back the battle and skips object upload when participant storage fails
 
     expect(Exit.isFailure(result)).toBe(true);
     expect((await pool.query("SELECT id FROM battles")).rows).toEqual([]);
-    expect((await pool.query("SELECT id FROM battle_warriors")).rows).toEqual(
-      [],
-    );
+    expect(
+      (await pool.query(`SELECT "battleId" FROM battle_warriors`)).rows,
+    ).toEqual([]);
     expect(services.uploads.size).toBe(0);
   } finally {
     await pool.query(`
@@ -933,7 +915,7 @@ it("rolls back the battle and skips object upload when participant storage fails
     { id: retried.battleId },
   ]);
   expect(
-    (await pool.query("SELECT id FROM battle_warriors")).rows,
+    (await pool.query(`SELECT "battleId" FROM battle_warriors`)).rows,
   ).toHaveLength(2);
   expect(services.uploads.has(retried.battleId)).toBe(true);
 });
@@ -990,7 +972,7 @@ it("keeps HTTP submissions durable and retry-safe during concurrent catalog read
     expect(
       (
         await pool.query(
-          'SELECT "originalId", name, team, "damageDealt", "damageTaken", stats, "statsVersion" FROM battle_warriors WHERE "battleId" = $1 ORDER BY name',
+          'SELECT "originalId", name, team, "damageDealt", "damageTaken" FROM battle_warriors WHERE "battleId" = $1 ORDER BY name',
           [created.battleId],
         )
       ).rows,
@@ -1000,16 +982,12 @@ it("keeps HTTP submissions durable and retry-safe during concurrent catalog read
         name: "first",
         team: 1,
         damageDealt: 10,
-        statsVersion: 1,
-        stats: expect.objectContaining({ damageDealt: 10 }),
       }),
       expect.objectContaining({
         originalId: "7533",
         name: "second",
         team: 2,
         damageTaken: 10,
-        statsVersion: 1,
-        stats: expect.objectContaining({ damageTaken: 10 }),
       }),
     ]);
     expect(services.uploads.has(created.battleId)).toBe(true);

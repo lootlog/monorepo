@@ -30,7 +30,6 @@ import { filterAndSortHeadToHeadRecords } from "./head-to-head-calculator.servic
 import { battleSummaryCalculator } from "./battle-summary-calculator.service.js";
 
 import { selectedWarriorOrder } from "#src/battles/battle-warrior-query";
-import { battleWarriorNumberStat } from "#src/battles/statistics/battle-warrior-stats-query";
 
 type WarriorSnapshotFields = keyof HeadToHeadRecord["lastBattleUserWarrior"];
 
@@ -62,7 +61,6 @@ const warriorSnapshotJson = (
   )})`;
 
 const snapshotColumns = {
-  id: battleWarriors.id,
   originalId: battleWarriors.originalId,
   name: battleWarriors.name,
   icon: battleWarriors.icon,
@@ -70,12 +68,12 @@ const snapshotColumns = {
   lvl: battleWarriors.lvl,
   team: battleWarriors.team,
   ph: battleWarriors.ph,
-  fireDamage: battleWarriorNumberStat("fireDamage"),
-  frostDamage: battleWarriorNumberStat("frostDamage"),
-  lightningDamage: battleWarriorNumberStat("lightningDamage"),
-  poisonDamageTaken: battleWarriorNumberStat("poisonDamageTaken"),
-  woundDamageTaken: battleWarriorNumberStat("woundDamageTaken"),
-  critWoundDamageTaken: battleWarriorNumberStat("critWoundDamageTaken"),
+  fireDamage: battleWarriors.fireDamage,
+  frostDamage: battleWarriors.frostDamage,
+  lightningDamage: battleWarriors.lightningDamage,
+  poisonDamageTaken: battleWarriors.poisonDamageTaken,
+  woundDamageTaken: battleWarriors.woundDamageTaken,
+  critWoundDamageTaken: battleWarriors.critWoundDamageTaken,
 };
 
 export const makeBattleAnalyticsRead = (
@@ -119,7 +117,7 @@ export const makeBattleAnalyticsRead = (
           notInArray(battleWarriors.originalId, characterIds),
         ),
       )
-      .orderBy(asc(battleWarriors.originalId), asc(battleWarriors.id))
+      .orderBy(asc(battleWarriors.originalId))
       .limit(1)
       .as("analytics_opponent");
 
@@ -357,10 +355,8 @@ export const makeBattleAnalyticsRead = (
     const ranked = db
       .select({
         opponentId: sql<string>`${opponent.originalId}`.as("opponent_id"),
-        userWarriorId: sql<string>`${user.id}`.as("user_warrior_id"),
-        opponentWarriorId: sql<string>`${opponent.id}`.as(
-          "opponent_warrior_id",
-        ),
+        lastBattleId: sql<string>`${battles.id}`.as("last_battle_id"),
+        userOriginalId: sql<string>`${user.originalId}`.as("user_original_id"),
         lastBattleDate: battles.createdAt,
         lastBattleResult: sql<
           "won" | "lost"
@@ -394,7 +390,7 @@ export const makeBattleAnalyticsRead = (
       .as("opponent_records");
 
     // Keep window rows narrow. Only the latest record for each opponent needs
-    // presentation data and packed statistics; resolve those by warrior PK.
+    // presentation data and statistics; resolve those by participant key.
     const latest = db
       .select()
       .from(ranked)
@@ -404,13 +400,23 @@ export const makeBattleAnalyticsRead = (
     const latestUser = db
       .select(snapshotColumns)
       .from(battleWarriors)
-      .where(eq(battleWarriors.id, latest.userWarriorId))
+      .where(
+        and(
+          eq(battleWarriors.battleId, latest.lastBattleId),
+          eq(battleWarriors.originalId, latest.userOriginalId),
+        ),
+      )
       .as("latest_user");
 
     const latestOpponent = db
       .select(snapshotColumns)
       .from(battleWarriors)
-      .where(eq(battleWarriors.id, latest.opponentWarriorId))
+      .where(
+        and(
+          eq(battleWarriors.battleId, latest.lastBattleId),
+          eq(battleWarriors.originalId, latest.opponentId),
+        ),
+      )
       .as("latest_opponent");
 
     return db
@@ -636,8 +642,6 @@ export const makeBattleAnalyticsRead = (
           eq(battleWarriors.originalId, query.opponentId),
         ),
       )
-      .orderBy(asc(battleWarriors.id))
-      .limit(1)
       .as("selected_opponent");
 
     const rows = yield* db

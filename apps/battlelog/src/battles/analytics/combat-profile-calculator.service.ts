@@ -1,9 +1,8 @@
 import type { CombatProfile } from "#src/battles/analytics/battle-statistics-response";
-import type { InflatedBattleWarrior } from "#src/battles/statistics/battle-warrior-stats";
-import type { Battle } from "#src/database/schema";
+import type { Battle, BattleWarrior } from "#src/database/schema";
 
 type CombatProfileWarrior = Pick<
-  InflatedBattleWarrior,
+  BattleWarrior,
   | "team"
   | "ph"
   | "turns"

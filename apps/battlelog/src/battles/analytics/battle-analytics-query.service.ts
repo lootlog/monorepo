@@ -213,7 +213,7 @@ export const makeBattleAnalyticsQuery = (
           notInArray(battleWarriors.originalId, characterIds),
         ),
       )
-      .orderBy(asc(battleWarriors.originalId), asc(battleWarriors.id))
+      .orderBy(asc(battleWarriors.originalId))
       .limit(1)
       .as("analytics_opponent");
 

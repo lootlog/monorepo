@@ -7,6 +7,22 @@ database introspection must not overwrite the source schema. The deploy command
 initializes empty databases and applies only pending migrations to databases
 already tracked by Drizzle.
 
+## Participant key and derived battle data
+
+`20261004114013_battle_derived_data` removes data that Battlelog can derive.
+Participant statistics live only in their columns; the `stats` JSON copy and
+`statsVersion` are dropped. `battles.statistics` is dropped: awards are
+computed from the participants when a battle is read. A participant is
+identified by `("battleId", "originalId")` instead of a random `id`. Redundant
+participant and battle indexes are dropped, and `user_characters` and
+`battle_object_deletions` store `timestamptz`.
+
+The migration ships with the TimescaleDB migration (LOO-254) and follows its
+cutover: released services still write the dropped columns, and the
+participant primary key is built inside the migration transaction. Dropping a
+column does not shrink existing rows; their space returns when the tables are
+rewritten.
+
 ## Object cleanup
 
 Apply `20260904192453_pending_object_deletions` before deploying the Battlelog

@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it } from "bun:test";
-import { BattleProcessor, type BattlePayload } from "@lootlog/battle-processor";
+import {
+  BattleProcessor,
+  calculateBattleStatistics,
+  type BattlePayload,
+} from "@lootlog/battle-processor";
 import type { CreateBattleInput } from "#src/battles/submission/create-battle";
 
 // Persisted warrior statistics must remain identical when timeline work is skipped.
@@ -604,13 +608,15 @@ describe("BattleProcessor", () => {
 
       const result = processBattleWithStatisticsParity(battleData);
 
-      expect(result.statistics.topDamageDealer).toEqual({
+      const statistics = calculateBattleStatistics(result.warriors);
+
+      expect(statistics.topDamageDealer).toEqual({
         warriorId: "101",
         name: "TopDamage",
         value: 1000,
       });
 
-      expect(result.statistics.topTank).toEqual({
+      expect(statistics.topTank).toEqual({
         warriorId: "102",
         name: "TopTank",
         value: 1000,
