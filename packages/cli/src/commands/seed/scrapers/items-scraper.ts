@@ -115,7 +115,7 @@ export async function scrapeItems(
     const pageItems = await scrapePage(i);
     items.push(...pageItems);
 
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await Bun.sleep(100);
   }
 
   console.log(`Scraped ${items.length} items successfully`);
