@@ -101,45 +101,48 @@ describe("sound settings Effect module", () => {
     });
   });
 
-  it("merges partial sound configuration entries", async () => {
-    const settingsDocuments = createSettingsDocumentsMock({
-      notificationsConfig: {
-        HERO: {
-          volume: 0.35,
-          soundUrl: "https://example.com/hero.mp3",
+  it.each(["notificationsConfig", "detectorConfig", "timersConfig"] as const)(
+    "merges partial %s entries without replacing stored volume",
+    async (configKey) => {
+      const settingsDocuments = createSettingsDocumentsMock({
+        [configKey]: {
+          HERO: {
+            volume: 0.35,
+            soundUrl: "https://example.com/hero.mp3",
+          },
         },
-      },
-    });
+      });
 
-    const service = makeSoundSettings(settingsDocuments);
+      const service = makeSoundSettings(settingsDocuments);
 
-    await Effect.runPromise(
-      service.updateSettings("user-1", {
-        notificationsConfig: {
-          HERO: { soundUrl: "https://example.com/new-hero.mp3" },
-        },
-      }),
-    );
+      await Effect.runPromise(
+        service.updateSettings("user-1", {
+          [configKey]: {
+            HERO: { soundUrl: "https://example.com/new-hero.mp3" },
+          },
+        }),
+      );
 
-    expect(settingsDocuments.patchPreferences).toHaveBeenCalledWith(
-      "user-1",
-      expect.objectContaining({
-        operations: [
-          expect.objectContaining({
-            set: {
-              notificationsConfig: expect.objectContaining({
-                HERO: {
-                  volume: 0.35,
-                  soundUrl: "https://example.com/new-hero.mp3",
-                },
-                ELITE2: { volume: 0.5, soundUrl: "" },
-              }),
-            },
-          }),
-        ],
-      }),
-    );
-  });
+      expect(settingsDocuments.patchPreferences).toHaveBeenCalledWith(
+        "user-1",
+        expect.objectContaining({
+          operations: [
+            expect.objectContaining({
+              set: {
+                [configKey]: expect.objectContaining({
+                  HERO: {
+                    volume: 0.35,
+                    soundUrl: "https://example.com/new-hero.mp3",
+                  },
+                  ELITE2: { volume: 0.5, soundUrl: "" },
+                }),
+              },
+            }),
+          ],
+        }),
+      );
+    },
+  );
 
   it("treats an empty sound URL as an explicit reset", async () => {
     const settingsDocuments = createSettingsDocumentsMock({
