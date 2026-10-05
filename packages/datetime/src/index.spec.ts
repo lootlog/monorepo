@@ -57,6 +57,45 @@ describe("@lootlog/datetime", () => {
     ).toBe(true);
   });
 
+  it.each([
+    ["2026-01-01T00:00:00Z", "2026-01-01T02:00:00Z", 2],
+    ["2026-01-15T04:00:00Z", "2026-01-15T07:00:00Z", 1],
+    ["2026-01-15T00:00:00Z", "2026-01-16T07:00:00Z", 13],
+    ["2026-03-28T23:00:00Z", "2026-03-29T04:00:00Z", 5],
+    ["2026-10-24T22:00:00Z", "2026-10-25T05:00:00Z", 7],
+  ])(
+    "includes the overnight window from the previous local date for %s to %s",
+    (start, end, expectedHours) => {
+      expect(
+        calculateLocalWindowOverlapMs({
+          startUtc: new Date(start),
+          endUtc: new Date(end),
+          timeZone: "Europe/Warsaw",
+          windowFrom: "22:00",
+          windowTo: "06:00",
+        }),
+      ).toBe(expectedHours * 60 * 60 * 1000);
+    },
+  );
+
+  it.each([
+    ["2026-03-29T01:00:00Z", "2026-03-29T01:30:00Z", 0.5],
+    ["2026-03-28T01:00:00Z", "2026-03-29T02:00:00Z", 24.5],
+  ])(
+    "counts overlapping daily windows once across DST for %s to %s",
+    (start, end, expectedHours) => {
+      expect(
+        calculateLocalWindowOverlapMs({
+          startUtc: new Date(start),
+          endUtc: new Date(end),
+          timeZone: "Europe/Warsaw",
+          windowFrom: "03:00",
+          windowTo: "02:30",
+        }),
+      ).toBe(expectedHours * 60 * 60 * 1000);
+    },
+  );
+
   it("calculates overlap through the Warsaw DST forward transition", () => {
     expect(
       calculateLocalWindowOverlapMs({

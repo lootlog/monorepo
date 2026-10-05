@@ -197,9 +197,20 @@ export function calculateLocalWindowOverlapMs(params: {
 
   const fromClock = parseWindowClock(params.windowFrom);
   const toClock = parseWindowClock(params.windowTo);
+
+  const crossesMidnight =
+    toClock.hour * 60 + toClock.minute <=
+    fromClock.hour * 60 + fromClock.minute;
+
   let currentLocalDate = getLocalDate(params.startUtc, params.timeZone);
+
+  if (crossesMidnight) {
+    currentLocalDate = addDays(currentLocalDate, -1);
+  }
+
   const lastLocalDate = getLocalDate(params.endUtc, params.timeZone);
   let totalOverlapMs = 0;
+  let coveredUntilMs = params.startUtc.getTime();
 
   while (localDateKey(currentLocalDate) <= localDateKey(lastLocalDate)) {
     const windowStartUtc = toUtcDateFromLocal(
@@ -208,10 +219,6 @@ export function calculateLocalWindowOverlapMs(params: {
       fromClock.minute,
       params.timeZone,
     );
-
-    const crossesMidnight =
-      toClock.hour * 60 + toClock.minute <=
-      fromClock.hour * 60 + fromClock.minute;
 
     const windowEndDate = crossesMidnight
       ? addDays(currentLocalDate, 1)
@@ -224,10 +231,7 @@ export function calculateLocalWindowOverlapMs(params: {
       params.timeZone,
     );
 
-    const overlapStartMs = Math.max(
-      params.startUtc.getTime(),
-      windowStartUtc.getTime(),
-    );
+    const overlapStartMs = Math.max(coveredUntilMs, windowStartUtc.getTime());
 
     const overlapEndMs = Math.min(
       params.endUtc.getTime(),
@@ -236,6 +240,7 @@ export function calculateLocalWindowOverlapMs(params: {
 
     if (overlapEndMs > overlapStartMs) {
       totalOverlapMs += overlapEndMs - overlapStartMs;
+      coveredUntilMs = overlapEndMs;
     }
 
     currentLocalDate = addDays(currentLocalDate, 1);
