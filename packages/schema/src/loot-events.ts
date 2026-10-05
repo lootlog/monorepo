@@ -1,4 +1,5 @@
 import { Schema } from "effect";
+import { NpcRoutingDataSchema } from "./npc-routing.js";
 
 export type GuildLootEventNpc = {
   lvl?: number | null;
@@ -20,13 +21,7 @@ export type GuildLootShareUpdatedEventV2 = GuildLootCreatedEventV2 & {
 
 const GuildLootEventNpcSchema = Schema.Struct({
   lvl: Schema.optionalKey(Schema.NullOr(Schema.Number)),
-  prof: Schema.optionalKey(Schema.NullOr(Schema.String)),
-  type: Schema.optionalKey(
-    Schema.NullOr(Schema.Union([Schema.Number, Schema.String])),
-  ),
-  wt: Schema.optionalKey(
-    Schema.NullOr(Schema.Union([Schema.Number, Schema.String])),
-  ),
+  ...NpcRoutingDataSchema.fields,
 });
 
 export const GuildLootCreatedEventV2Schema = Schema.Struct({
