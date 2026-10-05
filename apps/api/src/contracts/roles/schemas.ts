@@ -1,7 +1,7 @@
 /** Shared input and output schemas for the roles feature. */
 import * as Schema from "effect/Schema";
 import { CapabilitySchema } from "@lootlog/schema/permissions";
-import { FiniteNumber } from "@lootlog/schema/http-scalars";
+import { FiniteNumber, LevelFilter } from "@lootlog/schema/http-scalars";
 
 export type RoleResponse = typeof RoleResponse.Type;
 
@@ -23,24 +23,10 @@ export const RoleResponse = MemberRole.annotate({
 export type UpdateRolePermissionsRequest =
   typeof UpdateRolePermissionsRequest.Type;
 
-const RoleLevel = Schema.Number.check(
-  Schema.isInt().annotate({ expected: "an integer" }),
-)
-  .check(
-    Schema.isGreaterThanOrEqualTo(0).annotate({
-      expected: "a value greater than or equal to 0",
-    }),
-  )
-  .check(
-    Schema.isLessThanOrEqualTo(500).annotate({
-      expected: "a value less than or equal to 500",
-    }),
-  );
-
 export const UpdateRolePermissionsRequest = Schema.Struct({
   permissions: Schema.Array(CapabilitySchema),
-  lvlRangeFrom: RoleLevel,
-  lvlRangeTo: RoleLevel,
+  lvlRangeFrom: LevelFilter,
+  lvlRangeTo: LevelFilter,
 })
   .check(
     Schema.makeFilter((data) =>
