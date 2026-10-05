@@ -1,6 +1,6 @@
 /** Transport schemas owned by the npcs HTTP module. */
 import * as Schema from "effect/Schema";
-import { FiniteNumber } from "@lootlog/schema/http-scalars";
+import { FiniteNumber, SafeInteger } from "@lootlog/schema/http-scalars";
 
 export type NpcHitDto_Output = typeof NpcHitDto_Output.Type;
 
@@ -44,21 +44,7 @@ export const NpcHitDto_Output = Schema.Struct({
 export type NpcsControllerGetNpcsQuery = typeof NpcsControllerGetNpcsQuery.Type;
 
 export const NpcsControllerGetNpcsQuery = Schema.Struct({
-  ids: Schema.optionalKey(
-    Schema.Array(
-      Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
-        .check(
-          Schema.isGreaterThanOrEqualTo(-9007199254740991).annotate({
-            expected: "a value greater than or equal to -9007199254740991",
-          }),
-        )
-        .check(
-          Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-            expected: "a value less than or equal to 9007199254740991",
-          }),
-        ),
-    ),
-  ),
+  ids: Schema.optionalKey(Schema.Array(SafeInteger)),
   limit: Schema.optionalKey(
     Schema.Number.annotate({ default: 10 }).check(
       Schema.isFinite().annotate({ expected: "a finite number" }),
