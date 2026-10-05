@@ -1102,7 +1102,6 @@ export const makeBattles = (
               const warriorValues = analysis.warriors.map(
                 (warrior: Warrior) => ({
                   battleId: insertedBattle.id,
-                  userId,
                   originalId: warrior.originalId,
                   name: warrior.name,
                   lvl: warrior.lvl,

@@ -396,8 +396,8 @@ it("aggregates battle summaries in SQL without losing flee PH, level filters or 
       ],
     );
     await pool.query(
-      `INSERT INTO battle_warriors ("battleId","userId","originalId",name,lvl,prof,icon,team,turns,ph)
-      VALUES ($1,(SELECT "userId" FROM battles WHERE id = $1),'hero','Hero',100,'w','hero.gif',1,1,$2), ($1,(SELECT "userId" FROM battles WHERE id = $1),'enemy','Enemy',$3,'m','enemy.gif',2,1,0)`,
+      `INSERT INTO battle_warriors ("battleId","originalId",name,lvl,prof,icon,team,turns,ph)
+      VALUES ($1,'hero','Hero',100,'w','hero.gif',1,1,$2), ($1,'enemy','Enemy',$3,'m','enemy.gif',2,1,0)`,
       [id, fixture.ph, fixture.lvl ?? 100],
     );
   }
@@ -508,8 +508,8 @@ it("reports character metadata from the latest matching self warrior per owner a
       [id, fixture.owner, fixture.world ?? "world"],
     );
     await pool.query(
-      `INSERT INTO battle_warriors ("battleId","userId","originalId",name,lvl,prof,icon,team,turns,ph)
-      VALUES ($1,(SELECT "userId" FROM battles WHERE id = $1),$3,'Hero',$2,'w','hero.gif',1,1,0), ($1,(SELECT "userId" FROM battles WHERE id = $1),'enemy','Enemy',300,'m','enemy.gif',2,1,0)`,
+      `INSERT INTO battle_warriors ("battleId","originalId",name,lvl,prof,icon,team,turns,ph)
+      VALUES ($1,$3,'Hero',$2,'w','hero.gif',1,1,0), ($1,'enemy','Enemy',300,'m','enemy.gif',2,1,0)`,
       [id, fixture.lvl, fixture.missingSelf ? "unrelated" : "hero"],
     );
   }
@@ -780,12 +780,12 @@ it("searches only owned warriors with trimmed ILIKE and preserves distinct names
   await pool.query(`INSERT INTO battles (id,"userId","accountId","characterId",world,duration,type,winner,loser,"winningTeam","losingTeam","createdAt")
     SELECT id, owner,'account','hero','world',10,'1v1','Hero','Enemy',1,2,battle_id_created_at(id)
     FROM (VALUES ('${latest}'::uuid,'owner'), ('${earlier}'::uuid,'owner'), ('${foreign}'::uuid,'someone-else')) AS seed(id, owner)`);
-  await pool.query(`INSERT INTO battle_warriors ("battleId","userId","originalId",name,lvl,prof,icon,team,turns,ph) VALUES
-    ('${latest}','owner','9','Alpha',90,'w','latest.gif',1,1,0),
-    ('${earlier}','owner','10','Alpha',100,'m','earlier.gif',1,1,0),
-    ('${earlier}','owner','11','alpha',110,'p','case.gif',1,1,0),
-    ('${foreign}','someone-else','9','Alpha',999,'m','private.gif',1,1,0),
-    ('${foreign}','someone-else','12','Alpine',999,'m','private.gif',1,1,0)`);
+  await pool.query(`INSERT INTO battle_warriors ("battleId","originalId",name,lvl,prof,icon,team,turns,ph) VALUES
+    ('${latest}','9','Alpha',90,'w','latest.gif',1,1,0),
+    ('${earlier}','10','Alpha',100,'m','earlier.gif',1,1,0),
+    ('${earlier}','11','alpha',110,'p','case.gif',1,1,0),
+    ('${foreign}','9','Alpha',999,'m','private.gif',1,1,0),
+    ('${foreign}','12','Alpine',999,'m','private.gif',1,1,0)`);
 
   const expected = [
     { name: "Alpha", lvl: 90, prof: "w", icon: "latest.gif" },
@@ -811,8 +811,8 @@ it("searches only owned warriors with trimmed ILIKE and preserves distinct names
     await runtime.runPromise(services.metadata.searchWarriors(" a ", "owner")),
   ).toEqual({ warriors: [] });
 
-  await pool.query(`INSERT INTO battle_warriors ("battleId","userId","originalId",name,lvl,prof,icon,team,turns,ph)
-    SELECT '${earlier}'::uuid, 'owner', 'ordered-' || n, 'Ordered ' || lpad(n::text,2,'0'), 100, 'w', 'hero.gif', 1, 1, 0
+  await pool.query(`INSERT INTO battle_warriors ("battleId","originalId",name,lvl,prof,icon,team,turns,ph)
+    SELECT '${earlier}'::uuid, 'ordered-' || n, 'Ordered ' || lpad(n::text,2,'0'), 100, 'w', 'hero.gif', 1, 1, 0
     FROM generate_series(12,1,-1) n`);
 
   const ordered = await runtime.runPromise(
@@ -867,8 +867,8 @@ it("applies combined dashboard filters and counts only the requesting owner's ma
       ],
     );
     await pool.query(
-      `INSERT INTO battle_warriors ("battleId","userId","originalId",name,lvl,prof,icon,team,turns,ph)
-      VALUES ($1,(SELECT "userId" FROM battles WHERE id = $1),'hero','Hero',100,'w','hero.gif',1,1,0), ($1,(SELECT "userId" FROM battles WHERE id = $1),'enemy',$2,$3,'m','enemy.gif',2,1,0)`,
+      `INSERT INTO battle_warriors ("battleId","originalId",name,lvl,prof,icon,team,turns,ph)
+      VALUES ($1,'hero','Hero',100,'w','hero.gif',1,1,0), ($1,'enemy',$2,$3,'m','enemy.gif',2,1,0)`,
       [id, fixture.name ?? "Enemy", fixture.lvl ?? 100],
     );
   }
@@ -1103,14 +1103,14 @@ it("toggles visibility, serves public links and deletes battles stored in compre
     ),
   );
 
-  for (const table of ["battles", "battle_warriors"])
+  for (const table of ["battles"])
     await pool.query(
       `SELECT compress_chunk(chunk) FROM show_chunks('${table}') chunk`,
     );
   expect(
     (
       await pool.query(
-        "SELECT count(*)::int AS uncompressed FROM timescaledb_information.chunks WHERE hypertable_name IN ('battles', 'battle_warriors') AND NOT is_compressed",
+        "SELECT count(*)::int AS uncompressed FROM timescaledb_information.chunks WHERE hypertable_name = 'battles' AND NOT is_compressed",
       )
     ).rows,
   ).toEqual([{ uncompressed: 0 }]);

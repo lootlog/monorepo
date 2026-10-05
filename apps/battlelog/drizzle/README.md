@@ -9,25 +9,29 @@ already tracked by Drizzle.
 
 ## TimescaleDB battle tables
 
-`20261004153153_battlelog_timescale` gives Battlelog its TimescaleDB schema in
+`20261005000630_battlelog_timescale` gives Battlelog its TimescaleDB schema in
 one step:
 
 - **Battle IDs are UUIDv7.** The first 48 bits of an ID are the battle's
   `createdAt` in Unix milliseconds; `battles_id_createdAt_check` keeps both
   equal, so the list, date filters and analytics order and filter by `id`.
   `createdAt` and `updatedAt` are `timestamptz`.
-- **Hypertables.** `battles`, `battle_warriors` and `battle_timelines` are
-  partitioned by battle ID in 7-day chunks. `battles` and `battle_warriors`
-  are compressed 7 days after a chunk closes, segmented by `"userId"`, so every
-  participant row carries its battle's owner and joins on `("battleId",
-"userId")`. Timelines are zstd-compressed already and are not.
+- **Hypertables.** `battles` and `battle_timelines` are partitioned by battle
+  ID in 7-day chunks. `battles` is compressed 7 days after a chunk closes,
+  segmented by `"userId"`; timelines are zstd-compressed already and are not.
+- **Participants stay a plain table.** Analytics look up a battle's
+  participants one battle at a time. On compressed chunks each lookup
+  decompresses a whole batch and plans every chunk: on the local production
+  copy, a head-to-head read for one large history ran for more than 8 minutes.
+  Compressing participants needs analytics that read a user's participants in
+  one pass first.
 - **No duplicated or derived data.** Participant statistics live only in their
   columns; `battles.statistics` is computed when a battle is read. A
   participant is identified by `("battleId", "originalId")`.
 - **Plain side tables.** A unique index on a hypertable must contain the
   partition column, so `(userId, submissionId)` lives in `battle_submissions`.
-  Hypertables cannot reference each other, so the foreign keys are gone and
-  `BattleDeletion` removes a battle's rows from every table together.
+  `BattleDeletion` removes a battle's rows from every table together instead
+  of relying on cascading foreign keys into the hypertable.
 - **Timelines.** New battles store the submitted events in `battle_timelines`
   in the same transaction as the battle. Battles saved before keep their R2
   object; `battle_legacy_ids` maps their old ID (Prisma CUID, cuid2 or UUIDv4)

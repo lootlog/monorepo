@@ -12,7 +12,7 @@ import { join } from "node:path";
 
 const appRoot = new URL("../../", import.meta.url).pathname;
 
-const TIMESCALE_MIGRATION = "20261004153153_battlelog_timescale";
+const TIMESCALE_MIGRATION = "20261005000630_battlelog_timescale";
 
 let postgres: StartedPostgreSqlContainer;
 
@@ -142,6 +142,21 @@ it("moves battles onto the TimescaleDB schema online, keeping old links, order a
     `DELETE FROM battles WHERE id = 'c0ffee00-fc52-4e76-a4f8-e1b0222bd081'`,
   );
 
+  // A repeated copy applies the changes online, leaving the cutover only what
+  // happens after it.
+  await cutover("copy");
+  expect(
+    (
+      await pool.query(
+        `SELECT count(*)::int AS pending FROM battlelog_next.cutover_changes`,
+      )
+    ).rows,
+  ).toEqual([{ pending: 0 }]);
+  await insertOldBattle({
+    id: "d15ea5e0-fc52-4e76-a4f8-e1b0222bd081",
+    createdAt: "2026-10-02 00:00:00.000",
+  });
+
   await cutover("cutover");
 
   const expectedOrder = (
@@ -154,7 +169,7 @@ it("moves battles onto the TimescaleDB schema online, keeping old links, order a
     `SELECT legacy."legacyId", battle.id, battle.public, battle."createdAt",
        battle_id_created_at(battle.id) AS "idTime",
        (SELECT count(*)::int FROM battle_warriors warrior
-        WHERE warrior."battleId" = battle.id AND warrior."userId" = battle."userId") AS warriors,
+        WHERE warrior."battleId" = battle.id) AS warriors,
        (SELECT "submissionId" FROM battle_submissions submission
         WHERE submission."battleId" = battle.id) AS "submissionId"
      FROM battles battle
@@ -165,6 +180,7 @@ it("moves battles onto the TimescaleDB schema online, keeping old links, order a
   expect(migrated.rows.map((row) => row.legacyId)).toEqual(expectedOrder);
   expect(expectedOrder).not.toContain("c0ffee00-fc52-4e76-a4f8-e1b0222bd081");
   expect(expectedOrder).toContain("5ca1ab1e-fc52-4e76-a4f8-e1b0222bd081");
+  expect(expectedOrder).toContain("d15ea5e0-fc52-4e76-a4f8-e1b0222bd081");
 
   for (const row of migrated.rows) {
     expect(row.idTime).toEqual(row.createdAt);
@@ -185,7 +201,6 @@ it("moves battles onto the TimescaleDB schema online, keeping old links, order a
     ).rows,
   ).toEqual([
     { hypertable_name: "battle_timelines" },
-    { hypertable_name: "battle_warriors" },
     { hypertable_name: "battles" },
   ]);
   expect(

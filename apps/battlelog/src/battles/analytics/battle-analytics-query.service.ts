@@ -1,7 +1,6 @@
 import {
   selectedWarriorOrder,
   warriorExists,
-  warriorOfBattle,
 } from "#src/battles/battle-warrior-query";
 import { firstBattleIdAt, lastBattleIdAt } from "#src/battles/battle-id";
 import { ResourceNotFoundError } from "#src/infrastructure/http-error";
@@ -200,7 +199,7 @@ export const makeBattleAnalyticsQuery = (
       .from(battleWarriors)
       .where(
         and(
-          warriorOfBattle(battles),
+          eq(battleWarriors.battleId, battles.id),
           inArray(battleWarriors.originalId, characterIds),
         ),
       )
@@ -213,7 +212,7 @@ export const makeBattleAnalyticsQuery = (
       .from(battleWarriors)
       .where(
         and(
-          warriorOfBattle(battles),
+          eq(battleWarriors.battleId, battles.id),
           notInArray(battleWarriors.originalId, characterIds),
         ),
       )

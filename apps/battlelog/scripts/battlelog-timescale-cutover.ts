@@ -1,5 +1,5 @@
 // Moves a Battlelog database that already holds battles onto the TimescaleDB
-// schema of `drizzle/20261004153153_battlelog_timescale` while the released
+// schema of `drizzle/20261005000630_battlelog_timescale` while the released
 // service keeps running. Run the steps by hand, in order; see drizzle/README.md.
 //
 //   bun scripts/battlelog-timescale-cutover.ts prepare
@@ -13,7 +13,7 @@ import { Client } from "pg";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
-const MIGRATION_NAME = "20261004153153_battlelog_timescale";
+const MIGRATION_NAME = "20261005000630_battlelog_timescale";
 
 const MIGRATION_PATH = new URL(
   `../drizzle/${MIGRATION_NAME}/migration.sql`,
@@ -88,7 +88,7 @@ const warriorColumns = async () =>
     await query<{ column_name: string }>(
       `SELECT column_name FROM information_schema.columns
        WHERE table_schema = $1 AND table_name = 'battle_warriors'
-         AND column_name NOT IN ('battleId', 'userId')
+         AND column_name <> 'battleId'
        ORDER BY ordinal_position`,
       [NEXT],
     )
@@ -152,8 +152,8 @@ const copyBattles = async (source: string, values: unknown[]) => {
   );
 
   await query(
-    `INSERT INTO ${NEXT}.battle_warriors ("battleId", "userId", ${warriors.join(", ")})
-     SELECT legacy."battleId", old."userId", ${warriors.map((c) => `warrior.${c}`).join(", ")}
+    `INSERT INTO ${NEXT}.battle_warriors ("battleId", ${warriors.join(", ")})
+     SELECT legacy."battleId", ${warriors.map((c) => `warrior.${c}`).join(", ")}
      FROM public.battles old
      JOIN (${source}) AS source ON source.id = old.id
      JOIN ${NEXT}.battle_legacy_ids legacy ON legacy."legacyId" = old.id
@@ -305,7 +305,7 @@ const copy = async () => {
   const chunks = await query<{ chunk: string }>(
     `SELECT format('%I.%I', chunk_schema, chunk_name) AS chunk
      FROM timescaledb_information.chunks
-     WHERE hypertable_schema = $1 AND hypertable_name IN ('battles', 'battle_warriors')
+     WHERE hypertable_schema = $1 AND hypertable_name = 'battles'
        AND NOT is_compressed AND range_end < now() - INTERVAL '7 days'`,
     [NEXT],
   );
@@ -318,7 +318,31 @@ const copy = async () => {
     log(`compressed ${chunk}`);
   }
 
-  log(`Copy caught up: ${total} battles in this run.`);
+  // Compression truncates a chunk unless a concurrent lock, such as
+  // autovacuum, makes it delete the rows instead; reclaim that space.
+  const leftovers = await query<{ chunk: string }>(
+    `SELECT format('%I.%I', chunk_schema, chunk_name) AS chunk
+     FROM timescaledb_information.chunks
+     WHERE hypertable_schema = $1 AND is_compressed
+       AND pg_relation_size(format('%I.%I', chunk_schema, chunk_name)::regclass) > 0`,
+    [NEXT],
+  );
+
+  for (const { chunk } of leftovers) {
+    await query(`VACUUM ${chunk}`);
+    await query(`REINDEX TABLE ${chunk}`);
+    log(`reclaimed ${chunk}`);
+  }
+
+  for (const table of MOVED_TABLES) await query(`ANALYZE ${NEXT}.${table}`);
+
+  // Changes the released service made meanwhile are applied online too, so
+  // the cutover only applies the last few while it blocks writes.
+  const applied = await applyAllChanges();
+
+  log(
+    `Copy caught up: ${total} battles in this run, ${applied} changed battles re-copied.`,
+  );
 };
 
 const status = async () => {
@@ -338,28 +362,88 @@ const status = async () => {
   log(JSON.stringify(row, null, 2));
 };
 
-/** Re-copies every battle the old service changed since the copy saw it. */
-const applyChanges = async () => {
-  const changed = `SELECT "legacyId" FROM ${NEXT}.cutover_changes`;
-  const mapped = `SELECT "battleId" FROM ${NEXT}.battle_legacy_ids WHERE "legacyId" IN (${changed})`;
+/**
+ * Re-copies up to `limit` battles the released service changed after the copy
+ * saw them. Battles past the watermark are left to the batches. Each delete
+ * names one battle and its owner, so TimescaleDB excludes the other chunks and
+ * decompresses only that owner's batch.
+ */
+const applyChanges = async (limit: number) => {
+  const claimed = (
+    await query<{ legacyId: string }>(
+      `DELETE FROM ${NEXT}.cutover_changes
+       WHERE "legacyId" IN (
+         SELECT change."legacyId" FROM ${NEXT}.cutover_changes change
+         LEFT JOIN public.battles old ON old.id = change."legacyId"
+         WHERE old.id IS NULL
+           OR old."createdAt" <= (SELECT "copiedThrough" FROM ${NEXT}.cutover_progress)
+         LIMIT $1
+         FOR UPDATE OF change SKIP LOCKED
+       )
+       RETURNING "legacyId"`,
+      [limit],
+    )
+  ).map((row) => row.legacyId);
 
-  for (const table of ["battle_warriors", "battle_submissions"])
-    await query(`DELETE FROM ${NEXT}.${table} WHERE "battleId" IN (${mapped})`);
-  await query(`DELETE FROM ${NEXT}.battles WHERE id IN (${mapped})`);
+  if (claimed.length === 0) return 0;
+
+  const mapped = await query<{ battleId: string; userId: string }>(
+    `SELECT legacy."battleId", battle."userId"
+     FROM ${NEXT}.battle_legacy_ids legacy
+     JOIN ${NEXT}.battles battle ON battle.id = legacy."battleId"
+     WHERE legacy."legacyId" = ANY($1::text[])`,
+    [claimed],
+  );
+
+  // One battle at a time: a set of owners would decompress every batch of
+  // every owner in each chunk.
+  await query(
+    "SELECT set_config('timescaledb.max_tuples_decompressed_per_dml_transaction', '0', true)",
+  );
+
+  for (const { battleId, userId } of mapped) {
+    await query(`DELETE FROM ${NEXT}.battle_warriors WHERE "battleId" = $1`, [
+      battleId,
+    ]);
+    await query(
+      `DELETE FROM ${NEXT}.battle_submissions WHERE "battleId" = $1`,
+      [battleId],
+    );
+    await query(`DELETE FROM ${NEXT}.battles WHERE "userId" = $1 AND id = $2`, [
+      userId,
+      battleId,
+    ]);
+  }
+
   await query(
     `DELETE FROM ${NEXT}.battle_legacy_ids legacy
-     WHERE legacy."legacyId" IN (${changed})
+     WHERE legacy."legacyId" = ANY($1::text[])
        AND NOT EXISTS (SELECT FROM public.battles old WHERE old.id = legacy."legacyId")`,
+    [claimed],
   );
 
-  const recopied = await copyBattles(
-    `SELECT id, "createdAt" FROM public.battles WHERE id IN (${changed})`,
-    [],
+  await copyBattles(
+    `SELECT id, "createdAt" FROM public.battles WHERE id = ANY($1::text[])`,
+    [claimed],
   );
 
-  await query(`TRUNCATE ${NEXT}.cutover_changes`);
+  return claimed.length;
+};
 
-  return recopied;
+const CHANGE_BATCH_SIZE = 1_000;
+
+/** Applies recorded changes in batches until none are left to apply. */
+const applyAllChanges = async () => {
+  let applied = 0;
+
+  for (
+    let batch = await inTransaction(() => applyChanges(CHANGE_BATCH_SIZE));
+    batch > 0;
+    batch = await inTransaction(() => applyChanges(CHANGE_BATCH_SIZE))
+  )
+    applied += batch;
+
+  return applied;
 };
 
 const cutover = async () => {
@@ -384,7 +468,14 @@ const cutover = async () => {
     )
       copied += batch;
 
-    const recopied = await applyChanges();
+    let recopied = 0;
+
+    for (
+      let batch = await applyChanges(CHANGE_BATCH_SIZE);
+      batch > 0;
+      batch = await applyChanges(CHANGE_BATCH_SIZE)
+    )
+      recopied += batch;
 
     for (const table of ["battles", "battle_warriors"])
       await query(`DROP TRIGGER cutover_record_change ON public.${table}`);

@@ -6,7 +6,6 @@ import { makeBattleAnalyticsCache } from "#src/battles/analytics/battle-analytic
 import type { BattleReadBudget } from "#src/database/battle-read-budget";
 import type { DrizzleDatabase } from "#src/database/database";
 import { battles, battleWarriors, userCharacters } from "#src/database/schema";
-import { warriorOfBattle } from "#src/battles/battle-warrior-query";
 
 const UserCharactersResponseSchema = Schema.Struct({
   characters: Schema.Array(
@@ -54,7 +53,7 @@ export const makeBattleMetadata = (
     .innerJoin(
       battleWarriors,
       and(
-        warriorOfBattle(battles),
+        eq(battleWarriors.battleId, battles.id),
         eq(battleWarriors.originalId, battles.characterId),
       ),
     )
@@ -215,7 +214,6 @@ export const makeBattleMetadata = (
                  ${battleWarriors.icon}, ${battleWarriors.prof}, ${battleWarriors.lvl}
           FROM ${battleWarriors}
           WHERE ${battleWarriors.battleId} = ${battles.id}
-            AND ${battleWarriors.userId} = ${battles.userId}
             AND ${battleWarriors.name} ILIKE ${`%${query.trim()}%`}
           OFFSET 0
         ) w`,

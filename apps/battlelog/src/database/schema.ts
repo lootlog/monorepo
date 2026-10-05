@@ -1,6 +1,6 @@
 // Hand-maintained Battlelog database schema; Drizzle generates SQL migrations from it.
-// `battles`, `battle_warriors` and `battle_timelines` are TimescaleDB hypertables
-// partitioned by battle ID; the migration creates them, the schema cannot.
+// `battles` and `battle_timelines` are TimescaleDB hypertables partitioned by
+// battle ID; the migration creates them, the schema cannot.
 import { sql } from "drizzle-orm";
 import {
   boolean,
@@ -184,8 +184,6 @@ export const battleWarriors = pgTable(
   "battle_warriors",
   {
     battleId: uuid("battleId").notNull(),
-    // The battle owner, so compression segments and deletions follow the owner.
-    userId: text("userId").notNull(),
 
     originalId: text("originalId").notNull(),
     name: text("name").notNull(),
