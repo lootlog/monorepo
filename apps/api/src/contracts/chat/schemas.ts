@@ -1,3 +1,4 @@
+import { partyGatheringDetailsFields } from "../party-gathering.schema.js";
 /** Shared input and output schemas for the chat feature. */
 import * as Schema from "effect/Schema";
 import {
@@ -34,35 +35,7 @@ const ChatNpc = Schema.Struct({
 const PartyGathering = Schema.Struct({
   notificationId: NonEmptyString,
   discordId: NonEmptyString,
-  description: Schema.optionalKey(
-    Schema.String.check(
-      Schema.isMaxLength(200).annotate({
-        expected: "a value with a length of at most 200",
-      }),
-    ),
-  ),
-  minLvl: Schema.optionalKey(
-    FiniteNumber.check(
-      Schema.isGreaterThanOrEqualTo(1).annotate({
-        expected: "a value greater than or equal to 1",
-      }),
-    ).check(
-      Schema.isLessThanOrEqualTo(500).annotate({
-        expected: "a value less than or equal to 500",
-      }),
-    ),
-  ),
-  maxLvl: Schema.optionalKey(
-    FiniteNumber.check(
-      Schema.isGreaterThanOrEqualTo(1).annotate({
-        expected: "a value greater than or equal to 1",
-      }),
-    ).check(
-      Schema.isLessThanOrEqualTo(500).annotate({
-        expected: "a value less than or equal to 500",
-      }),
-    ),
-  ),
+  ...partyGatheringDetailsFields,
   world: NonEmptyString.check(
     Schema.isMaxLength(50).annotate({
       expected: "a value with a length of at most 50",

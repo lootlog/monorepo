@@ -1,3 +1,4 @@
+import { partyGatheringDetailsFields } from "../party-gathering.schema.js";
 import { GameCharacter } from "../game-character.schema.js";
 /** Shared input and output schemas for the party-ready-room feature. */
 import * as Schema from "effect/Schema";
@@ -80,35 +81,7 @@ export const CreatePartyGatheringRequest = Schema.Struct({
     }),
   ),
   character: GameCharacter,
-  description: Schema.optionalKey(
-    Schema.String.check(
-      Schema.isMaxLength(200).annotate({
-        expected: "a value with a length of at most 200",
-      }),
-    ),
-  ),
-  minLvl: Schema.optionalKey(
-    FiniteNumber.check(
-      Schema.isGreaterThanOrEqualTo(1).annotate({
-        expected: "a value greater than or equal to 1",
-      }),
-    ).check(
-      Schema.isLessThanOrEqualTo(500).annotate({
-        expected: "a value less than or equal to 500",
-      }),
-    ),
-  ),
-  maxLvl: Schema.optionalKey(
-    FiniteNumber.check(
-      Schema.isGreaterThanOrEqualTo(1).annotate({
-        expected: "a value greater than or equal to 1",
-      }),
-    ).check(
-      Schema.isLessThanOrEqualTo(500).annotate({
-        expected: "a value less than or equal to 500",
-      }),
-    ),
-  ),
+  ...partyGatheringDetailsFields,
 }).annotate({ identifier: "CreatePartyGatheringDto" });
 
 export type CreatePartyGatheringRequest =
