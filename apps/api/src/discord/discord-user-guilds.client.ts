@@ -4,7 +4,6 @@ import {
   parseResponse,
   type REST,
 } from "@discordjs/rest";
-import { setTimeout as sleep } from "node:timers/promises";
 import {
   ApplicationError,
   DependencyUnavailableError,
@@ -508,7 +507,7 @@ export class DiscordUserGuildsClient {
       return null;
     }
 
-    await sleep(this.completeGuildsPollMs);
+    await Bun.sleep(this.completeGuildsPollMs);
     const entry = await this.getCompleteUserGuildsEntry(key, maxAgeMs);
 
     return (
