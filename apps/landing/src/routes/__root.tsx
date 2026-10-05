@@ -28,7 +28,7 @@ export const Route = createRootRoute({
       { property: "og:type", content: "website" },
       { property: "og:locale", content: "pl_PL" },
       { property: "og:site_name", content: "Lootlog.pl" },
-      { property: "og:url", content: "https://lootlog.pl" },
+      { property: "og:url", content: "https://lootlog.pl/" },
       {
         property: "og:image",
         content: "https://lootlog.pl/brand/lootlog-social.png",

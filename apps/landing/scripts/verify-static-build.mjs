@@ -16,9 +16,9 @@ const privacyDocument = await readDocument("privacy-policy/index.html");
 const termsDocument = await readDocument("terms-of-service/index.html");
 
 for (const [documentName, document, canonicalUrl] of [
-  ["home", homeDocument, "https://lootlog.pl"],
-  ["privacy policy", privacyDocument, "https://lootlog.pl/privacy-policy"],
-  ["terms of service", termsDocument, "https://lootlog.pl/terms-of-service"],
+  ["home", homeDocument, "https://lootlog.pl/"],
+  ["privacy policy", privacyDocument, "https://lootlog.pl/privacy-policy/"],
+  ["terms of service", termsDocument, "https://lootlog.pl/terms-of-service/"],
 ]) {
   assert.match(
     document,
@@ -73,8 +73,8 @@ assert.deepEqual(
   [...sitemap.matchAll(/<loc>(.*?)<\/loc>/gu)].map((match) => match[1]).sort(),
   [
     "https://lootlog.pl/",
-    "https://lootlog.pl/privacy-policy",
-    "https://lootlog.pl/terms-of-service",
+    "https://lootlog.pl/privacy-policy/",
+    "https://lootlog.pl/terms-of-service/",
   ].sort(),
   "Landing sitemap must list the canonical public pages",
 );

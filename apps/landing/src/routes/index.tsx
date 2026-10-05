@@ -8,7 +8,7 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
   name: "Lootlog",
-  url: "https://lootlog.pl",
+  url: "https://lootlog.pl/",
   description: seo.description,
   applicationCategory: "GameApplication",
   operatingSystem: "Web",
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/")({
       { name: "description", content: seo.description },
       { name: "keywords", content: seo.keywords.join(", ") },
     ],
-    links: [{ rel: "canonical", href: "https://lootlog.pl" }],
+    links: [{ rel: "canonical", href: "https://lootlog.pl/" }],
   }),
   component: HomePage,
 });
