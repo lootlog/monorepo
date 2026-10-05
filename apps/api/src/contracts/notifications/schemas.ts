@@ -572,7 +572,7 @@ export const WatchedItemResponse = Schema.Struct({
 
 export type WatchedItemResponse = typeof WatchedItemResponse.Type;
 
-export const CreateWatchedItemRequest = Schema.Struct({
+const watchedItemInputFields = {
   itemId: SafeInteger,
   itemName: NonEmptyString.check(
     Schema.isMaxLength(255).annotate({
@@ -584,6 +584,10 @@ export const CreateWatchedItemRequest = Schema.Struct({
       expected: "a value with a length of at most 50",
     }),
   ),
+};
+
+export const CreateWatchedItemRequest = Schema.Struct({
+  ...watchedItemInputFields,
   guildIds: Schema.Array(
     Schema.String.check(
       Schema.isMaxLength(50).annotate({
@@ -606,17 +610,7 @@ export const CreateWatchedItemRequest = Schema.Struct({
 export type CreateWatchedItemRequest = typeof CreateWatchedItemRequest.Type;
 
 export const QuickAddWatchedItemRequest = Schema.Struct({
-  itemId: SafeInteger,
-  itemName: NonEmptyString.check(
-    Schema.isMaxLength(255).annotate({
-      expected: "a value with a length of at most 255",
-    }),
-  ),
-  world: NonEmptyString.check(
-    Schema.isMaxLength(50).annotate({
-      expected: "a value with a length of at most 50",
-    }),
-  ),
+  ...watchedItemInputFields,
   guildId: NonEmptyString.check(
     Schema.isMaxLength(50).annotate({
       expected: "a value with a length of at most 50",
