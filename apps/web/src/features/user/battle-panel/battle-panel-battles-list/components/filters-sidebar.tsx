@@ -1,3 +1,4 @@
+import { getBattleFilterOptions } from "../utils/battle-filter-options";
 import { CharacterSelector } from "@/components/filters/character-selector";
 import {
   createBattleFilterHandlers,
@@ -54,16 +55,7 @@ export const FiltersSidebar = ({
   const { data: worldsResponse } = useBattlesControllerGetUserWorlds();
   const worlds = worldsResponse?.worlds ?? [];
 
-  const battleTypes = [
-    { value: "solo" as const, label: t("battlePanel.filters.types.solo") },
-    { value: "group" as const, label: t("battlePanel.filters.types.group") },
-  ];
-
-  const battleResults = [
-    { value: "won" as const, label: t("battlePanel.filters.results.won") },
-    { value: "lost" as const, label: t("battlePanel.filters.results.lost") },
-    { value: "flee" as const, label: t("battlePanel.filters.results.flee") },
-  ];
+  const { battleTypes, battleResults } = getBattleFilterOptions(t);
 
   const handleClearFilters = () => {
     onFiltersChange({});
