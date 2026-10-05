@@ -22,11 +22,7 @@ export type PlayersControllerGetPlayersQuery =
   typeof PlayersControllerGetPlayersQuery.Type;
 
 export const PlayersControllerGetPlayersQuery = Schema.Struct({
-  limit: Schema.optionalKey(
-    Schema.Number.annotate({ default: 10 }).check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-  ),
+  limit: Schema.optionalKey(FiniteNumber.annotate({ default: 10 })),
   search: Schema.optionalKey(
     Schema.Union([Schema.String, Schema.Array(Schema.String)]),
   ),

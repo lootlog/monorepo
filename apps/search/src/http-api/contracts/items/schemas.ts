@@ -39,16 +39,8 @@ export type ItemsControllerGetItemsQuery =
   typeof ItemsControllerGetItemsQuery.Type;
 
 export const ItemsControllerGetItemsQuery = Schema.Struct({
-  limit: Schema.optionalKey(
-    Schema.Number.annotate({ default: 20 }).check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-  ),
-  offset: Schema.optionalKey(
-    Schema.Number.annotate({ default: 0 }).check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-  ),
+  limit: Schema.optionalKey(FiniteNumber.annotate({ default: 20 })),
+  offset: Schema.optionalKey(FiniteNumber.annotate({ default: 0 })),
   search: Schema.optionalKey(Schema.String),
   filter: Schema.optionalKey(
     Schema.Union([Schema.String, Schema.Array(Schema.String)]),
