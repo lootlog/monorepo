@@ -4,6 +4,7 @@ import {
   DateTimeWithOffsetString,
   DateTimeString,
   FiniteNumber,
+  PageSize,
 } from "@lootlog/schema/http-scalars";
 
 const ActivityListQuery = Schema.Struct({
@@ -19,20 +20,7 @@ const ActivityListQuery = Schema.Struct({
   startDate: Schema.optionalKey(DateTimeWithOffsetString),
   endDate: Schema.optionalKey(DateTimeWithOffsetString),
   cursor: Schema.optionalKey(Schema.String),
-  limit: Schema.optionalKey(
-    Schema.Number.annotate({ default: 50 })
-      .check(Schema.isInt().annotate({ expected: "an integer" }))
-      .check(
-        Schema.isGreaterThanOrEqualTo(1).annotate({
-          expected: "a value greater than or equal to 1",
-        }),
-      )
-      .check(
-        Schema.isLessThanOrEqualTo(100).annotate({
-          expected: "a value less than or equal to 100",
-        }),
-      ),
-  ),
+  limit: Schema.optionalKey(PageSize.annotate({ default: 50 })),
 });
 
 const activitySuggestionsQuery = (defaultLimit: number) =>
