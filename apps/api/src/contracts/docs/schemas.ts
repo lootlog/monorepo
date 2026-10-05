@@ -7,6 +7,12 @@ import {
   JsonValue,
 } from "@lootlog/schema/http-scalars";
 
+const DocumentTitle = NonEmptyString.check(
+  Schema.isMaxLength(120).annotate({
+    expected: "a value with a length of at most 120",
+  }),
+);
+
 const DocumentContent = JsonValue.annotate({
   identifier: "GuildDocumentResponseDto__schema0",
 });
@@ -64,11 +70,7 @@ export const DocumentListResponse = Schema.Struct({
 export type CreateDocumentRequest = typeof CreateDocumentRequest.Type;
 
 export const CreateDocumentRequest = Schema.Struct({
-  title: NonEmptyString.check(
-    Schema.isMaxLength(120).annotate({
-      expected: "a value with a length of at most 120",
-    }),
-  ),
+  title: DocumentTitle,
 }).annotate({ identifier: "CreateGuildDocumentDto" });
 
 export type DocumentResponse = typeof DocumentResponse.Type;
@@ -109,11 +111,7 @@ export type UpdateDocumentRequest = typeof UpdateDocumentRequest.Type;
 
 export const UpdateDocumentRequest = Schema.Struct({
   content: UpdatedDocumentContent,
-  title: NonEmptyString.check(
-    Schema.isMaxLength(120).annotate({
-      expected: "a value with a length of at most 120",
-    }),
-  ),
+  title: DocumentTitle,
 }).annotate({ identifier: "UpdateGuildDocumentDto" });
 
 export type DocumentMutationResponse = typeof DocumentMutationResponse.Type;
