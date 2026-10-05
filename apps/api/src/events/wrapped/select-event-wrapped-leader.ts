@@ -1,3 +1,4 @@
+import { roundEventDisplayValue } from "#src/events/round-event-display-value";
 import type {
   EventWrappedLeaderDto,
   EventWrappedLeaderResultDto,
@@ -10,8 +11,6 @@ type EventWrappedLeaderCandidate = {
   avatar?: string | null;
 };
 
-const roundToTwo = (value: number): number => Math.round(value * 100) / 100;
-
 const toLeader = <T extends EventWrappedLeaderCandidate>(
   entry: T,
   primaryValue: number,
@@ -22,9 +21,9 @@ const toLeader = <T extends EventWrappedLeaderCandidate>(
       memberId: entry.member.id,
       name: entry.member.name,
       avatar: entry.member.avatar,
-      primaryValue: roundToTwo(primaryValue),
+      primaryValue: roundEventDisplayValue(primaryValue),
       secondaryValue:
-        secondaryValue === null ? null : roundToTwo(secondaryValue),
+        secondaryValue === null ? null : roundEventDisplayValue(secondaryValue),
     };
   }
 
@@ -32,8 +31,9 @@ const toLeader = <T extends EventWrappedLeaderCandidate>(
     memberId: entry.memberId,
     name: entry.name ?? "Unknown",
     avatar: entry.avatar ?? null,
-    primaryValue: roundToTwo(primaryValue),
-    secondaryValue: secondaryValue === null ? null : roundToTwo(secondaryValue),
+    primaryValue: roundEventDisplayValue(primaryValue),
+    secondaryValue:
+      secondaryValue === null ? null : roundEventDisplayValue(secondaryValue),
   };
 };
 
