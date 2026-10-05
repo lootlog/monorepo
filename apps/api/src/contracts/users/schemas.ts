@@ -59,27 +59,21 @@ const NpcDetectorPreferencesPatch = NpcDetectorPreferences.mapFields(
   Struct.map(Schema.optionalKey),
 );
 
+const DetectorRoutingLevel = FiniteNumber.check(
+  Schema.isGreaterThanOrEqualTo(0).annotate({
+    expected: "a value greater than or equal to 0",
+  }),
+).check(
+  Schema.isLessThanOrEqualTo(500).annotate({
+    expected: "a value less than or equal to 500",
+  }),
+);
+
 const DetectorRoutingRule = Schema.Struct({
   id: NonEmptyString,
   name: Schema.optionalKey(Schema.String),
-  minLevel: FiniteNumber.check(
-    Schema.isGreaterThanOrEqualTo(0).annotate({
-      expected: "a value greater than or equal to 0",
-    }),
-  ).check(
-    Schema.isLessThanOrEqualTo(500).annotate({
-      expected: "a value less than or equal to 500",
-    }),
-  ),
-  maxLevel: FiniteNumber.check(
-    Schema.isGreaterThanOrEqualTo(0).annotate({
-      expected: "a value greater than or equal to 0",
-    }),
-  ).check(
-    Schema.isLessThanOrEqualTo(500).annotate({
-      expected: "a value less than or equal to 500",
-    }),
-  ),
+  minLevel: DetectorRoutingLevel,
+  maxLevel: DetectorRoutingLevel,
   world: Schema.optionalKey(Schema.String),
   guildIds: Schema.Array(Schema.String),
 });
