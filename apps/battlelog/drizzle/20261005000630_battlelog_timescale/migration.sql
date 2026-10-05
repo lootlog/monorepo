@@ -65,7 +65,6 @@ CREATE TABLE "battles" (
 --> statement-breakpoint
 CREATE TABLE "battle_warriors" (
 	"battleId" uuid,
-	"userId" text NOT NULL,
 	"originalId" text,
 	"name" text NOT NULL,
 	"lvl" integer NOT NULL,
@@ -183,19 +182,19 @@ CREATE INDEX "battles_characterId_id_idx" ON "battles" ("characterId","id");
 --> statement-breakpoint
 CREATE INDEX "battles_semanticFingerprint_id_idx" ON "battles" ("semanticFingerprint","id");
 --> statement-breakpoint
--- PGlite in tests has no TimescaleDB, so the tables stay plain there. Only
+-- Participants stay a plain table: analytics look up a battle's participants
+-- one battle at a time, which decompresses a whole batch per battle on
+-- compressed chunks. PGlite in tests has no TimescaleDB, so the tables stay
+-- plain there. Only
 -- superusers may read shared_preload_libraries, so the check uses the catalog.
 DO $$
 BEGIN
 	IF EXISTS (SELECT FROM pg_available_extensions WHERE name = 'timescaledb') THEN
 		CREATE EXTENSION IF NOT EXISTS timescaledb WITH SCHEMA public;
 		PERFORM create_hypertable('battles', by_range('id', INTERVAL '7 days'), create_default_indexes => false);
-		PERFORM create_hypertable('battle_warriors', by_range('battleId', INTERVAL '7 days'), create_default_indexes => false);
 		PERFORM create_hypertable('battle_timelines', by_range('battleId', INTERVAL '7 days'), create_default_indexes => false);
 		EXECUTE 'ALTER TABLE battles SET (timescaledb.enable_columnstore, timescaledb.segmentby = ''"userId"'', timescaledb.orderby = ''id DESC'')';
-		EXECUTE 'ALTER TABLE battle_warriors SET (timescaledb.enable_columnstore, timescaledb.segmentby = ''"userId"'', timescaledb.orderby = ''"battleId" DESC, "originalId"'')';
 		CALL add_columnstore_policy('battles', after => INTERVAL '7 days');
-		CALL add_columnstore_policy('battle_warriors', after => INTERVAL '7 days');
 	END IF;
 END $$;
 --> statement-breakpoint

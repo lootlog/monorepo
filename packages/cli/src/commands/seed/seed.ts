@@ -872,7 +872,6 @@ async function seedBattles(count: number) {
         await transaction.insert(battleWarriorsTable).values(
           analysis.warriors.map((warrior) => ({
             battleId: battle.id,
-            userId,
             ...toSeedBattleWarrior(warrior),
           })),
         );

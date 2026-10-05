@@ -70,8 +70,8 @@ beforeEach(async () => {
     FROM (VALUES ('${BATTLE_IDS.one}'::uuid, 'owner'), ('${BATTLE_IDS.two}'::uuid, 'owner'), ('${BATTLE_IDS.other}'::uuid, 'other-owner')) AS seed(id, owner);
     INSERT INTO battle_legacy_ids ("legacyId", "battleId") VALUES ('${LEGACY_ONE}', '${BATTLE_IDS.one}');
     INSERT INTO user_characters (id, "userId", "characterId", name, world) VALUES ('character', 'owner', 'character', 'name', 'world');
-    INSERT INTO battle_warriors ("battleId", "userId", "originalId", name, lvl, prof, icon, team, turns)
-    SELECT id, "userId", 'character', 'name', 1, 'w', 'icon', 1, 1 FROM battles;
+    INSERT INTO battle_warriors ("battleId", "originalId", name, lvl, prof, icon, team, turns)
+    SELECT id, 'character', 'name', 1, 'w', 'icon', 1, 1 FROM battles;
     INSERT INTO battle_submissions ("userId", "submissionId", "battleId")
     SELECT "userId", id::text, id FROM battles;
     INSERT INTO battle_timelines ("battleId", "userId", events)

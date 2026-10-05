@@ -16,7 +16,6 @@ import { groupBy } from "es-toolkit";
 import {
   selectedWarriorOrder,
   warriorExists,
-  warriorOfBattle,
 } from "#src/battles/battle-warrior-query";
 import type { DrizzleDatabase } from "#src/database/database";
 import { battles, battleWarriors } from "#src/database/schema";
@@ -70,7 +69,7 @@ export const makeBattleCombatProfileRead = (
       .from(battleWarriors)
       .where(
         and(
-          warriorOfBattle(battles),
+          eq(battleWarriors.battleId, battles.id),
           inArray(battleWarriors.originalId, characterIds),
         ),
       )
@@ -134,7 +133,6 @@ export const makeBattleCombatProfileRead = (
         .from(battleWarriors)
         .where(
           and(
-            eq(battleWarriors.userId, userId),
             inArray(
               battleWarriors.battleId,
               batch.map((battle) => battle.id),

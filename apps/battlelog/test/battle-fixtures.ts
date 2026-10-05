@@ -20,7 +20,6 @@ const createWarriorFixture = (
   ...(warriorStatDefaults as Omit<
     BattleWarrior,
     | "battleId"
-    | "userId"
     | "originalId"
     | "name"
     | "lvl"
@@ -30,7 +29,6 @@ const createWarriorFixture = (
     | "turns"
   >),
   battleId: "battle-1",
-  userId: "user-1",
   originalId: "character-1",
   name: "Character",
   lvl: 100,

@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "97c4bf97-c94d-4d28-9734-2c11ee92ddb3",
+  "id": "5a95d10e-d9a2-493a-99c4-cac137ceefe7",
   "prevIds": ["9303edbc-0cd6-4cda-ad22-af5392cc8c16"],
   "ddl": [
     {
@@ -211,19 +211,6 @@
       "generated": null,
       "identity": null,
       "name": "battleId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "battle_warriors"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "userId",
       "entityType": "columns",
       "schema": "public",
       "table": "battle_warriors"
