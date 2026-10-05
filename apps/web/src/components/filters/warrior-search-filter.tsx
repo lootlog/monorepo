@@ -1,5 +1,6 @@
 import { formatLevel } from "@lootlog/domain/profession";
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
+import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import { Search, ChevronsUpDown, Check } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -39,19 +40,9 @@ export const WarriorSearchFilter = ({
 }: WarriorSearchFilterProps) => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const debouncedQuery = useDebounce(searchQuery, 300);
   const resultsListId = useId();
   const { t } = useTranslation();
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setDebouncedQuery(searchQuery);
-    }, 300);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [searchQuery]);
 
   const { data: searchResponse, isFetching } =
     useBattlesControllerSearchWarriors(
