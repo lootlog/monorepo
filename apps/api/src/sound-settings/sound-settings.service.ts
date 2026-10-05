@@ -164,33 +164,14 @@ export const makeSoundSettings = (
 
         const defaults = getDefaultSettingsData();
 
-        if (notificationsConfig) {
-          set.notificationsConfig = soundConfigMapToJson(
-            mergeSoundConfigMap(
-              currentSettings.notificationsConfig,
-              defaults.notificationsConfig,
-              notificationsConfig,
-            ),
-          );
-        }
-
-        if (detectorConfig) {
-          set.detectorConfig = soundConfigMapToJson(
-            mergeSoundConfigMap(
-              currentSettings.detectorConfig,
-              defaults.detectorConfig,
-              detectorConfig,
-            ),
-          );
-        }
-
-        if (timersConfig) {
-          set.timersConfig = soundConfigMapToJson(
-            mergeSoundConfigMap(
-              currentSettings.timersConfig,
-              defaults.timersConfig,
-              timersConfig,
-            ),
+        for (const [key, patch] of [
+          ["notificationsConfig", notificationsConfig],
+          ["detectorConfig", detectorConfig],
+          ["timersConfig", timersConfig],
+        ] as const) {
+          if (!patch) continue;
+          set[key] = soundConfigMapToJson(
+            mergeSoundConfigMap(currentSettings[key], defaults[key], patch),
           );
         }
 
