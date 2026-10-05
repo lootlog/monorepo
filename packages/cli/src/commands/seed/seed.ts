@@ -103,19 +103,22 @@ async function cleanDatabase() {
   console.log("✅ Database cleaned");
 }
 
+function getDevelopmentGuildIds(): string[] {
+  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
+
+  return devGuildIdsRaw && devGuildIdsRaw !== "xxx"
+    ? devGuildIdsRaw
+        .split(",")
+        .map((id) => id.trim())
+        .filter((id) => id.length > 0)
+    : [];
+}
+
 async function seedGuilds(count: number) {
   console.log(`🏰 Seeding ${count} guilds...`);
 
-  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
+  const devGuildIds = getDevelopmentGuildIds();
   const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
-
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
 
   const totalGuildsToCreate = Math.max(count, devGuildIds.length);
 
@@ -391,16 +394,8 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
   const loots = lootGenerator.generateMultiple(count);
   const createdLoots = [];
 
-  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
+  const devGuildIds = getDevelopmentGuildIds();
   const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
-
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
 
   for (const loot of loots) {
     const { gameVersion } = SCRAPER_CONFIG;
@@ -585,16 +580,8 @@ async function seedTimers(guilds: SeedGuild[]) {
     return;
   }
 
-  const devGuildIdsRaw = process.env.DISCORD_DEVELOPMENT_GUILD_ID;
+  const devGuildIds = getDevelopmentGuildIds();
   const devUserId = process.env.DISCORD_DEVELOPMENT_USER_ID;
-
-  const devGuildIds =
-    devGuildIdsRaw && devGuildIdsRaw !== "xxx"
-      ? devGuildIdsRaw
-          .split(",")
-          .map((id) => id.trim())
-          .filter((id) => id.length > 0)
-      : [];
 
   let totalTimers = 0;
 
