@@ -1,3 +1,4 @@
+import { parseKillStatsLevel } from "@/features/kills/parse-kill-stats-level";
 import { updateSettingsField } from "./update-settings-field";
 import { useLocalStorage } from "usehooks-ts";
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -67,21 +68,13 @@ export const useStatsSettings = (page: StatsSettingsPage) => {
     });
   };
 
-  const parsedMinLvl = debouncedMinLvl
-    ? Number.parseInt(debouncedMinLvl, 10)
-    : undefined;
-
-  const parsedMaxLvl = debouncedMaxLvl
-    ? Number.parseInt(debouncedMaxLvl, 10)
-    : undefined;
-
   return {
     settings: {
       ...settings,
       period: settings.period ?? "all",
     },
-    debouncedMinLvl: Number.isNaN(parsedMinLvl) ? undefined : parsedMinLvl,
-    debouncedMaxLvl: Number.isNaN(parsedMaxLvl) ? undefined : parsedMaxLvl,
+    debouncedMinLvl: parseKillStatsLevel(debouncedMinLvl),
+    debouncedMaxLvl: parseKillStatsLevel(debouncedMaxLvl),
     setWorld,
     setMinLvl,
     setMaxLvl,
