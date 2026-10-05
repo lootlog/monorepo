@@ -46,6 +46,17 @@ const ReservationEditingLimits = Schema.Struct({
   reservationMaxAdvanceDays: ReservationLimit,
 });
 
+const ReservationReminderMinutes = Schema.Union([
+  Schema.Literals([0, 5, 15, 30]),
+  Schema.Null,
+]);
+
+const ReservationComment = Schema.String.check(
+  Schema.isMaxLength(128).annotate({
+    expected: "a value with a length of at most 128",
+  }),
+);
+
 const reservationFields = {
   id: SafeInteger,
   spotId: Schema.String,
@@ -65,10 +76,7 @@ const reservationFields = {
     ]),
     Schema.Null,
   ]),
-  reminderMinutesBefore: Schema.Union([
-    Schema.Literals([0, 5, 15, 30]),
-    Schema.Null,
-  ]),
+  reminderMinutesBefore: ReservationReminderMinutes,
 };
 
 export const ReservationSpotsResponse = Schema.Array(
@@ -113,16 +121,8 @@ export type ReservationWindowResponse = typeof ReservationWindowResponse.Type;
 export const CreateReservationRequest = Schema.Struct({
   startsAt: DateTimeWithOffsetString,
   endsAt: DateTimeWithOffsetString,
-  comment: Schema.optionalKey(
-    Schema.String.check(
-      Schema.isMaxLength(128).annotate({
-        expected: "a value with a length of at most 128",
-      }),
-    ),
-  ),
-  reminderMinutesBefore: Schema.optionalKey(
-    Schema.Union([Schema.Literals([0, 5, 15, 30]), Schema.Null]),
-  ),
+  comment: Schema.optionalKey(ReservationComment),
+  reminderMinutesBefore: Schema.optionalKey(ReservationReminderMinutes),
 }).annotate({ identifier: "CreateReservationDto" });
 
 export type CreateReservationRequest = typeof CreateReservationRequest.Type;
@@ -142,19 +142,8 @@ export type MyReservationsResponse = typeof MyReservationsResponse.Type;
 export const UpdateReservationRequest = Schema.Struct({
   startsAt: Schema.optionalKey(DateTimeWithOffsetString),
   endsAt: Schema.optionalKey(DateTimeWithOffsetString),
-  comment: Schema.optionalKey(
-    Schema.Union([
-      Schema.String.check(
-        Schema.isMaxLength(128).annotate({
-          expected: "a value with a length of at most 128",
-        }),
-      ),
-      Schema.Null,
-    ]),
-  ),
-  reminderMinutesBefore: Schema.optionalKey(
-    Schema.Union([Schema.Literals([0, 5, 15, 30]), Schema.Null]),
-  ),
+  comment: Schema.optionalKey(Schema.Union([ReservationComment, Schema.Null])),
+  reminderMinutesBefore: Schema.optionalKey(ReservationReminderMinutes),
 })
   .check(
     Schema.makeFilter((data) => Object.keys(data).length > 0, {
