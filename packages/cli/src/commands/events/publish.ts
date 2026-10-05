@@ -1,14 +1,9 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { fileURLToPath } from "node:url";
 import * as p from "@clack/prompts";
 import { chalk } from "zx";
 import { Schema } from "effect";
 import { createRabbitMQClient } from "../../rabbitmq/client.js";
-
-const __filename = fileURLToPath(import.meta.url);
-
-const __dirname = path.dirname(__filename);
 
 const EventFixture = Schema.Struct({
   exchange: Schema.String,
@@ -27,7 +22,7 @@ const parsePayload = Schema.decodeUnknownSync(
 );
 
 const loadFixtures = async (): Promise<Map<string, EventFixture>> => {
-  const fixturesDir = path.join(__dirname, "../../events/fixtures");
+  const fixturesDir = path.join(import.meta.dirname, "../../events/fixtures");
   const fixtures = new Map<string, EventFixture>();
 
   try {

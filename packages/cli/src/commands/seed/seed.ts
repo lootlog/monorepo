@@ -41,14 +41,9 @@ import { BattlesGenerator } from "./generators/battles-generator.js";
 import { BattleProcessor, type Warrior } from "@lootlog/battle-processor";
 import { SCRAPER_CONFIG, SEED_CONFIG } from "./config.js";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
-
-const __filename = fileURLToPath(import.meta.url);
-
-const __dirname = path.dirname(__filename);
 
 const mainPool = new pg.Pool({
   connectionString:
@@ -374,7 +369,7 @@ type SeedGuild = Awaited<ReturnType<typeof seedGuilds>>[number];
 async function seedLoots(count: number, guilds: SeedGuild[]) {
   console.log(`🎁 Seeding ${count} loots...`);
 
-  const dataPath = path.join(__dirname, "../../mocks/data");
+  const dataPath = path.join(import.meta.dirname, "../../mocks/data");
   const lootGenerator = new LootGenerator();
 
   try {
@@ -570,7 +565,7 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
 async function seedTimers(guilds: SeedGuild[]) {
   console.log("⏱️  Seeding timers...");
 
-  const dataPath = path.join(__dirname, "../../mocks/data");
+  const dataPath = path.join(import.meta.dirname, "../../mocks/data");
   const npcsPath = path.join(dataPath, "npcs.json");
 
   let npcs = [];
