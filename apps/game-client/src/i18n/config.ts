@@ -6,6 +6,7 @@ import chat from "./translations/chat.json";
 import command from "./translations/command.json";
 import common from "./translations/common.json";
 import errorBoundary from "./translations/error-boundary.json";
+import globalChat from "./translations/global-chat.json";
 import notifications from "./translations/notifications.json";
 import npcDetector from "./translations/npc-detector.json";
 import onlinePlayers from "./translations/online-players.json";
@@ -27,6 +28,7 @@ i18n.use(initReactI18next).init({
         catchingWhitelistWarning,
         backendPreferencesWarning,
         errorBoundary,
+        globalChat,
         npcDetector,
         notifications,
         partyFinder,
@@ -42,6 +44,7 @@ i18n.use(initReactI18next).init({
       catchingWhitelistWarning,
       backendPreferencesWarning,
       errorBoundary,
+      globalChat,
       npcDetector,
       notifications,
       partyFinder,

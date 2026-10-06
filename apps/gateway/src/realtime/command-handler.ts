@@ -10,6 +10,7 @@ import {
   REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
   REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
   REALTIME_NPC_PRESENCE_CAPABILITY,
+  REALTIME_GLOBAL_CHAT_CAPABILITY,
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_PING_CAPABILITY,
   REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
@@ -43,6 +44,7 @@ import type { MapPingService } from "#src/realtime/map-ping-service";
 import type { PresenceStore } from "#src/realtime/presence-store";
 import {
   getScopeKey,
+  GLOBAL_CHAT_FEDERATION_VERSION,
   PARTY_GATHERING_STATE_FEDERATION_VERSION,
   type RealtimeHub,
 } from "#src/realtime/realtime-hub";
@@ -917,6 +919,10 @@ export class CommandHandler {
             hub.clusterFederationVersion >=
               PARTY_GATHERING_STATE_FEDERATION_VERSION
               ? [REALTIME_PARTY_GATHERING_STATE_CAPABILITY]
+              : []),
+            ...(socket.data.supportsGlobalChat &&
+            hub.clusterFederationVersion >= GLOBAL_CHAT_FEDERATION_VERSION
+              ? [REALTIME_GLOBAL_CHAT_CAPABILITY]
               : []),
           ],
         },

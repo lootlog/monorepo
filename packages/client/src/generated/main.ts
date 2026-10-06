@@ -6546,6 +6546,37 @@ export type ReservationSpotsResponseDtoItem = {
 
 export type ReservationSpotsResponseDto = ReservationSpotsResponseDtoItem[];
 
+export interface SendGlobalChatMessageRequest {
+  /**
+     * @minLength 1
+     * @maxLength 128
+     * @pattern ^\S[\s\S]*\S$|^\S$|^$
+     */
+  message: string;
+}
+
+export interface GlobalChatMessageResponse {
+  /** @minLength 1 */
+  id: string;
+  /** @minLength 1 */
+  displayName: string;
+  /**
+     * @minLength 1
+     * @maxLength 128
+     * @pattern ^\S[\s\S]*\S$|^\S$|^$
+     */
+  message: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  timestamp: string;
+  isOwn: boolean;
+}
+
+export interface GlobalChatMessagesResponse {
+  messages: GlobalChatMessageResponse[];
+  /** @nullable */
+  nextCursor: string | null;
+}
+
 export interface ChatMessageActionResponseDtoOutput {
   success: boolean;
 }
@@ -11386,6 +11417,34 @@ export type ChatControllerDeleteChatMessage403 = {
 };
 
 export type ChatControllerDeleteChatMessage429 = {
+  message: string;
+};
+
+export type GlobalChatControllerGetMessagesParams = {
+before?: string;
+};
+
+export type GlobalChatControllerGetMessages401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type GlobalChatControllerGetMessages403 = {
+  message: string;
+};
+
+export type GlobalChatControllerGetMessages429 = {
+  message: string;
+};
+
+export type GlobalChatControllerSendMessage401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type GlobalChatControllerSendMessage403 = {
+  message: string;
+};
+
+export type GlobalChatControllerSendMessage429 = {
   message: string;
 };
 
@@ -22453,6 +22512,246 @@ export const useChatControllerDeleteChatMessage = <TError = ErrorType<RequestVal
         TContext
       > => {
       return useMutation(getChatControllerDeleteChatMessageMutationOptions(options), queryClient);
+    }
+
+export const getGlobalChatControllerGetMessagesUrl = (params?: GlobalChatControllerGetMessagesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/global-chat/messages?${stringifiedParams}` : `/global-chat/messages`
+}
+
+/**
+ * Read one page of the chat shared by every Member of any Organization
+ * @summary Get global chat messages
+ */
+export const globalChatControllerGetMessages = async (params?: GlobalChatControllerGetMessagesParams, options?: Parameters<typeof mainFetch>[1]): Promise<GlobalChatMessagesResponse> => {
+
+  return mainFetch<GlobalChatMessagesResponse>(getGlobalChatControllerGetMessagesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGlobalChatControllerGetMessagesQueryKey = (params?: GlobalChatControllerGetMessagesParams,) => {
+    return [
+    `/global-chat/messages`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGlobalChatControllerGetMessagesQueryOptions = <TData = Awaited<ReturnType<typeof globalChatControllerGetMessages>>, TError = ErrorType<RequestValidationError | GlobalChatControllerGetMessages401 | GlobalChatControllerGetMessages403 | GlobalChatControllerGetMessages429>>(params?: GlobalChatControllerGetMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof globalChatControllerGetMessages>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGlobalChatControllerGetMessagesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof globalChatControllerGetMessages>>> = ({ signal }) => globalChatControllerGetMessages(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof globalChatControllerGetMessages>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GlobalChatControllerGetMessagesQueryResult = NonNullable<Awaited<ReturnType<typeof globalChatControllerGetMessages>>>
+export type GlobalChatControllerGetMessagesQueryError = ErrorType<RequestValidationError | GlobalChatControllerGetMessages401 | GlobalChatControllerGetMessages403 | GlobalChatControllerGetMessages429>
+
+
+export function useGlobalChatControllerGetMessages<TData = Awaited<ReturnType<typeof globalChatControllerGetMessages>>, TError = ErrorType<RequestValidationError | GlobalChatControllerGetMessages401 | GlobalChatControllerGetMessages403 | GlobalChatControllerGetMessages429>>(
+ params: undefined |  GlobalChatControllerGetMessagesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof globalChatControllerGetMessages>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof globalChatControllerGetMessages>>,
+          TError,
+          Awaited<ReturnType<typeof globalChatControllerGetMessages>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGlobalChatControllerGetMessages<TData = Awaited<ReturnType<typeof globalChatControllerGetMessages>>, TError = ErrorType<RequestValidationError | GlobalChatControllerGetMessages401 | GlobalChatControllerGetMessages403 | GlobalChatControllerGetMessages429>>(
+ params?: GlobalChatControllerGetMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof globalChatControllerGetMessages>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof globalChatControllerGetMessages>>,
+          TError,
+          Awaited<ReturnType<typeof globalChatControllerGetMessages>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGlobalChatControllerGetMessages<TData = Awaited<ReturnType<typeof globalChatControllerGetMessages>>, TError = ErrorType<RequestValidationError | GlobalChatControllerGetMessages401 | GlobalChatControllerGetMessages403 | GlobalChatControllerGetMessages429>>(
+ params?: GlobalChatControllerGetMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof globalChatControllerGetMessages>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get global chat messages
+ */
+
+export function useGlobalChatControllerGetMessages<TData = Awaited<ReturnType<typeof globalChatControllerGetMessages>>, TError = ErrorType<RequestValidationError | GlobalChatControllerGetMessages401 | GlobalChatControllerGetMessages403 | GlobalChatControllerGetMessages429>>(
+ params?: GlobalChatControllerGetMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof globalChatControllerGetMessages>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGlobalChatControllerGetMessagesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get global chat messages
+ */
+export const prefetchGlobalChatControllerGetMessagesQuery = async <TData = Awaited<ReturnType<typeof globalChatControllerGetMessages>>, TError = ErrorType<RequestValidationError | GlobalChatControllerGetMessages401 | GlobalChatControllerGetMessages403 | GlobalChatControllerGetMessages429>>(
+ queryClient: QueryClient, params?: GlobalChatControllerGetMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof globalChatControllerGetMessages>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getGlobalChatControllerGetMessagesQueryOptions(params,options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useGlobalChatControllerGetMessages} query
+ */
+export const invalidateGlobalChatControllerGetMessages = async (
+ queryClient: QueryClient, params?: GlobalChatControllerGetMessagesParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getGlobalChatControllerGetMessagesQueryKey(params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get global chat messages
+ */
+export const useSetGlobalChatControllerGetMessagesQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: GlobalChatControllerGetMessagesParams | undefined,updater: Awaited<ReturnType<typeof globalChatControllerGetMessages>> | undefined | ((old: Awaited<ReturnType<typeof globalChatControllerGetMessages>> | undefined) => Awaited<ReturnType<typeof globalChatControllerGetMessages>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof globalChatControllerGetMessages>>>({ exact: $exactMatch, queryKey: getGlobalChatControllerGetMessagesQueryKey(params) }, updater);
+  };
+}
+
+/**
+ * @summary Get global chat messages
+ */
+export const useGetGlobalChatControllerGetMessagesQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params?: GlobalChatControllerGetMessagesParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof globalChatControllerGetMessages>>>(getGlobalChatControllerGetMessagesQueryKey(params));
+}
+
+
+
+export const getGlobalChatControllerSendMessageUrl = () => {
+
+
+
+
+  return `/global-chat/messages`
+}
+
+/**
+ * Send a plain-text message to the chat shared by every Member of any Organization
+ * @summary Send global chat message
+ */
+export const globalChatControllerSendMessage = async (sendGlobalChatMessageRequest: SendGlobalChatMessageRequest, options?: Parameters<typeof mainFetch>[1]): Promise<GlobalChatMessageResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return mainFetch<GlobalChatMessageResponse>(getGlobalChatControllerSendMessageUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(sendGlobalChatMessageRequest)
+  }
+);}
+
+
+
+
+
+export const getGlobalChatControllerSendMessageMutationKey = () => ['globalChatControllerSendMessage'] as const;
+
+export const getGlobalChatControllerSendMessageMutationOptions = <TError = ErrorType<RequestValidationError | GlobalChatControllerSendMessage401 | GlobalChatControllerSendMessage403 | GlobalChatControllerSendMessage429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof globalChatControllerSendMessage>>, TError,GlobalChatControllerSendMessageMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof globalChatControllerSendMessage>>, TError,GlobalChatControllerSendMessageMutationVariables, TContext> => {
+
+const mutationKey = getGlobalChatControllerSendMessageMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof globalChatControllerSendMessage>>, GlobalChatControllerSendMessageMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  globalChatControllerSendMessage(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GlobalChatControllerSendMessageMutationResult = NonNullable<Awaited<ReturnType<typeof globalChatControllerSendMessage>>>
+    export type GlobalChatControllerSendMessageMutationBody = BodyType<SendGlobalChatMessageRequest>
+    export type GlobalChatControllerSendMessageMutationError = ErrorType<RequestValidationError | GlobalChatControllerSendMessage401 | GlobalChatControllerSendMessage403 | GlobalChatControllerSendMessage429>
+    export type GlobalChatControllerSendMessageMutationVariables = {data: BodyType<SendGlobalChatMessageRequest>}
+
+    /**
+ * @summary Send global chat message
+ */
+export const useGlobalChatControllerSendMessage = <TError = ErrorType<RequestValidationError | GlobalChatControllerSendMessage401 | GlobalChatControllerSendMessage403 | GlobalChatControllerSendMessage429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof globalChatControllerSendMessage>>, TError,GlobalChatControllerSendMessageMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof globalChatControllerSendMessage>>,
+        TError,
+        GlobalChatControllerSendMessageMutationVariables,
+        TContext
+      > => {
+      return useMutation(getGlobalChatControllerSendMessageMutationOptions(options), queryClient);
     }
 
 export const getListReservationSpotsUrl = ({ guildId }: ListReservationSpotsPathParameters,) => {

@@ -52,6 +52,7 @@ const WINDOW_SLOTS: Record<WindowId, WindowSlot> = {
   notifications: { zone: "alerts" },
   "battle-pings": { zone: "alerts" },
   "online-players": { zone: "tools" },
+  "global-chat": { zone: "tools" },
   "party-finder": { zone: "tools" },
   "create-party-gathering": { zone: "tools" },
   // The login and error screens replace the game UI, so nothing opens beside them.

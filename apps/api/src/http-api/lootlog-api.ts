@@ -15,6 +15,7 @@ import { LootsGroup } from "./contracts/loots/api.js";
 import { LootlogConfigGroup } from "./contracts/lootlog-config/api.js";
 import { HealthGroup } from "./contracts/health/api.js";
 import { ChatGroup } from "./contracts/chat/api.js";
+import { GlobalChatGroup } from "./contracts/global-chat/api.js";
 import { ReservationsGroup } from "./contracts/reservations/api.js";
 import { ReservationSharingGroup } from "./contracts/reservation-sharing/api.js";
 import { NotificationsGroup } from "./contracts/notifications/api.js";
@@ -48,6 +49,7 @@ export class LootlogApi extends HttpApi.make("LootlogApi")
     LootlogConfigGroup,
     HealthGroup,
     ChatGroup,
+    GlobalChatGroup,
     ReservationsGroup,
     ReservationSharingGroup,
     NotificationsGroup,

@@ -1,4 +1,5 @@
 import { Effect, Layer } from "effect";
+import { GlobalChatIdentity } from "#src/http-api/handlers/global-chat/global-chat.handlers";
 import { MessagingIdentity } from "#src/http-api/handlers/messaging/messaging.handlers";
 import { ReadyRoomAuthorization } from "#src/http-api/handlers/party-ready-room/party-ready-room.handlers";
 import { SettingsIdentity } from "#src/http-api/handlers/settings/settings.operations";
@@ -24,6 +25,11 @@ const MessagingIdentityLive = Layer.succeed(
   MessagingIdentity.of({ caller: requestScopedIdentity }),
 );
 
+const GlobalChatIdentityLive = Layer.succeed(
+  GlobalChatIdentity,
+  GlobalChatIdentity.of({ caller: requestScopedIdentity }),
+);
+
 const ReadyRoomAuthorizationLive = Layer.succeed(
   ReadyRoomAuthorization,
   ReadyRoomAuthorization.of({ identity: requestScopedIdentity }),
@@ -34,5 +40,6 @@ export const RequestIdentityLayers = Layer.mergeAll(
   SettingsIdentityLive,
   UserLootlogConfigIdentityLive,
   MessagingIdentityLive,
+  GlobalChatIdentityLive,
   ReadyRoomAuthorizationLive,
 );

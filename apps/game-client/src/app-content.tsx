@@ -6,6 +6,7 @@ import { BackendPreferencesWarning } from "@/features/backend-preferences-warnin
 import { CatchingWhitelistWarning } from "@/features/catching-whitelist-warning/catching-whitelist-warning";
 import { Chat } from "@/features/chat/chat";
 import { CommandWindow } from "@/features/command/command";
+import { GlobalChat } from "@/features/global-chat/global-chat";
 import { CreatePartyGathering } from "@/features/party-finder/create-party-gathering";
 import { BattlePingMarkers } from "@/features/pings/battle-ping-markers";
 import { BattlePingWindow } from "@/features/pings/battle-ping-window";
@@ -76,6 +77,7 @@ export const AppContent = () => {
           <Timers />
           <Settings />
           <Chat />
+          <GlobalChat />
           <CommandWindow />
           <OnlinePlayers />
           <NpcDetector />

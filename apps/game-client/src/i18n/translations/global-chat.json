@@ -1,0 +1,29 @@
+{
+  "window": {
+    "title": "Czat globalny"
+  },
+  "emptyState": {
+    "title": "Na czacie globalnym jeszcze cisza",
+    "description": "Napisz pierwszą wiadomość. Zobaczą ją członkowie wszystkich Lootlogów."
+  },
+  "states": {
+    "loading": "Ładowanie czatu globalnego",
+    "loadingOlder": "Ładowanie starszych wiadomości",
+    "loadError": "Nie udało się załadować czatu globalnego"
+  },
+  "actions": {
+    "retryOlder": "Wczytaj starsze ponownie"
+  },
+  "navigation": {
+    "latest": "Najnowsze wiadomości"
+  },
+  "input": {
+    "placeholder": "Wiadomość do wszystkich…",
+    "pending": "Wysyłanie wiadomości"
+  },
+  "errors": {
+    "sendFailed": "Nie udało się wysłać wiadomości na czat globalny",
+    "rateLimited": "Za szybko. Następną wiadomość wyślesz za kilka sekund.",
+    "notMember": "Czat globalny jest dostępny dla członków Lootlogów"
+  }
+}

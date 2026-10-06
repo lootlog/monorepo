@@ -4,6 +4,7 @@ import { useSettingsStore } from "@/store/settings.store";
 import { GatewayEvent } from "@/config/gateway";
 import {
   REALTIME_BATTLE_PING_CAPABILITY,
+  REALTIME_GLOBAL_CHAT_CAPABILITY,
   REALTIME_TEAM_BATTLE_PING_CAPABILITY,
 } from "@lootlog/protocol/realtime";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -459,6 +460,53 @@ describe("game realtime verification and presence selection", () => {
     wire.close();
     expect(socket.supportsBattlePings()).toBe(false);
     expect(socket.supportsTeamBattlePings()).toBe(false);
+  });
+
+  it("follows the global chat only on gateways that advertise it, renewing it on every join", async () => {
+    const globalChatRequests = () =>
+      mocks.request.mock.calls.filter(([type]) =>
+        type.startsWith("subscription."),
+      );
+
+    const subscribed = vi.fn();
+    const socket = createSocket();
+    socket.on(GatewayEvent.GLOBAL_CHAT_SUBSCRIBED, subscribed);
+    socket.setGlobalChatSubscribed(true);
+    await socket.join(joinData);
+    // Older gateways close the socket on an unknown subscription topic.
+    expect(globalChatRequests()).toEqual([]);
+
+    mocks.join.mockResolvedValue({
+      connectionId: "connection-1",
+      organizationIds: ["organization-1"],
+      capabilities: [REALTIME_GLOBAL_CHAT_CAPABILITY],
+    });
+
+    const rejoin = async (joins: number) => {
+      socket.disconnect();
+      socket.connect();
+      wire.open();
+      wire.receive({
+        v: 1,
+        type: "session.hello",
+        data: { connectionId: "connection-1" },
+      });
+      await socket.join(joinData);
+      await vi.waitFor(() => expect(subscribed).toHaveBeenCalledTimes(joins));
+    };
+
+    await rejoin(1);
+    // Each join replaces the gateway's subscriptions with the defaults.
+    await rejoin(2);
+
+    socket.setGlobalChatSubscribed(false);
+    await vi.waitFor(() =>
+      expect(globalChatRequests()).toEqual([
+        ["subscription.subscribe", { topic: "global.chat" }],
+        ["subscription.subscribe", { topic: "global.chat" }],
+        ["subscription.unsubscribe", { topic: "global.chat" }],
+      ]),
+    );
   });
 
   it("keeps the reported session when an account proof is unavailable", async () => {
