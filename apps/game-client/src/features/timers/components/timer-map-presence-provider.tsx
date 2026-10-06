@@ -43,8 +43,9 @@ const TimerMapPresenceContext =
 const scopeKey = (guildId: string, world: string) =>
   JSON.stringify([guildId, world]);
 
-const timerGuildIds = (timer: PresenceTimer) =>
-  timer.mergedGuildIds?.map((entry) => entry.guildId) ?? [timer.guildId];
+export const timerGuildIds = (
+  timer: Pick<TimerWithTimeLeft, "guildId" | "mergedGuildIds">,
+) => timer.mergedGuildIds?.map((entry) => entry.guildId) ?? [timer.guildId];
 
 function getTimerMapName(timer: PresenceTimer): string | undefined {
   if (timer.npc.type === NpcType.HERO || timer.npc.type === NpcType.EVENT_HERO)

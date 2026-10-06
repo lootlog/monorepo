@@ -30,6 +30,7 @@ import { usePartyReadyRoomExpiry } from "@/features/party-finder/hooks/use-party
 import { usePartyReadyRoomObserver } from "@/features/party-finder/hooks/use-party-ready-room-observer";
 import { usePartyReadyRoomSocket } from "@/features/party-finder/hooks/use-party-ready-room-socket";
 import { usePartyReadyRoomSync } from "@/features/party-finder/hooks/use-party-ready-room-sync";
+import { useNpcPresenceReporter } from "@/features/npc-presence/use-npc-presence-reporter";
 import { useSettingsHydration } from "@/features/settings/persistence/use-settings-hydration";
 import { useSelectedLootlogGuildInitialization } from "@/hooks/use-selected-lootlog-guild";
 
@@ -40,6 +41,7 @@ export const AppContent = () => {
   useSettingsHydration();
   const pingHotkeyHandlers = usePings();
   useAirTags();
+  useNpcPresenceReporter();
   const { sendHelp, sendPosition } = useChatQuickActions();
   useHotkeys({
     ...pingHotkeyHandlers,

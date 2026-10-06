@@ -37,6 +37,7 @@ import type {
 import { AirTagService } from "#src/realtime/air-tag-service";
 import { MapPingService } from "#src/realtime/map-ping-service";
 import { BattlePingService } from "#src/realtime/battle-ping-service";
+import { NpcPresenceService } from "#src/realtime/npc-presence-service";
 import { FEDERATION_VERSION, RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 import { makeGuildStore } from "#src/guilds/guild-store";
@@ -3498,6 +3499,139 @@ describe("realtime Dragonfly integration", () => {
       channelListener.close();
     } finally {
       await Promise.all([firstStore.close(), secondStore.close()]);
+    }
+  }, 30_000);
+
+  test("NPC presence reaches timer readers only when an NPC gains its first or loses its last reporter", async () => {
+    const configuration = makeConfiguration();
+
+    const runtime = ManagedRuntime.make(
+      BunRedis.layer({ url: `redis://127.0.0.1:${redisPort}` }),
+    );
+
+    const store = new RedisGatewayStore(
+      await runtime.runPromise(Redis.Redis),
+      {
+        ...configuration.redis,
+        password: Redacted.value(configuration.redis.password),
+      },
+      (effect) => runtime.runPromise(effect),
+      (_label, effect) => {
+        runtime.runFork(effect);
+      },
+    );
+
+    await store.connect();
+
+    try {
+      await store.command.flushdb();
+      const hub = new RealtimeHub(configuration, store);
+      const service = new NpcPresenceService(store, hub);
+
+      const timerGuild = (lvlRangeTo: number) => [
+        {
+          guild: { id: "organization-1", ownerId: "owner" },
+          roles: [
+            {
+              id: "timers",
+              lvlRangeFrom: 0,
+              lvlRangeTo,
+              permissions: [
+                Permission.LOOTLOG_TIMERS_READ,
+                Permission.LOOTLOG_TIMERS_WRITE,
+              ],
+            },
+          ],
+        },
+      ];
+
+      const timerSocket = (connectionId: string, lvlRangeTo = 500) => {
+        const created = makeSocket(connectionId);
+        created.socket.data.guilds = timerGuild(lvlRangeTo);
+        created.socket.data.character = created.socket.data.presence?.character;
+        Object.assign(created.socket.data, { supportsNpcPresence: true });
+        hub.register(created.socket);
+        hub.subscribe(created.socket, {
+          topic: "organization.timers",
+          organizationId: "organization-1",
+        });
+
+        return created;
+      };
+
+      const first = timerSocket("first-reporter");
+      const second = timerSocket("second-reporter");
+      const lowLevelReader = timerSocket("low-level-reader", 50);
+
+      const presenceUpdates = (frames: readonly Uint8Array[]) =>
+        frames.flatMap((frame) => {
+          const decoded = decodeRealtimeFrame(frame);
+
+          return "type" in decoded && decoded.type === "npc-presence.updated"
+            ? [decoded.data]
+            : [];
+        });
+
+      const elite = { id: 101, lvl: 120, wt: 25, prof: "w", type: 2 };
+
+      const report = (npcs: (typeof elite)[], world = "classic") => ({
+        world,
+        organizationIds: ["organization-1"],
+        npcs,
+      });
+
+      await expect(
+        service.report(first.socket, report([elite])),
+      ).resolves.toEqual({ status: "accepted" });
+      await expect(
+        service.report(second.socket, report([elite])),
+      ).resolves.toEqual({ status: "accepted" });
+
+      expect(presenceUpdates(first.frames)).toEqual([
+        expect.objectContaining({
+          organizationId: "organization-1",
+          world: "classic",
+          npc: elite,
+          standing: true,
+        }),
+      ]);
+      // An NPC above the reader's level range stays hidden, like its timer.
+      expect(presenceUpdates(lowLevelReader.frames)).toEqual([]);
+
+      await expect(
+        service.fetch(second.socket, "organization-1", "classic"),
+      ).resolves.toMatchObject({ npcs: [{ npc: elite }] });
+      await expect(
+        service.fetch(lowLevelReader.socket, "organization-1", "classic"),
+      ).resolves.toMatchObject({ npcs: [] });
+
+      // The first reporter leaving keeps the NPC standing for the second one.
+      await service.withdraw(first.socket);
+      expect(presenceUpdates(second.frames)).toHaveLength(1);
+
+      // A report from another world withdraws the NPCs seen in the previous one.
+      second.socket.data.character = {
+        ...second.socket.data.character!,
+        world: "tempest",
+      };
+      await service.report(second.socket, report([], "tempest"));
+
+      const updates = presenceUpdates(second.frames);
+      expect(updates).toEqual([
+        expect.objectContaining({ standing: true }),
+        expect.objectContaining({
+          npc: elite,
+          standing: false,
+          world: "classic",
+        }),
+      ]);
+      expect(updates[1]!.revision).toBeGreaterThan(updates[0]!.revision);
+      await expect(
+        service.fetch(second.socket, "organization-1", "classic"),
+      ).resolves.toMatchObject({ npcs: [] });
+    } finally {
+      await store.close();
+      await runtime.dispose();
     }
   }, 30_000);
 });
