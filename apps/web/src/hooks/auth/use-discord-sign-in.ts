@@ -17,13 +17,32 @@ export const useDiscordSignIn = () => {
     setStatus("pending");
 
     try {
-      const result = await authClient.signIn.social({
-        ...options,
-        provider: "discord",
+      const session = await authClient.getSession({
+        query: { disableCookieCache: true },
       });
+
+      if (session.error && session.error.status !== 401) {
+        attemptPending.current = false;
+        setStatus("failed");
+
+        return;
+      }
+
+      const oauthOptions = { ...options, provider: "discord" as const };
+
+      // Better Auth updates existing account scopes only through account linking.
+      const result = session.data
+        ? await authClient.linkSocial(oauthOptions)
+        : await authClient.signIn.social(oauthOptions);
 
       // Keep successful OAuth initiation locked until the redirect unloads the page.
       if (!result.error) return;
+
+      if (session.data && result.error.status === 401) {
+        const signInResult = await authClient.signIn.social(oauthOptions);
+
+        if (!signInResult.error) return;
+      }
     } catch {
       // Network failures and HTTP errors share the same visible retry state.
     }

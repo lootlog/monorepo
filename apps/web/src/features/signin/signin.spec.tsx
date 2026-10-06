@@ -20,7 +20,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const signInFetch = vi.fn<NonNullable<ApiServiceConfig["fetch"]>>();
 
-vi.stubGlobal("fetch", signInFetch);
+const sessionFetch = vi.fn<NonNullable<ApiServiceConfig["fetch"]>>();
+
+const authFetch: NonNullable<ApiServiceConfig["fetch"]> = (input, init) => {
+  if (String(input).includes("/get-session")) return sessionFetch(input, init);
+
+  return signInFetch(input, init);
+};
+
+vi.stubGlobal("fetch", authFetch);
 
 const { SignIn } = await import("./signin");
 
@@ -51,8 +59,11 @@ const renderSignIn = async (error = "state_mismatch") => {
 };
 
 beforeEach(() => {
+  sessionFetch.mockReset();
+  sessionFetch.mockImplementation(() => Promise.resolve(Response.json(null)));
   signInFetch.mockReset();
   signInFetch.mockImplementation(() => new Promise<Response>(() => undefined));
+  vi.stubGlobal("fetch", authFetch);
 });
 
 afterEach(() => {
