@@ -27,6 +27,8 @@ export const GlobalChatChannelView = ({
 }: GlobalChatChannelViewProps) => {
   const { t } = useTranslation("globalChat");
   const { chatAppearance } = useChatAppearanceSettings();
+  // The global chat shows no send time, whatever the chat window's setting.
+  const appearance = { ...chatAppearance, showTimestamp: false };
   const { query, addSentMessage } = useGlobalChat(channel);
   const newest = query.data?.pages[0];
   const viewer = newest?.viewer;
@@ -73,7 +75,7 @@ export const GlobalChatChannelView = ({
             scrollPreviousItemPeek={0}
           >
             <GlobalChatTranscript
-              appearance={chatAppearance}
+              appearance={appearance}
               rows={getGlobalChatRows(query.data)}
               rowContext={rowContext}
               hasOlder={query.hasNextPage}
