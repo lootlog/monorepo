@@ -1,4 +1,5 @@
-import { and, eq, gt, isNull, lte, or } from "drizzle-orm";
+import { activeEventCondition } from "#src/events/event-scope-query";
+import { and, eq, or } from "drizzle-orm";
 import { Capability } from "@lootlog/domain/access-policy";
 import { canViewNpcTimer } from "@lootlog/domain/npc-permissions";
 import type { TimersGuildAccess } from "./timers.handlers.js";
@@ -66,8 +67,7 @@ export const activeTimerEventCondition = (
       eq(eventHeroNpcTable.npcId, npcId),
       eq(eventHeroNpcTable.npcName, npcName),
     ),
-    or(isNull(eventTable.startsAt), lte(eventTable.startsAt, now)),
-    or(isNull(eventTable.endsAt), gt(eventTable.endsAt, now)),
+    activeEventCondition(now),
   );
 
 type TimerEventNpc = Pick<typeof timerTable.$inferSelect, "npcId" | "npc">;

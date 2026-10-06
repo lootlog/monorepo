@@ -1,21 +1,13 @@
 import { isObjectRecord } from "@lootlog/schema/records";
-import { eventHeroScope } from "#src/events/event-scope-query";
+import {
+  activeEventCondition,
+  eventHeroScope,
+} from "#src/events/event-scope-query";
 import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
 import { makeEventMapRead } from "./event-map-read.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
-import {
-  and,
-  desc,
-  eq,
-  inArray,
-  isNull,
-  lte,
-  ne,
-  or,
-  sql,
-  gt,
-} from "drizzle-orm";
+import { and, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -161,8 +153,7 @@ export const makeEventCatalogMutations = (
               and(
                 eq(eventTable.id, eventId),
                 eq(eventTable.guildId, guild.id),
-                or(isNull(eventTable.startsAt), lte(eventTable.startsAt, now)),
-                or(isNull(eventTable.endsAt), gt(eventTable.endsAt, now)),
+                activeEventCondition(now),
               ),
             )
             .limit(1),
