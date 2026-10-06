@@ -7,16 +7,16 @@ const PartnerOrganization = Schema.Struct({
   iconUrl: Schema.Union([Schema.String, Schema.Null]),
 });
 
+const ReservationShare = Schema.Struct({
+  id: Schema.String,
+  partner: PartnerOrganization,
+  createdAt: DateTimeString,
+});
+
 export type ReservationSharesResponse = typeof ReservationSharesResponse.Type;
 
 export const ReservationSharesResponse = Schema.Struct({
-  shares: Schema.Array(
-    Schema.Struct({
-      id: Schema.String,
-      partner: PartnerOrganization,
-      createdAt: DateTimeString,
-    }),
-  ),
+  shares: Schema.Array(ReservationShare),
   pendingInvitations: Schema.Array(
     Schema.Struct({
       id: Schema.String,
@@ -51,8 +51,7 @@ export const ReservationShareInvitationPreviewResponse = Schema.Struct({
   expiresAt: DateTimeString,
   eligibleTargetOrganizations: Schema.Array(
     Schema.Struct({
-      name: Schema.String,
-      iconUrl: Schema.Union([Schema.String, Schema.Null]),
+      ...PartnerOrganization.fields,
       id: Schema.String,
     }),
   ),
@@ -68,11 +67,9 @@ export const AcceptReservationShareInvitationRequest = Schema.Struct({
 export type AcceptedReservationShareResponse =
   typeof AcceptedReservationShareResponse.Type;
 
-export const AcceptedReservationShareResponse = Schema.Struct({
-  id: Schema.String,
-  partner: PartnerOrganization,
-  createdAt: DateTimeString,
-}).annotate({ identifier: "AcceptReservationShareInvitationResponseDto" });
+export const AcceptedReservationShareResponse = ReservationShare.annotate({
+  identifier: "AcceptReservationShareInvitationResponseDto",
+});
 
 export type ReservationSharingOrganizationPath =
   typeof ReservationSharingOrganizationPath.Type;
