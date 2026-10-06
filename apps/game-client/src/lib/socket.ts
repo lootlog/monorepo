@@ -5,13 +5,21 @@ import {
   isAirTagSubscriptionAcknowledgement,
   isAirTagObservationAcknowledgement,
   isAirTagMapThreatsFetchResponse,
+  isNpcPresenceReportAcknowledgement,
+  isNpcPresenceSnapshot,
   isPresenceFetchResult,
 } from "@lootlog/protocol/realtime/codec";
 import type { AirTagMapThreatEvent } from "@lootlog/schema/air-tag";
+import type {
+  NpcPresenceReport,
+  NpcPresenceReportAck,
+  NpcPresenceSnapshot,
+} from "@lootlog/schema/npc-presence";
 import {
   REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
   REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
   REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
+  REALTIME_NPC_PRESENCE_CAPABILITY,
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_TEAM_BATTLE_PING_CAPABILITY,
   type AirTagSubscriptionCommand,
@@ -147,6 +155,7 @@ const legacyEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
   "air-tag.updated": GatewayEvent.AIR_TAG_UPDATE,
   "air-tag.scope-updated": GatewayEvent.AIR_TAG_SCOPE_UPDATE,
   "air-tag.map-threat-updated": GatewayEvent.AIR_TAG_MAP_THREAT_UPDATE,
+  "npc-presence.updated": GatewayEvent.NPC_PRESENCE_UPDATE,
   "event.map-status-updated": GatewayEvent.EVENT_MAP_STATUS_UPDATE,
   "event.hero-killed": GatewayEvent.EVENT_HERO_KILLED,
   "event.ranking-updated": GatewayEvent.EVENT_RANKING_UPDATE,
@@ -216,6 +225,7 @@ export class AppSocket {
   private teamBattlePingsSupported = false;
   private airTagMapThreatsSupported = false;
   private airTagDeparturesSupported = false;
+  private npcPresenceSupported = false;
   id: string | undefined;
 
   constructor() {
@@ -249,6 +259,7 @@ export class AppSocket {
         this.teamBattlePingsSupported = false;
         this.airTagMapThreatsSupported = false;
         this.airTagDeparturesSupported = false;
+        this.npcPresenceSupported = false;
       }
 
       this.listeners.emit(
@@ -319,6 +330,41 @@ export class AppSocket {
       throw new Error("Invalid air-tag.map-threats.fetch response");
 
     return response.threats;
+  }
+
+  /** Whether the joined gateway accepts `npc-presence.report` and `npc-presence.fetch`. */
+  supportsNpcPresence(): boolean {
+    return this.npcPresenceSupported;
+  }
+
+  /** Replaces the timer NPCs this character reports standing on its map. */
+  async reportNpcPresence(
+    report: NpcPresenceReport,
+  ): Promise<NpcPresenceReportAck> {
+    const response = await this.realtime.request("npc-presence.report", report);
+
+    if (!isNpcPresenceReportAcknowledgement(response))
+      throw new Error("Invalid npc-presence.report response");
+
+    return response;
+  }
+
+  /** NPCs standing in one Organization and world, or null when the gateway predates them. */
+  async fetchNpcPresence(
+    organizationId: string,
+    world: string,
+  ): Promise<NpcPresenceSnapshot | null> {
+    if (!this.npcPresenceSupported) return null;
+
+    const response = await this.realtime.request("npc-presence.fetch", {
+      organizationId,
+      world,
+    });
+
+    if (!isNpcPresenceSnapshot(response))
+      throw new Error("Invalid npc-presence.fetch response");
+
+    return response;
   }
 
   getAccessPolicy(): AccessPolicySnapshot | undefined {
@@ -506,6 +552,9 @@ export class AppSocket {
     );
     this.airTagDeparturesSupported = capabilities.includes(
       REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
+    );
+    this.npcPresenceSupported = capabilities.includes(
+      REALTIME_NPC_PRESENCE_CAPABILITY,
     );
     this.joinedOrganizationIds = [...response.organizationIds];
 
@@ -794,7 +843,8 @@ export class AppSocket {
         event.type === "map-ping.received" ||
         event.type === "battle-ping.received" ||
         event.type === "air-tag.updated" ||
-        event.type === "air-tag.map-threat-updated"
+        event.type === "air-tag.map-threat-updated" ||
+        event.type === "npc-presence.updated"
           ? event.data
           : unwrapOrganizationEvent(event);
 

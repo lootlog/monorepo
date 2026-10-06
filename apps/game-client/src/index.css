@@ -329,6 +329,35 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   animation: ll-keybind-breathe 1.6s ease-in-out infinite;
 }
 
+/* A timer NPC an Organization member sees standing: its accent colour pulses
+   over the tile, under the text. Only the overlay's opacity animates; with
+   animations off the tile keeps a steady tint. */
+@keyframes ll-timer-standing-pulse {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+#lootlog-root .ll-timer-standing {
+  position: relative;
+  isolation: isolate;
+}
+
+#lootlog-root .ll-timer-standing::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--ll-timer-accent);
+  opacity: 0.4;
+  animation: ll-timer-standing-pulse 1.2s ease-in-out infinite;
+}
+
 /* A detected NPC or a new notification: the row slides into place, lights
    up in its accent colour and a sheen crosses it once.
    Everything animates opacity or transform only. */

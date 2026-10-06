@@ -15,6 +15,8 @@ export type TimerTileViewProps = {
   id?: string;
   isMinSpawnTime?: boolean;
   isPending?: boolean;
+  /** An Organization member sees the NPC on its map right now. */
+  isStanding?: boolean;
   label: string;
   timeLabel: string;
   /** Rendered inline before the time, such as the map presence icon. */
@@ -65,6 +67,7 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
   id,
   isMinSpawnTime = false,
   isPending = false,
+  isStanding = false,
   label,
   timeLabel,
   timeAdornment,
@@ -110,6 +113,7 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
               displayMode === "column",
             "ll:justify-between": displayMode === "row",
             "ll:opacity-60 ll:blur-[0.5px]": isPending,
+            "ll-timer-standing": isStanding,
           },
         )}
         // SAFETY: CSSProperties has no index signature for custom properties;
@@ -143,10 +147,11 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
             displayMode === "column",
           "ll:justify-between": displayMode === "row",
           "ll:opacity-60 ll:blur-[0.5px]": isPending,
+          "ll-timer-standing": isStanding,
         },
       )}
       // SAFETY: CSSProperties has no index signature for custom properties;
-      // "--ll-timer-accent" is consumed by the stripe class.
+      // "--ll-timer-accent" is consumed by the stripe and standing classes.
       style={
         {
           "--ll-timer-accent": isExpired

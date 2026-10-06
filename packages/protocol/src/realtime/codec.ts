@@ -10,6 +10,10 @@ import {
   RealtimeFrame,
   type RealtimeFrame as RealtimeFrameType,
 } from "./protocol.js";
+import {
+  NpcPresenceReportAckSchema,
+  NpcPresenceSnapshotSchema,
+} from "@lootlog/schema/npc-presence";
 
 export class RealtimeCodecError extends TaggedErrorClass<RealtimeCodecError>()(
   "RealtimeCodecError",
@@ -133,6 +137,12 @@ export const isAirTagObservationAcknowledgement =
 export const isAirTagMapThreatsFetchResponse = Schema.is(
   AirTagMapThreatsFetchResponse,
 );
+
+export const isNpcPresenceReportAcknowledgement = Schema.is(
+  NpcPresenceReportAckSchema,
+);
+
+export const isNpcPresenceSnapshot = Schema.is(NpcPresenceSnapshotSchema);
 
 export const hasRealtimeCapabilities = Schema.is(
   Schema.Struct({ capabilities: Schema.Array(Schema.NonEmptyString) }),

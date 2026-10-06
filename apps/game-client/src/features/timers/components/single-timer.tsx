@@ -17,6 +17,7 @@ import { Loader2 } from "lucide-react";
 import type { FC } from "react";
 import { useTimerActions } from "../hooks/use-timer-actions";
 import { useTimerDisplay } from "../hooks/use-timer-display";
+import { useTimerNpcPresence } from "../hooks/use-timer-npc-presence";
 import { TimerContextMenuContent } from "./timer-context-menu-content";
 import { TimerTooltip } from "./timer-tooltip";
 import { TimerLiveTile } from "./timer-live-tile";
@@ -101,6 +102,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
 
   const occupancy = useTimerMapPresence(timer);
   const threat = useTimerMapThreat(timer);
+  const isStanding = useTimerNpcPresence(timer);
 
   return (
     <Tooltip>
@@ -129,6 +131,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                 displayMode={displayConfig.singleTimerDisplayMode}
                 fontSize={displayConfig.fontSize}
                 isPending={isPending}
+                isStanding={isStanding}
                 label={`${resetIndicator}${shortname} ${timer.npc.name} ${npcDetails}`}
                 countdownMode={countdownMode}
                 timer={timer}
@@ -182,6 +185,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
           guildNamesById={guildNamesById}
           occupancy={occupancy}
           threat={threat}
+          isStanding={isStanding}
         />
       </TooltipContent>
     </Tooltip>

@@ -2,7 +2,7 @@ import type { Timer } from "@/api/timers.api";
 import type { MapThreat } from "@/lib/map-threat-source";
 import type { MapOccupancy } from "@/lib/presence-map-index";
 import { format } from "@/utils/local-date";
-import { ClockArrowDown, ClockArrowUp, RotateCcw } from "lucide-react";
+import { ClockArrowDown, ClockArrowUp, RotateCcw, Swords } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -19,6 +19,7 @@ type TimerTooltipProps = {
   timer: Timer;
   occupancy?: MapOccupancy;
   threat?: MapThreat;
+  isStanding?: boolean;
 };
 
 const DATE_FORMAT = "dd.MM HH:mm:ss";
@@ -28,6 +29,7 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
   timer,
   occupancy,
   threat,
+  isStanding = false,
 }) => {
   const { t } = useTranslation("timers");
   const levelSuffix = getLevelSuffix(timer.npc);
@@ -58,6 +60,12 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
           <div className="ll:flex ll:items-center ll:gap-1 ll:font-semibold ll:text-orange-400">
             <RotateCcw size={12} aria-hidden="true" />
             {t("tooltip.reset")}
+          </div>
+        )}
+        {isStanding && (
+          <div className="ll:flex ll:items-center ll:gap-1 ll:font-semibold ll:text-green-400">
+            <Swords size={12} aria-hidden="true" />
+            {t("tooltip.standing")}
           </div>
         )}
       </div>

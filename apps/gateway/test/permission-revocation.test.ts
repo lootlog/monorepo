@@ -35,6 +35,7 @@ import { CommandHandler } from "../src/realtime/command-handler.js";
 import { PresenceStore } from "../src/realtime/presence-store.js";
 import { MapPingService } from "../src/realtime/map-ping-service.js";
 import { BattlePingService } from "../src/realtime/battle-ping-service.js";
+import { NpcPresenceService } from "../src/realtime/npc-presence-service.js";
 import { AirTagService } from "../src/realtime/air-tag-service.js";
 import { RealtimeHub } from "../src/realtime/realtime-hub.js";
 import type { GatewaySocket, SessionData } from "../src/realtime/session.js";
@@ -208,6 +209,7 @@ const setup = async () => {
       new MapPingService(presenceRedis, hub),
       new BattlePingService(presenceRedis, hub),
       new AirTagService(presenceRedis, hub),
+      new NpcPresenceService(presenceRedis, hub),
     );
 
     return { store, hub, commands, presence };

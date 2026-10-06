@@ -19,6 +19,7 @@ import {
   REALTIME_TEAM_BATTLE_PING_CAPABILITY,
   REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
   REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
+  REALTIME_NPC_PRESENCE_CAPABILITY,
   REALTIME_FEED_CAPABILITY,
   REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
   REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
@@ -62,6 +63,7 @@ import { JoinAdmission } from "#src/realtime/join-admission";
 import { AirTagService } from "#src/realtime/air-tag-service";
 import { MapPingService } from "#src/realtime/map-ping-service";
 import { BattlePingService } from "#src/realtime/battle-ping-service";
+import { NpcPresenceService } from "#src/realtime/npc-presence-service";
 import { PresenceStore } from "#src/realtime/presence-store";
 import { closeGradually, RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
@@ -174,6 +176,7 @@ class GatewayApplication extends Context.Service<
       const mapPings = new MapPingService(redis, hub);
       const battlePings = new BattlePingService(redis, hub);
       const airTags = new AirTagService(redis, hub);
+      const npcPresence = new NpcPresenceService(redis, hub);
       yield* airTags.runInterestRefresh().pipe(Effect.forkScoped);
       const guilds = makeGuildStore(config, redis, httpClient);
       const joinAdmission = new JoinAdmission();
@@ -187,6 +190,7 @@ class GatewayApplication extends Context.Service<
         mapPings,
         battlePings,
         airTags,
+        npcPresence,
         joinAdmission,
       );
 
@@ -219,8 +223,16 @@ class GatewayApplication extends Context.Service<
                       ),
                     ),
                   ),
+                Effect.tryPromise(() => npcPresence.withdraw(socket)).pipe(
+                  Effect.catchCause((error) =>
+                    Effect.logError(
+                      "Gateway disconnect NPC presence failed",
+                      error,
+                    ),
+                  ),
+                ),
               ],
-              { concurrency: 2, discard: true },
+              { concurrency: 3, discard: true },
             );
           }),
         runBackground,
@@ -350,6 +362,7 @@ const negotiateCapabilities = (
     supportsAirTagScopeUpdates: offersGameCapability(
       REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
     ),
+    supportsNpcPresence: offersGameCapability(REALTIME_NPC_PRESENCE_CAPABILITY),
   };
 };
 

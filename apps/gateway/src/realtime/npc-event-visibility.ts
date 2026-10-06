@@ -321,6 +321,19 @@ export const prepareNpcSourceEvent = (
         );
     }
 
+    case "npc-presence.updated": {
+      const routing = npcRouting(event.data.npc);
+
+      return (session, guild) => {
+        if (!guild || !routing) return false;
+
+        return (
+          isOrganizationAdministrator(session, guild) ||
+          canReadNpcFeatureSource(guild.roles, "timers", routing)
+        );
+      };
+    }
+
     case "party-ready-room.updated":
     case "timer.created":
     case "timer.deleted":

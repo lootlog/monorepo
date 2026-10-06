@@ -14,6 +14,10 @@ import {
   BattlePingSendPayloadSchema,
 } from "@lootlog/schema/battle-ping";
 import {
+  NpcPresenceEventSchema,
+  NpcPresenceReportSchema,
+} from "@lootlog/schema/npc-presence";
+import {
   MapPingAckSchema,
   MapPingEventSchema,
   MapPingSendPayloadSchema,
@@ -67,6 +71,12 @@ export const REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY =
 // per target and no removals.
 export const REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY =
   "lootlog.air-tag-scope-update.v1";
+
+// Offered as a subprotocol by clients that decode `npc-presence.updated`, and
+// listed in `session.joined` capabilities by gateways that accept
+// `npc-presence.report` and `npc-presence.fetch`. Older clients close the socket
+// on an unknown event, and older gateways close it on an unknown command.
+export const REALTIME_NPC_PRESENCE_CAPABILITY = "lootlog.npc-presence.v1";
 
 export const REALTIME_SESSION_HELLO_CAPABILITY = "lootlog.session-hello.v1";
 
@@ -291,6 +301,19 @@ export const AirTagMapThreatsFetchResponse = Schema.Struct({
   threats: Schema.Array(AirTagMapThreatEventSchema),
 });
 
+export const NpcPresenceReportCommand = command(
+  "npc-presence.report",
+  NpcPresenceReportSchema,
+);
+
+export const NpcPresenceFetchCommand = command(
+  "npc-presence.fetch",
+  Schema.Struct({
+    organizationId: Schema.NonEmptyString,
+    world: Schema.NonEmptyString,
+  }),
+);
+
 export const AirTagRejectCode = Schema.Literals([
   "forbidden",
   "invalid-context",
@@ -340,6 +363,8 @@ export const ClientCommand = Schema.Union([
   AirTagSubscriptionCommand,
   AirTagObservationCommand,
   AirTagMapThreatsFetchCommand,
+  NpcPresenceReportCommand,
+  NpcPresenceFetchCommand,
 ]);
 
 export type ClientCommand = typeof ClientCommand.Type;
@@ -449,6 +474,7 @@ export const ServerEvent = Schema.Union([
   serverEvent("air-tag.updated", AirTagUpdateEventSchema),
   serverEvent("air-tag.scope-updated", AirTagScopeUpdateEventSchema),
   serverEvent("air-tag.map-threat-updated", AirTagMapThreatEventSchema),
+  serverEvent("npc-presence.updated", NpcPresenceEventSchema),
   serverEvent("event.map-status-updated", OrganizationEvent),
   serverEvent("event.hero-killed", OrganizationEvent),
   serverEvent("event.ranking-updated", OrganizationEvent),

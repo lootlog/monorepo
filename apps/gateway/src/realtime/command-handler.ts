@@ -9,6 +9,7 @@ import {
   decodeClientCommand,
   REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
   REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
+  REALTIME_NPC_PRESENCE_CAPABILITY,
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_PING_CAPABILITY,
   REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
@@ -32,6 +33,11 @@ import type { MargonemProofVerifier } from "#src/auth/margonem-proof";
 import type { ActivityPublisher } from "#src/rabbit/activity-publisher";
 import type { AirTagService } from "#src/realtime/air-tag-service";
 import type { BattlePingService } from "#src/realtime/battle-ping-service";
+import type { NpcPresenceService } from "#src/realtime/npc-presence-service";
+import type {
+  NpcPresenceReportAck,
+  NpcPresenceSnapshot,
+} from "@lootlog/schema/npc-presence";
 import { JoinAdmission } from "#src/realtime/join-admission";
 import type { MapPingService } from "#src/realtime/map-ping-service";
 import type { PresenceStore } from "#src/realtime/presence-store";
@@ -176,6 +182,10 @@ export class CommandHandler {
       | "publishObservations"
       | "fetchMapThreats"
       | "registerInterest"
+    >,
+    private readonly npcPresence: Pick<
+      NpcPresenceService,
+      "report" | "refresh" | "withdraw" | "fetch"
     >,
     private readonly joinAdmission: Pick<
       JoinAdmission,
@@ -610,6 +620,12 @@ export class CommandHandler {
           Effect.andThen(
             this.presence.heartbeat(socket, command.data.sessionId),
           ),
+          // The heartbeat must not wait for Redis scripts it does not need.
+          Effect.tap(() =>
+            Effect.sync(() => {
+              this.npcPresence.refresh(socket).catch(() => undefined);
+            }),
+          ),
           Effect.map((lastSeen) => ({ lastSeen })),
         );
       case "connection.ping":
@@ -734,7 +750,53 @@ export class CommandHandler {
               : Effect.fail(new OrganizationAccessDenied()),
           ),
         );
+      default:
+        return requireJoined.pipe(
+          Effect.andThen(
+            fromPromise(() => this.dispatchNpcPresence(socket, command)),
+          ),
+          Effect.flatMap((result) =>
+            result
+              ? Effect.succeed(result)
+              : Effect.fail(new OrganizationAccessDenied()),
+          ),
+        );
     }
+  }
+
+  private dispatchNpcPresence(
+    socket: GatewaySocket,
+    command: Extract<
+      Command,
+      { type: "npc-presence.report" | "npc-presence.fetch" }
+    >,
+  ): Promise<NpcPresenceReportAck | NpcPresenceSnapshot | null> {
+    return command.type === "npc-presence.report"
+      ? this.npcPresence.report(socket, command.data)
+      : this.npcPresence.fetch(
+          socket,
+          command.data.organizationId,
+          command.data.world,
+        );
+  }
+
+  /** Reports belong to the character and world that saw the NPCs. */
+  private withdrawNpcPresenceOnCharacterChange(
+    socket: GatewaySocket,
+    character: Extract<Command, { type: "session.join" }>["data"]["character"],
+  ): Effect.Effect<void> {
+    const state = socket.data.npcPresence;
+
+    if (
+      !state ||
+      (state.world === character?.world &&
+        state.characterId === character?.characterId)
+    )
+      return Effect.void;
+
+    return Effect.tryPromise(() => this.npcPresence.withdraw(socket)).pipe(
+      Effect.catch(() => Effect.logWarning("NPC presence withdraw failed")),
+    );
   }
 
   private join(
@@ -742,6 +804,9 @@ export class CommandHandler {
     data: Extract<Command, { type: "session.join" }>["data"],
   ): Effect.Effect<unknown, CommandFailure> {
     const { activity, guilds, hub, presence, proofVerifier } = this;
+
+    const withdrawNpcPresence =
+      this.withdrawNpcPresenceOnCharacterChange.bind(this);
 
     return Effect.gen(function* () {
       const wasJoined = socket.data.joined;
@@ -754,6 +819,8 @@ export class CommandHandler {
         (data.character || data.margonemAccountProof)
       )
         return yield* Effect.fail(new OrganizationAccessDenied());
+
+      yield* withdrawNpcPresence(socket, data.character);
       socket.data.character = data.character;
       socket.data.confidence = "reported";
 
@@ -843,6 +910,9 @@ export class CommandHandler {
             REALTIME_TEAM_BATTLE_PING_CAPABILITY,
             REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
             REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
+            ...(socket.data.apiKeyAccess
+              ? []
+              : [REALTIME_NPC_PRESENCE_CAPABILITY]),
             ...(!socket.data.apiKeyAccess &&
             hub.clusterFederationVersion >=
               PARTY_GATHERING_STATE_FEDERATION_VERSION
