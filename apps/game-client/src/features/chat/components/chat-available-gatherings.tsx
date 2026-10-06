@@ -19,6 +19,12 @@ type Props = {
   roomSummary?: PartyGatheringSummary;
   pending: boolean;
   stale: boolean;
+  /**
+   * `room` is shown as the user's own gathering. Its viewer is ORGANIZER for
+   * every character of the organizer's Discord user, including one that only
+   * participates in it, so the projection alone cannot decide this.
+   */
+  organizer?: boolean;
   hasOwnGathering?: boolean;
   onApply: (candidate: PartyGatheringSummary) => void;
   onHide: (candidate: PartyGatheringSummary) => void;
@@ -31,6 +37,7 @@ export function ChatAvailableGatherings({
   roomSummary,
   pending,
   stale,
+  organizer = false,
   hasOwnGathering = false,
   onApply,
   onHide,
@@ -47,7 +54,7 @@ export function ChatAvailableGatherings({
     ),
   ];
 
-  const visibleCandidateCount = room?.viewer === "PARTICIPANT" ? 0 : 1;
+  const visibleCandidateCount = room && !organizer ? 0 : 1;
 
   const remainingCount = Math.max(
     0,
@@ -59,8 +66,13 @@ export function ChatAvailableGatherings({
       key={room.notificationId}
       className="ll:min-w-0 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:first:border-t-0"
     >
-      <div className={room.viewer === "ORGANIZER" ? "ll:px-1.5 ll:py-0.5" : ""}>
-        <ChatOwnGatheringBar room={room} summary={roomSummary} stale={stale} />
+      <div className={organizer ? "ll:px-1.5 ll:py-0.5" : ""}>
+        <ChatOwnGatheringBar
+          room={room}
+          organizer={organizer}
+          summary={roomSummary}
+          stale={stale}
+        />
       </div>
     </li>
   );
@@ -68,9 +80,9 @@ export function ChatAvailableGatherings({
   return (
     <ul
       className="ll:m-0 ll:flex ll:min-w-0 ll:max-h-64 ll:flex-col ll:list-none ll:overflow-auto ll:p-0"
-      data-organizer={room?.viewer === "ORGANIZER"}
+      data-organizer={organizer}
     >
-      {room?.viewer !== "ORGANIZER" && currentRoom}
+      {!organizer && currentRoom}
       {(expanded
         ? availableCandidates
         : availableCandidates.slice(0, visibleCandidateCount)
@@ -135,7 +147,7 @@ export function ChatAvailableGatherings({
           </Button>
         </li>
       )}
-      {room?.viewer === "ORGANIZER" && currentRoom}
+      {organizer && currentRoom}
     </ul>
   );
 }

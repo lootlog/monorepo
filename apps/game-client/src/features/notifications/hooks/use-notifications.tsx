@@ -3,12 +3,14 @@ import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { useNotificationPresenter } from "@/features/notifications/hooks/use-notification-presenter";
 import { isNotificationMuted } from "@/features/notifications/utils/notification-mutes";
+import { isOwnNotification } from "@/features/notifications/utils/is-own-notification";
 import { useSession } from "@/hooks/auth/use-session";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
 import { useCurrentUserNotificationMutes } from "@/features/settings/persistence/use-notification-mutes";
 import { useBufferedSocketIngress } from "@/hooks/use-buffered-socket-ingress";
 import { useGameStore } from "@/store/game.store";
 import type { GameNpc } from "@lootlog/margonem/npcs";
+import type { PartyGatheringCharacterBase } from "@/types/party-gathering";
 import { useEffect, useRef } from "react";
 import {
   getNotificationSettingsKey,
@@ -24,6 +26,8 @@ export type Notification = {
   world: string;
   createdAt: string;
   isGatheringParty?: boolean;
+  /** The organizer character of a party gathering report. */
+  character?: PartyGatheringCharacterBase;
 };
 
 export const useNotifications = () => {
@@ -52,7 +56,13 @@ export const useNotifications = () => {
     worldRef.current = world;
     processNotificationsRef.current = (notifications) => {
       const requests = notifications.flatMap((data) => {
-        if (data.discordId === sessionDataRef.current?.user?.discordId) {
+        if (
+          isOwnNotification(
+            data.discordId,
+            sessionDataRef.current?.user?.discordId,
+            data.isGatheringParty ? data.character : undefined,
+          )
+        ) {
           return [];
         }
 

@@ -11,14 +11,17 @@ import {
   toolbarStripRowClassName,
 } from "@/components/ui/toolbar-strip";
 import { useWindowsStore } from "@/store/windows.store";
-import { useOwnedReadyRoom } from "@/features/party-finder/hooks/use-ready-rooms";
+import { useAccountOwnedReadyRoom } from "@/features/party-finder/hooks/use-ready-rooms";
 import { usePartyStore } from "@/store/party.store";
 import { useCancelPartyGathering } from "@/hooks/api/use-cancel-party-gathering";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTranslation } from "react-i18next";
 import { ReadyRoomParticipantsList } from "@/features/party-finder/components/ready-room-participants-list";
 import { useReadyRoomInvitations } from "@/features/party-finder/hooks/use-ready-room-invitations";
-import { selectParticipantsOutsideParty } from "@/features/party-finder/ready-room-cache";
+import {
+  characterIdentitiesMatch,
+  selectParticipantsOutsideParty,
+} from "@/features/party-finder/ready-room-cache";
 import { ReadyRoomExpiry } from "@/features/party-finder/components/ready-room-expiry";
 import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
 
@@ -31,7 +34,7 @@ export const PartyFinder = () => {
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
 
   const currentCharacterIdentity = getCurrentReadyRoomCharacterIdentity();
-  const readyRoom = useOwnedReadyRoom();
+  const readyRoom = useAccountOwnedReadyRoom();
   const partyMembers = usePartyStore((s) => s.members);
   const partyFull = partyMembers.length >= PARTY_SIZE_LIMIT;
 
@@ -43,10 +46,10 @@ export const PartyFinder = () => {
 
   const isOrganizerCharacter =
     readyRoom !== null &&
-    currentCharacterIdentity?.accountId ===
-      readyRoom.organizerCharacter.accountId &&
-    currentCharacterIdentity.characterId ===
-      readyRoom.organizerCharacter.characterId;
+    characterIdentitiesMatch(
+      currentCharacterIdentity,
+      readyRoom.organizerCharacter,
+    );
 
   if (!readyRoom) return null;
 
