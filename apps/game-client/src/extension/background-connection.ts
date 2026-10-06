@@ -151,6 +151,13 @@ function executeGameCommand(realtime: RealtimeClient, command: unknown) {
     case "npc-presence.report":
     case "npc-presence.fetch":
       return realtime.request(frame.type, frame.data);
+    // The page follows only the global chat; Organization topics stay default scopes.
+    case "subscription.subscribe":
+    case "subscription.unsubscribe":
+      if (frame.data.topic !== "global.chat")
+        throw new Error("Unsupported game command");
+
+      return realtime.request(frame.type, frame.data);
     default:
       throw new Error("Unsupported game command");
   }

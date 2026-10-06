@@ -1521,6 +1521,64 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
           },
         },
       },
+      // Verified by global-chat.data-layer.test.ts and
+      // global-chat-store.integration.test.ts: only active Members read and
+      // send, pages keep their cursor, and a send within the cooldown is 429.
+      "GET /global-chat/messages": {
+        operationId: "GlobalChatController_getMessages",
+        description:
+          "Read one page of the chat shared by every Member of any Organization",
+        parameters: [
+          {
+            name: "before",
+            in: "query",
+            schema: { type: "string" },
+            required: false,
+          },
+        ],
+        security: [{ bearer: [] }],
+        responses: {
+          "200": {
+            description: "GlobalChatMessagesResponse",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/GlobalChatMessagesResponse",
+                },
+              },
+            },
+          },
+        },
+      },
+      "POST /global-chat/messages": {
+        operationId: "GlobalChatController_sendMessage",
+        description:
+          "Send a plain-text message to the chat shared by every Member of any Organization",
+        parameters: [],
+        security: [{ bearer: [] }],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/SendGlobalChatMessageRequest",
+              },
+            },
+          },
+          required: true,
+        },
+        responses: {
+          "201": {
+            description: "GlobalChatMessageResponse",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/GlobalChatMessageResponse",
+                },
+              },
+            },
+          },
+        },
+      },
       "GET /users/@me/feed": {
         operationId: "UsersController_getUserFeed",
         parameters: USER_FEED_PARAMETERS,

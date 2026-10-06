@@ -2,6 +2,7 @@ import { Layer } from "effect";
 import { ChatHandlers } from "./chat/chat.handlers.js";
 import { DocsHandlers } from "./docs/docs.handlers.js";
 import { EventsHandlers } from "./events/events.handlers.js";
+import { GlobalChatHandlers } from "./global-chat/global-chat.handlers.js";
 import { GuildStatsCardHandlers } from "./guild-stats-card/guild-stats-card.handlers.js";
 import { GuildsHandlers } from "./guilds/guilds.handlers.js";
 import { HealthHandlers } from "./health/health.handlers.js";
@@ -40,6 +41,7 @@ export const LootlogApiHandlers = Layer.mergeAll(
   LootlogConfigHandlers,
   HealthHandlers,
   ChatHandlers,
+  GlobalChatHandlers,
   ReservationsHandlers,
   ReservationSharingHandlers,
   NotificationsHandlers,

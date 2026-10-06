@@ -51,6 +51,7 @@ export type WindowId =
   | "settings"
   | "timers"
   | "chat"
+  | "global-chat"
   | "command"
   | "online-players"
   | "npc-detector"
@@ -110,6 +111,7 @@ interface WindowsState {
   settings: WindowData & { state: SettingsWindowState };
   timers: WindowData;
   chat: WindowData;
+  "global-chat": WindowData;
   command: WindowData;
   "online-players": WindowData;
   "npc-detector": WindowData;
@@ -227,6 +229,7 @@ const WINDOW_IDS: WindowId[] = [
   "settings",
   "timers",
   "chat",
+  "global-chat",
   "command",
   "online-players",
   "npc-detector",
@@ -584,6 +587,14 @@ export const useWindowsStore = create<WindowsState>()(
         opacity: DEFAULT_OPACITY,
         locked: false,
       },
+      "global-chat": {
+        open: false,
+        position: DEFAULT_POSITION,
+        hasDefinedPosition: false,
+        size: DEFAULT_SIZE,
+        opacity: DEFAULT_OPACITY,
+        locked: false,
+      },
       command: {
         open: false,
         position: DEFAULT_POSITION,
@@ -883,6 +894,10 @@ export const useWindowsStore = create<WindowsState>()(
             settings: resetWindow(state.settings, defaults.settings),
             timers: resetWindow(state.timers, defaults.timers),
             chat: resetWindow(state.chat, defaults.chat),
+            "global-chat": resetWindow(
+              state["global-chat"],
+              defaults["global-chat"],
+            ),
             command: resetWindow(state.command, defaults.command),
             "online-players": resetWindow(
               state["online-players"],

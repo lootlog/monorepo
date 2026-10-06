@@ -29,6 +29,7 @@ import {
   ScheduledJobs,
 } from "#src/runtime/background/background-layers";
 import { chatData } from "#src/runtime/features/chat";
+import { globalChatData } from "#src/runtime/features/global-chat";
 import { messagingData } from "#src/runtime/features/messaging";
 import { publicSystemData } from "#src/runtime/features/public-system";
 import {
@@ -63,6 +64,7 @@ const coreDataLayers = Layer.mergeAll(
   messagingData,
   readyRoomData,
   chatData,
+  globalChatData,
   userLootlogConfigData,
   rolesData,
   guildConfigurationData,

@@ -123,6 +123,9 @@ export const prepareSourceEventVisibility = (
     )
       return false;
 
+    if (event.type === "global-chat.created")
+      return session.supportsGlobalChat === true;
+
     if (!canReadNpc(session, guild)) return false;
 
     switch (event.type) {

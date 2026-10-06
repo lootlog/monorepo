@@ -35,6 +35,7 @@ export const createMemberFixture = (
   guildId: "guild-1",
   type: "USER",
   name: "Member",
+  discordDisplayName: null,
   avatar: null,
   banner: null,
   active: true,
