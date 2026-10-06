@@ -1,5 +1,5 @@
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import { and, eq } from "drizzle-orm";
+import { and, eq, gt, isNull, lte, or } from "drizzle-orm";
 import {
   eventHeroNpcTable,
   eventMapTable,
@@ -46,3 +46,9 @@ export const queryEventHero = (
       ),
     )
     .limit(1);
+
+export const activeEventCondition = (referenceTime: Date) =>
+  and(
+    or(isNull(eventTable.startsAt), lte(eventTable.startsAt, referenceTime)),
+    or(isNull(eventTable.endsAt), gt(eventTable.endsAt, referenceTime)),
+  );
