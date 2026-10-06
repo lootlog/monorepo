@@ -44,6 +44,7 @@ export interface SessionData extends AuthenticatedIdentity {
   readonly supportsAirTagMapThreats?: boolean;
   readonly supportsAirTagScopeUpdates?: boolean;
   readonly supportsNpcPresence?: boolean;
+  readonly supportsGlobalChat?: boolean;
   readonly frameEncoding?: "json";
   joined: boolean;
   /** Set when the gateway will close the socket; it no longer acts on commands. */

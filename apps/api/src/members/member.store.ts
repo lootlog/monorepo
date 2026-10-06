@@ -26,6 +26,7 @@ type MemberWrite = {
   readonly avatar: string | null;
   readonly banner: string | null;
   readonly name: string;
+  readonly discordDisplayName: string;
   readonly active: boolean;
   readonly globalUserId: string;
   readonly lastDiscordAttemptAt: Date;

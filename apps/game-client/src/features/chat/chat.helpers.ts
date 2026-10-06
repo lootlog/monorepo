@@ -12,7 +12,8 @@ const CHAT_NPC_GROUP_WINDOW_MS = 60_000;
 
 export const CHAT_VISIBLE_MESSAGE_LIMIT = 500;
 
-const getChatMessageDayKey = (timestamp: string) => timestamp.slice(0, 10);
+export const getChatMessageDayKey = (timestamp: string) =>
+  timestamp.slice(0, 10);
 
 const getChatMessageTimestamp = (timestamp: string) =>
   new Date(timestamp).getTime();

@@ -2,6 +2,7 @@ import { AccessPolicySnapshot, AccessPolicyChange } from "./access-policy.js";
 import { UserFeedItem } from "../feed.js";
 import { NonNegativeInt } from "@lootlog/schema/primitives";
 import { PartyGatheringClientUpdateSchema } from "@lootlog/schema/party-ready-room";
+import { GlobalChatMessageSchema } from "@lootlog/schema/chat";
 import {
   AirTagMapThreatEventSchema,
   AirTagObservationBatchSchema,
@@ -78,6 +79,12 @@ export const REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY =
 // on an unknown event, and older gateways close it on an unknown command.
 export const REALTIME_NPC_PRESENCE_CAPABILITY = "lootlog.npc-presence.v1";
 
+// Offered as a subprotocol by clients that decode `global-chat.created`, and
+// listed in `session.joined` capabilities by gateways that accept a
+// `subscription.subscribe` to `global.chat`. Older clients close the socket on
+// an unknown event, and older gateways close it on an unknown topic.
+export const REALTIME_GLOBAL_CHAT_CAPABILITY = "lootlog.global-chat.v1";
+
 export const REALTIME_SESSION_HELLO_CAPABILITY = "lootlog.session-hello.v1";
 
 export const REALTIME_JSON_SUBPROTOCOL = "lootlog.realtime.json.v1";
@@ -114,6 +121,7 @@ export const RealtimeLogicalTopic = Schema.Literals([
   "map.air-tags",
   "map.pings",
   "party.ready-room",
+  "global.chat",
 ]);
 
 export type RealtimeLogicalTopic = typeof RealtimeLogicalTopic.Type;
@@ -445,6 +453,7 @@ export const ServerEvent = Schema.Union([
   serverEvent("chat.updated", OrganizationEvent),
   serverEvent("chat.deleted", OrganizationEvent),
   serverEvent("chat.cleared", OrganizationEvent),
+  serverEvent("global-chat.created", GlobalChatMessageSchema),
   serverEvent("feed.entry", UserFeedItem),
   serverEvent(
     "kills.changed",

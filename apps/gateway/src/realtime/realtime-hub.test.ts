@@ -1923,6 +1923,126 @@ describe("RealtimeHub federation", () => {
     ]);
   });
 
+  test("delivers global chat from RabbitMQ only to subscribed Members whose client decodes it", async () => {
+    const bus = new FederationBus();
+    const local = new RealtimeHub(config, new FakeRedisStore(bus));
+    const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+    const scope = { topic: "global.chat" } as const;
+
+    const audience = (hub: RealtimeHub, name: string) => {
+      const capable = (id: string): SessionData => ({
+        ...makeSession(`${name}-${id}`),
+        supportsGlobalChat: true,
+      });
+
+      const recipients = {
+        subscribed: makeSocket(capable("subscribed")),
+        unsubscribed: makeSocket(capable("unsubscribed")),
+        legacyClient: makeSocket(makeSession(`${name}-legacy`)),
+        apiKey: makeSocket({
+          ...capable("api-key"),
+          apiKeyAccess: {
+            keyId: "key",
+            organizationIds: ["organization-1"],
+            mode: "read",
+            personalData: false,
+            expiresAt: null,
+          },
+          apiKeyLeaseExpiresAt: Number.MAX_SAFE_INTEGER,
+        }),
+        noOrganization: makeSocket({ ...capable("former-member"), guilds: [] }),
+      };
+
+      for (const [role, target] of Object.entries(recipients)) {
+        hub.register(target.socket);
+
+        if (role !== "unsubscribed") hub.subscribe(target.socket, scope);
+      }
+
+      return recipients;
+    };
+
+    const recipients = [audience(local, "local"), audience(remote, "remote")];
+
+    const handlers = new Map<
+      string,
+      (delivery: RabbitDelivery) => Effect.Effect<void, unknown>
+    >();
+
+    const messaging: RabbitMessagingService = {
+      publish: () => Effect.void,
+      ack: () => Effect.void,
+      nack: () => Effect.void,
+      consume: (options, handler) =>
+        Effect.sync(() => {
+          handlers.set(options.queue, handler);
+
+          return { consumerTag: options.queue, cancel: Effect.void };
+        }),
+    };
+
+    const unexpected = () => {
+      throw new Error("Unexpected control operation");
+    };
+
+    const bridge = new RabbitBridge(
+      messaging,
+      local,
+      { rebalanceAcrossInstances: unexpected },
+      { coverageForMap: unexpected },
+      { publish: unexpected },
+    );
+
+    const message = {
+      id: "message-1",
+      displayName: "Author",
+      message: "Hello everyone",
+      timestamp: "2026-10-06T12:00:00.000Z",
+    };
+
+    for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+    await Effect.runPromise(
+      Effect.scoped(
+        Effect.gen(function* () {
+          yield* bridge.start();
+
+          const spec = gatewayConsumerSpecs.find(
+            (entry) =>
+              entry.routingKey === RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE,
+          );
+
+          const handler = spec && handlers.get(spec.queue);
+
+          if (!handler) throw new Error("Missing global chat consumer");
+
+          const deliver = (id: string) =>
+            handler(
+              createRabbitDelivery(
+                RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE,
+                Buffer.from(JSON.stringify({ ...message, id })),
+                id,
+              ),
+            );
+
+          // A replica that predates the event would drop it, so none is sent.
+          yield* deliver("before-rollout");
+
+          for (const hub of [local, remote]) hub.clusterFederationVersion = 6;
+          yield* deliver(message.id);
+        }),
+      ),
+    );
+
+    for (const { subscribed, ...others } of recipients) {
+      expect(
+        subscribed.sent.map((bytes) => decodeRealtimeFrame(bytes)),
+      ).toEqual([{ v: 1, type: "global-chat.created", data: message }]);
+
+      for (const other of Object.values(others))
+        expect(other.sent).toHaveLength(0);
+    }
+  });
+
   test("delivers a federated event once to an exact logical subscription", async () => {
     const bus = new FederationBus();
     const first = new RealtimeHub(config, new FakeRedisStore(bus));

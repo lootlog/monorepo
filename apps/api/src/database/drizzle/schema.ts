@@ -330,6 +330,8 @@ export const memberTable = pgTable(
     guildId: text("guildId").notNull(),
     type: memberTypeEnum("type").default("USER").notNull(),
     name: text("name").notNull(),
+    /** The User's Discord display name, independent of the server nickname in `name`. */
+    discordDisplayName: text("discordDisplayName"),
     avatar: text("avatar"),
     banner: text("banner"),
     active: boolean("active").default(true).notNull(),

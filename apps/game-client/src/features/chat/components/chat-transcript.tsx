@@ -15,7 +15,6 @@ import {
   type PointerEvent,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowDown } from "lucide-react";
 import {
   CHAT_APPEARANCE_READABLE_PRESET,
   type ChatAppearanceSettings,
@@ -26,7 +25,7 @@ import type {
   MemberSummaryResponseDtoOutput as GuildMember,
 } from "@lootlog/client/main";
 import { EmptyState } from "@/components/empty-state";
-import { Button } from "@/components/ui/button";
+import { ScrollToLatestButton } from "@/components/common/scroll-to-latest-button";
 import type { useChatGuildData } from "../hooks/use-chat-guild-data";
 import type { ChatRenderableMessage } from "../chat.helpers";
 import { getChatDensityStyle } from "../chat-density";
@@ -357,17 +356,7 @@ export const ChatTranscript = ({
         </BaseScrollArea.Content>
       </BaseScrollArea.Viewport>
       <ScrollBar />
-      <Button
-        variant="secondary"
-        size="xs"
-        hidden={!end}
-        style={{ display: end ? undefined : "none" }}
-        onClick={() => scrollToEnd({ behavior: "instant" })}
-        aria-label={t("navigation.latest")}
-        className="ll:absolute ll:bottom-2 ll:left-1/2 ll:-translate-x-1/2 ll:size-7 ll:p-0 ll:shadow-md ll:bg-gray-800/90 ll:hover:bg-gray-700/95"
-      >
-        <ArrowDown aria-hidden className="ll:size-3" />
-      </Button>
+      <ScrollToLatestButton label={t("navigation.latest")} />
     </BaseScrollArea.Root>
   );
 };

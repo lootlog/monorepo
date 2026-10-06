@@ -10,6 +10,7 @@ import {
 } from "@lootlog/schema/discord";
 import { NonNegativeInt } from "@lootlog/schema/primitives";
 import { PartyGatheringUpdateEnvelopeSchema } from "@lootlog/schema/party-ready-room";
+import { GlobalChatMessageSchema } from "@lootlog/schema/chat";
 import { Schema } from "effect";
 import { RabbitRoutingKey } from "./topology.js";
 
@@ -359,6 +360,7 @@ const canonicalRabbitEventSchemas = {
   [RabbitRoutingKey.EVENT_RANKING_UPDATE]: EventScope,
   [RabbitRoutingKey.EVENT_RESPAWN_WINDOW_CLOSED]: EventRespawnWindowChanged,
   [RabbitRoutingKey.EVENT_RESPAWN_WINDOW_OPENED]: EventRespawnWindowChanged,
+  [RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE]: GlobalChatMessageSchema,
   [RabbitRoutingKey.GUILDS_LOOTS_CREATE]: GuildLootCreatedEventV2,
   [RabbitRoutingKey.GUILDS_LOOTS_SHARE_UPDATE]: GuildLootShareUpdatedEventV2,
   [RabbitRoutingKey.GUILDS_CREATE]: GuildCreated,
