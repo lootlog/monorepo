@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { GlobalChatMessageResponse } from "@lootlog/client/main";
 import { IconButton } from "@/components/ui/icon-button";
 import type { GlobalChatChannel } from "@/store/global-chat.store";
-import { getGlobalChatColor } from "../global-chat.helpers";
+import { getGlobalChatSenderColor } from "../global-chat.helpers";
 import { useGlobalChatModeration } from "../hooks/use-global-chat-moderation";
 
 type GlobalChatPinnedProps = {
@@ -36,7 +36,7 @@ export const GlobalChatPinned = ({
       >
         <span
           className="ll:font-bold"
-          style={{ color: getGlobalChatColor(message.displayName) }}
+          style={{ color: getGlobalChatSenderColor(message) }}
         >
           {message.displayName}:
         </span>{" "}
