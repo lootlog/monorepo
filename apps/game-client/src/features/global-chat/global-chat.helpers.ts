@@ -134,6 +134,16 @@ export const resolveGlobalChatChannel = (
 export const getGlobalChatColor = (value: string) =>
   `hsl(${hashString(value) % 360} 70% 72%)`;
 
+/** Readable red on the chat's dark rows, also over the admin highlight. */
+export const GLOBAL_CHAT_ADMIN_COLOR = "#ff6b6b";
+
+/** Admins write in red; everyone else keeps the color of their name. */
+export const getGlobalChatSenderColor = ({
+  displayName,
+  isAdmin,
+}: Pick<GlobalChatMessageResponse, "displayName" | "isAdmin">) =>
+  isAdmin ? GLOBAL_CHAT_ADMIN_COLOR : getGlobalChatColor(displayName);
+
 /** Oldest first, with a divider before each day's first message. */
 export const getGlobalChatRows = (
   data: GlobalChatPages | undefined,
