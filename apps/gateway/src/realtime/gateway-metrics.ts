@@ -1,4 +1,5 @@
 import { PRESENCE_EXPIRY_MS } from "@lootlog/protocol/realtime";
+import type { GlobalChatStats } from "@lootlog/schema/chat";
 import { Effect, Metric, Schedule, Schema } from "effect";
 import type {
   RedisGatewayCommands,
@@ -8,6 +9,7 @@ import type { CommandIngress } from "#src/realtime/command-ingress";
 import type { JoinAdmission } from "#src/realtime/join-admission";
 import {
   FEDERATION_VERSION,
+  globalChatScope,
   type RealtimeHub,
 } from "#src/realtime/realtime-hub";
 
@@ -24,6 +26,7 @@ local snapshots = redis.call('HGETALL', KEYS[1])
 local connections, sessions, count = 0, 0, 0
 local federationVersion = math.huge
 local players = {}
+local listeners = {}
 for i = 1, #snapshots, 2 do
   local value = cjson.decode(snapshots[i + 1])
   if now - value.at >= 30000 then
@@ -36,9 +39,13 @@ for i = 1, #snapshots, 2 do
     for _, player in ipairs(value.players) do
       if not players[player] then players[player] = true; count = count + 1 end
     end
+    -- Replicas that predate global chat stats send no listeners.
+    for channel, listening in pairs(value.globalChatListeners or {}) do
+      listeners[channel] = (listeners[channel] or 0) + listening
+    end
   end
 end
-return {connections, sessions, count, federationVersion}
+return {connections, sessions, count, federationVersion, cjson.encode(listeners)}
 `;
 
 // Same liveness rule as SAMPLE, without writing this replica's snapshot.
@@ -65,8 +72,17 @@ export const readClusterFederationVersion = (
   ).pipe(Effect.map(Schema.decodeUnknownSync(Schema.Number)));
 
 const decodeCounts = Schema.decodeUnknownSync(
-  Schema.Tuple([Schema.Number, Schema.Number, Schema.Number, Schema.Number]),
+  Schema.Tuple([
+    Schema.Number,
+    Schema.Number,
+    Schema.Number,
+    Schema.Number,
+    Schema.fromJsonString(Schema.Record(Schema.String, Schema.Number)),
+  ]),
 );
+
+/** The shared channel's key among global chat listener counts. */
+const SHARED_CHANNEL = "";
 
 const observedAt = Metric.gauge("lootlog_gateway_cluster_observed_at_seconds", {
   attributes: { unit: "s" },
@@ -162,7 +178,10 @@ export class GatewayMetrics {
     private readonly redis: Pick<RedisGatewayCommands, "eval">,
     private readonly hub: Pick<
       RealtimeHub,
-      "instanceId" | "getLocalSockets" | "clusterFederationVersion"
+      | "instanceId"
+      | "getLocalSockets"
+      | "clusterFederationVersion"
+      | "publishToScopes"
     >,
     private readonly now: () => number = Date.now,
   ) {}
@@ -170,10 +189,25 @@ export class GatewayMetrics {
   readonly sample = Effect.fnUntraced(function* (this: GatewayMetrics) {
     const sockets = this.hub.getLocalSockets();
     const players = new Set<string>();
+    // Unique Users per global chat channel this replica serves.
+    const chatListeners = new Map<string, Set<string>>();
     let sessions = 0;
     const now = this.now();
 
     for (const { data } of sockets) {
+      for (const scope of data.subscriptions.values()) {
+        if (
+          scope.topic !== "global.chat" &&
+          scope.topic !== "global.chat.world"
+        )
+          continue;
+        const channel = scope.world ?? SHARED_CHANNEL;
+        const listening = chatListeners.get(channel) ?? new Set<string>();
+
+        listening.add(data.discordId);
+        chatListeners.set(channel, listening);
+      }
+
       const presence = data.presence;
 
       if (
@@ -198,12 +232,23 @@ export class GatewayMetrics {
           sessions,
           players: [...players],
           federationVersion: FEDERATION_VERSION,
+          globalChatListeners: Object.fromEntries(
+            [...chatListeners].map(([channel, listening]) => [
+              channel,
+              listening.size,
+            ]),
+          ),
         }),
       ),
     );
 
-    const [connectionCount, sessionCount, playerCount, federationVersion] =
-      decodeCounts(counts);
+    const [
+      connectionCount,
+      sessionCount,
+      playerCount,
+      federationVersion,
+      listeners,
+    ] = decodeCounts(counts);
 
     // Each replica samples every 10 s, so a starting older replica is seen within that.
     this.hub.clusterFederationVersion = federationVersion;
@@ -211,6 +256,33 @@ export class GatewayMetrics {
     yield* Metric.update(gameSessions, sessionCount);
     yield* Metric.update(uniquePlayers, playerCount);
     yield* Metric.update(observedAt, this.now() / 1_000);
+
+    // Every replica reads the same cluster totals, so each tells only its own
+    // subscribers and nothing crosses federation.
+    yield* Effect.forEach(
+      chatListeners.keys(),
+      (channel) => {
+        const world = channel === SHARED_CHANNEL ? undefined : channel;
+
+        const stats: GlobalChatStats = {
+          online: playerCount,
+          listeners: listeners[channel] ?? 0,
+        };
+
+        return Effect.tryPromise(() =>
+          this.hub.publishToScopes(
+            [globalChatScope(world)],
+            {
+              v: 1,
+              type: "global-chat.stats",
+              data: world === undefined ? stats : { ...stats, world },
+            },
+            { localOnly: true },
+          ),
+        );
+      },
+      { discard: true },
+    );
 
     return {
       connections: connectionCount,

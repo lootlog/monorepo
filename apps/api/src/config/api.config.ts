@@ -41,6 +41,8 @@ export interface ApiConfiguration {
     readonly retentionDays: number;
   };
   readonly nodeWarningDiagnosticsEnabled: boolean;
+  /** Internal User ids shown as global chat admins and allowed to moderate it. */
+  readonly globalChatAdminUserIds: ReadonlyArray<string>;
   readonly hostName: string | undefined;
 }
 
@@ -101,6 +103,15 @@ export const apiConfiguration = Config.all({
   }),
   nodeWarningDiagnosticsEnabled: compatibilityBoolean(
     "NODE_WARNING_DIAGNOSTICS_ENABLED",
+  ),
+  globalChatAdminUserIds: Config.String("GLOBAL_CHAT_ADMIN_USER_IDS").pipe(
+    Config.withDefault(""),
+    Config.map((value) =>
+      value
+        .split(",")
+        .map((userId) => userId.trim())
+        .filter((userId) => userId !== ""),
+    ),
   ),
   hostName: Config.option(Config.String("HOSTNAME")).pipe(
     Config.map(Option.getOrUndefined),

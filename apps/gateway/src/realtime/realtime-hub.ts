@@ -66,7 +66,7 @@ const MAX_SCOPE_BYTES = 1_024;
  * once `clusterFederationVersion` reaches it: a replica drops a frame its
  * schema does not know.
  */
-export const FEDERATION_VERSION = 6;
+export const FEDERATION_VERSION = 7;
 
 export const PARTY_GATHERING_STATE_FEDERATION_VERSION = 3;
 
@@ -78,6 +78,9 @@ export const AIR_TAG_INTEREST_FEDERATION_VERSION = 5;
 
 /** Replicas from this version decode `global-chat.created`. */
 export const GLOBAL_CHAT_FEDERATION_VERSION = 6;
+
+/** Replicas from this version decode `global-chat.deleted` and `global-chat.pinned`. */
+export const GLOBAL_CHAT_CHANNELS_FEDERATION_VERSION = 7;
 
 const CLOSE_BATCH_INTERVAL_MS = 100;
 
@@ -125,6 +128,12 @@ const toBase64 = (bytes: Uint8Array): string =>
   Buffer.from(bytes).toString("base64");
 
 const fromBase64 = (value: string): Uint8Array => Buffer.from(value, "base64");
+
+/** The global chat channel of `world`, or the one every world shares. */
+export const globalChatScope = (world: string | undefined): Scope =>
+  world === undefined
+    ? { topic: "global.chat" }
+    : { topic: "global.chat.world", world };
 
 export const getScopeKey = (scope: Scope): string =>
   [

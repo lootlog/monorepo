@@ -7,6 +7,7 @@ import { CatchingWhitelistWarning } from "@/features/catching-whitelist-warning/
 import { Chat } from "@/features/chat/chat";
 import { CommandWindow } from "@/features/command/command";
 import { GlobalChat } from "@/features/global-chat/global-chat";
+import { useGlobalChatSync } from "@/features/global-chat/hooks/use-global-chat-sync";
 import { CreatePartyGathering } from "@/features/party-finder/create-party-gathering";
 import { BattlePingMarkers } from "@/features/pings/battle-ping-markers";
 import { BattlePingWindow } from "@/features/pings/battle-ping-window";
@@ -54,6 +55,7 @@ export const AppContent = () => {
   usePartyReadyRoomSync();
   usePartyReadyRoomExpiry();
   usePartyReadyRoomObserver();
+  useGlobalChatSync();
 
   const gameInitialized = useGlobalStore((state) =>
     Boolean(state.gameState.gameInitialized),

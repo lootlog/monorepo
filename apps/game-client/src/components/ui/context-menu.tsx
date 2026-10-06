@@ -1,4 +1,5 @@
 import { ContextMenu as BaseContextMenu } from "@base-ui/react/context-menu";
+import { ChevronRight } from "lucide-react";
 import * as React from "react";
 import { cn } from "cn";
 import { getLootlogPortalContainer } from "./theme-boundary";
@@ -52,6 +53,9 @@ const ContextMenuContent = React.forwardRef<
 
 ContextMenuContent.displayName = "ContextMenuContent";
 
+const contextMenuItemClassName =
+  "ll:relative ll:flex ll-custom-cursor-pointer ll:select-none ll:items-center ll:rounded-none ll:outline-none ll:data-[disabled]:pointer-events-none ll:data-[disabled]:opacity-50 ll:text-popover-foreground ll:data-[highlighted]:bg-muted ll:hover:bg-muted ll:focus-visible:bg-muted ll:text-[11px] ll:font-semibold ll:border-0 ll:min-h-6 ll:py-1.5 ll:px-2";
+
 type ContextMenuItemProps = BaseContextMenu.Item.Props & {
   inset?: boolean;
   onSelect?: React.MouseEventHandler<HTMLElement>;
@@ -61,11 +65,7 @@ const ContextMenuItem = React.forwardRef<HTMLElement, ContextMenuItemProps>(
   ({ className, inset, onClick, onSelect, ...props }, ref) => (
     <BaseContextMenu.Item
       ref={ref}
-      className={cn(
-        "ll:relative ll:flex ll-custom-cursor-pointer ll:select-none ll:items-center ll:rounded-none ll:outline-none ll:data-[disabled]:pointer-events-none ll:data-[disabled]:opacity-50 ll:text-popover-foreground ll:data-[highlighted]:bg-muted ll:hover:bg-muted ll:focus-visible:bg-muted ll:text-[11px] ll:font-semibold ll:border-0 ll:min-h-6 ll:py-1.5 ll:px-2",
-        inset && "ll:pl-8",
-        className,
-      )}
+      className={cn(contextMenuItemClassName, inset && "ll:pl-8", className)}
       onClick={(event) => {
         onClick?.(event);
         onSelect?.(event);
@@ -80,6 +80,29 @@ const ContextMenuItem = React.forwardRef<HTMLElement, ContextMenuItemProps>(
 );
 
 ContextMenuItem.displayName = "ContextMenuItem";
+
+/** A nested menu; its items render in a `ContextMenuContent` beside the trigger. */
+const ContextMenuSub = BaseContextMenu.SubmenuRoot;
+
+const ContextMenuSubTrigger = React.forwardRef<
+  HTMLDivElement,
+  BaseContextMenu.SubmenuTrigger.Props
+>(({ className, children, ...props }, ref) => (
+  <BaseContextMenu.SubmenuTrigger
+    ref={ref}
+    className={cn(
+      contextMenuItemClassName,
+      "ll:data-[popup-open]:bg-muted",
+      className,
+    )}
+    {...props}
+  >
+    {children}
+    <ChevronRight aria-hidden className="ll:ml-auto ll:size-3 ll:shrink-0" />
+  </BaseContextMenu.SubmenuTrigger>
+));
+
+ContextMenuSubTrigger.displayName = "ContextMenuSubTrigger";
 
 /**
  * Opens the context menu whose trigger contains `element`, anchored under
@@ -117,5 +140,7 @@ export {
   ContextMenuTrigger,
   ContextMenuContent,
   ContextMenuItem,
+  ContextMenuSub,
+  ContextMenuSubTrigger,
   openContextMenuOnKeyDown,
 };

@@ -3,7 +3,7 @@
     "title": "Czat globalny"
   },
   "emptyState": {
-    "title": "Na czacie globalnym jeszcze cisza",
+    "title": "Na tym kanale jeszcze cisza",
     "description": "Napisz pierwszą wiadomość. Zobaczą ją członkowie wszystkich Lootlogów."
   },
   "states": {
@@ -17,13 +17,82 @@
   "navigation": {
     "latest": "Najnowsze wiadomości"
   },
+  "channels": {
+    "label": "Kanał czatu globalnego",
+    "shared": "Wszystkie światy",
+    "sharedGroup": "Kanał wspólny",
+    "worldsGroup": "Światy"
+  },
+  "stats": {
+    "online": "{{count}} online",
+    "onlineLabel": "Gracze z Lootlogiem online: {{count}}",
+    "listenersLabel": "Osoby na tym kanale: {{count}}"
+  },
+  "message": {
+    "admin": "Admin",
+    "originWorld": "Pisze ze świata {{world}}"
+  },
+  "pinned": {
+    "label": "Przypięta wiadomość",
+    "unpin": "Odepnij wiadomość"
+  },
+  "messageActions": {
+    "label": "Akcje wiadomości",
+    "copy": "Kopiuj tekst",
+    "pin": "Przypnij",
+    "delete": "Usuń",
+    "mute": "Wycisz autora",
+    "deleteConfirm": {
+      "title": "Usunąć wiadomość?",
+      "description": "Zniknie z czatu u wszystkich."
+    }
+  },
+  "mute": {
+    "durations": {
+      "5": "5 minut",
+      "15": "15 minut",
+      "30": "30 minut",
+      "60": "1 godzina",
+      "180": "3 godziny",
+      "360": "6 godzin",
+      "720": "12 godzin",
+      "1440": "1 dzień",
+      "4320": "3 dni",
+      "10080": "7 dni",
+      "43200": "30 dni",
+      "permanent": "Na stałe"
+    },
+    "muted": "Wyciszono: {{name}}"
+  },
+  "mutes": {
+    "open": "Wyciszeni użytkownicy",
+    "title": "Wyciszeni",
+    "empty": "Nikt nie jest wyciszony.",
+    "until": "do {{date}}",
+    "permanent": "na stałe",
+    "unmute": "Odcisz {{name}}",
+    "loadError": "Nie udało się wczytać wyciszonych"
+  },
   "input": {
-    "placeholder": "Wiadomość do wszystkich…",
-    "pending": "Wysyłanie wiadomości"
+    "sharedPlaceholder": "Wiadomość do wszystkich światów…",
+    "worldPlaceholder": "Wiadomość na świat {{world}}…",
+    "mutedUntil": "Wyciszono cię do {{date}}",
+    "mutedPermanently": "Wyciszono cię na stałe",
+    "pending": "Wysyłanie wiadomości",
+    "emoji": "Wstaw emoji"
+  },
+  "quickAccess": {
+    "unread_one": "{{count}} nowa wiadomość na czacie globalnym",
+    "unread_few": "{{count}} nowe wiadomości na czacie globalnym",
+    "unread_many": "{{count}} nowych wiadomości na czacie globalnym",
+    "unread_other": "{{count}} nowych wiadomości na czacie globalnym"
   },
   "errors": {
     "sendFailed": "Nie udało się wysłać wiadomości na czat globalny",
     "rateLimited": "Za szybko. Następną wiadomość wyślesz za kilka sekund.",
-    "notMember": "Czat globalny jest dostępny dla członków Lootlogów"
+    "notMember": "Czat globalny jest dostępny dla członków Lootlogów",
+    "muted": "Nie możesz teraz pisać na czacie globalnym",
+    "channelGone": "Ten kanał już nie istnieje",
+    "moderationFailed": "Nie udało się wykonać akcji moderacji"
   }
 }

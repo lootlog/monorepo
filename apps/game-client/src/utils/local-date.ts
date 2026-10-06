@@ -3,6 +3,7 @@ type LocalDatePattern =
   | "HH:mm:ss"
   | "dd.MM"
   | "dd.MM.yyyy"
+  | "dd.MM.yyyy HH:mm"
   | "dd.MM HH:mm:ss"
   | "dd.MM.yyyy HH:mm:ss"
   | "dd.MM.yyyy - HH:mm:ss";
@@ -24,6 +25,8 @@ export const format = (date: Date, pattern: LocalDatePattern): string => {
       return dayMonth;
     case "dd.MM.yyyy":
       return dateWithYear;
+    case "dd.MM.yyyy HH:mm":
+      return `${dateWithYear} ${hoursMinutes}`;
     case "dd.MM HH:mm:ss":
       return `${dayMonth} ${timeWithSeconds}`;
     case "dd.MM.yyyy HH:mm:ss":

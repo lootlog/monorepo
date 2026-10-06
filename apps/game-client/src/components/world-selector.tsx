@@ -1,22 +1,13 @@
 import { Schema } from "effect";
 import {
-  Combobox,
-  ComboboxCollection,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxGroup,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxLabel,
-  ComboboxList,
-  ComboboxTrigger,
-  ComboboxValue,
-} from "@/components/ui/combobox";
+  toWorldOption,
+  WorldCombobox,
+  type WorldGroup,
+} from "@/components/world-combobox";
 import {
   getGuildsControllerGetWorldsByGuildIdQueryKey,
   useGuildsControllerGetWorldsByGuildId,
 } from "@lootlog/client/main";
-import { cn } from "cn";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGameStore } from "@/store/game.store";
 import { type FC, useEffect, useMemo } from "react";
@@ -28,11 +19,6 @@ import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 
 const recentWorldsSchema = Schema.mutable(Schema.Array(Schema.String));
-
-type WorldOption = { value: string; label: string };
-
-/** Base UI filters grouped items when each group carries an `items` array. */
-type WorldGroup = { value: string; label: string; items: WorldOption[] };
 
 const DEFAULT_RECENT_WORLDS: string[] = [];
 
@@ -129,27 +115,13 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     const availableWorlds = new Set(worlds);
 
     const recent = recentWorlds.flatMap((w) =>
-      availableWorlds.has(w)
-        ? [
-            {
-              value: w,
-              label: w.charAt(0).toUpperCase() + w.slice(1),
-            },
-          ]
-        : [],
+      availableWorlds.has(w) ? [toWorldOption(w)] : [],
     );
 
     const recentValues = new Set(recent.map((w) => w.value));
 
     const rest = worlds.flatMap((w) =>
-      recentValues.has(w)
-        ? []
-        : [
-            {
-              value: w,
-              label: w.charAt(0).toUpperCase() + w.slice(1),
-            },
-          ],
+      recentValues.has(w) ? [] : [toWorldOption(w)],
     );
 
     const groups: WorldGroup[] = [];
@@ -173,15 +145,8 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     return groups;
   }, [recentWorlds, t, worlds]);
 
-  const selectedOption =
-    worldGroups
-      .flatMap((group) => group.items)
-      .find((option) => option.value === world) ?? null;
-
-  const handleWorldChange = (option: WorldOption | null) => {
-    if (!guildId || !option) return;
-
-    const newWorld = option.value;
+  const handleWorldChange = (newWorld: string) => {
+    if (!guildId) return;
 
     const updatedRecent = [
       newWorld,
@@ -205,40 +170,14 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     : t("worldSelector.placeholder");
 
   return (
-    <Combobox<WorldOption>
-      items={worldGroups}
-      value={selectedOption}
+    <WorldCombobox
+      groups={worldGroups}
+      value={world}
       onValueChange={handleWorldChange}
-      isItemEqualToValue={(item, selected) => item.value === selected.value}
+      placeholder={placeholder}
       disabled={disabled || isLoading}
-      autoHighlight
-    >
-      <ComboboxTrigger
-        size="sm"
-        variant={variant}
-        aria-label={t("worldSelector.placeholder")}
-        className={cn(variant === "default" && "ll:mb-1", className)}
-      >
-        <ComboboxValue placeholder={placeholder} />
-      </ComboboxTrigger>
-      <ComboboxContent>
-        <ComboboxInput placeholder={t("worldSelector.searchPlaceholder")} />
-        <ComboboxEmpty>{t("worldSelector.empty")}</ComboboxEmpty>
-        <ComboboxList>
-          {(group: WorldGroup) => (
-            <ComboboxGroup key={group.value} items={group.items}>
-              <ComboboxLabel>{group.label}</ComboboxLabel>
-              <ComboboxCollection>
-                {(option: WorldOption) => (
-                  <ComboboxItem key={option.value} value={option}>
-                    {option.label}
-                  </ComboboxItem>
-                )}
-              </ComboboxCollection>
-            </ComboboxGroup>
-          )}
-        </ComboboxList>
-      </ComboboxContent>
-    </Combobox>
+      variant={variant}
+      className={className}
+    />
   );
 };

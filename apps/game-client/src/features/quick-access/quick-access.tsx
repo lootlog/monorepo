@@ -10,6 +10,7 @@ import {
   QuickAccessWindowButton,
   type QuickAccessWindowButtonProps,
 } from "@/features/quick-access/components/quick-access-window-button";
+import { useGlobalChatStore } from "@/store/global-chat.store";
 import { useWindowsStore } from "@/store/windows.store";
 import {
   Globe,
@@ -39,6 +40,7 @@ export const QuickAccess = () => {
   );
 
   const setOpen = useWindowsStore((state) => state.setOpen);
+  const globalChatUnread = useGlobalChatStore((state) => state.unread);
 
   const buttons: QuickAccessWindowButtonProps[] = [
     {
@@ -69,6 +71,16 @@ export const QuickAccess = () => {
       windowId: "global-chat",
       label: t("buttons.globalChat"),
       icon: <Globe aria-hidden="true" className={ICON_CLASS_NAME} />,
+      badge:
+        globalChatUnread > 0
+          ? {
+              count: globalChatUnread,
+              label: t("quickAccess.unread", {
+                ns: "globalChat",
+                count: globalChatUnread,
+              }),
+            }
+          : undefined,
     },
     {
       windowId: "command",

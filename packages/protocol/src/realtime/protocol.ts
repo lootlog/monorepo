@@ -2,7 +2,11 @@ import { AccessPolicySnapshot, AccessPolicyChange } from "./access-policy.js";
 import { UserFeedItem } from "../feed.js";
 import { NonNegativeInt } from "@lootlog/schema/primitives";
 import { PartyGatheringClientUpdateSchema } from "@lootlog/schema/party-ready-room";
-import { GlobalChatMessageSchema } from "@lootlog/schema/chat";
+import {
+  GlobalChatMessageSchema,
+  GlobalChatStatsSchema,
+  GlobalChatWorld,
+} from "@lootlog/schema/chat";
 import {
   AirTagMapThreatEventSchema,
   AirTagObservationBatchSchema,
@@ -85,6 +89,13 @@ export const REALTIME_NPC_PRESENCE_CAPABILITY = "lootlog.npc-presence.v1";
 // an unknown event, and older gateways close it on an unknown topic.
 export const REALTIME_GLOBAL_CHAT_CAPABILITY = "lootlog.global-chat.v1";
 
+// Offered as a subprotocol by clients that decode `global-chat.deleted`,
+// `global-chat.pinned` and `global-chat.stats`, and listed in `session.joined`
+// capabilities by gateways that route per-world `global.chat` scopes and send
+// those events. Clients without it follow only the channel every world shares.
+export const REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY =
+  "lootlog.global-chat.v2";
+
 export const REALTIME_SESSION_HELLO_CAPABILITY = "lootlog.session-hello.v1";
 
 export const REALTIME_JSON_SUBPROTOCOL = "lootlog.realtime.json.v1";
@@ -122,6 +133,9 @@ export const RealtimeLogicalTopic = Schema.Literals([
   "map.pings",
   "party.ready-room",
   "global.chat",
+  // A world's own global chat channel. A scope without a world matches every
+  // world, so world channels cannot share the shared channel's topic.
+  "global.chat.world",
 ]);
 
 export type RealtimeLogicalTopic = typeof RealtimeLogicalTopic.Type;
@@ -454,6 +468,21 @@ export const ServerEvent = Schema.Union([
   serverEvent("chat.deleted", OrganizationEvent),
   serverEvent("chat.cleared", OrganizationEvent),
   serverEvent("global-chat.created", GlobalChatMessageSchema),
+  serverEvent(
+    "global-chat.deleted",
+    Schema.Struct({
+      world: Schema.optionalKey(GlobalChatWorld),
+      id: Schema.NonEmptyString,
+    }),
+  ),
+  serverEvent(
+    "global-chat.pinned",
+    Schema.Struct({
+      world: Schema.optionalKey(GlobalChatWorld),
+      message: Schema.NullOr(GlobalChatMessageSchema),
+    }),
+  ),
+  serverEvent("global-chat.stats", GlobalChatStatsSchema),
   serverEvent("feed.entry", UserFeedItem),
   serverEvent(
     "kills.changed",
