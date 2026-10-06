@@ -1,16 +1,15 @@
 import { spawnSync } from "node:child_process";
-import { resolve } from "node:path";
+import { relative, resolve } from "node:path";
+import { clientServices } from "./client-services";
 
 const repositoryRoot = resolve("../..");
 
 const trackedOutputs = [
-  "apps/activity/openapi.yaml",
-  "apps/api/openapi.yaml",
-  "apps/auth/openapi.yaml",
-  "apps/battlelog/openapi.yaml",
+  ...Object.values(clientServices).map(({ specPath }) =>
+    relative(repositoryRoot, resolve(specPath)),
+  ),
   "apps/discord-bot/openapi.yaml",
   "apps/gateway/openapi.yaml",
-  "apps/search/openapi.yaml",
   "packages/client/src/generated",
 ];
 
