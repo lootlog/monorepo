@@ -13,11 +13,12 @@ import { ScrollBar } from "@/components/ui/scroll-bar";
 import { Spinner } from "@/components/ui/spinner";
 import { getChatDensityStyle } from "@/features/chat/chat-density";
 import type { GlobalChatRow as GlobalChatRowData } from "../global-chat.helpers";
-import { GlobalChatRow } from "./global-chat-row";
+import { GlobalChatRow, type GlobalChatRowContext } from "./global-chat-row";
 
 type GlobalChatTranscriptProps = {
   appearance: ChatAppearanceSettings;
   rows: GlobalChatRowData[];
+  rowContext: GlobalChatRowContext;
   hasOlder: boolean;
   loadingOlder: boolean;
   /** A failed older page waits for the player instead of retrying in a loop. */
@@ -29,6 +30,7 @@ type GlobalChatTranscriptProps = {
 export const GlobalChatTranscript = ({
   appearance,
   rows,
+  rowContext,
   hasOlder,
   loadingOlder,
   olderFailed,
@@ -91,7 +93,12 @@ export const GlobalChatTranscript = ({
           style={getChatDensityStyle(appearance.fontScalePercent)}
         >
           {rows.map((row) => (
-            <GlobalChatRow key={row.key} appearance={appearance} row={row} />
+            <GlobalChatRow
+              key={row.key}
+              appearance={appearance}
+              context={rowContext}
+              row={row}
+            />
           ))}
         </BaseScrollArea.Content>
       </BaseScrollArea.Viewport>

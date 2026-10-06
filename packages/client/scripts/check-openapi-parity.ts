@@ -15,6 +15,14 @@ const BASELINE_SHA = "633f8f0157cca04ef2b609ba0e2f1903b1c28949";
 
 // Optional reader filters for the Web dashboard feed; omitted filters keep the
 // previous response, so API key callers are unaffected.
+/** Omitting it names the global chat channel every world shares. */
+const GLOBAL_CHAT_WORLD_PARAMETER: JsonValue = {
+  name: "world",
+  in: "query",
+  schema: { type: "string", minLength: 1, maxLength: 64 },
+  required: false,
+};
+
 const USER_FEED_PARAMETERS: JsonValue[] = [
   {
     name: "excludedGuildIds",
@@ -1523,20 +1531,51 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
       },
       // Verified by global-chat.data-layer.test.ts and
       // global-chat-store.integration.test.ts: only active Members read and
-      // send, pages keep their cursor, and a send within the cooldown is 429.
+      // send, each world's channel stays apart and unknown worlds are 404,
+      // pages keep their cursor, a send within the cooldown or while muted is
+      // refused, and only global chat admins delete, pin and mute.
+      "GET /global-chat/worlds": {
+        operationId: "GlobalChatController_getWorlds",
+        description: "List the worlds that have their own global chat channel",
+        parameters: [],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "GlobalChatWorldsResponse",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/GlobalChatWorldsResponse",
+                },
+              },
+            },
+          },
+        },
+      },
       "GET /global-chat/messages": {
         operationId: "GlobalChatController_getMessages",
         description:
-          "Read one page of the chat shared by every Member of any Organization",
+          "Read one page of a global chat channel shared by every Member of any Organization",
         parameters: [
+          GLOBAL_CHAT_WORLD_PARAMETER,
           {
             name: "before",
             in: "query",
-            schema: { type: "string" },
+            schema: {
+              type: "string",
+            },
             required: false,
           },
         ],
-        security: [{ bearer: [] }],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
         responses: {
           "200": {
             description: "GlobalChatMessagesResponse",
@@ -1548,14 +1587,21 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
               },
             },
           },
+          "404": {
+            description: "<No Content>",
+          },
         },
       },
       "POST /global-chat/messages": {
         operationId: "GlobalChatController_sendMessage",
         description:
-          "Send a plain-text message to the chat shared by every Member of any Organization",
+          "Send a plain-text message to a global chat channel; muted senders are refused",
         parameters: [],
-        security: [{ bearer: [] }],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
         requestBody: {
           content: {
             "application/json": {
@@ -1576,6 +1622,181 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
                 },
               },
             },
+          },
+          "404": {
+            description: "<No Content>",
+          },
+        },
+      },
+      "DELETE /global-chat/messages/{messageId}": {
+        operationId: "GlobalChatController_deleteMessage",
+        description:
+          "Remove a message from a global chat channel; global chat admins only",
+        parameters: [
+          {
+            name: "messageId",
+            in: "path",
+            schema: {
+              type: "string",
+              minLength: 1,
+            },
+            required: true,
+          },
+          GLOBAL_CHAT_WORLD_PARAMETER,
+        ],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        responses: {
+          "204": {
+            description: "<No Content>",
+          },
+          "404": {
+            description: "<No Content>",
+          },
+        },
+      },
+      "PUT /global-chat/pinned-message": {
+        operationId: "GlobalChatController_pinMessage",
+        description:
+          "Pin one message above a global chat channel, replacing any pinned one; global chat admins only",
+        parameters: [],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/PinGlobalChatMessageRequest",
+              },
+            },
+          },
+          required: true,
+        },
+        responses: {
+          "200": {
+            description: "GlobalChatMessageResponse",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/GlobalChatMessageResponse",
+                },
+              },
+            },
+          },
+          "404": {
+            description: "<No Content>",
+          },
+        },
+      },
+      "DELETE /global-chat/pinned-message": {
+        operationId: "GlobalChatController_unpinMessage",
+        description:
+          "Remove the pinned message of a global chat channel; global chat admins only",
+        parameters: [GLOBAL_CHAT_WORLD_PARAMETER],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        responses: {
+          "204": {
+            description: "<No Content>",
+          },
+          "404": {
+            description: "<No Content>",
+          },
+        },
+      },
+      "GET /global-chat/mutes": {
+        operationId: "GlobalChatController_getMutes",
+        description:
+          "List senders who may not write in the global chat; global chat admins only",
+        parameters: [],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "GlobalChatMutesResponse",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/GlobalChatMutesResponse",
+                },
+              },
+            },
+          },
+        },
+      },
+      "POST /global-chat/mutes": {
+        operationId: "GlobalChatController_muteSender",
+        description:
+          "Stop the sender of a kept message from writing in every global chat channel; global chat admins only",
+        parameters: [],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/MuteGlobalChatSenderRequest",
+              },
+            },
+          },
+          required: true,
+        },
+        responses: {
+          "201": {
+            description: "GlobalChatMuteResponse",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/GlobalChatMuteResponse",
+                },
+              },
+            },
+          },
+          "404": {
+            description: "<No Content>",
+          },
+        },
+      },
+      "DELETE /global-chat/mutes/{muteId}": {
+        operationId: "GlobalChatController_unmuteSender",
+        description: "Lift a global chat mute; global chat admins only",
+        parameters: [
+          {
+            name: "muteId",
+            in: "path",
+            schema: {
+              type: "string",
+              minLength: 1,
+            },
+            required: true,
+          },
+        ],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        responses: {
+          "204": {
+            description: "<No Content>",
+          },
+          "404": {
+            description: "<No Content>",
           },
         },
       },

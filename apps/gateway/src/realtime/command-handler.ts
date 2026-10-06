@@ -11,6 +11,7 @@ import {
   REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
   REALTIME_NPC_PRESENCE_CAPABILITY,
   REALTIME_GLOBAL_CHAT_CAPABILITY,
+  REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_PING_CAPABILITY,
   REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
@@ -44,6 +45,7 @@ import type { MapPingService } from "#src/realtime/map-ping-service";
 import type { PresenceStore } from "#src/realtime/presence-store";
 import {
   getScopeKey,
+  GLOBAL_CHAT_CHANNELS_FEDERATION_VERSION,
   GLOBAL_CHAT_FEDERATION_VERSION,
   PARTY_GATHERING_STATE_FEDERATION_VERSION,
   type RealtimeHub,
@@ -152,6 +154,28 @@ const invalidLegacyPayloadResponse = Function.compose(
     }),
   }),
 );
+
+/** Global chat capabilities the client decodes and every replica supports. */
+const globalChatCapabilities = (
+  session: SessionData,
+  clusterFederationVersion: number,
+): string[] => {
+  const capabilities: string[] = [];
+
+  if (
+    session.supportsGlobalChat &&
+    clusterFederationVersion >= GLOBAL_CHAT_FEDERATION_VERSION
+  )
+    capabilities.push(REALTIME_GLOBAL_CHAT_CAPABILITY);
+
+  if (
+    session.supportsGlobalChatChannels &&
+    clusterFederationVersion >= GLOBAL_CHAT_CHANNELS_FEDERATION_VERSION
+  )
+    capabilities.push(REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY);
+
+  return capabilities;
+};
 
 export class CommandHandler {
   constructor(
@@ -920,10 +944,10 @@ export class CommandHandler {
               PARTY_GATHERING_STATE_FEDERATION_VERSION
               ? [REALTIME_PARTY_GATHERING_STATE_CAPABILITY]
               : []),
-            ...(socket.data.supportsGlobalChat &&
-            hub.clusterFederationVersion >= GLOBAL_CHAT_FEDERATION_VERSION
-              ? [REALTIME_GLOBAL_CHAT_CAPABILITY]
-              : []),
+            ...globalChatCapabilities(
+              socket.data,
+              hub.clusterFederationVersion,
+            ),
           ],
         },
       } satisfies Event;

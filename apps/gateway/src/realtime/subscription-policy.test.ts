@@ -48,4 +48,26 @@ describe("logical subscription policy", () => {
     expect(canReadPreciseLocation(basic, "organization-1")).toBe(false);
     expect(canReadPreciseLocation(precise, "organization-1")).toBe(true);
   });
+
+  test("admits one world's global chat only to clients that know channels", () => {
+    const member = makeSession([]);
+
+    const channels = {
+      ...member,
+      supportsGlobalChat: true,
+      supportsGlobalChatChannels: true,
+    };
+
+    const legacy = { ...member, supportsGlobalChat: true };
+    const world = { topic: "global.chat.world", world: "gordion" } as const;
+
+    expect(canSubscribe(channels, world)).toBe(true);
+    expect(canSubscribe(channels, { topic: "global.chat" })).toBe(true);
+    expect(canSubscribe(legacy, { topic: "global.chat" })).toBe(true);
+    // A legacy client would close the socket on moderation events.
+    expect(canSubscribe(legacy, world)).toBe(false);
+    // Without a world, the scope would match every world's channel.
+    expect(canSubscribe(channels, { topic: "global.chat.world" })).toBe(false);
+    expect(canSubscribe({ ...channels, guilds: [] }, world)).toBe(false);
+  });
 });

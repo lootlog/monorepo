@@ -179,6 +179,20 @@ describe("background connection", () => {
 
     bridge.socket.respond({ presences: [] });
     await presence;
+
+    // A world's global chat channel is the one topic the page may follow.
+    const follow = bridge.receive({
+      type: "command",
+      id: "follow",
+      command: {
+        v: 1,
+        type: "subscription.subscribe",
+        data: { topic: "global.chat.world", world: "jaruna" },
+      },
+    });
+
+    bridge.socket.respond({});
+    await follow;
     expect(bridge.messages).toContainEqual({
       type: "result",
       id: "presence",
@@ -207,13 +221,17 @@ describe("background connection", () => {
           delivery: "response",
         },
       }),
+      expect.objectContaining({
+        type: "subscription.subscribe",
+        data: { topic: "global.chat.world", world: "jaruna" },
+      }),
     ]);
   });
 
   it.each([
     { v: 1, type: "session.join", data: { world: 42 } },
     { v: 1, type: "presence.heartbeat", data: { sessionId: "session" } },
-    // The page may follow only the global chat, never another Organization topic.
+    // The page may follow only global chat channels, never another Organization topic.
     {
       v: 1,
       type: "subscription.subscribe",
