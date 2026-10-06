@@ -1,4 +1,4 @@
-import { BattlePagination } from "../shared.js";
+import { BattleListMeta, BattlePagination } from "../shared.js";
 /** analytics transport definitions for battles. */
 import * as Schema from "effect/Schema";
 import { DateTimeString, FiniteNumber } from "@lootlog/schema/http-scalars";
@@ -155,14 +155,7 @@ export const HeadToHeadPaginatedResponseDto_Output = Schema.Struct({
     }),
   ),
   pagination: BattlePagination,
-  meta: Schema.Struct({
-    performance: Schema.Struct({
-      queryTime: FiniteNumber,
-      countTime: Schema.optionalKey(FiniteNumber),
-      totalItems: Schema.optionalKey(FiniteNumber),
-      estimatedTotal: Schema.optionalKey(Schema.Boolean),
-    }),
-  }),
+  meta: BattleListMeta,
 }).annotate({ identifier: "HeadToHeadPaginatedResponseDto_Output" });
 
 export type StreakResponseDto_Output = typeof StreakResponseDto_Output.Type;

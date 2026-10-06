@@ -1,4 +1,8 @@
-import { BattleResponseFields, BattlePagination } from "../shared.js";
+import {
+  BattleListMeta,
+  BattleResponseFields,
+  BattlePagination,
+} from "../shared.js";
 /** catalog transport definitions for battles. */
 import * as Schema from "effect/Schema";
 import { FiniteNumber } from "@lootlog/schema/http-scalars";
@@ -9,14 +13,7 @@ export type BattlesListResponseDto_Output =
 export const BattlesListResponseDto_Output = Schema.Struct({
   battles: Schema.Array(Schema.Struct(BattleResponseFields)),
   pagination: BattlePagination,
-  meta: Schema.Struct({
-    performance: Schema.Struct({
-      queryTime: FiniteNumber,
-      countTime: Schema.optionalKey(FiniteNumber),
-      totalItems: Schema.optionalKey(FiniteNumber),
-      estimatedTotal: Schema.optionalKey(Schema.Boolean),
-    }),
-  }),
+  meta: BattleListMeta,
 }).annotate({ identifier: "BattlesListResponseDto_Output" });
 
 export type BattleCharactersResponseDto_Output =
