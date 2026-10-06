@@ -39,12 +39,16 @@ local function npcId(field) return string.match(field, "^([^|]+)|") end
 `;
 
 // A report field is `<npcId>|<connectionId>`; an NPC stands while any field names it.
+// Replaces the connection's fields with the given NPCs and renews their expiry, so
+// a field left by a failed earlier write is dropped rather than kept alive.
 // Returns the NPCs that gained their first or lost their last reporter.
 const APPLY_SCRIPT = `${LUA_COMMON}
 local now = nowMs()
 local connection = ARGV[1]
 local ttl = tonumber(ARGV[2])
 local suffix = "|" .. connection
+local reported = {}
+for _, npc in ipairs(cjson.decode(ARGV[3])) do reported[tostring(npc.id)] = npc end
 local function standing()
   local records = {}
   local raw = redis.call("HGETALL", KEYS[1])
@@ -59,20 +63,16 @@ for _, field in ipairs(redis.call("ZRANGEBYSCORE", KEYS[2], "-inf", now)) do
   redis.call("HDEL", KEYS[1], field)
   redis.call("ZREM", KEYS[2], field)
 end
-for _, id in ipairs(cjson.decode(ARGV[4])) do
-  local field = tostring(id) .. suffix
-  redis.call("HDEL", KEYS[1], field)
-  redis.call("ZREM", KEYS[2], field)
+for _, field in ipairs(redis.call("HKEYS", KEYS[1])) do
+  if string.sub(field, -#suffix) == suffix and reported[npcId(field)] == nil then
+    redis.call("HDEL", KEYS[1], field)
+    redis.call("ZREM", KEYS[2], field)
+  end
 end
-for _, npc in ipairs(cjson.decode(ARGV[3])) do
-  local field = tostring(npc.id) .. suffix
+for id, npc in pairs(reported) do
+  local field = id .. suffix
   redis.call("HSETNX", KEYS[1], field, cjson.encode({ npc = npc, since = now }))
   redis.call("ZADD", KEYS[2], now + ttl, field)
-end
-if ARGV[5] == "1" then
-  for _, field in ipairs(redis.call("HKEYS", KEYS[1])) do
-    if string.sub(field, -#suffix) == suffix then redis.call("ZADD", KEYS[2], "XX", now + ttl, field) end
-  end
 end
 local after = standing()
 local changes = {}
@@ -91,7 +91,7 @@ if redis.call("HLEN", KEYS[1]) > 0 then
   redis.call("PEXPIRE", KEYS[2], ttl * 2)
 end
 if #changes == 0 then return "[]" end
-redis.call("PEXPIRE", KEYS[3], ARGV[6])
+redis.call("PEXPIRE", KEYS[3], ARGV[4])
 return cjson.encode(changes)
 `;
 
@@ -133,12 +133,11 @@ const decodeSnapshot = Schema.decodeUnknownSync(
 
 type Event = typeof ServerEvent.Type;
 
+/** The NPCs one connection reports in one Organization and world. */
 type Operation = {
   organizationId: string;
   world: string;
-  adds: NpcPresenceNpc[];
-  removes: number[];
-  refresh: boolean;
+  npcs: NpcPresenceNpc[];
 };
 
 const keys = (organizationId: string, world: string) => {
@@ -165,15 +164,14 @@ const presenceEvent = (
 const operation = (
   organizationId: string,
   state: NpcPresenceState,
-  change: Partial<Pick<Operation, "adds" | "removes" | "refresh">> = {},
-): Operation => ({
-  organizationId,
-  world: state.world,
-  adds: [],
-  removes: [],
-  refresh: false,
-  ...change,
-});
+  npcs: readonly NpcPresenceNpc[] = [...state.npcs.values()],
+): Operation => ({ organizationId, world: state.world, npcs: [...npcs] });
+
+const sameNpcs = (
+  first: ReadonlyMap<number, NpcPresenceNpc>,
+  second: ReadonlyMap<number, NpcPresenceNpc>,
+) =>
+  first.size === second.size && [...first.keys()].every((id) => second.has(id));
 
 /** Operations that turn the reports stored for `previous` into `next`. */
 const planOperations = (
@@ -190,30 +188,24 @@ const planOperations = (
   const withdrawals = previous
     ? previous.organizationIds
         .filter((organizationId) => !kept(organizationId))
-        .map((organizationId) =>
-          operation(organizationId, previous, {
-            removes: [...previous.npcs.keys()],
-          }),
-        )
+        .map((organizationId) => operation(organizationId, previous, []))
     : [];
 
   if (!next) return withdrawals;
 
-  const changes = next.organizationIds
-    .map((organizationId) => {
-      const known =
-        sameScope && previous?.organizationIds.includes(organizationId)
-          ? previous.npcs
-          : new Map<number, NpcPresenceNpc>();
+  const unchanged = (organizationId: string) =>
+    Boolean(
+      sameScope &&
+      previous?.organizationIds.includes(organizationId) &&
+      sameNpcs(previous.npcs, next.npcs),
+    );
 
-      return operation(organizationId, next, {
-        adds: [...next.npcs.values()].filter((npc) => !known.has(npc.id)),
-        removes: [...known.keys()].filter((id) => !next.npcs.has(id)),
-      });
-    })
-    .filter(({ adds, removes }) => adds.length > 0 || removes.length > 0);
-
-  return [...withdrawals, ...changes];
+  return [
+    ...withdrawals,
+    ...next.organizationIds
+      .filter((organizationId) => !unchanged(organizationId))
+      .map((organizationId) => operation(organizationId, next)),
+  ];
 };
 
 /**
@@ -256,10 +248,8 @@ export class NpcPresenceService {
           socket,
           state.organizationIds.map((organizationId) =>
             allowed.includes(organizationId)
-              ? operation(organizationId, state, { refresh: true })
-              : operation(organizationId, state, {
-                  removes: [...state.npcs.keys()],
-                }),
+              ? operation(organizationId, state)
+              : operation(organizationId, state, []),
           ),
         );
       } catch (error) {
@@ -283,9 +273,7 @@ export class NpcPresenceService {
       await this.apply(
         socket,
         state.organizationIds.map((organizationId) =>
-          operation(organizationId, state, {
-            removes: [...state.npcs.keys()],
-          }),
+          operation(organizationId, state, []),
         ),
       );
     });
@@ -381,9 +369,18 @@ export class NpcPresenceService {
           }
         : undefined;
 
-    const operations = planOperations(previous, next);
+    // After a failed write nothing is known to be stored, so every reported
+    // scope is replaced, even with no NPCs.
+    const operations = previous
+      ? planOperations(previous, next)
+      : organizationIds.map((organizationId) => ({
+          organizationId,
+          world: payload.world,
+          npcs: [...npcs.values()],
+        }));
 
-    // A failed report is resent whole, so nothing is assumed to be stored.
+    // A failed report is resent whole and replaces whatever this connection
+    // stored, so nothing is assumed to be stored meanwhile.
     socket.data.npcPresence = undefined;
 
     try {
@@ -419,13 +416,7 @@ export class NpcPresenceService {
     socket: GatewaySocket,
     operations: readonly Operation[],
   ): Promise<void> {
-    for (const {
-      organizationId,
-      world,
-      adds,
-      removes,
-      refresh,
-    } of operations) {
+    for (const { organizationId, world, npcs } of operations) {
       const changes = decodeChanges(
         String(
           await this.redis.command.eval(
@@ -434,9 +425,7 @@ export class NpcPresenceService {
             ...keys(organizationId, world),
             socket.data.connectionId,
             NPC_PRESENCE_TTL_MS,
-            JSON.stringify(adds),
-            JSON.stringify(removes),
-            refresh ? "1" : "0",
+            JSON.stringify(npcs),
             REVISION_TTL_MS,
           ),
         ),

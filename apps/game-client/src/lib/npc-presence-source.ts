@@ -140,7 +140,12 @@ export class NpcPresenceSource {
     }
 
     this.snapshotRevision = snapshot.revision;
-    this.revisions.clear();
+
+    // Updates newer than the snapshot still guard their NPC against older ones.
+    for (const [npcId, revision] of this.revisions) {
+      if (revision <= snapshot.revision) this.revisions.delete(npcId);
+    }
+
     this.replace(next);
   };
 

@@ -3629,6 +3629,16 @@ describe("realtime Dragonfly integration", () => {
       await expect(
         service.fetch(second.socket, "organization-1", "classic"),
       ).resolves.toMatchObject({ npcs: [] });
+
+      // A report after a failed write replaces what the connection stored,
+      // so an NPC killed meanwhile does not keep standing.
+      await service.report(second.socket, report([elite], "tempest"));
+      second.socket.data.npcPresence = undefined;
+      await service.report(second.socket, report([], "tempest"));
+      expect(presenceUpdates(second.frames).slice(-2)).toEqual([
+        expect.objectContaining({ world: "tempest", standing: true }),
+        expect.objectContaining({ world: "tempest", standing: false }),
+      ]);
     } finally {
       await store.close();
       await runtime.dispose();

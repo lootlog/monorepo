@@ -97,6 +97,10 @@ describe("NPC presence source", () => {
     answerFetch({ revision: 4, npcs: [{ npc, since: 5_000 }] });
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(source.getStandingSince(npc.id)).toBeUndefined();
+
+    // An update between the snapshot and the newest one still arrives late.
+    await harness.receive(presence(true, 5));
+    expect(source.getStandingSince(npc.id)).toBeUndefined();
     release();
   });
 
