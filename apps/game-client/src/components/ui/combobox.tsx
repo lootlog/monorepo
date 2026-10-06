@@ -9,6 +9,7 @@ import {
   selectTriggerClassName,
   selectTriggerStripClassName,
 } from "./select";
+import { ScrollArea } from "./scroll-area";
 import { getLootlogPortalContainer } from "./theme-boundary";
 
 /**
@@ -132,17 +133,23 @@ const ComboboxInput = React.forwardRef<
 
 ComboboxInput.displayName = "ComboboxInput";
 
+/**
+ * Scrolls inside the overlay's ScrollArea, capped well below the screen so a
+ * long list (every world) does not fill the game's height.
+ */
 const ComboboxList = React.forwardRef<HTMLDivElement, BaseCombobox.List.Props>(
   ({ className, ...props }, ref) => (
-    <BaseCombobox.List
-      ref={ref}
-      data-slot="combobox-list"
-      className={cn(
-        "ll:flex ll:min-h-0 ll:w-full ll:flex-col ll:overflow-y-auto ll:overscroll-contain ll:p-1 ll:data-[empty]:p-0",
-        className,
-      )}
-      {...props}
-    />
+    <ScrollArea className="ll:max-h-[min(16rem,var(--available-height))] ll:overscroll-contain">
+      <BaseCombobox.List
+        ref={ref}
+        data-slot="combobox-list"
+        className={cn(
+          "ll:flex ll:w-full ll:flex-col ll:p-1 ll:data-[empty]:p-0",
+          className,
+        )}
+        {...props}
+      />
+    </ScrollArea>
   ),
 );
 
