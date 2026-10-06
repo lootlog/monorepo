@@ -1,4 +1,5 @@
 import {
+  discordGuildChannelFields,
   discordPermissionFields,
   DiscordGuildSyncStatus,
 } from "@lootlog/schema/discord";
@@ -9,16 +10,7 @@ import { HttpApiSchema } from "effect/http-api";
 export const GuildParams = Schema.Struct({ guildId: Schema.String });
 
 export const DiscordGuildChannel = Schema.Struct({
-  guildId: Schema.String,
-  channelId: Schema.String,
-  name: Schema.String,
-  channelType: Schema.String,
-  parentId: Schema.NullOr(Schema.String),
-  position: Schema.Int,
-  active: Schema.Boolean,
-  canView: Schema.Boolean,
-  canSend: Schema.Boolean,
-  ...discordPermissionFields,
+  ...discordGuildChannelFields,
   lastSyncedAt: Schema.String,
 }).annotate({ identifier: "DiscordGuildChannel" });
 

@@ -16,6 +16,19 @@ export const discordPermissionFields = {
   missingPermissions: Schema.Array(Schema.String),
 };
 
+export const discordGuildChannelFields = {
+  guildId: Schema.String,
+  channelId: Schema.String,
+  name: Schema.String,
+  channelType: Schema.String,
+  parentId: Schema.NullOr(Schema.String),
+  position: Schema.Int,
+  active: Schema.Boolean,
+  canView: Schema.Boolean,
+  canSend: Schema.Boolean,
+  ...discordPermissionFields,
+};
+
 export const DiscordGuildSyncStatus = Schema.Literals([
   "SYNCED",
   "SYNCING",
