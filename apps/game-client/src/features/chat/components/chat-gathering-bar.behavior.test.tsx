@@ -49,6 +49,26 @@ const createGathering = (
   ...overrides,
 });
 
+const currentCharacterOrganizerRoom = {
+  ...readyRoomOrganizerFixture,
+  world: "luvia",
+  organizerCharacter: {
+    ...readyRoomOrganizerFixture.organizerCharacter,
+    accountId: "account-1",
+    characterId: "101",
+  },
+};
+
+// Organized on another character of the hero's Margonem account.
+const accountOrganizerRoom = {
+  ...readyRoomOrganizerFixture,
+  world: "luvia",
+  organizerCharacter: {
+    ...readyRoomOrganizerFixture.organizerCharacter,
+    accountId: "account-1",
+  },
+};
+
 const setup = async (rooms: PartyGatheringSummary[] = []) => {
   const harness = createRealtimeTest();
   // Start from a synchronized empty collection so mounting a Ready Room view
@@ -233,7 +253,7 @@ it.each(["ORGANIZER", "PARTICIPANT"] as const)(
 
     const room =
       viewer === "ORGANIZER"
-        ? { ...readyRoomOrganizerFixture, world: "luvia" }
+        ? accountOrganizerRoom
         : createChatReadyRoom({ world: "luvia" });
 
     await act(async () =>
@@ -279,8 +299,7 @@ it("shows actual party size independently of applications and opens management",
   const harness = await setup();
 
   const room = {
-    ...readyRoomOrganizerFixture,
-    world: "luvia",
+    ...accountOrganizerRoom,
     partyMemberCount: 5,
     partyState: {
       status: "OBSERVED" as const,
@@ -351,10 +370,7 @@ it("invites applicants only when available, blocks double clicks and recovers af
   });
   await act(async () =>
     mergeReadyRoomProjectionIntoCache(
-      {
-        ...readyRoomOrganizerFixture,
-        world: "luvia",
-      },
+      accountOrganizerRoom,
       harness.queryClient,
     ),
   );
@@ -368,10 +384,7 @@ it("invites applicants only when available, blocks double clicks and recovers af
   expect(harness.mutation).not.toHaveBeenCalled();
   act(() => {
     setTestRuntimeGame({
-      hero: {
-        accountId: "organizer-account",
-        characterId: "organizer-character",
-      },
+      hero: { accountId: "account-1", characterId: "organizer-character" },
     });
   });
   harness.open();
@@ -465,52 +478,69 @@ it.each(["OUTSIDE", "IN_PARTY"] as const)(
   },
 );
 
-it("keeps the hovered signup target and prioritizes an owned room", async () => {
-  const room = createGathering({
-    notificationId: "original-room",
-    createdAt: "2026-09-28T10:00:00.000Z",
-  });
+it.each([
+  ["another Margonem account", false],
+  ["another character of the account", true],
+  ["the current character", true],
+] as const)(
+  "keeps the hovered signup target and blocks signups only while organizing on %s",
+  async (organizer, organizesOnCurrentAccount) => {
+    const room = createGathering({
+      notificationId: "original-room",
+      createdAt: "2026-09-28T10:00:00.000Z",
+    });
 
-  const harness = await setup([room]);
-  await screen.findByRole("button", { name: "Zgłoś się" });
-  const panel = harness.container.firstElementChild;
+    const harness = await setup([room]);
+    await screen.findByRole("button", { name: "Zgłoś się" });
+    const panel = harness.container.firstElementChild;
 
-  if (!(panel instanceof HTMLElement))
-    throw new Error("Expected gathering panel");
-  fireEvent.mouseEnter(panel);
-  harness.discovery.mockImplementation(async () =>
-    Response.json([
-      {
-        ...room,
-        notificationId: "newer-room",
-        createdAt: "2026-09-28T10:00:01.000Z",
-      },
-      room,
-    ]),
-  );
-  await harness.refresh();
-  harness.mutation.mockResolvedValue(
-    Response.json({ message: "Failed" }, { status: 500 }),
-  );
-  vi.spyOn(HTMLElement.prototype, "getClientRects").mockReturnValue(
-    Object.assign([new DOMRect()], { item: () => new DOMRect() }),
-  );
-  act(() => window.dispatchEvent(new Event("lootlog:join-visible-gathering")));
-  await waitFor(() => expect(harness.mutation).toHaveBeenCalledTimes(1));
-  expect(String(harness.mutation.mock.calls[0]?.[0])).toContain(
-    "original-room",
-  );
-  await act(async () =>
-    mergeReadyRoomProjectionIntoCache(
-      { ...readyRoomOrganizerFixture, world: "luvia" },
-      harness.queryClient,
-    ),
-  );
-  await waitFor(() => {
+    if (!(panel instanceof HTMLElement))
+      throw new Error("Expected gathering panel");
+    fireEvent.mouseEnter(panel);
+    harness.discovery.mockImplementation(async () =>
+      Response.json([
+        {
+          ...room,
+          notificationId: "newer-room",
+          createdAt: "2026-09-28T10:00:01.000Z",
+        },
+        room,
+      ]),
+    );
+    await harness.refresh();
+    harness.mutation.mockResolvedValue(
+      Response.json({ message: "Failed" }, { status: 500 }),
+    );
+    vi.spyOn(HTMLElement.prototype, "getClientRects").mockReturnValue(
+      Object.assign([new DOMRect()], { item: () => new DOMRect() }),
+    );
+    act(() =>
+      window.dispatchEvent(new Event("lootlog:join-visible-gathering")),
+    );
+    await waitFor(() => expect(harness.mutation).toHaveBeenCalledTimes(1));
+    expect(String(harness.mutation.mock.calls[0]?.[0])).toContain(
+      "original-room",
+    );
+    await act(async () => {
+      mergeReadyRoomProjectionIntoCache(
+        {
+          "another Margonem account": {
+            ...readyRoomOrganizerFixture,
+            world: "luvia",
+          },
+          "another character of the account": accountOrganizerRoom,
+          "the current character": currentCharacterOrganizerRoom,
+        }[organizer],
+        harness.queryClient,
+      );
+      // Let the query observers deliver the room before asserting either way.
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    });
+
     for (const signup of screen.getAllByRole("button", { name: "Zgłoś się" }))
-      expect(signup).toBeDisabled();
-  });
-});
+      expect(signup).toHaveProperty("disabled", organizesOnCurrentAccount);
+  },
+);
 
 it.each(["ORGANIZER", "PARTICIPANT"] as const)(
   "places the %s room after other gatherings only when organizing",
@@ -531,7 +561,7 @@ it.each(["ORGANIZER", "PARTICIPANT"] as const)(
 
     const room =
       viewer === "ORGANIZER"
-        ? { ...readyRoomOrganizerFixture, world: "luvia" }
+        ? accountOrganizerRoom
         : createChatReadyRoom({ world: "luvia" });
 
     await act(async () =>
@@ -814,71 +844,117 @@ it("keeps keyboard focus on the hidden gatherings menu after hiding a secondary 
   ).toBeVisible();
 });
 
-it("joins the selected organizer from the visible list and enables other signups after withdrawal", async () => {
-  const user = userEvent.setup();
+it.each([
+  ["another Discord user", false],
+  ["another character of the same Discord user", true],
+] as const)(
+  "joins a gathering organized by %s from the visible list and enables other signups after withdrawal",
+  async (_organizer, ownDiscordUser) => {
+    const user = userEvent.setup();
 
-  const harness = await setup([
-    createGathering({ description: "First", organizerName: "First organizer" }),
-    createGathering({
-      notificationId: "second-room",
-      description: "Second",
-      organizerName: "Second organizer",
-    }),
-  ]);
-
-  harness.mutation.mockResolvedValueOnce(
-    Response.json(
-      createChatReadyRoom({
-        notificationId: "second-room",
-        world: "luvia",
-        description: "Second",
+    const harness = await setup([
+      createGathering({
+        description: "First",
+        organizerName: "First organizer",
       }),
-    ),
-  );
-  expandGatherings();
+      createGathering({
+        notificationId: "second-room",
+        description: "Second",
+        organizerName: "Second organizer",
+      }),
+    ]);
 
-  const secondOrganizer = screen
-    .getAllByRole("listitem")
-    .find((row) => within(row).queryByText("Second"));
-
-  if (!secondOrganizer) throw new Error("Expected second organizer gathering");
-  await user.click(
-    within(secondOrganizer).getByRole("button", { name: "Zgłoś się" }),
-  );
-  await waitFor(() => expect(harness.mutation).toHaveBeenCalledTimes(1));
-  expect(String(harness.mutation.mock.calls[0]?.[0])).toContain("second-room");
-
-  const withdrawal = await screen.findByRole("button", {
-    name: "Wycofaj zgłoszenie",
-  });
-
-  expect(screen.getByText("First")).toBeVisible();
-  expect(screen.getByRole("button", { name: "Zgłoś się" })).toBeDisabled();
-  await openGatheringMenu();
-  expect(screen.getByRole("button", { name: "Ukryj zbiórkę" })).toBeEnabled();
-  await user.keyboard("{Escape}");
-  harness.mutation.mockResolvedValueOnce(
-    Response.json({
-      schemaVersion: 3,
-      type: "REMOVE",
+    // The same Discord user sees its own room as organizer, including the
+    // participant it adds from another character.
+    const ownRoom = {
+      ...readyRoomOrganizerFixture,
       notificationId: "second-room",
-      revision: 4,
-    }),
-  );
-  await user.click(withdrawal);
-  await waitFor(() =>
-    expect(
-      screen.queryByRole("button", { name: "Wycofaj zgłoszenie" }),
-    ).toBeNull(),
-  );
-  expect(screen.getByText("First")).toBeVisible();
+      world: "luvia",
+      description: "Second",
+      participants: {},
+      ownedParticipantIds: [],
+    };
 
-  for (const action of screen.getAllByRole("button", {
-    name: /^(Zgłoś się|Ukryj zbiórkę)$/,
-  })) {
-    expect(action).toBeEnabled();
-  }
-});
+    if (ownDiscordUser)
+      await act(async () =>
+        mergeReadyRoomProjectionIntoCache(ownRoom, harness.queryClient),
+      );
+
+    const participant = createChatReadyRoom().participants["participant-1"];
+
+    if (!participant) throw new Error("Expected current character fixture");
+    harness.mutation.mockResolvedValueOnce(
+      Response.json(
+        ownDiscordUser
+          ? {
+              ...ownRoom,
+              revision: ownRoom.revision + 1,
+              participants: { "participant-1": participant },
+              ownedParticipantIds: ["participant-1"],
+            }
+          : createChatReadyRoom({
+              notificationId: "second-room",
+              world: "luvia",
+              description: "Second",
+            }),
+      ),
+    );
+    expandGatherings();
+
+    const secondOrganizer = screen
+      .getAllByRole("listitem")
+      .find((row) => within(row).queryByText("Second"));
+
+    if (!secondOrganizer)
+      throw new Error("Expected second organizer gathering");
+    await user.click(
+      within(secondOrganizer).getByRole("button", { name: "Zgłoś się" }),
+    );
+    await waitFor(() => expect(harness.mutation).toHaveBeenCalledTimes(1));
+    expect(String(harness.mutation.mock.calls[0]?.[0])).toContain(
+      "second-room",
+    );
+
+    const withdrawal = await screen.findByRole("button", {
+      name: "Wycofaj zgłoszenie",
+    });
+
+    expect(screen.getByText("First")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Zgłoś się" })).toBeDisabled();
+    await openGatheringMenu();
+    expect(screen.getByRole("button", { name: "Ukryj zbiórkę" })).toBeEnabled();
+    await user.keyboard("{Escape}");
+    harness.mutation.mockResolvedValueOnce(
+      Response.json(
+        ownDiscordUser
+          ? {
+              schemaVersion: 3,
+              type: "UPSERT",
+              projection: { ...ownRoom, revision: ownRoom.revision + 2 },
+            }
+          : {
+              schemaVersion: 3,
+              type: "REMOVE",
+              notificationId: "second-room",
+              revision: 4,
+            },
+      ),
+    );
+    await user.click(withdrawal);
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Wycofaj zgłoszenie" }),
+      ).toBeNull(),
+    );
+    expect(screen.getByText("First")).toBeVisible();
+
+    for (const action of screen.getAllByRole("button", {
+      name: /^(Zgłoś się|Ukryj zbiórkę)$/,
+    })) {
+      expect(action).toBeEnabled();
+    }
+  },
+);
 
 it("preserves the editor focus, draft and caret while gatherings appear, change and disappear", async () => {
   const user = userEvent.setup();

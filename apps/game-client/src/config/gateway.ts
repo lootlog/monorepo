@@ -49,6 +49,7 @@ export enum GatewayEvent {
   AIR_TAG_UPDATE = "air-tag:update",
   AIR_TAG_SCOPE_UPDATE = "air-tag:scope:update",
   AIR_TAG_MAP_THREAT_UPDATE = "air-tag:map-threat:update",
+  NPC_PRESENCE_UPDATE = "npc-presence:update",
 
   // margo events (game-specific)
   EVENT_MAP_STATUS_UPDATE = "event:map-status:update",

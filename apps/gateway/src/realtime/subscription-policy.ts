@@ -23,7 +23,7 @@ const TOPIC_PERMISSION = new Map<Topic, Permission>([
   ["map.pings", Permission.LOOTLOG_ONLINE_PLAYERS_READ],
 ]);
 
-const hasPermission = (
+export const hasPermission = (
   session: SessionData,
   organizationId: string,
   permission: Permission,

@@ -148,6 +148,8 @@ function executeGameCommand(realtime: RealtimeClient, command: unknown) {
     case "air-tag.subscription":
     case "air-tag.observation":
     case "air-tag.map-threats.fetch":
+    case "npc-presence.report":
+    case "npc-presence.fetch":
       return realtime.request(frame.type, frame.data);
     default:
       throw new Error("Unsupported game command");

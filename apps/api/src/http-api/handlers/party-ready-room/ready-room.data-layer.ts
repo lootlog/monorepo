@@ -402,9 +402,10 @@ export const makeReadyRoomDataLayer = (
         Effect.gen(function* () {
           const aggregate = yield* getLive(notificationId);
 
-          if (
-            aggregate.organizerCharacter.characterId === character.characterId
-          ) {
+          // Organizing is Margonem-account-wide: none of the organizer
+          // account's characters may join, other accounts of the same
+          // Discord user may.
+          if (aggregate.organizerCharacter.accountId === character.accountId) {
             return yield* Effect.fail(
               new ResourceConflictError({ code: "CHARACTER_ALREADY_JOINED" }),
             );

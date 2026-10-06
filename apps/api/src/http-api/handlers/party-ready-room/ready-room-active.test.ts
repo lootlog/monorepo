@@ -739,22 +739,35 @@ it("keeps authorized gathering rosters current across discovery, observations, a
       },
     });
 
-    const apply = await boundary.handler(
-      new Request(
-        "http://api.test/messaging/party-gathering/npc/applications",
-        {
-          method: "POST",
-          headers: {
-            authorization: "Bearer test",
-            "content-type": "application/json",
+    const applyAs = (character: typeof base.organizerCharacter) =>
+      boundary.handler(
+        new Request(
+          "http://api.test/messaging/party-gathering/npc/applications",
+          {
+            method: "POST",
+            headers: {
+              authorization: "Bearer test",
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({ world: base.world, character }),
           },
-          body: JSON.stringify({
-            world: base.world,
-            character: { ...base.organizerCharacter, characterId: "applicant" },
-          }),
-        },
-      ),
-    );
+        ),
+      );
+
+    // Every character of the organizer's Margonem account is the organizer.
+    const sameAccount = await applyAs({
+      ...base.organizerCharacter,
+      characterId: "applicant",
+    });
+
+    expect(sameAccount.status).toBe(409);
+
+    // Another Margonem account of the same Discord user may join.
+    const apply = await applyAs({
+      ...base.organizerCharacter,
+      accountId: "4",
+      characterId: "applicant",
+    });
 
     expect(apply.status).toBe(201);
     const application = await apply.json();
