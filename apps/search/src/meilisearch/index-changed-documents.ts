@@ -1,6 +1,7 @@
 import { Effect, Metric } from "effect";
 import { chunk } from "es-toolkit";
 import type { Index } from "meilisearch";
+import { SEARCH_INDEX_PRIMARY_KEY } from "./meilisearch-indexes.service.js";
 import {
   attemptMeilisearch,
   completeMeilisearchTask,
@@ -68,7 +69,7 @@ export const indexChangedDocuments = Effect.fn("Search.indexChangedDocuments")(
 
     for (const batch of chunk(changedDocuments, 500)) {
       yield* completeMeilisearchTask(`search.${index.uid}.index`, () =>
-        index.addDocuments(batch, { primaryKey: "uid" }),
+        index.addDocuments(batch, { primaryKey: SEARCH_INDEX_PRIMARY_KEY }),
       );
       yield* Metric.update(indexed, batch.length);
     }
