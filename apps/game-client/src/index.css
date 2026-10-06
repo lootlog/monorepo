@@ -331,7 +331,8 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
 
 /* A timer NPC an Organization member sees standing: its accent colour pulses
    over the tile, under the text. Only the overlay's opacity animates; with
-   animations off the tile keeps a steady tint. */
+   animations off the tile keeps a steady tint. Timers under the bag render
+   in a host portal outside #lootlog-root. */
 @keyframes ll-timer-standing-pulse {
   0%,
   100% {
@@ -342,12 +343,12 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   }
 }
 
-#lootlog-root .ll-timer-standing {
+:is(#lootlog-root, .ll-theme-boundary) .ll-timer-standing {
   position: relative;
   isolation: isolate;
 }
 
-#lootlog-root .ll-timer-standing::after {
+:is(#lootlog-root, .ll-theme-boundary) .ll-timer-standing::after {
   content: "";
   position: absolute;
   inset: 0;
