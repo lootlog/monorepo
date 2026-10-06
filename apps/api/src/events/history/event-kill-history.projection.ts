@@ -83,26 +83,10 @@ export const makeEventKillHistoryProjection = (
       overlapStart: overlapWindowStartTime,
     });
 
-    const assignmentsByMember = new Map<
-      number,
-      Array<{
-        mapId: string;
-        assignedAt: Date;
-        unassignedAt: Date | null;
-      }>
-    >();
-
-    for (const assignment of assignments) {
-      if (!assignmentsByMember.has(assignment.memberId)) {
-        assignmentsByMember.set(assignment.memberId, []);
-      }
-
-      assignmentsByMember.get(assignment.memberId)?.push({
-        mapId: assignment.mapId,
-        assignedAt: assignment.assignedAt,
-        unassignedAt: assignment.unassignedAt,
-      });
-    }
+    const assignmentsByMember = Map.groupBy(
+      assignments,
+      (assignment) => assignment.memberId,
+    );
 
     const fallbackMemberIds = [
       ...new Set(
@@ -315,27 +299,10 @@ export const makeEventKillHistoryProjection = (
           overlapStart: minTrackingWindowStart,
         })) ?? [];
 
-      const assignmentsByHeroMember = new Map<
-        string,
-        Array<{
-          mapId: string;
-          memberId: number;
-          assignedAt: Date;
-          unassignedAt: Date | null;
-        }>
-      >();
-
-      for (const assignment of assignments) {
-        const key = `${assignment.heroNpcId}:${assignment.memberId}`;
-        const current = assignmentsByHeroMember.get(key) ?? [];
-        current.push({
-          mapId: assignment.mapId,
-          memberId: assignment.memberId,
-          assignedAt: assignment.assignedAt,
-          unassignedAt: assignment.unassignedAt,
-        });
-        assignmentsByHeroMember.set(key, current);
-      }
+      const assignmentsByHeroMember = Map.groupBy(
+        assignments,
+        (assignment) => `${assignment.heroNpcId}:${assignment.memberId}`,
+      );
 
       for (const kill of kills) {
         const overlapWindowStartTime =
@@ -482,37 +449,16 @@ export const makeEventKillHistoryProjection = (
 
     const maps = yield* repository.findMaps(heroId);
 
-    const assignmentsByMapId = new Map<
-      string,
-      Array<{
-        memberId: number;
-        assignedAt: Date;
-        unassignedAt: Date | null;
-        member: {
-          name: string;
-          avatar: string | null;
-          userId: string | null;
-        };
-      }>
-    >();
-
     const timelineAssignments = yield* repository.findTimelineAssignments({
       mapIds: maps.map((map) => map.id),
       killedAt: kill.killedAt,
       overlapStart: scoringWindowStartTime,
     });
 
-    for (const assignment of timelineAssignments) {
-      const currentAssignments = assignmentsByMapId.get(assignment.mapId) ?? [];
-
-      currentAssignments.push({
-        memberId: assignment.memberId,
-        assignedAt: assignment.assignedAt,
-        unassignedAt: assignment.unassignedAt,
-        member: assignment.member,
-      });
-      assignmentsByMapId.set(assignment.mapId, currentAssignments);
-    }
+    const assignmentsByMapId = Map.groupBy(
+      timelineAssignments,
+      (assignment) => assignment.mapId,
+    );
 
     const results = maps.map((map) => {
       const gapsForMap = summaryGaps.filter((g) => g.mapId === map.id);
