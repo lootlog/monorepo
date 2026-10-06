@@ -26,6 +26,7 @@
   "stats": {
     "online": "{{count}} online",
     "onlineLabel": "Gracze z Lootlogiem online: {{count}}",
+    "worldOnlineLabel": "Gracze z Lootlogiem na świecie {{world}}: {{count}}",
     "listenersLabel": "Osoby na tym kanale: {{count}}"
   },
   "message": {
@@ -42,6 +43,7 @@
     "pin": "Przypnij",
     "delete": "Usuń",
     "mute": "Wycisz autora",
+    "unmute": "Odcisz autora",
     "deleteConfirm": {
       "title": "Usunąć wiadomość?",
       "description": "Zniknie z czatu u wszystkich."
@@ -62,7 +64,9 @@
       "43200": "30 dni",
       "permanent": "Na stałe"
     },
-    "muted": "Wyciszono: {{name}}"
+    "muted": "Wyciszono: {{name}}",
+    "unmuted": "Zdjęto wyciszenie",
+    "notMuted": "Autor tej wiadomości nie jest wyciszony"
   },
   "mutes": {
     "open": "Wyciszeni użytkownicy",

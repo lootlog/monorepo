@@ -37,6 +37,15 @@ export const GlobalChatToolbar = ({
     state.stats?.channel === channel ? state.stats : null,
   );
 
+  const onlineLabel =
+    stats &&
+    (channel === GLOBAL_CHAT_SHARED_CHANNEL
+      ? t("stats.onlineLabel", { count: stats.online })
+      : t("stats.worldOnlineLabel", {
+          count: stats.online,
+          world: toWorldOption(channel).label,
+        }));
+
   const groups: WorldGroup[] = [
     {
       value: "shared",
@@ -57,9 +66,7 @@ export const GlobalChatToolbar = ({
       <div className={toolbarStripRowClassName}>
         <span
           className="ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:px-1.5 ll:text-[11px] ll:font-semibold ll:tabular-nums ll:text-gray-200"
-          title={
-            stats ? t("stats.onlineLabel", { count: stats.online }) : undefined
-          }
+          title={onlineLabel ?? undefined}
         >
           <span
             aria-hidden
@@ -68,10 +75,8 @@ export const GlobalChatToolbar = ({
           <span aria-hidden>
             {stats ? t("stats.online", { count: stats.online }) : "–"}
           </span>
-          {stats ? (
-            <span className="ll:sr-only">
-              {t("stats.onlineLabel", { count: stats.online })}
-            </span>
+          {onlineLabel ? (
+            <span className="ll:sr-only">{onlineLabel}</span>
           ) : null}
         </span>
         <WorldCombobox

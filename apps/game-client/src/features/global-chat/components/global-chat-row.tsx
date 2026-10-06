@@ -14,7 +14,9 @@ import { ChatPlayerMessageView } from "@/features/chat/components/chat-player-me
 import { isChatMessageYesterdayOrOlder } from "@/features/chat/components/chat-message.helpers";
 import type { GlobalChatChannel } from "@/store/global-chat.store";
 import {
+  GLOBAL_CHAT_ADMIN_COLOR,
   getGlobalChatColor,
+  getGlobalChatSenderColor,
   type GlobalChatRow as GlobalChatRowData,
 } from "../global-chat.helpers";
 import { GlobalChatMessageMenu } from "./global-chat-message-menu";
@@ -89,7 +91,13 @@ export const GlobalChatRow = memo(function GlobalChatRow({
         paddingBlockStart: messageGap / 2,
         paddingBlockEnd: messageGap / 2,
       }}
-      className="ll:min-w-0 ll:shrink-0 ll:pl-1.5 ll:pr-0.5 ll:odd:bg-white/5 ll:even:bg-black/25 ll:odd:hover:bg-white/10 ll:even:hover:bg-white/10"
+      className={cn(
+        "ll:min-w-0 ll:shrink-0 ll:pl-1.5 ll:pr-0.5",
+        message.isAdmin
+          ? // Admin messages stand out from the alternating rows.
+            "ll:bg-red-500/20 ll:shadow-[inset_2px_0_0_#ef4444] ll:hover:bg-red-500/30"
+          : "ll:odd:bg-white/5 ll:even:bg-black/25 ll:odd:hover:bg-white/10 ll:even:hover:bg-white/10",
+      )}
     >
       <ContextMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <ContextMenuTrigger
@@ -118,9 +126,7 @@ export const GlobalChatRow = memo(function GlobalChatRow({
                   </span>
                 ) : null}
                 {message.isAdmin ? (
-                  <span className="ll:mr-1 ll:inline-block ll:rounded-sm ll:bg-red-600 ll:px-1 ll:text-[0.85em] ll:font-bold ll:uppercase ll:text-white">
-                    {t("message.admin")}
-                  </span>
+                  <span className="ll:sr-only">{t("message.admin")}</span>
                 ) : null}
                 <span
                   // Marks the caller's own name like a mention of the current user.
@@ -128,7 +134,7 @@ export const GlobalChatRow = memo(function GlobalChatRow({
                     "ll:rounded-sm ll:px-0.5 ll:bg-white/14 ll:ring-1 ll:ring-white/20":
                       message.isOwn,
                   })}
-                  style={{ color: getGlobalChatColor(message.displayName) }}
+                  style={{ color: getGlobalChatSenderColor(message) }}
                 >
                   {message.displayName}:
                 </span>
@@ -138,9 +144,14 @@ export const GlobalChatRow = memo(function GlobalChatRow({
               <span
                 data-slot="bubble"
                 className={cn("ll:whitespace-pre-wrap ll:select-text", {
-                  "ll:text-gray-200": isMsgYesterday,
+                  "ll:text-gray-200": isMsgYesterday && !message.isAdmin,
+                  "ll:font-semibold": message.isAdmin,
                 })}
-                style={{ overflowWrap: "anywhere", wordBreak: "normal" }}
+                style={{
+                  overflowWrap: "anywhere",
+                  wordBreak: "normal",
+                  color: message.isAdmin ? GLOBAL_CHAT_ADMIN_COLOR : undefined,
+                }}
               >
                 {message.message}
               </span>

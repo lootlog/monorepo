@@ -1,4 +1,4 @@
-import { Copy, Pin, Trash2, VolumeX } from "lucide-react";
+import { Copy, Pin, Trash2, Volume2, VolumeX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { GlobalChatMessageResponse } from "@lootlog/client/main";
@@ -39,7 +39,7 @@ export const GlobalChatMessageMenu = ({
   const { t } = useTranslation("globalChat");
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
-  const { deleteMessage, pinMessage, muteSender, isPending } =
+  const { deleteMessage, pinMessage, muteSender, unmuteSender, isPending } =
     useGlobalChatModeration(channel);
 
   return (
@@ -80,6 +80,17 @@ export const GlobalChatMessageMenu = ({
               ))}
             </ContextMenuContent>
           </ContextMenuSub>
+          <ContextMenuItem
+            disabled={isPending}
+            onClick={() => unmuteSender(message.id)}
+          >
+            <Volume2
+              aria-hidden
+              strokeWidth={1.5}
+              className={ICON_CLASS_NAME}
+            />
+            {t("messageActions.unmute")}
+          </ContextMenuItem>
           <ConfirmPopover
             open={deleteConfirmOpen}
             onOpenChange={setDeleteConfirmOpen}
