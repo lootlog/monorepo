@@ -26,6 +26,7 @@
   "stats": {
     "online": "{{count}} online",
     "onlineLabel": "Gracze z Lootlogiem online: {{count}}",
+    "worldOnlineLabel": "Gracze z Lootlogiem na świecie {{world}}: {{count}}",
     "listenersLabel": "Osoby na tym kanale: {{count}}"
   },
   "message": {
