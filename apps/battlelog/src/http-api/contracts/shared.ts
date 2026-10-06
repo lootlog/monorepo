@@ -262,3 +262,12 @@ export const BattlePagination = Schema.Struct({
   previousCursor: Schema.optionalKey(Schema.String),
   total: Schema.optionalKey(FiniteNumber),
 });
+
+export const BattleListMeta = Schema.Struct({
+  performance: Schema.Struct({
+    queryTime: FiniteNumber,
+    countTime: Schema.optionalKey(FiniteNumber),
+    totalItems: Schema.optionalKey(FiniteNumber),
+    estimatedTotal: Schema.optionalKey(Schema.Boolean),
+  }),
+});
