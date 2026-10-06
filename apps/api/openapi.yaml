@@ -5437,6 +5437,138 @@ paths:
                 additionalProperties: false
       description: Delete a chat message from a guild
       summary: Delete chat message
+  /global-chat/messages:
+    get:
+      tags:
+        - globalChat
+      operationId: GlobalChatController_getMessages
+      parameters:
+        - name: before
+          in: query
+          schema:
+            type: string
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: GlobalChatMessagesResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GlobalChatMessagesResponse"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: <No Content>
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Read one page of the chat shared by every Member of any Organization
+      summary: Get global chat messages
+    post:
+      tags:
+        - globalChat
+      operationId: GlobalChatController_sendMessage
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "201":
+          description: GlobalChatMessageResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GlobalChatMessageResponse"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: <No Content>
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "429":
+          description: <No Content>
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Send a plain-text message to the chat shared by every Member of any Organization
+      summary: Send global chat message
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendGlobalChatMessageRequest"
+        required: true
   /guilds/{guildId}/reservation-spots:
     get:
       tags:
@@ -26012,6 +26144,58 @@ components:
           - currentReservation
           - nextReservation
         additionalProperties: false
+    SendGlobalChatMessageRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          pattern: ^\S[\s\S]*\S$|^\S$|^$
+          minLength: 1
+          maxLength: 128
+      required:
+        - message
+      additionalProperties: false
+    GlobalChatMessagesResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/GlobalChatMessageResponse"
+        nextCursor:
+          nullable: true
+          type: string
+      required:
+        - messages
+        - nextCursor
+      additionalProperties: false
+    GlobalChatMessageResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+        displayName:
+          type: string
+          minLength: 1
+        message:
+          type: string
+          pattern: ^\S[\s\S]*\S$|^\S$|^$
+          minLength: 1
+          maxLength: 128
+        timestamp:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        isOwn:
+          type: boolean
+      required:
+        - id
+        - displayName
+        - message
+        - timestamp
+        - isOwn
+      additionalProperties: false
     ChatMessageActionResponseDto_Output:
       type: object
       properties:
@@ -30981,6 +31165,7 @@ tags:
   - name: lootlog-config
   - name: health
   - name: chat
+  - name: globalChat
   - name: reservations
   - name: reservation-sharing
   - name: notifications

@@ -213,6 +213,12 @@ describe("background connection", () => {
   it.each([
     { v: 1, type: "session.join", data: { world: 42 } },
     { v: 1, type: "presence.heartbeat", data: { sessionId: "session" } },
+    // The page may follow only the global chat, never another Organization topic.
+    {
+      v: 1,
+      type: "subscription.subscribe",
+      data: { topic: "organization.chat", organizationId: "organization" },
+    },
     {
       v: 1,
       type: "permissions.updated",

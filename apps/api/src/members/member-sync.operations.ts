@@ -83,6 +83,8 @@ export const makeMemberSync = (
           discordMember.nick ??
           discordMember.user.global_name ??
           discordMember.user.username,
+        discordDisplayName:
+          discordMember.user.global_name ?? discordMember.user.username,
         active: true,
         globalUserId: discordMember.globalUserId,
         lastDiscordAttemptAt: syncTimestamp,

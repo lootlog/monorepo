@@ -23,6 +23,7 @@ import type {
 import { Effect, Option, Schema, type Types, type Scope } from "effect";
 import type { CommandHandler } from "#src/realtime/command-handler";
 import {
+  GLOBAL_CHAT_FEDERATION_VERSION,
   PARTY_GATHERING_STATE_FEDERATION_VERSION,
   type RealtimeHub,
 } from "#src/realtime/realtime-hub";
@@ -103,6 +104,12 @@ export const gatewayConsumerSpecs: ReadonlyArray<ConsumerSpec> = [
     RabbitRoutingKey.GUILDS_RESERVATIONS_CHANGED_V2,
     RabbitRoutingKey.GUILDS_RESERVATIONS_CHANGED_V2_RETRY,
     RabbitRoutingKey.GUILDS_RESERVATIONS_CHANGED_V2_DLQ,
+  ),
+  retryable(
+    "gateway-global-chat-send-message",
+    RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE,
+    RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE_RETRY,
+    RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE_DLQ,
   ),
   retryable(
     "gateway-guilds-send-message",
@@ -627,6 +634,23 @@ export class RabbitBridge {
             ),
           ),
         { discard: true },
+      );
+    }
+
+    if (routingKey === RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE) {
+      const data = decodeRabbitEventJson(routingKey, serializedPayload);
+
+      // Sessions subscribe only once the cluster advertises global chat, and
+      // older replicas drop the frame; readers fetch the stored message.
+      if (this.hub.clusterFederationVersion < GLOBAL_CHAT_FEDERATION_VERSION)
+        return Effect.void;
+
+      return fromPromise(() =>
+        this.hub.publishToScope(
+          { topic: "global.chat" },
+          { v: 1, type: "global-chat.created", data },
+          data.id,
+        ),
       );
     }
 

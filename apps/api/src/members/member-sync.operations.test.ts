@@ -326,13 +326,16 @@ test("role deltas retain common rows and only visible profile changes invalidate
     boundary.events.length = 0;
     boundary.state.member = {
       ...boundary.state.member,
+      user: { ...boundary.state.member.user, global_name: "Global name" },
       nick: "New name",
       avatar: "new-avatar",
       banner: "new-banner",
     };
     const renamed = await boundary.refresh();
+    // The global chat names a User by the server-independent display name.
     expect(renamed.member).toMatchObject({
       name: "New name",
+      discordDisplayName: "Global name",
       avatar: "new-avatar",
       banner: "new-banner",
     });

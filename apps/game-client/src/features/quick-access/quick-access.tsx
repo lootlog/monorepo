@@ -12,6 +12,7 @@ import {
 } from "@/features/quick-access/components/quick-access-window-button";
 import { useWindowsStore } from "@/store/windows.store";
 import {
+  Globe,
   MessageSquareText,
   MessagesSquare,
   Settings,
@@ -63,6 +64,11 @@ export const QuickAccess = () => {
       label: t("buttons.chat"),
       icon: <MessagesSquare aria-hidden="true" className={ICON_CLASS_NAME} />,
       hotkeyAction: "toggle-chat",
+    },
+    {
+      windowId: "global-chat",
+      label: t("buttons.globalChat"),
+      icon: <Globe aria-hidden="true" className={ICON_CLASS_NAME} />,
     },
     {
       windowId: "command",

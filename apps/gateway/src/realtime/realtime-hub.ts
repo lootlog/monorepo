@@ -66,7 +66,7 @@ const MAX_SCOPE_BYTES = 1_024;
  * once `clusterFederationVersion` reaches it: a replica drops a frame its
  * schema does not know.
  */
-export const FEDERATION_VERSION = 5;
+export const FEDERATION_VERSION = 6;
 
 export const PARTY_GATHERING_STATE_FEDERATION_VERSION = 3;
 
@@ -75,6 +75,9 @@ export const SEQUENCED_FEDERATION_VERSION = 4;
 
 /** Replicas from this version register the air-tag scopes their sockets follow. */
 export const AIR_TAG_INTEREST_FEDERATION_VERSION = 5;
+
+/** Replicas from this version decode `global-chat.created`. */
+export const GLOBAL_CHAT_FEDERATION_VERSION = 6;
 
 const CLOSE_BATCH_INTERVAL_MS = 100;
 
