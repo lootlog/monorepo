@@ -1,5 +1,6 @@
 import { IsoDateTime } from "@lootlog/schema/primitives";
 import {
+  discordGuildChannelFields,
   discordPermissionFields,
   DiscordGuildSyncStatus,
 } from "@lootlog/schema/discord";
@@ -8,16 +9,7 @@ import { nullableIsoDatetimeCodec } from "./response-codecs.js";
 
 export const DiscordGuildChannelSnapshotResponse = Schema.Struct({
   id: Schema.Int,
-  guildId: Schema.String,
-  channelId: Schema.String,
-  name: Schema.String,
-  channelType: Schema.String,
-  parentId: Schema.NullOr(Schema.String),
-  position: Schema.Int,
-  active: Schema.Boolean,
-  canView: Schema.Boolean,
-  canSend: Schema.Boolean,
-  ...discordPermissionFields,
+  ...discordGuildChannelFields,
   lastSyncedAt: IsoDateTime,
   createdAt: IsoDateTime,
   updatedAt: IsoDateTime,
