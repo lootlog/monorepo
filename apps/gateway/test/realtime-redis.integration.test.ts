@@ -811,7 +811,7 @@ describe("realtime Dragonfly integration", () => {
     }
   });
 
-  test("gateway metrics tell each global chat channel its cluster-wide listeners", async () => {
+  test("gateway metrics tell each global chat channel its cluster-wide players and listeners", async () => {
     const runtime = ManagedRuntime.make(
       BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
     );
@@ -832,14 +832,19 @@ describe("realtime Dragonfly integration", () => {
         () => {},
       );
 
-      const listener = (id: string, channels: boolean) => {
+      const listener = (id: string, channels: boolean, world: string) => {
         const target = makeSocket(id);
+        const { data } = target.socket;
 
         Object.assign(target.socket, {
           data: {
-            ...target.socket.data,
+            ...data,
             supportsGlobalChat: true,
             supportsGlobalChatChannels: channels,
+            presence: data.presence?.character && {
+              ...data.presence,
+              character: { ...data.presence.character, world },
+            },
           },
         });
 
@@ -848,10 +853,11 @@ describe("realtime Dragonfly integration", () => {
 
       const firstHub = new RealtimeHub(makeConfiguration(), store);
       const secondHub = new RealtimeHub(makeConfiguration(), store);
-      const gordionA = listener("chat-gordion-a", true);
-      const sharedA = listener("chat-shared-a", true);
-      const gordionB = listener("chat-gordion-b", true);
-      const legacyB = listener("chat-legacy-b", false);
+      // Who plays where differs from who follows which channel.
+      const gordionA = listener("chat-gordion-a", true, "gordion");
+      const sharedA = listener("chat-shared-a", true, "gordion");
+      const gordionB = listener("chat-gordion-b", true, "classic");
+      const legacyB = listener("chat-legacy-b", false, "classic");
       const gordion = { topic: "global.chat.world", world: "gordion" } as const;
 
       for (const [hub, target, scope] of [
@@ -884,7 +890,7 @@ describe("realtime Dragonfly integration", () => {
         {
           v: 1,
           type: "global-chat.stats",
-          data: { world: "gordion", online: 4, listeners: 2 },
+          data: { world: "gordion", online: 2, listeners: 2 },
         },
       ]);
       expect(stats(sharedA.frames)).toEqual([
@@ -895,7 +901,7 @@ describe("realtime Dragonfly integration", () => {
         {
           v: 1,
           type: "global-chat.stats",
-          data: { world: "gordion", online: 2, listeners: 1 },
+          data: { world: "gordion", online: 0, listeners: 1 },
         },
       ]);
       // A client without channels would close the socket on the stats event.
