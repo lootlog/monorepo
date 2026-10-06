@@ -18,9 +18,16 @@ import { createDetectorSettings } from "@/lib/game-account-preferences";
 import { useGameStore } from "@/store/game.store";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import { useSession } from "@/hooks/auth/use-session";
 import { usePartyGatheringSocket } from "./use-party-gathering-socket";
 
-const notification = (index: number) => ({
+const notification = (
+  index: number,
+  {
+    discordId = `discord-${index}`,
+    organizer = { accountId: `${index}`, characterId: `${index}` },
+  } = {},
+) => ({
   v: 1 as const,
   type: "party-gathering.updated" as const,
   data: {
@@ -28,15 +35,14 @@ const notification = (index: number) => ({
     payload: {
       notificationId: `notification-${index}`,
       guildId: "guild-1",
-      discordId: `discord-${index}`,
+      discordId,
       world: "luvia",
       createdAt: "2026-04-17T10:00:00.000Z",
       character: {
         nick: `Hero ${index}`,
         lvl: 100,
         prof: "w",
-        characterId: `${index}`,
-        accountId: `${index}`,
+        ...organizer,
         icon: "hero.gif",
       },
     },
@@ -142,6 +148,36 @@ describe("usePartyGatheringSocket", () => {
     );
     expect(useNotificationsStore.getState().notifications).toContainEqual(
       expect.objectContaining({ notificationId: "notification-49" }),
+    );
+  });
+  it("shows own gatherings only when organized on another Margonem account", async () => {
+    const test = prepare();
+    act(() => test.setSessionDiscordId("discord-1"));
+
+    const view = renderHook(
+      () => {
+        usePartyGatheringSocket();
+
+        return useSession().data?.user.discordId;
+      },
+      { wrapper: test.wrapper },
+    );
+
+    await waitFor(() => expect(view.result.current).toBe("discord-1"));
+    test.open();
+    await test.receive(
+      notification(1, { organizer: { accountId: "202", characterId: "101" } }),
+      notification(2, { discordId: "discord-1" }),
+      notification(3, {
+        discordId: "discord-1",
+        organizer: { accountId: "202", characterId: "102" },
+      }),
+    );
+    await test.ready();
+    await waitFor(() =>
+      expect(useNotificationsStore.getState().notifications).toEqual([
+        expect.objectContaining({ notificationId: "notification-2" }),
+      ]),
     );
   });
   it("drops queued notifications cancelled before readiness", async () => {

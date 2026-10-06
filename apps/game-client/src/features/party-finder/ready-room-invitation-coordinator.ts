@@ -6,6 +6,7 @@ import { partyReadyRoomControllerResolveInvitationTargets } from "@lootlog/clien
 import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
 import { useGlobalStore } from "@/store/global.store";
 import {
+  characterIdentitiesMatch,
   isReadyRoomExpired,
   selectOwnedReadyRoom,
   type ReadyRoomCharacterIdentity,
@@ -43,16 +44,6 @@ let activeAbortController: AbortController | null = null;
 let pendingInvitation: PendingInvitation | null = null;
 
 let coordinatorGeneration = 0;
-
-function characterIdentitiesMatch(
-  first: ReadyRoomCharacterIdentity | null,
-  second: ReadyRoomCharacterIdentity,
-): boolean {
-  return (
-    first?.accountId === second.accountId &&
-    first.characterId === second.characterId
-  );
-}
 
 function getOrganizerCharacterIdentity(
   room: PartyReadyRoomOrganizerProjection,

@@ -26,7 +26,7 @@ it.each([
   [
     "character room",
     useCurrentCharacterReadyRoom,
-    { ...readyRoomOrganizerFixture, revision: 4 },
+    { room: { ...readyRoomOrganizerFixture, revision: 4 }, isOrganizer: true },
   ],
   ["synchronization", useReadyRoomsSynchronized, false],
 ] as const)(
@@ -37,6 +37,12 @@ it.each([
     });
 
     seedReadyRoomCache(client, [readyRoomOrganizerFixture]);
+    const previousGame = useGameStore.getState().game;
+
+    const { accountId, characterId } =
+      readyRoomOrganizerFixture.organizerCharacter;
+
+    setTestRuntimeGame({ hero: { accountId, characterId } });
 
     const wrapper = ({ children }: PropsWithChildren) => (
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
@@ -87,6 +93,7 @@ it.each([
     } finally {
       view.unmount();
       client.clear();
+      useGameStore.setState({ game: previousGame });
     }
   },
 );
@@ -107,7 +114,7 @@ it("updates the character room when switching characters without a cache write",
   const view = renderHook(useCurrentCharacterReadyRoom, { wrapper });
 
   try {
-    expect(view.result.current).toBeNull();
+    expect(view.result.current.room).toBeNull();
     act(() =>
       setTestRuntimeGame({
         hero: {
@@ -116,13 +123,13 @@ it("updates the character room when switching characters without a cache write",
         },
       }),
     );
-    expect(view.result.current?.notificationId).toBe(room.notificationId);
+    expect(view.result.current.room?.notificationId).toBe(room.notificationId);
     act(() =>
       setTestRuntimeGame({
         hero: { accountId: "other-account", characterId: "other-character" },
       }),
     );
-    expect(view.result.current).toBeNull();
+    expect(view.result.current.room).toBeNull();
   } finally {
     view.unmount();
     client.clear();

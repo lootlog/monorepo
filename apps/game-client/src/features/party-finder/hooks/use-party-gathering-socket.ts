@@ -3,6 +3,7 @@ import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { useNotificationPresenter } from "@/features/notifications/hooks/use-notification-presenter";
 import { isNotificationMuted } from "@/features/notifications/utils/notification-mutes";
+import { isOwnNotification } from "@/features/notifications/utils/is-own-notification";
 import { useSession } from "@/hooks/auth/use-session";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
 import { useCurrentUserNotificationMutes } from "@/features/settings/persistence/use-notification-mutes";
@@ -44,7 +45,13 @@ export const usePartyGatheringSocket = () => {
     worldRef.current = world;
     processNotificationsRef.current = (notifications) => {
       const requests = notifications.flatMap((data) => {
-        if (data.discordId === sessionDataRef.current?.user?.discordId) {
+        if (
+          isOwnNotification(
+            data.discordId,
+            sessionDataRef.current?.user?.discordId,
+            data.character,
+          )
+        ) {
           return [];
         }
 

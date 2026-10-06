@@ -11,7 +11,10 @@ import {
   useReadyRoomsSynchronized,
 } from "@/features/party-finder/hooks/use-ready-rooms";
 import { mergeReadyRoomProjectionIntoCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
-import { selectOwnedReadyRoom } from "@/features/party-finder/ready-room-cache";
+import {
+  characterIdentitiesMatch,
+  selectOwnedReadyRoom,
+} from "@/features/party-finder/ready-room-cache";
 import {
   createReadyRoomPartyReporter,
   type ReadyRoomPartyObservation,
@@ -31,8 +34,7 @@ function readObservation(
     !joined ||
     !areReadyRoomsSynchronized(client) ||
     status !== "ready" ||
-    currentCharacter?.accountId !== room.organizerCharacter.accountId ||
-    currentCharacter.characterId !== room.organizerCharacter.characterId
+    !characterIdentitiesMatch(currentCharacter, room.organizerCharacter)
   )
     return null;
 
