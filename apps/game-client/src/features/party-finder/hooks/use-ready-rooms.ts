@@ -14,6 +14,7 @@ import { useGlobalStore } from "@/store/global.store";
 import {
   applyAuthoritativeReadyRoomSync,
   captureReadyRoomSyncBaseline,
+  characterIdentitiesMatch,
   EMPTY_READY_ROOM_CACHE,
   resetReadyRoomObservationSequence,
   selectOwnedReadyRoom,
@@ -137,6 +138,18 @@ export const useReadyRoomProjections = () =>
 export const useOwnedReadyRoom = () =>
   useReadyRooms(selectOwnedReadyRoom).data ?? null;
 
+/**
+ * The room the Discord user organizes on the current Margonem account. Every
+ * character of that account manages it and none may join it; other accounts
+ * of the same Discord user join it like anyone else.
+ */
+export const useAccountOwnedReadyRoom = () => {
+  const accountId = useGameStore((state) => state.game?.hero.accountId);
+  const room = useOwnedReadyRoom();
+
+  return room?.organizerCharacter.accountId === accountId ? room : null;
+};
+
 export const useHasOwnedReadyRoom = () =>
   useReadyRooms(selectHasOwnedRoom).data ?? false;
 
@@ -145,16 +158,19 @@ export const useCurrentCharacterReadyRoom = () => {
   const accountId = useGameStore((state) => state.game?.hero.accountId);
   const characterId = useGameStore((state) => state.game?.hero.characterId);
 
-  return (
-    useReadyRooms(
-      (cache) =>
-        selectOwnedReadyRoom(cache) ??
-        selectReadyRoomForCharacter(
-          cache,
-          accountId !== undefined && characterId !== undefined
-            ? { accountId, characterId }
-            : null,
-        ),
-    ).data ?? null
-  );
+  const identity =
+    accountId !== undefined && characterId !== undefined
+      ? { accountId, characterId }
+      : null;
+
+  const room =
+    useReadyRooms((cache) => selectReadyRoomForCharacter(cache, identity))
+      .data ?? null;
+
+  return {
+    room,
+    isOrganizer:
+      room?.viewer === "ORGANIZER" &&
+      characterIdentitiesMatch(identity, room.organizerCharacter),
+  };
 };

@@ -79,11 +79,21 @@ type PreviewState = {
   color: keyof typeof TIMERS_COLORS;
   occupancy?: MapOccupancy;
   threat?: MapThreat;
+  /** An Organization member sees the NPC standing. */
+  standing?: boolean;
 };
 
 // Built when the preview opens, so enemy sightings start fresh.
 const createStates = (): readonly PreviewState[] => [
   { title: "Nikt", color: "sky" },
+  { title: "Stoi", color: "sky", standing: true },
+  {
+    title: "Stoi + 2 naszych",
+    color: "green",
+    occupancy: allies(2),
+    standing: true,
+  },
+  { title: "Stoi + 1 wróg", color: "red", threat: enemies(1), standing: true },
   { title: "1 nasz", color: "green", occupancy: allies(1) },
   { title: "4 naszych", color: "violet", occupancy: allies(4, 1) },
   { title: "3 naszych AFK", color: "yellow", occupancy: allies(3, "all") },
@@ -186,6 +196,7 @@ function PreviewTile({
             displayMode={displayMode}
             fontSize={11}
             isMinSpawnTime={index % 3 === 1}
+            isStanding={state.standing}
             label={`${timer.npc.name} (${timer.npc.lvl}w)`}
             timeLabel="3:59"
             timeAdornment=<TimerMapPlayersAdornment
@@ -201,13 +212,14 @@ function PreviewTile({
           guildNamesById={{ "guild-1": "Lootlog" }}
           occupancy={occupancy}
           threat={threat}
+          isStanding={state.standing}
         />
       </TooltipContent>
     </Tooltip>
   );
 }
 
-/** Every map presence and threat state of a single timer, with hover tooltips. */
+/** Every map presence, threat and standing state of a single timer, with hover tooltips. */
 export function TimerStatesPreview({ onClose }: { onClose: () => void }) {
   const container = getLootlogPortalContainer();
   const [states] = useState(createStates);
@@ -261,6 +273,7 @@ export function TimerStatesPreview({ onClose }: { onClose: () => void }) {
                 guildNamesById={{ "guild-1": "Lootlog" }}
                 occupancy={pinnedState.occupancy}
                 threat={pinnedState.threat}
+                isStanding={pinnedState.standing}
               />
             </div>
           </section>

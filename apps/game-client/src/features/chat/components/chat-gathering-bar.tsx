@@ -13,7 +13,10 @@ import {
   useActivePartyGatherings,
   ACTIVE_GATHERINGS_QUERY_KEY,
 } from "@/features/chat/hooks/use-active-party-gatherings";
-import { useCurrentCharacterReadyRoom } from "@/features/party-finder/hooks/use-ready-rooms";
+import {
+  useAccountOwnedReadyRoom,
+  useCurrentCharacterReadyRoom,
+} from "@/features/party-finder/hooks/use-ready-rooms";
 import { useReadyRoomsCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
 import { useGameStore } from "@/store/game.store";
 import { buildCurrentCharacterPayload } from "@/lib/api/generated-helpers";
@@ -67,10 +70,11 @@ export function ChatGatheringBar({
   );
 
   const { mergeProjection } = useReadyRoomsCache();
-  const room = useCurrentCharacterReadyRoom();
+  const { room, isOrganizer } = useCurrentCharacterReadyRoom();
+  // Managed from, and closed to signups on, every character of its account.
+  const ownedRoom = useAccountOwnedReadyRoom();
 
   const roomId = room?.notificationId;
-  const isOrganizer = room?.viewer === "ORGANIZER";
   const queryClient = useQueryClient();
   const participantRoom = isOrganizer ? null : room;
   const withdrawal = useReadyRoomWithdrawal(participantRoom);
@@ -120,7 +124,10 @@ export function ChatGatheringBar({
     (hiddenIds?.[candidate.notificationId] ?? 0) > discovery.observedAt;
 
   const candidates = eligibleGatherings.filter(
-    (candidate) => !hidden(candidate) && candidate.notificationId !== roomId,
+    (candidate) =>
+      !hidden(candidate) &&
+      candidate.notificationId !== roomId &&
+      candidate.notificationId !== ownedRoom?.notificationId,
   );
 
   const hiddenGatherings = eligibleGatherings.filter(hidden);
@@ -131,6 +138,7 @@ export function ChatGatheringBar({
     if (
       pendingRef.current ||
       room ||
+      ownedRoom ||
       discovery.isStale ||
       (!allowHidden &&
         useHiddenPartyGatheringsStore
@@ -248,7 +256,7 @@ export function ChatGatheringBar({
           candidates={candidates}
           target={target}
           room={participantRoom}
-          hasOwnGathering={isOrganizer}
+          hasOwnGathering={ownedRoom !== null}
           roomSummary={discovery.data.find(
             (candidate) => candidate.notificationId === roomId,
           )}
@@ -300,7 +308,7 @@ export function ChatGatheringBar({
         gatherings={hiddenGatherings}
         activeGatherings={candidates}
         pending={application.isPending}
-        disabled={[room, discovery.isStale].some(Boolean)}
+        disabled={[room, ownedRoom, discovery.isStale].some(Boolean)}
         onApply={(candidate) => apply(candidate, true)}
         onRestore={(notificationId) => {
           if (scopeKey)
@@ -316,14 +324,16 @@ export function ChatGatheringBar({
         }}
       />
     ),
-    isOrganizer && (
+    ownedRoom && (
       <div className="ll:shrink-0 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:text-[11px] ll:leading-[14px] ll:text-gray-100">
         <ChatAvailableGatherings
           candidates={[]}
           target={null}
-          room={room}
+          room={ownedRoom}
+          organizer
           roomSummary={discovery.data.find(
-            (candidate) => candidate.notificationId === roomId,
+            (candidate) =>
+              candidate.notificationId === ownedRoom.notificationId,
           )}
           pending={application.isPending}
           stale={discovery.isStale}

@@ -216,6 +216,12 @@ const setup = (
         Promise.reject(new Error("Unexpected map threat fetch")),
       registerInterest,
     },
+    {
+      report: () => Promise.reject(new Error("Unexpected NPC presence report")),
+      refresh: () => Promise.resolve(),
+      withdraw: () => Promise.resolve(),
+      fetch: () => Promise.reject(new Error("Unexpected NPC presence fetch")),
+    },
     joinAdmission,
   );
 
@@ -795,6 +801,14 @@ describe("CommandHandler session lifecycle", () => {
           registerInterest: () =>
             Promise.reject(new Error("Unexpected air tag interest")),
         },
+        {
+          report: () =>
+            Promise.reject(new Error("Unexpected NPC presence report")),
+          refresh: () => Promise.resolve(),
+          withdraw: () => Promise.resolve(),
+          fetch: () =>
+            Promise.reject(new Error("Unexpected NPC presence fetch")),
+        },
       );
 
       const responses: unknown[] = [];
@@ -1173,6 +1187,7 @@ describe("CommandHandler session lifecycle", () => {
           "lootlog.battle-ping.team.v1",
           "lootlog.air-tag-map-threat.v1",
           "lootlog.air-tag-scope-update.v1",
+          "lootlog.npc-presence.v1",
         ],
       },
     });
@@ -1568,6 +1583,13 @@ describe("CommandHandler session lifecycle", () => {
         publishObservations: () => Promise.reject(new Error("unused")),
         fetchMapThreats: () => Promise.reject(new Error("unused")),
         registerInterest: () => Promise.reject(new Error("unused")),
+      },
+      {
+        report: () =>
+          Promise.reject(new Error("Unexpected NPC presence report")),
+        refresh: () => Promise.resolve(),
+        withdraw: () => Promise.resolve(),
+        fetch: () => Promise.reject(new Error("Unexpected NPC presence fetch")),
       },
     );
 

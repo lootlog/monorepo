@@ -63,6 +63,16 @@ export function resetReadyRoomObservationSequence(): void {
   readyRoomObservationSequence = 0;
 }
 
+export function characterIdentitiesMatch(
+  first: ReadyRoomCharacterIdentity | null,
+  second: ReadyRoomCharacterIdentity,
+): first is ReadyRoomCharacterIdentity {
+  return (
+    first?.accountId === second.accountId &&
+    first.characterId === second.characterId
+  );
+}
+
 export function selectOwnedReadyRoom(
   cache: ReadyRoomProjections,
 ): PartyReadyRoomOrganizerProjection | null {
@@ -112,12 +122,11 @@ export function selectReadyRoomForCharacter(
   if (!identity) return null;
   const ownedReadyRoom = selectOwnedReadyRoom(cache);
 
-  const isOrganizerCharacter =
+  if (
     ownedReadyRoom !== null &&
-    identity.accountId === ownedReadyRoom.organizerCharacter.accountId &&
-    identity.characterId === ownedReadyRoom.organizerCharacter.characterId;
-
-  if (isOrganizerCharacter) return ownedReadyRoom;
+    characterIdentitiesMatch(identity, ownedReadyRoom.organizerCharacter)
+  )
+    return ownedReadyRoom;
 
   return (
     Object.values(cache.projections).find(

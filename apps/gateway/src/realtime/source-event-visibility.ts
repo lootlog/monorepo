@@ -117,6 +117,12 @@ export const prepareSourceEventVisibility = (
     if (event.type === "air-tag.map-threat-updated")
       return session.supportsAirTagMapThreats === true;
 
+    if (
+      event.type === "npc-presence.updated" &&
+      session.supportsNpcPresence !== true
+    )
+      return false;
+
     if (!canReadNpc(session, guild)) return false;
 
     switch (event.type) {

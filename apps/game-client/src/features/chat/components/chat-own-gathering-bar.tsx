@@ -28,10 +28,13 @@ function getLatestPartyState(
 
 export function ChatOwnGatheringBar({
   room,
+  organizer,
   summary,
   stale,
 }: {
   room: PartyReadyRoomProjection;
+  /** Shows organizer controls; otherwise the current character's application. */
+  organizer: boolean;
   summary?: PartyGatheringSummary;
   stale?: boolean;
 }) {
@@ -41,7 +44,6 @@ export function ChatOwnGatheringBar({
   const withdrawal = useReadyRoomWithdrawal(room);
   const [inviteFailed, setInviteFailed] = useState(false);
   const [withdrawFailed, setWithdrawFailed] = useState(false);
-  const organizer = room.viewer === "ORGANIZER";
 
   const partyState = getLatestPartyState(room, summary);
   const { observation, isStale } = useGatheringPartyState(partyState, stale);
