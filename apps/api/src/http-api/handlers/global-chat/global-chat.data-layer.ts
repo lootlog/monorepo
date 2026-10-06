@@ -1,5 +1,5 @@
 import { v6 } from "uuid";
-import { and, asc, desc, eq, gt, isNull, or } from "drizzle-orm";
+import { and, asc, desc, eq, gt, isNull, or, type SQL } from "drizzle-orm";
 import { Effect, Exit, Layer, Option, Schema } from "effect";
 import {
   GLOBAL_CHAT_PAGE_SIZE,
@@ -241,6 +241,19 @@ export const makeGlobalChatOperations = (
         return pinned?.id === id ? pinned : yield* notFound();
       });
 
+    /** Fails with 404 when no mute matches. */
+    const liftMute = (match: SQL) =>
+      database
+        .delete(globalChatMuteTable)
+        .where(match)
+        .returning({ id: globalChatMuteTable.id })
+        .pipe(
+          Effect.mapError(operationError),
+          Effect.flatMap((deleted) =>
+            deleted.length === 0 ? notFound() : Effect.void,
+          ),
+        );
+
     const unpin = (world: string | undefined) =>
       Effect.gen(function* () {
         yield* storeCall(store.setPinned(world, undefined));
@@ -452,14 +465,15 @@ export const makeGlobalChatOperations = (
       unmuteSender: (caller, muteId) =>
         Effect.gen(function* () {
           yield* requireAdmin(caller);
+          yield* liftMute(eq(globalChatMuteTable.id, muteId));
+        }),
+      unmuteMessageSender: (caller, world, messageId) =>
+        Effect.gen(function* () {
+          yield* requireAdmin(caller);
+          yield* requireChannel(world);
+          const { senderUserId } = yield* findMessage(world, messageId);
 
-          const deleted = yield* database
-            .delete(globalChatMuteTable)
-            .where(eq(globalChatMuteTable.id, muteId))
-            .returning({ id: globalChatMuteTable.id })
-            .pipe(Effect.mapError(operationError));
-
-          if (deleted.length === 0) return yield* notFound();
+          yield* liftMute(eq(globalChatMuteTable.userId, senderUserId));
         }),
     });
   });

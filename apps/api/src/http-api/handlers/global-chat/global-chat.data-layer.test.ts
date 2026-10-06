@@ -426,6 +426,7 @@ describe("global chat", () => {
           durationMinutes: 5,
         }),
       ),
+      fail(operations.unmuteMessageSender(reader, undefined, sent.id)),
     ]);
 
     const page = await run(
@@ -433,7 +434,7 @@ describe("global chat", () => {
     );
 
     expect(attempts.map(({ _tag }) => _tag)).toEqual(
-      Array.from({ length: 5 }, () => "GlobalChatAccessDenied"),
+      Array.from({ length: 6 }, () => "GlobalChatAccessDenied"),
     );
     expect(page.messages).toHaveLength(1);
     expect(page.pinned).toBeNull();
@@ -498,7 +499,13 @@ describe("global chat", () => {
     ).viewer;
 
     const listed = await run(operations.getMutes(admin));
-    await run(operations.unmuteSender(admin, mute.id));
+
+    await run(operations.unmuteMessageSender(admin, undefined, sent.id));
+
+    const notMuted = await Promise.all([
+      fail(operations.unmuteMessageSender(admin, undefined, sent.id)),
+      fail(operations.unmuteSender(admin, mute.id)),
+    ]);
 
     const resumed = await run(
       operations.sendMessage(author, { message: "Sorry", world: "gordion" }),
@@ -511,6 +518,11 @@ describe("global chat", () => {
       mutedUntil: mute.mutedUntil,
     });
     expect(listed.mutes).toEqual([mute]);
+    // Lifted from the message's menu; neither way finds the mute again.
+    expect(notMuted.map(({ _tag }) => _tag)).toEqual([
+      "GlobalChatNotFound",
+      "GlobalChatNotFound",
+    ]);
     expect(resumed.message).toBe("Sorry");
   });
 

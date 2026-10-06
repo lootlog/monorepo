@@ -1,11 +1,13 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { getApiErrorStatus } from "@lootlog/client/transport";
 import { toast } from "sonner";
 import {
   getGlobalChatControllerGetMutesQueryKey,
   useGlobalChatControllerDeleteMessage,
   useGlobalChatControllerMuteSender,
   useGlobalChatControllerPinMessage,
+  useGlobalChatControllerUnmuteMessageSender,
   useGlobalChatControllerUnmuteSender,
   useGlobalChatControllerUnpinMessage,
 } from "@lootlog/client/main";
@@ -82,6 +84,21 @@ export const useGlobalChatModeration = (channel: GlobalChatChannel) => {
     },
   });
 
+  const unmuteMutation = useGlobalChatControllerUnmuteMessageSender({
+    mutation: {
+      onSuccess: () => {
+        toast.success(t("mute.unmuted"));
+        void queryClient.invalidateQueries({
+          queryKey: getGlobalChatControllerGetMutesQueryKey(),
+        });
+      },
+      onError: (error) => {
+        if (getApiErrorStatus(error) === 404) toast.info(t("mute.notMuted"));
+        else onError();
+      },
+    },
+  });
+
   return {
     deleteMessage: (messageId: string) =>
       deleteMutation.mutate({
@@ -95,7 +112,13 @@ export const useGlobalChatModeration = (channel: GlobalChatChannel) => {
       muteMutation.mutate({
         data: { ...channelParams, messageId, durationMinutes },
       }),
+    unmuteSender: (messageId: string) =>
+      unmuteMutation.mutate({
+        pathParams: { messageId },
+        params: channelParams,
+      }),
     isPending:
+      unmuteMutation.isPending ||
       deleteMutation.isPending ||
       pinMutation.isPending ||
       unpinMutation.isPending ||
