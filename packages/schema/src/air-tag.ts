@@ -210,15 +210,7 @@ export const AirTagObservationBatchSchema = Schema.Struct({
 });
 
 export const AirTagTargetSchema = Schema.Struct({
-  targetId: ShortString,
-  nickname: ShortString,
-  clan: Schema.optionalKey(AirTagClanSchema),
-  relation: AirTagRelationSchema,
-  x: Coordinate,
-  y: Coordinate,
-  lvl: Schema.optionalKey(Level),
-  prof: Schema.optionalKey(Profession),
-  stasis: Schema.optionalKey(Schema.Boolean),
+  ...AirTagObservationSchema.fields,
   observedAt: SafeNatural,
   enemyObservedAt: Schema.optionalKey(SafeNatural),
   clanEnemyObservedAt: Schema.optionalKey(SafeNatural),
