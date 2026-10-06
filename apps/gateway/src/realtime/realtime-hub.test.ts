@@ -14,6 +14,10 @@ import type {
   RabbitMessagingService,
 } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
+import type {
+  GlobalChatChannelUpdate,
+  GlobalChatMessage,
+} from "@lootlog/schema/chat";
 import { Effect, Predicate } from "effect";
 import { decode, encode } from "@msgpack/msgpack";
 import type { FederatedRealtimeMessage } from "#src/platform/redis-store";
@@ -1920,6 +1924,157 @@ describe("RealtimeHub federation", () => {
         type: "party-ready-room.updated",
         data: { payload: { type: "REMOVE" } },
       },
+    ]);
+  });
+
+  test("routes global chat messages and moderation to the channel's subscribers only", async () => {
+    const bus = new FederationBus();
+    const local = new RealtimeHub(config, new FakeRedisStore(bus));
+    const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+
+    const session = (id: string, channels: boolean): SessionData => ({
+      ...makeSession(id),
+      supportsGlobalChat: true,
+      supportsGlobalChatChannels: channels,
+    });
+
+    const gordion = makeSocket(session("remote-gordion", true));
+    const shared = makeSocket(session("remote-shared", true));
+    const legacyShared = makeSocket(session("local-legacy-shared", false));
+    remote.register(gordion.socket);
+    remote.subscribe(gordion.socket, {
+      topic: "global.chat.world",
+      world: "gordion",
+    });
+    remote.register(shared.socket);
+    remote.subscribe(shared.socket, { topic: "global.chat" });
+    local.register(legacyShared.socket);
+    local.subscribe(legacyShared.socket, { topic: "global.chat" });
+
+    const handlers = new Map<
+      string,
+      (delivery: RabbitDelivery) => Effect.Effect<void, unknown>
+    >();
+
+    const messaging: RabbitMessagingService = {
+      publish: () => Effect.void,
+      ack: () => Effect.void,
+      nack: () => Effect.void,
+      consume: (options, handler) =>
+        Effect.sync(() => {
+          handlers.set(options.queue, handler);
+
+          return { consumerTag: options.queue, cancel: Effect.void };
+        }),
+    };
+
+    const unexpected = () => {
+      throw new Error("Unexpected control operation");
+    };
+
+    const bridge = new RabbitBridge(
+      messaging,
+      local,
+      { rebalanceAcrossInstances: unexpected },
+      { coverageForMap: unexpected },
+      { publish: unexpected },
+    );
+
+    const sharedMessage = {
+      id: "in-shared",
+      displayName: "Author",
+      message: "Hello",
+      timestamp: "2026-10-06T12:00:00.000Z",
+      isAdmin: false,
+    };
+
+    const inGordion = { ...sharedMessage, id: "in-gordion", world: "gordion" };
+
+    for (const hub of [local, remote]) {
+      await Effect.runPromise(hub.start());
+      hub.clusterFederationVersion = 7;
+    }
+
+    await Effect.runPromise(
+      Effect.scoped(
+        Effect.gen(function* () {
+          yield* bridge.start();
+
+          const deliver = (
+            routingKey: string,
+            id: string,
+            payload: GlobalChatMessage | GlobalChatChannelUpdate,
+          ) => {
+            const spec = gatewayConsumerSpecs.find(
+              (entry) => entry.routingKey === routingKey,
+            );
+
+            const handler = spec && handlers.get(spec.queue);
+
+            if (!handler) throw new Error(`Missing consumer for ${routingKey}`);
+
+            return handler(
+              createRabbitDelivery(
+                routingKey,
+                Buffer.from(JSON.stringify(payload)),
+                id,
+              ),
+            );
+          };
+
+          yield* deliver(
+            RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE,
+            inGordion.id,
+            inGordion,
+          );
+          yield* deliver(
+            RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE,
+            sharedMessage.id,
+            sharedMessage,
+          );
+          yield* deliver(
+            RabbitRoutingKey.GLOBAL_CHAT_CHANNEL_UPDATE,
+            "delete",
+            {
+              type: "deleted",
+              world: "gordion",
+              id: "in-gordion",
+            },
+          );
+          yield* deliver(RabbitRoutingKey.GLOBAL_CHAT_CHANNEL_UPDATE, "pin", {
+            type: "pinned",
+            message: sharedMessage,
+          });
+        }),
+      ),
+    );
+
+    const received = (frames: Uint8Array[]) =>
+      frames.map((bytes) => decodeRealtimeFrame(bytes));
+
+    expect(received(gordion.sent)).toEqual([
+      {
+        v: 1,
+        type: "global-chat.created",
+        data: inGordion,
+      },
+      {
+        v: 1,
+        type: "global-chat.deleted",
+        data: { world: "gordion", id: "in-gordion" },
+      },
+    ]);
+    expect(received(shared.sent)).toEqual([
+      { v: 1, type: "global-chat.created", data: sharedMessage },
+      {
+        v: 1,
+        type: "global-chat.pinned",
+        data: { message: sharedMessage },
+      },
+    ]);
+    // A client without channels would close the socket on moderation events.
+    expect(received(legacyShared.sent)).toEqual([
+      { v: 1, type: "global-chat.created", data: sharedMessage },
     ]);
   });
 

@@ -20,10 +20,13 @@ import type {
   ServerEvent,
   SubscriptionScope,
 } from "@lootlog/protocol/realtime";
+import type { GlobalChatChannelUpdate } from "@lootlog/schema/chat";
 import { Effect, Option, Schema, type Types, type Scope } from "effect";
 import type { CommandHandler } from "#src/realtime/command-handler";
 import {
+  GLOBAL_CHAT_CHANNELS_FEDERATION_VERSION,
   GLOBAL_CHAT_FEDERATION_VERSION,
+  globalChatScope,
   PARTY_GATHERING_STATE_FEDERATION_VERSION,
   type RealtimeHub,
 } from "#src/realtime/realtime-hub";
@@ -33,6 +36,18 @@ import type { CoveragePublisher } from "#src/rabbit/coverage-publisher";
 type Event = typeof ServerEvent.Type;
 
 type Scope = typeof SubscriptionScope.Type;
+
+const globalChatChannelEvent = (update: GlobalChatChannelUpdate): Event => {
+  if (update.type === "deleted") {
+    const { type: _type, ...data } = update;
+
+    return { v: 1, type: "global-chat.deleted", data };
+  }
+
+  const { type: _type, ...data } = update;
+
+  return { v: 1, type: "global-chat.pinned", data };
+};
 
 interface ConsumerSpec {
   readonly queue: string;
@@ -104,6 +119,12 @@ export const gatewayConsumerSpecs: ReadonlyArray<ConsumerSpec> = [
     RabbitRoutingKey.GUILDS_RESERVATIONS_CHANGED_V2,
     RabbitRoutingKey.GUILDS_RESERVATIONS_CHANGED_V2_RETRY,
     RabbitRoutingKey.GUILDS_RESERVATIONS_CHANGED_V2_DLQ,
+  ),
+  retryable(
+    "gateway-global-chat-channel-update",
+    RabbitRoutingKey.GLOBAL_CHAT_CHANNEL_UPDATE,
+    RabbitRoutingKey.GLOBAL_CHAT_CHANNEL_UPDATE_RETRY,
+    RabbitRoutingKey.GLOBAL_CHAT_CHANNEL_UPDATE_DLQ,
   ),
   retryable(
     "gateway-global-chat-send-message",
@@ -637,22 +658,11 @@ export class RabbitBridge {
       );
     }
 
-    if (routingKey === RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE) {
-      const data = decodeRabbitEventJson(routingKey, serializedPayload);
-
-      // Sessions subscribe only once the cluster advertises global chat, and
-      // older replicas drop the frame; readers fetch the stored message.
-      if (this.hub.clusterFederationVersion < GLOBAL_CHAT_FEDERATION_VERSION)
-        return Effect.void;
-
-      return fromPromise(() =>
-        this.hub.publishToScope(
-          { topic: "global.chat" },
-          { v: 1, type: "global-chat.created", data },
-          data.id,
-        ),
-      );
-    }
+    if (
+      routingKey === RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE ||
+      routingKey === RabbitRoutingKey.GLOBAL_CHAT_CHANNEL_UPDATE
+    )
+      return this.publishGlobalChat(routingKey, serializedPayload, messageId);
 
     if (routingKey === RabbitRoutingKey.GUILDS_PARTY_GATHERING_UPDATED)
       return this.publishGatheringUpdate(
@@ -684,6 +694,51 @@ export class RabbitBridge {
     return fromPromise(() =>
       this.hub.publishToScope(routed.scope, routed.event),
     );
+  }
+
+  private publishGlobalChat(
+    routingKey:
+      | typeof RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE
+      | typeof RabbitRoutingKey.GLOBAL_CHAT_CHANNEL_UPDATE,
+    serializedPayload: string,
+    messageId: string | undefined,
+  ): Effect.Effect<void, unknown> {
+    const publish = (world: string | undefined, event: Event, id?: string) =>
+      Effect.tryPromise({
+        try: () => this.hub.publishToScope(globalChatScope(world), event, id),
+        catch: (cause) => cause,
+      });
+
+    if (routingKey === RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE) {
+      const data = decodeRabbitEventJson(routingKey, serializedPayload);
+
+      // Sessions subscribe only once the cluster advertises global chat or its
+      // channels, and older replicas drop the frame; readers fetch the stored message.
+      if (
+        this.hub.clusterFederationVersion <
+        (data.world === undefined
+          ? GLOBAL_CHAT_FEDERATION_VERSION
+          : GLOBAL_CHAT_CHANNELS_FEDERATION_VERSION)
+      )
+        return Effect.void;
+
+      return publish(
+        data.world,
+        { v: 1, type: "global-chat.created", data },
+        data.id,
+      );
+    }
+
+    const data = decodeRabbitEventJson(routingKey, serializedPayload);
+
+    // Readers see moderation on their next fetch until every replica decodes it.
+    if (
+      this.hub.clusterFederationVersion <
+      GLOBAL_CHAT_CHANNELS_FEDERATION_VERSION
+    )
+      return Effect.void;
+
+    return publish(data.world, globalChatChannelEvent(data), messageId);
   }
 
   private publishGatheringUpdate(

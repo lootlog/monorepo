@@ -7,7 +7,7 @@ const BUNDLE_PATH = new URL(
 );
 
 // Gzipped bytes. Raise it deliberately, in the change that needs the room.
-const GZIP_BUDGET_BYTES = 780_000;
+const GZIP_BUDGET_BYTES = 790_000;
 
 const bundle = await Bun.file(BUNDLE_PATH).bytes();
 

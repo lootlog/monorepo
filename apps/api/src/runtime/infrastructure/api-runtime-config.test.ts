@@ -56,6 +56,20 @@ describe("apiConfiguration", () => {
     expect(config.nodeWarningDiagnosticsEnabled).toBe(false);
   });
 
+  it("reads global chat admins as a comma-separated User id list", async () => {
+    const config = await Effect.runPromise(
+      loadWith({
+        ...requiredEnvironment,
+        GLOBAL_CHAT_ADMIN_USER_IDS: " user-1, ,user-2,",
+      }),
+    );
+
+    const unset = await Effect.runPromise(loadWith(requiredEnvironment));
+
+    expect(config.globalChatAdminUserIds).toEqual(["user-1", "user-2"]);
+    expect(unset.globalChatAdminUserIds).toEqual([]);
+  });
+
   it("fails closed for missing required input", () => {
     const missingRabbit = Effect.runSyncExit(
       loadWith({ ...requiredEnvironment, RABBITMQ_URI: undefined }),

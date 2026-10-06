@@ -1,10 +1,12 @@
 import type { PlayerPresenceUpdatePayload } from "@/lib/online-players-presence";
 import { useGameStore } from "@/store/game.store";
 import { useSettingsStore } from "@/store/settings.store";
+import { GLOBAL_CHAT_SHARED_CHANNEL } from "@/store/global-chat.store";
 import { GatewayEvent } from "@/config/gateway";
 import {
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_GLOBAL_CHAT_CAPABILITY,
+  REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
   REALTIME_TEAM_BATTLE_PING_CAPABILITY,
 } from "@lootlog/protocol/realtime";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -462,7 +464,7 @@ describe("game realtime verification and presence selection", () => {
     expect(socket.supportsTeamBattlePings()).toBe(false);
   });
 
-  it("follows the global chat only on gateways that advertise it, renewing it on every join", async () => {
+  it("follows a global chat channel only on gateways that advertise it, renewing it on every join", async () => {
     const globalChatRequests = () =>
       mocks.request.mock.calls.filter(([type]) =>
         type.startsWith("subscription."),
@@ -471,18 +473,17 @@ describe("game realtime verification and presence selection", () => {
     const subscribed = vi.fn();
     const socket = createSocket();
     socket.on(GatewayEvent.GLOBAL_CHAT_SUBSCRIBED, subscribed);
-    socket.setGlobalChatSubscribed(true);
+    socket.followGlobalChat("gordion");
     await socket.join(joinData);
     // Older gateways close the socket on an unknown subscription topic.
     expect(globalChatRequests()).toEqual([]);
 
-    mocks.join.mockResolvedValue({
-      connectionId: "connection-1",
-      organizationIds: ["organization-1"],
-      capabilities: [REALTIME_GLOBAL_CHAT_CAPABILITY],
-    });
-
-    const rejoin = async (joins: number) => {
+    const rejoin = async (capabilities: string[]) => {
+      mocks.join.mockResolvedValue({
+        connectionId: "connection-1",
+        organizationIds: ["organization-1"],
+        capabilities,
+      });
       socket.disconnect();
       socket.connect();
       wire.open();
@@ -492,17 +493,34 @@ describe("game realtime verification and presence selection", () => {
         data: { connectionId: "connection-1" },
       });
       await socket.join(joinData);
-      await vi.waitFor(() => expect(subscribed).toHaveBeenCalledTimes(joins));
     };
 
-    await rejoin(1);
-    // Each join replaces the gateway's subscriptions with the defaults.
-    await rejoin(2);
+    // A gateway with only the shared channel cannot follow a world.
+    await rejoin([REALTIME_GLOBAL_CHAT_CAPABILITY]);
+    expect(globalChatRequests()).toEqual([]);
 
-    socket.setGlobalChatSubscribed(false);
+    await rejoin([
+      REALTIME_GLOBAL_CHAT_CAPABILITY,
+      REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
+    ]);
+    await vi.waitFor(() => expect(subscribed).toHaveBeenCalledWith("gordion"));
+
+    socket.followGlobalChat(GLOBAL_CHAT_SHARED_CHANNEL);
+    await vi.waitFor(() =>
+      expect(subscribed).toHaveBeenLastCalledWith(GLOBAL_CHAT_SHARED_CHANNEL),
+    );
+    socket.followGlobalChat(undefined);
+
     await vi.waitFor(() =>
       expect(globalChatRequests()).toEqual([
-        ["subscription.subscribe", { topic: "global.chat" }],
+        [
+          "subscription.subscribe",
+          { topic: "global.chat.world", world: "gordion" },
+        ],
+        [
+          "subscription.unsubscribe",
+          { topic: "global.chat.world", world: "gordion" },
+        ],
         ["subscription.subscribe", { topic: "global.chat" }],
         ["subscription.unsubscribe", { topic: "global.chat" }],
       ]),

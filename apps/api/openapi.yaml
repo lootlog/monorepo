@@ -5437,12 +5437,80 @@ paths:
                 additionalProperties: false
       description: Delete a chat message from a guild
       summary: Delete chat message
+  /global-chat/worlds:
+    get:
+      tags:
+        - globalChat
+      operationId: GlobalChatController_getWorlds
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: GlobalChatWorldsResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GlobalChatWorldsResponse"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: <No Content>
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: List the worlds that have their own global chat channel
+      summary: Get global chat worlds
   /global-chat/messages:
     get:
       tags:
         - globalChat
       operationId: GlobalChatController_getMessages
       parameters:
+        - name: world
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 64
+          required: false
         - name: before
           in: query
           schema:
@@ -5489,6 +5557,8 @@ paths:
                 required:
                   - message
                 additionalProperties: false
+        "404":
+          description: <No Content>
         "429":
           description: Error
           content:
@@ -5501,7 +5571,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Read one page of the chat shared by every Member of any Organization
+      description: Read one page of a global chat channel shared by every Member of any Organization
       summary: Get global chat messages
     post:
       tags:
@@ -5549,6 +5619,8 @@ paths:
                 required:
                   - message
                 additionalProperties: false
+        "404":
+          description: <No Content>
         "429":
           description: <No Content>
           content:
@@ -5561,7 +5633,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Send a plain-text message to the chat shared by every Member of any Organization
+      description: Send a plain-text message to a global chat channel; muted senders are refused
       summary: Send global chat message
       requestBody:
         content:
@@ -5569,6 +5641,406 @@ paths:
             schema:
               $ref: "#/components/schemas/SendGlobalChatMessageRequest"
         required: true
+  /global-chat/messages/{messageId}:
+    delete:
+      tags:
+        - globalChat
+      operationId: GlobalChatController_deleteMessage
+      parameters:
+        - name: messageId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: world
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 64
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "204":
+          description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: <No Content>
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "404":
+          description: <No Content>
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Remove a message from a global chat channel; global chat admins only
+      summary: Delete global chat message
+  /global-chat/pinned-message:
+    put:
+      tags:
+        - globalChat
+      operationId: GlobalChatController_pinMessage
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: GlobalChatMessageResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GlobalChatMessageResponse"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: <No Content>
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "404":
+          description: <No Content>
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Pin one message above a global chat channel, replacing any pinned one; global chat admins only
+      summary: Pin global chat message
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PinGlobalChatMessageRequest"
+        required: true
+    delete:
+      tags:
+        - globalChat
+      operationId: GlobalChatController_unpinMessage
+      parameters:
+        - name: world
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 64
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "204":
+          description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: <No Content>
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "404":
+          description: <No Content>
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Remove the pinned message of a global chat channel; global chat admins only
+      summary: Unpin global chat message
+  /global-chat/mutes:
+    get:
+      tags:
+        - globalChat
+      operationId: GlobalChatController_getMutes
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: GlobalChatMutesResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GlobalChatMutesResponse"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: <No Content>
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: List senders who may not write in the global chat; global chat admins only
+      summary: Get global chat mutes
+    post:
+      tags:
+        - globalChat
+      operationId: GlobalChatController_muteSender
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "201":
+          description: GlobalChatMuteResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GlobalChatMuteResponse"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: <No Content>
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "404":
+          description: <No Content>
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Stop the sender of a kept message from writing in every global chat channel; global chat admins only
+      summary: Mute global chat sender
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MuteGlobalChatSenderRequest"
+        required: true
+  /global-chat/mutes/{muteId}:
+    delete:
+      tags:
+        - globalChat
+      operationId: GlobalChatController_unmuteSender
+      parameters:
+        - name: muteId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "204":
+          description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: <No Content>
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "404":
+          description: <No Content>
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Lift a global chat mute; global chat admins only
+      summary: Unmute global chat sender
   /guilds/{guildId}/reservation-spots:
     get:
       tags:
@@ -26144,30 +26616,66 @@ components:
           - currentReservation
           - nextReservation
         additionalProperties: false
-    SendGlobalChatMessageRequest:
+    MuteGlobalChatSenderRequest:
       type: object
       properties:
-        message:
+        world:
           type: string
-          pattern: ^\S[\s\S]*\S$|^\S$|^$
           minLength: 1
-          maxLength: 128
+          maxLength: 64
+        messageId:
+          type: string
+          minLength: 1
+        durationMinutes:
+          nullable: true
+          type: number
+          enum:
+            - 5
+            - 15
+            - 30
+            - 60
+            - 180
+            - 360
+            - 720
+            - 1440
+            - 4320
+            - 10080
+            - 43200
       required:
-        - message
+        - messageId
+        - durationMinutes
       additionalProperties: false
-    GlobalChatMessagesResponse:
+    GlobalChatMutesResponse:
       type: object
       properties:
-        messages:
+        mutes:
           type: array
           items:
-            $ref: "#/components/schemas/GlobalChatMessageResponse"
-        nextCursor:
+            $ref: "#/components/schemas/GlobalChatMuteResponse"
+      required:
+        - mutes
+      additionalProperties: false
+    GlobalChatMuteResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string
+        mutedUntil:
           nullable: true
           type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
       required:
-        - messages
-        - nextCursor
+        - id
+        - displayName
+        - mutedUntil
+        - createdAt
       additionalProperties: false
     GlobalChatMessageResponse:
       type: object
@@ -26187,6 +26695,16 @@ components:
           type: string
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        world:
+          type: string
+          minLength: 1
+          maxLength: 64
+        originWorld:
+          type: string
+          minLength: 1
+          maxLength: 64
+        isAdmin:
+          type: boolean
         isOwn:
           type: boolean
       required:
@@ -26194,7 +26712,124 @@ components:
         - displayName
         - message
         - timestamp
+        - isAdmin
         - isOwn
+      additionalProperties: false
+    PinGlobalChatMessageRequest:
+      type: object
+      properties:
+        world:
+          type: string
+          minLength: 1
+          maxLength: 64
+        messageId:
+          type: string
+          minLength: 1
+      required:
+        - messageId
+      additionalProperties: false
+    SendGlobalChatMessageRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          pattern: ^\S[\s\S]*\S$|^\S$|^$
+          minLength: 1
+          maxLength: 128
+        world:
+          type: string
+          minLength: 1
+          maxLength: 64
+        originWorld:
+          type: string
+          minLength: 1
+          maxLength: 64
+      required:
+        - message
+      additionalProperties: false
+    GlobalChatMessagesResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/GlobalChatMessageResponse"
+        nextCursor:
+          nullable: true
+          type: string
+        pinned:
+          nullable: true
+          type: object
+          properties:
+            id:
+              type: string
+              minLength: 1
+            displayName:
+              type: string
+              minLength: 1
+            message:
+              type: string
+              pattern: ^\S[\s\S]*\S$|^\S$|^$
+              minLength: 1
+              maxLength: 128
+            timestamp:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            world:
+              type: string
+              minLength: 1
+              maxLength: 64
+            originWorld:
+              type: string
+              minLength: 1
+              maxLength: 64
+            isAdmin:
+              type: boolean
+            isOwn:
+              type: boolean
+          required:
+            - id
+            - displayName
+            - message
+            - timestamp
+            - isAdmin
+            - isOwn
+          additionalProperties: false
+        viewer:
+          $ref: "#/components/schemas/GlobalChatViewer"
+      required:
+        - messages
+        - nextCursor
+        - pinned
+        - viewer
+      additionalProperties: false
+    GlobalChatViewer:
+      type: object
+      properties:
+        isAdmin:
+          type: boolean
+        muted:
+          type: boolean
+        mutedUntil:
+          nullable: true
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+      required:
+        - isAdmin
+        - muted
+        - mutedUntil
+      additionalProperties: false
+    GlobalChatWorldsResponse:
+      type: object
+      properties:
+        worlds:
+          type: array
+          items:
+            type: string
+      required:
+        - worlds
       additionalProperties: false
     ChatMessageActionResponseDto_Output:
       type: object

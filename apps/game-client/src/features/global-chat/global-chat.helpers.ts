@@ -3,7 +3,13 @@ import type {
   GlobalChatMessageResponse,
   GlobalChatMessagesResponse,
 } from "@lootlog/client/main";
+import type { GlobalChatMessage } from "@lootlog/schema/chat";
+import { hashString } from "@lootlog/ui/lib/seeded-random";
 import { getChatMessageDayKey } from "@/features/chat/chat.helpers";
+import {
+  GLOBAL_CHAT_SHARED_CHANNEL,
+  type GlobalChatChannel,
+} from "@/store/global-chat.store";
 
 export type GlobalChatPages = InfiniteData<GlobalChatMessagesResponse>;
 
@@ -47,6 +53,86 @@ export const appendGlobalChatMessage = (
     pages: [{ ...newest, messages: [...newest.messages, message] }, ...older],
   };
 };
+
+/** A message the gateway delivered, which never knows whose it is. */
+export const fromDeliveredGlobalChatMessage = (
+  message: GlobalChatMessage,
+): GlobalChatMessageResponse => ({
+  ...message,
+  isAdmin: message.isAdmin ?? false,
+  isOwn: false,
+});
+
+/** Drops a message an admin deleted from every loaded page. */
+export const removeGlobalChatMessage = (
+  data: GlobalChatPages | undefined,
+  id: string,
+): GlobalChatPages | undefined =>
+  data && {
+    ...data,
+    pages: data.pages.map((page) => ({
+      ...page,
+      messages: page.messages.filter((message) => message.id !== id),
+    })),
+  };
+
+/**
+ * Replaces the pinned message, which the newest page carries. A message the
+ * caller sent keeps its `isOwn` from the loaded history.
+ */
+export const setGlobalChatPinned = (
+  data: GlobalChatPages | undefined,
+  pinned: GlobalChatMessage | null,
+): GlobalChatPages | undefined => {
+  const [newest, ...older] = data?.pages ?? [];
+
+  if (!data || !newest) return data;
+
+  const loaded = pinned
+    ? [newest.pinned, ...data.pages.flatMap((page) => page.messages)].find(
+        (message) => message?.id === pinned.id,
+      )
+    : undefined;
+
+  return {
+    ...data,
+    pages: [
+      {
+        ...newest,
+        pinned: pinned && (loaded ?? fromDeliveredGlobalChatMessage(pinned)),
+      },
+      ...older,
+    ],
+  };
+};
+
+/**
+ * The picked channel while it still exists, otherwise the current world's,
+ * otherwise the one every world shares. A world has a channel once any
+ * Organization recorded a timer there; until the world list is known, every
+ * world is assumed to have one.
+ */
+export const resolveGlobalChatChannel = (
+  selected: GlobalChatChannel | null,
+  currentWorld: string | undefined,
+  worlds: ReadonlyArray<string> | undefined,
+): GlobalChatChannel => {
+  const exists = (world: string) => !worlds || worlds.includes(world);
+
+  if (
+    selected !== null &&
+    (selected === GLOBAL_CHAT_SHARED_CHANNEL || exists(selected))
+  )
+    return selected;
+
+  if (currentWorld !== undefined && exists(currentWorld)) return currentWorld;
+
+  return GLOBAL_CHAT_SHARED_CHANNEL;
+};
+
+/** A stable, readable color for a sender name or world tag on the dark chat. */
+export const getGlobalChatColor = (value: string) =>
+  `hsl(${hashString(value) % 360} 70% 72%)`;
 
 /** Oldest first, with a divider before each day's first message. */
 export const getGlobalChatRows = (

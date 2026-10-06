@@ -1,4 +1,5 @@
 import { IconButton } from "@/components/ui/icon-button";
+import { toWorldOption } from "@/components/world-combobox";
 import { SettingsNumberField } from "@/components/settings/settings-number-field";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsTextField } from "@/components/settings/settings-text-field";
@@ -73,7 +74,7 @@ export const DetectorRoutingRule: FC<DetectorRoutingRuleProps> = ({
   // World names are matched case-insensitively; show the game's lowercase
   // value the way the world selector does.
   const currentWorldLabel = currentWorld
-    ? currentWorld.charAt(0).toUpperCase() + currentWorld.slice(1)
+    ? toWorldOption(currentWorld).label
     : "";
 
   return (

@@ -51,9 +51,17 @@ export const canSubscribe = (session: SessionData, scope: Scope): boolean => {
   if (!organizationId) {
     if (session.apiKeyAccess) return false;
 
-    // Any Member of any Organization reads the global chat.
+    // Any Member of any Organization reads the global chat; only clients
+    // that know channels follow one world's channel, and never all at once.
     if (scope.topic === "global.chat")
       return session.supportsGlobalChat === true && session.guilds.length > 0;
+
+    if (scope.topic === "global.chat.world")
+      return (
+        session.guilds.length > 0 &&
+        scope.world !== undefined &&
+        session.supportsGlobalChatChannels === true
+      );
 
     return scope.topic === "party.ready-room";
   }

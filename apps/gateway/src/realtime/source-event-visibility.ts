@@ -78,6 +78,15 @@ export const findEventGuild = (
     ? undefined
     : session.guilds.find((entry) => entry.guild.id === organizationId);
 
+/** Older game clients close the socket on a global chat event they cannot decode. */
+const canDecodeGlobalChatEvent = (
+  session: SessionData,
+  type: Event["type"],
+): boolean =>
+  type === "global-chat.created"
+    ? session.supportsGlobalChat === true
+    : session.supportsGlobalChatChannels === true;
+
 export const prepareSourceEventVisibility = (
   event: Event,
   sourceNpcs: readonly LootVisibilityNpc[] = [],
@@ -123,8 +132,8 @@ export const prepareSourceEventVisibility = (
     )
       return false;
 
-    if (event.type === "global-chat.created")
-      return session.supportsGlobalChat === true;
+    if (event.type.startsWith("global-chat."))
+      return canDecodeGlobalChatEvent(session, event.type);
 
     if (!canReadNpc(session, guild)) return false;
 

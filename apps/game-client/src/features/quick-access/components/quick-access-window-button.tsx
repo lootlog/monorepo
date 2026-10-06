@@ -9,6 +9,8 @@ export type QuickAccessWindowButtonProps = {
   icon: ReactNode;
   /** Hotkey whose binding the tooltip shows next to the label. */
   hotkeyAction?: HotkeyAction;
+  /** Something new waits in the window; the label tells what. */
+  badge?: { count: number; label: string };
 };
 
 /** Toggles one Lootlog window and lights up while that window is open. */
@@ -17,6 +19,7 @@ export const QuickAccessWindowButton: FC<QuickAccessWindowButtonProps> = ({
   label,
   icon,
   hotkeyAction,
+  badge,
 }) => {
   const open = useWindowsStore((state) => state[windowId].open);
   const toggleOpen = useWindowsStore((state) => state.toggleOpen);
@@ -27,8 +30,22 @@ export const QuickAccessWindowButton: FC<QuickAccessWindowButtonProps> = ({
 
   return (
     <QuickAccessButton
-      label={label}
-      icon={icon}
+      label={badge ? `${label}. ${badge.label}` : label}
+      icon={
+        badge ? (
+          <span className="ll:relative ll:flex">
+            {icon}
+            <span
+              aria-hidden
+              className="ll:absolute ll:-top-1.5 ll:-right-2 ll:min-w-3.5 ll:rounded-full ll:bg-primary ll:px-0.5 ll:text-center ll:text-[9px] ll:font-bold ll:leading-3.5 ll:text-primary-foreground ll:tabular-nums"
+            >
+              {badge.count > 99 ? "99+" : badge.count}
+            </span>
+          </span>
+        ) : (
+          icon
+        )
+      }
       active={open}
       binding={binding}
       data-ll-window-toggle={windowId}

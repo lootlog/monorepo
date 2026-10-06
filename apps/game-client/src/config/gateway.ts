@@ -18,6 +18,9 @@ export enum GatewayEvent {
 
   // global chat
   GLOBAL_CHAT_MESSAGE = "global-chat:message",
+  GLOBAL_CHAT_DELETED = "global-chat:deleted",
+  GLOBAL_CHAT_PINNED = "global-chat:pinned",
+  GLOBAL_CHAT_STATS = "global-chat:stats",
   /** The joined gateway now delivers global chat messages to this socket. */
   GLOBAL_CHAT_SUBSCRIBED = "global-chat:subscribed",
 
