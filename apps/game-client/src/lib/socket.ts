@@ -21,6 +21,7 @@ import {
   REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
   REALTIME_NPC_PRESENCE_CAPABILITY,
   REALTIME_GLOBAL_CHAT_CAPABILITY,
+  REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_TEAM_BATTLE_PING_CAPABILITY,
   type AirTagSubscriptionCommand,
@@ -38,6 +39,10 @@ import {
 } from "@lootlog/client/realtime/event-listeners";
 import { GatewayEvent } from "@/config/gateway";
 import { useGameStore } from "@/store/game.store";
+import {
+  GLOBAL_CHAT_SHARED_CHANNEL,
+  type GlobalChatChannel,
+} from "@/store/global-chat.store";
 import {
   RealtimeRequestError,
   type RealtimeConnectionState,
@@ -158,6 +163,9 @@ const legacyEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
   "air-tag.map-threat-updated": GatewayEvent.AIR_TAG_MAP_THREAT_UPDATE,
   "npc-presence.updated": GatewayEvent.NPC_PRESENCE_UPDATE,
   "global-chat.created": GatewayEvent.GLOBAL_CHAT_MESSAGE,
+  "global-chat.deleted": GatewayEvent.GLOBAL_CHAT_DELETED,
+  "global-chat.pinned": GatewayEvent.GLOBAL_CHAT_PINNED,
+  "global-chat.stats": GatewayEvent.GLOBAL_CHAT_STATS,
   "event.map-status-updated": GatewayEvent.EVENT_MAP_STATUS_UPDATE,
   "event.hero-killed": GatewayEvent.EVENT_HERO_KILLED,
   "event.ranking-updated": GatewayEvent.EVENT_RANKING_UPDATE,
@@ -229,8 +237,9 @@ export class AppSocket {
   private airTagDeparturesSupported = false;
   private npcPresenceSupported = false;
   private globalChatSupported = false;
-  /** Whether a global chat window wants messages; every join drops the subscription. */
-  private globalChatWanted = false;
+  private globalChatChannelsSupported = false;
+  /** The followed global chat channel, if any; every join drops the subscription. */
+  private globalChatChannel: GlobalChatChannel | undefined;
   id: string | undefined;
 
   constructor() {
@@ -266,6 +275,7 @@ export class AppSocket {
         this.airTagDeparturesSupported = false;
         this.npcPresenceSupported = false;
         this.globalChatSupported = false;
+        this.globalChatChannelsSupported = false;
       }
 
       this.listeners.emit(
@@ -374,31 +384,47 @@ export class AppSocket {
   }
 
   /**
-   * Follows the global chat while a window shows it. The subscription is
-   * renewed after every join and emits `GLOBAL_CHAT_SUBSCRIBED` once live, so
-   * the window can fetch what it missed while not subscribed.
+   * Follows one global chat channel, or none when `undefined`. The
+   * subscription is renewed after every join and emits
+   * `GLOBAL_CHAT_SUBSCRIBED` with the channel once live, so its reader can
+   * fetch what it missed while not subscribed.
    */
-  setGlobalChatSubscribed(subscribed: boolean): void {
-    if (this.globalChatWanted === subscribed) return;
-    this.globalChatWanted = subscribed;
+  followGlobalChat(channel: GlobalChatChannel | undefined): void {
+    const previous = this.globalChatChannel;
 
-    if (this.globalChatSupported)
-      void this.requestGlobalChatSubscription(subscribed);
+    if (previous === channel) return;
+    this.globalChatChannel = channel;
+
+    if (previous !== undefined && this.supportsGlobalChatChannel(previous))
+      void this.requestGlobalChatSubscription(previous, false);
+
+    if (channel !== undefined && this.supportsGlobalChatChannel(channel))
+      void this.requestGlobalChatSubscription(channel, true);
+  }
+
+  /** Older gateways close the socket on a topic they do not know. */
+  private supportsGlobalChatChannel(channel: GlobalChatChannel): boolean {
+    return channel === GLOBAL_CHAT_SHARED_CHANNEL
+      ? this.globalChatSupported
+      : this.globalChatChannelsSupported;
   }
 
   private async requestGlobalChatSubscription(
+    channel: GlobalChatChannel,
     subscribed: boolean,
   ): Promise<void> {
     try {
       await this.realtime.request(
         subscribed ? "subscription.subscribe" : "subscription.unsubscribe",
-        { topic: "global.chat" },
+        channel === GLOBAL_CHAT_SHARED_CHANNEL
+          ? { topic: "global.chat" }
+          : { topic: "global.chat.world", world: channel },
       );
 
-      if (subscribed && this.globalChatWanted)
-        this.listeners.emit(GatewayEvent.GLOBAL_CHAT_SUBSCRIBED);
+      if (subscribed && this.globalChatChannel === channel)
+        this.listeners.emit(GatewayEvent.GLOBAL_CHAT_SUBSCRIBED, channel);
     } catch {
-      // The next join renews it; until then the window keeps fetched history.
+      // The next join renews it; until then the reader keeps fetched history.
       if (import.meta.env.DEV)
         console.warn("[Gateway] Failed to update the global chat subscription");
     }
@@ -596,14 +622,19 @@ export class AppSocket {
     this.globalChatSupported = capabilities.includes(
       REALTIME_GLOBAL_CHAT_CAPABILITY,
     );
+    this.globalChatChannelsSupported = capabilities.includes(
+      REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
+    );
     this.joinedOrganizationIds = [...response.organizationIds];
 
     if (response.accessPolicy) this.applyAccessPolicy(response.accessPolicy);
 
     this.dispatchJoin(response, data);
 
-    if (this.globalChatWanted && this.globalChatSupported)
-      void this.requestGlobalChatSubscription(true);
+    const channel = this.globalChatChannel;
+
+    if (channel !== undefined && this.supportsGlobalChatChannel(channel))
+      void this.requestGlobalChatSubscription(channel, true);
 
     return response;
   }
@@ -888,7 +919,7 @@ export class AppSocket {
         event.type === "air-tag.updated" ||
         event.type === "air-tag.map-threat-updated" ||
         event.type === "npc-presence.updated" ||
-        event.type === "global-chat.created"
+        event.type.startsWith("global-chat.")
           ? event.data
           : unwrapOrganizationEvent(event);
 

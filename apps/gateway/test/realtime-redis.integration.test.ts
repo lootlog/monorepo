@@ -811,6 +811,100 @@ describe("realtime Dragonfly integration", () => {
     }
   });
 
+  test("gateway metrics tell each global chat channel its cluster-wide listeners", async () => {
+    const runtime = ManagedRuntime.make(
+      BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
+    );
+
+    try {
+      const redis = await runtime.runPromise(Redis.Redis);
+
+      const store = new RedisGatewayStore(
+        redis,
+        {
+          host: dragonfly.getHost(),
+          port: redisPort,
+          username: "",
+          password: "",
+          keyPrefix: `chat-stats-test:${crypto.randomUUID()}`,
+        },
+        (effect) => runtime.runPromise(effect),
+        () => {},
+      );
+
+      const listener = (id: string, channels: boolean) => {
+        const target = makeSocket(id);
+
+        Object.assign(target.socket, {
+          data: {
+            ...target.socket.data,
+            supportsGlobalChat: true,
+            supportsGlobalChatChannels: channels,
+          },
+        });
+
+        return target;
+      };
+
+      const firstHub = new RealtimeHub(makeConfiguration(), store);
+      const secondHub = new RealtimeHub(makeConfiguration(), store);
+      const gordionA = listener("chat-gordion-a", true);
+      const sharedA = listener("chat-shared-a", true);
+      const gordionB = listener("chat-gordion-b", true);
+      const legacyB = listener("chat-legacy-b", false);
+      const gordion = { topic: "global.chat.world", world: "gordion" } as const;
+
+      for (const [hub, target, scope] of [
+        [firstHub, gordionA, gordion],
+        [firstHub, sharedA, { topic: "global.chat" }],
+        [secondHub, gordionB, gordion],
+        [secondHub, legacyB, { topic: "global.chat" }],
+      ] as const) {
+        hub.register(target.socket);
+        hub.subscribe(target.socket, scope);
+      }
+
+      await Effect.runPromise(
+        new GatewayMetrics(store.command, secondHub).sample(),
+      );
+      await Effect.runPromise(
+        new GatewayMetrics(store.command, firstHub).sample(),
+      );
+
+      const stats = (frames: Uint8Array[]) =>
+        frames.flatMap((bytes) => {
+          const frame = decodeRealtimeFrame(bytes);
+
+          return "type" in frame && frame.type === "global-chat.stats"
+            ? [frame]
+            : [];
+        });
+
+      expect(stats(gordionA.frames)).toEqual([
+        {
+          v: 1,
+          type: "global-chat.stats",
+          data: { world: "gordion", online: 4, listeners: 2 },
+        },
+      ]);
+      expect(stats(sharedA.frames)).toEqual([
+        { v: 1, type: "global-chat.stats", data: { online: 4, listeners: 2 } },
+      ]);
+      // The second replica sampled before the first one reported its listeners.
+      expect(stats(gordionB.frames)).toEqual([
+        {
+          v: 1,
+          type: "global-chat.stats",
+          data: { world: "gordion", online: 2, listeners: 1 },
+        },
+      ]);
+      // A client without channels would close the socket on the stats event.
+      expect(stats(legacyB.frames)).toEqual([]);
+    } finally {
+      await runtime.dispose();
+    }
+  });
+
   test("offline claims serialize with reconnect and retain expired-session delivery through a restart", async () => {
     const runtime = ManagedRuntime.make(
       BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),

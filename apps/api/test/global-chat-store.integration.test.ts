@@ -19,13 +19,23 @@ describe("Global chat store Dragonfly integration", () => {
   let store: GlobalChatStore;
   let redisRuntime: ManagedRuntime.ManagedRuntime<Redis.Redis, never>;
 
-  const appendAll = (values: ReadonlyArray<string>) =>
+  const appendAll = (
+    values: ReadonlyArray<string>,
+    world: string | undefined = undefined,
+  ) =>
     Effect.runPromise(
-      Effect.forEach(values, (value) => store.append(value), { discard: true }),
+      Effect.forEach(values, (value) => store.append(world, value), {
+        discard: true,
+      }),
     );
 
-  const page = (before: number | undefined, count: number) =>
-    Effect.runPromise(store.page(before, count));
+  const page = (
+    before: number | undefined,
+    count: number,
+    world: string | undefined = undefined,
+  ) => Effect.runPromise(store.page(world, before, count));
+
+  const message = (id: string) => JSON.stringify({ id, message: id });
 
   beforeAll(async () => {
     const username = encodeURIComponent(process.env.REDIS_USERNAME ?? "");
@@ -74,6 +84,50 @@ describe("Global chat store Dragonfly integration", () => {
 
     expect(kept).toHaveLength(GLOBAL_CHAT_MESSAGE_LIMIT);
     expect(kept.at(-1)?.value).toBe("message-3");
+  });
+
+  it("keeps each world's channel apart from the shared one", async () => {
+    await appendAll(["shared"]);
+    await appendAll(["gordion"], "gordion");
+
+    expect((await page(undefined, 10)).map(({ value }) => value)).toEqual([
+      "shared",
+    ]);
+    expect(
+      (await page(undefined, 10, "gordion")).map(({ value }) => value),
+    ).toEqual(["gordion"]);
+    expect(await page(undefined, 10, "tarhuna")).toEqual([]);
+  });
+
+  it("finds and removes a kept message by id without moving the others", async () => {
+    await appendAll([message("a"), message("b"), message("c")], "gordion");
+
+    const found = await Effect.runPromise(store.find("gordion", "b"));
+    const elsewhere = await Effect.runPromise(store.find(undefined, "b"));
+    const removed = await Effect.runPromise(store.remove("gordion", "b"));
+    const again = await Effect.runPromise(store.remove("gordion", "b"));
+    const kept = await page(undefined, 10, "gordion");
+
+    expect(found).toBe(message("b"));
+    expect(elsewhere).toBeUndefined();
+    expect(removed).toBe(true);
+    expect(again).toBe(false);
+    expect(kept.map(({ value, position }) => [value, position])).toEqual([
+      [message("c"), 3],
+      [message("a"), 1],
+    ]);
+  });
+
+  it("pins one message per channel until unpinned", async () => {
+    await Effect.runPromise(store.setPinned("gordion", message("a")));
+
+    const pinned = await Effect.runPromise(store.getPinned("gordion"));
+    const shared = await Effect.runPromise(store.getPinned(undefined));
+    await Effect.runPromise(store.setPinned("gordion", undefined));
+
+    expect(pinned).toBe(message("a"));
+    expect(shared).toBeUndefined();
+    expect(await Effect.runPromise(store.getPinned("gordion"))).toBeUndefined();
   });
 
   it("admits one send per User within the cooldown", async () => {
