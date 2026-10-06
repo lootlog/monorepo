@@ -30,7 +30,15 @@ await initializeTestTranslations();
 
 const signInFetch = vi.fn<NonNullable<ApiServiceConfig["fetch"]>>();
 
-vi.stubGlobal("fetch", signInFetch);
+const sessionFetch = vi.fn<NonNullable<ApiServiceConfig["fetch"]>>();
+
+const authFetch: NonNullable<ApiServiceConfig["fetch"]> = (input, init) => {
+  if (String(input).includes("/get-session")) return sessionFetch(input, init);
+
+  return signInFetch(input, init);
+};
+
+vi.stubGlobal("fetch", authFetch);
 
 const { AuthenticationGuard } = await import("./authentication-guard");
 
@@ -64,9 +72,11 @@ const renderGuard = (
 
 beforeEach(() => {
   useAuthRecoveryStore.getState().clearFailure();
+  sessionFetch.mockReset();
+  sessionFetch.mockImplementation(() => Promise.resolve(Response.json(null)));
   signInFetch.mockReset();
   signInFetch.mockImplementation(() => new Promise<Response>(() => undefined));
-  vi.stubGlobal("fetch", signInFetch);
+  vi.stubGlobal("fetch", authFetch);
 });
 
 afterEach(() => {
@@ -75,6 +85,80 @@ afterEach(() => {
 });
 
 describe("AuthenticationGuard", () => {
+  it("requests additional Discord consent through account linking for an existing session", async () => {
+    sessionFetch.mockResolvedValue(
+      Response.json({
+        session: { id: "existing-session", userId: "existing-user" },
+        user: { id: "existing-user", discordId: "123456789012345671" },
+      }),
+    );
+    renderGuard(["identify", "email"]);
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "auth.reloginRequired.button",
+      }),
+    );
+
+    await waitFor(() => expect(signInFetch).toHaveBeenCalledTimes(1));
+    expect(String(signInFetch.mock.calls[0]?.[0])).toContain("/link-social");
+    expect(
+      JSON.parse(String(signInFetch.mock.calls[0]?.[1]?.body)),
+    ).toMatchObject({
+      provider: "discord",
+      scopes: DISCORD_AUTH_SCOPES,
+      callbackURL: window.location.href,
+    });
+  });
+
+  it("starts a new sign-in if the session expires before account linking", async () => {
+    sessionFetch.mockResolvedValue(
+      Response.json({
+        session: { id: "expired-session", userId: "existing-user" },
+        user: { id: "existing-user" },
+      }),
+    );
+    signInFetch.mockResolvedValueOnce(
+      Response.json(
+        { code: "UNAUTHORIZED", message: "Session expired" },
+        { status: 401 },
+      ),
+    );
+    renderGuard([]);
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "auth.reloginRequired.button",
+      }),
+    );
+
+    await waitFor(() => expect(signInFetch).toHaveBeenCalledTimes(2));
+    expect(String(signInFetch.mock.calls[0]?.[0])).toContain("/link-social");
+    expect(String(signInFetch.mock.calls[1]?.[0])).toContain("/sign-in/social");
+  });
+
+  it("does not start OAuth when session verification is unavailable and allows retry", async () => {
+    sessionFetch.mockResolvedValueOnce(
+      Response.json(
+        { code: "UNAVAILABLE", message: "Unavailable" },
+        { status: 503 },
+      ),
+    );
+    renderGuard([]);
+
+    const button = screen.getByRole("button", {
+      name: "auth.reloginRequired.button",
+    });
+
+    fireEvent.click(button);
+
+    await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy());
+    expect(signInFetch).not.toHaveBeenCalled();
+    fireEvent.click(button);
+    await waitFor(() => expect(signInFetch).toHaveBeenCalledTimes(1));
+    expect(String(signInFetch.mock.calls[0]?.[0])).toContain("/sign-in/social");
+  });
+
   it("renders protected content only when all scopes are available", () => {
     renderGuard();
     expect(screen.getByText("protected content")).toBeTruthy();
