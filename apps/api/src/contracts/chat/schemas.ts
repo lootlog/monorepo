@@ -43,14 +43,16 @@ const PartyGathering = Schema.Struct({
   ),
 });
 
+const ChatMessageText = Schema.String.check(
+  Schema.isMaxLength(128).annotate({
+    expected: "a value with a length of at most 128",
+  }),
+);
+
 const ChatReply = Schema.Struct({
   messageId: NonEmptyString,
   senderNick: NonEmptyString,
-  message: Schema.String.check(
-    Schema.isMaxLength(128).annotate({
-      expected: "a value with a length of at most 128",
-    }),
-  ),
+  message: ChatMessageText,
   type: Schema.Literals(["NORMAL", "NOTIFICATION"]),
 });
 
@@ -59,11 +61,7 @@ export type ChatMessageResponse = typeof ChatMessageResponse.Type;
 export const ChatMessageResponse = Schema.Struct({
   id: NonEmptyString,
   guildId: NonEmptyString,
-  message: Schema.String.check(
-    Schema.isMaxLength(128).annotate({
-      expected: "a value with a length of at most 128",
-    }),
-  ),
+  message: ChatMessageText,
   senderId: NonEmptyString,
   timestamp: DateTimeString,
   type: Schema.Literals(["NORMAL", "NOTIFICATION", "NPC", "PARTY_GATHERING"]),
@@ -77,11 +75,7 @@ export const ChatMessageResponse = Schema.Struct({
 export type SendChatMessageRequest = typeof SendChatMessageRequest.Type;
 
 export const SendChatMessageRequest = Schema.Struct({
-  message: Schema.String.check(
-    Schema.isMaxLength(128).annotate({
-      expected: "a value with a length of at most 128",
-    }),
-  ),
+  message: ChatMessageText,
   type: Schema.Literals(["NORMAL", "NOTIFICATION", "NPC", "PARTY_GATHERING"]),
   characterData: ChatCharacter,
   npc: Schema.optionalKey(ChatNpc),
