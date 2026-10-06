@@ -103,6 +103,11 @@ export class GlobalChatData extends Context.Service<
       caller: GlobalChatCaller,
       muteId: string,
     ) => Effect.Effect<void, GlobalChatFailure>;
+    readonly unmuteMessageSender: (
+      caller: GlobalChatCaller,
+      world: string | undefined,
+      messageId: string,
+    ) => Effect.Effect<void, GlobalChatFailure>;
   }
 >()("@lootlog/api/http-api/global-chat/data") {}
 
@@ -187,6 +192,13 @@ export const GlobalChatHandlers = HttpApiBuilder.group(
         declaredHttpFailure(
           withCaller((data, caller) =>
             data.unmuteSender(caller, params.muteId),
+          ),
+        ),
+      )
+      .handle("GlobalChatControllerUnmuteMessageSender", ({ params, query }) =>
+        declaredHttpFailure(
+          withCaller((data, caller) =>
+            data.unmuteMessageSender(caller, query.world, params.messageId),
           ),
         ),
       ),

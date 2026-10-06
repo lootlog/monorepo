@@ -1800,6 +1800,25 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
           },
         },
       },
+      "DELETE /global-chat/messages/{messageId}/sender-mute": {
+        operationId: "GlobalChatController_unmuteMessageSender",
+        description:
+          "Lift the mute of the sender of a kept message; 404 when the sender is not muted; global chat admins only",
+        parameters: [
+          {
+            name: "messageId",
+            in: "path",
+            schema: { type: "string", minLength: 1 },
+            required: true,
+          },
+          GLOBAL_CHAT_WORLD_PARAMETER,
+        ],
+        security: [{ bearer: [] }],
+        responses: {
+          "204": { description: "<No Content>" },
+          "404": { description: "<No Content>" },
+        },
+      },
       "GET /users/@me/feed": {
         operationId: "UsersController_getUserFeed",
         parameters: USER_FEED_PARAMETERS,

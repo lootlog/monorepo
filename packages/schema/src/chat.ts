@@ -74,7 +74,10 @@ export type GlobalChatChannelUpdate = typeof GlobalChatChannelUpdateSchema.Type;
 /** Live counts the gateway sends to a channel's subscribers. */
 export const GlobalChatStatsSchema = Schema.Struct({
   world: Schema.optionalKey(GlobalChatWorld),
-  /** Unique Users with a live Game client across every Organization. */
+  /**
+   * Unique Users with a live Game client across every Organization: on the
+   * channel's world, or on any world in the shared channel.
+   */
   online: NonNegativeInt,
   /** Unique Users following this channel. */
   listeners: NonNegativeInt,

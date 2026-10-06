@@ -27,6 +27,7 @@ local connections, sessions, count = 0, 0, 0
 local federationVersion = math.huge
 local players = {}
 local listeners = {}
+local worldPlayers = {}
 for i = 1, #snapshots, 2 do
   local value = cjson.decode(snapshots[i + 1])
   if now - value.at >= 30000 then
@@ -43,9 +44,12 @@ for i = 1, #snapshots, 2 do
     for channel, listening in pairs(value.globalChatListeners or {}) do
       listeners[channel] = (listeners[channel] or 0) + listening
     end
+    for world, playing in pairs(value.worldPlayers or {}) do
+      worldPlayers[world] = (worldPlayers[world] or 0) + playing
+    end
   end
 end
-return {connections, sessions, count, federationVersion, cjson.encode(listeners)}
+return {connections, sessions, count, federationVersion, cjson.encode(listeners), cjson.encode(worldPlayers)}
 `;
 
 // Same liveness rule as SAMPLE, without writing this replica's snapshot.
@@ -78,8 +82,28 @@ const decodeCounts = Schema.decodeUnknownSync(
     Schema.Number,
     Schema.Number,
     Schema.fromJsonString(Schema.Record(Schema.String, Schema.Number)),
+    Schema.fromJsonString(Schema.Record(Schema.String, Schema.Number)),
   ]),
 );
+
+/** Adds one User to the set under `key`. */
+const addUser = (
+  sets: Map<string, Set<string>>,
+  key: string,
+  discordId: string,
+) => {
+  const users = sets.get(key) ?? new Set<string>();
+
+  users.add(discordId);
+  sets.set(key, users);
+};
+
+/**
+ * Unique Users per key on this replica. Replicas sum their counts, so a User
+ * connected to two replicas counts twice.
+ */
+const countUsers = (sets: Map<string, Set<string>>) =>
+  Object.fromEntries([...sets].map(([key, users]) => [key, users.size]));
 
 /** The shared channel's key among global chat listener counts. */
 const SHARED_CHANNEL = "";
@@ -189,8 +213,8 @@ export class GatewayMetrics {
   readonly sample = Effect.fnUntraced(function* (this: GatewayMetrics) {
     const sockets = this.hub.getLocalSockets();
     const players = new Set<string>();
-    // Unique Users per global chat channel this replica serves.
     const chatListeners = new Map<string, Set<string>>();
+    const worldPlayers = new Map<string, Set<string>>();
     let sessions = 0;
     const now = this.now();
 
@@ -201,11 +225,7 @@ export class GatewayMetrics {
           scope.topic !== "global.chat.world"
         )
           continue;
-        const channel = scope.world ?? SHARED_CHANNEL;
-        const listening = chatListeners.get(channel) ?? new Set<string>();
-
-        listening.add(data.discordId);
-        chatListeners.set(channel, listening);
+        addUser(chatListeners, scope.world ?? SHARED_CHANNEL, data.discordId);
       }
 
       const presence = data.presence;
@@ -218,6 +238,9 @@ export class GatewayMetrics {
         continue;
       sessions += 1;
       players.add(data.discordId);
+
+      if (presence.character)
+        addUser(worldPlayers, presence.character.world, data.discordId);
     }
 
     // ponytail: one snapshot per replica is scanned every 10s; shard aggregation if replica/player counts make this Redis script costly.
@@ -232,12 +255,8 @@ export class GatewayMetrics {
           sessions,
           players: [...players],
           federationVersion: FEDERATION_VERSION,
-          globalChatListeners: Object.fromEntries(
-            [...chatListeners].map(([channel, listening]) => [
-              channel,
-              listening.size,
-            ]),
-          ),
+          globalChatListeners: countUsers(chatListeners),
+          worldPlayers: countUsers(worldPlayers),
         }),
       ),
     );
@@ -248,6 +267,7 @@ export class GatewayMetrics {
       playerCount,
       federationVersion,
       listeners,
+      playersByWorld,
     ] = decodeCounts(counts);
 
     // Each replica samples every 10 s, so a starting older replica is seen within that.
@@ -262,21 +282,22 @@ export class GatewayMetrics {
     yield* Effect.forEach(
       chatListeners.keys(),
       (channel) => {
-        const world = channel === SHARED_CHANNEL ? undefined : channel;
+        const listening = listeners[channel] ?? 0;
 
-        const stats: GlobalChatStats = {
-          online: playerCount,
-          listeners: listeners[channel] ?? 0,
-        };
+        // The shared channel counts every world; a world's channel only its own.
+        const stats: GlobalChatStats =
+          channel === SHARED_CHANNEL
+            ? { online: playerCount, listeners: listening }
+            : {
+                world: channel,
+                online: playersByWorld[channel] ?? 0,
+                listeners: listening,
+              };
 
         return Effect.tryPromise(() =>
           this.hub.publishToScopes(
-            [globalChatScope(world)],
-            {
-              v: 1,
-              type: "global-chat.stats",
-              data: world === undefined ? stats : { ...stats, world },
-            },
+            [globalChatScope(stats.world)],
+            { v: 1, type: "global-chat.stats", data: stats },
             { localOnly: true },
           ),
         );

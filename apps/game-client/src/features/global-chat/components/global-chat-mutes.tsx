@@ -5,6 +5,7 @@ import { useGlobalChatControllerGetMutes } from "@lootlog/client/main";
 import { AsyncContent } from "@/components/async-content";
 import { format } from "@/utils/local-date";
 import { IconButton } from "@/components/ui/icon-button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Popover,
   PopoverContent,
@@ -43,39 +44,41 @@ export const GlobalChatMutes = () => {
               {t("mutes.empty")}
             </p>
           ) : (
-            <ul className="ll:m-0 ll:list-none ll:p-0 ll:flex ll:max-h-48 ll:flex-col ll:gap-1 ll:overflow-y-auto">
-              {mutes.data?.mutes.map((mute) => (
-                <li
-                  key={mute.id}
-                  className="ll:flex ll:items-center ll:gap-1 ll:text-xs"
-                >
-                  <span className="ll:min-w-0 ll:flex-1">
-                    <span className="ll:block ll:truncate ll:font-semibold">
-                      {mute.displayName}
-                    </span>
-                    <span className="ll:block ll:text-[11px] ll:text-muted-foreground">
-                      {mute.mutedUntil
-                        ? t("mutes.until", {
-                            date: format(
-                              new Date(mute.mutedUntil),
-                              "dd.MM.yyyy HH:mm",
-                            ),
-                          })
-                        : t("mutes.permanent")}
-                    </span>
-                  </span>
-                  <IconButton
-                    label={t("mutes.unmute", { name: mute.displayName })}
-                    disabled={unmute.isPending}
-                    onClick={() =>
-                      unmute.mutate({ pathParams: { muteId: mute.id } })
-                    }
+            <ScrollArea className="ll:max-h-48">
+              <ul className="ll:m-0 ll:flex ll:list-none ll:flex-col ll:gap-1 ll:p-0 ll:pr-2">
+                {mutes.data?.mutes.map((mute) => (
+                  <li
+                    key={mute.id}
+                    className="ll:flex ll:items-center ll:gap-1 ll:text-xs"
                   >
-                    <Volume2 aria-hidden className="ll:size-3.5" />
-                  </IconButton>
-                </li>
-              ))}
-            </ul>
+                    <span className="ll:min-w-0 ll:flex-1">
+                      <span className="ll:block ll:truncate ll:font-semibold">
+                        {mute.displayName}
+                      </span>
+                      <span className="ll:block ll:text-[11px] ll:text-muted-foreground">
+                        {mute.mutedUntil
+                          ? t("mutes.until", {
+                              date: format(
+                                new Date(mute.mutedUntil),
+                                "dd.MM.yyyy HH:mm",
+                              ),
+                            })
+                          : t("mutes.permanent")}
+                      </span>
+                    </span>
+                    <IconButton
+                      label={t("mutes.unmute", { name: mute.displayName })}
+                      disabled={unmute.isPending}
+                      onClick={() =>
+                        unmute.mutate({ pathParams: { muteId: mute.id } })
+                      }
+                    >
+                      <Volume2 aria-hidden className="ll:size-3.5" />
+                    </IconButton>
+                  </li>
+                ))}
+              </ul>
+            </ScrollArea>
           )}
         </AsyncContent>
       </PopoverContent>

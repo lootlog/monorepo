@@ -11685,6 +11685,29 @@ export type GlobalChatControllerUnmuteSender429 = {
   message: string;
 };
 
+export type GlobalChatControllerUnmuteMessageSenderPathParameters = {
+ messageId: string,
+ }
+export type GlobalChatControllerUnmuteMessageSenderParams = {
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
+world?: string;
+};
+
+export type GlobalChatControllerUnmuteMessageSender401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type GlobalChatControllerUnmuteMessageSender403 = {
+  message: string;
+};
+
+export type GlobalChatControllerUnmuteMessageSender429 = {
+  message: string;
+};
+
 export type ListReservationSpotsPathParameters = {
  guildId: string,
  }
@@ -23696,6 +23719,90 @@ export const useGlobalChatControllerUnmuteSender = <TError = ErrorType<RequestVa
         TContext
       > => {
       return useMutation(getGlobalChatControllerUnmuteSenderMutationOptions(options), queryClient);
+    }
+
+export const getGlobalChatControllerUnmuteMessageSenderUrl = ({ messageId }: GlobalChatControllerUnmuteMessageSenderPathParameters,
+    params?: GlobalChatControllerUnmuteMessageSenderParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/global-chat/messages/${messageId}/sender-mute?${stringifiedParams}` : `/global-chat/messages/${messageId}/sender-mute`
+}
+
+/**
+ * Lift the mute of the sender of a kept message; 404 when the sender is not muted; global chat admins only
+ * @summary Unmute global chat message sender
+ */
+export const globalChatControllerUnmuteMessageSender = async ({ messageId }: GlobalChatControllerUnmuteMessageSenderPathParameters,
+    params?: GlobalChatControllerUnmuteMessageSenderParams, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
+
+  return mainFetch<void>(getGlobalChatControllerUnmuteMessageSenderUrl({ messageId },params),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getGlobalChatControllerUnmuteMessageSenderMutationKey = () => ['globalChatControllerUnmuteMessageSender'] as const;
+
+export const getGlobalChatControllerUnmuteMessageSenderMutationOptions = <TError = ErrorType<RequestValidationError | GlobalChatControllerUnmuteMessageSender401 | GlobalChatControllerUnmuteMessageSender403 | void | GlobalChatControllerUnmuteMessageSender429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof globalChatControllerUnmuteMessageSender>>, TError,GlobalChatControllerUnmuteMessageSenderMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof globalChatControllerUnmuteMessageSender>>, TError,GlobalChatControllerUnmuteMessageSenderMutationVariables, TContext> => {
+
+const mutationKey = getGlobalChatControllerUnmuteMessageSenderMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof globalChatControllerUnmuteMessageSender>>, GlobalChatControllerUnmuteMessageSenderMutationVariables> = (props) => {
+          const {pathParams,params} = props ?? {};
+
+          return  globalChatControllerUnmuteMessageSender(pathParams,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GlobalChatControllerUnmuteMessageSenderMutationResult = NonNullable<Awaited<ReturnType<typeof globalChatControllerUnmuteMessageSender>>>
+
+    export type GlobalChatControllerUnmuteMessageSenderMutationError = ErrorType<RequestValidationError | GlobalChatControllerUnmuteMessageSender401 | GlobalChatControllerUnmuteMessageSender403 | void | GlobalChatControllerUnmuteMessageSender429>
+    export type GlobalChatControllerUnmuteMessageSenderMutationVariables = {pathParams: GlobalChatControllerUnmuteMessageSenderPathParameters;params?: GlobalChatControllerUnmuteMessageSenderParams}
+
+    /**
+ * @summary Unmute global chat message sender
+ */
+export const useGlobalChatControllerUnmuteMessageSender = <TError = ErrorType<RequestValidationError | GlobalChatControllerUnmuteMessageSender401 | GlobalChatControllerUnmuteMessageSender403 | void | GlobalChatControllerUnmuteMessageSender429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof globalChatControllerUnmuteMessageSender>>, TError,GlobalChatControllerUnmuteMessageSenderMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof globalChatControllerUnmuteMessageSender>>,
+        TError,
+        GlobalChatControllerUnmuteMessageSenderMutationVariables,
+        TContext
+      > => {
+      return useMutation(getGlobalChatControllerUnmuteMessageSenderMutationOptions(options), queryClient);
     }
 
 export const getListReservationSpotsUrl = ({ guildId }: ListReservationSpotsPathParameters,) => {

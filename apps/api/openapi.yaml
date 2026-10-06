@@ -6041,6 +6041,78 @@ paths:
                 additionalProperties: false
       description: Lift a global chat mute; global chat admins only
       summary: Unmute global chat sender
+  /global-chat/messages/{messageId}/sender-mute:
+    delete:
+      tags:
+        - globalChat
+      operationId: GlobalChatController_unmuteMessageSender
+      parameters:
+        - name: messageId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: world
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 64
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "204":
+          description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: <No Content>
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "404":
+          description: <No Content>
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Lift the mute of the sender of a kept message; 404 when the sender is not muted; global chat admins only
+      summary: Unmute global chat message sender
   /guilds/{guildId}/reservation-spots:
     get:
       tags:

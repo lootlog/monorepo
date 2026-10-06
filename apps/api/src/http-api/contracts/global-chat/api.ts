@@ -165,4 +165,21 @@ export class GlobalChatGroup extends HttpApiGroup.make("globalChat")
         OpenApi.Description,
         "Lift a global chat mute; global chat admins only",
       ),
+    HttpApiEndpoint.delete(
+      "GlobalChatControllerUnmuteMessageSender",
+      "/global-chat/messages/:messageId/sender-mute",
+      {
+        params: GlobalChatMessageParams,
+        query: GlobalChatChannelQuery,
+        success: HttpApiSchema.Empty(204),
+        error: [forbidden, notFound],
+      },
+    )
+      .middleware(BearerSecurityMiddleware)
+      .annotate(OpenApi.Identifier, "GlobalChatController_unmuteMessageSender")
+      .annotate(OpenApi.Summary, "Unmute global chat message sender")
+      .annotate(
+        OpenApi.Description,
+        "Lift the mute of the sender of a kept message; 404 when the sender is not muted; global chat admins only",
+      ),
   ) {}
