@@ -331,6 +331,16 @@ body {
   background: var(--broadcast-ink);
 }
 
+.landing-action-coral {
+  background: var(--broadcast-coral);
+  color: var(--broadcast-ink);
+}
+
+.landing-action-coral:hover {
+  background: var(--broadcast-white);
+  color: var(--broadcast-ink);
+}
+
 .landing-action-dark {
   background: var(--broadcast-ink);
   color: var(--broadcast-coral);

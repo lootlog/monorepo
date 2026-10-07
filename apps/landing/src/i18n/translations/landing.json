@@ -41,14 +41,14 @@
     "description": "Nie ma tu Twojego pytania? Zapytaj na Discordzie Lootloga.",
     "discord": "Dołącz do Discorda",
     "guide1": "Panel walk i analiza PvP",
-    "guide3": "Konfiguracja lootloga klanowego",
+    "guide3": "Wesprzyj Lootloga",
     "guide4": "Instrukcja timerów",
     "q1": "Gdzie znajdę analizę walk?",
     "a1": "W Panelu walk w aplikacji Lootloga. Dodatek zapisuje obsługiwane walki. W panelu sprawdzisz ich przebieg i statystyki.",
     "q2": "Czy za Lootloga można dostać bana?",
     "a2": "Lootlog nie porusza postacią, nie walczy i\u00a0nie gra za Ciebie\u00a0– zapisuje tylko obsługiwane zdarzenia z\u00a0gry. To nieoficjalny projekt społeczności, a\u00a0ostateczne decyzje dotyczące dodatków należą do administracji Margonem.",
     "q3": "Ile kosztuje Lootlog?",
-    "a3": "Nic. Lootlog jest darmowy i\u00a0rozwijany jako open source.",
+    "a3": "Nic. Lootlog jest darmowy i\u00a0rozwijany jako open source. Jeśli chcesz pomóc w\u00a0utrzymaniu serwerów i\u00a0dalszym rozwoju, możesz wesprzeć projekt na buycoffee.to.",
     "q4": "Jak synchronizują się timery?",
     "a4": "Gdy ktoś z klanu zbije obsługiwanego potwora, dodatek aktualizuje timer. Widzą go członkowie z dostępem do timerów w tym samym lootlogu.",
     "q5": "Czy Lootlog działa na wielu postaciach i\u00a0światach?",
@@ -99,6 +99,11 @@
     "description": "Lootlog jest darmowym projektem open source rozwijanym przez graczy Margonem. Kod źródłowy i dokumentacja są publiczne.",
     "github": "Zobacz kod na GitHubie",
     "docs": "Przeczytaj dokumentację",
+    "support": {
+      "title": "Wesprzyj rozwój Lootloga",
+      "description": "Lootlog zostaje darmowy dla wszystkich graczy. Wpłaty na buycoffee.to pomagają utrzymać serwery i\u00a0rozwijać nowe funkcje.",
+      "action": "Postaw kawę"
+    },
     "items": {
       "free": {
         "title": "Darmowy dodatek",
