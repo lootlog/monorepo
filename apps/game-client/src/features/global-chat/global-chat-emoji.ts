@@ -1,3 +1,5 @@
+import { normalizeSearchText } from "@/features/settings/settings-search";
+import { GLOBAL_CHAT_EMOJI_KEYWORDS } from "./global-chat-emoji-keywords.data";
 import {
   GLOBAL_CHAT_EMOJI_CATEGORIES,
   GLOBAL_CHAT_EMOJI_VERSIONS,
@@ -93,3 +95,34 @@ let categories: GlobalChatEmojiCategory[] | undefined;
  */
 export const getGlobalChatEmojiCategories = () =>
   (categories ??= detectCategories());
+
+let keywords: Map<string, string> | undefined;
+
+/**
+ * The picker's emoji whose Polish or English names contain every word of
+ * `query`, ignoring case and diacritics, in the picker's order.
+ */
+export const searchGlobalChatEmoji = (query: string) => {
+  const words = normalizeSearchText(query).split(/\s+/u).filter(Boolean);
+
+  if (words.length === 0) return [];
+
+  const index = (keywords ??= new Map(
+    GLOBAL_CHAT_EMOJI_KEYWORDS.split("\n").map((line) => {
+      const separator = line.indexOf(" ");
+
+      return [
+        line.slice(0, separator),
+        normalizeSearchText(line.slice(separator + 1)),
+      ];
+    }),
+  ));
+
+  return getGlobalChatEmojiCategories().flatMap(({ emoji }) =>
+    emoji.filter((candidate) => {
+      const terms = index.get(candidate);
+
+      return terms !== undefined && words.every((word) => terms.includes(word));
+    }),
+  );
+};

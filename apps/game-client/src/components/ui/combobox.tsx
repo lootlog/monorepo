@@ -93,7 +93,8 @@ const ComboboxContent = React.forwardRef<HTMLDivElement, ComboboxContentProps>(
           data-slot="combobox-content"
           className={cn(
             selectPopupClassName,
-            "ll:group/combobox-content ll:flex ll:w-[var(--anchor-width)] ll:max-w-[var(--available-width)] ll:flex-col ll:overflow-hidden",
+            // A narrow trigger (a toolbar strip) still opens a readable list.
+            "ll:group/combobox-content ll:flex ll:w-[max(var(--anchor-width),12rem)] ll:max-w-[var(--available-width)] ll:flex-col ll:overflow-hidden",
             className,
           )}
           {...props}

@@ -1,6 +1,6 @@
 {
   "window": {
-    "title": "Czat globalny"
+    "title": "Global"
   },
   "emptyState": {
     "title": "Na tym kanale jeszcze cisza",
@@ -87,6 +87,9 @@
     "emoji": "Wstaw emoji"
   },
   "emoji": {
+    "search": "Szukaj emoji…",
+    "results": "Wyniki wyszukiwania",
+    "empty": "Nie znaleziono emoji.",
     "categoriesLabel": "Kategorie emoji",
     "categories": {
       "recent": "Ostatnio używane",

@@ -1,6 +1,7 @@
 import type { GlobalChatStats } from "@lootlog/schema/chat";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { addRecentWorld } from "@/lib/recent-worlds";
 import { storageKey } from "@/lib/storage-key";
 
 const STORAGE_KEY = storageKey("ll:global-chat");
@@ -25,6 +26,8 @@ interface GlobalChatState {
   /** The channel the player last picked; null until they pick one. */
   selectedChannel: GlobalChatChannel | null;
   selectChannel: (channel: GlobalChatChannel) => void;
+  /** World channels the player picked, most recent first. */
+  recentWorlds: string[];
   /** The latest live counts the gateway sent for the followed channel. */
   stats:
     | (Omit<GlobalChatStats, "world"> & { channel: GlobalChatChannel })
@@ -46,7 +49,16 @@ export const useGlobalChatStore = create<GlobalChatState>()(
     (set) => ({
       selectedChannel: null,
       selectChannel: (channel) =>
-        set({ selectedChannel: channel, stats: null, unread: 0 }),
+        set((state) => ({
+          selectedChannel: channel,
+          recentWorlds:
+            channel === GLOBAL_CHAT_SHARED_CHANNEL
+              ? state.recentWorlds
+              : addRecentWorld(state.recentWorlds, channel),
+          stats: null,
+          unread: 0,
+        })),
+      recentWorlds: [],
       stats: null,
       setStats: ({ world, online, listeners }) =>
         set({
@@ -68,6 +80,7 @@ export const useGlobalChatStore = create<GlobalChatState>()(
       name: STORAGE_KEY,
       partialize: (state) => ({
         selectedChannel: state.selectedChannel,
+        recentWorlds: state.recentWorlds,
         recentEmoji: state.recentEmoji,
       }),
       storage: createJSONStorage(() => localStorage),
