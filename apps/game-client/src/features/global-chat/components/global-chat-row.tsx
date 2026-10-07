@@ -91,13 +91,7 @@ export const GlobalChatRow = memo(function GlobalChatRow({
         paddingBlockStart: messageGap / 2,
         paddingBlockEnd: messageGap / 2,
       }}
-      className={cn(
-        "ll:min-w-0 ll:shrink-0 ll:pl-1.5 ll:pr-0.5",
-        message.isAdmin
-          ? // Admin messages stand out from the alternating rows.
-            "ll:bg-red-950/60 ll:hover:bg-red-950/75"
-          : "ll:odd:bg-white/5 ll:even:bg-black/25 ll:odd:hover:bg-white/10 ll:even:hover:bg-white/10",
-      )}
+      className="ll:min-w-0 ll:shrink-0 ll:pl-1.5 ll:pr-0.5 ll:odd:bg-white/5 ll:even:bg-black/25 ll:odd:hover:bg-white/10 ll:even:hover:bg-white/10"
     >
       <ContextMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <ContextMenuTrigger
