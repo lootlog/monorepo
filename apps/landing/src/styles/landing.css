@@ -331,16 +331,6 @@ body {
   background: var(--broadcast-ink);
 }
 
-.landing-action-coral {
-  background: var(--broadcast-coral);
-  color: var(--broadcast-ink);
-}
-
-.landing-action-coral:hover {
-  background: var(--broadcast-white);
-  color: var(--broadcast-ink);
-}
-
 .landing-action-dark {
   background: var(--broadcast-ink);
   color: var(--broadcast-coral);
@@ -408,32 +398,6 @@ body {
   font-size: 0.875rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-}
-
-.landing-eyebrow {
-  display: inline-flex;
-  min-height: 2.25rem;
-  align-items: center;
-  gap: 0.625rem;
-  padding: 0.375rem 0.875rem 0.375rem 0.75rem;
-  border: 1px solid var(--broadcast-line);
-  border-radius: 999px;
-  background: var(--broadcast-ink-soft);
-  color: var(--broadcast-white);
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-.landing-eyebrow::before {
-  content: "";
-  width: 0.625rem;
-  height: 0.625rem;
-  flex: none;
-  border-radius: 999px;
-  background: var(--broadcast-lime);
-  box-shadow: 0 0 0 4px rgb(200 241 53 / 22%);
 }
 
 .landing-hero-mark {
@@ -963,11 +927,10 @@ body {
   color: var(--broadcast-ink);
 }
 
-.landing-faq-help {
+.landing-callout {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  margin-top: 2.5rem;
   padding: 1.75rem 1.5rem 1.5rem;
   border-radius: var(--broadcast-radius-card);
   background: var(--broadcast-blue);
@@ -975,7 +938,7 @@ body {
   box-shadow: 0.5rem 0.5rem 0 var(--broadcast-lime);
 }
 
-.landing-faq-help .landing-ring {
+.landing-callout .landing-ring {
   top: -2.5rem;
   right: -2.5rem;
   width: 8rem;
@@ -984,11 +947,21 @@ body {
   border-color: var(--broadcast-cyan);
 }
 
-.landing-faq-help .landing-badge {
+.landing-callout .landing-badge {
   color: var(--broadcast-lime);
 }
 
-.landing-faq-help p {
+.landing-callout h3 {
+  margin-top: 1.25rem;
+  font-size: 1.5rem;
+  font-variation-settings: "wght" 850;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.landing-callout p {
   max-width: 30ch;
   margin-top: 1.25rem;
   font-size: 1.125rem;
@@ -997,8 +970,45 @@ body {
   text-wrap: pretty;
 }
 
-.landing-faq-help .landing-action {
+.landing-callout h3 + p {
+  margin-top: 0.5rem;
+}
+
+.landing-callout .landing-action {
   margin-top: 1.5rem;
+}
+
+.landing-support {
+  background: var(--broadcast-coral);
+  color: var(--broadcast-ink);
+  box-shadow: 0.5rem 0.5rem 0 var(--broadcast-ink);
+}
+
+.landing-support .landing-ring {
+  border-color: var(--broadcast-amber);
+}
+
+.landing-support .landing-badge {
+  color: var(--broadcast-coral);
+}
+
+.landing-support p {
+  max-width: 52ch;
+  color: var(--broadcast-paper-ink);
+}
+
+@media (min-width: 1024px) {
+  .landing-support {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2.5rem;
+    padding: 2rem;
+  }
+
+  .landing-support .landing-action {
+    margin-top: 0;
+  }
 }
 
 .landing-cta-layout {
