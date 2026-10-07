@@ -26,8 +26,7 @@ type GlobalChatToolbarProps = {
 };
 
 /**
- * Players online across Lootlog, a shortcut to the shared channel, the channel
- * switcher and its listeners.
+ * A shortcut to the shared channel, the channel switcher and its listeners.
  */
 export const GlobalChatToolbar = ({
   channel,
@@ -40,15 +39,6 @@ export const GlobalChatToolbar = ({
   const stats = useGlobalChatStore((state) =>
     state.stats?.channel === channel ? state.stats : null,
   );
-
-  const onlineLabel =
-    stats &&
-    (channel === GLOBAL_CHAT_SHARED_CHANNEL
-      ? t("stats.onlineLabel", { count: stats.online })
-      : t("stats.worldOnlineLabel", {
-          count: stats.online,
-          world: toWorldOption(channel).label,
-        }));
 
   const groups: WorldGroup[] = [
     {
@@ -68,25 +58,7 @@ export const GlobalChatToolbar = ({
   return (
     <div className={cn(toolbarStripClassName, "ll:-mt-px ll:shrink-0")}>
       <div className={toolbarStripRowClassName}>
-        <span
-          className="ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:px-1.5 ll:text-[11px] ll:font-semibold ll:tabular-nums ll:text-gray-200"
-          title={onlineLabel ?? undefined}
-        >
-          <span
-            aria-hidden
-            className="ll:size-1.5 ll:rounded-full ll:bg-green-500"
-          />
-          <span aria-hidden>{stats ? stats.online : "–"}</span>
-          {onlineLabel ? (
-            <span className="ll:sr-only">{onlineLabel}</span>
-          ) : null}
-        </span>
-        <div
-          className={cn(
-            toolbarStripDividerClassName,
-            "ll:flex ll:shrink-0 ll:items-center ll:px-0.5",
-          )}
-        >
+        <div className="ll:flex ll:shrink-0 ll:items-center ll:px-0.5">
           <IconButton
             label={t("channels.shared")}
             active={channel === GLOBAL_CHAT_SHARED_CHANNEL}
