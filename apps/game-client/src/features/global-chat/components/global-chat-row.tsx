@@ -95,7 +95,7 @@ export const GlobalChatRow = memo(function GlobalChatRow({
         "ll:min-w-0 ll:shrink-0 ll:pl-1.5 ll:pr-0.5",
         message.isAdmin
           ? // Admin messages stand out from the alternating rows.
-            "ll:bg-red-500/20 ll:shadow-[inset_2px_0_0_#ef4444] ll:hover:bg-red-500/30"
+            "ll:bg-red-950/30 ll:shadow-[inset_2px_0_0_#991b1b] ll:hover:bg-red-950/45"
           : "ll:odd:bg-white/5 ll:even:bg-black/25 ll:odd:hover:bg-white/10 ll:even:hover:bg-white/10",
       )}
     >
@@ -116,7 +116,7 @@ export const GlobalChatRow = memo(function GlobalChatRow({
               <>
                 {originWorld ? (
                   <span
-                    className="ll:mr-1 ll:inline-block ll:rounded-sm ll:bg-white/10 ll:px-1 ll:text-[0.85em] ll:font-semibold"
+                    className="ll:mr-1 ll:text-[0.85em] ll:font-semibold"
                     style={{ color: getGlobalChatColor(originWorld) }}
                     title={t("message.originWorld", {
                       world: toWorldOption(originWorld).label,
@@ -129,10 +129,9 @@ export const GlobalChatRow = memo(function GlobalChatRow({
                   <span className="ll:sr-only">{t("message.admin")}</span>
                 ) : null}
                 <span
-                  // Marks the caller's own name like a mention of the current user.
-                  className={cn("ll:inline-block ll:font-bold ll:mr-0.5", {
-                    "ll:rounded-sm ll:px-0.5 ll:bg-white/14 ll:ring-1 ll:ring-white/20":
-                      message.isOwn,
+                  // Underlines the caller's own name; the narrow window has no room for a box.
+                  className={cn("ll:font-bold ll:mr-0.5", {
+                    "ll:underline ll:underline-offset-2": message.isOwn,
                   })}
                   style={{ color: getGlobalChatSenderColor(message) }}
                 >
