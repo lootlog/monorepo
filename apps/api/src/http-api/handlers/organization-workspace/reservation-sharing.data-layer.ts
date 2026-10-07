@@ -15,6 +15,10 @@ import {
   ResourceGoneError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
+import {
+  selectActiveReservationShares,
+  visibleReservationGuildIds,
+} from "#src/reservations/reservation-visibility-query";
 import { getGuildIconUrl } from "#src/reservations/reservation-presentation";
 import {
   ReservationSharingData,
@@ -50,30 +54,8 @@ export const makeReservationSharingDataLayer = (
         );
 
       const findActiveShares = (guildId: string) =>
-        database
-          .select()
-          .from(reservationShareTable)
-          .where(
-            and(
-              isNull(reservationShareTable.revokedAt),
-              or(
-                eq(reservationShareTable.firstGuildId, guildId),
-                eq(reservationShareTable.secondGuildId, guildId),
-              ),
-            ),
-          )
-          .orderBy(desc(reservationShareTable.createdAt));
-
-      const visibleGuildIds = (guildId: string) =>
-        findActiveShares(guildId).pipe(
-          Effect.map((shares) => [
-            guildId,
-            ...shares.map((share) =>
-              share.firstGuildId === guildId
-                ? share.secondGuildId
-                : share.firstGuildId,
-            ),
-          ]),
+        selectActiveReservationShares(database, guildId).orderBy(
+          desc(reservationShareTable.createdAt),
         );
 
       const administrativeGuilds = (discordId: string) =>
@@ -341,9 +323,10 @@ export const makeReservationSharingDataLayer = (
               const [guilds, existingPartnerIds] = yield* Effect.all(
                 [
                   administrativeGuilds(discordId),
-                  visibleGuildIds(invitation.sourceGuildId).pipe(
-                    Effect.map((ids) => new Set(ids)),
-                  ),
+                  visibleReservationGuildIds(
+                    database,
+                    invitation.sourceGuildId,
+                  ).pipe(Effect.map((ids) => new Set(ids))),
                 ],
                 { concurrency: "unbounded" },
               );
