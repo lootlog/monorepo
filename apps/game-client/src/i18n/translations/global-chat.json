@@ -79,6 +79,8 @@
   "input": {
     "sharedPlaceholder": "Wiadomość do wszystkich światów…",
     "worldPlaceholder": "Wiadomość na świat {{world}}…",
+    "allWorldsPlaceholder": "Wiadomość na wszystkie kanały…",
+    "allWorlds": "Wyślij na wszystkie kanały",
     "mutedUntil": "Wyciszono cię do {{date}}",
     "mutedPermanently": "Wyciszono cię na stałe",
     "pending": "Wysyłanie wiadomości",

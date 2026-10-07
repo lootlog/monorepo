@@ -21,7 +21,8 @@ export type GlobalChatCaller = {
 
 /**
  * The caller is not an active Member of any active Organization, is muted
- * while sending, or is not a global chat admin while moderating.
+ * while sending, or is not a global chat admin while moderating or sending to
+ * every channel.
  */
 export class GlobalChatAccessDenied extends TaggedErrorClass<GlobalChatAccessDenied>()(
   "GlobalChatAccessDenied",

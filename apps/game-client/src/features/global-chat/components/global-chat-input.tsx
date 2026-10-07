@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader2 } from "lucide-react";
+import { Loader2, Megaphone } from "lucide-react";
 import { toast } from "sonner";
 import { getApiErrorStatus } from "@lootlog/client/transport";
 import {
@@ -11,6 +11,7 @@ import {
 } from "@lootlog/client/main";
 import { GLOBAL_CHAT_MESSAGE_MAX_LENGTH } from "@lootlog/schema/chat";
 import { WindowFooter } from "@/components/draggable-window/window-footer";
+import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import { toWorldOption } from "@/components/world-combobox";
 import { useGameStore } from "@/store/game.store";
@@ -39,7 +40,10 @@ const sendErrorKey = (status: number | undefined) => {
   return "errors.sendFailed";
 };
 
-/** Plain text and emoji: Enter sends, and a failed send keeps the draft. */
+/**
+ * Plain text and emoji: Enter sends, and a failed send keeps the draft. An
+ * admin may send one message to every channel; the choice resets once sent.
+ */
 export const GlobalChatInput = ({
   channel,
   viewer,
@@ -49,16 +53,19 @@ export const GlobalChatInput = ({
   const { t } = useTranslation("globalChat");
   const inputRef = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState("");
+  const [allWorlds, setAllWorlds] = useState(false);
   const currentWorld = useGameStore((state) => state.game?.world);
   const world = getGlobalChatWorld(channel);
   const message = draft.trim();
   const muted = viewer?.muted ?? false;
+  const isAdmin = viewer?.isAdmin ?? false;
 
   const { mutate, isPending } = useGlobalChatControllerSendMessage({
     mutation: {
       onSuccess: (sent) => {
         onSent(sent);
         setDraft("");
+        setAllWorlds(false);
       },
       onError: (error) => {
         const status = getApiErrorStatus(error);
@@ -90,9 +97,11 @@ export const GlobalChatInput = ({
           date: format(new Date(viewer.mutedUntil), "dd.MM.yyyy HH:mm"),
         })
       : t("input.mutedPermanently")
-    : world === undefined
-      ? t("input.sharedPlaceholder")
-      : t("input.worldPlaceholder", { world: toWorldOption(world).label });
+    : allWorlds
+      ? t("input.allWorldsPlaceholder")
+      : world === undefined
+        ? t("input.sharedPlaceholder")
+        : t("input.worldPlaceholder", { world: toWorldOption(world).label });
 
   return (
     <form
@@ -105,6 +114,8 @@ export const GlobalChatInput = ({
         if (world !== undefined) data.world = world;
         // Only the shared channel tags where its senders write from.
         else if (currentWorld) data.originWorld = currentWorld;
+
+        if (isAdmin && allWorlds) data.allWorlds = true;
         mutate({ data });
       }}
     >
@@ -131,6 +142,16 @@ export const GlobalChatInput = ({
             aria-label={t("input.pending")}
             className="ll:pointer-events-none ll:size-3.5 ll:shrink-0 ll:animate-spin ll:motion-reduce:animate-none"
           />
+        ) : null}
+        {isAdmin ? (
+          <IconButton
+            label={t("input.allWorlds")}
+            active={allWorlds}
+            disabled={muted || isPending}
+            onClick={() => setAllWorlds((current) => !current)}
+          >
+            <Megaphone aria-hidden className="ll:size-3.5" />
+          </IconButton>
         ) : null}
         <GlobalChatEmojiPicker
           disabled={muted || isPending}

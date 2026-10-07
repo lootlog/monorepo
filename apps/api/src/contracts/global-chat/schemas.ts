@@ -62,6 +62,11 @@ export const SendGlobalChatMessageRequest = Schema.Struct({
   world: Schema.optionalKey(GlobalChatWorld),
   /** The sender's current world, tagged on messages in the shared channel. */
   originWorld: Schema.optionalKey(GlobalChatWorld),
+  /**
+   * Global chat admins only: also posts a copy to the shared channel and every
+   * world's channel. The response is the copy in the channel `world` names.
+   */
+  allWorlds: Schema.optionalKey(Schema.Boolean),
 }).annotate({ identifier: "SendGlobalChatMessageRequest" });
 
 export type SendGlobalChatMessageRequest =
