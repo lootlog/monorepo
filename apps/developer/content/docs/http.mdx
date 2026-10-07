@@ -48,6 +48,10 @@ Send the key only in the `X-Api-Key` header. Do not add it to the URL. An invali
 
 For typed requests in a server application, continue with the [TypeScript SDK](/docs/sdk). To receive changes over WebSocket, see [Realtime](/docs/realtime).
 
+## Player search
+
+For Search `GET /players` and `GET /all`, `world` selects one literal world name for player results. Pass the name as a URL-encoded query parameter. Quotes and backslashes are treated as part of the value, not as filter operators. In `/all`, this parameter does not filter NPC or item results.
+
 ## Writes
 
 A write operation requires a read/write key and the user's current permissions for that operation in the Organization. A key does not grant access to account management, other keys, or internal operations.
