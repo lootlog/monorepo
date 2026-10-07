@@ -2198,6 +2198,65 @@ describe("CommandHandler session lifecycle", () => {
     ]);
   });
 
+  test("a global chat subscriber gets the latest counts instead of waiting for the next sample", async () => {
+    const hub = new (class extends FakeHub {
+      override subscribe(): void {}
+      globalChatCounts = {
+        online: 9,
+        playersByWorld: { gordion: 3 },
+        listeners: { "": 5, gordion: 2 },
+      };
+    })();
+
+    const { handler } = setup(undefined, undefined, hub);
+
+    const subscribe = async (
+      supportsGlobalChatChannels: boolean,
+      data: { topic: "global.chat" } | { topic: string; world: string },
+    ) => {
+      const target = makeSocket();
+      Object.assign(target.socket.data, {
+        joined: true,
+        guilds: [guild()],
+        supportsGlobalChat: true,
+        supportsGlobalChatChannels,
+      });
+
+      await Effect.runPromise(
+        handler.handle(
+          target.socket,
+          Buffer.from(
+            encode({
+              v: 1,
+              type: "subscription.subscribe",
+              requestId: "request-chat",
+              data,
+            }),
+          ),
+        ),
+      );
+    };
+
+    await subscribe(true, { topic: "global.chat.world", world: "gordion" });
+    await subscribe(true, { topic: "global.chat" });
+    // A client without channels would close the socket on the stats event.
+    await subscribe(false, { topic: "global.chat" });
+
+    expect(hub.events).toEqual([
+      {
+        v: 1,
+        type: "global-chat.stats",
+        data: { world: "gordion", online: 3, listeners: 2 },
+      },
+      { v: 1, type: "global-chat.stats", data: { online: 9, listeners: 5 } },
+    ]);
+    expect(hub.responses).toMatchObject([
+      { status: "success" },
+      { status: "success" },
+      { status: "success" },
+    ]);
+  });
+
   test("does not expose dependency failures through command responses", async () => {
     const { handler, presence, hub } = setup();
     presence.heartbeat = () =>
