@@ -1,5 +1,4 @@
 import { useGlobalChatControllerGetWorlds } from "@lootlog/client/main";
-import { useGameStore } from "@/store/game.store";
 import { useGlobalChatStore } from "@/store/global-chat.store";
 import { resolveGlobalChatChannel } from "../global-chat.helpers";
 
@@ -22,13 +21,12 @@ export const useGlobalChatChannel = ({
   });
 
   const selected = useGlobalChatStore((state) => state.selectedChannel);
-  const currentWorld = useGameStore((state) => state.game?.world);
   const worlds = worldsQuery.data?.worlds;
 
   return {
     channel:
       worlds || !loadWorlds
-        ? resolveGlobalChatChannel(selected, currentWorld, worlds)
+        ? resolveGlobalChatChannel(selected, worlds)
         : undefined,
     worlds,
     worldsQuery,

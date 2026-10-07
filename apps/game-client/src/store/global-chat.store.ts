@@ -34,7 +34,12 @@ interface GlobalChatState {
   unread: number;
   addUnread: () => void;
   clearUnread: () => void;
+  /** Emoji the player picked, most recent first. */
+  recentEmoji: string[];
+  addRecentEmoji: (emoji: string) => void;
 }
+
+const RECENT_EMOJI_LIMIT = 24;
 
 export const useGlobalChatStore = create<GlobalChatState>()(
   persist(
@@ -50,10 +55,21 @@ export const useGlobalChatStore = create<GlobalChatState>()(
       unread: 0,
       addUnread: () => set((state) => ({ unread: state.unread + 1 })),
       clearUnread: () => set({ unread: 0 }),
+      recentEmoji: [],
+      addRecentEmoji: (emoji) =>
+        set((state) => ({
+          recentEmoji: [
+            emoji,
+            ...state.recentEmoji.filter((recent) => recent !== emoji),
+          ].slice(0, RECENT_EMOJI_LIMIT),
+        })),
     }),
     {
       name: STORAGE_KEY,
-      partialize: (state) => ({ selectedChannel: state.selectedChannel }),
+      partialize: (state) => ({
+        selectedChannel: state.selectedChannel,
+        recentEmoji: state.recentEmoji,
+      }),
       storage: createJSONStorage(() => localStorage),
     },
   ),

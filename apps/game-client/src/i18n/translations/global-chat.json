@@ -24,7 +24,6 @@
     "worldsGroup": "Światy"
   },
   "stats": {
-    "online": "{{count}} online",
     "onlineLabel": "Gracze z Lootlogiem online: {{count}}",
     "worldOnlineLabel": "Gracze z Lootlogiem na świecie {{world}}: {{count}}",
     "listenersLabel": "Osoby na tym kanale: {{count}}"
@@ -84,6 +83,20 @@
     "mutedPermanently": "Wyciszono cię na stałe",
     "pending": "Wysyłanie wiadomości",
     "emoji": "Wstaw emoji"
+  },
+  "emoji": {
+    "categoriesLabel": "Kategorie emoji",
+    "categories": {
+      "recent": "Ostatnio używane",
+      "smileys": "Buźki i ludzie",
+      "nature": "Zwierzęta i natura",
+      "food": "Jedzenie i picie",
+      "activities": "Aktywność",
+      "travel": "Podróże i miejsca",
+      "objects": "Przedmioty",
+      "symbols": "Symbole",
+      "flags": "Flagi"
+    }
   },
   "quickAccess": {
     "unread_one": "{{count}} nowa wiadomość na czacie globalnym",

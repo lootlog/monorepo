@@ -7,65 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-
-/**
- * A fixed set, so the picker loads nothing. Mostly Unicode 6–9 emoji, which
- * the oldest supported systems still draw.
- */
-const EMOJI = [
-  "😀",
-  "😂",
-  "🤣",
-  "😅",
-  "😊",
-  "🙂",
-  "😉",
-  "😍",
-  "😎",
-  "😜",
-  "😇",
-  "🤔",
-  "😐",
-  "🙄",
-  "😴",
-  "😱",
-  "😭",
-  "😡",
-  "😈",
-  "💀",
-  "👀",
-  "🤝",
-  "👋",
-  "🙏",
-  "👍",
-  "👎",
-  "👌",
-  "👏",
-  "💪",
-  "✌️",
-  "❤️",
-  "💔",
-  "🔥",
-  "⭐",
-  "✨",
-  "💯",
-  "🎉",
-  "🍀",
-  "💰",
-  "💎",
-  "👑",
-  "⚔️",
-  "🛡️",
-  "🏹",
-  "🐉",
-  "🎯",
-  "⏰",
-  "✅",
-  "❌",
-  "❓",
-  "❗",
-  "💤",
-];
+import { GlobalChatEmojiPanel } from "./global-chat-emoji-panel";
 
 type GlobalChatEmojiPickerProps = {
   disabled: boolean;
@@ -87,21 +29,8 @@ export const GlobalChatEmojiPicker = ({
           <Smile aria-hidden className="ll:size-3.5" />
         </IconButton>
       </PopoverTrigger>
-      <PopoverContent
-        side="top"
-        align="end"
-        className="ll:grid ll:w-auto ll:grid-cols-8 ll:gap-0.5 ll:p-1"
-      >
-        {EMOJI.map((emoji) => (
-          <button
-            key={emoji}
-            type="button"
-            className="ll:flex ll:size-7 ll:items-center ll:justify-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:text-base ll:leading-none ll:hover:bg-white/10 ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll-custom-cursor-pointer"
-            onClick={() => onPick(emoji)}
-          >
-            {emoji}
-          </button>
-        ))}
+      <PopoverContent side="top" align="end" className="ll:w-auto ll:p-1">
+        <GlobalChatEmojiPanel onPick={onPick} />
       </PopoverContent>
     </Popover>
   );
