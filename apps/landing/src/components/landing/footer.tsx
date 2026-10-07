@@ -16,6 +16,9 @@ export function LandingFooter() {
           className="flex flex-col gap-6 border-b border-[var(--broadcast-line)] pb-6 sm:flex-row sm:items-center sm:justify-between"
         >
           <div className="flex flex-wrap items-center gap-x-8 gap-y-2">
+            <Link className="landing-footer-link" to="/blog">
+              {t("landing.footer.blog")}
+            </Link>
             <a className="landing-footer-link" href={links.docs}>
               {t("landing.footer.docs")}
               <ArrowUpRight className="size-3.5" aria-hidden="true" />

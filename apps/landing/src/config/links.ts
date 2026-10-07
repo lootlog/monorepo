@@ -1,8 +1,12 @@
+import { blogPosts } from "./blog.ts";
+
 export const landingDocumentPaths = [
   "/",
   "/privacy-policy",
   "/terms-of-service",
-] as const;
+  "/blog",
+  ...blogPosts.map((post) => post.path),
+];
 
 export const links = {
   developer: "https://developer.lootlog.pl",
