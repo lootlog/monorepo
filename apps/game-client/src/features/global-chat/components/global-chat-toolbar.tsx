@@ -1,4 +1,4 @@
-import { Users } from "lucide-react";
+import { Globe, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 import {
@@ -6,6 +6,7 @@ import {
   toolbarStripDividerClassName,
   toolbarStripRowClassName,
 } from "@/components/ui/toolbar-strip";
+import { IconButton } from "@/components/ui/icon-button";
 import {
   toWorldOption,
   WorldCombobox,
@@ -24,7 +25,10 @@ type GlobalChatToolbarProps = {
   isAdmin: boolean;
 };
 
-/** Players online across Lootlog, the channel switcher and its listeners. */
+/**
+ * Players online across Lootlog, a shortcut to the shared channel, the channel
+ * switcher and its listeners.
+ */
 export const GlobalChatToolbar = ({
   channel,
   worlds,
@@ -72,13 +76,25 @@ export const GlobalChatToolbar = ({
             aria-hidden
             className="ll:size-1.5 ll:rounded-full ll:bg-green-500"
           />
-          <span aria-hidden>
-            {stats ? t("stats.online", { count: stats.online }) : "–"}
-          </span>
+          <span aria-hidden>{stats ? stats.online : "–"}</span>
           {onlineLabel ? (
             <span className="ll:sr-only">{onlineLabel}</span>
           ) : null}
         </span>
+        <div
+          className={cn(
+            toolbarStripDividerClassName,
+            "ll:flex ll:shrink-0 ll:items-center ll:px-0.5",
+          )}
+        >
+          <IconButton
+            label={t("channels.shared")}
+            active={channel === GLOBAL_CHAT_SHARED_CHANNEL}
+            onClick={() => selectChannel(GLOBAL_CHAT_SHARED_CHANNEL)}
+          >
+            <Globe aria-hidden className="ll:size-3.5" />
+          </IconButton>
+        </div>
         <WorldCombobox
           groups={groups}
           value={channel}
