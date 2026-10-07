@@ -3,13 +3,7 @@ import { useTranslation } from "react-i18next";
 import { LandingHeader } from "../landing/header";
 import { LandingFooter } from "../landing/footer";
 
-export function BlogLayout({
-  children,
-  wide = false,
-}: {
-  children: ReactNode;
-  wide?: boolean;
-}) {
+export function BlogLayout({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
 
   return (
@@ -18,13 +12,7 @@ export function BlogLayout({
         {t("landing.blog.skip")}
       </a>
       <LandingHeader />
-      <main
-        id="blog-content"
-        tabIndex={-1}
-        className={
-          wide ? "blog-container blog-container-wide" : "blog-container"
-        }
-      >
+      <main id="blog-content" tabIndex={-1} className="blog-main">
         {children}
       </main>
       <LandingFooter />
