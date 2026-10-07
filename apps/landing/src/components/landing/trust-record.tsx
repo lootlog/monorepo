@@ -64,26 +64,20 @@ export function TrustRecord() {
             </li>
           ))}
         </ul>
-        <div className="flex flex-col gap-6 rounded-[var(--broadcast-radius-card)] border-2 border-[var(--broadcast-coral)] p-6 sm:p-8 md:col-span-2 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-start gap-5">
-            <Heart
-              className="mt-1 size-6 shrink-0 text-[var(--broadcast-coral)]"
-              aria-hidden="true"
-            />
-            <div>
-              <h3 className="text-balance text-xl font-bold tracking-[-0.01em]">
-                {t("landing.trust.support.title")}
-              </h3>
-              <p className="mt-2 max-w-[68ch] text-pretty text-sm leading-6 text-[var(--broadcast-text-muted)]">
-                {t("landing.trust.support.description")}
-              </p>
-            </div>
+        <div className="landing-callout landing-support md:col-span-2">
+          <span aria-hidden="true" className="landing-shape landing-ring" />
+          <div>
+            <span className="landing-badge">
+              <Heart className="size-5" aria-hidden="true" />
+            </span>
+            <h3>{t("landing.trust.support.title")}</h3>
+            <p>{t("landing.trust.support.description")}</p>
           </div>
           <a
             href={links.support}
             target="_blank"
             rel="noopener noreferrer"
-            className="landing-action landing-action-coral self-start lg:self-auto"
+            className="landing-action landing-action-dark"
           >
             <Heart className="size-4" aria-hidden="true" />
             {t("landing.trust.support.action")}
