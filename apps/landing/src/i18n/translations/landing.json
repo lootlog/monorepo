@@ -27,11 +27,12 @@
     "lootlog": "Lootlog",
     "login": "Zaloguj się",
     "loginLoading": "Łączenie z\u00a0Discordem…",
-    "loginError": "Nie udało się rozpocząć logowania przez Discorda. Spróbuj ponownie."
+    "loginError": "Nie udało się rozpocząć logowania przez Discorda. Spróbuj ponownie.",
+    "blog": "Poradniki"
   },
   "hero": {
-    "title": "Timery, łupy i\u00a0walki całego klanu.",
-    "description": "Dodatek do Margonem, który w\u00a0trakcie gry zapisuje respy, dropy i\u00a0walki. Cały klan widzi je od razu\u00a0– w\u00a0grze i\u00a0w\u00a0panelu.",
+    "title": "Lootlog do Margonem",
+    "description": "Wspólne timery, historia dropów i zapis walk. Korzystasz z dodatku w grze i z panelu Lootloga.",
     "installAddon": "Zainstaluj dodatek",
     "openDashboard": "Otwórz Lootloga"
   },
@@ -39,17 +40,17 @@
     "title": "Częste pytania",
     "description": "Nie ma tu Twojego pytania? Zapytaj na Discordzie Lootloga.",
     "discord": "Dołącz do Discorda",
-    "guide1": "Zobacz panel walk Margonem i analizę PvP",
-    "guide3": "Jak skonfigurować darmowy lootlog klanowy",
-    "guide4": "Poznaj wspólne timery respów",
+    "guide1": "Panel walk i analiza PvP",
+    "guide3": "Konfiguracja lootloga klanowego",
+    "guide4": "Instrukcja timerów",
     "q1": "Gdzie znajdę analizę walk?",
-    "a1": "W\u00a0Panelu walk w\u00a0aplikacji Lootloga. Po zainstalowaniu dodatku obsługiwane walki trafiają tam same\u00a0– z\u00a0przebiegiem i\u00a0statystykami starć.",
+    "a1": "W Panelu walk w aplikacji Lootloga. Dodatek zapisuje obsługiwane walki. W panelu sprawdzisz ich przebieg i statystyki.",
     "q2": "Czy za Lootloga można dostać bana?",
     "a2": "Lootlog nie porusza postacią, nie walczy i\u00a0nie gra za Ciebie\u00a0– zapisuje tylko obsługiwane zdarzenia z\u00a0gry. To nieoficjalny projekt społeczności, a\u00a0ostateczne decyzje dotyczące dodatków należą do administracji Margonem.",
     "q3": "Ile kosztuje Lootlog?",
     "a3": "Nic. Lootlog jest darmowy i\u00a0rozwijany jako open source.",
     "q4": "Jak synchronizują się timery?",
-    "a4": "Gdy ktoś z\u00a0klanu ubije obsługiwanego potwora, Lootlog od razu aktualizuje timer. Odliczanie widzą wszyscy członkowie z\u00a0dostępem do timerów na tym samym serwerze Discord.",
+    "a4": "Gdy ktoś z klanu zbije obsługiwanego potwora, dodatek aktualizuje timer. Widzą go członkowie z dostępem do timerów w tym samym lootlogu.",
     "q5": "Czy Lootlog działa na wielu postaciach i\u00a0światach?",
     "a5": "Tak. Postacie z\u00a0różnych światów są przypisane do jednego konta połączonego z\u00a0Discordem.",
     "q6": "Gdzie zgłosić błąd albo pomysł?",
@@ -57,51 +58,51 @@
   },
   "proof": {
     "guide": "Skonfiguruj lootlog klanowy",
-    "title": "Łupy i\u00a0statystyki klanu bez przepisywania z\u00a0czatu.",
-    "description": "Dodatek zapisuje obsługiwane walki i\u00a0łupy w\u00a0trakcie gry. W\u00a0panelu cały klan widzi historię dropów, aktywność członków i\u00a0statystyki bić.",
+    "title": "Łupy i statystyki klanu",
+    "description": "W panelu sprawdzisz dropy, liczbę bić i aktywność graczy. Dane trafiają tam z dodatku podczas gry.",
     "dashboard": {
       "caption": "Lootlog",
-      "title": "Każdy drop trafia do wspólnego lootloga.",
-      "description": "Łupy są przypisane do potwora, świata i\u00a0czasu. Filtrujesz po potworze, przedmiocie albo graczu i\u00a0od razu widzisz, kto co zdobył."
+      "title": "Historia dropów",
+      "description": "Przy dropie widzisz potwora, świat i czas bicia. Możesz szukać po potworze, przedmiocie albo graczu."
     },
     "statistics": {
       "caption": "Statystyki",
-      "title": "Aktywność klanu bez liczenia w\u00a0arkuszu.",
-      "description": "Liczba bić, ranking członków i\u00a0najczęściej bite potwory w\u00a0wybranym okresie. Łatwo porównać aktywność i\u00a0ustalić, na co idziecie dalej."
+      "title": "Statystyki bić",
+      "description": "Liczba bić, ranking graczy i najczęściej bite potwory. Wybierasz okres, za który chcesz zobaczyć statystyki."
     }
   },
   "workflow": {
-    "title": "Instalujesz raz, potem po prostu grasz.",
-    "description": "Po walce nie trzeba niczego wpisywać ani klikać. Dodatek rozpoznaje obsługiwane zdarzenia i\u00a0wysyła je do panelu Twojego klanu.",
+    "title": "Jak działa Lootlog",
+    "description": "Instalujesz dodatek i logujesz się przez Discorda. Podczas gry dodatek zapisuje obsługiwane walki, dropy i czasy bicia potworów.",
     "guide": "Zobacz instrukcję instalacji",
     "steps": {
       "install": {
-        "title": "Instalujesz dodatek",
-        "description": "Logujesz się przez Discorda. Dostęp do danych klanu dostajesz przez jego serwer."
+        "title": "Instalacja",
+        "description": "Instalujesz dodatek w przeglądarce i logujesz się przez Discorda."
       },
       "play": {
-        "title": "Grasz jak zwykle",
-        "description": "Dodatek rozpoznaje obsługiwane walki, łupy i\u00a0ubicia potworów."
+        "title": "Zapis z gry",
+        "description": "Dodatek przesyła do Lootloga obsługiwane walki, dropy i czasy bicia potworów."
       },
       "sync": {
-        "title": "Klan widzi to od razu",
-        "description": "Timery, looty i\u00a0walki pojawiają się u\u00a0wszystkich członków na żywo."
+        "title": "Lootlog klanowy",
+        "description": "Członkowie serwera Discord mają dostęp do danych zgodnie z uprawnieniami w lootlogu."
       },
       "plan": {
-        "title": "Planujecie razem",
-        "description": "Na podstawie tych samych danych ustalacie kolejne respy i\u00a0priorytety."
+        "title": "Timery i historia bić",
+        "description": "Sprawdzasz czasy respów w grze, a w panelu przeglądasz dropy, walki i statystyki."
       }
     }
   },
   "trust": {
-    "title": "Otwarty kod, zero opłat.",
-    "description": "Lootlog to darmowy projekt open source rozwijany przez graczy. Kod i\u00a0dokumentacja są publiczne\u00a0– możesz sprawdzić, co robi dodatek, zanim go zainstalujesz.",
+    "title": "O projekcie",
+    "description": "Lootlog jest darmowym projektem open source rozwijanym przez graczy Margonem. Kod źródłowy i dokumentacja są publiczne.",
     "github": "Zobacz kod na GitHubie",
     "docs": "Przeczytaj dokumentację",
     "items": {
       "free": {
-        "title": "0\u00a0SŁ",
-        "description": "Nie płacisz ani za dodatek, ani za panel."
+        "title": "Darmowy dodatek",
+        "description": "Dodatek i panel Lootloga są dostępne bez opłat."
       },
       "openSource": {
         "title": "Open source",
@@ -109,7 +110,7 @@
       },
       "discordAccount": {
         "title": "Logowanie przez Discorda",
-        "description": "Bez zakładania osobnego konta i\u00a0pamiętania kolejnego hasła."
+        "description": "Do logowania w Lootlogu używasz konta Discord."
       },
       "multiWorld": {
         "title": "Wiele postaci i\u00a0światów",
@@ -118,8 +119,8 @@
     }
   },
   "closingCta": {
-    "title": "Zainstaluj dodatek i\u00a0graj dalej.",
-    "description": "Zaloguj się przez Discorda i\u00a0dołącz do lootloga swojego klanu. Resztę dodatek zrobi w\u00a0tle\u00a0– timery, łupy i\u00a0walki zapiszą się same.",
+    "title": "Instalacja dodatku",
+    "description": "Instrukcja pokazuje, jak dodać Lootloga do przeglądarki i zalogować się przez Discorda.",
     "install": "Zainstaluj dodatek",
     "guide": "Zobacz instrukcję"
   },
@@ -133,7 +134,8 @@
     "terms": "Regulamin",
     "support": "Wesprzyj",
     "legalNotice": "Grafiki wykorzystane na stronie są własnością Garmory sp. z\u00a0o.o.",
-    "copyright": "© {{year}} Lootlog · open source"
+    "copyright": "© {{year}} Lootlog · open source",
+    "blog": "Poradniki"
   },
   "cookieConsent": {
     "title": "Ustawienia plików cookie",
@@ -149,7 +151,7 @@
     "example": "Przykładowe dane",
     "timer": "Wspólny timer",
     "opponent": "Piekielny Kościej",
-    "shared": "Widzi go cały klan",
+    "shared": "Timer klanowy",
     "loot": "Nowy drop w\u00a0lootlogu",
     "ranking": "Aktywność klanu",
     "kills": "{{count}} bić",
@@ -162,6 +164,31 @@
       "first": "Gracz 01",
       "second": "Gracz 02",
       "third": "Gracz 03"
+    }
+  },
+  "blog": {
+    "title": "Poradniki",
+    "read": "Czytaj poradnik",
+    "description": "Instrukcje ustawień dodatku Lootlog w Margonem.",
+    "back": "Wszystkie poradniki",
+    "author": "Zespół Lootlog",
+    "updated": "Aktualizacja",
+    "skip": "Przejdź do treści",
+    "notFoundTitle": "Nie znaleźliśmy tego poradnika.",
+    "notFoundDescription": "Sprawdź adres lub wybierz artykuł z listy poradników.",
+    "posts": {
+      "timers": {
+        "title": "Timery po wyzerowaniu",
+        "description": "Zostawianie wyzerowanych timerów i sprawdzanie czasów respu elit II."
+      },
+      "notifications": {
+        "title": "Powiadomienia",
+        "description": "Wybór typów zgłoszeń, Lootlogów, dźwięku i czasu wyświetlania."
+      },
+      "windows": {
+        "title": "Okna i skróty klawiszowe",
+        "description": "Położenie i rozmiar okien, przypisanie skrótów, przywracanie ustawień."
+      }
     }
   }
 }
