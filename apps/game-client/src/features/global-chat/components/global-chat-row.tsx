@@ -14,7 +14,6 @@ import { ChatPlayerMessageView } from "@/features/chat/components/chat-player-me
 import { isChatMessageYesterdayOrOlder } from "@/features/chat/components/chat-message.helpers";
 import type { GlobalChatChannel } from "@/store/global-chat.store";
 import {
-  GLOBAL_CHAT_ADMIN_COLOR,
   getGlobalChatColor,
   getGlobalChatSenderColor,
   type GlobalChatRow as GlobalChatRowData,
@@ -139,13 +138,12 @@ export const GlobalChatRow = memo(function GlobalChatRow({
               <span
                 data-slot="bubble"
                 className={cn("ll:whitespace-pre-wrap ll:select-text", {
-                  "ll:text-gray-200": isMsgYesterday && !message.isAdmin,
+                  "ll:text-gray-200": isMsgYesterday,
                   "ll:font-semibold": message.isAdmin,
                 })}
                 style={{
                   overflowWrap: "anywhere",
                   wordBreak: "normal",
-                  color: message.isAdmin ? GLOBAL_CHAT_ADMIN_COLOR : undefined,
                 }}
               >
                 {message.message}

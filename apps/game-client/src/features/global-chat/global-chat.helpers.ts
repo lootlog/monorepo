@@ -124,9 +124,9 @@ export const getGlobalChatColor = (value: string) =>
   `hsl(${hashString(value) % 360} 70% 72%)`;
 
 /** Readable red on the chat's dark rows. */
-export const GLOBAL_CHAT_ADMIN_COLOR = "#ff6b6b";
+const GLOBAL_CHAT_ADMIN_COLOR = "#ff6b6b";
 
-/** Admins write in red; everyone else keeps the color of their name. */
+/** Admin names are red; everyone else keeps the color of their name. */
 export const getGlobalChatSenderColor = ({
   displayName,
   isAdmin,
