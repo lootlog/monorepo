@@ -81,6 +81,13 @@ export function LandingHeader() {
         {t("landing.header.workflow")}
       </Link>
       <Link
+        to="/blog"
+        onClick={closeNavigation}
+        className={navigationLinkClassName}
+      >
+        {t("landing.header.blog")}
+      </Link>
+      <Link
         onClick={closeNavigation}
         to="/"
         hash="trust"
@@ -95,13 +102,6 @@ export function LandingHeader() {
         className={navigationLinkClassName}
       >
         {t("landing.header.faq")}
-      </Link>
-      <Link
-        to="/blog"
-        onClick={closeNavigation}
-        className={navigationLinkClassName}
-      >
-        {t("landing.header.blog")}
       </Link>
       <a
         onClick={closeNavigation}
