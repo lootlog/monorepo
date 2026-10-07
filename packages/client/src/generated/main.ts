@@ -6648,6 +6648,7 @@ export interface SendGlobalChatMessageRequest {
      * @maxLength 64
      */
   originWorld?: string;
+  allWorlds?: boolean;
 }
 
 /**
@@ -23078,7 +23079,7 @@ export const getGlobalChatControllerSendMessageUrl = () => {
 }
 
 /**
- * Send a plain-text message to a global chat channel; muted senders are refused
+ * Send a plain-text message to a global chat channel; muted senders are refused, and only global chat admins may send it to every channel at once
  * @summary Send global chat message
  */
 export const globalChatControllerSendMessage = async (sendGlobalChatMessageRequest: SendGlobalChatMessageRequest, options?: Parameters<typeof mainFetch>[1]): Promise<GlobalChatMessageResponse> => {

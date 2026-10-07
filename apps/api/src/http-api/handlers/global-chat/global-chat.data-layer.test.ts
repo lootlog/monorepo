@@ -390,6 +390,52 @@ describe("global chat", () => {
     expect(inWorld.originWorld).toBeUndefined();
   });
 
+  it("sends an admin's message to every channel and refuses it from others", async () => {
+    const { operations, published } = await setup();
+
+    const refused = await fail(
+      operations.sendMessage(author, { message: "Everyone", allWorlds: true }),
+    );
+
+    expect(refused._tag).toBe("GlobalChatAccessDenied");
+    expect(published).toHaveLength(0);
+
+    const sent = await run(
+      operations.sendMessage(admin, {
+        message: "Maintenance tonight",
+        world: "tarhuna",
+        originWorld: "gordion",
+        allWorlds: true,
+      }),
+    );
+
+    const read = (world: string | undefined) =>
+      run(operations.getMessages(reader, world, undefined)).then(
+        ({ messages }) => messages,
+      );
+
+    const [shared] = await read(undefined);
+    const [gordion] = await read("gordion");
+    const [tarhuna] = await read("tarhuna");
+
+    expect(sent).toMatchObject({ world: "tarhuna", isAdmin: true });
+    expect(tarhuna?.id).toBe(sent.id);
+    expect(shared?.message).toBe("Maintenance tonight");
+    expect(shared?.originWorld).toBeUndefined();
+    expect(gordion?.message).toBe("Maintenance tonight");
+    expect(new Set([shared?.id, gordion?.id, tarhuna?.id]).size).toBe(3);
+    expect(published.map(({ world }) => world).toSorted()).toEqual([
+      "gordion",
+      "tarhuna",
+      undefined,
+    ]);
+
+    // Each channel moderates its own copy.
+    await run(operations.deleteMessage(admin, "gordion", gordion?.id ?? ""));
+    expect(await read("gordion")).toEqual([]);
+    expect(await read(undefined)).toHaveLength(1);
+  });
+
   it("marks admin messages and tells only admins they may moderate", async () => {
     const { operations } = await setup();
     await run(operations.sendMessage(admin, { message: "Rules" }));

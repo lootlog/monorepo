@@ -69,7 +69,7 @@ export class GlobalChatGroup extends HttpApiGroup.make("globalChat")
       .annotate(OpenApi.Summary, "Send global chat message")
       .annotate(
         OpenApi.Description,
-        "Send a plain-text message to a global chat channel; muted senders are refused",
+        "Send a plain-text message to a global chat channel; muted senders are refused, and only global chat admins may send it to every channel at once",
       ),
     HttpApiEndpoint.delete(
       "GlobalChatControllerDeleteMessage",
