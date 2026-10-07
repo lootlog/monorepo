@@ -104,6 +104,10 @@
       }
     }
   },
+  "guides": {
+    "title": "Poradniki do dodatku",
+    "description": "Instrukcje krok po kroku: jak ustawić timery, powiadomienia, okna i skróty klawiszowe w Margonem."
+  },
   "trust": {
     "title": "O projekcie",
     "description": "Lootlog jest darmowym projektem open source rozwijanym przez graczy Margonem. Kod źródłowy i dokumentacja są publiczne.",
