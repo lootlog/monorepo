@@ -1,4 +1,4 @@
-import { ONLINE_HISTORY_RETENTION_DAYS } from "./online-retention.js";
+import { onlineHistoryCutoff } from "./online-retention.js";
 import { PgClient } from "@effect/sql-pg";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
@@ -72,9 +72,7 @@ export class OnlineRepository extends Context.Service<
           );
         }
 
-        const cutoff = new Date(
-          now - ONLINE_HISTORY_RETENTION_DAYS * 86_400_000,
-        ).toISOString();
+        const cutoff = onlineHistoryCutoff(now);
 
         // Old redeliveries cannot resurrect expired history or establish tracking metadata.
         if (Date.parse(event.endedAt) <= Date.parse(cutoff)) return;
@@ -114,9 +112,7 @@ export class OnlineRepository extends Context.Service<
         const now = yield* Clock.currentTimeMillis;
         const nowIso = new Date(now).toISOString();
 
-        const cutoff = new Date(
-          now - ONLINE_HISTORY_RETENTION_DAYS * 86_400_000,
-        ).toISOString();
+        const cutoff = onlineHistoryCutoff(now);
 
         const metadata = yield* sql<{
           trackingStartedAt: string | null;
@@ -190,9 +186,7 @@ export class OnlineRepository extends Context.Service<
       const prune = Effect.fn("OnlineRepository.prune")(function* () {
         const now = yield* Clock.currentTimeMillis;
 
-        const cutoff = new Date(
-          now - ONLINE_HISTORY_RETENTION_DAYS * 86_400_000,
-        ).toISOString();
+        const cutoff = onlineHistoryCutoff(now);
 
         const windowStart = new Date(
           Math.floor(now / 3600_000) * 3600_000,
