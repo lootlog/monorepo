@@ -169,8 +169,11 @@
   "blog": {
     "title": "Poradniki",
     "read": "Czytaj poradnik",
+    "guide": "Poradnik",
     "description": "Instrukcje ustawień dodatku Lootlog w Margonem.",
+    "intro": "Krótkie instrukcje krok po kroku: jak ustawić timery, powiadomienia, okna i\u00a0skróty dodatku Lootlog w\u00a0Margonem.",
     "back": "Wszystkie poradniki",
+    "more": "Inne poradniki",
     "author": "Zespół Lootlog",
     "updated": "Aktualizacja",
     "skip": "Przejdź do treści",

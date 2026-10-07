@@ -19,15 +19,24 @@ function BlogIndex() {
   const { t } = useTranslation();
 
   return (
-    <BlogLayout wide>
-      <h1 className="blog-index-title">{t("landing.blog.title")}</h1>
-      <ul className="blog-index">
-        {blogPosts.map((post) => (
-          <li key={post.slug}>
-            <BlogGuideCard post={post} />
-          </li>
-        ))}
-      </ul>
+    <BlogLayout>
+      <div className="landing-container">
+        <header className="blog-index-header">
+          <h1 className="landing-heading-display text-balance">
+            {t("landing.blog.title")}
+          </h1>
+          <p className="landing-lead text-[var(--broadcast-text-muted)]">
+            {t("landing.blog.intro")}
+          </p>
+        </header>
+        <ul className="blog-index">
+          {blogPosts.map((post) => (
+            <li key={post.slug}>
+              <BlogGuideCard post={post} />
+            </li>
+          ))}
+        </ul>
+      </div>
     </BlogLayout>
   );
 }
