@@ -1,6 +1,8 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { BlogGuideCard } from "../components/blog/blog-guide-card";
+import { BlogGuideIcon } from "../components/blog/blog-guide-icon";
 import { BlogLayout } from "../components/blog/blog-layout";
 import { BlogNotFound } from "../components/blog/blog-not-found";
 import { blogNotFoundHead, blogPageHead, blogPosts } from "../config/blog";
@@ -47,6 +49,10 @@ function BlogArticle() {
 
   const date = articleDateFormat.format(new Date(post.updatedAt));
 
+  const otherPosts = blogPosts.filter(
+    (candidate) => candidate.slug !== post.slug,
+  );
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -71,22 +77,50 @@ function BlogArticle() {
           __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
         }}
       />
-      <Link to="/blog" className="blog-text-link blog-back-link">
-        <ArrowLeft className="size-4" aria-hidden="true" />
-        {t("landing.blog.back")}
-      </Link>
-      <article>
-        <header>
-          <h1 className="blog-title">{post.title}</h1>
-          <p className="blog-updated">
-            {t("landing.blog.updated")}:{" "}
-            <time dateTime={post.updatedAt}>{date}</time>
-          </p>
-        </header>
-        <div className="blog-prose">
-          <Content />
-        </div>
-      </article>
+      <div className="landing-container">
+        <Link to="/blog" className="blog-back-link">
+          <ArrowLeft className="size-4" aria-hidden="true" />
+          {t("landing.blog.back")}
+        </Link>
+        <article className="blog-article" data-surface={post.surface}>
+          <header className="blog-article-hero">
+            <span aria-hidden="true" className="landing-shape blog-hero-ring" />
+            <span aria-hidden="true" className="landing-shape blog-hero-dot" />
+            <div className="blog-article-hero-copy">
+              <p className="blog-article-eyebrow">
+                <BlogGuideIcon guide={post.key} size={20} strokeWidth={2.25} />
+                {t("landing.blog.guide")} {post.number}
+              </p>
+              <h1 className="landing-heading-display text-balance">
+                {post.title}
+              </h1>
+              <p className="landing-lead">{post.description}</p>
+              <p className="blog-article-updated">
+                {t("landing.blog.updated")}:{" "}
+                <time dateTime={post.updatedAt}>{date}</time>
+              </p>
+            </div>
+            <div className="blog-article-emblem" aria-hidden="true">
+              <BlogGuideIcon guide={post.key} strokeWidth={1.75} />
+            </div>
+          </header>
+          <div className="blog-prose">
+            <Content />
+          </div>
+        </article>
+        <section className="blog-more" aria-labelledby="blog-more-title">
+          <h2 id="blog-more-title" className="landing-heading-card">
+            {t("landing.blog.more")}
+          </h2>
+          <ul className="blog-more-list">
+            {otherPosts.map((otherPost) => (
+              <li key={otherPost.slug}>
+                <BlogGuideCard post={otherPost} heading="h3" />
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
     </BlogLayout>
   );
 }

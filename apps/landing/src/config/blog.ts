@@ -5,6 +5,7 @@ export const blogPosts = (
     {
       slug: "timery-zawsze-widoczne",
       key: "timers",
+      surface: "lime",
       preview: "/screenshots/guides/timer-menu.jpg",
       previewWidth: 196,
       previewHeight: 344,
@@ -12,6 +13,7 @@ export const blogPosts = (
     {
       slug: "ustawienia-powiadomien",
       key: "notifications",
+      surface: "cyan",
       preview: "/screenshots/guides/powiadomienia.jpg",
       previewWidth: 820,
       previewHeight: 560,
@@ -19,13 +21,15 @@ export const blogPosts = (
     {
       slug: "okna-i-skroty-klawiszowe",
       key: "windows",
+      surface: "amber",
       preview: "/screenshots/guides/skroty-klawiszowe.jpg",
       previewWidth: 820,
       previewHeight: 560,
     },
   ] as const
-).map((post) => ({
+).map((post, index) => ({
   ...post,
+  number: String(index + 1).padStart(2, "0"),
   ...translations.blog.posts[post.key],
   publishedAt: "2026-10-07",
   updatedAt: "2026-10-07",
