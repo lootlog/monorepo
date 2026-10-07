@@ -11,7 +11,7 @@ import {
 const faqItems = [
   { key: "1", guide: links.battleGuide },
   { key: "2" },
-  { key: "3", guide: links.organizationGuide },
+  { key: "3", guide: links.support },
   { key: "4", guide: links.addonGuide },
   { key: "5" },
   { key: "6" },
