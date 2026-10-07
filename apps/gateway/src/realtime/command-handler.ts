@@ -42,6 +42,8 @@ import type {
 } from "@lootlog/schema/npc-presence";
 import { JoinAdmission } from "#src/realtime/join-admission";
 import type { MapPingService } from "#src/realtime/map-ping-service";
+import { getGlobalChatStats } from "#src/realtime/gateway-metrics";
+import { canReadSourceEvent } from "#src/realtime/source-event-visibility";
 import type { PresenceStore } from "#src/realtime/presence-store";
 import {
   getScopeKey,
@@ -189,6 +191,7 @@ export class CommandHandler {
       RealtimeHub,
       | "onPermissionRebalance"
       | "clusterFederationVersion"
+      | "globalChatCounts"
       | "sendResponse"
       | "sendEvent"
       | "replaceSubscriptions"
@@ -719,6 +722,28 @@ export class CommandHandler {
             scope.topic === "map.air-tags"
               ? fromPromise(() => this.airTags.registerInterest(scope))
               : Effect.void,
+          ),
+          // Counts otherwise arrive with the next metrics sample, up to 10 s later.
+          Effect.tap(({ scope }) =>
+            Effect.sync(() => {
+              const counts = this.hub.globalChatCounts;
+
+              if (
+                !counts ||
+                (scope.topic !== "global.chat" &&
+                  scope.topic !== "global.chat.world")
+              )
+                return;
+
+              const event: Event = {
+                v: 1,
+                type: "global-chat.stats",
+                data: getGlobalChatStats(counts, scope.world),
+              };
+
+              if (canReadSourceEvent(socket.data, event))
+                this.hub.sendEvent(socket, event);
+            }),
           ),
         );
       case "subscription.unsubscribe":

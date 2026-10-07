@@ -46,6 +46,7 @@ import {
   type PartyGatheringEventSource,
 } from "#src/realtime/npc-event-visibility";
 import { toLegacyAirTagUpdates } from "#src/realtime/air-tag-legacy-updates";
+import type { GlobalChatCounts } from "#src/realtime/gateway-metrics";
 
 type Scope = typeof SubscriptionScope.Type;
 
@@ -212,6 +213,8 @@ export class RealtimeHub {
   readonly instanceId = crypto.randomUUID();
   /** Lowest `FEDERATION_VERSION` among live replicas, kept by `GatewayMetrics`; 1 until known. */
   clusterFederationVersion = 1;
+  /** Cluster-wide global chat counts, kept by `GatewayMetrics`; undefined until sampled. */
+  globalChatCounts?: GlobalChatCounts;
 
   constructor(
     private readonly config: Pick<GatewayConfiguration, "maxBackpressureBytes">,
