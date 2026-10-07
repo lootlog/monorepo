@@ -64,34 +64,45 @@ export function LandingHeader() {
 
   const navigationLinks = (
     <>
-      <a
+      <Link
         onClick={closeNavigation}
-        href="#product"
+        to="/"
+        hash="product"
         className={navigationLinkClassName}
       >
         {t("landing.header.product")}
-      </a>
-      <a
+      </Link>
+      <Link
         onClick={closeNavigation}
-        href="#workflow"
+        to="/"
+        hash="workflow"
         className={navigationLinkClassName}
       >
         {t("landing.header.workflow")}
-      </a>
-      <a
+      </Link>
+      <Link
         onClick={closeNavigation}
-        href="#trust"
+        to="/"
+        hash="trust"
         className={navigationLinkClassName}
       >
         {t("landing.header.trust")}
-      </a>
-      <a
+      </Link>
+      <Link
         onClick={closeNavigation}
-        href="#faq"
+        to="/"
+        hash="faq"
         className={navigationLinkClassName}
       >
         {t("landing.header.faq")}
-      </a>
+      </Link>
+      <Link
+        to="/blog"
+        onClick={closeNavigation}
+        className={navigationLinkClassName}
+      >
+        {t("landing.header.blog")}
+      </Link>
       <a
         onClick={closeNavigation}
         href={links.docs}
