@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/toolbar-strip";
 import { IconButton } from "@/components/ui/icon-button";
 import {
-  toWorldOption,
+  getRecentWorldGroups,
   WorldCombobox,
   type WorldGroup,
 } from "@/components/world-combobox";
@@ -35,6 +35,7 @@ export const GlobalChatToolbar = ({
 }: GlobalChatToolbarProps) => {
   const { t } = useTranslation("globalChat");
   const selectChannel = useGlobalChatStore((state) => state.selectChannel);
+  const recentWorlds = useGlobalChatStore((state) => state.recentWorlds);
 
   const stats = useGlobalChatStore((state) =>
     state.stats?.channel === channel ? state.stats : null,
@@ -48,11 +49,10 @@ export const GlobalChatToolbar = ({
         { value: GLOBAL_CHAT_SHARED_CHANNEL, label: t("channels.shared") },
       ],
     },
-    {
-      value: "worlds",
-      label: t("channels.worldsGroup"),
-      items: worlds.map(toWorldOption),
-    },
+    ...getRecentWorldGroups(worlds, recentWorlds, {
+      recent: t("worldSelector.recent", { ns: "common" }),
+      rest: t("channels.worldsGroup"),
+    }),
   ];
 
   return (

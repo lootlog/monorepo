@@ -25,6 +25,29 @@ export const toWorldOption = (world: string): WorldOption => ({
   label: upperFirst(world),
 });
 
+/**
+ * The recently picked worlds that are still available, newest first, then
+ * every other world. Empty groups are left out.
+ */
+export const getRecentWorldGroups = (
+  worlds: ReadonlyArray<string>,
+  recent: ReadonlyArray<string>,
+  labels: { recent: string; rest: string },
+): WorldGroup[] => {
+  const recentWorlds = recent.filter((world) => worlds.includes(world));
+
+  return [
+    { value: "recent", label: labels.recent, items: recentWorlds },
+    {
+      value: "rest",
+      label: labels.rest,
+      items: worlds.filter((world) => !recentWorlds.includes(world)),
+    },
+  ].flatMap(({ items, ...group }) =>
+    items.length > 0 ? [{ ...group, items: items.map(toWorldOption) }] : [],
+  );
+};
+
 type WorldComboboxProps = {
   groups: WorldGroup[];
   value: string | undefined;
