@@ -7,11 +7,17 @@ export function BlogNotFound() {
 
   return (
     <BlogLayout>
-      <h1 className="blog-title">{t("landing.blog.notFoundTitle")}</h1>
-      <p className="blog-updated">{t("landing.blog.notFoundDescription")}</p>
-      <Link to="/blog" className="blog-text-link">
-        {t("landing.blog.back")}
-      </Link>
+      <div className="landing-container blog-not-found">
+        <h1 className="landing-heading-section text-balance">
+          {t("landing.blog.notFoundTitle")}
+        </h1>
+        <p className="landing-lead mt-5 text-[var(--broadcast-text-muted)]">
+          {t("landing.blog.notFoundDescription")}
+        </p>
+        <Link to="/blog" className="landing-action landing-action-solid mt-8">
+          {t("landing.blog.back")}
+        </Link>
+      </div>
     </BlogLayout>
   );
 }
