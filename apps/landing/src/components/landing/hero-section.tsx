@@ -1,5 +1,5 @@
 import { ArrowUpRight, Download } from "lucide-react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 
 import { TimerIllustration } from "@/src/components/landing/timer-illustration";
@@ -39,11 +39,17 @@ export function HeroSection() {
       <div className="broadcast-hero-layout relative z-10 landing-container min-h-[calc(100svh-6rem)] pb-14 pt-3 sm:pb-20 sm:pt-14 lg:pb-20 lg:pt-20">
         <div className="broadcast-hero-copy min-w-0 self-center">
           <div className="max-w-2xl">
+            <p className="landing-eyebrow mb-5 sm:mb-7">
+              {t("landing.hero.eyebrow")}
+            </p>
             <h1
               id="landing-hero-title"
               className="landing-heading-display max-w-3xl text-balance text-[var(--broadcast-white)]"
             >
-              {t("landing.hero.title")}
+              <Trans
+                i18nKey="landing.hero.title"
+                components={{ mark: <mark className="landing-hero-mark" /> }}
+              />
             </h1>
           </div>
 
