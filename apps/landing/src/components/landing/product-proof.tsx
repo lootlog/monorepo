@@ -1,13 +1,22 @@
 import { ArrowUpRight, ChartColumn, Gem } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { LootIllustration } from "@/src/components/landing/loot-illustration";
-import { RankingIllustration } from "@/src/components/landing/ranking-illustration";
+import { SectionHead } from "@/src/components/landing/section-head";
 import { links } from "@/src/config/links";
 
 const evidenceItems = [
-  { key: "dashboard", icon: Gem, surface: "blue" },
-  { key: "statistics", icon: ChartColumn, surface: "cyan" },
+  {
+    key: "dashboard",
+    icon: Gem,
+    tone: "amber",
+    image: "/screenshots/guild-lootlog-current.jpg",
+  },
+  {
+    key: "statistics",
+    icon: ChartColumn,
+    tone: "cyan",
+    image: "/screenshots/guild-kill-stats-current.png",
+  },
 ] as const;
 
 export function ProductProof() {
@@ -17,95 +26,69 @@ export function ProductProof() {
     <section
       id="product"
       aria-labelledby="product-proof-title"
-      className="landing-section bg-[var(--broadcast-ink)]"
+      className="landing-section bg-[var(--broadcast-ink)] text-[var(--broadcast-white)]"
     >
       <div className="landing-container">
-        <h2
+        <SectionHead
           id="product-proof-title"
-          className="landing-heading-section max-w-4xl text-balance text-[var(--broadcast-white)]"
+          title={t("landing.proof.title")}
+          description={t("landing.proof.description")}
         >
-          {t("landing.proof.title")}
-        </h2>
-        <p className="landing-lead mt-6 text-[var(--broadcast-text-muted)]">
-          {t("landing.proof.description")}
-        </p>
-        <a href={links.organizationGuide} className="landing-footer-link mt-3">
-          {t("landing.proof.guide")}
-          <ArrowUpRight className="size-4" aria-hidden="true" />
-        </a>
+          <a
+            href={links.organizationGuide}
+            className="landing-footer-link mt-3"
+          >
+            {t("landing.proof.guide")}
+            <ArrowUpRight className="size-4" aria-hidden="true" />
+          </a>
+        </SectionHead>
 
         <div className="mt-12 grid gap-6 sm:mt-16 sm:gap-8">
-          {evidenceItems.map(({ key, icon: Icon, surface }) => {
-            const isCyan = surface === "cyan";
+          {evidenceItems.map(({ key, icon: Icon, tone, image }, index) => (
+            <article
+              key={key}
+              className={`landing-proof-card landing-tone-${tone}`}
+              data-reverse={index % 2 === 1 ? "" : undefined}
+            >
+              <div className="landing-proof-copy">
+                <p className="landing-proof-meta">
+                  <span className="landing-badge">
+                    <Icon className="size-5" aria-hidden="true" />
+                  </span>
+                  <span className="landing-number">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  {t(`landing.proof.${key}.caption`)}
+                </p>
+                <h3 className="landing-heading-card text-balance">
+                  {t(`landing.proof.${key}.title`)}
+                </h3>
+                <p className="landing-lead">
+                  {t(`landing.proof.${key}.description`)}
+                </p>
+              </div>
 
-            return (
-              <article
-                key={key}
-                className={[
-                  "relative isolate overflow-hidden rounded-[var(--broadcast-radius-card)] px-4 py-10 sm:px-10 sm:py-14 lg:rounded-[var(--broadcast-radius-panel)] lg:px-14 lg:py-16",
-                  isCyan
-                    ? "bg-[var(--broadcast-cyan)] text-[var(--broadcast-ink)]"
-                    : "bg-[var(--broadcast-navy)] text-[var(--broadcast-white)]",
-                ].join(" ")}
-              >
-                <div
-                  className={[
-                    "grid items-center gap-10 sm:gap-12 lg:grid-cols-2 lg:gap-20",
-                    isCyan ? "lg:[&>*:first-child]:order-2" : "",
-                  ].join(" ")}
-                >
-                  <div>
-                    <p
-                      className={[
-                        "mb-5 flex items-center gap-2.5 text-sm font-bold sm:mb-6",
-                        isCyan
-                          ? "text-[var(--broadcast-ink)]"
-                          : "text-[var(--broadcast-cyan)]",
-                      ].join(" ")}
-                    >
-                      <Icon className="size-5" aria-hidden="true" />
-                      {t(`landing.proof.${key}.caption`)}
-                    </p>
-                    <h3 className="landing-heading-card max-w-xl text-balance">
-                      {t(`landing.proof.${key}.title`)}
-                    </h3>
-                    <p
-                      className={[
-                        "landing-lead mt-5",
-                        isCyan
-                          ? "text-[var(--broadcast-paper-ink)]"
-                          : "text-[var(--broadcast-navy-muted)]",
-                      ].join(" ")}
-                    >
-                      {t(`landing.proof.${key}.description`)}
-                    </p>
-                  </div>
-
-                  <div className="relative isolate min-w-0">
-                    <div
-                      aria-hidden="true"
-                      className={[
-                        "landing-shape absolute -left-3 -top-5 size-20 rounded-full border-[12px] sm:size-24 sm:border-[14px]",
-                        isCyan
-                          ? "border-[var(--broadcast-coral)]"
-                          : "border-[var(--broadcast-lime)]",
-                      ].join(" ")}
-                    />
-                    <div
-                      aria-hidden="true"
-                      className={[
-                        "landing-shape absolute bottom-10 -right-2 size-20 rounded-full sm:-right-4",
-                        isCyan
-                          ? "bg-[var(--broadcast-blue)]"
-                          : "bg-[var(--broadcast-amber)]",
-                      ].join(" ")}
-                    />
-                    {isCyan ? <RankingIllustration /> : <LootIllustration />}
-                  </div>
-                </div>
-              </article>
-            );
-          })}
+              <div className="landing-proof-visual">
+                <span
+                  aria-hidden="true"
+                  className="landing-shape landing-ring"
+                />
+                <span
+                  aria-hidden="true"
+                  className="landing-shape landing-dot"
+                />
+                <img
+                  src={image}
+                  width={1280}
+                  height={720}
+                  alt={t(`landing.proof.${key}.imageAlt`)}
+                  loading="lazy"
+                  decoding="async"
+                  className="landing-screen"
+                />
+              </div>
+            </article>
+          ))}
         </div>
       </div>
     </section>
