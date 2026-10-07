@@ -12,9 +12,7 @@ export const GlobalChatOnline = () => {
   const { channel } = useGlobalChatChannel({ loadWorlds: true });
 
   const stats = useGlobalChatStore((state) =>
-    channel !== undefined && state.stats?.channel === channel
-      ? state.stats
-      : null,
+    state.stats?.channel === channel ? state.stats : null,
   );
 
   const onlineLabel =
