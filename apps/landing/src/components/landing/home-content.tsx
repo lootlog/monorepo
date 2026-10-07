@@ -1,8 +1,9 @@
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, MessageCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { ClosingCta } from "@/src/components/landing/closing-cta";
 import { FaqPanel } from "@/src/components/landing/faq-panel";
+import { FeatureBand } from "@/src/components/landing/feature-band";
 import { LandingFooter } from "@/src/components/landing/footer";
 import { LandingHeader } from "@/src/components/landing/header";
 import { HeroSection } from "@/src/components/landing/hero-section";
@@ -20,6 +21,7 @@ export function HomeContent() {
 
       <main>
         <HeroSection />
+        <FeatureBand />
         <ProductProof />
         <HowItWorks />
         <TrustRecord />
@@ -30,25 +32,32 @@ export function HomeContent() {
           className="landing-section bg-[var(--broadcast-ink)]"
         >
           <div className="landing-container grid items-start gap-8 md:grid-cols-[0.75fr_1.25fr] md:gap-10 lg:gap-20">
-            <div>
+            <div className="md:sticky md:top-28">
               <h2
                 id="faq-title"
                 className="landing-heading-section max-w-xl text-balance text-[var(--broadcast-white)]"
               >
                 {t("landing.faq.title")}
               </h2>
-              <p className="landing-lead mt-6 text-[var(--broadcast-text-muted)]">
-                {t("landing.faq.description")}
-              </p>
-              <a
-                href={links.discord}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="landing-footer-link mt-3 font-semibold text-[var(--broadcast-white)]"
-              >
-                {t("landing.faq.discord")}
-                <ArrowUpRight className="size-4" aria-hidden="true" />
-              </a>
+              <div className="landing-faq-help">
+                <span
+                  aria-hidden="true"
+                  className="landing-shape landing-ring"
+                />
+                <span className="landing-badge">
+                  <MessageCircle className="size-5" aria-hidden="true" />
+                </span>
+                <p>{t("landing.faq.description")}</p>
+                <a
+                  href={links.discord}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="landing-action landing-action-light"
+                >
+                  {t("landing.faq.discord")}
+                  <ArrowUpRight className="size-4" aria-hidden="true" />
+                </a>
+              </div>
             </div>
             <FaqPanel />
           </div>

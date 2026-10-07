@@ -31,10 +31,19 @@
     "blog": "Poradniki"
   },
   "hero": {
-    "title": "Lootlog do Margonem",
+    "eyebrow": "Darmowy dodatek open source",
+    "title": "Lootlog do <mark>Margonem</mark>",
     "description": "Wspólne timery, historia dropów i zapis walk. Korzystasz z dodatku w grze i z panelu Lootloga.",
     "installAddon": "Zainstaluj dodatek",
     "openDashboard": "Otwórz Lootloga"
+  },
+  "band": {
+    "timers": "Wspólne timery",
+    "drops": "Historia dropów",
+    "battles": "Zapis walk",
+    "statistics": "Statystyki bić",
+    "worlds": "Wiele światów",
+    "openSource": "Open source"
   },
   "faq": {
     "title": "Częste pytania",
@@ -63,12 +72,14 @@
     "dashboard": {
       "caption": "Lootlog",
       "title": "Historia dropów",
-      "description": "Przy dropie widzisz potwora, świat i czas bicia. Możesz szukać po potworze, przedmiocie albo graczu."
+      "description": "Przy dropie widzisz potwora, świat i czas bicia. Możesz szukać po potworze, przedmiocie albo graczu.",
+      "imageAlt": "Lista łupów klanu w\u00a0panelu Lootloga z\u00a0potworami, uczestnikami i\u00a0dropami"
     },
     "statistics": {
       "caption": "Statystyki",
       "title": "Statystyki bić",
-      "description": "Liczba bić, ranking graczy i najczęściej bite potwory. Wybierasz okres, za który chcesz zobaczyć statystyki."
+      "description": "Liczba bić, ranking graczy i najczęściej bite potwory. Wybierasz okres, za który chcesz zobaczyć statystyki.",
+      "imageAlt": "Statystyki bić klanu w\u00a0panelu Lootloga z\u00a0rankingiem członków i\u00a0najczęściej bitymi potworami"
     }
   },
   "workflow": {
@@ -131,6 +142,7 @@
   },
   "footer": {
     "developer": "Dla programistów",
+    "tagline": "Darmowy dodatek open source do Margonem dla graczy i\u00a0klanów.",
     "navigationLabel": "Linki w\u00a0stopce",
     "docs": "Dokumentacja",
     "discord": "Discord",
@@ -158,17 +170,8 @@
     "opponent": "Piekielny Kościej",
     "shared": "Timer klanowy",
     "loot": "Nowy drop w\u00a0lootlogu",
-    "ranking": "Aktywność klanu",
-    "kills": "{{count}} bić",
     "items": {
-      "sword": "Miecz",
-      "shield": "Tarcza",
       "gem": "Legendarny łup"
-    },
-    "players": {
-      "first": "Gracz 01",
-      "second": "Gracz 02",
-      "third": "Gracz 03"
     }
   },
   "blog": {
