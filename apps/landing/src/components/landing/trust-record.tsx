@@ -3,6 +3,7 @@ import {
   Code2,
   Coins,
   Fingerprint,
+  Heart,
   UsersRound,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -63,6 +64,26 @@ export function TrustRecord() {
             </li>
           ))}
         </ul>
+        <div className="landing-callout landing-support md:col-span-2">
+          <span aria-hidden="true" className="landing-shape landing-ring" />
+          <div>
+            <span className="landing-badge">
+              <Heart className="size-5" aria-hidden="true" />
+            </span>
+            <h3>{t("landing.trust.support.title")}</h3>
+            <p>{t("landing.trust.support.description")}</p>
+          </div>
+          <a
+            href={links.support}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="landing-action landing-action-dark"
+          >
+            <Heart className="size-4" aria-hidden="true" />
+            {t("landing.trust.support.action")}
+            <ArrowUpRight className="size-4" aria-hidden="true" />
+          </a>
+        </div>
       </div>
     </section>
   );

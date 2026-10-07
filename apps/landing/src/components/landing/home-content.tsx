@@ -39,7 +39,7 @@ export function HomeContent() {
               >
                 {t("landing.faq.title")}
               </h2>
-              <div className="landing-faq-help">
+              <div className="landing-callout mt-10">
                 <span
                   aria-hidden="true"
                   className="landing-shape landing-ring"
