@@ -314,6 +314,8 @@ export const makeGlobalChatOperations = (
       sendMessage: (caller, payload) =>
         Effect.gen(function* () {
           const displayName = yield* sender(caller);
+
+          if (payload.allWorlds) yield* requireAdmin(caller);
           yield* requireChannel(payload.world);
 
           if (yield* activeMute(caller.userId)) return yield* accessDenied();
@@ -327,33 +329,64 @@ export const makeGlobalChatOperations = (
               new GlobalChatRateLimited({ status: 429 }),
             );
 
-          // Only the shared channel names where its senders write from.
+          const worlds = yield* knownWorlds;
+
+          // Only a message to the shared channel alone names where it comes from.
           const originWorld =
             payload.world === undefined &&
+            !payload.allWorlds &&
             payload.originWorld !== undefined &&
-            (yield* knownWorlds).includes(payload.originWorld)
+            worlds.includes(payload.originWorld)
               ? payload.originWorld
               : undefined;
 
-          let stored: StoredGlobalChatMessage = {
-            id: v6(),
-            displayName,
-            message: payload.message,
-            timestamp: new Date().toISOString(),
-            senderUserId: caller.userId,
+          const timestamp = new Date().toISOString();
+
+          // Each channel moderates its copy apart, so each copy has its own id.
+          const compose = (
+            world: string | undefined,
+          ): StoredGlobalChatMessage => {
+            const stored = {
+              id: v6(),
+              displayName,
+              message: payload.message,
+              timestamp,
+              senderUserId: caller.userId,
+            };
+
+            if (world !== undefined) return { ...stored, world };
+
+            return originWorld === undefined
+              ? stored
+              : { ...stored, originWorld };
           };
 
-          if (payload.world !== undefined)
-            stored = { ...stored, world: payload.world };
-          else if (originWorld !== undefined)
-            stored = { ...stored, originWorld };
+          const requested = compose(payload.world);
 
-          yield* storeCall(store.append(payload.world, encodeStored(stored)));
+          const copies = payload.allWorlds
+            ? [
+                requested,
+                ...[undefined, ...worlds].flatMap((world) =>
+                  world === payload.world ? [] : [compose(world)],
+                ),
+              ]
+            : [requested];
 
-          // The message is stored; a lost broadcast reaches readers on their next fetch.
-          yield* events.publish(published(stored)).pipe(Effect.ignore);
+          yield* Effect.forEach(
+            copies,
+            (stored) =>
+              Effect.gen(function* () {
+                yield* storeCall(
+                  store.append(stored.world, encodeStored(stored)),
+                );
 
-          return response(stored, caller);
+                // The message is stored; a lost broadcast reaches readers on their next fetch.
+                yield* events.publish(published(stored)).pipe(Effect.ignore);
+              }),
+            { concurrency: 8, discard: true },
+          );
+
+          return response(requested, caller);
         }),
       deleteMessage: (caller, world, messageId) =>
         Effect.gen(function* () {
