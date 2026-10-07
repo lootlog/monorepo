@@ -1,9 +1,9 @@
 import { Schema } from "effect";
 import {
-  toWorldOption,
+  getRecentWorldGroups,
   WorldCombobox,
-  type WorldGroup,
 } from "@/components/world-combobox";
+import { addRecentWorld } from "@/lib/recent-worlds";
 import {
   getGuildsControllerGetWorldsByGuildIdQueryKey,
   useGuildsControllerGetWorldsByGuildId,
@@ -30,8 +30,6 @@ type WorldSelectorProps = {
   className?: string;
   variant?: "default" | "strip";
 };
-
-const MAX_RECENT_WORLDS = 3;
 
 export const WorldSelector: FC<WorldSelectorProps> = ({
   disabled = false,
@@ -109,51 +107,19 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     }
   }, [guildId, isFetched, worlds, world, defaultWorld, setWorld]);
 
-  const worldGroups = useMemo<WorldGroup[]>(() => {
-    if (!worlds || worlds.length === 0) return [];
-
-    const availableWorlds = new Set(worlds);
-
-    const recent = recentWorlds.flatMap((w) =>
-      availableWorlds.has(w) ? [toWorldOption(w)] : [],
-    );
-
-    const recentValues = new Set(recent.map((w) => w.value));
-
-    const rest = worlds.flatMap((w) =>
-      recentValues.has(w) ? [] : [toWorldOption(w)],
-    );
-
-    const groups: WorldGroup[] = [];
-
-    if (recent.length > 0) {
-      groups.push({
-        value: "recent",
-        label: t("worldSelector.recent"),
-        items: recent,
-      });
-    }
-
-    if (rest.length > 0) {
-      groups.push({
-        value: "all",
-        label: t("worldSelector.allWorlds"),
-        items: rest,
-      });
-    }
-
-    return groups;
-  }, [recentWorlds, t, worlds]);
+  const worldGroups = useMemo(
+    () =>
+      getRecentWorldGroups(worlds ?? [], recentWorlds, {
+        recent: t("worldSelector.recent"),
+        rest: t("worldSelector.allWorlds"),
+      }),
+    [recentWorlds, t, worlds],
+  );
 
   const handleWorldChange = (newWorld: string) => {
     if (!guildId) return;
 
-    const updatedRecent = [
-      newWorld,
-      ...recentWorlds.filter((w) => w !== newWorld),
-    ].slice(0, MAX_RECENT_WORLDS);
-
-    setRecentWorlds(updatedRecent);
+    setRecentWorlds(addRecentWorld(recentWorlds, newWorld));
     setWorld(guildId, newWorld);
   };
 
