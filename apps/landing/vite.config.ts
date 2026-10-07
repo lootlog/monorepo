@@ -26,7 +26,10 @@ export default defineConfig(({ command, isPreview }) => ({
     tailwindcss(),
     tanstackStart({
       router: { basepath: "/" },
-      pages: landingDocumentPaths.map((path) => ({ path })),
+      pages: [
+        ...landingDocumentPaths.map((path) => ({ path })),
+        { path: "/404", prerender: { outputPath: "/404.html" } },
+      ],
       prerender: {
         enabled: true,
         crawlLinks: false,
