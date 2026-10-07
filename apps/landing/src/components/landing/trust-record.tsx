@@ -9,10 +9,10 @@ import { useTranslation } from "react-i18next";
 import { links } from "@/src/config/links";
 
 const facts = [
-  { key: "free", icon: Coins },
-  { key: "openSource", icon: Code2 },
-  { key: "discordAccount", icon: Fingerprint },
-  { key: "multiWorld", icon: UsersRound },
+  { key: "free", icon: Coins, tone: "lime" },
+  { key: "openSource", icon: Code2, tone: "cyan" },
+  { key: "discordAccount", icon: Fingerprint, tone: "amber" },
+  { key: "multiWorld", icon: UsersRound, tone: "coral" },
 ] as const;
 
 export function TrustRecord() {
@@ -24,8 +24,8 @@ export function TrustRecord() {
       aria-labelledby="trust-record-title"
       className="landing-section bg-[var(--broadcast-ink-soft)] text-[var(--broadcast-white)]"
     >
-      <div className="landing-container grid gap-10 md:grid-cols-[0.9fr_1.1fr] md:gap-12 lg:gap-20">
-        <div>
+      <div className="landing-container grid gap-12 md:grid-cols-[0.9fr_1.1fr] md:gap-12 lg:gap-20">
+        <div className="md:self-center">
           <h2
             id="trust-record-title"
             className="landing-heading-section text-balance"
@@ -51,22 +51,15 @@ export function TrustRecord() {
             </a>
           </div>
         </div>
-        <ul className="grid gap-x-8 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2">
-          {facts.map(({ key, icon: Icon }) => (
-            <li
-              key={key}
-              className="border-t border-[var(--broadcast-line)] py-6"
-            >
-              <Icon
-                className="mb-5 size-6 text-[var(--broadcast-cyan)]"
-                aria-hidden="true"
-              />
-              <h3 className="text-balance text-xl font-bold tracking-[-0.01em]">
-                {t(`landing.trust.items.${key}.title`)}
-              </h3>
-              <p className="mt-2 text-pretty text-sm leading-6 text-[var(--broadcast-text-muted)]">
-                {t(`landing.trust.items.${key}.description`)}
-              </p>
+        <ul className="landing-facts">
+          {facts.map(({ key, icon: Icon, tone }) => (
+            <li key={key} className={`landing-fact landing-tone-${tone}`}>
+              <span aria-hidden="true" className="landing-ring" />
+              <span className="landing-badge">
+                <Icon className="size-5" aria-hidden="true" />
+              </span>
+              <h3>{t(`landing.trust.items.${key}.title`)}</h3>
+              <p>{t(`landing.trust.items.${key}.description`)}</p>
             </li>
           ))}
         </ul>

@@ -21,8 +21,8 @@ export function TimerIllustration() {
   const countdown = `00:${String(Math.floor(remaining / 60)).padStart(2, "0")}:${String(remaining % 60).padStart(2, "0")}`;
 
   return (
-    <figure className="relative mx-auto w-full max-w-xl px-1 py-3 sm:px-6 sm:py-8">
-      <div className="relative rounded-[var(--broadcast-radius-panel)] border-2 border-[var(--broadcast-ink)] bg-[var(--broadcast-lime)] p-4 text-[var(--broadcast-ink)] sm:p-8">
+    <figure className="landing-timer relative mx-auto w-full max-w-xl px-1 py-3 sm:px-6 sm:py-8">
+      <div className="landing-sticker landing-timer-card relative rounded-[var(--broadcast-radius-panel)] bg-[var(--broadcast-lime)] p-4 text-[var(--broadcast-ink)] sm:p-8">
         <div className="flex items-center justify-between gap-4">
           <p className="text-xs font-bold uppercase tracking-widest">
             {t("landing.illustrations.timer")}
@@ -53,7 +53,7 @@ export function TimerIllustration() {
           {t("landing.illustrations.shared")}
         </p>
       </div>
-      <div className="relative -mt-2 ml-5 flex items-center gap-3 rounded-[var(--broadcast-radius-card)] border-2 sm:-mt-3 sm:ml-8 sm:gap-4 border-[var(--broadcast-ink)] bg-[var(--broadcast-paper)] p-3 text-[var(--broadcast-ink)] sm:p-5">
+      <div className="landing-sticker landing-timer-toast relative -mt-1 ml-5 flex items-center gap-3 rounded-[var(--broadcast-radius-card)] sm:-mt-2 sm:ml-8 sm:gap-4 bg-[var(--broadcast-paper)] p-3 text-[var(--broadcast-ink)] sm:p-5">
         <span className="grid size-10 shrink-0 place-items-center sm:size-14 rounded-[var(--broadcast-radius-card)] bg-[var(--broadcast-amber)]">
           <Gem className="size-6 sm:size-8" aria-hidden="true" />
         </span>

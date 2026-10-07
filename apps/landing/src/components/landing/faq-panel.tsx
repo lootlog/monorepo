@@ -27,17 +27,17 @@ export function FaqPanel() {
           <AccordionItem
             key={item.key}
             value={`item-${index}`}
-            className="border-0 rounded-[var(--broadcast-radius-card)] bg-[var(--broadcast-ink-soft)] px-5 sm:px-6"
+            className="landing-faq-item rounded-[var(--broadcast-radius-card)] bg-[var(--broadcast-ink-soft)] px-4 sm:px-6"
           >
-            <AccordionTrigger className="min-h-20 gap-5 rounded-[var(--broadcast-radius-control)] px-0 py-5 text-left text-base font-bold text-[var(--broadcast-white)] hover:text-[var(--broadcast-lime)] hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--broadcast-lime)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--broadcast-ink)]">
-              <span className="flex items-start gap-4">
-                <span className="mt-1 font-mono text-xs font-bold text-[var(--broadcast-cyan)]">
+            <AccordionTrigger className="landing-faq-trigger min-h-20 gap-4 rounded-[var(--broadcast-radius-control)] px-0 py-4 text-left text-[var(--broadcast-white)] hover:text-[var(--broadcast-lime)] hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--broadcast-lime)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--broadcast-ink)]">
+              <span className="flex items-center gap-4">
+                <span className="landing-faq-number">
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <span>{t(`landing.faq.q${item.key}`)}</span>
               </span>
             </AccordionTrigger>
-            <AccordionContent className="pb-6 pl-0 pr-4 sm:pl-9">
+            <AccordionContent className="pb-6 pl-0 pr-2 sm:pl-[3.25rem] sm:pr-12">
               <p className="max-w-[68ch] text-base leading-7 text-[var(--broadcast-text-muted)]">
                 {t(`landing.faq.a${item.key}`)}
               </p>
