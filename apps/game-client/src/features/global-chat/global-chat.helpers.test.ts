@@ -96,30 +96,22 @@ describe("global chat channel", () => {
   const worlds = ["gordion", "tarhuna"];
 
   it("keeps the picked channel while it exists", () => {
-    expect(resolveGlobalChatChannel("tarhuna", "gordion", worlds)).toBe(
-      "tarhuna",
-    );
-    expect(
-      resolveGlobalChatChannel(GLOBAL_CHAT_SHARED_CHANNEL, "gordion", worlds),
-    ).toBe(GLOBAL_CHAT_SHARED_CHANNEL);
-  });
-
-  it("falls back to the current world, then to the shared channel", () => {
-    expect(resolveGlobalChatChannel(null, "gordion", worlds)).toBe("gordion");
-    expect(resolveGlobalChatChannel("removed", "gordion", worlds)).toBe(
-      "gordion",
-    );
-    expect(resolveGlobalChatChannel(null, "unknown", worlds)).toBe(
+    expect(resolveGlobalChatChannel("tarhuna", worlds)).toBe("tarhuna");
+    expect(resolveGlobalChatChannel(GLOBAL_CHAT_SHARED_CHANNEL, worlds)).toBe(
       GLOBAL_CHAT_SHARED_CHANNEL,
     );
   });
 
-  it("trusts the picked or current world until the world list loads", () => {
-    expect(resolveGlobalChatChannel("removed", "gordion", undefined)).toBe(
-      "removed",
+  it("falls back to the shared channel", () => {
+    expect(resolveGlobalChatChannel(null, worlds)).toBe(
+      GLOBAL_CHAT_SHARED_CHANNEL,
     );
-    expect(resolveGlobalChatChannel(null, "gordion", undefined)).toBe(
-      "gordion",
+    expect(resolveGlobalChatChannel("removed", worlds)).toBe(
+      GLOBAL_CHAT_SHARED_CHANNEL,
     );
+  });
+
+  it("trusts the picked world until the world list loads", () => {
+    expect(resolveGlobalChatChannel("removed", undefined)).toBe("removed");
   });
 });

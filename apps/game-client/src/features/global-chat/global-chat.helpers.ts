@@ -107,28 +107,17 @@ export const setGlobalChatPinned = (
 };
 
 /**
- * The picked channel while it still exists, otherwise the current world's,
- * otherwise the one every world shares. A world has a channel once any
- * Organization recorded a timer there; until the world list is known, every
- * world is assumed to have one.
+ * The picked channel while it still exists, otherwise the one every world
+ * shares. A world has a channel once any Organization recorded a timer there;
+ * until the world list is known, every world is assumed to have one.
  */
 export const resolveGlobalChatChannel = (
   selected: GlobalChatChannel | null,
-  currentWorld: string | undefined,
   worlds: ReadonlyArray<string> | undefined,
-): GlobalChatChannel => {
-  const exists = (world: string) => !worlds || worlds.includes(world);
-
-  if (
-    selected !== null &&
-    (selected === GLOBAL_CHAT_SHARED_CHANNEL || exists(selected))
-  )
-    return selected;
-
-  if (currentWorld !== undefined && exists(currentWorld)) return currentWorld;
-
-  return GLOBAL_CHAT_SHARED_CHANNEL;
-};
+): GlobalChatChannel =>
+  selected !== null && (!worlds || worlds.includes(selected))
+    ? selected
+    : GLOBAL_CHAT_SHARED_CHANNEL;
 
 /** A stable, readable color for a sender name or world tag on the dark chat. */
 export const getGlobalChatColor = (value: string) =>
