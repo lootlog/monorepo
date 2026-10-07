@@ -12,7 +12,6 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-  type PointerEvent,
 } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -27,6 +26,10 @@ import type {
 import { EmptyState } from "@/components/empty-state";
 import { ScrollToLatestButton } from "@/components/common/scroll-to-latest-button";
 import type { useChatGuildData } from "../hooks/use-chat-guild-data";
+import {
+  getViewportPosition,
+  useTranscriptFollow,
+} from "../hooks/use-transcript-follow";
 import type { ChatRenderableMessage } from "../chat.helpers";
 import { getChatDensityStyle } from "../chat-density";
 import { subscribeToChatScrollToMessage } from "../chat-scroll-to-message";
@@ -66,21 +69,6 @@ export type ChatTranscriptProps = {
 
 const noopDeleteMessage = () => undefined;
 
-const getViewportPosition = (viewport: HTMLElement): ChatScrollPosition => {
-  const box = viewport.getBoundingClientRect();
-
-  const row = Array.from(
-    viewport.querySelectorAll<HTMLElement>("[data-message-id]"),
-  ).find((element) => element.getBoundingClientRect().bottom > box.top);
-
-  return {
-    atEnd:
-      viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop <= 1,
-    messageId: row?.dataset.messageId,
-    offset: row ? row.getBoundingClientRect().top - box.top : 0,
-  };
-};
-
 export const ChatTranscript = ({
   appearance = CHAT_APPEARANCE_READABLE_PRESET,
   npcTypeColors,
@@ -102,11 +90,13 @@ export const ChatTranscript = ({
   onPositionChange,
 }: ChatTranscriptProps) => {
   const { t } = useTranslation("chat");
-  const { scrollToMessage, scrollToEnd } = useMessageScroller();
+  const { scrollToMessage } = useMessageScroller();
   const { end } = useMessageScrollerScrollable();
   const { visibleMessageIds } = useMessageScrollerVisibility();
   const viewport = useRef<HTMLDivElement>(null);
-  const pointerHeld = useRef(false);
+
+  const { holdPosition, resumeAtEnd, resumeOnWheel } =
+    useTranscriptFollow(viewport);
 
   const [highlightedMessageId, setHighlightedMessageId] = useState<
     string | null
@@ -229,55 +219,6 @@ export const ChatTranscript = ({
     [isActive],
   );
 
-  const holdPosition = (event: PointerEvent<HTMLDivElement>) => {
-    if (
-      event.target instanceof Element &&
-      event.target.closest("button, a, input, textarea, [contenteditable=true]")
-    )
-      return;
-    const element = viewport.current;
-
-    if (!element) return;
-    const position = getViewportPosition(element);
-    pointerHeld.current = true;
-
-    if (position.messageId)
-      scrollToMessage(position.messageId, {
-        align: "start",
-        scrollMargin: position.offset,
-        behavior: "instant",
-      });
-  };
-
-  const resumeAtEnd = () => {
-    const element = viewport.current;
-
-    if (
-      element &&
-      !pointerHeld.current &&
-      !window.getSelection()?.toString() &&
-      element.scrollHeight - element.clientHeight - element.scrollTop <= 1
-    ) {
-      scrollToEnd({ behavior: "instant" });
-    }
-  };
-
-  const releasePosition = useEffectEvent(() => {
-    if (!pointerHeld.current) return;
-    pointerHeld.current = false;
-    resumeAtEnd();
-  });
-
-  useEffect(() => {
-    window.addEventListener("pointerup", releasePosition);
-    window.addEventListener("pointercancel", releasePosition);
-
-    return () => {
-      window.removeEventListener("pointerup", releasePosition);
-      window.removeEventListener("pointercancel", releasePosition);
-    };
-  }, []);
-
   return (
     <BaseScrollArea.Root
       render=<MessageScroller.Root />
@@ -304,9 +245,7 @@ export const ChatTranscript = ({
           resumeAtEnd();
           savePosition();
         }}
-        onWheel={(event) => {
-          if (event.deltaY > 0) resumeAtEnd();
-        }}
+        onWheel={resumeOnWheel}
       >
         <BaseScrollArea.Content
           render=<MessageScroller.Content />

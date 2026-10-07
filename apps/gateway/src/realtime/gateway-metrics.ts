@@ -108,6 +108,25 @@ const countUsers = (sets: Map<string, Set<string>>) =>
 /** The shared channel's key among global chat listener counts. */
 const SHARED_CHANNEL = "";
 
+/** Cluster-wide counts from one metrics sample. */
+export type GlobalChatCounts = {
+  online: number;
+  playersByWorld: Record<string, number>;
+  listeners: Record<string, number>;
+};
+
+/** The shared channel counts every world; a world's channel only its own. */
+export const getGlobalChatStats = (
+  counts: GlobalChatCounts,
+  world: string | undefined,
+): GlobalChatStats => {
+  const listeners = counts.listeners[world ?? SHARED_CHANNEL] ?? 0;
+
+  return world === undefined
+    ? { online: counts.online, listeners }
+    : { world, online: counts.playersByWorld[world] ?? 0, listeners };
+};
+
 const observedAt = Metric.gauge("lootlog_gateway_cluster_observed_at_seconds", {
   attributes: { unit: "s" },
 });
@@ -205,6 +224,7 @@ export class GatewayMetrics {
       | "instanceId"
       | "getLocalSockets"
       | "clusterFederationVersion"
+      | "globalChatCounts"
       | "publishToScopes"
     >,
     private readonly now: () => number = Date.now,
@@ -272,6 +292,9 @@ export class GatewayMetrics {
 
     // Each replica samples every 10 s, so a starting older replica is seen within that.
     this.hub.clusterFederationVersion = federationVersion;
+    const chatCounts = { online: playerCount, playersByWorld, listeners };
+    // A new subscriber gets these at once instead of waiting for the next sample.
+    this.hub.globalChatCounts = chatCounts;
     yield* Metric.update(connections, connectionCount);
     yield* Metric.update(gameSessions, sessionCount);
     yield* Metric.update(uniquePlayers, playerCount);
@@ -282,17 +305,10 @@ export class GatewayMetrics {
     yield* Effect.forEach(
       chatListeners.keys(),
       (channel) => {
-        const listening = listeners[channel] ?? 0;
-
-        // The shared channel counts every world; a world's channel only its own.
-        const stats: GlobalChatStats =
-          channel === SHARED_CHANNEL
-            ? { online: playerCount, listeners: listening }
-            : {
-                world: channel,
-                online: playersByWorld[channel] ?? 0,
-                listeners: listening,
-              };
+        const stats = getGlobalChatStats(
+          chatCounts,
+          channel === SHARED_CHANNEL ? undefined : channel,
+        );
 
         return Effect.tryPromise(() =>
           this.hub.publishToScopes(
