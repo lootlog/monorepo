@@ -38,14 +38,7 @@ import { REQUIRED_NOTIFICATION_PERMISSIONS } from "./required-notification-permi
 import { DiscordSdkReadFailure, discordSdkRead } from "./discord-sdk-read.js";
 import type { RabbitPublisher } from "./rabbit-publisher.js";
 
-type ChannelPermissionsState = {
-  canView: boolean;
-  canSend: boolean;
-  hasRequiredPermissions: boolean;
-  requiredPermissions: string[];
-  grantedPermissions: string[];
-  missingPermissions: string[];
-};
+type ChannelPermissionsState = ReturnType<typeof channelPermissionsState>;
 
 type SyncableGuildChannel = Extract<
   GuildBasedChannel,
@@ -129,7 +122,7 @@ const permissionState = (
 const channelPermissionsState = (
   channel: GuildBasedChannel,
   botUserId: string,
-): ChannelPermissionsState => {
+) => {
   const permissions = channel.permissionsFor(botUserId);
 
   return {
