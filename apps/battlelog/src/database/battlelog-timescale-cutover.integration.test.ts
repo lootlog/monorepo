@@ -231,6 +231,16 @@ it("moves battles onto the TimescaleDB schema online, keeping old links, order a
     await session.end();
   }
 
+  // The scheduler runs the compression policy; it must not fail on UUID IDs.
+  const [{ jobId }] = (
+    await pool.query<{ jobId: number }>(
+      `SELECT job_id AS "jobId" FROM timescaledb_information.jobs
+       WHERE hypertable_name = 'battles' AND proc_name = 'policy_compression'`,
+    )
+  ).rows;
+
+  await pool.query("CALL run_job($1::integer)", [jobId]);
+
   expect(await cutover("verify")).toContain(
     "old battles without a migrated battle: 0",
   );
