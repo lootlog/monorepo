@@ -60,9 +60,7 @@ const asJsonValue = (value: unknown): JsonValue => {
 
   if (!Predicate.isObject(value)) return null;
 
-  return Object.fromEntries(
-    Object.entries(value).map(([key, entry]) => [key, asJsonValue(entry)]),
-  );
+  return asJsonObject(value);
 };
 
 const asJsonObject = (value: unknown): JsonObject => {
