@@ -1,5 +1,6 @@
+import { activeEventCondition } from "#src/events/event-scope-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, desc, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, lte, or } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -7,12 +8,6 @@ import {
   eventTable,
   userPinnedEventTable,
 } from "#src/database/drizzle/schema";
-
-const activeEventCondition = (referenceTime: Date) =>
-  and(
-    or(isNull(eventTable.startsAt), lte(eventTable.startsAt, referenceTime)),
-    or(isNull(eventTable.endsAt), gt(eventTable.endsAt, referenceTime)),
-  );
 
 class PinnedEventsPersistenceError extends TaggedErrorClass<PinnedEventsPersistenceError>()(
   "PinnedEventsPersistenceError",

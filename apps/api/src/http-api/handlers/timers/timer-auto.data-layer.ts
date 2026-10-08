@@ -1,9 +1,10 @@
+import { activeEventCondition } from "#src/events/event-scope-query";
 import { getTimerHistoryValues } from "./timer-restore-snapshot.js";
 import { pruneTimerHistory } from "./timer-history-retention.js";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { upsertActorCharacter } from "./timer-actor-snapshot.js";
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, gt, gte, isNull, lte, or } from "drizzle-orm";
+import { and, desc, eq, gte } from "drizzle-orm";
 import { Clock, Effect, Predicate, Result, Schema } from "effect";
 import { partition } from "es-toolkit";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
@@ -210,8 +211,7 @@ const migrateSyntheticTimer = (
           eq(eventTable.guildId, options.guildId),
           eq(eventTable.world, options.world),
           eq(eventHeroNpcTable.npcName, options.npcName),
-          or(isNull(eventTable.startsAt), lte(eventTable.startsAt, now)),
-          or(isNull(eventTable.endsAt), gt(eventTable.endsAt, now)),
+          activeEventCondition(now),
         ),
       )
       .limit(1);
