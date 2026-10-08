@@ -38,8 +38,11 @@ one step:
   to the new one, so old links resolve and R2 reads and deletions use the old
   key. Drop it together with the R2 bucket.
 - **No JIT.** Plans over the hypertables cost more than `jit_above_cost`, and
-  compiling them adds about 85 ms to every analytics read, so the service
-  connects with `jit = off`.
+  compiling them adds about 85 ms to every analytics read.
+  `20261008203752_battlelog_disable_jit` sets `jit = off` on the database, so
+  it also reaches sessions opened through PgBouncer, which rejects a `jit`
+  startup parameter. Sessions opened before the migration keep JIT until they
+  reconnect.
 
 The migration creates the tables on an empty database (tests, new
 environments) and refuses to run when `battles` holds rows. PGlite has no
@@ -66,11 +69,13 @@ changes or deletes during the copy. Each step is manual:
    remaining battles, re-copies every recorded change, moves the old tables to
    `battlelog_old` and the new ones to `public`, applies the rest of the
    migration, resumes the compression policies and records the migration for
-   Drizzle. Release the new Battlelog service right after it: until the new
-   pods are ready, the released service fails against the new schema, and
-   battles submitted in that gap are rejected and lost, because the game
-   client retries for about a second.
-4. `verify` compares the old and new tables; `cleanup` drops `battlelog_old`.
+   Drizzle.
+4. `bun run db:migrate:deploy` applies the migrations added after this one,
+   such as `20261008203752_battlelog_disable_jit`. Release the new Battlelog
+   service right after it: until the new pods are ready, the released service
+   fails against the new schema, and battles submitted in that gap are
+   rejected and lost, because the game client retries for about a second.
+5. `verify` compares the old and new tables; `cleanup` drops `battlelog_old`.
 
 Until `cleanup`, rolling back means moving the tables back and releasing the
 previous service; battles saved after the cutover would have to be copied back
