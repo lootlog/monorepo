@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import { reservationShareTable } from "#src/database/drizzle/schema";
 
-export const visibleReservationGuildIds = (
+export const selectActiveReservationShares = (
   database: typeof ApiDatabase.Service,
   guildId: string,
 ) =>
@@ -18,14 +18,19 @@ export const visibleReservationGuildIds = (
           eq(reservationShareTable.secondGuildId, guildId),
         ),
       ),
-    )
-    .pipe(
-      Effect.map((shares) => [
-        guildId,
-        ...shares.map((share) =>
-          share.firstGuildId === guildId
-            ? share.secondGuildId
-            : share.firstGuildId,
-        ),
-      ]),
     );
+
+export const visibleReservationGuildIds = (
+  database: typeof ApiDatabase.Service,
+  guildId: string,
+) =>
+  selectActiveReservationShares(database, guildId).pipe(
+    Effect.map((shares) => [
+      guildId,
+      ...shares.map((share) =>
+        share.firstGuildId === guildId
+          ? share.secondGuildId
+          : share.firstGuildId,
+      ),
+    ]),
+  );
