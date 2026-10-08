@@ -60,7 +60,7 @@ export function buildMeilisearchNameQuery({
   }
 
   if (world) {
-    filters.push(`world = "${world}"`);
+    filters.push(`world = ${JSON.stringify(world)}`);
   }
 
   const query: SearchParams = {
