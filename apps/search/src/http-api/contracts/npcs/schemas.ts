@@ -45,11 +45,7 @@ export type NpcsControllerGetNpcsQuery = typeof NpcsControllerGetNpcsQuery.Type;
 
 export const NpcsControllerGetNpcsQuery = Schema.Struct({
   ids: Schema.optionalKey(Schema.Array(SafeInteger)),
-  limit: Schema.optionalKey(
-    Schema.Number.annotate({ default: 10 }).check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-  ),
+  limit: Schema.optionalKey(FiniteNumber.annotate({ default: 10 })),
   search: Schema.optionalKey(
     Schema.Union([Schema.String, Schema.Array(Schema.String)]),
   ),

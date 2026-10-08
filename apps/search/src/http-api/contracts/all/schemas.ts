@@ -1,5 +1,6 @@
 /** Transport schemas owned by the all HTTP module. */
 import * as Schema from "effect/Schema";
+import { FiniteNumber } from "@lootlog/schema/http-scalars";
 import { ItemHit } from "../items/schemas.js";
 import { PlayerHitDto_Output } from "../players/schemas.js";
 import { NpcHitDto_Output } from "../npcs/schemas.js";
@@ -28,11 +29,7 @@ export type AllControllerSearchAllQuery =
   typeof AllControllerSearchAllQuery.Type;
 
 export const AllControllerSearchAllQuery = Schema.Struct({
-  limit: Schema.optionalKey(
-    Schema.Number.annotate({ default: 10 }).check(
-      Schema.isFinite().annotate({ expected: "a finite number" }),
-    ),
-  ),
+  limit: Schema.optionalKey(FiniteNumber.annotate({ default: 10 })),
   search: Schema.optionalKey(Schema.String),
   // Filters players only; NPCs and items are shared by every world of an
   // edition.
