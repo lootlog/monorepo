@@ -323,27 +323,17 @@ export const makeLootSubmissionAcceptancePersistence = (
       { concurrency: "unbounded" },
     ).pipe(
       Effect.map(({ records, submissions }) => {
-        const submissionsByRecordId = new Map<
-          number,
-          Array<{ memberId: number }>
-        >();
-
-        for (const submission of submissions) {
-          const recordSubmissions =
-            submissionsByRecordId.get(submission.organizationLootRecordId) ??
-            [];
-
-          recordSubmissions.push({ memberId: submission.memberId });
-          submissionsByRecordId.set(
-            submission.organizationLootRecordId,
-            recordSubmissions,
-          );
-        }
+        const submissionsByRecordId = Map.groupBy(
+          submissions,
+          ({ organizationLootRecordId }) => organizationLootRecordId,
+        );
 
         return records.map((record) => ({
           guildId: record.guildId,
           archivedAt: record.archivedAt,
-          submissions: submissionsByRecordId.get(record.id) ?? [],
+          submissions: (submissionsByRecordId.get(record.id) ?? []).map(
+            ({ memberId }) => ({ memberId }),
+          ),
         }));
       }),
     );
