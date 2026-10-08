@@ -16,6 +16,14 @@ export const PgClientLive = Layer.unwrap(
       Config.withDefault("battlelog-service"),
     );
 
-    return makePostgresLayer({ url, applicationName, maxConnections: 10 });
+    return makePostgresLayer({
+      url,
+      applicationName,
+      maxConnections: 10,
+      // Plans over the battle hypertables cost more than jit_above_cost, and
+      // compiling them adds about 85 ms to analytics reads that run in tens of
+      // milliseconds without JIT.
+      startupParameters: { jit: "off" },
+    });
   }),
 );

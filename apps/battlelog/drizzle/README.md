@@ -37,6 +37,9 @@ one step:
   object; `battle_legacy_ids` maps their old ID (Prisma CUID, cuid2 or UUIDv4)
   to the new one, so old links resolve and R2 reads and deletions use the old
   key. Drop it together with the R2 bucket.
+- **No JIT.** Plans over the hypertables cost more than `jit_above_cost`, and
+  compiling them adds about 85 ms to every analytics read, so the service
+  connects with `jit = off`.
 
 The migration creates the tables on an empty database (tests, new
 environments) and refuses to run when `battles` holds rows. PGlite has no
@@ -72,6 +75,41 @@ changes or deletes during the copy. Each step is manual:
 Until `cleanup`, rolling back means moving the tables back and releasing the
 previous service; battles saved after the cutover would have to be copied back
 by hand, so prefer a forward fix.
+
+On the local production copy (11.2 million battles, 38.3 million
+participants, 5.1 million submissions; `timescale/timescaledb:2.24.0-pg17`):
+
+| Step      | Duration                                                        |
+| --------- | --------------------------------------------------------------- |
+| `prepare` | 25 s                                                            |
+| `copy`    | 3 h 39 min at 2 CPUs, of which about 1 min compresses 51 chunks |
+| `cutover` | 0.9 s, including process start; no late or changed battles      |
+| `verify`  | 82 s; equal counts, every old battle mapped                     |
+| `cleanup` | 0.3 s                                                           |
+
+Sizes after the move: `battles` 1.1 GB instead of 18 GB (6.8 GB before
+compression), `battle_warriors` 23 GB instead of 45 GB, `battle_legacy_ids`
+1.8 GB; the database 27 GB instead of 63 GB.
+
+Read latency at 0.5 CPU and 512 MiB, p50 / p95 over 40 histories of 340 to
+38,800 battles:
+
+| Read                      | Before                      | After          |
+| ------------------------- | --------------------------- | -------------- |
+| List, first page          | 11.6 / 28.2 ms              | 10 / 35-43 ms  |
+| List, next pages          | 10.0 / 325.5 ms, 6 timeouts | 10 / 46-49 ms  |
+| List, previous page       | 4.0 / 689.3 ms              | 4.3 / 10-35 ms |
+| List, world filter        | 3.7 / 14.6 ms               | 10 / 16-51 ms  |
+| List, last 30 days        | 2.9 / 6.8 ms                | 4 / 9-43 ms    |
+| Analytics, duration       | 400 ms / 9.6 s              | 234 ms / 4.6 s |
+| Analytics, streak         | 41 ms / 2.3 s               | 32 ms / 2.9 s  |
+| Analytics, head-to-head   | 58 ms / 2.8 s               | 110 ms / 3.2 s |
+| Analytics, combat profile | 179 ms / 92 s               | 112 ms / 4.7 s |
+
+List ranges span three runs; their p95 sits near the container's 50 ms CPU
+quota period. Analytics were measured with `jit = off`; with JIT the p50 of
+head-to-head was 248 ms and of streak 110 ms. The first query on a new
+connection also spends 55-110 ms planning while it loads the chunk catalog.
 
 ### Backup and restore
 
