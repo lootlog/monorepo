@@ -1,17 +1,16 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   lootCommentTable,
   memberTable,
-  memberToRoleTable,
   organizationLootRecordTable,
-  roleTable,
 } from "#src/database/drizzle/schema";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
 import type { CreateLootCommentRequest } from "#src/contracts/loots/schemas";
 import { ErrorKey } from "#src/loots/error-key";
+import { memberDisplayRolesQuery } from "#src/members/member-display-role";
 
 export class LootPersistenceError extends TaggedErrorClass<LootPersistenceError>()(
   "LootPersistenceError",
@@ -68,15 +67,7 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
       const roles =
         memberIds.length === 0
           ? []
-          : yield* database
-              .select({
-                memberId: memberToRoleTable.A,
-                color: roleTable.color,
-              })
-              .from(memberToRoleTable)
-              .innerJoin(roleTable, eq(roleTable.id, memberToRoleTable.B))
-              .where(inArray(memberToRoleTable.A, memberIds))
-              .orderBy(desc(roleTable.position));
+          : yield* memberDisplayRolesQuery(database, memberIds);
 
       const rolesByMember = new Map<
         number,
