@@ -19,11 +19,19 @@ import {
   mock,
   spyOn,
 } from "bun:test";
+import { sql } from "drizzle-orm";
 import { Effect, ManagedRuntime, Schema } from "effect";
 import { ConnectionError, SqlError } from "effect/sql/SqlError";
 import type { RawBattleData } from "#src/battles/battle-service";
 import { BattleResponseSchemas } from "#src/battles/catalog/battle-response";
-import { battles } from "#src/database/schema";
+import {
+  battleLegacyIds,
+  battles,
+  battleSubmissions,
+  battleTimelines,
+  battleWarriors,
+} from "#src/database/schema";
+import { decodeBattleEvents } from "#src/battles/battle-timeline";
 import { Logger } from "#src/infrastructure/logger";
 import type { JsonCodec } from "#src/infrastructure/redis-store";
 import { makeBattlelogOperations } from "#src/battles/battlelog-operations";
@@ -139,6 +147,60 @@ const databaseRuntime = ManagedRuntime.make(PgliteClient.layer({}));
 const databaseEffect = makeWithDefaults({ relations });
 
 let sharedDatabase: Effect.Success<typeof databaseEffect>;
+
+// A battle's ID carries its time, so aging a battle gives it an older ID.
+const ageStoredBattles = async () => {
+  await databaseRuntime.runPromise(
+    sharedDatabase.execute(sql`
+      WITH moved AS (
+        SELECT id AS "oldId", ('00000000' || substr(replace(id::text, '-', ''), 9))::uuid AS "newId"
+        FROM battles
+      ), warriors AS (
+        UPDATE battle_warriors SET "battleId" = moved."newId"
+        FROM moved WHERE battle_warriors."battleId" = moved."oldId"
+      ), timelines AS (
+        UPDATE battle_timelines SET "battleId" = moved."newId"
+        FROM moved WHERE battle_timelines."battleId" = moved."oldId"
+      ), submissions AS (
+        UPDATE battle_submissions SET "battleId" = moved."newId"
+        FROM moved WHERE battle_submissions."battleId" = moved."oldId"
+      )
+      UPDATE battles SET id = moved."newId", "createdAt" = battle_id_created_at(moved."newId")
+      FROM moved WHERE battles.id = moved."oldId"
+    `),
+  );
+};
+
+const clearBattleTables = async () => {
+  for (const table of [
+    battles,
+    battleWarriors,
+    battleTimelines,
+    battleSubmissions,
+    battleLegacyIds,
+  ]) {
+    await databaseRuntime.runPromise(sharedDatabase.delete(table));
+  }
+};
+
+const storedTimelines = async () =>
+  new Map(
+    (
+      await databaseRuntime.runPromise(
+        sharedDatabase.select().from(battleTimelines),
+      )
+    ).map((timeline) => [
+      timeline.battleId,
+      decodeBattleEvents(timeline.events),
+    ]),
+  );
+
+const storedBattleIds = async () =>
+  (
+    await databaseRuntime.runPromise(
+      sharedDatabase.select({ id: battles.id }).from(battles),
+    )
+  ).map((battle) => battle.id);
 
 const createDatabaseBoundary = ({
   beforeTransaction,
@@ -280,13 +342,11 @@ const createTestApplication = ({
   redis = createRedisBoundary(),
   waitTimeoutMs = 10_000,
   lockTtlSeconds = 30,
-  beforeUpload,
 }: {
   beforeTransaction?: () => Promise<void>;
   redis?: ReturnType<typeof createRedisBoundary>;
   waitTimeoutMs?: number;
   lockTtlSeconds?: number;
-  beforeUpload?: () => Promise<void>;
 } = {}) => {
   const database = createDatabaseBoundary({ beforeTransaction });
   const drizzle = database.service.db;
@@ -303,11 +363,8 @@ const createTestApplication = ({
     JSON.stringify(objects.get(battleId)),
   );
 
+  // R2 only serves timelines of battles saved before they moved to Postgres.
   const objectStorage = {
-    uploadBattleData: mock(async (battleId: string, data: RawBattleData) => {
-      await beforeUpload?.();
-      objects.set(battleId, data);
-    }),
     readBattleData,
     getBattleData: async <TData>(
       battleId: string,
@@ -370,9 +427,7 @@ describe("battle creation deduplication", () => {
     );
   }, 60_000);
 
-  beforeEach(async () => {
-    await databaseRuntime.runPromise(sharedDatabase.delete(battles));
-  });
+  beforeEach(clearBattleTables);
 
   afterAll(async () => {
     await databaseRuntime.dispose();
@@ -397,11 +452,13 @@ describe("battle creation deduplication", () => {
     };
 
     const first = await postBattle(app.handler, data);
-    const original = testApplication.objects.get(first.body.battleId);
+    const original = (await storedTimelines()).get(first.body.battleId);
     const second = await postBattle(app.handler, data, "user-2");
 
     expect(second.body.battleId).not.toBe(first.body.battleId);
-    expect(testApplication.objects.get(first.body.battleId)).toEqual(original);
+    expect((await storedTimelines()).get(first.body.battleId)).toEqual(
+      original,
+    );
     const stored = await testApplication.database.getStoredBattles();
     expect(stored.map((battle) => battle.userId).sort()).toEqual([
       "user-1",
@@ -448,8 +505,8 @@ describe("battle creation deduplication", () => {
       events: [battleEvent],
     };
 
-    const first = await postBattle(app.handler, data);
-    const original = testApplication.objects.get(first.body.battleId);
+    await postBattle(app.handler, data);
+    const timelines = await storedTimelines();
     const stored = await testApplication.database.getStoredBattles();
     await requestJson(app.handler, "POST", "/battles", Schema.Unknown, 400, {
       ...data,
@@ -457,10 +514,7 @@ describe("battle creation deduplication", () => {
     });
 
     expect(await testApplication.database.getStoredBattles()).toEqual(stored);
-    expect(testApplication.objects.get(first.body.battleId)).toEqual(original);
-    expect(
-      testApplication.objectStorage.uploadBattleData,
-    ).toHaveBeenCalledTimes(1);
+    expect(await storedTimelines()).toEqual(timelines);
   });
 
   it("resolves the owner's durable submission after the semantic cache expires", async () => {
@@ -475,14 +529,13 @@ describe("battle creation deduplication", () => {
       events: [battleEvent],
     };
 
-    const first = await postBattle(app.handler, data);
+    await postBattle(app.handler, data);
     redis.readCachedJson.mockResolvedValue(null);
-    await databaseRuntime.runPromise(
-      sharedDatabase.update(battles).set({ createdAt: new Date(0) }),
-    );
+    await ageStoredBattles();
+    const [stored] = await storedBattleIds();
     const retry = await postBattle(app.handler, data);
 
-    expect(retry.body).toEqual(first.body);
+    expect(retry.body).toEqual({ battleId: stored });
     expect(await testApplication.database.getStoredBattles()).toHaveLength(1);
     expect(testApplication.database.getTransactionCount()).toBe(1);
     expect(processBattle).toHaveBeenCalledTimes(1);
@@ -505,9 +558,8 @@ describe("battle creation deduplication", () => {
 
     const first = await postBattle(app.handler, data);
     now = 11_000;
-    await databaseRuntime.runPromise(
-      sharedDatabase.update(battles).set({ createdAt: new Date(0) }),
-    );
+    await ageStoredBattles();
+    const [older] = await storedBattleIds();
 
     const newer = await postBattle(app.handler, {
       ...data,
@@ -517,7 +569,7 @@ describe("battle creation deduplication", () => {
     expect(newer.body.battleId).not.toBe(first.body.battleId);
 
     const retry = await postBattle(app.handler, data);
-    expect(retry.body).toEqual(first.body);
+    expect(retry.body).toEqual({ battleId: older });
     expect(await testApplication.database.getStoredBattles()).toHaveLength(2);
   });
 
@@ -548,8 +600,9 @@ describe("battle creation deduplication", () => {
 
       expect(second.body).toEqual(first.body);
       expect(await firstWriter.database.getStoredBattles()).toHaveLength(1);
-      expect(firstWriter.objects.has(first.body.battleId)).toBe(true);
-      expect(secondWriter.objects.has(first.body.battleId)).toBe(true);
+      expect([...(await storedTimelines()).keys()]).toEqual([
+        first.body.battleId,
+      ]);
     } finally {
       await secondWriter.app.dispose();
     }
@@ -590,15 +643,11 @@ describe("battle creation deduplication", () => {
     expect(responses.map((response) => response.status).sort()).toEqual([
       201, 400,
     ]);
-    const [stored] = await testApplication.database.getStoredBattles();
+    const stored = await testApplication.database.getStoredBattles();
+    const timelines = await storedTimelines();
 
-    if (!stored) throw new Error("Missing accepted battle");
-    expect(testApplication.objects.get(stored.id)?.rawData.world).toBe(
-      stored.world,
-    );
-    expect(
-      testApplication.objectStorage.uploadBattleData,
-    ).toHaveBeenCalledTimes(1);
+    expect(stored).toHaveLength(1);
+    expect([...timelines.keys()]).toEqual([stored[0]?.id]);
   });
 
   it("retains legacy submission IDs without replacing unverifiable payloads", async () => {
@@ -615,14 +664,13 @@ describe("battle creation deduplication", () => {
     await databaseRuntime.runPromise(
       sharedDatabase.update(battles).set({ semanticFingerprint: null }),
     );
-    const original = testApplication.objects.get(first.body.battleId);
+    const stored = await testApplication.database.getStoredBattles();
+    const timelines = await storedTimelines();
     const retry = await postBattle(app.handler, { ...data, world: "changed" });
 
     expect(retry.body).toEqual(first.body);
-    expect(testApplication.objects.get(first.body.battleId)).toEqual(original);
-    expect(
-      testApplication.objectStorage.uploadBattleData,
-    ).toHaveBeenCalledTimes(1);
+    expect(await testApplication.database.getStoredBattles()).toEqual(stored);
+    expect(await storedTimelines()).toEqual(timelines);
   });
 
   it("does not recover another owner's submission after a database outage", async () => {
@@ -646,9 +694,7 @@ describe("battle creation deduplication", () => {
 
     await postBattle(app.handler, data);
     redis.readCachedJson.mockResolvedValue(null);
-    await databaseRuntime.runPromise(
-      sharedDatabase.update(battles).set({ createdAt: new Date(0) }),
-    );
+    await ageStoredBattles();
     failTransaction = true;
     await requestJson(
       app.handler,
@@ -660,42 +706,102 @@ describe("battle creation deduplication", () => {
       "user-2",
     );
     expect(
-      testApplication.objectStorage.uploadBattleData,
-    ).toHaveBeenCalledTimes(1);
+      (await testApplication.database.getStoredBattles()).map(
+        (battle) => battle.userId,
+      ),
+    ).toEqual(["user-1"]);
   });
 
-  it("retries an unfinished object upload without duplicating the database record", async () => {
-    let failUpload = true;
-
-    const testApplication = createTestApplication({
-      beforeUpload: async () => {
-        if (failUpload) throw new Error("Object storage unavailable");
-      },
-    });
-
+  it("stores the battle, its participants and timeline together, so a failed timeline write leaves nothing to retry around", async () => {
+    const testApplication = createTestApplication();
     app = testApplication.app;
 
     const data = {
       ...battleContext,
-      submissionId: "upload-retry",
+      submissionId: "atomic-retry",
       events: [battleEvent],
     };
 
-    await requestJson(
-      app.handler,
-      "POST",
-      "/battles",
-      Schema.Unknown,
-      500,
-      data,
-    );
-    const [stored] = await testApplication.database.getStoredBattles();
-    failUpload = false;
+    for (const statement of [
+      sql`CREATE FUNCTION reject_test_timeline() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'Timeline storage unavailable'; END; $$`,
+      sql`CREATE TRIGGER reject_test_timeline BEFORE INSERT ON battle_timelines FOR EACH ROW EXECUTE FUNCTION reject_test_timeline()`,
+    ])
+      await databaseRuntime.runPromise(sharedDatabase.execute(statement));
+
+    try {
+      await requestJson(
+        app.handler,
+        "POST",
+        "/battles",
+        Schema.Unknown,
+        500,
+        data,
+      );
+      expect(await testApplication.database.getStoredBattles()).toEqual([]);
+      expect(
+        await databaseRuntime.runPromise(
+          sharedDatabase.select().from(battleSubmissions),
+        ),
+      ).toEqual([]);
+    } finally {
+      for (const statement of [
+        sql`DROP TRIGGER reject_test_timeline ON battle_timelines`,
+        sql`DROP FUNCTION reject_test_timeline()`,
+      ])
+        await databaseRuntime.runPromise(sharedDatabase.execute(statement));
+    }
+
     const retry = await postBattle(app.handler, data);
 
-    expect(retry.body.battleId).toBe(stored?.id);
     expect(await testApplication.database.getStoredBattles()).toHaveLength(1);
-    expect(testApplication.objects.has(retry.body.battleId)).toBe(true);
+    expect((await storedTimelines()).get(retry.body.battleId)).toEqual(
+      data.events,
+    );
+  });
+
+  it("serves the timeline of a battle saved before timelines moved to Postgres from R2 under its legacy ID", async () => {
+    const testApplication = createTestApplication();
+    app = testApplication.app;
+
+    const { body } = await postBattle(app.handler, {
+      ...battleContext,
+      events: [battleEvent],
+    });
+
+    const [timeline] = await databaseRuntime.runPromise(
+      sharedDatabase.delete(battleTimelines).returning(),
+    );
+
+    if (!timeline) throw new Error("Missing stored timeline");
+    await databaseRuntime.runPromise(
+      sharedDatabase.insert(battleLegacyIds).values({
+        legacyId: "cmglj0y2u0224qd0ioniw0lxa",
+        battleId: body.battleId,
+      }),
+    );
+    testApplication.objects.set("cmglj0y2u0224qd0ioniw0lxa", {
+      battleId: "cmglj0y2u0224qd0ioniw0lxa",
+      timestamp: new Date(0).toISOString(),
+      rawData: {
+        ...battleContext,
+        events: [],
+        sourceEvents: decodeBattleEvents(timeline.events),
+      },
+    });
+
+    const result = await requestJson(
+      app.handler,
+      "GET",
+      "/battles/cmglj0y2u0224qd0ioniw0lxa/timeline",
+      BattleResponseSchemas.timeline,
+      200,
+    );
+
+    expect(result.body.battleId).toBe(body.battleId);
+    expect(result.body.timeline).toHaveLength(moves.length);
+    expect(testApplication.objectStorage.readBattleData).toHaveBeenCalledWith(
+      "cmglj0y2u0224qd0ioniw0lxa",
+    );
   });
 
   it("projects public battle metadata to the declared response fields", async () => {
@@ -731,17 +837,6 @@ describe("battle creation deduplication", () => {
 
     expect(battle.id).toBe(body.battleId);
     expect(battle.warriors).toHaveLength(2);
-
-    const originalRaw = testApplication.objects.get(body.battleId);
-
-    if (!originalRaw) throw new Error("Missing battle object");
-    testApplication.objects.set(body.battleId, {
-      ...originalRaw,
-      rawData: {
-        ...originalRaw.rawData,
-        submissionId: "private-idempotency-key",
-      },
-    });
 
     const rawResponse = await app.handler(
       new Request(`http://battlelog.test/battles/public/${body.battleId}/raw`),
@@ -848,9 +943,6 @@ describe("battle creation deduplication", () => {
     expect(second.body).toEqual(first.body);
     expect(first.body.timeline).toHaveLength(moves.length);
     expect(processBattle).toHaveBeenCalledTimes(1);
-    expect(testApplication.objectStorage.readBattleData).toHaveBeenCalledTimes(
-      1,
-    );
     expect(
       testApplication.analyticsService.invalidateAnalyticsCache,
     ).toHaveBeenCalledTimes(invalidations);
@@ -890,6 +982,7 @@ describe("battle creation deduplication", () => {
   });
 
   it("serves oversized timelines without admitting them to Redis", async () => {
+    const processBattle = spyOn(BattleProcessor.prototype, "processBattle");
     const testApplication = createTestApplication();
     app = testApplication.app;
 
@@ -926,9 +1019,8 @@ describe("battle creation deduplication", () => {
     );
     expect(second.body.timeline).toEqual(first.body.timeline);
     expect(second.body.timeline).toHaveLength(longMoves.length);
-    expect(testApplication.objectStorage.readBattleData).toHaveBeenCalledTimes(
-      2,
-    );
+    // Ingest analyzes the battle once; each uncached read processes it again.
+    expect(processBattle).toHaveBeenCalledTimes(3);
   });
 
   it("serves uncached timelines when Redis is unavailable", async () => {

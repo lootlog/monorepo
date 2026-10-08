@@ -414,6 +414,7 @@ const ACTIVITY_UNAVAILABLE_OPERATIONS = new Set([
 ]);
 
 const BATTLELOG_INVALID_REQUEST_OPERATIONS = new Set([
+  "GET /battles/@me",
   "POST /battles",
   "PATCH /battles/{battleId}",
   "POST /internal/delete-user-data",

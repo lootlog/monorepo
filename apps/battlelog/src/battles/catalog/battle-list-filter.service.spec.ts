@@ -5,6 +5,7 @@ import { migrate } from "drizzle-orm/effect-pglite/migrator";
 import { Effect, ManagedRuntime } from "effect";
 import { relations } from "#src/database/relations";
 import { battles, battleWarriors, userCharacters } from "#src/database/schema";
+import { createBattleId } from "#src/battles/battle-id";
 import { makeBattleListFilter } from "./battle-list-filter.service.js";
 import type { BattleListQuery } from "./query-battles.js";
 
@@ -13,6 +14,10 @@ const runtime = ManagedRuntime.make(PgliteClient.layer({}));
 const databaseEffect = makeWithDefaults({ relations });
 
 let database: Effect.Success<typeof databaseEffect>;
+
+const FIRST_BATTLE_AT = Date.UTC(2026, 9, 4, 12);
+
+const fixtureNames = new Map<string, string>();
 
 const fixtures = [
   { id: "win", characterId: "hero", team: 1, winningTeam: 1, losingTeam: 2 },
@@ -77,10 +82,13 @@ beforeAll(async () => {
     ),
   );
 
-  for (const fixture of fixtures) {
+  for (const [index, fixture] of fixtures.entries()) {
+    const battleId = createBattleId(FIRST_BATTLE_AT + index);
+    fixtureNames.set(battleId.id, fixture.id);
+
     await runtime.runPromise(
       database.insert(battles).values({
-        id: fixture.id,
+        ...battleId,
         userId: fixture.userId ?? "owner",
         accountId: "account",
         characterId: fixture.characterId,
@@ -97,7 +105,7 @@ beforeAll(async () => {
     await runtime.runPromise(
       database.insert(battleWarriors).values([
         {
-          battleId: fixture.id,
+          battleId: battleId.id,
           originalId: fixture.characterId,
           name: fixture.characterId,
           lvl: 100,
@@ -108,7 +116,7 @@ beforeAll(async () => {
           ph: 10,
         },
         {
-          battleId: fixture.id,
+          battleId: battleId.id,
           originalId: fixture.opponentId ?? "enemy",
           name: fixture.opponentId ?? "enemy",
           lvl: 200,
@@ -147,7 +155,7 @@ const list = (filters: Partial<BattleListQuery>, userId = "owner") =>
         .where(filter(battles))
         .orderBy(battles.id);
 
-      return rows.map((row) => row.id);
+      return rows.map((row) => fixtureNames.get(row.id)).sort();
     }),
   );
 
@@ -194,5 +202,15 @@ describe("battle list filters against PostgreSQL", () => {
     expect(
       await list({ characterId: ["alt"], result: ["won"], ph: true }),
     ).toEqual([]);
+  });
+
+  it("includes battles saved exactly at either end of a date range", async () => {
+    const savedAt = (index: number) =>
+      new Date(FIRST_BATTLE_AT + index).toISOString();
+
+    expect(await list({ startDate: savedAt(1), endDate: savedAt(2) })).toEqual([
+      "loss",
+      "mixed",
+    ]);
   });
 });

@@ -1,290 +1,161 @@
-import { Effect } from "effect";
+import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
+import { PgliteClient } from "@effect/sql-pglite";
 import { eq } from "drizzle-orm";
-import { beforeEach, describe, expect, it, mock } from "bun:test";
-import {
-  makeBattlePagination,
-  type BattlePagination,
-} from "./pagination.service.js";
+import { makeWithDefaults } from "drizzle-orm/effect-pglite";
+import { migrate } from "drizzle-orm/effect-pglite/migrator";
+import { Effect, ManagedRuntime } from "effect";
+import { createBattleId } from "#src/battles/battle-id";
+import { relations } from "#src/database/relations";
+import { battles } from "#src/database/schema";
+import { InvalidRequestError } from "#src/infrastructure/http-error";
+import type { SortOrder } from "#src/battles/catalog/query-battles";
+import { makeBattlePagination } from "./pagination.service.js";
 
-const createDatabaseFixture = () => {
-  const mockDrizzleService = {
-    run: mock((query) => Promise.resolve(query)),
-    db: {
-      query: {
-        battles: {
-          findMany: mock(),
-        },
-      },
-      select: mock().mockReturnValue({
-        from: mock().mockReturnValue({
-          where: mock(),
+const runtime = ManagedRuntime.make(PgliteClient.layer({}));
+
+const databaseEffect = makeWithDefaults({ relations });
+
+let database: Effect.Success<typeof databaseEffect>;
+
+const FIRST_BATTLE_AT = Date.UTC(2026, 9, 4, 12);
+
+// Milliseconds after FIRST_BATTLE_AT; two battles share a millisecond.
+const OWNER_BATTLE_OFFSETS = [0, 1, 2, 2, 5, 8, 13, 21];
+
+const ownerBattleIds: string[] = [];
+
+beforeAll(async () => {
+  database = await runtime.runPromise(databaseEffect);
+  await runtime.runPromise(
+    migrate(database, {
+      migrationsFolder: new URL("../../../drizzle", import.meta.url).pathname,
+    }),
+  );
+
+  const insert = (userId: string, offset: number) => {
+    const battleId = createBattleId(FIRST_BATTLE_AT + offset);
+
+    return runtime
+      .runPromise(
+        database.insert(battles).values({
+          ...battleId,
+          userId,
+          accountId: "account",
+          characterId: "character",
+          world: "world",
+          duration: 10,
+          type: "1v1",
+          winner: "Winner",
+          loser: "Loser",
+          winningTeam: 1,
+          losingTeam: 2,
         }),
-      }),
-      execute: mock(),
-    },
+      )
+      .then(() => battleId.id);
   };
 
-  return mockDrizzleService;
-};
+  for (const offset of OWNER_BATTLE_OFFSETS) {
+    ownerBattleIds.push(await insert("owner", offset));
+  }
 
-describe("battle pagination", () => {
-  let service: BattlePagination;
-  let drizzleService: ReturnType<typeof createDatabaseFixture>;
+  await insert("other-owner", 3);
+}, 60_000);
 
-  const mockBattles = [
-    {
-      id: "1",
-      accountId: "acc1",
-      characterId: "char1",
-      world: "world1",
-      duration: 1000,
-      createdAt: new Date("2024-01-01"),
-      updatedAt: new Date("2024-01-01"),
-      type: "1v1",
-      public: false,
-      userId: "user1",
-      semanticFingerprint: null,
-      submissionId: null,
-      winner: "winner",
-      loser: "loser",
-      winningTeam: 1,
-      losingTeam: 2,
-      honorPoints: 0,
-      hasFlee: false,
-      matchmaking: false,
-      statistics: {},
-      difficultyRank: null,
-      result: null,
-      ratingDelta: null,
-      opponentLvl: null,
-      opponentOplvl: null,
-      opponentRating: null,
-      rating: null,
-      status: null,
-      pointsGained: null,
-      placementCur: null,
-      placementMax: null,
-      dailyStageId: null,
-      dailyPointsCur: null,
-      dailyPointsMax: null,
-      dailyPointsStep: null,
-      dailyRewardsLast: null,
-      dailyRewardsCur: null,
-      dailyRewardsMax: null,
-      warriors: [],
-    },
-    {
-      id: "2",
-      accountId: "acc1",
-      characterId: "char1",
-      world: "world1",
-      duration: 2000,
-      createdAt: new Date("2024-01-02"),
-      updatedAt: new Date("2024-01-02"),
-      type: "1v1",
-      public: false,
-      userId: "user1",
-      semanticFingerprint: null,
-      submissionId: null,
-      winner: "winner",
-      loser: "loser",
-      winningTeam: 1,
-      losingTeam: 2,
-      honorPoints: 0,
-      hasFlee: false,
-      matchmaking: false,
-      statistics: {},
-      difficultyRank: null,
-      result: null,
-      ratingDelta: null,
-      opponentLvl: null,
-      opponentOplvl: null,
-      opponentRating: null,
-      rating: null,
-      status: null,
-      pointsGained: null,
-      placementCur: null,
-      placementMax: null,
-      dailyStageId: null,
-      dailyPointsCur: null,
-      dailyPointsMax: null,
-      dailyPointsStep: null,
-      dailyRewardsLast: null,
-      dailyRewardsCur: null,
-      dailyRewardsMax: null,
-      warriors: [],
-    },
-  ];
+afterAll(() => runtime.dispose());
 
-  beforeEach(() => {
-    const mockDrizzleService = createDatabaseFixture();
+const pagination = () =>
+  makeBattlePagination(database, (effect) => effect).paginateBattles;
 
-    service = makeBattlePagination(mockDrizzleService.db, (effect) => effect);
-    drizzleService = mockDrizzleService;
-  });
+const page = (sortOrder: SortOrder, cursor?: string) =>
+  runtime.runPromise(
+    pagination()((table) => eq(table.userId, "owner"), {
+      size: 3,
+      sortOrder,
+      includeTotal: false,
+      cursor,
+    }),
+  );
 
-  describe("cursor pagination", () => {
-    it("should return paginated results without cursor", async () => {
-      drizzleService.db.query.battles.findMany.mockReturnValue(
-        Effect.succeed(mockBattles),
-      );
+const ids = (result: Awaited<ReturnType<typeof page>>) =>
+  result.data.map((battle) => battle.id);
 
-      const result = await Effect.runPromise(
-        service.paginateBattles(() => undefined, {
-          size: 2,
-          sortOrder: "desc",
-          includeTotal: false,
-        }),
-      );
+describe("battle list pagination against PostgreSQL", () => {
+  for (const sortOrder of ["desc", "asc"] as const) {
+    it(`pages through a whole ${sortOrder} history and back without duplicates or gaps`, async () => {
+      const expected =
+        sortOrder === "desc"
+          ? ownerBattleIds.slice().reverse()
+          : ownerBattleIds;
 
-      expect(result.data).toEqual(mockBattles);
-      expect(result.pagination).toMatchObject({
-        size: 2,
-        hasNext: false,
+      const forward = [await page(sortOrder)];
+
+      while (forward.at(-1).pagination.nextCursor) {
+        forward.push(
+          await page(sortOrder, forward.at(-1).pagination.nextCursor),
+        );
+      }
+
+      expect(forward.flatMap(ids)).toEqual(expected);
+      expect(forward.map((result) => result.pagination.hasPrev)).toEqual([
+        false,
+        true,
+        true,
+      ]);
+
+      const backward = [forward.at(-1)];
+
+      while (backward.at(-1).pagination.previousCursor) {
+        backward.push(
+          await page(sortOrder, backward.at(-1).pagination.previousCursor),
+        );
+      }
+
+      expect(backward.map(ids)).toEqual(forward.map(ids).reverse());
+      expect(backward.at(-1).pagination).toMatchObject({
         hasPrev: false,
-      });
-    });
-
-    it("should return paginated results with next cursor when more results exist", async () => {
-      const battlesWithExtra = [...mockBattles, { ...mockBattles[0], id: "3" }];
-      drizzleService.db.query.battles.findMany.mockReturnValue(
-        Effect.succeed(battlesWithExtra),
-      );
-
-      const result = await Effect.runPromise(
-        service.paginateBattles(() => undefined, {
-          size: 2,
-          sortOrder: "desc",
-          includeTotal: false,
-        }),
-      );
-
-      expect(result.data).toHaveLength(2);
-      expect(result.pagination).toMatchObject({
-        size: 2,
         hasNext: true,
-        hasPrev: false,
-        nextCursor: `${new Date("2024-01-02").toISOString()}_2`,
       });
     });
+  }
 
-    it("should return previous cursor when cursor has a previous page", async () => {
-      const currentCursor = `${new Date("2024-01-04").toISOString()}_4`;
+  it("rejects a malformed cursor instead of returning the first page", async () => {
+    const previousFormat = `${new Date(FIRST_BATTLE_AT).toISOString()}_${ownerBattleIds[0]}`;
 
-      const previousWindow = [
-        { ...mockBattles[0], id: "4", createdAt: new Date("2024-01-04") },
-        { ...mockBattles[0], id: "3", createdAt: new Date("2024-01-03") },
-        { ...mockBattles[0], id: "2", createdAt: new Date("2024-01-02") },
-      ];
+    for (const cursor of [previousFormat, "not-a-cursor"]) {
+      await expect(page("desc", cursor)).rejects.toBeInstanceOf(
+        InvalidRequestError,
+      );
+    }
+  });
+});
 
-      drizzleService.db.query.battles.findMany
-        .mockReturnValueOnce(Effect.succeed(mockBattles))
-        .mockReturnValueOnce(Effect.succeed(previousWindow));
+describe("battle list count", () => {
+  it("fails an exhausted filtered count without submitting the same expensive read again", async () => {
+    const failure = new Error("canceling statement due to statement timeout");
 
-      const result = await Effect.runPromise(
-        service.paginateBattles(() => undefined, {
-          cursor: currentCursor,
+    const where = mock()
+      .mockReturnValueOnce(Effect.fail(failure))
+      .mockReturnValueOnce(Effect.succeed([{ count: 2 }]));
+
+    const paginate = makeBattlePagination(
+      // SAFETY: the count path only reads `findMany`, `select().from().where()` and `execute`.
+      {
+        query: { battles: { findMany: () => Effect.succeed([]) } },
+        select: () => ({ from: () => ({ where }) }),
+        execute: mock(),
+      } as never,
+      (effect) => effect,
+    ).paginateBattles;
+
+    await expect(
+      Effect.runPromise(
+        paginate((table) => eq(table.userId, "owner"), {
           size: 2,
           sortOrder: "desc",
-          includeTotal: false,
+          includeTotal: true,
         }),
-      );
-
-      expect(result.pagination).toMatchObject({
-        size: 2,
-        hasPrev: true,
-        previousCursor: `${new Date("2024-01-02").toISOString()}_2`,
-      });
-    });
-
-    it("should not return previous cursor for the first cursor page", async () => {
-      const currentCursor = `${new Date("2024-01-02").toISOString()}_2`;
-
-      const previousWindow = [
-        { ...mockBattles[0], id: "2", createdAt: new Date("2024-01-02") },
-        { ...mockBattles[0], id: "1", createdAt: new Date("2024-01-01") },
-      ];
-
-      drizzleService.db.query.battles.findMany
-        .mockReturnValueOnce(Effect.succeed(mockBattles))
-        .mockReturnValueOnce(Effect.succeed(previousWindow));
-
-      const result = await Effect.runPromise(
-        service.paginateBattles(() => undefined, {
-          cursor: currentCursor,
-          size: 2,
-          sortOrder: "desc",
-          includeTotal: false,
-        }),
-      );
-
-      expect(result.pagination).toMatchObject({
-        size: 2,
-        hasPrev: true,
-        previousCursor: undefined,
-      });
-    });
-
-    it("should ignore invalid cursors when reporting previous page state", async () => {
-      drizzleService.db.query.battles.findMany.mockReturnValue(
-        Effect.succeed(mockBattles),
-      );
-
-      const result = await Effect.runPromise(
-        service.paginateBattles(() => undefined, {
-          cursor: "invalid-cursor",
-          size: 2,
-          sortOrder: "desc",
-          includeTotal: false,
-        }),
-      );
-
-      expect(result.pagination).toMatchObject({
-        size: 2,
-        hasPrev: false,
-        previousCursor: undefined,
-      });
-      expect(drizzleService.db.query.battles.findMany).toHaveBeenCalledTimes(1);
-    });
-
-    it("fails an exhausted filtered count without submitting the same expensive read again", async () => {
-      drizzleService.db.query.battles.findMany.mockReturnValue(
-        Effect.succeed(mockBattles),
-      );
-      const failure = new Error("canceling statement due to statement timeout");
-      drizzleService.db
-        .select()
-        .from()
-        .where.mockReturnValueOnce(Effect.fail(failure))
-        .mockReturnValueOnce(Effect.succeed([{ count: 2 }]));
-
-      await expect(
-        Effect.runPromise(
-          service.paginateBattles((table) => eq(table.userId, "user1"), {
-            size: 2,
-            sortOrder: "desc",
-            includeTotal: true,
-          }),
-        ),
-      ).rejects.toBe(failure);
-      expect(drizzleService.db.select().from().where).toHaveBeenCalledTimes(1);
-    });
-
-    it("should work without includeTotal", async () => {
-      drizzleService.db.query.battles.findMany.mockReturnValue(
-        Effect.succeed(mockBattles),
-      );
-
-      const result = await Effect.runPromise(
-        service.paginateBattles(() => undefined, {
-          size: 2,
-          sortOrder: "desc",
-          includeTotal: false,
-        }),
-      );
-
-      expect(result.pagination.total).toBeUndefined();
-      expect(result.performance.countTime).toBeUndefined();
-    });
+      ),
+    ).rejects.toBe(failure);
+    expect(where).toHaveBeenCalledTimes(1);
   });
 });

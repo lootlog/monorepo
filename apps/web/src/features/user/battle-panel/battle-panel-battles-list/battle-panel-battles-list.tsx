@@ -4,6 +4,7 @@ import {
   type BattleFilters,
 } from "@/features/user/battle-panel/battle-panel-battles-list/utils/battle-filter-handlers";
 import { BattlesList } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-list";
+import { useResetRejectedBattlePanelCursor } from "@/features/user/battle-panel/components/use-reset-rejected-battle-panel-cursor";
 import { FiltersSidebar } from "@/features/user/battle-panel/battle-panel-battles-list/components/filters-sidebar";
 import { BattlesListFilterToolbar } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-list-filter-toolbar";
 import {
@@ -52,6 +53,7 @@ export const BattlePanelBattlesList = () => {
 
   const {
     data: battlesResponse,
+    error: battlesError,
     isLoading: isBattlesLoading,
     isPlaceholderData: isBattlesRefreshing,
   } = useBattlesControllerGetDashboardBattles({
@@ -68,6 +70,12 @@ export const BattlePanelBattlesList = () => {
     endDate: optionalQueryValue(queryState.endDate),
     minLevel: queryState.minLevel,
     maxLevel: queryState.maxLevel,
+  });
+
+  useResetRejectedBattlePanelCursor({
+    cursor: queryState.cursor,
+    error: battlesError,
+    reset: () => void setQueryState(resetBattlePanelCursorPagination()),
   });
 
   const { data: worldsResponse } = useBattlesControllerGetUserWorlds();

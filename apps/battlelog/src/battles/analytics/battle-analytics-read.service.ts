@@ -224,10 +224,10 @@ export const makeBattleAnalyticsRead = (
       .select({
         isWin: isWin.as("is_win"),
         position:
-          sql<number>`row_number() over (order by ${battles.createdAt} desc, ${battles.id} desc)`.as(
+          sql<number>`row_number() over (order by ${battles.id} desc)`.as(
             "position",
           ),
-        run: sql<number>`row_number() over (order by ${battles.createdAt} desc, ${battles.id} desc) - row_number() over (partition by ${isWin} order by ${battles.createdAt} desc, ${battles.id} desc)`.as(
+        run: sql<number>`row_number() over (order by ${battles.id} desc) - row_number() over (partition by ${isWin} order by ${battles.id} desc)`.as(
           "run",
         ),
       })
@@ -292,7 +292,7 @@ export const makeBattleAnalyticsRead = (
         date: battles.createdAt,
         ph: user.ph,
         cumulativePh:
-          sql<number>`sum(${user.ph}) over (order by ${battles.createdAt}, ${battles.id} rows unbounded preceding)`.mapWith(
+          sql<number>`sum(${user.ph}) over (order by ${battles.id} rows unbounded preceding)`.mapWith(
             Number,
           ),
         battleId: battles.id,
@@ -301,7 +301,7 @@ export const makeBattleAnalyticsRead = (
       .innerJoinLateral(user, sql`true`)
       .leftJoinLateral(opponent, sql`true`)
       .where(where)
-      .orderBy(asc(battles.createdAt), asc(battles.id));
+      .orderBy(asc(battles.id));
 
     return rows.map((row) => ({ ...row, date: row.date.toISOString() }));
   });
@@ -329,7 +329,7 @@ export const makeBattleAnalyticsRead = (
       .innerJoinLateral(user, sql`true`)
       .leftJoinLateral(opponent, sql`true`)
       .where(where)
-      .orderBy(asc(battles.createdAt), asc(battles.id));
+      .orderBy(asc(battles.id));
 
     return rows.map((row) => ({
       ...row,
@@ -379,7 +379,7 @@ export const makeBattleAnalyticsRead = (
             .mapWith(Number)
             .as("battles_with_rating"),
         position:
-          sql<number>`row_number() over (${partition} order by ${battles.createdAt} desc, ${battles.id} desc)`.as(
+          sql<number>`row_number() over (${partition} order by ${battles.id} desc)`.as(
             "position",
           ),
       })
@@ -533,7 +533,7 @@ export const makeBattleAnalyticsRead = (
             "is_loss",
           ),
         startsSeason:
-          sql<number>`case when ${battles.createdAt} - lag(${battles.createdAt}) over (order by ${battles.createdAt}, ${battles.id}) > interval '14 days' then 1 else 0 end`.as(
+          sql<number>`case when ${battles.createdAt} - lag(${battles.createdAt}) over (order by ${battles.id}) > interval '14 days' then 1 else 0 end`.as(
             "starts_season",
           ),
       })
@@ -553,7 +553,7 @@ export const makeBattleAnalyticsRead = (
         isWin: gaps.isWin,
         isLoss: gaps.isLoss,
         season:
-          sql<number>`sum(${gaps.startsSeason}) over (order by ${gaps.createdAt}, ${gaps.id} rows unbounded preceding)`.as(
+          sql<number>`sum(${gaps.startsSeason}) over (order by ${gaps.id} rows unbounded preceding)`.as(
             "season",
           ),
       })
@@ -664,7 +664,7 @@ export const makeBattleAnalyticsRead = (
       .leftJoinLateral(opponent, sql`true`)
       .where(where)
       .innerJoinLateral(selectedOpponent, sql`true`)
-      .orderBy(desc(battles.createdAt), desc(battles.id))
+      .orderBy(desc(battles.id))
       .limit(page.size)
       .offset(page.offset);
 
