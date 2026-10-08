@@ -9,6 +9,46 @@ describe("game account preferences helpers", () => {
     expect(getEffectiveDetectorSettings()).toEqual(defaultDetectorSettings);
   });
 
+  it("keeps cached detector preferences unchanged when an effective copy is edited", () => {
+    const preferences = {
+      hasStoredDetector: true,
+      detector: {
+        ...defaultDetectorSettings,
+        HERO: { ...defaultDetectorSettings.HERO, detect: true },
+        routingRules: [
+          {
+            id: "rule-1",
+            minLevel: 100,
+            maxLevel: 200,
+            world: "luvia",
+            guildIds: ["guild-1"],
+          },
+        ],
+      },
+    };
+
+    const settings = getEffectiveDetectorSettings(preferences);
+    settings.HERO.detect = false;
+    const rule = settings.routingRules.at(0);
+
+    if (!rule) throw new Error("Expected the stored routing rule");
+    rule.world = "fobos";
+    rule.guildIds.push("guild-2");
+    settings.routingRules.splice(0, 1);
+
+    const nextSettings = getEffectiveDetectorSettings(preferences);
+    expect(nextSettings.HERO.detect).toBe(true);
+    expect(nextSettings.routingRules).toEqual([
+      {
+        id: "rule-1",
+        minLevel: 100,
+        maxLevel: 200,
+        world: "luvia",
+        guildIds: ["guild-1"],
+      },
+    ]);
+  });
+
   it("resolves guild ids from all matching routing rules without duplicates", () => {
     const guildIds = resolveDetectorGuildIds(
       [
