@@ -95,6 +95,9 @@ beforeAll(async () => {
     "timescale/timescaledb:2.24.0-pg17",
   ).start();
   pool = new pg.Pool({ connectionString: postgres.getConnectionUri() });
+  // The image's timescaledb-tune turns JIT off; CNPG clusters keep it on.
+  await pool.query("ALTER SYSTEM SET jit = on");
+  await pool.query("SELECT pg_reload_conf()");
 
   // The released schema: every migration before the TimescaleDB one.
   const released = await mkdtemp(join(tmpdir(), "battlelog-released-"));
@@ -212,8 +215,21 @@ it("moves battles onto the TimescaleDB schema online, keeping old links, order a
     ).rows,
   ).toEqual([{ scheduled: true }]);
 
-  // The cutover recorded the migration, so a deploy has nothing left to apply.
+  // The cutover recorded the migration, so a deploy applies only the later
+  // ones; they reach sessions opened afterwards, also through PgBouncer.
   await deployMigrations();
+
+  const session = new pg.Client({
+    connectionString: postgres.getConnectionUri(),
+  });
+
+  await session.connect();
+
+  try {
+    expect((await session.query("SHOW jit")).rows).toEqual([{ jit: "off" }]);
+  } finally {
+    await session.end();
+  }
 
   expect(await cutover("verify")).toContain(
     "old battles without a migrated battle: 0",
