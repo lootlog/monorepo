@@ -19,6 +19,9 @@ one step:
 - **Hypertables.** `battles` and `battle_timelines` are partitioned by battle
   ID in 7-day chunks. `battles` is compressed 7 days after a chunk closes,
   segmented by `"userId"`; timelines are zstd-compressed already and are not.
+  TimescaleDB 2.24's compression policy cannot compare a UUID partition with
+  `compress_after`, so `20261008210303_battlelog_compress_by_chunk_age`
+  compresses chunks 14 days after their creation instead.
 - **Participants stay a plain table.** Analytics look up a battle's
   participants one battle at a time. On compressed chunks each lookup
   decompresses a whole batch and plans every chunk: on the local production
@@ -71,7 +74,8 @@ changes or deletes during the copy. Each step is manual:
    migration, resumes the compression policies and records the migration for
    Drizzle.
 4. `bun run db:migrate:deploy` applies the migrations added after this one,
-   such as `20261008203752_battlelog_disable_jit`. Release the new Battlelog
+   such as `20261008203752_battlelog_disable_jit` and
+   `20261008210303_battlelog_compress_by_chunk_age`. Release the new Battlelog
    service right after it: until the new pods are ready, the released service
    fails against the new schema, and battles submitted in that gap are
    rejected and lost, because the game client retries for about a second.
