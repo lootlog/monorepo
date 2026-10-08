@@ -150,6 +150,29 @@ test("individual endpoints preserve text search and repeated exact-name filters 
         filter: 'name IN ["cashtelan", "Other"] AND world = "luvia"',
       }),
     ]);
+
+    for (const endpoint of ["players", "all"]) {
+      for (const [world, expectedFilter] of [
+        [
+          'luvia" OR world = "berufs',
+          String.raw`world = "luvia\" OR world = \"berufs"`,
+        ],
+        [String.raw`luvia\test`, String.raw`world = "luvia\\test"`],
+      ] as const) {
+        queries.length = 0;
+        const params = new URLSearchParams({ search: "cash", world });
+
+        const response = await boundary.handler(
+          new Request(`http://localhost/${endpoint}?${params}`),
+          Context.empty(),
+        );
+
+        expect(response.status).toBe(200);
+        expect(queries.filter(({ index }) => index === "players")).toEqual([
+          expect.objectContaining({ q: "cash", filter: expectedFilter }),
+        ]);
+      }
+    }
   } finally {
     await boundary.dispose();
     fetch.mockRestore();
