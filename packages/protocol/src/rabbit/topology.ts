@@ -150,14 +150,6 @@ export type RabbitRoutingKeyName = typeof RabbitRoutingKeyName.Type;
 
 export const DEFAULT_RETRY_TTL_MS = 30_000;
 
-export const RabbitExchangeDefinition = Schema.Struct({
-  name: RabbitExchangeName,
-  type: Schema.Literal("topic"),
-  durable: Schema.Boolean,
-});
-
-export type RabbitExchangeDefinition = typeof RabbitExchangeDefinition.Type;
-
 export const RabbitQueueDefinition = Schema.Struct({
   name: Schema.String,
   exchange: RabbitExchangeName,
@@ -170,12 +162,6 @@ export const RabbitQueueDefinition = Schema.Struct({
 });
 
 export type RabbitQueueDefinition = typeof RabbitQueueDefinition.Type;
-
-export const canonicalExchanges = [
-  { name: RabbitExchange.DEFAULT, type: "topic", durable: true },
-  { name: RabbitExchange.RETRY, type: "topic", durable: true },
-  { name: RabbitExchange.DEAD_LETTER, type: "topic", durable: true },
-] as const satisfies ReadonlyArray<RabbitExchangeDefinition>;
 
 export const makeRetryQueue = (options: {
   name: string;
