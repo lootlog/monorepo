@@ -13,11 +13,12 @@ export const NON_RETRYABLE_DISCORD_ERROR_CODES: ReadonlySet<number> = new Set([
   10_003, 10_004, 10_013, 50_001, 50_007, 50_013, 50_035,
 ]);
 
+const neverConnectedNetworkErrors = ["ECONNREFUSED", "EAI_AGAIN"];
+
 const transientNetworkErrors = [
   "ETIMEDOUT",
   "ECONNRESET",
-  "ECONNREFUSED",
-  "EAI_AGAIN",
+  ...neverConnectedNetworkErrors,
   "fetch failed",
 ];
 
@@ -66,8 +67,9 @@ const isRateLimit = (cause: unknown) =>
 export const isRetryableDiscordSendError = (cause: unknown): boolean =>
   isRateLimit(cause) ||
   (cause instanceof Error &&
-    (cause.message.includes("ECONNREFUSED") ||
-      cause.message.includes("EAI_AGAIN")));
+    neverConnectedNetworkErrors.some((fragment) =>
+      cause.message.includes(fragment),
+    ));
 
 /**
  * A stable, token-free code describing a Discord SDK failure.
