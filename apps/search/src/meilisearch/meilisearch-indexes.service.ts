@@ -10,15 +10,16 @@ import {
   completeMeilisearchTask,
 } from "./search-operation-failure.js";
 
+const searchIndexSettingFields = [
+  "filterableAttributes",
+  "searchableAttributes",
+  "sortableAttributes",
+  "distinctAttribute",
+] as const;
+
 type IndexSettings = Record<
   typeof NPCS_INDEX | typeof PLAYERS_INDEX | typeof ITEMS_INDEX,
-  Pick<
-    Settings,
-    | "filterableAttributes"
-    | "searchableAttributes"
-    | "sortableAttributes"
-    | "distinctAttribute"
-  >
+  Pick<Settings, (typeof searchIndexSettingFields)[number]>
 >;
 
 export const SEARCH_INDEX_PRIMARY_KEY = "uid";
@@ -82,14 +83,7 @@ export const configureMeilisearchIndexes = (
             () => index.getSettings(),
           );
 
-          const changed = (
-            [
-              "filterableAttributes",
-              "searchableAttributes",
-              "sortableAttributes",
-              "distinctAttribute",
-            ] as const
-          ).some((field) => {
+          const changed = searchIndexSettingFields.some((field) => {
             // Searchable attribute order affects ranking; filter/sort sets do not.
             if (!(field in desired)) return false;
             const actual = current[field];
