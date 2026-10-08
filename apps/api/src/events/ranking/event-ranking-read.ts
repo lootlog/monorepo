@@ -147,31 +147,16 @@ export const makeEventRankingRead = (
           ),
         );
 
-        const grouped = new Map<
-          string,
-          Array<
-            (typeof histories)[number] & {
-              deltaPoints: number;
-              editedByName: string | null;
-            }
-          >
-        >();
-
-        for (const history of histories) {
-          const entry = {
+        return Map.groupBy(
+          histories.map((history) => ({
             ...history,
             deltaPoints: roundEventDisplayValue(
               history.newPoints - history.previousPoints,
             ),
             editedByName: names.get(history.editedByUserId) ?? null,
-          };
-
-          const entries = grouped.get(history.rankingId) ?? [];
-          entries.push(entry);
-          grouped.set(history.rankingId, entries);
-        }
-
-        return grouped;
+          })),
+          (history) => history.rankingId,
+        );
       }).pipe(
         Effect.withSpan("events.ranking.editHistory", {
           attributes: { adapter: "events.ranking.drizzle", retryCount: 0 },
