@@ -1,5 +1,6 @@
+import { activeEventCondition } from "#src/events/event-scope-query";
 import { randomUUID } from "node:crypto";
-import { and, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
+import { and, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { RedlockService } from "#src/redis/redlock";
 import type { ApiDatabase } from "#src/database/drizzle/database";
@@ -252,14 +253,7 @@ export const makeEventPresenceTracking = (
                 and(
                   eq(eventMapTable.mapName, mapName),
                   eq(eventTable.guildId, guildId),
-                  or(
-                    isNull(eventTable.startsAt),
-                    lte(eventTable.startsAt, referenceTime),
-                  ),
-                  or(
-                    isNull(eventTable.endsAt),
-                    gt(eventTable.endsAt, referenceTime),
-                  ),
+                  activeEventCondition(referenceTime),
                 ),
               ),
           ),

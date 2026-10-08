@@ -1,10 +1,11 @@
+import { activeEventCondition } from "#src/events/event-scope-query";
 import { makeEventMapRead } from "./event-map-read.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   getEffectiveCapabilities,
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
-import { and, desc, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { groupBy } from "es-toolkit";
 import { eventReadCacheEntry } from "#src/events/catalog/event-read-cache.service";
@@ -203,18 +204,7 @@ export const makeEventsCatalogRead = (
                   normalizedWorld
                     ? eq(eventTable.world, normalizedWorld)
                     : undefined,
-                  onlyActive
-                    ? and(
-                        or(
-                          isNull(eventTable.startsAt),
-                          lte(eventTable.startsAt, referenceTime),
-                        ),
-                        or(
-                          isNull(eventTable.endsAt),
-                          gt(eventTable.endsAt, referenceTime),
-                        ),
-                      )
-                    : undefined,
+                  onlyActive ? activeEventCondition(referenceTime) : undefined,
                 ),
               )
               .orderBy(desc(eventTable.createdAt)),

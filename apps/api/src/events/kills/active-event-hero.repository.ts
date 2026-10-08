@@ -1,4 +1,5 @@
-import { and, eq, gt, isNull, lte, or } from "drizzle-orm";
+import { activeEventCondition } from "#src/events/event-scope-query";
+import { and, eq, or } from "drizzle-orm";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { eventHeroNpcTable, eventTable } from "#src/database/drizzle/schema";
 
@@ -22,11 +23,7 @@ export const makeActiveEventHeroStore = (database: ApiDatabaseValue) => ({
             eq(eventHeroNpcTable.npcId, npcId),
             eq(eventHeroNpcTable.npcName, npcName),
           ),
-          or(
-            isNull(eventTable.startsAt),
-            lte(eventTable.startsAt, referenceTime),
-          ),
-          or(isNull(eventTable.endsAt), gt(eventTable.endsAt, referenceTime)),
+          activeEventCondition(referenceTime),
         ),
       );
   },
