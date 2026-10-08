@@ -1,17 +1,7 @@
 import { Schema } from "effect";
+import { PlayerHit } from "./player-hit.js";
 
-const IndexPlayer = Schema.Struct({
-  id: Schema.String,
-  name: Schema.String,
-  lvl: Schema.Number,
-  prof: Schema.String,
-  icon: Schema.String,
-  characterId: Schema.Number,
-  accountId: Schema.Number,
-  world: Schema.String,
-});
-
-export const IndexPlayersPayload = Schema.Array(IndexPlayer);
+export const IndexPlayersPayload = Schema.Array(PlayerHit);
 
 export type IndexPlayersCommand = {
   readonly players: typeof IndexPlayersPayload.Type;
