@@ -892,13 +892,7 @@ export const KillTimelineMapResponse = Schema.Struct({
 export type HeroCoverageGapResponse = typeof HeroCoverageGapResponse.Type;
 
 export const HeroCoverageGapResponse = Schema.Struct({
-  id: Schema.String,
-  mapId: Schema.String,
-  heroNpcId: Schema.String,
-  gapType: Schema.Literals(["UNASSIGNED", "UNCOVERED"]),
-  startedAt: DateTimeString,
-  endedAt: Schema.Union([DateTimeString, Schema.Null]),
-  durationSeconds: Schema.Union([FiniteNumber, Schema.Null]),
+  ...EventCoverageGap.fields,
   map: Schema.Struct({
     mapName: Schema.String,
     mapId: FiniteNumber,
