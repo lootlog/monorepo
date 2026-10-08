@@ -67,13 +67,17 @@ export interface MapPingEvent {
   createdAt: number;
 }
 
-export const MapPingSendPayloadSchema = Schema.Struct({
-  expectedMapId: NonNegativeInt,
+const mapPingFields = {
   type: MapPingTypeSchema,
   x: NonNegativeInt,
   y: NonNegativeInt,
   npcId: Schema.optionalKey(MapPingCharacterIdSchema),
   playerId: Schema.optionalKey(MapPingCharacterIdSchema),
+};
+
+export const MapPingSendPayloadSchema = Schema.Struct({
+  expectedMapId: NonNegativeInt,
+  ...mapPingFields,
 });
 
 export const MapPingAckSchema = Schema.Union([
@@ -92,11 +96,7 @@ export const MapPingEventSchema = Schema.Struct({
   pingId: Schema.NonEmptyString,
   world: Schema.NonEmptyString,
   mapId: NonNegativeInt,
-  type: MapPingTypeSchema,
-  x: NonNegativeInt,
-  y: NonNegativeInt,
-  npcId: Schema.optionalKey(MapPingCharacterIdSchema),
-  playerId: Schema.optionalKey(MapPingCharacterIdSchema),
+  ...mapPingFields,
   sender: Schema.Struct({
     characterId: Schema.NonEmptyString,
     name: Schema.NonEmptyString,
