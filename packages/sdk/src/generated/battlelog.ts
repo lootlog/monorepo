@@ -1341,6 +1341,24 @@ export const BattlesControllerGetDashboardBattlesResultItem = {
   flee: 'flee',
 } as const;
 
+export type BattlesControllerGetDashboardBattles400Message = string | ({
+  path: (string | number | 'Infinity' | '-Infinity' | 'NaN')[];
+  message: string;
+})[];
+
+export type BattlesControllerGetDashboardBattles400StatusCode = typeof BattlesControllerGetDashboardBattles400StatusCode[keyof typeof BattlesControllerGetDashboardBattles400StatusCode];
+
+
+export const BattlesControllerGetDashboardBattles400StatusCode = {
+  NUMBER_400: 400,
+} as const;
+
+export type BattlesControllerGetDashboardBattles400 = {
+  error: string;
+  message: BattlesControllerGetDashboardBattles400Message;
+  statusCode: BattlesControllerGetDashboardBattles400StatusCode;
+};
+
 export type BattlesControllerGetDashboardBattles401 = {
   message: string;
 };

@@ -7,33 +7,124 @@ database introspection must not overwrite the source schema. The deploy command
 initializes empty databases and applies only pending migrations to databases
 already tracked by Drizzle.
 
-## Participant key and derived battle data
+## TimescaleDB battle tables
 
-`20261004114013_battle_derived_data` removes data that Battlelog can derive.
-Participant statistics live only in their columns; the `stats` JSON copy and
-`statsVersion` are dropped. `battles.statistics` is dropped: awards are
-computed from the participants when a battle is read. A participant is
-identified by `("battleId", "originalId")` instead of a random `id`. Redundant
-participant and battle indexes are dropped, and `user_characters` and
-`battle_object_deletions` store `timestamptz`.
+`20261005000630_battlelog_timescale` gives Battlelog its TimescaleDB schema in
+one step:
 
-The migration ships with the TimescaleDB migration (LOO-254) and follows its
-cutover: released services still write the dropped columns, and the
-participant primary key is built inside the migration transaction. Dropping a
-column does not shrink existing rows; their space returns when the tables are
-rewritten.
+- **Battle IDs are UUIDv7.** The first 48 bits of an ID are the battle's
+  `createdAt` in Unix milliseconds; `battles_id_createdAt_check` keeps both
+  equal, so the list, date filters and analytics order and filter by `id`.
+  `createdAt` and `updatedAt` are `timestamptz`.
+- **Hypertables.** `battles` and `battle_timelines` are partitioned by battle
+  ID in 7-day chunks. `battles` is compressed 7 days after a chunk closes,
+  segmented by `"userId"`; timelines are zstd-compressed already and are not.
+- **Participants stay a plain table.** Analytics look up a battle's
+  participants one battle at a time. On compressed chunks each lookup
+  decompresses a whole batch and plans every chunk: on the local production
+  copy, a head-to-head read for one large history ran for more than 8 minutes.
+  Compressing participants needs analytics that read a user's participants in
+  one pass first.
+- **No duplicated or derived data.** Participant statistics live only in their
+  columns; `battles.statistics` is computed when a battle is read. A
+  participant is identified by `("battleId", "originalId")`.
+- **Plain side tables.** A unique index on a hypertable must contain the
+  partition column, so `(userId, submissionId)` lives in `battle_submissions`.
+  `BattleDeletion` removes a battle's rows from every table together instead
+  of relying on cascading foreign keys into the hypertable.
+- **Timelines.** New battles store the submitted events in `battle_timelines`
+  in the same transaction as the battle. Battles saved before keep their R2
+  object; `battle_legacy_ids` maps their old ID (Prisma CUID, cuid2 or UUIDv4)
+  to the new one, so old links resolve and R2 reads and deletions use the old
+  key. Drop it together with the R2 bucket.
+- **No JIT.** Plans over the hypertables cost more than `jit_above_cost`, and
+  compiling them adds about 85 ms to every analytics read, so the service
+  connects with `jit = off`.
 
-Submissions accept a warrior only under its own `originalId`, so a battle
-cannot hold the same participant twice. Rows accepted earlier are checked by
-the primary key: if the migration fails with a duplicate key, it rolls back
-completely. List the affected participants before deciding how to repair them:
+The migration creates the tables on an empty database (tests, new
+environments) and refuses to run when `battles` holds rows. PGlite has no
+TimescaleDB, so tests there keep plain tables.
+
+### Moving a database with battles
+
+`scripts/battlelog-timescale-cutover.ts` builds the new tables in the
+`battlelog_next` schema from the migration's `BEGIN`/`END battle tables`
+section and copies the battles while the released service keeps reading and
+writing. Triggers on the old tables record every battle the service inserts,
+changes or deletes during the copy. Each step is manual:
+
+1. `prepare` creates the `timescaledb` extension, `battlelog_next`, the change
+   triggers and a `createdAt` index on the old battles. Compression policies
+   stay paused during the copy.
+2. `copy` copies battles in whole milliseconds of `createdAt`, one transaction
+   per batch (`CUTOVER_BATCH_SIZE`, 20,000 by default). Every battle gets a
+   UUIDv7 from its `createdAt`; battles saved in the same millisecond keep
+   their previous order. It resumes where it stopped and compresses the
+   finished chunks at the end. Run it again until it reports no new battles;
+   `status` shows its progress and the pending changes.
+3. `cutover` blocks writes to the old tables (reads continue), copies the
+   remaining battles, re-copies every recorded change, moves the old tables to
+   `battlelog_old` and the new ones to `public`, applies the rest of the
+   migration, resumes the compression policies and records the migration for
+   Drizzle. Release the new Battlelog service right after it: until the new
+   pods are ready, the released service fails against the new schema, and
+   battles submitted in that gap are rejected and lost, because the game
+   client retries for about a second.
+4. `verify` compares the old and new tables; `cleanup` drops `battlelog_old`.
+
+Until `cleanup`, rolling back means moving the tables back and releasing the
+previous service; battles saved after the cutover would have to be copied back
+by hand, so prefer a forward fix.
+
+On the local production copy (11.2 million battles, 38.3 million
+participants, 5.1 million submissions; `timescale/timescaledb:2.24.0-pg17`):
+
+| Step      | Duration                                                        |
+| --------- | --------------------------------------------------------------- |
+| `prepare` | 25 s                                                            |
+| `copy`    | 3 h 39 min at 2 CPUs, of which about 1 min compresses 51 chunks |
+| `cutover` | 0.9 s, including process start; no late or changed battles      |
+| `verify`  | 82 s; equal counts, every old battle mapped                     |
+| `cleanup` | 0.3 s                                                           |
+
+Sizes after the move: `battles` 1.1 GB instead of 18 GB (6.8 GB before
+compression), `battle_warriors` 23 GB instead of 45 GB, `battle_legacy_ids`
+1.8 GB; the database 27 GB instead of 63 GB.
+
+Read latency at 0.5 CPU and 512 MiB, p50 / p95 over 40 histories of 340 to
+38,800 battles:
+
+| Read                      | Before                      | After          |
+| ------------------------- | --------------------------- | -------------- |
+| List, first page          | 11.6 / 28.2 ms              | 10 / 35-43 ms  |
+| List, next pages          | 10.0 / 325.5 ms, 6 timeouts | 10 / 46-49 ms  |
+| List, previous page       | 4.0 / 689.3 ms              | 4.3 / 10-35 ms |
+| List, world filter        | 3.7 / 14.6 ms               | 10 / 16-51 ms  |
+| List, last 30 days        | 2.9 / 6.8 ms                | 4 / 9-43 ms    |
+| Analytics, duration       | 400 ms / 9.6 s              | 234 ms / 4.6 s |
+| Analytics, streak         | 41 ms / 2.3 s               | 32 ms / 2.9 s  |
+| Analytics, head-to-head   | 58 ms / 2.8 s               | 110 ms / 3.2 s |
+| Analytics, combat profile | 179 ms / 92 s               | 112 ms / 4.7 s |
+
+List ranges span three runs; their p95 sits near the container's 50 ms CPU
+quota period. Analytics were measured with `jit = off`; with JIT the p50 of
+head-to-head was 248 ms and of streak 110 ms. The first query on a new
+connection also spends 55-110 ms planning while it loads the chunk catalog.
+
+### Backup and restore
+
+CNPG's barman backups are physical and restore TimescaleDB unchanged. For a
+logical copy, dump with `pg_dump -Fd` and restore into a database that already
+has the extension:
 
 ```sql
-SELECT "battleId", "originalId", count(*)
-FROM "battle_warriors"
-GROUP BY "battleId", "originalId"
-HAVING count(*) > 1;
+CREATE EXTENSION IF NOT EXISTS timescaledb;
+SELECT timescaledb_pre_restore();
+-- pg_restore -Fd -d battlelog <dump>
+SELECT timescaledb_post_restore();
 ```
+
+Restore with the same TimescaleDB version as the dump (2.24.0).
 
 ## Object cleanup
 

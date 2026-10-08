@@ -64,7 +64,7 @@ export const makeBattleMetadata = (
         eq(battles.world, userCharacters.world),
       ),
     )
-    .orderBy(desc(battles.createdAt))
+    .orderBy(desc(battles.id))
     .limit(1)
     .as("latest_character_warrior");
 
@@ -221,7 +221,7 @@ export const makeBattleMetadata = (
         )
         .where(eq(battles.userId, userId))
         // The latest appearance supplies the icon, profession and level.
-        .orderBy(sql`w.name`, desc(battles.createdAt), desc(battles.id))
+        .orderBy(sql`w.name`, desc(battles.id))
         .limit(10)
         .pipe(read);
 

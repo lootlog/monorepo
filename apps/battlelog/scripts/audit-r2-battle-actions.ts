@@ -83,8 +83,13 @@ const fetchLatestBattleIdsFromDb = async (): Promise<SampleSource | null> => {
   try {
     await client.connect();
 
+    // Only battles saved before timelines moved to Postgres have an R2
+    // object, kept under their legacy ID.
     const result = await client.query<{ id: string }>(
-      'select id from battles order by "createdAt" desc limit $1',
+      `select legacy."legacyId" as id
+       from battles
+       join battle_legacy_ids legacy on legacy."battleId" = battles.id
+       order by battles.id desc limit $1`,
       [SAMPLE_SIZE],
     );
 

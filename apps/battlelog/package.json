@@ -14,7 +14,9 @@
     }
   },
   "exports": {
-    "./database/schema": "./src/database/schema.ts"
+    "./database/schema": "./src/database/schema.ts",
+    "./battles/battle-id": "./src/battles/battle-id.ts",
+    "./battles/battle-timeline": "./src/battles/battle-timeline.ts"
   },
   "scripts": {
     "dev": "bun --conditions=development --env-file=.env --watch src/main.ts",
@@ -34,7 +36,7 @@
     "db:push": "bunx drizzle-kit push --force",
     "db:studio": "bunx drizzle-kit studio",
     "maintenance:audit-actions": "bun --env-file=.env scripts/audit-r2-battle-actions.ts",
-    "test:integration": "bun --conditions=development test src/database/battle-read-budget.integration.test.ts src/battles/deletion/battle-deletion.integration.test.ts src/battles/submission/battle-creation-redis.integration.test.ts"
+    "test:integration": "bun --conditions=development test src/database/battle-read-budget.integration.test.ts src/battles/deletion/battle-deletion.integration.test.ts src/battles/submission/battle-creation-redis.integration.test.ts src/database/battlelog-timescale-cutover.integration.test.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1146.0",

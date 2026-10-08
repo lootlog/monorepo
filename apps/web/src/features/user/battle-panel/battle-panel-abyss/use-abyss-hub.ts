@@ -7,6 +7,7 @@ import {
   type AbyssTab,
   type Period,
 } from "@/features/user/battle-panel/battle-panel-search";
+import { useResetRejectedBattlePanelCursor } from "@/features/user/battle-panel/components/use-reset-rejected-battle-panel-cursor";
 import type { AbyssSeason } from "@/lib/api/battlelog-types";
 import {
   getBattlesControllerGetAbyssSeasonsQueryKey,
@@ -219,6 +220,7 @@ export function useAbyssHub() {
 
   const {
     data: battlesResponse,
+    error: battlesError,
     isLoading: isBattlesLoading,
     isPlaceholderData: isBattlesRefreshing,
   } = useBattlesControllerGetDashboardBattles(dashboardParams, {
@@ -227,6 +229,12 @@ export function useAbyssHub() {
       queryKey:
         getBattlesControllerGetDashboardBattlesQueryKey(dashboardParams),
     },
+  });
+
+  useResetRejectedBattlePanelCursor({
+    cursor: queryState.cursor,
+    error: battlesError,
+    reset: () => void setQueryState(resetBattlePanelCursorPagination()),
   });
 
   const handleCharacterChange = (characterId: string | undefined) => {

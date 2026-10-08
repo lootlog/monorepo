@@ -3,9 +3,9 @@ import { makeWithDefaults } from "drizzle-orm/effect-pglite";
 import { migrate } from "drizzle-orm/effect-pglite/migrator";
 import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
 import { Effect, ManagedRuntime } from "effect";
-import { sql } from "drizzle-orm";
 import { relations } from "#src/database/relations";
 import { battles, battleWarriors, userCharacters } from "#src/database/schema";
+import { createBattleId } from "#src/battles/battle-id";
 import { unusedRedisStore } from "../../../test/battle-fixtures.js";
 import { makeBattleAnalyticsCache } from "./battle-analytics-cache.service.js";
 import { makeBattleAnalyticsQuery } from "./battle-analytics-query.service.js";
@@ -30,6 +30,18 @@ let reads: ReturnType<typeof makeBattleAnalyticsRead>;
 let service: ReturnType<typeof makeBattleAnalytics>;
 
 let fullHistory: BattleWithWarriors[];
+
+const namedBattleIds = new Map<string, string>();
+
+// A battle ID carries its createdAt; fixtures name battles for readable assertions.
+const namedBattle = (name: string, createdAt: Date) => {
+  const battle = createBattleId(createdAt.getTime());
+  namedBattleIds.set(name, battle.id);
+
+  return battle;
+};
+
+const idOf = (name: string) => namedBattleIds.get(name);
 
 const characters = ["hero-1", "hero-2"];
 
@@ -123,17 +135,22 @@ beforeAll(async () => {
   );
 
   for (let index = 0; index < 14; index++) {
-    const id = `battle-${String(index).padStart(2, "0")}`;
+    const { id, createdAt } = namedBattle(
+      `battle-${String(index).padStart(2, "0")}`,
+      new Date(Date.UTC(2024, index < 8 ? 0 : 2, index + 1)),
+    );
+
     const characterId = characters[index % 2];
+    const owner = index === 13 ? "foreign" : "owner";
     const isLoss = index % 3 === 0;
     await runtime.runPromise(
       db.insert(battles).values({
         id,
-        userId: index === 13 ? "foreign" : "owner",
+        userId: owner,
         accountId: "account",
         characterId,
         world: index === 10 ? "beta" : "alpha",
-        createdAt: new Date(Date.UTC(2024, index < 8 ? 0 : 2, index + 1)),
+        createdAt,
         type: index === 11 ? "group" : "1v1",
         duration: 100 + index * 13,
         winner: isLoss ? "Opponent" : "Hero",
@@ -301,7 +318,7 @@ describe("SQL battle analytics parity", () => {
       const pvpQuery = {
         ...query({ minLevel: 90, maxLevel: 101 }),
         opponentId,
-        excludeBattleId: "battle-02",
+        excludeBattleId: idOf("battle-02"),
       };
 
       const expected = legacy.playerVsPlayerBattles(
@@ -389,8 +406,7 @@ describe("SQL battle analytics parity", () => {
 
 it("folds combat history across tied-date batches without losing team matchups or visibility", async () => {
   const battleRows = Array.from({ length: 264 }, (_, index) => ({
-    id: `combat-${String(index).padStart(3, "0")}`,
-    createdAt: sql`${"2025-01-01T00:00:00.000123"}::timestamp`,
+    ...createBattleId(Date.UTC(2025, 0, 1)),
     userId: index === 263 ? "foreign" : "owner",
     accountId: "account",
     characterId: "hero-1",
@@ -507,24 +523,24 @@ it("selects the recorder among multiple owned participants and uses character or
     db.insert(battles).values(
       [
         {
-          id: "selection-recorder",
-          characterId: "hero-2",
-          winningTeam: 2,
-          losingTeam: 1,
-        },
-        {
           id: "selection-fallback",
           characterId: "outsider",
           winningTeam: 1,
           losingTeam: 2,
         },
-      ].map((battle) => ({
+        {
+          id: "selection-recorder",
+          characterId: "hero-2",
+          winningTeam: 2,
+          losingTeam: 1,
+        },
+      ].map(({ id, ...battle }) => ({
         ...battle,
+        ...namedBattle(id, new Date("2025-02-01T00:00:00Z")),
         userId: "owner",
         accountId: "account",
         world: "combat-selection",
         type: "group",
-        createdAt: new Date("2025-02-01T00:00:00Z"),
         duration: 100,
         winner: "Winner",
         loser: "Loser",
@@ -532,9 +548,11 @@ it("selects the recorder among multiple owned participants and uses character or
     ),
   );
 
-  for (const battleId of ["selection-recorder", "selection-fallback"]) {
+  for (const name of ["selection-recorder", "selection-fallback"]) {
+    const battleId = idOf(name);
+
     const ids =
-      battleId === "selection-recorder"
+      name === "selection-recorder"
         ? ["hero-1", "hero-2"]
         : ["hero-2", "hero-1"];
 
@@ -584,8 +602,8 @@ it("selects the recorder among multiple owned participants and uses character or
   expect(
     actual.phTrend.map(({ battleId, value }) => ({ battleId, value })),
   ).toEqual([
-    { battleId: "selection-fallback", value: 10 },
-    { battleId: "selection-recorder", value: 20 },
+    { battleId: idOf("selection-fallback"), value: 10 },
+    { battleId: idOf("selection-recorder"), value: 20 },
   ]);
   expect(actual).toEqual(legacy.combatProfile(fullRows, characterSet));
   expect(actual).toEqual(
@@ -674,13 +692,13 @@ it("filters and sorts opponent records, breaking ties by latest battle", async (
       [
         { id: "latest-older-win", day: 1, winningTeam: 1, losingTeam: 2 },
         { id: "latest-newer-loss", day: 2, winningTeam: 2, losingTeam: 1 },
-      ].map(({ day, ...battle }) => ({
+      ].map(({ day, id, ...battle }) => ({
         ...battle,
+        ...namedBattle(id, new Date(Date.UTC(2025, 5, day))),
         userId: "owner",
         accountId: "account",
         characterId: "hero-1",
         world: "h2h-latest",
-        createdAt: new Date(Date.UTC(2025, 5, day)),
         type: "1v1",
         duration: 100,
         winner: "Winner",
@@ -691,10 +709,14 @@ it("filters and sorts opponent records, breaking ties by latest battle", async (
   );
   await runtime.runPromise(
     db.insert(battleWarriors).values(
-      ["latest-older-win", "latest-newer-loss"].flatMap((battleId) =>
+      ["latest-older-win", "latest-newer-loss"].map(idOf).flatMap((battleId) =>
         [
           { battleId, originalId: "hero-1", team: 1 },
-          { battleId, originalId: "latest-opponent", team: 2 },
+          {
+            battleId,
+            originalId: "latest-opponent",
+            team: 2,
+          },
         ].map((warrior) => ({
           ...warrior,
           name: warrior.originalId,
@@ -800,7 +822,7 @@ it("pages only 1v1 battles against the requested opponent inside the level range
   const pvpQuery = {
     ...query({ minLevel: 93, maxLevel: 101 }),
     opponentId: "opponent-2",
-    excludeBattleId: "battle-05",
+    excludeBattleId: idOf("battle-05"),
   };
 
   expect(
@@ -827,7 +849,7 @@ it("pages only 1v1 battles against the requested opponent inside the level range
     ),
   ).toMatchObject([
     {
-      battleId: "battle-08",
+      battleId: idOf("battle-08"),
       createdAt: "2024-03-09T00:00:00.000Z",
       winner: "Hero",
       ratingDelta: 0,
@@ -888,13 +910,12 @@ it("keeps the strongest combat highlights, skips flees and admits battles with a
   await runtime.runPromise(
     db.insert(battles).values(
       combatBattles.map((battle) => ({
-        id: battle.id,
+        ...namedBattle(battle.id, new Date(Date.UTC(2025, 2, battle.day))),
         userId: "owner",
         accountId: "account",
         characterId: "hero-1",
         world: "combat-explicit",
         type: "group",
-        createdAt: new Date(Date.UTC(2025, 2, battle.day)),
         duration: 100,
         winner: "Winner",
         loser: "Loser",
@@ -909,7 +930,7 @@ it("keeps the strongest combat highlights, skips flees and admits battles with a
     db.insert(battleWarriors).values(
       combatBattles.flatMap((battle) => [
         {
-          battleId: battle.id,
+          battleId: idOf(battle.id),
           originalId: "hero-1",
           name: "Hero",
           icon: "hero.gif",
@@ -924,7 +945,7 @@ it("keeps the strongest combat highlights, skips flees and admits battles with a
           blockedDamage: battle.blocked,
         },
         ...battle.levels.map((lvl, index) => ({
-          battleId: battle.id,
+          battleId: idOf(battle.id),
           originalId: `explicit-opponent-${index}`,
           name: "Enemy",
           icon: "enemy.gif",
@@ -962,9 +983,17 @@ it("keeps the strongest combat highlights, skips flees and admits battles with a
       value,
     })),
   ).toEqual([
-    { battleId: "explicit-small-win", type: "biggestComeback", value: 500 },
-    { battleId: "explicit-big-loss", type: "biggestDamage", value: 300 },
-    { battleId: "explicit-big-loss", type: "biggestMitigation", value: 50 },
+    {
+      battleId: idOf("explicit-small-win"),
+      type: "biggestComeback",
+      value: 500,
+    },
+    { battleId: idOf("explicit-big-loss"), type: "biggestDamage", value: 300 },
+    {
+      battleId: idOf("explicit-big-loss"),
+      type: "biggestMitigation",
+      value: 50,
+    },
   ]);
   expect(profile.matchupByProfession).toEqual([
     { prof: "m", wins: 1, losses: 1, totalBattles: 2, winRate: 50 },

@@ -12,10 +12,29 @@ import { makeBattleDeletion } from "./battle-deletion.js";
 
 let postgres: StartedPostgreSqlContainer;
 
+const BATTLE_IDS = {
+  one: "01a10000-0000-7000-8000-000000000001",
+  two: "01a10000-0000-7000-8000-000000000002",
+  other: "01a10000-0000-7000-8000-000000000003",
+};
+
+// "one" was saved before UUIDv7 IDs, so R2 keeps its object under its old ID.
+const LEGACY_ONE = "legacy-one";
+
+const battleName = (id: string) =>
+  Object.entries(BATTLE_IDS).find(([, battleId]) => battleId === id)?.[0] ?? id;
+
+const storedBattles = async () =>
+  (await pool.query("SELECT id FROM battles ORDER BY id")).rows.map((row) =>
+    battleName(row.id),
+  );
+
 let pool: pg.Pool;
 
 beforeAll(async () => {
-  postgres = await new PostgreSqlContainer("postgres:17-alpine").start();
+  postgres = await new PostgreSqlContainer(
+    "timescale/timescaledb:2.24.0-pg17",
+  ).start();
   pool = new pg.Pool({ connectionString: postgres.getConnectionUri() });
 
   const child = Bun.spawn(["bun", "src/database/migrate.ts"], {
@@ -44,14 +63,19 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await pool.query(
-    "TRUNCATE battles, user_characters, battle_object_deletions CASCADE",
+    "TRUNCATE battles, battle_warriors, battle_timelines, battle_submissions, battle_legacy_ids, user_characters, battle_object_deletions",
   );
-  await pool.query(`INSERT INTO battles (id, "userId", "accountId", "characterId", world, duration, type, winner, loser, "winningTeam", "losingTeam", public)
-    SELECT id, owner, 'account', 'character', 'world', 1, 'pvp', 'winner', 'loser', 1, 2, true
-    FROM (VALUES ('one', 'owner'), ('two', 'owner'), ('other', 'other-owner')) AS seed(id, owner);
+  await pool.query(`INSERT INTO battles (id, "createdAt", "userId", "accountId", "characterId", world, duration, type, winner, loser, "winningTeam", "losingTeam", public)
+    SELECT id, battle_id_created_at(id), owner, 'account', 'character', 'world', 1, 'pvp', 'winner', 'loser', 1, 2, true
+    FROM (VALUES ('${BATTLE_IDS.one}'::uuid, 'owner'), ('${BATTLE_IDS.two}'::uuid, 'owner'), ('${BATTLE_IDS.other}'::uuid, 'other-owner')) AS seed(id, owner);
+    INSERT INTO battle_legacy_ids ("legacyId", "battleId") VALUES ('${LEGACY_ONE}', '${BATTLE_IDS.one}');
     INSERT INTO user_characters (id, "userId", "characterId", name, world) VALUES ('character', 'owner', 'character', 'name', 'world');
     INSERT INTO battle_warriors ("battleId", "originalId", name, lvl, prof, icon, team, turns)
-    VALUES ('one', 'character', 'name', 1, 'w', 'icon', 1, 1);`);
+    SELECT id, 'character', 'name', 1, 'w', 'icon', 1, 1 FROM battles;
+    INSERT INTO battle_submissions ("userId", "submissionId", "battleId")
+    SELECT "userId", id::text, id FROM battles;
+    INSERT INTO battle_timelines ("battleId", "userId", events)
+    SELECT id, "userId", '\\x00' FROM battles WHERE id <> '${BATTLE_IDS.one}';`);
 });
 
 const run = <A, E>(effect: Effect.Effect<A, E, PgClient.PgClient>) =>
@@ -70,7 +94,7 @@ for (const mode of ["single", "user"] as const) {
 
     const storage = {
       deleteBattlesData: async (ids: readonly string[]) => {
-        const failed = ids.filter((id) => fail && id === "one");
+        const failed = ids.filter((id) => fail && id === LEGACY_ONE);
         removed.push(...ids.filter((id) => !failed.includes(id)));
 
         return failed;
@@ -86,24 +110,27 @@ for (const mode of ["single", "user"] as const) {
           analytics,
         );
 
-        if (mode === "single") yield* deletion.deleteBattle("one");
+        if (mode === "single") yield* deletion.deleteBattle(BATTLE_IDS.one);
         else yield* deletion.deleteUserBattles("owner");
         yield* deletion.drain;
       }),
     );
 
-    const expected = mode === "single" ? ["one"] : ["one", "two"];
+    // Only the battle saved before timelines moved to Postgres owns an object.
+    const expected = [LEGACY_ONE];
+
     expect(
       (
         await pool.query(
           'SELECT "battleId" FROM battle_object_deletions ORDER BY "battleId"',
         )
       ).rows,
-    ).toEqual([{ battleId: "one" }]);
-    expect(
-      (await pool.query("SELECT id FROM battles ORDER BY id")).rows,
-    ).toEqual(
-      mode === "single" ? [{ id: "other" }, { id: "two" }] : [{ id: "other" }],
+    ).toEqual([{ battleId: LEGACY_ONE }]);
+    expect(await storedBattles()).toEqual(
+      mode === "single" ? ["two", "other"] : ["other"],
+    );
+    expect((await pool.query("SELECT * FROM battle_legacy_ids")).rows).toEqual(
+      [],
     );
 
     if (mode === "user")
@@ -111,13 +138,23 @@ for (const mode of ["single", "user"] as const) {
         [],
       );
 
-    expect(
-      (await pool.query(`SELECT "battleId" FROM battle_warriors`)).rows,
-    ).toEqual([]);
+    // Battle hypertables have no cascading foreign keys.
+    for (const table of [
+      "battle_warriors",
+      "battle_timelines",
+      "battle_submissions",
+    ])
+      expect(
+        (
+          await pool.query(
+            `SELECT "battleId" FROM ${table} ORDER BY "battleId"`,
+          )
+        ).rows.map((row) => battleName(row.battleId)),
+      ).toEqual(mode === "single" ? ["two", "other"] : ["other"]);
     expect(
       (
         await pool.query(
-          `SELECT id FROM battles WHERE id = 'one' AND public = true`,
+          `SELECT id FROM battles WHERE id = '${BATTLE_IDS.one}' AND public = true`,
         )
       ).rows,
     ).toEqual([]);
@@ -136,7 +173,7 @@ for (const mode of ["single", "user"] as const) {
         yield* restarted.drain;
       }),
     );
-    expect(removed.sort()).toEqual(expected);
+    expect(removed.sort()).toEqual(expected.sort());
     expect(
       (await pool.query("SELECT * FROM battle_object_deletions")).rows,
     ).toEqual([]);
@@ -162,9 +199,7 @@ it("rolls back database removal if durable cleanup cannot be recorded", async ()
         }),
       ),
     ).rejects.toBeDefined();
-    expect(
-      (await pool.query("SELECT id FROM battles ORDER BY id")).rows,
-    ).toEqual([{ id: "one" }, { id: "other" }, { id: "two" }]);
+    expect(await storedBattles()).toEqual(["one", "two", "other"]);
     expect((await pool.query("SELECT id FROM user_characters")).rows).toEqual([
       { id: "character" },
     ]);
@@ -173,28 +208,6 @@ it("rolls back database removal if durable cleanup cannot be recorded", async ()
       "ALTER TABLE battle_object_deletions DROP CONSTRAINT reject_cleanup",
     );
   }
-});
-
-it("scopes submission uniqueness to the owner and rejects duplicate retries for that owner", async () => {
-  await pool.query(
-    `UPDATE battles SET "submissionId" = 'shared-submission' WHERE id = 'one'`,
-  );
-  await pool.query(
-    `UPDATE battles SET "submissionId" = 'shared-submission' WHERE id = 'other'`,
-  );
-  await expect(
-    pool.query(
-      `UPDATE battles SET "submissionId" = 'shared-submission' WHERE id = 'two'`,
-    ),
-  ).rejects.toMatchObject({ code: "23505" });
-  expect(
-    (await pool.query('SELECT id, "submissionId" FROM battles ORDER BY id'))
-      .rows,
-  ).toEqual([
-    { id: "one", submissionId: "shared-submission" },
-    { id: "other", submissionId: "shared-submission" },
-    { id: "two", submissionId: null },
-  ]);
 });
 
 it("claims disjoint cleanup batches across workers and invalidates each owner once", async () => {

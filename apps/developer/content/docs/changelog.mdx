@@ -3,6 +3,31 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased (breaking): Time-ordered battle IDs and opaque list cursors
+
+Battle IDs are now UUIDv7 values whose first 48 bits are the battle's
+`createdAt`, so newer battles have greater IDs. Release the SDK as a breaking
+version.
+
+- Every existing battle has a new ID. Battle, list, timeline, analytics and
+  `POST /battles` responses return the new ID. Paths that take a battle ID,
+  including `/battles/public/{battleId}`, still accept the old ID and return
+  the battle with its new ID. Store the new ID: old IDs keep resolving only
+  until the timelines of those battles are removed from object storage.
+- `GET /battles/@me` cursors are opaque. Pass `nextCursor` or
+  `previousCursor` back unchanged; do not build or parse them. Cursors issued
+  before this change, and any other malformed cursor, are rejected with `400`
+  instead of returning the first page.
+- `previousCursor` is returned whenever `hasPrev` is `true`. The previous page
+  holds the `size` battles directly before the current page. Battles saved
+  since the first page was read appear on the pages before it, and `hasPrev`
+  stays `true` until the newest battle is reached.
+- `createdAt` is unchanged: the time Battlelog saved the battle, with
+  millisecond precision. `startDate` and `endDate` filters compare against it.
+- Raw battle data (`/battles/{battleId}/raw` and its public variant) keeps its
+  shape. For battles saved after this change, `timestamp` is the battle's
+  `createdAt`.
+
 ## Unreleased (breaking): Battle participants no longer return `id`
 
 Battlelog identifies a participant by its battle and Margonem character, so the

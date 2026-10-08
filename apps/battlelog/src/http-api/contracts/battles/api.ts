@@ -62,6 +62,7 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
     .annotate(OpenApi.Summary, "Create a battle"),
   HttpApiEndpoint.get("BattlesControllerGetDashboardBattles", "/battles/@me", {
     query: BattlesControllerGetDashboardBattlesQuery,
+    error: BadRequestResponse,
     success: BattlesControllerGetDashboardBattles200,
   })
     .middleware(BearerSecurityMiddleware)

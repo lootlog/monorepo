@@ -31,6 +31,8 @@ import { makeBattleAnalyticsQuery } from "#src/battles/analytics/battle-analytic
 import { makeBattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
 import { makeBattlePagination } from "#src/battles/analytics/pagination.service";
 import { makeBattleListFilter } from "#src/battles/catalog/battle-list-filter.service";
+import { createBattleId } from "#src/battles/battle-id";
+import { InvalidRequestError } from "#src/infrastructure/http-error";
 import { makeBattleMetadata } from "#src/battles/catalog/battle-metadata.service";
 import {
   createBattleSemanticFingerprint,
@@ -118,19 +120,17 @@ const createServices = () =>
         (operation) => read(operation, { consistentSnapshot: true }),
       );
 
-      // R2 is the only fake boundary; database, Redis commands and Lua are real.
-      const uploads = new Map<string, unknown>();
+      // R2 is the only fake boundary; database, Redis commands and Lua are
+      // real. R2 holds only timelines of battles saved before Postgres did.
+      const legacyObjects = new Map<string, unknown>();
 
       const battles = makeBattles(
         database,
         {
-          uploadBattleData: async (id, body) => {
-            uploads.set(id, body);
-          },
           getBattleData: async (id, decode) =>
-            decode(JSON.stringify(uploads.get(id))),
+            decode(JSON.stringify(legacyObjects.get(id))),
           deleteBattlesData: async (ids) => {
-            for (const id of ids) uploads.delete(id);
+            for (const id of ids) legacyObjects.delete(id);
 
             return [];
           },
@@ -153,7 +153,6 @@ const createServices = () =>
         battles,
         redis,
         redisApi,
-        uploads,
         cache,
         analytics,
         metadata: makeBattleMetadata(database, redis, read),
@@ -162,7 +161,9 @@ const createServices = () =>
   );
 
 beforeAll(async () => {
-  postgres = await new PostgreSqlContainer("postgres:17-alpine").start();
+  postgres = await new PostgreSqlContainer(
+    "timescale/timescaledb:2.24.0-pg17",
+  ).start();
   redisContainer = await new GenericContainer("redis:7.4-alpine")
     .withExposedPorts(6379)
     .withWaitStrategy(Wait.forListeningPorts())
@@ -189,10 +190,9 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await pool.query(
-    "TRUNCATE battles, user_characters, battle_object_deletions CASCADE",
+    "TRUNCATE battles, battle_warriors, battle_timelines, battle_submissions, battle_legacy_ids, user_characters, battle_object_deletions",
   );
   await runtime.runPromise(services.redisApi.send("FLUSHDB"));
-  services.uploads.clear();
 });
 
 const waitForLock = async () => {
@@ -247,7 +247,9 @@ it("renews the real Lua lock beyond its TTL while concurrent callers create one 
     expect((await pool.query("SELECT id FROM battles")).rows).toEqual([
       { id: results[0].battleId },
     ]);
-    expect(services.uploads.size).toBe(1);
+    expect(
+      (await pool.query('SELECT "battleId" FROM battle_timelines')).rows,
+    ).toEqual([{ battleId: results[0].battleId }]);
     expect(await services.redis.get(lockKey)).toBeNull();
   } finally {
     await blocker.query("ROLLBACK");
@@ -379,11 +381,13 @@ it("aggregates battle summaries in SQL without losing flee PH, level filters or 
   ];
 
   for (const fixture of fixtures) {
+    const { id } = createBattleId(Date.now());
+
     await pool.query(
-      `INSERT INTO battles (id, "userId", "accountId", "characterId", world, duration, type, winner, loser, "winningTeam", "losingTeam", "hasFlee")
-      VALUES ($1,$2,'account','hero','world',10,$3,'Hero','Enemy',$4,$5,$6)`,
+      `INSERT INTO battles (id, "createdAt", "userId", "accountId", "characterId", world, duration, type, winner, loser, "winningTeam", "losingTeam", "hasFlee")
+      VALUES ($1,battle_id_created_at($1),$2,'account','hero','world',10,$3,'Hero','Enemy',$4,$5,$6)`,
       [
-        fixture.id,
+        id,
         fixture.owner ?? "owner",
         fixture.type ?? "1v1",
         fixture.winningTeam,
@@ -394,7 +398,7 @@ it("aggregates battle summaries in SQL without losing flee PH, level filters or 
     await pool.query(
       `INSERT INTO battle_warriors ("battleId","originalId",name,lvl,prof,icon,team,turns,ph)
       VALUES ($1,'hero','Hero',100,'w','hero.gif',1,1,$2), ($1,'enemy','Enemy',$3,'m','enemy.gif',2,1,0)`,
-      [fixture.id, fixture.ph, fixture.lvl ?? 100],
+      [id, fixture.ph, fixture.lvl ?? 100],
     );
   }
 
@@ -444,7 +448,7 @@ it("reloads corrupted metadata cache and shares invalidation with analytics", as
   await services.redis.set("battle-cache-generation:owner", "test-generation");
 
   const key =
-    "battle-cache:v3:owner:test-generation:battle-characters:list:owner";
+    "battle-cache:v4:owner:test-generation:battle-characters:list:owner";
 
   await services.redis.set(key, "{broken-json", 300);
   expect(
@@ -496,15 +500,17 @@ it("reports character metadata from the latest matching self warrior per owner a
   ];
 
   for (const fixture of fixtures) {
+    const { id } = createBattleId(Date.parse(fixture.createdAt));
+
     await pool.query(
       `INSERT INTO battles (id, "userId", "accountId", "characterId", world, duration, type, winner, loser, "winningTeam", "losingTeam", "hasFlee", "createdAt")
-      VALUES ($1,$2,'account','hero',$4,10,'1v1','Hero','Enemy',1,2,false,$3)`,
-      [fixture.id, fixture.owner, fixture.createdAt, fixture.world ?? "world"],
+      VALUES ($1,$2,'account','hero',$3,10,'1v1','Hero','Enemy',1,2,false,battle_id_created_at($1))`,
+      [id, fixture.owner, fixture.world ?? "world"],
     );
     await pool.query(
       `INSERT INTO battle_warriors ("battleId","originalId",name,lvl,prof,icon,team,turns,ph)
       VALUES ($1,$3,'Hero',$2,'w','hero.gif',1,1,0), ($1,'enemy','Enemy',300,'m','enemy.gif',2,1,0)`,
-      [fixture.id, fixture.lvl, fixture.missingSelf ? "unrelated" : "hero"],
+      [id, fixture.lvl, fixture.missingSelf ? "unrelated" : "hero"],
     );
   }
 
@@ -750,7 +756,7 @@ it("interrupts a coalesced analytics factory and permits a subsequent fill", asy
   expect(Exit.hasInterrupts(await reading)).toBe(true);
   await canceled;
   const generation = await services.redis.get("battle-cache-generation:abort");
-  const key = `battle-cache:v3:abort:${generation}:summary`;
+  const key = `battle-cache:v4:abort:${generation}:summary`;
   expect(await services.redis.get(key)).toBeNull();
   expect(
     await runtime.runPromise(
@@ -767,16 +773,19 @@ it("interrupts a coalesced analytics factory and permits a subsequent fill", asy
 });
 
 it("searches only owned warriors with trimmed ILIKE and preserves distinct names from their latest battle", async () => {
-  await pool.query(`INSERT INTO battles (id,"userId","accountId","characterId",world,duration,type,winner,loser,"winningTeam","losingTeam","createdAt") VALUES
-    ('latest','owner','account','hero','world',10,'1v1','Hero','Enemy',1,2,'2026-02-01'),
-    ('earlier','owner','account','hero','world',10,'1v1','Hero','Enemy',1,2,'2026-01-01'),
-    ('foreign','someone-else','account','hero','world',10,'1v1','Hero','Enemy',1,2,'2026-03-01')`);
+  const latest = createBattleId(Date.parse("2026-02-01")).id;
+  const earlier = createBattleId(Date.parse("2026-01-01")).id;
+  const foreign = createBattleId(Date.parse("2026-03-01")).id;
+
+  await pool.query(`INSERT INTO battles (id,"userId","accountId","characterId",world,duration,type,winner,loser,"winningTeam","losingTeam","createdAt")
+    SELECT id, owner,'account','hero','world',10,'1v1','Hero','Enemy',1,2,battle_id_created_at(id)
+    FROM (VALUES ('${latest}'::uuid,'owner'), ('${earlier}'::uuid,'owner'), ('${foreign}'::uuid,'someone-else')) AS seed(id, owner)`);
   await pool.query(`INSERT INTO battle_warriors ("battleId","originalId",name,lvl,prof,icon,team,turns,ph) VALUES
-    ('latest','9','Alpha',90,'w','latest.gif',1,1,0),
-    ('earlier','10','Alpha',100,'m','earlier.gif',1,1,0),
-    ('earlier','11','alpha',110,'p','case.gif',1,1,0),
-    ('foreign','9','Alpha',999,'m','private.gif',1,1,0),
-    ('foreign','12','Alpine',999,'m','private.gif',1,1,0)`);
+    ('${latest}','9','Alpha',90,'w','latest.gif',1,1,0),
+    ('${earlier}','10','Alpha',100,'m','earlier.gif',1,1,0),
+    ('${earlier}','11','alpha',110,'p','case.gif',1,1,0),
+    ('${foreign}','9','Alpha',999,'m','private.gif',1,1,0),
+    ('${foreign}','12','Alpine',999,'m','private.gif',1,1,0)`);
 
   const expected = [
     { name: "Alpha", lvl: 90, prof: "w", icon: "latest.gif" },
@@ -803,7 +812,7 @@ it("searches only owned warriors with trimmed ILIKE and preserves distinct names
   ).toEqual({ warriors: [] });
 
   await pool.query(`INSERT INTO battle_warriors ("battleId","originalId",name,lvl,prof,icon,team,turns,ph)
-    SELECT 'earlier', 'ordered-' || n, 'Ordered ' || lpad(n::text,2,'0'), 100, 'w', 'hero.gif', 1, 1, 0
+    SELECT '${earlier}'::uuid, 'ordered-' || n, 'Ordered ' || lpad(n::text,2,'0'), 100, 'w', 'hero.gif', 1, 1, 0
     FROM generate_series(12,1,-1) n`);
 
   const ordered = await runtime.runPromise(
@@ -840,12 +849,17 @@ it("applies combined dashboard filters and counts only the requesting owner's ma
     { id: "other-name", name: "Other" },
   ];
 
+  const ids = new Map<string, string>();
+
   for (const fixture of fixtures) {
+    const { id } = createBattleId(Date.parse("2026-01-01"));
+    ids.set(fixture.id, id);
+
     await pool.query(
       `INSERT INTO battles (id,"userId","accountId","characterId",world,duration,type,winner,loser,"winningTeam","losingTeam","hasFlee","createdAt")
-      VALUES ($1,$2,'account','hero','world',10,'1v1','Hero','Enemy',$3,$4,$5,'2026-01-01')`,
+      VALUES ($1,$2,'account','hero','world',10,'1v1','Hero','Enemy',$3,$4,$5,battle_id_created_at($1))`,
       [
-        fixture.id,
+        id,
         fixture.owner ?? "owner",
         fixture.winningTeam ?? 1,
         fixture.winningTeam === 2 ? 1 : 2,
@@ -855,7 +869,7 @@ it("applies combined dashboard filters and counts only the requesting owner's ma
     await pool.query(
       `INSERT INTO battle_warriors ("battleId","originalId",name,lvl,prof,icon,team,turns,ph)
       VALUES ($1,'hero','Hero',100,'w','hero.gif',1,1,0), ($1,'enemy',$2,$3,'m','enemy.gif',2,1,0)`,
-      [fixture.id, fixture.name ?? "Enemy", fixture.lvl ?? 100],
+      [id, fixture.name ?? "Enemy", fixture.lvl ?? 100],
     );
   }
 
@@ -875,9 +889,29 @@ it("applies combined dashboard filters and counts only the requesting owner's ma
     ),
   );
 
-  expect(result.battles.map((battle) => battle.id)).toEqual(["match-a"]);
+  expect(result.battles.map((battle) => battle.id)).toEqual([
+    ids.get("match-a"),
+  ]);
   expect(result.pagination.total).toBe(2);
   expect(result.pagination.hasNext).toBe(true);
+
+  const previousFormatCursor = `2026-01-01T00:00:00.000Z_${ids.get("match-a")}`;
+
+  expect(
+    await runtime.runPromise(
+      Effect.flip(
+        services.battles.getDashboardBattles(
+          {
+            cursor: previousFormatCursor,
+            size: 1,
+            sortOrder: "asc",
+            includeTotal: false,
+          },
+          "owner",
+        ),
+      ),
+    ),
+  ).toBeInstanceOf(InvalidRequestError);
 });
 
 it("rolls back the battle and skips object upload when participant storage fails", async () => {
@@ -899,7 +933,9 @@ it("rolls back the battle and skips object upload when participant storage fails
     expect(
       (await pool.query(`SELECT "battleId" FROM battle_warriors`)).rows,
     ).toEqual([]);
-    expect(services.uploads.size).toBe(0);
+    expect(
+      (await pool.query('SELECT "battleId" FROM battle_timelines')).rows,
+    ).toEqual([]);
   } finally {
     await pool.query(`
       DROP TRIGGER reject_test_warrior ON battle_warriors;
@@ -917,7 +953,9 @@ it("rolls back the battle and skips object upload when participant storage fails
   expect(
     (await pool.query(`SELECT "battleId" FROM battle_warriors`)).rows,
   ).toHaveLength(2);
-  expect(services.uploads.has(retried.battleId)).toBe(true);
+  expect(
+    (await pool.query('SELECT "battleId" FROM battle_timelines')).rows,
+  ).toEqual([{ battleId: retried.battleId }]);
 });
 
 it("keeps HTTP submissions durable and retry-safe during concurrent catalog reads", async () => {
@@ -990,7 +1028,9 @@ it("keeps HTTP submissions durable and retry-safe during concurrent catalog read
         damageTaken: 10,
       }),
     ]);
-    expect(services.uploads.has(created.battleId)).toBe(true);
+    expect(
+      (await pool.query('SELECT "battleId" FROM battle_timelines')).rows,
+    ).toEqual([{ battleId: created.battleId }]);
   } finally {
     await boundary.dispose();
   }
@@ -1050,3 +1090,65 @@ it("does not cache an older snapshot's character list under a newly invalidated 
     await oldRead;
   }
 }, 10_000);
+
+it("toggles visibility, serves public links and deletes battles stored in compressed chunks", async () => {
+  const [kept, removed] = await Promise.all(
+    ["kept-world", "removed-world"].map((world) =>
+      runtime.runPromise(
+        services.battles.createBattle({
+          data: { ...data, world, submissionId: world },
+          userId,
+        }),
+      ),
+    ),
+  );
+
+  for (const table of ["battles"])
+    await pool.query(
+      `SELECT compress_chunk(chunk) FROM show_chunks('${table}') chunk`,
+    );
+  expect(
+    (
+      await pool.query(
+        "SELECT count(*)::int AS uncompressed FROM timescaledb_information.chunks WHERE hypertable_name = 'battles' AND NOT is_compressed",
+      )
+    ).rows,
+  ).toEqual([{ uncompressed: 0 }]);
+
+  await runtime.runPromise(
+    services.battles.updateBattle(kept.battleId, { public: true }),
+  );
+
+  const visible = await runtime.runPromise(
+    services.battles.getPublicBattle(kept.battleId),
+  );
+
+  expect(visible.warriors.map((warrior) => warrior.name).sort()).toEqual(
+    data.events[0].f.w
+      ? Object.values(data.events[0].f.w)
+          .map((warrior) => warrior.name)
+          .sort()
+      : [],
+  );
+
+  await runtime.runPromise(services.battles.deleteBattle(removed.battleId));
+  expect(
+    (
+      await pool.query(
+        'SELECT DISTINCT "battleId" FROM battle_warriors ORDER BY "battleId"',
+      )
+    ).rows,
+  ).toEqual([{ battleId: kept.battleId }]);
+
+  await runtime.runPromise(services.battles.deleteUserBattles(userId));
+
+  for (const table of [
+    "battles",
+    "battle_warriors",
+    "battle_timelines",
+    "battle_submissions",
+  ])
+    expect(
+      (await pool.query(`SELECT count(*)::int AS left FROM ${table}`)).rows,
+    ).toEqual([{ left: 0 }]);
+});
