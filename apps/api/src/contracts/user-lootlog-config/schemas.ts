@@ -2,10 +2,14 @@
 import * as Schema from "effect/Schema";
 import { NonEmptyString } from "@lootlog/schema/http-scalars";
 
-const characterLootlogConfigFields = {
+const LootlogCharacterIdentity = Schema.Struct({
   userId: Schema.String,
   accountId: Schema.String,
   characterId: Schema.String,
+});
+
+const characterLootlogConfigFields = {
+  ...LootlogCharacterIdentity.fields,
   catchingGuildIds: Schema.Array(Schema.String),
 };
 
@@ -38,13 +42,7 @@ export type PlayersCatchingOrganizationsRequest =
   typeof PlayersCatchingOrganizationsRequest.Type;
 
 export const PlayersCatchingOrganizationsRequest = Schema.Struct({
-  players: Schema.Array(
-    Schema.Struct({
-      userId: Schema.String,
-      accountId: Schema.String,
-      characterId: Schema.String,
-    }),
-  ).check(
+  players: Schema.Array(LootlogCharacterIdentity).check(
     Schema.isMaxLength(100).annotate({
       expected: "a value with a length of at most 100",
     }),
@@ -57,9 +55,7 @@ export type PlayersCatchingOrganizationsResponse =
 export const PlayersCatchingOrganizationsResponse = Schema.Struct({
   players: Schema.Array(
     Schema.Struct({
-      userId: Schema.String,
-      accountId: Schema.String,
-      characterId: Schema.String,
+      ...LootlogCharacterIdentity.fields,
       guilds: Schema.Array(
         Schema.Struct({ id: Schema.String, name: Schema.String }),
       ),
