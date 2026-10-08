@@ -239,6 +239,17 @@ export const KillOrganizationPath = Schema.Struct({
   guildId: JsonValue,
 });
 
+const validLevelRange = Schema.makeFilter<{
+  readonly minLvl?: number;
+  readonly maxLvl?: number;
+}>((data) =>
+  data.minLvl === undefined ||
+  data.maxLvl === undefined ||
+  data.minLvl <= data.maxLvl
+    ? undefined
+    : { path: ["minLvl"], issue: "minLvl must be <= maxLvl" },
+);
+
 export type GuildKillStatsQuery = typeof GuildKillStatsQuery.Type;
 
 export const GuildKillStatsQuery = Schema.Struct({
@@ -247,15 +258,7 @@ export const GuildKillStatsQuery = Schema.Struct({
   maxLvl: Schema.optionalKey(LevelFilter),
   world: Schema.optionalKey(Schema.String),
   period: Schema.optionalKey(KillStatsPeriodSchema),
-}).check(
-  Schema.makeFilter((data) =>
-    data.minLvl === undefined ||
-    data.maxLvl === undefined ||
-    data.minLvl <= data.maxLvl
-      ? undefined
-      : { path: ["minLvl"], issue: "minLvl must be <= maxLvl" },
-  ),
-);
+}).check(validLevelRange);
 
 export type UserKillStatsQuery = typeof UserKillStatsQuery.Type;
 
@@ -280,15 +283,7 @@ export const UserNpcKillsQuery = Schema.Struct({
   minLvl: Schema.optionalKey(LevelFilter),
   maxLvl: Schema.optionalKey(LevelFilter),
   period: Schema.optionalKey(KillStatsPeriodSchema),
-}).check(
-  Schema.makeFilter((data) =>
-    data.minLvl === undefined ||
-    data.maxLvl === undefined ||
-    data.minLvl <= data.maxLvl
-      ? undefined
-      : { path: ["minLvl"], issue: "minLvl must be <= maxLvl" },
-  ),
-);
+}).check(validLevelRange);
 
 export type GuildTopKillersQuery = typeof GuildTopKillersQuery.Type;
 
