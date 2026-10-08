@@ -14,36 +14,28 @@ export const readNotificationRuleTargets = Effect.fnUntraced(function* (
   database: typeof ApiDatabase.Service,
   ruleIds: readonly number[],
 ) {
-  const result = new Map<
-    number,
-    Array<
-      typeof notificationRuleTargetTable.$inferSelect & {
-        target: typeof notificationTargetTable.$inferSelect;
-      }
-    >
-  >();
+  const rows =
+    ruleIds.length === 0
+      ? []
+      : yield* database
+          .select({
+            link: notificationRuleTargetTable,
+            target: notificationTargetTable,
+          })
+          .from(notificationRuleTargetTable)
+          .innerJoin(
+            notificationTargetTable,
+            eq(
+              notificationRuleTargetTable.targetId,
+              notificationTargetTable.id,
+            ),
+          )
+          .where(inArray(notificationRuleTargetTable.ruleId, ruleIds));
 
-  if (ruleIds.length === 0) return result;
-
-  const rows = yield* database
-    .select({
-      link: notificationRuleTargetTable,
-      target: notificationTargetTable,
-    })
-    .from(notificationRuleTargetTable)
-    .innerJoin(
-      notificationTargetTable,
-      eq(notificationRuleTargetTable.targetId, notificationTargetTable.id),
-    )
-    .where(inArray(notificationRuleTargetTable.ruleId, ruleIds));
-
-  for (const { link, target } of rows) {
-    const targets = result.get(link.ruleId) ?? [];
-    targets.push({ ...link, target });
-    result.set(link.ruleId, targets);
-  }
-
-  return result;
+  return Map.groupBy(
+    rows.map(({ link, target }) => ({ ...link, target })),
+    (target) => target.ruleId,
+  );
 });
 
 export const updateNotificationTarget = Effect.fnUntraced(function* (
