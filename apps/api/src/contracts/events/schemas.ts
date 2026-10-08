@@ -274,13 +274,7 @@ export const EventListItemResponse = EventSummary.annotate({
   identifier: "EventListItemResponseDto",
 });
 
-export type CreateEventRequest = typeof CreateEventRequest.Type;
-
-export const CreateEventRequest = Schema.Struct({
-  name: Schema.String,
-  world: Schema.String,
-  startsAt: Schema.optionalKey(DateTimeString),
-  endsAt: Schema.optionalKey(DateTimeString),
+const eventConfigurationInputFields = {
   basePointsPerKill: Schema.optionalKey(NonNegativeSafeInteger),
   assignmentTimeoutMinutes: Schema.optionalKey(NonNegativeSafeInteger),
   participationConfirmationMinutes: Schema.optionalKey(NonNegativeSafeInteger),
@@ -294,6 +288,16 @@ export const CreateEventRequest = Schema.Struct({
   ),
   scoringRules: Schema.optionalKey(EventScoringRules),
   scoringMode: Schema.optionalKey(Schema.Literals(["SIMPLE", "ADVANCED"])),
+};
+
+export type CreateEventRequest = typeof CreateEventRequest.Type;
+
+export const CreateEventRequest = Schema.Struct({
+  name: Schema.String,
+  world: Schema.String,
+  startsAt: Schema.optionalKey(DateTimeString),
+  endsAt: Schema.optionalKey(DateTimeString),
+  ...eventConfigurationInputFields,
   heroNpcs: Schema.optionalKey(Schema.Array(EventHeroDefinition)),
 })
   .check(
@@ -363,19 +367,7 @@ export const UpdateEventRequest = Schema.Struct({
   startsAt: Schema.optionalKey(DateTimeString),
   endsAt: Schema.optionalKey(Schema.NullOr(DateTimeString)),
   heroNpcs: Schema.optionalKey(Schema.Array(EventHeroDefinition)),
-  basePointsPerKill: Schema.optionalKey(NonNegativeSafeInteger),
-  assignmentTimeoutMinutes: Schema.optionalKey(NonNegativeSafeInteger),
-  participationConfirmationMinutes: Schema.optionalKey(NonNegativeSafeInteger),
-  mapAssignmentCap: Schema.optionalKey(NonNegativeSafeInteger),
-  rulebookMarkdown: Schema.optionalKey(
-    Schema.String.check(
-      Schema.isMaxLength(10000).annotate({
-        expected: "a value with a length of at most 10000",
-      }),
-    ),
-  ),
-  scoringRules: Schema.optionalKey(EventScoringRules),
-  scoringMode: Schema.optionalKey(Schema.Literals(["SIMPLE", "ADVANCED"])),
+  ...eventConfigurationInputFields,
 }).annotate({ identifier: "UpdateEventDto" });
 
 export type EventWrappedResponse = typeof EventWrappedResponse.Type;
