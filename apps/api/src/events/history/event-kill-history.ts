@@ -202,13 +202,10 @@ export const makeEventKillHistory = ({
             memberId: authorized.memberId,
           });
 
-          const hasMore = result.rows.length > limit;
-
-          const last =
-            result.rows[Math.min(result.rows.length, limit) - 1]?.kill;
+          const last = result.rows.at(-1)?.kill;
 
           const nextCursor =
-            hasMore && last
+            result.hasMore && last
               ? encodeHistoryCursor(last, authorized.scope)
               : null;
 
@@ -221,7 +218,7 @@ export const makeEventKillHistory = ({
             return {
               kind: "member" as const,
               member: authorized.member,
-              data: result.rows.slice(0, limit).map((row) => ({
+              data: result.rows.map((row) => ({
                 ...toHistorySummary(row),
                 memberPoint: normalizeKillPointTracking(
                   row.memberPoint,
@@ -235,7 +232,7 @@ export const makeEventKillHistory = ({
 
           return {
             kind: "event" as const,
-            data: result.rows.slice(0, limit).map(toHistorySummary),
+            data: result.rows.map(toHistorySummary),
             nextCursor,
           };
         }),
