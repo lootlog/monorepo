@@ -1,3 +1,4 @@
+import { parseKillStatsLevel } from "@/features/kills/parse-kill-stats-level";
 import { FilterBar } from "@/components/common/filter-bar";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
@@ -44,12 +45,6 @@ type KillStatsFilterBarProps = {
 // the level range's default.
 const LEVEL_COMMIT_DELAY_MS = 300;
 
-const toLevel = (value: string) => {
-  const level = Number.parseInt(value, 10);
-
-  return Number.isNaN(level) ? undefined : level;
-};
-
 const toLevelParam = (value: number | undefined) =>
   value === undefined ? "" : String(value);
 
@@ -70,8 +65,8 @@ export const KillStatsFilterBar = ({
       <LevelRangeFilter
         layout={layout}
         debounceMs={LEVEL_COMMIT_DELAY_MS}
-        minLevel={toLevel(level.minLvl)}
-        maxLevel={toLevel(level.maxLvl)}
+        minLevel={parseKillStatsLevel(level.minLvl)}
+        maxLevel={parseKillStatsLevel(level.maxLvl)}
         onMinLevelChange={(value) => level.onMinLvlChange(toLevelParam(value))}
         onMaxLevelChange={(value) => level.onMaxLvlChange(toLevelParam(value))}
       />
