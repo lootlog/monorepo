@@ -48,45 +48,43 @@ const activitySuggestionsQuery = (defaultLimit: number) =>
     ),
   });
 
+const ActivityResponse = Schema.Struct({
+  id: Schema.String,
+  userId: Schema.String,
+  guildId: Schema.String,
+  discordId: Schema.String,
+  type: Schema.Literals(["CONNECT_EVENT", "DISCONNECT_EVENT"]),
+  source: Schema.Literals(["GAME", "WEB_APP"]),
+  createdAt: DateTimeString,
+  world: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
+  details: Schema.optionalKey(
+    Schema.Record(
+      Schema.String,
+      Schema.Json.annotate({ expected: "JSON value" }),
+    ),
+  ),
+  actorSnapshot: Schema.optionalKey(
+    Schema.Struct({
+      id: Schema.String,
+      accountId: FiniteNumber,
+      characterId: FiniteNumber,
+      name: Schema.String,
+      clanName: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
+      clanId: Schema.optionalKey(Schema.Union([FiniteNumber, Schema.Null])),
+      icon: Schema.String,
+      lvl: FiniteNumber,
+      prof: Schema.String,
+      source: Schema.Literals(["GAME", "WEB_APP"]),
+      createdAt: DateTimeString,
+    }),
+  ),
+});
+
 export type PaginatedActivitiesResponseDto =
   typeof PaginatedActivitiesResponseDto.Type;
 
 export const PaginatedActivitiesResponseDto = Schema.Struct({
-  data: Schema.Array(
-    Schema.Struct({
-      id: Schema.String,
-      userId: Schema.String,
-      guildId: Schema.String,
-      discordId: Schema.String,
-      type: Schema.Literals(["CONNECT_EVENT", "DISCONNECT_EVENT"]),
-      source: Schema.Literals(["GAME", "WEB_APP"]),
-      createdAt: DateTimeString,
-      world: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-      details: Schema.optionalKey(
-        Schema.Record(
-          Schema.String,
-          Schema.Json.annotate({ expected: "JSON value" }),
-        ),
-      ),
-      actorSnapshot: Schema.optionalKey(
-        Schema.Struct({
-          id: Schema.String,
-          accountId: FiniteNumber,
-          characterId: FiniteNumber,
-          name: Schema.String,
-          clanName: Schema.optionalKey(
-            Schema.Union([Schema.String, Schema.Null]),
-          ),
-          clanId: Schema.optionalKey(Schema.Union([FiniteNumber, Schema.Null])),
-          icon: Schema.String,
-          lvl: FiniteNumber,
-          prof: Schema.String,
-          source: Schema.Literals(["GAME", "WEB_APP"]),
-          createdAt: DateTimeString,
-        }),
-      ),
-    }),
-  ),
+  data: Schema.Array(ActivityResponse),
   nextCursor: Schema.optionalKey(Schema.String),
   hasMore: Schema.Boolean,
 }).annotate({ identifier: "PaginatedActivitiesResponseDto" });
@@ -143,37 +141,9 @@ export const MemberActivityStatsResponseDto = Schema.Struct({
 
 export type ActivityResponseDto = typeof ActivityResponseDto.Type;
 
-export const ActivityResponseDto = Schema.Struct({
-  id: Schema.String,
-  userId: Schema.String,
-  guildId: Schema.String,
-  discordId: Schema.String,
-  type: Schema.Literals(["CONNECT_EVENT", "DISCONNECT_EVENT"]),
-  source: Schema.Literals(["GAME", "WEB_APP"]),
-  createdAt: DateTimeString,
-  world: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-  details: Schema.optionalKey(
-    Schema.Record(
-      Schema.String,
-      Schema.Json.annotate({ expected: "JSON value" }),
-    ),
-  ),
-  actorSnapshot: Schema.optionalKey(
-    Schema.Struct({
-      id: Schema.String,
-      accountId: FiniteNumber,
-      characterId: FiniteNumber,
-      name: Schema.String,
-      clanName: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-      clanId: Schema.optionalKey(Schema.Union([FiniteNumber, Schema.Null])),
-      icon: Schema.String,
-      lvl: FiniteNumber,
-      prof: Schema.String,
-      source: Schema.Literals(["GAME", "WEB_APP"]),
-      createdAt: DateTimeString,
-    }),
-  ),
-}).annotate({ identifier: "ActivityResponseDto" });
+export const ActivityResponseDto = ActivityResponse.annotate({
+  identifier: "ActivityResponseDto",
+});
 
 export type DeleteActivityResponseDto_Output =
   typeof DeleteActivityResponseDto_Output.Type;
