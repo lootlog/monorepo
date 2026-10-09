@@ -1,5 +1,6 @@
 import { MessageType } from "@/api/chat.api";
 import { ActivePartyGatheringError } from "@/features/party-finder/active-party-gathering-error";
+import { NotificationChatPublishError } from "@/features/chat/hooks/use-notification-chat-orchestration";
 import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import {
   useMessagingControllerSendNotification,
@@ -274,7 +275,11 @@ export const usePartyGatheringOrchestration = () => {
 
       if (!chatMessageOptions) return;
 
-      await sendChatMessageAsync(chatMessageOptions);
+      await sendChatMessageAsync(chatMessageOptions).catch((cause: unknown) => {
+        throw new NotificationChatPublishError(cause, async () => {
+          await sendChatMessageAsync(chatMessageOptions);
+        });
+      });
 
       return {
         notificationId: response.notificationId,
