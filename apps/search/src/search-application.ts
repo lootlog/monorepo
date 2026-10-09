@@ -23,11 +23,11 @@ import { effectLogger } from "#src/shared/logger";
 
 const batchMessageLimit = 50;
 
-const searchQueues = [
-  queue("search.items.index", RabbitRoutingKey.SEARCH_ITEMS_INDEX),
-  queue("search-npcs-index", RabbitRoutingKey.SEARCH_NPCS_INDEX),
-  queue("search-players-index", RabbitRoutingKey.SEARCH_PLAYERS_INDEX),
-] as const;
+const searchQueues = {
+  items: queue("search.items.index", RabbitRoutingKey.SEARCH_ITEMS_INDEX),
+  npcs: queue("search-npcs-index", RabbitRoutingKey.SEARCH_NPCS_INDEX),
+  players: queue("search-players-index", RabbitRoutingKey.SEARCH_PLAYERS_INDEX),
+};
 
 export const SearchConsumers = Layer.effectDiscard(
   Effect.gen(function* () {
@@ -104,13 +104,13 @@ export const SearchConsumers = Layer.effectDiscard(
       );
     });
 
-    yield* consume("search.items.index", IndexItemsPayload, (items) =>
+    yield* consume(searchQueues.items.name, IndexItemsPayload, (items) =>
       search.indexItems({ items: [...items] }),
     );
-    yield* consume("search-npcs-index", IndexNpcsPayload, (npcs) =>
+    yield* consume(searchQueues.npcs.name, IndexNpcsPayload, (npcs) =>
       search.indexNpcs({ npcs: [...npcs] }),
     );
-    yield* consume("search-players-index", IndexPlayersPayload, (players) =>
+    yield* consume(searchQueues.players.name, IndexPlayersPayload, (players) =>
       search.indexPlayers({ players: [...players] }),
     );
   }),
@@ -123,7 +123,7 @@ const RabbitLive = Layer.unwrap(
     return RabbitMessaging.layer({
       uri: Redacted.value(config.rabbitmqUri),
       connectionName: config.serviceName,
-      queues: searchQueues,
+      queues: Object.values(searchQueues),
     });
   }),
 ).pipe(Layer.provide(SearchConfig.layer));
