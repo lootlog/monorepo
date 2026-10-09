@@ -145,17 +145,22 @@ export class AuthService {
     return Effect.gen({ self: this }, function* () {
       const cacheKey = getAuthTokenCacheKey(userId, discordId);
 
-      const [cached, rejected] = yield* Effect.tryPromise(() =>
-        Promise.all([
-          this.redisService.getJson(cacheKey, cachedIdpTokenCodec),
-          this.redisService.get(getRejectedAuthTokenKey(userId, discordId)),
-        ]),
+      const isRejected = (token: IdpToken) =>
+        Effect.tryPromise(() =>
+          this.redisService.get(
+            getRejectedAuthTokenKey(
+              userId,
+              discordId,
+              fingerprintAccessToken(token.accessToken),
+            ),
+          ),
+        ).pipe(Effect.map((marker) => marker !== null));
+
+      const cached = yield* Effect.tryPromise(() =>
+        this.redisService.getJson(cacheKey, cachedIdpTokenCodec),
       );
 
-      const isRejected = (token: IdpToken) =>
-        rejected === fingerprintAccessToken(token.accessToken);
-
-      if (cached && hasRequiredScopes(cached) && !isRejected(cached)) {
+      if (cached && hasRequiredScopes(cached) && !(yield* isRejected(cached))) {
         return cached;
       }
 
@@ -202,7 +207,7 @@ export class AuthService {
         );
       }
 
-      if (isRejected(response)) {
+      if (yield* isRejected(response)) {
         return yield* Effect.fail(new DiscordTokenRejectedError());
       }
 
@@ -229,8 +234,10 @@ export class AuthService {
   }
 
   /**
-   * Stops serving a token Discord answered with 401 until the auth service
-   * returns a different one. A failure is logged and does not replace the
+   * Stops serving a token Discord answered with 401 while the auth service
+   * keeps returning it. Each token has its own marker, so a late rejection of
+   * an older token cannot clear a newer one's, and reading the cache drops
+   * only a token that is marked. A failure is logged and does not replace the
    * Discord error the caller is about to report.
    */
   rejectIdpToken(
@@ -239,16 +246,16 @@ export class AuthService {
     accessToken: string,
   ): Effect.Effect<void> {
     return Effect.tryPromise(() =>
-      Promise.all([
-        this.redisService.set(
-          getRejectedAuthTokenKey(userId, discordId),
+      this.redisService.set(
+        getRejectedAuthTokenKey(
+          userId,
+          discordId,
           fingerprintAccessToken(accessToken),
-          REJECTED_AUTH_TOKEN_TTL_SECONDS,
         ),
-        this.redisService.del(getAuthTokenCacheKey(userId, discordId)),
-      ]),
+        "1",
+        REJECTED_AUTH_TOKEN_TTL_SECONDS,
+      ),
     ).pipe(
-      Effect.asVoid,
       Effect.catch((error) =>
         Effect.sync(() =>
           this.logger.log({
