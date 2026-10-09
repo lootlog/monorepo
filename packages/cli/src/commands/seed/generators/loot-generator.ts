@@ -108,12 +108,6 @@ export class LootGenerator {
     }
   }
 
-  setData(npcs: NpcData[], items: ItemData[], players: GeneratedPlayer[]) {
-    this.npcs = npcs;
-    this.items = items;
-    this.players = players;
-  }
-
   private getRandomItems(count: number): ItemData[] {
     const result: ItemData[] = [];
 
