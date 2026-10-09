@@ -1,4 +1,3 @@
-import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileExists } from "./file-exists.js";
 
@@ -16,5 +15,8 @@ export async function readCachedScrape(
   console.log(`⏭️  ${label} file already exists at ${fullPath}`);
   console.log("💡 Use --force flag to re-scrape");
 
-  return readFile(fullPath, "utf-8");
+  // Preserve a leading BOM so JSON parsing rejects it as before.
+  return new TextDecoder("utf-8", { ignoreBOM: true }).decode(
+    await Bun.file(fullPath).bytes(),
+  );
 }
