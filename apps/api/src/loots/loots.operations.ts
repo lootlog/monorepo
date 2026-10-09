@@ -217,7 +217,6 @@ export const makeLootsOperations = ({
     );
 
   const visibleLoot = (
-    operation: string,
     guild: Guild,
     accessPolicy: AccessPolicy,
     roles: Role[],
@@ -234,7 +233,6 @@ export const makeLootsOperations = ({
     getComments: (options) =>
       Effect.gen(function* () {
         const loot = yield* visibleLoot(
-          "loots.comments.visibility",
           options.guild,
           options.accessPolicy,
           options.roles,
@@ -252,7 +250,6 @@ export const makeLootsOperations = ({
     archiveLoot: (options) =>
       Effect.gen(function* () {
         const loot = yield* visibleLoot(
-          "loots.archive.visibility",
           options.guild,
           options.accessPolicy,
           options.roles,
@@ -290,7 +287,6 @@ export const makeLootsOperations = ({
     createComment: (options) =>
       Effect.gen(function* () {
         const loot = yield* visibleLoot(
-          "loots.comment.visibility",
           options.guild,
           options.accessPolicy,
           options.roles,
