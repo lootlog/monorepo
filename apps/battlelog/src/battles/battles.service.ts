@@ -612,6 +612,8 @@ export const makeBattles = (
       }).pipe(
         Effect.tapError((error) =>
           Effect.sync(() => {
+            if (error instanceof ApplicationError) return;
+
             logger.error(
               `Failed to retrieve raw data for battle ${battleId}:`,
               error,
