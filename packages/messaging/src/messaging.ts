@@ -462,6 +462,18 @@ const makeService = (
                       }),
                     ),
                   ),
+                  // The delivery runtime captured the consume span; without a
+                  // root, every delivery joins one trace for the process lifetime.
+                  Effect.withSpan("RabbitMessaging.process", {
+                    root: true,
+                    kind: "consumer",
+                    attributes: {
+                      "messaging.system": "rabbitmq",
+                      "messaging.destination.name": options.queue,
+                      "messaging.rabbitmq.destination.routing_key":
+                        delivery.routingKey,
+                    },
+                  }),
                 ),
               );
             },
