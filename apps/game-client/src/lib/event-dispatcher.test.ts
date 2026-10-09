@@ -202,6 +202,32 @@ it("bootstraps detector features from normalized NPCs without replacing domain s
   expect(useNpcsStore.getState()).toBe(before);
 });
 
+it("clears bootstrapped NPCs on the first transition after a late start", () => {
+  const oldMapNpc = normalizeNpc({
+    id: 400,
+    tpl: 800,
+    nick: "Old map hero",
+    icon: "npc.gif",
+    x: 4,
+    y: 6,
+    lvl: 120,
+    prof: "w",
+    wt: 85,
+    type: 2,
+  });
+
+  if (!oldMapNpc) throw new Error("Expected a valid runtime NPC");
+  useNpcsStore.getState().replaceNpcs([oldMapNpc]);
+  const dispatcher = new EventDispatcher();
+  dispatcher.handleInitialEvents();
+  expect(useNpcDetectorStore.getState().npcs).toMatchObject([{ id: 400 }]);
+  dispatcher.handleEvent({ ...npcEvent, town: town(43) });
+  expect(useNpcDetectorStore.getState().npcs).toMatchObject([
+    { id: 500, nick: "Tanroth" },
+  ]);
+  expect(useNpcDetectorStore.getState().npcs).toHaveLength(1);
+});
+
 it("sends loot distribution updates over HTTP and clears the pending loot only after success", async () => {
   const requests: Request[] = [];
 
