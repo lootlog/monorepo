@@ -147,9 +147,8 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
     metric: string,
     userId: string,
     query: BattleStatisticsQuery,
-    options: { includeBattleFilters?: boolean } = {},
-  ): string => {
-    const cacheKeySegments = [
+  ): string =>
+    [
       "statistics",
       metric,
       userId,
@@ -159,17 +158,9 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
       formatCacheSegment(query.startDate),
       formatCacheSegment(query.endDate),
       formatLevelCacheSegment(query),
-    ];
-
-    if (options.includeBattleFilters ?? true) {
-      cacheKeySegments.push(
-        formatBooleanCacheSegment(query.ph, "ph"),
-        formatBooleanCacheSegment(query.matchmaking, "matchmaking"),
-      );
-    }
-
-    return cacheKeySegments.join(":");
-  };
+      formatBooleanCacheSegment(query.ph, "ph"),
+      formatBooleanCacheSegment(query.matchmaking, "matchmaking"),
+    ].join(":");
 
   const buildQueryCacheKey = (
     prefix: string,
