@@ -87,6 +87,23 @@ const canDecodeGlobalChatEvent = (
     ? session.supportsGlobalChat === true
     : session.supportsGlobalChatChannels === true;
 
+/** A snapshot session receives each new loot once, as `loot.snapshot`. */
+const canReadLootEvent = (
+  session: SessionData,
+  guild: UserGuildData | undefined,
+  type: "loot.created" | "loot.snapshot" | "loot.share-updated",
+  npcs: readonly LootVisibilityNpc[],
+): boolean => {
+  if (type === "loot.snapshot") {
+    if (session.platform !== "web-app" || !session.supportsLootSnapshot)
+      return false;
+  } else if (type === "loot.created" && session.supportsLootSnapshot) {
+    return false;
+  }
+
+  return canReadLootSource(session, guild, npcs, false);
+};
+
 export const prepareSourceEventVisibility = (
   event: Event,
   sourceNpcs: readonly LootVisibilityNpc[] = [],
@@ -101,7 +118,9 @@ export const prepareSourceEventVisibility = (
   const canReadNpc = prepareNpcSourceEvent(event, gatheringSource);
 
   const npcs =
-    event.type === "loot.created" || event.type === "loot.share-updated"
+    event.type === "loot.created" ||
+    event.type === "loot.snapshot" ||
+    event.type === "loot.share-updated"
       ? lootEventVisibilityNpcs(event.data.npcs)
       : sourceNpcs;
 
@@ -139,8 +158,9 @@ export const prepareSourceEventVisibility = (
 
     switch (event.type) {
       case "loot.created":
+      case "loot.snapshot":
       case "loot.share-updated":
-        return canReadLootSource(session, guild, npcs, false);
+        return canReadLootEvent(session, guild, event.type, npcs);
       case "kills.changed":
       case "feed.entry":
         if (session.platform !== "web-app" || !session.supportsFeed)

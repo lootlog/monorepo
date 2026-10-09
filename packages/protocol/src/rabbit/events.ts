@@ -1,4 +1,5 @@
 import { UserFeedItem } from "../feed.js";
+import { LootSnapshot } from "../loot-summary.js";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 import {
   DateTimeWithOffsetString,
@@ -199,6 +200,14 @@ export const GuildLootCreatedEventV2 = Schema.Struct({
 
 export type GuildLootCreatedEventV2 = typeof GuildLootCreatedEventV2.Type;
 
+// Publishers before the snapshot omit `loot`; web clients then read the loot back.
+export const GuildLootCreatedMessageV2 = Schema.Struct({
+  ...GuildLootCreatedEventV2.fields,
+  loot: Schema.optional(LootSnapshot),
+});
+
+export type GuildLootCreatedMessageV2 = typeof GuildLootCreatedMessageV2.Type;
+
 export const GuildLootShareUpdatedEventV2 = Schema.Struct({
   ...GuildLootCreatedEventV2.fields,
   lootShare: Schema.Record(Schema.String, Schema.Array(Schema.String)),
@@ -365,7 +374,7 @@ const canonicalRabbitEventSchemas = {
   [RabbitRoutingKey.EVENT_RESPAWN_WINDOW_OPENED]: EventRespawnWindowChanged,
   [RabbitRoutingKey.GLOBAL_CHAT_CHANNEL_UPDATE]: GlobalChatChannelUpdateSchema,
   [RabbitRoutingKey.GLOBAL_CHAT_SEND_MESSAGE]: GlobalChatMessageSchema,
-  [RabbitRoutingKey.GUILDS_LOOTS_CREATE]: GuildLootCreatedEventV2,
+  [RabbitRoutingKey.GUILDS_LOOTS_CREATE]: GuildLootCreatedMessageV2,
   [RabbitRoutingKey.GUILDS_LOOTS_SHARE_UPDATE]: GuildLootShareUpdatedEventV2,
   [RabbitRoutingKey.GUILDS_CREATE]: GuildCreated,
   [RabbitRoutingKey.GUILDS_DELETE]: GuildDeleted,

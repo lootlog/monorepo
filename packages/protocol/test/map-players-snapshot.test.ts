@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { Schema } from "effect";
-import { MapPlayersSnapshot } from "./map-players-snapshot.js";
+import { MapPlayersSnapshot } from "../src/loot-summary.js";
 
 const player = {
   accountId: 123,

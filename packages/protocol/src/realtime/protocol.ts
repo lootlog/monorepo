@@ -30,11 +30,20 @@ import {
 import { Schema } from "effect";
 import {
   GuildLootCreatedEventV2,
+  GuildLootCreatedMessageV2,
   GuildLootShareUpdatedEventV2,
   ReservationChangedEventV2,
 } from "../rabbit/events.js";
 
 export const REALTIME_PROTOCOL_VERSION = 1;
+
+const { feedEntry: _feedEntry, ...lootCreatedFields } =
+  GuildLootCreatedMessageV2.fields;
+
+// `loot` is absent when the publisher predates snapshots.
+export const LootSnapshotEvent = Schema.Struct(lootCreatedFields);
+
+export type LootSnapshotEvent = typeof LootSnapshotEvent.Type;
 
 // Offered alongside v1 by clients that understand feed events; never selected as the wire protocol.
 export const REALTIME_FEED_CAPABILITY = "lootlog.feed.v1";
@@ -95,6 +104,11 @@ export const REALTIME_GLOBAL_CHAT_CAPABILITY = "lootlog.global-chat.v1";
 // those events. Clients without it follow only the channel every world shares.
 export const REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY =
   "lootlog.global-chat.v2";
+
+// Offered as a subprotocol by web clients that decode `loot.snapshot`. Such a
+// session receives `loot.snapshot` instead of `loot.created`, so a new loot
+// reaches its lists without an HTTP read.
+export const REALTIME_LOOT_SNAPSHOT_CAPABILITY = "lootlog.loot-snapshot.v1";
 
 export const REALTIME_SESSION_HELLO_CAPABILITY = "lootlog.session-hello.v1";
 
@@ -490,6 +504,7 @@ export const ServerEvent = Schema.Union([
   ),
   serverEvent("loot.created", GuildLootCreatedEventV2),
   serverEvent("loot.share-updated", GuildLootShareUpdatedEventV2),
+  serverEvent("loot.snapshot", LootSnapshotEvent),
   serverEvent("timer.created", OrganizationEvent),
   serverEvent("timer.deleted", OrganizationEvent),
   serverEvent("reservation.created", OrganizationEvent),

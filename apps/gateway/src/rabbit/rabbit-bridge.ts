@@ -580,7 +580,7 @@ export class RabbitBridge {
     }
 
     if (routingKey === RabbitRoutingKey.GUILDS_LOOTS_CREATE) {
-      const { feedEntry, ...data } = decodeRabbitEventJson(
+      const { feedEntry, loot, ...data } = decodeRabbitEventJson(
         routingKey,
         serializedPayload,
       );
@@ -591,11 +591,25 @@ export class RabbitBridge {
           organizationId: data.guildId,
         };
 
-        await this.hub.publishToScope(
-          scope,
-          { v: 1, type: "loot.created", data },
-          messageId,
-        );
+        // Each session receives exactly one of these, by its snapshot
+        // capability; both deliver locally before either awaits federation.
+        await Promise.all([
+          this.hub.publishToScope(
+            scope,
+            {
+              v: 1,
+              type: "loot.snapshot",
+              data: loot ? { ...data, loot } : data,
+            },
+            messageId,
+            { recipientPlatform: "web-app" },
+          ),
+          this.hub.publishToScope(
+            scope,
+            { v: 1, type: "loot.created", data },
+            messageId,
+          ),
+        ]);
 
         if (
           feedEntry &&

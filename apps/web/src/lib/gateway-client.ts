@@ -5,6 +5,7 @@ import {
 } from "@lootlog/protocol/realtime/access-policy";
 import {
   REALTIME_FEED_CAPABILITY,
+  REALTIME_LOOT_SNAPSHOT_CAPABILITY,
   REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
 } from "@lootlog/protocol/realtime";
 import {
@@ -98,6 +99,7 @@ const serverEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
   "kills.changed": GatewayEvent.KILLS_CHANGED,
   "loot.created": GatewayEvent.LOOTS_CREATE,
   "loot.share-updated": GatewayEvent.LOOTS_SHARE_UPDATE,
+  "loot.snapshot": GatewayEvent.LOOTS_SNAPSHOT,
   "timer.created": GatewayEvent.TIMERS_CREATE,
   "timer.deleted": GatewayEvent.TIMERS_DELETE,
   "reservation.created": GatewayEvent.RESERVATIONS_CREATE,
@@ -126,6 +128,7 @@ export class GatewayClient {
     protocols: [
       this.readable ? REALTIME_JSON_SUBPROTOCOL : REALTIME_SUBPROTOCOL,
       REALTIME_FEED_CAPABILITY,
+      REALTIME_LOOT_SNAPSHOT_CAPABILITY,
       REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
     ],
     frameEncoding: this.readable ? "json" : "messagepack",

@@ -1,12 +1,14 @@
-import { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import type { Permission } from "@lootlog/schema/permissions";
+import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Schema } from "effect";
 import type { guildTable, roleTable } from "#src/database/drizzle/schema";
 import type { LootsQuery as FetchLootsParamsDto } from "#src/contracts/loots/schemas";
 import type { LootItemDto } from "#src/loots/query/loot-item";
 import type { LootQueryResult } from "#src/loots/query/loot-query-result";
-import { LootShareResponse } from "@lootlog/protocol/loot-summary";
+import {
+  LootShareResponse,
+  MapPlayersSnapshot,
+} from "@lootlog/protocol/loot-summary";
 import {
   mapItem,
   mapPlayer,
@@ -52,6 +54,11 @@ export interface LootQueryOperations {
     guild: Guild,
     permissions: Permission[],
     roles: Role[],
+    lootId: number,
+  ) => QueryEffect<LootQueryResult | null>;
+  /** Reads a loot as its Organization stores it; the caller applies member visibility. */
+  readonly fetchOrganizationLoot: (
+    guildId: string,
     lootId: number,
   ) => QueryEffect<LootQueryResult | null>;
   readonly resolveLootItemByHid: (
@@ -182,6 +189,17 @@ export const makeLootQueryOperations = (
           filters: { lootId },
         }),
       ).pipe(Effect.map((loot) => (loot ? mapLoot(guild.id, loot) : null))),
+
+    fetchOrganizationLoot: (guildId, lootId) =>
+      attempt(
+        "loots.query.organizationLoot",
+        persistence.findOne({
+          guildId,
+          permissions: [Permission.OWNER],
+          roles: [],
+          filters: { lootId },
+        }),
+      ).pipe(Effect.map((loot) => (loot ? mapLoot(guildId, loot) : null))),
 
     resolveLootItemByHid: (guild, permissions, roles, options) => {
       const hid = options.hid.trim();

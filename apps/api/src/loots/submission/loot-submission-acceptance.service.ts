@@ -1,4 +1,4 @@
-import type { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
+import type { MapPlayersSnapshot } from "@lootlog/protocol/loot-summary";
 import {
   createItemSnapshotHash,
   createItemStatsHash,

@@ -6,7 +6,10 @@ import {
 import { afterEach, expect, it, vi } from "vitest";
 import type { Loot } from "@/lib/loots/loot-types";
 import {
+  LOOTS_PAGE_LIMIT,
   LOOTS_QUERY_GC_TIME_MS,
+  applyLootSnapshots,
+  lootMatchesListParams,
   reconcileActiveLootLists,
 } from "./loot-list-cache";
 
@@ -96,4 +99,100 @@ it("reports server reconciliation failures rather than marking retained rows cur
   );
   unsubscribe();
   client.clear();
+});
+
+const lootWith = (id: number, overrides: Partial<Loot> = {}): Loot => ({
+  id,
+  uniqueId: String(id),
+  world: "tempest",
+  source: "FIGHT",
+  location: "Map",
+  items: [],
+  players: [],
+  mapPlayersSnapshot: null,
+  npcs: [],
+  lootShare: {},
+  createdAt: "2026-10-09T00:00:00.000Z",
+  updatedAt: "2026-10-09T00:00:00.000Z",
+  commentsCount: 0,
+  ...overrides,
+});
+
+const item = (prof: Loot["items"][number]["prof"], lvl = 50) => ({
+  id: 1,
+  hid: "hid",
+  name: "Sword",
+  icon: "sword.gif",
+  stat: "",
+  type: null,
+  rarity: null,
+  lvl,
+  prof,
+});
+
+it("matches live loots against list filters as the server query does", () => {
+  const warriorItem = lootWith(1, { items: [item(["WARRIOR"])] });
+  const anyProfessionItem = lootWith(2, { items: [item([])] });
+
+  expect(
+    [warriorItem, anyProfessionItem].map((loot) =>
+      lootMatchesListParams(loot, { professions: ["MAGE"] }),
+    ),
+  ).toEqual([false, true]);
+
+  // A level range never matches an NPC whose level is unknown.
+  expect(
+    lootMatchesListParams(
+      lootWith(3, {
+        npcs: [
+          {
+            id: 1,
+            name: "Hero",
+            wt: null,
+            lvl: null,
+            prof: null,
+            icon: null,
+            type: "HERO",
+            margonemType: null,
+          },
+        ],
+      }),
+      { npcLevelMin: 1 },
+    ),
+  ).toBe(false);
+
+  expect(lootMatchesListParams(warriorItem, { search: "sword" })).toBe(
+    undefined,
+  );
+});
+
+it("places snapshots by id among loaded pages and leaves unread pages to pagination", () => {
+  const client = new QueryClient();
+  const key = ["/guilds/one/loots", { world: "tempest" }];
+
+  const fullPage = Array.from({ length: LOOTS_PAGE_LIMIT }, (_, index) =>
+    lootWith(100 - index),
+  );
+
+  client.setQueryData<InfiniteData<Loot[]>>(key, {
+    pages: [fullPage],
+    pageParams: [0],
+  });
+
+  const ids = () =>
+    client
+      .getQueryData<InfiniteData<Loot[]>>(key)
+      ?.pages.flat()
+      .map((loot) => loot.id);
+
+  expect(applyLootSnapshots(client, "one", [lootWith(101), lootWith(90)])).toBe(
+    false,
+  );
+  expect(ids()?.slice(0, 3)).toEqual([101, 100, 99]);
+  // A redelivered loot replaces its entry.
+  expect(ids()?.filter((id) => id === 90)).toEqual([90]);
+
+  // Older than the full last page: its page has not been read yet.
+  applyLootSnapshots(client, "one", [lootWith(50)]);
+  expect(ids()).not.toContain(50);
 });
