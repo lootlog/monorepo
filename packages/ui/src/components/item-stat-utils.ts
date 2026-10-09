@@ -1,3 +1,5 @@
+import { getLocalDate } from "@lootlog/datetime";
+
 export type ItemStat = {
   key: string;
   value: string | boolean;
@@ -193,13 +195,6 @@ const dateTimeFormatter = new Intl.DateTimeFormat("pl-PL", {
   year: "numeric",
 });
 
-const datePartsFormatter = new Intl.DateTimeFormat("en-CA", {
-  day: "numeric",
-  month: "numeric",
-  timeZone: "Europe/Warsaw",
-  year: "numeric",
-});
-
 const yearFormatter = new Intl.DateTimeFormat("pl-PL", {
   timeZone: "Europe/Warsaw",
   year: "numeric",
@@ -232,15 +227,7 @@ function getShiftedYear(
     return yearFormatter.format(date);
   }
 
-  const dateParts = Object.fromEntries(
-    datePartsFormatter
-      .formatToParts(date)
-      .map(({ type, value }) => [type, value]),
-  );
-
-  const year = Number.parseInt(dateParts.year ?? "", 10);
-  const month = Number.parseInt(dateParts.month ?? "", 10);
-  const day = Number.parseInt(dateParts.day ?? "", 10);
+  const { year, month, day } = getLocalDate(date, "Europe/Warsaw");
 
   if (![year, month, day].every(Number.isFinite)) {
     return yearFormatter.format(date);
