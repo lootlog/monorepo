@@ -2,6 +2,13 @@ export const PERMISSIONS_CACHE_TTL_SECONDS = 900;
 
 export const AUTH_TOKEN_CACHE_TTL_SECONDS = 300;
 
+// A cached Discord token must stop being served before Discord expires it.
+export const AUTH_TOKEN_EXPIRY_MARGIN_SECONDS = 60;
+
+// Discord never accepts a rejected access token again, and signing in again
+// issues a different one, so the marker can outlive many token cache windows.
+export const REJECTED_AUTH_TOKEN_TTL_SECONDS = 60 * 60;
+
 export const EVENT_WRAPPED_CACHE_TTL_SECONDS = 3600;
 
 const PERMISSIONS_CACHE_KEY_PREFIX = "perms";
@@ -30,6 +37,14 @@ export function getAuthTokenCacheKey(
   discordId: string,
 ): string {
   return `${AUTH_TOKEN_CACHE_KEY_PREFIX}:${userId}:${discordId}`;
+}
+
+/** Stores the fingerprint of the access token Discord last rejected. */
+export function getRejectedAuthTokenKey(
+  userId: string,
+  discordId: string,
+): string {
+  return `${getAuthTokenCacheKey(userId, discordId)}:rejected`;
 }
 
 export function getAuthTokenCachePattern(userId: string): string {
