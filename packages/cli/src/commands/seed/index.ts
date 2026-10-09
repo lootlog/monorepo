@@ -159,7 +159,7 @@ const generatePlayersFile = async (
   count: number,
   output: string,
   force: boolean | undefined,
-): Promise<boolean> => {
+): Promise<void> => {
   const outputPath = path.resolve(output);
   const outputExists = await fileExists(outputPath);
 
@@ -170,7 +170,7 @@ const generatePlayersFile = async (
       ),
     );
 
-    return false;
+    return;
   }
 
   console.log(chalk.blue(`Generating ${count} players...`));
@@ -181,8 +181,6 @@ const generatePlayersFile = async (
       `✅ Generated ${players.length} players saved to ${outputPath}`,
     ),
   );
-
-  return true;
 };
 
 const generatePlayersCommand: SeedSubcommandHandler = async (options) => {
@@ -224,21 +222,8 @@ const generateSetupPlayers = async (
   force: boolean | undefined,
 ): Promise<void> => {
   console.log(chalk.blue("👥 Step 2: Generating players"));
-  const playersPath = path.resolve(DEFAULT_PLAYERS_OUTPUT);
-
-  if ((await fileExists(playersPath)) && !force) {
-    console.log(
-      chalk.gray(
-        `⏭️  Players file already exists. Use --force to regenerate.\n`,
-      ),
-    );
-
-    return;
-  }
-
-  const players = generatePlayers(playerCount);
-  await writeFile(playersPath, JSON.stringify(players, null, 2));
-  console.log(chalk.green(`✅ Generated ${players.length} players\n`));
+  await generatePlayersFile(playerCount, DEFAULT_PLAYERS_OUTPUT, force);
+  console.log();
 };
 
 const setupCommand: SeedSubcommandHandler = async (options) => {
