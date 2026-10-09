@@ -287,12 +287,8 @@ export const buildKillAnalytics = (
     const entry = worlds.get(row.world) ?? {
       world: row.world,
       totalKills: 0,
-      comparisonKills:
-        raw.worldComparisons.find((value) => value.world === row.world)
-          ?.comparisonKills ?? 0,
-      previousKills:
-        raw.worldComparisons.find((value) => value.world === row.world)
-          ?.previousKills ?? 0,
+      comparisonKills: 0,
+      previousKills: 0,
       daily: [],
     };
 
