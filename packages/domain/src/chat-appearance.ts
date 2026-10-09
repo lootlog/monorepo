@@ -1,4 +1,5 @@
 import { Predicate, Schema } from "effect";
+import { isEqual } from "es-toolkit";
 import {
   CHAT_APPEARANCE_COMPACT_PRESET,
   CHAT_APPEARANCE_READABLE_PRESET,
@@ -90,29 +91,16 @@ export const mergeChatAppearanceSettings = (
   );
 };
 
-const chatAppearanceSettingsEqual = (
-  left: ChatAppearanceSettings,
-  right: ChatAppearanceSettings,
-) =>
-  left.npcLayout === right.npcLayout &&
-  left.fontScalePercent === right.fontScalePercent &&
-  left.messageGapPx === right.messageGapPx &&
-  left.showTimestamp === right.showTimestamp &&
-  left.showGuildLabel === right.showGuildLabel &&
-  left.showNpcAvatar === right.showNpcAvatar &&
-  left.showNpcLevel === right.showNpcLevel &&
-  left.showNpcLocationAndCoordinates === right.showNpcLocationAndCoordinates;
-
 export const getChatAppearancePreset = (
   value: unknown,
 ): ChatAppearancePreset => {
   const settings = normalizeChatAppearanceSettings(value);
 
-  if (chatAppearanceSettingsEqual(settings, CHAT_APPEARANCE_READABLE_PRESET)) {
+  if (isEqual(settings, CHAT_APPEARANCE_READABLE_PRESET)) {
     return "readable";
   }
 
-  if (chatAppearanceSettingsEqual(settings, CHAT_APPEARANCE_COMPACT_PRESET)) {
+  if (isEqual(settings, CHAT_APPEARANCE_COMPACT_PRESET)) {
     return "compact";
   }
 
