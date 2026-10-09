@@ -767,62 +767,6 @@ export const makeEventPoints = (
     }).pipe(Effect.withSpan("events.points.memberPresence"));
   }
 
-  function getMemberPresenceStatsPerMap(
-    mapIds: string[],
-    memberId: number,
-    since?: Date,
-    until?: Date,
-  ) {
-    if (mapIds.length === 0) {
-      return Effect.succeed([]);
-    }
-
-    return Effect.map(
-      repository.findPresenceLogs(mapIds, [memberId], since),
-      (logs) => {
-        const windowEnd = until ?? new Date();
-
-        const mapStats = new Map<
-          string,
-          { presenceTimeMs: number; afkTimeMs: number }
-        >();
-
-        for (const mapId of mapIds) {
-          mapStats.set(mapId, { presenceTimeMs: 0, afkTimeMs: 0 });
-        }
-
-        for (const log of logs) {
-          const stats = mapStats.get(log.mapId);
-
-          if (!stats) continue;
-
-          const { start, end } = clipToWindow({
-            start: log.startedAt,
-            end: log.endedAt,
-            windowStart: since ?? log.startedAt,
-            windowEnd,
-          });
-
-          const duration = end.getTime() - start.getTime();
-
-          if (duration > 0) {
-            stats.presenceTimeMs += duration;
-
-            if (log.isAfk) {
-              stats.afkTimeMs += duration;
-            }
-          }
-        }
-
-        return Array.from(mapStats.entries()).map(([mapId, stats]) => ({
-          mapId,
-          presenceTimeSeconds: Math.round(stats.presenceTimeMs / 1000),
-          afkTimeSeconds: Math.round(stats.afkTimeMs / 1000),
-        }));
-      },
-    );
-  }
-
   function getMembersPresenceStatsPerMap(
     mapIds: string[],
     memberIds: number[],
@@ -961,7 +905,6 @@ export const makeEventPoints = (
     calculateMemberPoints,
     getMemberPresenceStats,
     getMembersPresenceStats,
-    getMemberPresenceStatsPerMap,
     getMembersPresenceStatsPerMap,
     recalculateEventPoints,
     updateRankingAfterKill,

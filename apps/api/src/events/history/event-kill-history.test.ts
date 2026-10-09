@@ -297,11 +297,6 @@ describe("kill history database reads", () => {
             mapName: "Map",
           },
         ]);
-        expect(
-          await f.run(
-            f.points.getMemberPresenceStatsPerMap(["map"], 1, since, at(2000)),
-          ),
-        ).toEqual([{ mapId: "map", presenceTimeSeconds, afkTimeSeconds: 0 }]);
 
         const members = await f.run(
           f.points.getMembersPresenceStatsPerMap(
