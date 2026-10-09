@@ -67,7 +67,6 @@ const battlelogDatabase = drizzle({ client: battlelogPool });
 interface SeedOptions {
   guildsCount?: number;
   lootsCount?: number;
-  playersCount?: number;
   battlesCount?: number;
   clean?: boolean;
 }
