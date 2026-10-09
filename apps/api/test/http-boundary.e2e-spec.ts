@@ -12,18 +12,20 @@ import {
   RabbitMessaging,
   type RabbitMessagingService,
 } from "@lootlog/messaging";
+import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import { Permission } from "@lootlog/schema/permissions";
 import { BunRedis, BunHttpServer } from "@effect/platform-bun";
 import { Effect, Layer, ManagedRuntime, Schema } from "effect";
 import { FetchHttpClient, HttpRouter } from "effect/http";
 import { Redis } from "effect/persistence";
-import {
-  getCompleteUserGuildsCacheKey,
-  getGuildMemberCacheKeys,
-} from "#src/discord/discord-cache.util";
+import { fingerprintAccessToken } from "#src/auth/auth.service";
+import { getCompleteUserGuildsCacheKey } from "#src/discord/discord-cache.util";
 import { ReauthenticationRequired } from "#src/http-api/contracts/shared";
 import { RedisService } from "#src/redis/redis.service";
-import { getPermissionsCacheKey } from "#src/shared/cache";
+import {
+  getPermissionsCacheKey,
+  getRejectedAuthTokenKey,
+} from "#src/shared/cache";
 import { LootlogApiRouter } from "../src/runtime/application/http-routes.js";
 import { ApiRedis } from "../src/runtime/infrastructure/api-redis.js";
 import { ApiRuntimeConfig } from "../src/runtime/infrastructure/api-runtime-config.js";
@@ -73,12 +75,47 @@ const rabbitBoundary: RabbitMessagingService = {
   nack: () => Effect.void,
 };
 
+// The auth service answers the next IDP token request with this, when set.
+let authServiceAnswer: (() => Response) | null = null;
+
+const fetchBoundary: typeof globalThis.fetch = Object.assign(
+  (input: RequestInfo | URL, init?: RequestInit) =>
+    authServiceAnswer &&
+    new Request(input).url === "http://auth.test/auth/idp-token"
+      ? Promise.resolve(authServiceAnswer())
+      : globalThis.fetch(input, init),
+  { preconnect: globalThis.fetch.preconnect },
+);
+
 const RuntimeBoundaries = Layer.mergeAll(
   ApiRuntimeConfig.layer,
   ApiRedis.layer.pipe(Layer.provide(ApiRuntimeConfig.layer)),
   Layer.succeed(RabbitMessaging, RabbitMessaging.of(rabbitBoundary)),
-  FetchHttpClient.layer,
+  FetchHttpClient.layer.pipe(
+    Layer.provide(Layer.succeed(FetchHttpClient.Fetch, fetchBoundary)),
+  ),
 );
+
+const issueRevokedDiscordToken = async (
+  redis: RedisService,
+  identity: { readonly userId: string; readonly discordId: string },
+) => {
+  authServiceAnswer = () =>
+    Response.json({
+      accessToken: "revoked-token",
+      expiresIn: 3_600,
+      scopes: DISCORD_AUTH_SCOPES,
+    });
+  await redis.set(
+    getRejectedAuthTokenKey(
+      identity.userId,
+      identity.discordId,
+      fingerprintAccessToken("revoked-token"),
+    ),
+    "1",
+    60,
+  );
+};
 
 const boundary = HttpRouter.toWebHandler(
   LootlogApiRouter.pipe(
@@ -135,6 +172,7 @@ describe("API HTTP boundary", () => {
 
   beforeEach(async () => {
     publishedMessages.length = 0;
+    authServiceAnswer = null;
     await redis.flushall();
     await databaseRuntime.runPromise(
       Effect.gen(function* () {
@@ -1030,41 +1068,52 @@ describe("API HTTP boundary", () => {
     expect(forbiddenHistory.status).toBe(403);
   });
 
-  it("asks the caller to sign in again when Discord rejects their member refresh", async () => {
-    await databaseRuntime.runPromise(
-      database
-        .update(memberTable)
-        .set({ lastDiscordSyncAt: new Date(Date.now() - 24 * 60 * 60 * 1000) })
-        .where(eq(memberTable.guildId, authorizedGuildId)),
-    );
-    await redis.set(
-      getGuildMemberCacheKeys({ guildId: authorizedGuildId, ...caller })
-        .unauthorized,
-      "1",
-      60,
-    );
-
-    // Each route declares different own errors (empty 404, none, open 403);
-    // none of them may claim the failure. Sequential: a concurrent refresh
-    // would wait on the per-user lock.
-    for (const path of [
-      "/members/@me",
-      "/events",
-      `/timers/missing-timer/history?world=${world}`,
-    ]) {
-      const response = await request(`/guilds/${authorizedGuildId}${path}`);
-
-      expect(response.status).toBe(401);
-      expect(await response.json()).toEqual(
-        Schema.encodeSync(ReauthenticationRequired)(
-          new ReauthenticationRequired({
-            code: "DISCORD_UNAUTHORIZED",
-            requiresReauth: true,
-          }),
-        ),
+  it.each([
+    {
+      code: "DISCORD_UNAUTHORIZED",
+      reason: "Discord rejected their token",
+      arrange: () => issueRevokedDiscordToken(redis, caller),
+    },
+    {
+      code: "TOKEN_EXPIRED",
+      reason: "their Discord token expired",
+      arrange: () => {
+        authServiceAnswer = () =>
+          Response.json({ error: "TOKEN_EXPIRED" }, { status: 401 });
+      },
+    },
+  ])(
+    "asks the caller to sign in again when $reason",
+    async ({ code, arrange }) => {
+      await databaseRuntime.runPromise(
+        database
+          .update(memberTable)
+          .set({
+            lastDiscordSyncAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+          })
+          .where(eq(memberTable.guildId, authorizedGuildId)),
       );
-    }
-  });
+      await arrange();
+
+      // Each route declares different own errors (empty 404, none, open 403);
+      // none of them may claim the failure. Sequential: a concurrent refresh
+      // would wait on the per-user lock.
+      for (const path of [
+        "/members/@me",
+        "/events",
+        `/timers/missing-timer/history?world=${world}`,
+      ]) {
+        const response = await request(`/guilds/${authorizedGuildId}${path}`);
+
+        expect(response.status).toBe(401);
+        expect(await response.json()).toEqual(
+          Schema.encodeSync(ReauthenticationRequired)(
+            new ReauthenticationRequired({ code, requiresReauth: true }),
+          ),
+        );
+      }
+    },
+  );
 
   it("keeps an admin signed in when another member's Discord authorization fails", async () => {
     const other = { userId: "user-2", discordId: "discord-2" };
@@ -1079,12 +1128,7 @@ describe("API HTTP boundary", () => {
         updatedAt: new Date(),
       }),
     );
-    await redis.set(
-      getGuildMemberCacheKeys({ guildId: authorizedGuildId, ...other })
-        .unauthorized,
-      "1",
-      60,
-    );
+    await issueRevokedDiscordToken(redis, other);
 
     const response = await request(
       `/guilds/${authorizedGuildId}/members/${other.discordId}/refresh`,

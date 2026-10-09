@@ -74,14 +74,6 @@ const fallbackEligible = (error: unknown) => {
   );
 };
 
-const discordAdmin = (guild: RESTAPIPartialCurrentUserGuild) => {
-  try {
-    return isDiscordAdministrator(BigInt(guild.permissions));
-  } catch {
-    return false;
-  }
-};
-
 export const makeCurrentUserGuilds = (
   database: typeof ApiDatabase.Service,
   ports: CurrentUserGuildPorts,
@@ -187,7 +179,8 @@ export const makeCurrentUserGuilds = (
         const discordGuild = discordById.get(guild.id);
 
         const privileged = Boolean(
-          discordGuild && (discordGuild.owner || discordAdmin(discordGuild)),
+          discordGuild &&
+          (discordGuild.owner || isDiscordAdministrator(discordGuild)),
         );
 
         return [

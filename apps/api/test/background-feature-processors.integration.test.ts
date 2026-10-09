@@ -238,6 +238,55 @@ describe("background feature processors against migrated PostgreSQL", () => {
     ]);
   });
 
+  it("reports a retried bulk refresh with the counts of its last attempt", async () => {
+    const rabbit: Pick<RabbitMessaging["Service"], "publish"> = {
+      publish: () => Effect.void,
+    };
+
+    const rows = await runtime.runPromise(
+      Effect.gen(function* () {
+        const db = yield* ApiDatabase;
+
+        const [job] = yield* db
+          .insert(memberRefreshJobTable)
+          .values({
+            guildId,
+            requestedBy: "owner",
+            totalMembers: 2,
+            updatedAt: now,
+          })
+          .returning();
+
+        if (!job) return yield* Effect.die("Expected job fixture");
+
+        const process = makeMemberBulkRefreshProcessor(
+          db,
+          rabbit,
+          ({ discordId }) =>
+            discordId === "failed"
+              ? Effect.fail(new Error("Discord unavailable"))
+              : Effect.succeed({ refreshQueued: false }),
+        );
+
+        const attempt = {
+          data: { jobId: job.id, guildId, memberIds: ["first", "failed"] },
+        };
+
+        yield* process(attempt);
+        yield* process(attempt);
+
+        return yield* db
+          .select()
+          .from(memberRefreshJobTable)
+          .where(eq(memberRefreshJobTable.id, job.id));
+      }),
+    );
+
+    expect(rows).toMatchObject([
+      { status: "COMPLETED", processedMembers: 1, failedMembers: 1 },
+    ]);
+  });
+
   it("keeps a member refresh queued while another guild job holds the user lock, without spending an attempt", async () => {
     const connection = {
       url: redisUrl({

@@ -74,11 +74,13 @@ describe("Discord user guild list cache against Dragonfly", () => {
           expiresIn: 3_600,
           scopes: [...DISCORD_AUTH_SCOPES],
         }),
+      rejectIdpToken: () => Effect.void,
     });
 
-    const rest = await factory.getRestClient(
+    const rest = await factory.withRestClient(
       identity.userId,
       identity.discordId,
+      async (client) => client,
     );
 
     spyOn(rest, "queueRequest").mockImplementation(discord);

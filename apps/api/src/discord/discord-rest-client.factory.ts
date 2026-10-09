@@ -4,15 +4,18 @@ import {
   DependencyUnavailableError,
   AuthenticationRequiredError,
 } from "#src/shared/http/http-errors";
-import { createHash } from "node:crypto";
-import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
-import type { AuthService } from "#src/auth/auth.service";
+import {
+  fingerprintAccessToken,
+  type AuthService,
+} from "#src/auth/auth.service";
 import { AccountNotFoundError } from "#src/auth/errors/account-not-found.error";
 import { AuthBadRequestError } from "#src/auth/errors/auth-bad-request.error";
 import { AuthServiceUnavailableError } from "#src/auth/errors/auth-service-unavailable.error";
+import { DiscordTokenRejectedError } from "#src/auth/errors/discord-token-rejected.error";
 import { InvalidScopesError } from "#src/auth/errors/invalid-scopes.error";
 import { TokenExpiredError } from "#src/auth/errors/token-expired.error";
 import { Clock, Effect } from "effect";
+import { isDiscordUnauthorizedError } from "./discord-error.util.js";
 
 interface CachedDiscordRestClient {
   expiresAt: number;
@@ -25,11 +28,45 @@ export class DiscordRestClientFactory {
   private readonly restClients = new Map<string, CachedDiscordRestClient>();
 
   constructor(
-    private readonly authService: Pick<AuthService, "getIdpToken">,
+    private readonly authService: Pick<
+      AuthService,
+      "getIdpToken" | "rejectIdpToken"
+    >,
     private readonly runPromise = Effect.runPromise,
   ) {}
 
-  async getRestClient(userId: string, discordId: string): Promise<REST> {
+  /**
+   * Runs Discord requests with the user's token. When Discord answers 401 the
+   * token is rejected, so later requests neither reuse it nor call Discord
+   * with it again, while a token from a new sign-in is used immediately.
+   */
+  async withRestClient<A>(
+    userId: string,
+    discordId: string,
+    request: (rest: REST) => Promise<A>,
+  ): Promise<A> {
+    const { accessToken, rest } = await this.getRestClient(userId, discordId);
+
+    try {
+      return await request(rest);
+    } catch (error) {
+      if (isDiscordUnauthorizedError(error)) {
+        this.restClients.delete(
+          this.getRestClientCacheKey(userId, discordId, accessToken),
+        );
+        await this.runPromise(
+          this.authService.rejectIdpToken(userId, discordId, accessToken),
+        );
+      }
+
+      throw error;
+    }
+  }
+
+  private async getRestClient(
+    userId: string,
+    discordId: string,
+  ): Promise<{ readonly accessToken: string; readonly rest: REST }> {
     try {
       const { now, token } = await this.runPromise(
         Effect.all(
@@ -41,10 +78,6 @@ export class DiscordRestClientFactory {
         ),
       );
 
-      if (!DISCORD_AUTH_SCOPES.every((scope) => token.scopes.includes(scope))) {
-        throw new InvalidScopesError(DISCORD_AUTH_SCOPES, token.scopes);
-      }
-
       const cacheKey = this.getRestClientCacheKey(
         userId,
         discordId,
@@ -54,7 +87,7 @@ export class DiscordRestClientFactory {
       const cachedClient = this.restClients.get(cacheKey);
 
       if (cachedClient && cachedClient.expiresAt > now) {
-        return cachedClient.rest;
+        return { accessToken: token.accessToken, rest: cachedClient.rest };
       }
 
       const rest = this.createRestClient(token.accessToken);
@@ -65,11 +98,18 @@ export class DiscordRestClientFactory {
       });
       this.pruneExpiredRestClients(now);
 
-      return rest;
+      return { accessToken: token.accessToken, rest };
     } catch (error) {
       if (error instanceof TokenExpiredError) {
         throw new AuthenticationRequiredError({
           message: "TOKEN_EXPIRED",
+          requiresReauth: true,
+        });
+      }
+
+      if (error instanceof DiscordTokenRejectedError) {
+        throw new AuthenticationRequiredError({
+          message: "DISCORD_UNAUTHORIZED",
           requiresReauth: true,
         });
       }
@@ -131,9 +171,7 @@ export class DiscordRestClientFactory {
     discordId: string,
     accessToken: string,
   ): string {
-    const tokenHash = createHash("sha256").update(accessToken).digest("hex");
-
-    return `${userId}:${discordId}:${tokenHash}`;
+    return `${userId}:${discordId}:${fingerprintAccessToken(accessToken)}`;
   }
 
   private pruneExpiredRestClients(now: number): void {
