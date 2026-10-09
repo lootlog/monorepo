@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 import {
-  canonicalExchanges,
   DEFAULT_RETRY_TTL_MS,
   makeRetryQueue,
   RabbitExchange,
@@ -9,11 +8,11 @@ import {
 
 describe("canonical RabbitMQ topology", () => {
   test("keeps the deployed exchange names", () => {
-    expect(canonicalExchanges.map(({ name }) => name)).toEqual([
-      "default",
-      "retry",
-      "dlx",
-    ]);
+    expect(RabbitExchange).toEqual({
+      DEFAULT: "default",
+      RETRY: "retry",
+      DEAD_LETTER: "dlx",
+    });
   });
 
   test("retry queues expire back to the original route", () => {
