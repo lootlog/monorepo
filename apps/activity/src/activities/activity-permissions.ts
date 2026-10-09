@@ -31,10 +31,7 @@ export class Permissions extends Context.Service<
       const config = yield* ActivityConfig;
       const apiHttpClient = yield* ApiHttpClient;
 
-      const memory = new Map<
-        string,
-        { expiresAt: number; value: CachedValue }
-      >();
+      const memory = new Map<string, { value: CachedValue }>();
 
       const redis = yield* Redis.Redis;
 
@@ -92,7 +89,7 @@ export class Permissions extends Context.Service<
         }
 
         return Effect.sync(() => {
-          memory.set(key, { value, expiresAt: Number.POSITIVE_INFINITY });
+          memory.set(key, { value });
         });
       };
 
