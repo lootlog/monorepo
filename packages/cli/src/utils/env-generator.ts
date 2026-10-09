@@ -63,10 +63,14 @@ const APP_DATABASES = new Map<string, LocalDatabaseName>(
   } satisfies Record<string, LocalDatabaseName>),
 );
 
-const SHARED_KEYS = [
+export const SHARED_SERVICE_SECRET_KEYS = [
+  "ACTIVITY_EVENT_SIGNATURE_SECRET",
   "AUTH_IDP_TOKEN_SECRET",
   "BATTLELOG_CLEANUP_SECRET",
-  "ACTIVITY_EVENT_SIGNATURE_SECRET",
+] as const;
+
+const SHARED_KEYS = [
+  ...SHARED_SERVICE_SECRET_KEYS,
   ...Object.values(LOCAL_DATABASES).flatMap((database) => [
     database.userKey,
     database.passwordKey,
