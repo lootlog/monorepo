@@ -2,7 +2,7 @@ import { parse } from "node-html-parser";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { SCRAPER_CONFIG } from "../config.js";
-import { fileExists } from "../utils/file-exists.js";
+import { readCachedScrape } from "../utils/read-cached-scrape.js";
 
 interface ScrapedItem {
   hid: string;
@@ -88,20 +88,9 @@ export async function scrapeItems(
   outputPath?: string,
   force = false,
 ): Promise<ScrapedItem[]> {
-  if (outputPath && !force) {
-    const fullPath = path.resolve(outputPath);
-    const exists = await fileExists(fullPath);
+  const cached = await readCachedScrape(outputPath, force, "Items");
 
-    if (exists) {
-      console.log(`⏭️  Items file already exists at ${fullPath}`);
-      console.log("💡 Use --force flag to re-scrape");
-
-      const fs = await import("node:fs/promises");
-      const existingData = await fs.readFile(fullPath, "utf-8");
-
-      return JSON.parse(existingData);
-    }
-  }
+  if (cached !== undefined) return JSON.parse(cached);
 
   console.log("Starting items scraping...");
 
