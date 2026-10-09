@@ -10,7 +10,7 @@ import {
 } from "#src/contracts/loots/schemas";
 import { Permission } from "@lootlog/schema/permissions";
 import { makeLootQueryPersistence } from "#src/loots/query/loot-query.persistence";
-import type { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
+import type { MapPlayersSnapshot } from "@lootlog/protocol/loot-summary";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
 import { createHash, randomInt, randomUUID } from "node:crypto";
 import { and, arrayOverlaps, count, eq, inArray, sql } from "drizzle-orm";
@@ -49,7 +49,9 @@ import { makeLootSubmissionAcceptance } from "#src/loots/submission/loot-submiss
 import {
   LootPublicationPayload,
   makeLootPublicationDispatcher,
+  makeLootSnapshotReader,
 } from "#src/loots/submission/loot-publication-outbox";
+import { GuildLootCreatedMessageV2 } from "@lootlog/protocol/rabbit/events";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { makeLootsOperations } from "#src/loots/loots.operations";
 import { makeLootPersistence } from "#src/loots/loot-persistence";
@@ -1547,6 +1549,7 @@ describe("durable loot publications", () => {
               }),
       },
       () => Effect.fail(new Error("Cache unavailable")),
+      () => Effect.succeed(null),
     );
 
     await runtime.runPromise(dispatch());
@@ -1573,6 +1576,7 @@ describe("durable loot publications", () => {
         Effect.sync(() => {
           invalidated.push(ids);
         }),
+      () => Effect.fail(new Error("Snapshot read unavailable")),
     );
 
     await runtime.runPromise(
@@ -1582,6 +1586,17 @@ describe("durable loot publications", () => {
     await runtime.runPromise(recovered());
     expect(await pending(result.id)).toHaveLength(0);
     expect(invalidated).toEqual([[id]]);
+
+    const created = sent.find(
+      (message) => message.routingKey === RabbitRoutingKey.GUILDS_LOOTS_CREATE,
+    );
+
+    const createdPayload =
+      created && JSON.parse(new TextDecoder().decode(created.content));
+
+    // A failed snapshot read must not hold back the loot.created signal.
+    expect(createdPayload).toMatchObject({ guildId: id, lootId: result.id });
+    expect(createdPayload).not.toHaveProperty("loot");
     expect(sent.map((message) => message.routingKey).sort()).toEqual(
       [
         RabbitRoutingKey.GUILDS_LOOTS_CREATE,
@@ -1645,7 +1660,7 @@ describe("durable loot publications", () => {
     expect(await pending(accepted.id)).toHaveLength(8);
     await runtime.runPromise(acceptance().accept(additionalRequest));
     expect(await pending(accepted.id)).toHaveLength(8);
-    const organizations: string[] = [];
+    const published = new Map<string, unknown>();
     await runtime.runPromise(
       makeLootPublicationDispatcher(
         database,
@@ -1653,18 +1668,30 @@ describe("durable loot publications", () => {
           publish: (message) =>
             Effect.sync(() => {
               if (message.routingKey === RabbitRoutingKey.GUILDS_LOOTS_CREATE) {
-                const payload: { guildId: string } = JSON.parse(
-                  new TextDecoder().decode(message.content),
-                );
+                const payload = Schema.decodeUnknownSync(
+                  GuildLootCreatedMessageV2,
+                )(JSON.parse(new TextDecoder().decode(message.content)));
 
-                organizations.push(payload.guildId);
+                published.set(payload.guildId, payload.loot);
               }
             }),
         },
         () => Effect.void,
+        makeLootSnapshotReader(
+          makeLootQueryOperations(makeLootQueryPersistence(database)),
+        ),
       )(),
     );
-    expect(organizations.sort()).toEqual([first.id, second.id].sort());
+    expect([...published.keys()].sort()).toEqual([first.id, second.id].sort());
+
+    // Each Organization's snapshot carries only its own submissions.
+    for (const organizationId of [first.id, second.id]) {
+      expect(published.get(organizationId)).toMatchObject({
+        id: accepted.id,
+        submissions: [{ guildId: organizationId, lootId: accepted.id }],
+      });
+    }
+
     expect(await pending(accepted.id)).toEqual([]);
   });
 
@@ -2017,6 +2044,7 @@ describe("durable loot publications", () => {
             }),
         },
         () => Effect.void,
+        () => Effect.succeed(null),
       )(),
     );
 
@@ -2118,6 +2146,7 @@ describe("durable loot publications", () => {
             }),
         },
         () => Effect.void,
+        () => Effect.succeed(null),
       )(),
     );
     expect(sent).toEqual([]);

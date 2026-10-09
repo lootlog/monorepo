@@ -34,6 +34,7 @@ function Probe() {
     isEmpty,
     isPending,
     isFailed,
+    newLootCount,
     setScrollElement,
     resumeReconciliation,
   } = useLiveLootList();
@@ -56,6 +57,7 @@ function Probe() {
           isEmpty,
           isPending,
           isFailed,
+          newLootCount,
         })}
       </output>
     </>
@@ -67,7 +69,7 @@ const loot = {
   uniqueId: "one",
   mapPlayersSnapshot: null,
   world: "tempest",
-  source: "FIGHT",
+  source: "FIGHT" as const,
   location: "Map",
   items: [],
   players: [],
@@ -94,6 +96,7 @@ afterEach(() => {
 async function mount(
   fetchLoots: () => Promise<Response>,
   fetchGuilds?: () => Promise<Response>,
+  searchParams = "search=sword",
 ) {
   const gateway = createTestGateway();
   gateway.request.mockResolvedValue(undefined);
@@ -144,7 +147,7 @@ async function mount(
               setTheme: () => undefined,
             }}
           >
-            <NuqsTestingAdapter searchParams="search=sword" hasMemory>
+            <NuqsTestingAdapter searchParams={searchParams} hasMemory>
               <RouterProvider router={router} />
             </NuqsTestingAdapter>
           </ThemeContext>
@@ -243,6 +246,137 @@ it("delivered duplicate, share and reconnect events reconcile once through the f
     await vi.advanceTimersByTimeAsync(35_000);
   });
   expect(listRequests).toHaveBeenCalledTimes(2);
+});
+
+const snapshot = (id: number, world = "tempest") =>
+  ({
+    v: 1,
+    type: "loot.snapshot",
+    data: {
+      version: 2,
+      guildId: "one",
+      lootId: id,
+      npcs: [],
+      loot: { ...loot, id, uniqueId: String(id), world },
+    },
+  }) as const;
+
+const listState = () => JSON.parse(screen.getByRole("status").textContent);
+
+it("places delivered loot snapshots without requests, holding them while the reader is scrolled down", async () => {
+  const listRequests = vi.fn(async () => Response.json([loot]));
+  const { gateway, fetch } = await mount(listRequests, undefined, "");
+  const viewport = screen.getByTestId("loot-scroll");
+
+  await act(async () => {
+    gateway.deliver(snapshot(2));
+    await vi.advanceTimersByTimeAsync(1);
+  });
+  expect(listState()).toMatchObject({ ids: [2, 1], newLootCount: 0 });
+
+  await act(async () => {
+    viewport.scrollTop = 800;
+    fireEvent.scroll(viewport);
+    gateway.deliver(snapshot(3));
+    gateway.deliver(snapshot(4, "katahha"));
+    await vi.advanceTimersByTimeAsync(1);
+  });
+  // The other world's loot never belongs to this list.
+  expect(listState()).toMatchObject({ ids: [2, 1], newLootCount: 1 });
+
+  await act(async () => {
+    viewport.scrollTop = 0;
+    fireEvent.scroll(viewport);
+    await vi.advanceTimersByTimeAsync(35_000);
+  });
+  expect(listState()).toMatchObject({ ids: [3, 2, 1], newLootCount: 0 });
+  expect(listRequests).toHaveBeenCalledTimes(1);
+  expect(
+    fetch.mock.calls.filter(([input]) => String(input).includes("/loots/")),
+  ).toHaveLength(0);
+});
+
+it.each([
+  { case: "a search the server must match", searchParams: "search=sword" },
+  { case: "a snapshot without its loot", searchParams: "" },
+])("reconciles through the server list for $case", async ({ searchParams }) => {
+  const listRequests = vi.fn(async () => Response.json([loot]));
+  const { gateway } = await mount(listRequests, undefined, searchParams);
+  const { loot: _loot, ...withoutLoot } = snapshot(2).data;
+
+  await act(async () => {
+    gateway.deliver(
+      searchParams
+        ? snapshot(2)
+        : { v: 1, type: "loot.snapshot", data: withoutLoot },
+    );
+    await vi.advanceTimersByTimeAsync(1);
+  });
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(35_000);
+  });
+  expect(listRequests).toHaveBeenCalledTimes(2);
+});
+
+it("drops a waiting snapshot when loot access is restricted", async () => {
+  let page = [loot];
+
+  const { gateway } = await mount(
+    async () => Response.json(page),
+    undefined,
+    "",
+  );
+
+  const viewport = screen.getByTestId("loot-scroll");
+
+  const joined = (levelTo: number) =>
+    gateway.deliver({
+      v: 1,
+      type: "session.joined",
+      data: {
+        connectionId: "connection",
+        organizationIds: ["one"],
+        subscriptionScopes: [],
+        accessPolicy: createAccessPolicySnapshot(
+          [
+            {
+              guild: { id: "one", ownerId: "owner" },
+              roles: [
+                {
+                  permissions: [Permission.LOOTLOG_LOOTS_READ],
+                  lvlRangeFrom: 0,
+                  lvlRangeTo: levelTo,
+                },
+              ],
+            },
+          ],
+          "member",
+        ),
+      },
+    });
+
+  await act(async () => {
+    joined(300);
+    viewport.scrollTop = 800;
+    fireEvent.scroll(viewport);
+    gateway.deliver(snapshot(2));
+    await vi.advanceTimersByTimeAsync(1);
+  });
+  expect(listState()).toMatchObject({ ids: [1], newLootCount: 1 });
+
+  page = [];
+  await act(async () => {
+    gateway.setConnectionState("disconnected");
+    gateway.setConnectionState("ready");
+    joined(100);
+    await vi.advanceTimersByTimeAsync(1);
+  });
+  await act(async () => {
+    viewport.scrollTop = 0;
+    fireEvent.scroll(viewport);
+    await vi.advanceTimersByTimeAsync(35_000);
+  });
+  expect(listState()).toMatchObject({ ids: [], newLootCount: 0 });
 });
 
 it("retains visible loots through reconnect, background refresh and its failure", async () => {

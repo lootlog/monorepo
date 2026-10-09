@@ -18,6 +18,7 @@ export enum GatewayEvent {
   KILLS_CHANGED = "kills-changed",
   LOOTS_CREATE = "loots-create",
   LOOTS_SHARE_UPDATE = "loots-share-update",
+  LOOTS_SNAPSHOT = "loots-snapshot",
   MEMBER_WEB_PRESENCE_UPDATE = "member-web-presence:update",
   TIMERS_CREATE = "timers-create",
   TIMERS_DELETE = "timers-delete",

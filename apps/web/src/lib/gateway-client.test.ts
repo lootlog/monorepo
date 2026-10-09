@@ -6,6 +6,7 @@ import {
 } from "@lootlog/client/realtime";
 import {
   REALTIME_FEED_CAPABILITY,
+  REALTIME_LOOT_SNAPSHOT_CAPABILITY,
   REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
 } from "@lootlog/protocol/realtime";
 
@@ -51,6 +52,7 @@ describe("web realtime handshake", () => {
                 ? REALTIME_JSON_SUBPROTOCOL
                 : REALTIME_SUBPROTOCOL,
               REALTIME_FEED_CAPABILITY,
+              REALTIME_LOOT_SNAPSHOT_CAPABILITY,
               REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
             ],
           },

@@ -36,6 +36,8 @@ export interface SessionData extends AuthenticatedIdentity {
   readonly platform: typeof PresencePlatform.Type;
   readonly userAgent?: string;
   readonly supportsFeed?: boolean;
+  /** Receives `loot.snapshot` in place of `loot.created`. */
+  readonly supportsLootSnapshot?: boolean;
   readonly supportsSessionHello?: boolean;
   readonly supportsNotificationVolunteer?: boolean;
   readonly supportsPartyGatheringState?: boolean;

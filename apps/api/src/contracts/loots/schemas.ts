@@ -1,5 +1,5 @@
-import { MapPlayersSnapshot } from "./map-players-snapshot.js";
 import {
+  MapPlayersSnapshot,
   LootItemResponse as LootItem,
   LootPlayerResponse as LootPlayer,
   LootNpcResponse as LootNpc,

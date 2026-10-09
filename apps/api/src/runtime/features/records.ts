@@ -17,7 +17,10 @@ import { makeLootAllocationPersistence } from "#src/loots/allocation/loot-alloca
 import { makeLootAllocationOperations } from "#src/loots/allocation/loot-allocation.operations";
 import { makeLootPersistence } from "#src/loots/loot-persistence";
 import { makeLootSubmissionAcceptancePersistence } from "#src/loots/submission/loot-submission-acceptance.repository";
-import { makeLootPublicationDispatcher } from "#src/loots/submission/loot-publication-outbox";
+import {
+  makeLootPublicationDispatcher,
+  makeLootSnapshotReader,
+} from "#src/loots/submission/loot-publication-outbox";
 import { makeLootPublicationWorker } from "#src/loots/submission/loot-publication-worker";
 import { makeLootSubmissionAcceptance } from "#src/loots/submission/loot-submission-acceptance.service";
 import {
@@ -54,6 +57,10 @@ export const recordsServicesLive = Layer.effect(
     const lootStats = new LootStatsService(database, redis);
     const redlock = new RedlockService(redis).createInstance();
 
+    const lootQuery = makeLootQueryOperations(
+      makeLootQueryPersistence(database),
+    );
+
     const dispatchLootPublications = makeLootPublicationDispatcher(
       database,
       rabbit,
@@ -71,6 +78,7 @@ export const recordsServicesLive = Layer.effect(
           ),
           { concurrency: "unbounded", discard: true },
         ),
+      makeLootSnapshotReader(lootQuery),
     );
 
     const lootPublications = yield* makeLootPublicationWorker(
@@ -110,7 +118,7 @@ export const recordsServicesLive = Layer.effect(
 
     const loots = makeLootsOperations({
       persistence: makeLootPersistence(database),
-      query: makeLootQueryOperations(makeLootQueryPersistence(database)),
+      query: lootQuery,
       stats: lootStats,
       redis,
       logger: applicationLogger,
