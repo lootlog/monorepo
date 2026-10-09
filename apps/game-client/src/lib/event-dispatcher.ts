@@ -122,6 +122,7 @@ export class EventDispatcher {
   }
 
   handleInitialEvents(): void {
+    this.mapChange.bootstrap();
     this.npcsDetection.bootstrapProjection();
   }
 
