@@ -612,6 +612,10 @@ export const normalizeOpenApiRepresentation = (value: JsonValue): JsonValue => {
   );
 };
 
+const sameOpenApiContract = (left: JsonValue, right: JsonValue): boolean =>
+  JSON.stringify(normalizeOpenApiRepresentation(left)) ===
+  JSON.stringify(normalizeOpenApiRepresentation(right));
+
 const assertOrganizationNotFoundResponse = (
   operation: JsonValue,
   operationKey: string,
@@ -646,11 +650,7 @@ const assertErrorResponse = (
     },
   };
 
-  if (
-    response === undefined ||
-    JSON.stringify(normalizeOpenApiRepresentation(response)) !==
-      JSON.stringify(normalizeOpenApiRepresentation(expected))
-  ) {
+  if (response === undefined || !sameOpenApiContract(response, expected)) {
     throw new Error(`${operationKey} must declare a ${status} ${schemaName}`);
   }
 };
@@ -740,12 +740,10 @@ const normalizeManageableOrganizationResponse = (
 ): JsonValue => {
   if (
     !schemas?.["ManageableOrganizationResponse"] ||
-    JSON.stringify(
-      normalizeOpenApiRepresentation(schemas["ManageableOrganizationResponse"]),
-    ) !==
-      JSON.stringify(
-        normalizeOpenApiRepresentation(MANAGEABLE_ORGANIZATION_SCHEMA),
-      )
+    !sameOpenApiContract(
+      schemas["ManageableOrganizationResponse"],
+      MANAGEABLE_ORGANIZATION_SCHEMA,
+    )
   ) {
     throw new Error("ManageableOrganizationResponse contract changed");
   }
@@ -811,10 +809,10 @@ const normalizeServiceAuthentication = (
 
     if (
       !isJsonObject(normalized) ||
-      JSON.stringify(
-        normalizeOpenApiRepresentation(normalized.parameters ?? null),
-      ) !==
-        JSON.stringify(normalizeOpenApiRepresentation(authorizationParameter))
+      !sameOpenApiContract(
+        normalized.parameters ?? null,
+        authorizationParameter,
+      )
     )
       throw new Error(
         `${operationKey} must declare the service authorization header`,
@@ -982,9 +980,7 @@ const normalizeInternalPermissionFreshness = (
 
   if (
     !isJsonObject(operation) ||
-    JSON.stringify(
-      normalizeOpenApiRepresentation(operation.parameters ?? null),
-    ) !== JSON.stringify(normalizeOpenApiRepresentation(expectedParameters))
+    !sameOpenApiContract(operation.parameters ?? null, expectedParameters)
   ) {
     throw new Error(
       `${operationKey} must retain its optional required-freshness query`,
@@ -1051,10 +1047,7 @@ const normalizeTimerNpcSearchQuery = (
     TIMER_NPC_SEARCH_CHANGED_PARAMETERS.some((name) => parameter.name === name),
   );
 
-  if (
-    JSON.stringify(normalizeOpenApiRepresentation(changedParameters)) !==
-    JSON.stringify(normalizeOpenApiRepresentation(expectedChangedParameters))
-  ) {
+  if (!sameOpenApiContract(changedParameters, expectedChangedParameters)) {
     throw new Error(
       `${operationKey} must keep search and world optional and accept npcIds and templateIds arrays`,
     );
@@ -1918,10 +1911,7 @@ export const assertVerifiedAddition = (
   if (!isJsonObject(keyNormalized)) throw new Error("Invalid operation");
   const { tags: _tags, summary: _summary, ...contract } = keyNormalized;
 
-  if (
-    JSON.stringify(normalizeOpenApiRepresentation(contract)) !==
-    JSON.stringify(normalizeOpenApiRepresentation(expected))
-  ) {
+  if (!sameOpenApiContract(contract, expected)) {
     throw new Error(
       `Verified API contract changed: ${service} ${operationKey}`,
     );
@@ -1960,14 +1950,11 @@ export const normalizeApiKeyErrors = (
       return (
         (additionalProperties !== undefined &&
           additionalProperties !== false) ||
-        JSON.stringify(normalizeOpenApiRepresentation(errorContract)) !==
-          JSON.stringify(
-            normalizeOpenApiRepresentation({
-              type: "object",
-              properties: { message: { type: "string" } },
-              required: ["message"],
-            }),
-          )
+        !sameOpenApiContract(errorContract, {
+          type: "object",
+          properties: { message: { type: "string" } },
+          required: ["message"],
+        })
       );
     });
 
@@ -1981,8 +1968,7 @@ export const normalizeApiKeyErrors = (
         if (
           isJsonObject(previousResponse) &&
           previousResponse.content !== undefined &&
-          JSON.stringify(normalizeOpenApiRepresentation(previousResponse)) !==
-            JSON.stringify(normalizeOpenApiRepresentation(response))
+          !sameOpenApiContract(previousResponse, response)
         ) {
           throw new Error(
             `API key errors replaced an existing ${status} response`,
