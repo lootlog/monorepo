@@ -198,7 +198,6 @@ const runSeedCommand: SeedSubcommandHandler = async (options) => {
     guildsCount: options.guilds,
     lootsCount: options.loots,
     battlesCount: options.battles,
-    playersCount: options.players,
     clean: options.clean !== false,
   });
 };
@@ -253,7 +252,6 @@ const setupCommand: SeedSubcommandHandler = async (options) => {
     guildsCount: options.guilds ?? 5,
     lootsCount: options.loots ?? 5000,
     battlesCount: options.battles ?? 1000,
-    playersCount: playerCount,
     clean: true,
   });
 
