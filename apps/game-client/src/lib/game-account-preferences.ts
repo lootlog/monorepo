@@ -1,6 +1,8 @@
-import { cloneNotifications } from "@lootlog/domain/account-preferences";
 import {
-  DETECTOR_NPC_TYPES,
+  cloneDetector,
+  cloneNotifications,
+} from "@lootlog/domain/account-preferences";
+import {
   defaultDetectorSettings,
   defaultNotificationsSettings,
   type DetectorRoutingRule,
@@ -26,29 +28,8 @@ export const createNotificationsSettings = (
   guildIds: [...guildIds],
 });
 
-export const cloneDetectorSettings = (
-  settings: DetectorSettings,
-): DetectorSettings => {
-  const clonedSettings = {
-    ...settings,
-    routingRules: settings.routingRules.map((rule) => ({
-      ...rule,
-      world: rule.world,
-      guildIds: [...rule.guildIds],
-    })),
-  };
-
-  DETECTOR_NPC_TYPES.forEach((npcType) => {
-    clonedSettings[npcType] = {
-      ...settings[npcType],
-    };
-  });
-
-  return clonedSettings;
-};
-
 export const createDetectorSettings = (): DetectorSettings => {
-  return cloneDetectorSettings(defaultDetectorSettings);
+  return cloneDetector(defaultDetectorSettings);
 };
 
 export const getEffectiveNotificationSettings = (
@@ -65,10 +46,10 @@ export const getEffectiveDetectorSettings = (
   preferences?: GameAccountDetectorPreferences | null,
 ) => {
   if (!preferences) {
-    return cloneDetectorSettings(defaultDetectorSettings);
+    return cloneDetector(defaultDetectorSettings);
   }
 
-  return cloneDetectorSettings(preferences.detector);
+  return cloneDetector(preferences.detector);
 };
 
 export const isNotificationPreferencesReady = (
