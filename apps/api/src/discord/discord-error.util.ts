@@ -43,6 +43,10 @@ export function isDiscordNotFoundError(error: unknown): boolean {
   return extractHttpStatus(error) === HttpStatus.NOT_FOUND;
 }
 
+export function isDiscordUnauthorizedError(error: unknown): boolean {
+  return extractHttpStatus(error) === HttpStatus.UNAUTHORIZED;
+}
+
 function createDiscordRateLimitError(retryAfterMs?: number): ApplicationError {
   const retryAfterSeconds =
     retryAfterMs === undefined ? undefined : Math.ceil(retryAfterMs / 1000);

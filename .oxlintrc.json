@@ -407,6 +407,7 @@
             "boundaryFunctions": [
               "extractHttpStatus",
               "isDiscordNotFoundError",
+              "isDiscordUnauthorizedError",
               "recordInvalidDiscordRequest",
               "toDiscordRequestError",
               "getInvalidDiscordRequestStatus"

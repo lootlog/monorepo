@@ -5,14 +5,18 @@ import type { GetIdpTokenResponse } from "#src/auth/get-idp-token-response";
 import { AccountNotFoundError } from "#src/auth/errors/account-not-found.error";
 import { AuthBadRequestError } from "#src/auth/errors/auth-bad-request.error";
 import { AuthServiceUnavailableError } from "#src/auth/errors/auth-service-unavailable.error";
+import { DiscordTokenRejectedError } from "#src/auth/errors/discord-token-rejected.error";
+import { InvalidScopesError } from "#src/auth/errors/invalid-scopes.error";
 import { TokenExpiredError } from "#src/auth/errors/token-expired.error";
+import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
 import { outboundHttpRequest } from "#src/shared/http/outbound-http";
 import {
   getAuthTokenCacheKey,
-  getAuthTokenCachePattern,
-  getLegacyAuthTokenCacheKey,
+  getRejectedAuthTokenKey,
   AUTH_TOKEN_CACHE_TTL_SECONDS,
+  AUTH_TOKEN_EXPIRY_MARGIN_SECONDS,
+  REJECTED_AUTH_TOKEN_TTL_SECONDS,
 } from "#src/shared/cache";
 
 const DEFAULT_REQUEST_TIMEOUT = 5000;
@@ -37,7 +41,15 @@ type AuthServiceError =
   | AccountNotFoundError
   | AuthBadRequestError
   | AuthServiceUnavailableError
+  | DiscordTokenRejectedError
+  | InvalidScopesError
   | TokenExpiredError;
+
+export const fingerprintAccessToken = (accessToken: string) =>
+  new Bun.CryptoHasher("sha256").update(accessToken).digest("hex");
+
+const hasRequiredScopes = (token: IdpToken) =>
+  DISCORD_AUTH_SCOPES.every((scope) => token.scopes.includes(scope));
 
 class AuthHttpResponseError extends Error {
   constructor(
@@ -57,7 +69,7 @@ export class AuthService {
     private readonly logger: Logger,
     private readonly redisService: Pick<
       RedisService,
-      "getJson" | "setJson" | "del" | "deleteByPattern"
+      "get" | "set" | "getJson" | "setJson" | "del"
     >,
     private readonly httpClient: HttpClientValue,
     authServiceUrl: URL,
@@ -133,12 +145,24 @@ export class AuthService {
     return Effect.gen({ self: this }, function* () {
       const cacheKey = getAuthTokenCacheKey(userId, discordId);
 
-      const cached = yield* Effect.tryPromise(() =>
-        this.redisService.getJson(cacheKey, cachedIdpTokenCodec),
+      const [cached, rejected] = yield* Effect.tryPromise(() =>
+        Promise.all([
+          this.redisService.getJson(cacheKey, cachedIdpTokenCodec),
+          this.redisService.get(getRejectedAuthTokenKey(userId, discordId)),
+        ]),
       );
 
-      if (cached) {
+      const isRejected = (token: IdpToken) =>
+        rejected === fingerprintAccessToken(token.accessToken);
+
+      if (cached && hasRequiredScopes(cached) && !isRejected(cached)) {
         return cached;
+      }
+
+      // The auth service holds the token issued by the user's latest sign-in,
+      // which replaces a rejected or under-scoped one at once.
+      if (cached) {
+        yield* Effect.tryPromise(() => this.redisService.del(cacheKey));
       }
 
       const response = yield* this.fetchIdpToken(userId, discordId);
@@ -172,14 +196,31 @@ export class AuthService {
         );
       }
 
-      yield* Effect.tryPromise(() =>
-        this.redisService.setJson(
-          cacheKey,
-          response,
-          AUTH_TOKEN_CACHE_TTL_SECONDS,
-          cachedIdpTokenCodec,
-        ),
+      if (!hasRequiredScopes(response)) {
+        return yield* Effect.fail(
+          new InvalidScopesError(DISCORD_AUTH_SCOPES, response.scopes),
+        );
+      }
+
+      if (isRejected(response)) {
+        return yield* Effect.fail(new DiscordTokenRejectedError());
+      }
+
+      const cacheTtl = Math.min(
+        AUTH_TOKEN_CACHE_TTL_SECONDS,
+        response.expiresIn - AUTH_TOKEN_EXPIRY_MARGIN_SECONDS,
       );
+
+      if (cacheTtl > 0) {
+        yield* Effect.tryPromise(() =>
+          this.redisService.setJson(
+            cacheKey,
+            response,
+            cacheTtl,
+            cachedIdpTokenCodec,
+          ),
+        );
+      }
 
       return response;
     }).pipe(
@@ -187,27 +228,34 @@ export class AuthService {
     );
   }
 
-  invalidateIdpTokenCache(
+  /**
+   * Stops serving a token Discord answered with 401 until the auth service
+   * returns a different one. A failure is logged and does not replace the
+   * Discord error the caller is about to report.
+   */
+  rejectIdpToken(
     userId: string,
-    discordId?: string,
-  ): Effect.Effect<void, AuthServiceUnavailableError> {
-    const invalidate = discordId
-      ? Effect.tryPromise(() =>
-          this.redisService.del(getAuthTokenCacheKey(userId, discordId)),
-        )
-      : Effect.tryPromise(() =>
-          Promise.all([
-            this.redisService.deleteByPattern(getAuthTokenCachePattern(userId)),
-            this.redisService.del(getLegacyAuthTokenCacheKey(userId)),
-          ]),
-        ).pipe(Effect.asVoid);
-
-    return invalidate.pipe(
-      Effect.mapError(
-        (error) =>
-          new AuthServiceUnavailableError(
-            `Failed to invalidate IDP token cache: ${this.getErrorMessage(error)}`,
-          ),
+    discordId: string,
+    accessToken: string,
+  ): Effect.Effect<void> {
+    return Effect.tryPromise(() =>
+      Promise.all([
+        this.redisService.set(
+          getRejectedAuthTokenKey(userId, discordId),
+          fingerprintAccessToken(accessToken),
+          REJECTED_AUTH_TOKEN_TTL_SECONDS,
+        ),
+        this.redisService.del(getAuthTokenCacheKey(userId, discordId)),
+      ]),
+    ).pipe(
+      Effect.asVoid,
+      Effect.catch((error) =>
+        Effect.sync(() =>
+          this.logger.log({
+            level: "warn",
+            message: `Failed to record the rejected Discord token for user ${userId}: ${this.getErrorMessage(error)}`,
+          }),
+        ),
       ),
     );
   }
@@ -288,6 +336,8 @@ export class AuthService {
     return (
       error instanceof AuthServiceUnavailableError ||
       error instanceof AccountNotFoundError ||
+      error instanceof DiscordTokenRejectedError ||
+      error instanceof InvalidScopesError ||
       error instanceof TokenExpiredError ||
       error instanceof AuthBadRequestError
     );

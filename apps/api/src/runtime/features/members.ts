@@ -65,7 +65,6 @@ interface MemberServicesValue {
   readonly refreshMember: (options: {
     readonly discordId: string;
     readonly guildId: string;
-    readonly skipTtlCheck?: boolean;
   }) => Effect.Effect<{ readonly refreshQueued: boolean } | null, unknown>;
   readonly removal: MemberRemoval;
   readonly memberDelivery: MemberDelivery;
@@ -148,14 +147,12 @@ export const memberServicesLive = Layer.effect(
           applicationLogger,
           redis,
           rateLimiter,
-          redlock,
           diagnostics,
           restClientFactory,
           config.environment,
         );
 
         userGuildsClient.initialize();
-        guildMemberClient.initialize();
 
         const discord = makeDiscordOperations(
           userGuildsClient,
@@ -180,7 +177,7 @@ export const memberServicesLive = Layer.effect(
                 member.globalUserId
                   ? Effect.all(
                       [
-                        discord.clearGuildMemberDataCache({
+                        discord.clearGuildMemberCache({
                           discordId: member.discordId,
                           guildId: member.guildId,
                           userId: member.globalUserId,
