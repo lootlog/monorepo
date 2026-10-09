@@ -1,8 +1,24 @@
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
-import { ProfessionSchema } from "@lootlog/schema/loot";
+import { LootSourceSchema, ProfessionSchema } from "@lootlog/schema/loot";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { Schema } from "effect";
-import { FiniteNumber } from "@lootlog/schema/http-scalars";
+import {
+  FiniteNumber,
+  NonEmptyString,
+  PositiveSafeInteger,
+} from "@lootlog/schema/http-scalars";
+
+export const MapPlayersSnapshot = Schema.Array(
+  Schema.Struct({
+    accountId: PositiveSafeInteger,
+    characterId: PositiveSafeInteger,
+    name: NonEmptyString,
+    prof: Schema.NullOr(ProfessionSchema),
+    icon: Schema.NullOr(Schema.String),
+  }),
+).check(Schema.isMinLength(1));
+
+export type MapPlayersSnapshot = typeof MapPlayersSnapshot.Type;
 
 export const LootItemResponse = Schema.Struct({
   id: FiniteNumber,
@@ -52,3 +68,36 @@ export const LootSummary = Schema.Struct({
 });
 
 export type LootSummary = typeof LootSummary.Type;
+
+const LootSubmissionMember = Schema.Struct({
+  name: Schema.String,
+  avatar: Schema.optionalKey(Schema.NullOr(Schema.String)),
+  userId: Schema.String,
+});
+
+const LootSubmission = Schema.Struct({
+  guildId: Schema.String,
+  memberId: Schema.Number,
+  lootId: Schema.Number,
+  member: LootSubmissionMember,
+});
+
+/** One Organization's view of a loot, as its HTTP list and detail responses encode it. */
+export const LootSnapshot = Schema.Struct({
+  id: Schema.Number,
+  uniqueId: Schema.String,
+  world: Schema.String,
+  source: LootSourceSchema,
+  location: Schema.String,
+  items: Schema.Array(LootItemResponse),
+  players: Schema.Array(LootPlayerResponse),
+  mapPlayersSnapshot: Schema.NullOr(MapPlayersSnapshot),
+  npcs: Schema.Array(LootNpcResponse),
+  lootShare: LootShareResponse,
+  createdAt: Schema.String,
+  updatedAt: Schema.String,
+  submissions: Schema.optionalKey(Schema.Array(LootSubmission)),
+  commentsCount: Schema.Number,
+});
+
+export type LootSnapshot = typeof LootSnapshot.Type;
