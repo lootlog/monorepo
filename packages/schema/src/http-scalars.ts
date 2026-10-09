@@ -29,72 +29,25 @@ export const NonEmptyString = Schema.String.check(
 
 export const JsonValue = Schema.Json.annotate({ expected: "JSON value" });
 
-export const SafeInteger = Schema.Number.check(
-  Schema.isInt().annotate({ expected: "an integer" }),
-)
-  .check(
-    Schema.isGreaterThanOrEqualTo(-9007199254740991).annotate({
-      expected: "a value greater than or equal to -9007199254740991",
-    }),
-  )
-  .check(
-    Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-      expected: "a value less than or equal to 9007199254740991",
-    }),
-  );
+const boundedInteger = (minimum: number, maximum: number) =>
+  Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
+    .check(
+      Schema.isGreaterThanOrEqualTo(minimum).annotate({
+        expected: `a value greater than or equal to ${minimum}`,
+      }),
+    )
+    .check(
+      Schema.isLessThanOrEqualTo(maximum).annotate({
+        expected: `a value less than or equal to ${maximum}`,
+      }),
+    );
 
-export const PositiveSafeInteger = Schema.Number.check(
-  Schema.isInt().annotate({ expected: "an integer" }),
-)
-  .check(
-    Schema.isGreaterThanOrEqualTo(1).annotate({
-      expected: "a value greater than or equal to 1",
-    }),
-  )
-  .check(
-    Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-      expected: "a value less than or equal to 9007199254740991",
-    }),
-  );
+export const SafeInteger = boundedInteger(-9007199254740991, 9007199254740991);
 
-export const NonNegativeSafeInteger = Schema.Number.check(
-  Schema.isInt().annotate({ expected: "an integer" }),
-)
-  .check(
-    Schema.isGreaterThanOrEqualTo(0).annotate({
-      expected: "a value greater than or equal to 0",
-    }),
-  )
-  .check(
-    Schema.isLessThanOrEqualTo(9007199254740991).annotate({
-      expected: "a value less than or equal to 9007199254740991",
-    }),
-  );
+export const PositiveSafeInteger = boundedInteger(1, 9007199254740991);
 
-export const LevelFilter = Schema.Number.check(
-  Schema.isInt().annotate({ expected: "an integer" }),
-)
-  .check(
-    Schema.isGreaterThanOrEqualTo(0).annotate({
-      expected: "a value greater than or equal to 0",
-    }),
-  )
-  .check(
-    Schema.isLessThanOrEqualTo(500).annotate({
-      expected: "a value less than or equal to 500",
-    }),
-  );
+export const NonNegativeSafeInteger = boundedInteger(0, 9007199254740991);
 
-export const PageSize = Schema.Number.check(
-  Schema.isInt().annotate({ expected: "an integer" }),
-)
-  .check(
-    Schema.isGreaterThanOrEqualTo(1).annotate({
-      expected: "a value greater than or equal to 1",
-    }),
-  )
-  .check(
-    Schema.isLessThanOrEqualTo(100).annotate({
-      expected: "a value less than or equal to 100",
-    }),
-  );
+export const LevelFilter = boundedInteger(0, 500);
+
+export const PageSize = boundedInteger(1, 100);
