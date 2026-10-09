@@ -99,18 +99,22 @@ const remainingTtl = (aggregate: ReadyRoomAggregate, clock: () => number) =>
 const parseCommit = (
   result: unknown,
   aggregate: ReadyRoomAggregate,
-): CommitReadyRoomResult => {
-  if (!Array.isArray(result) || typeof result[0] !== "string") {
-    throw new Error("Invalid Ready Room commit result from Redis");
-  }
+): Effect.Effect<CommitReadyRoomResult, unknown> =>
+  Effect.try({
+    try: (): CommitReadyRoomResult => {
+      if (!Array.isArray(result) || !Schema.is(Schema.String)(result[0])) {
+        throw new Error("Invalid Ready Room commit result from Redis");
+      }
 
-  if (result[0] === "COMMITTED") return { status: "committed", aggregate };
+      if (result[0] === "COMMITTED") return { status: "committed", aggregate };
 
-  if (result[0] === "CONFLICT") return { status: "conflict" };
+      if (result[0] === "CONFLICT") return { status: "conflict" };
 
-  if (result[0] === "MISSING") return { status: "missing" };
-  throw new Error(`Unknown Ready Room commit result: ${String(result[0])}`);
-};
+      if (result[0] === "MISSING") return { status: "missing" };
+      throw new Error(`Unknown Ready Room commit result: ${String(result[0])}`);
+    },
+    catch: (error) => error,
+  });
 
 const parseCreate = (
   result: unknown,
@@ -291,14 +295,7 @@ export const makeReadyRoomRepository = (
           [roomKey(next.notificationId), ...READY_ROOM_PUBLICATION_KEYS],
           [JSON.stringify(expected), JSON.stringify(next), ttl],
         )
-        .pipe(
-          Effect.flatMap((result) =>
-            Effect.try({
-              try: () => parseCommit(result, next),
-              catch: (error) => error,
-            }),
-          ),
-        );
+        .pipe(Effect.flatMap((result) => parseCommit(result, next)));
     },
     join: (expected, next, participantId) => {
       const ttl = remainingTtl(next, clock);
@@ -338,10 +335,7 @@ export const makeReadyRoomRepository = (
               });
             }
 
-            return Effect.try({
-              try: () => parseCommit(result, next),
-              catch: (error) => error,
-            });
+            return parseCommit(result, next);
           },
         ),
       );
@@ -375,14 +369,7 @@ export const makeReadyRoomRepository = (
             ownerStillPresent ? 1 : 0,
           ],
         )
-        .pipe(
-          Effect.flatMap((result) =>
-            Effect.try({
-              try: () => parseCommit(result, next),
-              catch: (error) => error,
-            }),
-          ),
-        );
+        .pipe(Effect.flatMap((result) => parseCommit(result, next)));
     },
     terminate: (expected, next) => {
       const remaining = remainingTtl(next, clock);
@@ -418,14 +405,7 @@ export const makeReadyRoomRepository = (
             Math.min(remaining, TERMINAL_TOMBSTONE_SECONDS),
           ],
         )
-        .pipe(
-          Effect.flatMap((result) =>
-            Effect.try({
-              try: () => parseCommit(result, next),
-              catch: (error) => error,
-            }),
-          ),
-        );
+        .pipe(Effect.flatMap((result) => parseCommit(result, next)));
     },
   };
 };
