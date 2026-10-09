@@ -1,3 +1,8 @@
+import {
+  SETTINGS_DOMAINS,
+  type SettingsDomain,
+  type SettingsScopeType,
+} from "@lootlog/schema/settings-documents";
 import { Schema, Predicate } from "effect";
 import { isSettingsRecord } from "./settings-paths.js";
 import {
@@ -26,28 +31,6 @@ import type {
   NotificationsSettings,
 } from "@lootlog/schema/account-preferences";
 import type { NotificationMutes } from "@lootlog/schema/user-preferences";
-
-export const SETTINGS_DOMAINS = [
-  "general",
-  "appearance",
-  "chat",
-  "timers",
-  "gameData",
-  "notifications",
-  "sounds",
-  "controls",
-] as const;
-
-export type SettingsDomain = (typeof SETTINGS_DOMAINS)[number];
-
-export const SETTINGS_SCOPE_TYPES = [
-  "USER",
-  "GAME_ACCOUNT",
-  "CHARACTER",
-  "GUILD",
-] as const;
-
-export type SettingsScopeType = (typeof SETTINGS_SCOPE_TYPES)[number];
 
 export const getCharacterSettingsScopeId = (
   gameAccountId: string,
