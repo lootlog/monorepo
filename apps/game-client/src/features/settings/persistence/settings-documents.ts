@@ -3,13 +3,13 @@ import { Schema } from "effect";
 import {
   GuildSettingsDocumentsResponseSchema,
   SettingsDocumentsResponseSchema,
+  SETTINGS_DOMAINS,
+  type SettingsDomain,
 } from "@lootlog/schema/settings-documents";
 import {
   SETTINGS_CATALOG,
-  SETTINGS_DOMAINS,
   type ServerSettingsCatalogKey,
   type SettingsCatalogValue,
-  type SettingsDomain,
   type SettingsFieldDefinition,
 } from "@lootlog/domain/settings-documents";
 import {

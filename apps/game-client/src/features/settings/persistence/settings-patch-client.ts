@@ -2,10 +2,8 @@ import { collectLeafPaths } from "@lootlog/domain/settings-paths";
 import { queryClient } from "@/lib/query-client";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import { useGameStore } from "@/store/game.store";
-import {
-  getCharacterSettingsScopeId,
-  type SettingsDomain,
-} from "@lootlog/domain/settings-documents";
+import { getCharacterSettingsScopeId } from "@lootlog/domain/settings-documents";
+import type { SettingsDomain } from "@lootlog/schema/settings-documents";
 import {
   getUsersControllerGetUserPreferencesQueryKey,
   settingsDocumentsControllerPatchPreferences,
