@@ -30,6 +30,7 @@ import { useTranslation } from "react-i18next";
 import type { PartyGatheringOrchestration } from "@/features/party-finder/hooks/use-party-gathering-orchestration";
 import { NpcNotificationCooldown } from "@/features/npc-detector/components/npc-notification-cooldown";
 import { NPC_NOTIFICATION_COOLDOWN_MS } from "@/features/npc-detector/hooks/use-npc-list-lifecycle";
+import { NotificationChatPublishError } from "@/features/chat/hooks/use-notification-chat-orchestration";
 
 type NpcListItemProps = {
   animationEffectsEnabled: boolean;
@@ -102,13 +103,7 @@ export const NpcListItem = ({
 
     if (!npc || !world) return;
 
-    try {
-      await startNpcNotification({
-        npc,
-        guildIds: resolvedGuildIds,
-        world,
-      });
-
+    const markNotificationSent = () => {
       setNpcState(npc.id, {
         ...npc,
         notificationSentAt: Date.now(),
@@ -116,10 +111,51 @@ export const NpcListItem = ({
 
       if (selectOwnedReadyRoom(readReadyRoomCache()))
         setOpen("party-finder", true);
+    };
+
+    try {
+      await startNpcNotification({
+        npc,
+        guildIds: resolvedGuildIds,
+        world,
+      });
+      markNotificationSent();
     } catch (error) {
+      if (error instanceof NotificationChatPublishError) {
+        console.warn("Failed to publish notification to chat:", error.cause);
+        markNotificationSent();
+        reportChatPublishFailure(error.retryChat);
+
+        return;
+      }
+
       console.warn("Failed to send notification:", error);
       toast.error(t("actions.messageFailed"));
     }
+  };
+
+  // The alert was accepted, so retrying must repeat only the chat step:
+  // another alert would reopen the recipients' alarm and replay its sound.
+  const reportChatPublishFailure = (
+    retryChat: NotificationChatPublishError["retryChat"],
+  ) => {
+    toast.warning(t("actions.chatPublishFailed"), {
+      action: {
+        label: t("common:actions.retry"),
+        onClick: () => {
+          retryChat().then(
+            () => toast.success(t("actions.chatPublished")),
+            (retryError) => {
+              console.warn(
+                "Failed to publish notification to chat:",
+                retryError,
+              );
+              reportChatPublishFailure(retryChat);
+            },
+          );
+        },
+      },
+    });
   };
 
   const handleGatherParty = async (npc: GameNpcWithLocation) => {

@@ -8,6 +8,8 @@
     "messageSent": "Wysłano",
     "message": "Komunikat",
     "messageFailed": "Nie udało się wysłać komunikatu",
+    "chatPublishFailed": "Powiadomienie wysłano, ale nie udało się zapisać go w czacie.",
+    "chatPublished": "Zapisano powiadomienie w czacie",
     "gatheringParty": "Tworzenie zbiórki…",
     "alreadyGatheringParty": "Masz już aktywną zbiórkę",
     "gatherParty": "Utwórz zbiórkę",
