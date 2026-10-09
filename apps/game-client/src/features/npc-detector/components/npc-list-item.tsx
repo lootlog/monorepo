@@ -136,10 +136,14 @@ export const NpcListItem = ({
 
   // The alert was accepted, so retrying must repeat only the chat step:
   // another alert would reopen the recipients' alarm and replay its sound.
+  // The warning stays until dismissed so the retry is not lost on a timer.
   const reportChatPublishFailure = (
     retryChat: NotificationChatPublishError["retryChat"],
   ) => {
     toast.warning(t("actions.chatPublishFailed"), {
+      id: `npc-chat-publish-${npc.id}`,
+      duration: Number.POSITIVE_INFINITY,
+      closeButton: true,
       action: {
         label: t("common:actions.retry"),
         onClick: () => {
