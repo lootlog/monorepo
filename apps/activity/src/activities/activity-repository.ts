@@ -15,6 +15,7 @@ import {
   ne,
   or,
   sql as drizzleSql,
+  type SQL,
 } from "drizzle-orm";
 import {
   Clock,
@@ -546,27 +547,43 @@ export class ActivityRepository extends Context.Service<
             ),
         );
 
+      const suggestSnapshotNames = Effect.fnUntraced(function* (
+        column:
+          | typeof activityActorSnapshots.name
+          | typeof activityActorSnapshots.clanName,
+        guildId: string,
+        search: string | undefined,
+        limit: number,
+        extraCondition?: SQL,
+      ) {
+        const n = normalize(limit);
+
+        const rows = yield* db
+          .select({ value: column })
+          .from(activityActorSnapshots)
+          .where(
+            and(
+              snapshotHasGuildActivity(guildId),
+              extraCondition,
+              search?.trim() ? ilike(column, `%${search.trim()}%`) : undefined,
+            ),
+          )
+          .orderBy(desc(activityActorSnapshots.createdAt))
+          .limit(n * 2);
+
+        return dedupe(
+          rows.map((r) => r.value),
+          n,
+        );
+      });
+
       const suggestActorNames = Effect.fn("ActivityRepository.suggestActors")(
         function* (guildId: string, search?: string, limit = 10) {
-          const n = normalize(limit);
-
-          const rows = yield* db
-            .select({ value: activityActorSnapshots.name })
-            .from(activityActorSnapshots)
-            .where(
-              and(
-                snapshotHasGuildActivity(guildId),
-                search?.trim()
-                  ? ilike(activityActorSnapshots.name, `%${search.trim()}%`)
-                  : undefined,
-              ),
-            )
-            .orderBy(desc(activityActorSnapshots.createdAt))
-            .limit(n * 2);
-
-          return dedupe(
-            rows.map((r) => r.value),
-            n,
+          return yield* suggestSnapshotNames(
+            activityActorSnapshots.name,
+            guildId,
+            search,
+            limit,
           );
         },
       );
@@ -599,26 +616,12 @@ export class ActivityRepository extends Context.Service<
 
       const suggestClanNames = Effect.fn("ActivityRepository.suggestClans")(
         function* (guildId: string, search?: string, limit = 10) {
-          const n = normalize(limit);
-
-          const rows = yield* db
-            .select({ value: activityActorSnapshots.clanName })
-            .from(activityActorSnapshots)
-            .where(
-              and(
-                snapshotHasGuildActivity(guildId),
-                ne(activityActorSnapshots.clanName, ""),
-                search?.trim()
-                  ? ilike(activityActorSnapshots.clanName, `%${search.trim()}%`)
-                  : undefined,
-              ),
-            )
-            .orderBy(desc(activityActorSnapshots.createdAt))
-            .limit(n * 2);
-
-          return dedupe(
-            rows.map((r) => r.value),
-            n,
+          return yield* suggestSnapshotNames(
+            activityActorSnapshots.clanName,
+            guildId,
+            search,
+            limit,
+            ne(activityActorSnapshots.clanName, ""),
           );
         },
       );
