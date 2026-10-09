@@ -10,6 +10,7 @@ import {
   readEnvFile,
 } from "../../utils/file-utils.js";
 import {
+  SHARED_SERVICE_SECRET_KEYS,
   generateEnvValues,
   extractSharedValues,
   enhanceVariablesWithDerivedValues,
@@ -185,11 +186,7 @@ ${chalk.bold("Note:")}
   let sharedValues = new Map<string, string>();
 
   if (options.auto && (!options.force || options.skipExisting)) {
-    for (const secretKey of [
-      "ACTIVITY_EVENT_SIGNATURE_SECRET",
-      "AUTH_IDP_TOKEN_SECRET",
-      "BATTLELOG_CLEANUP_SECRET",
-    ]) {
+    for (const secretKey of SHARED_SERVICE_SECRET_KEYS) {
       for (const envFile of envFiles) {
         if (!existsSync(envFile.path)) continue;
 
