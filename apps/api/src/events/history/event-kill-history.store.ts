@@ -1,3 +1,4 @@
+import { takeKeysetPage } from "#src/shared/keyset-page";
 import { topMemberDisplayRoles } from "#src/members/member-display-role";
 import {
   and,
@@ -132,10 +133,11 @@ export const makeEventKillHistoryStore = (
   // TODO(kill-history-legacy): Remove this full-row page adapter; orderedKills still serves findLeanPage.
   const findPage = (query: HistoryPageQuery) =>
     orderedKills(query).pipe(
-      Effect.map((kills) => ({
-        kills: kills.slice(0, query.limit),
-        hasMore: kills.length > query.limit,
-      })),
+      Effect.map((rows) => {
+        const { rows: kills, hasMore } = takeKeysetPage(rows, query.limit);
+
+        return { kills, hasMore };
+      }),
     );
 
   const findLeanPage = (query: HistoryPageQuery) => {
@@ -178,7 +180,12 @@ export const makeEventKillHistoryStore = (
         .innerJoin(eventHeroNpcTable, eq(eventHeroNpcTable.id, page.heroNpcId))
         .leftJoin(counts, eq(counts.killId, page.id))
         .orderBy(desc(page.killedAt), desc(page.id))
-        .pipe(Effect.map((rows) => ({ kind: "event" as const, rows })));
+        .pipe(
+          Effect.map((rows) => ({
+            kind: "event" as const,
+            ...takeKeysetPage(rows, query.limit),
+          })),
+        );
     }
 
     const memberPoint = alias(eventKillPointTable, "history_member_point");
@@ -207,7 +214,12 @@ export const makeEventKillHistoryStore = (
         ),
       )
       .orderBy(desc(page.killedAt), desc(page.id))
-      .pipe(Effect.map((rows) => ({ kind: "member" as const, rows })));
+      .pipe(
+        Effect.map((rows) => ({
+          kind: "member" as const,
+          ...takeKeysetPage(rows, query.limit),
+        })),
+      );
   };
 
   // TODO(kill-history-legacy): Remove UUID anchor lookup when the three old lists are retired.
