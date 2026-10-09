@@ -107,8 +107,12 @@ const issueRevokedDiscordToken = async (
       scopes: DISCORD_AUTH_SCOPES,
     });
   await redis.set(
-    getRejectedAuthTokenKey(identity.userId, identity.discordId),
-    fingerprintAccessToken("revoked-token"),
+    getRejectedAuthTokenKey(
+      identity.userId,
+      identity.discordId,
+      fingerprintAccessToken("revoked-token"),
+    ),
+    "1",
     60,
   );
 };
