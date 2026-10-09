@@ -237,6 +237,23 @@ describe("environment value generation", () => {
   });
 
   test("derives application connection values", assertDerivedAppValues);
+  test("infers an unknown app's database before matching the default PostgreSQL port", () => {
+    const variables = enhanceVariablesWithDerivedValues(
+      [
+        envVariable(
+          "POSTGRESQL_CONNECTION_URI",
+          "postgresql://user:password@localhost:5432/activity_log",
+        ),
+      ],
+      sharedValues,
+      "apps/custom",
+    );
+
+    assert.equal(
+      getValue(variables, "POSTGRESQL_CONNECTION_URI"),
+      "postgresql://activity_user:activity_password@localhost:5435/activity_db",
+    );
+  });
   test("derives Auth database values", assertAuthValues);
   test("derives Search integration values", assertSearchValues);
   test("reuses generated root values", assertGeneratedRootValuesCanBeReused);
