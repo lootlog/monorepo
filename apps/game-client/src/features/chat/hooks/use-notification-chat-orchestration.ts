@@ -10,7 +10,11 @@ type StartNotificationMessageOptions<TResult> = {
 };
 
 export class NotificationChatPublishError extends Error {
-  constructor(cause: unknown) {
+  constructor(
+    cause: unknown,
+    // Repeats only the chat step; the accepted notification is not resent.
+    readonly retryChat: () => Promise<void>,
+  ) {
     super("Notification delivered, chat publishing failed", { cause });
     this.name = "NotificationChatPublishError";
   }
@@ -44,7 +48,9 @@ export const useNotificationChatOrchestration = () => {
 
       const result = await sendChatMessage(resolvedGuildIds).catch(
         (cause: unknown) => {
-          throw new NotificationChatPublishError(cause);
+          throw new NotificationChatPublishError(cause, async () => {
+            await sendChatMessage(resolvedGuildIds);
+          });
         },
       );
 
