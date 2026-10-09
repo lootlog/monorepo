@@ -326,13 +326,10 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
     options: {
       source: ChannelSource;
       excludeChannelId?: string;
-      syncedAt?: string;
     },
   ) =>
     Effect.gen(function* () {
-      const syncedAt =
-        options?.syncedAt ??
-        new Date(yield* Clock.currentTimeMillis).toISOString();
+      const syncedAt = new Date(yield* Clock.currentTimeMillis).toISOString();
 
       const botMember =
         guild.members.me ??
