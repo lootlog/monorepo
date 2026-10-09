@@ -23,6 +23,7 @@ import {
   REALTIME_GLOBAL_CHAT_CAPABILITY,
   REALTIME_GLOBAL_CHAT_CHANNELS_CAPABILITY,
   REALTIME_FEED_CAPABILITY,
+  REALTIME_LOOT_SNAPSHOT_CAPABILITY,
   REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
   REALTIME_PARTY_GATHERING_STATE_CAPABILITY,
   REALTIME_JSON_SUBPROTOCOL,
@@ -345,6 +346,9 @@ const negotiateCapabilities = (
 
   return {
     supportsFeed: offeredProtocols.includes(REALTIME_FEED_CAPABILITY),
+    supportsLootSnapshot:
+      !apiKeyAccess &&
+      offeredProtocols.includes(REALTIME_LOOT_SNAPSHOT_CAPABILITY),
     supportsSessionHello: offersGameCapability(
       REALTIME_SESSION_HELLO_CAPABILITY,
     ),

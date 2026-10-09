@@ -7,7 +7,7 @@ import {
   resolveNpcSnapshots,
 } from "./loot-snapshot.persistence.js";
 import { resolvePlayerSnapshots } from "#src/shared/margonem/player-snapshot.persistence";
-import type { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
+import type { MapPlayersSnapshot } from "@lootlog/protocol/loot-summary";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { DependencyUnavailableError } from "#src/shared/http/http-errors";
 import { and, desc, eq, inArray, isNull, ne, or } from "drizzle-orm";

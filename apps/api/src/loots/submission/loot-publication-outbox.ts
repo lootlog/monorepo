@@ -2,6 +2,11 @@ import { readPublishedFeedEntry } from "#src/feed/user-feed";
 import { and, asc, eq, inArray, isNull, notInArray, sql } from "drizzle-orm";
 import { Clock, Effect, Metric, Schema } from "effect";
 import { GuildLootCreatedEventV2Schema } from "@lootlog/schema/loot-events";
+import type { GuildLootCreatedMessageV2 } from "@lootlog/protocol/rabbit/events";
+import type { LootSnapshot } from "@lootlog/protocol/loot-summary";
+import type { LootQueryOperations } from "#src/loots/query/loot-query.operations";
+import { LootResponse } from "#src/loots/loot-response.schema";
+import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
 import { LootCreatedNotificationEventV2Schema } from "@lootlog/schema/notifications";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { RabbitMessaging } from "@lootlog/messaging";
@@ -49,11 +54,27 @@ const lootPublicationAge = Metric.histogram("loot.publication.age_ms", {
   boundaries: [100, 1000, 5000, 30_000, 60_000, 300_000, 900_000],
 });
 
+/** Encodes a loot for `loot.created` exactly as its Organization's HTTP responses do. */
+export const makeLootSnapshotReader =
+  (query: Pick<LootQueryOperations, "fetchOrganizationLoot">) =>
+  (guildId: string, lootId: number) =>
+    query
+      .fetchOrganizationLoot(guildId, lootId)
+      .pipe(
+        Effect.map((loot) =>
+          loot ? encodeUnknownResponse(LootResponse, loot) : null,
+        ),
+      );
+
 /** One locked intent per transaction; failed deliveries remain durable for the next poll. */
 export const makeLootPublicationDispatcher = (
   database: typeof ApiDatabase.Service,
   rabbit: Pick<typeof RabbitMessaging.Service, "publish">,
   invalidateCaches: (organizationIds: string[]) => Effect.Effect<void, unknown>,
+  readLoot: (
+    guildId: string,
+    lootId: number,
+  ) => Effect.Effect<LootSnapshot | null, unknown>,
 ) => {
   // ponytail: one delivery holds one DB transaction; use leased batches if measured throughput requires it.
   const dispatchOne = (attempted: number[]) => {
@@ -117,11 +138,26 @@ export const makeLootPublicationDispatcher = (
                   { lootId: payload.data.lootId },
                 );
 
-                const publishedData = feedEntry
-                  ? { ...payload.data, feedEntry }
-                  : { ...payload.data };
+                // Without a snapshot, web clients read the loot back instead.
+                const loot = yield* readLoot(
+                  payload.data.guildId,
+                  payload.data.lootId,
+                ).pipe(
+                  Effect.catch((error) =>
+                    Effect.logWarning(
+                      "Loot publication continues without a snapshot",
+                    ).pipe(
+                      Effect.annotateLogs({ publicationId: row.id, error }),
+                      Effect.as(null),
+                    ),
+                  ),
+                );
 
-                data = publishedData;
+                data = {
+                  ...payload.data,
+                  ...(feedEntry && { feedEntry }),
+                  ...(loot && { loot }),
+                } satisfies GuildLootCreatedMessageV2;
               }
 
               const publication = rabbit.publish({

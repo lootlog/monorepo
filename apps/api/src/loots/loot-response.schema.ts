@@ -1,44 +1,14 @@
 import { IsoDateTime } from "@lootlog/schema/primitives";
-import { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
-import {
-  LootItemResponse,
-  LootPlayerResponse,
-  LootNpcResponse,
-  LootShareResponse,
-} from "@lootlog/protocol/loot-summary";
-import { LootSourceSchema } from "@lootlog/schema/loot";
+import { LootSnapshot } from "@lootlog/protocol/loot-summary";
 import { Schema } from "effect";
-
-const LootSubmissionMemberResponse = Schema.Struct({
-  name: Schema.String,
-  avatar: Schema.optionalKey(Schema.NullOr(Schema.String)),
-  userId: Schema.String,
-});
-
-const LootSubmissionResponse = Schema.Struct({
-  guildId: Schema.String,
-  memberId: Schema.Number,
-  lootId: Schema.Number,
-  member: LootSubmissionMemberResponse,
-});
 
 export type LootShare = Record<string, string[]>;
 
+// The realtime snapshot carries this response in its encoded form.
 export const LootResponse = Schema.Struct({
-  id: Schema.Number,
-  uniqueId: Schema.String,
-  world: Schema.String,
-  source: LootSourceSchema,
-  location: Schema.String,
-  items: Schema.Array(LootItemResponse),
-  players: Schema.Array(LootPlayerResponse),
-  mapPlayersSnapshot: Schema.NullOr(MapPlayersSnapshot),
-  npcs: Schema.Array(LootNpcResponse),
-  lootShare: LootShareResponse,
+  ...LootSnapshot.fields,
   createdAt: IsoDateTime,
   updatedAt: IsoDateTime,
-  submissions: Schema.optionalKey(Schema.Array(LootSubmissionResponse)),
-  commentsCount: Schema.Number,
 });
 
 export type LootResponse = typeof LootResponse.Type;

@@ -8,18 +8,21 @@ import {
   useResetScrollTop,
   useVirtualInfiniteScroll,
 } from "@/hooks/utils/use-virtual-infinite-scroll";
-import type { Loot } from "@/lib/loots/loot-types";
+import { lootFromSnapshot, type Loot } from "@/lib/loots/loot-types";
 import {
-  getLootsControllerFetchLootByIdQueryKey,
   getLootsControllerFetchLootsByGuildIdQueryKey,
   lootsControllerFetchLootsByGuildId,
   useUsersControllerGetCurrentUserAccessibleGuilds,
   type LootsControllerFetchLootsByGuildIdParams,
 } from "@lootlog/client/main";
 import {
+  LOOTS_PAGE_LIMIT,
   LOOTS_QUERY_GC_TIME_MS,
-  reconcileActiveLootLists,
+  applyLootSnapshots,
   clearLootPolicyData,
+  lootMatchesListParams,
+  patchLootShare,
+  reconcileActiveLootLists,
 } from "./loot-list-cache";
 
 import { createLootListReconciliation } from "./loot-list-reconciliation";
@@ -38,6 +41,7 @@ import type {
   GuildLootShareUpdatedEventV2,
 } from "@lootlog/schema/loot-events";
 import type { AccessPolicyChange } from "@lootlog/protocol/realtime/access-policy";
+import type { LootSnapshotEvent } from "@lootlog/protocol/realtime";
 import {
   hashKey,
   useInfiniteQuery,
@@ -46,8 +50,6 @@ import {
 } from "@tanstack/react-query";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-
-const LOOTS_PAGE_LIMIT = 20;
 
 const LOOTS_QUERY_STALE_TIME_MS = 30_000;
 
@@ -187,8 +189,9 @@ export const useLiveLootList = () => {
         { signal },
       );
     },
+    // A live loot placed in the last page may grow it past the limit.
     getNextPageParam: (lastPage) =>
-      lastPage.length === LOOTS_PAGE_LIMIT
+      lastPage.length >= LOOTS_PAGE_LIMIT
         ? lastPage[lastPage.length - 1]?.id
         : undefined,
     initialPageParam: 0,
@@ -200,20 +203,82 @@ export const useLiveLootList = () => {
     refetchOnReconnect: false,
   });
 
+  const scrollsDocument = usePageScrollsDocument();
+
+  const scrolledToTop = () =>
+    (getPageScroller(scrollElement, scrollsDocument)?.getScrollTop() ?? 0) < 1;
+
+  const isScrolledToTop = useEffectEvent(scrolledToTop);
+
+  // Snapshots wait while the list is fetching, which would replace the pages
+  // they are placed in, or while the reader is away from its top. They belong
+  // to the Organization that sent them.
+  const [pending, setPending] = useState<{
+    organizationId?: string;
+    loots: readonly Loot[];
+  }>({ loots: EMPTY_LOOTS });
+
+  const pendingLoots =
+    pending.organizationId === currentGuildId ? pending.loots : EMPTY_LOOTS;
+
+  // The cache, not this render, knows whether a fetch is about to replace the
+  // pages a loot would be placed in.
+  const canPlaceLoots = () => {
+    const state = queryClient.getQueryState<LootsInfiniteData>(queryKey);
+
+    return (
+      state?.fetchStatus === "idle" &&
+      hasFetchedPage(state.data) &&
+      scrolledToTop()
+    );
+  };
+
+  const placeLoots = (placed: readonly Loot[]) => {
+    if (guildId && applyLootSnapshots(queryClient, guildId, placed))
+      reconciliationRef.current?.markDirty();
+  };
+
   const handleLootShareUpdate = useEffectEvent(
     (payload: GuildLootShareUpdatedEventV2) => {
       if (!guildId || payload.guildId !== currentGuildId) return;
-      // A cached detail can be patched without fetching an unseen loot.
-      queryClient.setQueryData<Loot | null>(
-        getLootsControllerFetchLootByIdQueryKey({
-          guildId,
-          lootId: payload.lootId,
-        }),
-        (old) => (old ? { ...old, lootShare: payload.lootShare } : old),
-      );
-      reconciliationRef.current?.markDirty();
+      const { lootId, lootShare } = payload;
+      patchLootShare(queryClient, guildId, lootId, lootShare);
+      setPending((current) => ({
+        ...current,
+        loots: current.loots.map((loot) =>
+          loot.id === lootId ? { ...loot, lootShare } : loot,
+        ),
+      }));
     },
   );
+
+  const handleLootSnapshot = useEffectEvent((payload: LootSnapshotEvent) => {
+    if (payload.guildId !== currentGuildId) return;
+
+    if (!payload.loot) {
+      reconciliationRef.current?.markDirty();
+
+      return;
+    }
+
+    const loot = lootFromSnapshot(payload.loot);
+
+    if (pendingLoots.length === 0 && canPlaceLoots()) {
+      placeLoots([loot]);
+
+      return;
+    }
+
+    setPending((current) => ({
+      organizationId: payload.guildId,
+      loots: [
+        ...(current.organizationId === payload.guildId
+          ? current.loots.filter((entry) => entry.id !== loot.id)
+          : []),
+        loot,
+      ],
+    }));
+  });
 
   const clearRestrictedLoots = useEffectEvent(
     (organizationIds?: readonly string[]) => {
@@ -228,16 +293,16 @@ export const useLiveLootList = () => {
         return aliases;
       });
 
+      const { organizationId } = pending;
+
+      if (
+        !organizationIds ||
+        (organizationId && organizationIds.includes(organizationId))
+      )
+        setPending({ loots: EMPTY_LOOTS });
+
       return clearLootPolicyData(queryClient, routes);
     },
-  );
-
-  const scrollsDocument = usePageScrollsDocument();
-
-  const isScrolledToTop = useEffectEvent(
-    () =>
-      (getPageScroller(scrollElement, scrollsDocument)?.getScrollTop() ?? 0) <
-      1,
   );
 
   useEffect(() => {
@@ -262,6 +327,10 @@ export const useLiveLootList = () => {
 
     const onLootShareUpdate = (payload: GuildLootShareUpdatedEventV2) => {
       handleLootShareUpdate(payload);
+    };
+
+    const onLootSnapshot = (payload: LootSnapshotEvent) => {
+      handleLootSnapshot(payload);
     };
 
     const restrictedOrganizations = (changes: readonly AccessPolicyChange[]) =>
@@ -325,6 +394,7 @@ export const useLiveLootList = () => {
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, onPermissions);
     socket.on(GatewayEvent.LOOTS_CREATE, onLootCreate);
     socket.on(GatewayEvent.LOOTS_SHARE_UPDATE, onLootShareUpdate);
+    socket.on(GatewayEvent.LOOTS_SNAPSHOT, onLootSnapshot);
     document.addEventListener("visibilitychange", resume);
 
     return () => {
@@ -335,6 +405,7 @@ export const useLiveLootList = () => {
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, onPermissions);
       socket.off(GatewayEvent.LOOTS_CREATE, onLootCreate);
       socket.off(GatewayEvent.LOOTS_SHARE_UPDATE, onLootShareUpdate);
+      socket.off(GatewayEvent.LOOTS_SNAPSHOT, onLootSnapshot);
       document.removeEventListener("visibilitychange", resume);
     };
   }, [
@@ -395,8 +466,52 @@ export const useLiveLootList = () => {
     virtualItems: gridVirtualItems,
   });
 
+  const placePendingLoots = () => {
+    if (pendingLoots.length === 0 || !canPlaceLoots()) return;
+    placeLoots(pendingLoots);
+    setPending({ loots: EMPTY_LOOTS });
+  };
+
+  const handleListChange = useEffectEvent(placePendingLoots);
+
+  // Waiting loots are placed when the reader returns to the top or a fetch
+  // settles. Placing a loot writes data manually, which never re-enters here.
+  useEffect(() => {
+    const target = getPageScroller(scrollElement, scrollsDocument)?.eventTarget;
+    const onScroll = () => handleListChange();
+
+    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
+      if (
+        event.type === "updated" &&
+        event.query.queryHash === queryIdentity &&
+        (event.action.type === "error" ||
+          (event.action.type === "success" && !event.action.manual))
+      )
+        handleListChange();
+    });
+
+    target?.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      unsubscribe();
+      target?.removeEventListener("scroll", onScroll);
+    };
+  }, [queryClient, queryIdentity, scrollElement, scrollsDocument]);
+
   const resumeReconciliation = () => reconciliationRef.current?.resume();
+
   useDocumentScrollListener(resumeReconciliation);
+
+  const newLootCount = pendingLoots.filter(
+    (loot) =>
+      !allLoots.some((entry) => entry.id === loot.id) &&
+      lootMatchesListParams(loot, lootQueryParams) !== false,
+  ).length;
+
+  const showNewLoots = () => {
+    getPageScroller(scrollElement, scrollsDocument)?.scrollTo({ top: 0 });
+    placePendingLoots();
+  };
 
   const hasLoots = hasInitialLoots(loots);
 
@@ -435,6 +550,8 @@ export const useLiveLootList = () => {
     t,
     themedKey,
     resumeReconciliation,
+    newLootCount,
+    showNewLoots,
     virtualizer,
     virtualItems,
     totalCount,

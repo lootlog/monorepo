@@ -1,7 +1,7 @@
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { Effect } from "effect";
 import { uniqBy } from "es-toolkit";
-import type { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
+import type { MapPlayersSnapshot } from "@lootlog/protocol/loot-summary";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   lootMapPlayerTable,

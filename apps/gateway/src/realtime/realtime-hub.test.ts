@@ -1407,12 +1407,17 @@ describe("RealtimeHub federation", () => {
       { name: "game", roles: [role(read)] },
       { name: "other-guild", roles: [role(read)] },
       { name: "legacy", roles: [role(read)] },
+      { name: "snapshot", roles: [role(read)] },
+      { name: "snapshot-low-level", roles: [role(read, 0, 99)] },
     ];
 
     const targets = hubs.map((hub, index) =>
       variants.map((variant) => {
         const session = makeSession(`${index}-${variant.name}`);
-        Object.assign(session, { supportsFeed: variant.name !== "legacy" });
+        Object.assign(session, {
+          supportsFeed: variant.name !== "legacy",
+          supportsLootSnapshot: variant.name.startsWith("snapshot"),
+        });
 
         if (variant.name === "game")
           Object.assign(session, { platform: "game" });
@@ -1519,7 +1524,7 @@ describe("RealtimeHub federation", () => {
 
           for (const group of targets)
             expect(group.map((target) => target.sent.length)).toEqual([
-              2, 0, 0, 0, 2, 2, 0, 0, 0,
+              2, 0, 0, 0, 2, 2, 0, 0, 0, 2, 0,
             ]);
 
           for (const group of targets)
@@ -1542,12 +1547,29 @@ describe("RealtimeHub federation", () => {
             additionalItemsCount: 0,
           };
 
+          const loot = {
+            id: 1,
+            uniqueId: "loot-1",
+            world: "tempest",
+            source: "FIGHT" as const,
+            location: "Map",
+            items: [],
+            players: [],
+            mapPlayersSnapshot: null,
+            npcs: [],
+            lootShare: {},
+            createdAt: "2026-09-06T12:00:00.000Z",
+            updatedAt: "2026-09-06T12:00:00.000Z",
+            commentsCount: 0,
+          };
+
           const lootPayload = {
             version: 2,
             guildId: "organization-1",
             lootId: 1,
             npcs: [{ type: "HERO", lvl: 100 }],
             feedEntry: lootEntry,
+            loot,
           };
 
           const lootContent = Buffer.from(JSON.stringify(lootPayload));
@@ -1575,8 +1597,20 @@ describe("RealtimeHub federation", () => {
 
           for (const group of targets) {
             expect(group.map((target) => target.sent.length)).toEqual([
-              4, 0, 0, 0, 2, 4, 1, 0, 1,
+              4, 0, 0, 0, 2, 4, 1, 0, 1, 4, 0,
             ]);
+            // Only snapshot sessions receive the loot, and only through `loot.snapshot`.
+            expect(decodeRealtimeFrame(group[9]!.sent[2]!)).toEqual({
+              v: 1,
+              type: "loot.snapshot",
+              data: {
+                version: 2,
+                guildId: "organization-1",
+                lootId: 1,
+                npcs: [{ type: "HERO", lvl: 100 }],
+                loot,
+              },
+            });
             expect(decodeRealtimeFrame(group[0]!.sent[2]!)).toEqual({
               v: 1,
               type: "loot.created",

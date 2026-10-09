@@ -15,7 +15,13 @@ import { ThemeEmptyStateIcon } from "@/themes";
 import { Button } from "@lootlog/ui/components/button";
 import { EmptyMedia } from "@lootlog/ui/components/empty";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { CircleAlert, PackageOpen, RotateCcw, SearchX } from "lucide-react";
+import {
+  ArrowUp,
+  CircleAlert,
+  PackageOpen,
+  RotateCcw,
+  SearchX,
+} from "lucide-react";
 
 import { useLiveLootList } from "./use-live-loot-list";
 import { LootListItemStacksProvider } from "./loot-list-item-stacks-provider";
@@ -43,6 +49,8 @@ export const LootsList = () => {
     t,
     themedKey,
     resumeReconciliation,
+    newLootCount,
+    showNewLoots,
     virtualizer,
     virtualItems,
     totalCount,
@@ -124,6 +132,23 @@ export const LootsList = () => {
         ref={setScrollElement}
         onScroll={resumeReconciliation}
       >
+        {/* Phones scroll the document under the app bar; wider screens scroll this viewport. */}
+        <div
+          aria-live="polite"
+          className="pointer-events-none fixed inset-x-0 top-16 z-10 flex justify-center md:sticky md:inset-x-auto md:top-2 md:h-0"
+        >
+          {newLootCount > 0 && (
+            <Button
+              type="button"
+              size="sm"
+              className="pointer-events-auto"
+              onClick={showNewLoots}
+            >
+              <ArrowUp className="size-4" aria-hidden />
+              {t("loots.list.newLoots", { count: newLootCount })}
+            </Button>
+          )}
+        </div>
         {isPending ? (
           <LootsListSkeleton viewMode={viewMode} />
         ) : viewMode === "grid" ? (
