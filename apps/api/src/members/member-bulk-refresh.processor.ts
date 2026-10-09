@@ -1,5 +1,5 @@
 import { Clock, Effect, Result } from "effect";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import type { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
@@ -11,7 +11,6 @@ export const makeMemberBulkRefreshProcessor = (
   refreshMember: (options: {
     readonly discordId: string;
     readonly guildId: string;
-    readonly skipTtlCheck: boolean;
   }) => Effect.Effect<{ readonly refreshQueued: boolean } | null, unknown>,
 ) => {
   const emitRefreshJobUpdate = (
@@ -57,10 +56,13 @@ export const makeMemberBulkRefreshProcessor = (
   }) =>
     Effect.gen(function* () {
       const { jobId, guildId, memberIds } = job.data;
+      // A retried attempt starts over, so its counts replace the last attempt's.
       yield* database
         .update(memberRefreshJobTable)
         .set({
           status: "PROCESSING",
+          processedMembers: 0,
+          failedMembers: 0,
           updatedAt: new Date(yield* Clock.currentTimeMillis),
         })
         .where(eq(memberRefreshJobTable.id, jobId));
@@ -72,11 +74,7 @@ export const makeMemberBulkRefreshProcessor = (
 
       for (const memberId of memberIds) {
         const result = yield* Effect.result(
-          refreshMember({
-            discordId: memberId,
-            guildId,
-            skipTtlCheck: true,
-          }),
+          refreshMember({ discordId: memberId, guildId }),
         );
 
         if (Result.isFailure(result)) {
@@ -84,7 +82,7 @@ export const makeMemberBulkRefreshProcessor = (
           yield* database
             .update(memberRefreshJobTable)
             .set({
-              failedMembers: sql`${memberRefreshJobTable.failedMembers} + 1`,
+              failedMembers: failedIds.length,
               updatedAt: new Date(yield* Clock.currentTimeMillis),
             })
             .where(eq(memberRefreshJobTable.id, jobId));

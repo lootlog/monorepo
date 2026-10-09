@@ -32,7 +32,7 @@ export const makeManageableGuilds = (
 
       return guilds
         .filter((guild) => apiKeyAllowsOrganization(apiKey, guild.id))
-        .filter((guild) => isDiscordAdministrator(BigInt(guild.permissions)))
+        .filter(isDiscordAdministrator)
         .map((guild) => ({
           id: guild.id,
           name: guild.name,

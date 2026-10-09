@@ -2,19 +2,14 @@ import { RateLimitError, RequestMethod, parseResponse } from "@discordjs/rest";
 import {
   ApplicationError,
   ResourceNotFoundError,
-  DependencyUnavailableError,
   AuthenticationRequiredError,
 } from "#src/shared/http/http-errors";
 import { RedisService } from "#src/redis/redis.service";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import { Routes, type APIGuildMember } from "discord-api-types/v10";
-import { ExecutionError, RedlockService } from "#src/redis/redlock";
-import { decodeJsonUnknown } from "#src/shared/schema/json";
 import {
-  getGuildMemberCacheKeys,
-  getLegacyGuildMemberCacheKeys,
+  getGuildMemberNotFoundCacheKey,
   isApiGuildMember,
-  type DiscordGuildMemberCacheKeys,
 } from "./discord-cache.util.js";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service.js";
@@ -27,14 +22,12 @@ import {
 import { DiscordRestClientFactory } from "./discord-rest-client.factory.js";
 import { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.service.js";
 
+/**
+ * Reads the caller's own guild membership from Discord. Member sync stores
+ * the result with its sync time and runs under the per-user refresh lock, so
+ * every call asks Discord: a cached answer would be stored as a fresh sync.
+ */
 export class DiscordGuildMemberClient {
-  private redlock: ReturnType<RedlockService["createInstance"]>;
-
-  private readonly lockTtl = 6000;
-  private readonly memberCacheTtlLocal = 10;
-  private readonly memberCacheTtlProd = 300;
-  private readonly errorCacheTtlLocal = 5;
-  private readonly errorCacheTtlProd = 60;
   private readonly notFoundCacheTtlLocal = 30;
   private readonly notFoundCacheTtlProd = 300;
   private readonly isLocal: boolean;
@@ -43,7 +36,6 @@ export class DiscordGuildMemberClient {
     private readonly logger: Logger,
     private readonly redisService: RedisService,
     private readonly rateLimiter: DiscordRateLimiterService,
-    private readonly redlockService: RedlockService,
     private readonly diagnostics: DiscordSyncDiagnosticsService,
     private readonly restClientFactory: DiscordRestClientFactory,
     environment: RuntimeEnvironment,
@@ -51,75 +43,25 @@ export class DiscordGuildMemberClient {
     this.isLocal = environment === RuntimeEnvironment.LOCAL;
   }
 
-  initialize() {
-    this.redlock = this.redlockService.createInstance({
-      automaticExtensionThreshold: 3000,
-    });
-  }
-
   async getGuildMember(options: {
     guildId: string;
     userId: string;
     discordId: string;
   }): Promise<APIGuildMember> {
-    const cacheTtl = this.getCacheTtl(
-      this.memberCacheTtlLocal,
-      this.memberCacheTtlProd,
-    );
-
-    const { guildId, userId, discordId } = options;
-    const cacheKeys = getGuildMemberCacheKeys({ guildId, userId, discordId });
-    const legacyCacheKeys = getLegacyGuildMemberCacheKeys({ guildId, userId });
-
-    const cached = await this.getCachedMember(cacheKeys.data);
-
-    if (cached) {
-      return cached;
-    }
-
-    await this.replayNegativeCache(cacheKeys);
-
-    let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
+    const { guildId, userId } = options;
+    const notFoundKey = getGuildMemberNotFoundCacheKey(options);
 
     try {
-      lock = await this.redlock.acquire([cacheKeys.lock], this.lockTtl);
-
-      const cachedAfterLock = await this.getCachedMember(cacheKeys.data);
-
-      if (cachedAfterLock) {
-        return cachedAfterLock;
+      if (await this.redisService.get(notFoundKey)) {
+        throw new ResourceNotFoundError();
       }
 
-      await this.replayNegativeCache(cacheKeys);
       await throwIfDiscordRateLimited(this.rateLimiter, userId, "guild-member");
 
-      const member = await this.fetchGuildMemberFromDiscord({
-        guildId,
-        userId,
-        discordId,
-      });
-
-      await Promise.all([
-        this.redisService.set(cacheKeys.data, JSON.stringify(member), cacheTtl),
-        this.redisService.del(cacheKeys.notFound),
-        this.redisService.del(cacheKeys.unauthorized),
-        this.redisService.del(legacyCacheKeys.data),
-        this.redisService.del(legacyCacheKeys.notFound),
-        this.redisService.del(legacyCacheKeys.unauthorized),
-      ]);
-
-      return member;
+      return await this.fetchGuildMemberFromDiscord(options);
     } catch (error: unknown) {
-      if (error instanceof ExecutionError) {
-        this.logger.log({
-          level: "error",
-          message: `Lock acquisition failed for getGuildMember`,
-          guildId,
-          userId,
-        });
-        throw new DependencyUnavailableError({
-          message: "DISCORD_MEMBER_LOCK_UNAVAILABLE",
-        });
+      if (error instanceof ResourceNotFoundError) {
+        throw error;
       }
 
       if (isDiscordNotFoundError(error)) {
@@ -127,20 +69,11 @@ export class DiscordGuildMemberClient {
           level: "debug",
           message: `Guild member not found for guildId: ${guildId}, userId: ${userId}`,
         });
-        await Promise.all([
-          this.redisService.del(cacheKeys.data),
-          this.redisService.del(legacyCacheKeys.data),
-          this.redisService.del(cacheKeys.unauthorized),
-          this.redisService.del(legacyCacheKeys.unauthorized),
-          this.redisService.set(
-            cacheKeys.notFound,
-            "1",
-            this.getCacheTtl(
-              this.notFoundCacheTtlLocal,
-              this.notFoundCacheTtlProd,
-            ),
-          ),
-        ]);
+        await this.redisService.set(
+          notFoundKey,
+          "1",
+          this.isLocal ? this.notFoundCacheTtlLocal : this.notFoundCacheTtlProd,
+        );
         throw new ResourceNotFoundError();
       }
 
@@ -150,17 +83,6 @@ export class DiscordGuildMemberClient {
           message: `User authentication failed for guildId: ${guildId}, userId: ${userId}`,
           error,
         });
-        await Promise.all([
-          this.redisService.del(cacheKeys.data),
-          this.redisService.del(legacyCacheKeys.data),
-          this.redisService.del(cacheKeys.notFound),
-          this.redisService.del(legacyCacheKeys.notFound),
-          this.redisService.set(
-            cacheKeys.unauthorized,
-            "1",
-            this.getCacheTtl(this.errorCacheTtlLocal, this.errorCacheTtlProd),
-          ),
-        ]);
         throw error;
       }
 
@@ -175,172 +97,74 @@ export class DiscordGuildMemberClient {
       });
 
       throw toDiscordRequestError(error);
-    } finally {
-      await this.releaseLock(lock, {
-        action: "getGuildMember",
-        guildId,
-        lockKey: cacheKeys.lock,
-        userId,
-      });
     }
   }
 
-  async clearGuildMemberDataCache(options: {
+  async clearGuildMemberCache(options: {
     guildId: string;
     userId: string;
     discordId: string;
   }): Promise<void> {
-    const { guildId, userId, discordId } = options;
-    const cacheKeys = getGuildMemberCacheKeys({ guildId, userId, discordId });
-    const legacyCacheKeys = getLegacyGuildMemberCacheKeys({ guildId, userId });
-
-    await Promise.all([
-      this.redisService.del(cacheKeys.data),
-      this.redisService.del(cacheKeys.notFound),
-      this.redisService.del(cacheKeys.unauthorized),
-      this.redisService.del(legacyCacheKeys.data),
-      this.redisService.del(legacyCacheKeys.notFound),
-      this.redisService.del(legacyCacheKeys.unauthorized),
-    ]);
+    await this.redisService.del(getGuildMemberNotFoundCacheKey(options));
   }
 
-  private async fetchGuildMemberFromDiscord(options: {
+  private fetchGuildMemberFromDiscord(options: {
     guildId: string;
     userId: string;
     discordId: string;
   }): Promise<APIGuildMember> {
     const { guildId, userId, discordId } = options;
-    const rest = await this.restClientFactory.getRestClient(userId, discordId);
     const path = Routes.userGuildMember(guildId);
 
-    try {
-      const response = await rest.queueRequest({
-        fullRoute: path,
-        method: RequestMethod.Get,
-      });
+    return this.restClientFactory.withRestClient(
+      userId,
+      discordId,
+      async (rest) => {
+        try {
+          const response = await rest.queueRequest({
+            fullRoute: path,
+            method: RequestMethod.Get,
+          });
 
-      await this.rateLimiter.updateRateLimitFromHeaders(
-        userId,
-        "guild-member",
-        response.headers,
-      );
+          await this.rateLimiter.updateRateLimitFromHeaders(
+            userId,
+            "guild-member",
+            response.headers,
+          );
 
-      const member = await parseResponse(response);
+          const member = await parseResponse(response);
 
-      if (!isApiGuildMember(member))
-        throw new TypeError("Invalid Discord guild member response");
-      this.logger.log({
-        level: "debug",
-        message: "Discord API returned member data",
-        path,
-      });
+          if (!isApiGuildMember(member))
+            throw new TypeError("Invalid Discord guild member response");
+          this.logger.log({
+            level: "debug",
+            message: "Discord API returned member data",
+            path,
+          });
 
-      return member;
-    } catch (error: unknown) {
-      await recordInvalidDiscordRequest(
-        this.diagnostics,
-        "guild-member",
-        error,
-      );
+          return member;
+        } catch (error: unknown) {
+          await recordInvalidDiscordRequest(
+            this.diagnostics,
+            "guild-member",
+            error,
+          );
 
-      if (isDiscordNotFoundError(error)) {
-        throw error;
-      }
+          if (isDiscordNotFoundError(error)) {
+            throw error;
+          }
 
-      if (error instanceof RateLimitError) {
-        await this.rateLimiter.setRateLimitForUser(
-          userId,
-          "guild-member",
-          error.retryAfter,
-        );
-      }
+          if (error instanceof RateLimitError) {
+            await this.rateLimiter.setRateLimitForUser(
+              userId,
+              "guild-member",
+              error.retryAfter,
+            );
+          }
 
-      throw toDiscordRequestError(error);
-    }
-  }
-
-  private async getCachedMember(
-    cacheKey: string,
-  ): Promise<APIGuildMember | null> {
-    const cached = await this.redisService.get(cacheKey);
-
-    if (!cached) {
-      return null;
-    }
-
-    const cachedMember = this.parseCachedGuildMember(cached);
-
-    if (cachedMember) {
-      return cachedMember;
-    }
-
-    await this.redisService.del(cacheKey);
-
-    return null;
-  }
-
-  private async replayNegativeCache(
-    cacheKeys: Pick<DiscordGuildMemberCacheKeys, "notFound" | "unauthorized">,
-  ): Promise<void> {
-    if (await this.redisService.get(cacheKeys.notFound)) {
-      throw new ResourceNotFoundError();
-    }
-
-    if (await this.redisService.get(cacheKeys.unauthorized)) {
-      throw new AuthenticationRequiredError({
-        message: "DISCORD_UNAUTHORIZED",
-        requiresReauth: true,
-      });
-    }
-  }
-
-  private getCacheTtl(localTtl: number, prodTtl: number): number {
-    return this.isLocal ? localTtl : prodTtl;
-  }
-
-  private parseCachedGuildMember(cached: string): APIGuildMember | null {
-    try {
-      const parsed = decodeJsonUnknown(cached);
-
-      if (isApiGuildMember(parsed)) {
-        return parsed;
-      }
-    } catch (error) {
-      this.logger.log({
-        level: "debug",
-        message: "Failed to parse Discord guild member cache",
-        error,
-      });
-    }
-
-    return null;
-  }
-
-  private async releaseLock(
-    lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null,
-    context: {
-      action: string;
-      guildId: string;
-      lockKey: string;
-      userId: string;
-    },
-  ): Promise<void> {
-    if (!lock) {
-      return;
-    }
-
-    try {
-      await lock.release();
-    } catch (error) {
-      this.logger.log({
-        level: "debug",
-        message: "Failed to release Discord member lock",
-        action: context.action,
-        guildId: context.guildId,
-        lockKey: context.lockKey,
-        userId: context.userId,
-        error,
-      });
-    }
+          throw toDiscordRequestError(error);
+        }
+      },
+    );
   }
 }

@@ -521,8 +521,11 @@ export class DiscordUserGuildsClient {
   ): Promise<RESTGetAPICurrentUserGuildsResult> {
     await throwIfDiscordRateLimited(this.rateLimiter, userId, "guilds");
 
-    const rest = await this.restClientFactory.getRestClient(userId, discordId);
-    const guilds = await this.fetchUserGuildPages(userId, rest);
+    const guilds = await this.restClientFactory.withRestClient(
+      userId,
+      discordId,
+      (rest) => this.fetchUserGuildPages(userId, rest),
+    );
 
     if (guilds.length === 0) {
       this.logger.log({

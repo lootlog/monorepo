@@ -13,10 +13,7 @@ import {
   userSettingDocumentTable,
   userSettingsTable,
 } from "#src/database/drizzle/schema";
-import {
-  getGuildMemberCacheKeys,
-  getLegacyGuildMemberCacheKeys,
-} from "#src/discord/discord-cache.util";
+import { getGuildMemberNotFoundCacheKey } from "#src/discord/discord-cache.util";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
 import {
   getAuthTokenCachePattern,
@@ -143,21 +140,6 @@ const invalidateRemovedMember = (
   ports: UserAccountDeletionPorts,
   member: RemovedMember,
 ) => {
-  const cacheKeys = member.globalUserId
-    ? getGuildMemberCacheKeys({
-        discordId: member.discordId,
-        guildId: member.guildId,
-        userId: member.globalUserId,
-      })
-    : null;
-
-  const legacyCacheKeys = member.globalUserId
-    ? getLegacyGuildMemberCacheKeys({
-        guildId: member.guildId,
-        userId: member.globalUserId,
-      })
-    : null;
-
   const effects: Array<Effect.Effect<unknown, unknown>> = [
     ports.invalidateCacheScopes(
       getUserLootlogConfigCacheScope(member.discordId),
@@ -166,14 +148,15 @@ const invalidateRemovedMember = (
     ports.invalidateCacheScopes(getMemberReadCacheScope(member.guildId)),
   ];
 
-  if (member.globalUserId && cacheKeys && legacyCacheKeys) {
+  if (member.globalUserId) {
     effects.push(
-      ports.deleteCacheKey(cacheKeys.data),
-      ports.deleteCacheKey(cacheKeys.notFound),
-      ports.deleteCacheKey(cacheKeys.unauthorized),
-      ports.deleteCacheKey(legacyCacheKeys.data),
-      ports.deleteCacheKey(legacyCacheKeys.notFound),
-      ports.deleteCacheKey(legacyCacheKeys.unauthorized),
+      ports.deleteCacheKey(
+        getGuildMemberNotFoundCacheKey({
+          discordId: member.discordId,
+          guildId: member.guildId,
+          userId: member.globalUserId,
+        }),
+      ),
       ports.deleteCacheKey(
         getPermissionsCacheKey(member.globalUserId, member.guildId),
       ),

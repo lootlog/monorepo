@@ -48,13 +48,13 @@ export const makeDiscordOperations = (
       readonly discordId: string;
     }) =>
       adapter("discord.guildMember", () => guildMember.getGuildMember(options)),
-    clearGuildMemberDataCache: (options: {
+    clearGuildMemberCache: (options: {
       readonly guildId: string;
       readonly userId: string;
       readonly discordId: string;
     }) =>
       adapter("discord.guildMember.cache.clear", () =>
-        guildMember.clearGuildMemberDataCache(options),
+        guildMember.clearGuildMemberCache(options),
       ),
   };
 };

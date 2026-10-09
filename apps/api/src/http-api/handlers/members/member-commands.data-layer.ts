@@ -3,6 +3,7 @@ import { Clock, Effect, Layer, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { findActiveGuild } from "#src/guilds/active-guild-lookup";
 import {
+  guildTable,
   memberRefreshJobTable,
   memberTable,
   memberToRoleTable,
@@ -298,68 +299,84 @@ export const makeMembersDataLayer = (
         Effect.gen(function* () {
           const rateLimit = getAdminBulkRefreshRateLimit(environment);
 
-          const recent = yield* database
-            .select()
-            .from(memberRefreshJobTable)
-            .where(
-              and(
-                eq(memberRefreshJobTable.guildId, guildId),
-                gte(
-                  memberRefreshJobTable.createdAt,
-                  new Date((yield* Clock.currentTimeMillis) - rateLimit),
-                ),
-              ),
-            )
-            .orderBy(desc(memberRefreshJobTable.createdAt))
-            .limit(1);
+          const { job, memberIds } = yield* database.transaction(
+            (transaction) =>
+              Effect.gen(function* () {
+                // Concurrent requests wait here, so only one of them can pass
+                // the cooldown check below and create a job.
+                yield* transaction
+                  .select({ id: guildTable.id })
+                  .from(guildTable)
+                  .where(eq(guildTable.id, guildId))
+                  .for("no key update");
 
-          if (recent[0]) {
-            return yield* Effect.fail(
-              new InvalidRequestError({
-                message: ErrorKey.BULK_REFRESH_RATE_LIMIT_ACTIVE,
-                nextAvailableAt: new Date(
-                  recent[0].createdAt.getTime() + rateLimit,
-                ),
+                const now = new Date(yield* Clock.currentTimeMillis);
+
+                const recent = yield* transaction
+                  .select()
+                  .from(memberRefreshJobTable)
+                  .where(
+                    and(
+                      eq(memberRefreshJobTable.guildId, guildId),
+                      gte(
+                        memberRefreshJobTable.createdAt,
+                        new Date(now.getTime() - rateLimit),
+                      ),
+                    ),
+                  )
+                  .orderBy(desc(memberRefreshJobTable.createdAt))
+                  .limit(1);
+
+                if (recent[0]) {
+                  return yield* Effect.fail(
+                    new InvalidRequestError({
+                      message: ErrorKey.BULK_REFRESH_RATE_LIMIT_ACTIVE,
+                      nextAvailableAt: new Date(
+                        recent[0].createdAt.getTime() + rateLimit,
+                      ),
+                    }),
+                  );
+                }
+
+                const members = yield* transaction
+                  .select({ userId: memberTable.userId })
+                  .from(memberTable)
+                  .where(
+                    and(
+                      eq(memberTable.guildId, guildId),
+                      eq(memberTable.active, true),
+                      isNotNull(memberTable.globalUserId),
+                    ),
+                  );
+
+                const inserted = yield* transaction
+                  .insert(memberRefreshJobTable)
+                  .values({
+                    guildId,
+                    requestedBy,
+                    status: "PENDING",
+                    totalMembers: members.length,
+                    createdAt: now,
+                    updatedAt: now,
+                  })
+                  .returning();
+
+                const job = inserted[0];
+
+                if (!job)
+                  return yield* Effect.die(
+                    "Member refresh job was not returned",
+                  );
+
+                return {
+                  job,
+                  memberIds: members.map(({ userId }) => userId),
+                };
               }),
-            );
-          }
-
-          const members = yield* database
-            .select({ userId: memberTable.userId })
-            .from(memberTable)
-            .where(
-              and(
-                eq(memberTable.guildId, guildId),
-                eq(memberTable.active, true),
-                isNotNull(memberTable.globalUserId),
-              ),
-            );
-
-          const now = new Date(yield* Clock.currentTimeMillis);
-
-          const inserted = yield* database
-            .insert(memberRefreshJobTable)
-            .values({
-              guildId,
-              requestedBy,
-              status: "PENDING",
-              totalMembers: members.length,
-              createdAt: now,
-              updatedAt: now,
-            })
-            .returning();
-
-          const job = inserted[0];
-
-          if (!job)
-            return yield* Effect.die("Member refresh job was not returned");
+          );
 
           yield* ports
-            .enqueueBulkRefresh({
-              jobId: job.id,
-              guildId,
-              memberIds: members.map(({ userId }) => userId),
-            })
+            .enqueueBulkRefresh({ jobId: job.id, guildId, memberIds })
             .pipe(
               Effect.catch((error) =>
                 Effect.gen(function* () {
