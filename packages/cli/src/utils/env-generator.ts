@@ -218,23 +218,20 @@ const getDatabaseName = (
     return appDatabase;
   }
 
-  if (
-    originalValue.includes("activity_log") ||
-    originalValue.includes("5435")
-  ) {
-    return "activityLog";
-  }
+  for (const databaseName of [
+    "activityLog",
+    "battleLog",
+    "lootlog",
+    "users",
+  ] as const) {
+    const database = LOCAL_DATABASES[databaseName];
 
-  if (originalValue.includes("battle_log") || originalValue.includes("5434")) {
-    return "battleLog";
-  }
-
-  if (originalValue.includes("lootlog") || originalValue.includes("5433")) {
-    return "lootlog";
-  }
-
-  if (originalValue.includes("users") || originalValue.includes("5432")) {
-    return "users";
+    if (
+      originalValue.includes(database.fallbackName) ||
+      originalValue.includes(database.port)
+    ) {
+      return databaseName;
+    }
   }
 
   return "lootlog";
