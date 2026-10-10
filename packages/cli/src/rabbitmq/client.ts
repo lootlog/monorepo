@@ -60,10 +60,6 @@ class RabbitMQClient {
     }
   }
 
-  isConnected(): boolean {
-    return this.connection !== null && this.channel !== null;
-  }
-
   async close(): Promise<void> {
     try {
       if (this.channel) {
