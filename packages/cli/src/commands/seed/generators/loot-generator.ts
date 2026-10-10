@@ -150,24 +150,22 @@ export class LootGenerator {
   }
 
   private getRandomRarity(): ItemRarity {
-    const rarities: ItemRarity[] = ["UNIQUE", "HEROIC", "LEGENDARY"];
-    const weights = [50, 30, 15];
+    const rarities: { rarity: ItemRarity; weight: number }[] = [
+      { rarity: "UNIQUE", weight: 50 },
+      { rarity: "HEROIC", weight: 30 },
+      { rarity: "LEGENDARY", weight: 15 },
+    ];
 
-    const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+    const totalWeight = rarities.reduce((sum, { weight }) => sum + weight, 0);
     const random = crypto.randomInt(0, totalWeight);
 
     let cumulativeWeight = 0;
 
-    for (let i = 0; i < rarities.length; i++) {
-      const weight = weights[i];
-      const rarity = rarities[i];
+    for (const { rarity, weight } of rarities) {
+      cumulativeWeight += weight;
 
-      if (weight !== undefined && rarity !== undefined) {
-        cumulativeWeight += weight;
-
-        if (random < cumulativeWeight) {
-          return rarity;
-        }
+      if (random < cumulativeWeight) {
+        return rarity;
       }
     }
 
