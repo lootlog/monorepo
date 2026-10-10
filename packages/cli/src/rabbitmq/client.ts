@@ -38,7 +38,8 @@ class RabbitMQClient {
         durable: true,
       });
 
-      const message = Buffer.from(JSON.stringify(payload, null, 2));
+      const serializedPayload = JSON.stringify(payload, null, 2);
+      const message = Buffer.from(serializedPayload);
 
       this.channel.publish(exchange, routingKey, message, {
         contentType: "application/json",
@@ -48,20 +49,13 @@ class RabbitMQClient {
       console.log(chalk.green("\n✓ Event published successfully!\n"));
       console.log(chalk.gray("Exchange:"), chalk.cyan(exchange));
       console.log(chalk.gray("Routing Key:"), chalk.cyan(routingKey));
-      console.log(
-        chalk.gray("Payload:\n"),
-        chalk.dim(JSON.stringify(payload, null, 2)),
-      );
+      console.log(chalk.gray("Payload:\n"), chalk.dim(serializedPayload));
       console.log();
     } catch (error) {
       throw new Error(
         `Failed to publish event: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
-  }
-
-  isConnected(): boolean {
-    return this.connection !== null && this.channel !== null;
   }
 
   async close(): Promise<void> {
