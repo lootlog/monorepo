@@ -24,6 +24,9 @@ export const SCRAPER_CONFIG = {
 } as const;
 
 export const SEED_CONFIG = {
+  players: {
+    count: 1000,
+  },
   guilds: {
     count: 5,
     membersPerGuild: {
