@@ -126,6 +126,19 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
       }),
     );
 
+  const formatAnalyticsFilterSegments = (
+    query: BattleAnalyticsCriteria | BattleStatisticsQuery,
+  ): string[] => [
+    formatCacheSegment(query.characterId),
+    formatCacheSegment(query.world),
+    formatCacheSegment(query.period),
+    formatCacheSegment(query.startDate),
+    formatCacheSegment(query.endDate),
+    formatLevelCacheSegment(query),
+    formatBooleanCacheSegment(query.ph, "ph"),
+    formatBooleanCacheSegment(query.matchmaking, "matchmaking"),
+  ];
+
   const buildAnalyticsCacheKey = (
     userId: string,
     query: BattleAnalyticsCriteria,
@@ -133,14 +146,7 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
     [
       ANALYTICS_CACHE_PREFIX,
       userId,
-      formatCacheSegment(query.characterId),
-      formatCacheSegment(query.world),
-      formatCacheSegment(query.period),
-      formatCacheSegment(query.startDate),
-      formatCacheSegment(query.endDate),
-      formatLevelCacheSegment(query),
-      formatBooleanCacheSegment(query.ph, "ph"),
-      formatBooleanCacheSegment(query.matchmaking, "matchmaking"),
+      ...formatAnalyticsFilterSegments(query),
     ].join(":");
 
   const buildStatisticsCacheKey = (
@@ -152,14 +158,7 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
       "statistics",
       metric,
       userId,
-      formatCacheSegment(query.characterId),
-      formatCacheSegment(query.world),
-      formatCacheSegment(query.period),
-      formatCacheSegment(query.startDate),
-      formatCacheSegment(query.endDate),
-      formatLevelCacheSegment(query),
-      formatBooleanCacheSegment(query.ph, "ph"),
-      formatBooleanCacheSegment(query.matchmaking, "matchmaking"),
+      ...formatAnalyticsFilterSegments(query),
     ].join(":");
 
   const buildQueryCacheKey = (
