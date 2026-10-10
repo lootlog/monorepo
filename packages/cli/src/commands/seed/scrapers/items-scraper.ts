@@ -1,8 +1,7 @@
 import { parse } from "node-html-parser";
-import { writeFile } from "node:fs/promises";
-import path from "node:path";
 import { SCRAPER_CONFIG } from "../config.js";
 import { readCachedScrape } from "../utils/read-cached-scrape.js";
+import { writeScrapedData } from "../utils/write-scraped-data.js";
 
 interface ScrapedItem {
   hid: string;
@@ -109,11 +108,7 @@ export async function scrapeItems(
 
   console.log(`Scraped ${items.length} items successfully`);
 
-  if (outputPath) {
-    const fullPath = path.resolve(outputPath);
-    await writeFile(fullPath, JSON.stringify(items, null, 2));
-    console.log(`Items saved to ${fullPath}`);
-  }
+  await writeScrapedData(outputPath, items, "Items");
 
   return items;
 }

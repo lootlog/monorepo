@@ -1,8 +1,7 @@
 import { parse } from "node-html-parser";
-import { writeFile } from "node:fs/promises";
-import path from "node:path";
 import { SCRAPER_CONFIG } from "../config.js";
 import { readCachedScrape } from "../utils/read-cached-scrape.js";
+import { writeScrapedData } from "../utils/write-scraped-data.js";
 
 interface ScrapedNpc {
   icon: string;
@@ -150,11 +149,7 @@ export async function scrapeNpcs(
 
   console.log(`Scraped ${npcs.length} NPCs successfully`);
 
-  if (outputPath) {
-    const fullPath = path.resolve(outputPath);
-    await writeFile(fullPath, JSON.stringify(npcs, null, 2));
-    console.log(`NPCs saved to ${fullPath}`);
-  }
+  await writeScrapedData(outputPath, npcs, "NPCs");
 
   return npcs;
 }
