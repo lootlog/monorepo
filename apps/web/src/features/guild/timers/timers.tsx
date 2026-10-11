@@ -13,7 +13,11 @@ import { CircleAlert, Clock3, RotateCcw, SearchX } from "lucide-react";
 import { useState } from "react";
 import { SingleTimer } from "./single-timer";
 import { TimersListSkeleton } from "./timers-list-skeleton";
-import { getTimerGroupClassName, TIMERS_VIEW_MODE_KEY } from "./timers-layout";
+import {
+  getTimerGroupClassName,
+  TIMERS_GRID_MEDIA_QUERY,
+  TIMERS_VIEW_MODE_KEY,
+} from "./timers-layout";
 
 import { SearchInput } from "@/components/ui/search-input";
 import { WorldSwitcher } from "@/components/common/world-switcher";
@@ -79,7 +83,13 @@ export const Timers = () => {
 
   useTimerExpiry(timers, guildId, world, dataUpdatedAt);
   const [search, setSearch] = useState("");
-  const { viewMode, setViewMode } = useViewMode(TIMERS_VIEW_MODE_KEY, "list");
+
+  const { viewMode, setViewMode, canChooseViewMode } = useViewMode(
+    TIMERS_VIEW_MODE_KEY,
+    "list",
+    TIMERS_GRID_MEDIA_QUERY,
+  );
+
   const { t } = useTranslation();
 
   const { filtered, hasFilteredTimers, showsNoSearchResults } =
@@ -219,12 +229,14 @@ export const Timers = () => {
             aria-label={t("timers.searchPlaceholder")}
           />
           <WorldSwitcher />
-          <ViewModeToggle
-            value={viewMode}
-            onChange={setViewMode}
-            listLabel={t("timers.view.list")}
-            gridLabel={t("timers.view.grid")}
-          />
+          {canChooseViewMode && (
+            <ViewModeToggle
+              value={viewMode}
+              onChange={setViewMode}
+              listLabel={t("timers.view.list")}
+              gridLabel={t("timers.view.grid")}
+            />
+          )}
         </FilterBar>
       </div>
 

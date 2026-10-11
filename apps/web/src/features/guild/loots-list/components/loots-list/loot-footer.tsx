@@ -23,17 +23,18 @@ export const LootFooter = ({
   return (
     <div
       className={cn(
-        "mt-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-1.5",
+        "mt-auto flex items-center justify-between gap-4 py-1.5",
         LOOT_CARD_DIVIDER_CLASS,
         LOOT_CARD_INSET_CLASS,
       )}
     >
-      {/* The location wraps instead of truncating; the counters move under it on narrow cards. */}
+      {/* One row: the location truncates and the counters keep their width. */}
       <LootMetaItem
         icon={MapPin}
-        className="min-h-5 min-w-0 flex-1 basis-40 whitespace-normal"
+        className="min-h-5 min-w-0 flex-1"
+        title={location}
       >
-        <span className="min-w-0 break-words">{location}</span>
+        <span className="min-w-0 truncate">{location}</span>
       </LootMetaItem>
       <div className="flex min-h-5 shrink-0 items-center gap-x-3">
         <LootMetaItem icon={Calendar}>{date}</LootMetaItem>
