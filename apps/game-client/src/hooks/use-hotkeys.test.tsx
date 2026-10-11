@@ -13,6 +13,12 @@ import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { queryClient } from "@/lib/query-client";
 import { useGlobalStore } from "@/store/global.store";
 import { disposeReadyRoomInvitationCoordinator } from "@/features/party-finder/ready-room-invitation-coordinator";
+import { selectSettingsValue } from "@/features/settings/persistence/settings-documents";
+import {
+  readCurrentSettingsDocuments,
+  settingsPatchQueue,
+} from "@/features/settings/persistence/settings-patch-client";
+import { seedSettingsDocumentValues } from "@/test/settings-documents-fixtures";
 
 describe("useHotkeys", () => {
   beforeEach(() => {
@@ -400,4 +406,54 @@ it("opens party creation once and ignores typing and repeated keys", () => {
   input.focus();
   press();
   expect(useWindowsStore.getState()["create-party-gathering"].open).toBe(false);
+});
+
+it("switches detector auto-send for every type on the current character only", () => {
+  setTestRuntimeGame({ hero: { accountId: "202", characterId: "101" } });
+  queryClient.clear();
+  seedSettingsDocumentValues(queryClient, {});
+  // The real queue applies each write to the cache; only sending is skipped.
+  const enqueue = vi.spyOn(settingsPatchQueue, "enqueue");
+  onTestFinished(() => {
+    enqueue.mockRestore();
+    settingsPatchQueue.reset();
+  });
+  useHotkeysStore.getState().resetAll();
+  useHotkeysStore.getState().setBinding("toggle-detector-auto-send", {
+    type: "keyboard",
+    key: "A",
+    alt: true,
+    ctrl: false,
+    shift: false,
+  });
+  renderHook(() => useHotkeys());
+
+  const press = () =>
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "A", altKey: true }),
+      );
+    });
+
+  const isEnabled = () =>
+    selectSettingsValue(
+      readCurrentSettingsDocuments(),
+      "gameData.detectorAutoSendEnabled",
+    );
+
+  press();
+  expect(isEnabled()).toBe(false);
+  press();
+  expect(isEnabled()).toBe(true);
+  expect(enqueue.mock.calls.map(([patch]) => patch.operation)).toEqual([
+    expect.objectContaining({
+      domain: "gameData",
+      scope: { type: "CHARACTER", id: "202:101" },
+      set: { detectorAutoSendEnabled: false },
+    }),
+    expect.objectContaining({
+      scope: { type: "CHARACTER", id: "202:101" },
+      set: { detectorAutoSendEnabled: true },
+    }),
+  ]);
 });
