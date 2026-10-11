@@ -1,4 +1,5 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import { DISCORD_ADMINISTRATOR_PERMISSION } from "@lootlog/schema/discord";
 import type {
   CanonicalRabbitEvent,
   CanonicalRabbitEventRoutingKey,
@@ -246,7 +247,9 @@ const roleSnapshot = (role: Role): GuildCreated["roles"][number] => ({
   id: role.id,
   name: role.name,
   color: role.color,
-  admin: (role.permissions.bitfield & 0x8n) === 0x8n,
+  admin:
+    (role.permissions.bitfield & DISCORD_ADMINISTRATOR_PERMISSION) ===
+    DISCORD_ADMINISTRATOR_PERMISSION,
   position: role.position,
 });
 
