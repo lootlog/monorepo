@@ -6,9 +6,8 @@ import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 export const EventKillDetailSkeleton = () => (
   <div aria-busy="true" className="flex flex-col gap-3 px-3 py-3">
     <PageHeaderSkeleton
-      withIcon={false}
+      media={<Skeleton className="size-16 shrink-0 rounded-xl" />}
       withMetadata
-      status={<Skeleton className="size-10 shrink-0 rounded-xl" />}
     />
     <div className="grid min-w-0 items-start gap-3 2xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
       <div className="flex min-w-0 flex-col gap-3">
