@@ -1,10 +1,9 @@
 import { useState, type FC } from "react";
 import { Link } from "@tanstack/react-router";
-import { Trophy, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
-import * as m from "framer-motion/m";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Event } from "@/features/guild/events/types/api";
-import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
+import { cn } from "cn";
 import { CollapsePresence } from "@/components/common/collapse-presence";
 import { EventTimersList } from "./event-timers-list";
 
@@ -21,8 +20,6 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
 }) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
-  // MotionConfig stops the transforms; the endless loops themselves are dropped here.
-  const prefersReducedMotion = usePrefersReducedMotion();
 
   if (events.length === 0) return null;
 
@@ -34,62 +31,32 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
 
   return (
     <div className="px-2 mb-3 pb-3 border-b border-border">
-      <div className="rounded-lg overflow-hidden bg-gradient-to-r from-signal-timer/20 via-signal-timer/15 to-signal-timer/10 border border-signal-timer/30 relative">
-        {prefersReducedMotion ? null : (
-          <m.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-signal-timer/20 to-transparent"
-            animate={{
-              x: ["-100%", "100%"],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              repeatDelay: 3,
-              ease: "easeInOut",
-            }}
-            style={{ width: "100%" }}
-          />
-        )}
+      <div className="relative overflow-hidden rounded-lg bg-sidebar-border p-px">
+        {/* The rim light orbits the frame like the loading slot's. */}
+        <span
+          aria-hidden="true"
+          className="absolute left-1/2 top-1/2 aspect-square w-[300%] -translate-x-1/2 -translate-y-1/2 bg-[conic-gradient(transparent_0_70%,var(--color-primary)_97%,transparent)] motion-safe:animate-[spin_6s_linear_infinite] motion-reduce:hidden"
+        />
 
-        <div className="relative">
+        <div className="relative overflow-hidden rounded-[calc(var(--radius-lg)-1px)] bg-sidebar">
           <Link
             to="/$guildId/events/$eventId"
             params={{ guildId, eventId: featuredEvent.id }}
             onClick={onNavigate}
-            className="block"
+            className="group/event flex items-center gap-2 bg-primary/5 px-3 py-2.5 transition-colors hover:bg-primary/10"
           >
-            <div className="relative flex items-center gap-3 px-3 py-2.5 transition-[background-color,transform] duration-200 motion-safe:hover:translate-x-0.5 hover:bg-signal-timer/10">
-              <div className="relative">
-                <Trophy className="size-4 text-signal-timer" />
-                <m.div
-                  key={String(prefersReducedMotion)}
-                  animate={
-                    prefersReducedMotion
-                      ? undefined
-                      : {
-                          scale: [1, 1.2, 1],
-                          opacity: [0.7, 1, 0.7],
-                        }
-                  }
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                >
-                  <Sparkles className="absolute -top-1 -right-1 size-2.5 text-signal-timer" />
-                </m.div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-signal-timer font-medium">
-                  {t("events.sidebarBanner.pinnedEvent")}
-                </p>
-                <p className="text-sm font-semibold truncate">
-                  {featuredEvent.name}
-                </p>
-              </div>
-              <ChevronRight className="size-4 text-muted-foreground shrink-0" />
-            </div>
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs text-muted-foreground">
+                {t("events.sidebarBanner.pinnedEvent")}
+              </span>
+              <span className="block truncate text-sm font-semibold text-sidebar-foreground">
+                {featuredEvent.name}
+              </span>
+            </span>
+            <ChevronRight
+              aria-hidden="true"
+              className="size-4 shrink-0 text-muted-foreground transition-colors group-hover/event:text-primary"
+            />
           </Link>
 
           <EventTimersList
@@ -97,14 +64,12 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
             guildId={guildId}
             onNavigate={onNavigate}
           />
-        </div>
 
-        <>
           {hasMoreEvents && (
-            <m.button
+            <button
               type="button"
               onClick={() => setIsExpanded((currentValue) => !currentValue)}
-              className="w-full px-3 py-1.5 flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:bg-signal-timer/10 transition-colors border-t border-signal-timer/20"
+              className="flex w-full items-center justify-center gap-1 border-t border-sidebar-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-primary/10 hover:text-foreground"
               aria-expanded={isExpanded}
             >
               <span>
@@ -112,32 +77,33 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
                   count: otherEvents.length,
                 })}
               </span>
-              <m.div
-                animate={{ rotate: isExpanded ? 180 : 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <ChevronDown className="size-3" />
-              </m.div>
-            </m.button>
+              <ChevronDown
+                aria-hidden="true"
+                className={cn(
+                  "size-3 transition-transform duration-200",
+                  isExpanded && "rotate-180",
+                )}
+              />
+            </button>
           )}
 
           <CollapsePresence open={hasMoreEvents && isExpanded}>
-            <div className="border-t border-signal-timer/20">
+            <div className="border-t border-sidebar-border">
               {otherEvents.map((event) => (
                 <div key={event.id}>
                   <Link
                     to="/$guildId/events/$eventId"
                     params={{ guildId, eventId: event.id }}
                     onClick={onNavigate}
-                    className="block"
+                    className="group/event flex items-center gap-2 px-3 py-2 transition-colors hover:bg-primary/10"
                   >
-                    <div className="flex items-center gap-2 px-3 py-2 transition-[background-color,transform] duration-200 motion-safe:hover:translate-x-0.5 hover:bg-signal-timer/10">
-                      <Trophy className="size-3.5 text-signal-timer/70" />
-                      <span className="text-sm truncate flex-1">
-                        {event.name}
-                      </span>
-                      <ChevronRight className="size-3.5 text-muted-foreground shrink-0" />
-                    </div>
+                    <span className="flex-1 truncate text-sm font-semibold">
+                      {event.name}
+                    </span>
+                    <ChevronRight
+                      aria-hidden="true"
+                      className="size-3.5 shrink-0 text-muted-foreground transition-colors group-hover/event:text-primary"
+                    />
                   </Link>
                   <EventTimersList
                     event={event}
@@ -148,7 +114,7 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
               ))}
             </div>
           </CollapsePresence>
-        </>
+        </div>
       </div>
     </div>
   );

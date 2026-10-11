@@ -1,6 +1,5 @@
 import { formatLevel } from "@lootlog/domain/profession";
 import { PageHeader } from "@/components/common/page-header";
-import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Tooltip,
@@ -10,15 +9,12 @@ import {
 import { HeroAvatar } from "./components/shared/hero-avatar";
 import { HeroTimerCountdown } from "./components/heroes/hero-timer-countdown";
 import type { useHeroDetail } from "./use-hero-detail";
-import { getWindowStatusConfig } from "./utils/window-status-presentation";
 
 type Props = Pick<
   Extract<ReturnType<typeof useHeroDetail>, { status: "ready" }>,
   | "hero"
   | "event"
   | "heroTimer"
-  | "windowStatus"
-  | "t"
   | "canManage"
   | "respawnAction"
   | "handleRespawnActionClick"
@@ -29,8 +25,6 @@ export const HeroDetailHeader = ({
   hero,
   event,
   heroTimer,
-  windowStatus,
-  t,
   canManage,
   respawnAction,
   handleRespawnActionClick,
@@ -49,16 +43,6 @@ export const HeroDetailHeader = ({
     }
     description={event.name}
     media={<HeroAvatar hero={hero} size="portrait" />}
-    status={
-      windowStatus !== "NONE" && (
-        <Badge
-          variant={getWindowStatusConfig(windowStatus, t).variant}
-          className="h-5 px-2 text-[11px]"
-        >
-          {getWindowStatusConfig(windowStatus, t).label}
-        </Badge>
-      )
-    }
     actions={
       <>
         <HeroTimerCountdown timer={heroTimer} />

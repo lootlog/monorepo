@@ -15,7 +15,6 @@ import {
 import { HeroAvatar } from "../shared/hero-avatar";
 import type { EventHeroNpc, EventTimer } from "../../types/api";
 import { HeroTimerDisplay } from "./hero-timer-display";
-import { HeroWindowStatusBadge } from "./hero-window-status-badge";
 import type { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { EMPTY_VALUE } from "@/constants/empty-value";
 
@@ -90,11 +89,6 @@ export const createEventHeroesTableColumns = ({
                     </span>
                   ) : null}
                 </span>
-                <HeroWindowStatusBadge
-                  eventId={eventId}
-                  heroId={hero.id}
-                  className="hidden h-5 shrink-0 px-1.5 lg:inline-flex"
-                />
               </div>
               <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] leading-none text-muted-foreground">
                 <span>
