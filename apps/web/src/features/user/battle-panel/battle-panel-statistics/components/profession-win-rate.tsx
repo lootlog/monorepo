@@ -1,3 +1,4 @@
+import { formatBattleMetric } from "@/components/battle/utils/value-utils";
 import { clamp } from "es-toolkit";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { getProfessionColor, getProfessionName } from "@/lib/utils/professions";
@@ -16,10 +17,6 @@ interface ProfessionWinRateChartProps {
   data: ProfessionWinRate[];
   isLoading?: boolean;
 }
-
-const percentFormatter = new Intl.NumberFormat("pl-PL", {
-  maximumFractionDigits: 1,
-});
 
 export function ProfessionWinRateChart({
   data,
@@ -55,7 +52,7 @@ export function ProfessionWinRateChart({
                   {row.losses}
                 </span>
                 <span className="ml-3 text-sm font-semibold text-foreground">
-                  {percentFormatter.format(row.winRate)}%
+                  {formatBattleMetric(row.winRate)}%
                 </span>
               </span>
             </div>
