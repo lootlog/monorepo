@@ -91,7 +91,7 @@ export const KillMapGapAudit = ({ gaps, t }: KillMapGapAuditProps) => {
             type="button"
             variant="ghost"
             size="sm"
-            className="h-11 px-2 text-xs md:h-8"
+            className="px-2 text-xs"
             aria-expanded={showAll}
             onClick={() => setShowAll((current) => !current)}
           >

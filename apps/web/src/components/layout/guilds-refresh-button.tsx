@@ -24,7 +24,7 @@ export const GuildsRefreshButton: FC<GuildsRefreshButtonProps> = ({
       <TooltipTrigger
         render={
           <Button
-            size="icon"
+            size="icon-lg"
             variant="ghost"
             aria-label={t("ui.tooltips.refreshServers")}
             loading={isRefreshing}

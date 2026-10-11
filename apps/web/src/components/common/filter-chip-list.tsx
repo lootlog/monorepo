@@ -34,8 +34,8 @@ export const FilterChipList = ({
       <Button
         type="button"
         variant="ghost"
-        size="sm"
-        className="h-7 shrink-0 px-2 text-xs"
+        size="xs"
+        className="shrink-0"
         onClick={onClear}
       >
         {clearLabel}

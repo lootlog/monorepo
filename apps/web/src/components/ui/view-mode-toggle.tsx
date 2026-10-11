@@ -22,7 +22,7 @@ export function ViewModeToggle({
       value={value}
       onValueChange={onChange}
       label={`${listLabel} / ${gridLabel}`}
-      size="large"
+      size="lg"
       className={className}
       options={[
         { value: "list", label: listLabel, icon: List },

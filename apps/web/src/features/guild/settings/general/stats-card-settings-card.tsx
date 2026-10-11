@@ -156,7 +156,6 @@ export const StatsCardSettingsCard = ({
             <Button
               type="button"
               variant="outline"
-              size="sm"
               disabled={!savedEnabled}
               loading={isCopying}
               icon=<Copy className="size-4" />
@@ -167,7 +166,6 @@ export const StatsCardSettingsCard = ({
             <Button
               type="button"
               variant="outline"
-              size="sm"
               disabled={!savedEnabled || refreshStatsCard.isPending}
               loading={refreshStatsCard.isPending}
               icon=<RefreshCw className="size-4" />

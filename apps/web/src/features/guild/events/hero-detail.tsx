@@ -165,7 +165,7 @@ export const HeroDetail = () => {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="size-8 px-0 @2xl/maps:w-auto @2xl/maps:px-3"
+                                  className="w-8 px-0 @2xl/maps:w-auto @2xl/maps:px-3"
                                   onClick={handleClearAllAssignments}
                                   loading={isClearingAssignments}
                                   icon=<Eraser className="size-4" />
@@ -192,7 +192,7 @@ export const HeroDetail = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="size-8 px-0 @2xl/maps:w-auto @2xl/maps:px-3"
+                                className="w-8 px-0 @2xl/maps:w-auto @2xl/maps:px-3"
                                 onClick={() => setMapManageOpen(true)}
                                 aria-label={t("events.maps.manage")}
                               >

@@ -111,9 +111,8 @@ export function DashboardLiveFeed() {
               </span>
             </Button>
             <Button
-              size="icon"
+              size="icon-sm"
               variant="outline"
-              className="size-9"
               disabled={!canSave}
               aria-label={t(
                 paused
@@ -176,7 +175,6 @@ export function DashboardLiveFeed() {
                 isFiltered && canSave ? (
                   <Button
                     variant="outline"
-                    size="sm"
                     onClick={() =>
                       update({
                         excludedGuildIds:

@@ -81,6 +81,7 @@ export function KillAnalyticsTrend({ title, data }: KillAnalyticsTrendProps) {
       <SectionCardHeader
         title={title}
         actions=<AnimatedToggleGroup
+          size="sm"
           label={t("statistics.view")}
           value={view}
           onValueChange={setView}

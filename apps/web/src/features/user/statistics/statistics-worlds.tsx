@@ -33,7 +33,7 @@ export function StatisticsWorlds({
           description={t("statistics.alignedComparison")}
           actions={
             data.meta.world ? (
-              <Button variant="outline" onClick={onClearWorld}>
+              <Button variant="outline" size="sm" onClick={onClearWorld}>
                 {t("statistics.clearWorld")}
               </Button>
             ) : undefined

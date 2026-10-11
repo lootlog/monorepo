@@ -53,7 +53,7 @@ export const ScoringGlobalSettings = ({
           register={register}
           name="scoringRules.hardCapPoints"
           label={t("events.scoring.hardCapPoints")}
-          className="h-8 text-sm font-mono"
+          className="text-sm font-mono"
         />
       </div>
       <div className="space-y-1">
@@ -75,7 +75,7 @@ export const ScoringGlobalSettings = ({
             label={t("events.scoring.minTrackingPercentForBonuses")}
             max={100}
             step={1}
-            className="h-8 text-sm font-mono"
+            className="text-sm font-mono"
           />
           <span className="text-[11px] text-muted-foreground/50 shrink-0 font-mono">
             %
@@ -95,7 +95,8 @@ export const ScoringGlobalSettings = ({
         <Input
           id={`${idPrefix}-timezone`}
           {...register("scoringRules.timezone")}
-          className="h-8 text-sm"
+          size="sm"
+          className="text-sm"
           placeholder="Europe/Warsaw"
         />
       </div>

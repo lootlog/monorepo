@@ -131,7 +131,7 @@ export const ServerVisibilitySettings = () => {
                     <Skeleton render={<span />} className="block h-3 w-40" />
                   </span>
                 }
-                actions={<Skeleton className="h-9 w-36 rounded-md" />}
+                actions={<Skeleton className="h-8 w-36 rounded-md" />}
               />
               <TableFilterToolbar>
                 <Skeleton className="h-10 w-full min-w-0 rounded-xl sm:min-w-[200px] sm:flex-1" />
@@ -207,6 +207,7 @@ export const ServerVisibilitySettings = () => {
                 actions={
                   <Button
                     variant="outline"
+                    size="sm"
                     icon=<Eye />
                     disabled={hiddenCount === 0 || updatePreferences.isPending}
                     loading={isShowingAll}
@@ -236,13 +237,14 @@ export const ServerVisibilitySettings = () => {
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder={t("settings.servers.searchPlaceholder")}
                   aria-label={t("settings.servers.searchPlaceholder")}
-                  wrapperClassName="h-10 w-full min-w-0 sm:min-w-[200px] sm:flex-1"
+                  size="lg"
+                  wrapperClassName="w-full min-w-0 sm:min-w-[200px] sm:flex-1"
                 />
                 <AnimatedToggleGroup
                   label={t("settings.servers.visibilityFilterLabel")}
                   value={visibilityFilter}
                   onValueChange={setVisibilityFilter}
-                  size="large"
+                  size="lg"
                   className="w-full shrink-0 sm:w-auto"
                   options={(["all", "visible", "hidden"] as const).map(
                     (filter) => ({

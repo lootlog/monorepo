@@ -36,15 +36,11 @@ export const AddCategoryForm = ({ onAddCategory }: AddCategoryFormProps) => {
             }
           }}
           placeholder={t("battleUi.customization.categoryPlaceholder")}
-          className="flex-1 h-8"
+          size="sm"
+          className="flex-1"
           autoFocus
         />
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleAddCategory}
-          className="h-8 px-3"
-        >
+        <Button variant="ghost" size="sm" onClick={handleAddCategory}>
           {t("battleUi.customization.add")}
         </Button>
         <Button
@@ -54,7 +50,6 @@ export const AddCategoryForm = ({ onAddCategory }: AddCategoryFormProps) => {
             setIsAddingCategory(false);
             setNewCategoryName("");
           }}
-          className="h-8 px-3"
         >
           {t("battleUi.customization.cancel")}
         </Button>

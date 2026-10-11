@@ -1,4 +1,3 @@
-import { cn } from "cn";
 import { Calendar } from "lucide-react";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import type { Period } from "@/features/user/battle-panel/battle-panel-search";
@@ -52,7 +51,7 @@ export function PeriodSelector({
       placeholder={placeholder ?? t("common.filterLabels.period")}
       emptyMessage={t("common.noResults")}
       width={width}
-      triggerClassName={cn("h-10", className)}
+      triggerClassName={className}
       showSearch={false}
     />
   );

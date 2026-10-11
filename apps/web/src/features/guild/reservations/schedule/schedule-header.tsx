@@ -81,8 +81,9 @@ export function ScheduleHeader({
     isCompact,
   );
 
-  // Icon buttons match the height of the labelled desktop buttons.
-  const iconButtonClassName = compactValue(isCompact, "size-11", "size-9");
+  // Touch layouts use the largest control step; desktop icon buttons match
+  // the 32px labelled buttons.
+  const iconButtonSize = compactValue(isCompact, "icon-lg", "icon-sm");
 
   const actionToolbar = (
     <div
@@ -100,8 +101,7 @@ export function ScheduleHeader({
       <Button
         type="button"
         variant={compactValue(isCompact, "ghost", "outline")}
-        size={compactValue(isCompact, "icon", "sm")}
-        className={compactValue(isCompact, "size-11", undefined)}
+        size={compactValue(isCompact, "icon-lg", "sm")}
         onClick={onToday}
         aria-label={t("reservations.schedule.header.today")}
       >
@@ -112,7 +112,7 @@ export function ScheduleHeader({
       </Button>
       <ScheduleIconButton
         label={t("reservations.schedule.header.findNearestSlot")}
-        className={iconButtonClassName}
+        size={iconButtonSize}
         loading={isFindingNearestFreeSlot}
         onClick={onFindNearestFreeSlot}
       >
@@ -120,7 +120,7 @@ export function ScheduleHeader({
       </ScheduleIconButton>
       <ScheduleIconButton
         label={t("reservations.schedule.header.info")}
-        className={iconButtonClassName}
+        size={iconButtonSize}
         onClick={() => setInfoOpen(true)}
       >
         <Info />
@@ -128,7 +128,7 @@ export function ScheduleHeader({
       {canManageReservationSettings && (
         <ScheduleIconButton
           label={t("reservations.schedule.header.settings")}
-          className={iconButtonClassName}
+          size={iconButtonSize}
           disabled={!settingsHref}
           onClick={() => settingsHref && navigate({ to: settingsHref })}
         >
@@ -137,8 +137,7 @@ export function ScheduleHeader({
       )}
       <Button
         type="button"
-        size={compactValue(isCompact, "icon", "sm")}
-        className={compactValue(isCompact, "size-11", undefined)}
+        size={compactValue(isCompact, "icon-lg", "sm")}
         onClick={onAddReservation}
         aria-label={t("reservations.schedule.header.addReservation")}
       >
@@ -172,7 +171,7 @@ export function ScheduleHeader({
             "items-center gap-1",
             compactValue(
               isCompact,
-              "grid w-full min-w-0 grid-cols-[2.75rem_minmax(0,1fr)_2.75rem]",
+              "grid w-full min-w-0 grid-cols-[2.5rem_minmax(0,1fr)_2.5rem]",
               "flex",
             ),
           )}
@@ -183,7 +182,7 @@ export function ScheduleHeader({
               t("reservations.schedule.header.previousDay"),
               t("reservations.schedule.header.previousWeek"),
             )}
-            className={iconButtonClassName}
+            size={iconButtonSize}
             onClick={onPrevious}
           >
             <ChevronLeft />
@@ -226,7 +225,7 @@ export function ScheduleHeader({
               t("reservations.schedule.header.nextDay"),
               t("reservations.schedule.header.nextWeek"),
             )}
-            className={iconButtonClassName}
+            size={iconButtonSize}
             onClick={onNext}
           >
             <ChevronRight />

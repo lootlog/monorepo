@@ -49,7 +49,7 @@ export const MoreFiltersPopover = ({
     <Popover>
       <PopoverTrigger
         render={
-          <Button type="button" variant="outline" className="h-10 gap-2">
+          <Button type="button" variant="outline" size="lg" className="gap-2">
             <SlidersHorizontal className="size-4" aria-hidden="true" />
             {moreLabel}
           </Button>

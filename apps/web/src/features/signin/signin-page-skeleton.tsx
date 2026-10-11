@@ -10,7 +10,7 @@ export const SigninPageSkeleton = () => (
       description=<Skeleton render={<span />} className="block h-3 w-full" />
     >
       <SectionCardContent>
-        <Skeleton className="h-10 w-full rounded-md" />
+        <Skeleton className="h-11 w-full rounded-md" />
       </SectionCardContent>
     </PageHeader>
   </div>

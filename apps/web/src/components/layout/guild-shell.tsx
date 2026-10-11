@@ -22,7 +22,7 @@ export const GuildShell: FC<GuildShellProps> = ({ children, variant }) => {
         ) : (
           <AppTopBar>
             <div className="flex items-center gap-2">
-              <SidebarTrigger className="size-8!" />
+              <SidebarTrigger />
               {variant === "fallback" ? (
                 <span className="text-sm font-bold text-primary">
                   {t("common.routeErrors.guildShellTitle")}

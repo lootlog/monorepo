@@ -48,33 +48,27 @@ export const HeroDetailHeader = ({
       </>
     }
     description={event.name}
-    status={<HeroAvatar hero={hero} />}
-    metadata={
-      <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs leading-none text-muted-foreground">
-        <HeroTimerCountdown timer={heroTimer} />
-        {windowStatus !== "NONE" && (
-          <>
-            <span aria-hidden="true">·</span>
-            <Badge
-              variant={getWindowStatusConfig(windowStatus, t).variant}
-              className="h-5 shrink-0 px-1.5 text-[11px]"
-            >
-              {getWindowStatusConfig(windowStatus, t).label}
-            </Badge>
-          </>
-        )}
-      </div>
+    media={<HeroAvatar hero={hero} size="portrait" />}
+    status={
+      windowStatus !== "NONE" && (
+        <Badge
+          variant={getWindowStatusConfig(windowStatus, t).variant}
+          className="h-5 px-2 text-[11px]"
+        >
+          {getWindowStatusConfig(windowStatus, t).label}
+        </Badge>
+      )
     }
     actions={
       <>
+        <HeroTimerCountdown timer={heroTimer} />
         {canManage && (
           <Tooltip>
             <TooltipTrigger
               render={
                 <Button
                   variant="outline"
-                  size="sm"
-                  className="h-9 shrink-0 px-2.5 lg:px-3"
+                  className="shrink-0 px-2.5 lg:px-3"
                   aria-label={respawnAction.label}
                   onClick={handleRespawnActionClick}
                 >

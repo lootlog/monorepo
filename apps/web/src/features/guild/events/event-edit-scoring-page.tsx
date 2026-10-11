@@ -188,7 +188,6 @@ const EventEditScoringForm = ({
           <Button
             type="button"
             variant="outline"
-            size="sm"
             onClick={handleRecalculate}
             loading={recalculatePoints.isPending}
             icon=<RefreshCw className="size-3.5" />

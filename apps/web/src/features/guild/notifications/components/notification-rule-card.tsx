@@ -116,7 +116,7 @@ export const NotificationRuleCard = (
               render={
                 <Button
                   type="button"
-                  size="icon"
+                  size="icon-sm"
                   variant="secondary"
                   aria-label={t("settings.notifications.actions.testNow")}
                   disabled={
@@ -148,7 +148,7 @@ export const NotificationRuleCard = (
               render={
                 <Button
                   type="button"
-                  size="icon"
+                  size="icon-sm"
                   variant="outline"
                   aria-label={t(
                     "settings.notifications.actions.rebuildPending",
@@ -169,7 +169,7 @@ export const NotificationRuleCard = (
             <TooltipTrigger
               render=<Button
                 type="button"
-                size="icon"
+                size="icon-sm"
                 variant="outline"
                 aria-label={t("settings.notifications.actions.edit")}
                 disabled={isActionDisabled}

@@ -169,7 +169,6 @@ export const EventSummaryDialog = ({
             <Button
               type="button"
               variant="ghost"
-              size="sm"
               onClick={() => onOpenChange(false)}
             >
               {t("events.summaryDialog.close")}

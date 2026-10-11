@@ -9,7 +9,6 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Permission } from "@lootlog/schema/permissions";
 import { EventRankingTable } from "./components/ranking/event-ranking-table";
 import { HeroTabs } from "./components/shared/hero-tabs";
-import { EventRankingSummary } from "./components/ranking/event-ranking-summary";
 import { useState } from "react";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
@@ -124,10 +123,7 @@ export const EventRankingPage = () => {
       />
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex w-full min-w-0 max-w-full flex-col gap-3 px-3 py-3">
-          <EventRankingSummary
-            eventName={event.name}
-            selectedHeroName={effectiveSelectedHeroName}
-          />
+          <h1 className="sr-only">{t("events.ranking.title")}</h1>
           <HeroTabs
             placement="page"
             heroes={heroes}

@@ -179,7 +179,7 @@ export const GuildsSelector: FC = () => {
         (preferencesQuery.isError && preferencesQuery.data === undefined) ? (
           <div className="flex h-12 items-center justify-center">
             <Button
-              size="icon"
+              size="icon-lg"
               variant="ghost"
               aria-label={t("settings.servers.loadError")}
               loading={guildsQuery.isFetching || preferencesQuery.isFetching}

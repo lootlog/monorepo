@@ -31,16 +31,11 @@ export const NotificationsActionsCard = ({
       />
       <SectionCardContent className="flex flex-col gap-3">
         <div className="flex flex-col gap-2">
-          <Button
-            size="sm"
-            disabled={!hasRequiredPermissions}
-            onClick={onAddTarget}
-          >
+          <Button disabled={!hasRequiredPermissions} onClick={onAddTarget}>
             {t("settings.notifications.actions.addTarget")}
           </Button>
           {hasRequiredPermissions && !isRuleLimitReached ? (
             <Button
-              size="sm"
               render={
                 <Link to={ROUTES.guild.notifications.create(guildId ?? "")}>
                   {t("settings.notifications.actions.addRule")}
@@ -49,7 +44,7 @@ export const NotificationsActionsCard = ({
               nativeButton={false}
             />
           ) : (
-            <Button size="sm" disabled>
+            <Button disabled>
               {t("settings.notifications.actions.addRule")}
             </Button>
           )}

@@ -6,6 +6,8 @@ import { PageHeader } from "./page-header";
 type PageHeaderSkeletonProps = {
   /** Reserves the icon tile of a header loaded with `icon`. */
   withIcon?: boolean;
+  /** Placeholder for the loaded header's media, such as an NPC tile. */
+  media?: ReactNode;
   withDescription?: boolean;
   withMetadata?: boolean;
   /** Placeholder for the loaded header's status, such as an NPC tile. */
@@ -29,6 +31,7 @@ const renderLine = (className: string) => (
 /** A `PageHeader` whose title and context are still loading. */
 export const PageHeaderSkeleton = ({
   withIcon = true,
+  media,
   withDescription = true,
   withMetadata = false,
   status,
@@ -39,7 +42,10 @@ export const PageHeaderSkeleton = ({
   <PageHeader
     className={className}
     media={
-      withIcon ? <Skeleton className="size-9 shrink-0 rounded-lg" /> : undefined
+      media ??
+      (withIcon ? (
+        <Skeleton className="size-9 shrink-0 rounded-lg" />
+      ) : undefined)
     }
     title={renderLine("h-5 w-40")}
     description={

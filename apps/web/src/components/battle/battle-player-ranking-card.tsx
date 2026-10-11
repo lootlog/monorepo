@@ -31,7 +31,7 @@ export const BattlePlayerRankingCard: FC<BattlePlayerRankingCardProps> = ({
         title={t("battleUi.ranking.title")}
         actions={
           <AnimatedToggleGroup
-            size="small"
+            size="sm"
             label={t("battleUi.ranking.metricLabel")}
             value={metric}
             onValueChange={setMetric}

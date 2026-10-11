@@ -35,7 +35,6 @@ export const KillStatsNpcTypeSelect = ({
       placeholder={t("kills.filters.npcType")}
       emptyMessage={t("common.noResults")}
       width={width}
-      triggerClassName="h-10"
       showSearch={false}
     />
   );
