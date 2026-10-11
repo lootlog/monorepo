@@ -3,7 +3,10 @@ import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { useViewMode } from "@/hooks/use-view-mode";
-import { LOOTS_VIEW_MODE_KEY } from "@/features/guild/loots-list/loots-list-layout";
+import {
+  LOOTS_GRID_MEDIA_QUERY,
+  LOOTS_VIEW_MODE_KEY,
+} from "@/features/guild/loots-list/loots-list-layout";
 import {
   useResetScrollTop,
   useVirtualInfiniteScroll,
@@ -419,7 +422,12 @@ export const useLiveLootList = () => {
     queryIdentity,
   ]);
 
-  const { viewMode } = useViewMode(LOOTS_VIEW_MODE_KEY);
+  const { viewMode } = useViewMode(
+    LOOTS_VIEW_MODE_KEY,
+    "grid",
+    LOOTS_GRID_MEDIA_QUERY,
+  );
+
   const { allLoots, gridRows } = useStableLootCollections(getLootPages(loots));
   const totalCount = allLoots.length;
 

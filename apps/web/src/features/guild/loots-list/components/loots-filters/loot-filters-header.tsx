@@ -11,7 +11,10 @@ import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { LootSearchCommand } from "./loot-search-command";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { useViewMode } from "@/hooks/use-view-mode";
-import { LOOTS_VIEW_MODE_KEY } from "@/features/guild/loots-list/loots-list-layout";
+import {
+  LOOTS_GRID_MEDIA_QUERY,
+  LOOTS_VIEW_MODE_KEY,
+} from "@/features/guild/loots-list/loots-list-layout";
 import { useTranslation } from "react-i18next";
 import { ThemeInteractiveFrame } from "@/themes";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
@@ -59,7 +62,13 @@ export const LootFiltersHeader = ({
   const isMobile = useIsMobile();
   const { world } = useGuildContext();
   const { filters } = useLootsFilters();
-  const { viewMode, setViewMode } = useViewMode(LOOTS_VIEW_MODE_KEY);
+
+  const { viewMode, setViewMode, canChooseViewMode } = useViewMode(
+    LOOTS_VIEW_MODE_KEY,
+    "grid",
+    LOOTS_GRID_MEDIA_QUERY,
+  );
+
   const primaryModifierKeyLabel = getPrimaryModifierKeyLabel();
 
   const { hasSearchFilters, showWorldControls, usesStackedControls } =
@@ -143,12 +152,14 @@ export const LootFiltersHeader = ({
                 <WorldSwitcher width="w-full" />
               </div>
 
-              <ViewModeToggle
-                value={viewMode}
-                onChange={setViewMode}
-                listLabel={t("loots.header.listView")}
-                gridLabel={t("loots.header.gridView")}
-              />
+              {canChooseViewMode && (
+                <ViewModeToggle
+                  value={viewMode}
+                  onChange={setViewMode}
+                  listLabel={t("loots.header.listView")}
+                  gridLabel={t("loots.header.gridView")}
+                />
+              )}
 
               <div
                 onMouseEnter={() => setIsFilterHovered(true)}
