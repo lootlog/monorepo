@@ -442,13 +442,7 @@
     "closeSuccess": "Okno respawnu zostało zamknięte",
     "closeError": "Błąd podczas zamykania okna respawnu",
     "openSuccess": "Okno respawnu zostało otwarte",
-    "openError": "Błąd podczas otwierania okna respawnu",
-    "status": {
-      "open": "Okno otwarte",
-      "waiting": "Oczekiwanie",
-      "overdue": "Po czasie",
-      "none": "Brak okna"
-    }
+    "openError": "Błąd podczas otwierania okna respawnu"
   },
   "killDetail": {
     "title": "Szczegóły bicia",

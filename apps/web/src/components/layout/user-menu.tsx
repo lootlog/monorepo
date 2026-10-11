@@ -97,7 +97,7 @@ export const UserMenu = () => {
             type="button"
             className={cn(
               BAR_GRID,
-              "group cursor-pointer bg-sidebar text-left text-sidebar-foreground transition-colors hover:bg-sidebar-accent/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-popup-open:bg-sidebar-accent/45",
+              "group/user-menu cursor-pointer bg-sidebar text-left text-sidebar-foreground transition-colors hover:bg-sidebar-accent/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-popup-open:bg-sidebar-accent/45",
             )}
           >
             <span className={AVATAR_CELL}>
@@ -119,7 +119,7 @@ export const UserMenu = () => {
             </span>
             <ChevronUp
               aria-hidden="true"
-              className="size-4 justify-self-center text-sidebar-foreground/50 transition-[color,rotate] duration-200 group-hover:text-sidebar-foreground group-data-popup-open:rotate-180 motion-reduce:transition-none"
+              className="size-4 justify-self-center text-sidebar-foreground/50 transition-[color,rotate] duration-200 group-hover/user-menu:text-sidebar-foreground group-data-popup-open/user-menu:rotate-180 motion-reduce:transition-none"
             />
           </button>
         }

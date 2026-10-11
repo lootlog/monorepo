@@ -142,6 +142,9 @@ export const MapCard = ({
           "grid min-h-14 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 px-3 py-2",
           isAssignmentEnabled && "cursor-pointer",
         )}
+        onMouseDown={(event) => {
+          if (event.detail > 1) event.preventDefault();
+        }}
         onDoubleClick={handleRowDoubleClick}
       >
         <div className="col-start-1 row-start-1 flex h-5 min-w-0 items-center gap-2">
