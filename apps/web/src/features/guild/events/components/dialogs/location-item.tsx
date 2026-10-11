@@ -83,7 +83,7 @@ export const LocationItem = ({
         variant="ghost"
         size="icon-sm"
         type="button"
-        aria-label={t("events.delete")}
+        aria-label={t("events.locations.delete")}
         icon=<Trash2 className="size-3" />
         onClick={() => handleDeleteLocation(location.id)}
         className="rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
