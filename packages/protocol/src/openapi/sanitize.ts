@@ -118,10 +118,6 @@ function visitOpenApiDictionaries(
   visitor(value);
 }
 
-function hasOpenApiProperty(value: OpenApiDictionary, propertyName: string) {
-  return Object.prototype.hasOwnProperty.call(value, propertyName);
-}
-
 function stripTypedObjectAdditionalProperties(value: unknown) {
   if (Array.isArray(value)) {
     value.forEach(stripTypedObjectAdditionalProperties);
@@ -132,8 +128,8 @@ function stripTypedObjectAdditionalProperties(value: unknown) {
   if (!Predicate.isObject(value)) return;
 
   if (
-    hasOpenApiProperty(value, "properties") &&
-    hasOpenApiProperty(value, "additionalProperties")
+    Object.hasOwn(value, "properties") &&
+    Object.hasOwn(value, "additionalProperties")
   ) {
     delete value.additionalProperties;
   }
@@ -150,11 +146,11 @@ function stripUnsupportedOpenApiKeywords(value: unknown) {
 
   if (!Predicate.isObject(value)) return;
 
-  if (hasOpenApiProperty(value, "propertyNames")) {
+  if (Object.hasOwn(value, "propertyNames")) {
     delete value.propertyNames;
   }
 
-  if (hasOpenApiProperty(value, "const")) {
+  if (Object.hasOwn(value, "const")) {
     value.enum = [value.const];
     delete value.const;
   }
