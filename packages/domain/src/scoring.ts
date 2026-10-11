@@ -267,6 +267,30 @@ export const DEFAULT_ADVANCED_EVENT_SCORING_RULES: EventScoringRules = {
   ],
 };
 
+export function calculateRespawnProgressPercentage(params: {
+  killTime: Date;
+  respawnStartTime: Date;
+  maxRespawnTime: Date | null | undefined;
+}): number | undefined {
+  if (!params.maxRespawnTime) {
+    return undefined;
+  }
+
+  const fullWindowMs =
+    params.maxRespawnTime.getTime() - params.respawnStartTime.getTime();
+
+  if (fullWindowMs <= 0) {
+    return undefined;
+  }
+
+  const elapsedWindowMs = Math.min(
+    fullWindowMs,
+    Math.max(0, params.killTime.getTime() - params.respawnStartTime.getTime()),
+  );
+
+  return Math.round((elapsedWindowMs / fullWindowMs) * 100);
+}
+
 function isOneOf<const Values extends readonly string[]>(
   values: Values,
   value: unknown,
