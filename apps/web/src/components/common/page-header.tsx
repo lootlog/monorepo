@@ -30,14 +30,14 @@ export const PageHeader = ({
   className,
 }: PageHeaderProps) => (
   <SectionCard className={cn("shrink-0", className)}>
-    <header className="flex min-w-0 flex-wrap items-start gap-3 p-4">
+    <header className="flex min-w-0 flex-wrap items-center gap-3 p-3">
       {media ??
         (Icon && (
           <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
             <Icon className="size-4 text-primary" aria-hidden="true" />
           </div>
         ))}
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 grow basis-48">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <h1
             id={id}

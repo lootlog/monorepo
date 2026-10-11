@@ -6,9 +6,7 @@ import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 export const EventHeroSkeleton = () => (
   <div aria-busy="true" className="flex flex-col gap-3 px-3 py-3">
     <PageHeaderSkeleton
-      withIcon={false}
-      withMetadata
-      status={<Skeleton className="size-10 shrink-0 rounded-xl" />}
+      media={<Skeleton className="size-16 shrink-0 rounded-xl" />}
     />
 
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
