@@ -105,8 +105,7 @@ export function BattleHpTimelineChart({
                     aria-label={visibilityLabel}
                     aria-pressed={isChartHidden}
                     variant="ghost"
-                    size="icon"
-                    className="size-8"
+                    size="icon-sm"
                     onClick={toggleChartHidden}
                   >
                     <VisibilityIcon className="size-3.5" />
@@ -122,8 +121,7 @@ export function BattleHpTimelineChart({
                     aria-label={heightLabel}
                     aria-pressed={isExpanded}
                     variant="ghost"
-                    size="icon"
-                    className="size-8"
+                    size="icon-sm"
                     onClick={toggleHeightMode}
                   >
                     <HeightIcon className="size-3.5" />

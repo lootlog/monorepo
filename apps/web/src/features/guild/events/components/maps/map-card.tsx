@@ -265,8 +265,7 @@ export const MapCard = ({
                   <span className="inline-flex">
                     <Button
                       variant="outline"
-                      size="icon"
-                      className="size-9"
+                      size="icon-sm"
                       onClick={() => onManageClick?.(map.id)}
                       disabled={isAssignDisabled}
                       aria-label={manageActionLabel}
@@ -290,8 +289,8 @@ export const MapCard = ({
                 render={
                   <Button
                     variant="outline"
-                    size="icon"
-                    className="size-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    size="icon-sm"
+                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                     loading={pendingAction === "unassign"}
                     disabled={isActionDisabled}
                     icon=<X className="size-4" />
@@ -309,8 +308,7 @@ export const MapCard = ({
                   <span className="inline-flex">
                     <Button
                       variant="outline"
-                      size="icon"
-                      className="size-9"
+                      size="icon-sm"
                       loading={pendingAction === "assign"}
                       icon=<UserPlus className="size-4" />
                       onClick={() => void runAssignment("assign")}

@@ -115,7 +115,6 @@ export const GuildDocTrashDialog = ({
                   <Button
                     type="button"
                     variant="outline"
-                    size="sm"
                     loading={trashQuery.isFetching}
                     icon=<RotateCcw className="size-3.5" />
                     onClick={() => void trashQuery.refetch()}

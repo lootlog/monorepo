@@ -168,7 +168,7 @@ export const CloseRespawnWindowDialog = ({
                         <FormControl
                           render=<Input
                             type="datetime-local"
-                            className="h-9 text-sm"
+                            className="text-sm"
                             {...field}
                           />
                         />
@@ -188,7 +188,7 @@ export const CloseRespawnWindowDialog = ({
                         <FormControl
                           render=<Input
                             type="datetime-local"
-                            className="h-9 text-sm"
+                            className="text-sm"
                             {...field}
                           />
                         />

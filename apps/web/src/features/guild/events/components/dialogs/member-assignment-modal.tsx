@@ -135,7 +135,7 @@ export const MemberAssignmentModal = ({
                       <span className="text-xs font-medium">{member.name}</span>
                       <Button
                         variant="ghost"
-                        size="icon"
+                        size="icon-xs"
                         loading={
                           pendingAction?.kind === "unassign" &&
                           pendingAction.memberId === member.id
@@ -144,7 +144,7 @@ export const MemberAssignmentModal = ({
                         icon=<X className="size-3" />
                         aria-label={t("events.maps.unassign")}
                         onClick={() => handleUnassign(member.id)}
-                        className="size-5 p-0.5 rounded-full hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+                        className="p-0.5 rounded-full hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
                         title={t("events.maps.unassign")}
                       />
                     </div>
@@ -179,7 +179,7 @@ export const MemberAssignmentModal = ({
                 placeholder={t("events.maps.searchMember")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="h-9 text-sm"
+                className="text-sm"
               />
 
               <ScrollArea className="h-[220px] rounded-lg border relative">
@@ -263,7 +263,6 @@ export const MemberAssignmentModal = ({
         <div className="px-5 py-3 border-t bg-muted/30 shrink-0">
           <Button
             variant="outline"
-            size="sm"
             disabled={Boolean(pendingAction)}
             onClick={() => onOpenChange(false)}
             className="w-full"

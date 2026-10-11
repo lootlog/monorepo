@@ -33,7 +33,7 @@ export const InfiniteListStatusRow = ({
       <>
         <CircleAlert className="size-4 text-destructive" aria-hidden="true" />
         <span>{errorLabel}</span>
-        <Button type="button" variant="outline" size="sm" onClick={onRetry}>
+        <Button type="button" variant="outline" onClick={onRetry}>
           {retryLabel}
         </Button>
       </>

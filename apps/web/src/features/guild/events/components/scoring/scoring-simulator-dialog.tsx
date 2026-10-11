@@ -100,7 +100,7 @@ export const ScoringSimulatorDialog = ({
                       onChange={(e) =>
                         setTrackingPercent(Number(e.target.value))
                       }
-                      className="h-8 text-[12px] font-mono"
+                      className="text-[12px] font-mono"
                     />
                     <span className="text-[11px] text-muted-foreground/50 shrink-0 font-mono">
                       %
@@ -121,7 +121,7 @@ export const ScoringSimulatorDialog = ({
                     step={1}
                     value={assignedMembers}
                     onChange={(e) => setAssignedMembers(Number(e.target.value))}
-                    className="h-8 text-[12px] font-mono"
+                    className="text-[12px] font-mono"
                   />
                 </div>
                 <div className="space-y-0.5">
@@ -140,7 +140,7 @@ export const ScoringSimulatorDialog = ({
                       step={1}
                       value={afkPercent}
                       onChange={(e) => setAfkPercent(Number(e.target.value))}
-                      className="h-8 text-[12px] font-mono"
+                      className="text-[12px] font-mono"
                     />
                     <span className="text-[11px] text-muted-foreground/50 shrink-0 font-mono">
                       %
@@ -163,7 +163,7 @@ export const ScoringSimulatorDialog = ({
                       setKillTimeHour(Number(h ?? 0));
                       setKillTimeMinute(Number(m ?? 0));
                     }}
-                    className="h-8 text-[12px] font-mono"
+                    className="text-[12px] font-mono"
                   />
                 </div>
                 <div className="space-y-0.5">
@@ -183,7 +183,7 @@ export const ScoringSimulatorDialog = ({
                       onChange={(e) =>
                         setRespawnDurationMin(Number(e.target.value))
                       }
-                      className="h-8 text-[12px] font-mono"
+                      className="text-[12px] font-mono"
                     />
                     <span className="text-[11px] text-muted-foreground/50 shrink-0">
                       {t("events.scoring.simulator.minutesUnit")}
@@ -207,7 +207,7 @@ export const ScoringSimulatorDialog = ({
                       onChange={(e) =>
                         setMaxRespawnDurationMin(Number(e.target.value))
                       }
-                      className="h-8 text-[12px] font-mono"
+                      className="text-[12px] font-mono"
                     />
                     <span className="text-[11px] text-muted-foreground/50 shrink-0">
                       {t("events.scoring.simulator.minutesUnit")}
@@ -221,7 +221,7 @@ export const ScoringSimulatorDialog = ({
                   >
                     {t("events.scoring.simulator.presentAtKill")}
                   </Label>
-                  <div className="flex items-center h-8">
+                  <div className="flex items-center h-9">
                     <Switch
                       id={`${fieldId}-presentAtKill`}
                       checked={presentAtKill}
@@ -247,7 +247,7 @@ export const ScoringSimulatorDialog = ({
                         onChange={(e) =>
                           setMinutesSinceLeave(Number(e.target.value))
                         }
-                        className="h-8 text-[12px] font-mono w-32"
+                        className="text-[12px] font-mono w-32"
                       />
                       <span className="text-[11px] text-muted-foreground/50 shrink-0">
                         {t("events.scoring.simulator.minutesUnit")}
@@ -273,7 +273,7 @@ export const ScoringSimulatorDialog = ({
                       onChange={(e) =>
                         setTrackingDurationSecondsOverride(e.target.value)
                       }
-                      className="h-8 text-[12px] font-mono"
+                      className="text-[12px] font-mono"
                     />
                     <span className="text-[11px] text-muted-foreground/50 shrink-0">
                       {t("events.scoring.simulator.secondsUnit")}
@@ -298,7 +298,7 @@ export const ScoringSimulatorDialog = ({
                       onChange={(e) =>
                         setTimeOnMapSecondsOverride(e.target.value)
                       }
-                      className="h-8 text-[12px] font-mono"
+                      className="text-[12px] font-mono"
                     />
                     <span className="text-[11px] text-muted-foreground/50 shrink-0">
                       {t("events.scoring.simulator.secondsUnit")}
@@ -312,7 +312,7 @@ export const ScoringSimulatorDialog = ({
                   >
                     {t("events.scoring.simulator.wasPresent")}
                   </Label>
-                  <div className="flex items-center h-8">
+                  <div className="flex items-center h-9">
                     <Switch
                       id={`${fieldId}-wasPresent`}
                       checked={wasPresent}

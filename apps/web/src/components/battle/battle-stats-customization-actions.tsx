@@ -59,14 +59,13 @@ export function BattleStatsCustomizationActions({
           <TooltipTrigger
             render={
               <Button
-                size="icon"
+                size="icon-sm"
                 onClick={() => setHideZeros(!hideZeros)}
                 aria-label={
                   hideZeros
                     ? t("battlePanel.single.statistics.showAll")
                     : t("battlePanel.single.statistics.hideZeros")
                 }
-                className="size-8"
               >
                 {hideZeros ? (
                   <Eye className="h-4 w-4" />

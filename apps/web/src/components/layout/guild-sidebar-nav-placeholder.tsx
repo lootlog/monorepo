@@ -19,7 +19,7 @@ export const GuildSidebarNavPlaceholder = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.25, delay: i * 0.05, ease: "easeOut" }}
           >
-            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-9 w-full" />
           </m.div>
         ))}
       </div>
@@ -38,7 +38,7 @@ export const GuildSidebarNavPlaceholder = () => {
               ease: "easeOut",
             }}
           >
-            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-9 w-full" />
           </m.div>
         ))}
       </div>

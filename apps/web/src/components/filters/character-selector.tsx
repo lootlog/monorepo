@@ -38,7 +38,7 @@ type CharacterSelectorProps = (
   | SingleCharacterSelection
   | MultipleCharacterSelection
 ) & {
-  size?: "sm" | "default";
+  size?: "sm" | "default" | "lg";
   className?: string;
 };
 
@@ -65,7 +65,7 @@ const getCharacterDetails = (character: BattleCharacter) => {
 };
 
 export function CharacterSelector(props: CharacterSelectorProps) {
-  const { size = "sm", className } = props;
+  const { size = "lg", className } = props;
   const [open, setOpen] = useState(false);
   const listId = useId();
   const { data: charactersResponse } = useBattlesControllerGetUserCharacters();

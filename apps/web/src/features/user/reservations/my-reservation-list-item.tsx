@@ -118,8 +118,8 @@ export function MyReservationListItem({
                   <Button
                     type="button"
                     variant="ghost"
-                    size="icon"
-                    className="size-8 text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                    size="icon-sm"
+                    className="text-muted-foreground hover:bg-primary/10 hover:text-primary"
                     onClick={onEdit}
                     aria-label={t("reservations.my.edit", {
                       spot: reservation.spotName,
@@ -151,8 +151,8 @@ export function MyReservationListItem({
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
-                  className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  size="icon-sm"
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                   loading={cancelPending}
                   aria-label={t("reservations.my.cancel", {
                     spot: reservation.spotName,

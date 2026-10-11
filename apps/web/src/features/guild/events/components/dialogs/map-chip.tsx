@@ -69,12 +69,12 @@ export const MapChip = ({
 
       <Button
         variant="ghost"
-        size="icon"
+        size="icon-xs"
         type="button"
         aria-label={t("events.delete")}
         icon=<X className="size-2.5" />
         onClick={onDelete}
-        className="size-5 p-0.5 rounded hover:bg-destructive/20 text-primary/60 hover:text-destructive transition-colors"
+        className="p-0.5 rounded hover:bg-destructive/20 text-primary/60 hover:text-destructive transition-colors"
         disabled={deletionDisabled}
         loading={isDeleting}
       />

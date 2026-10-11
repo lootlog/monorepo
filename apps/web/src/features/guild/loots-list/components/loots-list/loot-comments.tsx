@@ -104,7 +104,7 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
               {value.length}/{MAX_LENGTH}
             </span>
             <Button
-              className="h-8 px-3 text-xs"
+              className="text-xs"
               size="sm"
               type="submit"
               disabled={isSubmitDisabled}
@@ -130,7 +130,6 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
             <Button
               type="button"
               variant="outline"
-              size="sm"
               loading={isFetching}
               icon=<RotateCcw className="size-3.5" />
               onClick={() => void refetch()}

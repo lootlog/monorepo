@@ -65,7 +65,7 @@ export const ScoringActionEditor = ({
               <SelectTrigger
                 id={`${idPrefix}-action`}
                 size="sm"
-                className="h-8 text-[12px]"
+                className="text-[12px]"
               >
                 <SelectValue />
               </SelectTrigger>

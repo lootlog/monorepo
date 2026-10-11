@@ -228,9 +228,9 @@ export const KillParticipantRow = ({
                 render={
                   <Button
                     type="button"
-                    size="icon"
+                    size="icon-sm"
                     variant="ghost"
-                    className="size-11 text-muted-foreground lg:size-9"
+                    className="text-muted-foreground"
                     onClick={() => setIsEditDialogOpen(true)}
                     disabled={isEditPending}
                     aria-label={t("events.points.edit")}
@@ -246,9 +246,9 @@ export const KillParticipantRow = ({
           ) : null}
           <Button
             type="button"
-            size="icon"
+            size="icon-sm"
             variant="ghost"
-            className="size-11 text-muted-foreground lg:size-9"
+            className="text-muted-foreground"
             aria-expanded={isExpanded}
             aria-label={t(
               isExpanded

@@ -30,7 +30,6 @@ export const MemberDeactivationButton = ({
     <>
       <Button
         ref={buttonRef}
-        size="sm"
         variant="destructive"
         className={className}
         disabled={!guildId || !member.active || target !== null}

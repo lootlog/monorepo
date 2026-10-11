@@ -15,8 +15,7 @@ export interface LevelRangeFilterProps {
    * 72px wide from `md`. `fill` spans a side panel, popover, or drawer.
    */
   layout?: "inline" | "fill";
-  /** `sm` matches panels whose other controls use the 36px form size. */
-  size?: "default" | "sm";
+  size?: "default" | "lg";
   className?: string;
 }
 
@@ -58,7 +57,7 @@ export function LevelRangeFilter({
   onMaxLevelChange,
   debounceMs = 500,
   layout = "fill",
-  size = "default",
+  size = "lg",
   className,
 }: LevelRangeFilterProps) {
   const { t } = useTranslation();
@@ -108,7 +107,6 @@ export function LevelRangeFilter({
 
   const inputClassName = cn(
     "min-w-0 flex-1",
-    size === "sm" ? "h-9" : "h-10",
     layout === "inline" && "md:w-[72px] md:flex-none",
   );
 
@@ -130,6 +128,7 @@ export function LevelRangeFilter({
         placeholder={t("ui.levelRange.minPlaceholder")}
         value={localMinLevel ?? ""}
         onChange={(e) => handleMinLevelChange(e.target.value)}
+        size={size}
         className={inputClassName}
       />
       <span className="text-xs text-muted-foreground" aria-hidden="true">
@@ -143,6 +142,7 @@ export function LevelRangeFilter({
         placeholder={t("ui.levelRange.maxPlaceholder")}
         value={localMaxLevel ?? ""}
         onChange={(e) => handleMaxLevelChange(e.target.value)}
+        size={size}
         className={inputClassName}
       />
     </div>

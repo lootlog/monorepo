@@ -49,7 +49,6 @@ export const AccountSettings: FC = () => {
           <SectionCardContent>
             <Button
               variant="outline"
-              size="sm"
               className="w-full justify-center sm:w-auto"
               loading={isLoggingOut}
               icon=<LogOut className="size-3.5" />
@@ -87,7 +86,6 @@ export const AccountSettings: FC = () => {
               trigger={
                 <Button
                   variant="destructive"
-                  size="sm"
                   className="w-full justify-center sm:w-auto"
                   disabled={isDeleteDisabled}
                 >

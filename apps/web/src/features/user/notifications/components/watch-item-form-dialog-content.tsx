@@ -273,7 +273,6 @@ export const WatchFormDialogContent = ({
 
           <Button
             type="submit"
-            size="sm"
             loading={createWatchedItem.isPending}
             disabled={
               createWatchedItem.isPending ||

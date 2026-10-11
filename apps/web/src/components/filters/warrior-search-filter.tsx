@@ -66,11 +66,12 @@ export const WarriorSearchFilter = ({
         render={
           <Button
             variant="outline"
+            size="lg"
             role="combobox"
             aria-controls={resultsListId}
             aria-expanded={open}
             className={cn(
-              "h-10 min-w-[200px] flex-1 justify-between gap-2 px-2",
+              "min-w-[200px] flex-1 justify-between gap-2 px-2",
               className,
             )}
           >

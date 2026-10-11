@@ -28,7 +28,6 @@ export const DialogActionFooter = ({
     <Button
       type="button"
       variant="outline"
-      size="sm"
       onClick={onCancel}
       disabled={isPending}
       className="flex-1"
@@ -40,7 +39,6 @@ export const DialogActionFooter = ({
       form={confirmForm}
       loading={isPending}
       variant={confirmVariant}
-      size="sm"
       disabled={isPending}
       icon={confirmIcon}
       onClick={onConfirm}

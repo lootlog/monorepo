@@ -25,7 +25,7 @@ export const ScheduleIconButton = ({
         <Button
           type="button"
           variant={variant}
-          size="icon"
+          size="icon-sm"
           aria-label={label}
           {...props}
         />

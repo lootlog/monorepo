@@ -22,7 +22,7 @@ export const LootLevelRangeFilter = ({
         {t("loots.filtersPanel.common.levelRange")}
       </Label>
       <LevelRangeFilter
-        size="sm"
+        size="default"
         minLevel={min}
         maxLevel={max}
         onMinLevelChange={(value) =>

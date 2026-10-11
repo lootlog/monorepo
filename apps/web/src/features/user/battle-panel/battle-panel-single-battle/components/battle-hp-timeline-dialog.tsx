@@ -68,12 +68,7 @@ export function BattleHpTimelineDialog({
         <TooltipTrigger
           render=<DialogTrigger
             render={
-              <Button
-                aria-label={openLabel}
-                variant="ghost"
-                size="icon"
-                className="size-8"
-              >
+              <Button aria-label={openLabel} variant="ghost" size="icon-sm">
                 <Maximize2 className="size-3.5" />
               </Button>
             }

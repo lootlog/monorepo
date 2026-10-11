@@ -82,30 +82,30 @@ export const CategoryItem = ({
           value={localName}
           onChange={(e) => setLocalName(e.target.value)}
           onBlur={handleNameBlur}
-          className="flex-1 h-8"
+          size="sm"
+          className="flex-1"
         />
 
         <Button
           variant="ghost"
-          size="icon"
+          size="icon-sm"
           onClick={onRemoveCategory}
           aria-label={t("battleUi.customization.removeCategory", {
             name: localName,
           })}
-          className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
         >
           <Trash2 className="size-4" />
         </Button>
 
         <Button
           variant="ghost"
-          size="icon"
+          size="icon-sm"
           onClick={() => setIsExpanded(!isExpanded)}
           aria-expanded={isExpanded}
           aria-label={t("battleUi.customization.toggleCategory", {
             name: localName,
           })}
-          className="size-8"
         >
           <m.div
             animate={{ rotate: isExpanded ? 0 : -90 }}

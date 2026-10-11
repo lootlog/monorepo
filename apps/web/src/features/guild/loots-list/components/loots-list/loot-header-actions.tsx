@@ -24,7 +24,7 @@ export const LootHeaderActions = ({
         size="sm"
         icon={<MessageSquare className="size-3.5" />}
         className={cn(
-          "h-8 gap-1 px-2 text-xs",
+          "gap-1 px-2 text-xs",
           commentsCount === 0 ? "text-muted-foreground" : "text-foreground",
         )}
         aria-label={t("loots.list.commentsCount", { count: commentsCount })}
@@ -43,7 +43,7 @@ export const LootHeaderActions = ({
         icon={<Info className="size-3.5" />}
         aria-label={t("loots.list.details")}
         title={t("loots.list.details")}
-        className="h-8 gap-1 px-2 text-xs text-muted-foreground max-sm:w-8 max-sm:px-0"
+        className="gap-1 px-2 text-xs text-muted-foreground max-sm:w-8 max-sm:px-0"
       >
         <span className="max-sm:sr-only">{t("loots.list.details")}</span>
       </Button>

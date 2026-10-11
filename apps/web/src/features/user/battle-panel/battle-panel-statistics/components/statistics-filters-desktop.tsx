@@ -28,8 +28,7 @@ export const StatisticsFiltersDesktop = ({
           characterId={characterId}
           onCharacterChange={onCharacterChange}
           allowAllCharacters={false}
-          size="default"
-          className="h-10 w-[240px]"
+          className="w-[240px]"
         />
       </div>
 

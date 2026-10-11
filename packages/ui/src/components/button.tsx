@@ -43,7 +43,7 @@ function Button({
     </>
   );
 
-  if (size === "icon" && hasIndicator) {
+  if (size?.startsWith("icon") && hasIndicator) {
     content = (
       <span className="relative inline-grid place-items-center">
         <span className={cn("inline-flex", loading && "opacity-0")}>

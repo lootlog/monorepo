@@ -47,7 +47,6 @@ export const QueryErrorNotice = ({
       <Button
         type="button"
         variant="outline"
-        size="sm"
         loading={isRetrying}
         icon=<RotateCcw className="size-3.5" />
         onClick={onRetry}

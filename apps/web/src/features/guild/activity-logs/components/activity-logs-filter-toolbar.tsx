@@ -38,7 +38,8 @@ export const ActivityLogsFilterToolbar = ({
               <Button
                 type="button"
                 variant="outline"
-                className="h-10 shrink-0 gap-2"
+                size="lg"
+                className="shrink-0 gap-2"
               >
                 <Filter className="size-4" aria-hidden="true" />
                 {t("activityLogs.filters.open")}

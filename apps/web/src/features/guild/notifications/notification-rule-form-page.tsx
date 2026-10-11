@@ -206,7 +206,6 @@ export const NotificationRuleFormPage = () => {
                             </div>
                             <Button
                               type="button"
-                              size="sm"
                               variant="outline"
                               onClick={() => setIsCreateTargetDialogOpen(true)}
                             >

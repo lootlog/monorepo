@@ -101,6 +101,7 @@ export function ReservationSharingSettings() {
         actions={
           <Button
             type="button"
+            size="sm"
             loading={createMutation.isPending}
             icon=<Plus />
             onClick={() => createMutation.mutate({ pathParams: { guildId } })}
@@ -231,8 +232,8 @@ export function ReservationSharingSettings() {
                           <Button
                             type="button"
                             variant="ghost"
-                            size="icon"
-                            className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            size="icon-sm"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                             aria-label={t(
                               "settings.reservations.sharing.disconnectOrganization",
                               { name: share.partner.name },

@@ -56,7 +56,8 @@ export const BattlesListFilterToolbar = ({
         <Button
           type="button"
           variant="outline"
-          className="h-10 shrink-0 gap-2"
+          size="lg"
+          className="shrink-0 gap-2"
           onClick={onMobileFiltersOpen}
         >
           <Filter className="size-4" aria-hidden="true" />
@@ -110,8 +111,7 @@ export const BattlesListFilterToolbar = ({
         multiple
         characterIds={filters.characterId}
         onCharacterToggle={onCharacterChange}
-        size="default"
-        className="h-10 w-[220px]"
+        className="w-[220px]"
       />
 
       <FilterPopover
