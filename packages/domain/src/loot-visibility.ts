@@ -1,8 +1,10 @@
+import { Permission } from "@lootlog/schema/permissions";
+
 export const LOOT_PERMISSION = {
-  owner: "OWNER",
-  read: "LOOTLOG_LOOTS_READ",
-  readHeroes: "LOOTLOG_LOOTS_HEROES_READ",
-  readTitans: "LOOTLOG_LOOTS_TITANS_READ",
+  owner: Permission.OWNER,
+  read: Permission.LOOTLOG_LOOTS_READ,
+  readHeroes: Permission.LOOTLOG_LOOTS_HEROES_READ,
+  readTitans: Permission.LOOTLOG_LOOTS_TITANS_READ,
 } as const;
 
 export type LootVisibilityNpc = {
