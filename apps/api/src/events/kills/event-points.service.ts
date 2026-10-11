@@ -10,6 +10,7 @@ import type { EventEmitter } from "#src/events/event-emitter";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
 import {
+  calculateRespawnProgressPercentage,
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   evaluateEventScoring,
   normalizeEventScoringMode,
@@ -174,35 +175,6 @@ export const makeEventPoints = (
         (params.trackingDurationSeconds / trackingWindowDurationSeconds) * 100,
       ),
     );
-  }
-
-  function calculateRespawnProgressPercentage(params: {
-    killTime: Date;
-    respawnStartTime: Date;
-    maxRespawnTime: Date | null | undefined;
-  }): number | undefined {
-    if (!params.maxRespawnTime) {
-      return undefined;
-    }
-
-    const maxRespawnTime = params.maxRespawnTime;
-
-    const fullWindowMs =
-      maxRespawnTime.getTime() - params.respawnStartTime.getTime();
-
-    if (fullWindowMs <= 0) {
-      return undefined;
-    }
-
-    const elapsedWindowMs = Math.min(
-      fullWindowMs,
-      Math.max(
-        0,
-        params.killTime.getTime() - params.respawnStartTime.getTime(),
-      ),
-    );
-
-    return Math.round((elapsedWindowMs / fullWindowMs) * 100);
   }
 
   function calculateTrackingMetricsForKill(params: {
