@@ -56,6 +56,12 @@ const active = (key: StoredKey, now: number) =>
   key.enabled === true &&
   (key.expiresAt === null || key.expiresAt.getTime() > now);
 
+const isUserBanned = (
+  user: Pick<typeof authUsers.$inferSelect, "banned" | "banExpires">,
+  now: number,
+) =>
+  user.banned && (user.banExpires === null || user.banExpires.getTime() > now);
+
 const summary = (key: StoredKey) => {
   const grant = grantFor(key);
 
@@ -152,9 +158,7 @@ export class ApiKeyService extends Context.Service<
             !row ||
             !grant ||
             !active(row.key, now) ||
-            (row.user.banned &&
-              (row.user.banExpires === null ||
-                row.user.banExpires.getTime() > now))
+            isUserBanned(row.user, now)
           )
             return { keyId, valid: false };
 
@@ -225,12 +229,7 @@ export class ApiKeyService extends Context.Service<
 
           const user = users[0];
 
-          if (
-            !user ||
-            (user.banned &&
-              (user.banExpires === null ||
-                user.banExpires.getTime() > Date.now()))
-          )
+          if (!user || isUserBanned(user, Date.now()))
             return yield* failure(401, "Session required");
 
           return user.id;
