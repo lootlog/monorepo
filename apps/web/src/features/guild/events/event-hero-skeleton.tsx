@@ -9,8 +9,8 @@ export const EventHeroSkeleton = () => (
       media={<Skeleton className="size-16 shrink-0 rounded-xl" />}
     />
 
-    <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-      <div className="lg:col-span-2">
+    <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
+      <div>
         <SectionCardSkeleton withIcon withDescription={false}>
           <div className="divide-y divide-border/70">
             {Array.from({ length: 6 }, (_, index) => (

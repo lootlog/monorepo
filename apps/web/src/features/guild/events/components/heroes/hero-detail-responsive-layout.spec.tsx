@@ -31,11 +31,13 @@ describe("HeroDetailResponsiveLayout", () => {
       '[data-hero-detail-slot="sidebar"]',
     );
 
-    expect(layout?.className).toContain("lg:grid-cols-3");
+    expect(layout?.className).toContain(
+      "xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]",
+    );
     expect(maps?.className).toContain("order-2");
-    expect(maps?.className).toContain("lg:col-span-2");
+    expect(maps?.className).toContain("xl:col-start-1");
     expect(secondary?.className).toContain("contents");
-    expect(secondary?.className).toContain("lg:block");
+    expect(secondary?.className).toContain("xl:block");
     expect(participants?.className).toContain("order-1");
     expect(sidebar?.className).toContain("order-3");
     expect(participants?.parentElement).toBe(secondary);
