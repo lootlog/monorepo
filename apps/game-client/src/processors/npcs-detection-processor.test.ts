@@ -42,6 +42,7 @@ const readyPreferences = (overrides?: {
   npcType?: DetectorNpcType;
   detect?: boolean;
   autoSend?: boolean;
+  characterAutoSendEnabled?: boolean;
   notifySound?: boolean;
   routingRules?: Array<{
     id: string;
@@ -62,7 +63,11 @@ const readyPreferences = (overrides?: {
 
   seedSettingsDocumentValues(
     queryClient,
-    { ...soundValues, "gameData.detector": detector },
+    {
+      ...soundValues,
+      "gameData.detector": detector,
+      "gameData.detectorAutoSendEnabled": overrides?.characterAutoSendEnabled,
+    },
     { type: "GAME_ACCOUNT", id: "202" },
   );
 };
@@ -715,6 +720,35 @@ describe("NpcsDetectionProcessor", () => {
     await waitFor(() => expect(requests).toHaveLength(2));
     expect(useNpcDetectorStore.getState().npcs[0]?.notificationSentAt).toEqual(
       expect.any(Number),
+    );
+  });
+  it("detects without auto-sending while the character's auto-send is off", async () => {
+    readyPreferences({
+      autoSend: true,
+      characterAutoSendEnabled: false,
+      routingRules: [
+        { id: "rule-1", minLevel: 200, maxLevel: 260, guildIds: ["guild-1"] },
+      ],
+    });
+    processor.handle(createNpcEvent());
+    seedSettingsDocumentValues(
+      queryClient,
+      { "gameData.detectorAutoSendEnabled": true },
+      { type: "CHARACTER", id: "202:101" },
+    );
+    processor.handle({
+      ...createNpcEvent(),
+      npcs: [{ id: 501, x: 3, y: 4, tpl: 900, icon: { id: 44 } }],
+    });
+
+    // Sends run in detection order, so the first request shows whether the
+    // detection made while the switch was off was sent.
+    await waitFor(() => expect(requests).toHaveLength(2));
+    expect(await requests[0]?.json()).toMatchObject({ npc: { id: 501 } });
+    expect(useNpcDetectorStore.getState().npcs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 500, notificationSentAt: null }),
+      ]),
     );
   });
   it("does not auto-send when the routing rule targets another world", () => {

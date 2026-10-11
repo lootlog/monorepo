@@ -15,5 +15,9 @@
     "gatherParty": "Utwórz zbiórkę",
     "removeNpcAria": "Usuń potwora z listy",
     "gatherPartyFailed": "Nie udało się utworzyć zbiórki"
+  },
+  "autoSend": {
+    "enabled": "Autowysyłka włączona na postaci {{name}}",
+    "disabled": "Autowysyłka wyłączona na postaci {{name}}"
   }
 }

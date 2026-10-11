@@ -250,6 +250,10 @@
       "map-ping": {
         "label": "Ping",
         "description": "Oznacza miejsce na mapie albo wojownika w walce. Przytrzymaj, żeby wybrać rodzaj pingu."
+      },
+      "toggle-detector-auto-send": {
+        "label": "Autowysyłka na tej postaci",
+        "description": "Włącza lub wyłącza autowysyłkę wykrytych potworów wszystkich typów na postaci, którą grasz."
       }
     },
     "restoreDefaultsTitle": "Domyślne skróty",
@@ -325,6 +329,11 @@
       "guildPickerLabel": "Lootlogi: {{name}}",
       "deleteRuleLabel": "Usuń regułę {{name}}",
       "noGuildsBadge": "Nic nie wysyła – zaznacz Lootlog"
+    },
+    "characterTitle": "Ta postać",
+    "characterAutoSend": {
+      "label": "Autowysyłka na tej postaci",
+      "description": "Gdy wyłączysz, ta postać nie wysyła wykrytych potworów do Lootlogów, niezależnie od kolumny „Autowysyłka” poniżej. Działa tylko na postaci, którą teraz grasz. Możesz to też przełączać skrótem z zakładki Skróty klawiszowe."
     },
     "typesTitle": "Które potwory wykrywać",
     "categoryHeader": "Typ",
