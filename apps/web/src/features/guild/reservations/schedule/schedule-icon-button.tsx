@@ -12,6 +12,7 @@ type ScheduleIconButtonProps = Omit<
 > & {
   /** Names the button and fills its tooltip. */
   label: string;
+  size: "icon-sm" | "icon-lg";
 };
 
 export const ScheduleIconButton = ({
@@ -22,13 +23,7 @@ export const ScheduleIconButton = ({
   <Tooltip>
     <TooltipTrigger
       render={
-        <Button
-          type="button"
-          variant={variant}
-          size="icon"
-          aria-label={label}
-          {...props}
-        />
+        <Button type="button" variant={variant} aria-label={label} {...props} />
       }
     />
     <TooltipContent side="bottom">{label}</TooltipContent>

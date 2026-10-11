@@ -43,7 +43,7 @@ export const BattleLogSearchToolbar: FC<BattleLogSearchToolbarProps> = ({
           onChange={handleQueryChange}
           aria-label={t("battlePanel.single.log.search.label")}
           placeholder={t("battlePanel.single.log.search.placeholder")}
-          className="h-8"
+          size="sm"
           wrapperClassName="min-w-0 flex-1"
         />
         <div className="flex items-center justify-between gap-2 sm:justify-end">
@@ -60,8 +60,7 @@ export const BattleLogSearchToolbar: FC<BattleLogSearchToolbarProps> = ({
             <Button
               type="button"
               variant="outline"
-              size="icon"
-              className="h-8 w-8"
+              size="icon-sm"
               aria-label={t("battlePanel.single.log.search.previous")}
               disabled={!hasResults}
               onClick={onPrevious}
@@ -71,8 +70,7 @@ export const BattleLogSearchToolbar: FC<BattleLogSearchToolbarProps> = ({
             <Button
               type="button"
               variant="outline"
-              size="icon"
-              className="h-8 w-8"
+              size="icon-sm"
               aria-label={t("battlePanel.single.log.search.next")}
               disabled={!hasResults}
               onClick={onNext}

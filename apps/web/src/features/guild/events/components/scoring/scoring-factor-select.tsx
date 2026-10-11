@@ -46,7 +46,7 @@ export const ScoringFactorSelect = ({
           label: <>{getScoringFactorLabel(factor, t)}</>,
         }))}
       >
-        <SelectTrigger id={id} size="sm" className="h-8 text-[12px]">
+        <SelectTrigger id={id} size="sm" className="text-[12px]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

@@ -41,7 +41,7 @@ export const DashboardOnboarding = () => {
   if (dismissed)
     return (
       <div className="flex shrink-0 justify-end">
-        <Button variant="ghost" size="sm" onClick={() => setDismissed(false)}>
+        <Button variant="ghost" onClick={() => setDismissed(false)}>
           <ListChecks aria-hidden="true" />
           {t("statistics.onboarding.restore")}
         </Button>
@@ -104,8 +104,7 @@ export const DashboardOnboarding = () => {
                     <Button
                       aria-label={t("statistics.onboarding.dismiss")}
                       variant="ghost"
-                      size="icon"
-                      className="size-8"
+                      size="icon-sm"
                       onClick={() => setDismissed(true)}
                     >
                       <X className="size-3.5" aria-hidden="true" />

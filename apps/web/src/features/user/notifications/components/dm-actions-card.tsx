@@ -206,7 +206,7 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
         <div className="flex flex-col gap-2">
           {hasActiveDm ? (
             <>
-              <Button size="sm" onClick={onAddWatch}>
+              <Button onClick={onAddWatch}>
                 <Package className="size-4" />
                 {t("settings.userNotifications.actions.addWatch")}
               </Button>
@@ -215,7 +215,6 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
                   render={
                     <span>
                       <Button
-                        size="sm"
                         variant="outline"
                         className="w-full"
                         disabled={
@@ -257,7 +256,6 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
                 <TooltipTrigger
                   render={
                     <Button
-                      size="sm"
                       variant="ghost"
                       className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                       disabled={isDmActionPending}
@@ -276,7 +274,6 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
             </>
           ) : (
             <Button
-              size="sm"
               disabled={isDmActionPending}
               onClick={handleEnableDm}
               loading={isEnablePending}

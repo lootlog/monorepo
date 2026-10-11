@@ -119,7 +119,7 @@ export const createMemberKillsTableColumns = ({
         <Button
           type="button"
           variant="ghost"
-          size="icon"
+          size="icon-sm"
           aria-expanded={isExpanded}
           aria-label={t(
             isExpanded
@@ -128,7 +128,7 @@ export const createMemberKillsTableColumns = ({
             { monsterName: kill.heroNpc.npcName },
           )}
           onClick={() => onExpandedToggle(kill.id)}
-          className="size-9 text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground"
         >
           <ChevronDown
             className={cn(

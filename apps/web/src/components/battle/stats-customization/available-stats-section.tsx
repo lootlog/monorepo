@@ -36,15 +36,16 @@ export const AvailableStatsSection = ({
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         placeholder={t("battleUi.customization.searchStat")}
-        className="h-7 text-xs"
+        size="sm"
+        className="text-xs"
         wrapperClassName="mb-2"
         endAdornment={
           searchQuery ? (
             <Button
               variant="ghost"
-              size="icon"
+              size="icon-xs"
               onClick={() => setSearchQuery("")}
-              className="size-6 hover:bg-transparent"
+              className="hover:bg-transparent"
               aria-label={t("common.clear")}
             >
               <X className="h-3 w-3" />
@@ -63,12 +64,12 @@ export const AvailableStatsSection = ({
                 <span className="flex-1">{t(stat.labelKey)}</span>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon-sm"
                   onClick={() => onAddStat(String(stat.key))}
                   aria-label={t("battleUi.customization.addStat", {
                     name: t(stat.labelKey),
                   })}
-                  className="h-6 w-6 p-0 hover:bg-primary/10 hover:text-primary"
+                  className="hover:bg-primary/10 hover:text-primary"
                 >
                   <Plus className="h-3 w-3" />
                 </Button>

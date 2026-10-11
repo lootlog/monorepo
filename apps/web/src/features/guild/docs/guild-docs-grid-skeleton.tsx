@@ -21,8 +21,8 @@ export const GuildDocsGridSkeleton = () => {
             </div>
             <Skeleton className="h-3 w-24" />
             <div className="mt-1 flex gap-2">
-              <Skeleton className="h-9 flex-1 rounded-xl" />
-              <Skeleton className="size-9 shrink-0 rounded-xl" />
+              <Skeleton className="h-8 flex-1 rounded-xl" />
+              <Skeleton className="size-8 shrink-0 rounded-xl" />
             </div>
           </SectionCard>
         ))}

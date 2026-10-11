@@ -140,7 +140,6 @@ export const LootsList = () => {
           {newLootCount > 0 && (
             <Button
               type="button"
-              size="sm"
               className="pointer-events-auto"
               onClick={showNewLoots}
             >

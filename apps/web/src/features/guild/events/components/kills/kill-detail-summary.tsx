@@ -1,12 +1,12 @@
 import { PageHeader } from "@/components/common/page-header";
 import { useTranslation } from "react-i18next";
-import { Hand, Skull } from "lucide-react";
+import { Hand } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { NpcTile } from "@/components/tiles/npc-tile";
+import { HeroAvatar } from "../shared/hero-avatar";
 import type {
   EventConfig,
   KillDetail,
@@ -93,24 +93,7 @@ export const KillDetailSummary = ({
   return (
     <PageHeader
       title={kill.heroNpc.npcName}
-      status={
-        <>
-          {kill.heroNpc.npcIcon ? (
-            <NpcTile
-              className="flex w-10 shrink-0 items-center justify-center"
-              npc={{
-                id: kill.heroNpc.npcId ?? 0,
-                name: kill.heroNpc.npcName,
-                icon: kill.heroNpc.npcIcon,
-              }}
-            />
-          ) : (
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 ring-1 ring-border/70">
-              <Skull className="size-4 text-destructive" />
-            </div>
-          )}
-        </>
-      }
+      media={<HeroAvatar hero={kill.heroNpc} size="portrait" />}
       description={t("events.killDetail.title")}
       metadata={formattedKillTime}
       actions={

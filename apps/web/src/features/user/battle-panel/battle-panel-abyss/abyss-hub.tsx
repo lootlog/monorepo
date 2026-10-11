@@ -111,15 +111,12 @@ export function AbyssHub() {
               <div className="flex flex-wrap items-center gap-2 border-b border-border/70 p-2">
                 <TabsList
                   aria-label={t("battlePanel.abyss.title")}
-                  className="h-auto w-full gap-1 bg-transparent p-0 sm:w-auto"
+                  size="lg"
+                  className="w-full sm:w-auto"
                 >
                   {views.map((view) => (
-                    <TabsTrigger
-                      key={view.value}
-                      value={view.value}
-                      className="h-10 gap-2 rounded-xl px-4 text-muted-foreground hover:text-foreground data-active:border-primary/30 data-active:bg-primary/15 data-active:text-primary data-active:shadow-none sm:flex-none dark:data-active:border-primary/30 dark:data-active:bg-primary/15 dark:data-active:text-primary"
-                    >
-                      <view.icon className="size-4" aria-hidden="true" />
+                    <TabsTrigger key={view.value} value={view.value}>
+                      <view.icon aria-hidden="true" />
                       {view.label}
                     </TabsTrigger>
                   ))}
@@ -146,8 +143,7 @@ export function AbyssHub() {
                 characterId={currentCharacterId}
                 onCharacterChange={handleCharacterChange}
                 allowAllCharacters={false}
-                size="default"
-                className="h-10 w-full md:w-[240px]"
+                className="w-full md:w-[240px]"
               />
 
               <FilterPopover
@@ -171,7 +167,7 @@ export function AbyssHub() {
                 }
                 emptyMessage={t("battlePanel.abyss.noSeason")}
                 width="w-full md:w-[260px]"
-                triggerClassName="h-10 min-w-0"
+                triggerClassName="min-w-0"
                 contentClassName="w-[260px]"
               />
 

@@ -6,7 +6,6 @@ import { cn } from "cn";
 type BattleStatsTableHeaderProps = {
   title?: string;
   actions?: ReactNode;
-  compact?: boolean;
   leading?: ReactNode;
   className?: string;
   ref?: Ref<HTMLDivElement>;
@@ -15,7 +14,6 @@ type BattleStatsTableHeaderProps = {
 export const BattleStatsTableHeader = ({
   title,
   actions,
-  compact,
   leading,
   className,
   ref,
@@ -26,15 +24,7 @@ export const BattleStatsTableHeader = ({
       icon={ChartArea}
       actions={
         actions && (
-          <div
-            className={cn(
-              "flex flex-wrap items-center gap-2",
-              compact &&
-                "[&_button]:size-8 [&_button]:min-w-8 [&_button]:px-0 [&_svg]:size-4",
-            )}
-          >
-            {actions}
-          </div>
+          <div className="flex flex-wrap items-center gap-2">{actions}</div>
         )
       }
     />

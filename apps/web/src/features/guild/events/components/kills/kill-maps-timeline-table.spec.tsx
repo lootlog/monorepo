@@ -163,12 +163,8 @@ describe("KillMapsTimelineTable", () => {
       name: /events\.killDetail\.mapCoverage\.showAllGaps/,
     });
 
-    expect(auditToggle.className).toContain("h-11");
-    expect(auditToggle.className).toContain("md:h-8");
     fireEvent.click(auditToggle);
     expect(auditToggle.getAttribute("aria-expanded")).toBe("true");
-    expect(auditToggle.className).toContain("h-11");
-    expect(auditToggle.className).toContain("md:h-8");
     expect(
       screen.getByText("events.killDetail.mapCoverage.allGaps"),
     ).toBeTruthy();

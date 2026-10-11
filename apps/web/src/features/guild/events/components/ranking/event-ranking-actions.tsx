@@ -37,9 +37,9 @@ export const EventRankingActions = ({
           <TooltipTrigger
             render={
               <Button
-                size="icon"
+                size="icon-sm"
                 variant="ghost"
-                className="size-8 text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground"
                 onClick={onEditPoints}
                 disabled={isEditPending}
                 aria-label={t("events.points.edit")}
@@ -58,9 +58,9 @@ export const EventRankingActions = ({
         <DropdownMenuTrigger
           render={
             <Button
-              size="icon"
+              size="icon-sm"
               variant="ghost"
-              className="size-11 text-muted-foreground lg:hidden"
+              className="text-muted-foreground lg:hidden"
               disabled={isEditPending}
               aria-label={t("events.ranking.moreActions")}
             >

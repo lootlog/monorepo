@@ -122,8 +122,6 @@ describe("ScheduleHeader", () => {
       "Dodaj rezerwację",
     ]);
 
-    for (const action of actions) expect(action.className).toContain("size-11");
-
     const [
       todayAction,
       nearestSlotAction,
@@ -196,7 +194,7 @@ describe("ScheduleHeader", () => {
     expect(dateNavigation?.className).toContain("w-full");
     expect(dateNavigation?.className).toContain("grid");
     expect(dateNavigation?.className).toContain(
-      "grid-cols-[2.75rem_minmax(0,1fr)_2.75rem]",
+      "grid-cols-[2.5rem_minmax(0,1fr)_2.5rem]",
     );
     expect(dateNavigation?.className).not.toContain("w-48");
   });

@@ -53,7 +53,8 @@ export const Events = () => {
 
   const createButton = (
     <Button
-      className="h-10 w-full shrink-0 sm:w-auto"
+      size="lg"
+      className="w-full shrink-0 sm:w-auto"
       onClick={() => setCreateDialogOpen(true)}
       icon=<Plus className="size-4" />
     >
@@ -71,7 +72,8 @@ export const Events = () => {
             onChange={(event) => setSearchValue(event.target.value)}
             placeholder={t("events.searchPlaceholder")}
             aria-label={t("events.searchLabel")}
-            wrapperClassName="h-10 min-w-0 flex-1 basis-56"
+            size="lg"
+            wrapperClassName="min-w-0 flex-1 basis-56"
             disabled={isLoading}
           />
           {createButton}

@@ -113,13 +113,14 @@ export function FilterPopover<T extends string = string>({
         render={
           <Button
             variant="outline"
+            size="lg"
             role="combobox"
             aria-label={placeholder}
             aria-expanded={open}
             disabled={disabled}
             className={cn(
               width,
-              "h-10 justify-between focus-visible:ring-inset focus-visible:ring-offset-0 data-popup-open:border-ring data-popup-open:ring-2 data-popup-open:ring-inset data-popup-open:ring-ring",
+              "justify-between focus-visible:ring-inset focus-visible:ring-offset-0 data-popup-open:border-ring data-popup-open:ring-2 data-popup-open:ring-inset data-popup-open:ring-ring",
               triggerClassName,
             )}
           />

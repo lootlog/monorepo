@@ -156,8 +156,7 @@ export const PlayerTile: FC<PlayerTileProps> = ({
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
-                className="h-9 justify-start gap-2 px-2 text-sm font-medium"
+                className="justify-start gap-2 px-2 text-sm font-medium"
                 onClick={() => {
                   setIsPopoverOpen(false);
                   onShowLoots();
@@ -170,8 +169,7 @@ export const PlayerTile: FC<PlayerTileProps> = ({
             {profileUrl && (
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-9 justify-start gap-2 px-2 text-sm font-medium"
+                className="justify-start gap-2 px-2 text-sm font-medium"
                 render={
                   <a
                     href={profileUrl}

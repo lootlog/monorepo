@@ -24,6 +24,7 @@ import { cn } from "cn";
 export type MemberSyncButtonProps = {
   member: GuildMember;
   className?: string;
+  size?: "sm";
   variant?: "default" | "secondary" | "outline" | "ghost";
   onMemberUpdated?: (member: GuildMember | null) => void;
 };
@@ -31,6 +32,7 @@ export type MemberSyncButtonProps = {
 export const MemberSyncButton: FC<MemberSyncButtonProps> = ({
   member,
   className,
+  size,
   variant = "secondary",
   onMemberUpdated,
 }) => {
@@ -137,7 +139,7 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({
           <span>
             <Button
               className={cn("justify-center", className)}
-              size="sm"
+              size={size}
               variant={variant}
               loading={isPending}
               icon=<RefreshCw className="size-4" />

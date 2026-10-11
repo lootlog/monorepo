@@ -325,7 +325,6 @@ export const LootSearchCommand = (
             <>
               <Button
                 variant="outline"
-                size="sm"
                 onClick={handleDirectSearch}
                 className="w-full justify-start"
               >

@@ -42,7 +42,7 @@ export const LootDirectSearchNotice = ({
         variant="ghost"
         size="sm"
         onClick={onClear}
-        className="h-7 shrink-0 px-2 text-xs"
+        className="shrink-0 text-xs"
       >
         <X className="size-3" />
         {t("loots.searchCommand.directSearchClear")}

@@ -69,7 +69,7 @@ export const MapTemplateForm = (
                         placeholder={t(
                           "settings.mapTemplates.templateNamePlaceholder",
                         )}
-                        className="h-9 text-sm"
+                        className="text-sm"
                       />
                     />
                     <FormMessage />
@@ -135,7 +135,7 @@ export const MapTemplateForm = (
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t("settings.mapTemplates.searchPlaceholder")}
-                  className="h-9 text-sm"
+                  className="text-sm"
                 />
 
                 <div className="border rounded-lg max-h-[200px] overflow-y-auto custom-scrollbar [scrollbar-gutter:stable]">
@@ -183,7 +183,6 @@ export const MapTemplateForm = (
             <Button
               type="button"
               variant="outline"
-              size="sm"
               onClick={() => handleClose(false)}
               className="flex-1"
             >
@@ -191,7 +190,6 @@ export const MapTemplateForm = (
             </Button>
             <Button
               type="submit"
-              size="sm"
               loading={isPending}
               icon=<Icon className="size-3.5" />
               className="flex-1"

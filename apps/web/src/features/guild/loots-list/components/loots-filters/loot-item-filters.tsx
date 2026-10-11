@@ -208,8 +208,8 @@ export const LootItemFilters = ({
               </div>
               <Button
                 variant="ghost"
-                size="icon"
-                className="size-7 shrink-0"
+                size="icon-sm"
+                className="shrink-0"
                 aria-label={t("common.removeOption", { label: hidItem.name })}
                 onClick={() => updateFilters({ hid: "" })}
               >

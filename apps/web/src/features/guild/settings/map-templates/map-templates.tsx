@@ -96,8 +96,8 @@ export const MapTemplatesSettings = () => {
     }
   };
 
-  const createButton = (
-    <Button onClick={() => setCreateDialogOpen(true)}>
+  const renderCreateButton = (size?: "sm") => (
+    <Button size={size} onClick={() => setCreateDialogOpen(true)}>
       <Plus data-icon="inline-start" aria-hidden />
       {t("settings.mapTemplates.newTemplate")}
     </Button>
@@ -115,7 +115,7 @@ export const MapTemplatesSettings = () => {
               icon={FileText}
               title={t("settings.mapTemplates.title")}
               description={t("settings.mapTemplates.description")}
-              actions={!isEmpty && createButton}
+              actions={!isEmpty && renderCreateButton("sm")}
             />
             <SectionCardContent className="p-0">
               {isLoading ? (
@@ -129,7 +129,7 @@ export const MapTemplatesSettings = () => {
                   description={t(
                     "settings.mapTemplates.noTemplatesDescription",
                   )}
-                  action={createButton}
+                  action={renderCreateButton()}
                 />
               ) : (
                 <ul className="divide-y divide-border">
@@ -164,14 +164,13 @@ export const MapTemplatesSettings = () => {
                             </CollapsibleTrigger>
                             <Button
                               variant="ghost"
-                              size="icon"
+                              size="icon-sm"
                               aria-label={t(
                                 "settings.mapTemplates.editTemplate",
                                 {
                                   name: template.name,
                                 },
                               )}
-                              className="size-8"
                               onClick={() => handleEdit(template)}
                             >
                               <Pencil className="size-4" />
@@ -188,12 +187,12 @@ export const MapTemplatesSettings = () => {
                               trigger={
                                 <Button
                                   variant="ghost"
-                                  size="icon"
+                                  size="icon-sm"
                                   aria-label={t(
                                     "settings.mapTemplates.deleteTemplate",
                                     { name: template.name },
                                   )}
-                                  className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                                 >
                                   <Trash2 className="size-4" />
                                 </Button>

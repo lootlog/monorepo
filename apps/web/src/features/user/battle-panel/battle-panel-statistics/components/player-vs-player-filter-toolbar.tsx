@@ -57,7 +57,8 @@ export const PlayerVsPlayerFilterToolbar = ({
         <Button
           type="button"
           variant="outline"
-          className="h-10 shrink-0 gap-2 px-3"
+          size="lg"
+          className="shrink-0 gap-2 px-3"
           onClick={onMobileFiltersOpen}
         >
           <Filter className="size-4" aria-hidden="true" />
@@ -77,7 +78,7 @@ export const PlayerVsPlayerFilterToolbar = ({
       <Popover>
         <PopoverTrigger
           render={
-            <Button type="button" variant="outline" className="h-10 gap-2">
+            <Button type="button" variant="outline" size="lg" className="gap-2">
               <SlidersHorizontal className="size-4" aria-hidden="true" />
               {moreLabel}
             </Button>

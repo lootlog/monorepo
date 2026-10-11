@@ -1,12 +1,11 @@
 import { Button } from "@lootlog/ui/components/button";
-import { useState } from "react";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@lootlog/ui/components/select";
-import { GripVertical, X } from "lucide-react";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@lootlog/ui/components/dropdown-menu";
+import { MapPin, X } from "lucide-react";
 import type { LocationData } from "./map-manage-dialog.types";
 import { useTranslation } from "react-i18next";
 
@@ -27,54 +26,53 @@ export const MapChip = ({
   isDeleting,
   deletionDisabled,
 }: MapChipProps) => {
-  const [showSelect, setShowSelect] = useState(false);
   const { t } = useTranslation();
 
   return (
-    <div className="group inline-flex items-center gap-1 pl-2 pr-1 py-0.5 bg-primary/10 hover:bg-primary/15 rounded border border-primary/20 transition-colors">
-      <span className="text-[11px] font-medium text-primary">
+    <div className="inline-flex h-7 items-center gap-0.5 rounded border border-primary/20 bg-primary/10 pr-0.5 pl-2 transition-colors hover:bg-primary/15">
+      <span className="mr-0.5 text-xs font-medium text-primary">
         {map.mapName}
       </span>
 
       {locations.length > 0 && (
-        <Select<string>
-          open={showSelect}
-          onOpenChange={setShowSelect}
-          onValueChange={(value) =>
-            onLocationChange(value === "none" ? null : value)
-          }
-          items={[
-            { value: "none", label: <>{t("events.locations.noLocation")}</> },
-            ...locations.map((loc) => ({
-              value: loc.id,
-              label: <>{loc.name}</>,
-            })),
-          ]}
-        >
-          <SelectTrigger className="h-4 w-4 p-0 border-0 bg-transparent hover:bg-primary/20 rounded">
-            <GripVertical className="size-2.5 text-primary/60" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                type="button"
+                aria-label={`${t("events.locations.addTo")}: ${map.mapName}`}
+                className="rounded text-primary/60 hover:bg-primary/20 hover:text-primary"
+              />
+            }
+          >
+            <MapPin className="size-3" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onClick={() => onLocationChange(null)}>
               {t("events.locations.noLocation")}
-            </SelectItem>
-            {locations.map((loc) => (
-              <SelectItem key={loc.id} value={loc.id}>
-                {loc.name}
-              </SelectItem>
+            </DropdownMenuItem>
+            {locations.map((location) => (
+              <DropdownMenuItem
+                key={location.id}
+                onClick={() => onLocationChange(location.id)}
+              >
+                {location.name}
+              </DropdownMenuItem>
             ))}
-          </SelectContent>
-        </Select>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
 
       <Button
         variant="ghost"
-        size="icon"
+        size="icon-xs"
         type="button"
-        aria-label={t("events.delete")}
-        icon=<X className="size-2.5" />
+        aria-label={t("events.maps.remove", { name: map.mapName })}
+        icon=<X className="size-3" />
         onClick={onDelete}
-        className="size-5 p-0.5 rounded hover:bg-destructive/20 text-primary/60 hover:text-destructive transition-colors"
+        className="rounded text-primary/60 hover:bg-destructive/20 hover:text-destructive"
         disabled={deletionDisabled}
         loading={isDeleting}
       />

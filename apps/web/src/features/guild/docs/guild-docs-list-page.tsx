@@ -70,7 +70,8 @@ export const GuildDocsListPage = () => {
             value={searchValue}
             onChange={(event) => setSearchValue(event.target.value)}
             placeholder={t("docs.list.searchPlaceholder")}
-            wrapperClassName="h-10 min-w-0 flex-1 basis-full sm:basis-48"
+            size="lg"
+            wrapperClassName="min-w-0 flex-1 basis-full sm:basis-48"
             disabled={documentsQuery.isLoading}
           />
 
@@ -97,7 +98,8 @@ export const GuildDocsListPage = () => {
               <Button
                 type="button"
                 variant="outline"
-                className="h-10 shrink-0"
+                size="lg"
+                className="shrink-0"
                 onClick={() => setTrashOpen(true)}
               >
                 <Archive className="size-4" aria-hidden="true" />
@@ -110,7 +112,8 @@ export const GuildDocsListPage = () => {
             )}
             {canWrite && (
               <Button
-                className="h-10 shrink-0"
+                size="lg"
+                className="shrink-0"
                 disabled={!limit.canCreate}
                 onClick={() => setCreateOpen(true)}
               >
@@ -233,12 +236,12 @@ export const GuildDocsListPage = () => {
                       {canWrite && (
                         <Button
                           type="button"
-                          size="icon"
+                          size="icon-sm"
                           variant="outline"
                           disabled={deleteDocument.isPending}
                           aria-label={t("docs.trash.move")}
                           title={t("docs.trash.move")}
-                          className="size-9 shrink-0 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          className="shrink-0 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
                           onClick={() => setDocumentPendingTrash(document)}
                         >
                           <Trash2 className="size-4" aria-hidden="true" />

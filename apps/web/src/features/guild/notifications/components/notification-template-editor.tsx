@@ -73,7 +73,6 @@ export const NotificationTemplateEditor = (
           <Button
             key={preset.key}
             type="button"
-            size="sm"
             variant="outline"
             disabled={disabled}
             onClick={() => applyPreset(preset.value)}
@@ -84,7 +83,6 @@ export const NotificationTemplateEditor = (
 
         <Button
           type="button"
-          size="sm"
           variant="outline"
           disabled={disabled}
           className={previewButtonClassName}

@@ -174,7 +174,7 @@ export function ReservationShareInvitation({
             <Button
               type="button"
               className="mt-4 w-full"
-              size="lg"
+              size="xl"
               disabled={!targetGuildId}
               loading={acceptMutation.isPending}
               icon=<Link2 className="size-4" aria-hidden="true" />

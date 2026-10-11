@@ -18,11 +18,11 @@ export const TopBarBackButton = ({ to }: { to: string }) => {
         <Button
           aria-label={t("common.actions.back")}
           variant="ghost"
-          size="icon"
+          size="icon-sm"
           nativeButton={false}
           role="link"
           render={<Link to={to} />}
-          className="size-8 rounded-full hover:bg-muted/50"
+          className="rounded-full hover:bg-muted/50"
         >
           <ArrowLeft aria-hidden="true" />
         </Button>

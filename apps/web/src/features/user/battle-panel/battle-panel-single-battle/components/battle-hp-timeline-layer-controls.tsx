@@ -40,8 +40,8 @@ export function BattleHpTimelineLayerControls({
           <Button
             aria-label={t("battlePanel.single.chart.layers.reset")}
             variant="ghost"
-            size="icon"
-            className="size-8 shrink-0"
+            size="icon-sm"
+            className="shrink-0"
             onClick={onReset}
           >
             <RotateCcw className="size-3.5" />

@@ -128,8 +128,7 @@ export const FiltersSidebar = ({
                   multiple
                   characterIds={filters.characterId}
                   onCharacterToggle={handleCharacterChange}
-                  size="default"
-                  className="h-10 w-full"
+                  className="w-full"
                 />
               </div>
 
@@ -197,7 +196,6 @@ export const FiltersSidebar = ({
                 onClick={handleClearFilters}
                 variant="outline"
                 className="w-full"
-                size="sm"
               >
                 <X className="h-4 w-4 mr-2" />
                 {t("loots.filtersPanel.quickFilters.clearButton")}

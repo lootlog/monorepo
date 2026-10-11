@@ -26,8 +26,7 @@ export const ActivityLogDetailsPopover = ({
           <Button
             type="button"
             variant="ghost"
-            size="icon"
-            className="size-8"
+            size="icon-sm"
             aria-label={t("activityLogs.list.additionalData")}
           >
             <Info aria-hidden="true" />

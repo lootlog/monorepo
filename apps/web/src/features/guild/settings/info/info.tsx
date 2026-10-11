@@ -89,6 +89,7 @@ export const InfoSettings = () => {
                   actions={
                     hasRequiredPermissions ? (
                       <Button
+                        size="sm"
                         onClick={refresh}
                         disabled={!guildId || query.isFetching}
                         loading={isRefreshing}

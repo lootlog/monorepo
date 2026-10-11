@@ -80,7 +80,8 @@ export const KillStatsFilterBar = ({
           placeholder={search.placeholder}
           value={search.value}
           onChange={(event) => search.onChange(event.target.value)}
-          wrapperClassName="h-10 min-w-0 flex-1 md:w-[220px] md:flex-none"
+          size="lg"
+          wrapperClassName="min-w-0 flex-1 md:w-[220px] md:flex-none"
         />
       )}
 
@@ -92,14 +93,17 @@ export const KillStatsFilterBar = ({
             search ? (
               <Button
                 variant="outline"
-                size="icon"
-                className="size-10"
+                size="icon-lg"
                 aria-label={t("kills.filters.title")}
               >
                 <Filter aria-hidden="true" />
               </Button>
             ) : (
-              <Button variant="outline" className="h-10 w-full justify-start">
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full justify-start"
+              >
                 <Filter data-icon="inline-start" aria-hidden="true" />
                 {t("kills.filters.title")}
               </Button>

@@ -108,8 +108,7 @@ export function useNpcsTableColumns({ guildId, openNpcDetails }: ColumnsProps) {
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
-                  className="size-7 md:size-8"
+                  size="icon-sm"
                   aria-label={t("settings.npcs.actions.more")}
                 >
                   <MoreHorizontal className="size-4" />
