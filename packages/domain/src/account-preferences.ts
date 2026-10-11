@@ -240,11 +240,7 @@ export const normalizeRoutingRules = flow(
             : `rule-${index + 1}`,
         minLevel: Math.min(boundedMin, boundedMax),
         maxLevel: Math.max(boundedMin, boundedMax),
-        guildIds: Array.isArray(rule.guildIds)
-          ? rule.guildIds.filter((guildId): guildId is string =>
-              Predicate.isString(guildId),
-            )
-          : [],
+        guildIds: normalizeGuildIds([])(rule.guildIds),
       };
 
       if (name) normalizedRule.name = name;
