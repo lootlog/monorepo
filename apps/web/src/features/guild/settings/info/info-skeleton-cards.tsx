@@ -27,7 +27,7 @@ export const InfoSettingsSkeletonCards = () => (
           render=<span />
           className="block h-3 w-64 max-w-full"
         />
-        actions=<Skeleton className="h-9 w-28 rounded-xl" />
+        actions=<Skeleton className="h-8 w-28 rounded-xl" />
       />
       <SectionCardContent>{fieldTiles}</SectionCardContent>
     </SectionCard>

@@ -73,8 +73,7 @@ export const HeroDetailHeader = ({
               render={
                 <Button
                   variant="outline"
-                  size="sm"
-                  className="h-9 shrink-0 px-2.5 lg:px-3"
+                  className="shrink-0 px-2.5 lg:px-3"
                   aria-label={respawnAction.label}
                   onClick={handleRespawnActionClick}
                 >

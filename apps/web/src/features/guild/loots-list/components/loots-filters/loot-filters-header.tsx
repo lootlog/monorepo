@@ -90,8 +90,9 @@ export const LootFiltersHeader = ({
           >
             <Button
               variant="outline"
+              size="lg"
               onClick={() => setIsCommandOpen(true)}
-              className="relative h-10 w-full justify-start font-normal text-muted-foreground hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground"
+              className="relative w-full justify-start font-normal text-muted-foreground hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground"
             >
               <Search className="size-4 shrink-0" />
               <span className={cn("truncate", !usesStackedControls && "pr-16")}>
@@ -160,7 +161,7 @@ export const LootFiltersHeader = ({
                   <Button
                     onClick={onToggleFilters}
                     variant={isFiltersOpen ? "default" : "outline"}
-                    size="icon"
+                    size="icon-lg"
                     aria-label={t("loots.header.mobileFiltersTitle")}
                     aria-expanded={isFiltersOpen}
                     className="relative shrink-0"
@@ -195,9 +196,10 @@ export const LootFiltersHeader = ({
               <Button
                 type="button"
                 variant="outline"
+                size="lg"
                 onClick={onToggleFilters}
                 aria-expanded={isFiltersOpen}
-                className="relative h-10 shrink-0 gap-2"
+                className="relative shrink-0 gap-2"
               >
                 <Filter className="size-4" aria-hidden="true" />
                 {t("loots.header.filtersButton")}

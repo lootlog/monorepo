@@ -121,7 +121,6 @@ export function BattleStatsTable({
         <BattleStatsTableHeader
           title={headerTitle ?? t("battlePanel.single.statistics.title")}
           actions={headerActions}
-          compact={compact}
         />
       )}
       <ScrollArea

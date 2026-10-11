@@ -71,7 +71,6 @@ export const GuildDiscordSyncNotice = ({
         <div className="flex flex-wrap gap-2">
           {isMissing && guildId ? (
             <Button
-              size="sm"
               onClick={() =>
                 window.location.assign(buildDiscordBotInstallUrl(guildId))
               }
@@ -80,7 +79,6 @@ export const GuildDiscordSyncNotice = ({
             </Button>
           ) : null}
           <Button
-            size="sm"
             variant="outline"
             onClick={refresh}
             disabled={!guildId || isLoading}

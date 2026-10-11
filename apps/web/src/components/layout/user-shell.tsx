@@ -29,7 +29,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
           <AppTopBar>
             <div className="flex w-full flex-row items-center justify-between gap-2">
               <div className="flex flex-row items-center gap-2">
-                <SidebarTrigger className="size-8!" />
+                <SidebarTrigger />
                 {parentPath && <TopBarBackButton to={parentPath} />}
               </div>
 

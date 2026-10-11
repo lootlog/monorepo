@@ -133,7 +133,7 @@ export const NotificationTargetCard = ({
               render={
                 <Button
                   type="button"
-                  size="icon"
+                  size="icon-sm"
                   variant="outline"
                   aria-label={t("settings.notifications.actions.edit")}
                   disabled={isActionDisabled}

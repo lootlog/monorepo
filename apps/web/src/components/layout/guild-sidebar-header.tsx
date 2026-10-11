@@ -132,9 +132,9 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
           render={
             <Button
               variant="ghost"
-              size="icon"
+              size="icon-sm"
               aria-label={canTriggerRefreshText}
-              className="size-8 text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground"
               onClick={() => {
                 if (canTriggerRefresh) handleRefreshPermissions();
               }}

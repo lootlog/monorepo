@@ -17,8 +17,7 @@ type AnimatedToggleGroupProps<Value extends string> = {
   }[];
   className?: string;
   static?: boolean;
-  /** `large` matches the 40px filter-bar controls. */
-  size?: "default" | "small" | "large";
+  size?: "sm" | "default" | "lg";
 };
 
 export function AnimatedToggleGroup<Value extends string>({
@@ -44,7 +43,7 @@ export function AnimatedToggleGroup<Value extends string>({
       spacing={0}
       className={cn(
         "relative isolate grid max-w-full rounded-xl border border-border bg-background",
-        { small: "h-7", default: "h-9", large: "h-10" }[size],
+        { sm: "h-8", default: "h-9", lg: "h-10" }[size],
         className,
       )}
       style={{

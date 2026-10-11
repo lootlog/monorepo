@@ -146,8 +146,7 @@ export function AbyssHub() {
                 characterId={currentCharacterId}
                 onCharacterChange={handleCharacterChange}
                 allowAllCharacters={false}
-                size="default"
-                className="h-10 w-full md:w-[240px]"
+                className="w-full md:w-[240px]"
               />
 
               <FilterPopover
@@ -171,7 +170,7 @@ export function AbyssHub() {
                 }
                 emptyMessage={t("battlePanel.abyss.noSeason")}
                 width="w-full md:w-[260px]"
-                triggerClassName="h-10 min-w-0"
+                triggerClassName="min-w-0"
                 contentClassName="w-[260px]"
               />
 

@@ -218,10 +218,10 @@ export function OneVsOneStatsTable({
               "sticky top-(--battle-detail-pin-top,0px) z-30 bg-card",
           )}
           title={headerTitle ?? t("battlePanel.single.statistics.title")}
-          compact={compact}
           leading=<SearchInput
             aria-label={t("battleUi.customization.searchStat")}
-            className={cn(compact ? "h-8 text-sm" : "h-9 text-sm")}
+            size="sm"
+            className="text-sm"
             placeholder={t("battleUi.customization.searchStat")}
             value={statSearchQuery}
             wrapperClassName="w-full"

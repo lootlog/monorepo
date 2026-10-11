@@ -81,8 +81,9 @@ export function ScheduleHeader({
     isCompact,
   );
 
-  // Icon buttons match the height of the labelled desktop buttons.
-  const iconButtonClassName = compactValue(isCompact, "size-11", "size-9");
+  // Compact controls keep 44px touch targets; desktop icon buttons match the
+  // 32px labelled buttons through their size.
+  const iconButtonClassName = compactValue(isCompact, "size-11", undefined);
 
   const actionToolbar = (
     <div

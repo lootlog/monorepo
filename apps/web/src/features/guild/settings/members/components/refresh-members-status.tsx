@@ -108,7 +108,7 @@ export const RefreshMembersStatus = ({
   if (displayJob?.status === "FAILED") {
     return (
       <Button
-        className="h-10"
+        size="lg"
         onClick={onRefresh}
         disabled={!countdown.isExpired}
         loading={isPending}
@@ -125,7 +125,7 @@ export const RefreshMembersStatus = ({
 
   return (
     <Button
-      className="h-10"
+      size="lg"
       onClick={onRefresh}
       disabled={!countdown.isExpired}
       loading={isPending}

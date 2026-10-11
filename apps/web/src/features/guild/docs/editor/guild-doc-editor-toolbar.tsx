@@ -46,10 +46,10 @@ export const GuildDocEditorToolbar: React.FC = () => {
                 render={
                   <Button
                     type="button"
-                    size="icon"
+                    size="icon-sm"
                     variant="ghost"
                     className={cn(
-                      "relative h-8 w-8 border border-transparent text-muted-foreground transition-colors",
+                      "relative border border-transparent text-muted-foreground transition-colors",
                       "hover:bg-muted hover:text-foreground",
                       isActive &&
                         "border-primary/70 bg-primary/25 text-primary shadow-sm ring-1 ring-primary/30 hover:bg-primary/30 hover:text-primary after:absolute after:bottom-1 after:left-1/2 after:h-0.5 after:w-4 after:-translate-x-1/2 after:rounded-full after:bg-primary",

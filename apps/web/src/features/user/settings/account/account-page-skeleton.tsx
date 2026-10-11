@@ -13,7 +13,7 @@ export const AccountSettingsPageSkeleton = () => {
             title=<Skeleton render={<span />} className="block h-4 w-32" />
           />
           <SectionCardContent>
-            <Skeleton className="h-8 w-32 rounded-md" />
+            <Skeleton className="h-9 w-32 rounded-md" />
           </SectionCardContent>
         </SectionCard>
 
@@ -22,7 +22,7 @@ export const AccountSettingsPageSkeleton = () => {
             title=<Skeleton render={<span />} className="block h-4 w-32" />
           />
           <SectionCardContent>
-            <Skeleton className="h-8 w-32 rounded-md" />
+            <Skeleton className="h-9 w-32 rounded-md" />
           </SectionCardContent>
         </SectionCard>
       </div>

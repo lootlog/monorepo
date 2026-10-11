@@ -156,7 +156,7 @@ export const SearchCombobox = ({
             <ComboboxTrigger
               render={<Button variant="outline" />}
               aria-label={placeholder}
-              className="h-9 w-full justify-between gap-2 px-3 font-normal hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground data-popup-open:border-ring"
+              className="w-full justify-between gap-2 px-3 font-normal hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground data-popup-open:border-ring"
             >
               <Icon
                 className="size-4 shrink-0 text-muted-foreground"

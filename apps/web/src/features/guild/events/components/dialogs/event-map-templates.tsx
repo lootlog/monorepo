@@ -61,12 +61,7 @@ export function EventMapTemplates({
             <Popover key={template.id}>
               <PopoverTrigger
                 render={
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 text-xs gap-1.5"
-                    disabled={isAdding}
-                  >
+                  <Button variant="outline" size="xs" disabled={isAdding}>
                     <FileText className="size-3" />
                     {template.name}
                     <span className="text-muted-foreground">
@@ -84,7 +79,7 @@ export function EventMapTemplates({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-start h-7 text-xs"
+                    className="w-full justify-start text-xs"
                     loading={
                       pendingTemplate?.templateId === template.id &&
                       pendingTemplate.locationId === null
@@ -99,7 +94,7 @@ export function EventMapTemplates({
                       key={loc.id}
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-start h-7 text-xs"
+                      className="w-full justify-start text-xs"
                       loading={
                         pendingTemplate?.templateId === template.id &&
                         pendingTemplate.locationId === loc.id

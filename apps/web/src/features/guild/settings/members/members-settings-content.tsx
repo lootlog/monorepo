@@ -120,7 +120,7 @@ export const MembersSettingsContent = () => {
             className="w-full min-w-0 max-w-full sm:w-auto"
           >
             <AnimatedToggleGroup
-              size="large"
+              size="lg"
               value={statusFilter}
               onValueChange={(filter) => {
                 scrollToTop();

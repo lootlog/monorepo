@@ -169,8 +169,8 @@ export const createEventHeroesTableColumns = ({
                 render={
                   <Button
                     variant="ghost"
-                    size="icon"
-                    className="size-8 shrink-0 text-muted-foreground"
+                    size="icon-sm"
+                    className="shrink-0 text-muted-foreground"
                     aria-label={t("events.heroes.actions")}
                     title={t("events.heroes.actions")}
                   >

@@ -86,7 +86,7 @@ export const EventCreateDialog = ({
                 id={nameInputId}
                 {...form.register("name")}
                 placeholder={t("events.createDialog.namePlaceholder")}
-                className="h-9 text-sm"
+                className="text-sm"
               />
             </div>
 
@@ -101,7 +101,7 @@ export const EventCreateDialog = ({
                 id={worldInputId}
                 {...form.register("world")}
                 placeholder={t("events.createDialog.worldPlaceholder")}
-                className="h-9 text-sm"
+                className="text-sm"
               />
             </div>
 
@@ -144,7 +144,7 @@ export const EventCreateDialog = ({
                 {...form.register("participationConfirmationMinutes", {
                   valueAsNumber: true,
                 })}
-                className="h-9 text-sm"
+                className="text-sm"
               />
             </div>
 

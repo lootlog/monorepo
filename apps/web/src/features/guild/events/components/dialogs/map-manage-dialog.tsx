@@ -93,7 +93,7 @@ export const MapManageDialog = ({
                   value={newLocationName}
                   onChange={(e) => setNewLocationName(e.target.value)}
                   placeholder={t("events.locations.namePlaceholder")}
-                  className="h-8 text-sm flex-1"
+                  className="text-sm flex-1"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.nativeEvent.isComposing)
                       handleCreateLocation();
@@ -101,8 +101,7 @@ export const MapManageDialog = ({
                 />
                 <Button
                   variant="outline"
-                  size="sm"
-                  className="h-8 gap-1.5"
+                  className="gap-1.5"
                   onClick={handleCreateLocation}
                   loading={createLocation.isPending}
                   icon=<FolderPlus className="size-3" />
@@ -186,7 +185,7 @@ export const MapManageDialog = ({
                       })),
                     ]}
                   >
-                    <SelectTrigger className="h-7 text-xs w-[180px]">
+                    <SelectTrigger className="text-xs w-[180px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -208,7 +207,7 @@ export const MapManageDialog = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t("events.maps.searchPlaceholder")}
-                className="h-9 text-sm"
+                className="text-sm"
               />
 
               <ScrollArea className="h-[180px] rounded-lg border relative">
@@ -260,7 +259,6 @@ export const MapManageDialog = ({
         <div className="px-5 py-3 border-t bg-muted/30 shrink-0">
           <Button
             variant="outline"
-            size="sm"
             onClick={() => onOpenChange(false)}
             className="w-full"
           >

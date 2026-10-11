@@ -35,7 +35,6 @@ export const SidebarNavItem = ({
   const buttonContent = (
     <Button
       variant={isActive ? "default" : "ghost"}
-      size="sm"
       render={
         available ? (
           <Link

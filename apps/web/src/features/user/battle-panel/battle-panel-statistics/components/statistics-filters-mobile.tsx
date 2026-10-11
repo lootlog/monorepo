@@ -29,7 +29,7 @@ export const StatisticsFiltersMobile = ({
       closeLabel={t("battlePanel.actions.close")}
       childrenClassName="pr-2"
       trigger={
-        <Button variant="outline" className="h-10 w-full justify-between">
+        <Button variant="outline" size="lg" className="w-full justify-between">
           <span className="flex items-center gap-2">
             <Filter data-icon="inline-start" />
             {t("battlePanel.filters.title")}
@@ -42,8 +42,7 @@ export const StatisticsFiltersMobile = ({
         <CharacterSelector
           characterId={characterId}
           onCharacterChange={onCharacterChange}
-          size="default"
-          className="h-10 w-full"
+          className="w-full"
         />
       </div>
 

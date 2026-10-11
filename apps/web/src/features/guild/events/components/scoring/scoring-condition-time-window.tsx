@@ -33,7 +33,8 @@ export const ScoringConditionTimeWindow = ({
         <Input
           id={`${idPrefix}-from`}
           type="time"
-          className="h-8 text-[12px] font-mono"
+          size="sm"
+          className="text-[12px] font-mono"
           {...register(
             `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.from`,
           )}
@@ -50,7 +51,8 @@ export const ScoringConditionTimeWindow = ({
         <Input
           id={`${idPrefix}-to`}
           type="time"
-          className="h-8 text-[12px] font-mono"
+          size="sm"
+          className="text-[12px] font-mono"
           {...register(
             `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.to`,
           )}

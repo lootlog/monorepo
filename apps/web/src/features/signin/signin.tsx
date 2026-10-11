@@ -63,7 +63,7 @@ export const SignIn: React.FC = () => {
               }
               loading={isPending}
               className="w-full"
-              size="lg"
+              size="xl"
             >
               {t("auth.signin.submit")}
             </Button>

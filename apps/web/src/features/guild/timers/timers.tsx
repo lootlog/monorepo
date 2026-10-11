@@ -214,7 +214,8 @@ export const Timers = () => {
             placeholder={t("timers.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            wrapperClassName="h-10 min-w-0 basis-full sm:flex-1 sm:basis-0"
+            size="lg"
+            wrapperClassName="min-w-0 basis-full sm:flex-1 sm:basis-0"
             aria-label={t("timers.searchPlaceholder")}
           />
           <WorldSwitcher />

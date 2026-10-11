@@ -113,7 +113,8 @@ export function Reservations() {
             onChange={(event) => setSearchValue(event.target.value)}
             placeholder={t("reservations.searchPlaceholder")}
             aria-label={t("reservations.searchPlaceholder")}
-            wrapperClassName="h-10 min-w-0 flex-1 basis-48"
+            size="lg"
+            wrapperClassName="min-w-0 flex-1 basis-48"
             disabled={spotsQuery.isPending}
           />
           <ReservationFilters
