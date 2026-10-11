@@ -48,19 +48,18 @@ export const HeroTabs = ({
           : "min-w-0 flex-1"
       }
     >
-      <EventScrollableTabsList ariaLabel={t("events.heroTabs.label")}>
+      <EventScrollableTabsList
+        ariaLabel={t("events.heroTabs.label")}
+        size={placement === "section" ? "sm" : "lg"}
+      >
         {includeAll && (
-          <TabsTrigger value={ALL_HEROES_VALUE} className="h-8 text-xs">
+          <TabsTrigger value={ALL_HEROES_VALUE}>
             {t("events.kills.allHeroes")}
           </TabsTrigger>
         )}
         {heroes.map((hero) => (
-          <TabsTrigger
-            key={hero.id}
-            value={hero[valueKey]}
-            className="h-8 text-xs"
-          >
-            <Swords className="size-3" aria-hidden="true" />
+          <TabsTrigger key={hero.id} value={hero[valueKey]}>
+            <Swords aria-hidden="true" />
             {hero.npcName}
           </TabsTrigger>
         ))}
