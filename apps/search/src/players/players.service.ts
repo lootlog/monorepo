@@ -13,10 +13,13 @@ import { PLAYERS_INDEX } from "./search-index.js";
 import type { IndexPlayersCommand } from "./index-players-command.js";
 import type { PlayerHit } from "./player-hit.js";
 
+const playerNameKey = (player: Pick<PlayerHit, "world" | "name">) =>
+  JSON.stringify([player.world, player.name]);
+
 const uniquePlayers = (players: ReadonlyArray<PlayerHit>) => {
   const knownNames = new Set(
     players.flatMap((player) =>
-      player.accountId > 0 ? [JSON.stringify([player.world, player.name])] : [],
+      player.accountId > 0 ? [playerNameKey(player)] : [],
     ),
   );
 
@@ -24,10 +27,7 @@ const uniquePlayers = (players: ReadonlyArray<PlayerHit>) => {
 
   for (const player of players) {
     // ponytail: name fallback for truncated legacy IDs; remove after an identity migration.
-    if (
-      player.accountId === 0 &&
-      knownNames.has(JSON.stringify([player.world, player.name]))
-    ) {
+    if (player.accountId === 0 && knownNames.has(playerNameKey(player))) {
       continue;
     }
 
