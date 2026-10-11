@@ -32,19 +32,19 @@ export const canManageOwnPartyGathering = (
 
 export const NPC_FEATURE_PERMISSIONS = {
   timers: {
-    base: "LOOTLOG_TIMERS_READ",
-    titans: "LOOTLOG_TIMERS_TITANS_READ",
-    heroes: "LOOTLOG_TIMERS_HEROES_READ",
+    base: Permission.LOOTLOG_TIMERS_READ,
+    titans: Permission.LOOTLOG_TIMERS_TITANS_READ,
+    heroes: Permission.LOOTLOG_TIMERS_HEROES_READ,
   },
   chat: {
-    base: "LOOTLOG_CHAT_READ",
-    titans: "LOOTLOG_CHAT_TITANS_READ",
-    heroes: "LOOTLOG_CHAT_HEROES_READ",
+    base: Permission.LOOTLOG_CHAT_READ,
+    titans: Permission.LOOTLOG_CHAT_TITANS_READ,
+    heroes: Permission.LOOTLOG_CHAT_HEROES_READ,
   },
   notifications: {
-    base: "LOOTLOG_NOTIFICATIONS_READ",
-    titans: "LOOTLOG_NOTIFICATIONS_TITANS_READ",
-    heroes: "LOOTLOG_NOTIFICATIONS_HEROES_READ",
+    base: Permission.LOOTLOG_NOTIFICATIONS_READ,
+    titans: Permission.LOOTLOG_NOTIFICATIONS_TITANS_READ,
+    heroes: Permission.LOOTLOG_NOTIFICATIONS_HEROES_READ,
   },
 } as const;
 
