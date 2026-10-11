@@ -120,8 +120,6 @@ export const HeroDetail = () => {
             hero={hero}
             event={event}
             heroTimer={heroTimer}
-            windowStatus={windowStatus}
-            t={t}
             canManage={canManage}
             respawnAction={respawnAction}
             handleRespawnActionClick={handleRespawnActionClick}
