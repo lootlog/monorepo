@@ -11,23 +11,10 @@ export type ItemDisplayValue = {
   value?: string | number | boolean | string[];
 };
 
-export type StatBlocks = {
-  baseStatsBlock: ItemDisplayValue[];
-  descriptionBlock: ItemDisplayValue[];
-  enhancementStatsBlock: ItemDisplayValue[];
-  legendaryBonusBlock: ItemDisplayValue[];
-  metadataBlock: ItemDisplayValue[];
-  requirementsBlock: ItemDisplayValue[];
-  unrecognizedBlock: ItemDisplayValue[];
-  usageStatsBlock: ItemDisplayValue[];
-};
-
 export type ItemStatSection = {
   index: number;
   values: ItemDisplayValue[];
 };
-
-type StatBlockName = keyof StatBlocks;
 
 type StatValueFormatter = (
   key: string,
@@ -36,14 +23,12 @@ type StatValueFormatter = (
 ) => ItemDisplayValue | null;
 
 type StatDefinition = {
-  block: StatBlockName;
   formatter: StatValueFormatter;
   order: number;
   sectionIndex: number;
 };
 
 type StatSectionDefinition = {
-  block: StatBlockName;
   keys: readonly string[];
   sectionIndex: number;
 };
@@ -743,12 +728,10 @@ const STAT_VALUE_FORMATTERS = new Map(
 
 const STAT_SECTIONS = [
   {
-    block: "requirementsBlock",
     keys: ["lowreq"],
     sectionIndex: 0,
   },
   {
-    block: "baseStatsBlock",
     keys: [
       "dmg",
       "ac",
@@ -765,12 +748,10 @@ const STAT_SECTIONS = [
     sectionIndex: 1,
   },
   {
-    block: "baseStatsBlock",
     keys: ["fire", "frost", "light", "pet", "poison", "summonparty"],
     sectionIndex: 2,
   },
   {
-    block: "baseStatsBlock",
     keys: [
       "abdest",
       "absorb",
@@ -854,7 +835,6 @@ const STAT_SECTIONS = [
     sectionIndex: 3,
   },
   {
-    block: "enhancementStatsBlock",
     keys: [
       "add_battleset",
       "add_enhancement_refund",
@@ -880,7 +860,6 @@ const STAT_SECTIONS = [
     sectionIndex: 4,
   },
   {
-    block: "legendaryBonusBlock",
     keys: [
       "socket_content",
       "socket_fleeting_legbon",
@@ -891,22 +870,18 @@ const STAT_SECTIONS = [
     sectionIndex: 5,
   },
   {
-    block: "descriptionBlock",
     keys: ["furniture", "nodesc", "loot"],
     sectionIndex: 6,
   },
   {
-    block: "descriptionBlock",
     keys: ["teleport", "custom_teleport", "opis"],
     sectionIndex: 7,
   },
   {
-    block: "descriptionBlock",
     keys: ["etiquette", "pumpkin_weight"],
     sectionIndex: 7.5,
   },
   {
-    block: "metadataBlock",
     keys: [
       "permbound",
       "soulbound",
@@ -929,7 +904,6 @@ const STAT_SECTIONS = [
     sectionIndex: 8,
   },
   {
-    block: "requirementsBlock",
     keys: [
       "target_class",
       "reqp",
@@ -944,21 +918,6 @@ const STAT_SECTIONS = [
   },
 ] as const satisfies readonly StatSectionDefinition[];
 
-function getSemanticBlock(
-  key: string,
-  fallbackBlock: StatBlockName,
-): StatBlockName {
-  if (["amount", "cansplit", "capacity", "ttl"].includes(key)) {
-    return "usageStatsBlock";
-  }
-
-  if (["lvlupgcost", "lvlupgs"].includes(key)) {
-    return "enhancementStatsBlock";
-  }
-
-  return fallbackBlock;
-}
-
 function createStatDefinitions(): ReadonlyMap<string, StatDefinition> {
   const definitions = new Map<string, StatDefinition>();
   let order = 0;
@@ -967,7 +926,6 @@ function createStatDefinitions(): ReadonlyMap<string, StatDefinition> {
     for (const key of section.keys) {
       if (!definitions.has(key)) {
         definitions.set(key, {
-          block: getSemanticBlock(key, section.block),
           formatter: STAT_VALUE_FORMATTERS.get(key) ?? formatDefaultStat,
           order,
           sectionIndex: section.sectionIndex,
@@ -1003,7 +961,6 @@ export const parseItemStats = (stats: string): ItemStat[] => {
 };
 
 type OrderedDisplayValue = {
-  block: StatBlockName;
   order: number;
   sectionIndex: number;
   value: ItemDisplayValue;
@@ -1022,7 +979,6 @@ function mapStatsToOrderedValues(stats: ItemStat[]): OrderedDisplayValue[] {
 
     if (!definition) {
       orderedValues.push({
-        block: "unrecognizedBlock",
         order: unknownOrder,
         sectionIndex: 10,
         value: { key: stat.key, value: stat.value },
@@ -1055,29 +1011,6 @@ export const mapStatsToDisplaySections = (
   return [...sections.entries()]
     .sort(([leftIndex], [rightIndex]) => leftIndex - rightIndex)
     .map(([index, values]) => ({ index, values }));
-};
-
-function createEmptyBlocks(): StatBlocks {
-  return {
-    baseStatsBlock: [],
-    descriptionBlock: [],
-    enhancementStatsBlock: [],
-    legendaryBonusBlock: [],
-    metadataBlock: [],
-    requirementsBlock: [],
-    unrecognizedBlock: [],
-    usageStatsBlock: [],
-  };
-}
-
-export const mapStatsToDisplayValues = (stats: ItemStat[]): StatBlocks => {
-  const blocks = createEmptyBlocks();
-
-  for (const entry of mapStatsToOrderedValues(stats)) {
-    blocks[entry.block].push(entry.value);
-  }
-
-  return blocks;
 };
 
 const numericTextPattern =
