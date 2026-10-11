@@ -64,7 +64,7 @@ export const UserSignalAvatar = ({
         className={cn(
           "transition-[stroke-dasharray,opacity] duration-300 motion-reduce:transition-none",
           signal === "live"
-            ? "opacity-70 group-hover:opacity-100"
+            ? "opacity-70 group-hover/user-menu:opacity-100"
             : "opacity-90",
         )}
       />
