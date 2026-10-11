@@ -18,8 +18,6 @@ const landingFiles = new Set([
   "/sitemap.xml",
 ]);
 
-const credentialHeaders = ["authorization", "cookie", "proxy-authorization"];
-
 const legacyDocsAssetRoot = "/__legacy-assets/docs";
 
 const legacyLandingAssetRoot = "/__legacy-assets/landing";
@@ -187,6 +185,12 @@ function getUpstreamPathname(pathname: string): string {
   return pathname;
 }
 
+function stripCredentialHeaders(headers: Headers): void {
+  for (const header of ["authorization", "cookie", "proxy-authorization"]) {
+    headers.delete(header);
+  }
+}
+
 function createLegacyAssetProbeRequest(
   request: Request,
   refererUrl: URL,
@@ -198,9 +202,7 @@ function createLegacyAssetProbeRequest(
   upstreamUrl.hash = "";
   const headers = new Headers(request.headers);
 
-  for (const header of credentialHeaders) {
-    headers.delete(header);
-  }
+  stripCredentialHeaders(headers);
 
   headers.delete("content-length");
 
@@ -259,9 +261,7 @@ function createUpstreamRequest(request: Request, origin: string): Request {
   upstreamUrl.hash = "";
   const upstreamRequest = new Request(upstreamUrl, request);
 
-  for (const header of credentialHeaders) {
-    upstreamRequest.headers.delete(header);
-  }
+  stripCredentialHeaders(upstreamRequest.headers);
 
   return upstreamRequest;
 }
