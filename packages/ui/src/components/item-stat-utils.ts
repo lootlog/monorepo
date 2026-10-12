@@ -469,9 +469,6 @@ function formatSignedVariant(
   };
 }
 
-const formatSignedVariantStat: StatValueFormatter = (key, value) =>
-  formatSignedVariant(key, value);
-
 const formatExpiry: StatValueFormatter = (key, value) => {
   const rawValue = toStringValue(value);
   const expiresAt = Number.parseInt(rawValue, 10);
@@ -604,11 +601,6 @@ const formatExperienceLevelBonus: StatValueFormatter = (key, value) => {
   return { key, value: [multiplier, level] };
 };
 
-const formatTeleport: StatValueFormatter = (key, value) => ({
-  key,
-  value: toStringValue(value).split(","),
-});
-
 const formatBtype: StatValueFormatter = (key, value) => {
   const classKeys = toStringValue(value)
     .split(",")
@@ -713,14 +705,14 @@ const STAT_VALUE_FORMATTERS = new Map(
     manafatig: formatListStat,
     noauction: formatBindingMetadata,
     nodepoclan: formatBindingMetadata,
-    npc_expbon: formatSignedVariantStat,
+    npc_expbon: formatSignedVariant,
     opis: formatDescription,
     outfit: formatOutfit,
-    perheal: formatSignedVariantStat,
+    perheal: formatSignedVariant,
     pet: formatPet,
     poison: formatScaledListStat,
     pumpkin_weight: formatPumpkinWeight,
-    quest_expbon: formatSignedVariantStat,
+    quest_expbon: formatSignedVariant,
     reqp: formatProfessionRequirement,
     resfire: formatSignedStat,
     resfrost: formatSignedStat,
@@ -734,9 +726,9 @@ const STAT_VALUE_FORMATTERS = new Map(
     soulbound: formatBindingMetadata,
     target_class: formatTargetClass,
     target_rarity: formatRarityRequirement,
-    teleport: formatTeleport,
+    teleport: formatListStat,
     timelimit: formatTimelimit,
-    wanted_change: formatSignedVariantStat,
+    wanted_change: formatSignedVariant,
     wound: formatListStat,
   } satisfies Record<string, StatValueFormatter>),
 );
