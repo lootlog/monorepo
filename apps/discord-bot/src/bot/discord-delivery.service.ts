@@ -245,58 +245,51 @@ export const makeDiscordDelivery = (
     return { id: message.id };
   });
 
-  const sendNotification = Effect.fn("DiscordDelivery_sendNotification")(
-    function* (command: DiscordNotificationSendCommand) {
-      const delivery = yield* (
-        command.target.targetType === NotificationTargetType.DM
-          ? sendDirectMessage(command)
-          : sendGuildChannelMessage(command)
-      ).pipe(Effect.result);
+  const sendNotification = Effect.fn("DiscordDelivery_sendNotification", {
+    attributes: { adapter: "discord-sdk", retryCount: 0 },
+  })(function* (command: DiscordNotificationSendCommand) {
+    const delivery = yield* (
+      command.target.targetType === NotificationTargetType.DM
+        ? sendDirectMessage(command)
+        : sendGuildChannelMessage(command)
+    ).pipe(Effect.result);
 
-      if (Result.isSuccess(delivery)) {
-        yield* publishDeliveryResult({
-          notificationJobId: command.notificationJobId,
-          success: true,
-          retryable: false,
-          providerMessageId: delivery.success.id,
-          deliveredAt: new Date(yield* Clock.currentTimeMillis).toISOString(),
-        });
-
-        return;
-      }
-
-      // Structured, token-free failure context: which step failed, Discord's
-      // own code and message, and whether the API will retry. Target ids and
-      // message content stay out of the log.
-      yield* Effect.logError("Failed to send Discord notification").pipe(
-        Effect.annotateLogs({
-          notificationJobId: command.notificationJobId,
-          targetType: command.target.targetType,
-          operation: delivery.failure.operation,
-          errorCode: delivery.failure.errorCode,
-          reason: delivery.failure.reason,
-          retryable: delivery.failure.retryable,
-        }),
-      );
+    if (Result.isSuccess(delivery)) {
       yield* publishDeliveryResult({
         notificationJobId: command.notificationJobId,
-        success: false,
-        retryable: delivery.failure.retryable,
-        errorCode: delivery.failure.errorCode,
-        errorMessage: delivery.failure.reason,
+        success: true,
+        retryable: false,
+        providerMessageId: delivery.success.id,
         deliveredAt: new Date(yield* Clock.currentTimeMillis).toISOString(),
       });
-    },
-  );
 
-  return {
-    sendNotification: (command: DiscordNotificationSendCommand) =>
-      sendNotification(command).pipe(
-        Effect.withSpan("DiscordDelivery_sendNotification", {
-          attributes: { adapter: "discord-sdk", retryCount: 0 },
-        }),
-      ),
-  };
+      return;
+    }
+
+    // Structured, token-free failure context: which step failed, Discord's
+    // own code and message, and whether the API will retry. Target ids and
+    // message content stay out of the log.
+    yield* Effect.logError("Failed to send Discord notification").pipe(
+      Effect.annotateLogs({
+        notificationJobId: command.notificationJobId,
+        targetType: command.target.targetType,
+        operation: delivery.failure.operation,
+        errorCode: delivery.failure.errorCode,
+        reason: delivery.failure.reason,
+        retryable: delivery.failure.retryable,
+      }),
+    );
+    yield* publishDeliveryResult({
+      notificationJobId: command.notificationJobId,
+      success: false,
+      retryable: delivery.failure.retryable,
+      errorCode: delivery.failure.errorCode,
+      errorMessage: delivery.failure.reason,
+      deliveredAt: new Date(yield* Clock.currentTimeMillis).toISOString(),
+    });
+  });
+
+  return { sendNotification };
 };
 
 export type DiscordDelivery = ReturnType<typeof makeDiscordDelivery>;
