@@ -2,21 +2,23 @@ import { createHash } from "node:crypto";
 import type { GameVersion } from "@lootlog/schema/game-version";
 import { splitItemStat } from "./item-stat.js";
 
+function hashSnapshotPayload(payload: string): string {
+  return createHash("sha256").update(payload).digest("hex");
+}
+
 export function createPlayerSnapshotHash(
   name: string,
   profession: string | null | undefined,
   icon: string,
 ): string {
-  return createHash("sha256")
-    .update(`${name}${profession}${icon}`)
-    .digest("hex");
+  return hashSnapshotPayload(`${name}${profession}${icon}`);
 }
 
 /** Hash of the revision stats: per-instance entries are ignored, order is not. */
 export function createItemStatsHash(stats: string): string {
   const normalized = splitItemStat(stats).revision.split(";").sort().join(";");
 
-  return createHash("sha256").update(normalized).digest("hex");
+  return hashSnapshotPayload(normalized);
 }
 
 /**
@@ -32,19 +34,17 @@ export function createItemSnapshotHash(item: {
   itemType?: string | null;
   stat: string;
 }): string {
-  return createHash("sha256")
-    .update(
-      JSON.stringify([
-        "item-observation-v1",
-        item.gameVersion,
-        item.itemId,
-        item.name,
-        item.icon,
-        item.itemType ?? null,
-        createItemStatsHash(item.stat),
-      ]),
-    )
-    .digest("hex");
+  return hashSnapshotPayload(
+    JSON.stringify([
+      "item-observation-v1",
+      item.gameVersion,
+      item.itemId,
+      item.name,
+      item.icon,
+      item.itemType ?? null,
+      createItemStatsHash(item.stat),
+    ]),
+  );
 }
 
 /**
@@ -65,21 +65,19 @@ export function createNpcSnapshotHash(npc: {
   wt?: number | null;
   margonemType?: number | null;
 }): string {
-  return createHash("sha256")
-    .update(
-      JSON.stringify([
-        "npc-observation-v2",
-        npc.identityNamespace,
-        npc.gameVersion,
-        npc.npcId,
-        npc.name,
-        npc.type ?? null,
-        npc.lvl ?? null,
-        npc.icon ?? null,
-        npc.prof ?? null,
-        npc.wt ?? null,
-        npc.margonemType ?? null,
-      ]),
-    )
-    .digest("hex");
+  return hashSnapshotPayload(
+    JSON.stringify([
+      "npc-observation-v2",
+      npc.identityNamespace,
+      npc.gameVersion,
+      npc.npcId,
+      npc.name,
+      npc.type ?? null,
+      npc.lvl ?? null,
+      npc.icon ?? null,
+      npc.prof ?? null,
+      npc.wt ?? null,
+      npc.margonemType ?? null,
+    ]),
+  );
 }
