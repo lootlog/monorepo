@@ -12,7 +12,7 @@ import {
   RateLimitError,
 } from "discord.js";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
-import { Effect, Fiber, Logger, type Duration } from "effect";
+import { Effect, Fiber, Logger, Tracer, type Duration } from "effect";
 import {
   makeDiscordDelivery,
   type DiscordDeliveryClient,
@@ -120,11 +120,30 @@ describe("Discord delivery", () => {
       channels: { fetch: mock() },
     } satisfies DiscordDeliveryClient;
 
+    const spans: Tracer.Span[] = [];
+
+    const tracer = Tracer.make({
+      span(options) {
+        const span = new Tracer.NativeSpan(options);
+        spans.push(span);
+
+        return span;
+      },
+    });
+
     await Effect.runPromise(
-      makeDiscordDelivery({ publish }, client).sendNotification(
-        command(NotificationTargetType.DM),
-      ),
+      makeDiscordDelivery({ publish }, client)
+        .sendNotification(command(NotificationTargetType.DM))
+        .pipe(Effect.withTracer(tracer)),
     );
+
+    const deliveries = spans.filter(
+      (span) => span.name === "DiscordDelivery_sendNotification",
+    );
+
+    expect(deliveries).toHaveLength(1);
+    expect(deliveries[0]?.attributes.get("adapter")).toBe("discord-sdk");
+    expect(deliveries[0]?.attributes.get("retryCount")).toBe(0);
     expect(send).toHaveBeenCalledWith({
       content: "**Boss alert**\nTanroth spawned",
       allowedMentions: undefined,
