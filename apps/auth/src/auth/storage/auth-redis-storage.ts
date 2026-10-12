@@ -5,7 +5,7 @@ import { Context, Effect, FiberSet, Layer } from "effect";
 import { Redis } from "effect/persistence";
 import { createFailOpenSecondaryStorage } from "./secondary-storage-fail-open.js";
 
-const AUTH_REDIS_KEY_PREFIX = "auth:better-auth:";
+const secondaryStorageKey = (key: string) => `auth:better-auth:${key}`;
 
 export const createAuthRedisConnection = (config: AuthConfig["redis"]) =>
   BunRedis.layer({
@@ -48,32 +48,29 @@ export class AuthRedisStorage extends Context.Service<
       };
 
       const storage: SecondaryStorage = {
-        get: (key) => run(redis.send("GET", `${AUTH_REDIS_KEY_PREFIX}${key}`)),
+        get: (key) => run(redis.send("GET", secondaryStorageKey(key))),
         getAndDelete: (key) =>
-          run(redis.send("GETDEL", `${AUTH_REDIS_KEY_PREFIX}${key}`)),
+          run(redis.send("GETDEL", secondaryStorageKey(key))),
         increment: (key, ttl) =>
           run(
-            redis.eval(incrementScript)(
-              `${AUTH_REDIS_KEY_PREFIX}${key}`,
-              String(ttl),
-            ),
+            redis.eval(incrementScript)(secondaryStorageKey(key), String(ttl)),
           ),
         set: (key, value, ttl) =>
           ttl !== undefined && ttl > 0
             ? run(
                 redis.send(
                   "SET",
-                  `${AUTH_REDIS_KEY_PREFIX}${key}`,
+                  secondaryStorageKey(key),
                   value,
                   "EX",
                   String(ttl),
                 ),
               ).then(() => undefined)
-            : run(
-                redis.send("SET", `${AUTH_REDIS_KEY_PREFIX}${key}`, value),
-              ).then(() => undefined),
+            : run(redis.send("SET", secondaryStorageKey(key), value)).then(
+                () => undefined,
+              ),
         delete: (key) =>
-          run(redis.send("DEL", `${AUTH_REDIS_KEY_PREFIX}${key}`)).then(
+          run(redis.send("DEL", secondaryStorageKey(key))).then(
             () => undefined,
           ),
       };
