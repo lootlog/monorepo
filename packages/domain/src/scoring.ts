@@ -578,11 +578,12 @@ export function evaluateEventScoring(params: {
         60_000
       : null);
 
-  const minimumTrackingPercentage = Number.isFinite(
+  const minimumTrackingPercentage = toNumber(
     rules.minTrackingPercentForBonuses,
-  )
-    ? Math.min(100, Math.max(0, rules.minTrackingPercentForBonuses))
-    : 50;
+    50,
+    0,
+    100,
+  );
 
   const respawnDurationSeconds = Math.max(
     0,
