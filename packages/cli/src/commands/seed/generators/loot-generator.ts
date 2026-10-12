@@ -217,7 +217,7 @@ export class LootGenerator {
         mappedPlayers[crypto.randomInt(0, mappedPlayers.length)];
 
       if (randomPlayer) {
-        const playerId = `${randomPlayer.characterId}${randomPlayer.accountId}`;
+        const playerId = randomPlayer.id;
 
         if (!lootShare[playerId]) {
           lootShare[playerId] = [];
