@@ -8,13 +8,13 @@ import {
   PageSize,
 } from "@lootlog/schema/http-scalars";
 
+const ActivityType = Schema.Literals(["CONNECT_EVENT", "DISCONNECT_EVENT"]);
+
+const ActivitySource = Schema.Literals(["GAME", "WEB_APP"]);
+
 const ActivityListQuery = Schema.Struct({
-  type: Schema.optionalKey(
-    Schema.Array(Schema.Literals(["CONNECT_EVENT", "DISCONNECT_EVENT"])),
-  ),
-  source: Schema.optionalKey(
-    Schema.Array(Schema.Literals(["GAME", "WEB_APP"])),
-  ),
+  type: Schema.optionalKey(Schema.Array(ActivityType)),
+  source: Schema.optionalKey(Schema.Array(ActivitySource)),
   playerName: Schema.optionalKey(Schema.String),
   clanName: Schema.optionalKey(Schema.String),
   world: Schema.optionalKey(Schema.String),
@@ -54,8 +54,8 @@ const ActivityResponse = Schema.Struct({
   userId: Schema.String,
   guildId: Schema.String,
   discordId: Schema.String,
-  type: Schema.Literals(["CONNECT_EVENT", "DISCONNECT_EVENT"]),
-  source: Schema.Literals(["GAME", "WEB_APP"]),
+  type: ActivityType,
+  source: ActivitySource,
   createdAt: DateTimeString,
   world: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
   details: Schema.optionalKey(
@@ -75,7 +75,7 @@ const ActivityResponse = Schema.Struct({
       icon: Schema.String,
       lvl: FiniteNumber,
       prof: Schema.String,
-      source: Schema.Literals(["GAME", "WEB_APP"]),
+      source: ActivitySource,
       createdAt: DateTimeString,
     }),
   ),
@@ -117,7 +117,7 @@ export type MemberActivityStatsResponseDto =
 export const MemberActivityStatsResponseDto = Schema.Struct({
   guildId: Schema.String,
   discordId: Schema.String,
-  source: Schema.Literals(["GAME", "WEB_APP"]),
+  source: ActivitySource,
   lastSeenAt: Schema.optionalKey(
     Schema.Union([
       Schema.String.check(
