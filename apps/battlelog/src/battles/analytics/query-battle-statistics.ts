@@ -1,20 +1,15 @@
 import { Effect, Schema } from "effect";
 import {
   booleanFromString,
-  dateTimeString,
   intFromString,
 } from "#src/infrastructure/query-schema";
+import { QueryBattleAnalyticsSchema } from "#src/battles/analytics/query-battle-analytics";
 
 export const QueryBattleStatisticsSchema = Schema.Struct({
-  characterId: Schema.optional(Schema.String),
-  world: Schema.optional(Schema.String),
+  ...QueryBattleAnalyticsSchema.fields,
   period: Schema.optional(
     Schema.Literals(["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"]),
   ),
-  minLevel: Schema.optional(intFromString({ min: 1 })),
-  maxLevel: Schema.optional(intFromString({ min: 1 })),
-  startDate: Schema.optional(dateTimeString),
-  endDate: Schema.optional(dateTimeString),
   cursor: Schema.optional(Schema.String),
   size: intFromString({ min: 1 }).pipe(
     Schema.withDecodingDefaultTypeKey(Effect.succeed(20)),
@@ -36,8 +31,6 @@ export const QueryBattleStatisticsSchema = Schema.Struct({
   ),
   search: Schema.optional(Schema.String),
   minBattles: Schema.optional(intFromString({ min: 1 })),
-  ph: Schema.optional(booleanFromString),
-  matchmaking: Schema.optional(booleanFromString),
 });
 
 export type BattleStatisticsQuery = typeof QueryBattleStatisticsSchema.Type;
