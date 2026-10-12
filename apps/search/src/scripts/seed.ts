@@ -184,7 +184,7 @@ const indexDocuments = async <Document extends { uid: string }>(
   const index = meilisearch.index<Document>(rebuildIndexName(indexName));
   const enqueued: EnqueuedTask[] = [];
 
-  for (const batch of chunk([...documents], DOCUMENTS_PER_BATCH)) {
+  for (const batch of chunk(documents, DOCUMENTS_PER_BATCH)) {
     enqueued.push(
       await index.addDocuments(batch, { primaryKey: SEARCH_INDEX_PRIMARY_KEY }),
     );

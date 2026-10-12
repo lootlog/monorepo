@@ -127,7 +127,7 @@ export const makeBattleObjectStorage = (
     async deleteBattlesData(battleIds: readonly string[]): Promise<string[]> {
       const failed: string[] = [];
 
-      for (const batch of chunk([...battleIds], 1_000)) {
+      for (const batch of chunk(battleIds, 1_000)) {
         const response = await client.send(
           new DeleteObjectsCommand({
             Bucket: config.bucketName,
