@@ -252,12 +252,12 @@ export const AirTagMapThreatEventSchema = Schema.Struct({
   revision: SafeNatural,
   enemies: Schema.Array(
     Schema.Struct({
-      targetId: ShortString,
-      nickname: ShortString,
-      clan: Schema.optionalKey(AirTagClanSchema),
-      lvl: Schema.optionalKey(Level),
-      prof: Schema.optionalKey(Profession),
-      stasis: Schema.optionalKey(Schema.Boolean),
+      targetId: AirTagObservationSchema.fields.targetId,
+      nickname: AirTagObservationSchema.fields.nickname,
+      clan: AirTagObservationSchema.fields.clan,
+      lvl: AirTagObservationSchema.fields.lvl,
+      prof: AirTagObservationSchema.fields.prof,
+      stasis: AirTagObservationSchema.fields.stasis,
       ageMs: SafeNatural,
     }),
   ),
