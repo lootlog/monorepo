@@ -1,16 +1,15 @@
 /** Transport schemas owned by the npcs HTTP module. */
 import * as Schema from "effect/Schema";
+import { GameVersionSchema } from "@lootlog/schema/game-version";
 import { FiniteNumber, SafeInteger } from "@lootlog/schema/http-scalars";
+import { NpcIdentityNamespaceSchema } from "@lootlog/schema/npc-identity";
+import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 
 export type NpcHitDto_Output = typeof NpcHitDto_Output.Type;
 
 export const NpcHitDto_Output = Schema.Struct({
   id: FiniteNumber,
-  identityNamespace: Schema.Literals([
-    "legacy",
-    "runtime",
-    "template",
-  ]).annotate({
+  identityNamespace: NpcIdentityNamespaceSchema.annotate({
     description:
       "Meaning of `id`: a Margonem template id, a runtime spawn id observed without a template, or an overloaded legacy id.",
   }),
@@ -19,23 +18,13 @@ export const NpcHitDto_Output = Schema.Struct({
   name: Schema.String,
   lvl: FiniteNumber,
   wt: FiniteNumber,
-  type: Schema.Literals([
-    "COMMON",
-    "ELITE",
-    "ELITE2",
-    "ELITE3",
-    "HERO",
-    "EVENT_HERO",
-    "COLOSSUS",
-    "TITAN",
-    "NPC",
-  ]),
+  type: NpcTypeSchema,
   margonemType: FiniteNumber,
   worlds: Schema.Array(Schema.String).annotate({
     description: "Worlds of the edition where this NPC was observed.",
     default: [],
   }),
-  gameVersion: Schema.Literals(["en", "pl"]).annotate({
+  gameVersion: GameVersionSchema.annotate({
     description:
       "Margonem edition of the NPC: `pl` for margonem.pl, `en` for margonem.com. Equal ids in different editions are unrelated.",
   }),
