@@ -243,6 +243,13 @@ const isGuildNotFoundError = (cause: unknown) =>
   cause instanceof DiscordAPIError &&
   [10_004, 50_001].includes(Number(cause.code));
 
+const guildSnapshot = (guild: Guild): GuildUpdated => ({
+  guildId: guild.id,
+  name: guild.name,
+  icon: guild.iconURL(),
+  ownerId: guild.ownerId,
+});
+
 const roleSnapshot = (role: Role): GuildCreated["roles"][number] => ({
   id: role.id,
   name: role.name,
@@ -504,10 +511,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
       );
 
       yield* publish(RoutingKey.GUILDS_CREATE, {
-        guildId: guild.id,
-        name: guild.name,
-        icon: guild.iconURL(),
-        ownerId: guild.ownerId,
+        ...guildSnapshot(guild),
         roles: roles.map(roleSnapshot),
       } satisfies GuildCreated);
     }).pipe(
@@ -523,12 +527,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
       logger.log(`Guild ${oldGuild.name} has been updated to ${newGuild.name}`),
     ).pipe(
       Effect.andThen(
-        publish(RoutingKey.GUILDS_UPDATE, {
-          guildId: newGuild.id,
-          name: newGuild.name,
-          icon: newGuild.iconURL(),
-          ownerId: newGuild.ownerId,
-        } satisfies GuildUpdated),
+        publish(RoutingKey.GUILDS_UPDATE, guildSnapshot(newGuild)),
       ),
     );
 
