@@ -1,9 +1,6 @@
 export const MARGONEM_CDN_CHARACTERS_URL =
   "https://micc.garmory-cdn.cloud/obrazki/postacie";
 
-export const MARGONEM_CDN_NPCS_URL =
-  "https://micc.garmory-cdn.cloud/obrazki/npc/";
-
 export const MARGONEM_URL = "https://www.margonem.pl";
 
 export const MARGONEM_PROFILE_URL = "https://www.margonem.pl/profile/view";

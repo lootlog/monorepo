@@ -29351,8 +29351,11 @@ components:
       properties:
         userId:
           type: string
+        memberId:
+          type: number
       required:
         - userId
+        - memberId
       additionalProperties: false
     GuildResponseDto_Output:
       type: object

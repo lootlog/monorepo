@@ -15,3 +15,9 @@ export const normalizeNpcIcon = (icon: string): string => {
 
   return relativeIcon.startsWith("/") ? relativeIcon.slice(1) : relativeIcon;
 };
+
+const MARGONEM_NPC_IMAGES_URL = "https://micc.garmory-cdn.cloud/obrazki/npc/";
+
+/** Where an NPC icon is served; an icon that is already a URL stays as is. */
+export const npcIconUrl = (icon: string): string =>
+  /^(?:https?:)?\/\//i.test(icon) ? icon : `${MARGONEM_NPC_IMAGES_URL}${icon}`;

@@ -2,7 +2,7 @@ import { AttachmentBuilder, escapeMarkdown } from "discord.js";
 import { Effect, Schema } from "effect";
 import { BotConfig } from "#src/config/bot-config";
 import { guildCommand, visibilityOption } from "./command-builders.js";
-import { COMMAND_TEXT, rarityLabel } from "./command-messages.js";
+import { COMMAND_TEXT, rarityLabel, rarityMark } from "./command-messages.js";
 import { killedNpcChoiceName, searchKilledNpcs } from "./kill-commands.js";
 import {
   LootlogClient,
@@ -23,6 +23,9 @@ import {
 const SHOWN_LOOTS = 10;
 
 const SHOWN_ITEMS_PER_LOOT = 4;
+
+// Ten loots of a full party would pass Discord's 4096-character description.
+const SHOWN_PLAYERS_PER_LOOT = 5;
 
 const RARITIES = ["LEGENDARY", "HEROIC", "UPGRADED", "UNIQUE"] as const;
 
@@ -54,13 +57,17 @@ const SearchItems = Schema.Struct({
 });
 
 const itemLabel = (item: Loot["items"][number]) => {
+  const name = escapeMarkdown(item.name);
+  const mark = item.rarity ? rarityMark(item.rarity) : undefined;
+
+  if (mark) return `${mark} ${name}`;
+
   const rarity = item.rarity ? rarityLabel(item.rarity) : undefined;
 
-  return rarity
-    ? `${escapeMarkdown(item.name)} (${rarity.toLowerCase()})`
-    : escapeMarkdown(item.name);
+  return rarity ? `${name} (${rarity.toLowerCase()})` : name;
 };
 
+/** Who looted what from which NPC, on two lines so long lists stay readable. */
 const lootLine = (loot: Loot) => {
   const items = loot.items.slice(0, SHOWN_ITEMS_PER_LOOT).map(itemLabel);
 
@@ -68,16 +75,26 @@ const lootLine = (loot: Loot) => {
     items.push(`+${loot.items.length - items.length}`);
 
   const npc = loot.npcs[0];
-  const players = loot.players.map((player) => escapeMarkdown(player.name));
 
-  return [
-    discordTime(loot.createdAt),
-    npc ? COMMAND_TEXT.loots.from(`**${escapeMarkdown(npc.name)}**`) : null,
+  const players = loot.players
+    .slice(0, SHOWN_PLAYERS_PER_LOOT)
+    .map((player) => escapeMarkdown(player.name));
+
+  if (loot.players.length > players.length)
+    players.push(`+${loot.players.length - players.length}`);
+
+  const header = npc
+    ? `💀 **${escapeMarkdown(npc.name)}** · ${discordTime(loot.createdAt)}`
+    : `💀 ${discordTime(loot.createdAt)}`;
+
+  const details = [
     items.join(", "),
-    players.length > 0 ? `· ${players.join(", ")}` : null,
+    players.length > 0 ? `👥 ${players.join(", ")}` : null,
   ]
     .filter(Boolean)
-    .join(" ");
+    .join(" · ");
+
+  return `${header}\n↳ ${details}`;
 };
 
 const lootsReply = (

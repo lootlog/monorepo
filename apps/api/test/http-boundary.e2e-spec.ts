@@ -29,7 +29,7 @@ import {
 import { LootlogApiRouter } from "../src/runtime/application/http-routes.js";
 import { ApiRedis } from "../src/runtime/infrastructure/api-redis.js";
 import { ApiRuntimeConfig } from "../src/runtime/infrastructure/api-runtime-config.js";
-import { count, eq, sql } from "drizzle-orm";
+import { and, count, eq, sql } from "drizzle-orm";
 import {
   ApiDatabase,
   ApiDatabaseLive,
@@ -1044,10 +1044,25 @@ describe("API HTTP boundary", () => {
         ),
       );
 
+    const [member] = await databaseRuntime.runPromise(
+      database
+        .select({ id: memberTable.id })
+        .from(memberTable)
+        .where(
+          and(
+            eq(memberTable.guildId, authorizedGuildId),
+            eq(memberTable.userId, caller.discordId),
+          ),
+        ),
+    );
+
     const active = await identity(authorizedGuildId, caller.discordId);
 
     expect(active.status).toBe(200);
-    expect(await active.json()).toEqual({ userId: caller.userId });
+    expect(await active.json()).toEqual({
+      userId: caller.userId,
+      memberId: member?.id,
+    });
 
     for (const response of await Promise.all([
       identity(forbiddenGuildId, caller.discordId),

@@ -1,5 +1,5 @@
 import { escapeMarkdown, type SlashCommandSubcommandBuilder } from "discord.js";
-import { Clock, Effect, Match, Schema } from "effect";
+import { Array, Clock, Effect, Match, Schema } from "effect";
 import { BotConfig } from "#src/config/bot-config";
 import { guildCommand, visibilityOption } from "./command-builders.js";
 import { COMMAND_TEXT } from "./command-messages.js";
@@ -14,6 +14,7 @@ import {
   lootlogEmbed,
   MAX_AUTOCOMPLETE_CHOICES,
   openInLootlog,
+  npcTypeColor,
   rankedLines,
   type CommandInvocation,
   type CommandReply,
@@ -31,6 +32,8 @@ const MAX_RANKING_FIELD_CHARACTERS = 5500;
 const MAX_FIELD_NAME_LENGTH = 256;
 
 const EVENT_OPTION = "event";
+
+const EVENT_COLOR = npcTypeColor("EVENT_HERO");
 
 const Events = Schema.Array(
   Schema.Struct({
@@ -58,7 +61,7 @@ const EventRanking = Schema.Array(
     heroNpcName: Schema.String,
     totalPoints: Schema.Number,
     totalKills: Schema.Number,
-    member: Schema.Struct({ name: Schema.String }),
+    member: Schema.Struct({ id: Schema.Number, name: Schema.String }),
   }),
 );
 
@@ -124,16 +127,20 @@ const leaderLine = (
     ? `${label}: **${escapeMarkdown(leader.winner.name)}** (${format(leader.winner.primaryValue)})`
     : null;
 
+const readRanking = (session: MemberSession, event: LootlogEvent) =>
+  session.api(
+    `${eventsPath(session.guildId)}/${encodeURIComponent(event.id)}/ranking`,
+    {},
+    EventRanking,
+  );
+
 const rankingReply = (
   session: MemberSession,
   event: LootlogEvent,
+  ownDiscordId: string,
 ): Effect.Effect<CommandReply, CommandFailure> =>
   Effect.gen(function* () {
-    const ranking = yield* session.api(
-      `${eventsPath(session.guildId)}/${encodeURIComponent(event.id)}/ranking`,
-      {},
-      EventRanking,
-    );
+    const ranking = yield* readRanking(session, event);
 
     const heroNames = [
       ...new Set([
@@ -143,20 +150,24 @@ const rankingReply = (
     ];
 
     const heroFields = heroNames.flatMap((heroName) => {
-      const entries = ranking
-        .filter((entry) => entry.heroNpcName === heroName)
-        .slice(0, RANKING_PER_HERO);
+      const entries = ranking.filter((entry) => entry.heroNpcName === heroName);
 
       return entries.length === 0
         ? []
         : [
             {
               name: heroName.slice(0, MAX_FIELD_NAME_LENGTH),
-              value: rankedLines(
-                entries,
-                (entry) =>
-                  `${escapeMarkdown(entry.member.name)} — ${COMMAND_TEXT.events.points(entry.totalPoints, entry.totalKills)}`,
-              ).join("\n"),
+              value: rankedLines(entries, {
+                limit: RANKING_PER_HERO,
+                name: (entry) => escapeMarkdown(entry.member.name),
+                detail: (entry) =>
+                  COMMAND_TEXT.events.points(
+                    entry.totalPoints,
+                    entry.totalKills,
+                  ),
+                isOwn: (entry) => entry.member.id === session.memberId,
+                ownDiscordId,
+              }).join("\n"),
             },
           ];
     });
@@ -177,11 +188,20 @@ const rankingReply = (
       characters += size;
     }
 
-    const embed = lootlogEmbed(COMMAND_TEXT.events.rankingTitle(event.name));
+    const embed = lootlogEmbed(
+      COMMAND_TEXT.events.rankingTitle(event.name),
+      EVENT_COLOR,
+    );
 
     if (fields.length === 0)
       embed.setDescription(COMMAND_TEXT.events.rankingEmpty);
-    else embed.addFields(fields);
+    else {
+      embed.addFields(fields);
+
+      // One note instead of a missing line under every hero.
+      if (!ranking.some((entry) => entry.member.id === session.memberId))
+        embed.setDescription(`_${COMMAND_TEXT.events.ownMissing}_`);
+    }
 
     if (heroFields.length > fields.length)
       embed.setFooter({
@@ -215,9 +235,15 @@ const statusReply = (
         ? `${discordTime(timer.minSpawnTime)} – ${discordTime(timer.maxSpawnTime, "t")}`
         : COMMAND_TEXT.events.noTimer;
 
+      const state = !timer
+        ? "⚪"
+        : new Date(timer.minSpawnTime).getTime() <= now
+          ? "🟢"
+          : "⏳";
+
       const level = hero.npcLvl === null ? "" : ` (${hero.npcLvl})`;
 
-      return `**${escapeMarkdown(hero.npcName)}**${level} — ${window}`;
+      return `${state} **${escapeMarkdown(hero.npcName)}**${level} — ${window}`;
     });
 
     const period = [event.startsAt, event.endsAt]
@@ -226,9 +252,9 @@ const statusReply = (
 
     return {
       embeds: [
-        lootlogEmbed(COMMAND_TEXT.events.statusTitle(event.name))
+        lootlogEmbed(COMMAND_TEXT.events.statusTitle(event.name), EVENT_COLOR)
           .setDescription(
-            `${event.active ? COMMAND_TEXT.events.active : COMMAND_TEXT.events.finished} · ${escapeMarkdown(event.world)}\n${period}`,
+            `${event.active ? COMMAND_TEXT.events.activeBadge : COMMAND_TEXT.events.finishedBadge} · 🌍 ${escapeMarkdown(event.world)}\n📅 ${period}`,
           )
           .addFields({
             name: COMMAND_TEXT.events.heroes,
@@ -241,15 +267,31 @@ const statusReply = (
     };
   });
 
+/** Points and kills of each Member summed over heroes, highest points first. */
+const memberTotals = (ranking: typeof EventRanking.Type) =>
+  Object.entries(Array.groupBy(ranking, (entry) => String(entry.member.id)))
+    .map(([memberId, entries]) => ({
+      memberId: Number(memberId),
+      points: entries.reduce((sum, entry) => sum + entry.totalPoints, 0),
+      kills: entries.reduce((sum, entry) => sum + entry.totalKills, 0),
+    }))
+    .sort((left, right) => right.points - left.points);
+
 const summaryReply = (
   session: MemberSession,
   event: LootlogEvent,
 ): Effect.Effect<CommandReply, CommandFailure> =>
   Effect.gen(function* () {
-    const wrapped = yield* session.api(
-      `${eventsPath(session.guildId)}/${encodeURIComponent(event.id)}/wrapped`,
-      {},
-      EventWrapped,
+    const [wrapped, ranking] = yield* Effect.all(
+      [
+        session.api(
+          `${eventsPath(session.guildId)}/${encodeURIComponent(event.id)}/wrapped`,
+          {},
+          EventWrapped,
+        ),
+        readRanking(session, event),
+      ],
+      { concurrency: "unbounded" },
     );
 
     const text = COMMAND_TEXT.events.summary;
@@ -267,6 +309,7 @@ const summaryReply = (
 
     const embed = lootlogEmbed(
       COMMAND_TEXT.events.summaryTitle(event.name),
+      EVENT_COLOR,
     ).addFields(
       { name: text.kills, value: String(overview.totalKills), inline: true },
       {
@@ -287,7 +330,28 @@ const summaryReply = (
       { name: text.loots, value: String(overview.totalLoots), inline: true },
     );
 
-    if (leaderLines.length > 0) embed.setDescription(leaderLines.join("\n"));
+    if (leaderLines.length > 0)
+      embed.addFields({ name: text.leaders, value: leaderLines.join("\n") });
+
+    const totals = memberTotals(ranking);
+
+    const own = totals.findIndex(
+      ({ memberId }) => memberId === session.memberId,
+    );
+
+    const ownTotal = totals[own];
+
+    embed.addFields({
+      name: text.own,
+      value: ownTotal
+        ? text.ownResult(
+            own + 1,
+            totals.length,
+            numberFormat.format(ownTotal.points),
+            ownTotal.kills,
+          )
+        : COMMAND_TEXT.events.ownMissing,
+    });
 
     return { embeds: [embed] };
   });
@@ -359,7 +423,10 @@ export const eventCommand: SlashCommand = {
       const reply = Match.value(subcommand).pipe(
         Match.when("status", () => statusReply),
         Match.when("podsumowanie", () => summaryReply),
-        Match.orElse(() => rankingReply),
+        Match.orElse(
+          () => (session: MemberSession, event: LootlogEvent) =>
+            rankingReply(session, event, invocation.discordId),
+        ),
       );
 
       const result = yield* reply(session, event).pipe(

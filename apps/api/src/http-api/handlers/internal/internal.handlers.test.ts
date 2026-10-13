@@ -110,7 +110,7 @@ describe("internal guild HttpApi handlers", () => {
     const cached: unknown[] = [];
 
     const persistence: InternalGuildsPersistence = {
-      findActiveMemberUserId: () => Effect.succeed(null),
+      findActiveMemberIdentity: () => Effect.succeed(null),
       findActiveGuild: () => Effect.succeed(null),
       findGuildsForPermissions: () =>
         Effect.succeed([
@@ -169,7 +169,7 @@ describe("internal guild HttpApi handlers", () => {
     let databaseRead = false;
 
     const persistence: InternalGuildsPersistence = {
-      findActiveMemberUserId: () => Effect.succeed(null),
+      findActiveMemberIdentity: () => Effect.succeed(null),
       findActiveGuild: () =>
         Effect.sync(() => {
           databaseRead = true;

@@ -3,9 +3,6 @@ import type { NpcTypeEnum } from "@lootlog/schema/npc-type";
 export const MARGONEM_CDN_CHARACTERS_URL =
   "https://micc.garmory-cdn.cloud/obrazki/postacie";
 
-export const MARGONEM_CDN_NPCS_URL =
-  "https://micc.garmory-cdn.cloud/obrazki/npc/";
-
 export const NPC_NAMES = {
   TITAN: { shortname: "T" },
   COLOSSUS: { shortname: "K" },
