@@ -55,41 +55,6 @@ const EventKillParticipantResponse = Schema.Struct({
   ),
 });
 
-// TODO(kill-history-legacy): Remove the four list entry/response schemas below after retirement.
-// Keep the participant schemas above: KillDetailResponse also uses them.
-const EventKillHistoryEntryResponse = Schema.Struct({
-  id: Schema.String,
-  heroNpcId: Schema.String,
-  killedAt: IsoDateTime,
-  minSpawnTimeAtKill: IsoDateTime,
-  maxSpawnTimeAtKill: IsoDateTime,
-  isManualClose: Schema.Boolean,
-  heroNpc: EventKillHeroNpcResponse,
-  points: Schema.Array(EventKillParticipantResponse),
-});
-
-export const EventKillHistoryResponse = Schema.Struct({
-  data: Schema.Array(EventKillHistoryEntryResponse),
-  nextCursor: Schema.NullOr(Schema.String),
-});
-
-const EventMemberKillHistoryEntryResponse = Schema.Struct({
-  id: Schema.String,
-  heroNpcId: Schema.String,
-  killedAt: IsoDateTime,
-  minSpawnTimeAtKill: IsoDateTime,
-  maxSpawnTimeAtKill: IsoDateTime,
-  isManualClose: Schema.Boolean,
-  heroNpc: EventKillHeroNpcResponse,
-  memberPoint: Schema.NullOr(EventKillParticipantResponse),
-});
-
-export const EventMemberKillHistoryResponse = Schema.Struct({
-  member: EventKillParticipantMemberResponse,
-  data: Schema.Array(EventMemberKillHistoryEntryResponse),
-  nextCursor: Schema.NullOr(Schema.String),
-});
-
 const KillDetailParticipantMemberResponse = Schema.Struct({
   ...EventKillParticipantMemberResponse.fields,
   roles: Schema.Array(EventKillParticipantRoleResponse),

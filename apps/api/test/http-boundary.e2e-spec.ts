@@ -772,7 +772,7 @@ describe("API HTTP boundary", () => {
     return { memberId, highKill, newestLowKill, oldestLowKill, foreignKill };
   };
 
-  it("serves scoped kill summaries and compatible legacy pages through the deployed HTTP contracts", async () => {
+  it("serves scoped kill summaries through the deployed HTTP contracts", async () => {
     const { memberId, highKill, newestLowKill, oldestLowKill, foreignKill } =
       await seedKillHistory();
 
@@ -809,22 +809,6 @@ describe("API HTTP boundary", () => {
         { id: oldestLowKill },
       ],
     });
-    const legacy = await request(`${base}/kills?limit=1`);
-    expect(legacy.status).toBe(200);
-    expect(await legacy.json()).toMatchObject({
-      data: [{ id: highKill, points: [{ wasPresent: false }] }],
-      nextCursor: highKill,
-    });
-
-    for (const path of [
-      "kills",
-      "heroes/low-hero/kills",
-      `members/${memberId}/kills`,
-    ]) {
-      expect(
-        (await request(`${base}/${path}?cursor=${foreignKill}`)).status,
-      ).toBe(400);
-    }
 
     for (const query of [
       "limit=0",
@@ -869,9 +853,6 @@ describe("API HTTP boundary", () => {
     expect(
       (await request(`${base}/kill-history?heroId=high-hero`)).status,
     ).toBe(404);
-    expect((await request(`${base}/kills?cursor=${highKill}`)).status).toBe(
-      400,
-    );
     expect(
       (await request(`${base}/heroes/high-hero/kills/${highKill}`)).status,
     ).toBe(404);
