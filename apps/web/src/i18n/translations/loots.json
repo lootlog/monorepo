@@ -90,12 +90,10 @@
     }
   },
   "header": {
-    "searchPlaceholder": "Szukaj przedmiotów, potworów, graczy...",
     "shortcut": "{{modifier}} + K",
     "listView": "Widok listy",
     "gridView": "Widok siatki",
     "mobileFiltersTitle": "Filtry łupów",
-    "toolbarLabel": "Wyszukiwanie i widok łupów",
     "filtersButton": "Filtry"
   },
   "searchCommand": {

@@ -7,6 +7,7 @@ type ViewModeToggleProps = {
   onChange: (value: ViewMode) => void;
   listLabel: string;
   gridLabel: string;
+  size?: "default" | "lg";
   className?: string;
 };
 
@@ -15,6 +16,7 @@ export function ViewModeToggle({
   onChange,
   listLabel,
   gridLabel,
+  size = "lg",
   className,
 }: ViewModeToggleProps) {
   return (
@@ -22,7 +24,7 @@ export function ViewModeToggle({
       value={value}
       onValueChange={onChange}
       label={`${listLabel} / ${gridLabel}`}
-      size="lg"
+      size={size}
       className={className}
       options={[
         { value: "list", label: listLabel, icon: List },
