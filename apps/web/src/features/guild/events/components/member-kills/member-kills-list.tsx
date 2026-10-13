@@ -40,6 +40,7 @@ type MemberKillsListProps = {
 };
 
 const HEAD_CLASS_NAMES = new Map([
+  ["killNumber", "w-12"],
   ["monster", "min-w-0"],
   ["date", "hidden w-0 sm:table-cell sm:w-28 lg:w-36"],
   ["timeCoverage", "hidden w-0 text-right xl:table-cell xl:w-28"],
@@ -49,6 +50,7 @@ const HEAD_CLASS_NAMES = new Map([
 ]);
 
 const CELL_CLASS_NAMES = new Map([
+  ["killNumber", "w-12 py-0"],
   ["monster", "min-w-0 overflow-hidden py-1.5"],
   ["date", "hidden w-0 py-0 sm:table-cell sm:w-28 lg:w-36"],
   [

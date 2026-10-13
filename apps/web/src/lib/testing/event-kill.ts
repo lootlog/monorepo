@@ -20,5 +20,6 @@ export function createHeroKill({
     maxSpawnTimeAtKill: "2026-07-31T02:00:00.000Z",
     minSpawnTimeAtKill: "2026-07-31T01:00:00.000Z",
     participantCount: 2,
+    killNumber: 12,
   };
 }

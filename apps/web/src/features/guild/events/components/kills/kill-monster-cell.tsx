@@ -10,10 +10,7 @@ import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 type KillMonsterCellProps = {
   eventId: string;
   guildId: string;
-  /**
-   * Sits in a preview card with no date column: the date stays under the name
-   * and the sprite shows at every viewport width.
-   */
+  /** Sits in a preview card with no date column, so the date stays under the name. */
   isPreview?: boolean;
   kill: {
     heroNpc: Pick<KillHistoryEntryHeroNpc, "npcIcon" | "npcId" | "npcName">;
@@ -37,23 +34,19 @@ export const KillMonsterCell = ({
 
   return (
     <div className="flex min-w-0 items-center gap-2">
-      {kill.heroNpc.npcIcon ? (
-        <NpcTile
-          className={cn("shrink-0", !isPreview && "hidden lg:block")}
-          npc={{
-            id: kill.heroNpc.npcId ?? undefined,
-            name: kill.heroNpc.npcName,
-            icon: kill.heroNpc.npcIcon,
-          }}
-        />
-      ) : (
-        <Skull
-          className={cn(
-            "size-4 shrink-0 text-muted-foreground",
-            !isPreview && "hidden lg:block",
-          )}
-        />
-      )}
+      <span className="flex w-8 shrink-0 justify-center">
+        {kill.heroNpc.npcIcon ? (
+          <NpcTile
+            npc={{
+              id: kill.heroNpc.npcId ?? undefined,
+              name: kill.heroNpc.npcName,
+              icon: kill.heroNpc.npcIcon,
+            }}
+          />
+        ) : (
+          <Skull className="size-4 text-muted-foreground" />
+        )}
+      </span>
       <div className="min-w-0 flex-1">
         <TextLink
           aria-label={detailLabel}

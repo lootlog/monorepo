@@ -97,6 +97,7 @@ describe("EventReadCache", () => {
             npcLvl: 300,
           },
           participantCount: 0,
+          killNumber: 1,
         },
       ],
       nextCursor: null,

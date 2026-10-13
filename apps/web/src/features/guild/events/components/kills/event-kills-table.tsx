@@ -53,6 +53,10 @@ const getEventKillsTableVariant = (props: EventKillsTableProps) =>
   props.variant === "preview" ? "preview" : "history";
 
 const getColumnClassName = (columnId: string, isPreview: boolean) => {
+  if (columnId === "killNumber") {
+    return "w-12";
+  }
+
   if (columnId === "monster") {
     return "min-w-0";
   }

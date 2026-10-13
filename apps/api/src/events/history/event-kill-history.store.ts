@@ -149,6 +149,26 @@ export const makeEventKillHistoryStore = (
         .groupBy(eventKillPointTable.killId),
     );
 
+    // Number each kill within its hero, independent of the page's member filter.
+    const earlierKill = alias(eventHeroKillTable, "history_earlier_kill");
+
+    const killNumbers = database.$with("history_kill_numbers").as(
+      database
+        .select({
+          killId: page.id,
+          killNumber: count().as("kill_number"),
+        })
+        .from(page)
+        .innerJoin(
+          earlierKill,
+          and(
+            eq(earlierKill.heroNpcId, page.heroNpcId),
+            sql`(${earlierKill.killedAt}, ${earlierKill.id}) <= (${page.killedAt}, ${page.id})`,
+          ),
+        )
+        .groupBy(page.id),
+    );
+
     const selection = {
       kill: getColumns(page),
       heroNpc: {
@@ -160,15 +180,17 @@ export const makeEventKillHistoryStore = (
       },
       participantCount:
         sql<number>`coalesce(${counts.participantCount}, 0)`.mapWith(Number),
+      killNumber: sql<number>`${killNumbers.killNumber}`.mapWith(Number),
     };
 
     if (query.memberId === undefined) {
       return database
-        .with(page, counts)
+        .with(page, counts, killNumbers)
         .select(selection)
         .from(page)
         .innerJoin(eventHeroNpcTable, eq(eventHeroNpcTable.id, page.heroNpcId))
         .leftJoin(counts, eq(counts.killId, page.id))
+        .innerJoin(killNumbers, eq(killNumbers.killId, page.id))
         .orderBy(desc(page.killedAt), desc(page.id))
         .pipe(
           Effect.map((rows) => ({
@@ -181,7 +203,7 @@ export const makeEventKillHistoryStore = (
     const memberPoint = alias(eventKillPointTable, "history_member_point");
 
     return database
-      .with(page, counts)
+      .with(page, counts, killNumbers)
       .select({
         ...selection,
         memberPoint: {
@@ -196,6 +218,7 @@ export const makeEventKillHistoryStore = (
       .from(page)
       .innerJoin(eventHeroNpcTable, eq(eventHeroNpcTable.id, page.heroNpcId))
       .leftJoin(counts, eq(counts.killId, page.id))
+      .innerJoin(killNumbers, eq(killNumbers.killId, page.id))
       .innerJoin(
         memberPoint,
         and(
