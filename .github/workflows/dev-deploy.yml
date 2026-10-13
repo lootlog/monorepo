@@ -6,9 +6,10 @@ on:
 
 concurrency:
   group: development-deployment
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
+  actions: read
   contents: read
 
 env:
@@ -34,18 +35,32 @@ jobs:
       - name: Select affected deployment targets
         id: plan
         env:
-          BASE_SHA: ${{ github.event.before }}
+          GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.sha }}
         run: |
-          if [[ "$BASE_SHA" =~ ^0+$ ]]; then BASE_SHA="$(git rev-parse "$HEAD_SHA^")"; fi
-          affected="$(bunx turbo@2.11.7 query affected --base "$BASE_SHA" --head "$HEAD_SHA" --packages)"
-          packages="$(jq -c '[.data.affectedPackages.items[].name]' <<< "$affected")"
-          plan="$(
-            git diff --name-only -z "$BASE_SHA" "$HEAD_SHA" |
-              jq -Rsc --argjson affectedPackages "$packages" \
-                '{mode: "dev", affectedPackages: $affectedPackages, changedFiles: (split("\u0000") | map(select(length > 0)))}' |
-              bun scripts/deployment-targets.mjs
-          )"
+          history="$(bun scripts/development-deployment-base.mjs)"
+          BASE_SHA="$(jq -r '.baseSha // empty' <<< "$history")"
+          deploy_all="$(jq -r '.deployAll' <<< "$history")"
+          if [[ -n "$BASE_SHA" ]] && ! git merge-base --is-ancestor "$BASE_SHA" "$HEAD_SHA"; then
+            if git cat-file -e "$BASE_SHA^{commit}" && git merge-base --is-ancestor "$HEAD_SHA" "$BASE_SHA"; then
+              echo "::error::A newer development deployment run already completed."
+              exit 1
+            fi
+            deploy_all=true
+          fi
+
+          if [[ "$deploy_all" == "true" ]]; then
+            plan="$(bun scripts/deployment-targets.mjs '{"mode":"dev","deployAll":true}')"
+          else
+            affected="$(bunx turbo@2.11.7 query affected --base "$BASE_SHA" --head "$HEAD_SHA" --packages)"
+            packages="$(jq -c '[.data.affectedPackages.items[].name]' <<< "$affected")"
+            plan="$(
+              git diff --name-only -z "$BASE_SHA" "$HEAD_SHA" |
+                jq -Rsc --argjson affectedPackages "$packages" \
+                  '{mode: "dev", affectedPackages: $affectedPackages, changedFiles: (split("\u0000") | map(select(length > 0)))}' |
+                bun scripts/deployment-targets.mjs
+            )"
+          fi
           {
             echo "targets=$(jq -c '.targets' <<< "$plan")"
             echo "docker_targets=$(jq -c '[.targets[] | select(.kind == "docker")]' <<< "$plan")"
