@@ -272,10 +272,11 @@ export async function routeRequest(
   upstreamFetch: UpstreamFetch = fetch,
 ): Promise<Response> {
   const requestUrl = new URL(request.url);
+  const isReadRequest = request.method === "GET" || request.method === "HEAD";
 
   if (
     requestUrl.hostname === "lootlog.pl" &&
-    (request.method === "GET" || request.method === "HEAD") &&
+    isReadRequest &&
     isPathWithin(requestUrl.pathname, "/docs")
   ) {
     const canonicalUrl = new URL("https://docs.lootlog.pl");
@@ -290,11 +291,8 @@ export async function routeRequest(
     requestUrl,
   );
 
-  const canProbeLegacyAsset =
-    request.method === "GET" || request.method === "HEAD";
-
   const upstream =
-    ambiguousLegacyAssetReferer && canProbeLegacyAsset
+    ambiguousLegacyAssetReferer && isReadRequest
       ? await resolveAmbiguousLegacyAssetUpstream(
           request,
           ambiguousLegacyAssetReferer,
