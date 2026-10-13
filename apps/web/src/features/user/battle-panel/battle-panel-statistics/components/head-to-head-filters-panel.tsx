@@ -67,7 +67,7 @@ export const HeadToHeadFiltersPanel = ({
           characterId={characterId}
           onCharacterChange={onCharacterChange}
           allowAllCharacters
-          className="h-10 w-full justify-between"
+          className="w-full justify-between"
         />
       </div>
 

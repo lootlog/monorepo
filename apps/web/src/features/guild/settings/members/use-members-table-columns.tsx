@@ -271,8 +271,7 @@ export function useMembersTableColumns({
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
-                  className="size-7 md:size-8"
+                  size="icon-sm"
                   aria-label={t("settings.members.actions.more")}
                 >
                   <MoreHorizontal className="size-4" />
@@ -288,6 +287,7 @@ export function useMembersTableColumns({
               <div className="space-y-1 p-1">
                 <MemberSyncButton
                   member={member}
+                  size="sm"
                   className="w-full justify-start"
                 />
                 {canManageMembers && (

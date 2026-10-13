@@ -85,7 +85,7 @@ export const EventHeroesTable = ({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 shrink-0"
+                className="shrink-0"
                 onClick={onAddHero}
                 icon=<Plus className="size-4" />
               >

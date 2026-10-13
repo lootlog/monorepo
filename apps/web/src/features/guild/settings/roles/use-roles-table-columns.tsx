@@ -123,8 +123,7 @@ export function useRolesTableColumns({
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
-                  className="size-7 md:size-8"
+                  size="icon-sm"
                   aria-label={t("settings.roles.actions.more")}
                 >
                   <MoreHorizontal className="size-4" />

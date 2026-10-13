@@ -111,8 +111,8 @@ export const LootItemIds: FC<LootItemIdsProps> = ({ loot }) => {
                     </code>
                   </div>
                   <Button
-                    size="icon"
-                    className="size-8 shrink-0"
+                    size="icon-sm"
+                    className="shrink-0"
                     variant="ghost"
                     onClick={() => handleCopyId(formattedItemHid)}
                     loading={copyingId === formattedItemHid}

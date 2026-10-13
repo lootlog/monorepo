@@ -16,10 +16,10 @@ export const FilterChipButton = ({
   <Button
     type="button"
     variant="outline"
-    size="sm"
+    size="xs"
     aria-label={removeLabel}
     title={removeLabel}
-    className="h-7 max-w-full gap-1.5 border-primary/25 bg-primary/5 px-2 text-xs text-muted-foreground hover:border-primary/40 hover:bg-primary/10 hover:text-foreground"
+    className="max-w-full border-primary/25 bg-primary/5 text-muted-foreground hover:border-primary/40 hover:bg-primary/10 hover:text-foreground"
     onClick={onRemove}
   >
     <span className="truncate">{children}</span>

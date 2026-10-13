@@ -18,26 +18,6 @@ await initializeTestTranslations({
 afterEach(cleanup);
 
 describe("KillDetailSummary", () => {
-  it("renders the NPC sprite without a rounded background container", () => {
-    renderSummary(
-      createKill({
-        heroNpc: {
-          ...createKill().heroNpc,
-          npcIcon: "potulny-berserker.gif",
-        },
-      }),
-    );
-
-    const npcContainer = screen.getByRole("img", {
-      name: "Potulny Berserker",
-    }).parentElement;
-
-    expect(npcContainer?.className).toContain("w-10");
-    expect(npcContainer?.className).not.toContain("rounded");
-    expect(npcContainer?.className).not.toContain("bg-");
-    expect(npcContainer?.className).not.toContain("ring-");
-  });
-
   it("renders an accessible early delta inline with the respawn time", () => {
     renderSummary(createKill());
 

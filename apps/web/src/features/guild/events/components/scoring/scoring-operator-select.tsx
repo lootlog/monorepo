@@ -24,7 +24,7 @@ export const ScoringOperatorSelect = ({
       label: <>{operator}</>,
     }))}
   >
-    <SelectTrigger id={id} size="sm" className="h-8 text-[12px] font-mono">
+    <SelectTrigger id={id} size="sm" className="text-[12px] font-mono">
       <SelectValue />
     </SelectTrigger>
     <SelectContent>

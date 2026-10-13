@@ -48,7 +48,8 @@ export const ActivityLogsDateRangeFields = ({
             });
           }}
           placeholder={t("activityLogs.filters.startDatePlaceholder")}
-          className="h-10 w-full"
+          size="lg"
+          className="w-full"
           disabled={isStartDateDisabled}
         />
       </div>
@@ -62,7 +63,8 @@ export const ActivityLogsDateRangeFields = ({
             updateFilters({ endDate: date?.toISOString() ?? "" })
           }
           placeholder={t("activityLogs.filters.endDatePlaceholder")}
-          className="h-10 w-full"
+          size="lg"
+          className="w-full"
           disabled={isEndDateDisabled}
         />
       </div>

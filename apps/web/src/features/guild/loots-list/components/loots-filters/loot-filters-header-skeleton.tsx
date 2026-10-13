@@ -4,12 +4,14 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 type Props = {
   isMobile: boolean;
   isCompactLayout: boolean;
+  showsViewModeToggle: boolean;
 };
 
 /** Mirrors the loots toolbar: search, world, view toggle and filter button. */
 export const LootFiltersHeaderSkeleton = ({
   isMobile,
   isCompactLayout,
+  showsViewModeToggle,
 }: Props) => (
   <FilterBar ariaLabel="">
     <Skeleton
@@ -33,7 +35,9 @@ export const LootFiltersHeaderSkeleton = ({
         )}
         <div className="flex w-[19.5rem] shrink-0 items-center gap-2">
           <Skeleton className="h-10 min-w-0 flex-1 rounded-xl" />
-          <Skeleton className="h-10 w-[4.5rem] shrink-0 rounded-xl" />
+          {showsViewModeToggle && (
+            <Skeleton className="h-10 w-[4.5rem] shrink-0 rounded-xl" />
+          )}
           <Skeleton className="size-10 shrink-0 rounded-xl" />
         </div>
       </>

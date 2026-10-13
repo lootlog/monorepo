@@ -9,13 +9,15 @@ import {
 
 const SearchInput = forwardRef<
   HTMLInputElement,
-  React.ComponentProps<"input"> & {
+  Omit<React.ComponentProps<"input">, "size"> & {
     wrapperClassName?: string;
     endAdornment?: ReactNode;
+    size?: React.ComponentProps<typeof InputGroup>["size"];
   }
->(({ className, wrapperClassName, endAdornment, ...props }, ref) => {
+>(({ className, wrapperClassName, endAdornment, size, ...props }, ref) => {
   return (
     <InputGroup
+      size={size}
       className={cn(
         "has-[>[data-align=inline-start]]:[&>input]:pl-2 rounded-xl border-border bg-background dark:bg-background hover:border-foreground/20 hover:bg-foreground/[0.04] dark:hover:bg-foreground/[0.04]",
         wrapperClassName,

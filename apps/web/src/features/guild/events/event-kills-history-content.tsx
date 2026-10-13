@@ -1,5 +1,6 @@
 import { sumBy } from "es-toolkit";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   getEventsRankingControllerGetEventHeroStatsQueryKey,
@@ -49,6 +50,8 @@ export const EventKillsHistoryContent = ({
   eventId,
   initialHeroId,
 }: EventKillsHistoryContentProps) => {
+  const { t } = useTranslation();
+
   const [selectedHeroId, setSelectedHeroId] = useState<string | undefined>(
     initialHeroId,
   );
@@ -137,10 +140,6 @@ export const EventKillsHistoryContent = ({
   const heroes = event.heroNpcs ?? [];
   const allKills = killsData?.pages.flatMap((page) => page.data) ?? [];
 
-  const selectedHero = selectedHeroId
-    ? heroes.find((hero) => hero.id === selectedHeroId)
-    : undefined;
-
   const killCount = getKillCount(
     heroStatsHasError ? undefined : heroStats,
     selectedHeroId,
@@ -155,12 +154,7 @@ export const EventKillsHistoryContent = ({
 
       <ScrollArea ref={setScrollElement} className="min-h-0 flex-1">
         <div className="flex w-full min-w-0 max-w-full flex-col gap-3 px-3 py-3">
-          <EventKillsSummary
-            eventName={event.name}
-            heroName={selectedHero?.npcName}
-            killCount={killCount}
-            isKillCountLoading={heroStatsLoading}
-          />
+          <h1 className="sr-only">{t("events.kills.title")}</h1>
 
           <HeroTabs
             placement="page"
@@ -168,6 +162,11 @@ export const EventKillsHistoryContent = ({
             includeAll
             value={selectedHeroId}
             onValueChange={setSelectedHeroId}
+          />
+
+          <EventKillsSummary
+            killCount={killCount}
+            isKillCountLoading={heroStatsLoading}
           />
 
           <EventKillsTable

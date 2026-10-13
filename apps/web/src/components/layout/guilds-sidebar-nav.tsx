@@ -41,17 +41,7 @@ const organizationNavigationIcons: Partial<
 
 function getEventsIcon(hasActiveEvents: boolean) {
   return (
-    <div className="relative mr-1">
-      <Trophy
-        className={cn("size-4", hasActiveEvents && "text-signal-timer")}
-      />
-      {hasActiveEvents && (
-        <span className="absolute -top-1 -right-1 flex size-2">
-          <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-signal-timer opacity-75" />
-          <span className="relative inline-flex rounded-full size-2 bg-signal-timer" />
-        </span>
-      )}
-    </div>
+    <Trophy className={cn("mr-1 size-4", hasActiveEvents && "text-primary")} />
   );
 }
 

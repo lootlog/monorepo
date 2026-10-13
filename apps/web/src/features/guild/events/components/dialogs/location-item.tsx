@@ -47,7 +47,8 @@ export const LocationItem = ({
               name: e.target.value,
             })
           }
-          className="h-6 text-xs flex-1"
+          size="sm"
+          className="text-xs flex-1"
           autoFocus
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.nativeEvent.isComposing)
@@ -65,7 +66,7 @@ export const LocationItem = ({
       </span>
       <Button
         variant="ghost"
-        size="icon"
+        size="icon-sm"
         type="button"
         aria-label={t("events.locations.edit")}
         onClick={() =>
@@ -74,18 +75,18 @@ export const LocationItem = ({
             name: location.name,
           })
         }
-        className="size-6 p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+        className="rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
       >
         <Pencil className="size-3" />
       </Button>
       <Button
         variant="ghost"
-        size="icon"
+        size="icon-sm"
         type="button"
-        aria-label={t("events.delete")}
+        aria-label={t("events.locations.delete")}
         icon=<Trash2 className="size-3" />
         onClick={() => handleDeleteLocation(location.id)}
-        className="size-6 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+        className="rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
         disabled={deletionDisabled}
         loading={isDeleting}
       />

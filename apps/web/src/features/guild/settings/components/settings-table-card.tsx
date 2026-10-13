@@ -60,7 +60,8 @@ export const SettingsTableCard = ({
               onChange={(event) => search.onChange(event.target.value)}
               placeholder={search.placeholder}
               aria-label={search.placeholder}
-              wrapperClassName="h-10 w-full min-w-0 sm:min-w-[200px] sm:flex-1"
+              size="lg"
+              wrapperClassName="w-full min-w-0 sm:min-w-[200px] sm:flex-1"
             />
             {toolbarEnd}
           </>
@@ -80,7 +81,6 @@ export const SettingsTableCard = ({
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
                   onClick={onResetFilters}
                 >
                   <FilterX data-icon="inline-start" aria-hidden />

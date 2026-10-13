@@ -111,7 +111,6 @@ export const EventDetailHeader = ({
             render={
               <Button
                 type="button"
-                size="sm"
                 variant="outline"
                 loading={isPinPending(event.id)}
                 icon=<Star
@@ -126,7 +125,7 @@ export const EventDetailHeader = ({
                   isPinPending,
                 )}
                 className={cn(
-                  "h-9 shrink-0 gap-2 px-3",
+                  "shrink-0 gap-2 px-3",
                   eventIsPinned
                     ? "border-yellow-500/35 bg-yellow-500/10 text-yellow-500 hover:border-yellow-500/50 hover:bg-yellow-500/15 hover:text-yellow-500"
                     : "border-primary/30 bg-primary/5 text-primary hover:border-primary/50 hover:bg-primary/10 hover:text-primary",

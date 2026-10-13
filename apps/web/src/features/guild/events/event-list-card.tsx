@@ -133,8 +133,7 @@ export const EventListCard = ({
       <div className="flex shrink-0 items-center gap-1 border-l border-border px-2">
         <Button
           variant="ghost"
-          size="icon"
-          className="size-8"
+          size="icon-sm"
           title={pinActionLabel}
           loading={isPinPending(event.id)}
           aria-label={pinActionLabel}
@@ -151,8 +150,8 @@ export const EventListCard = ({
         {canDeleteEvent && (
           <Button
             variant="ghost"
-            size="icon"
-            className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            size="icon-sm"
+            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
             aria-label={t("events.deleteNamed", { name: event.name })}
             title={t("events.deleteNamed", { name: event.name })}
             onClick={() => setEventToDelete(event)}

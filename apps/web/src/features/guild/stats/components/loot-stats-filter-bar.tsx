@@ -48,7 +48,11 @@ export const LootStatsFilterBar = ({
           title={t("kills.filters.title")}
           closeLabel={t("kills.filters.close")}
           trigger={
-            <Button variant="outline" className="h-10 w-full justify-start">
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full justify-start"
+            >
               <Filter data-icon="inline-start" aria-hidden="true" />
               {t("kills.filters.title")}
             </Button>

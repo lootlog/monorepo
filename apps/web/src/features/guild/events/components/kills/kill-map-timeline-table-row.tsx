@@ -60,8 +60,8 @@ export const KillMapTimelineTableRow = ({
               <Button
                 type="button"
                 variant="ghost"
-                size="icon"
-                className="mr-1 size-11 text-muted-foreground lg:mr-3 lg:size-9"
+                size="icon-sm"
+                className="mr-1 text-muted-foreground lg:mr-3"
                 aria-label={t(
                   isExpanded
                     ? "events.killDetail.mapCoverage.collapseMap"

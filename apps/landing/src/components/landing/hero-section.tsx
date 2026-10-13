@@ -57,7 +57,7 @@ export function HeroSection() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button
-                size="lg"
+                size="xl"
                 className="landing-action landing-action-solid"
                 render={
                   <a href={links.dashboard}>
@@ -68,7 +68,7 @@ export function HeroSection() {
                 nativeButton={false}
               />
               <Button
-                size="lg"
+                size="xl"
                 className="landing-action landing-action-light"
                 render={
                   <a href={ADDON_URL} target="_blank" rel="noopener noreferrer">

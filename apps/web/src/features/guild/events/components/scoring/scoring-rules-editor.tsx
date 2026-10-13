@@ -132,7 +132,6 @@ export const ScoringRulesEditor = ({
             type="button"
             variant="outline"
             size="sm"
-            className="h-8"
             onClick={() => append(defaultRule())}
           >
             <Plus className="mr-1.5 h-3.5 w-3.5" />
@@ -143,7 +142,6 @@ export const ScoringRulesEditor = ({
             type="button"
             variant="outline"
             size="sm"
-            className="h-8"
             onClick={() => setSimulatorOpen(true)}
           >
             <FlaskConical className="mr-1.5 h-3.5 w-3.5" />

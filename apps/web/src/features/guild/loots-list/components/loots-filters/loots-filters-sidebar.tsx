@@ -138,7 +138,7 @@ export const LootsFiltersSidebar = (
             <ScrollArea className="h-full">
               <div>
                 <div className="space-y-3 border-b border-border/70 p-3 sm:p-4">
-                  <div className="flex min-h-7 items-center justify-between">
+                  <div className="flex min-h-8 items-center justify-between">
                     <Label className="text-sm font-semibold">
                       {t("loots.filtersPanel.quickFilters.title")}
                     </Label>
@@ -147,7 +147,7 @@ export const LootsFiltersSidebar = (
                         onClick={() => setIsDialogOpen(true)}
                         variant="default"
                         size="sm"
-                        className="h-7 px-2 text-xs"
+                        className="text-xs"
                       >
                         <Plus className="h-3 w-3 mr-1" />
                         {t("loots.filtersPanel.quickFilters.saveButton")}
@@ -167,8 +167,7 @@ export const LootsFiltersSidebar = (
                               ? "default"
                               : "outline"
                           }
-                          size="sm"
-                          className="h-7 px-2 text-xs"
+                          size="xs"
                           onClick={() => applyFilter(filter.filters)}
                           aria-pressed={isQuickFilterApplied(filter.filters)}
                         >
@@ -183,11 +182,11 @@ export const LootsFiltersSidebar = (
                           <Button
                             type="button"
                             variant="ghost"
-                            size="icon"
+                            size="icon-xs"
                             aria-label={t("common.removeOption", {
                               label: filter.label,
                             })}
-                            className="size-7 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+                            className="opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                             onClick={() => handleRemoveCustomFilter(filter.id)}
                           >
                             <X className="size-3" />
@@ -265,7 +264,6 @@ export const LootsFiltersSidebar = (
                   onClick={clearFilters}
                   variant="outline"
                   className="w-full"
-                  size="sm"
                 >
                   <X className="h-4 w-4 mr-2" />
                   {t("loots.filtersPanel.quickFilters.clearButton")}

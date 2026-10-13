@@ -26,7 +26,7 @@ export const BattleStatsExpandButton: FC<BattleStatsExpandButtonProps> = ({
       aria-expanded={expanded}
       onClick={onToggle}
       className={cn(
-        "h-7 gap-1 rounded-sm bg-transparent px-1 text-[13px] tabular-nums",
+        "gap-1 rounded-sm bg-transparent px-1 text-[13px] tabular-nums",
         dense &&
           "underline decoration-muted-foreground/60 decoration-dotted underline-offset-4",
         expanded && "bg-secondary",

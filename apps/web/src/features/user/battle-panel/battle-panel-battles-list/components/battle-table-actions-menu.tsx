@@ -49,8 +49,7 @@ export const BattleTableActionsMenu = ({
             <Button
               aria-label={t("battlePanel.actions.more")}
               variant="ghost"
-              size="icon"
-              className="size-7 md:size-8"
+              size="icon-sm"
               disabled={disabled}
               loading={loading}
             >

@@ -22,7 +22,7 @@ export const WorldSelectionEmptyState = ({
   >
     <WorldSwitcher
       width="w-full"
-      triggerClassName="h-11 w-full justify-between px-3"
+      triggerClassName="w-full justify-between px-3"
     />
   </NoticeCard>
 );

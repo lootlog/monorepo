@@ -258,7 +258,7 @@ function ComboboxChip({
       {showRemove && (
         <ComboboxPrimitive.ChipRemove
           aria-label={removeLabel}
-          render={<Button variant="ghost" size="icon" className="size-6" />}
+          render={<Button variant="ghost" size="icon-xs" />}
           className="-ml-1 opacity-50 hover:opacity-100"
           data-slot="combobox-chip-remove"
         >

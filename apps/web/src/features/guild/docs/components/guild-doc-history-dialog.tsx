@@ -156,7 +156,6 @@ export const GuildDocHistoryDialog = ({
                       <Button
                         type="button"
                         variant="outline"
-                        size="sm"
                         loading={historyQuery.isFetching}
                         icon=<RotateCcw className="size-3.5" />
                         onClick={() => void historyQuery.refetch()}

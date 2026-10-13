@@ -12,7 +12,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { cn } from "cn";
 import { History } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { getRecentOpponentBattleContext } from "./recent-opponent-battle-context";
@@ -43,8 +42,8 @@ export function RecentOpponentBattlesDialog({
               <Button
                 aria-label={t("battlePanel.single.recentOpponent.openDialog")}
                 variant="ghost"
-                size="icon"
-                className={cn("h-8 w-8", className)}
+                size="icon-sm"
+                className={className}
               >
                 <History className="h-3.5 w-3.5" />
               </Button>

@@ -105,8 +105,7 @@ export const BattlePanelSingleBattleActions: FC<
                 <Button
                   aria-label={t("battlePanel.actions.copyLink")}
                   variant="ghost"
-                  size="icon"
-                  className="size-8"
+                  size="icon-sm"
                   onClick={handleCopyClick}
                   loading={pendingAction?.action === "copy"}
                   disabled={isBusy}
@@ -123,8 +122,7 @@ export const BattlePanelSingleBattleActions: FC<
                 <Button
                   aria-label={t("battlePanel.actions.hide")}
                   variant="ghost"
-                  size="icon"
-                  className="size-8"
+                  size="icon-sm"
                   onClick={handleUnshareClick}
                   loading={pendingAction?.action === "unshare"}
                   disabled={isBusy}
@@ -143,8 +141,7 @@ export const BattlePanelSingleBattleActions: FC<
               <Button
                 aria-label={t("battlePanel.actions.share")}
                 variant="ghost"
-                size="icon"
-                className="size-8"
+                size="icon-sm"
                 onClick={handleShareClick}
                 loading={pendingAction?.action === "share"}
                 disabled={isBusy}
@@ -169,8 +166,8 @@ export const BattlePanelSingleBattleActions: FC<
           <Button
             aria-label={t("battlePanel.actions.delete")}
             variant="ghost"
-            size="icon"
-            className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            size="icon-sm"
+            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
           >
             <Trash2 className="size-3.5" />
           </Button>

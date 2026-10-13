@@ -53,7 +53,7 @@ export function MyReservations() {
               label={t("reservations.my.tabsLabel")}
               value={status}
               onValueChange={setStatus}
-              size="large"
+              size="lg"
               className="w-full sm:w-fit"
               options={STATUSES.map((value) => ({
                 value,

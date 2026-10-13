@@ -151,7 +151,12 @@ export const ActivityLogsFilterFields = ({
         <Popover>
           <PopoverTrigger
             render={
-              <Button type="button" variant="outline" className="h-10 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                className="gap-2"
+              >
                 <CalendarRange className="size-4" aria-hidden="true" />
                 {t("activityLogs.filters.dateRange")}
               </Button>

@@ -217,7 +217,7 @@ export const KillsPage: React.FC = () => {
           )}
           action={
             hasActiveFilters && (
-              <Button variant="outline" size="sm" onClick={handleResetFilters}>
+              <Button variant="outline" onClick={handleResetFilters}>
                 <FilterX data-icon="inline-start" aria-hidden />
                 {t("statistics.clearFilters")}
               </Button>

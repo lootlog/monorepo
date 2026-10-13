@@ -65,9 +65,9 @@ export const ThemeAnnouncement = () => {
           </Button>
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-sm"
             aria-label={t("settings.appearance.announcement.dismiss")}
-            className="size-8 text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground"
             onClick={handleDismiss}
           >
             <X aria-hidden="true" className="size-4" />
