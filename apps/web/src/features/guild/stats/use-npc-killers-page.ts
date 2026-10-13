@@ -1,3 +1,4 @@
+import { useWorldScopedCursor } from "./hooks/use-world-scoped-cursor";
 import { useParams } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -22,9 +23,9 @@ export function useNpcKillersPage() {
     from: "/_authenticated/$guildId/stats/npcs/$npcId",
   });
 
-  const [cursor, setCursor] = useState(0);
   const [search, setSearch] = useState("");
-  const { settings, setWorld, setPeriod } = useStatsSettings("npc-killers");
+  const { settings, setPeriod } = useStatsSettings("npc-killers");
+  const [cursor, setCursor] = useWorldScopedCursor(settings.world);
 
   const npcKillersParams = buildNpcKillersParams({
     world: settings.world ?? undefined,
@@ -53,11 +54,6 @@ export function useNpcKillersPage() {
 
   const membersMap = useGuildMemberMap(guildId);
 
-  const handleWorldChange = (value: string | null) => {
-    setWorld(value);
-    setCursor(0);
-  };
-
   const handlePeriodChange = (value: KillStatsPeriod) => {
     setPeriod(value);
     setCursor(0);
@@ -71,8 +67,7 @@ export function useNpcKillersPage() {
       )
     : killers;
 
-  const hasActiveFilters =
-    Boolean(settings.world) || settings.period !== "all" || Boolean(search);
+  const hasActiveFilters = settings.period !== "all" || Boolean(search);
 
   const total = filteredKillers.length;
 
@@ -98,7 +93,6 @@ export function useNpcKillersPage() {
     search,
     handleSearchChange,
     settings,
-    handleWorldChange,
     handlePeriodChange,
     hasActiveFilters,
     paginatedKillers,

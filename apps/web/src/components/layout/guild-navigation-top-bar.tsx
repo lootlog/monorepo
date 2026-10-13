@@ -7,7 +7,6 @@ import {
 } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { AppNavigationTopBar } from "./app-navigation-top-bar";
-import { APP_NAVIGATION_ICONS } from "@/navigation/app-navigation-icons";
 import { resolveAppNavigation } from "@/navigation/app-navigation";
 import {
   getMembersControllerGetGuildMembersQueryKey,
@@ -139,14 +138,14 @@ const useBreadcrumbLookupData = ({
   };
 };
 
-type GuildBreadcrumbsProps = {
-  contextRef: Ref<HTMLDivElement>;
+type GuildNavigationTopBarProps = {
   actionsRef: Ref<HTMLDivElement>;
+  contextRef: Ref<HTMLDivElement>;
 };
 
-export const GuildBreadcrumbs: FC<GuildBreadcrumbsProps> = ({
-  contextRef,
+export const GuildNavigationTopBar: FC<GuildNavigationTopBarProps> = ({
   actionsRef,
+  contextRef,
 }) => {
   const { t } = useTranslation();
   const location = useLocation();
@@ -216,19 +215,11 @@ export const GuildBreadcrumbs: FC<GuildBreadcrumbsProps> = ({
     });
   };
 
-  const navInfo = resolveNavigationInfo();
-  // The Organization crumb opens the trail; the sidebar header already names
-  // the Organization right next to the top bar.
-  const pageBreadcrumbs = navInfo.breadcrumbs.slice(1);
-  const section = navInfo.sidebarItems.find((item) => item.active);
-
   return (
     <AppNavigationTopBar
-      breadcrumbs={pageBreadcrumbs}
-      parentPath={navInfo.parentPath}
-      sectionIcon={section && APP_NAVIGATION_ICONS[section.id]}
-      contextRef={contextRef}
+      heading={resolveNavigationInfo().heading}
       actionsRef={actionsRef}
+      contextRef={contextRef}
     />
   );
 };

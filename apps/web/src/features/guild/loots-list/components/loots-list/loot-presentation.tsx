@@ -20,6 +20,7 @@ export const LootPresentation = ({
   selectedPlayerNames = EMPTY_NAMES,
   selectedItemNames = EMPTY_NAMES,
   renderItem,
+  showWorld = false,
 }: {
   loot: LootPresentationData;
   headerActions: ReactNode;
@@ -27,6 +28,8 @@ export const LootPresentation = ({
   selectedPlayerNames?: string[];
   selectedItemNames?: string[];
   renderItem?: (item: Item) => ReactNode;
+  /** Names the loot's world, for lists that span every world. */
+  showWorld?: boolean;
 }) => {
   const { itemsByPlayer, unassignedItems, sortedPlayers } = buildLootData(loot);
 
@@ -54,6 +57,7 @@ export const LootPresentation = ({
         renderItem={renderItem}
       />
       <LootFooter
+        world={showWorld ? loot.world : undefined}
         location={loot.location}
         date={timestampToDate(loot.createdAt)}
         playersCount={loot.players.length}

@@ -15,6 +15,8 @@ import {
 } from "@/hooks/utils/use-page-scroll";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
+import { useGuildWorld } from "@/hooks/context/use-guild-world";
+import { GuildWorldHeaderSwitcher } from "@/components/layout/guild-world-header-switcher";
 import { AlertCircle, SearchX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -42,6 +44,7 @@ export const ActivityLogs = () => {
   });
 
   const filterModel = useActivityLogsFilterModel();
+  const { world } = useGuildWorld();
 
   const { filters, selectedTypes, selectedSources, activeFilterChips } =
     filterModel;
@@ -62,7 +65,7 @@ export const ActivityLogs = () => {
       startDate: filters.startDate,
       endDate: filters.endDate,
       name: filters.name,
-      world: filters.world,
+      world: world ?? undefined,
       clanName: filters.clanName,
       limit: ACTIVITY_LOGS_PAGE_LIMIT,
     }),
@@ -163,6 +166,7 @@ export const ActivityLogs = () => {
   return (
     <div className="flex h-full min-h-0 flex-col p-3">
       <h1 className="sr-only">{t("activityLogs.title")}</h1>
+      <GuildWorldHeaderSwitcher />
       <ResultsSurface
         chips={activeFilterChips}
         clearFiltersLabel={t("activityLogs.filters.clear")}

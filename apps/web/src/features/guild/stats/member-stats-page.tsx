@@ -44,7 +44,6 @@ const hasMemberStatsFilters = (
   settings: StatsSettings,
   debouncedSearch: string,
 ) =>
-  Boolean(settings.world) ||
   Boolean(settings.minLvl) ||
   Boolean(settings.maxLvl) ||
   settings.period !== "all" ||
@@ -72,7 +71,6 @@ export const MemberStatsPage = () => {
     memberColor,
     search,
     handleSearchChange,
-    handleWorldChange,
     handleNpcTypeChange,
     handleMinLvlChange,
     handleMaxLvlChange,
@@ -183,9 +181,7 @@ export const MemberStatsPage = () => {
       />
 
       <KillStatsFilterBar
-        world={settings.world}
         period={settings.period}
-        onWorldChange={handleWorldChange}
         onPeriodChange={handlePeriodChange}
         search={{
           value: search,

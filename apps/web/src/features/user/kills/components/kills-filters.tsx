@@ -65,10 +65,12 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
 
   return (
     <KillStatsFilterBar
-      world={filters.world ?? null}
-      worlds={worlds}
+      world={{
+        value: filters.world ?? null,
+        worlds,
+        onChange: (world) => onWorldChange(world ?? undefined),
+      }}
       period={filters.period}
-      onWorldChange={(world) => onWorldChange(world ?? undefined)}
       onPeriodChange={onPeriodChange}
       search={{
         value: filters.search ?? "",

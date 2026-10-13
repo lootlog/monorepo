@@ -8,5 +8,4 @@ export const useActivityLogsFilters = createQueryFilters({
   endDate: parseAsString.withDefault(""),
   name: parseAsString.withDefault(""),
   clanName: parseAsString.withDefault(""),
-  world: parseAsString.withDefault(""),
 });

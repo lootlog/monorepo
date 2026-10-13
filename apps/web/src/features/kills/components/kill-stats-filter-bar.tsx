@@ -15,11 +15,14 @@ import { Filter } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 type KillStatsFilterBarProps = {
-  world: string | null;
-  /** Worlds to offer; omit to list the current guild's worlds. */
-  worlds?: string[];
+  /** Omit where the world is the Organization's context instead of a filter. */
+  world?: {
+    value: string | null;
+    /** Worlds to offer; omit to list the current guild's worlds. */
+    worlds?: string[];
+    onChange: (value: string | null) => void;
+  };
   period: KillStatsPeriod | undefined;
-  onWorldChange: (value: string | null) => void;
   onPeriodChange: (value: KillStatsPeriod) => void;
   search?: {
     /** Omit to leave the input uncontrolled, for callers that debounce on their own. */
@@ -50,9 +53,7 @@ const toLevelParam = (value: number | undefined) =>
 
 export const KillStatsFilterBar = ({
   world,
-  worlds,
   period = "all",
-  onWorldChange,
   onPeriodChange,
   search,
   level,
@@ -110,16 +111,18 @@ export const KillStatsFilterBar = ({
             )
           }
         >
-          <div className="space-y-2">
-            <Label>{t("kills.filters.world")}</Label>
-            <WorldSwitcher
-              value={world}
-              onValueChange={onWorldChange}
-              worlds={worlds}
-              showAllOption
-              width="w-full"
-            />
-          </div>
+          {world && (
+            <div className="space-y-2">
+              <Label>{t("kills.filters.world")}</Label>
+              <WorldSwitcher
+                value={world.value}
+                onValueChange={world.onChange}
+                worlds={world.worlds}
+                showAllOption
+                width="w-full"
+              />
+            </div>
+          )}
           <div className="space-y-2">
             <Label>{t("kills.filters.period")}</Label>
             <KillStatsPeriodSelect
@@ -144,12 +147,14 @@ export const KillStatsFilterBar = ({
       </div>
 
       <div className="hidden flex-wrap items-center gap-2 md:flex">
-        <WorldSwitcher
-          value={world}
-          onValueChange={onWorldChange}
-          worlds={worlds}
-          showAllOption
-        />
+        {world && (
+          <WorldSwitcher
+            value={world.value}
+            onValueChange={world.onChange}
+            worlds={world.worlds}
+            showAllOption
+          />
+        )}
         <KillStatsPeriodSelect
           value={period}
           onValueChange={onPeriodChange}

@@ -1,5 +1,4 @@
 import { EmptyState } from "@/components/common/empty-state";
-import { WorldSelectionEmptyState } from "@/components/common/world-selection-empty-state";
 import { LootsListItem } from "@/features/guild/loots-list/components/loots-list/loots-list-item";
 import { LootsListSkeleton } from "@/features/guild/loots-list/components/loots-list/loots-list-skeleton";
 import { InfiniteListStatusRow } from "@/components/common/infinite-list-status-row";
@@ -60,15 +59,6 @@ export const LootsList = () => {
     clearFilters,
     queryIdentity,
   } = useLiveLootList();
-
-  if (!world) {
-    return (
-      <WorldSelectionEmptyState
-        title={t("loots.list.selectWorldTitle")}
-        description={t(themedKey("loots.list.noWorldSelected"))}
-      />
-    );
-  }
 
   if (isFailed) {
     return (
@@ -188,7 +178,10 @@ export const LootsList = () => {
                     <div className={cn(LOOTS_GRID_CLASS, "items-stretch")}>
                       {rowLoots.map((loot) => (
                         <div key={loot.id} className="h-full">
-                          <LootsListItem loot={loot} />
+                          <LootsListItem
+                            loot={loot}
+                            showWorld={world === null}
+                          />
                         </div>
                       ))}
                     </div>
@@ -232,7 +225,7 @@ export const LootsList = () => {
                       retryLabel={t("common.actions.retry")}
                     />
                   ) : loot ? (
-                    <LootsListItem loot={loot} />
+                    <LootsListItem loot={loot} showWorld={world === null} />
                   ) : null}
                 </div>
               );

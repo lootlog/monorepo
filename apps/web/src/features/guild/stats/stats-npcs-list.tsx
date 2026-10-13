@@ -25,7 +25,6 @@ export const StatsNpcsList = () => {
     search,
     handleSearchChange,
     settings,
-    handleWorldChange,
     handleNpcTypeChange,
     handleMinLvlChange,
     handleMaxLvlChange,
@@ -103,9 +102,7 @@ export const StatsNpcsList = () => {
     <div className="flex h-full min-h-0 flex-col gap-3 px-3 pb-3">
       <h1 className="sr-only">{t("kills.npcsList.title")}</h1>
       <KillStatsFilterBar
-        world={settings.world}
         period={settings.period}
-        onWorldChange={handleWorldChange}
         onPeriodChange={handlePeriodChange}
         search={{
           value: search,

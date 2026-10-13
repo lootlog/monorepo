@@ -1,5 +1,5 @@
 import { uniqBy } from "es-toolkit";
-import { useGuildContext } from "@/hooks/context/use-guild-context";
+import { useGuildWorld } from "@/hooks/context/use-guild-world";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getLootsControllerFetchLootsByGuildIdQueryKey,
@@ -60,7 +60,7 @@ export const useLootSearchCommand = ({
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 200);
-  const { world, setWorld } = useGuildContext();
+  const { world, setWorld } = useGuildWorld();
   const guildId = useGuildId();
   const { pathname } = useLocation();
   const navigate = useNavigate();

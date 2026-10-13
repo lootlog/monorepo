@@ -1,3 +1,4 @@
+import { useWorldScopedCursor } from "./hooks/use-world-scoped-cursor";
 import { findNpcType } from "@/constants/npc";
 import { useParams } from "@tanstack/react-router";
 import { useState } from "react";
@@ -54,7 +55,6 @@ export function useMemberStatsPage() {
     from: "/_authenticated/$guildId/stats/members/$memberId",
   });
 
-  const [cursor, setCursor] = useState(0);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
 
@@ -62,12 +62,13 @@ export function useMemberStatsPage() {
     settings,
     debouncedMinLvl,
     debouncedMaxLvl,
-    setWorld,
     setMinLvl,
     setMaxLvl,
     setNpcType,
     setPeriod,
   } = useStatsSettings("member");
+
+  const [cursor, setCursor] = useWorldScopedCursor(settings.world);
 
   const { data, isLoading } = useKillsControllerGetMemberKills(
     {
@@ -84,11 +85,6 @@ export function useMemberStatsPage() {
   );
 
   const membersMap = useGuildMemberMap(guildId);
-
-  const handleWorldChange = (value: string | null) => {
-    setWorld(value);
-    setCursor(0);
-  };
 
   const handleNpcTypeChange = (value: string | null) => {
     if (value === null) return;
@@ -154,7 +150,6 @@ export function useMemberStatsPage() {
     memberColor,
     search,
     handleSearchChange,
-    handleWorldChange,
     handleNpcTypeChange,
     handleMinLvlChange,
     handleMaxLvlChange,

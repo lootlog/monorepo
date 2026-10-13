@@ -1,6 +1,7 @@
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { Outlet, useLocation } from "@tanstack/react-router";
 import { HorizontalMenu } from "@/components/layout/horizontal-menu";
+import { GuildWorldHeaderSwitcher } from "@/components/layout/guild-world-header-switcher";
 import { ROUTE_SEGMENTS } from "@/config/routes";
 import { useTranslation } from "react-i18next";
 
@@ -42,6 +43,7 @@ export const StatsLayout = () => {
 
   return (
     <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col">
+      <GuildWorldHeaderSwitcher />
       {showNavigation && (
         <HorizontalMenu
           items={navigationItems}

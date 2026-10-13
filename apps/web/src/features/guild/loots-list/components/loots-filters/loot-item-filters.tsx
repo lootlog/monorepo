@@ -188,29 +188,39 @@ export const LootItemFilters = ({
           />
         </div>
 
-        {hidItem && filters.hid && (
+        {/* Without a world the HID cannot be resolved to an item, but the
+            filter still applies, so it stays visible by its number. */}
+        {filters.hid && (
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">
               {t("loots.filtersPanel.itemSection.filteredItemLabel")}
             </Label>
             <div className="flex items-center gap-2 rounded-xl border border-border bg-background p-2">
-              <ItemImage
-                icon={hidItem.icon}
-                rarity={hidItem.rarity ?? ItemRarity.COMMON}
-              />
+              {hidItem && (
+                <ItemImage
+                  icon={hidItem.icon}
+                  rarity={hidItem.rarity ?? ItemRarity.COMMON}
+                />
+              )}
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{hidItem.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {t("loots.filtersPanel.common.levelValue", {
-                    level: hidItem.lvl,
-                  })}
+                <p className="truncate text-sm font-medium">
+                  {hidItem?.name ?? `#${filters.hid}`}
                 </p>
+                {hidItem && (
+                  <p className="text-xs text-muted-foreground">
+                    {t("loots.filtersPanel.common.levelValue", {
+                      level: hidItem.lvl,
+                    })}
+                  </p>
+                )}
               </div>
               <Button
                 variant="ghost"
                 size="icon-sm"
                 className="shrink-0"
-                aria-label={t("common.removeOption", { label: hidItem.name })}
+                aria-label={t("common.removeOption", {
+                  label: hidItem?.name ?? `#${filters.hid}`,
+                })}
                 onClick={() => updateFilters({ hid: "" })}
               >
                 <X className="size-3.5" />
