@@ -138,6 +138,7 @@ export const MembersSettingsContent = () => {
           <RefreshMembersButton />
         </>
       }
+      notice={<OrganizationPresenceStatus guildId={resolvedGuildId} />}
       isEmpty={filteredMembers.length === 0}
       empty={{
         icon: Users,
@@ -165,7 +166,6 @@ export const MembersSettingsContent = () => {
         />
       }
     >
-      <OrganizationPresenceStatus guildId={resolvedGuildId} />
       <MembersTable
         members={filteredMembers}
         guildOwnerId={guild?.ownerId}
