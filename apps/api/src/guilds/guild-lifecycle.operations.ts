@@ -3,7 +3,6 @@ import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { and, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
-import { uniq } from "es-toolkit";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   discordGuildSyncStateTable,
@@ -119,10 +118,14 @@ export const makeGuildLifecycle = (
     });
 
   const invalidateOwners = (ownerIds: ReadonlyArray<string>) =>
-    Effect.forEach(uniq(ownerIds), ports.invalidateUserGuildPermissions, {
-      concurrency: "unbounded",
-      discard: true,
-    });
+    Effect.forEach(
+      [...new Set(ownerIds)],
+      ports.invalidateUserGuildPermissions,
+      {
+        concurrency: "unbounded",
+        discard: true,
+      },
+    );
 
   const createGuild = Effect.fn("guildLifecycle.create")(function* (
     data: GuildCreated,
@@ -225,10 +228,9 @@ export const makeGuildLifecycle = (
               set: { status: DiscordGuildSyncStatus.STALE, updatedAt: now },
             });
 
-          const owners = uniq([
-            data.ownerId,
-            ...(previous ? [previous.ownerId] : []),
-          ]);
+          const owners = [
+            ...new Set([data.ownerId, ...(previous ? [previous.ownerId] : [])]),
+          ];
 
           // Discord replays creation for known guilds; only activation or an
           // ownership transfer changes what an owner member may access.

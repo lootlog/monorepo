@@ -1,4 +1,4 @@
-import { isNotNil, isPlainObject } from "es-toolkit";
+import { isPlainObject } from "es-toolkit";
 import { parseFiniteNumber as toNumberOrNull } from "@lootlog/schema/numbers";
 import { GameVersion } from "@lootlog/schema/game-version";
 import { createApiClient } from "@lootlog/client/transport";
@@ -201,7 +201,9 @@ export const normalizeCharacterList = (
     return [];
   }
 
-  return characters.map(normalizeCharacter).filter(isNotNil);
+  return characters
+    .map(normalizeCharacter)
+    .filter((character) => character !== null);
 };
 
 const filterCharactersByWorld = (
@@ -270,7 +272,7 @@ const getLocalStorageKeys = (): string[] => {
     return Array.from(
       { length: window.localStorage?.length ?? 0 },
       (_, index) => window.localStorage?.key(index) ?? null,
-    ).filter(isNotNil);
+    ).filter((key) => key !== null);
   } catch {
     return [];
   }

@@ -11,7 +11,7 @@ import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
 import type { Permission } from "@lootlog/schema/permissions";
 import { lootTable, type roleTable } from "#src/database/drizzle/schema";
 import { createHash } from "node:crypto";
-import { mapValues, sum } from "es-toolkit";
+import { mapValues } from "es-toolkit";
 import { Effect, Schema } from "effect";
 import { createLootAccessFingerprint } from "@lootlog/domain/loot-visibility";
 import {
@@ -261,7 +261,10 @@ export class LootStatsService {
           timelineMap.set(date, entry);
         }
 
-        const rarityTotal = sum(Object.values(rarityCounts));
+        const rarityTotal = Object.values(rarityCounts).reduce(
+          (total, count) => total + count,
+          0,
+        );
 
         const byRarity = mapValues(rarityCounts, (count): RarityStats => ({
           count,

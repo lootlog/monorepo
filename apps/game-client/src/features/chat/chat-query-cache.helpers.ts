@@ -1,5 +1,4 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { isString } from "es-toolkit";
 import {
   getChatControllerGetChatMessagesQueryKey,
   type ChatMessageResponseDtoOutput as ChatMessageType,
@@ -20,7 +19,7 @@ const CHAT_MESSAGES_QUERY_PATH_PATTERN = /^\/guilds\/([^/]+)\/chat-messages$/;
 export const getChatMessagesQueryGuildId = (query: QueryWithKey) => {
   const queryPath = query.queryKey[0];
 
-  if (!isString(queryPath)) {
+  if (typeof queryPath !== "string") {
     return undefined;
   }
 

@@ -1,4 +1,3 @@
-import { isNotNil } from "es-toolkit";
 import { z } from "zod";
 import type { BattleTimelineResponseDtoOutputTimelineItem } from "@lootlog/client/battlelog";
 
@@ -102,15 +101,15 @@ const tooltipPayload = z
     deltas: z
       .array(tooltipDelta.nullable().catch(null))
       .catch([])
-      .transform((values) => values.filter(isNotNil)),
+      .transform((values) => values.filter((value) => value !== null)),
     legendaryBonuses: z
       .array(tooltipLegendaryBonus.nullable().catch(null))
       .catch([])
-      .transform((values) => values.filter(isNotNil)),
+      .transform((values) => values.filter((value) => value !== null)),
     flagLabelKeys: z
       .array(z.string().nullable().catch(null))
       .catch([])
-      .transform((values) => values.filter(isNotNil)),
+      .transform((values) => values.filter((value) => value !== null)),
   })
   .transform((payload): BattleHpTimelineTooltipData => ({
     ...payload,
@@ -135,7 +134,9 @@ export const buildBattleHpTimelineTooltipData = (
     momentum: getRoundedTooltipNumber(team1 - team2),
     deltas: getBattleHpTimelineTooltipDeltas(turn),
     legendaryBonuses,
-    flagLabelKeys: turn.flags.map(getKnownFlagLabelKey).filter(isNotNil),
+    flagLabelKeys: turn.flags
+      .map(getKnownFlagLabelKey)
+      .filter((labelKey) => labelKey !== undefined),
   };
 };
 

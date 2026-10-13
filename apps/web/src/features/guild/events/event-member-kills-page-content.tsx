@@ -1,5 +1,4 @@
 import { EventLoadError } from "./components/event-load-error";
-import { sumBy } from "es-toolkit";
 import { EventMemberSkeleton } from "./event-member-skeleton";
 import { useState } from "react";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -25,18 +24,24 @@ type RankingSummaryInput = Pick<
 const buildStatsSummary = (
   rankings: RankingSummaryInput[],
 ): MemberStatsSummary => {
-  const totalKills = sumBy(rankings, (ranking) => ranking.totalKills);
-
-  const totalPoints = sumBy(rankings, (ranking) => ranking.totalPoints);
-
-  const totalTimeSeconds = sumBy(
-    rankings,
-    (ranking) => ranking.totalTimeSeconds,
+  const totalKills = rankings.reduce(
+    (sum, ranking) => sum + ranking.totalKills,
+    0,
   );
 
-  const weightedAfkSum = sumBy(
-    rankings,
-    (ranking) => ranking.avgAfkPercentage * ranking.totalKills,
+  const totalPoints = rankings.reduce(
+    (sum, ranking) => sum + ranking.totalPoints,
+    0,
+  );
+
+  const totalTimeSeconds = rankings.reduce(
+    (sum, ranking) => sum + ranking.totalTimeSeconds,
+    0,
+  );
+
+  const weightedAfkSum = rankings.reduce(
+    (sum, ranking) => sum + ranking.avgAfkPercentage * ranking.totalKills,
+    0,
   );
 
   return {

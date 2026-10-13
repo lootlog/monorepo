@@ -1,4 +1,3 @@
-import { sum, sumBy } from "es-toolkit";
 import type {
   EventWrapped,
   EventWrappedLeader,
@@ -129,8 +128,10 @@ export const buildWrappedQualityModel = (
 ): WrappedQualityModel => {
   const omissions: WrappedQualityModel["omissions"] = [];
 
-  const rankedKillTotal = sumBy(data.heroes, (hero) =>
-    isFiniteNonNegative(hero.totalKills) ? hero.totalKills : 0,
+  const rankedKillTotal = data.heroes.reduce(
+    (sum, hero) =>
+      sum + (isFiniteNonNegative(hero.totalKills) ? hero.totalKills : 0),
+    0,
   );
 
   const killSourceConsistent =
@@ -179,7 +180,7 @@ export const buildWrappedQualityModel = (
   ];
 
   const rarityItemCount = rarityValues.every(isFiniteNonNegative)
-    ? sum(rarityValues)
+    ? rarityValues.reduce((sum, value) => sum + value, 0)
     : 0;
 
   if (!rarityValues.every(isFiniteNonNegative)) {

@@ -11,7 +11,6 @@ import {
 import { Permission } from "@lootlog/schema/permissions";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
 import { Schema } from "effect";
-import { uniq } from "es-toolkit";
 import { Logger } from "#src/platform/logger";
 import {
   consumePingRateLimit,
@@ -354,10 +353,9 @@ export class NpcPresenceService {
         .map((npc) => [npc.id, npc]),
     );
 
-    const organizationIds = this.reportableOrganizations(
-      socket,
-      uniq(payload.organizationIds),
-    );
+    const organizationIds = this.reportableOrganizations(socket, [
+      ...new Set(payload.organizationIds),
+    ]);
 
     const next: NpcPresenceState | undefined =
       npcs.size > 0 && organizationIds.length > 0

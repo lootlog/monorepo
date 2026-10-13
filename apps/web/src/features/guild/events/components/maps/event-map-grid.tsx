@@ -1,4 +1,3 @@
-import { sumBy } from "es-toolkit";
 import { useTranslation } from "react-i18next";
 import { MapPin, ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
@@ -194,7 +193,8 @@ export const EventMapGrid = ({
     accessPolicy?.allows(Permission.OWNER);
 
   const totalMaps =
-    sumBy(locations, (location) => location.maps.length) + maps.length;
+    locations.reduce((sum, location) => sum + location.maps.length, 0) +
+    maps.length;
 
   if (totalMaps === 0) {
     return <EmptyState icon={MapPin} title={t("events.maps.noMaps")} />;

@@ -1,5 +1,4 @@
 import { normalizeBattleSearchText } from "./utils/normalize-battle-search-text";
-import { isNotNil } from "es-toolkit";
 import type { Battle } from "@/lib/api/battlelog-types";
 import type {
   BattleStatCategoryDefinition,
@@ -93,7 +92,7 @@ export const getVisibleStats = ({
 
       const orderedStats = customization.statOrder
         .map((statKey) => allStatsMap.get(statKey))
-        .filter(isNotNil);
+        .filter((stat) => stat !== undefined);
 
       const filteredStats =
         hideZeros && user && opponent
@@ -125,7 +124,7 @@ export const getVisibleStats = ({
         })),
       };
     })
-    .filter(isNotNil);
+    .filter((category) => category !== null);
 };
 
 /** Flattens the categories into the rows the table renders, in display order. */
