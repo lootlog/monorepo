@@ -19,8 +19,5 @@
   "details": {
     "minSpawnTime": "Min. czas respawnu",
     "maxSpawnTime": "Max. czas respawnu"
-  },
-  "status": {
-    "expired": "Po czasie"
   }
 }

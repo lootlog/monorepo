@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { decodeTimerSettings } from "./timer-settings-codec";
+import { describe, expect, it } from "bun:test";
+import { decodeTimerSettings } from "./timer-settings.js";
 
 // Stored timer settings come from localStorage written by every earlier
 // release and from server documents; the decoder must keep reading them.
@@ -11,7 +11,7 @@ const storedSettings = {
     removeTimerAfterMs: 30_000,
     timersGrouping: true,
     timersUnderBag: false,
-    countdownMode: "min",
+    countdownMode: "min" as const,
     compactView: true,
     retiredOption: "kept",
   },
@@ -21,7 +21,7 @@ const storedSettings = {
     showLevel: true,
     fontSize: 12,
     minColumnWidth: 150,
-    singleTimerDisplayMode: "column",
+    singleTimerDisplayMode: "column" as const,
     retiredOption: 3,
   },
   hiddenTimers: { global: ["Tanroth"], guild: [] },

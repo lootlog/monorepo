@@ -1,5 +1,5 @@
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
-import { findNpcType, NPC_TYPE_SORT_ORDER } from "@/constants/npc";
+import { findNpcType, getNpcTypeSortIndex } from "@/constants/npc";
 import { EmptyState } from "@/components/common/empty-state";
 import { FilterBar } from "@/components/common/filter-bar";
 import { ViewModeToggle } from "@/components/ui/view-mode-toggle";
@@ -22,12 +22,11 @@ import { SearchInput } from "@/components/ui/search-input";
 import { GuildWorldHeaderSwitcher } from "@/components/layout/guild-world-header-switcher";
 import { useViewMode } from "@/hooks/use-view-mode";
 import { useTranslation } from "react-i18next";
-import { useGuildWorld } from "@/hooks/context/use-guild-world";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import {
-  getTimersControllerGetTimersQueryKey,
-  useTimersControllerGetTimers,
-} from "@lootlog/client/main";
+import { getTimersControllerGetTimersQueryKey } from "@lootlog/client/main";
+import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
+import { useGuildTimers } from "./use-guild-timers";
+import { useTimerDisplaySettings } from "./use-timer-display-settings";
 import { ThemeEmptyStateIcon } from "@/themes";
 
 const getTimerListState = <Timer extends { npc?: { name: string } | null }>(
@@ -54,33 +53,20 @@ const getTimerListState = <Timer extends { npc?: { name: string } | null }>(
 
 export const Timers = () => {
   const guildId = useGuildId();
-  const { world } = useGuildWorld();
-  const queryGuildId = guildId ?? "";
-  // Without a world the list spans every world of the Organization.
-  const timersParams = world ? { world } : undefined;
 
-  const timersQueryKey = getTimersControllerGetTimersQueryKey(
-    { guildId: queryGuildId },
-    timersParams,
+  const { world, timers, isPending, isError, isFetching, fetchedAt, refetch } =
+    useGuildTimers();
+
+  const { removeTimerAfterMs, countdownMode, getPaint, isPinned } =
+    useTimerDisplaySettings();
+
+  useTimerExpiry(
+    timers,
+    guildId ? getTimersControllerGetTimersQueryKey({ guildId }) : null,
+    fetchedAt,
+    removeTimerAfterMs,
   );
-
-  const {
-    data: timers,
-    dataUpdatedAt,
-    isPending,
-    isError,
-    isFetching,
-    refetch,
-  } = useTimersControllerGetTimers({ guildId: queryGuildId }, timersParams, {
-    query: {
-      enabled: !!guildId,
-      queryKey: timersQueryKey,
-      staleTime: 15_000,
-      placeholderData: undefined,
-    },
-  });
-
-  useTimerExpiry(timers, guildId ? timersQueryKey : null, dataUpdatedAt);
+  const now = useMinuteTimestamp();
   const [search, setSearch] = useState("");
 
   const { viewMode, setViewMode, canChooseViewMode } = useViewMode(
@@ -94,10 +80,17 @@ export const Timers = () => {
   const { filtered, hasFilteredTimers, showsNoSearchResults } =
     getTimerListState(timers, search);
 
+  // Kept timers sit below the live ones, most recent first, as in the game.
+  const isKept = (timer: { maxSpawnTime: string }) =>
+    Date.parse(timer.maxSpawnTime) + removeTimerAfterMs <= now;
+
   const sorted = sortBy(filtered ?? [], [
+    (timer) => getNpcTypeSortIndex(timer.npc?.type),
+    (timer) => (isKept(timer) ? 1 : 0),
     (timer) =>
-      NPC_TYPE_SORT_ORDER.findIndex((type) => type === timer.npc?.type),
-    (timer) => new Date(timer.maxSpawnTime).getTime(),
+      isKept(timer)
+        ? -Date.parse(timer.maxSpawnTime)
+        : Date.parse(timer.maxSpawnTime),
   ]);
 
   const groups = groupBy(sorted, (timer) => timer.npc?.type ?? "");
@@ -194,6 +187,10 @@ export const Timers = () => {
                     <SingleTimer
                       key={`${timer.world}:${timer.timerKey}`}
                       timer={timer}
+                      paint={getPaint(timer.npc?.name ?? "")}
+                      countdownMode={countdownMode}
+                      removeTimerAfterMs={removeTimerAfterMs}
+                      isPinned={isPinned(timer)}
                       showWorld={world === null}
                     />
                   ))}

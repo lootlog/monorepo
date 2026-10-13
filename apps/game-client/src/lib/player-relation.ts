@@ -1,4 +1,4 @@
-import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
+import { TIMERS_COLORS } from "@lootlog/domain/timer-colors";
 import type { ClanRelation } from "@/store/social-relations.store";
 
 export type PlayerRelation =

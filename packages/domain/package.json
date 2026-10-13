@@ -25,6 +25,7 @@
     "./reservations": "./src/reservations.ts",
     "./scoring": "./src/scoring.ts",
     "./timers": "./src/timers.ts",
+    "./timer-colors": "./src/timer-colors.ts",
     "./settings-documents": "./src/settings-documents.ts",
     "./settings-paths": "./src/settings-paths.ts",
     "./guild-preferences": "./src/guild-preferences.ts",

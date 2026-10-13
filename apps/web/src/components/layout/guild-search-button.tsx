@@ -22,7 +22,7 @@ export const GuildSearchButton = ({ onClick }: GuildSearchButtonProps) => {
         variant="outline"
         onClick={onClick}
         aria-keyshortcuts="Meta+K Control+K"
-        className="w-72 justify-start rounded-lg border-border bg-card font-normal text-muted-foreground hover:border-foreground/20 hover:bg-card hover:text-foreground max-md:hidden"
+        className="w-72 justify-start rounded-md border-border bg-card font-normal text-muted-foreground hover:border-foreground/20 hover:bg-card hover:text-foreground max-md:hidden"
       >
         <Search aria-hidden="true" />
         <span className="min-w-0 flex-1 truncate text-left">

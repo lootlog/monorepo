@@ -1,4 +1,4 @@
-import { getTimerColor } from "@/features/timers/constants/timer-colors";
+import { getTimerColor } from "@lootlog/domain/timer-colors";
 
 export const getTimerColorHex = (color: string, legacyAppearance = false) => {
   const paint = getTimerColor(color, legacyAppearance);

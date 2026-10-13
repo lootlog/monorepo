@@ -57,7 +57,8 @@ const LEGACY_ACCENTS = {
 
 export const isTimerColor = (
   color: string,
-): color is keyof typeof TIMERS_COLORS => Object.hasOwn(TIMERS_COLORS, color);
+): color is keyof typeof TIMERS_COLORS =>
+  Object.keys(TIMERS_COLORS).includes(color);
 
 export const getTimerColor = (
   color: string,
@@ -130,4 +131,24 @@ export const resolveTimerColorPaint = (
     getTimerColor("white", legacyAppearance) ??
     TIMERS_COLORS.white
   );
+};
+
+/** The colour a player picked for a monster, with the stored paint it may name. */
+export const getTimerColorConfig = (
+  npcName: string,
+  timersColors: Readonly<Record<string, string | undefined>>,
+  customColors: Record<
+    string,
+    { id: string; name: string; backgroundColor: string; borderColor: string }
+  >,
+  overriddenDefaultColors: Record<
+    string,
+    { backgroundColor: string; borderColor: string }
+  >,
+) => {
+  const selectedColor = timersColors[npcName] ?? "white";
+  const customColor = customColors[selectedColor];
+  const overriddenColor = overriddenDefaultColors[selectedColor];
+
+  return { selectedColor, customColor, overriddenColor };
 };

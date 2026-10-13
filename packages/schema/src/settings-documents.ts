@@ -41,11 +41,6 @@ const SettingsValueSourceSchema = Schema.Union([
 
 export type SettingsValueSource = typeof SettingsValueSourceSchema.Type;
 
-const SettingsPersistenceSchema = Schema.Literals([
-  "SERVER_DOCUMENT",
-  "DEVICE",
-]);
-
 const PositiveSafeInt = Schema.Int.check(
   Schema.isGreaterThanOrEqualTo(1),
   Schema.isLessThanOrEqualTo(Number.MAX_SAFE_INTEGER),

@@ -2,7 +2,7 @@ import { useTimersStore } from "@/store/timers.store";
 import {
   getTimerColor,
   resolveTimerColorPaint,
-} from "@/features/timers/constants/timer-colors";
+} from "@lootlog/domain/timer-colors";
 import { TimerTileView } from "@/features/timers/components/timer-tile-view";
 import { cn } from "cn";
 import type { FC } from "react";

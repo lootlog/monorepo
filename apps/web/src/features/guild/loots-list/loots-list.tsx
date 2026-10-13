@@ -3,6 +3,7 @@ import { LootsFiltersSidebar } from "@/features/guild/loots-list/components/loot
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { CollapsePresence } from "@/components/common/collapse-presence";
 import { LootListHeaderActions } from "@/features/guild/loots-list/components/loots-filters/loot-list-header-actions";
+import { LootFiltersFab } from "@/features/guild/loots-list/components/loots-filters/loot-filters-fab";
 import { useState } from "react";
 import { GuildWorldHeaderSwitcher } from "@/components/layout/guild-world-header-switcher";
 import {
@@ -108,6 +109,13 @@ export const LootsListPage: React.FC = () => {
           </CollapsePresence>
         </div>
       </div>
+
+      {isMobile && (
+        <LootFiltersFab
+          hasActiveFilters={hasActiveFilters}
+          onOpenFilters={handleOpenSidebar}
+        />
+      )}
 
       <LootDetailsDialog
         onShowPlayerLoots={(playerName) =>
