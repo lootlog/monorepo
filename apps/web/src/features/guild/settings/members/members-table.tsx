@@ -109,7 +109,7 @@ export const MembersTable = ({
 
   const rows = table.getRowModel().rows;
 
-  const rowEstimateSize = isMobile ? 88 : 64;
+  const rowEstimateSize = isMobile ? 65 : 64;
 
   const rowVirtualizer = usePageVirtualizer<HTMLElement>({
     count: members.length,
@@ -153,6 +153,8 @@ export const MembersTable = ({
           return (
             <button
               key={virtualRow.key}
+              ref={rowVirtualizer.measureElement}
+              data-index={virtualRow.index}
               type="button"
               className="relative grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40"
               onClick={() => openMemberDetails(member)}
@@ -178,7 +180,7 @@ export const MembersTable = ({
                     />
                   </span>
                 )}
-                <span className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                <span className="mt-1 flex flex-wrap items-center gap-2 text-[11px] leading-4 text-muted-foreground">
                   <span>
                     {member.lastDiscordSyncAt
                       ? t("settings.members.discordSync.lastConfirmedCompact", {
