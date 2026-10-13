@@ -9,6 +9,8 @@ await initializeTestTranslations({
   "events.kills.kpiShareOfEventKills":
     "events.kills.kpiShareOfEventKills:{{percentage}}",
   "events.kills.kpiActiveShare": "events.kills.kpiActiveShare:{{percentage}}",
+  "events.kills.memberRankingPlace":
+    "events.kills.memberRankingPlace:{{position}}/{{count}}",
 });
 
 afterEach(cleanup);
@@ -50,7 +52,7 @@ describe("MemberSummaryStrip", () => {
       />,
     );
 
-    expect(screen.queryByText("events.kills.memberRankingPlace")).toBeNull();
+    expect(screen.queryByText(/events.kills.memberRankingPlace/)).toBeNull();
 
     rerender(
       <MemberSummaryStrip
@@ -62,8 +64,9 @@ describe("MemberSummaryStrip", () => {
       />,
     );
 
-    expect(screen.getByText("events.kills.memberRankingPlace")).toBeTruthy();
-    expect(screen.getByText("2")).toBeTruthy();
+    expect(
+      screen.getByText("events.kills.memberRankingPlace:2/14"),
+    ).toBeTruthy();
   });
 
   it("keeps the overview useful without member details or kills", () => {
