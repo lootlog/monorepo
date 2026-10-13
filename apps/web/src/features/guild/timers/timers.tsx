@@ -20,7 +20,7 @@ import {
 } from "./timers-layout";
 
 import { SearchInput } from "@/components/ui/search-input";
-import { WorldSwitcher } from "@/components/common/world-switcher";
+import { GuildWorldHeaderSwitcher } from "@/components/layout/guild-world-header-switcher";
 import { useViewMode } from "@/hooks/use-view-mode";
 import { useTranslation } from "react-i18next";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
@@ -218,6 +218,7 @@ export const Timers = () => {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("layout.navigation.timers")}</h1>
+      <GuildWorldHeaderSwitcher />
       <div className="px-3 pt-3">
         <FilterBar ariaLabel={t("timers.toolbarLabel")}>
           <SearchInput
@@ -228,7 +229,6 @@ export const Timers = () => {
             wrapperClassName="min-w-0 basis-full sm:flex-1 sm:basis-0"
             aria-label={t("timers.searchPlaceholder")}
           />
-          <WorldSwitcher />
           {canChooseViewMode && (
             <ViewModeToggle
               value={viewMode}

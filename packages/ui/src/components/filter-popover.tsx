@@ -35,6 +35,9 @@ interface FilterPopoverProps<T = string> {
   icon?: LucideIcon;
   multiSelect?: boolean;
   width?: string;
+  size?: "sm" | "default" | "lg";
+  variant?: "outline" | "ghost";
+  iconClassName?: string;
   align?: "start" | "center" | "end";
   triggerClassName?: string;
   contentClassName?: string;
@@ -66,6 +69,9 @@ export function FilterPopover<T extends string = string>({
   icon: Icon,
   multiSelect = false,
   width = "w-[180px]",
+  size = "lg",
+  variant = "outline",
+  iconClassName,
   align = "start",
   triggerClassName,
   contentClassName,
@@ -112,8 +118,8 @@ export function FilterPopover<T extends string = string>({
       <PopoverTrigger
         render={
           <Button
-            variant="outline"
-            size="lg"
+            variant={variant}
+            size={size}
             role="combobox"
             aria-label={placeholder}
             aria-expanded={open}
@@ -127,7 +133,7 @@ export function FilterPopover<T extends string = string>({
         }
       >
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          {Icon && <Icon className="h-4 w-4" />}
+          {Icon && <Icon className={cn("h-4 w-4", iconClassName)} />}
           <span className="truncate text-sm">{getLabel()}</span>
         </div>
         <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
@@ -164,7 +170,7 @@ export function FilterPopover<T extends string = string>({
                     key={option.value}
                     value={option.value}
                     onSelect={() => handleSelect(option.value)}
-                    className="min-h-9 rounded-md px-2.5 data-[selected=true]:bg-primary/15 data-[selected=true]:text-foreground"
+                    className="min-h-9 rounded-md px-2.5"
                   >
                     {option.render ? (
                       option.render()

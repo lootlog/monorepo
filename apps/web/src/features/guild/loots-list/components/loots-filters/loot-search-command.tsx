@@ -7,18 +7,21 @@ import {
 } from "@lootlog/ui/components/command";
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import { LootSearchResults } from "./loot-search-results";
+import { GuildSearchPages } from "./guild-search-pages";
 
 import { ItemRarity } from "@/lib/loots/loot-types";
 import { AnimatePresence } from "framer-motion";
 import * as m from "framer-motion/m";
-import { Button } from "@lootlog/ui/components/button";
+import { Kbd } from "@lootlog/ui/components/kbd";
+import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
+import { useRef } from "react";
 import { LootDirectSearchNotice } from "./loot-direct-search-notice";
 import { EmptyState } from "@/components/common/empty-state";
+import { AnimatedToggleGroup } from "@/components/ui/animated-toggle-group";
 import {
   ArrowRight,
   CircleAlert,
   ClipboardPaste,
-  DatabaseZap,
   PackageSearch,
   SearchX,
 } from "lucide-react";
@@ -27,8 +30,13 @@ import { useLootSearchCommand } from "./use-loot-search-command";
 import {
   allTrue,
   containerVariants,
+  isInScope,
   renderIf,
+  type GuildSearchScope,
 } from "./loot-search-presentation";
+import { useGuildSearchRows } from "./use-guild-search-rows";
+import { GuildSearchFooter } from "./guild-search-footer";
+import { GuildSearchDirectRow } from "./guild-search-direct-row";
 import { LoadingSlot } from "@/components/common/loading-slot";
 
 export const LootSearchCommand = (
@@ -43,6 +51,11 @@ export const LootSearchCommand = (
     searchQuery,
     setSearchQuery,
     trimmedSearch,
+    canSearchLoots,
+    world,
+    pageResults,
+    handleSelectPage,
+    showKeepTyping,
     isHidInput,
     isHid,
     isHidLoading,
@@ -64,18 +77,92 @@ export const LootSearchCommand = (
     handleOpenChange,
   } = useLootSearchCommand(props);
 
+  const isMobile = useIsMobile();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    activeScope,
+    setScope,
+    scopeOptions,
+    showDirectSearch,
+    selectedValue,
+    selectValue,
+  } = useGuildSearchRows({
+    trimmedSearch,
+    pageResults,
+    showSearchResults,
+    npcValues: npcResults.map((npc) => `npc-${npc.name}`),
+    itemValues: itemResults.map((item) => `item-${item.name}`),
+    playerValues: playerResults.map((player) => `player-${player.id}`),
+    hidValue: isHid && hidItem ? `hid-${hidItem.hid}` : null,
+    canSearchDirectly,
+  });
+
+  // Typing and Enter keep working after a scope is picked with the pointer.
+  const handleScopeChange = (nextScope: GuildSearchScope) => {
+    setScope(nextScope);
+    inputRef.current?.focus();
+  };
+
+  const handlePaletteOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) setScope("all");
+
+    handleOpenChange(nextOpen);
+  };
+
   const dialogContent = (
     <>
-      <CommandInput
-        placeholder={t("loots.searchCommand.placeholder")}
-        value={searchQuery}
-        onValueChange={setSearchQuery}
-        className="h-14 pr-12 text-base"
-      />
-      <CommandList className="custom-scrollbar h-[min(60dvh,32rem)] max-h-[min(60dvh,32rem)] p-2 [&>div]:h-full">
+      <div className="relative">
+        <CommandInput
+          ref={inputRef}
+          placeholder={t("loots.searchCommand.placeholder")}
+          value={searchQuery}
+          onValueChange={setSearchQuery}
+          className="pr-14 text-base"
+        />
+        <Kbd className="pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 max-md:hidden">
+          Esc
+        </Kbd>
+      </div>
+      {scopeOptions.length > 1 && (
+        // Five scopes do not fit a phone; the grouped list scrolls instead.
+        <div className="border-b border-border px-2.5 py-2 max-md:hidden">
+          <AnimatedToggleGroup
+            size="sm"
+            label={t("loots.searchCommand.scopeLabel")}
+            value={activeScope}
+            onValueChange={handleScopeChange}
+            options={[
+              { value: "all", label: t("loots.searchCommand.scopeAll") },
+              ...scopeOptions.map(({ group, count }) => ({
+                value: group,
+                label: `${t(`loots.searchCommand.${group}`)} ${count}`,
+              })),
+            ]}
+          />
+        </div>
+      )}
+      <CommandList className="custom-scrollbar max-h-[min(60dvh,30rem)] min-h-48 p-1.5">
+        {pageResults.length > 0 && isInScope(activeScope, "pages") && (
+          <GuildSearchPages pages={pageResults} onSelect={handleSelectPage} />
+        )}
+        {renderIf(
+          allTrue(!trimmedSearch, pageResults.length > 0, canSearchLoots),
+          <div className="mx-1 mt-1 flex items-center gap-3 px-2.5 py-2 text-sm text-muted-foreground">
+            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-secondary">
+              <ClipboardPaste className="size-4 text-primary" />
+            </span>
+            <span className="min-w-0">
+              {t("loots.searchCommand.hidHint")}{" "}
+              <code className="font-mono text-foreground">
+                {t("loots.searchCommand.hidExample")}
+              </code>
+            </span>
+          </div>,
+        )}
         <AnimatePresence mode="wait" initial={false}>
           {renderIf(
-            !trimmedSearch,
+            allTrue(!trimmedSearch, pageResults.length === 0),
             <m.div
               key="idle"
               variants={containerVariants}
@@ -104,7 +191,7 @@ export const LootSearchCommand = (
           )}
 
           {renderIf(
-            allTrue(!isHidInput, trimmedSearch.length === 1),
+            showKeepTyping,
             <m.div
               key="keep-typing"
               variants={containerVariants}
@@ -287,6 +374,8 @@ export const LootSearchCommand = (
             showSearchResults,
             <LootSearchResults
               key="search-results"
+              world={world}
+              scope={activeScope}
               npcResults={npcResults}
               t={t}
               handleSelectNpc={handleSelectNpc}
@@ -317,39 +406,25 @@ export const LootSearchCommand = (
             </m.div>,
           )}
         </AnimatePresence>
+
+        {showDirectSearch && (
+          <GuildSearchDirectRow
+            term={trimmedSearch}
+            onSelect={handleDirectSearch}
+          />
+        )}
       </CommandList>
 
-      {(canSearchDirectly || activeDirectSearch) && (
-        <div className="flex flex-col gap-2 border-t border-border p-2">
-          {canSearchDirectly && (
-            <>
-              <Button
-                variant="outline"
-                onClick={handleDirectSearch}
-                className="w-full justify-start"
-              >
-                <DatabaseZap className="text-primary" />
-                <span className="min-w-0 flex-1 truncate text-left">
-                  {t("loots.searchCommand.directSearch", {
-                    term: trimmedSearch,
-                  })}
-                </span>
-                <ArrowRight className="text-primary" />
-              </Button>
-              <p className="px-1 text-xs leading-4 text-muted-foreground">
-                {t("loots.searchCommand.directSearchHint")}
-              </p>
-            </>
-          )}
-
-          {activeDirectSearch && (
-            <LootDirectSearchNotice
-              term={activeDirectSearch}
-              onClear={handleClearDirectSearch}
-            />
-          )}
+      {activeDirectSearch && (
+        <div className="border-t border-border p-2">
+          <LootDirectSearchNotice
+            term={activeDirectSearch}
+            onClear={handleClearDirectSearch}
+          />
         </div>
       )}
+
+      <GuildSearchFooter world={world} />
     </>
   );
 
@@ -357,10 +432,14 @@ export const LootSearchCommand = (
     <CommandDialog
       shouldFilter={false}
       open={open}
-      onOpenChange={handleOpenChange}
+      onOpenChange={handlePaletteOpenChange}
+      value={selectedValue}
+      onValueChange={selectValue}
       title={t("loots.searchCommand.dialogTitle")}
       description={t("loots.searchCommand.dialogDescription")}
-      className="top-1/2 w-[calc(100%-2rem)] max-w-xl rounded-2xl border-border bg-popover shadow-[0_24px_80px_rgba(0,0,0,0.45)] [&_[data-slot=command]]:rounded-2xl [&_[data-slot=command]]:bg-popover"
+      // Esc closes it on a keyboard; phones get the close button instead.
+      showCloseButton={isMobile}
+      className="top-[12vh] w-[calc(100%-1rem)] max-w-[600px] translate-y-0 rounded-2xl border-border bg-card shadow-[0_24px_64px_rgba(0,0,0,0.55)] max-md:top-2 sm:max-w-[600px] [&_[data-slot=command]]:rounded-2xl [&_[data-slot=command]]:bg-card"
     >
       {dialogContent}
     </CommandDialog>

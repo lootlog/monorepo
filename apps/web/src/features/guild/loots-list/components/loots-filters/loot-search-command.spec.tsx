@@ -23,6 +23,14 @@ import { LootSearchCommand } from "./loot-search-command";
 import { useLootSearchCommand } from "./use-loot-search-command";
 import { createLoot } from "@/lib/testing/loot";
 import type { PropsWithChildren } from "react";
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  Outlet,
+  RouterProvider,
+} from "@tanstack/react-router";
 
 await initializeTestTranslations();
 
@@ -321,6 +329,146 @@ describe("LootSearchCommand direct loot search", () => {
     } finally {
       cleanup();
       client?.clear();
+      MotionGlobalConfig.skipAnimations = previousSkipAnimations;
+    }
+  });
+});
+
+describe("LootSearchCommand as the Organization search", () => {
+  it("opens the loot list with the chosen filter from another page", async () => {
+    vi.stubGlobal("localStorage", new MemoryStorage());
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ npcs: [], players: [], items: [] })),
+    );
+
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0 } },
+    });
+
+    const root = createRootRoute();
+
+    const organization = createRoute({
+      getParentRoute: () => root,
+      path: "$guildId",
+      component: Outlet,
+    });
+
+    const lootList = createRoute({
+      getParentRoute: () => organization,
+      path: "/",
+    });
+
+    const timers = createRoute({
+      getParentRoute: () => organization,
+      path: "timers",
+      component: () => (
+        <GuildContextProvider>
+          <QueryClientProvider client={client}>
+            <LootSearchCommand open onOpenChange={() => {}} />
+          </QueryClientProvider>
+        </GuildContextProvider>
+      ),
+    });
+
+    const router = createRouter({
+      routeTree: root.addChildren([
+        organization.addChildren([lootList, timers]),
+      ]),
+      history: createMemoryHistory({ initialEntries: ["/test-org/timers"] }),
+    });
+
+    const previousSkipAnimations = MotionGlobalConfig.skipAnimations;
+
+    try {
+      MotionGlobalConfig.skipAnimations = true;
+      await router.load();
+      render(
+        <NuqsTestingAdapter>
+          <RouterProvider router={router} />
+        </NuqsTestingAdapter>,
+      );
+
+      fireEvent.change(
+        await screen.findByPlaceholderText("loots.searchCommand.placeholder"),
+        { target: { value: "Zbojca Gorski" } },
+      );
+      fireEvent.click(
+        await screen.findByText("loots.searchCommand.directSearch"),
+      );
+
+      await waitFor(() =>
+        expect(router.state.location.pathname).toBe("/test-org"),
+      );
+      expect(
+        new URLSearchParams(router.state.location.searchStr).get("search"),
+      ).toBe("Zbojca Gorski");
+    } finally {
+      cleanup();
+      client.clear();
+      MotionGlobalConfig.skipAnimations = previousSkipAnimations;
+    }
+  });
+
+  it("offers only pages to a member who cannot read loots", async () => {
+    const RouterWrapper = await createOrganizationTestWrapper("/test-org");
+    vi.stubGlobal("localStorage", new MemoryStorage());
+
+    const fetch = vi.fn(async () =>
+      Response.json({ npcs: [], players: [], items: [] }),
+    );
+
+    vi.stubGlobal("fetch", fetch);
+
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0 } },
+    });
+
+    const previousSkipAnimations = MotionGlobalConfig.skipAnimations;
+
+    try {
+      MotionGlobalConfig.skipAnimations = true;
+      render(
+        <RouterWrapper>
+          <NuqsTestingAdapter>
+            <GuildContextProvider>
+              <QueryClientProvider client={client}>
+                <LootSearchCommand
+                  open
+                  onOpenChange={() => {}}
+                  canSearchLoots={false}
+                  pages={[
+                    {
+                      id: "organization-timers",
+                      label: "Timery",
+                      href: "/test-org/timers",
+                    },
+                  ]}
+                />
+              </QueryClientProvider>
+            </GuildContextProvider>
+          </NuqsTestingAdapter>
+        </RouterWrapper>,
+      );
+
+      const input = screen.getByPlaceholderText(
+        "loots.searchCommand.placeholder",
+      );
+
+      fireEvent.change(input, { target: { value: "ITEM#1.tempest" } });
+      expect(
+        await screen.findByText("loots.searchCommand.noResults"),
+      ).toBeTruthy();
+      expect(screen.queryByText("loots.searchCommand.directSearch")).toBeNull();
+
+      fireEvent.change(input, { target: { value: "tim" } });
+      expect(await screen.findByText("Timery")).toBeTruthy();
+
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      expect(fetch).not.toHaveBeenCalled();
+    } finally {
+      cleanup();
+      client.clear();
       MotionGlobalConfig.skipAnimations = previousSkipAnimations;
     }
   });
