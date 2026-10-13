@@ -39,6 +39,10 @@ type Operation = Effect.Effect<unknown, UserLootlogConfigOperationError>;
 
 const CACHE_TTL_SECONDS = 60;
 
+const getPlayerConfigKey = (
+  player: PlayersCatchingOrganizationsRequest["players"][number],
+) => `${player.userId}:${player.accountId}:${player.characterId}`;
+
 export interface UserLootlogConfigCache {
   readonly getOrSetJsonEffect: RedisService["getOrSetJsonEffect"];
   readonly invalidateScopes: (
@@ -231,7 +235,7 @@ export class UserLootlogConfigData extends Context.Service<
                 const players = [
                   ...new Map(
                     payload.players.map((player) => [
-                      `${player.userId}:${player.accountId}:${player.characterId}`,
+                      getPlayerConfigKey(player),
                       player,
                     ]),
                   ).values(),
@@ -289,7 +293,7 @@ export class UserLootlogConfigData extends Context.Service<
                 const visibleByPlayer = new Map<string, Set<string>>();
 
                 for (const config of configs) {
-                  const key = `${config.userId}:${config.accountId}:${config.characterId}`;
+                  const key = getPlayerConfigKey(config);
                   const visible = visibleByPlayer.get(key) ?? new Set<string>();
 
                   for (const guildId of config.catchingGuildIds) {
@@ -303,9 +307,8 @@ export class UserLootlogConfigData extends Context.Service<
                   players: players.map((player) => ({
                     ...player,
                     guilds: [
-                      ...(visibleByPlayer.get(
-                        `${player.userId}:${player.accountId}:${player.characterId}`,
-                      ) ?? []),
+                      ...(visibleByPlayer.get(getPlayerConfigKey(player)) ??
+                        []),
                     ].map((id) => ({
                       id,
                       name: guildById.get(id)?.name ?? id,
