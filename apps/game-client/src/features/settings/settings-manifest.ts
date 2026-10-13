@@ -395,6 +395,13 @@ const MANIFEST = [
         labelKey: "settings.subsections.detector",
         controls: [
           {
+            id: "detector-character-auto-send",
+            labelKey: "settings.detector.characterAutoSend.label",
+            descriptionKey: "settings.detector.characterAutoSend.description",
+            aliases: ["autowysyłka", "autowołanie", "postać", "wykrywacz"],
+            settingKeys: ["gameData.detectorAutoSendEnabled"],
+          },
+          {
             id: "detector-types",
             labelKey: "settings.detector.typesTitle",
             descriptionKey: "settings.detector.description",

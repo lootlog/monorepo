@@ -32,6 +32,7 @@ import { playSound } from "@/lib/sound-playback";
 import { getGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
 import { readCurrentSettingsDocuments } from "@/features/settings/persistence/settings-patch-client";
 import { areSettingsDocumentsSettled } from "@/features/settings/persistence/settings-snapshot";
+import { selectSettingsValue } from "@/features/settings/persistence/settings-documents";
 import { getEffectiveDetectorSettings } from "@/lib/game-account-preferences";
 
 type PendingDetection =
@@ -51,6 +52,8 @@ type PendingDetection =
 
 type DetectionProcessingContext = {
   detectorSettings: DetectorSettings;
+  /** The current character's master switch over every type's auto-send. */
+  characterAutoSendEnabled: boolean;
   routedGuildIdsByLevel: Map<number, string[]>;
 };
 
@@ -390,7 +393,7 @@ export class NpcsDetectionProcessor {
     context: DetectionProcessingContext,
     iconsById: ReadonlyMap<number, string>,
   ): ProcessedNpcSettings | null {
-    const { detectorSettings } = context;
+    const { detectorSettings, characterAutoSendEnabled } = context;
     const settings = detectorSettings[npcType];
 
     if (!settings?.detect) return null;
@@ -401,7 +404,9 @@ export class NpcsDetectionProcessor {
       "";
 
     const guildIds = this.resolveRoutingGuildIds(context, npcLevel);
-    const autoSendNotification = settings.autoSend && guildIds.length > 0;
+
+    const autoSendNotification =
+      characterAutoSendEnabled && settings.autoSend && guildIds.length > 0;
 
     return {
       settings,
@@ -416,14 +421,16 @@ export class NpcsDetectionProcessor {
     npcType: DetectorNpcType,
     context: DetectionProcessingContext,
   ): ProcessedNpcSettings | null {
-    const { detectorSettings } = context;
+    const { detectorSettings, characterAutoSendEnabled } = context;
     const settings = detectorSettings[npcType];
 
     if (!settings?.detect) return null;
 
     const icon = npc.icon;
     const guildIds = this.resolveRoutingGuildIds(context, npc.level);
-    const autoSendNotification = settings.autoSend && guildIds.length > 0;
+
+    const autoSendNotification =
+      characterAutoSendEnabled && settings.autoSend && guildIds.length > 0;
 
     return {
       settings,
@@ -569,6 +576,10 @@ export class NpcsDetectionProcessor {
   private createDetectionContext(): DetectionProcessingContext {
     return {
       detectorSettings: this.getDetectorSettings(),
+      characterAutoSendEnabled: selectSettingsValue(
+        readCurrentSettingsDocuments(),
+        "gameData.detectorAutoSendEnabled",
+      ),
       routedGuildIdsByLevel: new Map<number, string[]>(),
     };
   }

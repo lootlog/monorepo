@@ -20,7 +20,8 @@ export type HotkeyAction =
   | "chat-position"
   | "chat-help"
   | "join-party-gathering"
-  | "create-party-gathering";
+  | "create-party-gathering"
+  | "toggle-detector-auto-send";
 
 type HotkeyModifiers = {
   shift: boolean;
@@ -178,6 +179,21 @@ export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
     },
   },
   {
+    action: "toggle-detector-auto-send",
+    labelKey: "settings.hotkeys.actions.toggle-detector-auto-send.label",
+    descriptionKey:
+      "settings.hotkeys.actions.toggle-detector-auto-send.description",
+    category: "communication",
+    scope: "global",
+    defaultBinding: {
+      type: "keyboard",
+      key: "",
+      shift: false,
+      ctrl: false,
+      alt: false,
+    },
+  },
+  {
     action: "map-ping",
     labelKey: "settings.hotkeys.actions.map-ping.label",
     descriptionKey: "settings.hotkeys.actions.map-ping.description",
@@ -200,7 +216,7 @@ const getDefaultBindings = (): Record<HotkeyAction, HotkeyBinding> => {
     bindings[config.action] = { ...config.defaultBinding };
   }
 
-  // SAFETY: HOTKEY_ACTIONS enumerates all eight HotkeyAction values, copied by the loop above.
+  // SAFETY: HOTKEY_ACTIONS enumerates every HotkeyAction value, copied by the loop above.
   return bindings as Record<HotkeyAction, HotkeyBinding>;
 };
 
@@ -351,7 +367,7 @@ export const useHotkeysStore = create<HotkeysState>()(
       name: STORAGE_KEY,
       partialize: (state) => ({ bindings: state.bindings }),
       storage: createJSONStorage(() => localStorage),
-      version: 8,
+      version: 9,
       migrate: migrateHotkeysState,
     },
   ),

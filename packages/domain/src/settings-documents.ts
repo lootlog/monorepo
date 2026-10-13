@@ -351,6 +351,10 @@ export const SETTINGS_CATALOG = {
         accountScopes,
         isEnabledFlagRecord,
       ),
+      // Gates the per-type detector auto-send on one character, so a player
+      // can stop calling every monster type from it without touching the
+      // account's per-type settings.
+      detectorAutoSendEnabled: field(true, characterScopes, isBoolean),
       catching: field<OpaqueSettingsRecord>(
         {},
         characterScopes,
