@@ -1,7 +1,6 @@
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useTranslation } from "react-i18next";
 import { QueryErrorNotice } from "@/components/common/query-error-notice";
-import { cn } from "cn";
 
 type EventHistoryPaginationStatusProps = {
   hasError: boolean;
@@ -32,10 +31,13 @@ export const EventHistoryPaginationStatus = ({
 
   return (
     <span className="inline-flex items-center gap-2">
-      {/* The slot stays reserved so the label never shifts when a page loads. */}
-      <Spinner
-        className={cn("size-4 text-primary", !isFetching && "invisible")}
-      />
+      {/* The slot stays reserved so the label never shifts when a page loads;
+          the spinner mounts only while a page is loading. */}
+      {isFetching ? (
+        <Spinner className="size-4 text-primary" />
+      ) : (
+        <span aria-hidden="true" className="size-4 shrink-0" />
+      )}
       {t("events.kills.loading")}
     </span>
   );

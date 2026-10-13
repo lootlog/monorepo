@@ -46,7 +46,7 @@ const BAR_GRID =
   "grid h-14 w-full grid-cols-[4rem_minmax(0,1fr)_2.75rem] items-center";
 
 const AVATAR_CELL =
-  "flex h-full items-center justify-center border-r border-solid";
+  "flex h-full items-center justify-center border-r border-solid border-sidebar-border";
 
 export const UserMenu = () => {
   const { user, isPending } = useUser();
