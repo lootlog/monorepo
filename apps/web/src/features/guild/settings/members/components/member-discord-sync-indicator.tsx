@@ -51,12 +51,12 @@ export const MemberDiscordSyncIndicator: FC<
           render={
             <div
               className={cn(
-                "p-1.5 rounded-md transition-colors",
+                "inline-flex size-5 items-center justify-center rounded-md transition-colors",
                 indicatorToneClassNames[presentation.tone],
               )}
               onClick={(event) => event.stopPropagation()}
             >
-              <Icon className="size-4" />
+              <Icon className="size-3.5" />
             </div>
           }
         />

@@ -33,12 +33,12 @@ export const PermissionCategoryTooltip = ({
           // eslint-disable-next-line react-doctor/click-events-have-key-events, react-doctor/no-static-element-interactions
           <div
             className={cn(
-              "p-1.5 rounded-md transition-colors",
+              "inline-flex size-5 items-center justify-center rounded-md transition-colors",
               category.bgColor,
             )}
             onClick={onClick}
           >
-            <IconComponent className={cn("size-4", category.color)} />
+            <IconComponent className={cn("size-3.5", category.color)} />
           </div>
         }
       />
