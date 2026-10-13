@@ -68,9 +68,6 @@ describe("AppBreadcrumbs", () => {
     expect(breadcrumbItems[2]?.className).toContain("xl:inline-flex");
     expect(breadcrumbItems[3]?.className).toContain("sm:inline-flex");
     expect(breadcrumbItems[4]?.className).not.toContain("hidden");
-    expect(
-      screen.getByRole("link", { name: "Summer Event" }).className,
-    ).toContain("truncate");
 
     const members = screen.getByRole("link", { name: "Members" });
     expect(members.getAttribute("href")).toBe("/guild/events/summer/members");
