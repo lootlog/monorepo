@@ -69,8 +69,6 @@ export const combatProfileCalculator = (() => {
     let totalDamageTaken = 0;
     let totalBlockedDamage = 0;
     let totalControlTaken = 0;
-    let cumulativePh = 0;
-    let cumulativeRatingDelta = 0;
 
     const phTrend: CombatProfile["phTrend"] = [];
     const ratingTrend: CombatProfile["ratingTrend"] = [];
@@ -96,9 +94,10 @@ export const combatProfileCalculator = (() => {
       const damage = userWarrior.damageDealtAfterDefensive;
       const damageTaken = userWarrior.damageTaken;
       const blockedDamage = userWarrior.blockedDamage;
+      const ratingDelta = battle.ratingDelta ?? 0;
 
       totalPH += userWarrior.ph;
-      totalRatingDelta += battle.ratingDelta ?? 0;
+      totalRatingDelta += ratingDelta;
       totalTurns += userWarrior.turns;
       totalDuration += battle.duration;
       totalDamage += damage;
@@ -113,20 +112,17 @@ export const combatProfileCalculator = (() => {
       addSpellUsage(spellUsage, userWarrior.spellsUsedMap);
       addProfessionMatchups(matchupByProfession, battle.opponents, isWin);
 
-      cumulativePh += userWarrior.ph;
       phTrend.push({
         date: battle.createdAt.toISOString(),
         value: userWarrior.ph,
-        cumulativeValue: cumulativePh,
+        cumulativeValue: totalPH,
         battleId: battle.id,
       });
 
-      const ratingDelta = battle.ratingDelta ?? 0;
-      cumulativeRatingDelta += ratingDelta;
       ratingTrend.push({
         date: battle.createdAt.toISOString(),
         value: ratingDelta,
-        cumulativeValue: cumulativeRatingDelta,
+        cumulativeValue: totalRatingDelta,
         battleId: battle.id,
       });
 
