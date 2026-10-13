@@ -135,7 +135,7 @@ const handleCommand = (
         components: [...(reply.components ?? [])],
         files: [...(reply.files ?? [])],
         // A public ranking must never ping the players it lists.
-        allowedMentions: { parse: [] },
+        allowedMentions: { parse: [], users: [...(reply.pings ?? [])] },
       }),
     );
   }).pipe(

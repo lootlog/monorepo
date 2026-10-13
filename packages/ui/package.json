@@ -29,6 +29,7 @@
     "@fontsource-variable/geist": "^5.3.0",
     "@fontsource-variable/geist-mono": "^5.3.0",
     "@lootlog/datetime": "workspace:*",
+    "@lootlog/domain": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "@tailwindcss/postcss": "catalog:",
     "class-variance-authority": "^0.7.1",

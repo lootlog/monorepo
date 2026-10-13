@@ -48,14 +48,19 @@ export interface InternalGuildsCache extends UserGuildPermissionsCache {
 
 type GuildRecord = typeof guildTable.$inferSelect;
 
+interface MemberIdentity {
+  readonly userId: string;
+  readonly memberId: number;
+}
+
 export interface InternalGuildsPersistence extends UserGuildPermissionsPersistence {
   readonly findActiveGuild: (
     idOrVanityUrl: string,
   ) => Effect.Effect<GuildRecord | null, unknown>;
-  readonly findActiveMemberUserId: (
+  readonly findActiveMemberIdentity: (
     guildId: string,
     discordId: string,
-  ) => Effect.Effect<string | null, unknown>;
+  ) => Effect.Effect<MemberIdentity | null, unknown>;
 }
 
 export const makeInternalGuildsData = (
@@ -92,7 +97,7 @@ export const makeInternalGuildsData = (
       operation(getUserPermissions(discordId, userId, freshness)),
     getGuild: (idOrVanityUrl) => operation(getGuild(idOrVanityUrl)),
     getMemberIdentity: (guildId, discordId) =>
-      operation(persistence.findActiveMemberUserId(guildId, discordId)),
+      operation(persistence.findActiveMemberIdentity(guildId, discordId)),
   });
 };
 
@@ -110,7 +115,7 @@ export class InternalGuildsData extends Context.Service<
     readonly getMemberIdentity: (
       guildId: string,
       discordId: string,
-    ) => Effect.Effect<string | null, InternalGuildsOperationError>;
+    ) => Effect.Effect<MemberIdentity | null, InternalGuildsOperationError>;
   }
 >()("@lootlog/api/http-api/internal-guilds/data") {
   static layerDatabase(cache: InternalGuildsCache) {
@@ -120,9 +125,12 @@ export class InternalGuildsData extends Context.Service<
         const persistence: InternalGuildsPersistence = {
           findActiveGuild: (idOrVanityUrl) =>
             findActiveGuild(database, idOrVanityUrl),
-          findActiveMemberUserId: (guildId, discordId) =>
+          findActiveMemberIdentity: (guildId, discordId) =>
             database
-              .select({ userId: memberTable.globalUserId })
+              .select({
+                userId: memberTable.globalUserId,
+                memberId: memberTable.id,
+              })
               .from(memberTable)
               .where(
                 and(
@@ -133,7 +141,13 @@ export class InternalGuildsData extends Context.Service<
                 ),
               )
               .limit(1)
-              .pipe(Effect.map((rows) => rows[0]?.userId ?? null)),
+              .pipe(
+                Effect.map(([row]) =>
+                  row?.userId
+                    ? { userId: row.userId, memberId: row.memberId }
+                    : null,
+                ),
+              ),
           ...makeUserGuildPermissionsPersistence(database),
         };
 
@@ -190,16 +204,16 @@ export const getInternalGuild = (idOrVanityUrl: string) =>
 export const getInternalMemberIdentity = (guildId: string, discordId: string) =>
   Effect.gen(function* () {
     const data = yield* InternalGuildsData;
-    const userId = yield* data.getMemberIdentity(guildId, discordId);
+    const identity = yield* data.getMemberIdentity(guildId, discordId);
 
-    if (userId === null) {
+    if (identity === null) {
       return yield* new InternalMemberNotFound({
         status: 404,
         code: "MEMBER_NOT_FOUND",
       });
     }
 
-    return yield* decode(InternalMemberIdentityResponse, { userId });
+    return yield* decode(InternalMemberIdentityResponse, identity);
   }).pipe(
     Effect.withSpan("GuildsInternalControllerGetMemberIdentity", {
       attributes: { operationId: "GuildsInternalControllerGetMemberIdentity" },

@@ -1,5 +1,6 @@
 /** Shared input and output schemas for the internal feature. */
 import * as Schema from "effect/Schema";
+import { FiniteNumber } from "@lootlog/schema/http-scalars";
 import { OrganizationPermissionsResponse } from "#src/contracts/guilds/schemas";
 
 export type InternalOrganizationPermissionsResponse =
@@ -43,4 +44,5 @@ export type InternalMemberIdentityResponse =
 
 export const InternalMemberIdentityResponse = Schema.Struct({
   userId: Schema.String,
+  memberId: FiniteNumber,
 }).annotate({ identifier: "InternalMemberIdentityDto" });

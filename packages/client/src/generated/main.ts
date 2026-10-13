@@ -8716,6 +8716,7 @@ export interface UpdateRolePermissionsDto {
 
 export interface InternalMemberIdentityDto {
   userId: string;
+  memberId: number;
 }
 
 export interface GuildResponseDtoOutput {

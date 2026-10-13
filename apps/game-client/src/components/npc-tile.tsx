@@ -1,4 +1,4 @@
-import { MARGONEM_CDN_NPCS_URL } from "@/constants/margonem";
+import { npcIconUrl } from "@lootlog/domain/npc-icon";
 import { cn } from "cn";
 import type { GameNpc } from "@lootlog/margonem/npcs";
 import type { FC } from "react";
@@ -15,9 +15,6 @@ export const NpcTile: FC<NpcTileProps> = ({
   className,
   containerClassName,
 }) => {
-  const imageHasDomain =
-    npc.icon.startsWith("http://") || npc.icon.startsWith("https://");
-
   return (
     <span
       className={cn(
@@ -31,7 +28,7 @@ export const NpcTile: FC<NpcTileProps> = ({
           className,
         )}
         draggable={false}
-        src={`${imageHasDomain ? "" : MARGONEM_CDN_NPCS_URL}${npc.icon}`}
+        src={npcIconUrl(npc.icon)}
         alt={npc.nick}
       />
     </span>

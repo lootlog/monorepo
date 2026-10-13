@@ -438,23 +438,26 @@ danymi Lootloga tego serwera i pokazuje tylko to, co widzisz na stronie zgodnie
 ze swoją rolą. Aby z nich korzystać, zaloguj się przez Discorda na stronie
 Lootloga i otwórz Lootlog tego serwera.
 
-| Komenda                                                  | Co pokazuje                                                                                  |
-| -------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `/ranking`                                               | Ranking bić członków dla wybranego typu potworów, np. elit II, herosów, tytanów i kolosów    |
-| `/statystyki`                                            | Twoje bicia (lub wskazanego członka) według typu potworów i miejsce w rankingu               |
-| `/npc`                                                   | Kto najczęściej bije wybranego potwora                                                       |
-| `/timery`                                                | Najbliższe respawny, z filtrem typu potworów i świata                                        |
-| `/timer`                                                 | Okno respawnu jednego potwora, świat i mapę                                                  |
-| `/rezerwacje moje`, `/rezerwacje miejsca`                | Twoje nadchodzące rezerwacje lub zajętość miejsc expienia                                    |
-| `/event ranking`, `/event status`, `/event podsumowanie` | Punkty, okna respawnu herosów i podsumowanie eventu                                          |
-| `/lupy`                                                  | Ostatnie łupy, z filtrem postaci, potwora i rzadkości                                        |
-| `/przedmiot`                                             | Kto i z którego potwora zdobył przedmiot                                                     |
-| `/online`                                                | Postacie członków, które są teraz w grze                                                     |
-| `/karta`                                                 | Publiczną kartę statystyk łupów, jeśli administrator ją włączył                              |
-| `/lootlog link`, `/lootlog diagnostyka`                  | Linki do Lootloga i instalacji dodatku oraz stan połączenia konta i uprawnień bota na kanale |
+| Komenda                                                  | Co pokazuje                                                                                                  |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `/ranking`                                               | Ranking bić członków dla wybranego typu potworów, np. elit II, herosów, tytanów i kolosów, z Twoim miejscem  |
+| `/statystyki`                                            | Twoje bicia (lub wskazanego członka) według typu potworów i miejsce w rankingu                               |
+| `/npc`                                                   | Kto najczęściej bije wybranego potwora i Twoje miejsce wśród bijących                                        |
+| `/timery`                                                | Najbliższe respawny, z filtrem typu potworów i świata                                                        |
+| `/timer`                                                 | Okno respawnu jednego potwora, świat i mapę                                                                  |
+| `/rezerwacje moje`, `/rezerwacje miejsca`                | Twoje nadchodzące rezerwacje lub zajętość miejsc expienia                                                    |
+| `/event ranking`, `/event status`, `/event podsumowanie` | Punkty z Twoim miejscem przy każdym herosie, okna respawnu herosów oraz podsumowanie eventu z Twoim wynikiem |
+| `/lupy`                                                  | Ostatnie łupy, z filtrem postaci, potwora i rzadkości                                                        |
+| `/przedmiot`                                             | Kto i z którego potwora zdobył przedmiot                                                                     |
+| `/online`                                                | Liczbę postaci członków w grze na każdym świecie, w tym AFK                                                  |
+| `/karta`                                                 | Publiczną kartę statystyk łupów, jeśli administrator ją włączył                                              |
+| `/lootlog link`, `/lootlog diagnostyka`                  | Linki do Lootloga i instalacji dodatku oraz stan połączenia konta i uprawnień bota na kanale                 |
 
 Odpowiedź domyślnie widzisz tylko Ty. Ustaw opcję `publiczne`, aby pokazać ją
-wszystkim na kanale; bot nie oznacza wtedy wymienionych graczy. Czasy respawnów
+wszystkim na kanale; bot nie oznacza wtedy graczy z rankingów. Wyjątkiem są
+publiczne `/statystyki` innego członka: bot oznacza tę osobę, bo odpowiedź
+dotyczy tylko jej. Gdy nie mieścisz się w pokazanej czołówce rankingu, bot
+dopisuje pod nią Twoje miejsce. Czasy respawnów
 i rezerwacji Discord wyświetla w Twojej strefie czasowej i odlicza na bieżąco.
 
 ## Sprawdź rezultat
