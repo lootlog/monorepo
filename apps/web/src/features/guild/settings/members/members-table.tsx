@@ -106,7 +106,7 @@ export const MembersTable = ({
 
   const rows = table.getRowModel().rows;
 
-  const rowEstimateSize = isMobile ? 88 : 57;
+  const rowEstimateSize = isMobile ? 65 : 57;
 
   const rowVirtualizer = usePageVirtualizer<HTMLElement>({
     count: members.length,
@@ -155,6 +155,8 @@ export const MembersTable = ({
           return (
             <button
               key={virtualRow.key}
+              ref={rowVirtualizer.measureElement}
+              data-index={virtualRow.index}
               type="button"
               className="relative grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40"
               onClick={() => openMemberDetails(member)}
