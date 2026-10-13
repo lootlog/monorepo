@@ -4,7 +4,6 @@ import {
 } from "#src/members/member-display-role";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { Effect } from "effect";
-import { groupBy } from "es-toolkit";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventMapLocationTable,
@@ -61,17 +60,19 @@ export const makeEventMapRead = <Failure>(
             memberDisplayRolesQuery(database, memberIds),
           );
 
-    const assignmentsByMap = groupBy(assignments, ({ mapId }) => mapId);
+    const assignmentsByMap = Map.groupBy(assignments, ({ mapId }) => mapId);
 
     return maps.map((map) => ({
       ...map,
-      assignedMembers: (assignmentsByMap[map.id] ?? []).map(({ member }) => ({
-        id: member.id,
-        name: member.name,
-        avatar: member.avatar,
-        userId: member.userId,
-        roles: topMemberDisplayRoles(roles, member.id),
-      })),
+      assignedMembers: (assignmentsByMap.get(map.id) ?? []).map(
+        ({ member }) => ({
+          id: member.id,
+          name: member.name,
+          avatar: member.avatar,
+          userId: member.userId,
+          roles: topMemberDisplayRoles(roles, member.id),
+        }),
+      ),
     }));
   });
 
@@ -118,18 +119,18 @@ export const makeEventMapRead = <Failure>(
       { concurrency: "unbounded" },
     ).pipe(
       Effect.map(({ locations, maps }) => {
-        const locationsByHero = groupBy(
+        const locationsByHero = Map.groupBy(
           locations,
           ({ heroNpcId }) => heroNpcId,
         );
 
-        const mapsByHero = groupBy(maps, ({ heroNpcId }) => heroNpcId);
+        const mapsByHero = Map.groupBy(maps, ({ heroNpcId }) => heroNpcId);
 
         return (heroId: string) => {
-          const ownMaps = mapsByHero[heroId] ?? [];
+          const ownMaps = mapsByHero.get(heroId) ?? [];
 
           return {
-            locations: (locationsByHero[heroId] ?? []).map((location) => ({
+            locations: (locationsByHero.get(heroId) ?? []).map((location) => ({
               ...location,
               maps: ownMaps.filter(
                 ({ locationId }) => locationId === location.id,

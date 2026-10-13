@@ -1,6 +1,6 @@
 import { createNpcSnapshotHash } from "@lootlog/database/snapshot-hash";
 import { and, eq, inArray, or } from "drizzle-orm";
-import { sortBy, uniq, uniqBy } from "es-toolkit";
+import { sortBy, uniqBy } from "es-toolkit";
 import { Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -220,7 +220,7 @@ export const resolveNpcSnapshots = (
     const rows = yield* database
       .select()
       .from(npcSnapshotTable)
-      .where(inArray(npcSnapshotTable.id, uniq(ids)));
+      .where(inArray(npcSnapshotTable.id, [...new Set(ids)]));
 
     const snapshotById = new Map(rows.map((row) => [row.id, row]));
     const snapshots: Array<typeof npcSnapshotTable.$inferSelect> = [];

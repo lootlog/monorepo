@@ -1,4 +1,4 @@
-import { isEqual, isNotNil } from "es-toolkit";
+import { isEqual } from "es-toolkit";
 import { getCharacterIdentityKey } from "@/lib/character-identity-key";
 import { create } from "zustand";
 import type {
@@ -159,7 +159,7 @@ export const useOnlineCharacterOwnersStore =
           Object.values(response)
             .flat()
             .map((presence) => toOwner(presence, guildMembersByUserId))
-            .filter(isNotNil)
+            .filter((owner) => owner !== null)
             .map((owner) => [
               getCharacterIdentityKey(owner.accountId, owner.characterId),
               owner,

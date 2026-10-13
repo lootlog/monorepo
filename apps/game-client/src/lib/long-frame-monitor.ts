@@ -1,5 +1,3 @@
-import { sumBy } from "es-toolkit";
-
 // TypeScript's DOM library does not declare the Long Animation Frames API yet.
 type ScriptTiming = PerformanceEntry & {
   invoker: string;
@@ -37,7 +35,10 @@ export function monitorLongFrames(): () => void {
         script.sourceURL.startsWith(ownOrigin),
       );
 
-      const ownDuration = sumBy(ownScripts, (script) => script.duration);
+      const ownDuration = ownScripts.reduce(
+        (sum, script) => sum + script.duration,
+        0,
+      );
 
       if (ownDuration < REPORTED_SCRIPT_MS) continue;
 

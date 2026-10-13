@@ -1,4 +1,3 @@
-import { isNotNil, sumBy } from "es-toolkit";
 import type { MapAssignment, MapGap, MapTimelineData } from "../types/api";
 
 export type NormalizedMapGap = Omit<
@@ -200,7 +199,7 @@ const normalizeAssignmentPeriods = (
           windowEndMs,
         ),
       )
-      .filter(isNotNil)
+      .filter((interval) => interval !== null)
       .sort((first, second) => first.startMs - second.startMs);
 
     const mergedIntervals: RawInterval[] = [];
@@ -237,7 +236,10 @@ const normalizeAssignmentPeriods = (
       memberAvatar: representative.memberAvatar,
       memberUserId: representative.memberUserId,
       periods,
-      totalDurationSeconds: sumBy(periods, (period) => period.durationSeconds),
+      totalDurationSeconds: periods.reduce(
+        (sum, period) => sum + period.durationSeconds,
+        0,
+      ),
     });
   }
 

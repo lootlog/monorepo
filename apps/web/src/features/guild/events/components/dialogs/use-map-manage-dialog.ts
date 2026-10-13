@@ -14,7 +14,6 @@ import {
 } from "@lootlog/client/main";
 import { getApiErrorStatus } from "@lootlog/client/transport";
 import { useQueryClient } from "@tanstack/react-query";
-import { sortBy } from "es-toolkit";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -159,10 +158,13 @@ export function useMapManageDialog({
     reorderedLocationIds?.map((id, index) => [id, index]),
   );
 
+  const getLocationRank = (locationId: string) =>
+    locationOrder.get(locationId) ?? locationOrder.size;
+
   const displayedLocations = reorderedLocationIds
-    ? sortBy(heroLocations, [
-        (location) => locationOrder.get(location.id) ?? locationOrder.size,
-      ])
+    ? [...heroLocations].sort(
+        (left, right) => getLocationRank(left.id) - getLocationRank(right.id),
+      )
     : heroLocations;
 
   const allMapsFromLocations = heroLocations.flatMap(

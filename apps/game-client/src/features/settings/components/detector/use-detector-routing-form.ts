@@ -1,4 +1,4 @@
-import { clamp, intersection, uniq } from "es-toolkit";
+import { clamp, intersection } from "es-toolkit";
 import { toggleAvailableGuild } from "@/lib/selected-lootlog-guild";
 import { readCurrentSettingsDocuments } from "@/features/settings/persistence/settings-patch-client";
 import {
@@ -62,9 +62,9 @@ const normalizeRoutingRules = (
     const maxLevel = Math.max(normalizedMinLevel, normalizedMaxLevel);
     const world = normalizeRoutingRuleText(rule.world);
 
-    const normalizedGuildIds = uniq(
-      intersection(availableGuildIds, rule.guildIds),
-    );
+    const normalizedGuildIds = [
+      ...new Set(intersection(availableGuildIds, rule.guildIds)),
+    ];
 
     return {
       ...rule,
