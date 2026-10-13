@@ -49,9 +49,17 @@ export type AppNavigationSidebarItem = {
   visible: boolean;
 };
 
+export type AppNavigationHeading = {
+  title: string;
+  /** The page one step up; tabs of a section have none. */
+  parent: { label: string; path: string } | null;
+};
+
 export type AppNavigation = {
   scope: "organization" | "public" | "user";
   breadcrumbs: Breadcrumb[];
+  /** What the top bar names: the page title and, on a child page, its parent. */
+  heading: AppNavigationHeading;
   documentTitle: string;
   parentPath: string | null;
   sidebarItems: AppNavigationSidebarItem[];
@@ -138,6 +146,35 @@ function formatDocumentTitle(title: string, context?: string) {
   }
 
   return t("common.documentTitle.template", { appName, title });
+}
+
+/**
+ * A section's tabs share the section's title; a child page carries its own
+ * title and returns to its parent. The Organization crumb is left out because
+ * the sidebar header names the Organization.
+ */
+function resolveHeading(
+  breadcrumbs: readonly Breadcrumb[],
+  parentPath: string | null,
+  scope: AppNavigation["scope"],
+): AppNavigationHeading {
+  const pageBreadcrumbs =
+    scope === "organization" && breadcrumbs.length > 1
+      ? breadcrumbs.slice(1)
+      : breadcrumbs;
+
+  if (parentPath === null) {
+    return { title: pageBreadcrumbs[0]?.label ?? "", parent: null };
+  }
+
+  const parent =
+    pageBreadcrumbs.find((breadcrumb) => breadcrumb.path === parentPath) ??
+    pageBreadcrumbs[pageBreadcrumbs.length - 2];
+
+  return {
+    title: getCurrentBreadcrumb(pageBreadcrumbs)?.label ?? "",
+    parent: parent ? { label: parent.label, path: parentPath } : null,
+  };
 }
 
 function getCurrentBreadcrumb(breadcrumbs: readonly Breadcrumb[]) {
@@ -612,6 +649,7 @@ function createPublicNavigation(documentTitle: string): AppNavigation {
   return {
     scope: "public",
     breadcrumbs: [],
+    heading: { title: documentTitle, parent: null },
     documentTitle,
     parentPath: null,
     sidebarItems: [],
@@ -630,6 +668,11 @@ function resolveUserAppNavigation(
   return {
     scope: "user",
     breadcrumbs: userNavigation.breadcrumbs,
+    heading: resolveHeading(
+      userNavigation.breadcrumbs,
+      userNavigation.backPath ?? null,
+      "user",
+    ),
     documentTitle: resolveDocumentContext(
       userNavigation,
       userNavigation.breadcrumbs[0]?.label,
@@ -648,6 +691,7 @@ function createMissingOrganizationNavigation(): AppNavigation {
   return {
     scope: "organization",
     breadcrumbs: [{ label: fallbackLabel, path: null }],
+    heading: { title: fallbackLabel, parent: null },
     documentTitle: formatDocumentTitle(fallbackLabel),
     parentPath: null,
     sidebarItems: [],
@@ -745,6 +789,11 @@ function resolveOrganizationAppNavigation(
   return {
     scope: "organization",
     breadcrumbs: organizationNavigation.breadcrumbs,
+    heading: resolveHeading(
+      organizationNavigation.breadcrumbs,
+      organizationNavigation.backPath ?? null,
+      "organization",
+    ),
     documentTitle: resolveDocumentContext(
       organizationNavigation,
       documentContext,

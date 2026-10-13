@@ -4,7 +4,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { isEqual } from "es-toolkit";
 import { createChangedOnlyStorage } from "./changed-only-storage";
 import { storageKey } from "@/lib/storage-key";
-import { withFallback } from "@/lib/stored-value-schema";
+import { withFallback } from "@lootlog/schema/stored-value";
 
 /**
  * Margonem's `SocietyData.RELATION`: how the server relates a player on the

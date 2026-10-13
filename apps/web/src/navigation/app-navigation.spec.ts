@@ -72,10 +72,36 @@ describe("resolveAppNavigation", () => {
       { label: "Alicja", path: null },
     ]);
     expect(navigation.parentPath).toBe("/guild-1/settings/members");
+    // The sidebar names the Organization, so the top bar starts below it.
+    expect(navigation.heading).toEqual({
+      title: "Alicja",
+      parent: { label: "Członkowie", path: "/guild-1/settings/members" },
+    });
     expect(navigation.documentTitle).toBe("Alicja - Nocna Straż - Lootlog.pl");
     expect(
       navigation.sidebarItems.find(({ id }) => id === "organization-settings"),
     ).toMatchObject({ active: true, visible: true });
+  });
+
+  it("titles a section's tab by the section, with no way back to a sibling", () => {
+    const navigation = resolveAppNavigation({
+      matches: [
+        createMatch({
+          loaderData: { guild: { name: "Nocna Straż" } },
+          params: { guildId: "guild-1" },
+          pathname: "/guild-1",
+          routeId: "/_authenticated/$guildId",
+        }),
+        createMatch({
+          params: { guildId: "guild-1" },
+          pathname: "/guild-1/stats/kills",
+          routeId: "/_authenticated/$guildId/stats/kills",
+        }),
+      ],
+      accessPolicy: policy(Capability.ADMIN),
+    });
+
+    expect(navigation.heading).toEqual({ title: "Statystyki", parent: null });
   });
 
   it("keeps scoped navigation when an Organization child route is in error", () => {

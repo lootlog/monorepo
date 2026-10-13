@@ -8,7 +8,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { getLootlogPortalContainer } from "@/components/ui/theme-boundary";
-import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
+import { TIMERS_COLORS } from "@lootlog/domain/timer-colors";
 import { TimerMapPlayersAdornment } from "@/features/timers/components/timer-map-players-adornment";
 import { TimerTileView } from "@/features/timers/components/timer-tile-view";
 import { TimerTooltip } from "@/features/timers/components/timer-tooltip";
@@ -195,7 +195,7 @@ function PreviewTile({
             paint={TIMERS_COLORS[state.color]}
             displayMode={displayMode}
             fontSize={11}
-            isMinSpawnTime={index % 3 === 1}
+            phase={index % 3 === 1 ? "window" : "waiting"}
             isStanding={state.standing}
             label={`${timer.npc.name} (${timer.npc.lvl}w)`}
             timeLabel="3:59"

@@ -1,7 +1,4 @@
-import {
-  TIMERS_COLORS,
-  getTimerColor,
-} from "@/features/timers/constants/timer-colors";
+import { TIMERS_COLORS, getTimerColor } from "@lootlog/domain/timer-colors";
 import { getDefaultColorName } from "@/features/timers/utils/get-default-color-name";
 
 export type TimerColorOption = {

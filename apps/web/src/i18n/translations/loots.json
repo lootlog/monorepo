@@ -1,9 +1,5 @@
 {
   "stats": {
-    "selectWorld": {
-      "title": "Wybierz świat",
-      "description": "Łupy liczymy osobno dla każdego świata."
-    },
     "excludeColossus": "Bez kolosów",
     "overview": {
       "totalLoots": "Łupy",
@@ -94,12 +90,10 @@
     }
   },
   "header": {
-    "searchPlaceholder": "Szukaj przedmiotów, potworów, graczy...",
     "shortcut": "{{modifier}} + K",
     "listView": "Widok listy",
     "gridView": "Widok siatki",
     "mobileFiltersTitle": "Filtry łupów",
-    "toolbarLabel": "Wyszukiwanie i widok łupów",
     "filtersButton": "Filtry"
   },
   "searchCommand": {
@@ -141,16 +135,11 @@
     "worldContext": "Gracze i łupy ze świata {{world}}"
   },
   "list": {
-    "selectWorldTitle": "Wybierz świat",
-    "noWorldSelected": "Wybierz świat, z którego chcesz zobaczyć łupy.",
-    "noWorldSelectedCat": "Miau! Wybierz świat, żeby zobaczyć łupy 🐱",
-    "noWorldSelectedRukia": "Lodowa cisza... Wybierz świat, by przełamać mróz.",
-    "noWorldSelectedRias": "Krąg magiczny nieaktywny... Wybierz świat, by go przywołać.",
     "empty": "Brak łupów",
     "emptyCat": "Kot przeszukał wszystko... nic nie znalazł 😿",
     "emptyRukia": "Absolutne zero... nie znaleziono żadnych łupów.",
     "emptyRias": "Moc Zniszczenia nie wykryła żadnych łupów.",
-    "emptyDescription": "Nowe łupy z wybranego świata pojawią się tutaj automatycznie.",
+    "emptyDescription": "Nowe łupy pojawią się tutaj automatycznie.",
     "noResults": "Brak pasujących łupów",
     "noResultsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej łupów.",
     "clearFilters": "Wyczyść filtry",
@@ -170,6 +159,7 @@
     "unassignedItems": "Przedmioty bez podziału",
     "obtainedBy": "Zdobyto przez:",
     "details": "Szczegóły",
+    "worldLabel": "Świat",
     "commentsCount_one": "{{count}} komentarz",
     "commentsCount_few": "{{count}} komentarze",
     "commentsCount_many": "{{count}} komentarzy",

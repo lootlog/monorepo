@@ -1,6 +1,5 @@
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
-import { WorldSelectionEmptyState } from "@/components/common/world-selection-empty-state";
-import { findNpcType, NPC_TYPE_SORT_ORDER } from "@/constants/npc";
+import { findNpcType, getNpcTypeSortIndex } from "@/constants/npc";
 import { EmptyState } from "@/components/common/empty-state";
 import { FilterBar } from "@/components/common/filter-bar";
 import { ViewModeToggle } from "@/components/ui/view-mode-toggle";
@@ -23,12 +22,12 @@ import { SearchInput } from "@/components/ui/search-input";
 import { GuildWorldHeaderSwitcher } from "@/components/layout/guild-world-header-switcher";
 import { useViewMode } from "@/hooks/use-view-mode";
 import { useTranslation } from "react-i18next";
-import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import {
-  getTimersControllerGetTimersQueryKey,
-  useTimersControllerGetTimers,
-} from "@lootlog/client/main";
+import { getTimersControllerGetTimersQueryKey } from "@lootlog/client/main";
+import { getTimerPhase, getTimerTimeLeft } from "@lootlog/domain/timers";
+import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
+import { useGuildTimers } from "./use-guild-timers";
+import { useTimerDisplaySettings } from "./use-timer-display-settings";
 import { ThemeEmptyStateIcon } from "@/themes";
 
 const getTimerListState = <Timer extends { npc?: { name: string } | null }>(
@@ -55,33 +54,20 @@ const getTimerListState = <Timer extends { npc?: { name: string } | null }>(
 
 export const Timers = () => {
   const guildId = useGuildId();
-  const { world } = useGuildContext();
-  const queryGuildId = guildId ?? "";
 
-  const {
-    data: timers,
-    dataUpdatedAt,
-    isPending,
-    isError,
-    isFetching,
-    refetch,
-  } = useTimersControllerGetTimers(
-    { guildId: queryGuildId },
-    { world },
-    {
-      query: {
-        enabled: !!guildId && !!world,
-        queryKey: getTimersControllerGetTimersQueryKey(
-          { guildId: queryGuildId },
-          { world },
-        ),
-        staleTime: 15_000,
-        placeholderData: undefined,
-      },
-    },
+  const { removeTimerAfterMs, countdownMode, getPaint, isPinned } =
+    useTimerDisplaySettings();
+
+  const { world, timers, isPending, isError, isFetching, fetchedAt, refetch } =
+    useGuildTimers(removeTimerAfterMs);
+
+  useTimerExpiry(
+    timers,
+    guildId ? getTimersControllerGetTimersQueryKey({ guildId }) : null,
+    fetchedAt,
+    removeTimerAfterMs,
   );
-
-  useTimerExpiry(timers, guildId, world, dataUpdatedAt);
+  const now = useMinuteTimestamp();
   const [search, setSearch] = useState("");
 
   const { viewMode, setViewMode, canChooseViewMode } = useViewMode(
@@ -95,11 +81,24 @@ export const Timers = () => {
   const { filtered, hasFilteredTimers, showsNoSearchResults } =
     getTimerListState(timers, search);
 
-  const sorted = sortBy(filtered ?? [], [
-    (timer) =>
-      NPC_TYPE_SORT_ORDER.findIndex((type) => type === timer.npc?.type),
-    (timer) => new Date(timer.maxSpawnTime).getTime(),
-  ]);
+  // Kept timers sit below the live ones, most recent first, as in the game;
+  // a deleted timer counts from its deletion, as its row does.
+  const sorted = sortBy(
+    (filtered ?? []).map((timer) => {
+      const timeLeft = getTimerTimeLeft(timer, now);
+
+      return {
+        timer,
+        maxTimeLeft: timeLeft.maxTimeLeft,
+        isKept: getTimerPhase(timeLeft, removeTimerAfterMs) === "expired",
+      };
+    }),
+    [
+      ({ timer }) => getNpcTypeSortIndex(timer.npc?.type),
+      ({ isKept }) => (isKept ? 1 : 0),
+      ({ isKept, maxTimeLeft }) => (isKept ? -maxTimeLeft : maxTimeLeft),
+    ],
+  ).map(({ timer }) => timer);
 
   const groups = groupBy(sorted, (timer) => timer.npc?.type ?? "");
 
@@ -116,15 +115,6 @@ export const Timers = () => {
   );
 
   const renderContent = () => {
-    if (!world) {
-      return (
-        <WorldSelectionEmptyState
-          title={t("timers.selectWorldTitle")}
-          description={t("timers.noWorldSelected")}
-        />
-      );
-    }
-
     if (isError && timers === undefined) {
       return (
         <div className="px-3 pb-3">
@@ -202,8 +192,13 @@ export const Timers = () => {
                 <div className={getTimerGroupClassName(viewMode)}>
                   {groupTimers.map((timer) => (
                     <SingleTimer
-                      key={timer.npc?.id ?? timer.timerKey}
+                      key={`${timer.world}:${timer.timerKey}`}
                       timer={timer}
+                      paint={getPaint(timer.npc?.name ?? "")}
+                      countdownMode={countdownMode}
+                      removeTimerAfterMs={removeTimerAfterMs}
+                      isPinned={isPinned(timer)}
+                      showWorld={world === null}
                     />
                   ))}
                 </div>
@@ -241,7 +236,7 @@ export const Timers = () => {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col pt-3">
-        {world && isError && timers !== undefined && (
+        {isError && timers !== undefined && (
           <Alert
             variant="destructive"
             className="mx-3 mb-3 flex w-auto flex-wrap items-center justify-between gap-3"

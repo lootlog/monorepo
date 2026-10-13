@@ -20,7 +20,7 @@ import {
   type StateStorage,
 } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
-import { looseStruct, optionalOrUndefined } from "@/lib/stored-value-schema";
+import { looseStruct, optionalOrUndefined } from "@lootlog/schema/stored-value";
 
 const STORAGE_KEY = storageKey("ll-windows-state");
 

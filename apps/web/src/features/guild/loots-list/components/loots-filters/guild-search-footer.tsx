@@ -5,7 +5,7 @@ import { Globe } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 type GuildSearchFooterProps = {
-  world: string;
+  world: string | null;
 };
 
 /** Keyboard hints, and the world that player and loot hits come from. */

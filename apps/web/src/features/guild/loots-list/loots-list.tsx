@@ -2,7 +2,8 @@ import { LootsList } from "@/features/guild/loots-list/components/loots-list/loo
 import { LootsFiltersSidebar } from "@/features/guild/loots-list/components/loots-filters/loots-filters-sidebar";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { CollapsePresence } from "@/components/common/collapse-presence";
-import { LootFiltersHeader } from "@/features/guild/loots-list/components/loots-filters/loot-filters-header";
+import { LootListHeaderActions } from "@/features/guild/loots-list/components/loots-filters/loot-list-header-actions";
+import { LootFiltersFab } from "@/features/guild/loots-list/components/loots-filters/loot-filters-fab";
 import { useState } from "react";
 import { GuildWorldHeaderSwitcher } from "@/components/layout/guild-world-header-switcher";
 import {
@@ -87,17 +88,13 @@ export const LootsListPage: React.FC = () => {
       )}
 
       <GuildWorldHeaderSwitcher />
+      <LootListHeaderActions
+        isFiltersOpen={filtersOpenForHeader}
+        hasActiveFilters={hasActiveFilters}
+        onToggleFilters={handleOpenSidebar}
+      />
 
       <div className="w-full flex flex-col h-full overflow-hidden">
-        <div className="px-3 pt-3 pb-0">
-          <LootFiltersHeader
-            onToggleFilters={handleOpenSidebar}
-            isFiltersOpen={filtersOpenForHeader}
-            isCompactLayout={usesOverlayFilters}
-            hasActiveFilters={hasActiveFilters}
-          />
-        </div>
-
         <div className="flex-1 flex overflow-hidden">
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden pt-3">
             <LootsList />
@@ -112,6 +109,13 @@ export const LootsListPage: React.FC = () => {
           </CollapsePresence>
         </div>
       </div>
+
+      {isMobile && (
+        <LootFiltersFab
+          hasActiveFilters={hasActiveFilters}
+          onOpenFilters={handleOpenSidebar}
+        />
+      )}
 
       <LootDetailsDialog
         onShowPlayerLoots={(playerName) =>

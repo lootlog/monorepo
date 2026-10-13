@@ -25,7 +25,7 @@
   "loading": "Ładowanie...",
   "removeOption": "Usuń {{label}}",
   "actions": {
-    "back": "Wróć",
+    "backTo": "Wróć: {{page}}",
     "retry": "Spróbuj ponownie",
     "undo": "Cofnij"
   },
@@ -70,7 +70,6 @@
     "all": "Wszystko"
   },
   "breadcrumbs": {
-    "navigationLabel": "Ścieżka nawigacji",
     "guild": "Lootlog",
     "page": "Strona",
     "lootsList": "Lista łupów",

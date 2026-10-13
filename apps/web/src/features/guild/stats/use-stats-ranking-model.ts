@@ -1,3 +1,4 @@
+import { useWorldScopedCursor } from "./hooks/use-world-scoped-cursor";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -34,17 +35,17 @@ export const useStatsRankingModel = () => {
   });
 
   const navigate = useNavigate();
-  const [cursor, setCursor] = useState(0);
 
   const {
     settings,
     debouncedMinLvl,
     debouncedMaxLvl,
-    setWorld,
     setMinLvl,
     setMaxLvl,
     setPeriod,
   } = useStatsSettings("ranking");
+
+  const [cursor, setCursor] = useWorldScopedCursor(settings.world);
 
   const [searchQuery, setSearchQuery] = useState("");
   const membersMap = useGuildMemberMap(guildId);
@@ -69,11 +70,6 @@ export const useStatsRankingModel = () => {
       },
     },
   );
-
-  const handleWorldChange = (value: string | null) => {
-    setWorld(value);
-    setCursor(0);
-  };
 
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -112,7 +108,6 @@ export const useStatsRankingModel = () => {
     : memberRanking;
 
   const hasActiveFilters =
-    Boolean(settings.world) ||
     Boolean(settings.minLvl) ||
     Boolean(settings.maxLvl) ||
     settings.period !== "all" ||
@@ -144,7 +139,6 @@ export const useStatsRankingModel = () => {
     t,
     handleSearchChange,
     settings,
-    handleWorldChange,
     handleMinLvlChange,
     handleMaxLvlChange,
     handlePeriodChange,

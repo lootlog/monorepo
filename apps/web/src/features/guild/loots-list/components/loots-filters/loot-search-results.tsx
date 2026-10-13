@@ -9,6 +9,7 @@ import { upperFirst } from "es-toolkit";
 import * as m from "framer-motion/m";
 import {
   containerVariants,
+  getPlayerRowValue,
   isInScope,
   renderIf,
   SEARCH_ROW_CLASS_NAME,
@@ -124,8 +125,8 @@ export const LootSearchResults = ({
       >
         {playerResults.map((player) => (
           <CommandItem
-            key={`player-${player.id}`}
-            value={`player-${player.id}`}
+            key={getPlayerRowValue(player)}
+            value={getPlayerRowValue(player)}
             onSelect={() => handleSelectPlayer(player)}
             className={SEARCH_ROW_CLASS_NAME}
           >
@@ -135,6 +136,11 @@ export const LootSearchResults = ({
               className="mr-0 scale-75"
             />
             <span className="min-w-0 truncate font-medium">{player.name}</span>
+            {!world && (
+              <span className="shrink-0 text-xs text-muted-foreground">
+                {upperFirst(player.world)}
+              </span>
+            )}
             <span className="ml-auto shrink-0 text-xs text-muted-foreground tabular-nums max-sm:hidden">
               {player.lvl > 0 &&
                 t("loots.searchCommand.level", {

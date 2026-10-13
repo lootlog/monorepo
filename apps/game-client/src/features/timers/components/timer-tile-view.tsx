@@ -1,7 +1,8 @@
 import { cn } from "cn";
 import type { CSSProperties, FC, ReactNode } from "react";
+import type { TimerPhase } from "@lootlog/domain/timers";
 import { ListRow, veilColor } from "@/components/list-row";
-import type { TimerColorPaint } from "@/features/timers/constants/timer-colors";
+import type { TimerColorPaint } from "@lootlog/domain/timer-colors";
 
 export type TimerTileViewProps = {
   paint: TimerColorPaint;
@@ -10,10 +11,9 @@ export type TimerTileViewProps = {
   showColorStripe?: boolean;
   displayMode: "column" | "row";
   fontSize: number;
-  hasPassedRedThreshold?: boolean;
-  isExpired?: boolean;
+  /** Colours the text by the spawn window; previews show a waiting timer. */
+  phase?: TimerPhase;
   id?: string;
-  isMinSpawnTime?: boolean;
   isPending?: boolean;
   /** An Organization member sees the NPC on its map right now. */
   isStanding?: boolean;
@@ -30,28 +30,19 @@ const EXPIRED_VEIL = "black 40%";
  * The whole tile text follows the spawn window: orange once the minimum
  * spawn time passes, red after the maximum, and a dimmed red once expired.
  */
-const resolveTextColor = (
-  legacyAppearance: boolean,
-  isExpired: boolean,
-  hasPassedRedThreshold: boolean,
-  isMinSpawnTime: boolean,
-) => {
-  if (legacyAppearance) {
-    if (hasPassedRedThreshold) return "ll:text-red-500";
+const TEXT_COLORS = {
+  waiting: "ll:text-white",
+  window: "ll:text-orange-300",
+  overdue: "ll:text-red-400",
+  expired: "ll:text-red-400/70",
+} satisfies Record<TimerPhase, string>;
 
-    if (isMinSpawnTime) return "ll:text-orange-400";
-
-    return "ll:text-white";
-  }
-
-  if (isExpired) return "ll:text-red-400/70";
-
-  if (hasPassedRedThreshold) return "ll:text-red-400";
-
-  if (isMinSpawnTime) return "ll:text-orange-300";
-
-  return "ll:text-white";
-};
+const LEGACY_TEXT_COLORS = {
+  waiting: "ll:text-white",
+  window: "ll:text-orange-400",
+  overdue: "ll:text-red-500",
+  expired: "ll:text-red-500",
+} satisfies Record<TimerPhase, string>;
 
 /** Separates the text from a tile fill of the same hue. */
 const TEXT_OUTLINE = "ll:[text-shadow:0_1px_2px_rgb(0_0_0/0.7)]";
@@ -62,22 +53,19 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
   showColorStripe = true,
   displayMode,
   fontSize,
-  hasPassedRedThreshold = false,
-  isExpired = false,
+  phase = "waiting",
   id,
-  isMinSpawnTime = false,
   isPending = false,
   isStanding = false,
   label,
   timeLabel,
   timeAdornment,
 }) => {
-  const textColorClassName = resolveTextColor(
-    legacyAppearance,
-    isExpired,
-    hasPassedRedThreshold,
-    isMinSpawnTime,
-  );
+  const textColorClassName = (
+    legacyAppearance ? LEGACY_TEXT_COLORS : TEXT_COLORS
+  )[phase];
+
+  const isExpired = phase === "expired";
 
   const content = (
     <>

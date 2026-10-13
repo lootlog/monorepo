@@ -3,7 +3,7 @@ import { storageKey } from "@/lib/storage-key";
 import { isObjectRecord } from "@lootlog/schema/records";
 import type { SettingsCatalogValue } from "@lootlog/domain/settings-documents";
 import type { SettingsDomain } from "@lootlog/schema/settings-documents";
-import { decodeTimerSettings } from "@/store/timer-settings-codec";
+import { decodeTimerSettings } from "@lootlog/schema/timer-settings";
 import {
   areSettingsValuesEqual,
   getSettingsDefaultValue,

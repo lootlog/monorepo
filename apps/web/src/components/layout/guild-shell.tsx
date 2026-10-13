@@ -1,5 +1,5 @@
 import { AppContentFrame } from "./app-content-frame";
-import { GuildBreadcrumbs } from "@/components/layout/guild-breadcrumbs";
+import { GuildNavigationTopBar } from "@/components/layout/guild-navigation-top-bar";
 import { AppTopBar } from "@/components/layout/app-top-bar";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
 import { HeaderSlotsContext } from "@/contexts/header-slots-context";
@@ -16,14 +16,17 @@ type GuildShellProps = {
 export const GuildShell: FC<GuildShellProps> = ({ children, variant }) => {
   const { t } = useTranslation();
 
-  const { slots, contextRef, actionsRef } = useHeaderSlotTargets();
+  const { slots, actionsRef, contextRef } = useHeaderSlotTargets();
 
   return (
     <HeaderSlotsContext.Provider value={slots}>
       <AppContentFrame
         header={
           variant === "ready" ? (
-            <GuildBreadcrumbs contextRef={contextRef} actionsRef={actionsRef} />
+            <GuildNavigationTopBar
+              actionsRef={actionsRef}
+              contextRef={contextRef}
+            />
           ) : (
             <AppTopBar>
               <div className="flex items-center gap-2">
