@@ -4,11 +4,15 @@ import { EventMemberSkeleton } from "./event-member-skeleton";
 import { useState } from "react";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
+  getEventsRankingControllerGetEventHeroStatsQueryKey,
   getListEventRankingQueryKey,
   getShowEventOverviewQueryKey,
+  useEventsRankingControllerGetEventHeroStats,
   useListEventRanking,
   useShowEventOverview,
 } from "@lootlog/client/main";
+import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
+import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { HeroTabs } from "./components/shared/hero-tabs";
 import { MemberKillsList } from "./components/member-kills/member-kills-list";
@@ -65,6 +69,61 @@ const buildContextStats = ({
   );
 
   return buildStatsSummary(selectedRanking ? [selectedRanking] : []);
+};
+
+/**
+ * The member's place in one hero's ranking, ordered by points as the ranking
+ * table is; rankings are per hero, so there is no place across heroes.
+ */
+const getRankingPlace = (
+  rankings: EventRanking[],
+  memberId: number,
+  heroName: string,
+) => {
+  const heroRankings = rankings
+    .filter((ranking) => ranking.heroNpcName === heroName)
+    .sort((left, right) => right.totalPoints - left.totalPoints);
+
+  const index = heroRankings.findIndex(
+    (ranking) => ranking.memberId === memberId,
+  );
+
+  return index < 0
+    ? undefined
+    : { position: index + 1, playerCount: heroRankings.length };
+};
+
+/** Where the member stands in the event for the heroes the page shows. */
+const getMemberEventContext = ({
+  heroes,
+  selectedHero,
+  rankings,
+  memberRankings,
+  memberId,
+  heroStats,
+}: {
+  heroes: EventHeroNpc[];
+  selectedHero?: EventHeroNpc;
+  rankings: EventRanking[];
+  memberRankings: EventRanking[];
+  memberId: number;
+  heroStats?: { heroId: string; killCount: number }[];
+}) => {
+  const rankingHero =
+    selectedHero ?? (heroes.length === 1 ? heroes[0] : undefined);
+
+  return {
+    rankingPlace: rankingHero
+      ? getRankingPlace(rankings, memberId, rankingHero.npcName)
+      : undefined,
+    eventKillCount: heroStats
+      ?.filter((stats) => !selectedHero || stats.heroId === selectedHero.id)
+      .reduce((sum, stats) => sum + stats.killCount, 0),
+    roleColor:
+      getCustomRoleCssColor(
+        getMemberDisplayRole(memberRankings[0]?.member.roles)?.color,
+      ) ?? undefined,
+  };
 };
 
 type EventMemberKillsPageContentProps = {
@@ -148,6 +207,22 @@ export const EventMemberKillsPageContent = ({
     },
   );
 
+  const { data: heroStats } = useEventsRankingControllerGetEventHeroStats(
+    {
+      guildId: queryGuildId,
+      eventId: queryEventId,
+    },
+    {
+      query: {
+        enabled: hasEventRouteParams,
+        queryKey: getEventsRankingControllerGetEventHeroStatsQueryKey({
+          guildId: queryGuildId,
+          eventId: queryEventId,
+        }),
+      },
+    },
+  );
+
   if (eventLoading) {
     return <EventMemberSkeleton />;
   }
@@ -182,6 +257,15 @@ export const EventMemberKillsPageContent = ({
     selectedHero,
   });
 
+  const { rankingPlace, eventKillCount, roleColor } = getMemberEventContext({
+    heroes,
+    selectedHero,
+    rankings,
+    memberRankings,
+    memberId: memberIdNumber,
+    heroStats,
+  });
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <EventParticipationConfirmationDialog
@@ -197,13 +281,18 @@ export const EventMemberKillsPageContent = ({
             eventName={event.name}
             selectedHeroName={selectedHero?.npcName}
             contextStats={contextStats}
-          />
-          <HeroTabs
-            placement="page"
-            heroes={heroes}
-            includeAll
-            value={selectedHeroId}
-            onValueChange={setSelectedHeroId}
+            roleColor={roleColor}
+            rankingPlace={rankingPlace}
+            eventKillCount={eventKillCount}
+            filters={
+              <HeroTabs
+                placement="page"
+                heroes={heroes}
+                includeAll
+                value={selectedHeroId}
+                onValueChange={setSelectedHeroId}
+              />
+            }
           />
           {scrollElement && (
             <MemberKillsList
