@@ -75,7 +75,11 @@ describe("resolveAppNavigation", () => {
     // The sidebar names the Organization, so the top bar starts below it.
     expect(navigation.heading).toEqual({
       title: "Alicja",
-      parent: { label: "Członkowie", path: "/guild-1/settings/members" },
+      trail: [
+        { label: "Ustawienia", path: "/guild-1/settings" },
+        { label: "Członkowie", path: "/guild-1/settings/members" },
+      ],
+      section: "organization-settings",
     });
     expect(navigation.documentTitle).toBe("Alicja - Nocna Straż - Lootlog.pl");
     expect(
@@ -101,7 +105,11 @@ describe("resolveAppNavigation", () => {
       accessPolicy: policy(Capability.ADMIN),
     });
 
-    expect(navigation.heading).toEqual({ title: "Statystyki", parent: null });
+    expect(navigation.heading).toEqual({
+      title: "Statystyki",
+      trail: [],
+      section: "organization-stats",
+    });
   });
 
   it("keeps scoped navigation when an Organization child route is in error", () => {

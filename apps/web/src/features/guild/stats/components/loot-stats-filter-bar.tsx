@@ -24,7 +24,7 @@ export const LootStatsFilterBar = ({
   const { t } = useTranslation();
 
   const renderExcludeColossus = (id: string) => (
-    <div className="flex h-10 items-center gap-2 rounded-lg border border-border bg-background px-3 transition-colors hover:border-foreground/20 hover:bg-foreground/[0.04]">
+    <div className="flex h-10 items-center gap-2 rounded-lg border border-input bg-background px-3 transition-colors hover:border-foreground/20 hover:bg-foreground/[0.04]">
       <Checkbox
         id={id}
         checked={excludeColossus}
