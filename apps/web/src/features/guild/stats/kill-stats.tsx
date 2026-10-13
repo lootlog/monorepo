@@ -1,4 +1,3 @@
-import { AnimatedToggleGroup } from "@/components/ui/animated-toggle-group";
 import {
   getKillsControllerGetGuildKillStatsQueryKey,
   useKillsControllerGetGuildKillStats,
@@ -9,7 +8,10 @@ import { useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "usehooks-ts";
 import { KillStatsFilterBar } from "@/features/kills/components/kill-stats-filter-bar";
+import { KillStatsActivity } from "./components/kill-stats-activity";
 import { KillStatsOverview } from "./components/kill-stats-overview";
+import { KillStatsRecords } from "./components/kill-stats-records";
+import { KillStatsTimeline } from "./components/kill-stats-timeline";
 import { MemberLeaderboardCard } from "./components/member-leaderboard-card";
 import { TopNpcsCard } from "./components/top-npcs-card";
 import { TRACKABLE_NPC_TYPES } from "./constants";
@@ -85,26 +87,22 @@ export const KillStats = () => {
           }}
         />
 
-        <KillStatsOverview data={data?.overview} isLoading={isLoading} />
+        <KillStatsOverview
+          data={data?.overview}
+          isLoading={isLoading}
+          selectedType={npcType}
+          onSelectType={setNpcType}
+        />
 
         <section
           aria-labelledby="kill-stats-leaders"
           className="flex flex-col gap-3"
         >
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 pt-1">
-            <h2 id="kill-stats-leaders" className="text-base font-semibold">
-              {t("kills.leaders.title")}
-            </h2>
-            <AnimatedToggleGroup
-              label={t("kills.filters.npcType")}
-              value={npcType}
-              onValueChange={setNpcType}
-              options={TRACKABLE_NPC_TYPES.map((type) => ({
-                value: type,
-                label: t(`npcType.${type}`),
-              }))}
-            />
-          </div>
+          <h2 id="kill-stats-leaders" className="sr-only">
+            {t("kills.leaders.titleWithType", {
+              type: t(`npcType.${npcType}`),
+            })}
+          </h2>
           <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
             <MemberLeaderboardCard
               data={data?.memberRanking}
@@ -123,6 +121,18 @@ export const KillStats = () => {
             />
           </div>
         </section>
+
+        <KillStatsTimeline data={data?.timeline} isLoading={isLoading} />
+
+        {data && data.hourlyWeekday.length > 0 && (
+          <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-3">
+            <KillStatsRecords data={data} />
+            <KillStatsActivity
+              cells={data.hourlyWeekday}
+              className="min-w-0 xl:col-span-2"
+            />
+          </div>
+        )}
       </div>
     </ScrollArea>
   );
