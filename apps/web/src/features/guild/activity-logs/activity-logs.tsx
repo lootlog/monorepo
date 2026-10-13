@@ -114,6 +114,8 @@ export const ActivityLogs = () => {
       return (
         <TableRowsSkeleton
           rows={ACTIVITY_LOGS_PAGE_LIMIT}
+          withHeader
+          rowContent="text"
           mobileList={
             <ActivityLogsMobileListSkeleton rows={ACTIVITY_LOGS_PAGE_LIMIT} />
           }

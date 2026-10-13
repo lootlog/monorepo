@@ -121,6 +121,7 @@ export function HeadToHeadPageVariant({
         <TableRowsSkeleton
           withHeader
           trailingColumns={trailingSkeletonColumns}
+          rowContent="text"
           mobileList={
             <CardListSkeleton
               card={

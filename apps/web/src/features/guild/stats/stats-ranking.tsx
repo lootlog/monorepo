@@ -127,6 +127,7 @@ export const StatsRanking = () => {
 
       <StatsTableCard
         isLoading={isLoading}
+        rowContent="text"
         mobileSkeleton={
           <StatsMobileListSkeleton media="avatar" withTypeCounts />
         }

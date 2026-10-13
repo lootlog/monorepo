@@ -61,6 +61,7 @@ export const BattlePanelH2hSkeleton = ({
           <div className="relative min-h-0 flex-1 overflow-hidden">
             <TableRowsSkeleton
               withHeader
+              rowContent="text"
               mobileList={<CardListSkeleton card={mobileCard} />}
             />
           </div>
