@@ -8,6 +8,7 @@ import {
 } from "@lootlog/ui/components/chart";
 import { BattlePanelChartFrame } from "./battle-panel-chart-frame";
 import { ChartCard } from "@/components/common/chart-card";
+import { CHART_SERIES_ANIMATION } from "@/lib/motion";
 
 type GrowthChartCardProps<TData extends { date: string }> = {
   chartData: TData[];
@@ -83,6 +84,7 @@ export function GrowthChartCard<TData extends { date: string }>({
               />
             />
             <Line
+              {...CHART_SERIES_ANIMATION}
               dataKey={dataKey}
               type="monotone"
               stroke={`var(--color-${dataKey})`}

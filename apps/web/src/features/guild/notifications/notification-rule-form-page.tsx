@@ -2,7 +2,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { MultiSelect } from "@/components/ui/multi-select";
-import { NotificationFormSkeleton } from "./notification-form-skeleton";
+import { NotificationCreateSkeleton } from "./notification-create-skeleton";
 import { NotificationNpcFields } from "./notification-npc-fields";
 import { NotificationScheduleFields } from "./notification-schedule-fields";
 import { NotificationTimerFields } from "./notification-timer-fields";
@@ -61,15 +61,7 @@ export const NotificationRuleFormPage = () => {
     handleSubmit,
   } = useNotificationRuleForm();
 
-  if (isLoading) {
-    return (
-      <div className="flex h-full min-h-0 flex-col">
-        <div className="flex flex-col gap-3 px-3 py-3">
-          <NotificationFormSkeleton />
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <NotificationCreateSkeleton />;
 
   if (isError || (!isCreateMode && !rule)) {
     return (

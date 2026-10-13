@@ -1,8 +1,6 @@
 import { FilterBar } from "@/components/common/filter-bar";
 import { Button } from "@lootlog/ui/components/button";
 import { Kbd } from "@lootlog/ui/components/kbd";
-import { AnimatePresence } from "framer-motion";
-import * as m from "framer-motion/m";
 import { Filter, Search } from "lucide-react";
 import { useState } from "react";
 import { ViewModeToggle } from "@/components/ui/view-mode-toggle";
@@ -100,18 +98,9 @@ export const LootFiltersHeader = ({
               })}
             </Kbd>
           )}
-          {/* The responsive toolbar owns this button; filter changes keep the presence boundary mounted. */}
-          {/* eslint-disable-next-line react-doctor/motion-animate-presence-must-outlive-child */}
-          <AnimatePresence>
-            {hasSearchFilters && (
-              <m.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="absolute -left-1 -top-1 h-3 w-3 rounded-full border-2 border-background bg-primary"
-              />
-            )}
-          </AnimatePresence>
+          {hasSearchFilters && (
+            <div className="absolute -left-1 -top-1 h-3 w-3 animate-pop-in rounded-full border-2 border-background bg-primary motion-reduce:animate-none" />
+          )}
         </Button>
       </div>
 
@@ -151,18 +140,9 @@ export const LootFiltersHeader = ({
                 className="relative shrink-0"
               >
                 <Filter className="size-4" aria-hidden="true" />
-                {/* The responsive toolbar owns this button; filter changes keep the presence boundary mounted. */}
-                {/* eslint-disable-next-line react-doctor/motion-animate-presence-must-outlive-child */}
-                <AnimatePresence>
-                  {hasActiveFilters && !isFiltersOpen && (
-                    <m.div
-                      initial={{ scale: 0.95, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0.95, opacity: 0 }}
-                      className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background"
-                    />
-                  )}
-                </AnimatePresence>
+                {hasActiveFilters && !isFiltersOpen && (
+                  <div className="absolute -top-1 -right-1 h-3 w-3 animate-pop-in rounded-full border-2 border-background bg-primary motion-reduce:animate-none" />
+                )}
               </Button>
             </ThemeInteractiveFrame>
           </div>

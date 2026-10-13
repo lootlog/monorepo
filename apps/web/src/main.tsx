@@ -4,7 +4,6 @@ import ReactDOM from "react-dom/client";
 import { configureWebApiClients } from "@/lib/configure-api-clients";
 import { startContentEntrance } from "@/lib/content-entrance";
 import App from "./App.tsx";
-import "./reduced-motion.css";
 
 const loadMotionFeatures = () =>
   import("framer-motion").then(({ domMax }) => domMax);

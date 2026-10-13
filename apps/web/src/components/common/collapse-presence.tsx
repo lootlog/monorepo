@@ -3,6 +3,7 @@ import { AnimatePresence } from "framer-motion";
 import * as m from "framer-motion/m";
 import { cn } from "cn";
 import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
+import { EASE_EMPHASIZED, MOTION_DURATION } from "@/lib/motion";
 
 type CollapseAxis = "vertical" | "horizontal";
 
@@ -46,7 +47,7 @@ export const CollapsePresence = ({
           transition={
             prefersReducedMotion
               ? { duration: 0 }
-              : { duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }
+              : { duration: MOTION_DURATION.long, ease: EASE_EMPHASIZED }
           }
           className={cn("grid", className)}
         >

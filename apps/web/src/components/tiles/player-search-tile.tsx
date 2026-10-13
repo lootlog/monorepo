@@ -15,7 +15,7 @@ export const PlayerSearchTile: FC<PlayerSearchTileProps> = ({
   return (
     <div
       className={cn(
-        "w-[32px] h-[48px] relative cursor-pointer rounded-lg bg-muted/30 transition-all duration-200 hover:bg-muted/50 mr-2",
+        "w-[32px] h-[48px] relative cursor-pointer rounded-lg bg-muted/30 transition-colors duration-200 hover:bg-muted/50 mr-2",
         className,
       )}
       style={{

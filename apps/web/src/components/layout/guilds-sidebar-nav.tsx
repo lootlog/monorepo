@@ -8,8 +8,14 @@ import { SidebarNav } from "./sidebar-nav/sidebar-nav";
 import type { MenuItem } from "./sidebar-nav/types";
 import { GuildSidebarHeader } from "./guild-sidebar-header";
 import { GuildPinnedEventsSection } from "./guild-pinned-events-section";
+import { GuildSidebarNavPlaceholder } from "./guild-sidebar-nav-placeholder";
 import { CollapsePresence } from "@/components/common/collapse-presence";
-import { getListEventsQueryKey, useListEvents } from "@lootlog/client/main";
+import {
+  getListEventsQueryKey,
+  getListPinnedEventsQueryKey,
+  useListEvents,
+  useListPinnedEvents,
+} from "@lootlog/client/main";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useMatches } from "@tanstack/react-router";
 import {
@@ -76,6 +82,18 @@ export const GuildsSidebarNav: FC<GuildsSidebarNavProps> = ({
     },
   );
 
+  // Pinned events sit above the items, so the navigation waits for them
+  // instead of sliding down when they arrive.
+  const { isPending: isPinnedEventsPending } = useListPinnedEvents(
+    { guildId: activeEventsGuildId },
+    {
+      query: {
+        enabled: Boolean(activeEventsGuildId),
+        queryKey: getListPinnedEventsQueryKey({ guildId: activeEventsGuildId }),
+      },
+    },
+  );
+
   const activeEventCount = activeEvents?.length ?? 0;
   const hasActiveEvents = activeEventCount > 0;
 
@@ -103,6 +121,10 @@ export const GuildsSidebarNav: FC<GuildsSidebarNavProps> = ({
       isRouteFailed={routeFailure !== undefined}
     />
   );
+
+  if (activeEventsGuildId && isPinnedEventsPending) {
+    return <GuildSidebarNavPlaceholder />;
+  }
 
   return (
     <SidebarNav

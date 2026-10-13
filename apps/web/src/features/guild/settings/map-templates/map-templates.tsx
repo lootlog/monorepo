@@ -147,7 +147,7 @@ export const MapTemplatesSettings = () => {
                               <ChevronRight
                                 aria-hidden
                                 className={cn(
-                                  "size-4 shrink-0 text-muted-foreground transition-transform motion-reduce:transition-none",
+                                  "size-4 shrink-0 text-muted-foreground transition-[rotate] duration-200 ease-emphasized motion-reduce:transition-none",
                                   isExpanded && "rotate-90",
                                 )}
                               />

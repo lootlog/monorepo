@@ -3,6 +3,7 @@ import * as m from "framer-motion/m";
 import { Button } from "@lootlog/ui/components/button";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
+import { EASE_EMPHASIZED, MOTION_DURATION } from "@/lib/motion";
 
 export type UnsavedChangesBarProps = {
   isDirty: boolean;
@@ -40,8 +41,8 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{
-            duration: 0.2,
-            ease: "easeOut",
+            duration: MOTION_DURATION.medium,
+            ease: EASE_EMPHASIZED,
           }}
           className="pointer-events-none fixed bottom-0 left-0 right-0 md:left-(--sidebar-width) z-50 flex justify-center px-4 pb-4"
         >

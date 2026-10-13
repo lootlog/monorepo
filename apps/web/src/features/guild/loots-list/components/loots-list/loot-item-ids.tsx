@@ -69,7 +69,7 @@ export const LootItemIds: FC<LootItemIdsProps> = ({ loot }) => {
               <ChevronDown
                 aria-hidden="true"
                 className={cn(
-                  "size-4 shrink-0 text-muted-foreground transition-transform motion-reduce:transition-none",
+                  "size-4 shrink-0 text-muted-foreground transition-[rotate] duration-200 ease-emphasized motion-reduce:transition-none",
                   open && "rotate-180",
                 )}
               />

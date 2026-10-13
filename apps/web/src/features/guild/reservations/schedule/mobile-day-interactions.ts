@@ -1,6 +1,7 @@
 import type { MotionValue } from "framer-motion";
 import { HOURS, MIN_ROW_HEIGHT } from "./constants";
 import type { ReservationRange } from "./types";
+import { EASE_EMPHASIZED, MOTION_DURATION } from "@/lib/motion";
 
 export type DaySelection = {
   anchorMinutes: number;
@@ -28,13 +29,13 @@ export const TOUCH_MOVE_TOLERANCE_PX = 8;
 export const SWIPE_DRAG_THRESHOLD_PX = 10;
 
 export const SWIPE_COMMIT_TRANSITION = {
-  duration: 0.18,
-  ease: [0.16, 1, 0.3, 1],
+  duration: MOTION_DURATION.medium,
+  ease: EASE_EMPHASIZED,
 } as const;
 
 export const SWIPE_RETURN_TRANSITION = {
-  duration: 0.16,
-  ease: [0.16, 1, 0.3, 1],
+  duration: MOTION_DURATION.short,
+  ease: EASE_EMPHASIZED,
 } as const;
 
 export const getMinutesFromClientY = (
