@@ -7,7 +7,7 @@ import {
 } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { stableJsonStringify } from "@lootlog/schema/stable-json";
-import { Cause, Clock, Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import type { guildTable, roleTable } from "#src/database/drizzle/schema";
 import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import {
@@ -43,9 +43,9 @@ type ResolvedLootItem = Effect.Success<
   ReturnType<LootQueryOperations["resolveLootItemByHid"]>
 >;
 
-type FetchedLoot = Effect.Success<
-  ReturnType<LootQueryOperations["fetchLootById"]>
->;
+type FetchedLootRead = ReturnType<LootQueryOperations["fetchLootById"]>;
+
+type FetchedLoot = Effect.Success<FetchedLootRead>;
 
 type LootComments = Effect.Success<ReturnType<LootPersistence["listComments"]>>;
 
@@ -179,10 +179,7 @@ export const makeLootsOperations = ({
   redis,
   logger,
 }: LootsDependencies): LootsOperations => {
-  const pendingDetails = new Map<
-    string,
-    ReturnType<LootQueryOperations["fetchLootById"]>
-  >();
+  const pendingDetails = new Map<string, FetchedLootRead>();
 
   const attempt = <A>(operation: string, run: () => Promise<A>) =>
     Effect.tryPromise({
@@ -349,15 +346,8 @@ export const makeLootsOperations = ({
 
           const pending = pendingDetails.get(key);
 
-          const read = query.fetchLootById(guild, permissions, roles, lootId);
-
-          // A disconnected initiating client must not cancel another client's read.
           if (pending) {
-            const loot = yield* restore(
-              pending.pipe(
-                Effect.catchCauseIf(Cause.hasInterruptsOnly, () => read),
-              ),
-            );
+            const loot = yield* restore(pending);
 
             // Another replica may have archived the record after this flight began.
             if (!loot) return null;
@@ -369,16 +359,33 @@ export const makeLootsOperations = ({
             return visible ? loot : null;
           }
 
+          const read = query.fetchLootById(guild, permissions, roles, lootId);
+
           // Bound retained flights; completed results are never cached.
           if (pendingDetails.size >= MAX_PENDING_DETAIL_READS)
             return yield* restore(read);
 
-          const shared = yield* Effect.cached(read);
+          // Effect.cached starts a new run after every caller abandons the last
+          // one, so only the newest run, or no run at all, may release the key.
+          let runs = 0;
+
+          const release = (run: number) =>
+            Effect.sync(() => {
+              if (runs === run) pendingDetails.delete(key);
+            });
+
+          // The flight outlives a disconnected initiator while others still wait.
+          const shared = yield* Effect.cached(
+            Effect.suspend(() => {
+              const run = ++runs;
+
+              return read.pipe(Effect.ensuring(release(run)));
+            }),
+          );
+
           pendingDetails.set(key, shared);
 
-          return yield* restore(shared).pipe(
-            Effect.ensuring(Effect.sync(() => pendingDetails.delete(key))),
-          );
+          return yield* restore(shared).pipe(Effect.ensuring(release(0)));
         }),
       ),
 
