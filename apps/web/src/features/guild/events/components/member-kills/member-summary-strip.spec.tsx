@@ -5,46 +5,68 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemberSummaryStrip } from "./member-summary-strip";
 
-await initializeTestTranslations();
+await initializeTestTranslations({
+  "events.kills.kpiShareOfEventKills":
+    "events.kills.kpiShareOfEventKills:{{percentage}}",
+  "events.kills.kpiActiveShare": "events.kills.kpiActiveShare:{{percentage}}",
+});
 
 afterEach(cleanup);
 
+const contextStats = {
+  avgAfkPercentage: 2.5,
+  avgPointsPerKill: 1.5,
+  avgTimePerKillSeconds: 5160,
+  totalKills: 3,
+  totalPoints: 4.5,
+  totalTimeSeconds: 15_480,
+};
+
 describe("MemberSummaryStrip", () => {
-  it("shows the player, event, KPIs, and hero summary in one readable overview", () => {
+  it("relates the member's kills and AFK time to the event", () => {
     render(
       <MemberSummaryStrip
         member={{ avatar: null, name: "Wild", userId: "user-1" }}
         memberId="8112"
         eventName="Wakacje 2026"
-        contextStats={{
-          avgAfkPercentage: 0,
-          avgPointsPerKill: 1.5,
-          avgTimePerKillSeconds: 5160,
-          totalKills: 2,
-          totalPoints: 3,
-          totalTimeSeconds: 10_380,
-        }}
+        contextStats={contextStats}
+        eventKillCount={4}
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Wild" })).toBeTruthy();
-    expect(screen.getByText("Wakacje 2026")).toBeTruthy();
-    expect(screen.getByText("events.kills.kpiKills")).toBeTruthy();
-    expect(screen.getByText("events.kills.kpiPoints")).toBeTruthy();
-    expect(screen.getByText("events.kills.kpiTotalTime")).toBeTruthy();
-    expect(screen.getByText("events.kills.kpiAvgAfk")).toBeTruthy();
-    expect(screen.getByText("events.kills.kpiAvgPointsPerKill")).toBeTruthy();
-    expect(screen.getByText("events.kills.kpiAvgTimePerKill")).toBeTruthy();
-    expect(screen.getAllByText("2").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("3").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("2h 53m").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("0%").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("1.5").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("1h 26m").length).toBeGreaterThan(0);
-    expect(screen.queryByRole("button")).toBeNull();
+    expect(
+      screen.getByText("events.kills.kpiShareOfEventKills:75"),
+    ).toBeTruthy();
+    expect(screen.getByText("events.kills.kpiActiveShare:97.5")).toBeTruthy();
   });
 
-  it("keeps the overview useful when the member has no statistics", () => {
+  it("shows the ranking place only when one hero's ranking applies", () => {
+    const { rerender } = render(
+      <MemberSummaryStrip
+        member={{ avatar: null, name: "Wild", userId: "user-1" }}
+        memberId="8112"
+        eventName="Wakacje 2026"
+        contextStats={contextStats}
+      />,
+    );
+
+    expect(screen.queryByText("events.kills.memberRankingPlace")).toBeNull();
+
+    rerender(
+      <MemberSummaryStrip
+        member={{ avatar: null, name: "Wild", userId: "user-1" }}
+        memberId="8112"
+        eventName="Wakacje 2026"
+        contextStats={contextStats}
+        rankingPlace={{ position: 2, playerCount: 14 }}
+      />,
+    );
+
+    expect(screen.getByText("events.kills.memberRankingPlace")).toBeTruthy();
+    expect(screen.getByText("2")).toBeTruthy();
+  });
+
+  it("keeps the overview useful without member details or kills", () => {
     render(
       <MemberSummaryStrip
         member={undefined}
@@ -58,10 +80,12 @@ describe("MemberSummaryStrip", () => {
           totalPoints: 0,
           totalTimeSeconds: 0,
         }}
+        eventKillCount={0}
       />,
     );
 
     expect(screen.getByRole("heading", { name: "#8112" })).toBeTruthy();
-    expect(screen.getAllByText("0").length).toBeGreaterThan(0);
+    expect(screen.queryByText(/events.kills.kpiShareOfEventKills/)).toBeNull();
+    expect(screen.queryByText(/events.kills.kpiActiveShare/)).toBeNull();
   });
 });

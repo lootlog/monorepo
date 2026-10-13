@@ -2,7 +2,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { sumBy } from "es-toolkit";
 import type { TOptions } from "i18next";
 import { TextLink } from "@lootlog/ui/components/text-link";
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
@@ -30,6 +30,7 @@ import {
   getScoringItems,
 } from "../../utils/scoring-presentation";
 import { ManualPointsEditDialog } from "../dialogs/manual-points-edit-dialog";
+import { ScoringBreakdownList } from "../shared/scoring-breakdown-list";
 import { EMPTY_VALUE } from "@/constants/empty-value";
 
 interface KillParticipantRowProps {
@@ -274,29 +275,10 @@ export const KillParticipantRow = ({
             <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
               {t("events.kills.scoringBreakdown")}
             </p>
-            <dl className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 gap-y-1.5 text-xs">
-              {scoringItems.map((item) => (
-                <Fragment key={`${item.label}:${item.value}`}>
-                  <dt className="truncate text-muted-foreground">
-                    {item.label}
-                  </dt>
-                  <dd
-                    className={cn(
-                      "text-right font-semibold tabular-nums",
-                      item.valueClassName,
-                    )}
-                  >
-                    {item.value}
-                  </dd>
-                </Fragment>
-              ))}
-              <dt className="border-t border-border/60 pt-1.5 font-medium">
-                {t("events.kills.pointsTooltip.total")}
-              </dt>
-              <dd className="border-t border-border/60 pt-1.5 text-right font-bold tabular-nums text-primary">
-                {formatPoints(participant.points)}
-              </dd>
-            </dl>
+            <ScoringBreakdownList
+              items={scoringItems}
+              totalPoints={participant.points}
+            />
           </div>
 
           <div className="min-w-0">
