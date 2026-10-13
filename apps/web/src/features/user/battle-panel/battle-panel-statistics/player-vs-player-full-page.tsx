@@ -114,6 +114,8 @@ export function PlayerVsPlayerFullPage() {
     if (isLoading) {
       return (
         <TableRowsSkeleton
+          withHeader
+          rowContent="text"
           mobileList={
             <CardListSkeleton card={<BattlePanelPvpBattleCardSkeleton />} />
           }

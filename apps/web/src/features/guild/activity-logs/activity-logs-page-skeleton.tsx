@@ -33,6 +33,8 @@ export const ActivityLogsPageSkeleton = () => (
     >
       <TableRowsSkeleton
         rows={20}
+        withHeader
+        rowContent="text"
         mobileList={<ActivityLogsMobileListSkeleton rows={20} />}
       />
     </ResultsSurface>

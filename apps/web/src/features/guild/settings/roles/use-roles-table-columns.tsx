@@ -80,7 +80,7 @@ export function useRolesTableColumns({
           <Link
             to="/$guildId/settings/roles/$roleId"
             params={{ guildId, roleId: role.id }}
-            className="flex min-h-7 min-w-0 items-center gap-1"
+            className="flex min-h-5 min-w-0 items-center gap-1"
           >
             {activeCategories.length > 0 ? (
               <>

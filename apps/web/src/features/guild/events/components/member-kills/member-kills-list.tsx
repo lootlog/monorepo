@@ -7,13 +7,13 @@ import { useTranslation } from "react-i18next";
 import { useTable } from "@tanstack/react-table";
 import { CircleAlert, RotateCcw, Skull } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
   Table,
   TableBody,
   TableCell,
   TableRow,
 } from "@lootlog/ui/components/table";
+import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
@@ -132,13 +132,7 @@ export const MemberKillsList = ({
     if (isLoading) {
       return (
         <div aria-busy="true" aria-label={t("events.kills.loading")}>
-          <Skeleton className="h-10 w-full rounded-none border-b border-border" />
-          {Array.from({ length: 7 }).map((_, index) => (
-            <Skeleton
-              key={index}
-              className="h-14 w-full rounded-none border-b border-border last:border-b-0"
-            />
-          ))}
+          <TableRowsSkeleton rows={7} withHeader rowContent="text" />
         </div>
       );
     }

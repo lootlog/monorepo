@@ -7,6 +7,7 @@ export const Route = createFileRoute("/_authenticated/$guildId/stats/ranking")({
   component: StatsRanking,
   pendingComponent: () => (
     <StatsTablePageSkeleton
+      rowContent="text"
       mobileSkeleton={<StatsMobileListSkeleton media="avatar" withTypeCounts />}
     />
   ),
