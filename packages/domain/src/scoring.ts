@@ -1,4 +1,5 @@
 import { Predicate } from "effect";
+import { clamp } from "es-toolkit";
 import {
   calculateLocalWindowOverlapMs,
   isLocalTimeInRange,
@@ -283,9 +284,10 @@ export function calculateRespawnProgressPercentage(params: {
     return undefined;
   }
 
-  const elapsedWindowMs = Math.min(
+  const elapsedWindowMs = clamp(
+    params.killTime.getTime() - params.respawnStartTime.getTime(),
+    0,
     fullWindowMs,
-    Math.max(0, params.killTime.getTime() - params.respawnStartTime.getTime()),
   );
 
   return Math.round((elapsedWindowMs / fullWindowMs) * 100);
@@ -303,9 +305,7 @@ function toNumber(value: unknown, fallback: number, min = 0, max?: number) {
     return fallback;
   }
 
-  const boundedValue = Math.max(min, value);
-
-  return max === undefined ? boundedValue : Math.min(max, boundedValue);
+  return max === undefined ? Math.max(min, value) : clamp(value, min, max);
 }
 
 function toClock(value: unknown, fallback: string): string {

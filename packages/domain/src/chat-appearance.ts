@@ -1,5 +1,5 @@
 import { Predicate, Schema } from "effect";
-import { isEqual } from "es-toolkit";
+import { clamp, isEqual } from "es-toolkit";
 import {
   CHAT_APPEARANCE_COMPACT_PRESET,
   CHAT_APPEARANCE_READABLE_PRESET,
@@ -22,7 +22,7 @@ const normalizeNumber = (
     return fallback;
   }
 
-  return Math.min(maximum, Math.max(minimum, value));
+  return clamp(value, minimum, maximum);
 };
 
 const isChatNpcLayout = Schema.is(ChatNpcLayoutSchema);
