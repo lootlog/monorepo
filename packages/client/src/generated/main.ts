@@ -811,9 +811,36 @@ export type GuildKillStatsResponseDtoOutputMemberRankingItem = {
   participationsByType: GuildKillStatsResponseDtoOutputMemberRankingItemParticipationsByType;
 };
 
+export type GuildKillStatsResponseDtoOutputTimelineUnit = typeof GuildKillStatsResponseDtoOutputTimelineUnit[keyof typeof GuildKillStatsResponseDtoOutputTimelineUnit];
+
+
+export const GuildKillStatsResponseDtoOutputTimelineUnit = {
+  hour: 'hour',
+  day: 'day',
+} as const;
+
+export type GuildKillStatsResponseDtoOutputTimelinePointsItem = {
+  date: string;
+  kills: number;
+};
+
+export type GuildKillStatsResponseDtoOutputTimeline = {
+  unit: GuildKillStatsResponseDtoOutputTimelineUnit;
+  untimedKills: number;
+  points: GuildKillStatsResponseDtoOutputTimelinePointsItem[];
+};
+
+export type GuildKillStatsResponseDtoOutputHourlyWeekdayItem = {
+  weekday: number;
+  hour: number;
+  kills: number;
+};
+
 export interface GuildKillStatsResponseDtoOutput {
   overview: GuildKillStatsResponseDtoOutputOverview;
   memberRanking: GuildKillStatsResponseDtoOutputMemberRankingItem[];
+  timeline: GuildKillStatsResponseDtoOutputTimeline;
+  hourlyWeekday: GuildKillStatsResponseDtoOutputHourlyWeekdayItem[];
 }
 
 export interface CreateKillResponseDtoOutput {

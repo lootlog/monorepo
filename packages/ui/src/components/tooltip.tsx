@@ -17,8 +17,19 @@ function TooltipProvider({
   );
 }
 
-function Tooltip({ ...props }: TooltipPrimitive.Root.Props) {
-  return <TooltipPrimitive.Root data-slot="tooltip" {...props} />;
+// Tooltips hold no controls, so they close as soon as the pointer leaves the
+// trigger and never cover the next trigger, e.g. the cell above in a heatmap.
+function Tooltip({
+  disableHoverablePopup = true,
+  ...props
+}: TooltipPrimitive.Root.Props) {
+  return (
+    <TooltipPrimitive.Root
+      data-slot="tooltip"
+      disableHoverablePopup={disableHoverablePopup}
+      {...props}
+    />
+  );
 }
 
 function TooltipTrigger({ ...props }: TooltipPrimitive.Trigger.Props) {
@@ -51,7 +62,7 @@ function TooltipContent({
           role="tooltip"
           data-slot="tooltip-content"
           className={cn(
-            "bg-background border-solid border text-foreground animate-in fade-in-0 zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-fit origin-(--transform-origin) rounded-xl px-3 py-1.5 text-xs text-balance",
+            "pointer-events-none bg-background border-solid border text-foreground animate-in fade-in-0 zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-fit origin-(--transform-origin) rounded-xl px-3 py-1.5 text-xs text-balance",
             className,
           )}
           {...props}
