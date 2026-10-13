@@ -9,7 +9,14 @@ const Content = lazy(() =>
 
 export function KillAnalyticsTrend(props: ComponentProps<typeof Content>) {
   return (
-    <Suspense fallback={<KillAnalyticsTrendSkeleton title={props.title} />}>
+    <Suspense
+      fallback={
+        <KillAnalyticsTrendSkeleton
+          title={props.title}
+          description={props.description}
+        />
+      }
+    >
       <Content {...props} />
     </Suspense>
   );

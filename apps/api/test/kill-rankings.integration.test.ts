@@ -25,6 +25,7 @@ import {
 import { makeEventPointsStore } from "../src/events/kills/event-points.repository.js";
 import { makeKillStatsPersistence } from "../src/kills/kill-stats-persistence.js";
 import { makeGuildKillQueries } from "../src/kills/guild-kill-queries.js";
+import { getKillStatsBucketStart } from "../src/kills/kill-stats-period.js";
 import { applicationLogger } from "../src/shared/application-logger.js";
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
@@ -32,6 +33,8 @@ const runtime = ManagedRuntime.make(ApiDatabaseLive);
 const guildId = `kill-ranking-${randomUUID()}`;
 
 const otherGuildId = `kill-ranking-${randomUUID()}`;
+
+const timelineGuildId = `kill-ranking-${randomUUID()}`;
 
 const memberIds = { first: 0, second: 0 };
 
@@ -48,7 +51,7 @@ beforeAll(async () => {
     Effect.gen(function* () {
       const db = yield* ApiDatabase;
       yield* db.insert(guildTable).values(
-        [guildId, otherGuildId].map((id) => ({
+        [guildId, otherGuildId, timelineGuildId].map((id) => ({
           id,
           name: "Ranking integration",
           ownerId: "owner",
@@ -187,12 +190,16 @@ afterAll(async () => {
       ]) {
         yield* db
           .delete(table)
-          .where(inArray(table.guildId, [guildId, otherGuildId]));
+          .where(
+            inArray(table.guildId, [guildId, otherGuildId, timelineGuildId]),
+          );
       }
 
       yield* db
         .delete(guildTable)
-        .where(inArray(guildTable.id, [guildId, otherGuildId]));
+        .where(
+          inArray(guildTable.id, [guildId, otherGuildId, timelineGuildId]),
+        );
     }),
   );
   await runtime.dispose();
@@ -390,6 +397,127 @@ test("role visibility restricts totals and metadata before every SQL ranking", a
       expect(
         yield* service.getNpcKillers(guildId, restricted, roles, 2),
       ).toBeNull();
+    }),
+  );
+});
+
+test("the kill timeline and weekly hours follow Warsaw days, fill quiet days, count untimed history and respect role visibility", async () => {
+  await runtime.runPromise(
+    Effect.gen(function* () {
+      const db = yield* ApiDatabase;
+      const service = yield* queries;
+      const currentHour = getKillStatsBucketStart(new Date());
+
+      const bucket = (
+        periodStart: Date,
+        kills: number,
+        npcType: NpcType = NpcType.ELITE2,
+        bucketGuildId = timelineGuildId,
+      ) => ({
+        guildId: bucketGuildId,
+        world: "a",
+        npcId: npcType === NpcType.HERO ? 2 : 1,
+        npcName: "Timeline",
+        npcType,
+        npcLvl: 100,
+        npcProf: "w",
+        npcIcon: "timeline.gif",
+        kills,
+        periodStart,
+        lastKilledAt: periodStart,
+      });
+
+      yield* db.insert(guildKillBucketTable).values([
+        // 23:00 on Tuesday and midnight on Wednesday in Warsaw (CEST).
+        bucket(new Date("2026-07-14T21:00:00Z"), 2),
+        bucket(new Date("2026-07-14T22:00:00Z"), 3),
+        bucket(new Date("2026-07-15T22:00:00Z"), 50, NpcType.HERO),
+        bucket(new Date("2026-07-14T22:00:00Z"), 999, NpcType.ELITE2, guildId),
+        bucket(currentHour, 4),
+      ]);
+
+      // 100 Elita II kills predate hourly history and live only in the totals.
+      yield* db
+        .insert(guildKillTotalTable)
+        .values(
+          [bucket(currentHour, 109), bucket(currentHour, 50, NpcType.HERO)].map(
+            ({ periodStart: _start, ...total }) => total,
+          ),
+        );
+
+      const all = yield* service.getGuildKillStats(
+        timelineGuildId,
+        policy,
+        [],
+        {
+          period: "all",
+        },
+      );
+
+      expect(all.timeline.unit).toBe("day");
+      expect(all.timeline.untimedKills).toBe(100);
+      expect(all.timeline.points.slice(0, 4)).toEqual([
+        { date: "2026-07-14", kills: 2 },
+        { date: "2026-07-15", kills: 3 },
+        { date: "2026-07-16", kills: 50 },
+        { date: "2026-07-17", kills: 0 },
+      ]);
+      expect(all.timeline.points.at(-1)?.kills).toBe(4);
+      expect(all.hourlyWeekday).toEqual(
+        expect.arrayContaining([
+          { weekday: 2, hour: 23, kills: 2 },
+          { weekday: 3, hour: 0, kills: 3 },
+          { weekday: 4, hour: 0, kills: 50 },
+        ]),
+      );
+
+      const day = yield* service.getGuildKillStats(
+        timelineGuildId,
+        policy,
+        [],
+        {
+          period: "24h",
+        },
+      );
+
+      expect(day.timeline.unit).toBe("hour");
+      expect(day.timeline.untimedKills).toBe(0);
+      expect(day.timeline.points).toHaveLength(25);
+      expect(day.timeline.points.at(-1)).toEqual({
+        date: currentHour.toISOString(),
+        kills: 4,
+      });
+
+      const restricted = yield* service.getGuildKillStats(
+        timelineGuildId,
+        createAccessPolicy({ capabilities: [Permission.LOOTLOG_LOOTS_READ] }),
+        [
+          {
+            id: "limited",
+            guildId: timelineGuildId,
+            name: "Limited",
+            color: null,
+            position: null,
+            permissions: [Permission.LOOTLOG_LOOTS_READ],
+            lvlRangeFrom: 0,
+            lvlRangeTo: 150,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ],
+        { period: "all" },
+      );
+
+      expect(restricted.timeline.untimedKills).toBe(100);
+      expect(restricted.timeline.points[2]).toEqual({
+        date: "2026-07-16",
+        kills: 0,
+      });
+      expect(
+        restricted.hourlyWeekday.find(
+          (cell) => cell.weekday === 4 && cell.hour === 0,
+        ),
+      ).toBeUndefined();
     }),
   );
 });

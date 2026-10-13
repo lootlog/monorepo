@@ -3,12 +3,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { Button } from "@lootlog/ui/components/button";
-import { PlusCircleIcon } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { useGlobalContext } from "@/hooks/context/use-global-context";
 
+// Ends the guild list like Discord's "Add a Server", sized as a guild avatar.
 export const GuildNavCreate: FC = () => {
   const { t } = useTranslation();
 
@@ -17,23 +17,24 @@ export const GuildNavCreate: FC = () => {
   } = useGlobalContext();
 
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <Button
-            aria-label={t("ui.tooltips.createLootlog")}
-            className="h-auto w-14 flex-col gap-1 px-1 py-1.5 text-xs leading-none has-[>svg]:px-1"
-            variant="ghost"
-            onClick={() => dispatch({ type: "OPEN" })}
-          >
-            <PlusCircleIcon aria-hidden="true" className="!size-6" />
-            {t("ui.sidebar.createLootlog")}
-          </Button>
-        }
-      />
-      <TooltipContent side="right">
-        {t("ui.tooltips.createLootlog")}
-      </TooltipContent>
-    </Tooltip>
+    <div className="mb-2 flex w-full items-center justify-center">
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <button
+              type="button"
+              aria-label={t("ui.tooltips.createLootlog")}
+              className="flex size-11 cursor-pointer items-center justify-center rounded-xl border border-dashed border-sidebar-foreground/30 text-sidebar-foreground/60 transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
+              onClick={() => dispatch({ type: "OPEN" })}
+            >
+              <Plus aria-hidden="true" className="size-5" />
+            </button>
+          }
+        />
+        <TooltipContent side="right">
+          {t("ui.tooltips.createLootlog")}
+        </TooltipContent>
+      </Tooltip>
+    </div>
   );
 };

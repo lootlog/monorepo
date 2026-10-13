@@ -3,6 +3,7 @@ import { FilterBar } from "@/components/common/filter-bar";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
+import { MoreFiltersPopover } from "@/components/filters/more-filters-popover";
 import { SearchInput } from "@/components/ui/search-input";
 import {
   KillStatsPeriodSelect,
@@ -60,10 +61,9 @@ export const KillStatsFilterBar = ({
 }: KillStatsFilterBarProps) => {
   const { t } = useTranslation();
 
-  const renderLevelRange = (layout: "inline" | "fill") =>
+  const renderLevelRange = () =>
     level && (
       <LevelRangeFilter
-        layout={layout}
         debounceMs={LEVEL_COMMIT_DELAY_MS}
         minLevel={parseKillStatsLevel(level.minLvl)}
         maxLevel={parseKillStatsLevel(level.maxLvl)}
@@ -137,7 +137,7 @@ export const KillStatsFilterBar = ({
           {level && (
             <div className="space-y-2">
               <Label>{t("kills.filters.levelRange")}</Label>
-              {renderLevelRange("fill")}
+              {renderLevelRange()}
             </div>
           )}
         </MobileFiltersDrawer>
@@ -156,7 +156,19 @@ export const KillStatsFilterBar = ({
           className="w-[200px]"
         />
         {npcType && <KillStatsNpcTypeSelect {...npcType} />}
-        {renderLevelRange("inline")}
+        {level && (
+          <MoreFiltersPopover
+            levelDebounceMs={LEVEL_COMMIT_DELAY_MS}
+            minLevel={parseKillStatsLevel(level.minLvl)}
+            maxLevel={parseKillStatsLevel(level.maxLvl)}
+            onMinLevelChange={(value) =>
+              level.onMinLvlChange(toLevelParam(value))
+            }
+            onMaxLevelChange={(value) =>
+              level.onMaxLvlChange(toLevelParam(value))
+            }
+          />
+        )}
       </div>
     </FilterBar>
   );

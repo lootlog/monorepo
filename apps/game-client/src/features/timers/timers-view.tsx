@@ -218,30 +218,33 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
       <UnderBagTimers>
         {/* Mirrors the window title bar: actions lead, the title sits in the
             middle column, and the empty trailing column keeps it centered.
-            Same height as the title bar, with no gap before the content. */}
-        <div className="ll:grid ll:h-6 ll:shrink-0 ll:grid-cols-[1fr_auto_1fr] ll:items-center ll:gap-1 ll:px-0.5">
-          <div className="ll:flex ll:items-center ll:justify-self-start">
-            <TimersActions
-              timerFiltersEnabled={resolvedTimerFiltersEnabled}
-              toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
-              colorFiltersEnabled={resolvedColorFiltersEnabled}
-              toggleColorFiltersEnabled={toggleColorFiltersEnabled}
-              timersSortOrder={sortOrder}
-              setTimersSortOrder={setTimersSortOrder}
-              showHiddenTimers={showHiddenTimers}
-              setShowHiddenTimers={setShowHiddenTimers}
-              guildId={guildId}
-              world={desiredWorld}
-              isGrouping={generalConfig.timersGrouping}
-              addTimerOpen={addTimerOpen}
-              onAddTimer={handleAddTimer}
-            />
+            Same height as the title bar, with no gap before the content.
+            Compact view hides it, as it hides the window's title bar. */}
+        {!generalConfig.compactView && (
+          <div className="ll:grid ll:h-6 ll:shrink-0 ll:grid-cols-[1fr_auto_1fr] ll:items-center ll:gap-1 ll:px-0.5">
+            <div className="ll:flex ll:items-center ll:justify-self-start">
+              <TimersActions
+                timerFiltersEnabled={resolvedTimerFiltersEnabled}
+                toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
+                colorFiltersEnabled={resolvedColorFiltersEnabled}
+                toggleColorFiltersEnabled={toggleColorFiltersEnabled}
+                timersSortOrder={sortOrder}
+                setTimersSortOrder={setTimersSortOrder}
+                showHiddenTimers={showHiddenTimers}
+                setShowHiddenTimers={setShowHiddenTimers}
+                guildId={guildId}
+                world={desiredWorld}
+                isGrouping={generalConfig.timersGrouping}
+                addTimerOpen={addTimerOpen}
+                onAddTimer={handleAddTimer}
+              />
+            </div>
+            <p className="ll:min-w-0 ll:truncate ll:text-center ll:text-xs ll:font-semibold ll:leading-none ll:tracking-wide ll:text-gray-100">
+              {t("underBag.title")}
+            </p>
+            <div aria-hidden="true" />
           </div>
-          <p className="ll:min-w-0 ll:truncate ll:text-center ll:text-xs ll:font-semibold ll:leading-none ll:tracking-wide ll:text-gray-100">
-            {t("underBag.title")}
-          </p>
-          <div aria-hidden="true" />
-        </div>
+        )}
         <TimersContent
           world={desiredWorld}
           sortedTimers={sortedTimers}

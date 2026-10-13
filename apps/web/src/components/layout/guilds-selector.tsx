@@ -1,10 +1,9 @@
 import { orderGuilds } from "@lootlog/domain/guild-preferences";
 import { GuildNavCreate } from "@/components/layout/guild-nav-create";
 import { GuildNavItem } from "@/components/layout/guild-nav-item";
+import { GuildReorderItem } from "@/components/layout/guild-reorder-item";
 import { GuildsRefreshButton } from "@/components/layout/guilds-refresh-button";
-import { InstallButton } from "@/components/layout/install-button";
 import { UserNavItem } from "@/components/layout/user-nav-item";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { Reorder } from "framer-motion";
 import { useState, useEffect, useLayoutEffect, useRef, type FC } from "react";
@@ -173,7 +172,7 @@ export const GuildsSelector: FC = () => {
     <div className="flex flex-col gap-2 w-16 border-r border-solid pt-2 pb-2 h-full overflow-hidden">
       <UserNavItem />
       <Separator className="-mt-[1px]" />
-      <ScrollArea className="flex-1 h-24">
+      <div className="flex-1 h-24 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {(guildsQuery.isError && !guilds) ||
         (preferencesQuery.isError && preferencesQuery.data === undefined) ? (
           <div className="flex h-12 items-center justify-center">
@@ -204,19 +203,11 @@ export const GuildsSelector: FC = () => {
               as="div"
             >
               {guildList.map((guild) => (
-                <Reorder.Item
+                <GuildReorderItem
                   key={guild.id}
                   value={guild}
                   onDragStart={handleDragStart}
                   onDragEnd={handleDragEnd}
-                  className="w-full flex items-center justify-center cursor-grab active:cursor-grabbing"
-                  whileDrag={{
-                    scale: 1.1,
-                    zIndex: 50,
-                    transition: { type: "spring", stiffness: 300, damping: 30 },
-                  }}
-                  dragListener
-                  dragControls={undefined}
                 >
                   <div className="w-full">
                     <GuildNavItem
@@ -234,9 +225,10 @@ export const GuildsSelector: FC = () => {
                       }
                     />
                   </div>
-                </Reorder.Item>
+                </GuildReorderItem>
               ))}
             </Reorder.Group>
+            <GuildNavCreate />
             <div className="flex justify-center pb-2">
               <GuildsRefreshButton
                 isRefreshing={refreshGuilds.isPending}
@@ -245,14 +237,6 @@ export const GuildsSelector: FC = () => {
             </div>
           </>
         )}
-      </ScrollArea>
-      <Separator />
-      <div className="flex items-center justify-center">
-        <GuildNavCreate />
-      </div>
-      <Separator />
-      <div className="flex items-center justify-center">
-        <InstallButton />
       </div>
     </div>
   );

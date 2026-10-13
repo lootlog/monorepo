@@ -27,6 +27,7 @@ type SettingsTableCardProps = {
   hasActiveFilters: boolean;
   onResetFilters: () => void;
   footer?: ReactNode;
+  notice?: ReactNode;
   /** The scroll viewport, for tables that virtualize their rows. */
   scrollRef?: Ref<HTMLDivElement>;
   children: ReactNode;
@@ -42,6 +43,7 @@ export const SettingsTableCard = ({
   hasActiveFilters,
   onResetFilters,
   footer,
+  notice,
   scrollRef,
   children,
 }: SettingsTableCardProps) => {
@@ -70,6 +72,7 @@ export const SettingsTableCard = ({
         scrollRef={scrollRef}
         withHorizontalScroll={!isMobile}
       >
+        {notice}
         {isEmpty ? (
           <EmptyState
             className="min-h-80"

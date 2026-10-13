@@ -10,17 +10,15 @@ import {
 import { cn } from "cn";
 import {
   activityLevel,
+  activityLevelClasses,
   calendarOffset,
   type ActivityDay,
 } from "./activity-calendar";
+import { formatIsoWeekday } from "@/components/common/kill-analytics/format-statistics-date";
+import { ActivityLegend } from "./activity-legend";
 
 const fullDateFormatter = new Intl.DateTimeFormat("pl-PL", {
   dateStyle: "full",
-  timeZone: "Europe/Warsaw",
-});
-
-const weekdayFormatter = new Intl.DateTimeFormat("pl-PL", {
-  weekday: "short",
   timeZone: "Europe/Warsaw",
 });
 
@@ -28,15 +26,6 @@ const monthFormatter = new Intl.DateTimeFormat("pl-PL", {
   month: "short",
   timeZone: "Europe/Warsaw",
 });
-
-const levels = {
-  unknown: "bg-muted/30 border border-dashed border-muted-foreground/50",
-  zero: "bg-muted",
-  1: "bg-primary/25",
-  2: "bg-primary/50",
-  3: "bg-primary/75",
-  4: "bg-primary",
-};
 
 type ActivityHeatmapProps = {
   days: ActivityDay[];
@@ -135,9 +124,7 @@ export function ActivityHeatmap({
               className="sticky left-0 z-10 flex items-center justify-end bg-card pr-1 text-[10px] text-muted-foreground"
               style={{ gridColumn: 1, gridRow: weekday + 2 }}
             >
-              {weekdayFormatter.format(
-                new Date(Date.UTC(2026, 0, 5 + weekday, 12)),
-              )}
+              {formatIsoWeekday(weekday + 1, true)}
             </span>
           ))}
           {days.map((day, index) => (
@@ -165,8 +152,8 @@ export function ActivityHeatmap({
                   aria-label={describe(day)}
                   tabIndex={activeIndex === index ? 0 : -1}
                   className={cn(
-                    "block size-full rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
-                    levels[
+                    "block size-full rounded-[3px] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
+                    activityLevelClasses[
                       activityLevel(
                         unknownDisplay === "lowest"
                           ? (day.value ?? 0)
@@ -223,26 +210,7 @@ export function ActivityHeatmap({
           {selected ? describe(selected) : t("statistics.heatmapHint")}
         </p>
       )}
-      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <span>{t("statistics.less")}</span>
-        {(["zero", 1, 2, 3, 4] as const).map((level) => (
-          <span
-            key={level}
-            aria-hidden
-            className={cn("size-3 rounded-sm", levels[level])}
-          />
-        ))}
-        <span>{t("statistics.more")}</span>
-        {unknownDisplay === "distinct" && (
-          <>
-            <span
-              aria-hidden
-              className={cn("ml-2 size-3 rounded-sm", levels.unknown)}
-            />
-            <span>{t("statistics.unknown")}</span>
-          </>
-        )}
-      </div>
+      <ActivityLegend showUnknown={unknownDisplay === "distinct"} />
     </div>
   );
 }

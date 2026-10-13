@@ -11,17 +11,21 @@ import { Award, SlidersHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 type MoreFiltersPopoverProps = {
+  /** Delay before a typed level bound is committed. */
+  levelDebounceMs?: number;
   maxLevel?: number;
   minLevel?: number;
   onMaxLevelChange: (maxLevel: number | undefined) => void;
   onMinLevelChange: (minLevel: number | undefined) => void;
-  onPhChange: (ph: boolean) => void;
+  /** Omit to offer only the level range. */
+  onPhChange?: (ph: boolean) => void;
   ph?: boolean;
-  phCheckboxId: string;
+  phCheckboxId?: string;
   showPhFilter?: boolean;
 };
 
 export const MoreFiltersPopover = ({
+  levelDebounceMs,
   maxLevel,
   minLevel,
   onMaxLevelChange,
@@ -29,9 +33,10 @@ export const MoreFiltersPopover = ({
   onPhChange,
   ph,
   phCheckboxId,
-  showPhFilter = true,
+  showPhFilter: showPhFilterProp = true,
 }: MoreFiltersPopoverProps) => {
   const { t } = useTranslation();
+  const showPhFilter = showPhFilterProp && onPhChange !== undefined;
 
   const extraFiltersCount =
     ((minLevel ?? 1) !== 1 || (maxLevel ?? 500) !== 500 ? 1 : 0) +
@@ -62,6 +67,7 @@ export const MoreFiltersPopover = ({
               {t("battlePanel.filters.levelRange")}
             </Label>
             <LevelRangeFilter
+              debounceMs={levelDebounceMs}
               minLevel={minLevel}
               maxLevel={maxLevel}
               onMinLevelChange={onMinLevelChange}
@@ -79,7 +85,7 @@ export const MoreFiltersPopover = ({
               <Checkbox
                 id={phCheckboxId}
                 checked={ph === true}
-                onCheckedChange={(checked) => onPhChange(checked === true)}
+                onCheckedChange={(checked) => onPhChange?.(checked === true)}
               />
             </div>
           )}
