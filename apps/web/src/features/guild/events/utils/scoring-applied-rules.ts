@@ -1,4 +1,5 @@
 import {
+  calculateRespawnProgressPercentage,
   evaluateEventScoring as evaluateSharedEventScoring,
   type EventScoringContext,
   type EventScoringRules,
@@ -36,30 +37,6 @@ export type ScoringSimulationResult = {
   bonusPoints: number;
   appliedRules: ScoringSimulationAppliedRule[];
 };
-
-function calculateRespawnProgressPercentage(params: {
-  killTime: Date;
-  respawnStartTime: Date;
-  maxRespawnTime: Date | null | undefined;
-}): number | undefined {
-  if (!params.maxRespawnTime) {
-    return undefined;
-  }
-
-  const fullWindowMs =
-    params.maxRespawnTime.getTime() - params.respawnStartTime.getTime();
-
-  if (fullWindowMs <= 0) {
-    return undefined;
-  }
-
-  const elapsedWindowMs = Math.min(
-    fullWindowMs,
-    Math.max(0, params.killTime.getTime() - params.respawnStartTime.getTime()),
-  );
-
-  return Math.round((elapsedWindowMs / fullWindowMs) * 100);
-}
 
 function parseDateIfValid(value: string | null | undefined): Date | null {
   if (!value) {
