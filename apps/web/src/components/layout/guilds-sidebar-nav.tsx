@@ -20,7 +20,6 @@ import type { MenuItem } from "./sidebar-nav/types";
 import { GuildSidebarHeader } from "./guild-sidebar-header";
 import { GuildPinnedEventsSection } from "./guild-pinned-events-section";
 import { CollapsePresence } from "@/components/common/collapse-presence";
-import { useCurrentUserGuild } from "@/hooks/api/use-current-user-guild";
 import { getListEventsQueryKey, useListEvents } from "@lootlog/client/main";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useMatches } from "@tanstack/react-router";
@@ -48,14 +47,20 @@ function getEventsIcon(hasActiveEvents: boolean) {
   );
 }
 
-export const GuildsSidebarNav: FC = () => {
+type GuildsSidebarNavProps = {
+  /** Set when the Organization route failed; `forbidden` is a 403. */
+  routeFailure?: "forbidden" | "unavailable";
+};
+
+export const GuildsSidebarNav: FC<GuildsSidebarNavProps> = ({
+  routeFailure,
+}) => {
   const guildId = useGuildId();
   const { data: accessPolicy } = useGuildPermissions();
   const { setOpenMobile } = useSidebar();
   const { t } = useTranslation();
   const matches = useMatches();
   const navigation = resolveAppNavigation({ matches, accessPolicy });
-  const hasAccess = useCurrentUserGuild(guildId)?.hasLootlogAccess !== false;
 
   const eventsNavigationItem = navigation.sidebarItems.find(
     ({ id }) => id === "organization-events",
@@ -111,7 +116,12 @@ export const GuildsSidebarNav: FC = () => {
     setOpenMobile(false);
   };
 
-  const sidebarHeader = <GuildSidebarHeader guildId={guildId} />;
+  const sidebarHeader = (
+    <GuildSidebarHeader
+      guildId={guildId}
+      isRouteFailed={routeFailure !== undefined}
+    />
+  );
 
   return (
     <SidebarNav
@@ -119,7 +129,7 @@ export const GuildsSidebarNav: FC = () => {
       header={sidebarHeader}
       beforeItems={
         <>
-          <CollapsePresence open={!hasAccess}>
+          <CollapsePresence open={routeFailure === "forbidden"}>
             <p className="flex items-center gap-2.5 px-5 pt-5 text-sm font-medium text-muted-foreground">
               <Lock aria-hidden="true" className="size-4 shrink-0" />
               {t("layout.guildsSelector.noAccess")}

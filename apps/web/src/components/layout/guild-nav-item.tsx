@@ -46,7 +46,8 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
   const isActive =
     currentGuildId === guild.id || currentGuildId === guild.vanityUrl;
 
-  const isLocked = !guild.hasLootlogAccess;
+  // Stale access data may already be outdated, so it never shows a lock.
+  const isLocked = !guild.hasLootlogAccess && !guild.isAccessDataStale;
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (isDragging) {
