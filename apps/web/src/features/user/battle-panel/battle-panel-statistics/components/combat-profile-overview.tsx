@@ -1,3 +1,4 @@
+import { formatBattleMetric } from "@/components/battle/utils/value-utils";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { formatDurationCompact } from "@/features/guild/events/utils/format-duration";
 import { KpiCard } from "@/components/common/kpi-card";
@@ -13,10 +14,6 @@ type CombatProfileOverviewProps = {
   showRecord?: boolean;
 };
 
-const numberFormatter = new Intl.NumberFormat("pl-PL", {
-  maximumFractionDigits: 1,
-});
-
 const compactFormatter = new Intl.NumberFormat("pl-PL", {
   notation: "compact",
   maximumFractionDigits: 1,
@@ -26,8 +23,6 @@ const signedFormatter = new Intl.NumberFormat("pl-PL", {
   maximumFractionDigits: 1,
   signDisplay: "exceptZero",
 });
-
-const formatNumber = (value: number): string => numberFormatter.format(value);
 
 const EMPTY_SUMMARY: CombatProfileResponseDtoOutput["summary"] = {
   totalBattles: 0,
@@ -69,28 +64,28 @@ export function CombatProfileOverview({
         </>
       ),
       detail: t("battlePanel.statistics.combatProfile.details.winRate", {
-        value: formatNumber(summary.winRate),
+        value: formatBattleMetric(summary.winRate),
       }),
     },
     {
       key: "honorPoints",
       icon: Award,
       label: t("battlePanel.statistics.combatProfile.cards.honorPoints"),
-      value: formatNumber(summary.totalPH),
+      value: formatBattleMetric(summary.totalPH),
       // Rating only changes in Abyss battles, so outside of them the average says more.
       detail: summary.totalRatingDelta
         ? t("battlePanel.statistics.combatProfile.details.rating", {
             value: signedFormatter.format(summary.totalRatingDelta),
           })
         : t("battlePanel.statistics.combatProfile.details.perBattle", {
-            value: formatNumber(honorPointsPerBattle),
+            value: formatBattleMetric(honorPointsPerBattle),
           }),
     },
     {
       key: "turns",
       icon: Hourglass,
       label: t("battlePanel.statistics.combatProfile.cards.turns"),
-      value: formatNumber(summary.avgTurns),
+      value: formatBattleMetric(summary.avgTurns),
       detail: t("battlePanel.statistics.combatProfile.details.duration", {
         value: formatDurationCompact(Math.round(summary.avgDuration)),
       }),
@@ -106,7 +101,7 @@ export function CombatProfileOverview({
       key: "control",
       icon: Crosshair,
       label: t("battlePanel.statistics.combatProfile.cards.control"),
-      value: `${formatNumber(summary.controlRate)}%`,
+      value: `${formatBattleMetric(summary.controlRate)}%`,
       detail: t("battlePanel.statistics.combatProfile.details.control"),
     },
   ];

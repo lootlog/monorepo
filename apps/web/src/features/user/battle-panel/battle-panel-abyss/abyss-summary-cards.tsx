@@ -1,9 +1,10 @@
+import { formatBattleMetric } from "@/components/battle/utils/value-utils";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { KpiCard } from "@/components/common/kpi-card";
 import type { AbyssSeason } from "@/lib/api/battlelog-types";
 import { Crown, Percent, Sparkles, Swords, TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { formatAbyssNumber, formatAbyssSignedNumber } from "./abyss-formatters";
+import { formatAbyssSignedNumber } from "./abyss-formatters";
 
 type AbyssSummaryCardsProps = {
   isLoading?: boolean;
@@ -11,7 +12,7 @@ type AbyssSummaryCardsProps = {
 };
 
 const getOptionalAbyssMetric = (value: number | null | undefined) =>
-  value === null || value === undefined ? "–" : formatAbyssNumber(value);
+  value === null || value === undefined ? "–" : formatBattleMetric(value);
 
 export function AbyssSummaryCards({
   isLoading,
@@ -43,7 +44,7 @@ export function AbyssSummaryCards({
       key: "winRate",
       icon: Percent,
       label: t("battlePanel.abyss.cards.winRate"),
-      value: `${formatAbyssNumber(season?.winRate ?? 0)}%`,
+      value: `${formatBattleMetric(season?.winRate ?? 0)}%`,
       detail: t("battlePanel.abyss.details.winRate"),
     },
     {
