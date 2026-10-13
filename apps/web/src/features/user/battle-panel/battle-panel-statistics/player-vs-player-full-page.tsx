@@ -6,13 +6,17 @@ import { PeriodSelector } from "@/components/filters/period-selector";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
+import { CardListSkeleton } from "@/components/common/card-list-skeleton";
+import { SkeletonLine } from "@/components/common/skeleton-line";
 import { EmptyState } from "@/components/common/empty-state";
 import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/components/battle-panel-pagination-footer";
 import { BattlePanelPvpBattleCard } from "@/features/user/battle-panel/components/battle-panel-pvp-battle-card";
+import { BattlePanelPvpBattleCardSkeleton } from "@/features/user/battle-panel/components/battle-panel-pvp-battle-card-skeleton";
 import { ResultsSurface } from "@/components/common/results-surface";
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
 import { Label } from "@lootlog/ui/components/label";
 import { Separator } from "@lootlog/ui/components/separator";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Table } from "@lootlog/ui/components/table";
 import { AlertCircle, SearchX, Swords } from "lucide-react";
 import { usePlayerVsPlayerPage } from "./use-player-vs-player-page";
@@ -108,7 +112,15 @@ export function PlayerVsPlayerFullPage() {
 
   const renderResults = () => {
     if (isLoading) {
-      return <TableRowsSkeleton withHeader rowContent="text" />;
+      return (
+        <TableRowsSkeleton
+          withHeader
+          rowContent="text"
+          mobileList={
+            <CardListSkeleton card={<BattlePanelPvpBattleCardSkeleton />} />
+          }
+        />
+      );
     }
 
     if (isError) {
@@ -203,23 +215,30 @@ export function PlayerVsPlayerFullPage() {
               </>
             }
             description={
-              myCharacter
-                ? t("battlePanel.statistics.playerVsPlayer.subtitle", {
-                    level: myCharacter.lvl,
-                  })
-                : undefined
+              isLoading ? (
+                <SkeletonLine className="h-3 w-40" />
+              ) : (
+                myCharacter &&
+                t("battlePanel.statistics.playerVsPlayer.subtitle", {
+                  level: myCharacter.lvl,
+                })
+              )
             }
             metadata={
-              myCharacter ? (
-                <PlayerTile
-                  player={{
-                    name: myCharacter.name,
-                    lvl: myCharacter.lvl,
-                    prof: myCharacter.prof,
-                    icon: myCharacter.icon,
-                  }}
-                />
-              ) : undefined
+              isLoading ? (
+                <Skeleton className="h-12 w-8 rounded-lg" />
+              ) : (
+                myCharacter && (
+                  <PlayerTile
+                    player={{
+                      name: myCharacter.name,
+                      lvl: myCharacter.lvl,
+                      prof: myCharacter.prof,
+                      icon: myCharacter.icon,
+                    }}
+                  />
+                )
+              )
             }
           />
         </div>

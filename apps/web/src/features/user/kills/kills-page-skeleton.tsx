@@ -1,8 +1,10 @@
+import { CardListSkeleton } from "@/components/common/card-list-skeleton";
 import { FilterBar } from "@/components/common/filter-bar";
 import { PageHeaderSkeleton } from "@/components/common/page-header-skeleton";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { KillsMobileCardSkeleton } from "./components/kills-mobile-card-skeleton";
 
 export const KillsPageSkeleton = () => {
   return (
@@ -18,7 +20,12 @@ export const KillsPageSkeleton = () => {
       </FilterBar>
       <SectionCard className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="min-h-0 flex-1 overflow-hidden">
-          <TableRowsSkeleton trailingColumns={2} withHeader withNpcTile />
+          <TableRowsSkeleton
+            trailingColumns={2}
+            withHeader
+            withNpcTile
+            mobileList={<CardListSkeleton card={<KillsMobileCardSkeleton />} />}
+          />
         </div>
         <div className="flex h-14 shrink-0 items-center justify-between border-t border-border px-4">
           <Skeleton className="h-4 w-24" />
