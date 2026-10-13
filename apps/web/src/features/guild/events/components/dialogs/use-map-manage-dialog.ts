@@ -19,14 +19,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 import { invalidateEventMapStructureQueries } from "../../hooks/mutations/invalidate-event-queries";
-import type { LocationData } from "./map-manage-dialog.types";
-
-interface MapData {
-  id: string;
-  mapId: number;
-  mapName: string;
-  locationId?: string | null;
-}
+import type { LocationData, MapData } from "./map-manage-dialog.types";
 
 export interface MapManageDialogProps {
   open: boolean;

@@ -10,7 +10,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it("keeps current presence visible while a permissions refetch is pending", async () => {
+it("clears current presence before rechecking an unknown permission policy", async () => {
   const gateway = createTestGateway();
 
   let rejectRefresh = (_reason: Error): void => {
@@ -66,7 +66,7 @@ it("keeps current presence visible while a permissions refetch is pending", asyn
     }),
   );
   await waitFor(() => expect(gateway.request).toHaveBeenCalledTimes(2));
-  expect(isMemberOnlineInGame(result.current, "discord-1")).toBe(true);
+  expect(result.current).toBeUndefined();
   act(() => rejectRefresh(new Error("Forbidden")));
   await waitFor(() => expect(result.current).toBeUndefined());
 });

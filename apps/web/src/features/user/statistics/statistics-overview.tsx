@@ -12,8 +12,8 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { KpiCard } from "@/components/common/kpi-card";
-import { KillAnalyticsTrend } from "./kill-analytics-trend";
-import { formatStatisticsDateRange } from "./format-statistics-date";
+import { KillAnalyticsTrend } from "@/components/common/kill-analytics/kill-analytics-trend";
+import { formatStatisticsDateRange } from "@/components/common/kill-analytics/format-statistics-date";
 import { EMPTY_VALUE } from "@/constants/empty-value";
 
 const getOverviewDateFormatter = createCachedFormatter("pl-PL", {});

@@ -26,7 +26,8 @@
     "connecting": "Łączenie...",
     "connectingDescription": "Do czasu połączenia nowe zmiany mogą się spóźniać.",
     "offline": "Brak połączenia",
-    "offlineDescription": "Widoczne dane mogą być nieaktualne."
+    "offlineDescription": "Widoczne dane mogą być nieaktualne.",
+    "installAddon": "Zainstaluj dodatek do gry"
   },
   "breadcrumbs": {
     "statistics": "Analityka",

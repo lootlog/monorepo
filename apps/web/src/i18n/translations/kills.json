@@ -1,7 +1,8 @@
 {
   "overview": {
     "totalKills": "Wszystkie bicia",
-    "participations": "{{value}} udziałów"
+    "participations": "{{value}} udziałów",
+    "pickType": "Pokaż typ potwora w czołówce"
   },
   "filters": {
     "title": "Filtry",
@@ -82,6 +83,36 @@
   },
   "level": "Poziom {{level}}",
   "leaders": {
-    "title": "Czołówka"
+    "titleWithType": "Czołówka: {{type}}"
+  },
+  "timeline": {
+    "untimed": "Historia godzinowa zaczyna się {{date}}. Wcześniejszych bić ({{kills}}) nie ma na wykresie, w rekordach ani na mapie."
+  },
+  "records": {
+    "title": "Rekordy",
+    "bestDay": "Dzień chwały",
+    "bestHour": "Godzina chwały",
+    "streak": "Passa",
+    "streakDays": "najdłuższa seria dni z biciami",
+    "streakHours": "najdłuższa seria godzin z biciami",
+    "hours": "{{count}} godz.",
+    "kills_one": "{{count}} bicie",
+    "kills_few": "{{count}} bicia",
+    "kills_many": "{{count}} bić",
+    "kills_other": "{{count}} bicia",
+    "peakDetail_one": "{{count}} bicie w tej godzinie",
+    "peakDetail_few": "{{count}} bicia w tej godzinie",
+    "peakDetail_many": "{{count}} bić w tej godzinie",
+    "peakDetail_other": "{{count}} bicia w tej godzinie",
+    "shift": {
+      "night": "Nocna zmiana",
+      "morning": "Poranna zmiana",
+      "afternoon": "Popołudniowa zmiana",
+      "evening": "Wieczorna zmiana"
+    }
+  },
+  "activity": {
+    "title": "Kiedy bijecie",
+    "summary": "Najaktywniejszy dzień: {{weekday}} · najaktywniejsza godzina: {{hour}} · czas polski"
   }
 }
