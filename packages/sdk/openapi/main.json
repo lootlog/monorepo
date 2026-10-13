@@ -36783,6 +36783,12 @@
             "minimum": 0,
             "maximum": 9007199254740991,
             "description": "Number of recorded participants with a point record, including participants marked absent."
+          },
+          "killNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "One-based position of this kill among all recorded kills of its hero in the event, ordered by kill time and ID. Manual window closes are counted; the hero and member filters do not change it."
           }
         },
         "required": [
@@ -36793,7 +36799,8 @@
           "maxSpawnTimeAtKill",
           "isManualClose",
           "heroNpc",
-          "participantCount"
+          "participantCount",
+          "killNumber"
         ],
         "additionalProperties": false
       },
@@ -36898,6 +36905,12 @@
             "maximum": 9007199254740991,
             "description": "Number of recorded participants with a point record, including participants marked absent."
           },
+          "killNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "One-based position of this kill among all recorded kills of its hero in the event, ordered by kill time and ID. Manual window closes are counted; the hero and member filters do not change it."
+          },
           "memberPoint": {
             "$ref": "#/components/schemas/KillHistoryMemberPoint"
           }
@@ -36911,6 +36924,7 @@
           "isManualClose",
           "heroNpc",
           "participantCount",
+          "killNumber",
           "memberPoint"
         ],
         "additionalProperties": false

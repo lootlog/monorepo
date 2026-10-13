@@ -1524,6 +1524,12 @@ export interface KillHistoryEntry {
      * @maximum 9007199254740991
      */
   participantCount: number;
+  /**
+     * One-based position of this kill among all recorded kills of its hero in the event, ordered by kill time and ID. Manual window closes are counted; the hero and member filters do not change it.
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  killNumber: number;
 }
 
 export interface KillHistoryEventResponse {
@@ -1582,6 +1588,12 @@ export interface KillHistoryMemberEntry {
      * @maximum 9007199254740991
      */
   participantCount: number;
+  /**
+     * One-based position of this kill among all recorded kills of its hero in the event, ordered by kill time and ID. Manual window closes are counted; the hero and member filters do not change it.
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  killNumber: number;
   memberPoint: KillHistoryMemberPoint;
 }
 

@@ -12,6 +12,7 @@ import type { KillHistoryMemberEntry } from "@lootlog/client/main";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { formatPoints } from "../../utils/format-points";
 import { KillMonsterCell } from "../kills/kill-monster-cell";
+import { createKillNumberColumn } from "../kills/event-kills-table-columns";
 import { getMemberKillScoringViewModel } from "./member-kills-view-model";
 import type { coreTableFeatures } from "@/lib/tanstack-table-features";
 
@@ -33,6 +34,7 @@ export const createMemberKillsTableColumns = ({
   typeof coreTableFeatures,
   KillHistoryMemberEntry
 >[] => [
+  createKillNumberColumn<KillHistoryMemberEntry>(t),
   {
     id: "monster",
     header: t("events.kills.monster"),

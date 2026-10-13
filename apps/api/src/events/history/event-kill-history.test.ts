@@ -410,7 +410,7 @@ describe("kill history database reads", () => {
     }
   });
 
-  it("visits every scoped kill once despite unordered UUIDs and equal timestamps", async () => {
+  it("visits and numbers every scoped kill once despite unordered UUIDs and equal timestamps", async () => {
     const f = await fixture();
 
     try {
@@ -420,12 +420,17 @@ describe("kill history database reads", () => {
         { memberId: "1" },
         { memberId: "1", heroId: "low" },
       ]) {
-        const expected =
+        // Kill numbers follow the hero's full history, not the filtered page.
+        const expected: Array<[string, number]> =
           "memberId" in query
-            ? [orderedIds[0], orderedIds[2], orderedIds[4]]
-            : orderedIds;
+            ? [
+                [orderedIds[0], 5],
+                [orderedIds[2], 3],
+                [orderedIds[4], 1],
+              ]
+            : orderedIds.map((id, index): [string, number] => [id, 5 - index]);
 
-        const actual: string[] = [];
+        const actual: Array<[string, number]> = [];
         let cursor: string | undefined;
 
         do {
@@ -433,7 +438,12 @@ describe("kill history database reads", () => {
             f.history.list(context(), { ...query, limit: "2", cursor }),
           );
 
-          actual.push(...page.data.map((kill) => kill.id));
+          actual.push(
+            ...page.data.map((kill): [string, number] => [
+              kill.id,
+              kill.killNumber,
+            ]),
+          );
           cursor = page.nextCursor ?? undefined;
         } while (cursor !== undefined && actual.length <= 20);
 
