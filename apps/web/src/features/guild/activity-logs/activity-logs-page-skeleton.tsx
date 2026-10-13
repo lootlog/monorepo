@@ -1,6 +1,7 @@
 import { ResultsSurface } from "@/components/common/results-surface";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { ActivityLogsMobileListSkeleton } from "./components/activity-logs-mobile-list-skeleton";
 
 const DESKTOP_FILTER_WIDTHS = [
   "w-[200px]",
@@ -30,7 +31,10 @@ export const ActivityLogsPageSkeleton = () => (
       }
       footer={<div className="h-14 shrink-0 border-t border-border" />}
     >
-      <TableRowsSkeleton rows={20} />
+      <TableRowsSkeleton
+        rows={20}
+        mobileList={<ActivityLogsMobileListSkeleton rows={20} />}
+      />
     </ResultsSurface>
   </div>
 );

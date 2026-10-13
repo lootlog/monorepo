@@ -1,15 +1,19 @@
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import type { ReactNode } from "react";
 import { StatsFilterBarSkeleton } from "./components/stats-filter-bar-skeleton";
 import { StatsTableCard } from "./components/stats-table-card";
 
 type StatsTablePageSkeletonProps = {
   /** Detail pages open with a header card and have no navigation above them. */
   withHeader?: boolean;
+  /** Passed to `StatsTableCard` for pages that render a card list below `md`. */
+  mobileSkeleton?: ReactNode;
 };
 
 export const StatsTablePageSkeleton = ({
   withHeader = false,
+  mobileSkeleton,
 }: StatsTablePageSkeletonProps) => (
   <div
     className={
@@ -31,6 +35,8 @@ export const StatsTablePageSkeleton = ({
       </SectionCard>
     )}
     <StatsFilterBarSkeleton />
-    <StatsTableCard isLoading>{null}</StatsTableCard>
+    <StatsTableCard isLoading mobileSkeleton={mobileSkeleton}>
+      {null}
+    </StatsTableCard>
   </div>
 );

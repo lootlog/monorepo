@@ -1,5 +1,6 @@
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
+import type { ReactNode } from "react";
 
 type TableRowsSkeletonProps = {
   rows?: number;
@@ -8,6 +9,8 @@ type TableRowsSkeletonProps = {
   withHeader?: boolean;
   /** Rows lead with an `NpcTile`, whose 40px box sets the row height. */
   withNpcTile?: boolean;
+  /** Replaces the rows below `md`, where the results render a card list instead of the table. */
+  mobileList?: ReactNode;
 };
 
 export const TableRowsSkeleton = ({
@@ -15,9 +18,10 @@ export const TableRowsSkeleton = ({
   trailingColumns = 4,
   withHeader = false,
   withNpcTile = false,
+  mobileList,
 }: TableRowsSkeletonProps) => {
-  return (
-    <div>
+  const tableRows = (
+    <div className={cn(mobileList && "hidden md:block")}>
       {withHeader && (
         <div className="flex h-10 items-center gap-4 border-b border-border px-4">
           <Skeleton className="h-3 w-24" />
@@ -44,5 +48,16 @@ export const TableRowsSkeleton = ({
         </div>
       ))}
     </div>
+  );
+
+  if (!mobileList) {
+    return tableRows;
+  }
+
+  return (
+    <>
+      <div className="md:hidden">{mobileList}</div>
+      {tableRows}
+    </>
   );
 };
