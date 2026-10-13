@@ -1,4 +1,3 @@
-import { isNotNil } from "es-toolkit";
 import { composeNpcFromEvent } from "@/hooks/game-events/helpers/npc.helpers";
 import type { EventNpc, ProcessedNpcSettings } from "@/hooks/game-events/types";
 import {
@@ -523,7 +522,7 @@ export class NpcsDetectionProcessor {
           }
         }),
       )
-    ).filter(isNotNil);
+    ).filter((notification) => notification !== null);
 
     if (successfulNotifications.length === 0) {
       return;

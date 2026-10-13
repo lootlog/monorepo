@@ -1,6 +1,5 @@
 import type { Notification } from "@/features/notifications/hooks/use-notifications";
 import type { PartyGatheringCharacterBase } from "@/types/party-gathering";
-import { sum } from "es-toolkit";
 import { create } from "zustand";
 
 export type NotificationWithServers = Notification & {
@@ -534,4 +533,10 @@ export const isMentionNotification = (
  * counted under a revoked Organization may still have reached a kept one.
  */
 export const getNotificationReportCount = (notification: StoredNotification) =>
-  Math.max(1, sum(Object.values(notification.reportCountByGuildId)));
+  Math.max(
+    1,
+    Object.values(notification.reportCountByGuildId).reduce(
+      (sum, count) => sum + count,
+      0,
+    ),
+  );
