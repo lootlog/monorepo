@@ -9,9 +9,9 @@ import { toast } from "sonner";
 
 /**
  * Flips the current character's detector auto-send switch for every monster
- * type. Returns false while the character is unknown and nothing was saved.
+ * type. Skips the toast while the character is unknown and nothing was saved.
  */
-export const toggleCharacterDetectorAutoSend = (): boolean => {
+export const toggleCharacterDetectorAutoSend = () => {
   const enabled = !selectSettingsValue(
     readCurrentSettingsDocuments(),
     "gameData.detectorAutoSendEnabled",
@@ -23,7 +23,7 @@ export const toggleCharacterDetectorAutoSend = (): boolean => {
     set: { detectorAutoSendEnabled: enabled },
   });
 
-  if (!queued) return false;
+  if (!queued) return;
 
   const t = getFixedT("npcDetector");
   const name = useGameStore.getState().game?.hero.name ?? "";
@@ -31,6 +31,4 @@ export const toggleCharacterDetectorAutoSend = (): boolean => {
   toast.success(
     t(enabled ? "autoSend.enabled" : "autoSend.disabled", { name }),
   );
-
-  return true;
 };
