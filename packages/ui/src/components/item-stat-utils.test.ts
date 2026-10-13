@@ -4,7 +4,6 @@ import { describe, expect, it } from "vitest";
 import {
   getItemStatTemplateValues,
   mapStatsToDisplaySections,
-  mapStatsToDisplayValues,
   parseItemStats,
   SUPPORTED_ITEM_STAT_KEYS,
   type ItemDisplayValue,
@@ -68,33 +67,35 @@ describe("item stat utilities", () => {
     });
   });
 
-  it("preserves stat formatting and semantic block assignment", () => {
-    const blocks = mapStatsToDisplayValues(
+  it("preserves stat formatting across tooltip sections", () => {
+    const sections = mapStatsToDisplaySections(
       parseItemStats(
         "created=1767225600;hp=10;dmg=5,8;lvl=20;reqp=wm;opis=Created #YEAR#[br]Line;teleport=x,10,20,Karka-han;legbon=curse,1;amount=2;lvlupgs=3;unknown=value;rarity=legendary;rkey=x",
       ),
     );
 
-    expect(blocks.baseStatsBlock).toEqual([
+    expect(sections.find(({ index }) => index === 1)?.values).toEqual([
       { key: "dmg", value: "5 - 8" },
+    ]);
+    expect(sections.find(({ index }) => index === 3)?.values).toEqual([
       { key: "hp", value: "10" },
     ]);
-    expect(blocks.requirementsBlock).toEqual([
+    expect(sections.find(({ index }) => index === 9)?.values).toEqual([
       { key: "reqp", translateKey: "itemStats.prof", value: ["w", "m"] },
       { key: "lvl", value: "20" },
     ]);
-    expect(blocks.descriptionBlock).toEqual([
+    expect(sections.find(({ index }) => index === 7)?.values).toEqual([
       { key: "teleport", value: ["x", "10", "20", "Karka-han"] },
       { key: "opis", value: "Created 2026\nLine" },
     ]);
-    expect(blocks.legendaryBonusBlock).toEqual([
+    expect(sections.find(({ index }) => index === 5)?.values).toEqual([
       { key: "legbon.curse", value: 9 },
     ]);
-    expect(blocks.usageStatsBlock).toEqual([{ key: "amount", value: "2" }]);
-    expect(blocks.enhancementStatsBlock).toEqual([
+    expect(sections.find(({ index }) => index === 4)?.values).toEqual([
+      { key: "amount", value: "2" },
       { key: "lvlupgs", value: "3" },
     ]);
-    expect(blocks.unrecognizedBlock).toEqual([
+    expect(sections.find(({ index }) => index === 10)?.values).toEqual([
       { key: "unknown", value: "value" },
     ]);
   });
@@ -134,19 +135,21 @@ describe("item stat utilities", () => {
   });
 
   it("uses source class casing and Polish bag inflection", () => {
-    const blocks = mapStatsToDisplayValues(
+    const sections = mapStatsToDisplaySections(
       parseItemStats("bag=1;btype=1,8;target_class=1,8"),
     );
 
-    expect(blocks.baseStatsBlock).toEqual([{ key: "bag.one", value: "1" }]);
-    expect(blocks.enhancementStatsBlock).toEqual([
+    expect(sections.find(({ index }) => index === 3)?.values).toEqual([
+      { key: "bag.one", value: "1" },
+    ]);
+    expect(sections.find(({ index }) => index === 4)?.values).toEqual([
       {
         key: "btype",
         translateKey: "itemStats.classLower",
         value: ["oneHanded", "armor"],
       },
     ]);
-    expect(blocks.requirementsBlock).toEqual([
+    expect(sections.find(({ index }) => index === 9)?.values).toEqual([
       {
         key: "target_class",
         translateKey: "itemStats.class",
@@ -156,13 +159,17 @@ describe("item stat utilities", () => {
   });
 
   it("formats missing combat, enhancement, action and metadata families", () => {
-    const blocks = mapStatsToDisplayValues(
+    const sections = mapStatsToDisplaySections(
       parseItemStats(
         "dmgmul=-5;afterheal2=10,250;resmanaendest=9;leczy=-120;bonus=sa,250;action=fightperheal,10,20;expire_duration=2d;expire_date=1767225600;target_class=WEAPONS;cansplit=0;enhancement_refund=3;custom_teleport=id,12,34,Tuzmer;socket_content=0;enhancement_upgrade_lvl=4;nodepoclan",
       ),
     );
 
-    expect(blocks.baseStatsBlock).toEqual(
+    expect(
+      sections
+        .filter(({ index }) => index >= 1 && index <= 3)
+        .flatMap(({ values }) => values),
+    ).toEqual(
       expect.arrayContaining([
         { key: "dmgmul", value: "-5" },
         { key: "afterheal2", value: ["10", "250"] },
@@ -173,26 +180,22 @@ describe("item stat utilities", () => {
         { key: "expire_date", value: "01.01.2026, 01:00" },
       ]),
     );
-    expect(blocks.enhancementStatsBlock).toEqual(
-      expect.arrayContaining([
-        { key: "bonus.sa", value: "2.5" },
-        { key: "enhancement_refund.multiple", value: "3" },
-      ]),
-    );
-    expect(blocks.usageStatsBlock).toEqual([
+    expect(sections.find(({ index }) => index === 4)?.values).toEqual([
+      { key: "bonus.sa", value: "2.5" },
       { key: "cansplit.no", value: false },
+      { key: "enhancement_refund.multiple", value: "3" },
     ]);
-    expect(blocks.legendaryBonusBlock).toEqual([
+    expect(sections.find(({ index }) => index === 5)?.values).toEqual([
       { key: "socket_content.empty", value: false },
     ]);
-    expect(blocks.descriptionBlock).toEqual([
+    expect(sections.find(({ index }) => index === 7)?.values).toEqual([
       { key: "custom_teleport.set", value: ["id", "12", "34", "Tuzmer"] },
     ]);
-    expect(blocks.metadataBlock).toEqual([
+    expect(sections.find(({ index }) => index === 8)?.values).toEqual([
       { key: "enhancement_upgrade_lvl", value: "4" },
       { key: "nodepoclan", value: true },
     ]);
-    expect(blocks.requirementsBlock).toEqual([
+    expect(sections.find(({ index }) => index === 9)?.values).toEqual([
       {
         key: "target_class",
         translateKey: "itemStats.class",
@@ -202,13 +205,13 @@ describe("item stat utilities", () => {
   });
 
   it("formats description dates in the Warsaw timezone", () => {
-    const blocks = mapStatsToDisplayValues(
+    const sections = mapStatsToDisplaySections(
       parseItemStats(
         "created=1735687800;opis=#DATE#|#YEAR#|#YEAR,-1,D#|#YEAR,12,M#",
       ),
     );
 
-    expect(blocks.descriptionBlock).toEqual([
+    expect(sections.find(({ index }) => index === 7)?.values).toEqual([
       {
         key: "opis",
         value: "01.01.2025, 00:30|2025|2024|2026",
@@ -217,11 +220,11 @@ describe("item stat utilities", () => {
   });
 
   it("selects the outfit hour form from the rounded hour count", () => {
-    const blocks = mapStatsToDisplayValues(
+    const sections = mapStatsToDisplaySections(
       parseItemStats("outfit=299,x,Tuzmer"),
     );
 
-    expect(blocks.baseStatsBlock).toEqual([
+    expect(sections.find(({ index }) => index === 3)?.values).toEqual([
       { key: "outfit.hours", value: ["5", " w Tuzmer"] },
     ]);
   });
@@ -246,9 +249,9 @@ describe("item stat utilities", () => {
       "future-bonus",
     ];
 
-    const values = mapStatsToDisplayValues(
+    const values = mapStatsToDisplaySections(
       bonusNames.map((bonusName) => ({ key: "legbon", value: bonusName })),
-    ).legendaryBonusBlock;
+    ).flatMap(({ values }) => values);
 
     expect(values.map(({ key }) => key)).toEqual([
       ...bonusNames.slice(0, -1).map((bonusName) => `legbon.${bonusName}`),
@@ -288,10 +291,10 @@ describe("item stat utilities", () => {
       value: sampleValues.get(key) ?? "1",
     }));
 
-    const blocks = mapStatsToDisplayValues(stats);
-    const displayValues = Object.values(blocks).flat();
+    const sections = mapStatsToDisplaySections(stats);
+    const displayValues = sections.flatMap(({ values }) => values);
 
-    expect(blocks.unrecognizedBlock).toEqual([]);
+    expect(sections.find(({ index }) => index === 10)).toBeUndefined();
     displayValues.forEach(expectTranslated);
 
     for (const translationPath of displayValues.flatMap(
