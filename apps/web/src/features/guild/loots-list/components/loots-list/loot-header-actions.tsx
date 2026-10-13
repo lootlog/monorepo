@@ -1,52 +1,55 @@
-import { Button } from "@lootlog/ui/components/button";
+import { ChevronLink } from "@lootlog/ui/components/chevron-link";
+import { TextLink } from "@lootlog/ui/components/text-link";
+import { Link } from "@tanstack/react-router";
 import { cn } from "cn";
-import { Info, MessageSquare } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
+
+/**
+ * Keeps the current page and its filters and opens the loot details dialog
+ * over it. The router parses search params as strings (see `App.tsx`).
+ */
+const renderLootDetailsLink = (lootId: number) => (
+  <Link
+    to="."
+    search={(previous: Record<string, string | string[]>) => ({
+      ...previous,
+      lootId: String(lootId),
+    })}
+  />
+);
 
 export const LootHeaderActions = ({
   commentsCount,
-  onOpenDetails,
+  lootId,
 }: {
   commentsCount: number;
-  onOpenDetails: () => void;
+  lootId: number;
 }) => {
   const { t } = useTranslation();
 
+  const commentsLabel = t("loots.list.commentsCount", { count: commentsCount });
+
   return (
-    <div className="flex shrink-0 items-center gap-1">
-      <Button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onOpenDetails();
-        }}
-        variant="ghost"
-        size="sm"
-        icon={<MessageSquare className="size-3.5" />}
+    <div className="flex shrink-0 items-center gap-3">
+      <TextLink
+        render={renderLootDetailsLink(lootId)}
+        aria-label={commentsLabel}
+        title={commentsLabel}
         className={cn(
-          "gap-1 px-2 text-xs",
-          commentsCount === 0 ? "text-muted-foreground" : "text-foreground",
+          "inline-flex h-8 items-center gap-1 tabular-nums",
+          commentsCount > 0 && "text-foreground",
         )}
-        aria-label={t("loots.list.commentsCount", { count: commentsCount })}
-        title={t("loots.list.commentsCount", { count: commentsCount })}
       >
-        <span className="tabular-nums">{commentsCount}</span>
-      </Button>
-      <Button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onOpenDetails();
-        }}
-        variant="ghost"
-        size="sm"
-        icon={<Info className="size-3.5" />}
+        <MessageSquare aria-hidden className="size-3.5 shrink-0" />
+        {commentsCount}
+      </TextLink>
+      <ChevronLink
+        render={renderLootDetailsLink(lootId)}
         aria-label={t("loots.list.details")}
-        title={t("loots.list.details")}
-        className="gap-1 px-2 text-xs text-muted-foreground max-sm:w-8 max-sm:px-0"
       >
         <span className="max-sm:sr-only">{t("loots.list.details")}</span>
-      </Button>
+      </ChevronLink>
     </div>
   );
 };
