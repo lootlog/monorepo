@@ -1,11 +1,17 @@
 import { useState } from "react";
-import { type ColumnDef, useTable } from "@tanstack/react-table";
+import {
+  type ColumnDef,
+  type SortingState,
+  useTable,
+} from "@tanstack/react-table";
 import { Table } from "@lootlog/ui/components/table";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { AnimatedToggleGroup } from "@/components/ui/animated-toggle-group";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
+import { SortableColumnHeader } from "@/components/ui/sortable-column-header";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
+import { orderBy } from "es-toolkit";
 // eslint-disable-next-line react-doctor/prefer-dynamic-import -- This chart implementation is loaded only by its lazy wrapper; Recharts stays inside that async boundary.
 import {
   ResponsiveContainer,
@@ -21,7 +27,9 @@ import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import {
   formatStatisticsDate,
+  formatStatisticsDateHour,
   formatStatisticsDay,
+  formatStatisticsHour,
 } from "./format-statistics-date";
 
 type KillAnalyticsTrendPoint = {
@@ -33,10 +41,22 @@ type KillAnalyticsTrendPoint = {
 type KillAnalyticsTrendProps = {
   title: string;
   data: KillAnalyticsTrendPoint[];
+  /** "day" points are calendar dates; "hour" points are instants. */
+  granularity?: "day" | "hour";
 };
 
-export function KillAnalyticsTrend({ title, data }: KillAnalyticsTrendProps) {
+export function KillAnalyticsTrend({
+  title,
+  data,
+  granularity = "day",
+}: KillAnalyticsTrendProps) {
   const { t } = useTranslation();
+
+  const [formatLabel, formatTick] =
+    granularity === "hour"
+      ? [formatStatisticsDateHour, formatStatisticsHour]
+      : [formatStatisticsDate, formatStatisticsDay];
+
   const [view, setView] = useState<"chart" | "table">("chart");
 
   const partialDates = new Set(
@@ -49,10 +69,14 @@ export function KillAnalyticsTrend({ title, data }: KillAnalyticsTrendProps) {
   >[] = [
     {
       accessorKey: "date",
-      header: () => t("statistics.date"),
+      header: ({ column }) => (
+        <SortableColumnHeader column={column} align="start">
+          {t("statistics.date")}
+        </SortableColumnHeader>
+      ),
       cell: ({ row: { original: day } }) => (
         <>
-          {formatStatisticsDate(day.date)}
+          {formatLabel(day.date)}
           {day.partial && (
             <span className="ml-2 text-xs text-muted-foreground">
               {t("statistics.partial")}
@@ -63,17 +87,38 @@ export function KillAnalyticsTrend({ title, data }: KillAnalyticsTrendProps) {
     },
     {
       accessorKey: "kills",
-      header: () => t("statistics.kills"),
+      header: ({ column }) => (
+        <SortableColumnHeader column={column} align="end">
+          {t("statistics.kills")}
+        </SortableColumnHeader>
+      ),
       cell: ({ row: { original: day } }) =>
         day.kills?.toLocaleString("pl-PL") ?? t("statistics.unknown"),
     },
   ];
 
+  // The newest day comes first; the chart keeps time running left to right.
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "date", desc: true },
+  ]);
+
+  const sort = sorting[0] ?? { id: "date", desc: true };
+
+  // Days without data sort below days with zero kills.
+  const rows = orderBy(
+    data,
+    [sort.id === "kills" ? (day) => day.kills ?? -1 : (day) => day.date],
+    [sort.desc ? "desc" : "asc"],
+  );
+
   const table = useTable({
     features: coreTableFeatures,
-    data,
+    data: rows,
     columns,
     getRowId: (day) => day.date,
+    manualSorting: true,
+    onSortingChange: setSorting,
+    state: { sorting },
   });
 
   return (
@@ -98,7 +143,7 @@ export function KillAnalyticsTrend({ title, data }: KillAnalyticsTrendProps) {
               <BarChart data={data} accessibilityLayer>
                 <XAxis
                   dataKey="date"
-                  tickFormatter={formatStatisticsDay}
+                  tickFormatter={formatTick}
                   minTickGap={36}
                   tick={{ fontSize: 11 }}
                 />
@@ -110,7 +155,7 @@ export function KillAnalyticsTrend({ title, data }: KillAnalyticsTrendProps) {
                 <Tooltip
                   cursor={{ fill: "var(--primary)", fillOpacity: 0.12 }}
                   labelFormatter={(date) =>
-                    `${formatStatisticsDate(String(date))}${partialDates.has(String(date)) ? ` · ${t("statistics.partial")}` : ""}`
+                    `${formatLabel(String(date))}${partialDates.has(String(date)) ? ` · ${t("statistics.partial")}` : ""}`
                   }
                   contentStyle={{
                     background: "var(--card)",

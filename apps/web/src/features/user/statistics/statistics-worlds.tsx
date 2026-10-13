@@ -13,7 +13,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { KillAnalyticsTrend } from "./kill-analytics-trend";
+import { KillAnalyticsTrend } from "@/components/common/kill-analytics/kill-analytics-trend";
 import { EMPTY_VALUE } from "@/constants/empty-value";
 
 export function StatisticsWorlds({
