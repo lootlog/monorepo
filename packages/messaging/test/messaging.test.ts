@@ -147,6 +147,39 @@ describe("RabbitMessaging", () => {
     expect(ack).toHaveBeenCalledTimes(1);
   });
 
+  test("starts a separate trace for each delivery", async () => {
+    const { channel, dispatch } = makeChannel();
+    const deliveryTraceIds: string[] = [];
+
+    const startupTraceId = await runWithChannel(
+      channel,
+      Effect.gen(function* () {
+        const messaging = yield* RabbitMessaging;
+        yield* messaging.consume(
+          {
+            queue: "test-queue",
+            failurePolicy: { strategy: "requeue" },
+          },
+          (_delivery: RabbitDelivery) =>
+            Effect.currentSpan.pipe(
+              Effect.map((span) => {
+                deliveryTraceIds.push(span.traceId);
+              }),
+              Effect.orDie,
+            ),
+        );
+        dispatch(makeMessage());
+        dispatch(makeMessage());
+        yield* Effect.sleep(1);
+
+        return (yield* Effect.currentSpan).traceId;
+      }).pipe(Effect.orDie, Effect.withSpan("startup")),
+    );
+
+    expect(deliveryTraceIds).toHaveLength(2);
+    expect(new Set([startupTraceId, ...deliveryTraceIds]).size).toBe(3);
+  });
+
   test("requeues a failed delivery when requested", async () => {
     const { channel, nack, dispatch } = makeChannel();
 
