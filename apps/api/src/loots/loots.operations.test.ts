@@ -230,8 +230,13 @@ describe("loot detail concurrent reads", () => {
     controller.abort();
     expect(Exit.isFailure(await first)).toBe(true);
 
+    const next = Effect.runPromise(
+      operations.fetchLootById(guild, policy, [role], 42),
+    );
+
     finish.resolve();
     expect(await waiter).toEqual(loot);
+    expect(await next).toEqual(loot);
     expect(reads).toBe(1);
   });
 
