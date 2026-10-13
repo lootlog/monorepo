@@ -254,6 +254,29 @@ it("shows and hides the under-bag panel with the timers open state", () => {
   ).not.toBeInTheDocument();
 });
 
+it("hides the under-bag header in compact view and keeps the timers", () => {
+  const fixture = mountTimers(() => {
+    useTimersStore.setState((state) => ({
+      generalConfig: { ...state.generalConfig, timersUnderBag: true },
+    }));
+  });
+
+  const underBag = within(fixture.gameColumn);
+
+  expect(underBag.getByRole("button", { name: "Dodaj timer" })).toBeVisible();
+
+  act(() =>
+    useTimersStore.setState((state) => ({
+      generalConfig: { ...state.generalConfig, compactView: true },
+    })),
+  );
+  expect(
+    underBag.queryByRole("button", { name: "Dodaj timer" }),
+  ).not.toBeInTheDocument();
+  expect(underBag.queryByText("Timery")).not.toBeInTheDocument();
+  expect(underBag.getByText(/\[H\] Tanroth/)).toBeVisible();
+});
+
 it("uses the game world under the NI bag when world selection is disabled", () => {
   const fixture = mountTimers((value) => {
     setTestRuntimeGame({ interface: "ni", world: "luvia" });
