@@ -8,6 +8,11 @@
     "publicBattle": "Walka #{{id}}",
     "fallback": "Lootlog"
   },
+  "presence": {
+    "stale": "Dane obecności są nieaktualne. Wskazania online i obsady map mogą być błędne. Ponawiamy pobieranie.",
+    "unavailable": "Dane obecności są chwilowo niedostępne. Nie można potwierdzić statusu online ani obsady map.",
+    "forbidden": "Nie masz dostępu do danych obecności."
+  },
   "search": "Szukaj...",
   "startTypingToSearch": "Zacznij wpisywać, aby wyszukać.",
   "searchMinimumCharacters_one": "Wpisz co najmniej {{count}} znak, aby wyszukać.",

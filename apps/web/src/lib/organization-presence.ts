@@ -1,3 +1,4 @@
+import type { AccessPolicyChange } from "@lootlog/protocol/realtime/access-policy";
 import { GatewayEvent } from "@/config/gateway";
 import type { GatewayClient, PlayerPresence } from "@/lib/gateway-client";
 import {
@@ -12,11 +13,27 @@ import {
   type MemberWebPresenceUpdatePayload,
 } from "@/lib/web-presence";
 
-type PresenceSnapshot = {
-  game: Map<string, PlayerPresence[]> | undefined;
-  web: MemberWebPresenceByDiscordId | undefined;
-  accessState: "allowed" | "forbidden";
+type AvailablePresence = {
+  status: "ready" | "stale";
+  game: Map<string, PlayerPresence[]>;
+  web: MemberWebPresenceByDiscordId;
+  accessState: "allowed";
 };
+
+type PresenceSnapshot =
+  | AvailablePresence
+  | {
+      status: "loading" | "unavailable";
+      game: undefined;
+      web: undefined;
+      accessState: "allowed";
+    }
+  | {
+      status: "forbidden";
+      game: undefined;
+      web: undefined;
+      accessState: "forbidden";
+    };
 
 type PresenceUpdate =
   | {
@@ -29,9 +46,9 @@ type PresenceUpdate =
     };
 
 const applyPresenceUpdate = (
-  snapshot: PresenceSnapshot,
+  snapshot: AvailablePresence,
   update: PresenceUpdate,
-): PresenceSnapshot =>
+): AvailablePresence =>
   update.platform === "game"
     ? {
         ...snapshot,
@@ -42,18 +59,20 @@ const applyPresenceUpdate = (
         web: applyMemberWebPresenceUpdate(snapshot.web, update.payload),
       };
 
-const emptySnapshot: PresenceSnapshot = {
+const emptySnapshot = {
+  status: "loading",
   game: undefined,
   web: undefined,
   accessState: "allowed",
-};
+} satisfies PresenceSnapshot;
 
 const stores = new WeakMap<GatewayClient, Map<string, OrganizationPresence>>();
 
 export class OrganizationPresence {
-  private snapshot = emptySnapshot;
+  private snapshot: PresenceSnapshot = emptySnapshot;
   private readonly listeners = new Set<() => void>();
   private requestId = 0;
+  private retryTimer: ReturnType<typeof setTimeout> | undefined;
   private subscribed = false;
   private pendingUpdates: PresenceUpdate[] | undefined;
 
@@ -92,8 +111,9 @@ export class OrganizationPresence {
         GatewayEvent.MEMBER_WEB_PRESENCE_UPDATE,
         this.handleWebUpdate,
       );
-      this.socket.on(GatewayEvent.PERMISSIONS_UPDATED, this.refetch);
+      this.socket.on(GatewayEvent.PERMISSIONS_UPDATED, this.handlePermissions);
       this.socket.on(GatewayEvent.JOIN, this.handleJoin);
+      this.socket.on(GatewayEvent.DISCONNECT, this.handleDisconnect);
       this.refetch();
     }
 
@@ -105,6 +125,7 @@ export class OrganizationPresence {
         if (this.listeners.size > 0) return;
         this.subscribed = false;
         this.requestId += 1;
+        this.cancelRetry();
         this.snapshot = emptySnapshot;
         this.pendingUpdates = undefined;
         this.socket.off(
@@ -115,19 +136,32 @@ export class OrganizationPresence {
           GatewayEvent.MEMBER_WEB_PRESENCE_UPDATE,
           this.handleWebUpdate,
         );
-        this.socket.off(GatewayEvent.PERMISSIONS_UPDATED, this.refetch);
+        this.socket.off(
+          GatewayEvent.PERMISSIONS_UPDATED,
+          this.handlePermissions,
+        );
         this.socket.off(GatewayEvent.JOIN, this.handleJoin);
+        this.socket.off(GatewayEvent.DISCONNECT, this.handleDisconnect);
       });
     };
   };
 
   refetch = () => {
     if (this.listeners.size === 0) return;
+    this.cancelRetry();
     const requestId = ++this.requestId;
     this.pendingUpdates = [];
 
     void this.socket.fetchPresence(this.guildId).then((response) => {
       if (requestId !== this.requestId) return;
+
+      if (response.status === "unavailable") {
+        this.pendingUpdates = undefined;
+        this.markUnavailable();
+        this.retryTimer = setTimeout(this.refetch, 5_000);
+
+        return;
+      }
 
       let snapshot: PresenceSnapshot =
         response.status === "success"
@@ -135,10 +169,11 @@ export class OrganizationPresence {
               game: mapMemberGamePresenceByDiscordId(response.players),
               web: mapMemberWebPresenceByDiscordId(response.sessions),
               accessState: "allowed",
+              status: "ready",
             }
-          : { ...emptySnapshot, accessState: "forbidden" };
+          : { ...emptySnapshot, accessState: "forbidden", status: "forbidden" };
 
-      if (response.status === "success") {
+      if (snapshot.status === "ready") {
         // Snapshot rows and their revision are read separately on the gateway.
         // Replay live changes observed during this fetch, including equal revisions.
         for (const update of this.pendingUpdates ?? []) {
@@ -156,8 +191,55 @@ export class OrganizationPresence {
     this.listeners.forEach((listener) => listener());
   }
 
-  private handleJoin = (payload: { status: "success" | "error" }) => {
-    if (payload.status === "success") this.refetch();
+  private cancelRetry() {
+    clearTimeout(this.retryTimer);
+    this.retryTimer = undefined;
+  }
+
+  private markUnavailable() {
+    if (this.snapshot.accessState === "forbidden") return;
+
+    if (this.snapshot.status === "ready" || this.snapshot.status === "stale") {
+      this.update({ ...this.snapshot, status: "stale" });
+    } else {
+      this.update({ ...emptySnapshot, status: "unavailable" });
+    }
+  }
+
+  private handleDisconnect = () => {
+    this.requestId += 1;
+    this.pendingUpdates = undefined;
+    this.cancelRetry();
+    this.markUnavailable();
+  };
+
+  private handlePermissions = (payload: {
+    accessPolicyChanges?: readonly AccessPolicyChange[];
+  }) => {
+    const changes = payload.accessPolicyChanges;
+
+    if (
+      changes === undefined ||
+      changes.some(
+        (change) =>
+          change.organizationId === this.guildId &&
+          change.restricted &&
+          change.areas.includes("presence"),
+      )
+    ) {
+      // A restriction can hide locations without denying the whole presence list.
+      // Drop the old projection before fetching under the new policy.
+      this.update({ ...emptySnapshot, status: "unavailable" });
+    }
+
+    this.refetch();
+  };
+
+  private handleJoin = (payload: {
+    status: "success" | "error";
+    accessPolicyChanges?: readonly AccessPolicyChange[];
+  }) => {
+    if (payload.status === "success") this.handlePermissions(payload);
   };
 
   private handleGameUpdate = (payload: GamePresenceUpdatePayload) =>
@@ -170,13 +252,19 @@ export class OrganizationPresence {
     if (update.payload.guildId !== this.guildId) return;
     this.pendingUpdates?.push(update);
 
-    if (this.snapshot.accessState === "forbidden") return;
+    if (this.snapshot.status !== "ready" && this.snapshot.status !== "stale")
+      return;
     this.update(applyPresenceUpdate(this.snapshot, update));
   }
 }
 
+const disconnectedSnapshot: PresenceSnapshot = {
+  ...emptySnapshot,
+  status: "unavailable",
+};
+
 export const unavailablePresence = {
-  getSnapshot: () => emptySnapshot,
+  getSnapshot: () => disconnectedSnapshot,
   subscribe: () => () => {},
   refetch: () => {},
 };

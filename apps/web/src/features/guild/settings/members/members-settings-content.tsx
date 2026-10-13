@@ -1,3 +1,4 @@
+import { OrganizationPresenceStatus } from "@/components/common/organization-presence-status";
 import { useMemberActivity } from "@/features/guild/settings/members/use-member-activity";
 import { RefreshMembersButton } from "./components/refresh-members-button";
 import { SettingsTableCard } from "@/features/guild/settings/components/settings-table-card";
@@ -164,6 +165,7 @@ export const MembersSettingsContent = () => {
         />
       }
     >
+      <OrganizationPresenceStatus guildId={resolvedGuildId} />
       <MembersTable
         members={filteredMembers}
         guildOwnerId={guild?.ownerId}
