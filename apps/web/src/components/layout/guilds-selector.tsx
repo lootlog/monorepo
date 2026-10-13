@@ -170,9 +170,9 @@ export const GuildsSelector: FC = () => {
       : orderedGuilds;
 
   return (
-    <div className="flex flex-col gap-2 w-16 border-r border-solid pt-2 pb-2 h-full overflow-hidden">
+    <div className="flex flex-col gap-2 w-16 border-r border-solid border-sidebar-border pt-2 pb-2 h-full overflow-hidden">
       <UserNavItem />
-      <Separator className="-mt-[1px]" />
+      <Separator className="-mt-[1px] bg-sidebar-border" />
       <div className="flex-1 h-24 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {(guildsQuery.isError && !guilds) ||
         (preferencesQuery.isError && preferencesQuery.data === undefined) ? (
