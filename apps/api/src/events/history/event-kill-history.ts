@@ -54,6 +54,7 @@ const toHistorySummary = ({
   kill,
   heroNpc,
   participantCount,
+  killNumber,
 }: LeanHistoryRow) => ({
   id: kill.id,
   heroNpcId: kill.heroNpcId,
@@ -63,6 +64,7 @@ const toHistorySummary = ({
   isManualClose: kill.isManualClose,
   heroNpc,
   participantCount,
+  killNumber,
 });
 
 export const makeEventKillHistory = ({
@@ -175,7 +177,7 @@ export const makeEventKillHistory = ({
       readCache.getEventEntry(
         context.guildId,
         context.eventId,
-        "kill-history:v1",
+        "kill-history:v2",
         {
           ...authorized.scope,
           visibleHeroIds: authorized.heroIds,

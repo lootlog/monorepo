@@ -57,6 +57,10 @@ export const KillHistoryEntry = Schema.Struct({
     description:
       "Number of recorded participants with a point record, including participants marked absent.",
   }),
+  killNumber: PositiveSafeInteger.annotate({
+    description:
+      "One-based position of this kill among all recorded kills of its hero in the event, ordered by kill time and ID. Manual window closes are counted; the hero and member filters do not change it.",
+  }),
 }).annotate({ identifier: "KillHistoryEntry" });
 
 export const KillHistoryEventResponse = Schema.Struct({

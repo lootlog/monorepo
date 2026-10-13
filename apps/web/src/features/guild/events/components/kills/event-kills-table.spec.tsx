@@ -74,6 +74,7 @@ describe("EventKillsTable", () => {
     ).toBeNull();
     expect(screen.getByText("15m")).toBeTruthy();
     expect(screen.getByText("2")).toBeTruthy();
+    expect(screen.getByText("12")).toBeTruthy();
     expect(screen.getAllByText("Zorin").length).toBeGreaterThan(0);
 
     const detailLinks = screen.getAllByRole("link", {
