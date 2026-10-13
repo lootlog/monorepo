@@ -4,7 +4,7 @@ import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { useGuildSearchRows } from "./use-guild-search-rows";
 
-const loading = {
+const loading: Parameters<typeof useGuildSearchRows>[0] = {
   trimmedSearch: "wild",
   pageResults: [],
   showSearchResults: false,
