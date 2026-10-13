@@ -1,3 +1,4 @@
+import { OrganizationPresenceStatus } from "@/components/common/organization-presence-status";
 import { useMemberActivity } from "@/features/guild/settings/members/use-member-activity";
 import { RefreshMembersButton } from "./components/refresh-members-button";
 import { SettingsTableCard } from "@/features/guild/settings/components/settings-table-card";
@@ -137,6 +138,7 @@ export const MembersSettingsContent = () => {
           <RefreshMembersButton />
         </>
       }
+      notice={<OrganizationPresenceStatus guildId={resolvedGuildId} />}
       isEmpty={filteredMembers.length === 0}
       empty={{
         icon: Users,
