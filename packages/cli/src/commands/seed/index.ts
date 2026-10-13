@@ -6,6 +6,7 @@ import { seed } from "./seed.js";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileExists } from "./utils/file-exists.js";
+import { SEED_CONFIG } from "./config.js";
 
 const displaySeedHelp = (): void => {
   console.log(`
@@ -24,10 +25,10 @@ ${chalk.bold("Subcommands:")}
 
 ${chalk.bold("Options:")}
   --force, -f               Force re-scraping even if files exist
-  --guilds <number>         Number of guilds to create (default: 5)
-  --loots <number>          Number of loots to create (default: 5000)
-  --battles <number>        Number of battles to create (default: 1000)
-  --players <number>        Number of players to generate (default: 1000)
+  --guilds <number>         Number of guilds to create (default: ${SEED_CONFIG.guilds.count})
+  --loots <number>          Number of loots to create (default: ${SEED_CONFIG.loots.count})
+  --battles <number>        Number of battles to create (default: ${SEED_CONFIG.battles.count})
+  --players <number>        Number of players to generate (default: ${SEED_CONFIG.players.count})
   --no-clean                Don't clean database before seeding
   --skip-scrape             Skip scraping (use existing data)
   --help, -h                Show this help message
@@ -41,7 +42,7 @@ ${chalk.bold("Environment Variables:")}
 ${chalk.bold("Examples:")}
   bun run seed:scrape                      # Scrape items and NPCs
   bun run seed:scrape --force              # Force re-scrape
-  bun run seed:generate:players                # Generate 1000 players
+  bun run seed:generate:players                # Generate ${SEED_CONFIG.players.count} players
   bun run seed run --guilds 10 --loots 500     # Seed with custom counts
   bun run seed:setup                           # Complete setup
   bun run seed:setup --skip-scrape             # Setup without scraping
@@ -185,7 +186,7 @@ const generatePlayersFile = async (
 
 const generatePlayersCommand: SeedSubcommandHandler = async (options) => {
   await generatePlayersFile(
-    options.count ?? options.players ?? 1000,
+    options.count ?? options.players ?? SEED_CONFIG.players.count,
     options.output ?? DEFAULT_PLAYERS_OUTPUT,
     options.force,
   );
@@ -229,14 +230,14 @@ const setupCommand: SeedSubcommandHandler = async (options) => {
   console.log(chalk.blue("🚀 Starting complete setup...\n"));
   await scrapeSetupData(options);
 
-  const playerCount = options.players ?? 1000;
+  const playerCount = options.players ?? SEED_CONFIG.players.count;
   await generateSetupPlayers(playerCount, options.force);
 
   console.log(chalk.blue("🌱 Step 3: Seeding database"));
   await seed({
-    guildsCount: options.guilds ?? 5,
-    lootsCount: options.loots ?? 5000,
-    battlesCount: options.battles ?? 1000,
+    guildsCount: options.guilds,
+    lootsCount: options.loots,
+    battlesCount: options.battles,
     clean: true,
   });
 
