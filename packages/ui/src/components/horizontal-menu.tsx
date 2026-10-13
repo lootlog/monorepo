@@ -41,15 +41,27 @@ export function HorizontalMenu({
     const update = (recenter = false) => {
       const active = list.querySelector<HTMLElement>('a[aria-current="page"]');
       highlight.hidden = !active;
-      const activeChanged = active !== previousActive;
+      const previous = previousActive;
+      const activeChanged = active !== previous;
       previousActive = active;
 
       if (!active) return;
 
       if (activeChanged || recenter) scheduleReveal(active);
+      // Slide only between two active items; first placement and layout
+      // changes snap so the highlight never flies in from the list origin.
+      const slide = activeChanged && previous !== null;
+
+      if (!slide) highlight.style.transition = "none";
       highlight.style.width = `${active.offsetWidth}px`;
       highlight.style.height = `${active.offsetHeight}px`;
       highlight.style.transform = `translate(${active.offsetLeft}px, ${active.offsetTop}px)`;
+
+      if (!slide) {
+        // Commit the snapped position before transitions are restored.
+        void highlight.offsetWidth;
+        highlight.style.transition = "";
+      }
     };
 
     const onInteraction = (event: Event) => {
