@@ -124,9 +124,7 @@ describe("RecentKillsPreview", () => {
         await screen.findByRole("link", { name: "events.kills.viewAll" })
       ).getAttribute("href"),
     ).toContain("/heroes/hero-2/kills");
-    fireEvent.click(
-      screen.getByRole("tab", { name: "events.kills.allHeroes" }),
-    );
+    fireEvent.click(screen.getByRole("tab", { name: "events.heroTabs.all" }));
     expect(
       (
         await screen.findByRole("link", { name: "events.kills.viewAll" })

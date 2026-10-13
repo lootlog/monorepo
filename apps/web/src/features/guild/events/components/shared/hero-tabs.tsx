@@ -52,7 +52,7 @@ export const HeroTabs = ({
       >
         {includeAll && (
           <TabsTrigger value={ALL_HEROES_VALUE}>
-            {t("events.kills.allHeroes")}
+            {t("events.heroTabs.all")}
           </TabsTrigger>
         )}
         {heroes.map((hero) => (

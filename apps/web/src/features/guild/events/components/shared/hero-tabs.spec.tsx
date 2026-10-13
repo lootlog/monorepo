@@ -70,7 +70,7 @@ describe("HeroTabs", () => {
       />,
     );
 
-    selectTab("events.kills.allHeroes");
+    selectTab("events.heroTabs.all");
 
     expect(onValueChange).toHaveBeenCalledWith(undefined);
   });
