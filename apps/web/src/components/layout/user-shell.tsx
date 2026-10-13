@@ -1,13 +1,11 @@
 import { AppContentFrame } from "./app-content-frame";
-import { AppBreadcrumbs } from "@/components/layout/app-breadcrumbs";
-import { AppTopBar } from "@/components/layout/app-top-bar";
-import { UserHeaderActionsContext } from "@/contexts/user-header-actions-context";
-import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
+import { AppNavigationTopBar } from "./app-navigation-top-bar";
+import { HeaderSlotsContext } from "@/contexts/header-slots-context";
+import { useHeaderSlotTargets } from "@/hooks/use-header-slot-targets";
 import { useMatches } from "@tanstack/react-router";
-import { cn } from "cn";
-import { useState, type FC, type ReactNode } from "react";
-import { TopBarBackButton } from "./top-bar-back-button";
+import type { FC, ReactNode } from "react";
 import { resolveAppNavigation } from "@/navigation/app-navigation";
+import { APP_NAVIGATION_ICONS } from "@/navigation/app-navigation-icons";
 
 type UserShellProps = {
   children: ReactNode;
@@ -15,41 +13,25 @@ type UserShellProps = {
 
 export const UserShell: FC<UserShellProps> = ({ children }) => {
   const matches = useMatches();
-
-  const [headerActionsElement, setHeaderActionsElement] =
-    useState<HTMLElement | null>(null);
-
+  const { slots, contextRef, actionsRef } = useHeaderSlotTargets();
   const navigationInfo = resolveAppNavigation({ matches });
-  const parentPath = navigationInfo.parentPath;
+  const section = navigationInfo.sidebarItems.find((item) => item.active);
 
   return (
-    <UserHeaderActionsContext.Provider value={headerActionsElement}>
+    <HeaderSlotsContext.Provider value={slots}>
       <AppContentFrame
         header={
-          <AppTopBar>
-            {/* Equal side tracks keep the breadcrumbs centred, so page actions
-                arriving on the right never move them. */}
-            <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2">
-              <div className="flex flex-row items-center gap-2">
-                <SidebarTrigger />
-                {parentPath && <TopBarBackButton to={parentPath} />}
-              </div>
-
-              <AppBreadcrumbs breadcrumbs={navigationInfo.breadcrumbs} />
-
-              <div
-                ref={setHeaderActionsElement}
-                className={cn(
-                  "flex shrink-0 items-center justify-end gap-1",
-                  parentPath ? "min-w-[4.5rem]" : "min-w-8",
-                )}
-              />
-            </div>
-          </AppTopBar>
+          <AppNavigationTopBar
+            breadcrumbs={navigationInfo.breadcrumbs}
+            parentPath={navigationInfo.parentPath}
+            sectionIcon={section && APP_NAVIGATION_ICONS[section.id]}
+            contextRef={contextRef}
+            actionsRef={actionsRef}
+          />
         }
       >
         {children}
       </AppContentFrame>
-    </UserHeaderActionsContext.Provider>
+    </HeaderSlotsContext.Provider>
   );
 };

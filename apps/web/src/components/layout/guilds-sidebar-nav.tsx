@@ -2,19 +2,8 @@ import { useSidebar } from "@lootlog/ui/components/sidebar";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import {
-  BarChart4,
-  BellRing,
-  CalendarClock,
-  ClipboardList,
-  Clock,
-  FileText,
-  Lock,
-  Logs,
-  Settings,
-  Trophy,
-} from "lucide-react";
-import type { FC, ReactNode } from "react";
+import { Lock } from "lucide-react";
+import type { FC } from "react";
 import { SidebarNav } from "./sidebar-nav/sidebar-nav";
 import type { MenuItem } from "./sidebar-nav/types";
 import { GuildSidebarHeader } from "./guild-sidebar-header";
@@ -33,23 +22,18 @@ import {
   resolveAppNavigation,
   type AppNavigationItemId,
 } from "@/navigation/app-navigation";
+import { APP_NAVIGATION_ICONS } from "@/navigation/app-navigation-icons";
 
-const organizationNavigationIcons: Partial<
-  Record<AppNavigationItemId, ReactNode>
-> = {
-  "organization-loots": <ClipboardList className="mr-1 size-4" />,
-  "organization-timers": <Clock className="mr-1 size-4" />,
-  "organization-reservations": <CalendarClock className="mr-1 size-4" />,
-  "organization-docs": <FileText className="mr-1 size-4" />,
-  "organization-stats": <BarChart4 className="mr-1 size-4" />,
-  "organization-activity": <Logs className="mr-1 size-4" />,
-  "organization-notifications": <BellRing className="mr-1 size-4" />,
-  "organization-settings": <Settings className="mr-1 size-4" />,
-};
+function getNavigationIcon(id: AppNavigationItemId, hasActiveEvents: boolean) {
+  const Icon = APP_NAVIGATION_ICONS[id];
 
-function getEventsIcon(hasActiveEvents: boolean) {
   return (
-    <Trophy className={cn("mr-1 size-4", hasActiveEvents && "text-primary")} />
+    <Icon
+      className={cn(
+        "mr-1 size-4",
+        id === "organization-events" && hasActiveEvents && "text-primary",
+      )}
+    />
   );
 }
 
@@ -117,10 +101,7 @@ export const GuildsSidebarNav: FC<GuildsSidebarNavProps> = ({
     active: item.active,
     available: true,
     enabled: item.visible,
-    icon:
-      item.id === "organization-events"
-        ? getEventsIcon(hasActiveEvents)
-        : organizationNavigationIcons[item.id],
+    icon: getNavigationIcon(item.id, hasActiveEvents),
     label: item.label,
     path: item.href,
     group: item.group,

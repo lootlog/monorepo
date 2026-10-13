@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { useEffect } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Sidebar, SidebarProvider, SidebarTrigger } from "./sidebar";
@@ -16,6 +22,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  cleanup();
   vi.restoreAllMocks();
 });
 
@@ -33,6 +40,21 @@ describe("mobile sidebar", () => {
     expect(await screen.findByRole("dialog")).toBeVisible();
     fireEvent.keyDown(window, { key: "b", ctrlKey: true });
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("leaves the shortcut to the page when it is turned off", () => {
+    render(
+      <SidebarProvider keyboardShortcut={false}>
+        <Sidebar>
+          <span>Sidebar content</span>
+        </Sidebar>
+      </SidebarProvider>,
+    );
+
+    const handled = !fireEvent.keyDown(window, { key: "b", ctrlKey: true });
+
+    expect(handled).toBe(false);
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("preserves hidden content while disconnecting its effects", async () => {

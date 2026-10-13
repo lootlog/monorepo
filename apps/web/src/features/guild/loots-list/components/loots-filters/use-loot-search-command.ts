@@ -7,6 +7,7 @@ import {
   type LootsControllerFetchLootsByGuildIdParams,
 } from "@lootlog/client/main";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 
@@ -16,46 +17,83 @@ import {
   type NpcHitDtoOutput,
 } from "@lootlog/client/search";
 
-import { useLootsFilters } from "@/hooks/use-loots-filters";
+import {
+  serializeLootsFilters,
+  useLootsFilters,
+} from "@/hooks/use-loots-filters";
+import { ROUTES } from "@/config/routes";
+import type { AppNavigationItemId } from "@/navigation/app-navigation";
 import { parseItemHid } from "@/lib/utils/hid-detection";
 import { useTranslation } from "react-i18next";
+
+export type GuildSearchPage = {
+  id: AppNavigationItemId;
+  label: string;
+  href: string;
+};
 
 export type LootSearchCommandProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Organization pages the member may open, offered before any typing. */
+  pages?: GuildSearchPage[];
+  /** False when the member cannot read loots, so only pages are searched. */
+  canSearchLoots?: boolean;
 };
+
+type LootFiltersUpdate = Parameters<typeof serializeLootsFilters>[1];
+
+const normalizeForMatch = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLocaleLowerCase("pl");
 
 import { allTrue, anyTrue } from "./loot-search-presentation";
 
 export const useLootSearchCommand = ({
   open,
   onOpenChange,
+  pages = [],
+  canSearchLoots = true,
 }: LootSearchCommandProps) => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 200);
-  const { world } = useGuildContext();
+  const { world, setWorld } = useGuildContext();
   const guildId = useGuildId();
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
   const { filters, setFilters } = useLootsFilters();
   const trimmedSearch = searchQuery.trim();
-  const parsedHid = parseItemHid(trimmedSearch);
-  const isHidInput = trimmedSearch.toUpperCase().startsWith("ITEM#");
 
-  const searchResultsQuery = useAllControllerSearchAll(
-    {
-      search: debouncedSearch,
-      world: world || "",
-    },
-    {
-      query: {
-        queryKey: getAllControllerSearchAllQueryKey({
-          search: debouncedSearch,
-          world: world || "",
-        }),
-        enabled: debouncedSearch.length >= 2 && !isHidInput,
-      },
-    },
+  // Loot states read these terms, so a member without loot access sees pages only.
+  const [lootSearchTerm, debouncedLootSearch] = canSearchLoots
+    ? [trimmedSearch, debouncedSearch]
+    : ["", ""];
+
+  const parsedHid = parseItemHid(lootSearchTerm);
+  const isHidInput = lootSearchTerm.toUpperCase().startsWith("ITEM#");
+
+  const lootsPath = ROUTES.guild.base(guildId ?? "");
+  const isOnLootsPage = pathname.replace(/\/$/, "") === lootsPath;
+
+  const pageQuery = normalizeForMatch(trimmedSearch);
+
+  const pageResults = pages.filter((page) =>
+    normalizeForMatch(page.label).includes(pageQuery),
   );
+
+  // Items and monsters are shared by every world; `world` narrows only the
+  // characters, whose loots the list shows for the selected world.
+  const searchParams = { search: debouncedLootSearch, world: world || "" };
+
+  const searchResultsQuery = useAllControllerSearchAll(searchParams, {
+    query: {
+      queryKey: getAllControllerSearchAllQueryKey(searchParams),
+      enabled: debouncedLootSearch.length >= 2 && !isHidInput,
+    },
+  });
 
   const searchResults = searchResultsQuery.data;
   const isSearchLoading = searchResultsQuery.isLoading;
@@ -108,20 +146,41 @@ export const useLootSearchCommand = ({
     staleTime: 5 * 60 * 1000,
   });
 
-  const handleSelectNpc = (npc: NpcHitDtoOutput) => {
-    setFilters({ npcs: [npc.name] });
+  const close = () => {
     onOpenChange(false);
     setSearchQuery("");
+  };
+
+  // On the loot list a hit refines the current filters; from any other page
+  // it opens the loot list with just that filter.
+  const applyLootFilters = (update: LootFiltersUpdate) => {
+    if (isOnLootsPage) {
+      void setFilters(update);
+    } else {
+      void navigate({ href: serializeLootsFilters(lootsPath, update) });
+    }
+
+    close();
+  };
+
+  const handleSelectPage = (page: GuildSearchPage) => {
+    void navigate({ to: page.href });
+    close();
+  };
+
+  const handleSelectNpc = (npc: NpcHitDtoOutput) => {
+    applyLootFilters({ npcs: [npc.name] });
   };
 
   const handleSelectItem = (item: { name: string }) => {
-    setFilters({ itemNames: [item.name] });
-    onOpenChange(false);
-    setSearchQuery("");
+    applyLootFilters({ itemNames: [item.name] });
   };
 
   const handleSelectItemByHid = (hid: string) => {
-    setFilters({
+    // The HID names its world, which the loot list must show to find it.
+    if (parsedHid && parsedHid.world !== world) setWorld(parsedHid.world);
+
+    applyLootFilters({
       hid,
       search: null,
       npcTypes: null,
@@ -136,32 +195,27 @@ export const useLootSearchCommand = ({
       playerLevelMin: null,
       playerLevelMax: null,
     });
-    onOpenChange(false);
-    setSearchQuery("");
   };
 
   const handleSelectPlayer = (player: { name: string }) => {
-    setFilters({ players: [player.name] });
-    onOpenChange(false);
-    setSearchQuery("");
+    applyLootFilters({ players: [player.name] });
   };
 
   // The search service can be behind or miss a name entirely. This matches the
   // term against the loot database itself, so a name it has not indexed is
   // still reachable.
   const handleDirectSearch = () => {
-    setFilters({ search: trimmedSearch });
-    onOpenChange(false);
-    setSearchQuery("");
+    applyLootFilters({ search: lootSearchTerm });
   };
 
   const handleClearDirectSearch = () => {
     setFilters({ search: null });
   };
 
-  const activeDirectSearch = filters.search;
+  // Other pages may use a `search` parameter of their own.
+  const activeDirectSearch = isOnLootsPage ? filters.search : "";
 
-  const canSearchDirectly = allTrue(!isHidInput, trimmedSearch.length >= 2);
+  const canSearchDirectly = allTrue(!isHidInput, lootSearchTerm.length >= 2);
 
   // Selecting a hit filters by name, so each name is one option even when
   // several editions or ids share it.
@@ -177,10 +231,10 @@ export const useLootSearchCommand = ({
 
   const showSearchLoading = allTrue(
     !isHidInput,
-    trimmedSearch.length >= 2,
+    lootSearchTerm.length >= 2,
     anyTrue(
-      debouncedSearch !== trimmedSearch,
-      allTrue(isSearchLoading, Boolean(debouncedSearch), !hasSearchResults),
+      debouncedLootSearch !== lootSearchTerm,
+      allTrue(isSearchLoading, Boolean(debouncedLootSearch), !hasSearchResults),
     ),
   );
 
@@ -194,25 +248,36 @@ export const useLootSearchCommand = ({
 
   const showSearchResults = allTrue(
     !isHidInput,
-    trimmedSearch.length >= 2,
-    Boolean(debouncedSearch),
+    lootSearchTerm.length >= 2,
+    Boolean(debouncedLootSearch),
     !showSearchLoading,
     !searchResultsQuery.isError,
     Boolean(hasSearchResults),
   );
 
-  const showNoResults = allTrue(
+  const showNoLootResults = allTrue(
     !isHidInput,
-    trimmedSearch.length >= 2,
-    Boolean(debouncedSearch),
+    lootSearchTerm.length >= 2,
+    Boolean(debouncedLootSearch),
     !showSearchLoading,
     !searchResultsQuery.isError,
     !hasSearchResults,
   );
 
+  const showNoResults = allTrue(
+    pageResults.length === 0,
+    canSearchLoots ? showNoLootResults : trimmedSearch.length > 0,
+  );
+
+  const showKeepTyping = allTrue(
+    !isHidInput,
+    lootSearchTerm.length === 1,
+    pageResults.length === 0,
+  );
+
   const showSearchError = allTrue(
     !isHidInput,
-    trimmedSearch.length >= 2,
+    lootSearchTerm.length >= 2,
     !showSearchLoading,
     searchResultsQuery.isError,
   );
@@ -234,6 +299,11 @@ export const useLootSearchCommand = ({
     searchQuery,
     setSearchQuery,
     trimmedSearch,
+    canSearchLoots,
+    world,
+    pageResults,
+    handleSelectPage,
+    showKeepTyping,
     isHidInput,
     isHid,
     isHidLoading,

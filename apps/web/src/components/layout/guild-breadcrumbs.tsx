@@ -1,4 +1,4 @@
-import type { FC } from "react";
+import type { FC, Ref } from "react";
 import {
   getRouteApi,
   useLocation,
@@ -6,10 +6,8 @@ import {
   useParams,
 } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { TopBarBackButton } from "./top-bar-back-button";
-import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
-import { AppBreadcrumbs } from "@/components/layout/app-breadcrumbs";
-import { AppTopBar } from "@/components/layout/app-top-bar";
+import { AppNavigationTopBar } from "./app-navigation-top-bar";
+import { APP_NAVIGATION_ICONS } from "@/navigation/app-navigation-icons";
 import { resolveAppNavigation } from "@/navigation/app-navigation";
 import {
   getMembersControllerGetGuildMembersQueryKey,
@@ -141,7 +139,15 @@ const useBreadcrumbLookupData = ({
   };
 };
 
-export const GuildBreadcrumbs: FC = () => {
+type GuildBreadcrumbsProps = {
+  contextRef: Ref<HTMLDivElement>;
+  actionsRef: Ref<HTMLDivElement>;
+};
+
+export const GuildBreadcrumbs: FC<GuildBreadcrumbsProps> = ({
+  contextRef,
+  actionsRef,
+}) => {
   const { t } = useTranslation();
   const location = useLocation();
   const params = useParams({ strict: false });
@@ -211,19 +217,18 @@ export const GuildBreadcrumbs: FC = () => {
   };
 
   const navInfo = resolveNavigationInfo();
-  const parentPath = navInfo.parentPath;
+  // The Organization crumb opens the trail; the sidebar header already names
+  // the Organization right next to the top bar.
+  const pageBreadcrumbs = navInfo.breadcrumbs.slice(1);
+  const section = navInfo.sidebarItems.find((item) => item.active);
 
   return (
-    <AppTopBar>
-      <div className="grid w-full min-w-0 grid-cols-[1fr_auto_1fr] items-center gap-2 overflow-hidden">
-        <div className="flex min-w-0 shrink-0 flex-row gap-2 items-center">
-          <SidebarTrigger />
-          {parentPath && <TopBarBackButton to={parentPath} />}
-        </div>
-
-        <AppBreadcrumbs breadcrumbs={navInfo.breadcrumbs} />
-        <div className={parentPath ? "w-[4.5rem]" : "w-8"} />
-      </div>
-    </AppTopBar>
+    <AppNavigationTopBar
+      breadcrumbs={pageBreadcrumbs}
+      parentPath={navInfo.parentPath}
+      sectionIcon={section && APP_NAVIGATION_ICONS[section.id]}
+      contextRef={contextRef}
+      actionsRef={actionsRef}
+    />
   );
 };

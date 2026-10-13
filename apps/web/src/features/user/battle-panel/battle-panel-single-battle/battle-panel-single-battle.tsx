@@ -1,4 +1,4 @@
-import { UserHeaderActionsPortal } from "@/components/layout/user-header-actions-portal";
+import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
 import { BattleDetailView } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-detail-view";
 import { BattlePanelSingleBattleActions } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-panel-single-battle-actions";
 import { getRecentOpponentBattleContext } from "@/features/user/battle-panel/battle-panel-single-battle/components/recent-opponent-battle-context";
@@ -30,9 +30,9 @@ export const BattlePanelSingleBattle = () => {
   return (
     <>
       {battle ? (
-        <UserHeaderActionsPortal>
+        <HeaderSlotPortal slot="actions">
           <BattlePanelSingleBattleActions battle={battle} />
-        </UserHeaderActionsPortal>
+        </HeaderSlotPortal>
       ) : null}
       <BattleDetailView
         battle={battle}

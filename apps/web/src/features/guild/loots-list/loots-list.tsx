@@ -4,6 +4,7 @@ import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { CollapsePresence } from "@/components/common/collapse-presence";
 import { LootFiltersHeader } from "@/features/guild/loots-list/components/loots-filters/loot-filters-header";
 import { useState } from "react";
+import { GuildWorldHeaderSwitcher } from "@/components/layout/guild-world-header-switcher";
 import {
   Drawer,
   DrawerContent,
@@ -84,6 +85,8 @@ export const LootsListPage: React.FC = () => {
           </SheetContent>
         </Sheet>
       )}
+
+      <GuildWorldHeaderSwitcher />
 
       <div className="w-full flex flex-col h-full overflow-hidden">
         <div className="px-3 pt-3 pb-0">
