@@ -156,20 +156,20 @@ export class ActivityRepository extends Context.Service<
             new Error("Actor snapshot is missing a database-required field"),
           );
 
+        const snapshotFields = {
+          accountId: snapshot.accountId,
+          characterId: snapshot.characterId,
+          clanName: snapshot.clanName,
+          clanId: snapshot.clanId,
+          name: snapshot.name,
+          icon: snapshot.icon,
+          lvl: snapshot.lvl,
+          prof: snapshot.prof,
+          source: dto.source,
+        };
+
         const fingerprint = createHash("sha256")
-          .update(
-            JSON.stringify({
-              accountId: snapshot.accountId,
-              characterId: snapshot.characterId,
-              clanName: snapshot.clanName,
-              clanId: snapshot.clanId,
-              name: snapshot.name,
-              icon: snapshot.icon,
-              lvl: snapshot.lvl,
-              prof: snapshot.prof,
-              source: dto.source,
-            }),
-          )
+          .update(JSON.stringify(snapshotFields))
           .digest("hex");
 
         const findExisting = () =>
@@ -187,15 +187,7 @@ export class ActivityRepository extends Context.Service<
           .insert(activityActorSnapshots)
           .values({
             id: crypto.randomUUID(),
-            accountId: snapshot.accountId,
-            characterId: snapshot.characterId,
-            name: snapshot.name,
-            clanName: snapshot.clanName,
-            clanId: snapshot.clanId,
-            icon: snapshot.icon,
-            lvl: snapshot.lvl,
-            prof: snapshot.prof,
-            source: dto.source,
+            ...snapshotFields,
             fingerprint,
           })
           .onConflictDoNothing({
