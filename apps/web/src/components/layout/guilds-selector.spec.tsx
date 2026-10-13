@@ -201,12 +201,13 @@ function dispatchPointer(
   target: HTMLElement | Window,
   type: "pointerdown" | "pointermove" | "pointerup",
   y: number,
+  pointerType: "mouse" | "touch" = "mouse",
 ) {
   const event = new PointerEvent(type, {
     bubbles: true,
     pointerId: 1,
     isPrimary: true,
-    pointerType: "mouse",
+    pointerType,
     button: 0,
     buttons: type === "pointerup" ? 0 : 1,
     clientX: 20,
@@ -216,6 +217,17 @@ function dispatchPointer(
   // happy-dom omits page coordinates consumed by the browser drag engine.
   Object.defineProperties(event, { pageX: { value: 20 }, pageY: { value: y } });
   fireEvent(target, event);
+}
+
+function mockGuildItemRects() {
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+    function (this: HTMLElement) {
+      const link = this.querySelector('a[href="/guild-1"],a[href="/guild-2"]');
+      const top = link?.getAttribute("href") === "/guild-2" ? 60 : 0;
+
+      return new DOMRect(0, top, 60, 50);
+    },
+  );
 }
 
 const nextFrame = () =>
@@ -259,18 +271,30 @@ describe("GuildsSelector", () => {
     await screen.findByText("layout.guildsSelector.refreshError");
     expect(guildLink("guild-1").textContent).toContain("A");
   });
+  it("leaves vertical touch swipes to scrolling instead of reordering", async () => {
+    mockGuildItemRects();
+    await renderSelector();
+    await nextFrame();
+    const item = guildLink("guild-1").closest("li");
+
+    if (!item) throw new Error("Missing reorder item");
+    dispatchPointer(item, "pointerdown", 20, "touch");
+    dispatchPointer(window, "pointermove", 40, "touch");
+    await nextFrame();
+    dispatchPointer(window, "pointermove", 140, "touch");
+    await nextFrame();
+    dispatchPointer(window, "pointerup", 140, "touch");
+    await nextFrame();
+    expect(requests).toHaveLength(0);
+    expect(
+      screen
+        .getAllByRole("link")
+        .map((link) => link.getAttribute("href"))
+        .filter((href) => href?.startsWith("/guild-")),
+    ).toEqual(["/guild-1", "/guild-2"]);
+  });
   it("does not retry a rejected guild order automatically", async () => {
-    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
-      function (this: HTMLElement) {
-        const link = this.querySelector(
-          'a[href="/guild-1"],a[href="/guild-2"]',
-        );
-
-        const top = link?.getAttribute("href") === "/guild-2" ? 60 : 0;
-
-        return new DOMRect(0, top, 60, 50);
-      },
-    );
+    mockGuildItemRects();
     let rejectWrite = (_error: Error) => {};
 
     writeResponse = () =>

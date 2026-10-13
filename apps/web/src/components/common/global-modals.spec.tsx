@@ -13,14 +13,27 @@ import { configureApiClients } from "@lootlog/client/transport";
 import { afterEach, expect, it, vi } from "vitest";
 import { GlobalContextProvider } from "@/contexts/global-provider";
 import { GuildNavCreate } from "@/components/layout/guild-nav-create";
-import { InstallButton } from "@/components/layout/install-button";
+import { useGlobalContext } from "@/hooks/context/use-global-context";
 import i18n from "@/i18n/config";
 import { GlobalModals } from "./global-modals";
+
+const OpenInstaller = () => {
+  const { installAddonModal } = useGlobalContext();
+
+  return (
+    <button
+      type="button"
+      onClick={() => installAddonModal.dispatch({ type: "OPEN" })}
+    >
+      {i18n.t("layout.userMenu.installAddon")}
+    </button>
+  );
+};
 
 const ModalControls = () => (
   <>
     <GuildNavCreate />
-    <InstallButton />
+    <OpenInstaller />
     <GlobalModals />
   </>
 );
@@ -97,7 +110,7 @@ it("opens deferred modals, restores focus and preserves create form state after 
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 
     const install = screen.getByRole("button", {
-      name: i18n.t("ui.tooltips.installAddon"),
+      name: i18n.t("layout.userMenu.installAddon"),
     });
 
     const openAndCloseInstaller = async () => {
