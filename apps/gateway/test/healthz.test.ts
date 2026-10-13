@@ -48,6 +48,18 @@ const grantsByDiscordId = new Map<string, UserGuildData[]>([
 
 const snapshotReads: Array<{ organizationId: string; world?: string }> = [];
 
+const onlinePresence = {
+  userId: "user-2",
+  discordId: "discord-2",
+  sessionId: "session-2",
+  organizationIds: ["organization-1"],
+  platform: "game" as const,
+  status: "online" as const,
+  confidence: "verified" as const,
+  isAfk: false,
+  lastSeen: 1,
+};
+
 const guilds: GatewayHttpDependencies["guilds"] = {
   getUserGuilds: ({ discordId }) =>
     Effect.succeed(grantsByDiscordId.get(discordId) ?? []),
@@ -58,7 +70,12 @@ const presence: GatewayHttpDependencies["presence"] = {
     Effect.sync(() => {
       snapshotReads.push({ organizationId, world });
 
-      return { organizationId, world, revision: 1, presences: [] };
+      return {
+        organizationId,
+        world,
+        revision: 1,
+        presences: [onlinePresence],
+      };
     }),
 };
 
@@ -361,12 +378,16 @@ describe("gateway HTTP boundary", () => {
 
     const allowed = await read("discord-reader");
 
+    const { discordId: _discordId, ...presenceWithoutDiscordId } =
+      onlinePresence;
+
     expect(allowed?.status).toBe(200);
+    // Discord identities never leave the realtime protocol over HTTP.
     expect(await allowed?.json()).toEqual({
       organizationId: "organization-1",
       world: "Aldous",
       revision: 1,
-      presences: [],
+      presences: [presenceWithoutDiscordId],
     });
     expect(snapshotReads).toEqual([
       { organizationId: "organization-1", world: "Aldous" },

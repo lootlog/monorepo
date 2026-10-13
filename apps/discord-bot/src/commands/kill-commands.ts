@@ -12,11 +12,7 @@ import {
   PERIOD_LABELS,
   npcTypeLabel,
 } from "./command-messages.js";
-import {
-  memberSession,
-  type CommandFailure,
-  type MemberSession,
-} from "./lootlog-client.js";
+import { memberSession, type MemberSession } from "./lootlog-client.js";
 import {
   choice,
   lootlogEmbed,
@@ -62,23 +58,24 @@ const TopNpcs = Schema.Struct({
   ),
 });
 
-const NpcKillers = Schema.NullOr(
-  Schema.Struct({
-    npc: Schema.Struct({
+// An NPC without visible kills answers `{ npc: null, killers: [] }`.
+const NpcKillers = Schema.Struct({
+  npc: Schema.NullOr(
+    Schema.Struct({
       npcName: Schema.String,
       npcType: Schema.String,
       npcLvl: Schema.Number,
       uniqueGuildKills: Schema.Number,
       totalMemberParticipations: Schema.Number,
     }),
-    killers: Schema.Array(
-      Schema.Struct({
-        memberName: Schema.String,
-        participationCount: Schema.Number,
-      }),
-    ),
-  }),
-);
+  ),
+  killers: Schema.Array(
+    Schema.Struct({
+      memberName: Schema.String,
+      participationCount: Schema.Number,
+    }),
+  ),
+});
 
 const killStatsPath = (guildId: string) =>
   `/guilds/${encodeURIComponent(guildId)}/stats/kills`;
@@ -258,37 +255,30 @@ export const npcCommand: SlashCommand = {
 
       if (!/^\d+$/.test(npcId)) return { content: COMMAND_TEXT.npc.notFound };
 
-      const killers = yield* session
-        .api(
-          `${killStatsPath(session.guildId)}/npcs/${npcId}/killers`,
-          { limit: NPC_KILLERS_LIMIT, period },
-          NpcKillers,
-        )
-        .pipe(
-          Effect.catchIf(
-            (failure: CommandFailure) => failure.reason === "not-found",
-            () => Effect.succeed(null),
-          ),
-        );
+      const { npc, killers } = yield* session.api(
+        `${killStatsPath(session.guildId)}/npcs/${npcId}/killers`,
+        { limit: NPC_KILLERS_LIMIT, period },
+        NpcKillers,
+      );
 
-      if (!killers) return { content: COMMAND_TEXT.npc.notFound };
+      if (!npc) return { content: COMMAND_TEXT.npc.notFound };
 
       return {
         embeds: [
           lootlogEmbed(
-            COMMAND_TEXT.npc.title(killers.npc.npcName, killers.npc.npcLvl),
+            COMMAND_TEXT.npc.title(npc.npcName, npc.npcLvl),
           ).setDescription(
             [
-              `${npcTypeLabel(killers.npc.npcType)} · ${PERIOD_LABELS[period]}`,
+              `${npcTypeLabel(npc.npcType)} · ${PERIOD_LABELS[period]}`,
               COMMAND_TEXT.npc.summary(
-                killers.npc.uniqueGuildKills,
-                killers.npc.totalMemberParticipations,
+                npc.uniqueGuildKills,
+                npc.totalMemberParticipations,
               ),
               "",
-              ...(killers.killers.length === 0
+              ...(killers.length === 0
                 ? [COMMAND_TEXT.npc.empty]
                 : rankedLines(
-                    killers.killers,
+                    killers,
                     (killer) =>
                       `${escapeMarkdown(killer.memberName)} — ${COMMAND_TEXT.ranking.kills(killer.participationCount)}`,
                   )),

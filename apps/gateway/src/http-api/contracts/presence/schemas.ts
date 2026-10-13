@@ -1,6 +1,23 @@
 /** Transport schemas owned by the presence HTTP module. */
-import { Schema } from "effect";
+import {
+  BasicPresence,
+  PresenceSnapshot,
+  PresenceWithLocation,
+} from "@lootlog/protocol/realtime";
+import { Schema, Struct } from "effect";
 import { HttpApiSchema } from "effect/http-api";
+
+// HTTP readers identify players by the internal User; Discord identities stay
+// inside the realtime protocol.
+export const OrganizationPresence = Schema.Struct({
+  ...PresenceSnapshot.fields,
+  presences: Schema.Array(
+    Schema.Union([
+      Schema.Struct(Struct.omit(PresenceWithLocation.fields, ["discordId"])),
+      Schema.Struct(Struct.omit(BasicPresence.fields, ["discordId"])),
+    ]),
+  ),
+}).annotate({ identifier: "OrganizationPresence" });
 
 export const OrganizationPresencePath = Schema.Struct({
   organizationId: Schema.NonEmptyString,

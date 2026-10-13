@@ -1,7 +1,7 @@
 /** Endpoints owned by the presence HTTP module. */
 import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/http-api";
-import { PresenceSnapshot } from "@lootlog/protocol/realtime";
 import {
+  OrganizationPresence,
   OrganizationPresencePath,
   OrganizationPresenceQuery,
   PresenceForbidden,
@@ -16,7 +16,7 @@ export class PresenceGroup extends HttpApiGroup.make("presence").add(
     {
       params: OrganizationPresencePath,
       query: OrganizationPresenceQuery,
-      success: PresenceSnapshot,
+      success: OrganizationPresence,
       error: [PresenceUnauthorized, PresenceForbidden, PresenceUnavailable],
     },
   )

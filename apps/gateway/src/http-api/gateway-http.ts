@@ -1,5 +1,5 @@
 import { Permission } from "@lootlog/schema/permissions";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, Struct } from "effect";
 import { HttpRouter, HttpServer, HttpServerRequest } from "effect/http";
 import { HttpApiBuilder } from "effect/http-api";
 import type { GatewayAuth } from "#src/auth/auth-service";
@@ -64,9 +64,16 @@ const readOrganizationPresence = Effect.fn("GatewayOrganizationPresence")(
     )
       return yield* Effect.fail(forbidden);
 
-    return yield* dependencies.presence
+    const snapshot = yield* dependencies.presence
       .snapshot(viewer, organizationId, world)
       .pipe(Effect.mapError(() => unavailable));
+
+    return {
+      ...snapshot,
+      presences: snapshot.presences.map((presence) =>
+        Struct.omit(presence, ["discordId"]),
+      ),
+    };
   },
 );
 
