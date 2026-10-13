@@ -104,13 +104,13 @@ http:
       entryPoints:
         - "web"
 
+    # Internal endpoints trust their callers, so like the deployed edge this
+    # route answers 403; services call the API on its own port instead.
     api-internal:
       rule: "PathPrefix(`/api/lootlog/internal`)"
       service: "api"
       middlewares:
-        - "cors"
-        - "apiStripPrefix"
-        - "apiCompress"
+        - "denyAll"
       priority: 15
       entryPoints:
         - "web"
@@ -186,6 +186,10 @@ http:
         servers:
           - url: "http://host.docker.internal:4027"
   middlewares:
+    denyAll:
+      ipAllowList:
+        sourceRange:
+          - "127.0.0.1/32"
     developerTrailingSlash:
       redirectRegex:
         regex: "^(https?://[^/]+/developer)([?].*)?$"
