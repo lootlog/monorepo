@@ -1,4 +1,5 @@
 import { flow, Option, Predicate, Schema } from "effect";
+import { clamp } from "es-toolkit";
 import { isObjectRecord } from "@lootlog/schema/records";
 import {
   DETECTOR_NPC_TYPES,
@@ -217,15 +218,9 @@ export const normalizeRoutingRules = flow(
         continue;
       }
 
-      const boundedMin = Math.min(
-        DETECTOR_LEVEL_MAX,
-        Math.max(DETECTOR_LEVEL_MIN, rawMin),
-      );
+      const boundedMin = clamp(rawMin, DETECTOR_LEVEL_MIN, DETECTOR_LEVEL_MAX);
 
-      const boundedMax = Math.min(
-        DETECTOR_LEVEL_MAX,
-        Math.max(DETECTOR_LEVEL_MIN, rawMax),
-      );
+      const boundedMax = clamp(rawMax, DETECTOR_LEVEL_MIN, DETECTOR_LEVEL_MAX);
 
       const name = Predicate.isString(rule.name) ? rule.name.trim() : undefined;
 
