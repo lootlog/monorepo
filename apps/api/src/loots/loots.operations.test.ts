@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Exit } from "effect";
+import { MaxOpsBeforeYield } from "effect/Scheduler";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { makeLootsOperations } from "#src/loots/loots.operations";
@@ -238,6 +239,91 @@ describe("loot detail concurrent reads", () => {
     expect(await waiter).toEqual(loot);
     expect(await next).toEqual(loot);
     expect(reads).toBe(1);
+  });
+
+  it("keeps a replacement read shared while an abandoned read is still unwinding", async () => {
+    const unwind = Promise.withResolvers<void>();
+    const finish = Promise.withResolvers<void>();
+    let reads = 0;
+
+    const operations = makeOperations(() =>
+      Effect.suspend(() => {
+        reads += 1;
+
+        return reads === 1
+          ? Effect.never.pipe(
+              Effect.onInterrupt(() => Effect.promise(() => unwind.promise)),
+            )
+          : Effect.promise(async () => {
+              await finish.promise;
+
+              return loot;
+            });
+      }),
+    );
+
+    const controller = new AbortController();
+
+    const abandoned = Effect.runPromiseExit(
+      operations.fetchLootById(guild, policy, [role], 42),
+      { signal: controller.signal },
+    );
+
+    controller.abort();
+
+    const replacement = Effect.runPromise(
+      operations.fetchLootById(guild, policy, [role], 42),
+    );
+
+    expect(reads).toBe(2);
+    unwind.resolve();
+    expect(Exit.isFailure(await abandoned)).toBe(true);
+
+    const next = Effect.runPromise(
+      operations.fetchLootById(guild, policy, [role], 42),
+    );
+
+    finish.resolve();
+    expect(await replacement).toEqual(loot);
+    expect(await next).toEqual(loot);
+    expect(reads).toBe(2);
+  });
+
+  it("releases flights whose initiator disconnects before the shared read starts", async () => {
+    const finish = Promise.withResolvers<void>();
+    let reads = 0;
+
+    const operations = makeOperations((_guild, _permissions, _roles, lootId) =>
+      Effect.promise(async () => {
+        if (lootId === 42) reads += 1;
+        await finish.promise;
+
+        return loot;
+      }),
+    );
+
+    const controller = new AbortController();
+
+    // Yield inside the masked setup so the disconnect lands before the read starts.
+    const abandoned = Array.from({ length: 1_024 }, (_, index) =>
+      Effect.runPromiseExit(
+        operations
+          .fetchLootById(guild, policy, [role], index + 1_000)
+          .pipe(Effect.provideService(MaxOpsBeforeYield, 3)),
+        { signal: controller.signal },
+      ),
+    );
+
+    controller.abort();
+    await Promise.all(abandoned);
+
+    const requests = Array.from({ length: 2 }, () =>
+      Effect.runPromise(operations.fetchLootById(guild, policy, [role], 42)),
+    );
+
+    expect(reads).toBe(1);
+    finish.resolve();
+    expect(await Promise.all(requests)).toEqual([loot, loot]);
   });
 
   it("does not cancel or evict shared work when a waiting request disconnects", async () => {
