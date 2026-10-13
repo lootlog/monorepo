@@ -48,7 +48,7 @@ export const SidebarNav = ({
   footer,
   ariaLabel,
 }: SidebarNavProps) => {
-  const { isRukiaTheme, isCatTheme } = useThemeMeta();
+  const { isCatTheme } = useThemeMeta();
   const { isMobile, setOpenMobile } = useSidebar();
   const groupIdPrefix = useId();
   const enabledItems = items.filter((item) => item.enabled);
@@ -133,7 +133,6 @@ export const SidebarNav = ({
                             icon={icon}
                             label={label}
                             badge={badge}
-                            isRukiaTheme={isRukiaTheme}
                             isCatTheme={isCatTheme}
                             onItemClick={() => {
                               if (isMobile) setOpenMobile(false);

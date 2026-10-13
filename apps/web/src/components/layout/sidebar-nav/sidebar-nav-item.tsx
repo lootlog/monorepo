@@ -25,7 +25,6 @@ export const SidebarNavItem = ({
   icon,
   label,
   badge,
-  isRukiaTheme,
   isCatTheme,
   onItemClick,
 }: {
@@ -35,7 +34,6 @@ export const SidebarNavItem = ({
   icon: ReactNode;
   label: string;
   badge?: MenuItem["badge"];
-  isRukiaTheme: boolean;
   isCatTheme: boolean;
   onItemClick: (e: MouseEvent) => void;
 }) => {
@@ -99,14 +97,6 @@ export const SidebarNavItem = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {isActive && !isRukiaTheme ? (
-        <m.span
-          aria-hidden="true"
-          layoutId="sidebar-nav-active-indicator"
-          transition={{ type: "spring", stiffness: 500, damping: 40 }}
-          className="absolute top-1/2 left-0 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary"
-        />
-      ) : null}
       <ThemeInteractiveFrame isHovered={isHovered} isActive={isActive}>
         {buttonContent}
       </ThemeInteractiveFrame>

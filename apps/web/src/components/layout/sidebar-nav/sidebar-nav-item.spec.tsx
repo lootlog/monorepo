@@ -44,7 +44,6 @@ const renderSidebarNavItem = (isActive: boolean) =>
         isActive={isActive}
         icon=<svg data-testid="navigation-icon" className="text-yellow-500" />
         label="Events"
-        isRukiaTheme={false}
         isCatTheme={false}
         onItemClick={() => undefined}
       />
