@@ -1,5 +1,4 @@
 import { KpiCard } from "@/components/common/kpi-card";
-import { RankBadge } from "@/components/common/rank-badge";
 import { formatPoints } from "../../utils/format-points";
 import { PageHeader } from "@/components/common/page-header";
 import { useTranslation } from "react-i18next";
@@ -8,11 +7,11 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
-import { Clock, Moon, Sparkles, Swords } from "lucide-react";
+import { Clock, Moon, Sparkles, Swords, Trophy } from "lucide-react";
+import { cn } from "cn";
 import type { ReactNode } from "react";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { formatDurationHuman } from "../../utils/format-duration";
-import { EventHeroContext } from "../shared/event-hero-context";
 import {
   type MemberIdentity,
   type MemberStatsSummary,
@@ -23,7 +22,6 @@ type MemberSummaryStripProps = {
   member?: MemberIdentity;
   memberId?: string;
   eventName: string;
-  selectedHeroName?: string;
   contextStats: MemberStatsSummary;
   roleColor?: string;
   /** The place in the shown hero's ranking; absent across several heroes. */
@@ -54,7 +52,6 @@ export const MemberSummaryStrip = ({
   member,
   memberId,
   eventName,
-  selectedHeroName,
   contextStats,
   roleColor,
   rankingPlace,
@@ -93,17 +90,21 @@ export const MemberSummaryStrip = ({
         }
         description={eventName}
         metadata={
-          <>
-            {rankingPlace ? (
-              <span className="inline-flex items-center gap-1.5">
-                <RankBadge rank={rankingPlace.position} className="size-5" />
-                {t("events.kills.memberRankingPlace", {
-                  count: rankingPlace.playerCount,
-                })}
-              </span>
-            ) : null}
-            <EventHeroContext heroName={selectedHeroName} />
-          </>
+          rankingPlace ? (
+            <span className="inline-flex items-center gap-1.5">
+              <Trophy
+                aria-hidden
+                className={cn(
+                  "size-3.5 shrink-0",
+                  rankingPlace.position <= 3 && "text-primary",
+                )}
+              />
+              {t("events.kills.memberRankingPlace", {
+                position: rankingPlace.position,
+                count: rankingPlace.playerCount,
+              })}
+            </span>
+          ) : undefined
         }
       />
       {filters}

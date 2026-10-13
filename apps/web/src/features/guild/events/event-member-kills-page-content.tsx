@@ -279,7 +279,6 @@ export const EventMemberKillsPageContent = ({
             member={member}
             memberId={memberId}
             eventName={event.name}
-            selectedHeroName={selectedHero?.npcName}
             contextStats={contextStats}
             roleColor={roleColor}
             rankingPlace={rankingPlace}
