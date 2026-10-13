@@ -44,6 +44,8 @@ export type AppNavigationSidebarItem = {
   active: boolean;
   href: string;
   label: string;
+  /** Heading of the sidebar group the item belongs to; the first group has none. */
+  group?: string;
   visible: boolean;
 };
 
@@ -98,6 +100,7 @@ const documentRouteLoaderData = z.object({
 type RegistryItem = {
   id: AppNavigationItemId;
   labelKey: string;
+  groupKey?: string;
   path: string;
   visible: (accessPolicy: AccessPolicy | undefined) => boolean;
 };
@@ -201,6 +204,7 @@ function resolveSidebarItems(
     active: item.id === activeItem?.id,
     href: item.path,
     label: t(item.labelKey),
+    group: item.groupKey && t(item.groupKey),
     visible: item.visible(accessPolicy),
   }));
 }
@@ -228,12 +232,14 @@ function buildUserSidebarRegistry(): RegistryItem[] {
     {
       id: "user-notifications",
       labelKey: "layout.navigation.notifications",
+      groupKey: "layout.navigation.groups.account",
       path: ROUTES.user.notifications.base,
       visible: alwaysVisible,
     },
     {
       id: "user-settings",
       labelKey: "layout.navigation.settings",
+      groupKey: "layout.navigation.groups.account",
       path: ROUTES.user.settings.base,
       visible: alwaysVisible,
     },
@@ -296,18 +302,21 @@ function buildOrganizationSidebarRegistry(
     {
       id: "organization-activity",
       labelKey: "layout.navigation.activityLogs",
+      groupKey: "layout.navigation.groups.management",
       path: ROUTES.guild.activityLogs(organizationId),
       visible: canManage,
     },
     {
       id: "organization-notifications",
       labelKey: "layout.navigation.notifications",
+      groupKey: "layout.navigation.groups.management",
       path: ROUTES.guild.notifications.base(organizationId),
       visible: canManage,
     },
     {
       id: "organization-settings",
       labelKey: "layout.navigation.settings",
+      groupKey: "layout.navigation.groups.management",
       path: ROUTES.guild.settings.base(organizationId),
       visible: canManage,
     },

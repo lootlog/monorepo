@@ -10,7 +10,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it("tracks world changes and keeps the last snapshot while permissions are rebalanced", async () => {
+it("tracks world changes and clears cached presence while an unknown policy is rechecked", async () => {
   const gateway = createTestGateway();
 
   const presence = {
@@ -89,7 +89,6 @@ it("tracks world changes and keeps the last snapshot while permissions are rebal
     }),
   );
   expect(result.current.presenceData?.get("user-1")).toHaveLength(1);
-  const previousPresence = result.current.presenceData;
   expect(result.current.accessState).toBe("allowed");
   act(() =>
     gateway.deliver({
@@ -99,7 +98,7 @@ it("tracks world changes and keeps the last snapshot while permissions are rebal
     }),
   );
   await waitFor(() => expect(gateway.request).toHaveBeenCalledTimes(2));
-  expect(result.current.presenceData).toBe(previousPresence);
+  expect(result.current.presenceData).toBeUndefined();
   expect(result.current.accessState).toBe("allowed");
 });
 

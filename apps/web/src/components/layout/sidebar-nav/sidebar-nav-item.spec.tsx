@@ -11,12 +11,12 @@ const wrapper = await createOrganizationTestWrapper();
 describe("SidebarNavItem", () => {
   afterEach(cleanup);
 
-  it("uses the active foreground color for a nested navigation icon", () => {
+  it("uses the active color for a nested navigation icon", () => {
     renderSidebarNavItem(true);
 
     expect(
       screen.getByTestId("navigation-icon").parentElement?.className,
-    ).toContain("[&_svg]:text-primary-foreground");
+    ).toContain("[&_svg]:text-primary");
   });
 
   it("preserves the signal color for an inactive navigation icon", () => {
@@ -24,7 +24,7 @@ describe("SidebarNavItem", () => {
 
     expect(
       screen.getByTestId("navigation-icon").parentElement?.className,
-    ).not.toContain("[&_svg]:text-primary-foreground");
+    ).not.toContain("[&_svg]:text-primary");
   });
 });
 
@@ -44,7 +44,6 @@ const renderSidebarNavItem = (isActive: boolean) =>
         isActive={isActive}
         icon=<svg data-testid="navigation-icon" className="text-yellow-500" />
         label="Events"
-        isRukiaTheme={false}
         isCatTheme={false}
         onItemClick={() => undefined}
       />

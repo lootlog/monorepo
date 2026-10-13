@@ -33,7 +33,7 @@ jobs:
           fetch-depth: 0
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.4.2
+          bun-version: 1.4.3
       - name: Create plan
         id: plan
         env:
@@ -76,11 +76,14 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-bun
-      - run: bun test scripts/deployment-targets.test.mjs scripts/static-assets.test.mjs
+      - run: bun test scripts/deployment-targets.test.mjs scripts/development-deployment-plan.test.mjs scripts/static-assets.test.mjs
       - run: bun run format:check
       - run: bun run deps:check
       - name: Check workflow syntax
         uses: docker://rhysd/actionlint:1.7.12
+        # actionlint 1.7.12 does not recognize GitHub's documented concurrency queue key.
+        with:
+          args: -ignore=^unexpected.key..queue..for..concurrency..section
 
   workspaces:
     name: Workspace checks (${{ matrix.id }})

@@ -128,6 +128,7 @@ components:
         revision:
           type: integer
           minimum: 0
+          maximum: 9007199254740991
         presences:
           type: array
           items:
@@ -165,6 +166,7 @@ components:
                   lastSeen:
                     type: integer
                     minimum: 0
+                    maximum: 9007199254740991
                   character:
                     nullable: true
                     type: object
@@ -178,6 +180,7 @@ components:
                       lvl:
                         type: integer
                         minimum: 0
+                        maximum: 9007199254740991
                       icon:
                         type: string
                       characterId:
@@ -196,12 +199,15 @@ components:
                             nullable: true
                             type: integer
                             minimum: 0
+                            maximum: 9007199254740991
                           name:
                             nullable: true
                             type: string
                           rank:
                             nullable: true
                             type: integer
+                            minimum: -9007199254740991
+                            maximum: 9007199254740991
                         additionalProperties: false
                     required:
                       - world
@@ -219,6 +225,7 @@ components:
                         nullable: true
                         type: integer
                         minimum: 0
+                        maximum: 9007199254740991
                       map:
                         type: string
                         minLength: 1
@@ -226,10 +233,12 @@ components:
                         nullable: true
                         type: integer
                         minimum: 0
+                        maximum: 9007199254740991
                       y:
                         nullable: true
                         type: integer
                         minimum: 0
+                        maximum: 9007199254740991
                     required:
                       - map
                 required:
@@ -275,6 +284,7 @@ components:
                   lastSeen:
                     type: integer
                     minimum: 0
+                    maximum: 9007199254740991
                   character:
                     nullable: true
                     type: object
@@ -288,6 +298,7 @@ components:
                       lvl:
                         type: integer
                         minimum: 0
+                        maximum: 9007199254740991
                       icon:
                         type: string
                       characterId:
@@ -306,12 +317,15 @@ components:
                             nullable: true
                             type: integer
                             minimum: 0
+                            maximum: 9007199254740991
                           name:
                             nullable: true
                             type: string
                           rank:
                             nullable: true
                             type: integer
+                            minimum: -9007199254740991
+                            maximum: 9007199254740991
                         additionalProperties: false
                     required:
                       - world

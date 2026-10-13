@@ -507,7 +507,7 @@ export const prefetchHealthzControllerHealthCheckQuery = async <TData = Awaited<
 
   const queryOptions = getHealthzControllerHealthCheckQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -650,7 +650,7 @@ export const prefetchAuthControllerVerifyQuery = async <TData = Awaited<ReturnTy
 
   const queryOptions = getAuthControllerVerifyQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -793,7 +793,7 @@ export const prefetchAuthControllerGetScopesQuery = async <TData = Awaited<Retur
 
   const queryOptions = getAuthControllerGetScopesQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -1016,7 +1016,7 @@ export const prefetchApiKeysListApiKeysQuery = async <TData = Awaited<ReturnType
 
   const queryOptions = getApiKeysListApiKeysQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }

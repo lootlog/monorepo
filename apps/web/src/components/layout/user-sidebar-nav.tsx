@@ -24,7 +24,7 @@ export const UserSidebarNav = () => {
       icon: <Icon className="mr-1 size-4" />,
       label: item.label,
       path: item.href,
-      divided: item.id === "user-notifications",
+      group: item.group,
       badge:
         item.id === "user-battles"
           ? { content: t("layout.navigation.beta"), variant: "default" }

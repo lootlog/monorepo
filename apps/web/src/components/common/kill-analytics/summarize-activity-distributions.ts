@@ -1,8 +1,7 @@
-import type { UserKillAnalyticsResponseDtoOutput } from "@lootlog/client/main";
+/** Kills in one hour of one ISO weekday (1 = Monday), in Warsaw time. */
+export type ActivityCell = { weekday: number; hour: number; kills: number };
 
-export function summarizeActivityDistributions(
-  cells: UserKillAnalyticsResponseDtoOutput["hourlyWeekday"],
-) {
+export function summarizeActivityDistributions(cells: ActivityCell[]) {
   const hourly = new Map<number, number>();
   const weekdays = new Map<number, number>();
 

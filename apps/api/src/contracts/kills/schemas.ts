@@ -99,6 +99,29 @@ export const GuildKillStatsResponse = Schema.Struct({
       participationsByType: KillCountsByNpcType,
     }),
   ),
+  /**
+   * Kills per hour (`date` is the UTC instant starting the hour) or per Warsaw
+   * calendar day (`date` is "YYYY-MM-DD"), with empty buckets as zero.
+   */
+  timeline: Schema.Struct({
+    unit: Schema.Literals(["hour", "day"]),
+    /**
+     * All-time kills recorded before hourly history began, which the timeline
+     * and `hourlyWeekday` leave out; always 0 for a bounded period.
+     */
+    untimedKills: FiniteNumber,
+    points: Schema.Array(
+      Schema.Struct({ date: Schema.String, kills: FiniteNumber }),
+    ),
+  }),
+  /** Kills by ISO weekday (1 = Monday) and hour in Warsaw time. */
+  hourlyWeekday: Schema.Array(
+    Schema.Struct({
+      weekday: FiniteNumber,
+      hour: FiniteNumber,
+      kills: FiniteNumber,
+    }),
+  ),
 }).annotate({ identifier: "GuildKillStatsResponseDto_Output" });
 
 export type UserKillStatsResponse = typeof UserKillStatsResponse.Type;

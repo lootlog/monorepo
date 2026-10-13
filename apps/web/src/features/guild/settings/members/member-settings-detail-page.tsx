@@ -1,3 +1,4 @@
+import { OrganizationPresenceStatus } from "@/components/common/organization-presence-status";
 import { useMemberActivity } from "@/features/guild/settings/members/use-member-activity";
 import { PageHeader } from "@/components/common/page-header";
 import { EmptyState } from "@/components/common/empty-state";
@@ -141,6 +142,7 @@ const MemberSettingsDetailPageContent = () => {
       />
       <ScrollArea className="min-h-48 flex-1">
         <div className="mx-auto w-full">
+          <OrganizationPresenceStatus guildId={resolvedGuildId} />
           <MemberData
             member={member}
             webActivityStats={
