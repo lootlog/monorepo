@@ -1,5 +1,4 @@
 import { formatLevel } from "@lootlog/domain/profession";
-import { sumBy } from "es-toolkit";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import type { TFunction } from "i18next";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -41,8 +40,10 @@ type CreateEventHeroesTableColumnsOptions = {
 };
 
 const getTotalMapsCount = (hero: EventHeroNpc) =>
-  sumBy(hero.locations ?? [], (location) => location.maps.length) +
-  (hero.maps?.length ?? 0);
+  (hero.locations ?? []).reduce(
+    (sum, location) => sum + location.maps.length,
+    0,
+  ) + (hero.maps?.length ?? 0);
 
 export const createEventHeroesTableColumns = ({
   canManage,

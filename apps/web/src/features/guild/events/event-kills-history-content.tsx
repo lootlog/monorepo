@@ -1,4 +1,3 @@
-import { sumBy } from "es-toolkit";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -37,7 +36,10 @@ const getKillCount = (
     );
   }
 
-  return sumBy(heroStats, (heroStatistic) => heroStatistic.killCount);
+  return heroStats.reduce(
+    (sum, heroStatistic) => sum + heroStatistic.killCount,
+    0,
+  );
 };
 
 const getEventRouteIds = (guildId?: string, eventId?: string) => ({
