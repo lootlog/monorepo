@@ -13,8 +13,6 @@ import {
 import { cn } from "cn";
 import { getPermissionRefreshInfo } from "@/utils/get-permission-refresh-info";
 import { RefreshCw } from "lucide-react";
-import { AnimatePresence } from "framer-motion";
-import * as m from "framer-motion/m";
 import { useThemeMeta } from "@/themes";
 import {
   getLootsControllerFetchLootsByGuildIdQueryKey,
@@ -117,46 +115,40 @@ export const GuildSidebarHeader = ({
   return (
     <>
       <div className="flex min-w-0 flex-1 items-center pl-3">
-        <AnimatePresence mode="wait">
-          <m.span
-            key={guild?.id ?? "loading"}
-            initial={{ opacity: 0, x: -4 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 4 }}
-            transition={{ duration: 0.15, delay: 0.03 }}
-            className="flex min-w-0 items-center gap-2.5"
-          >
-            {guild && (
-              <Avatar className="size-6 rounded-md">
-                <AvatarImage src={guild.icon ?? undefined} alt="" />
-                <AvatarFallback className="rounded-none text-[10px] font-medium">
-                  {guild.name.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+        <span
+          key={guild?.id ?? "loading"}
+          className="flex min-w-0 items-center gap-2.5 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200"
+        >
+          {guild && (
+            <Avatar className="size-6 rounded-md">
+              <AvatarImage src={guild.icon ?? undefined} alt="" />
+              <AvatarFallback className="rounded-none text-[10px] font-medium">
+                {guild.name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          )}
+          <span
+            className={cn(
+              "truncate text-sm",
+              (isRukiaTheme || isRiasTheme) && "font-semibold",
             )}
-            <span
-              className={cn(
-                "truncate text-sm",
-                (isRukiaTheme || isRiasTheme) && "font-semibold",
-              )}
-              style={
-                isRukiaTheme
-                  ? {
-                      background:
-                        "linear-gradient(135deg, #e0f4ff 0%, #a8d8ff 30%, #7cc4ff 50%, #b8e0ff 70%, #ffffff 100%)",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                      filter:
-                        "drop-shadow(0 0 4px rgba(180, 220, 255, 0.6)) drop-shadow(0 0 8px rgba(150, 200, 255, 0.3))",
-                    }
-                  : undefined
-              }
-            >
-              {guild?.name}
-            </span>
-          </m.span>
-        </AnimatePresence>
+            style={
+              isRukiaTheme
+                ? {
+                    background:
+                      "linear-gradient(135deg, #e0f4ff 0%, #a8d8ff 30%, #7cc4ff 50%, #b8e0ff 70%, #ffffff 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                    filter:
+                      "drop-shadow(0 0 4px rgba(180, 220, 255, 0.6)) drop-shadow(0 0 8px rgba(150, 200, 255, 0.3))",
+                  }
+                : undefined
+            }
+          >
+            {guild?.name}
+          </span>
+        </span>
       </div>
       {hasAccess && (
         <Tooltip>

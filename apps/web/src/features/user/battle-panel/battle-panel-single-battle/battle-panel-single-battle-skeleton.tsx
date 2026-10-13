@@ -4,6 +4,8 @@ import { SectionCard } from "@/components/common/section-card/section-card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
+import { ChartArea, Scale, Sword } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { BattleHpTimelineChartSkeleton } from "./components/battle-hp-timeline-chart-skeleton";
 import {
   BATTLE_DETAIL_BATTLE_COLUMN_CLASS_NAME,
@@ -44,6 +46,8 @@ const panelCardClassName =
   "flex w-full flex-col overflow-hidden border-border bg-card";
 
 export const BattlePanelSingleBattleSkeleton = () => {
+  const { t } = useTranslation();
+
   return (
     <ScrollArea className="h-full" aria-hidden="true">
       <div className={getBattleDetailContentClassName({ isGroup: false })}>
@@ -93,10 +97,8 @@ export const BattlePanelSingleBattleSkeleton = () => {
               <SectionCard className={panelCardClassName}>
                 <SectionCardHeader
                   className="shrink-0"
-                  title=<Skeleton
-                    render={<span />}
-                    className="block h-5 w-36"
-                  />
+                  icon={Sword}
+                  title={t("battlePanel.single.log.title")}
                 />
                 <div className="flex min-h-[49px] shrink-0 items-center gap-2 border-b border-border/70 px-3 py-2">
                   <Skeleton className="h-8 min-w-0 flex-1 rounded-md" />
@@ -137,7 +139,8 @@ export const BattlePanelSingleBattleSkeleton = () => {
 
             <SectionCard className={panelCardClassName}>
               <SectionCardHeader
-                title=<Skeleton render={<span />} className="block h-5 w-32" />
+                icon={Scale}
+                title={t("battleUi.summary.title")}
               />
               <div className="flex flex-col gap-4 p-3">
                 {summaryRows.map((_, index) => (
@@ -157,10 +160,8 @@ export const BattlePanelSingleBattleSkeleton = () => {
               <SectionCard className={panelCardClassName}>
                 <SectionCardHeader
                   className="shrink-0"
-                  title=<Skeleton
-                    render={<span />}
-                    className="block h-5 w-36"
-                  />
+                  icon={ChartArea}
+                  title={t("battlePanel.single.statistics.title")}
                   actions={
                     <div className="flex items-center gap-1.5">
                       <Skeleton className="size-8 rounded-md" />

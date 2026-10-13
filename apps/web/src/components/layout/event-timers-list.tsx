@@ -226,7 +226,7 @@ export const EventTimersList: FC<EventTimersListProps> = ({
           <ChevronDown
             aria-hidden="true"
             className={cn(
-              "size-3 transition-transform duration-200 ease-emphasized",
+              "size-3 transition-[rotate] duration-200 ease-emphasized motion-reduce:transition-none",
               isExpanded && "rotate-180",
             )}
           />

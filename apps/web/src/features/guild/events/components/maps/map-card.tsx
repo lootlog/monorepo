@@ -163,7 +163,7 @@ export const MapCard = ({
               </span>
               <ChevronDown
                 className={cn(
-                  "size-3.5 shrink-0 text-muted-foreground transition-transform",
+                  "size-3.5 shrink-0 text-muted-foreground transition-[rotate] duration-200 ease-emphasized motion-reduce:transition-none",
                   isExpanded && "rotate-180",
                 )}
               />

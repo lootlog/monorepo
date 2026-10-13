@@ -18,7 +18,7 @@ export const KillsPageSkeleton = () => {
       </FilterBar>
       <SectionCard className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="min-h-0 flex-1 overflow-hidden">
-          <TableRowsSkeleton trailingColumns={2} withHeader />
+          <TableRowsSkeleton trailingColumns={2} withHeader withNpcTile />
         </div>
         <div className="flex h-14 shrink-0 items-center justify-between border-t border-border px-4">
           <Skeleton className="h-4 w-24" />

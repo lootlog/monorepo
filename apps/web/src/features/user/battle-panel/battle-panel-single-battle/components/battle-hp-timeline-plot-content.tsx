@@ -43,6 +43,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { CHART_SERIES_ANIMATION } from "@/lib/motion";
 
 type BattleHpTimelinePlotProps = {
   timeline: BattleTimelineResponseDtoOutput["timeline"];
@@ -215,11 +216,11 @@ export function BattleHpTimelinePlot({
           />
         ) : null}
         <Line
+          {...CHART_SERIES_ANIMATION}
           dataKey="team1"
           type="monotone"
           stroke="var(--color-team1)"
           strokeWidth={2}
-          isAnimationActive={false}
           dot=<BattleHpTimelinePoint onTurnSelect={onTurnSelect} />
           activeDot=<BattleHpTimelinePoint
             visible
@@ -227,11 +228,11 @@ export function BattleHpTimelinePlot({
           />
         />
         <Line
+          {...CHART_SERIES_ANIMATION}
           dataKey="team2"
           type="monotone"
           stroke="var(--color-team2)"
           strokeWidth={2}
-          isAnimationActive={false}
           dot=<BattleHpTimelinePoint onTurnSelect={onTurnSelect} />
           activeDot=<BattleHpTimelinePoint
             visible

@@ -1,5 +1,6 @@
 import { lazy, Suspense, type ComponentProps } from "react";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { cn } from "cn";
 
 const Content = lazy(() =>
   import("./battle-hp-timeline-plot-content").then((module) => ({
@@ -9,7 +10,8 @@ const Content = lazy(() =>
 
 export function BattleHpTimelinePlot(props: ComponentProps<typeof Content>) {
   return (
-    <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+    // Sized by the caller's class, like the plot it stands in for.
+    <Suspense fallback={<Skeleton className={cn("w-full", props.className)} />}>
       <Content {...props} />
     </Suspense>
   );

@@ -3,6 +3,8 @@ import { SectionCardContent } from "@/components/common/section-card/section-car
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
+import { Activity } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   BATTLE_HP_TIMELINE_PLOT_HEIGHT_CLASS_NAMES,
   useBattleHpTimelineSettingsStore,
@@ -13,6 +15,8 @@ const chartActions = Array.from({ length: 4 });
 const chartGridLines = Array.from({ length: 5 });
 
 export function BattleHpTimelineChartSkeleton() {
+  const { t } = useTranslation();
+
   // The settings are persisted, so the skeleton can already match a hidden or expanded chart.
   const isChartHidden = useBattleHpTimelineSettingsStore(
     (state) => state.isChartHidden,
@@ -25,7 +29,8 @@ export function BattleHpTimelineChartSkeleton() {
   return (
     <SectionCard aria-hidden="true">
       <SectionCardHeader
-        title=<Skeleton render={<span />} className="block h-5 w-40" />
+        icon={Activity}
+        title={t("battlePanel.single.chart.title")}
         actions={
           <div className="flex items-center gap-2">
             {chartActions.map((_, index) => (

@@ -28,8 +28,12 @@ export const GuildPinnedEventsSection = ({
   const pinnedActiveEvents = pinnedEvents?.map(({ event }) => event) ?? [];
   const hasPinnedEvents = pinnedActiveEvents.length > 0;
 
+  // Mounting only once the list has loaded makes the first answer appear at
+  // once; the banner grows only when a pin or the events access changes later.
+  if (enabled && isPending) return null;
+
   return (
-    <CollapsePresence open={enabled && !isPending && hasPinnedEvents}>
+    <CollapsePresence open={enabled && hasPinnedEvents}>
       <PinnedEventsBanner
         events={pinnedActiveEvents}
         guildId={guildId}

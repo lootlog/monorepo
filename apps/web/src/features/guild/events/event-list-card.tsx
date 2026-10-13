@@ -127,7 +127,7 @@ export const EventListCard = ({
           </div>
         </div>
 
-        <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover/event:translate-x-0.5 group-hover/event:text-foreground" />
+        <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-[color,translate] duration-150 ease-emphasized group-hover/event:translate-x-0.5 group-hover/event:text-foreground motion-reduce:transition-none" />
       </Link>
 
       <div className="flex shrink-0 items-center gap-1 border-l border-border px-2">

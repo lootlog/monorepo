@@ -65,7 +65,7 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
         </span>
         <ChevronRight
           aria-hidden="true"
-          className="size-4 shrink-0 text-muted-foreground transition-[color,translate] duration-200 ease-emphasized group-hover/event:translate-x-0.5 group-hover/event:text-primary"
+          className="size-4 shrink-0 text-muted-foreground transition-[color,translate] duration-150 ease-emphasized group-hover/event:translate-x-0.5 group-hover/event:text-primary motion-reduce:transition-none"
         />
       </Link>
 
@@ -92,7 +92,7 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
               </span>
               <ChevronRight
                 aria-hidden="true"
-                className="size-4 shrink-0 text-muted-foreground transition-[color,translate] duration-200 ease-emphasized group-hover/event:translate-x-0.5 group-hover/event:text-primary"
+                className="size-4 shrink-0 text-muted-foreground transition-[color,translate] duration-150 ease-emphasized group-hover/event:translate-x-0.5 group-hover/event:text-primary motion-reduce:transition-none"
               />
             </Link>
             <EventTimersList
@@ -122,7 +122,7 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
           <ChevronDown
             aria-hidden="true"
             className={cn(
-              "size-3 transition-transform duration-200 ease-emphasized",
+              "size-3 transition-[rotate] duration-200 ease-emphasized motion-reduce:transition-none",
               isExpanded && "rotate-180",
             )}
           />
