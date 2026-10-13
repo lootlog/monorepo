@@ -40,23 +40,20 @@ export const RefreshMembersStatus = ({
     displayJob?.status === "PROCESSING" || displayJob?.status === "PENDING";
 
   if (isRefreshing && displayJob) {
+    const progressLabel = t("settings.members.refreshingProgress", {
+      processed: displayJob.processedMembers,
+      total: displayJob.totalMembers,
+    });
+
     return (
       <div className="flex min-w-48 flex-col gap-2">
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <RefreshCw className="size-4 animate-spin" />
-          <span>
-            {t("settings.members.refreshingProgress", {
-              processed: displayJob.processedMembers,
-              total: displayJob.totalMembers,
-            })}
-          </span>
+          <span>{progressLabel}</span>
         </div>
         <Progress
           value={getRefreshProgress(displayJob)}
-          aria-label={t("settings.members.refreshingProgress", {
-            processed: displayJob.processedMembers,
-            total: displayJob.totalMembers,
-          })}
+          aria-label={progressLabel}
           className="[&_[data-slot=progress-track]]:h-1.5"
         />
       </div>
@@ -64,15 +61,17 @@ export const RefreshMembersStatus = ({
   }
 
   if (!countdown.isExpired) {
+    const cooldown = {
+      minutes: countdown.minutes,
+      seconds: countdown.seconds.toString().padStart(2, "0"),
+    };
+
     if (displayJob?.status === "COMPLETED") {
       return (
         <div className="flex flex-wrap items-center gap-2 text-sm text-signal-ready">
           <RefreshCw className="size-4" />
           <span>
-            {t("settings.members.refreshSuccessWithCooldown", {
-              minutes: countdown.minutes,
-              seconds: countdown.seconds.toString().padStart(2, "0"),
-            })}
+            {t("settings.members.refreshSuccessWithCooldown", cooldown)}
           </span>
         </div>
       );
@@ -83,10 +82,7 @@ export const RefreshMembersStatus = ({
         <div className="flex flex-wrap items-center gap-2 text-sm text-signal-alert">
           <Clock className="size-4" />
           <span>
-            {t("settings.members.refreshErrorWithCooldown", {
-              minutes: countdown.minutes,
-              seconds: countdown.seconds.toString().padStart(2, "0"),
-            })}
+            {t("settings.members.refreshErrorWithCooldown", cooldown)}
           </span>
         </div>
       );
@@ -95,31 +91,8 @@ export const RefreshMembersStatus = ({
     return (
       <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
         <Clock className="size-4" />
-        <span>
-          {t("settings.members.nextRefreshIn", {
-            minutes: countdown.minutes,
-            seconds: countdown.seconds.toString().padStart(2, "0"),
-          })}
-        </span>
+        <span>{t("settings.members.nextRefreshIn", cooldown)}</span>
       </div>
-    );
-  }
-
-  if (displayJob?.status === "FAILED") {
-    return (
-      <Button
-        size="lg"
-        onClick={onRefresh}
-        disabled={!countdown.isExpired}
-        loading={isPending}
-        icon=<RefreshCw className="size-4" />
-      >
-        <span className="mr-1 font-medium">
-          {t("settings.members.refreshError")}
-        </span>
-        <span className="opacity-70">·</span>
-        <span className="ml-1">{t("settings.members.retry")}</span>
-      </Button>
     );
   }
 
@@ -131,7 +104,17 @@ export const RefreshMembersStatus = ({
       loading={isPending}
       icon=<RefreshCw className="size-4" />
     >
-      {t("settings.members.refreshAll")}
+      {displayJob?.status === "FAILED" ? (
+        <>
+          <span className="mr-1 font-medium">
+            {t("settings.members.refreshError")}
+          </span>
+          <span className="opacity-70">·</span>
+          <span className="ml-1">{t("settings.members.retry")}</span>
+        </>
+      ) : (
+        t("settings.members.refreshAll")
+      )}
     </Button>
   );
 };
