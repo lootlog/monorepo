@@ -1,4 +1,4 @@
-import { isUndefined, omitBy } from "es-toolkit";
+import { omitBy } from "es-toolkit";
 import type {
   KillsControllerGetGuildKillStatsParams,
   KillsControllerGetGuildTopNpcsParams,
@@ -16,7 +16,7 @@ export const DEFAULT_MEMBER_KILLS_LIMIT = 40;
 const DEFAULT_NPC_KILLERS_LIMIT = 50;
 
 const withDefinedEntries = <T extends Record<string, unknown>>(params: T) => {
-  const definedParams = omitBy(params, isUndefined);
+  const definedParams = omitBy(params, (value) => value === undefined);
 
   if (Object.keys(definedParams).length === 0) {
     return undefined;

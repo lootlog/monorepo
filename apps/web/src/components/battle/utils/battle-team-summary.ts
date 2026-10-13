@@ -1,4 +1,3 @@
-import { sumBy } from "es-toolkit";
 import type { Battle, BattleWarrior } from "@/lib/api/battlelog-types";
 import { getBattleTeamPresentation } from "./battle-team-presentation";
 
@@ -60,24 +59,27 @@ const getSegments = <TKey extends keyof BattleWarrior & string>(
 ): BattleSegmentValue<TKey>[] => {
   const values = keys.map((key) => ({
     key,
-    value: sumBy(team, (warrior) => getValue(warrior, key)),
+    value: team.reduce((sum, warrior) => sum + getValue(warrior, key), 0),
   }));
 
-  const total = sumBy(values, (segment) => segment.value);
+  const total = values.reduce((sum, segment) => sum + segment.value, 0);
 
   return values.flatMap((segment) =>
     segment.value > 0 ? [{ ...segment, share: segment.value / total }] : [],
   );
 };
 
+const getMetricTotal = (team: BattleWarrior[], metric: BattleSummaryMetric) =>
+  team.reduce((sum, warrior) => sum + METRIC_VALUE[metric](warrior), 0);
+
 const getTeamSummary = (team: BattleWarrior[]): BattleTeamSummary => ({
   metrics: {
-    damageDealt: sumBy(team, METRIC_VALUE.damageDealt),
-    damageTaken: sumBy(team, METRIC_VALUE.damageTaken),
-    healing: sumBy(team, METRIC_VALUE.healing),
-    criticalHits: sumBy(team, METRIC_VALUE.criticalHits),
-    avoidedAttacks: sumBy(team, METRIC_VALUE.avoidedAttacks),
-    turns: sumBy(team, METRIC_VALUE.turns),
+    damageDealt: getMetricTotal(team, "damageDealt"),
+    damageTaken: getMetricTotal(team, "damageTaken"),
+    healing: getMetricTotal(team, "healing"),
+    criticalHits: getMetricTotal(team, "criticalHits"),
+    avoidedAttacks: getMetricTotal(team, "avoidedAttacks"),
+    turns: getMetricTotal(team, "turns"),
   },
   damageSegments: getSegments(
     team,

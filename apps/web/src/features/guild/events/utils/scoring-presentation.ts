@@ -1,4 +1,3 @@
-import { sumBy } from "es-toolkit";
 import { formatPoints } from "./format-points";
 import type { TOptions } from "i18next";
 import { normalizeBonusBreakdown } from "./normalize-bonus-breakdown";
@@ -23,8 +22,9 @@ export const getScoringBreakdown = ({
 
   const bonusPoints =
     bonusBreakdown.length > 0
-      ? Math.round(sumBy(bonusBreakdown, (item) => item.points) * 10_000) /
-        10_000
+      ? Math.round(
+          bonusBreakdown.reduce((sum, item) => sum + item.points, 0) * 10_000,
+        ) / 10_000
       : fallbackBonusPoints;
 
   const capReduction = Math.max(0, basePoints + bonusPoints - autoTotalPoints);
