@@ -56,6 +56,23 @@ const ROLE_COLORS = [
   0x8800ff, 0x00ff88, 0xff0088, 0x88ff00, 0x0088ff,
 ];
 
+function drawDistinctValues<T extends string>(
+  values: readonly T[],
+  attempts: number,
+): T[] {
+  const result: T[] = [];
+
+  for (let i = 0; i < attempts; i++) {
+    const value = values[crypto.randomInt(0, values.length)];
+
+    if (value && !result.includes(value)) {
+      result.push(value);
+    }
+  }
+
+  return result;
+}
+
 export class GuildGenerator {
   generateRole(position: number): GeneratedRole {
     const id = Bun.randomUUIDv7();
@@ -63,18 +80,11 @@ export class GuildGenerator {
     const color = ROLE_COLORS[crypto.randomInt(0, ROLE_COLORS.length)];
 
     const permissionCount = crypto.randomInt(1, 6);
-    const permissions: PermissionValue[] = [];
 
-    for (let i = 0; i < permissionCount; i++) {
-      const perm =
-        AVAILABLE_PERMISSIONS[
-          crypto.randomInt(0, AVAILABLE_PERMISSIONS.length)
-        ];
-
-      if (perm && !permissions.includes(perm)) {
-        permissions.push(perm);
-      }
-    }
+    const permissions = drawDistinctValues(
+      AVAILABLE_PERMISSIONS,
+      permissionCount,
+    );
 
     const lvlRangeFrom = crypto.randomInt(0, 150);
     const lvlRangeTo = crypto.randomInt(lvlRangeFrom + 50, 301);
@@ -99,16 +109,7 @@ export class GuildGenerator {
       Math.min(3, availableRoleIds.length + 1),
     );
 
-    const roleIds: string[] = [];
-
-    for (let i = 0; i < roleCount; i++) {
-      const roleId =
-        availableRoleIds[crypto.randomInt(0, availableRoleIds.length)];
-
-      if (roleId && !roleIds.includes(roleId)) {
-        roleIds.push(roleId);
-      }
-    }
+    const roleIds = drawDistinctValues(availableRoleIds, roleCount);
 
     return {
       userId,
