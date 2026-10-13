@@ -84,7 +84,7 @@ export const NotificationRuleFormPage = () => {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <ScrollArea className="flex-1 min-h-0">
+      <ScrollArea data-under-top-bar className="flex-1 min-h-0">
         <div className="flex flex-col gap-3 px-3 py-3">
           <PageHeader
             title={t(
