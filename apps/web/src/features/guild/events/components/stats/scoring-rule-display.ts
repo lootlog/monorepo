@@ -3,9 +3,10 @@ import type {
   EventScoringAction,
   EventScoringRule,
 } from "@lootlog/domain/scoring";
+import { formatPoints } from "../../utils/format-points";
 import {
   formatScoringAction,
-  formatScoringCondition,
+  formatScoringConditions,
 } from "../../utils/scoring-rule-labels";
 
 export const getScoringRuleAction = (
@@ -14,13 +15,13 @@ export const getScoringRuleAction = (
 ) => {
   if (action.type === "SET_BASE") {
     return t("events.scoring.actionSummary.basePoints", {
-      points: action.points,
+      points: formatPoints(action.points),
     });
   }
 
   if (action.type === "ADD_BONUS") {
     return t("events.scoring.actionSummary.bonusPoints", {
-      points: action.points,
+      points: formatPoints(action.points),
     });
   }
 
@@ -37,15 +38,5 @@ export const getScoringRuleName = (rule: EventScoringRule, t: TFunction) => {
   return rule.id;
 };
 
-export const getScoringRuleCondition = (
-  rule: EventScoringRule,
-  t: TFunction,
-) => {
-  if (rule.conditions.length === 0) {
-    return t("events.scoring.always");
-  }
-
-  return rule.conditions
-    .map((condition) => formatScoringCondition(condition, t))
-    .join(` ${t("events.scoring.andLabel")} `);
-};
+export const getScoringRuleCondition = (rule: EventScoringRule, t: TFunction) =>
+  formatScoringConditions(rule.conditions, t);

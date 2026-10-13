@@ -1,248 +1,203 @@
 import { PageHeader } from "@/components/common/page-header";
-import { useTranslation } from "react-i18next";
-import { Hand } from "lucide-react";
+import { formatLevel } from "@lootlog/domain/profession";
+import { Badge } from "@lootlog/ui/components/badge";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
+import { differenceInSeconds } from "date-fns";
+import { CalendarDays, Hand, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { HeroAvatar } from "../shared/hero-avatar";
-import type {
-  EventConfig,
-  KillDetail,
-} from "../../hooks/queries/use-kill-detail";
+import type { KillDetail } from "../../hooks/queries/use-kill-detail";
 import { formatDurationHuman } from "../../utils/format-duration";
 import {
   DATE_TIME_WITH_SECONDS_FORMAT,
   timestampToDate,
 } from "@/utils/date/parse-timestamp-to-date";
+import { KillRespawnGauge } from "./kill-respawn-gauge";
+
+/**
+ * Where the kill landed in its respawn window. Stored durations win; older
+ * kills without them fall back to the window timestamps.
+ */
+const getKillRespawnTiming = (kill: KillDetail) => {
+  const minSpawn = new Date(kill.minSpawnTimeAtKill);
+
+  const respawnSeconds =
+    kill.respawnDurationSeconds ??
+    Math.max(0, differenceInSeconds(new Date(kill.killedAt), minSpawn));
+
+  const windowSeconds =
+    kill.windowDurationSeconds ??
+    Math.max(
+      0,
+      differenceInSeconds(new Date(kill.maxSpawnTimeAtKill), minSpawn),
+    );
+
+  const overdueSeconds =
+    kill.resolvedAfterMaxSpawnTimeMs !== null &&
+    kill.resolvedAfterMaxSpawnTimeMs > 0
+      ? Math.round(kill.resolvedAfterMaxSpawnTimeMs / 1000)
+      : null;
+
+  const windowShare = windowSeconds > 0 ? respawnSeconds / windowSeconds : null;
+
+  return {
+    respawnSeconds,
+    windowSeconds,
+    overdueSeconds,
+    windowPercentage:
+      windowShare === null ? null : Math.round(windowShare * 100),
+    gaugeFill:
+      overdueSeconds !== null ? 1 : Math.min(1, Math.max(0, windowShare ?? 0)),
+  };
+};
 
 interface KillDetailSummaryProps {
   kill: KillDetail;
-  eventConfig: EventConfig;
-  participantsCount: number;
-  lootCount: number;
-  respawnDurationText: string;
-  windowDurationText: string;
-  fasterThanMaxText: string | null;
-  respawnComparedToMaxPercentage: number | null;
+  heroProf: string | null;
 }
 
 export const KillDetailSummary = ({
   kill,
-  eventConfig,
-  participantsCount,
-  lootCount,
-  respawnDurationText,
-  windowDurationText,
-  fasterThanMaxText,
-  respawnComparedToMaxPercentage,
+  heroProf,
 }: KillDetailSummaryProps) => {
   const { t } = useTranslation();
 
-  const overdueDurationText =
-    kill.resolvedAfterMaxSpawnTimeMs !== null &&
-    kill.resolvedAfterMaxSpawnTimeMs !== undefined &&
-    kill.resolvedAfterMaxSpawnTimeMs > 0
-      ? formatDurationHuman(Math.round(kill.resolvedAfterMaxSpawnTimeMs / 1000))
-      : null;
+  const timing = getKillRespawnTiming(kill);
+  const respawnText = formatDurationHuman(timing.respawnSeconds);
 
-  const scoringModeLabel = t(
-    eventConfig.scoringMode === "SIMPLE"
-      ? "events.scoring.modeSimpleTitle"
-      : "events.scoring.modeAdvancedTitle",
-  );
+  const comparisonText =
+    timing.overdueSeconds !== null
+      ? t("events.killDetail.overdueBy", {
+          duration: formatDurationHuman(timing.overdueSeconds),
+        })
+      : timing.windowPercentage !== null
+        ? t("events.killDetail.windowShare", {
+            percentage: timing.windowPercentage,
+          })
+        : null;
 
-  let respawnComparisonText: string | null = null;
-  let respawnDeltaText: string | null = null;
-
-  if (overdueDurationText) {
-    respawnComparisonText = t("events.killDetail.overdueBy", {
-      duration: overdueDurationText,
-    });
-    respawnDeltaText = `+${overdueDurationText}`;
-  } else if (fasterThanMaxText) {
-    respawnComparisonText = t("events.killDetail.respawnFasterBy", {
-      duration: fasterThanMaxText,
-    });
-    respawnDeltaText = `−${fasterThanMaxText}`;
-  }
-
-  const respawnMetricLabel = [
-    `${t("events.killDetail.respawnTime")}: ${respawnDurationText}`,
-    respawnComparisonText,
+  const gaugeLabel = [
+    `${t("events.killDetail.respawnTime")}: ${respawnText}`,
+    comparisonText,
   ]
     .filter(Boolean)
     .join(", ");
 
-  const formattedMinSpawn = timestampToDate(
-    kill.minSpawnTimeAtKill,
-    DATE_TIME_WITH_SECONDS_FORMAT,
-  );
-
-  const formattedMaxSpawn = timestampToDate(
-    kill.maxSpawnTimeAtKill,
-    DATE_TIME_WITH_SECONDS_FORMAT,
-  );
-
-  const formattedKillTime = timestampToDate(
-    kill.killedAt,
-    DATE_TIME_WITH_SECONDS_FORMAT,
-  );
+  const formatTimestamp = (timestamp: string) =>
+    timestampToDate(timestamp, DATE_TIME_WITH_SECONDS_FORMAT);
 
   return (
     <PageHeader
-      title={kill.heroNpc.npcName}
-      media={<HeroAvatar hero={kill.heroNpc} size="portrait" />}
-      description={t("events.killDetail.title")}
-      metadata={formattedKillTime}
-      actions={
+      title={
         <>
-          {kill.isManualClose ? (
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <span
-                    className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border border-signal-timer/30 bg-signal-timer/10 px-2.5 text-xs font-medium text-signal-timer"
-                    tabIndex={0}
-                    aria-label={t("events.killDetail.manualCloseTitle")}
-                  >
-                    <Hand className="size-3.5" />
-                    <span className="hidden sm:inline">
-                      {t("events.kills.manualCloseLabel")}
-                    </span>
-                  </span>
-                }
-              />
-              <TooltipContent className="max-w-72">
-                <p className="font-medium">
-                  {t("events.killDetail.manualCloseTitle")}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {t("events.killDetail.manualCloseDescription")}
-                </p>
-              </TooltipContent>
-            </Tooltip>
+          {kill.heroNpc.npcName}
+          {kill.heroNpc.npcLvl ? (
+            <span className="ml-2 text-base font-normal text-muted-foreground">
+              {formatLevel(kill.heroNpc.npcLvl, heroProf)}
+            </span>
           ) : null}
         </>
       }
-    >
-      <dl className="grid grid-cols-3 border-t border-border/70 bg-muted/20 md:grid-cols-6">
-        <div className="min-w-0 border-border/70 px-3 py-2.5">
-          <dt className="truncate text-[11px] leading-tight text-muted-foreground">
-            {t("events.killDetail.participantCount")}
-          </dt>
-          <dd className="mt-1 truncate text-base font-semibold leading-none tabular-nums">
-            {participantsCount}
-          </dd>
-        </div>
-        <div className="min-w-0 border-l border-border/70 px-3 py-2.5">
-          <dt className="truncate text-[11px] leading-tight text-muted-foreground">
-            {t("events.killDetail.lootCount")}
-          </dt>
-          <dd className="mt-1 truncate text-base font-semibold leading-none tabular-nums">
-            {lootCount}
-          </dd>
-        </div>
+      media={<HeroAvatar hero={kill.heroNpc} size="portrait" />}
+      description={kill.heroNpc.event.name}
+      status={
+        kill.isManualClose ? (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Badge
+                  variant="timer"
+                  className="h-5 gap-1 px-2 text-[11px]"
+                  tabIndex={0}
+                  aria-label={t("events.killDetail.manualCloseTitle")}
+                />
+              }
+            >
+              <Hand className="size-3" aria-hidden />
+              {t("events.kills.manualCloseLabel")}
+            </TooltipTrigger>
+            <TooltipContent className="max-w-72">
+              <p className="font-medium">
+                {t("events.killDetail.manualCloseTitle")}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t("events.killDetail.manualCloseDescription")}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        ) : null
+      }
+      metadata={
+        <>
+          <span className="inline-flex items-center gap-1.5">
+            <CalendarDays className="size-3.5 shrink-0" aria-hidden />
+            {formatTimestamp(kill.killedAt)}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Users className="size-3.5 shrink-0" aria-hidden />
+            {t("events.kills.participantCount", { count: kill.points.length })}
+          </span>
+        </>
+      }
+      actions={
         <Tooltip>
           <TooltipTrigger
             render={
               <div
-                className="min-w-0 cursor-help border-l border-border/70 px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                className="flex cursor-help items-center gap-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 tabIndex={0}
-                aria-label={respawnMetricLabel}
-              >
-                <dt className="truncate text-[11px] leading-tight text-muted-foreground">
-                  {t("events.killDetail.respawnTime")}
-                </dt>
-                <dd className="mt-0.5 flex min-w-0 items-baseline gap-1.5 whitespace-nowrap leading-none tabular-nums">
-                  <span className="min-w-0 truncate text-base font-semibold">
-                    {respawnDurationText}
-                  </span>
-                  {respawnDeltaText ? (
-                    <span
-                      aria-hidden="true"
-                      className={
-                        overdueDurationText
-                          ? "shrink-0 text-[10px] font-medium text-signal-timer"
-                          : "shrink-0 text-[10px] font-medium text-muted-foreground"
-                      }
-                    >
-                      {respawnDeltaText}
-                    </span>
-                  ) : null}
-                </dd>
-              </div>
+                aria-label={gaugeLabel}
+              />
             }
-          />
+          >
+            <KillRespawnGauge
+              fill={timing.gaugeFill}
+              isOverdue={timing.overdueSeconds !== null}
+            />
+            <div aria-hidden className="min-w-0">
+              <div className="text-lg font-semibold leading-tight tabular-nums">
+                {respawnText}
+              </div>
+              {comparisonText ? (
+                <div
+                  className={
+                    timing.overdueSeconds !== null
+                      ? "text-xs font-medium text-signal-timer"
+                      : "text-xs text-muted-foreground"
+                  }
+                >
+                  {comparisonText}
+                </div>
+              ) : null}
+            </div>
+          </TooltipTrigger>
           <TooltipContent>
             <p className="font-medium">
               {t("events.killDetail.respawnTimeDescription")}
             </p>
             <p>
-              {t("events.killDetail.respawnMinLabel")}: {formattedMinSpawn}
+              {t("events.killDetail.respawnMinLabel")}:{" "}
+              {formatTimestamp(kill.minSpawnTimeAtKill)}
             </p>
             <p>
-              {t("events.killDetail.killTimeLabel")}: {formattedKillTime}
+              {t("events.killDetail.killTimeLabel")}:{" "}
+              {formatTimestamp(kill.killedAt)}
+            </p>
+            <p>
+              {t("events.killDetail.respawnMaxLabel")}:{" "}
+              {formatTimestamp(kill.maxSpawnTimeAtKill)}
+            </p>
+            <p>
+              {t("events.killDetail.respawnWindowTime")}:{" "}
+              {formatDurationHuman(timing.windowSeconds)}
             </p>
           </TooltipContent>
         </Tooltip>
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <div
-                className="min-w-0 cursor-help border-t border-border/70 px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset md:border-l md:border-t-0"
-                tabIndex={0}
-                aria-label={`${t("events.killDetail.respawnWindowTime")}: ${windowDurationText}`}
-              >
-                <dt className="truncate text-[11px] leading-tight text-muted-foreground">
-                  {t("events.killDetail.respawnWindowTime")}
-                </dt>
-                <dd className="mt-1 truncate text-base font-semibold leading-none tabular-nums">
-                  {windowDurationText}
-                </dd>
-              </div>
-            }
-          />
-          <TooltipContent>
-            <p className="font-medium">
-              {t("events.killDetail.respawnWindowTimeDescription")}
-            </p>
-            <p>
-              {t("events.killDetail.respawnMinLabel")}: {formattedMinSpawn}
-            </p>
-            <p>
-              {t("events.killDetail.respawnMaxLabel")}: {formattedMaxSpawn}
-            </p>
-            {respawnComparedToMaxPercentage !== null &&
-            respawnComparedToMaxPercentage !== undefined ? (
-              <p>
-                {t("events.killDetail.respawnComparedToMax", {
-                  percentage: respawnComparedToMaxPercentage,
-                })}
-              </p>
-            ) : null}
-          </TooltipContent>
-        </Tooltip>
-        <div className="min-w-0 border-l border-t border-border/70 px-3 py-2.5 md:border-t-0">
-          <dt className="truncate text-[11px] leading-tight text-muted-foreground">
-            {t("events.scoring.title")}
-          </dt>
-          <dd className="mt-1 truncate text-base font-semibold leading-none">
-            {scoringModeLabel}
-          </dd>
-        </div>
-        <div className="min-w-0 border-l border-t border-border/70 px-3 py-2.5 md:border-t-0">
-          <dt className="truncate text-[11px] leading-tight text-muted-foreground">
-            {t("events.killDetail.summaryStatus")}
-          </dt>
-          <dd className="mt-1 truncate text-base font-semibold leading-none">
-            {kill.isManualClose
-              ? t("events.kills.manualCloseLabel")
-              : t("events.killDetail.automaticClose")}
-          </dd>
-        </div>
-      </dl>
-    </PageHeader>
+      }
+    />
   );
 };

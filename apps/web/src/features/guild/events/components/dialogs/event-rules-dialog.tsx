@@ -4,7 +4,7 @@ import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { Dialog, DialogContent } from "@lootlog/ui/components/dialog";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { BookOpen, BookText, Scale } from "lucide-react";
-import { EventScoringRulesSummary } from "./event-scoring-rules-summary";
+import { ScoringRulesOverview } from "../stats/scoring-rules-overview";
 import type {
   EventScoringMode,
   EventScoringRules,
@@ -67,13 +67,13 @@ export const EventRulesDialog = ({
                 icon={Scale}
                 title={t("events.rulesDialog.scoringTitle")}
               />
-              <div className="p-3">
-                <EventScoringRulesSummary
-                  scoringMode={scoringMode}
-                  rules={scoringRules}
-                  t={t}
-                />
-              </div>
+              {scoringMode === "SIMPLE" ? (
+                <p className="p-3 text-sm text-muted-foreground">
+                  {t("events.scoring.summary.simple")}
+                </p>
+              ) : (
+                <ScoringRulesOverview scoringRules={scoringRules} t={t} />
+              )}
             </div>
           </div>
         </ScrollArea>

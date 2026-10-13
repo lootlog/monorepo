@@ -3,94 +3,61 @@ import { initializeTestTranslations } from "@/lib/testing/i18n";
 
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import type {
-  EventConfig,
-  KillDetail,
-} from "../../hooks/queries/use-kill-detail";
+import type { KillDetail } from "../../hooks/queries/use-kill-detail";
 import { KillDetailSummary } from "./kill-detail-summary";
 
 await initializeTestTranslations({
   "events.killDetail.overdueBy": "events.killDetail.overdueBy:{{duration}}",
-  "events.killDetail.respawnFasterBy":
-    "events.killDetail.respawnFasterBy:{{duration}}",
+  "events.killDetail.windowShare":
+    "events.killDetail.windowShare:{{percentage}}",
 });
 
 afterEach(cleanup);
 
 describe("KillDetailSummary", () => {
-  it("renders an accessible early delta inline with the respawn time", () => {
-    renderSummary(createKill());
-
-    const respawnMetric = screen.getByLabelText(
-      "events.killDetail.respawnTime: 1h 18m, events.killDetail.respawnFasterBy:41m 48s",
-    );
-
-    const maximumWindowMetric = screen.getByLabelText(
-      "events.killDetail.respawnWindowTime: 2h",
-    );
-
-    const delta = screen.getByText("−41m 48s");
-    const valueRow = respawnMetric.querySelector("dd");
-
-    expect(valueRow?.className).toContain("whitespace-nowrap");
-    expect(delta.className).toContain("shrink-0");
-    expect(delta.getAttribute("aria-hidden")).toBe("true");
-    expect(maximumWindowMetric.textContent).not.toContain("−41m 48s");
-  });
-
-  it("prioritizes an accessible overdue delta", () => {
-    renderSummary(createKill({ resolvedAfterMaxSpawnTimeMs: 60_000 }));
-
-    const respawnMetric = screen.getByLabelText(
-      "events.killDetail.respawnTime: 1h 18m, events.killDetail.overdueBy:1m",
-    );
-
-    const maximumWindowMetric = screen.getByLabelText(
-      "events.killDetail.respawnWindowTime: 2h",
-    );
-
-    expect(screen.getByText("+1m")).toBeDefined();
-    expect(respawnMetric.textContent).not.toContain("−41m 48s");
-    expect(maximumWindowMetric.textContent).not.toContain("+1m");
-  });
-
-  it("omits the delta and comparison label without a difference", () => {
-    renderSummary(createKill(), { fasterThanMaxText: null });
+  it("reports how much of the respawn window passed before the kill", () => {
+    render(<KillDetailSummary kill={createKill()} heroProf={null} />);
 
     expect(
-      screen.getByLabelText("events.killDetail.respawnTime: 1h 18m"),
+      screen.getByLabelText(
+        "events.killDetail.respawnTime: 1h 18m, events.killDetail.windowShare:65",
+      ),
     ).toBeTruthy();
-    expect(screen.queryByText("−41m 48s")).toBeNull();
-    expect(screen.queryByText("+1m")).toBeNull();
+  });
+
+  it("reports an overdue kill instead of its window share", () => {
+    render(
+      <KillDetailSummary
+        kill={createKill({ resolvedAfterMaxSpawnTimeMs: 60_000 })}
+        heroProf={null}
+      />,
+    );
+
+    const gauge = screen.getByLabelText(/^events.killDetail.respawnTime:/);
+
+    expect(gauge.getAttribute("aria-label")).toBe(
+      "events.killDetail.respawnTime: 1h 18m, events.killDetail.overdueBy:1m",
+    );
+  });
+
+  it("derives the timing from the window timestamps for kills without stored durations", () => {
+    render(
+      <KillDetailSummary
+        kill={createKill({
+          respawnDurationSeconds: null,
+          windowDurationSeconds: null,
+        })}
+        heroProf={null}
+      />,
+    );
+
+    expect(
+      screen.getByLabelText(
+        "events.killDetail.respawnTime: 1h 18m, events.killDetail.windowShare:65",
+      ),
+    ).toBeTruthy();
   });
 });
-
-function renderSummary(
-  kill: KillDetail,
-  options: { fasterThanMaxText?: string | null } = {},
-) {
-  const eventConfig: EventConfig = {
-    scoringMode: "ADVANCED",
-    scoringRules: null,
-  };
-
-  return render(
-    <KillDetailSummary
-      kill={kill}
-      eventConfig={eventConfig}
-      participantsCount={3}
-      lootCount={1}
-      respawnDurationText="1h 18m"
-      windowDurationText="2h"
-      fasterThanMaxText={
-        options.fasterThanMaxText === undefined
-          ? "41m 48s"
-          : options.fasterThanMaxText
-      }
-      respawnComparedToMaxPercentage={65}
-    />,
-  );
-}
 
 function createKill(overrides: Partial<KillDetail> = {}): KillDetail {
   return {

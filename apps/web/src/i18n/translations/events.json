@@ -451,8 +451,6 @@
     "accessDenied": "Nie masz dostępu do tego bicia",
     "error": "Nie udało się pobrać szczegółów bicia",
     "lootsError": "Nie udało się pobrać dopasowanych łupów",
-    "participantCount": "Uczestników",
-    "lootCount": "Dopasowanych łupów",
     "participants": "Uczestnicy",
     "matchingLoots": "Dopasowane łupy",
     "noLoots": "Brak łupów pasujących do tego bicia",
@@ -460,16 +458,13 @@
     "respawnTimeDescription": "Czas od minimalnego respawnu do momentu zabicia",
     "respawnWindowTime": "Maksymalne okno respawnu",
     "respawnWindowTimeDescription": "Czas od minimalnego do maksymalnego respawnu",
-    "respawnFasterBy": "{{duration}} przed max",
-    "respawnComparedToMax": "{{percentage}}% maksymalnego czasu",
     "overdueBy": "{{duration}} po max respie",
+    "windowShare": "{{percentage}}% okna",
     "respawnMinLabel": "Min. respawn",
     "respawnMaxLabel": "Max. respawn",
     "killTimeLabel": "Moment bicia",
     "manualCloseTitle": "Ręczne zamknięcie okna",
     "manualCloseDescription": "Okno respawnu zostało ręcznie zamknięte - heros mógł nie zostać zabity.",
-    "summaryStatus": "Zamknięcie",
-    "automaticClose": "Automatyczne",
     "multipliers": {
       "title": "Zasady punktacji",
       "simpleMode": "Tryb prosty: 1 punkt za bicie.",
@@ -478,11 +473,12 @@
       "ruleCount_few": "{{count}} reguły",
       "ruleCount_many": "{{count}} reguł",
       "ruleCount_other": "{{count}} reguł",
-      "capLabel": "Limit punktów",
       "pointsValue": "{{points}} pkt",
       "appliedStatus": "Zastosowano",
       "disabledStatus": "Wyłączona",
-      "configuredRules": "Skonfigurowane zasady punktacji"
+      "baseGroup": "Punkty bazowe",
+      "baseGroupHint": "Liczy się ostatnia spełniona reguła",
+      "bonusGroup": "Bonusy"
     },
     "mapCoverage": {
       "title": "Pokrycie map",
@@ -593,8 +589,8 @@
       "ZERO_BASE": "Zeruj punkty"
     },
     "actionSummary": {
-      "basePoints": "[{{points}}]",
-      "bonusPoints": "[+{{points}}]"
+      "basePoints": "{{points}} pkt",
+      "bonusPoints": "+{{points}} pkt"
     },
     "factor": {
       "trackingDurationPercentage": "% respawnu obstawionego",
@@ -620,6 +616,7 @@
     "summary": {
       "cap": "Max {{points}} pkt za bicie",
       "minTrackingForBonuses": "Bonusy tylko przy min. {{percentage}}% czasu na mapie",
+      "timezone": "Godziny wg strefy {{timezone}}",
       "simple": "Każdy gracz przypisany do mapy dostaje 1 pkt za bicie."
     },
     "recalculateButton": "Przelicz punkty",

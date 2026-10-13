@@ -7,8 +7,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { MultipliersCard } from "./multipliers-card";
 
 const { t } = await initializeTestTranslations({
-  "events.scoring.actionSummary.basePoints": "[{{points}}]",
-  "events.scoring.actionSummary.bonusPoints": "[+{{points}}]",
+  "events.scoring.actionSummary.basePoints": "{{points}} pkt",
+  "events.scoring.actionSummary.bonusPoints": "+{{points}} pkt",
 });
 
 const scoringRules: EventScoringRules = {
@@ -64,7 +64,7 @@ const staticScoringStates: Array<{
 afterEach(cleanup);
 
 describe("MultipliersCard", () => {
-  it("shows every rule immediately in an accessible list", () => {
+  it("groups base rules apart from bonuses and marks the viewer's applied rules", () => {
     const { container } = render(
       <MultipliersCard
         eventConfig={{ scoringMode: "ADVANCED", scoringRules }}
@@ -75,44 +75,44 @@ describe("MultipliersCard", () => {
 
     expect(container.querySelector("button")).toBeNull();
 
-    const list = screen.getByRole("list", {
-      name: "events.killDetail.multipliers.configuredRules",
-    });
+    const baseItems = within(
+      screen.getByRole("list", {
+        name: "events.killDetail.multipliers.baseGroup",
+      }),
+    ).getAllByRole("listitem");
 
-    const items = within(list).getAllByRole("listitem");
-    expect(items).toHaveLength(3);
+    const bonusItems = within(
+      screen.getByRole("list", {
+        name: "events.killDetail.multipliers.bonusGroup",
+      }),
+    ).getAllByRole("listitem");
 
-    if (!items[0] || !items[1] || !items[2])
+    expect(baseItems).toHaveLength(1);
+    expect(bonusItems).toHaveLength(2);
+
+    const [appliedBase] = baseItems;
+    const [neutralBonus, disabledBonus] = bonusItems;
+
+    if (!appliedBase || !neutralBonus || !disabledBonus)
       throw new Error("Missing scoring rules");
-    expect(items[0]?.textContent).toContain("Applied rule");
-    expect(within(items[0]).getByText("[1]")).toBeTruthy();
-    expect(within(items[1]).getByText("[+0.25]")).toBeTruthy();
-    expect(within(items[2]).getByText("[+0.5]")).toBeTruthy();
-    const firstItemText = items[0]?.textContent ?? "";
-    expect(firstItemText).toContain("events.scoring.always");
-    expect(firstItemText.indexOf("events.scoring.always")).toBeLessThan(
-      firstItemText.indexOf("[1]"),
-    );
-    expect(items[0]?.textContent).toContain(
+
+    expect(appliedBase.textContent).toContain("Applied rule");
+    expect(appliedBase.textContent).toContain("events.scoring.always");
+    expect(within(appliedBase).getByText("1 pkt")).toBeTruthy();
+    expect(appliedBase.textContent).toContain(
       "events.killDetail.multipliers.appliedStatus",
     );
-    expect(items[0]?.className).toContain("before:bg-cyan-400");
-    expect(items[1]?.textContent).not.toContain(
+
+    expect(within(neutralBonus).getByText("+0.25 pkt")).toBeTruthy();
+    expect(neutralBonus.textContent).not.toContain(
       "events.killDetail.multipliers.appliedStatus",
     );
-    expect(items[1]?.textContent).not.toContain(
+
+    expect(disabledBonus.textContent).toContain(
       "events.killDetail.multipliers.disabledStatus",
     );
-    expect(items[2]?.textContent).toContain(
-      "events.killDetail.multipliers.disabledStatus",
-    );
-    expect(items[2]?.textContent).not.toContain(
+    expect(disabledBonus.textContent).not.toContain(
       "events.killDetail.multipliers.appliedStatus",
-    );
-    expect(screen.queryByText("events.scoring.ifLabel")).toBeNull();
-    expect(screen.queryByText("events.scoring.thenLabel")).toBeNull();
-    expect(container.textContent).not.toContain(
-      "events.killDetail.multipliers.total",
     );
   });
 
@@ -151,15 +151,9 @@ describe("MultipliersCard", () => {
         expect(
           screen.queryByText("events.killDetail.multipliers.ruleCount"),
         ).toBeNull();
-        expect(
-          screen.queryByText("events.killDetail.multipliers.capLabel"),
-        ).toBeNull();
       } else {
         expect(
           screen.getByText("events.killDetail.multipliers.ruleCount"),
-        ).toBeTruthy();
-        expect(
-          screen.getByText("events.killDetail.multipliers.capLabel"),
         ).toBeTruthy();
       }
     },
