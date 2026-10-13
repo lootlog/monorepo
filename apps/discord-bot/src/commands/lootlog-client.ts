@@ -34,6 +34,8 @@ type Read = <A, I>(
 /** Reads made on behalf of one Member, with the access policy of the Web app. */
 export interface MemberSession {
   readonly guildId: string;
+  /** Matches the `member.id` of the Organization's own records. */
+  readonly memberId: number;
   readonly api: Read;
   readonly gateway: Read;
 }
@@ -49,7 +51,10 @@ export interface LootlogClientValue {
   ) => Effect.Effect<Uint8Array, CommandFailure>;
 }
 
-const MemberIdentity = Schema.Struct({ userId: Schema.String });
+const MemberIdentity = Schema.Struct({
+  userId: Schema.String,
+  memberId: Schema.Number,
+});
 
 const failureForStatus = (status: number): CommandFailure | undefined => {
   if (status >= 200 && status < 300) return undefined;
@@ -130,11 +135,10 @@ export class LootlogClient extends Context.Service<
       ) {
         const identityPath = `/internal/guilds/${encodeURIComponent(guildId)}/members/${encodeURIComponent(discordId)}/identity`;
 
-        const { userId } = yield* read(httpClient, config.apiServiceUrl)(
-          identityPath,
-          {},
-          MemberIdentity,
-        ).pipe(
+        const { userId, memberId } = yield* read(
+          httpClient,
+          config.apiServiceUrl,
+        )(identityPath, {}, MemberIdentity).pipe(
           Effect.catchIf(
             (failure) => failure.reason === "not-found",
             () => Effect.fail(new CommandFailure({ reason: "not-linked" })),
@@ -153,6 +157,7 @@ export class LootlogClient extends Context.Service<
 
         return {
           guildId,
+          memberId,
           api: read(asMember, config.apiServiceUrl),
           gateway: read(asMember, config.gatewayServiceUrl),
         } satisfies MemberSession;

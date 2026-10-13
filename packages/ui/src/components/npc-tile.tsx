@@ -5,10 +5,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
+import { npcIconUrl } from "@lootlog/domain/npc-icon";
 import { cn } from "cn";
 import type { FC, ReactNode } from "react";
-
-const MARGONEM_CDN_NPCS_URL = "https://micc.garmory-cdn.cloud/obrazki/npc/";
 
 export type NpcTileNpc = {
   icon?: string | null;
@@ -41,16 +40,7 @@ export const NpcTile: FC<NpcTileProps> = ({
     className,
   );
 
-  const isAbsoluteIconUrl =
-    icon !== undefined &&
-    icon !== null &&
-    (icon.startsWith("http://") ||
-      icon.startsWith("https://") ||
-      icon.startsWith("//"));
-
-  const npcIconSource = isAbsoluteIconUrl
-    ? icon
-    : `${MARGONEM_CDN_NPCS_URL}${icon ?? ""}`;
+  const npcIconSource = npcIconUrl(icon ?? "");
 
   const tooltipContent = renderTooltip?.(npc) ?? (
     <p className="text-foreground">

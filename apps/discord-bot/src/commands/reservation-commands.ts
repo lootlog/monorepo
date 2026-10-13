@@ -51,7 +51,7 @@ const spotState = (spot: Spot) => {
     : COMMAND_TEXT.reservations.free;
 
   return next
-    ? `${state}; ${COMMAND_TEXT.reservations.next(escapeMarkdown(next.author.displayName), discordTime(next.startsAt))}`
+    ? `${state}\n${COMMAND_TEXT.reservations.next(escapeMarkdown(next.author.displayName), discordTime(next.startsAt))}`
     : state;
 };
 

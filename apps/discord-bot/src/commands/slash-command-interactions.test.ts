@@ -60,6 +60,8 @@ const invoke = (
   options: {
     readonly subcommand?: string;
     readonly strings?: Readonly<Record<string, string>>;
+    readonly booleans?: Readonly<Record<string, boolean>>;
+    readonly users?: Readonly<Record<string, string>>;
   } = {},
 ): Promise<CommandReply> => {
   const invocation: CommandInvocation = {
@@ -69,8 +71,8 @@ const invoke = (
     options: {
       subcommand: options.subcommand ?? null,
       string: (name) => options.strings?.[name] ?? null,
-      boolean: () => null,
-      user: () => null,
+      boolean: (name) => options.booleans?.[name] ?? null,
+      user: (name) => options.users?.[name] ?? null,
     },
   };
 
@@ -83,7 +85,7 @@ const identityPath = `/internal/guilds/${guildId}/members/${discordId}/identity`
 
 const linkedMember = {
   path: identityPath,
-  answer: () => Response.json({ userId: "user-1" }),
+  answer: () => Response.json({ userId: "user-1", memberId: 1 }),
 };
 
 const description = (reply: CommandReply) =>
@@ -141,6 +143,170 @@ describe("slash commands", () => {
     );
   });
 
+  it("adds the invoker below the top of the ranking with their real position", async () => {
+    const memberRanking = Array.from({ length: 20 }, (_, index) => ({
+      memberName: index === 17 ? "Invoker" : `Member ${index + 1}`,
+      memberUserId: index === 17 ? discordId : `discord-other-${index}`,
+      totalParticipations: 20 - index,
+      participationsByType: {},
+    }));
+
+    answers = [
+      linkedMember,
+      {
+        path: `/guilds/${guildId}/stats/kills`,
+        answer: () =>
+          Response.json({ overview: { guildUniqueKills: 20 }, memberRanking }),
+      },
+    ];
+
+    const lines = description(
+      await invoke("ranking", { strings: { typ: "ELITE2" } }),
+    ).split("\n");
+
+    expect(lines).toHaveLength(17);
+    expect(lines[15]).toBe("…");
+    expect(lines[16]).toContain("`18.`");
+    expect(lines[16]).toContain(`<@${discordId}>`);
+    expect(lines.join("\n")).not.toContain("Member 16");
+  });
+
+  it("does not claim the invoker never killed an NPC when the killers page is cut", async () => {
+    const killers = (count: number) =>
+      Array.from({ length: count }, (_, index) => ({
+        memberName: `Member ${index + 1}`,
+        memberUserId: `discord-other-${index}`,
+        participationCount: 1,
+      }));
+
+    const npcReply = async (count: number) => {
+      answers = [
+        linkedMember,
+        {
+          path: `/guilds/${guildId}/stats/kills/npcs/7/killers`,
+          answer: () =>
+            Response.json({
+              npc: {
+                npcName: "Heros",
+                npcType: "HERO",
+                npcLvl: 100,
+                npcIcon: null,
+                uniqueGuildKills: count,
+                totalMemberParticipations: count,
+              },
+              killers: killers(count),
+            }),
+        },
+      ];
+
+      const reply = await invoke("npc", { strings: { nazwa: "7" } });
+
+      return (reply.embeds?.[0]?.toJSON().fields ?? [])
+        .map(({ value }) => value)
+        .join("\n");
+    };
+
+    expect(await npcReply(100)).not.toContain(COMMAND_TEXT.npc.ownMissing);
+    expect(await npcReply(3)).toContain(COMMAND_TEXT.npc.ownMissing);
+  });
+
+  it("sums the invoker's event points over heroes and ranks them by total", async () => {
+    const entry = (heroNpcName: string, id: number, totalPoints: number) => ({
+      heroNpcName,
+      totalPoints,
+      totalKills: 1,
+      member: { id, name: `Member ${id}` },
+    });
+
+    answers = [
+      linkedMember,
+      {
+        path: `/guilds/${guildId}/events`,
+        answer: () =>
+          Response.json([
+            {
+              id: "event-1",
+              name: "Event",
+              world: "Aldous",
+              active: true,
+              startsAt: null,
+              endsAt: null,
+              createdAt: new Date().toISOString(),
+              heroNpcs: [],
+            },
+          ]),
+      },
+      {
+        path: `/guilds/${guildId}/events/event-1/ranking`,
+        answer: () =>
+          Response.json([
+            entry("A", 2, 10),
+            entry("A", 1, 6),
+            entry("B", 1, 6),
+            entry("B", 3, 8),
+          ]),
+      },
+      {
+        path: `/guilds/${guildId}/events/event-1/wrapped`,
+        answer: () =>
+          Response.json({
+            overview: {
+              totalKills: 4,
+              participantCount: 3,
+              totalPoints: 30,
+              coveragePercentage: 50,
+              totalLoots: 0,
+            },
+            leaders: {
+              topHunter: { winner: null },
+              topScorer: { winner: null },
+              longestDuty: { winner: null },
+            },
+          }),
+      },
+    ];
+
+    const reply = await invoke("event", { subcommand: "podsumowanie" });
+
+    const own = reply.embeds?.[0]
+      ?.toJSON()
+      .fields?.find(({ name }) => name === COMMAND_TEXT.events.summary.own);
+
+    expect(own?.value).toBe(
+      COMMAND_TEXT.events.summary.ownResult(1, 3, "12", 2),
+    );
+  });
+
+  it("pings the chosen Member only when their statistics are shown publicly", async () => {
+    answers = [
+      linkedMember,
+      {
+        path: `/guilds/${guildId}/stats/kills`,
+        answer: () =>
+          Response.json({
+            overview: { guildUniqueKills: 1 },
+            memberRanking: [
+              {
+                memberName: "Aria",
+                memberUserId: "discord-2",
+                totalParticipations: 1,
+                participationsByType: { HERO: 1 },
+              },
+            ],
+          }),
+      },
+    ];
+
+    const statistics = (publiczne: boolean) =>
+      invoke("statystyki", {
+        users: { gracz: "discord-2" },
+        booleans: { publiczne },
+      });
+
+    expect((await statistics(true)).pings).toEqual(["discord-2"]);
+    expect((await statistics(false)).pings).toBeUndefined();
+  });
+
   it("asks a player without a Lootlog account here to sign in before reading anything", async () => {
     const reply = await invoke("ranking", { strings: { typ: "HERO" } });
 
@@ -177,7 +343,7 @@ describe("slash commands", () => {
       minSpawnTime: at(from),
       maxSpawnTime: at(until),
       wasReset: false,
-      npc: { name, lvl: 100, type: "ELITE2", location: "Mapa" },
+      npc: { name, lvl: 100, type: "ELITE2", location: "Mapa", icon: null },
     });
 
     answers = [
@@ -252,7 +418,10 @@ describe("slash commands", () => {
                 heroNpcName,
                 totalPoints: 100 - index,
                 totalKills: 10,
-                member: { name: `Członek z długim nickiem ${index}` },
+                member: {
+                  id: 100 + index,
+                  name: `Członek z długim nickiem ${index}`,
+                },
               })),
             ),
           ),
@@ -278,15 +447,14 @@ describe("slash commands", () => {
     const presence = (
       sessionId: string,
       platform: string,
-      character?: { name: string; lvl: number },
+      character?: { name: string; world: string },
+      isAfk = false,
     ) => ({
       sessionId,
       platform,
       status: "online",
-      isAfk: false,
-      ...(character && {
-        character: { ...character, world: "Aldous", prof: "w" },
-      }),
+      isAfk,
+      ...(character && { character: { ...character, lvl: 100, prof: "w" } }),
     });
 
     answers = [
@@ -298,10 +466,11 @@ describe("slash commands", () => {
             organizationId: guildId,
             revision: 1,
             presences: [
-              presence("1", "game", { name: "Aria", lvl: 120 }),
-              presence("2", "game", { name: "Aria", lvl: 120 }),
+              presence("1", "game", { name: "Aria", world: "Aldous" }),
+              presence("2", "game", { name: "Aria", world: "Aldous" }),
               presence("3", "web-app"),
-              presence("4", "game", { name: "Borys", lvl: 80 }),
+              presence("4", "game", { name: "Borys", world: "Luvia" }, true),
+              presence("5", "game", { name: "Cyra", world: "Luvia" }),
             ],
           }),
       },
@@ -309,8 +478,13 @@ describe("slash commands", () => {
 
     const reply = await invoke("online");
 
-    expect(reply.embeds?.[0]?.toJSON().title).toBe("W grze: 2");
-    expect(description(reply).match(/Aria/g)).toHaveLength(1);
+    expect(reply.embeds?.[0]?.toJSON().title).toBe(
+      COMMAND_TEXT.online.title(3),
+    );
+    expect(description(reply).split("\n")).toEqual([
+      COMMAND_TEXT.online.world("Luvia", 2, 1),
+      COMMAND_TEXT.online.world("Aldous", 1, 0),
+    ]);
     expect(
       requests
         .find(({ url }) => url.host === "gateway.test")

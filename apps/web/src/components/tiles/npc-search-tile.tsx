@@ -1,4 +1,4 @@
-import { MARGONEM_CDN_NPCS_URL } from "@/constants/margonem";
+import { npcIconUrl } from "@lootlog/domain/npc-icon";
 import { cn } from "cn";
 import type { FC } from "react";
 
@@ -8,15 +8,12 @@ type NpcSearchTileProps = {
   className?: string;
 };
 
-const isFullUrl = (url: string): boolean =>
-  url.startsWith("http://") || url.startsWith("https://");
-
 export const NpcSearchTile: FC<NpcSearchTileProps> = ({
   icon,
   name,
   className,
 }) => {
-  const src = isFullUrl(icon) ? icon : `${MARGONEM_CDN_NPCS_URL}${icon}`;
+  const src = npcIconUrl(icon);
 
   return (
     <div className="flex h-10 w-8 shrink-0 items-center justify-center">
