@@ -1,3 +1,4 @@
+import { formatBattleMetric } from "@/components/battle/utils/value-utils";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
@@ -15,7 +16,6 @@ import { cn } from "cn";
 import { Check, Trophy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
-  formatAbyssNumber,
   formatAbyssSignedNumber,
   getAbyssSeasonRangeLabel,
 } from "./abyss-formatters";
@@ -28,7 +28,7 @@ type AbyssSeasonsTableProps = {
 };
 
 const formatOptionalNumber = (value: number | null) =>
-  value === null ? "–" : formatAbyssNumber(value);
+  value === null ? "–" : formatBattleMetric(value);
 
 const getAbyssSeasonCellClassName = (columnId: string) => {
   if (columnId === "range") {
@@ -104,7 +104,7 @@ export function AbyssSeasonsTable({
       id: "winRate",
       header: () => t("battlePanel.abyss.seasonsTable.winRate"),
       cell: ({ row: { original: season } }) =>
-        `${formatAbyssNumber(season.winRate)}%`,
+        `${formatBattleMetric(season.winRate)}%`,
     },
     {
       id: "ratingDelta",
@@ -184,7 +184,7 @@ export function AbyssSeasonsTable({
                   },
                   {
                     label: t("battlePanel.abyss.seasonsTable.winRate"),
-                    value: `${formatAbyssNumber(season.winRate)}%`,
+                    value: `${formatBattleMetric(season.winRate)}%`,
                   },
                   {
                     label: t("battlePanel.abyss.seasonsTable.ratingDelta"),
