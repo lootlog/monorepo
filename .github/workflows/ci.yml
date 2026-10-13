@@ -83,7 +83,7 @@ jobs:
         uses: docker://rhysd/actionlint:1.7.12
         # actionlint 1.7.12 does not recognize GitHub's documented concurrency queue key.
         with:
-          args: -ignore 'unexpected key "queue" for "concurrency" section'
+          args: -ignore=^unexpected.key..queue..for..concurrency..section
 
   workspaces:
     name: Workspace checks (${{ matrix.id }})
