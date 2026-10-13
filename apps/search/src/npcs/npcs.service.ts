@@ -48,21 +48,19 @@ const NAMESPACE_PREFERENCE: Record<NpcIdentityNamespace, number> = {
 };
 
 const collapseByNameAndType = (hits: readonly NpcHit[]) => {
-  // Equal names in different editions are different NPCs.
-  const suggestionKey = (npc: NpcHit) =>
-    `${npc.gameVersion}_${npc.name}_${npc.type}`;
-
   const preferred = new Map<string, NpcHit>();
 
   for (const hit of hits) {
-    const current = preferred.get(suggestionKey(hit));
+    // Equal names in different editions are different NPCs.
+    const key = `${hit.gameVersion}_${hit.name}_${hit.type}`;
+    const current = preferred.get(key);
 
     if (
       !current ||
       NAMESPACE_PREFERENCE[hit.identityNamespace] <
         NAMESPACE_PREFERENCE[current.identityNamespace]
     ) {
-      preferred.set(suggestionKey(hit), hit);
+      preferred.set(key, hit);
     }
   }
 
