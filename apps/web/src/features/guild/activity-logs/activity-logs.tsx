@@ -20,6 +20,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { activityLogsInfiniteQueryOptions } from "./activity-logs.queries";
 import { ActivityLogsFilterToolbar } from "./components/activity-logs-filter-toolbar";
+import { ActivityLogsMobileListSkeleton } from "./components/activity-logs-mobile-list-skeleton";
 import { ActivityLogsTable } from "./components/activity-logs-table";
 import { useActivityLogsFilterModel } from "./components/use-activity-logs-filter-model";
 
@@ -110,7 +111,14 @@ export const ActivityLogs = () => {
     }
 
     if (isLoading) {
-      return <TableRowsSkeleton rows={ACTIVITY_LOGS_PAGE_LIMIT} />;
+      return (
+        <TableRowsSkeleton
+          rows={ACTIVITY_LOGS_PAGE_LIMIT}
+          mobileList={
+            <ActivityLogsMobileListSkeleton rows={ACTIVITY_LOGS_PAGE_LIMIT} />
+          }
+        />
+      );
     }
 
     if (activities.length === 0) {

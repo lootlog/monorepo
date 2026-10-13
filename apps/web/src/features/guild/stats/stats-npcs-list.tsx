@@ -7,6 +7,7 @@ import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { KillStatsFilterBar } from "@/features/kills/components/kill-stats-filter-bar";
 import { TRACKABLE_NPC_TYPES } from "./constants";
 import { StatsCountCell } from "./components/stats-count-cell";
+import { StatsMobileListSkeleton } from "./components/stats-mobile-list-skeleton";
 import { StatsNpcCell } from "./components/stats-npc-cell";
 import { RankBadge } from "@/components/common/rank-badge";
 import {
@@ -126,6 +127,7 @@ export const StatsNpcsList = () => {
 
       <StatsTableCard
         isLoading={isLoading}
+        mobileSkeleton={<StatsMobileListSkeleton media="npcTile" />}
         emptyMessage={
           paginatedData.length === 0
             ? t(
