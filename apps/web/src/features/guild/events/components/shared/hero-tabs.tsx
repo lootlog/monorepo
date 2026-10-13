@@ -1,6 +1,5 @@
 import { FilterBar } from "@/components/common/filter-bar";
 import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
-import { Swords } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { EventScrollableTabsList } from "./event-scrollable-tabs-list";
 
@@ -43,14 +42,13 @@ export const HeroTabs = ({
         onValueChange(nextValue === ALL_HEROES_VALUE ? undefined : nextValue)
       }
       className={
-        placement === "section"
-          ? "border-b border-border/70 px-3 py-2"
-          : "min-w-0 flex-1"
+        placement === "section" ? "border-b border-border/70" : "min-w-0 flex-1"
       }
     >
       <EventScrollableTabsList
         ariaLabel={t("events.heroTabs.label")}
-        size={placement === "section" ? "sm" : "lg"}
+        size={placement === "section" ? "default" : "lg"}
+        variant={placement === "section" ? "flush" : "pill"}
       >
         {includeAll && (
           <TabsTrigger value={ALL_HEROES_VALUE}>
@@ -59,7 +57,6 @@ export const HeroTabs = ({
         )}
         {heroes.map((hero) => (
           <TabsTrigger key={hero.id} value={hero[valueKey]}>
-            <Swords aria-hidden="true" />
             {hero.npcName}
           </TabsTrigger>
         ))}
