@@ -43,9 +43,9 @@ type ResolvedLootItem = Effect.Success<
   ReturnType<LootQueryOperations["resolveLootItemByHid"]>
 >;
 
-type FetchedLoot = Effect.Success<
-  ReturnType<LootQueryOperations["fetchLootById"]>
->;
+type FetchedLootRead = ReturnType<LootQueryOperations["fetchLootById"]>;
+
+type FetchedLoot = Effect.Success<FetchedLootRead>;
 
 type LootComments = Effect.Success<ReturnType<LootPersistence["listComments"]>>;
 
@@ -179,10 +179,7 @@ export const makeLootsOperations = ({
   redis,
   logger,
 }: LootsDependencies): LootsOperations => {
-  const pendingDetails = new Map<
-    string,
-    ReturnType<LootQueryOperations["fetchLootById"]>
-  >();
+  const pendingDetails = new Map<string, FetchedLootRead>();
 
   const attempt = <A>(operation: string, run: () => Promise<A>) =>
     Effect.tryPromise({
@@ -368,16 +365,27 @@ export const makeLootsOperations = ({
           if (pendingDetails.size >= MAX_PENDING_DETAIL_READS)
             return yield* restore(read);
 
+          // Effect.cached starts a new run after every caller abandons the last
+          // one, so only the newest run, or no run at all, may release the key.
+          let runs = 0;
+
+          const release = (run: number) =>
+            Effect.sync(() => {
+              if (runs === run) pendingDetails.delete(key);
+            });
+
           // The flight outlives a disconnected initiator while others still wait.
           const shared = yield* Effect.cached(
-            read.pipe(
-              Effect.ensuring(Effect.sync(() => pendingDetails.delete(key))),
-            ),
+            Effect.suspend(() => {
+              const run = ++runs;
+
+              return read.pipe(Effect.ensuring(release(run)));
+            }),
           );
 
           pendingDetails.set(key, shared);
 
-          return yield* restore(shared);
+          return yield* restore(shared).pipe(Effect.ensuring(release(0)));
         }),
       ),
 
