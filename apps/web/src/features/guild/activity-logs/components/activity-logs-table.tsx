@@ -1,4 +1,5 @@
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
+import { VirtualTableSpacerRow } from "@/components/ui/virtual-table-spacer-row";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import type { PaginatedActivitiesResponseDtoDataItem as Activity } from "@lootlog/client/activity";
@@ -131,14 +132,7 @@ export const ActivityLogsTable = ({
         rowClassName="border-b-1! border-border hover:bg-transparent"
       />
       <TableBody>
-        {topPadding > 0 && (
-          <TableRow className="border-b-0 hover:bg-transparent">
-            <TableCell
-              colSpan={columns.length}
-              style={{ height: topPadding }}
-            />
-          </TableRow>
-        )}
+        <VirtualTableSpacerRow colSpan={columns.length} height={topPadding} />
         {virtualRows.map((virtualRow) => {
           const row = rows[virtualRow.index];
 
@@ -164,14 +158,10 @@ export const ActivityLogsTable = ({
             </TableRow>
           );
         })}
-        {bottomPadding > 0 && (
-          <TableRow className="border-b-0 hover:bg-transparent">
-            <TableCell
-              colSpan={columns.length}
-              style={{ height: bottomPadding }}
-            />
-          </TableRow>
-        )}
+        <VirtualTableSpacerRow
+          colSpan={columns.length}
+          height={bottomPadding}
+        />
       </TableBody>
     </Table>
   );
