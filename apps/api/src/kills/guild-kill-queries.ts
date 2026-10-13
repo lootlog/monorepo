@@ -1,7 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
-import { Effect, Schema } from "effect";
+import { DateTime, Effect, Schema } from "effect";
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import {
   GuildKillStatsResponse,
@@ -23,7 +23,9 @@ import {
   visibilityFilter,
 } from "./kill-query-support.js";
 import {
+  fillKillTimeline,
   getKillStatsPeriodStart,
+  getKillTimelineUnit,
   type KillStatsPeriod,
 } from "./kill-stats-period.js";
 
@@ -90,13 +92,20 @@ export const makeGuildKillQueries = (
         label: "guild kill stats",
         schema: GuildKillStatsResponse,
         load: Effect.gen(function* () {
-          const [memberStats, guildSummary] = yield* Effect.all(
-            [
-              persistence.groupMemberStats(filter),
-              persistence.groupGuildSummaries(filter),
-            ],
-            { concurrency: "unbounded" },
-          );
+          const timelineUnit = getKillTimelineUnit(query.period);
+
+          const [memberStats, guildSummary, timeline, hourlyWeekday] =
+            yield* Effect.all(
+              [
+                persistence.groupMemberStats(filter),
+                persistence.groupGuildSummaries(filter),
+                persistence.guildKillTimeline(filter, timelineUnit),
+                persistence.guildKillHourlyWeekday(filter),
+              ],
+              { concurrency: "unbounded" },
+            );
+
+          const now = yield* DateTime.nowAsDate;
 
           const members = yield* persistence.findMembers([
             ...new Set(memberStats.map((stat) => stat.memberId)),
@@ -171,6 +180,16 @@ export const makeGuildKillQueries = (
               (left, right) =>
                 right.totalParticipations - left.totalParticipations,
             ),
+            timeline: {
+              unit: timelineUnit,
+              points: fillKillTimeline(
+                timeline,
+                timelineUnit,
+                periodStart,
+                now,
+              ),
+            },
+            hourlyWeekday,
           };
         }),
       }),

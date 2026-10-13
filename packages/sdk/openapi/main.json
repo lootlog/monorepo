@@ -38311,9 +38311,55 @@
               ],
               "additionalProperties": false
             }
+          },
+          "timeline": {
+            "type": "object",
+            "properties": {
+              "unit": {
+                "type": "string",
+                "enum": ["hour", "day"]
+              },
+              "points": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "date": {
+                      "type": "string"
+                    },
+                    "kills": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["date", "kills"],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": ["unit", "points"],
+            "additionalProperties": false
+          },
+          "hourlyWeekday": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "weekday": {
+                  "type": "number"
+                },
+                "hour": {
+                  "type": "number"
+                },
+                "kills": {
+                  "type": "number"
+                }
+              },
+              "required": ["weekday", "hour", "kills"],
+              "additionalProperties": false
+            }
           }
         },
-        "required": ["overview", "memberRanking"],
+        "required": ["overview", "memberRanking", "timeline", "hourlyWeekday"],
         "additionalProperties": false
       },
       "UserKillStatsResponseDto_Output": {
