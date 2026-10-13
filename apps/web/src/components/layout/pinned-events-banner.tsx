@@ -33,17 +33,15 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
       aria-label={t("events.sidebarBanner.pinnedEvent")}
       className="relative isolate overflow-hidden border-b border-sidebar-border bg-primary/[0.03]"
     >
+      {/* The corner glow breathes and the bottom rule is lit, so the block reads as live. */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(90%_70%_at_0%_0%,color-mix(in_oklab,var(--color-primary)_16%,transparent),transparent)]"
+        className="pointer-events-none absolute inset-0 -z-10 animate-glow-breathe bg-[radial-gradient(90%_70%_at_0%_0%,color-mix(in_oklab,var(--color-primary)_16%,transparent),transparent)] motion-reduce:animate-none"
       />
-      {/* A light runs along the bottom rule, so the block reads as live. */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-px overflow-hidden motion-reduce:hidden"
-      >
-        <span className="absolute inset-y-0 left-0 w-1/2 animate-hairline-sweep bg-gradient-to-r from-transparent via-primary to-transparent" />
-      </span>
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-primary/60 via-primary/15 to-transparent"
+      />
 
       <Link
         to="/$guildId/events/$eventId"

@@ -486,8 +486,9 @@
     placeholder-in 200ms var(--ease-emphasized) 150ms backwards;
   /* Small confirmations (check marks, radio dots, status dots) pop into place. */
   --animate-pop-in: pop-in 200ms var(--ease-overshoot) backwards;
-  /* A light that crosses a hairline, then rests before the next pass. */
-  --animate-hairline-sweep: hairline-sweep 5s var(--ease-emphasized) infinite;
+  /* An ambient glow that slowly brightens and dims; it never travels, so it
+   * does not read as progress. */
+  --animate-glow-breathe: glow-breathe 4s ease-in-out infinite alternate;
 
   @keyframes pop-in {
     from {
@@ -496,13 +497,9 @@
     }
   }
 
-  @keyframes hairline-sweep {
+  @keyframes glow-breathe {
     from {
-      translate: -100% 0;
-    }
-    45%,
-    to {
-      translate: 200% 0;
+      opacity: 0.5;
     }
   }
 
