@@ -1,4 +1,4 @@
-import { discordPermissionFields } from "@lootlog/schema/discord";
+import { discordGuildChannelFields } from "@lootlog/schema/discord";
 import { DiscordGuildSyncStateResponse } from "#src/contracts/guilds/schemas";
 /** Shared input and output schemas for the notifications feature. */
 import * as Schema from "effect/Schema";
@@ -94,16 +94,9 @@ export const AvailableOrganizationNotificationTargetsResponse = Schema.Struct({
   channels: Schema.Array(
     Schema.Struct({
       id: SafeInteger,
-      guildId: Schema.String,
-      channelId: Schema.String,
-      name: Schema.String,
-      channelType: Schema.String,
+      ...discordGuildChannelFields,
       parentId: Schema.Union([Schema.String, Schema.Null]),
       position: SafeInteger,
-      active: Schema.Boolean,
-      canView: Schema.Boolean,
-      canSend: Schema.Boolean,
-      ...discordPermissionFields,
       lastSyncedAt: DateTimeString,
       createdAt: DateTimeString,
       updatedAt: DateTimeString,
