@@ -38319,6 +38319,9 @@
                 "type": "string",
                 "enum": ["hour", "day"]
               },
+              "untimedKills": {
+                "type": "number"
+              },
               "points": {
                 "type": "array",
                 "items": {
@@ -38336,7 +38339,7 @@
                 }
               }
             },
-            "required": ["unit", "points"],
+            "required": ["unit", "untimedKills", "points"],
             "additionalProperties": false
           },
           "hourlyWeekday": {

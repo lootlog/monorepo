@@ -124,7 +124,8 @@ export const KillStats = () => {
 
         <KillStatsTimeline data={data?.timeline} isLoading={isLoading} />
 
-        {data && data.hourlyWeekday.length > 0 && (
+        {/* An API from before the timeline omits it during a rollout. */}
+        {data?.timeline && data.hourlyWeekday?.length > 0 && (
           <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-3">
             <KillStatsRecords data={data} />
             <KillStatsActivity

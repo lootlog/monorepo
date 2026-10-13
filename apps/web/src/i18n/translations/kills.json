@@ -85,6 +85,9 @@
   "leaders": {
     "titleWithType": "Czołówka: {{type}}"
   },
+  "timeline": {
+    "untimed": "Historia godzinowa zaczyna się {{date}}. Wcześniejszych bić ({{kills}}) nie ma na wykresie, w rekordach ani na mapie."
+  },
   "records": {
     "title": "Rekordy",
     "bestDay": "Dzień chwały",

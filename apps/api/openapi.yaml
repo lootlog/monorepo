@@ -17938,6 +17938,8 @@ components:
               enum:
                 - hour
                 - day
+            untimedKills:
+              type: number
             points:
               type: array
               items:
@@ -17953,6 +17955,7 @@ components:
                 additionalProperties: false
           required:
             - unit
+            - untimedKills
             - points
           additionalProperties: false
         hourlyWeekday:

@@ -826,6 +826,7 @@ export type GuildKillStatsResponseDtoOutputTimelinePointsItem = {
 
 export type GuildKillStatsResponseDtoOutputTimeline = {
   unit: GuildKillStatsResponseDtoOutputTimelineUnit;
+  untimedKills: number;
   points: GuildKillStatsResponseDtoOutputTimelinePointsItem[];
 };
 
