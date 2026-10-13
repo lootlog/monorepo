@@ -9,6 +9,7 @@ import {
   ClipboardList,
   Clock,
   FileText,
+  Lock,
   Logs,
   Settings,
   Trophy,
@@ -18,6 +19,7 @@ import { SidebarNav } from "./sidebar-nav/sidebar-nav";
 import type { MenuItem } from "./sidebar-nav/types";
 import { GuildSidebarHeader } from "./guild-sidebar-header";
 import { GuildPinnedEventsSection } from "./guild-pinned-events-section";
+import { CollapsePresence } from "@/components/common/collapse-presence";
 import { getListEventsQueryKey, useListEvents } from "@lootlog/client/main";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useMatches } from "@tanstack/react-router";
@@ -45,7 +47,14 @@ function getEventsIcon(hasActiveEvents: boolean) {
   );
 }
 
-export const GuildsSidebarNav: FC = () => {
+type GuildsSidebarNavProps = {
+  /** Set when the Organization route failed; `forbidden` is a 403. */
+  routeFailure?: "forbidden" | "unavailable";
+};
+
+export const GuildsSidebarNav: FC<GuildsSidebarNavProps> = ({
+  routeFailure,
+}) => {
   const guildId = useGuildId();
   const { data: accessPolicy } = useGuildPermissions();
   const { setOpenMobile } = useSidebar();
@@ -96,31 +105,42 @@ export const GuildsSidebarNav: FC = () => {
         : organizationNavigationIcons[item.id],
     label: item.label,
     path: item.href,
-    divided: item.id === "organization-activity",
+    group: item.group,
     badge:
       item.id === "organization-events" && hasActiveEvents
         ? { content: activeEventCount, variant: "default" }
         : undefined,
-    highlight: item.id === "organization-events" && hasActiveEvents,
   }));
 
   const handleItemClick = () => {
     setOpenMobile(false);
   };
 
-  const sidebarHeader = <GuildSidebarHeader guildId={guildId} />;
+  const sidebarHeader = (
+    <GuildSidebarHeader
+      guildId={guildId}
+      isRouteFailed={routeFailure !== undefined}
+    />
+  );
 
   return (
     <SidebarNav
       items={menuItems}
       header={sidebarHeader}
       beforeItems={
-        eventsNavigationItem?.visible ? (
+        <>
+          <CollapsePresence open={routeFailure === "forbidden"}>
+            <p className="flex items-center gap-2.5 px-5 pt-5 text-sm font-medium text-muted-foreground">
+              <Lock aria-hidden="true" className="size-4 shrink-0" />
+              {t("layout.guildsSelector.noAccess")}
+            </p>
+          </CollapsePresence>
           <GuildPinnedEventsSection
             guildId={guildId ?? ""}
+            enabled={Boolean(eventsNavigationItem?.visible)}
             onNavigate={handleItemClick}
           />
-        ) : undefined
+        </>
       }
       ariaLabel={t("layout.navigation.guildAriaLabel")}
     />
