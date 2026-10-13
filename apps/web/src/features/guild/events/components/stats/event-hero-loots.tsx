@@ -33,12 +33,10 @@ export const EventHeroLoots = ({
   const { t } = useTranslation();
   const [selectedHeroName, setSelectedHeroName] = useState<string | null>(null);
 
-  const activeHeroName = selectedHeroName ?? heroNpcs?.[0]?.npcName ?? null;
+  const activeHeroName =
+    showHeroTabs && heroNpcs && heroNpcs.length > 1 ? selectedHeroName : null;
 
-  const npcNamesToFetch =
-    showHeroTabs && heroNpcs && heroNpcs.length > 1 && activeHeroName
-      ? [activeHeroName]
-      : heroNpcNames;
+  const npcNamesToFetch = activeHeroName ? [activeHeroName] : heroNpcNames;
 
   const { data: loots, isLoading } = useEventLoots({
     guildId,
@@ -73,6 +71,7 @@ export const EventHeroLoots = ({
             placement="section"
             heroes={heroNpcs}
             valueKey="npcName"
+            includeAll
             value={activeHeroName ?? undefined}
             onValueChange={(heroName) => setSelectedHeroName(heroName ?? null)}
           />

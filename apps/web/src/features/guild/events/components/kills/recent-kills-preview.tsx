@@ -30,12 +30,10 @@ export const RecentKillsPreview = ({
   const { t } = useTranslation();
   const [selectedHeroId, setSelectedHeroId] = useState<string | null>(null);
 
-  const activeHero = selectedHeroId
-    ? heroNpcs?.find((h) => h.id === selectedHeroId)
-    : heroNpcs?.[0];
-
   const activeHeroId =
-    showHeroTabs && heroNpcs && heroNpcs.length > 1 ? activeHero?.id : heroId;
+    showHeroTabs && heroNpcs && heroNpcs.length > 1
+      ? (selectedHeroId ?? undefined)
+      : heroId;
 
   const {
     data: kills,
@@ -81,7 +79,8 @@ export const RecentKillsPreview = ({
         <HeroTabs
           placement="section"
           heroes={heroNpcs}
-          value={activeHero?.id}
+          includeAll
+          value={selectedHeroId ?? undefined}
           onValueChange={(heroId) => setSelectedHeroId(heroId ?? null)}
         />
       )}
