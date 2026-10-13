@@ -11,7 +11,6 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "@lootlog/ui/components/input-group";
-import { animateHeightChanges } from "@lootlog/ui/lib/animate-height-changes";
 import { ChevronDownIcon, XIcon, CheckIcon } from "lucide-react";
 
 const Combobox = ComboboxPrimitive.Root;
@@ -109,7 +108,6 @@ function ComboboxContent({
         className="isolate z-50"
       >
         <ComboboxPrimitive.Popup
-          ref={animateHeightChanges}
           data-slot="combobox-content"
           data-chips={!!anchor}
           className={cn(
