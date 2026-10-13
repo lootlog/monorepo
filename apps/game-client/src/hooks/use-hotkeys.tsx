@@ -10,6 +10,7 @@ import {
   canEnqueueReadyRoomInvitations,
   enqueueReadyRoomInvitations,
 } from "@/features/party-finder/ready-room-invitation-coordinator";
+import { toggleCharacterDetectorAutoSend } from "@/features/npc-detector/character-auto-send";
 import {
   createPingPressIdentity,
   isSamePingPressIdentity,
@@ -134,6 +135,7 @@ export const useHotkeys = (handlers: UseHotkeysOptions = {}) => {
         "join-party-gathering",
         () => window.dispatchEvent(new Event("lootlog:join-visible-gathering")),
       ],
+      ["toggle-detector-auto-send", toggleCharacterDetectorAutoSend],
     ]);
 
     const executeAction = (event: HotkeyEvent) => {
