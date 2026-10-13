@@ -23231,7 +23231,9 @@
                         "type": "string"
                       },
                       {
-                        "type": "integer"
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
                       }
                     ]
                   }
@@ -38427,7 +38429,8 @@
               },
               "days": {
                 "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "world": {
                 "nullable": true,
@@ -38449,15 +38452,18 @@
               },
               "allTimeKills": {
                 "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "timedKills": {
                 "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "untimedKills": {
                 "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "includesCurrentHour": {
                 "type": "boolean",
@@ -38485,11 +38491,13 @@
             "properties": {
               "totalKills": {
                 "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "activeDays": {
                 "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "averagePerDay": {
                 "nullable": true,
@@ -38497,15 +38505,18 @@
               },
               "currentStreak": {
                 "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "longestStreak": {
                 "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "uniqueNpcs": {
                 "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "maximum": 9007199254740991
               }
             },
             "required": [
@@ -38557,7 +38568,8 @@
                 },
                 "kills": {
                   "type": "integer",
-                  "minimum": 0
+                  "minimum": 0,
+                  "maximum": 9007199254740991
                 },
                 "partial": {
                   "type": "boolean"
@@ -38572,11 +38584,13 @@
             "properties": {
               "currentKills": {
                 "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "previousKills": {
                 "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "deltaKills": {
                 "type": "number"
@@ -38621,7 +38635,8 @@
                   },
                   "kills": {
                     "type": "integer",
-                    "minimum": 0
+                    "minimum": 0,
+                    "maximum": 9007199254740991
                   },
                   "partial": {
                     "type": "boolean"
@@ -38642,7 +38657,8 @@
                   },
                   "kills": {
                     "type": "integer",
-                    "minimum": 0
+                    "minimum": 0,
+                    "maximum": 9007199254740991
                   },
                   "partial": {
                     "type": "boolean"
@@ -38663,7 +38679,8 @@
                   },
                   "kills": {
                     "type": "integer",
-                    "minimum": 0
+                    "minimum": 0,
+                    "maximum": 9007199254740991
                   },
                   "partial": {
                     "type": "boolean"
@@ -38683,15 +38700,18 @@
               "properties": {
                 "weekday": {
                   "type": "integer",
-                  "minimum": 0
+                  "minimum": 0,
+                  "maximum": 9007199254740991
                 },
                 "hour": {
                   "type": "integer",
-                  "minimum": 0
+                  "minimum": 0,
+                  "maximum": 9007199254740991
                 },
                 "kills": {
                   "type": "integer",
-                  "minimum": 0
+                  "minimum": 0,
+                  "maximum": 9007199254740991
                 }
               },
               "required": ["weekday", "hour", "kills"],
@@ -38708,11 +38728,13 @@
                 },
                 "totalKills": {
                   "type": "integer",
-                  "minimum": 0
+                  "minimum": 0,
+                  "maximum": 9007199254740991
                 },
                 "uniqueNpcs": {
                   "type": "integer",
-                  "minimum": 0
+                  "minimum": 0,
+                  "maximum": 9007199254740991
                 },
                 "share": {
                   "type": "number"
@@ -38752,15 +38774,18 @@
                 },
                 "totalKills": {
                   "type": "integer",
-                  "minimum": 0
+                  "minimum": 0,
+                  "maximum": 9007199254740991
                 },
                 "previousKills": {
                   "type": "integer",
-                  "minimum": 0
+                  "minimum": 0,
+                  "maximum": 9007199254740991
                 },
                 "comparisonKills": {
                   "type": "integer",
-                  "minimum": 0
+                  "minimum": 0,
+                  "maximum": 9007199254740991
                 },
                 "deltaKills": {
                   "type": "number"
@@ -38837,15 +38862,18 @@
                 },
                 "totalKills": {
                   "type": "integer",
-                  "minimum": 0
+                  "minimum": 0,
+                  "maximum": 9007199254740991
                 },
                 "previousKills": {
                   "type": "integer",
-                  "minimum": 0
+                  "minimum": 0,
+                  "maximum": 9007199254740991
                 },
                 "comparisonKills": {
                   "type": "integer",
-                  "minimum": 0
+                  "minimum": 0,
+                  "maximum": 9007199254740991
                 },
                 "deltaKills": {
                   "type": "number"
@@ -38902,15 +38930,18 @@
                 },
                 "totalKills": {
                   "type": "integer",
-                  "minimum": 0
+                  "minimum": 0,
+                  "maximum": 9007199254740991
                 },
                 "comparisonKills": {
                   "type": "integer",
-                  "minimum": 0
+                  "minimum": 0,
+                  "maximum": 9007199254740991
                 },
                 "previousKills": {
                   "type": "integer",
-                  "minimum": 0
+                  "minimum": 0,
+                  "maximum": 9007199254740991
                 },
                 "deltaKills": {
                   "type": "number"
@@ -38984,7 +39015,8 @@
               },
               "days": {
                 "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "world": {
                 "nullable": true,
@@ -39006,15 +39038,18 @@
               },
               "allTimeKills": {
                 "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "timedKills": {
                 "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "untimedKills": {
                 "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "includesCurrentHour": {
                 "type": "boolean",

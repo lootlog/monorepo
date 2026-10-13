@@ -29,7 +29,8 @@
       "entry": [
         "src/main.tsx",
         "sandbox/main.ts",
-        "extension/entrypoints/**/*.ts"
+        "extension/entrypoints/**/*.ts",
+        "vite.config.ts"
       ],
       "project": [
         "src/**/*.{ts,tsx}",

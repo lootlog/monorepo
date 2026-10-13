@@ -31,8 +31,8 @@
       "packages/*"
     ],
     "catalog": {
-      "@effect/platform-bun": "4.0.0",
-      "@effect/sql-pg": "4.0.0",
+      "@effect/platform-bun": "4.0.4",
+      "@effect/sql-pg": "4.0.4",
       "@lexical/code": "0.52.0",
       "@lexical/code-prism": "0.52.0",
       "@lexical/link": "0.52.0",
@@ -46,33 +46,33 @@
       "@hookform/resolvers": "^5.9.1",
       "@tailwindcss/postcss": "^4.3.3",
       "@tailwindcss/vite": "^4.3.3",
-      "@tanstack/react-query": "^5.104.1",
-      "@tanstack/react-query-devtools": "^5.104.1",
-      "@tanstack/react-router": "^1.170.41",
-      "@types/node": "^26.6.4",
-      "@types/bun": "1.4.2",
+      "@tanstack/react-query": "^5.104.2",
+      "@tanstack/react-query-devtools": "^5.104.2",
+      "@tanstack/react-router": "^1.170.44",
+      "@types/node": "^26.6.5",
+      "@types/bun": "1.4.3",
       "@types/react": "^19.3.0",
       "@types/react-dom": "^19.3.0",
-      "@vitejs/plugin-react": "^6.1.1",
+      "@vitejs/plugin-react": "^6.1.2",
       "cn": "^0.4.0",
       "drizzle-kit": "1.0.0-rc.4",
       "drizzle-orm": "1.0.0-rc.4",
-      "effect": "4.0.0",
+      "effect": "4.0.4",
       "es-toolkit": "^1.52.0",
       "lexical": "0.52.0",
-      "nanostores": "1.5.4",
+      "nanostores": "1.5.5",
       "postcss-load-config": "^6.0.1",
       "react": "^19.3.0",
-      "react-doctor": "0.9.14",
+      "react-doctor": "0.9.18",
       "react-dom": "^19.3.0",
-      "react-hook-form": "7.89.0",
+      "react-hook-form": "7.90.0",
       "superjson": "^2.2.6",
       "tailwindcss": "^4.3.3",
       "typescript": "^7.0.2",
-      "vite": "^8.3.2",
-      "vitest": "^5.0.3",
+      "vite": "^8.3.4",
+      "vitest": "^5.0.4",
       "yaml": "2.9.1",
-      "zod": "^4.6.5"
+      "zod": "^4.6.7"
     }
   },
   "scripts": {
@@ -132,16 +132,16 @@
   },
   "devDependencies": {
     "@lootlog/client": "workspace:*",
-    "@oxlint/plugins": "1.86.0",
+    "@oxlint/plugins": "1.88.0",
     "husky": "^9.1.7",
-    "knip": "^6.39.0",
+    "knip": "^6.41.0",
     "lint-staged": "^17.6.0",
-    "oxfmt": "^0.71.0",
-    "oxlint": "^1.86.0",
+    "oxfmt": "^0.73.0",
+    "oxlint": "^1.88.0",
     "react-doctor": "catalog:",
-    "turbo": "2.11.7",
+    "turbo": "2.11.8",
     "typescript": "catalog:",
-    "wrangler": "^4.147.0"
+    "wrangler": "^4.150.0"
   },
   "overrides": {
     "@ai-sdk/provider-utils@>=4.0.0-beta.10 <4.0.33": "^4.0.33",
@@ -166,18 +166,18 @@
   "devEngines": {
     "packageManager": {
       "name": "bun",
-      "version": "1.4.2",
+      "version": "1.4.3",
       "onFail": "ignore"
     }
   },
   "engines": {
-    "bun": "1.4.2"
+    "bun": "1.4.3"
   },
-  "packageManager": "bun@1.4.2",
+  "packageManager": "bun@1.4.3",
   "patchedDependencies": {
     "drizzle-orm@1.0.0-rc.4": "patches/drizzle-orm@1.0.0-rc.4.patch",
-    "@effect/platform-bun@4.0.0": "patches/@effect%2Fplatform-bun@4.0.0.patch",
-    "happy-dom@20.14.5": "patches/happy-dom@20.14.5.patch"
+    "@effect/platform-bun@4.0.4": "patches/@effect%2Fplatform-bun@4.0.4.patch",
+    "happy-dom@20.14.6": "patches/happy-dom@20.14.6.patch"
   },
   "trustedDependencies": [
     "@tailwindcss/oxide",
