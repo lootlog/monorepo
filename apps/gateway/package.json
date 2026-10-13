@@ -46,7 +46,7 @@
     "@lootlog/typescript-config": "workspace:*",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
-    "testcontainers": "^12.2.0",
+    "testcontainers": "^12.2.1",
     "typescript": "catalog:",
     "yaml": "catalog:"
   }

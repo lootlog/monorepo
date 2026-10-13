@@ -457,7 +457,7 @@ export const prefetchHealthzControllerHealthCheckQuery = async <TData = Awaited<
 
   const queryOptions = getHealthzControllerHealthCheckQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -615,7 +615,7 @@ export const prefetchPlayersControllerGetPlayersQuery = async <TData = Awaited<R
 
   const queryOptions = getPlayersControllerGetPlayersQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -773,7 +773,7 @@ export const prefetchNpcsControllerGetNpcsQuery = async <TData = Awaited<ReturnT
 
   const queryOptions = getNpcsControllerGetNpcsQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -931,7 +931,7 @@ export const prefetchItemsControllerGetItemsQuery = async <TData = Awaited<Retur
 
   const queryOptions = getItemsControllerGetItemsQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -1081,7 +1081,7 @@ export const prefetchAllControllerSearchAllQuery = async <TData = Awaited<Return
 
   const queryOptions = getAllControllerSearchAllQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }

@@ -50,6 +50,7 @@ const developmentPipelineInputs = new Set([
   ".github/workflows/dev-deploy.yml",
   "scripts/deployment-targets.mjs",
   "scripts/deployment-input.ts",
+  "scripts/development-deployment-base.mjs",
 ]);
 
 const isWorkspaceManifest = (file) =>
@@ -285,7 +286,8 @@ export async function createDeploymentPlan(input) {
       targets: targets.filter(
         (target) =>
           target.development !== false &&
-          (pipelineChanged ||
+          (input.deployAll === true ||
+            pipelineChanged ||
             affectedPackages.has(target.package) ||
             (target.kind === "docker" &&
               isDockerPackagingChange(target, changedFiles, affectedPackages))),

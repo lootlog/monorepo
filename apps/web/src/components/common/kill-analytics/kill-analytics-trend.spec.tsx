@@ -36,3 +36,33 @@ it("keeps incomplete intervals identifiable in table view", () => {
   expect(screen.queryByRole("table")).toBeNull();
   expect(screen.getByRole("img", { name: "Weekly kills" })).toBeDefined();
 });
+
+it("lists the newest day first and re-sorts by kills, unknown days last both ways", () => {
+  render(
+    <KillAnalyticsTrend
+      title="Daily kills"
+      data={[
+        { date: "2026-08-01", kills: 40 },
+        { date: "2026-08-02", kills: null },
+        { date: "2026-08-03", kills: 5 },
+      ]}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "statistics.table" }));
+  const table = screen.getByRole("table", { name: "Daily kills" });
+
+  const dates = () =>
+    within(table)
+      .getAllByRole("rowheader")
+      .map((cell) => cell.textContent);
+
+  expect(dates()).toEqual(["3.08.2026", "2.08.2026", "1.08.2026"]);
+  fireEvent.click(
+    within(table).getByRole("button", { name: "statistics.kills" }),
+  );
+  expect(dates()).toEqual(["1.08.2026", "3.08.2026", "2.08.2026"]);
+  fireEvent.click(
+    within(table).getByRole("button", { name: "statistics.kills" }),
+  );
+  expect(dates()).toEqual(["3.08.2026", "1.08.2026", "2.08.2026"]);
+});

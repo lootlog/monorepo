@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { KpiCard } from "@/components/common/kpi-card";
-import { KillAnalyticsTrendSkeleton } from "./kill-analytics-trend-skeleton";
+import { KillAnalyticsTrendSkeleton } from "@/components/common/kill-analytics/kill-analytics-trend-skeleton";
 
 const METRICS = [
   { key: "total", icon: Skull },

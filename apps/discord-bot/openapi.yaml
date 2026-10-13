@@ -144,8 +144,12 @@ components:
             type: string
         channelCount:
           type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
         selectableChannelCount:
           type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
         lastAttemptAt:
           nullable: true
           type: string
@@ -201,6 +205,8 @@ components:
           type: string
         position:
           type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
         active:
           type: boolean
         canView:

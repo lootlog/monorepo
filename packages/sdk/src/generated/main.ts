@@ -8411,9 +8411,36 @@ export type GuildKillStatsResponseDtoOutputMemberRankingItem = {
   participationsByType: GuildKillStatsResponseDtoOutputMemberRankingItemParticipationsByType;
 };
 
+export type GuildKillStatsResponseDtoOutputTimelineUnit = typeof GuildKillStatsResponseDtoOutputTimelineUnit[keyof typeof GuildKillStatsResponseDtoOutputTimelineUnit];
+
+
+export const GuildKillStatsResponseDtoOutputTimelineUnit = {
+  hour: 'hour',
+  day: 'day',
+} as const;
+
+export type GuildKillStatsResponseDtoOutputTimelinePointsItem = {
+  date: string;
+  kills: number;
+};
+
+export type GuildKillStatsResponseDtoOutputTimeline = {
+  unit: GuildKillStatsResponseDtoOutputTimelineUnit;
+  untimedKills: number;
+  points: GuildKillStatsResponseDtoOutputTimelinePointsItem[];
+};
+
+export type GuildKillStatsResponseDtoOutputHourlyWeekdayItem = {
+  weekday: number;
+  hour: number;
+  kills: number;
+};
+
 export interface GuildKillStatsResponseDtoOutput {
   overview: GuildKillStatsResponseDtoOutputOverview;
   memberRanking: GuildKillStatsResponseDtoOutputMemberRankingItem[];
+  timeline: GuildKillStatsResponseDtoOutputTimeline;
+  hourlyWeekday: GuildKillStatsResponseDtoOutputHourlyWeekdayItem[];
 }
 
 export type UserKillStatsResponseDtoOutputOverviewKillsByType = {
@@ -8472,7 +8499,10 @@ export const UserKillAnalyticsResponseDtoOutputMetaCoverage = {
 export type UserKillAnalyticsResponseDtoOutputMeta = {
   timezone: UserKillAnalyticsResponseDtoOutputMetaTimezone;
   generatedAt: string;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   days: number;
   /** @nullable */
   world: string | null;
@@ -8481,27 +8511,51 @@ export type UserKillAnalyticsResponseDtoOutputMeta = {
   /** @nullable */
   firstBucketAt: string | null;
   coverage: UserKillAnalyticsResponseDtoOutputMetaCoverage;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   allTimeKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   timedKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   untimedKills: number;
   includesCurrentHour: true;
 };
 
 export type UserKillAnalyticsResponseDtoOutputOverview = {
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   totalKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   activeDays: number;
   /** @nullable */
   averagePerDay: number | null;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   currentStreak: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   longestStreak: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   uniqueNpcs: number;
 };
 
@@ -8516,15 +8570,24 @@ export type UserKillAnalyticsResponseDtoOutputDailyItem = {
 export type UserKillAnalyticsResponseDtoOutputWeeklyItem = {
   startDate: string;
   endDate: string;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   kills: number;
   partial: boolean;
 };
 
 export type UserKillAnalyticsResponseDtoOutputComparison = {
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   currentKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   previousKills: number;
   deltaKills: number;
   /** @nullable */
@@ -8540,7 +8603,10 @@ export type UserKillAnalyticsResponseDtoOutputComparison = {
 export type UserKillAnalyticsResponseDtoOutputRecordsBestDay = {
   startDate: string;
   endDate: string;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   kills: number;
   partial: boolean;
 } | null;
@@ -8551,7 +8617,10 @@ export type UserKillAnalyticsResponseDtoOutputRecordsBestDay = {
 export type UserKillAnalyticsResponseDtoOutputRecordsBestWeek = {
   startDate: string;
   endDate: string;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   kills: number;
   partial: boolean;
 } | null;
@@ -8562,7 +8631,10 @@ export type UserKillAnalyticsResponseDtoOutputRecordsBestWeek = {
 export type UserKillAnalyticsResponseDtoOutputRecordsBestMonth = {
   startDate: string;
   endDate: string;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   kills: number;
   partial: boolean;
 } | null;
@@ -8577,19 +8649,34 @@ export type UserKillAnalyticsResponseDtoOutputRecords = {
 };
 
 export type UserKillAnalyticsResponseDtoOutputHourlyWeekdayItem = {
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   weekday: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   hour: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   kills: number;
 };
 
 export type UserKillAnalyticsResponseDtoOutputTypesItem = {
   npcType: string;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   totalKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   uniqueNpcs: number;
   share: number;
 };
@@ -8613,11 +8700,20 @@ export type UserKillAnalyticsResponseDtoOutputNpcsItem = {
   npcProf: string | null;
   /** @nullable */
   npcIcon: string | null;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   totalKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   previousKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   comparisonKills: number;
   deltaKills: number;
   /** @nullable */
@@ -8646,11 +8742,20 @@ export type UserKillAnalyticsResponseDtoOutputNpcGainsItem = {
   npcProf: string | null;
   /** @nullable */
   npcIcon: string | null;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   totalKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   previousKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   comparisonKills: number;
   deltaKills: number;
   /** @nullable */
@@ -8668,11 +8773,20 @@ export type UserKillAnalyticsResponseDtoOutputWorldsItemDailyItem = {
 
 export type UserKillAnalyticsResponseDtoOutputWorldsItem = {
   world: string;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   totalKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   comparisonKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   previousKills: number;
   deltaKills: number;
   /** @nullable */
@@ -8714,7 +8828,10 @@ export const UserKillActivityResponseDtoOutputMetaCoverage = {
 export type UserKillActivityResponseDtoOutputMeta = {
   timezone: UserKillActivityResponseDtoOutputMetaTimezone;
   generatedAt: string;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   days: number;
   /** @nullable */
   world: string | null;
@@ -8723,11 +8840,20 @@ export type UserKillActivityResponseDtoOutputMeta = {
   /** @nullable */
   firstBucketAt: string | null;
   coverage: UserKillActivityResponseDtoOutputMetaCoverage;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   allTimeKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   timedKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   untimedKills: number;
   includesCurrentHour: true;
 };
