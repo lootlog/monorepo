@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@lootlog/ui/components/input";
+import { ArrowRight } from "lucide-react";
 import { cn } from "cn";
 
 export interface LevelRangeFilterProps {
@@ -131,9 +132,10 @@ export function LevelRangeFilter({
         size={size}
         className={inputClassName}
       />
-      <span className="text-xs text-muted-foreground" aria-hidden="true">
-        –
-      </span>
+      <ArrowRight
+        className="size-4 shrink-0 text-muted-foreground"
+        aria-hidden="true"
+      />
       <Input
         type="number"
         min="1"

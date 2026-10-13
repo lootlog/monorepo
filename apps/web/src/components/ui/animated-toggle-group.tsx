@@ -42,7 +42,7 @@ export function AnimatedToggleGroup<Value extends string>({
       }}
       spacing={0}
       className={cn(
-        "relative isolate grid max-w-full rounded-xl border border-border bg-background",
+        "relative isolate grid max-w-full rounded-md border border-border bg-background",
         { sm: "h-8", default: "h-9", lg: "h-10" }[size],
         className,
       )}
@@ -54,7 +54,7 @@ export function AnimatedToggleGroup<Value extends string>({
         <span
           aria-hidden
           className={cn(
-            "pointer-events-none absolute inset-y-0 left-0 -z-10 rounded-[inherit] bg-primary",
+            "pointer-events-none absolute inset-y-0 left-0 -z-10 rounded-[calc(var(--radius-md)-1px)] bg-primary",
             !isStatic &&
               "transition-transform duration-150 ease-emphasized motion-reduce:transition-none",
           )}
