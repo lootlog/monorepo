@@ -8,17 +8,10 @@ import {
 import { invalidateRankingQueries } from "./invalidate-ranking-queries";
 import { invalidateEventCoordinationQuery } from "./invalidate-event-queries";
 
-const getEventKillsPath = (guildId: string, eventId: string) =>
-  `/guilds/${guildId}/events/${eventId}/kills`;
-
-const getEventMembersPathPrefix = (guildId: string, eventId: string) =>
-  `/guilds/${guildId}/events/${eventId}/members/`;
-
 const getEventHeroesPathPrefix = (guildId: string, eventId: string) =>
   `/guilds/${guildId}/events/${eventId}/heroes/`;
 
-// TODO(kill-history-legacy): Remove only the old event/member/hero list matches after retirement.
-// Keep /kill-history and /heroes/:heroId/kills/:killId (including /timeline).
+// Matches the kill history list and the kill detail and timeline reads.
 const isEventKillQuery = (query: Query, guildId: string, eventId: string) => {
   const path = z.string().safeParse(query.queryKey[0]).data;
 
@@ -26,24 +19,7 @@ const isEventKillQuery = (query: Query, guildId: string, eventId: string) => {
     return false;
   }
 
-  if (
-    path === getEventKillsPath(guildId, eventId) ||
-    path === `/guilds/${guildId}/events/${eventId}/kill-history`
-  ) {
-    return true;
-  }
-
-  if (
-    path.startsWith(getEventMembersPathPrefix(guildId, eventId)) &&
-    path.endsWith("/kills")
-  ) {
-    return true;
-  }
-
-  if (
-    path.startsWith(getEventHeroesPathPrefix(guildId, eventId)) &&
-    path.endsWith("/kills")
-  ) {
+  if (path === `/guilds/${guildId}/events/${eventId}/kill-history`) {
     return true;
   }
 

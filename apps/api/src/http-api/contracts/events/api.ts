@@ -40,12 +40,7 @@ import {
   EventHeroKillPath,
   OpenRespawnWindowRequest,
   EventHeroStatsListResponse,
-  EventKillHistoryResponse,
-  EventKillHistoryQuery,
-  HeroKillHistoryQuery,
   EventKillDetailResponse,
-  EventMemberKillHistoryResponse,
-  EventMemberPath,
   EventKillPointPath,
   UpdateKillPointRequest,
   EventTimersResponse,
@@ -550,74 +545,6 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .annotate(
       OpenApi.Description,
       "Read visible kills in descending (killedAt, id) order. Filter by hero or member. Cursors are opaque and scoped to the Organization, event and filters. Continuation reads current data, not a frozen snapshot. Full participants and map data are available from kill detail and timeline endpoints.",
-    ),
-  // TODO(kill-history-legacy): Remove the next three list endpoints after client retirement.
-  // Keep the detail and timeline endpoints below; see events/history/README.md.
-  HttpApiEndpoint.get(
-    "EventsRankingControllerGetEventKillHistory",
-    "/guilds/:guildId/events/:eventId/kills",
-    {
-      params: EventPath,
-      query: EventKillHistoryQuery,
-      success: EventKillHistoryResponse,
-      error: [
-        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
-        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
-      ],
-    },
-  )
-    .middleware(BearerSecurityMiddleware)
-    .annotate(OpenApi.Identifier, "EventsRankingController_getEventKillHistory")
-    .annotate(OpenApi.Deprecated, true)
-    .annotate(OpenApi.Summary, "Get event kill history")
-    .annotate(
-      OpenApi.Description,
-      "Deprecated: use listEventKillHistory for lightweight summaries. This endpoint retains full participant details and UUID cursors. Invalid, missing or inaccessible cursor anchors return 400. Limit must be an integer from 1 to 100.",
-    ),
-  HttpApiEndpoint.get(
-    "EventsRankingControllerGetMemberKillHistory",
-    "/guilds/:guildId/events/:eventId/members/:memberId/kills",
-    {
-      params: EventMemberPath,
-      query: EventKillHistoryQuery,
-      success: EventMemberKillHistoryResponse,
-      error: [
-        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
-        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
-      ],
-    },
-  )
-    .middleware(BearerSecurityMiddleware)
-    .annotate(
-      OpenApi.Identifier,
-      "EventsRankingController_getMemberKillHistory",
-    )
-    .annotate(OpenApi.Deprecated, true)
-    .annotate(OpenApi.Summary, "Get member kill history")
-    .annotate(
-      OpenApi.Description,
-      "Deprecated: use listEventKillHistory with memberId. This endpoint retains its full response and UUID cursors. Invalid, missing or inaccessible cursor anchors return 400. Limit must be an integer from 1 to 100.",
-    ),
-  HttpApiEndpoint.get(
-    "EventsRankingControllerGetHeroKillHistory",
-    "/guilds/:guildId/events/:eventId/heroes/:heroId/kills",
-    {
-      params: EventHeroPath,
-      query: HeroKillHistoryQuery,
-      success: EventKillHistoryResponse,
-      error: [
-        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
-        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
-      ],
-    },
-  )
-    .middleware(BearerSecurityMiddleware)
-    .annotate(OpenApi.Identifier, "EventsRankingController_getHeroKillHistory")
-    .annotate(OpenApi.Deprecated, true)
-    .annotate(OpenApi.Summary, "Get hero kill history")
-    .annotate(
-      OpenApi.Description,
-      "Deprecated: use listEventKillHistory with heroId. This endpoint retains full participant details and UUID cursors. Invalid, missing or inaccessible cursor anchors return 400. Limit must be an integer from 1 to 100.",
     ),
   HttpApiEndpoint.get(
     "EventsRankingControllerGetKillDetail",

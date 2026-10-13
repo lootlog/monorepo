@@ -36,15 +36,6 @@ const EventOverviewScoringState = JsonValue.annotate({
   identifier: "EventOverviewResponseDto__schema0",
 });
 
-// TODO(kill-history-legacy): Remove these two list-only JSON components with the legacy responses.
-const KillHistoryBonusBreakdown = JsonValue.annotate({
-  identifier: "EventKillHistoryResponseDto__schema0",
-});
-
-const MemberKillBonusBreakdown = JsonValue.annotate({
-  identifier: "EventMemberKillHistoryResponseDto__schema0",
-});
-
 const KillScoringState = JsonValue.annotate({
   identifier: "KillDetailResponseDto__schema0",
 });
@@ -219,17 +210,6 @@ const ParticipationConfirmation = Schema.Struct({
   killedAt: DateTimeString,
   confirmationDeadlineAt: DateTimeString,
   heroNpc: EventHeroSummary,
-});
-
-// TODO(kill-history-legacy): Remove this map schema with KillParticipation; detail defines its own shape.
-const EventMapParticipation = Schema.Struct({
-  mapId: Schema.String,
-  mapName: Schema.String,
-  assignedAt: DateTimeString,
-  unassignedAt: Schema.Union([DateTimeString, Schema.Null]),
-  assignmentDurationSeconds: FiniteNumber,
-  presenceTimeSeconds: FiniteNumber,
-  afkTimeSeconds: FiniteNumber,
 });
 
 const PointAdjustment = Schema.Struct({
@@ -647,73 +627,6 @@ export const EventHeroStatsResponse = Schema.Struct({
   killCount: FiniteNumber,
 }).annotate({ identifier: "EventHeroStatsResponseDto" });
 
-// TODO(kill-history-legacy): Remove KillParticipation and both legacy history responses below.
-// Keep EventKillDetailResponse, EventParticipant and EventHeroSummary; see events/history/README.md.
-const KillParticipation = Schema.Struct({
-  id: Schema.String,
-  memberId: FiniteNumber,
-  points: FiniteNumber,
-  basePoints: FiniteNumber,
-  manualAdjustmentPoints: Schema.optionalKey(
-    Schema.Union([FiniteNumber, Schema.Null]),
-  ),
-  trackingDurationSeconds: Schema.Union([FiniteNumber, Schema.Null]),
-  trackingDurationPercentage: Schema.Union([FiniteNumber, Schema.Null]),
-  timeOnMapSeconds: FiniteNumber,
-  afkPercentage: FiniteNumber,
-  wasPresent: Schema.Boolean,
-  bonusBreakdown: Schema.optionalKey(KillHistoryBonusBreakdown),
-  member: EventParticipant,
-  mapData: Schema.optionalKey(Schema.Array(EventMapParticipation)),
-});
-
-export type EventKillHistoryResponse = typeof EventKillHistoryResponse.Type;
-
-export const EventKillHistoryResponse = Schema.Struct({
-  data: Schema.Array(
-    Schema.Struct({
-      id: Schema.String,
-      heroNpcId: Schema.String,
-      killedAt: DateTimeString,
-      minSpawnTimeAtKill: DateTimeString,
-      maxSpawnTimeAtKill: DateTimeString,
-      isManualClose: Schema.Boolean,
-      heroNpc: EventHeroSummary,
-      points: Schema.Array(KillParticipation),
-    }),
-  ),
-  nextCursor: Schema.Union([Schema.String, Schema.Null]),
-}).annotate({ identifier: "EventKillHistoryResponseDto" });
-
-export type EventMemberKillHistoryResponse =
-  typeof EventMemberKillHistoryResponse.Type;
-
-export const EventMemberKillHistoryResponse = Schema.Struct({
-  member: EventParticipant,
-  data: Schema.Array(
-    Schema.Struct({
-      id: Schema.String,
-      heroNpcId: Schema.String,
-      killedAt: DateTimeString,
-      minSpawnTimeAtKill: DateTimeString,
-      maxSpawnTimeAtKill: DateTimeString,
-      isManualClose: Schema.Boolean,
-      heroNpc: EventHeroSummary,
-      memberPoint: Schema.Union([
-        Schema.StructWithRest(
-          Schema.Struct({
-            ...KillParticipation.fields,
-            bonusBreakdown: Schema.optionalKey(MemberKillBonusBreakdown),
-          }),
-          [Schema.Record(Schema.String, JsonValue)],
-        ),
-        Schema.Null,
-      ]),
-    }),
-  ),
-  nextCursor: Schema.Union([Schema.String, Schema.Null]),
-}).annotate({ identifier: "EventMemberKillHistoryResponseDto" });
-
 export type EventKillDetailResponse = typeof EventKillDetailResponse.Type;
 
 export const EventKillDetailResponse = Schema.Struct({
@@ -1075,31 +988,6 @@ export const EventTimersResponse = Schema.Array(EventTimerResponse);
 export type EventHeroStatsListResponse = typeof EventHeroStatsListResponse.Type;
 
 export const EventHeroStatsListResponse = Schema.Array(EventHeroStatsResponse);
-
-// TODO(kill-history-legacy): Remove EventKillHistoryQuery, EventMemberPath and HeroKillHistoryQuery.
-// EventHeroKillPath below remains the detail/timeline contract.
-export type EventKillHistoryQuery = typeof EventKillHistoryQuery.Type;
-
-export const EventKillHistoryQuery = Schema.Struct({
-  limit: Schema.optionalKey(Schema.String),
-  cursor: Schema.optionalKey(Schema.String),
-  heroId: Schema.optionalKey(Schema.String),
-});
-
-export type EventMemberPath = typeof EventMemberPath.Type;
-
-export const EventMemberPath = Schema.Struct({
-  eventId: Schema.String,
-  memberId: Schema.String,
-  guildId: Schema.String,
-});
-
-export type HeroKillHistoryQuery = typeof HeroKillHistoryQuery.Type;
-
-export const HeroKillHistoryQuery = Schema.Struct({
-  limit: Schema.optionalKey(Schema.String),
-  cursor: Schema.optionalKey(Schema.String),
-});
 
 export type EventHeroKillPath = typeof EventHeroKillPath.Type;
 

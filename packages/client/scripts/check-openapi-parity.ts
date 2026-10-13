@@ -66,14 +66,6 @@ const GUILD_METADATA_ERROR_OPERATIONS = new Set([
   "GET /guilds/{guildId}/permissions",
 ]);
 
-// TODO(kill-history-legacy): Replace these status/deprecation allowances with verified removal expectations.
-// Do not relax parity for unrelated endpoints; see apps/api/src/events/history/README.md.
-const LEGACY_KILL_HISTORY_OPERATIONS = [
-  "GET /guilds/{guildId}/events/{eventId}/kills",
-  "GET /guilds/{guildId}/events/{eventId}/members/{memberId}/kills",
-  "GET /guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills",
-];
-
 const ORGANIZATION_NOT_FOUND_OPERATIONS = new Set([
   "GET /guilds/{guildId}/members",
   "GET /guilds/{guildId}/members/references",
@@ -359,11 +351,6 @@ const API_ERROR_RESPONSE_MIGRATIONS = [
       "PATCH /guilds/{guildId}/events/{eventId}/kills/{killId}/points/{killPointId}",
       "GET /guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills/{killId}/timeline",
     ],
-  },
-  {
-    restore: ["404"],
-    add: ["400"],
-    operations: LEGACY_KILL_HISTORY_OPERATIONS,
   },
   {
     restore: ["404"],
@@ -887,27 +874,6 @@ const normalizeServiceAuthentication = (
   return normalized;
 };
 
-const normalizeLegacyKillHistoryDeprecation = (
-  service: string,
-  operationKey: string,
-  operation: JsonValue,
-): JsonValue => {
-  if (
-    service !== "api" ||
-    !LEGACY_KILL_HISTORY_OPERATIONS.includes(operationKey)
-  )
-    return operation;
-
-  // Verified by http-boundary.e2e-spec.ts: the UUID list contracts remain
-  // available, with explicit invalid-cursor errors and a replacement endpoint.
-  if (!isJsonObject(operation) || operation["deprecated"] !== true)
-    throw new Error(`${operationKey} must remain deprecated`);
-
-  const { deprecated: _deprecated, ...withoutDeprecation } = operation;
-
-  return withoutDeprecation;
-};
-
 const REMOVED_SEARCH_WORLD: JsonValue = {
   name: "world",
   in: "query",
@@ -1135,12 +1101,6 @@ export const normalizeAllowedChanges = (
     service,
     operationKey,
     operation,
-  );
-
-  normalized = normalizeLegacyKillHistoryDeprecation(
-    service,
-    operationKey,
-    normalized,
   );
 
   if (service === "auth" && operationKey === "GET /auth/verify") {
@@ -2121,12 +2081,16 @@ if (import.meta.main) {
       assertVerifiedAddition(service.current, key, current.get(key));
     }
 
-    // User editing and the unused Organization loot count endpoint were removed.
+    // User editing, the unused Organization loot count endpoint and the UUID
+    // kill history lists replaced by listEventKillHistory were removed.
     const expectedRemovals =
       service.current === "api"
         ? [
             "PATCH /guilds/{guildId}/chat-messages/{messageId}",
             "GET /guilds/{guildId}/loots/count",
+            "GET /guilds/{guildId}/events/{eventId}/kills",
+            "GET /guilds/{guildId}/events/{eventId}/members/{memberId}/kills",
+            "GET /guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills",
           ]
         : [];
 
