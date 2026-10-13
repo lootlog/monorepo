@@ -618,31 +618,26 @@ export class RealtimeClient {
         return;
       }
 
+      // A publication can refresh this same session while its heartbeat is
+      // in flight. Keep the publication's heartbeat schedule and lifetime.
+      const isStaleHeartbeat = () =>
+        this.socket !== socket ||
+        this.presenceSessionId !== sessionId ||
+        this.presenceRefreshedAt !== refreshedAt;
+
       void this.requestWithTimeout(
         "presence.heartbeat",
         { sessionId },
         Math.min(this.requestTimeoutMs, remaining),
       )
         .then(() => {
-          if (
-            this.socket !== socket ||
-            this.presenceSessionId !== sessionId ||
-            this.presenceRefreshedAt !== refreshedAt
-          )
-            return;
+          if (isStaleHeartbeat()) return;
           this.presenceRefreshedAt = startedAt;
           this.setHeartbeatLatency(Math.round(performance.now() - startedAt));
           this.scheduleHeartbeat();
         })
         .catch((error: Error) => {
-          // A publication can refresh this same session while its heartbeat is
-          // in flight. Keep the publication's heartbeat schedule and lifetime.
-          if (
-            this.socket !== socket ||
-            this.presenceSessionId !== sessionId ||
-            this.presenceRefreshedAt !== refreshedAt
-          )
-            return;
+          if (isStaleHeartbeat()) return;
           this.setHeartbeatLatency(null);
 
           // Correlated retryable responses prove the transport is alive. Back off
