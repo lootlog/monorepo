@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next";
 import { upperFirst } from "es-toolkit";
 import { Skull } from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
-import { formatStatisticsDate } from "./format-statistics-date";
+import { formatStatisticsDate } from "@/components/common/kill-analytics/format-statistics-date";
 import { EMPTY_VALUE } from "@/constants/empty-value";
 
 export function StatisticsNpcTable({
