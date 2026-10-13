@@ -145,6 +145,9 @@ export const getScopeKey = (scope: Scope): string =>
     scope.mapId?.toString() ?? "",
   ].join("|");
 
+const getIdentityAudienceKey = (kind: "user" | "discord", id: string): string =>
+  JSON.stringify([kind, id]);
+
 const getScopeAudienceKey = (scope: Scope): string =>
   JSON.stringify([
     scope.topic,
@@ -549,7 +552,9 @@ export class RealtimeHub {
   }
 
   getLocalSocketsForUser(userId: string): ReadonlyArray<GatewaySocket> {
-    return [...(this.audiences.get(JSON.stringify(["user", userId])) ?? [])];
+    return [
+      ...(this.audiences.get(getIdentityAudienceKey("user", userId)) ?? []),
+    ];
   }
 
   reconnectUser(discordId: string, userId: string): void {
@@ -956,8 +961,8 @@ export class RealtimeHub {
 
   private audienceKeys(session: SessionData): string[] {
     return [
-      JSON.stringify(["user", session.userId]),
-      JSON.stringify(["discord", session.discordId]),
+      getIdentityAudienceKey("user", session.userId),
+      getIdentityAudienceKey("discord", session.discordId),
       ...Array.from(session.subscriptions.values(), getScopeAudienceKey),
     ];
   }
@@ -996,10 +1001,10 @@ export class RealtimeHub {
     const keys: string[] = [];
 
     if (message.userId !== undefined)
-      keys.push(JSON.stringify(["user", message.userId]));
+      keys.push(getIdentityAudienceKey("user", message.userId));
 
     if (message.discordId !== undefined)
-      keys.push(JSON.stringify(["discord", message.discordId]));
+      keys.push(getIdentityAudienceKey("discord", message.discordId));
     const scopes = message.scope ? [message.scope] : [];
 
     if (message.scopes) scopes.push(...message.scopes);
