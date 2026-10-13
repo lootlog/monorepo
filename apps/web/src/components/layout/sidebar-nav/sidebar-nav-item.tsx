@@ -3,8 +3,20 @@ import { Button } from "@lootlog/ui/components/button";
 import { cn } from "cn";
 import { type MouseEvent, type ReactNode, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import * as m from "framer-motion/m";
+import type { Variants } from "framer-motion";
 import type { MenuItem } from "./types";
 import { ThemeInteractiveFrame } from "@/themes";
+
+// Follows the variants of an appearing sidebar group; static otherwise.
+const itemVariants: Variants = {
+  hidden: { opacity: 0, x: -8 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { type: "spring", stiffness: 500, damping: 40 },
+  },
+};
 
 export const SidebarNavItem = ({
   url,
@@ -13,7 +25,6 @@ export const SidebarNavItem = ({
   icon,
   label,
   badge,
-  highlight,
   isRukiaTheme,
   isCatTheme,
   onItemClick,
@@ -24,17 +35,15 @@ export const SidebarNavItem = ({
   icon: ReactNode;
   label: string;
   badge?: MenuItem["badge"];
-  highlight?: boolean;
   isRukiaTheme: boolean;
   isCatTheme: boolean;
   onItemClick: (e: MouseEvent) => void;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const badgeVariant = isActive ? "white" : (badge?.variant ?? "default");
 
   const buttonContent = (
     <Button
-      variant={isActive ? "default" : "ghost"}
+      variant="ghost"
       render={
         available ? (
           <Link
@@ -48,29 +57,21 @@ export const SidebarNavItem = ({
       nativeButton={!available}
       role={available ? "link" : undefined}
       className={cn(
-        "justify-between w-full font-semibold transition-colors duration-200 relative",
-        isActive && "shadow-[0_0_12px] shadow-primary/25",
-        !isActive &&
-          "text-muted-foreground hover:text-primary hover:!bg-primary/10",
-        highlight &&
-          !isActive && [
-            "border border-primary/30 bg-primary/10 hover:!bg-primary/15",
-            "text-foreground",
-          ],
+        "justify-between w-full transition-colors duration-200 relative",
+        isActive
+          ? "!bg-primary/12 font-semibold text-primary hover:!bg-primary/15 hover:text-primary"
+          : "font-medium text-muted-foreground hover:text-primary hover:!bg-primary/10",
       )}
       disabled={!available}
     >
       <div
-        className={cn(
-          "flex items-center",
-          isActive && "[&_svg]:text-primary-foreground",
-        )}
+        className={cn("flex items-center", isActive && "[&_svg]:text-primary")}
       >
         {icon}
         {label}
       </div>
       {badge && (
-        <Badge variant={badgeVariant} className="ml-auto">
+        <Badge variant={badge.variant ?? "default"} className="ml-auto">
           {badge.content}
         </Badge>
       )}
@@ -92,17 +93,23 @@ export const SidebarNavItem = ({
   );
 
   return (
-    <li
+    <m.li
+      variants={itemVariants}
       className="relative w-full list-none px-2"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {isActive && !isRukiaTheme ? (
-        <div className="absolute inset-x-2 inset-y-0 rounded-md bg-primary/5" />
+        <m.span
+          aria-hidden="true"
+          layoutId="sidebar-nav-active-indicator"
+          transition={{ type: "spring", stiffness: 500, damping: 40 }}
+          className="absolute top-1/2 left-0 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary"
+        />
       ) : null}
       <ThemeInteractiveFrame isHovered={isHovered} isActive={isActive}>
         {buttonContent}
       </ThemeInteractiveFrame>
-    </li>
+    </m.li>
   );
 };

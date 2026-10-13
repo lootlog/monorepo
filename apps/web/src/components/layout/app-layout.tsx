@@ -47,13 +47,14 @@ export const AppLayout = () => {
     guildRouteMatch?.status === "error" ||
     guildRouteMatch?.status === "notFound";
 
-  // A failed Organization route has no navigation or server details to show,
-  // so the sidebar narrows to the server rail instead of an empty column.
-  const isCompactSidebar = isStandaloneRoute || hasFailedGuildRoute;
+  const isCompactSidebar = isStandaloneRoute;
 
+  // A failed Organization route keeps the navigation column: without an
+  // access policy its sections collapse, so moving between servers with and
+  // without access never shifts the layout.
   const sidebarNavigation = isCompactSidebar ? null : isUserRoute ? (
     <UserSidebarNav />
-  ) : showGuildNav ? (
+  ) : showGuildNav || hasFailedGuildRoute ? (
     <GuildsSidebarNav />
   ) : (
     <GuildSidebarNavPlaceholder />
