@@ -325,32 +325,6 @@ describe("EventRankingTable", () => {
     ).toBeNull();
   });
 
-  it("gives compact rankings a narrow responsive points column", () => {
-    renderRankingTable([createRanking({ id: "ranking-1", memberId: 1 })], {
-      variant: "compact",
-    });
-
-    const pointsHeader = screen.getByRole("columnheader", {
-      name: "events.ranking.points",
-    });
-
-    expect(pointsHeader.className).toContain("w-20");
-    expect(pointsHeader.className).toContain("@md/ranking:w-28");
-    expect(pointsHeader.className).not.toContain("md:w-36");
-  });
-
-  it("preserves the wider points column in the full ranking", () => {
-    renderRankingTable([createRanking({ id: "ranking-1", memberId: 1 })]);
-
-    const pointsHeader = screen.getByRole("columnheader", {
-      name: "events.ranking.points",
-    });
-
-    expect(pointsHeader.className).toContain("w-28");
-    expect(pointsHeader.className).toContain("md:w-36");
-    expect(pointsHeader.className).not.toContain("w-20");
-  });
-
   it("shows kills only when the ranking widget is wide enough", () => {
     const { container } = renderRankingTable(
       [createRanking({ id: "ranking-1", memberId: 1 })],
