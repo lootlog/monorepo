@@ -116,11 +116,10 @@ export const useGuildWorld = () => {
   const { guildId, urlWorld, storedWorld, setUrlWorld } =
     useGuildWorldSources();
 
-  // A named world reaches storage through the URL, like a shared link; all
-  // worlds leave no trace in the URL, so storage hears of them directly.
+  // Stored at once, so a navigation started right after the choice, such as
+  // opening the loot list for an item, already lands on the chosen world.
   const setWorld = (world: string | null) => {
-    if (world === null) storeGuildWorld(guildId, null);
-
+    storeGuildWorld(guildId, world);
     setUrlWorld(world, false);
   };
 

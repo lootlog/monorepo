@@ -100,7 +100,7 @@ export const ActivityLogs = () => {
   });
   useResetScrollTop({
     getScrollElement: () => scrollElement,
-    resetKey: JSON.stringify({ filters, guildId }),
+    resetKey: JSON.stringify({ filters, guildId, world }),
   });
 
   const renderResults = () => {

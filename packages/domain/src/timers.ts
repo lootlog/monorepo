@@ -4,7 +4,10 @@ export type TimerIdentity = {
   readonly timerKey: string;
 };
 
-const isSameTimer = (first: TimerIdentity, second: TimerIdentity): boolean =>
+export const isSameTimer = (
+  first: TimerIdentity,
+  second: TimerIdentity,
+): boolean =>
   first.timerKey === second.timerKey &&
   first.guildId === second.guildId &&
   first.world === second.world;

@@ -67,6 +67,7 @@ async function mount(
   fetchTimers: (url: URL) => Promise<Response>,
   world: string | null = "tempest",
   timerSettings: UpdateTimerSettingsPayload = {},
+  worldsResponse: () => Response = () => Response.json(["tempest", "pandora"]),
 ) {
   const client = new QueryClient({
     defaultOptions: {
@@ -90,7 +91,7 @@ async function mount(
             });
           }
 
-          return Response.json(["tempest", "pandora"]);
+          return worldsResponse();
         },
       },
     }),
@@ -301,4 +302,23 @@ it("counts past the maximum and drops a timer after the player's removal delay u
   expect(screen.queryByText("Overdue NPC")).toBeNull();
   expect(screen.getByText("Kept NPC")).toBeTruthy();
   vi.useRealTimers();
+});
+
+it("offers a retry when the Organization's worlds cannot be read for all worlds", async () => {
+  const worlds = vi
+    .fn<() => Response>()
+    .mockReturnValueOnce(new Response(null, { status: 503 }))
+    .mockReturnValue(Response.json(["tempest"]));
+
+  await mount(async () => Response.json([timer]), null, {}, worlds);
+
+  fireEvent.click(
+    await screen.findByRole(
+      "button",
+      { name: "Spróbuj ponownie" },
+      { timeout: 5_000 },
+    ),
+  );
+  expect(await screen.findByText("Original NPC")).toBeTruthy();
+  expect(worlds).toHaveBeenCalledTimes(2);
 });
