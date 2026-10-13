@@ -1,7 +1,7 @@
 import { startTransition, useEffect, useState, type FC } from "react";
 import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
 import { Link } from "@tanstack/react-router";
-import { Clock, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
@@ -17,6 +17,7 @@ import {
 import type { Event } from "@/features/guild/events/types/api";
 import { parseMsToTime } from "@lootlog/datetime";
 import { cn } from "cn";
+import { SpawnWindowRing } from "./spawn-window-ring";
 
 interface EventTimersListProps {
   event: Event;
@@ -29,6 +30,7 @@ interface TimerItemProps {
     npcId: number;
     minSpawnTime: string;
     maxSpawnTime: string;
+    minSpawnTimestamp: number;
     maxSpawnTimestamp: number;
     npc: { name: string; icon?: string | null };
     heroId?: string;
@@ -48,8 +50,7 @@ const TimerItem: FC<TimerItemProps> = ({
 }) => {
   const timeLeftMilliseconds = timer.maxSpawnTimestamp - currentTimestamp;
 
-  const isWindowOpen =
-    currentTimestamp >= new Date(timer.minSpawnTime).getTime();
+  const isWindowOpen = currentTimestamp >= timer.minSpawnTimestamp;
 
   const signalClassName = isWindowOpen
     ? "text-signal-ready"
@@ -83,13 +84,21 @@ const TimerItem: FC<TimerItemProps> = ({
               heroId: timer.heroId ?? "",
             }}
             onClick={onNavigate}
-            className="group/timer flex items-center gap-2.5 px-5 py-1.5 outline-none transition-colors hover:bg-primary/10 focus-visible:bg-primary/10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+            className="group/timer flex items-center gap-2 px-5 py-1.5 outline-none transition-colors hover:bg-primary/10 focus-visible:bg-primary/10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
           >
-            <Clock
-              aria-hidden="true"
-              className={cn("size-3.5 shrink-0", signalClassName)}
+            <SpawnWindowRing
+              minSpawnTimestamp={timer.minSpawnTimestamp}
+              maxSpawnTimestamp={timer.maxSpawnTimestamp}
+              currentTimestamp={currentTimestamp}
             />
-            <span className="flex-1 truncate text-xs text-muted-foreground transition-colors group-hover/timer:text-foreground">
+            <span
+              className={cn(
+                "flex-1 truncate text-xs transition-colors group-hover/timer:text-foreground",
+                isWindowOpen
+                  ? "text-sidebar-foreground"
+                  : "text-muted-foreground",
+              )}
+            >
               {timer.npc.name}
             </span>
             <span
@@ -167,7 +176,11 @@ export const EventTimersList: FC<EventTimersListProps> = ({
   );
 
   const activeTimers: Array<
-    (typeof timers)[number] & { heroId?: string; maxSpawnTimestamp: number }
+    (typeof timers)[number] & {
+      heroId?: string;
+      minSpawnTimestamp: number;
+      maxSpawnTimestamp: number;
+    }
   > = [];
 
   for (const timer of timers) {
@@ -180,6 +193,7 @@ export const EventTimersList: FC<EventTimersListProps> = ({
     activeTimers.push({
       ...timer,
       heroId: heroIdByNpcId.get(timer.npcId),
+      minSpawnTimestamp: new Date(timer.minSpawnTime).getTime(),
       maxSpawnTimestamp,
     });
   }
@@ -195,7 +209,7 @@ export const EventTimersList: FC<EventTimersListProps> = ({
   const hasMore = activeTimers.length > 3;
 
   return (
-    <div className="pb-1.5">
+    <div>
       {visibleTimers.map((timer) => (
         <TimerItem
           key={timer.npcId}
