@@ -1,5 +1,4 @@
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
-import { WorldSelectionEmptyState } from "@/components/common/world-selection-empty-state";
 import { findNpcType, NPC_TYPE_SORT_ORDER } from "@/constants/npc";
 import { EmptyState } from "@/components/common/empty-state";
 import { FilterBar } from "@/components/common/filter-bar";
@@ -23,7 +22,7 @@ import { SearchInput } from "@/components/ui/search-input";
 import { GuildWorldHeaderSwitcher } from "@/components/layout/guild-world-header-switcher";
 import { useViewMode } from "@/hooks/use-view-mode";
 import { useTranslation } from "react-i18next";
-import { useGuildContext } from "@/hooks/context/use-guild-context";
+import { useGuildWorld } from "@/hooks/context/use-guild-world";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getTimersControllerGetTimersQueryKey,
@@ -55,8 +54,15 @@ const getTimerListState = <Timer extends { npc?: { name: string } | null }>(
 
 export const Timers = () => {
   const guildId = useGuildId();
-  const { world } = useGuildContext();
+  const { world } = useGuildWorld();
   const queryGuildId = guildId ?? "";
+  // Without a world the list spans every world of the Organization.
+  const timersParams = world ? { world } : undefined;
+
+  const timersQueryKey = getTimersControllerGetTimersQueryKey(
+    { guildId: queryGuildId },
+    timersParams,
+  );
 
   const {
     data: timers,
@@ -65,23 +71,16 @@ export const Timers = () => {
     isError,
     isFetching,
     refetch,
-  } = useTimersControllerGetTimers(
-    { guildId: queryGuildId },
-    { world },
-    {
-      query: {
-        enabled: !!guildId && !!world,
-        queryKey: getTimersControllerGetTimersQueryKey(
-          { guildId: queryGuildId },
-          { world },
-        ),
-        staleTime: 15_000,
-        placeholderData: undefined,
-      },
+  } = useTimersControllerGetTimers({ guildId: queryGuildId }, timersParams, {
+    query: {
+      enabled: !!guildId,
+      queryKey: timersQueryKey,
+      staleTime: 15_000,
+      placeholderData: undefined,
     },
-  );
+  });
 
-  useTimerExpiry(timers, guildId, world, dataUpdatedAt);
+  useTimerExpiry(timers, guildId ? timersQueryKey : null, dataUpdatedAt);
   const [search, setSearch] = useState("");
 
   const { viewMode, setViewMode, canChooseViewMode } = useViewMode(
@@ -116,15 +115,6 @@ export const Timers = () => {
   );
 
   const renderContent = () => {
-    if (!world) {
-      return (
-        <WorldSelectionEmptyState
-          title={t("timers.selectWorldTitle")}
-          description={t("timers.noWorldSelected")}
-        />
-      );
-    }
-
     if (isError && timers === undefined) {
       return (
         <div className="px-3 pb-3">
@@ -202,8 +192,9 @@ export const Timers = () => {
                 <div className={getTimerGroupClassName(viewMode)}>
                   {groupTimers.map((timer) => (
                     <SingleTimer
-                      key={timer.npc?.id ?? timer.timerKey}
+                      key={`${timer.world}:${timer.timerKey}`}
                       timer={timer}
+                      showWorld={world === null}
                     />
                   ))}
                 </div>
@@ -241,7 +232,7 @@ export const Timers = () => {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col pt-3">
-        {world && isError && timers !== undefined && (
+        {isError && timers !== undefined && (
           <Alert
             variant="destructive"
             className="mx-3 mb-3 flex w-auto flex-wrap items-center justify-between gap-3"

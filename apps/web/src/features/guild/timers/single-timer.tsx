@@ -4,6 +4,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { NpcSearchTile } from "@/components/tiles/npc-search-tile";
+import { upperFirst } from "es-toolkit";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import type { TimerResponseDto } from "@lootlog/client/main";
@@ -16,9 +17,14 @@ import {
 
 type SingleTimerProps = {
   timer: TimerResponseDto;
+  /** Names the timer's world, for lists that span every world. */
+  showWorld?: boolean;
 };
 
-export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
+export const SingleTimer: FC<SingleTimerProps> = ({
+  timer,
+  showWorld = false,
+}) => {
   const { t } = useTranslation();
   const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
   const minSpawnTime = new Date(timer.minSpawnTime).getTime();
@@ -51,6 +57,12 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
                 )}
               </span>
               <span className="block truncate text-xs text-muted-foreground">
+                {showWorld && (
+                  <span className="font-medium text-foreground/80">
+                    {upperFirst(timer.world)}
+                    {timer.member?.name && " · "}
+                  </span>
+                )}
                 {timer.member?.name ?? ""}
               </span>
             </span>

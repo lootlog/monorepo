@@ -60,7 +60,6 @@ export const TopNpcsCard = ({
   const topNpcs = data?.topNpcs?.slice(0, LEADERBOARD_SIZE) ?? [];
 
   const hasActiveFilters =
-    Boolean(world) ||
     Boolean(minLvl) ||
     Boolean(maxLvl) ||
     (period !== undefined && period !== "all");

@@ -46,6 +46,7 @@ it("refreshes simultaneous expiries once, preserves scope, and handles a reset t
   client.setQueryData(otherKey, []);
 
   const timers = Array.from({ length: 100 }, (_, index) => ({
+    world: "tempest",
     timerKey: String(index),
     maxSpawnTime: "2026-09-05T12:00:01Z",
   }));
@@ -57,8 +58,7 @@ it("refreshes simultaneous expiries once, preserves scope, and handles a reset t
       recordRender();
       useTimerExpiry(
         currentTimers,
-        "one",
-        "tempest",
+        queryKey,
         Date.parse("2026-09-05T12:00:00Z"),
       );
     },
@@ -81,7 +81,13 @@ it("refreshes simultaneous expiries once, preserves scope, and handles a reset t
   });
   expect(fetchTimers).toHaveBeenCalledTimes(1);
   rerender({
-    currentTimers: [{ timerKey: "0", maxSpawnTime: "2026-09-05T12:00:03Z" }],
+    currentTimers: [
+      {
+        world: "tempest",
+        timerKey: "0",
+        maxSpawnTime: "2026-09-05T12:00:03Z",
+      },
+    ],
   });
   await act(async () => {
     await vi.advanceTimersByTimeAsync(1000);
@@ -123,9 +129,8 @@ it.each([
     const { unmount } = renderHook(
       () =>
         useTimerExpiry(
-          [{ timerKey: "expired", maxSpawnTime: expiredAt }],
-          "one",
-          "tempest",
+          [{ world: "tempest", timerKey: "expired", maxSpawnTime: expiredAt }],
+          queryKey,
           Date.parse("2026-09-05T12:00:00Z"),
         ),
       {

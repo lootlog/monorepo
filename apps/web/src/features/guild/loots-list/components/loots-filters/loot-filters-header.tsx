@@ -14,7 +14,6 @@ import {
 } from "@/features/guild/loots-list/loots-list-layout";
 import { useTranslation } from "react-i18next";
 import { ThemeInteractiveFrame } from "@/themes";
-import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { cn } from "cn";
 import { getPrimaryModifierKeyLabel } from "@/utils/platform/get-primary-modifier-key-label";
 
@@ -35,7 +34,6 @@ const getLootFiltersHeaderState = (
   },
   isMobile: boolean,
   isCompactLayout: boolean,
-  world: string | undefined,
 ) => ({
   hasSearchFilters:
     filters.npcs.length > 0 ||
@@ -43,7 +41,6 @@ const getLootFiltersHeaderState = (
     filters.hid !== "" ||
     filters.search !== "" ||
     filters.players.length > 0,
-  showToolbar: !isMobile || Boolean(world),
   usesStackedControls: isMobile || isCompactLayout,
 });
 
@@ -57,7 +54,6 @@ export const LootFiltersHeader = ({
   const openGuildSearch = useOpenGuildSearch();
   const [isFilterHovered, setIsFilterHovered] = useState(false);
   const isMobile = useIsMobile();
-  const { world } = useGuildContext();
   const { filters } = useLootsFilters();
 
   const { viewMode, setViewMode, canChooseViewMode } = useViewMode(
@@ -68,10 +64,11 @@ export const LootFiltersHeader = ({
 
   const primaryModifierKeyLabel = getPrimaryModifierKeyLabel();
 
-  const { hasSearchFilters, showToolbar, usesStackedControls } =
-    getLootFiltersHeaderState(filters, isMobile, isCompactLayout, world);
-
-  if (!showToolbar) return null;
+  const { hasSearchFilters, usesStackedControls } = getLootFiltersHeaderState(
+    filters,
+    isMobile,
+    isCompactLayout,
+  );
 
   return (
     <FilterBar ariaLabel={t("loots.header.toolbarLabel")}>

@@ -1,4 +1,4 @@
-import { useGuildContext } from "@/hooks/context/use-guild-context";
+import { useGuildWorld } from "@/hooks/context/use-guild-world";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getLootsControllerResolveLootItemByHidQueryKey,
@@ -137,7 +137,7 @@ export const useLootFiltersSidebar = ({
     rarityOptions,
   } = useLootFilterOptions();
 
-  const { world } = useGuildContext();
+  const { world } = useGuildWorld();
   const guildId = useGuildId();
 
   const { filters, setFilters, hasActiveFilters, clearFilters } =

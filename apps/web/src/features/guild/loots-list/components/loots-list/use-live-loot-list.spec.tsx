@@ -22,7 +22,7 @@ import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { Storage as MemoryStorage } from "happy-dom";
 import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
 import { createTestGateway } from "@/lib/testing/gateway";
-import { GuildContext } from "@/contexts/guild.context";
+import { storeGuildWorld } from "@/hooks/context/use-guild-world";
 import { ThemeContext } from "@/contexts/theme-context";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { useLiveLootList } from "./use-live-loot-list";
@@ -135,28 +135,28 @@ async function mount(
 
   const GatewayWrapper = gateway.wrapper;
 
-  const renderApp = (world: string) => (
+  storeGuildWorld("alias", "tempest");
+
+  const app = (
     <GatewayWrapper>
       <QueryClientProvider client={client}>
-        <GuildContext value={{ world, setWorld: () => undefined }}>
-          <ThemeContext
-            value={{
-              theme: "default",
-              resolvedTheme: "default",
-              isLoading: false,
-              setTheme: () => undefined,
-            }}
-          >
-            <NuqsTestingAdapter searchParams={searchParams} hasMemory>
-              <RouterProvider router={router} />
-            </NuqsTestingAdapter>
-          </ThemeContext>
-        </GuildContext>
+        <ThemeContext
+          value={{
+            theme: "default",
+            resolvedTheme: "default",
+            isLoading: false,
+            setTheme: () => undefined,
+          }}
+        >
+          <NuqsTestingAdapter searchParams={searchParams} hasMemory>
+            <RouterProvider router={router} />
+          </NuqsTestingAdapter>
+        </ThemeContext>
       </QueryClientProvider>
     </GatewayWrapper>
   );
 
-  const view = render(renderApp("tempest"));
+  render(app);
   await act(async () => {
     await router.load();
     await vi.advanceTimersByTimeAsync(1);
@@ -166,7 +166,7 @@ async function mount(
     gateway,
     client,
     fetch,
-    changeWorld: () => view.rerender(renderApp("katahha")),
+    changeWorld: () => storeGuildWorld("alias", "katahha"),
   };
 }
 

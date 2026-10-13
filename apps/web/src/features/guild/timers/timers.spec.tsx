@@ -22,8 +22,9 @@ import {
 } from "@lootlog/client/main";
 import { Storage as MemoryStorage } from "happy-dom";
 import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
-import { GuildContext } from "@/contexts/guild.context";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { ThemeContext } from "@/contexts/theme-context";
+import { storeGuildWorld } from "@/hooks/context/use-guild-world";
 import { queryClient } from "@/lib/query-client";
 import { Timers } from "./timers";
 import "@/i18n/config";
@@ -61,7 +62,10 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-async function mount(fetchTimers: () => Promise<Response>) {
+async function mount(
+  fetchTimers: (url: URL) => Promise<Response>,
+  world: string | null = "tempest",
+) {
   const client = new QueryClient({
     defaultOptions: {
       queries: { ...queryClient.getDefaultOptions().queries, retry: false },
@@ -76,7 +80,7 @@ async function mount(fetchTimers: () => Promise<Response>) {
         fetch: async (input) => {
           const url = new URL(String(input));
 
-          if (url.pathname.endsWith("/timers")) return fetchTimers();
+          if (url.pathname.endsWith("/timers")) return fetchTimers(url);
 
           return Response.json(["tempest", "pandora"]);
         },
@@ -97,9 +101,9 @@ async function mount(fetchTimers: () => Promise<Response>) {
     history: createMemoryHistory({ initialEntries: ["/one/timers"] }),
   });
 
-  const tree = (world: string) => (
+  const tree = (
     <QueryClientProvider client={client}>
-      <GuildContext value={{ world, setWorld: () => undefined }}>
+      <NuqsTestingAdapter>
         <ThemeContext
           value={{
             theme: "default",
@@ -110,17 +114,18 @@ async function mount(fetchTimers: () => Promise<Response>) {
         >
           <RouterProvider router={router} />
         </ThemeContext>
-      </GuildContext>
+      </NuqsTestingAdapter>
     </QueryClientProvider>
   );
 
+  storeGuildWorld("one", world);
   await router.load();
-  const view = render(tree("tempest"));
+  render(tree);
 
   return {
     client,
     router,
-    changeWorld: (world: string) => view.rerender(tree(world)),
+    changeWorld: (world: string) => storeGuildWorld("one", world),
   };
 }
 
@@ -226,4 +231,20 @@ it("orders timer groups by NPC type, then spawn time, preserving tied timers", a
       .getAllByText(/^(Late|First tied|Titan|Second tied) NPC$/)
       .map((element) => element.textContent),
   ).toEqual(["Titan NPC", "First tied NPC", "Second tied NPC", "Late NPC"]);
+});
+
+it("lists one NPC's timers on every world when the Organization shows all worlds", async () => {
+  const fetchTimers = vi.fn(async (_url: URL) =>
+    Response.json([
+      timer,
+      { ...timer, world: "pandora", member: { name: "Kaszmir" } },
+    ]),
+  );
+
+  await mount(fetchTimers, null);
+
+  expect(await screen.findAllByText("Original NPC")).toHaveLength(2);
+  expect(screen.getByText("Tempest")).toBeTruthy();
+  expect(screen.getByText(/^Pandora/)).toBeTruthy();
+  expect(fetchTimers.mock.calls[0]?.[0].searchParams.has("world")).toBe(false);
 });

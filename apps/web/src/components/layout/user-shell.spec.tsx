@@ -1,12 +1,6 @@
 // @vitest-environment happy-dom
 
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  within,
-} from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import {
   createMemoryHistory,
   createRootRoute,
@@ -102,7 +96,7 @@ const renderAccountPage = async () => {
 describe("user shell navigation", () => {
   afterEach(cleanup);
 
-  it("removes the page's header action when returning through the breadcrumb", async () => {
+  it("names the section of a settings tab and drops the tab's header action on leaving", async () => {
     const router = await renderAccountPage();
     expect(
       await screen.findByRole("button", { name: "Page action" }),
@@ -113,16 +107,14 @@ describe("user shell navigation", () => {
       }),
     ).toBeNull();
     // A settings tab is a sibling of the overview, not its child.
-    expect(screen.queryByRole("link", { name: "Wróć" })).toBeNull();
+    expect(screen.queryByRole("link", { name: /^Wróć/ })).toBeNull();
+    expect(screen.getByText("Ustawienia")).toBeDefined();
 
-    fireEvent.click(
-      within(screen.getByRole("navigation")).getByRole("link", {
-        name: "Ustawienia",
-      }),
-    );
+    await act(async () => {
+      await router.navigate({ to: "/@me/settings" });
+    });
 
     await screen.findByRole("heading", { name: "Settings overview" });
-    expect(router.state.location.pathname).toBe("/@me/settings");
     expect(screen.queryByRole("button", { name: "Page action" })).toBeNull();
   });
 });

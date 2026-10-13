@@ -1,4 +1,3 @@
-import { upperFirst } from "es-toolkit";
 import { Button } from "@lootlog/ui/components/button";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { Label } from "@lootlog/ui/components/label";
@@ -7,12 +6,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@lootlog/ui/components/popover";
-import {
-  Activity,
-  CalendarRange,
-  Globe,
-  MonitorSmartphone,
-} from "lucide-react";
+import { Activity, CalendarRange, MonitorSmartphone } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityLogsDateRangeFields } from "./activity-logs-date-range-fields";
@@ -34,7 +28,6 @@ export const ActivityLogsFilterFields = ({
   const {
     filters,
     updateFilters,
-    worlds,
     clanNameSuggestions,
     activityTypes,
     activitySources,
@@ -81,24 +74,6 @@ export const ActivityLogsFilterFields = ({
           onValueChange={(value) => updateFilters({ clanName: value })}
           placeholder={t("activityLogs.filters.clanSearchPlaceholder")}
           className={stacked ? "w-full" : "w-[200px]"}
-        />,
-      )}
-      {renderField(
-        t("activityLogs.filters.world"),
-        <FilterPopover
-          options={worlds.map((world) => ({
-            value: world,
-            label: upperFirst(world),
-          }))}
-          value={filters.world || undefined}
-          onValueChange={(world) =>
-            updateFilters({ world: world === filters.world ? "" : world })
-          }
-          placeholder={t("activityLogs.filters.world")}
-          icon={Globe}
-          width={stacked ? "w-full" : "w-[150px]"}
-          searchPlaceholder={t("activityLogs.filters.worldSearchPlaceholder")}
-          emptyMessage={t("activityLogs.filters.noWorlds")}
         />,
       )}
       {renderField(

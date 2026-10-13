@@ -31,7 +31,6 @@ export const NpcKillersPage = () => {
     search,
     handleSearchChange,
     settings,
-    handleWorldChange,
     handlePeriodChange,
     hasActiveFilters,
     paginatedKillers,
@@ -149,9 +148,7 @@ export const NpcKillersPage = () => {
       />
 
       <KillStatsFilterBar
-        world={settings.world}
         period={settings.period}
-        onWorldChange={handleWorldChange}
         onPeriodChange={handlePeriodChange}
         search={{
           value: search,

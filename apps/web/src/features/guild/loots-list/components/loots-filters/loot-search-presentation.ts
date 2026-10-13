@@ -32,3 +32,7 @@ export const isInScope = (scope: GuildSearchScope, group: GuildSearchScope) =>
 
 /** One result row in the search palette, whatever kind of hit it holds. */
 export const SEARCH_ROW_CLASS_NAME = "group h-12 gap-3 rounded-lg px-2.5";
+
+/** A character's id is unique only within its world. */
+export const getPlayerRowValue = (player: { id: string; world: string }) =>
+  `player-${player.world}-${player.id}`;
