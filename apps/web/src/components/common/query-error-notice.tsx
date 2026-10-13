@@ -8,7 +8,7 @@ type QueryErrorNoticeProps = {
   message: string;
   /** Second line, for example that the content below is the last good copy. */
   detail?: string;
-  onRetry: () => void;
+  onRetry?: () => void;
   isRetrying?: boolean;
   className?: string;
 };
@@ -44,15 +44,17 @@ export const QueryErrorNotice = ({
           <p className="text-xs text-muted-foreground">{detail}</p>
         ) : null}
       </div>
-      <Button
-        type="button"
-        variant="outline"
-        loading={isRetrying}
-        icon=<RotateCcw className="size-3.5" />
-        onClick={onRetry}
-      >
-        {t("common.actions.retry")}
-      </Button>
+      {onRetry && (
+        <Button
+          type="button"
+          variant="outline"
+          loading={isRetrying}
+          icon=<RotateCcw className="size-3.5" />
+          onClick={onRetry}
+        >
+          {t("common.actions.retry")}
+        </Button>
+      )}
     </div>
   );
 };

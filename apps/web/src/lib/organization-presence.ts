@@ -266,5 +266,5 @@ const disconnectedSnapshot: PresenceSnapshot = {
 export const unavailablePresence = {
   getSnapshot: () => disconnectedSnapshot,
   subscribe: () => () => {},
-  refetch: () => {},
+  refetch: undefined,
 };
