@@ -17,7 +17,6 @@ import {
   legacyBattleAnalytics as legacy,
   type BattleWithWarriors,
 } from "../../../test/legacy-battle-analytics.js";
-import { sortBy } from "es-toolkit";
 
 const runtime = ManagedRuntime.make(PgliteClient.layer({}));
 
@@ -268,21 +267,23 @@ describe("SQL battle analytics parity", () => {
     it(`preserves opponent aggregates, latest snapshots and packed fallback for filter set ${index}`, async () => {
       const h2hQuery = { ...filtersQuery, matchmaking: true };
       expect(
-        sortBy(
-          await runtime.runPromise(
+        [
+          ...(await runtime.runPromise(
             reads.getHeadToHead("owner", h2hQuery, characters),
-          ),
-          ["opponentId"],
+          )),
+        ].sort((left, right) =>
+          left.opponentId.localeCompare(right.opponentId),
         ),
       ).toEqual(
-        sortBy(
-          legacy.headToHeadRecords(
+        legacy
+          .headToHeadRecords(
             legacyHistory(h2hQuery, { hasFlee: false }).slice().reverse(),
             characterSet,
             h2hQuery.matchmaking,
+          )
+          .sort((left, right) =>
+            left.opponentId.localeCompare(right.opponentId),
           ),
-          ["opponentId"],
-        ),
       );
       expect(
         await runtime.runPromise(
