@@ -23,7 +23,12 @@ import {
   Redacted,
   Schema,
 } from "effect";
-import { HttpRouter, HttpServer, HttpServerResponse } from "effect/http";
+import {
+  FetchHttpClient,
+  HttpRouter,
+  HttpServer,
+  HttpServerResponse,
+} from "effect/http";
 import { HttpApiBuilder } from "effect/http-api";
 import { registerDiscordEventHandlers } from "#src/bot/bot-discord-events.handler";
 import {
@@ -35,6 +40,9 @@ import {
   type DiscordSync,
 } from "#src/bot/discord-sync.service";
 import type { RabbitPublisher } from "#src/bot/rabbit-publisher";
+import { LootlogClient } from "#src/commands/lootlog-client";
+import { registerSlashCommands } from "#src/commands/slash-command-interactions";
+import type { CommandServices } from "#src/commands/slash-command";
 import { BotConfig } from "#src/config/bot-config";
 import { DiscordBotApi } from "#src/http-api/discord-bot-api";
 
@@ -108,6 +116,14 @@ class BotServices extends Context.Service<BotServices, BotServicesValue>()(
       const sync = makeDiscordSync(publisher, client);
       const runEvent = yield* FiberSet.makeRuntime<never, void, never>();
       registerDiscordEventHandlers(client, sync, runEvent);
+
+      const runInteraction = yield* FiberSet.makeRuntime<
+        CommandServices,
+        void,
+        never
+      >();
+
+      registerSlashCommands(client, runInteraction);
 
       return BotServices.of({ client, delivery, sync });
     }),
@@ -252,6 +268,8 @@ const RabbitLive = Layer.unwrap(
 
 export const BotApplication = Layer.merge(BotHttpServer, BotConsumer).pipe(
   Layer.provide(BotServices.layer),
+  Layer.provide(LootlogClient.layer),
+  Layer.provide(FetchHttpClient.layer),
   Layer.provide(RabbitLive),
   Layer.provide(BotConfig.layer),
 );
