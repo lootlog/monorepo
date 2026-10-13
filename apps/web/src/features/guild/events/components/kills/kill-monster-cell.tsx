@@ -34,7 +34,7 @@ export const KillMonsterCell = ({
 
   return (
     <div className="flex min-w-0 items-center gap-2">
-      <span className="flex w-8 shrink-0 justify-center">
+      <span className="flex h-10 w-8 shrink-0 items-center justify-center">
         {kill.heroNpc.npcIcon ? (
           <NpcTile
             npc={{

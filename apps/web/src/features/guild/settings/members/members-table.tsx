@@ -6,6 +6,7 @@ import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { MemberStatusBadge } from "@/features/guild/settings/members/member-status-badge";
 import type { MemberWebPresenceByDiscordId } from "@/lib/web-presence";
 import type { GuildMember } from "@/features/guild/settings/members/members.types";
+import { memberTableColumnWidths } from "@/features/guild/settings/members/members.constants";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import {
   getVirtualListPadding,
@@ -109,7 +110,7 @@ export const MembersTable = ({
 
   const rows = table.getRowModel().rows;
 
-  const rowEstimateSize = isMobile ? 65 : 64;
+  const rowEstimateSize = isMobile ? 65 : 57;
 
   const rowVirtualizer = usePageVirtualizer<HTMLElement>({
     count: members.length,
@@ -215,12 +216,9 @@ export const MembersTable = ({
     <>
       <Table ref={tableRef} tabIndex={-1} className="min-w-[994px] table-fixed">
         <colgroup>
-          <col className="w-[360px]" />
-          <col className="w-[130px]" />
-          <col className="w-[160px]" />
-          <col className="w-[150px]" />
-          <col className="w-[130px]" />
-          <col className="w-16" />
+          {memberTableColumnWidths.map(([columnId, className]) => (
+            <col key={columnId} className={className} />
+          ))}
         </colgroup>
         <TanStackTableHeader
           table={table}

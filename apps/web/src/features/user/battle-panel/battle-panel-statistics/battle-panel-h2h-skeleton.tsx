@@ -1,3 +1,4 @@
+import { CardListSkeleton } from "@/components/common/card-list-skeleton";
 import { PageHeader } from "@/components/common/page-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SkeletonLine } from "@/components/common/skeleton-line";
@@ -6,13 +7,24 @@ import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Swords } from "lucide-react";
+import type { ReactNode } from "react";
 
 const noop = () => undefined;
+
+type BattlePanelH2hSkeletonProps = {
+  /** One placeholder of the card the route lists below `md` instead of its table. */
+  mobileCard: ReactNode;
+  /** The player-vs-player header shows the user's character tile. */
+  withPlayerTile?: boolean;
+};
 
 // Stands in for the head-to-head pages: a page header above a `ResultsSurface`
 // whose header carries the filter toolbar. The titles differ per route, so
 // they stay placeholders; the toolbar mirrors `HeadToHeadFilterToolbar`.
-export const BattlePanelH2hSkeleton = () => {
+export const BattlePanelH2hSkeleton = ({
+  mobileCard,
+  withPlayerTile = false,
+}: BattlePanelH2hSkeletonProps) => {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <div className="px-3 pt-3 pb-0">
@@ -20,6 +32,9 @@ export const BattlePanelH2hSkeleton = () => {
           icon={Swords}
           title=<SkeletonLine className="h-5 w-56 max-w-full" />
           description=<SkeletonLine className="h-3 w-72 max-w-full" />
+          metadata={
+            withPlayerTile && <Skeleton className="h-12 w-8 rounded-lg" />
+          }
         />
       </div>
 
@@ -44,7 +59,11 @@ export const BattlePanelH2hSkeleton = () => {
             }
           />
           <div className="relative min-h-0 flex-1 overflow-hidden">
-            <TableRowsSkeleton withHeader />
+            <TableRowsSkeleton
+              withHeader
+              rowContent="text"
+              mobileList={<CardListSkeleton card={mobileCard} />}
+            />
           </div>
           <TablePaginationFooter
             totalLabel=<Skeleton className="h-4 w-36" />

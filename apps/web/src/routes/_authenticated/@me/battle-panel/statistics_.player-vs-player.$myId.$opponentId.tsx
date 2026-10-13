@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PlayerVsPlayerFullPage } from "@/features/user/battle-panel/battle-panel-statistics/player-vs-player-full-page";
 import { BattlePanelH2hSkeleton } from "@/features/user/battle-panel/battle-panel-statistics/battle-panel-h2h-skeleton";
+import { BattlePanelPvpBattleCardSkeleton } from "@/features/user/battle-panel/components/battle-panel-pvp-battle-card-skeleton";
 import { ensureBattlePanelCharacterId } from "@/features/user/battle-panel/battle-panel-route-loader";
 import {
   battlePanelPlayerVsPlayerSearchSchema,
@@ -49,5 +50,10 @@ export const Route = createFileRoute(
       return null;
     }),
   component: PlayerVsPlayerFullPage,
-  pendingComponent: BattlePanelH2hSkeleton,
+  pendingComponent: () => (
+    <BattlePanelH2hSkeleton
+      mobileCard={<BattlePanelPvpBattleCardSkeleton />}
+      withPlayerTile
+    />
+  ),
 });
