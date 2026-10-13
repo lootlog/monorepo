@@ -1,4 +1,7 @@
-import { discordPermissionFields } from "@lootlog/schema/discord";
+import {
+  discordGuildChannelFields,
+  discordPermissionFields,
+} from "@lootlog/schema/discord";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   DiscordGuildSyncStatusSchema,
@@ -26,15 +29,8 @@ const mutableDiscordPermissionFields = {
 };
 
 const DiscordGuildChannelSnapshotSchema = Schema.Struct({
-  guildId: Schema.String,
-  channelId: Schema.String,
-  name: Schema.String,
-  channelType: Schema.String,
-  parentId: Schema.NullOr(Schema.String),
+  ...discordGuildChannelFields,
   position: Schema.Number,
-  active: Schema.Boolean,
-  canView: Schema.Boolean,
-  canSend: Schema.Boolean,
   ...mutableDiscordPermissionFields,
   lastSyncedAt: Schema.String,
 });
