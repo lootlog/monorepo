@@ -10,16 +10,26 @@ import {
 } from "#src/members/user-guild-permissions";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
+import { and, eq, isNotNull } from "drizzle-orm";
 
 import { HttpApiBuilder } from "effect/http-api";
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { findActiveGuild } from "#src/guilds/active-guild-lookup";
-import type { guildTable } from "#src/database/drizzle/schema";
+import { memberTable, type guildTable } from "#src/database/drizzle/schema";
 
 import { OrganizationSummary } from "#src/contracts/shared";
-import { InternalUserPermissionsResponse } from "#src/contracts/internal/schemas";
+import {
+  InternalMemberIdentityResponse,
+  InternalUserPermissionsResponse,
+} from "#src/contracts/internal/schemas";
 import { LootlogApi } from "../../lootlog-api.js";
+
+export class InternalMemberNotFound extends TaggedErrorClass<InternalMemberNotFound>()(
+  "InternalMemberNotFound",
+  { status: Schema.Literal(404), code: Schema.Literal("MEMBER_NOT_FOUND") },
+) {}
 
 export class InternalGuildsOperationError extends TaggedErrorClass<InternalGuildsOperationError>()(
   "InternalGuildsOperationError",
@@ -42,6 +52,10 @@ export interface InternalGuildsPersistence extends UserGuildPermissionsPersisten
   readonly findActiveGuild: (
     idOrVanityUrl: string,
   ) => Effect.Effect<GuildRecord | null, unknown>;
+  readonly findActiveMemberUserId: (
+    guildId: string,
+    discordId: string,
+  ) => Effect.Effect<string | null, unknown>;
 }
 
 export const makeInternalGuildsData = (
@@ -77,6 +91,8 @@ export const makeInternalGuildsData = (
     getUserPermissions: (discordId, userId, freshness) =>
       operation(getUserPermissions(discordId, userId, freshness)),
     getGuild: (idOrVanityUrl) => operation(getGuild(idOrVanityUrl)),
+    getMemberIdentity: (guildId, discordId) =>
+      operation(persistence.findActiveMemberUserId(guildId, discordId)),
   });
 };
 
@@ -91,6 +107,10 @@ export class InternalGuildsData extends Context.Service<
     readonly getGuild: (
       idOrVanityUrl: string,
     ) => Effect.Effect<unknown, InternalGuildsOperationError>;
+    readonly getMemberIdentity: (
+      guildId: string,
+      discordId: string,
+    ) => Effect.Effect<string | null, InternalGuildsOperationError>;
   }
 >()("@lootlog/api/http-api/internal-guilds/data") {
   static layerDatabase(cache: InternalGuildsCache) {
@@ -100,6 +120,20 @@ export class InternalGuildsData extends Context.Service<
         const persistence: InternalGuildsPersistence = {
           findActiveGuild: (idOrVanityUrl) =>
             findActiveGuild(database, idOrVanityUrl),
+          findActiveMemberUserId: (guildId, discordId) =>
+            database
+              .select({ userId: memberTable.globalUserId })
+              .from(memberTable)
+              .where(
+                and(
+                  eq(memberTable.guildId, guildId),
+                  eq(memberTable.userId, discordId),
+                  eq(memberTable.active, true),
+                  isNotNull(memberTable.globalUserId),
+                ),
+              )
+              .limit(1)
+              .pipe(Effect.map((rows) => rows[0]?.userId ?? null)),
           ...makeUserGuildPermissionsPersistence(database),
         };
 
@@ -148,6 +182,30 @@ export const getInternalGuild = (idOrVanityUrl: string) =>
     }),
   );
 
+/**
+ * The Discord bot acts for the User behind an interaction. Only an active
+ * member whose Lootlog User is known resolves; every other case is the same
+ * 404, so the bot cannot tell a missing guild from a missing member.
+ */
+export const getInternalMemberIdentity = (guildId: string, discordId: string) =>
+  Effect.gen(function* () {
+    const data = yield* InternalGuildsData;
+    const userId = yield* data.getMemberIdentity(guildId, discordId);
+
+    if (userId === null) {
+      return yield* new InternalMemberNotFound({
+        status: 404,
+        code: "MEMBER_NOT_FOUND",
+      });
+    }
+
+    return yield* decode(InternalMemberIdentityResponse, { userId });
+  }).pipe(
+    Effect.withSpan("GuildsInternalControllerGetMemberIdentity", {
+      attributes: { operationId: "GuildsInternalControllerGetMemberIdentity" },
+    }),
+  );
+
 const orDieHttpFailure = <A, R>(
   effect: Effect.Effect<A, InternalGuildsOperationError, R>,
 ) =>
@@ -171,5 +229,12 @@ export const InternalGuildsHandlers = HttpApiBuilder.group(
       )
       .handle("GuildsInternalControllerGetGuildByIdOrVanityUrl", ({ params }) =>
         orDieHttpFailure(getInternalGuild(params.idOrVanityUrl)),
+      )
+      .handle("GuildsInternalControllerGetMemberIdentity", ({ params }) =>
+        orDieHttpFailure(
+          getInternalMemberIdentity(params.guildId, params.discordId).pipe(
+            Effect.catchTag("InternalMemberNotFound", statusCodeResponse),
+          ),
+        ),
       ),
 );

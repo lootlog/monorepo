@@ -1029,6 +1029,36 @@ describe("API HTTP boundary", () => {
     },
   );
 
+  it("resolves the Discord bot's member identity only for an active member of that Organization", async () => {
+    await databaseRuntime.runPromise(
+      database
+        .update(memberTable)
+        .set({ active: false })
+        .where(eq(memberTable.guildId, forbiddenGuildId)),
+    );
+
+    const identity = (guildId: string, discordId: string) =>
+      boundary.handler(
+        new Request(
+          `http://api.test/internal/guilds/${guildId}/members/${discordId}/identity`,
+        ),
+      );
+
+    const active = await identity(authorizedGuildId, caller.discordId);
+
+    expect(active.status).toBe(200);
+    expect(await active.json()).toEqual({ userId: caller.userId });
+
+    for (const response of await Promise.all([
+      identity(forbiddenGuildId, caller.discordId),
+      identity(authorizedGuildId, "discord-unknown"),
+      identity("guild-unknown", caller.discordId),
+    ])) {
+      expect(response.status).toBe(404);
+      expect(await response.json()).toEqual({ code: "MEMBER_NOT_FOUND" });
+    }
+  });
+
   it("preserves expected 4xx statuses at the HTTP boundary", async () => {
     const missingTemplate = await request(
       `/guilds/${authorizedGuildId}/map-templates/missing-template`,

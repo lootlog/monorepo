@@ -49,6 +49,7 @@ describe("internal guild HttpApi handlers", () => {
         return Effect.succeed(permissions);
       },
       getGuild: () => Effect.succeed(guild),
+      getMemberIdentity: () => Effect.succeed(null),
     });
 
     const response = await Effect.runPromise(
@@ -76,6 +77,7 @@ describe("internal guild HttpApi handlers", () => {
         return Effect.succeed([]);
       },
       getGuild: () => Effect.succeed(guild),
+      getMemberIdentity: () => Effect.succeed(null),
     });
 
     const response = await Effect.runPromise(
@@ -92,6 +94,7 @@ describe("internal guild HttpApi handlers", () => {
     const data = InternalGuildsData.of({
       getUserPermissions: () => Effect.succeed([]),
       getGuild: () => Effect.succeed(guild),
+      getMemberIdentity: () => Effect.succeed(null),
     });
 
     const response = await Effect.runPromise(
@@ -107,6 +110,7 @@ describe("internal guild HttpApi handlers", () => {
     const cached: unknown[] = [];
 
     const persistence: InternalGuildsPersistence = {
+      findActiveMemberUserId: () => Effect.succeed(null),
       findActiveGuild: () => Effect.succeed(null),
       findGuildsForPermissions: () =>
         Effect.succeed([
@@ -165,6 +169,7 @@ describe("internal guild HttpApi handlers", () => {
     let databaseRead = false;
 
     const persistence: InternalGuildsPersistence = {
+      findActiveMemberUserId: () => Effect.succeed(null),
       findActiveGuild: () =>
         Effect.sync(() => {
           databaseRead = true;
@@ -215,6 +220,7 @@ describe("internal response validation", () => {
     ]) {
       const data = InternalGuildsData.of({
         getGuild: () => Effect.succeed(source),
+        getMemberIdentity: () => Effect.succeed(null),
         getUserPermissions: () => Effect.succeed([]),
       });
 
@@ -238,6 +244,7 @@ describe("internal response validation", () => {
     ]) {
       const data = InternalGuildsData.of({
         getGuild: () => Effect.succeed(source),
+        getMemberIdentity: () => Effect.succeed(null),
         getUserPermissions: () => Effect.succeed([]),
       });
 
@@ -271,6 +278,7 @@ describe("internal response validation", () => {
 
     const data = InternalGuildsData.of({
       getGuild: () => Effect.succeed(guild),
+      getMemberIdentity: () => Effect.succeed(null),
       getUserPermissions: () => Effect.succeed(permissions),
     });
 

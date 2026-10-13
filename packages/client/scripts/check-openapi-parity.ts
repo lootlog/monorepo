@@ -1462,6 +1462,36 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
           },
         },
       },
+      // Verified by http-boundary.e2e-spec.ts: only an active Member of that
+      // Organization resolves; every other identity is the same 404.
+      "GET /internal/guilds/{guildId}/members/{discordId}/identity": {
+        operationId: "GuildsInternalController_getMemberIdentity",
+        parameters: ["guildId", "discordId"].map((name) => ({
+          name,
+          in: "path",
+          schema: { type: "string" },
+          required: true,
+        })),
+        security: [],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/InternalMemberIdentityDto",
+                },
+              },
+            },
+          },
+          "404": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/HttpErrorResponse" },
+              },
+            },
+          },
+        },
+      },
       // Verified by http-boundary.e2e-spec.ts: refresh skips the cached
       // Discord guild list.
       "POST /users/@me/guilds/refresh": {

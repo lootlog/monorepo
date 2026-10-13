@@ -11,7 +11,9 @@ import type { AuthenticatedIdentity } from "#src/realtime/session";
 export interface GatewayAuth {
   readonly getPlatform: (origin: string) => "game" | "web-app";
   readonly isAllowedOrigin: (origin: string | null) => boolean;
-  readonly readIdentity: (request: Request) => AuthenticatedIdentity | null;
+  readonly readIdentity: (
+    request: Pick<Request, "headers">,
+  ) => AuthenticatedIdentity | null;
 }
 
 export const makeGatewayAuth = (

@@ -5,6 +5,7 @@ import { LootlogApi } from "#src/http-api/lootlog-api";
 const PUBLIC_ENDPOINTS = [
   "internal.GuildsInternalControllerGetUserPermissions",
   "internal.GuildsInternalControllerGetGuildByIdOrVanityUrl",
+  "internal.GuildsInternalControllerGetMemberIdentity",
   "health.HealthzControllerHealthCheck",
   "maps.MapsControllerGetMaps",
   "public-guild-stats-card.PublicGuildStatsCardControllerGetStatsCard",
