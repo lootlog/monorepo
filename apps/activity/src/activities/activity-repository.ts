@@ -273,6 +273,19 @@ export class ActivityRepository extends Context.Service<
                 new Error("Activity session identifier is missing"),
               );
 
+            const countActiveSessions = () =>
+              tx
+                .select({ value: count() })
+                .from(memberActivitySessions)
+                .where(
+                  and(
+                    eq(memberActivitySessions.guildId, dto.guildId),
+                    eq(memberActivitySessions.discordId, dto.discordId),
+                    eq(memberActivitySessions.source, dto.source),
+                  ),
+                )
+                .pipe(Effect.map((rows) => rows[0]?.value ?? 0));
+
             if (dto.type === ActivityType.CONNECT_EVENT) {
               const now = new Date(yield* Clock.currentTimeMillis);
 
@@ -291,17 +304,7 @@ export class ActivityRepository extends Context.Service<
                 .onConflictDoNothing()
                 .returning({ sessionId: memberActivitySessions.sessionId });
 
-              const active =
-                (yield* tx
-                  .select({ value: count() })
-                  .from(memberActivitySessions)
-                  .where(
-                    and(
-                      eq(memberActivitySessions.guildId, dto.guildId),
-                      eq(memberActivitySessions.discordId, dto.discordId),
-                      eq(memberActivitySessions.source, dto.source),
-                    ),
-                  ))[0]?.value ?? 0;
+              const active = yield* countActiveSessions();
 
               yield* tx
                 .insert(memberActivityStats)
@@ -339,17 +342,7 @@ export class ActivityRepository extends Context.Service<
                   ),
                 );
 
-              const active =
-                (yield* tx
-                  .select({ value: count() })
-                  .from(memberActivitySessions)
-                  .where(
-                    and(
-                      eq(memberActivitySessions.guildId, dto.guildId),
-                      eq(memberActivitySessions.discordId, dto.discordId),
-                      eq(memberActivitySessions.source, dto.source),
-                    ),
-                  ))[0]?.value ?? 0;
+              const active = yield* countActiveSessions();
 
               yield* tx
                 .update(memberActivityStats)

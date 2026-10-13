@@ -313,6 +313,26 @@ describe("ActivityRepository", () => {
       }).pipe(Effect.provide(repositoryLayer())),
     );
 
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const repository = yield* ActivityRepository;
+
+        expect(yield* repository.memberStats(activity.guildId)).toMatchObject([
+          { activeSessionCount: 1, visitCount: 1 },
+        ]);
+
+        yield* repository.create({
+          ...activity,
+          type: ActivityType.DISCONNECT_EVENT,
+          idempotencyKey: "redelivered-activity-disconnect",
+        });
+
+        expect(yield* repository.memberStats(activity.guildId)).toMatchObject([
+          { activeSessionCount: 0, visitCount: 1 },
+        ]);
+      }).pipe(Effect.provide(repositoryLayer())),
+    );
+
     expect(second).toEqual(first);
     expect(
       await pool.query(
