@@ -1,29 +1,11 @@
 import { useTranslation } from "react-i18next";
 import { useSession } from "@/hooks/auth/use-session";
-import {
-  BarChart3,
-  BellRing,
-  LayoutDashboard,
-  Settings,
-  Swords,
-} from "lucide-react";
 import { SidebarNav } from "./sidebar-nav/sidebar-nav";
 import type { MenuItem } from "./sidebar-nav/types";
 import { useThemeMeta } from "@/themes";
 import { useMatches } from "@tanstack/react-router";
-import type { ReactNode } from "react";
-import {
-  resolveAppNavigation,
-  type AppNavigationItemId,
-} from "@/navigation/app-navigation";
-
-const userNavigationIcons: Partial<Record<AppNavigationItemId, ReactNode>> = {
-  "user-statistics": <BarChart3 className="mr-1 size-4" />,
-  "user-dashboard": <LayoutDashboard className="mr-1 size-4" />,
-  "user-battles": <Swords className="mr-1 size-4" />,
-  "user-notifications": <BellRing className="mr-1 size-4" />,
-  "user-settings": <Settings className="mr-1 size-4" />,
-};
+import { resolveAppNavigation } from "@/navigation/app-navigation";
+import { APP_NAVIGATION_ICONS } from "@/navigation/app-navigation-icons";
 
 export const UserSidebarNav = () => {
   const { data: session } = useSession();
@@ -32,19 +14,23 @@ export const UserSidebarNav = () => {
   const matches = useMatches();
   const navigation = resolveAppNavigation({ matches });
 
-  const menuItems: MenuItem[] = navigation.sidebarItems.map((item) => ({
-    active: item.active,
-    available: true,
-    enabled: item.visible,
-    icon: userNavigationIcons[item.id],
-    label: item.label,
-    path: item.href,
-    divided: item.id === "user-notifications",
-    badge:
-      item.id === "user-battles"
-        ? { content: t("layout.navigation.beta"), variant: "default" }
-        : undefined,
-  }));
+  const menuItems: MenuItem[] = navigation.sidebarItems.map((item) => {
+    const Icon = APP_NAVIGATION_ICONS[item.id];
+
+    return {
+      active: item.active,
+      available: true,
+      enabled: item.visible,
+      icon: <Icon className="mr-1 size-4" />,
+      label: item.label,
+      path: item.href,
+      divided: item.id === "user-notifications",
+      badge:
+        item.id === "user-battles"
+          ? { content: t("layout.navigation.beta"), variant: "default" }
+          : undefined,
+    };
+  });
 
   const userName = session?.user?.name;
 

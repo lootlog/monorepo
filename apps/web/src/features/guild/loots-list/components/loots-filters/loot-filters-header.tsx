@@ -4,11 +4,10 @@ import { Kbd } from "@lootlog/ui/components/kbd";
 import { AnimatePresence } from "framer-motion";
 import * as m from "framer-motion/m";
 import { Filter, Search } from "lucide-react";
-import { useEffect, useState } from "react";
-import { WorldSwitcher } from "@/components/common/world-switcher";
+import { useState } from "react";
 import { ViewModeToggle } from "@/components/ui/view-mode-toggle";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
-import { LootSearchCommand } from "./loot-search-command";
+import { useOpenGuildSearch } from "@/hooks/context/use-open-guild-search";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { useViewMode } from "@/hooks/use-view-mode";
 import {
@@ -46,7 +45,7 @@ const getLootFiltersHeaderState = (
     filters.hid !== "" ||
     filters.search !== "" ||
     filters.players.length > 0,
-  showWorldControls: !isMobile || Boolean(world),
+  showToolbar: !isMobile || Boolean(world),
   usesStackedControls: isMobile || isCompactLayout,
 });
 
@@ -57,7 +56,7 @@ export const LootFiltersHeader = ({
   onToggleFilters,
 }: LootFiltersHeaderProps) => {
   const { t } = useTranslation();
-  const [isCommandOpen, setIsCommandOpen] = useState(false);
+  const openGuildSearch = useOpenGuildSearch();
   const [isFilterHovered, setIsFilterHovered] = useState(false);
   const isMobile = useIsMobile();
   const { world } = useGuildContext();
@@ -71,162 +70,126 @@ export const LootFiltersHeader = ({
 
   const primaryModifierKeyLabel = getPrimaryModifierKeyLabel();
 
-  const { hasSearchFilters, showWorldControls, usesStackedControls } =
+  const { hasSearchFilters, showToolbar, usesStackedControls } =
     getLootFiltersHeaderState(filters, isMobile, isCompactLayout, world);
 
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setIsCommandOpen((open) => !open);
-      }
-    };
-
-    document.addEventListener("keydown", down);
-
-    return () => document.removeEventListener("keydown", down);
-  }, []);
+  if (!showToolbar) return null;
 
   return (
-    <>
-      {showWorldControls && (
-        <FilterBar ariaLabel={t("loots.header.toolbarLabel")}>
-          <div
-            className={cn(
-              "min-w-0 flex-1",
-              isMobile ? "basis-full" : "min-w-48 basis-48",
-            )}
-          >
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => setIsCommandOpen(true)}
-              className="relative w-full justify-start font-normal text-muted-foreground hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground"
-            >
-              <Search className="size-4 shrink-0" />
-              <span className={cn("truncate", !usesStackedControls && "pr-16")}>
-                {t("loots.header.searchPlaceholder")}
-              </span>
-              {!usesStackedControls && (
-                <Kbd className="absolute right-2 top-1/2 -translate-y-1/2">
-                  {t("loots.header.shortcut", {
-                    modifier: primaryModifierKeyLabel,
-                  })}
-                </Kbd>
-              )}
-              {/* The responsive toolbar owns this button; filter changes keep the presence boundary mounted. */}
-              {/* eslint-disable-next-line react-doctor/motion-animate-presence-must-outlive-child */}
-              <AnimatePresence>
-                {hasSearchFilters && (
-                  <m.div
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.95, opacity: 0 }}
-                    className="absolute -left-1 -top-1 h-3 w-3 rounded-full border-2 border-background bg-primary"
-                  />
-                )}
-              </AnimatePresence>
-            </Button>
-          </div>
-
+    <FilterBar ariaLabel={t("loots.header.toolbarLabel")}>
+      <div
+        className={cn(
+          "min-w-0 flex-1",
+          isMobile ? "basis-full" : "min-w-48 basis-48",
+        )}
+      >
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={openGuildSearch}
+          className="relative w-full justify-start font-normal text-muted-foreground hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground"
+        >
+          <Search className="size-4 shrink-0" />
+          <span className={cn("truncate", !usesStackedControls && "pr-16")}>
+            {t("loots.header.searchPlaceholder")}
+          </span>
           {!usesStackedControls && (
-            <div aria-hidden className="relative h-10 w-3 shrink-0">
-              <div className="absolute inset-y-1 left-1/2 w-px -translate-x-1/2 bg-border" />
-            </div>
+            <Kbd className="absolute right-2 top-1/2 -translate-y-1/2">
+              {t("loots.header.shortcut", {
+                modifier: primaryModifierKeyLabel,
+              })}
+            </Kbd>
           )}
+          {/* The responsive toolbar owns this button; filter changes keep the presence boundary mounted. */}
+          {/* eslint-disable-next-line react-doctor/motion-animate-presence-must-outlive-child */}
+          <AnimatePresence>
+            {hasSearchFilters && (
+              <m.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="absolute -left-1 -top-1 h-3 w-3 rounded-full border-2 border-background bg-primary"
+              />
+            )}
+          </AnimatePresence>
+        </Button>
+      </div>
 
-          {!isMobile && (
-            // The controls wrap as one group, so a narrow toolbar never strands
-            // a single button on its own line.
-            <div
-              className={cn(
-                "flex shrink-0 items-center gap-2",
-                isCompactLayout ? "ml-auto" : "w-[19.5rem]",
-              )}
-            >
-              <div
-                className={
-                  isCompactLayout ? "w-[180px] shrink-0" : "min-w-0 flex-1"
-                }
-              >
-                <WorldSwitcher width="w-full" />
-              </div>
-
-              {canChooseViewMode && (
-                <ViewModeToggle
-                  value={viewMode}
-                  onChange={setViewMode}
-                  listLabel={t("loots.header.listView")}
-                  gridLabel={t("loots.header.gridView")}
-                />
-              )}
-
-              <div
-                onMouseEnter={() => setIsFilterHovered(true)}
-                onMouseLeave={() => setIsFilterHovered(false)}
-              >
-                <ThemeInteractiveFrame
-                  isHovered={isFilterHovered}
-                  isActive={isFiltersOpen}
-                >
-                  <Button
-                    onClick={onToggleFilters}
-                    variant={isFiltersOpen ? "default" : "outline"}
-                    size="icon-lg"
-                    aria-label={t("loots.header.mobileFiltersTitle")}
-                    aria-expanded={isFiltersOpen}
-                    className="relative shrink-0"
-                  >
-                    <Filter className="size-4" aria-hidden="true" />
-                    {/* The responsive toolbar owns this button; filter changes keep the presence boundary mounted. */}
-                    {/* eslint-disable-next-line react-doctor/motion-animate-presence-must-outlive-child */}
-                    <AnimatePresence>
-                      {hasActiveFilters && !isFiltersOpen && (
-                        <m.div
-                          initial={{ scale: 0.95, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          exit={{ scale: 0.95, opacity: 0 }}
-                          className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background"
-                        />
-                      )}
-                    </AnimatePresence>
-                  </Button>
-                </ThemeInteractiveFrame>
-              </div>
-            </div>
-          )}
-
-          {isMobile && (
-            <>
-              <div className="min-w-0 flex-1">
-                <WorldSwitcher
-                  width="w-full"
-                  triggerClassName="w-full justify-between"
-                />
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="lg"
-                onClick={onToggleFilters}
-                aria-expanded={isFiltersOpen}
-                className="relative shrink-0 gap-2"
-              >
-                <Filter className="size-4" aria-hidden="true" />
-                {t("loots.header.filtersButton")}
-                {hasActiveFilters && (
-                  <span
-                    aria-hidden="true"
-                    className="absolute -top-1 -right-1 size-3 rounded-full border-2 border-background bg-primary"
-                  />
-                )}
-              </Button>
-            </>
-          )}
-        </FilterBar>
+      {!usesStackedControls && (
+        <div aria-hidden className="relative h-10 w-3 shrink-0">
+          <div className="absolute inset-y-1 left-1/2 w-px -translate-x-1/2 bg-border" />
+        </div>
       )}
 
-      <LootSearchCommand open={isCommandOpen} onOpenChange={setIsCommandOpen} />
-    </>
+      {!isMobile && (
+        // The controls wrap as one group, so a narrow toolbar never strands
+        // a single button on its own line.
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          {canChooseViewMode && (
+            <ViewModeToggle
+              value={viewMode}
+              onChange={setViewMode}
+              listLabel={t("loots.header.listView")}
+              gridLabel={t("loots.header.gridView")}
+            />
+          )}
+
+          <div
+            onMouseEnter={() => setIsFilterHovered(true)}
+            onMouseLeave={() => setIsFilterHovered(false)}
+          >
+            <ThemeInteractiveFrame
+              isHovered={isFilterHovered}
+              isActive={isFiltersOpen}
+            >
+              <Button
+                onClick={onToggleFilters}
+                variant={isFiltersOpen ? "default" : "outline"}
+                size="icon-lg"
+                aria-label={t("loots.header.mobileFiltersTitle")}
+                aria-expanded={isFiltersOpen}
+                className="relative shrink-0"
+              >
+                <Filter className="size-4" aria-hidden="true" />
+                {/* The responsive toolbar owns this button; filter changes keep the presence boundary mounted. */}
+                {/* eslint-disable-next-line react-doctor/motion-animate-presence-must-outlive-child */}
+                <AnimatePresence>
+                  {hasActiveFilters && !isFiltersOpen && (
+                    <m.div
+                      initial={{ scale: 0.95, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.95, opacity: 0 }}
+                      className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background"
+                    />
+                  )}
+                </AnimatePresence>
+              </Button>
+            </ThemeInteractiveFrame>
+          </div>
+        </div>
+      )}
+
+      {isMobile && (
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            onClick={onToggleFilters}
+            aria-expanded={isFiltersOpen}
+            className="relative shrink-0 gap-2"
+          >
+            <Filter className="size-4" aria-hidden="true" />
+            {t("loots.header.filtersButton")}
+            {hasActiveFilters && (
+              <span
+                aria-hidden="true"
+                className="absolute -top-1 -right-1 size-3 rounded-full border-2 border-background bg-primary"
+              />
+            )}
+          </Button>
+        </>
+      )}
+    </FilterBar>
   );
 };
