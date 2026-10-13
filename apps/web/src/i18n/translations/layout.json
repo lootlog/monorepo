@@ -14,7 +14,9 @@
     "docs": "Dokumenty",
     "events": "Eventy",
     "stats": "Statystyki",
-    "activityLogs": "Logi aktywności"
+    "activityLogs": "Logi aktywności",
+    "search": "Szukaj",
+    "searchPlaceholder": "Szukaj…"
   },
   "guildsSelector": {
     "unreadLootsOverflow": "99+",

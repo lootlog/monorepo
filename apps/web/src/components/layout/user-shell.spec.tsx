@@ -19,7 +19,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { SidebarProvider } from "@lootlog/ui/components/sidebar";
 import { ThemeContext } from "@/contexts/theme-context";
 import { UserShell } from "./user-shell";
-import { UserHeaderActionsPortal } from "./user-header-actions-portal";
+import { HeaderSlotPortal } from "./header-slot-portal";
 import "@/i18n/config";
 
 const theme = {
@@ -75,9 +75,9 @@ const renderAccountPage = async () => {
     path: "account",
     component: () => (
       <div>
-        <UserHeaderActionsPortal>
+        <HeaderSlotPortal slot="actions">
           <button>Page action</button>
-        </UserHeaderActionsPortal>
+        </HeaderSlotPortal>
         <h1>Account content</h1>
       </div>
     ),

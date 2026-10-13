@@ -79,7 +79,9 @@ export const AppLayout = () => {
       <Suspense fallback={null}>
         <ThemeAnnouncement />
       </Suspense>
+      {/* Desktop navigation stays expanded; only the mobile sheet opens and closes. */}
       <SidebarProvider
+        open
         className="relative min-h-0 flex-1 md:overflow-hidden"
         style={sidebarStyle}
       >

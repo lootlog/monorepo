@@ -21,7 +21,12 @@ type WorldSwitcherProps = {
   onValueChange?: (world: string | null) => void;
   showAllOption?: boolean;
   width?: string;
+  size?: "sm" | "default" | "lg";
+  variant?: "outline" | "ghost";
+  iconClassName?: string;
+  align?: "start" | "center" | "end";
   triggerClassName?: string;
+  contentClassName?: string;
   worlds?: string[];
 };
 
@@ -31,7 +36,12 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
   onValueChange,
   showAllOption = false,
   width,
+  size,
+  variant,
+  iconClassName,
+  align,
   triggerClassName,
+  contentClassName,
   worlds: externalWorlds,
 }) => {
   const { t } = useTranslation();
@@ -119,11 +129,15 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
         emptyMessage={t("common.noResults")}
         searchPlaceholder={t("common.search")}
         width={cn(width ?? "w-[140px] md:w-[200px]", className)}
+        size={size}
+        variant={variant}
+        iconClassName={iconClassName}
+        align={align}
         triggerClassName={cn(
           "shrink-0 hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground",
           triggerClassName,
         )}
-        contentClassName="max-h-64"
+        contentClassName={cn("max-h-64", contentClassName)}
         showSearch
       />
     </div>

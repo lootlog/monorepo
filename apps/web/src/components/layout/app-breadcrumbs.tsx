@@ -1,4 +1,3 @@
-import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
 import type { AppNavigation } from "@/navigation/app-navigation";
 import {
@@ -9,12 +8,19 @@ import {
   BreadcrumbSeparator,
 } from "@lootlog/ui/components/breadcrumb";
 import { cn } from "cn";
+import type { LucideIcon } from "lucide-react";
 import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
 
 type AppBreadcrumbsProps = {
   breadcrumbs: AppNavigation["breadcrumbs"];
+  /** Icon of the section the trail starts in, as the sidebar shows it. */
+  sectionIcon?: LucideIcon;
 };
+
+// Every crumb is a 32px chip so links light up like the controls beside them.
+const BREADCRUMB_CHIP_CLASS_NAME =
+  "inline-flex h-8 min-w-0 max-w-full items-center gap-2 rounded-md px-2 text-sm";
 
 type BreadcrumbVisibility = "always" | "sm" | "xl" | "2xl";
 
@@ -51,19 +57,31 @@ const getBreadcrumbVisibility = (
   return "2xl";
 };
 
-export const AppBreadcrumbs = ({ breadcrumbs }: AppBreadcrumbsProps) => {
+export const AppBreadcrumbs = ({
+  breadcrumbs,
+  sectionIcon: SectionIcon,
+}: AppBreadcrumbsProps) => {
   const { t } = useTranslation();
 
   return (
     <Breadcrumb
       aria-label={t("common.breadcrumbs.navigationLabel")}
-      className="min-w-0 flex-1 overflow-hidden"
+      // Pulls the first chip's padding out so its icon sits on the content edge.
+      className="min-w-0 overflow-hidden md:-ml-2"
     >
-      <BreadcrumbList className="flex-nowrap justify-center overflow-hidden">
+      <BreadcrumbList className="flex-nowrap gap-0.5 overflow-hidden">
         {breadcrumbs.map((breadcrumb, index) => {
           const isLast = index === breadcrumbs.length - 1;
           const breadcrumbPath = breadcrumb.path;
           const visibility = getBreadcrumbVisibility(index, breadcrumbs.length);
+
+          const icon =
+            index === 0 && SectionIcon ? (
+              <SectionIcon
+                aria-hidden="true"
+                className="size-4 shrink-0 text-muted-foreground"
+              />
+            ) : null;
 
           return (
             <Fragment
@@ -71,22 +89,29 @@ export const AppBreadcrumbs = ({ breadcrumbs }: AppBreadcrumbsProps) => {
             >
               <BreadcrumbItem className={breadcrumbItemClassNames[visibility]}>
                 {breadcrumbPath ? (
-                  <TextLink
-                    render=<Link to={breadcrumbPath} />
-                    className="inline-flex min-h-6 min-w-0 max-w-full items-center truncate"
+                  <Link
+                    to={breadcrumbPath}
+                    className={cn(
+                      BREADCRUMB_CHIP_CLASS_NAME,
+                      "font-medium text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
+                    )}
                   >
-                    {breadcrumb.label}
-                  </TextLink>
+                    {icon}
+                    <span className="truncate">{breadcrumb.label}</span>
+                  </Link>
                 ) : (
-                  <BreadcrumbPage className="truncate text-sm font-bold">
-                    {breadcrumb.label}
+                  <BreadcrumbPage
+                    className={cn(BREADCRUMB_CHIP_CLASS_NAME, "font-semibold")}
+                  >
+                    {icon}
+                    <span className="truncate">{breadcrumb.label}</span>
                   </BreadcrumbPage>
                 )}
               </BreadcrumbItem>
               {!isLast && (
                 <BreadcrumbSeparator
                   className={cn(
-                    "text-muted-foreground/30",
+                    "text-muted-foreground/50",
                     breadcrumbSeparatorClassNames[visibility],
                   )}
                 />
