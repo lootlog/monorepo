@@ -460,7 +460,7 @@ describe("kill history database reads", () => {
     }
   });
 
-  it("applies current hero visibility before reading cached pages and cursor anchors", async () => {
+  it("applies current hero visibility before reading cached pages", async () => {
     const f = await fixture();
 
     try {
@@ -479,12 +479,6 @@ describe("kill history database reads", () => {
       expect(continuation.data.map((kill) => kill.id)).toEqual(orderedIds);
       const none = await f.run(f.history.list(context(20), {}));
       expect(none).toMatchObject({ data: [], nextCursor: null });
-
-      for (const cursor of [hiddenId, otherEventId, foreignId, uuid("ff")]) {
-        await expect(
-          f.run(f.history.legacyEvent(context(), { cursor })),
-        ).rejects.toThrow("Invalid cursor");
-      }
 
       await expect(
         f.run(f.history.list(context(), { heroId: "high" })),
@@ -530,60 +524,6 @@ describe("kill history database reads", () => {
 
       expect(next.data.map((kill) => kill.id)).toEqual(orderedIds.slice(2));
       expect(next.nextCursor).toBeNull();
-    } finally {
-      await f.dispose();
-    }
-  });
-
-  it("preserves UUID continuation on legacy event, hero and member lists", async () => {
-    const f = await fixture();
-
-    try {
-      for (const query of [{}, { heroId: "low" }]) {
-        const first = await f.run(
-          f.history.legacyEvent(context(), { ...query, limit: "2" }),
-        );
-
-        expect(first.nextCursor).toBe(orderedIds[1]);
-
-        const next = await f.run(
-          f.history.legacyEvent(context(), {
-            ...query,
-            limit: "20",
-            cursor: first.nextCursor ?? undefined,
-          }),
-        );
-
-        expect([...first.data, ...next.data].map((kill) => kill.id)).toEqual(
-          orderedIds,
-        );
-        expect(first.data[0]?.points).toHaveLength(2);
-      }
-
-      const first = await f.run(
-        f.history.legacyMember(context(), { memberId: "1", limit: "1" }),
-      );
-
-      const next = await f.run(
-        f.history.legacyMember(context(), {
-          memberId: "1",
-          cursor: first.nextCursor ?? undefined,
-        }),
-      );
-
-      expect([...first.data, ...next.data].map((kill) => kill.id)).toEqual([
-        orderedIds[0],
-        orderedIds[2],
-        orderedIds[4],
-      ]);
-      await expect(
-        f.run(
-          f.history.legacyMember(context(), {
-            memberId: "1",
-            cursor: orderedIds[1],
-          }),
-        ),
-      ).rejects.toThrow("Invalid cursor");
     } finally {
       await f.dispose();
     }

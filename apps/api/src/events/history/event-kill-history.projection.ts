@@ -14,20 +14,6 @@ import {
 import type { EventPoints } from "#src/events/kills/event-points.service";
 import type { EventKillHistoryStore } from "#src/events/history/event-kill-history.store";
 
-type MapPresenceData = Effect.Success<
-  ReturnType<EventKillHistoryStore["findPoints"]>
->[number]["mapPresenceData"];
-
-type KillPointMapDataEntry = {
-  mapId: string;
-  mapName: string;
-  assignedAt: string;
-  unassignedAt: string | null;
-  assignmentDurationSeconds: number;
-  presenceTimeSeconds: number;
-  afkTimeSeconds: number;
-};
-
 export const makeEventKillHistoryProjection = (
   repository: EventKillHistoryStore,
   pointsService: Pick<EventPoints, "getMembersPresenceStatsPerMap">,
@@ -231,136 +217,6 @@ export const makeEventKillHistoryProjection = (
     };
   });
 
-  // TODO(kill-history-legacy): Remove this list-only map hydration and its private types/helper.
-  // See README.md; detail map data and getEffectiveWindowStartByKillId remain required.
-  function buildKillPointMapDataByKillMember(
-    kills: Array<{
-      id: string;
-      heroNpcId: string;
-      killedAt: Date;
-      minSpawnTimeAtKill: Date;
-      points: Array<{
-        memberId: number;
-        mapPresenceData: MapPresenceData;
-      }>;
-    }>,
-    windowStartByKillId: Map<string, Date>,
-  ) {
-    return Effect.gen(function* () {
-      const mapDataByKillMember = new Map<string, KillPointMapDataEntry[]>();
-
-      if (kills.length === 0) {
-        return mapDataByKillMember;
-      }
-
-      const heroIds = [...new Set(kills.map((kill) => kill.heroNpcId))];
-
-      const memberIds = [
-        ...new Set(
-          kills.flatMap((kill) => kill.points.map((point) => point.memberId)),
-        ),
-      ];
-
-      if (heroIds.length === 0 || memberIds.length === 0) {
-        return mapDataByKillMember;
-      }
-
-      const maxKillTime = new Date(
-        Math.max(...kills.map((kill) => kill.killedAt.getTime())),
-      );
-
-      const minTrackingWindowStart = new Date(
-        Math.min(
-          ...kills.map((kill) =>
-            (
-              windowStartByKillId.get(kill.id) ??
-              getTrackingWindowStartTime({
-                killedAt: kill.killedAt,
-                minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
-              })
-            ).getTime(),
-          ),
-        ),
-      );
-
-      const heroMaps = (yield* repository.findMapsForHeroes(heroIds)) ?? [];
-
-      if (heroMaps.length === 0) {
-        return mapDataByKillMember;
-      }
-
-      const mapIdToName = new Map(heroMaps.map((map) => [map.id, map.mapName]));
-
-      const assignments =
-        (yield* repository.findAssignments({
-          heroNpcIds: heroIds,
-          memberIds,
-          killedAt: maxKillTime,
-          overlapStart: minTrackingWindowStart,
-        })) ?? [];
-
-      const assignmentsByHeroMember = Map.groupBy(
-        assignments,
-        (assignment) => `${assignment.heroNpcId}:${assignment.memberId}`,
-      );
-
-      for (const kill of kills) {
-        const overlapWindowStartTime =
-          windowStartByKillId.get(kill.id) ??
-          getTrackingWindowStartTime({
-            killedAt: kill.killedAt,
-            minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
-          });
-
-        for (const point of kill.points) {
-          const pointAssignments =
-            assignmentsByHeroMember.get(
-              `${kill.heroNpcId}:${point.memberId}`,
-            ) ?? [];
-
-          const presenceByMapId = getPresenceByMapId(point.mapPresenceData);
-
-          const mapData = pointAssignments
-            .map((assignment) => {
-              const clippedAssignmentInterval = clipIntervalToWindow({
-                start: assignment.assignedAt,
-                end: assignment.unassignedAt ?? kill.killedAt,
-                windowStart: overlapWindowStartTime,
-                windowEnd: kill.killedAt,
-              });
-
-              if (!clippedAssignmentInterval) {
-                return null;
-              }
-
-              const assignmentDurationSeconds = Math.round(
-                (clippedAssignmentInterval.end.getTime() -
-                  clippedAssignmentInterval.start.getTime()) /
-                  1000,
-              );
-
-              const presence = presenceByMapId.get(assignment.mapId);
-
-              return {
-                mapId: assignment.mapId,
-                mapName: mapIdToName.get(assignment.mapId) ?? "",
-                assignedAt: assignment.assignedAt.toISOString(),
-                unassignedAt: assignment.unassignedAt?.toISOString() ?? null,
-                assignmentDurationSeconds,
-                presenceTimeSeconds: presence?.presenceTimeSeconds ?? 0,
-                afkTimeSeconds: presence?.afkTimeSeconds ?? 0,
-              };
-            })
-            .filter((entry): entry is KillPointMapDataEntry => entry !== null);
-
-          mapDataByKillMember.set(`${kill.id}:${point.memberId}`, mapData);
-        }
-      }
-
-      return mapDataByKillMember;
-    });
-  }
-
   function getEffectiveWindowStartByKillId(
     kills: Array<{
       id: string;
@@ -400,34 +256,6 @@ export const makeEventKillHistoryProjection = (
 
       return windowStartByKillId;
     });
-  }
-
-  function getPresenceByMapId(
-    mapPresenceData: MapPresenceData,
-  ): Map<string, { presenceTimeSeconds: number; afkTimeSeconds: number }> {
-    const presenceByMapId = new Map<
-      string,
-      { presenceTimeSeconds: number; afkTimeSeconds: number }
-    >();
-
-    for (const entry of mapPresenceData ?? []) {
-      if (entry.mapId.length === 0) continue;
-
-      const presenceTimeSeconds = Number.isFinite(entry.presenceTimeSeconds)
-        ? Math.max(0, Math.round(entry.presenceTimeSeconds))
-        : 0;
-
-      const afkTimeSeconds = Number.isFinite(entry.afkTimeSeconds)
-        ? Math.max(0, Math.round(entry.afkTimeSeconds))
-        : 0;
-
-      presenceByMapId.set(entry.mapId, {
-        presenceTimeSeconds,
-        afkTimeSeconds,
-      });
-    }
-
-    return presenceByMapId;
   }
 
   const getKillTimelineData = Effect.fnUntraced(function* (
@@ -504,8 +332,6 @@ export const makeEventKillHistoryProjection = (
   return {
     detail: getKillDetail,
     timeline: getKillTimelineData,
-    getEffectiveWindowStartByKillId,
-    buildKillPointMapDataByKillMember,
   };
 };
 

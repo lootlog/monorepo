@@ -336,36 +336,6 @@ test.each([
   },
 );
 
-test.each([
-  "/guilds/{guildId}/events/{eventId}/kills",
-  "/guilds/{guildId}/events/{eventId}/members/{memberId}/kills",
-  "/guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills",
-])(
-  "legacy history migration %s requires deprecation and cursor errors",
-  async (path) => {
-    const document = await readDocument("api");
-    const operation = document.paths?.[path]?.get;
-
-    if (!isJsonObject(operation) || !isJsonObject(operation.responses))
-      throw new Error("Missing test operation responses");
-    const responses = operation.responses;
-    const key = `GET ${path}`;
-
-    expect(() =>
-      normalizeAllowedChanges("api", key, normalizeValidationErrors(operation)),
-    ).not.toThrow();
-    expect(() =>
-      normalizeAllowedChanges("api", key, { ...operation, deprecated: false }),
-    ).toThrow("must remain deprecated");
-    expect(() =>
-      normalizeAllowedChanges("api", key, {
-        ...operation,
-        responses: { ...responses, "400": {} },
-      }),
-    ).toThrow();
-  },
-);
-
 test("manageable guild migration pins the Discord summary response and preserves unrelated contracts", async () => {
   const document = await readDocument("api");
 

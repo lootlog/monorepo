@@ -108,9 +108,3 @@ export const parseHistoryMemberId = Effect.fnUntraced(function* (
     Effect.mapError(() => new InvalidRequestError("Invalid member ID")),
   );
 });
-
-// TODO(kill-history-legacy): Remove with UUID list endpoints; retain the versioned cursor codec.
-export const decodeLegacyHistoryCursor = (cursor: string) =>
-  Schema.decodeUnknownEffect(Schema.String.check(Schema.isUUID()))(cursor).pipe(
-    Effect.mapError(() => new InvalidRequestError("Invalid cursor")),
-  );

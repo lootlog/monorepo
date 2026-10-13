@@ -52,8 +52,6 @@ const unexpected = () => Effect.die("Unexpected operation");
 const unusedEvents = {
   history: {
     list: unexpected,
-    legacyEvent: unexpected,
-    legacyMember: unexpected,
     detail: unexpected,
     timeline: unexpected,
   },

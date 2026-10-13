@@ -3,6 +3,30 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased (breaking): Deprecated event kill lists removed
+
+The event, member and hero kill lists deprecated in favour of
+`GET /guilds/{guildId}/events/{eventId}/kill-history` are removed. Release the
+SDK as a breaking version.
+
+| Removed GET route                                             | Replacement query on `/kill-history` |
+| ------------------------------------------------------------- | ------------------------------------ |
+| `/guilds/{guildId}/events/{eventId}/kills`                    | Optional `heroId`                    |
+| `/guilds/{guildId}/events/{eventId}/members/{memberId}/kills` | `memberId`, optionally `heroId`      |
+| `/guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills`    | `heroId`                             |
+
+- UUID cursors from the removed lists are not accepted by `/kill-history`.
+  Restart pagination without a cursor and pass its `nextCursor` unchanged.
+- Lists return summaries with `participantCount`. Read participants, scoring
+  and map presence from
+  `GET /guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills/{killId}` and
+  its `/timeline`; both are unchanged.
+- The SDK no longer exports `eventsRankingControllerGetEventKillHistory`,
+  `eventsRankingControllerGetMemberKillHistory`,
+  `eventsRankingControllerGetHeroKillHistory`, their URL helpers and
+  parameter and error types, `EventKillHistoryResponseDto` or
+  `EventMemberKillHistoryResponseDto`. Use `listEventKillHistory`.
+
 ## Unreleased (breaking): Time-ordered battle IDs and opaque list cursors
 
 Battle IDs are now UUIDv7 values whose first 48 bits are the battle's

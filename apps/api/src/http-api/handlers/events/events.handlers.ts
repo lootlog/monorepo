@@ -30,8 +30,6 @@ import {
 import { EventCoordinationResponse } from "#src/events/coordination/event-coordination-response.schema";
 import {
   EventHeroStatsResponse,
-  EventKillHistoryResponse,
-  EventMemberKillHistoryResponse,
   KillDetailResponse,
 } from "#src/events/kills/event-kill-response.schema";
 import {
@@ -728,64 +726,6 @@ export const EventsHandlers = HttpApiBuilder.group(
               Effect.map((value) =>
                 encodeUnknownResponse(KillHistoryResponse, value),
               ),
-            ),
-        ),
-      // TODO(kill-history-legacy): Remove these three list handlers with their deprecated routes.
-      EventsRankingControllerGetEventKillHistory: ({ params, query }) =>
-        event(
-          "EventsRankingControllerGetEventKillHistory",
-          read,
-          params,
-          (caller, eventId) =>
-            operations.history
-              .legacyEvent(historyContext(caller, eventId), query)
-              .pipe(
-                Effect.map((value) =>
-                  encodeUnknownResponse(EventKillHistoryResponse, value),
-                ),
-              ),
-        ),
-      EventsRankingControllerGetMemberKillHistory: ({ params, query }) =>
-        event(
-          "EventsRankingControllerGetMemberKillHistory",
-          read,
-          params,
-          (caller, eventId) =>
-            Effect.flatMap(
-              stringParameter(params.memberId, "memberId"),
-              (memberId) =>
-                operations.history
-                  .legacyMember(historyContext(caller, eventId), {
-                    ...query,
-                    memberId,
-                  })
-                  .pipe(
-                    Effect.map((value) =>
-                      encodeUnknownResponse(
-                        EventMemberKillHistoryResponse,
-                        value,
-                      ),
-                    ),
-                  ),
-            ),
-        ),
-      EventsRankingControllerGetHeroKillHistory: ({ params, query }) =>
-        event(
-          "EventsRankingControllerGetHeroKillHistory",
-          read,
-          params,
-          (caller, eventId) =>
-            Effect.flatMap(stringParameter(params.heroId, "heroId"), (heroId) =>
-              operations.history
-                .legacyEvent(historyContext(caller, eventId), {
-                  ...query,
-                  heroId,
-                })
-                .pipe(
-                  Effect.map((value) =>
-                    encodeUnknownResponse(EventKillHistoryResponse, value),
-                  ),
-                ),
             ),
         ),
       EventsRankingControllerGetKillDetail: ({ params }) =>
