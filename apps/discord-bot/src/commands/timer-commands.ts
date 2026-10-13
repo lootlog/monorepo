@@ -1,7 +1,11 @@
 import { escapeMarkdown } from "discord.js";
 import { Clock, Effect, Schema } from "effect";
 import { BotConfig } from "#src/config/bot-config";
-import { guildCommand, visibilityOption } from "./command-builders.js";
+import {
+  guildCommand,
+  visibilityOption,
+  worldOption,
+} from "./command-builders.js";
 import { COMMAND_TEXT, npcTypeLabel } from "./command-messages.js";
 import { memberSession, type MemberSession } from "./lootlog-client.js";
 import {
@@ -10,6 +14,7 @@ import {
   lootlogEmbed,
   MAX_AUTOCOMPLETE_CHOICES,
   openInLootlog,
+  worldAutocompleteChoices,
   type SlashCommand,
 } from "./slash-command.js";
 
@@ -95,24 +100,15 @@ export const timersCommand: SlashCommand = {
           })),
         ),
     )
-    .addStringOption((option) =>
-      option
-        .setName("swiat")
-        .setDescription(COMMAND_TEXT.worldOption)
-        .setAutocomplete(true),
-    )
+    .addStringOption(worldOption)
     .addBooleanOption(visibilityOption)
     .toJSON(),
   autocomplete: (invocation) =>
     Effect.gen(function* () {
       const session = yield* memberSession(invocation);
       const timers = yield* readCurrentTimers(session);
-      const query = invocation.focused.value.toLowerCase();
 
-      return [...new Set(timers.map((timer) => timer.world))]
-        .filter((world) => world.toLowerCase().includes(query))
-        .slice(0, MAX_AUTOCOMPLETE_CHOICES)
-        .map((world) => choice(world, world));
+      return worldAutocompleteChoices(timers, invocation.focused.value);
     }),
   run: (invocation) =>
     Effect.gen(function* () {

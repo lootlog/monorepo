@@ -80,6 +80,18 @@ export const choice = (name: string, value: string): AutocompleteChoice => ({
   value: value.slice(0, MAX_CHOICE_NAME_LENGTH),
 });
 
+export const worldAutocompleteChoices = (
+  entries: ReadonlyArray<{ readonly world: string }>,
+  focusedValue: string,
+): AutocompleteChoice[] => {
+  const query = focusedValue.toLowerCase();
+
+  return [...new Set(entries.map((entry) => entry.world))]
+    .filter((world) => world.toLowerCase().includes(query))
+    .slice(0, MAX_AUTOCOMPLETE_CHOICES)
+    .map((world) => choice(world, world));
+};
+
 export const LOOTLOG_COLOR = 0xf5a524;
 
 export const lootlogEmbed = (title: string) =>

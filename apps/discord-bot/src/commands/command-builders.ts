@@ -26,6 +26,12 @@ export const visibilityOption = (option: SlashCommandBooleanOption) =>
     .setName(VISIBILITY_OPTION)
     .setDescription(COMMAND_TEXT.visibilityOption);
 
+export const worldOption = (option: SlashCommandStringOption) =>
+  option
+    .setName("swiat")
+    .setDescription(COMMAND_TEXT.worldOption)
+    .setAutocomplete(true);
+
 export const PERIOD_OPTION = "okres";
 
 export const periodOption = (option: SlashCommandStringOption) =>

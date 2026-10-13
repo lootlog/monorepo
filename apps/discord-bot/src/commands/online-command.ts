@@ -1,12 +1,15 @@
 import { escapeMarkdown } from "discord.js";
 import { Effect, Schema } from "effect";
-import { guildCommand, visibilityOption } from "./command-builders.js";
+import {
+  guildCommand,
+  visibilityOption,
+  worldOption,
+} from "./command-builders.js";
 import { COMMAND_TEXT, professionLabel } from "./command-messages.js";
 import { memberSession, type MemberSession } from "./lootlog-client.js";
 import {
-  choice,
   lootlogEmbed,
-  MAX_AUTOCOMPLETE_CHOICES,
+  worldAutocompleteChoices,
   type SlashCommand,
 } from "./slash-command.js";
 
@@ -80,24 +83,15 @@ const readOnlineCharacters = (session: MemberSession, world?: string) =>
 
 export const onlineCommand: SlashCommand = {
   definition: guildCommand("online", COMMAND_TEXT.online.description)
-    .addStringOption((option) =>
-      option
-        .setName("swiat")
-        .setDescription(COMMAND_TEXT.worldOption)
-        .setAutocomplete(true),
-    )
+    .addStringOption(worldOption)
     .addBooleanOption(visibilityOption)
     .toJSON(),
   autocomplete: (invocation) =>
     Effect.gen(function* () {
       const session = yield* memberSession(invocation);
       const characters = yield* readOnlineCharacters(session);
-      const query = invocation.focused.value.toLowerCase();
 
-      return [...new Set(characters.map((character) => character.world))]
-        .filter((world) => world.toLowerCase().includes(query))
-        .slice(0, MAX_AUTOCOMPLETE_CHOICES)
-        .map((world) => choice(world, world));
+      return worldAutocompleteChoices(characters, invocation.focused.value);
     }),
   run: (invocation) =>
     Effect.gen(function* () {
