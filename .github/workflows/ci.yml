@@ -76,7 +76,7 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-bun
-      - run: bun test scripts/deployment-targets.test.mjs scripts/static-assets.test.mjs
+      - run: bun test scripts/deployment-targets.test.mjs scripts/development-deployment-plan.test.mjs scripts/static-assets.test.mjs
       - run: bun run format:check
       - run: bun run deps:check
       - name: Check workflow syntax
