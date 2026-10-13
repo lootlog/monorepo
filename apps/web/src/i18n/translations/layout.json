@@ -16,11 +16,16 @@
     "stats": "Statystyki",
     "activityLogs": "Logi aktywności",
     "search": "Szukaj",
-    "searchPlaceholder": "Szukaj…"
+    "searchPlaceholder": "Szukaj…",
+    "groups": {
+      "account": "Konto",
+      "management": "Zarządzanie"
+    }
   },
   "guildsSelector": {
     "unreadLootsOverflow": "99+",
-    "refreshError": "Nie udało się odświeżyć listy Lootlogów."
+    "refreshError": "Nie udało się odświeżyć listy Lootlogów.",
+    "noAccess": "Brak dostępu"
   },
   "userMenu": {
     "live": "Połączono",
@@ -28,7 +33,8 @@
     "connecting": "Łączenie...",
     "connectingDescription": "Do czasu połączenia nowe zmiany mogą się spóźniać.",
     "offline": "Brak połączenia",
-    "offlineDescription": "Widoczne dane mogą być nieaktualne."
+    "offlineDescription": "Widoczne dane mogą być nieaktualne.",
+    "installAddon": "Zainstaluj dodatek do gry"
   },
   "breadcrumbs": {
     "statistics": "Analityka",

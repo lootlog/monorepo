@@ -5,7 +5,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@lootlog/ui/components/dropdown-menu";
-import { ChevronUp, LogOut, Palette, Server, UserRound } from "lucide-react";
+import {
+  Blocks,
+  ChevronUp,
+  LogOut,
+  Palette,
+  Server,
+  UserRound,
+} from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useSidebar } from "@lootlog/ui/components/sidebar";
@@ -16,6 +23,7 @@ import { Link } from "@tanstack/react-router";
 import { ROUTES } from "@/config/routes";
 import { useTranslation } from "react-i18next";
 import { useGateway } from "@/hooks/utils/use-gateway";
+import { useGlobalContext } from "@/hooks/context/use-global-context";
 import {
   type LiveSignal,
   UserSignalAvatar,
@@ -38,7 +46,7 @@ const BAR_GRID =
   "grid h-14 w-full grid-cols-[4rem_minmax(0,1fr)_2.75rem] items-center";
 
 const AVATAR_CELL =
-  "flex h-full items-center justify-center border-r border-solid";
+  "flex h-full items-center justify-center border-r border-solid border-sidebar-border";
 
 export const UserMenu = () => {
   const { user, isPending } = useUser();
@@ -46,6 +54,7 @@ export const UserMenu = () => {
   const { logout, isPending: isLogoutPending } = useLogout();
   const { connected, joined } = useGateway();
   const { setOpenMobile } = useSidebar();
+  const { installAddonModal } = useGlobalContext();
 
   let signal: LiveSignal = "offline";
 
@@ -179,6 +188,16 @@ export const UserMenu = () => {
               {label}
             </DropdownMenuItem>
           ))}
+        </div>
+        <DropdownMenuSeparator className="m-0" />
+        <div className="p-1.5">
+          <DropdownMenuItem
+            onClick={() => installAddonModal.dispatch({ type: "OPEN" })}
+            className="rounded-lg px-2.5 py-2"
+          >
+            <Blocks />
+            {t("layout.userMenu.installAddon")}
+          </DropdownMenuItem>
         </div>
         <DropdownMenuSeparator className="m-0" />
         <div className="p-1.5">

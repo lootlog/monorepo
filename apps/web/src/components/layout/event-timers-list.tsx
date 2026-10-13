@@ -83,25 +83,23 @@ const TimerItem: FC<TimerItemProps> = ({
               heroId: timer.heroId ?? "",
             }}
             onClick={onNavigate}
-            className="group/timer block"
+            className="group/timer flex items-center gap-2.5 px-5 py-1.5 outline-none transition-colors hover:bg-primary/10 focus-visible:bg-primary/10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
           >
-            <div className="flex items-center gap-2 rounded-sm px-2 py-1.5 transition-colors group-hover/timer:bg-primary/10">
-              <Clock
-                aria-hidden="true"
-                className={cn("size-3 shrink-0", signalClassName)}
-              />
-              <span className="flex-1 truncate text-xs text-muted-foreground transition-colors group-hover/timer:text-foreground">
-                {timer.npc.name}
-              </span>
-              <span
-                className={cn(
-                  "text-xs font-mono font-medium tabular-nums",
-                  signalClassName,
-                )}
-              >
-                {parseMsToTime(timeLeftMilliseconds)}
-              </span>
-            </div>
+            <Clock
+              aria-hidden="true"
+              className={cn("size-3.5 shrink-0", signalClassName)}
+            />
+            <span className="flex-1 truncate text-xs text-muted-foreground transition-colors group-hover/timer:text-foreground">
+              {timer.npc.name}
+            </span>
+            <span
+              className={cn(
+                "font-mono text-xs font-medium tabular-nums",
+                signalClassName,
+              )}
+            >
+              {parseMsToTime(timeLeftMilliseconds)}
+            </span>
           </Link>
         }
       />
@@ -197,47 +195,43 @@ export const EventTimersList: FC<EventTimersListProps> = ({
   const hasMore = activeTimers.length > 3;
 
   return (
-    <div className="border-t border-sidebar-border">
-      <div className="p-1">
-        {visibleTimers.map((timer) => (
-          <TimerItem
-            key={timer.npcId}
-            timer={timer}
-            currentTimestamp={currentTimestamp}
-            guildId={guildId}
-            eventId={event.id}
-            onNavigate={onNavigate}
-          />
-        ))}
+    <div className="pb-1.5">
+      {visibleTimers.map((timer) => (
+        <TimerItem
+          key={timer.npcId}
+          timer={timer}
+          currentTimestamp={currentTimestamp}
+          guildId={guildId}
+          eventId={event.id}
+          onNavigate={onNavigate}
+        />
+      ))}
 
-        {hasMore && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsExpanded((currentValue) => !currentValue);
-            }}
-            className="flex w-full items-center justify-center gap-1 rounded-sm px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-primary/10 hover:text-foreground"
-            aria-expanded={isExpanded}
-          >
-            <span>
-              {isExpanded
-                ? t("events.sidebarBanner.collapse")
-                : t("events.sidebarBanner.showMore", {
-                    count: activeTimers.length - 3,
-                  })}
-            </span>
-            <div
-              className={`flex items-center transition-transform duration-200 ${
-                isExpanded ? "rotate-180" : ""
-              }`}
-            >
-              <ChevronDown className="size-3" />
-            </div>
-          </button>
-        )}
-      </div>
+      {hasMore && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsExpanded((currentValue) => !currentValue);
+          }}
+          className="flex w-full items-center gap-1.5 py-1.5 pr-5 pl-11 text-xs text-muted-foreground outline-none transition-colors hover:bg-primary/10 hover:text-foreground focus-visible:bg-primary/10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          aria-expanded={isExpanded}
+        >
+          {isExpanded
+            ? t("events.sidebarBanner.collapse")
+            : t("events.sidebarBanner.showMore", {
+                count: activeTimers.length - 3,
+              })}
+          <ChevronDown
+            aria-hidden="true"
+            className={cn(
+              "size-3 transition-transform duration-200 ease-emphasized",
+              isExpanded && "rotate-180",
+            )}
+          />
+        </button>
+      )}
     </div>
   );
 };

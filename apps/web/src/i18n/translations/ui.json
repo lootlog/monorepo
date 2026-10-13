@@ -1,12 +1,7 @@
 {
   "tooltips": {
-    "installAddon": "Instaluj dodatek do gry",
     "createLootlog": "Dodaj Lootloga do serwera Discord",
     "refreshServers": "Odśwież listę Lootlogów"
-  },
-  "sidebar": {
-    "createLootlog": "Dodaj",
-    "installAddon": "Instaluj"
   },
   "externalLink": {
     "newTab": " (otwiera się w nowej karcie)"

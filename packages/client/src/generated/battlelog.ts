@@ -2619,7 +2619,7 @@ export const prefetchHealthzControllerHealthCheckQuery = async <TData = Awaited<
 
   const queryOptions = getHealthzControllerHealthCheckQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -2865,7 +2865,7 @@ export const prefetchBattlesControllerGetDashboardBattlesQuery = async <TData = 
 
   const queryOptions = getBattlesControllerGetDashboardBattlesQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -3008,7 +3008,7 @@ export const prefetchBattlesControllerGetUserCharactersQuery = async <TData = Aw
 
   const queryOptions = getBattlesControllerGetUserCharactersQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -3158,7 +3158,7 @@ export const prefetchBattlesControllerGetBattleAnalyticsQuery = async <TData = A
 
   const queryOptions = getBattlesControllerGetBattleAnalyticsQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -3308,7 +3308,7 @@ export const prefetchBattlesControllerGetAbyssSeasonsQuery = async <TData = Awai
 
   const queryOptions = getBattlesControllerGetAbyssSeasonsQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -3458,7 +3458,7 @@ export const prefetchBattlesControllerGetCombatProfileQuery = async <TData = Awa
 
   const queryOptions = getBattlesControllerGetCombatProfileQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -3608,7 +3608,7 @@ export const prefetchBattlesControllerGetProfessionWinRateQuery = async <TData =
 
   const queryOptions = getBattlesControllerGetProfessionWinRateQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -3758,7 +3758,7 @@ export const prefetchBattlesControllerGetHeadToHeadQuery = async <TData = Awaite
 
   const queryOptions = getBattlesControllerGetHeadToHeadQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -3908,7 +3908,7 @@ export const prefetchBattlesControllerGetCurrentStreakQuery = async <TData = Awa
 
   const queryOptions = getBattlesControllerGetCurrentStreakQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -4058,7 +4058,7 @@ export const prefetchBattlesControllerGetBattleDurationQuery = async <TData = Aw
 
   const queryOptions = getBattlesControllerGetBattleDurationQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -4208,7 +4208,7 @@ export const prefetchBattlesControllerGetPhGrowthQuery = async <TData = Awaited<
 
   const queryOptions = getBattlesControllerGetPhGrowthQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -4358,7 +4358,7 @@ export const prefetchBattlesControllerGetRatingGrowthQuery = async <TData = Awai
 
   const queryOptions = getBattlesControllerGetRatingGrowthQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -4508,7 +4508,7 @@ export const prefetchBattlesControllerGetRatingDeltaByOpponentQuery = async <TDa
 
   const queryOptions = getBattlesControllerGetRatingDeltaByOpponentQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -4658,7 +4658,7 @@ export const prefetchBattlesControllerGetPlayerVsPlayerBattlesQuery = async <TDa
 
   const queryOptions = getBattlesControllerGetPlayerVsPlayerBattlesQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -4808,7 +4808,7 @@ export const prefetchBattlesControllerSearchWarriorsQuery = async <TData = Await
 
   const queryOptions = getBattlesControllerSearchWarriorsQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -4951,7 +4951,7 @@ export const prefetchBattlesControllerGetUserWorldsQuery = async <TData = Awaite
 
   const queryOptions = getBattlesControllerGetUserWorldsQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -5094,7 +5094,7 @@ export const prefetchBattlesControllerGetBattleTimelineQuery = async <TData = Aw
 
   const queryOptions = getBattlesControllerGetBattleTimelineQueryOptions({ battleId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -5237,7 +5237,7 @@ export const prefetchBattlesControllerGetBattleQuery = async <TData = Awaited<Re
 
   const queryOptions = getBattlesControllerGetBattleQueryOptions({ battleId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -5543,7 +5543,7 @@ export const prefetchBattlesControllerGetBattleRawDataQuery = async <TData = Awa
 
   const queryOptions = getBattlesControllerGetBattleRawDataQueryOptions({ battleId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -5686,7 +5686,7 @@ export const prefetchPublicBattlesControllerGetPublicBattleQuery = async <TData 
 
   const queryOptions = getPublicBattlesControllerGetPublicBattleQueryOptions({ battleId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -5829,7 +5829,7 @@ export const prefetchPublicBattlesControllerGetPublicBattleRawQuery = async <TDa
 
   const queryOptions = getPublicBattlesControllerGetPublicBattleRawQueryOptions({ battleId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -5972,7 +5972,7 @@ export const prefetchPublicBattlesControllerGetPublicBattleTimelineQuery = async
 
   const queryOptions = getPublicBattlesControllerGetPublicBattleTimelineQueryOptions({ battleId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }

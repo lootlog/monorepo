@@ -6,14 +6,10 @@ import { SectionCardContent } from "@/components/common/section-card/section-car
 import { ActivityHeatmap } from "@/components/common/activity-heatmap/activity-heatmap";
 import { KpiCard } from "@/components/common/kpi-card";
 import { Flame, Trophy } from "lucide-react";
-
+import { WeeklyActivityHeatmap } from "@/components/common/activity-heatmap/weekly-activity-heatmap";
+import { formatIsoWeekday } from "@/components/common/kill-analytics/format-statistics-date";
+import { summarizeActivityDistributions } from "@/components/common/kill-analytics/summarize-activity-distributions";
 import { StatisticsDistribution } from "./statistics-distribution";
-import { summarizeActivityDistributions } from "./summarize-activity-distributions";
-
-const weekdayFormatter = new Intl.DateTimeFormat("pl-PL", {
-  weekday: "long",
-  timeZone: "Europe/Warsaw",
-});
 
 export function StatisticsActivity({
   data,
@@ -22,11 +18,6 @@ export function StatisticsActivity({
 }) {
   const { t } = useTranslation();
   const distributions = summarizeActivityDistributions(data.hourlyWeekday);
-  const max = Math.max(1, ...data.hourlyWeekday.map((cell) => cell.kills));
-
-  const weekdays = Array.from({ length: 7 }, (_, day) =>
-    weekdayFormatter.format(new Date(Date.UTC(2026, 0, 5 + day, 12))),
-  );
 
   return (
     <>
@@ -67,9 +58,7 @@ export function StatisticsActivity({
         <StatisticsDistribution
           title={t("statistics.weekdayDistribution")}
           rows={distributions.weekdays.map(({ weekday, kills }) => ({
-            label: weekdayFormatter.format(
-              new Date(Date.UTC(2026, 0, 4 + weekday, 12)),
-            ),
+            label: formatIsoWeekday(weekday),
             kills,
           }))}
         />
@@ -80,49 +69,10 @@ export function StatisticsActivity({
           description={t("statistics.polishTime")}
         />
         <SectionCardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px] border-separate border-spacing-1 text-center text-xs">
-              <caption className="sr-only">{t("statistics.hours")}</caption>
-              <thead>
-                <tr>
-                  <th scope="col">{t("statistics.weekday")}</th>
-                  {Array.from({ length: 24 }, (_, hour) => (
-                    <th scope="col" key={hour}>
-                      {hour}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {weekdays.map((weekday, index) => (
-                  <tr key={weekday}>
-                    <th scope="row" className="text-left font-normal">
-                      {weekday}
-                    </th>
-                    {Array.from({ length: 24 }, (_, hour) => {
-                      const value =
-                        data.hourlyWeekday.find(
-                          (cell) =>
-                            cell.weekday === index + 1 && cell.hour === hour,
-                        )?.kills ?? 0;
-
-                      return (
-                        <td
-                          key={hour}
-                          className="rounded-sm px-1 py-2 text-card-foreground tabular-nums"
-                          style={{
-                            backgroundColor: `color-mix(in srgb, var(--primary) ${Math.ceil((value / max) * 20)}%, var(--card))`,
-                          }}
-                        >
-                          {value}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <WeeklyActivityHeatmap
+            cells={data.hourlyWeekday}
+            label={t("statistics.hours")}
+          />
         </SectionCardContent>
       </SectionCard>
     </>

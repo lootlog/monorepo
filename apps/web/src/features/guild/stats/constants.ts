@@ -8,4 +8,4 @@ export const TRACKABLE_NPC_TYPES: NpcType[] = [
 ];
 
 /** Rows shown by every statistics leaderboard card, so paired cards stay the same height. */
-export const LEADERBOARD_SIZE = 5;
+export const LEADERBOARD_SIZE = 10;
