@@ -2,6 +2,9 @@ import type { GuildKillStatsResponseDtoOutputTimeline } from "@lootlog/client/ma
 import { useTranslation } from "react-i18next";
 import { ChartCard } from "@/components/common/chart-card";
 import { KillAnalyticsTrend } from "@/components/common/kill-analytics/kill-analytics-trend";
+import { formatStatisticsDate } from "@/components/common/kill-analytics/format-statistics-date";
+
+const numberFormatter = new Intl.NumberFormat("pl-PL");
 
 type KillStatsTimelineProps = {
   data?: GuildKillStatsResponseDtoOutputTimeline;
@@ -35,9 +38,21 @@ export const KillStatsTimeline = ({
     );
   }
 
+  // All-time totals include kills from before hourly history began.
+  const firstDate = data.points[0]?.date;
+
+  const description =
+    data.untimedKills > 0 && firstDate
+      ? t("kills.timeline.untimed", {
+          date: formatStatisticsDate(firstDate),
+          kills: numberFormatter.format(data.untimedKills),
+        })
+      : undefined;
+
   return (
     <KillAnalyticsTrend
       title={title}
+      description={description}
       granularity={data.unit}
       data={data.points}
     />

@@ -21,7 +21,8 @@ export interface LevelRangeFilterProps {
 }
 
 /**
- * Commits the last scheduled value once typing pauses. The commit reads the
+ * Commits the last scheduled value once typing pauses, or at once on `flush`
+ * (leaving the field, e.g. before a popover closes). The commit reads the
  * latest props, so a caller that passes new callbacks on every render never
  * cancels or delays a pending edit; unmounting drops it.
  */
@@ -40,7 +41,14 @@ const useDebouncedCommit = <T,>(
     return () => clearTimeout(timer);
   }, [draft, delayMs]);
 
-  return (value: T) => setDraft({ value });
+  return {
+    schedule: (value: T) => setDraft({ value }),
+    flush: () => {
+      if (!draft) return;
+      setDraft(null);
+      onCommit(draft.value);
+    },
+  };
 };
 
 const parseLevel = (value: string) => {
@@ -94,7 +102,7 @@ export function LevelRangeFilter({
     if (value !== "" && level === undefined) return;
 
     setLocalMinLevel(level);
-    commitMinLevel(level);
+    commitMinLevel.schedule(level);
   };
 
   const handleMaxLevelChange = (value: string) => {
@@ -103,7 +111,7 @@ export function LevelRangeFilter({
     if (value !== "" && level === undefined) return;
 
     setLocalMaxLevel(level);
-    commitMaxLevel(level);
+    commitMaxLevel.schedule(level);
   };
 
   const inputClassName = cn(
@@ -129,6 +137,7 @@ export function LevelRangeFilter({
         placeholder={t("ui.levelRange.minPlaceholder")}
         value={localMinLevel ?? ""}
         onChange={(e) => handleMinLevelChange(e.target.value)}
+        onBlur={commitMinLevel.flush}
         size={size}
         className={inputClassName}
       />
@@ -144,6 +153,7 @@ export function LevelRangeFilter({
         placeholder={t("ui.levelRange.maxPlaceholder")}
         value={localMaxLevel ?? ""}
         onChange={(e) => handleMaxLevelChange(e.target.value)}
+        onBlur={commitMaxLevel.flush}
         size={size}
         className={inputClassName}
       />

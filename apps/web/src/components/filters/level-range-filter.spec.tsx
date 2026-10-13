@@ -71,6 +71,27 @@ it("commits only the last valid draft and cancels a pending edit on unmount", ()
   expect(onMaxLevelChange).not.toHaveBeenCalled();
 });
 
+it("commits a typed bound at once when the field loses focus, e.g. as a popover closes", () => {
+  vi.useFakeTimers();
+  const onMinLevelChange = vi.fn();
+
+  render(
+    <LevelRangeFilter
+      onMinLevelChange={onMinLevelChange}
+      onMaxLevelChange={vi.fn()}
+    />,
+  );
+
+  const input = screen.getAllByRole("spinbutton")[0];
+
+  if (!input) throw new Error("Missing minimum level input");
+  fireEvent.change(input, { target: { value: "250" } });
+  fireEvent.blur(input);
+  expect(onMinLevelChange).toHaveBeenCalledExactlyOnceWith(250);
+  act(() => vi.advanceTimersByTime(500));
+  expect(onMinLevelChange).toHaveBeenCalledTimes(1);
+});
+
 it("commits both bounds typed within one debounce window and follows an outside reset", () => {
   vi.useFakeTimers();
   const onChange = vi.fn();

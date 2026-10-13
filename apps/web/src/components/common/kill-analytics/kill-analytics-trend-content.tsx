@@ -40,6 +40,7 @@ type KillAnalyticsTrendPoint = {
 
 type KillAnalyticsTrendProps = {
   title: string;
+  description?: string;
   data: KillAnalyticsTrendPoint[];
   /** "day" points are calendar dates; "hour" points are instants. */
   granularity?: "day" | "hour";
@@ -47,6 +48,7 @@ type KillAnalyticsTrendProps = {
 
 export function KillAnalyticsTrend({
   title,
+  description,
   data,
   granularity = "day",
 }: KillAnalyticsTrendProps) {
@@ -104,12 +106,17 @@ export function KillAnalyticsTrend({
 
   const sort = sorting[0] ?? { id: "date", desc: true };
 
-  // Days without data sort below days with zero kills.
-  const rows = orderBy(
-    data,
-    [sort.id === "kills" ? (day) => day.kills ?? -1 : (day) => day.date],
-    [sort.desc ? "desc" : "asc"],
-  );
+  const direction = sort.desc ? "desc" : "asc";
+
+  // By kills, days without data stay last in both directions.
+  const rows =
+    sort.id === "kills"
+      ? orderBy(
+          data,
+          [(day) => day.kills === null, (day) => day.kills ?? 0],
+          ["asc", direction],
+        )
+      : orderBy(data, [(day) => day.date], [direction]);
 
   const table = useTable({
     features: coreTableFeatures,
@@ -125,6 +132,7 @@ export function KillAnalyticsTrend({
     <SectionCard>
       <SectionCardHeader
         title={title}
+        description={description}
         actions=<AnimatedToggleGroup
           size="sm"
           label={t("statistics.view")}

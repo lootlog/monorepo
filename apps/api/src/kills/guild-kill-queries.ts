@@ -2,6 +2,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { DateTime, Effect, Schema } from "effect";
+import { sum } from "es-toolkit";
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import {
   GuildKillStatsResponse,
@@ -182,6 +183,12 @@ export const makeGuildKillQueries = (
             ),
             timeline: {
               unit: timelineUnit,
+              untimedKills: periodStart
+                ? 0
+                : Math.max(
+                    0,
+                    guildUniqueKills - sum(timeline.map(({ kills }) => kills)),
+                  ),
               points: fillKillTimeline(
                 timeline,
                 timelineUnit,

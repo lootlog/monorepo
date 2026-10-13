@@ -37,7 +37,7 @@ it("keeps incomplete intervals identifiable in table view", () => {
   expect(screen.getByRole("img", { name: "Weekly kills" })).toBeDefined();
 });
 
-it("lists the newest day first and re-sorts by kills, unknown days last", () => {
+it("lists the newest day first and re-sorts by kills, unknown days last both ways", () => {
   render(
     <KillAnalyticsTrend
       title="Daily kills"
@@ -61,4 +61,8 @@ it("lists the newest day first and re-sorts by kills, unknown days last", () => 
     within(table).getByRole("button", { name: "statistics.kills" }),
   );
   expect(dates()).toEqual(["1.08.2026", "3.08.2026", "2.08.2026"]);
+  fireEvent.click(
+    within(table).getByRole("button", { name: "statistics.kills" }),
+  );
+  expect(dates()).toEqual(["3.08.2026", "1.08.2026", "2.08.2026"]);
 });

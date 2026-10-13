@@ -402,7 +402,7 @@ test("role visibility restricts totals and metadata before every SQL ranking", a
   );
 });
 
-test("the kill timeline and weekly hours follow Warsaw days, fill quiet days and respect role visibility", async () => {
+test("the kill timeline and weekly hours follow Warsaw days, fill quiet days, count untimed history and respect role visibility", async () => {
   await runtime.runPromise(
     Effect.gen(function* () {
       const db = yield* ApiDatabase;
@@ -437,6 +437,15 @@ test("the kill timeline and weekly hours follow Warsaw days, fill quiet days and
         bucket(currentHour, 4),
       ]);
 
+      // 100 Elita II kills predate hourly history and live only in the totals.
+      yield* db
+        .insert(guildKillTotalTable)
+        .values(
+          [bucket(currentHour, 109), bucket(currentHour, 50, NpcType.HERO)].map(
+            ({ periodStart: _start, ...total }) => total,
+          ),
+        );
+
       const all = yield* service.getGuildKillStats(
         timelineGuildId,
         policy,
@@ -447,6 +456,7 @@ test("the kill timeline and weekly hours follow Warsaw days, fill quiet days and
       );
 
       expect(all.timeline.unit).toBe("day");
+      expect(all.timeline.untimedKills).toBe(100);
       expect(all.timeline.points.slice(0, 4)).toEqual([
         { date: "2026-07-14", kills: 2 },
         { date: "2026-07-15", kills: 3 },
@@ -472,6 +482,7 @@ test("the kill timeline and weekly hours follow Warsaw days, fill quiet days and
       );
 
       expect(day.timeline.unit).toBe("hour");
+      expect(day.timeline.untimedKills).toBe(0);
       expect(day.timeline.points).toHaveLength(25);
       expect(day.timeline.points.at(-1)).toEqual({
         date: currentHour.toISOString(),
@@ -498,6 +509,7 @@ test("the kill timeline and weekly hours follow Warsaw days, fill quiet days and
         { period: "all" },
       );
 
+      expect(restricted.timeline.untimedKills).toBe(100);
       expect(restricted.timeline.points[2]).toEqual({
         date: "2026-07-16",
         kills: 0,

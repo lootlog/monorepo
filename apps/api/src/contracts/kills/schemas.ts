@@ -105,6 +105,11 @@ export const GuildKillStatsResponse = Schema.Struct({
    */
   timeline: Schema.Struct({
     unit: Schema.Literals(["hour", "day"]),
+    /**
+     * All-time kills recorded before hourly history began, which the timeline
+     * and `hourlyWeekday` leave out; always 0 for a bounded period.
+     */
+    untimedKills: FiniteNumber,
     points: Schema.Array(
       Schema.Struct({ date: Schema.String, kills: FiniteNumber }),
     ),
