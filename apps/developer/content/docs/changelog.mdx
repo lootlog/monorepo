@@ -3,6 +3,17 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased: Kill numbers in event kill history
+
+`GET /guilds/{guildId}/events/{eventId}/kill-history` returns `killNumber` on
+every event and member summary. It is the one-based position of the kill among
+all recorded kills of its hero in the event, ordered by `killedAt` and then
+`id`, so the hero's first kill is `1`.
+
+- Manual window closes are counted like other kills.
+- The `heroId` and `memberId` filters do not renumber kills: a member's list
+  shows the hero's kill numbers, with gaps for kills the member missed.
+
 ## Unreleased (breaking): Deprecated event kill lists removed
 
 The event, member and hero kill lists deprecated in favour of

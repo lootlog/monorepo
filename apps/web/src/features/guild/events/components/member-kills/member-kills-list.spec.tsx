@@ -252,6 +252,7 @@ function createKill(
     maxSpawnTimeAtKill: "2026-07-31T01:27:00.000Z",
     memberPoint,
     participantCount: 1,
+    killNumber: 1,
     minSpawnTimeAtKill: "2026-07-31T01:27:00.000Z",
   };
 }

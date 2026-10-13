@@ -2,18 +2,14 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
-  getEventsRankingControllerGetEventHeroStatsQueryKey,
   getShowEventOverviewQueryKey,
-  useEventsRankingControllerGetEventHeroStats,
   useShowEventOverview,
-  type EventHeroStatsResponseDto,
 } from "@lootlog/client/main";
 
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { EventLoadError } from "./components/event-load-error";
 import { HeroTabs } from "./components/shared/hero-tabs";
 import { EventKillsSkeleton } from "./event-kills-skeleton";
-import { EventKillsSummary } from "./components/kills/event-kills-summary";
 import { EventKillsTable } from "./components/kills/event-kills-table";
 import { useEventKillHistory } from "./hooks/queries/use-event-kill-history";
 
@@ -21,25 +17,6 @@ type EventKillsHistoryContentProps = {
   guildId?: string;
   eventId?: string;
   initialHeroId?: string;
-};
-
-const getKillCount = (
-  heroStats: EventHeroStatsResponseDto[] | undefined,
-  selectedHeroId: string | undefined,
-) => {
-  if (!heroStats) return undefined;
-
-  if (selectedHeroId) {
-    return (
-      heroStats.find((heroStatistic) => heroStatistic.heroId === selectedHeroId)
-        ?.killCount ?? 0
-    );
-  }
-
-  return heroStats.reduce(
-    (sum, heroStatistic) => sum + heroStatistic.killCount,
-    0,
-  );
 };
 
 const getEventRouteIds = (guildId?: string, eventId?: string) => ({
@@ -103,26 +80,6 @@ export const EventKillsHistoryContent = ({
     limit: 20,
   });
 
-  const {
-    data: heroStats,
-    isError: heroStatsHasError,
-    isLoading: heroStatsLoading,
-  } = useEventsRankingControllerGetEventHeroStats(
-    {
-      guildId: routeIds.guildId,
-      eventId: routeIds.eventId,
-    },
-    {
-      query: {
-        enabled: hasEventRouteParams,
-        queryKey: getEventsRankingControllerGetEventHeroStatsQueryKey({
-          guildId: routeIds.guildId,
-          eventId: routeIds.eventId,
-        }),
-      },
-    },
-  );
-
   if (eventLoading) {
     return <EventKillsSkeleton />;
   }
@@ -142,11 +99,6 @@ export const EventKillsHistoryContent = ({
   const heroes = event.heroNpcs ?? [];
   const allKills = killsData?.pages.flatMap((page) => page.data) ?? [];
 
-  const killCount = getKillCount(
-    heroStatsHasError ? undefined : heroStats,
-    selectedHeroId,
-  );
-
   return (
     <div className="flex h-full min-h-0 flex-col">
       <EventParticipationConfirmationDialog
@@ -164,11 +116,6 @@ export const EventKillsHistoryContent = ({
             includeAll
             value={selectedHeroId}
             onValueChange={setSelectedHeroId}
-          />
-
-          <EventKillsSummary
-            killCount={killCount}
-            isKillCountLoading={heroStatsLoading}
           />
 
           <EventKillsTable

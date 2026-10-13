@@ -14,6 +14,26 @@ type CreateEventKillsTableColumnsOptions = {
   t: TFunction;
 };
 
+export const createKillNumberColumn = <
+  TData extends Pick<KillHistoryEntry, "killNumber">,
+>(
+  t: TFunction,
+): ColumnDef<typeof coreTableFeatures, TData> => ({
+  id: "killNumber",
+  header: () => (
+    <span title={t("events.kills.killNumber")}>
+      <span aria-hidden="true">#</span>
+      <span className="sr-only">{t("events.kills.killNumber")}</span>
+    </span>
+  ),
+  cell: ({ row }) => (
+    <span className="text-xs font-semibold text-muted-foreground tabular-nums">
+      {row.original.killNumber}
+    </span>
+  ),
+  enableSorting: false,
+});
+
 export const createEventKillsTableColumns = ({
   eventId,
   guildId,
@@ -23,6 +43,7 @@ export const createEventKillsTableColumns = ({
   typeof coreTableFeatures,
   KillHistoryEntry
 >[] => [
+  ...(isPreview ? [] : [createKillNumberColumn<KillHistoryEntry>(t)]),
   {
     id: "monster",
     header: t("events.kills.monster"),
