@@ -6,6 +6,7 @@ import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { MemberStatusBadge } from "@/features/guild/settings/members/member-status-badge";
 import type { MemberWebPresenceByDiscordId } from "@/lib/web-presence";
 import type { GuildMember } from "@/features/guild/settings/members/members.types";
+import { memberTableColumnWidths } from "@/features/guild/settings/members/members.constants";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import {
   getVirtualListPadding,
@@ -109,7 +110,7 @@ export const MembersTable = ({
 
   const rows = table.getRowModel().rows;
 
-  const rowEstimateSize = isMobile ? 88 : 64;
+  const rowEstimateSize = isMobile ? 88 : 57;
 
   const rowVirtualizer = usePageVirtualizer<HTMLElement>({
     count: members.length,
@@ -178,7 +179,7 @@ export const MembersTable = ({
                     />
                   </span>
                 )}
-                <span className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                <span className="mt-1 flex flex-wrap items-center gap-2 text-[11px] leading-4 text-muted-foreground">
                   <span>
                     {member.lastDiscordSyncAt
                       ? t("settings.members.discordSync.lastConfirmedCompact", {
@@ -213,12 +214,9 @@ export const MembersTable = ({
     <>
       <Table ref={tableRef} tabIndex={-1} className="min-w-[994px] table-fixed">
         <colgroup>
-          <col className="w-[360px]" />
-          <col className="w-[130px]" />
-          <col className="w-[160px]" />
-          <col className="w-[150px]" />
-          <col className="w-[130px]" />
-          <col className="w-16" />
+          {memberTableColumnWidths.map(([columnId, className]) => (
+            <col key={columnId} className={className} />
+          ))}
         </colgroup>
         <TanStackTableHeader
           table={table}

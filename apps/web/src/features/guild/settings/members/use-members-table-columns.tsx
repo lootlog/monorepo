@@ -95,8 +95,8 @@ export function useMembersTableColumns({
               />
               <AvatarFallback>{member.name.slice(0, 1)}</AvatarFallback>
             </Avatar>
-            <div className="min-w-0 flex-1 space-y-1">
-              <div className="flex min-w-0 items-center gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="flex h-5 min-w-0 items-center gap-2">
                 <span className="truncate text-sm font-semibold">
                   {member.name}
                 </span>
@@ -109,7 +109,8 @@ export function useMembersTableColumns({
                   </span>
                 )}
               </div>
-              <div className="flex min-h-7 flex-wrap items-center gap-1">
+              {/* Two 20px lines keep the row at the 57px table standard. */}
+              <div className="flex h-5 items-center gap-1 overflow-hidden">
                 <MemberDiscordSyncIndicator member={member} />
                 {member.userId === guildOwnerId && (
                   <TooltipProvider delay={100}>
@@ -117,10 +118,10 @@ export function useMembersTableColumns({
                       <TooltipTrigger
                         render={
                           <span
-                            className="inline-flex rounded-md bg-amber-500/10 p-1.5 text-amber-400 transition-colors"
+                            className="inline-flex size-5 items-center justify-center rounded-md bg-amber-500/10 text-amber-400 transition-colors"
                             onClick={(event) => event.stopPropagation()}
                           >
-                            <Crown className="size-4" />
+                            <Crown className="size-3.5" />
                           </span>
                         }
                       />
