@@ -36,7 +36,7 @@
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "effect": "catalog:",
-    "orval": "^8.39.0",
+    "orval": "^8.42.0",
     "react": "catalog:",
     "typescript": "catalog:",
     "yaml": "catalog:"

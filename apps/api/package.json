@@ -49,25 +49,25 @@
     "@lootlog/messaging": "workspace:*",
     "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
-    "bullmq": "^6.3.11",
+    "bullmq": "^6.3.14",
     "discord-api-types": "0.38.56",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
     "es-toolkit": "catalog:",
     "sharp": "^0.35.5",
     "superjson": "catalog:",
-    "uuid": "^14.0.2"
+    "uuid": "^14.0.3"
   },
   "devDependencies": {
-    "@effect/sql-pglite": "^4.0.0",
-    "@electric-sql/pglite": "^0.5.8",
+    "@effect/sql-pglite": "^4.0.4",
+    "@electric-sql/pglite": "^0.5.9",
     "@lootlog/typescript-config": "workspace:*",
-    "@testcontainers/postgresql": "^12.2.0",
+    "@testcontainers/postgresql": "^12.2.1",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "drizzle-kit": "catalog:",
     "pg": "^8.23.1",
-    "testcontainers": "^12.2.0",
+    "testcontainers": "^12.2.1",
     "typescript": "catalog:",
     "yaml": "catalog:"
   }
