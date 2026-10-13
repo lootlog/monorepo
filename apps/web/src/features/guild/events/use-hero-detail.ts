@@ -2,6 +2,7 @@ import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {
   type EventOverviewResponseDto as EventOverview,
   getEventsMonitoringControllerGetActiveGapsForHeroQueryKey,
+  getEventsRankingControllerGetEventHeroStatsQueryKey,
   getGuildsControllerGetGuildByIdQueryKey,
   getListEventHeroTimersQueryKey,
   getListEventMapsQueryKey,
@@ -15,6 +16,7 @@ import {
   useEventsMonitoringControllerCloseRespawnWindow,
   useEventsMonitoringControllerGetActiveGapsForHero,
   useEventsMonitoringControllerOpenRespawnWindow,
+  useEventsRankingControllerGetEventHeroStats,
   useGuildsControllerGetGuildById,
   useListEventHeroTimers,
   useListEventMaps,
@@ -401,9 +403,30 @@ export const useHeroDetail = () => {
     },
   );
 
+  // The event hero record has no profession; hero stats derive it from the
+  // Organization's kills of that NPC.
+  const { data: heroStats } = useEventsRankingControllerGetEventHeroStats(
+    {
+      guildId: queryGuildId,
+      eventId: queryEventId,
+    },
+    {
+      query: {
+        enabled: hasEventRouteParams,
+        queryKey: getEventsRankingControllerGetEventHeroStatsQueryKey({
+          guildId: queryGuildId,
+          eventId: queryEventId,
+        }),
+      },
+    },
+  );
+
   const activeGapsMap = new Map(activeGaps.map((gap) => [gap.mapId, gap]));
 
   const hero = getEventHero(event, eventMaps, heroId);
+
+  const heroProf =
+    heroStats?.find((stats) => stats.heroId === heroId)?.npcProf ?? null;
 
   const heroTimer = findEventHeroTimer(timers, {
     heroNpcId: hero?.npcId,
@@ -669,6 +692,7 @@ export const useHeroDetail = () => {
   return {
     status: "ready" as const,
     hero,
+    heroProf,
     event,
     heroTimer,
     windowStatus,

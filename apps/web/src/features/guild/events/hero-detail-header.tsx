@@ -13,6 +13,7 @@ import type { useHeroDetail } from "./use-hero-detail";
 type Props = Pick<
   Extract<ReturnType<typeof useHeroDetail>, { status: "ready" }>,
   | "hero"
+  | "heroProf"
   | "event"
   | "heroTimer"
   | "canManage"
@@ -23,6 +24,7 @@ type Props = Pick<
 
 export const HeroDetailHeader = ({
   hero,
+  heroProf,
   event,
   heroTimer,
   canManage,
@@ -36,7 +38,7 @@ export const HeroDetailHeader = ({
         {hero.npcName}
         {hero.npcLvl ? (
           <span className="ml-2 text-base font-normal text-muted-foreground">
-            {formatLevel(hero.npcLvl)}
+            {formatLevel(hero.npcLvl, heroProf)}
           </span>
         ) : null}
       </>
