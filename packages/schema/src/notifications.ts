@@ -146,10 +146,24 @@ export type DiscordNotificationAllowedMentions = {
   repliedUser?: boolean;
 };
 
+export const NotificationOwnerTypeSchema = Schema.Literals([
+  `${NotificationOwnerType.GUILD}`,
+  `${NotificationOwnerType.USER}`,
+]);
+
+export const NotificationProviderSchema = Schema.Literal(
+  `${NotificationProvider.DISCORD}`,
+);
+
+export const NotificationTargetTypeSchema = Schema.Literals([
+  `${NotificationTargetType.CHANNEL}`,
+  `${NotificationTargetType.DM}`,
+]);
+
 export const DiscordNotificationSendCommandSchema = Schema.Struct({
   notificationJobId: Schema.String,
-  provider: Schema.Literal("DISCORD"),
-  ownerType: Schema.Literals(["GUILD", "USER"]),
+  provider: NotificationProviderSchema,
+  ownerType: NotificationOwnerTypeSchema,
   ownerId: Schema.String,
   guildId: Schema.optionalKey(Schema.NullOr(Schema.String)),
   content: Schema.optionalKey(Schema.String),
@@ -171,7 +185,7 @@ export const DiscordNotificationSendCommandSchema = Schema.Struct({
   target: Schema.Struct({
     targetId: Schema.String,
     externalId: Schema.String,
-    targetType: Schema.Literals(["CHANNEL", "DM"]),
+    targetType: NotificationTargetTypeSchema,
   }),
 });
 
@@ -187,20 +201,6 @@ export interface DiscordNotificationDeliveryResultEvent {
   errorMessage?: string | null;
   deliveredAt: string;
 }
-
-export const NotificationOwnerTypeSchema = Schema.Literals([
-  `${NotificationOwnerType.GUILD}`,
-  `${NotificationOwnerType.USER}`,
-]);
-
-export const NotificationProviderSchema = Schema.Literal(
-  `${NotificationProvider.DISCORD}`,
-);
-
-export const NotificationTargetTypeSchema = Schema.Literals([
-  `${NotificationTargetType.CHANNEL}`,
-  `${NotificationTargetType.DM}`,
-]);
 
 export const NotificationTriggerTypeSchema = Schema.Literals([
   `${NotificationTriggerType.TIMER_BEFORE_SPAWN}`,
