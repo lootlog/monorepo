@@ -1,7 +1,6 @@
 import { ItemRarity, type Loot } from "@/lib/loots/loot-types";
 import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { cn } from "cn";
-import { useSelectedLoot } from "@/hooks/use-selected-loot";
 import * as m from "framer-motion/m";
 import { useThemeMeta } from "@/themes";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
@@ -21,7 +20,6 @@ const animate = {
 };
 
 export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
-  const { openLootDetails } = useSelectedLoot();
   const { filters, setFilters } = useLootsFilters();
   const { isRukiaTheme } = useThemeMeta();
 
@@ -35,7 +33,7 @@ export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
         loot={loot}
         headerActions=<LootHeaderActions
           commentsCount={loot.commentsCount}
-          onOpenDetails={() => openLootDetails(loot.id)}
+          lootId={loot.id}
         />
         onShowPlayerLoots={(playerName) =>
           setFilters({ players: [playerName] })
@@ -57,7 +55,12 @@ export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
         "h-full",
         variant === "embedded" &&
           "group relative flex flex-col transition-colors hover:bg-muted/20",
-        variant === "embedded" && hasLegendaryItem && LEGENDARY_LOOT_ROW_CLASS,
+        // Alternate rows so neighbouring kills stay apart in a dense list;
+        // legendary rows keep their own tint.
+        variant === "embedded" &&
+          (hasLegendaryItem
+            ? LEGENDARY_LOOT_ROW_CLASS
+            : "even:bg-background/40"),
         variant === "card" &&
           isRukiaTheme &&
           "rounded-xl hover:shadow-[inset_0_0_8px_1px_rgba(200,230,255,0.4),0_0_10px_2px_rgba(180,220,255,0.25)] transition-shadow duration-300",

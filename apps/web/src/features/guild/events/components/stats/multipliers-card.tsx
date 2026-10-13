@@ -1,11 +1,9 @@
-import { EmptyState } from "@/components/common/empty-state";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import type { TFunction } from "i18next";
 import { Calculator } from "lucide-react";
 import type { EventConfig } from "../../hooks/queries/use-kill-detail";
-import { ScoringConfigurationStrip } from "./scoring-configuration-strip";
-import { ScoringRulesList } from "./scoring-rules-list";
+import { ScoringRulesOverview } from "./scoring-rules-overview";
 
 interface MultipliersCardProps {
   eventConfig: EventConfig;
@@ -21,12 +19,6 @@ export const MultipliersCard = ({
   t,
 }: MultipliersCardProps) => {
   const rules = eventConfig.scoringRules?.rules ?? [];
-  const hardCapPoints = eventConfig.scoringRules?.hardCapPoints ?? 2;
-
-  const minTrackingPercentForBonuses =
-    eventConfig.scoringRules?.minTrackingPercentForBonuses ?? 50;
-
-  const timezone = eventConfig.scoringRules?.timezone ?? "Europe/Warsaw";
 
   return (
     <SectionCard className="overflow-hidden bg-card">
@@ -51,28 +43,11 @@ export const MultipliersCard = ({
           {t("events.killDetail.multipliers.simpleMode")}
         </p>
       ) : (
-        <>
-          <ScoringConfigurationStrip
-            hardCapPoints={hardCapPoints}
-            minTrackingPercentForBonuses={minTrackingPercentForBonuses}
-            timezone={timezone}
-            t={t}
-          />
-
-          {rules.length === 0 ? (
-            <EmptyState
-              compact
-              icon={Calculator}
-              title={t("events.killDetail.multipliers.noRules")}
-            />
-          ) : (
-            <ScoringRulesList
-              highlightedRuleIds={highlightedRuleIds}
-              rules={rules}
-              t={t}
-            />
-          )}
-        </>
+        <ScoringRulesOverview
+          scoringRules={eventConfig.scoringRules}
+          highlightedRuleIds={highlightedRuleIds}
+          t={t}
+        />
       )}
     </SectionCard>
   );

@@ -30,7 +30,7 @@ export const createEventKillsTableColumns = ({
       <KillMonsterCell
         eventId={eventId}
         guildId={guildId}
-        isDateAlwaysVisible={isPreview}
+        isPreview={isPreview}
         kill={row.original}
       />
     ),

@@ -60,6 +60,7 @@ export const HeroDetail = () => {
 
   const {
     hero,
+    heroProf,
     event,
     heroTimer,
     windowStatus,
@@ -118,6 +119,7 @@ export const HeroDetail = () => {
         <div className="px-3 py-3 flex flex-col gap-3">
           <HeroDetailHeader
             hero={hero}
+            heroProf={heroProf}
             event={event}
             heroTimer={heroTimer}
             canManage={canManage}
