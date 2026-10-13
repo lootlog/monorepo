@@ -1,4 +1,3 @@
-import { differenceInSeconds } from "date-fns";
 import { useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Permission } from "@lootlog/schema/permissions";
@@ -15,21 +14,13 @@ import { MatchingLootsSection } from "./components/kills/matching-loots-section"
 import { MultipliersCard } from "./components/stats/multipliers-card";
 import { useKillDetail } from "./hooks/queries/use-kill-detail";
 import { useMatchingLoots } from "./hooks/queries/use-matching-loots";
-import { formatDurationHuman } from "./utils/format-duration";
+import { useEventHeroProfession } from "./hooks/queries/use-event-hero-profession";
 import { normalizeBonusBreakdown } from "./utils/normalize-bonus-breakdown";
 import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { EventLoadError } from "./components/event-load-error";
 import { EventKillDetailSkeleton } from "./event-kill-detail-skeleton";
 import { getKillDetailErrorKind } from "./utils/kill-detail-error";
 import { getAppliedRuleIdsForParticipant } from "./utils/scoring-applied-rules";
-
-const formatRespawnWindow = (minSpawn: string, maxSpawn: string): string => {
-  const minDate = new Date(minSpawn);
-  const maxDate = new Date(maxSpawn);
-  const differenceSeconds = Math.max(0, differenceInSeconds(maxDate, minDate));
-
-  return formatDurationHuman(differenceSeconds);
-};
 
 export const KillDetail = () => {
   const { t } = useTranslation();
@@ -68,6 +59,12 @@ export const KillDetail = () => {
   });
 
   const loots = matchingLoots ?? [];
+
+  const heroProf = useEventHeroProfession({
+    guildId: queryGuildId,
+    eventId: queryEventId,
+    heroId: queryHeroId,
+  });
 
   if (isLoading) {
     return <EventKillDetailSkeleton />;
@@ -137,60 +134,8 @@ export const KillDetail = () => {
     );
   };
 
-  const getTimingViewModel = () => {
-    const respawnDurationSeconds = kill.respawnDurationSeconds;
-    const windowDurationSeconds = kill.windowDurationSeconds;
-
-    const respawnDurationText =
-      respawnDurationSeconds !== null && respawnDurationSeconds !== undefined
-        ? formatDurationHuman(respawnDurationSeconds)
-        : formatRespawnWindow(kill.minSpawnTimeAtKill, kill.killedAt);
-
-    const windowDurationText =
-      windowDurationSeconds !== null && windowDurationSeconds !== undefined
-        ? formatDurationHuman(windowDurationSeconds)
-        : formatRespawnWindow(kill.minSpawnTimeAtKill, kill.maxSpawnTimeAtKill);
-
-    const hasDurations =
-      windowDurationSeconds !== null &&
-      windowDurationSeconds !== undefined &&
-      respawnDurationSeconds !== null &&
-      respawnDurationSeconds !== undefined;
-
-    const fasterThanMaxSeconds = hasDurations
-      ? Math.max(0, windowDurationSeconds - respawnDurationSeconds)
-      : null;
-
-    const respawnComparedToMaxPercentage =
-      hasDurations && windowDurationSeconds > 0
-        ? Math.max(
-            0,
-            Math.round((respawnDurationSeconds / windowDurationSeconds) * 100),
-          )
-        : null;
-
-    return {
-      respawnDurationText,
-      windowDurationText,
-      fasterThanMaxText:
-        fasterThanMaxSeconds !== null &&
-        fasterThanMaxSeconds !== undefined &&
-        fasterThanMaxSeconds > 0
-          ? formatDurationHuman(fasterThanMaxSeconds)
-          : null,
-      respawnComparedToMaxPercentage,
-    };
-  };
-
   const memberRoleColors = getMemberRoleColors();
   const highlightedRuleIds = getHighlightedRuleIds();
-
-  const {
-    respawnDurationText,
-    windowDurationText,
-    fasterThanMaxText,
-    respawnComparedToMaxPercentage,
-  } = getTimingViewModel();
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -208,63 +153,64 @@ export const KillDetail = () => {
               isRetrying={isFetching}
             />
           )}
-          <KillDetailSummary
-            kill={kill}
-            eventConfig={eventConfig}
-            participantsCount={participants.length}
-            lootCount={loots.length}
-            respawnDurationText={respawnDurationText}
-            windowDurationText={windowDurationText}
-            fasterThanMaxText={fasterThanMaxText}
-            respawnComparedToMaxPercentage={respawnComparedToMaxPercentage}
-          />
+          <KillDetailSummary kill={kill} heroProf={heroProf} />
 
           <div
             data-testid="kill-detail-content-grid"
             className="grid min-w-0 items-start gap-3 2xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]"
           >
+            {/* One column below 2xl reads participants, scoring rules, loots,
+                then the long map table; 2xl splits them into two columns. */}
             <div
               data-testid="kill-detail-primary-column"
-              className="flex min-w-0 flex-col gap-3"
+              className="contents 2xl:flex 2xl:min-w-0 2xl:flex-col 2xl:gap-3"
             >
-              <KillParticipantsCard
-                participants={participants}
-                guildId={guildId}
-                eventId={eventId}
-                killId={killId}
-                canEdit={canEditPoints}
-              />
+              <div className="order-1 min-w-0 2xl:order-none">
+                <KillParticipantsCard
+                  participants={participants}
+                  guildId={guildId}
+                  eventId={eventId}
+                  killId={killId}
+                  canEdit={canEditPoints}
+                />
+              </div>
 
-              <KillMapsTimelineSection
-                eventId={queryEventId}
-                heroId={queryHeroId}
-                killId={queryKillId}
-                minSpawnTimeAtKill={kill.minSpawnTimeAtKill}
-                killedAt={kill.killedAt}
-                memberRoleColors={memberRoleColors}
-                t={t}
-              />
+              <div className="order-4 min-w-0 2xl:order-none">
+                <KillMapsTimelineSection
+                  eventId={queryEventId}
+                  heroId={queryHeroId}
+                  killId={queryKillId}
+                  minSpawnTimeAtKill={kill.minSpawnTimeAtKill}
+                  killedAt={kill.killedAt}
+                  memberRoleColors={memberRoleColors}
+                  t={t}
+                />
+              </div>
             </div>
 
             <aside
               data-testid="kill-detail-secondary-column"
-              className="flex min-w-0 flex-col gap-3"
+              className="contents 2xl:flex 2xl:min-w-0 2xl:flex-col 2xl:gap-3"
             >
-              <MatchingLootsSection
-                loots={loots}
-                isLoading={isLootsLoading}
-                hasError={lootsHasError}
-                onRetry={() => void refetchLoots()}
-                isRetrying={isFetchingLoots}
-                guildId={queryGuildId}
-                npcName={kill.heroNpc.npcName}
-              />
+              <div className="order-3 min-w-0 2xl:order-none">
+                <MatchingLootsSection
+                  loots={loots}
+                  isLoading={isLootsLoading}
+                  hasError={lootsHasError}
+                  onRetry={() => void refetchLoots()}
+                  isRetrying={isFetchingLoots}
+                  guildId={queryGuildId}
+                  npcName={kill.heroNpc.npcName}
+                />
+              </div>
 
-              <MultipliersCard
-                eventConfig={eventConfig}
-                highlightedRuleIds={highlightedRuleIds}
-                t={t}
-              />
+              <div className="order-2 min-w-0 2xl:order-none">
+                <MultipliersCard
+                  eventConfig={eventConfig}
+                  highlightedRuleIds={highlightedRuleIds}
+                  t={t}
+                />
+              </div>
             </aside>
           </div>
         </div>

@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import type { EventScoringRule } from "@lootlog/domain/scoring";
 import {
   formatScoringAction,
-  formatScoringCondition,
+  formatScoringConditions,
 } from "../../utils/scoring-rule-labels";
 
 interface ScoringRuleSummaryProps {
@@ -12,9 +12,7 @@ interface ScoringRuleSummaryProps {
 export const ScoringRuleSummary = ({ rule }: ScoringRuleSummaryProps) => {
   const { t } = useTranslation();
 
-  const conditionsText = rule.conditions
-    .map((c) => formatScoringCondition(c, t))
-    .join(` ${t("events.scoring.andLabel")} `);
+  const conditionsText = formatScoringConditions(rule.conditions, t);
 
   const actionText = formatScoringAction(rule.action, t);
 

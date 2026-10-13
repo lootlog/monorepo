@@ -127,7 +127,9 @@ async function renderDetail() {
   );
 
   if (state === "success")
-    await screen.findByRole("heading", { name: detail.kill.heroNpc.npcName });
+    await screen.findByRole("heading", {
+      name: new RegExp(`^${detail.kill.heroNpc.npcName}`),
+    });
 
   return view;
 }
@@ -171,7 +173,9 @@ describe("KillDetail states", () => {
       screen.getByRole("button", { name: "common.routeErrors.actions.retry" }),
     );
     expect(
-      await screen.findByRole("heading", { name: detail.kill.heroNpc.npcName }),
+      await screen.findByRole("heading", {
+        name: new RegExp(`^${detail.kill.heroNpc.npcName}`),
+      }),
     ).toBeTruthy();
   });
 
@@ -193,7 +197,9 @@ describe("KillDetail states", () => {
       await screen.findByText("events.killDetail.mapCoverage.error"),
     ).toBeTruthy();
     expect(
-      screen.getByRole("heading", { name: detail.kill.heroNpc.npcName }),
+      screen.getByRole("heading", {
+        name: new RegExp(`^${detail.kill.heroNpc.npcName}`),
+      }),
     ).toBeTruthy();
 
     timelineFails = false;
@@ -257,22 +263,12 @@ describe("KillDetail states", () => {
 
     await renderDetail();
 
-    expect(screen.getByRole("heading", { name: longNpcName })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: new RegExp(`^${longNpcName}`) }),
+    ).toBeTruthy();
     expect(
       screen.getByLabelText("events.killDetail.manualCloseTitle"),
     ).toBeTruthy();
-  });
-
-  it("omits the early comparison when respawn equals the maximum", async () => {
-    detail = createDetailData({ respawnDurationSeconds: 7_200 });
-
-    await renderDetail();
-
-    expect(
-      screen
-        .getByLabelText(/^events.killDetail.respawnTime:/)
-        .getAttribute("aria-label"),
-    ).not.toContain("events.killDetail.respawnFasterBy");
   });
 });
 
@@ -280,7 +276,6 @@ function createDetailData(
   options: {
     isManualClose?: boolean;
     npcName?: string;
-    respawnDurationSeconds?: number;
   } = {},
 ): KillDetailResponseDto {
   return {
@@ -296,7 +291,6 @@ function createKill(
   options: {
     isManualClose?: boolean;
     npcName?: string;
-    respawnDurationSeconds?: number;
   } = {},
 ) {
   return {
@@ -307,7 +301,7 @@ function createKill(
     killedAt: "2026-08-12T09:18:12.000Z",
     minSpawnTimeAtKill: "2026-08-12T08:00:00.000Z",
     maxSpawnTimeAtKill: "2026-08-12T10:00:00.000Z",
-    respawnDurationSeconds: options.respawnDurationSeconds ?? 4_692,
+    respawnDurationSeconds: 4_692,
     windowDurationSeconds: 7_200,
     resolvedAfterMaxSpawnTimeMs: null,
     isManualClose: options.isManualClose ?? false,

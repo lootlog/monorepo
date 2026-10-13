@@ -51,7 +51,7 @@ export const EVENT_SCORING_ACTION_TYPES = [
 
 export type EventScoringMode = (typeof EVENT_SCORING_MODES)[number];
 
-type EventScoringNumericOperator =
+export type EventScoringNumericOperator =
   (typeof EVENT_SCORING_NUMERIC_OPERATORS)[number];
 
 export type EventScoringNumericFactor =
