@@ -7,7 +7,7 @@ import {
 } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { stableJsonStringify } from "@lootlog/schema/stable-json";
-import { Cause, Clock, Effect, Schema } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import type { guildTable, roleTable } from "#src/database/drizzle/schema";
 import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import {
@@ -349,15 +349,8 @@ export const makeLootsOperations = ({
 
           const pending = pendingDetails.get(key);
 
-          const read = query.fetchLootById(guild, permissions, roles, lootId);
-
-          // A disconnected initiating client must not cancel another client's read.
           if (pending) {
-            const loot = yield* restore(
-              pending.pipe(
-                Effect.catchCauseIf(Cause.hasInterruptsOnly, () => read),
-              ),
-            );
+            const loot = yield* restore(pending);
 
             // Another replica may have archived the record after this flight began.
             if (!loot) return null;
@@ -368,6 +361,8 @@ export const makeLootsOperations = ({
 
             return visible ? loot : null;
           }
+
+          const read = query.fetchLootById(guild, permissions, roles, lootId);
 
           // Bound retained flights; completed results are never cached.
           if (pendingDetails.size >= MAX_PENDING_DETAIL_READS)
