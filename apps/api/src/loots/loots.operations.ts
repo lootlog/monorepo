@@ -368,12 +368,16 @@ export const makeLootsOperations = ({
           if (pendingDetails.size >= MAX_PENDING_DETAIL_READS)
             return yield* restore(read);
 
-          const shared = yield* Effect.cached(read);
+          // The flight outlives a disconnected initiator while others still wait.
+          const shared = yield* Effect.cached(
+            read.pipe(
+              Effect.ensuring(Effect.sync(() => pendingDetails.delete(key))),
+            ),
+          );
+
           pendingDetails.set(key, shared);
 
-          return yield* restore(shared).pipe(
-            Effect.ensuring(Effect.sync(() => pendingDetails.delete(key))),
-          );
+          return yield* restore(shared);
         }),
       ),
 
