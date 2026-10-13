@@ -16,3 +16,34 @@
     scroll-padding-top: 3.5rem;
   }
 }
+
+/*
+ * From `md` up, a page scroller marked `data-under-top-bar` reaches up beneath
+ * the translucent app bar, so its content blurs through the bar as it scrolls.
+ * The content frame slides up by the bar's height, the scroller insets its
+ * content and scrollbar by the same amount, and panels beside it marked
+ * `data-top-bar-inset` keep their content below the bar. A page that renders
+ * no marked scroller, such as an error state, stays below the bar.
+ */
+
+@media (width >= 48rem) {
+  .app-content-frame > main:has([data-under-top-bar]) {
+    margin-top: -3.5rem;
+  }
+
+  [data-under-top-bar] > [data-slot="scroll-area-viewport"] {
+    padding-top: 3.5rem;
+    scroll-padding-top: 3.5rem;
+  }
+
+  /* Base UI pins the track with inline offsets. */
+  [data-under-top-bar]
+    > [data-slot="scroll-area-scrollbar"][data-orientation="vertical"] {
+    top: 3.5rem !important;
+    height: auto;
+  }
+
+  .app-content-frame > main:has([data-under-top-bar]) [data-top-bar-inset] {
+    padding-top: 3.5rem;
+  }
+}

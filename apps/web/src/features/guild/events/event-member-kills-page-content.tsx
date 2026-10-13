@@ -278,7 +278,11 @@ export const EventMemberKillsPageContent = ({
         eventId={eventId}
       />
 
-      <ScrollArea ref={setScrollElement} className="min-h-0 flex-1">
+      <ScrollArea
+        data-under-top-bar
+        ref={setScrollElement}
+        className="min-h-0 flex-1"
+      >
         <div className="flex flex-col gap-3 px-3 py-3">
           <MemberSummaryStrip
             member={member}

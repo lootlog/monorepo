@@ -11,7 +11,7 @@ export const Dashboard = () => {
   const { t } = useTranslation();
 
   return (
-    <ScrollArea className="h-full min-h-0">
+    <ScrollArea data-under-top-bar className="h-full min-h-0">
       <div className="@container/dashboard flex flex-col gap-3 p-3">
         <h1 className="sr-only">{t("statistics.dashboard")}</h1>
         <DashboardOnboarding />

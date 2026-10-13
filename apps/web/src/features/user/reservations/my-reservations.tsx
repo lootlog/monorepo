@@ -42,7 +42,7 @@ export function MyReservations() {
     );
 
   return (
-    <ScrollArea className="h-full min-h-0">
+    <ScrollArea data-under-top-bar className="h-full min-h-0">
       <div className="flex w-full min-w-0 flex-col gap-3 p-3">
         <PageHeader
           icon={CalendarDays}

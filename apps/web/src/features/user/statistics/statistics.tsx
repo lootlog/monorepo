@@ -46,7 +46,7 @@ export function Statistics() {
   const data = analytics.data;
 
   return (
-    <ScrollArea className="h-full min-h-0">
+    <ScrollArea data-under-top-bar className="h-full min-h-0">
       <div className="min-w-0 space-y-3 p-3">
         <PageHeader
           className="@container/page-heading [&>header>div:last-child]:basis-full @2xl/page-heading:[&>header>div:last-child]:basis-auto"
