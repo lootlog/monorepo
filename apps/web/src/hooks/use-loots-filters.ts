@@ -1,7 +1,7 @@
-import { parseAsArrayOf, parseAsString } from "nuqs";
+import { createSerializer, parseAsArrayOf, parseAsString } from "nuqs";
 import { createQueryFilters } from "./create-query-filters";
 
-export const useLootsFilters = createQueryFilters({
+const lootsFiltersParsers = {
   search: parseAsString.withDefault(""),
   npcTypes: parseAsArrayOf(parseAsString).withDefault([]),
   npcs: parseAsArrayOf(parseAsString).withDefault([]),
@@ -16,4 +16,9 @@ export const useLootsFilters = createQueryFilters({
   players: parseAsArrayOf(parseAsString).withDefault([]),
   playerLevelMin: parseAsString.withDefault(""),
   playerLevelMax: parseAsString.withDefault(""),
-});
+};
+
+export const useLootsFilters = createQueryFilters(lootsFiltersParsers);
+
+/** Builds a loot list URL with the given filters, for links from other pages. */
+export const serializeLootsFilters = createSerializer(lootsFiltersParsers);

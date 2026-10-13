@@ -24,3 +24,11 @@ export const anyTrue = (...values: boolean[]) => values.some(Boolean);
 
 export const renderIf = (condition: boolean, content: ReactNode) =>
   condition ? content : null;
+
+export type GuildSearchScope = "all" | "pages" | "npcs" | "items" | "players";
+
+export const isInScope = (scope: GuildSearchScope, group: GuildSearchScope) =>
+  scope === "all" || scope === group;
+
+/** One result row in the search palette, whatever kind of hit it holds. */
+export const SEARCH_ROW_CLASS_NAME = "group h-12 gap-3 rounded-lg px-2.5";

@@ -15,6 +15,8 @@
     "events": "Eventy",
     "stats": "Statystyki",
     "activityLogs": "Logi aktywności",
+    "search": "Szukaj",
+    "searchPlaceholder": "Szukaj…",
     "groups": {
       "account": "Konto",
       "management": "Zarządzanie"

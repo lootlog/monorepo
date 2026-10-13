@@ -103,9 +103,9 @@
     "filtersButton": "Filtry"
   },
   "searchCommand": {
-    "dialogTitle": "Wyszukaj łup",
-    "dialogDescription": "Wyszukaj przedmiot, potwora lub gracza albo wklej identyfikator HID.",
-    "placeholder": "Szukaj lub wklej HID przedmiotu...",
+    "dialogTitle": "Szukaj w Lootlogu",
+    "dialogDescription": "Przejdź do strony, wyszukaj przedmiot, potwora lub gracza albo wklej identyfikator HID.",
+    "placeholder": "Szukaj stron, przedmiotów, potworów, graczy...",
     "loading": "Wyszukiwanie...",
     "idleTitle": "Znajdź łup szybciej",
     "startTyping": "Wpisz nazwę przedmiotu, potwora lub gracza.",
@@ -120,6 +120,7 @@
     "hidErrorTitle": "Nie udało się sprawdzić HID",
     "hidErrorDescription": "Połączenie z wyszukiwarką nie powiodło się. Spróbuj ponownie za chwilę.",
     "itemById": "Przedmiot z HID",
+    "pages": "Strony",
     "level": "Poziom {{level}}",
     "npcs": "Potwory",
     "items": "Przedmioty",
@@ -130,7 +131,14 @@
     "directSearchHint": "Pomija wyszukiwarkę: dopasowuje nazwy przedmiotów, potworów i graczy zapisane w łupach.",
     "directSearchActive": "Szukanie w łupach: „{{term}}”",
     "directSearchClear": "Wyczyść",
-    "directSearchActiveHint": "Dopasowanie bezpośrednio w łupach, z pominięciem wyszukiwarki."
+    "directSearchActiveHint": "Dopasowanie bezpośrednio w łupach, z pominięciem wyszukiwarki.",
+    "playersOnWorld": "Gracze · {{world}}",
+    "directSearchGroup": "Nie ma tego, czego szukasz?",
+    "scopeLabel": "Zakres wyników",
+    "scopeAll": "Wszystko",
+    "footerNavigate": "wybierz",
+    "footerOpen": "otwórz",
+    "worldContext": "Gracze i łupy ze świata {{world}}"
   },
   "list": {
     "selectWorldTitle": "Wybierz świat",
