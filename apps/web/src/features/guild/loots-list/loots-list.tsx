@@ -96,7 +96,7 @@ export const LootsListPage: React.FC = () => {
 
       <div className="w-full flex flex-col h-full overflow-hidden">
         <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden pt-3">
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             <LootsList />
           </div>
 

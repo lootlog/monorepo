@@ -62,7 +62,7 @@ export const LootsList = () => {
 
   if (isFailed) {
     return (
-      <div className="px-3 pb-3">
+      <div className="p-3">
         <EmptyState
           framed
           icon={CircleAlert}
@@ -85,7 +85,7 @@ export const LootsList = () => {
 
   if (isEmpty) {
     return (
-      <div className="px-3 pb-3">
+      <div className="p-3">
         {hasActiveFilters ? (
           <EmptyState
             framed
