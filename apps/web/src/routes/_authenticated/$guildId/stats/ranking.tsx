@@ -4,5 +4,5 @@ import { StatsTablePageSkeleton } from "@/features/guild/stats/stats-table-page-
 
 export const Route = createFileRoute("/_authenticated/$guildId/stats/ranking")({
   component: StatsRanking,
-  pendingComponent: StatsTablePageSkeleton,
+  pendingComponent: () => <StatsTablePageSkeleton rowContent="text" />,
 });

@@ -1,5 +1,13 @@
+import type { ComponentProps } from "react";
 import { StatsTablePageSkeleton } from "./stats-table-page-skeleton";
 
-export const StatsDetailPageSkeleton = () => (
-  <StatsTablePageSkeleton withHeader />
+type StatsDetailPageSkeletonProps = Pick<
+  ComponentProps<typeof StatsTablePageSkeleton>,
+  "rowContent"
+>;
+
+export const StatsDetailPageSkeleton = ({
+  rowContent,
+}: StatsDetailPageSkeletonProps) => (
+  <StatsTablePageSkeleton withHeader rowContent={rowContent} />
 );

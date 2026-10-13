@@ -108,7 +108,7 @@ export function PlayerVsPlayerFullPage() {
 
   const renderResults = () => {
     if (isLoading) {
-      return <TableRowsSkeleton />;
+      return <TableRowsSkeleton withHeader rowContent="text" />;
     }
 
     if (isError) {

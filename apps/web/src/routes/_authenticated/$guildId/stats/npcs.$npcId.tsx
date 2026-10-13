@@ -54,5 +54,5 @@ export const Route = createFileRoute(
       }
     }),
   component: NpcKillersPage,
-  pendingComponent: StatsDetailPageSkeleton,
+  pendingComponent: () => <StatsDetailPageSkeleton rowContent="text" />,
 });

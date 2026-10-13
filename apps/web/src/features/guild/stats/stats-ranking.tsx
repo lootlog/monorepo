@@ -126,6 +126,7 @@ export const StatsRanking = () => {
 
       <StatsTableCard
         isLoading={isLoading}
+        rowContent="text"
         emptyMessage={
           paginatedData.length === 0
             ? t(
