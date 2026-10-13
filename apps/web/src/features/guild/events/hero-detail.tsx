@@ -1,3 +1,4 @@
+import { OrganizationPresenceStatus } from "@/components/common/organization-presence-status";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -84,6 +85,7 @@ export const HeroDetail = () => {
     handleManageClick,
     currentMember,
     presenceData,
+    presenceGuildId,
     assignmentAllowed,
     assignmentEnabledAt,
     assignmentDisabledMessage,
@@ -211,6 +213,7 @@ export const HeroDetail = () => {
                     )
                   }
                 />
+                <OrganizationPresenceStatus guildId={presenceGuildId} />
                 <EventMapGrid
                   locations={hero.locations}
                   maps={hero.maps}
