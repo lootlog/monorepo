@@ -401,6 +401,27 @@ test("role visibility restricts totals and metadata before every SQL ranking", a
   );
 });
 
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+/** The ISO weekday and hour of an instant in Warsaw, as the SQL groups it. */
+const warsawSlot = (date: Date) => {
+  const parts = new Map(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "Europe/Warsaw",
+      weekday: "short",
+      hour: "numeric",
+      hourCycle: "h23",
+    })
+      .formatToParts(date)
+      .map(({ type, value }) => [type, value]),
+  );
+
+  return {
+    weekday: WEEKDAYS.indexOf(parts.get("weekday") ?? "") + 1,
+    hour: Number(parts.get("hour")),
+  };
+};
+
 test("the kill timeline and weekly hours follow Warsaw days, fill quiet days, count untimed history and respect role visibility", async () => {
   await runtime.runPromise(
     Effect.gen(function* () {
@@ -463,12 +484,18 @@ test("the kill timeline and weekly hours follow Warsaw days, fill quiet days, co
         { date: "2026-07-17", kills: 0 },
       ]);
       expect(all.timeline.points.at(-1)?.kills).toBe(4);
+      // The 4 kills of the current hour land in its own Warsaw slot, which can
+      // be one of the seeded slots when the suite runs at that hour.
+      const now = warsawSlot(currentHour);
+
+      const slot = (weekday: number, hour: number, kills: number) => ({
+        weekday,
+        hour,
+        kills: now.weekday === weekday && now.hour === hour ? kills + 4 : kills,
+      });
+
       expect(all.hourlyWeekday).toEqual(
-        expect.arrayContaining([
-          { weekday: 2, hour: 23, kills: 2 },
-          { weekday: 3, hour: 0, kills: 3 },
-          { weekday: 4, hour: 0, kills: 50 },
-        ]),
+        expect.arrayContaining([slot(2, 23, 2), slot(3, 0, 3), slot(4, 0, 50)]),
       );
 
       const day = yield* service.getGuildKillStats(
