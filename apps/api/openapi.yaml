@@ -29374,6 +29374,9 @@ components:
           type: string
         publicStatsCardEnabled:
           type: boolean
+        banner:
+          nullable: true
+          type: string
         reservationMaxDurationMinutes:
           type: number
         reservationMinDurationMinutes:

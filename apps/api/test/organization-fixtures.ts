@@ -11,6 +11,7 @@ export const createGuildFixture = (overrides: Partial<Guild> = {}): Guild => ({
   id: "guild-1",
   name: "Guild",
   icon: null,
+  banner: null,
   ownerId: "owner-1",
   vanityUrl: null,
   notificationRuleLimit: 20,

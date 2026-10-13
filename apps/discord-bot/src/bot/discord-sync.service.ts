@@ -247,6 +247,8 @@ const guildSnapshot = (guild: Guild): GuildUpdated => ({
   guildId: guild.id,
   name: guild.name,
   icon: guild.iconURL(),
+  // The web sidebar shows the banner still and at most 240px wide.
+  banner: guild.bannerURL({ size: 512, forceStatic: true }),
   ownerId: guild.ownerId,
 });
 

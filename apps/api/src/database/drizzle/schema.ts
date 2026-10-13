@@ -246,6 +246,7 @@ export const guildTable = pgTable(
     id: text("id").notNull().primaryKey(),
     name: text("name").notNull(),
     icon: text("icon"),
+    banner: text("banner"),
     ownerId: text("ownerId").notNull(),
     vanityUrl: text("vanityUrl"),
     notificationRuleLimit: integer("notificationRuleLimit")
