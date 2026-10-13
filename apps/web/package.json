@@ -65,7 +65,7 @@
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
     "@tailwindcss/postcss": "catalog:",
-    "@tanstack/router-plugin": "^1.168.42",
+    "@tanstack/router-plugin": "^1.168.45",
     "@testing-library/react": "^16.3.3",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
