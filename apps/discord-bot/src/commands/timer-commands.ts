@@ -1,4 +1,5 @@
 import { escapeMarkdown } from "discord.js";
+import { npcIconUrl } from "@lootlog/domain/npc-icon";
 import { Clock, Effect, Schema } from "effect";
 import { BotConfig } from "#src/config/bot-config";
 import { guildCommand, visibilityOption } from "./command-builders.js";
@@ -9,6 +10,7 @@ import {
   discordTime,
   lootlogEmbed,
   MAX_AUTOCOMPLETE_CHOICES,
+  npcTypeColor,
   openInLootlog,
   type SlashCommand,
 } from "./slash-command.js";
@@ -36,6 +38,7 @@ const Timer = Schema.Struct({
     lvl: Schema.Number,
     type: Schema.String,
     location: Schema.String,
+    icon: Schema.NullOr(Schema.String),
   }),
   member: Schema.optionalKey(Schema.Struct({ name: Schema.String })),
   deletedAt: Schema.optionalKey(Schema.NullOr(Schema.String)),
@@ -146,7 +149,10 @@ export const timersCommand: SlashCommand = {
 
       return {
         embeds: [
-          lootlogEmbed(title).setDescription(
+          lootlogEmbed(
+            title,
+            type === null ? undefined : npcTypeColor(type),
+          ).setDescription(
             lines.length === 0 ? COMMAND_TEXT.timers.empty : lines.join("\n"),
           ),
         ],
@@ -196,7 +202,10 @@ export const timerCommand: SlashCommand = {
 
       if (!timer) return { content: COMMAND_TEXT.timer.notFound };
 
-      const embed = lootlogEmbed(timerName(timer))
+      const embed = lootlogEmbed(
+        `⏳ ${timerName(timer)}`,
+        npcTypeColor(timer.npc.type),
+      )
         .setDescription(npcTypeLabel(timer.npc.type))
         .addFields(
           {
@@ -221,6 +230,8 @@ export const timerCommand: SlashCommand = {
           value: escapeMarkdown(timer.member.name),
           inline: true,
         });
+
+      if (timer.npc.icon) embed.setThumbnail(npcIconUrl(timer.npc.icon));
 
       if (timer.wasReset) embed.setFooter({ text: COMMAND_TEXT.timer.reset });
 
