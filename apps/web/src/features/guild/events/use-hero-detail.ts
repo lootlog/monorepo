@@ -700,6 +700,7 @@ export const useHeroDetail = () => {
     handleManageClick,
     currentMember,
     presenceData,
+    presenceGuildId: guild?.id,
     assignmentAllowed,
     assignmentEnabledAt,
     assignmentDisabledMessage,

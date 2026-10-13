@@ -21,6 +21,7 @@ import {
   REALTIME_SUBPROTOCOL,
   REALTIME_JSON_SUBPROTOCOL,
   RealtimeClient,
+  RealtimeRequestError,
   type BasicPresence,
   type PresenceWithLocation,
   type ServerEvent,
@@ -71,7 +72,8 @@ export type OrganizationPresenceResponse =
       players: Record<string, PlayerPresence[]>;
       sessions: Record<string, { sessionId: string }[]>;
     }
-  | ForbiddenPresence;
+  | ForbiddenPresence
+  | { status: "unavailable" };
 
 const groupPresence = <TValue>(
   presences: ReadonlyArray<BasicPresence | PresenceWithLocation>,
@@ -208,11 +210,18 @@ export class GatewayClient {
           sessionId: presence.sessionId,
         })),
       };
-    } catch {
-      return {
-        status: "forbidden",
-        code: "ONLINE_PLAYERS_ACCESS_DENIED",
-      };
+    } catch (error) {
+      // The deployed gateway uses COMMAND_REJECTED for all command failures.
+      if (
+        error instanceof RealtimeRequestError &&
+        error.code === "COMMAND_REJECTED" &&
+        !error.retryable &&
+        error.message === "organization access denied"
+      ) {
+        return { status: "forbidden", code: "ONLINE_PLAYERS_ACCESS_DENIED" };
+      }
+
+      return { status: "unavailable" };
     }
   }
 
