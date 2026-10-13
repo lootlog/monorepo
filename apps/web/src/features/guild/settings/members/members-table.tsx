@@ -1,5 +1,6 @@
 import { MemberPresenceBadges } from "./member-presence-badges";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
+import { VirtualTableSpacerRow } from "@/components/ui/virtual-table-spacer-row";
 import type { MemberActivityStatsByDiscordId } from "@/features/guild/settings/members/member-activity-stats.utils";
 import type { isMemberOnlineInGame } from "@/features/guild/settings/members/member-game-presence.utils";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
@@ -18,12 +19,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from "@lootlog/ui/components/table";
+import { Table, TableBody } from "@lootlog/ui/components/table";
 import { useNavigate } from "@tanstack/react-router";
 import { useTable } from "@tanstack/react-table";
 import { useRef, useState } from "react";
@@ -116,7 +112,12 @@ export const MembersTable = ({
     count: members.length,
     scrollElement,
     getItemKey: (index) => members[index]?.id ?? `member-${index}`,
-    estimateSize: () => rowEstimateSize,
+    // Under border-collapse the last table row, which has no bottom border,
+    // is half a border shorter than the others.
+    estimateSize: (index) =>
+      !isMobile && index === members.length - 1
+        ? rowEstimateSize - 0.5
+        : rowEstimateSize,
     overscan: 8,
   });
 
@@ -227,14 +228,7 @@ export const MembersTable = ({
           }
         />
         <TableBody>
-          {topPadding > 0 && (
-            <TableRow className="border-b-0 hover:bg-transparent">
-              <TableCell
-                colSpan={columns.length}
-                style={{ height: topPadding }}
-              />
-            </TableRow>
-          )}
+          <VirtualTableSpacerRow colSpan={columns.length} height={topPadding} />
           {virtualRows.map((virtualRow) => {
             const row = rows[virtualRow.index];
 
@@ -249,14 +243,10 @@ export const MembersTable = ({
               />
             );
           })}
-          {bottomPadding > 0 && (
-            <TableRow className="border-b-0 hover:bg-transparent">
-              <TableCell
-                colSpan={columns.length}
-                style={{ height: bottomPadding }}
-              />
-            </TableRow>
-          )}
+          <VirtualTableSpacerRow
+            colSpan={columns.length}
+            height={bottomPadding}
+          />
         </TableBody>
       </Table>
       {canManageMembers && deactivationTarget && (
