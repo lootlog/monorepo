@@ -1,6 +1,13 @@
 /** Shared input and output schemas for the events feature. */
 import * as Schema from "effect/Schema";
 import {
+  EVENT_SCORING_ACTION_TYPES,
+  EVENT_SCORING_BOOLEAN_FACTORS,
+  EVENT_SCORING_MODES,
+  EVENT_SCORING_NUMERIC_FACTORS,
+  EVENT_SCORING_NUMERIC_OPERATORS,
+} from "@lootlog/domain/scoring";
+import {
   SafeInteger,
   JsonValue,
   NonNegativeSafeInteger,
@@ -52,23 +59,14 @@ const EventHeroSummary = Schema.Struct({
 
 const NumericScoringCondition = Schema.Struct({
   type: Schema.Literal("NUMERIC"),
-  factor: Schema.Literals([
-    "trackingDurationPercentage",
-    "trackingDurationSeconds",
-    "assignedMembersCount",
-    "minutesSinceLeaveToKill",
-    "timeOnMapSeconds",
-    "afkPercentage",
-    "respawnDurationSeconds",
-    "respawnProgressPercentage",
-  ]),
-  operator: Schema.Literals([">", ">=", "<", "<=", "==", "!="]),
+  factor: Schema.Literals(EVENT_SCORING_NUMERIC_FACTORS),
+  operator: Schema.Literals(EVENT_SCORING_NUMERIC_OPERATORS),
   value: FiniteNumber,
 });
 
 const BooleanScoringCondition = Schema.Struct({
   type: Schema.Literal("BOOLEAN"),
-  factor: Schema.Literals(["eligible", "memberPresentAtKill", "wasPresent"]),
+  factor: Schema.Literals(EVENT_SCORING_BOOLEAN_FACTORS),
   value: Schema.Boolean,
 });
 
@@ -82,12 +80,12 @@ const RespawnWindowCoverageCondition = Schema.Struct({
   type: Schema.Literal("RESPAWN_WINDOW_COVERAGE"),
   from: ScoringClockTime,
   to: ScoringClockTime,
-  operator: Schema.Literals([">", ">=", "<", "<=", "==", "!="]),
+  operator: Schema.Literals(EVENT_SCORING_NUMERIC_OPERATORS),
   value: FiniteNumber,
 });
 
 const ScoringAction = Schema.Struct({
-  type: Schema.Literals(["SET_BASE", "ADD_BONUS", "ZERO_BASE"]),
+  type: Schema.Literals(EVENT_SCORING_ACTION_TYPES),
   points: Schema.optionalKey(
     FiniteNumber.check(
       Schema.isGreaterThanOrEqualTo(0).annotate({
@@ -287,7 +285,7 @@ const eventConfigurationInputFields = {
     ),
   ),
   scoringRules: Schema.optionalKey(EventScoringRules),
-  scoringMode: Schema.optionalKey(Schema.Literals(["SIMPLE", "ADVANCED"])),
+  scoringMode: Schema.optionalKey(Schema.Literals(EVENT_SCORING_MODES)),
 };
 
 export type CreateEventRequest = typeof CreateEventRequest.Type;
@@ -336,7 +334,7 @@ const eventResponseFields = {
   rulebookMarkdown: Schema.optionalKey(
     Schema.Union([Schema.String, Schema.Null]),
   ),
-  scoringMode: Schema.Literals(["SIMPLE", "ADVANCED"]),
+  scoringMode: Schema.Literals(EVENT_SCORING_MODES),
 };
 
 export type EventMutationResponse = typeof EventMutationResponse.Type;
@@ -785,7 +783,7 @@ export const EventKillDetailResponse = Schema.Struct({
     ),
   }),
   eventConfig: Schema.Struct({
-    scoringMode: Schema.Literals(["SIMPLE", "ADVANCED"]),
+    scoringMode: Schema.Literals(EVENT_SCORING_MODES),
     scoringRules: KillScoringState,
   }),
 }).annotate({ identifier: "KillDetailResponseDto" });
