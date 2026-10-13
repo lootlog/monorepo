@@ -39,7 +39,7 @@
     "test:integration": "bun --conditions=development test src/database/battle-read-budget.integration.test.ts src/battles/deletion/battle-deletion.integration.test.ts src/battles/submission/battle-creation-redis.integration.test.ts src/database/battlelog-timescale-cutover.integration.test.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1146.0",
+    "@aws-sdk/client-s3": "^3.1150.0",
     "@effect/platform-bun": "catalog:",
     "@effect/sql-pg": "catalog:",
     "@lootlog/battle-processor": "workspace:*",
@@ -47,22 +47,22 @@
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
-    "bullmq": "^6.3.11",
+    "bullmq": "^6.3.14",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
     "es-toolkit": "catalog:",
     "pg": "^8.23.1"
   },
   "devDependencies": {
-    "@effect/sql-pglite": "4.0.0",
-    "@electric-sql/pglite": "^0.5.8",
+    "@effect/sql-pglite": "4.0.4",
+    "@electric-sql/pglite": "^0.5.9",
     "@lootlog/typescript-config": "workspace:*",
-    "@testcontainers/postgresql": "^12.2.0",
+    "@testcontainers/postgresql": "^12.2.1",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "@types/pg": "^8.23.1",
     "drizzle-kit": "catalog:",
-    "testcontainers": "^12.2.0",
+    "testcontainers": "^12.2.1",
     "typescript": "catalog:",
     "yaml": "catalog:"
   }

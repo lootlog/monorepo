@@ -448,7 +448,10 @@ export const UserKillActivityResponseDtoOutputMetaCoverage = {
 export type UserKillActivityResponseDtoOutputMeta = {
   timezone: UserKillActivityResponseDtoOutputMetaTimezone;
   generatedAt: string;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   days: number;
   /** @nullable */
   world: string | null;
@@ -457,11 +460,20 @@ export type UserKillActivityResponseDtoOutputMeta = {
   /** @nullable */
   firstBucketAt: string | null;
   coverage: UserKillActivityResponseDtoOutputMetaCoverage;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   allTimeKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   timedKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   untimedKills: number;
   includesCurrentHour: true;
 };
@@ -498,7 +510,10 @@ export const UserKillAnalyticsResponseDtoOutputMetaCoverage = {
 export type UserKillAnalyticsResponseDtoOutputMeta = {
   timezone: UserKillAnalyticsResponseDtoOutputMetaTimezone;
   generatedAt: string;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   days: number;
   /** @nullable */
   world: string | null;
@@ -507,27 +522,51 @@ export type UserKillAnalyticsResponseDtoOutputMeta = {
   /** @nullable */
   firstBucketAt: string | null;
   coverage: UserKillAnalyticsResponseDtoOutputMetaCoverage;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   allTimeKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   timedKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   untimedKills: number;
   includesCurrentHour: true;
 };
 
 export type UserKillAnalyticsResponseDtoOutputOverview = {
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   totalKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   activeDays: number;
   /** @nullable */
   averagePerDay: number | null;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   currentStreak: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   longestStreak: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   uniqueNpcs: number;
 };
 
@@ -542,15 +581,24 @@ export type UserKillAnalyticsResponseDtoOutputDailyItem = {
 export type UserKillAnalyticsResponseDtoOutputWeeklyItem = {
   startDate: string;
   endDate: string;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   kills: number;
   partial: boolean;
 };
 
 export type UserKillAnalyticsResponseDtoOutputComparison = {
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   currentKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   previousKills: number;
   deltaKills: number;
   /** @nullable */
@@ -566,7 +614,10 @@ export type UserKillAnalyticsResponseDtoOutputComparison = {
 export type UserKillAnalyticsResponseDtoOutputRecordsBestDay = {
   startDate: string;
   endDate: string;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   kills: number;
   partial: boolean;
 } | null;
@@ -577,7 +628,10 @@ export type UserKillAnalyticsResponseDtoOutputRecordsBestDay = {
 export type UserKillAnalyticsResponseDtoOutputRecordsBestWeek = {
   startDate: string;
   endDate: string;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   kills: number;
   partial: boolean;
 } | null;
@@ -588,7 +642,10 @@ export type UserKillAnalyticsResponseDtoOutputRecordsBestWeek = {
 export type UserKillAnalyticsResponseDtoOutputRecordsBestMonth = {
   startDate: string;
   endDate: string;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   kills: number;
   partial: boolean;
 } | null;
@@ -603,19 +660,34 @@ export type UserKillAnalyticsResponseDtoOutputRecords = {
 };
 
 export type UserKillAnalyticsResponseDtoOutputHourlyWeekdayItem = {
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   weekday: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   hour: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   kills: number;
 };
 
 export type UserKillAnalyticsResponseDtoOutputTypesItem = {
   npcType: string;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   totalKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   uniqueNpcs: number;
   share: number;
 };
@@ -639,11 +711,20 @@ export type UserKillAnalyticsResponseDtoOutputNpcsItem = {
   npcProf: string | null;
   /** @nullable */
   npcIcon: string | null;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   totalKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   previousKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   comparisonKills: number;
   deltaKills: number;
   /** @nullable */
@@ -672,11 +753,20 @@ export type UserKillAnalyticsResponseDtoOutputNpcGainsItem = {
   npcProf: string | null;
   /** @nullable */
   npcIcon: string | null;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   totalKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   previousKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   comparisonKills: number;
   deltaKills: number;
   /** @nullable */
@@ -694,11 +784,20 @@ export type UserKillAnalyticsResponseDtoOutputWorldsItemDailyItem = {
 
 export type UserKillAnalyticsResponseDtoOutputWorldsItem = {
   world: string;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   totalKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   comparisonKills: number;
-  /** @minimum 0 */
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
   previousKills: number;
   deltaKills: number;
   /** @nullable */
@@ -14076,7 +14175,7 @@ export const prefetchUsersControllerGetUserFeedQuery = async <TData = Awaited<Re
 
   const queryOptions = getUsersControllerGetUserFeedQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -14295,7 +14394,7 @@ export const prefetchUsersControllerGetUserPreferencesQuery = async <TData = Awa
 
   const queryOptions = getUsersControllerGetUserPreferencesQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -14528,7 +14627,7 @@ export const prefetchUsersControllerGetCurrentUserGuildsQuery = async <TData = A
 
   const queryOptions = getUsersControllerGetCurrentUserGuildsQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -14747,7 +14846,7 @@ export const prefetchUsersControllerGetCurrentUserAccessibleGuildsQuery = async 
 
   const queryOptions = getUsersControllerGetCurrentUserAccessibleGuildsQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -14891,7 +14990,7 @@ export const prefetchUsersControllerGetUserGameAccountPreferencesQuery = async <
 
   const queryOptions = getUsersControllerGetUserGameAccountPreferencesQueryOptions({ accountId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -15125,7 +15224,7 @@ export const prefetchMembersControllerGetMeQuery = async <TData = Awaited<Return
 
   const queryOptions = getMembersControllerGetMeQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -15494,7 +15593,7 @@ export const prefetchMembersControllerGetMemberLootlogConfigSummaryQuery = async
 
   const queryOptions = getMembersControllerGetMemberLootlogConfigSummaryQueryOptions({ guildId, discordId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -15654,7 +15753,7 @@ export const prefetchMembersControllerGetGuildMembersQuery = async <TData = Awai
 
   const queryOptions = getMembersControllerGetGuildMembersQueryOptions({ guildId },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -15817,7 +15916,7 @@ export const prefetchMembersControllerGetGuildMemberReferencesQuery = async <TDa
 
   const queryOptions = getMembersControllerGetGuildMemberReferencesQueryOptions({ guildId },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -15964,7 +16063,7 @@ export const prefetchMembersControllerGetGuildMembersSummaryQuery = async <TData
 
   const queryOptions = getMembersControllerGetGuildMembersSummaryQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -16183,7 +16282,7 @@ export const prefetchMembersControllerGetLatestRefreshJobQuery = async <TData = 
 
   const queryOptions = getMembersControllerGetLatestRefreshJobQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -16327,7 +16426,7 @@ export const prefetchMembersControllerGetRefreshJobStatusQuery = async <TData = 
 
   const queryOptions = getMembersControllerGetRefreshJobStatusQueryOptions({ guildId, jobId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -16481,7 +16580,7 @@ export const prefetchGuildsControllerGetUserGuildsQuery = async <TData = Awaited
 
   const queryOptions = getGuildsControllerGetUserGuildsQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -16631,7 +16730,7 @@ export const prefetchGuildsControllerGetUserGuildsWithPermissionsQuery = async <
 
   const queryOptions = getGuildsControllerGetUserGuildsWithPermissionsQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -16778,7 +16877,7 @@ export const prefetchGuildsControllerGetManageableUserGuildsQuery = async <TData
 
   const queryOptions = getGuildsControllerGetManageableUserGuildsQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -16922,7 +17021,7 @@ export const prefetchGuildsControllerGetGuildByIdQuery = async <TData = Awaited<
 
   const queryOptions = getGuildsControllerGetGuildByIdQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -17056,7 +17155,7 @@ export const prefetchGuildsControllerGetGuildConfigQuery = async <TData = Awaite
 
   const queryOptions = getGuildsControllerGetGuildConfigQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -17277,7 +17376,7 @@ export const prefetchGuildsControllerGetWorldsByGuildIdQuery = async <TData = Aw
 
   const queryOptions = getGuildsControllerGetWorldsByGuildIdQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -17421,7 +17520,7 @@ export const prefetchGuildsControllerGetGuildPermissionsQuery = async <TData = A
 
   const queryOptions = getGuildsControllerGetGuildPermissionsQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -17565,7 +17664,7 @@ export const prefetchGuildsControllerGetGuildDiscordSyncStatusQuery = async <TDa
 
   const queryOptions = getGuildsControllerGetGuildDiscordSyncStatusQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -17791,7 +17890,7 @@ export const prefetchGuildsInternalControllerGetUserPermissionsQuery = async <TD
 
   const queryOptions = getGuildsInternalControllerGetUserPermissionsQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -17935,7 +18034,7 @@ export const prefetchGuildsInternalControllerGetGuildByIdOrVanityUrlQuery = asyn
 
   const queryOptions = getGuildsInternalControllerGetGuildByIdOrVanityUrlQueryOptions({ idOrVanityUrl },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -18079,7 +18178,7 @@ export const prefetchGuildsInternalControllerGetMemberIdentityQuery = async <TDa
 
   const queryOptions = getGuildsInternalControllerGetMemberIdentityQueryOptions({ guildId, discordId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -18223,7 +18322,7 @@ export const prefetchRolesControllerGetGuildRolesQuery = async <TData = Awaited<
 
   const queryOptions = getRolesControllerGetGuildRolesQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -18464,7 +18563,7 @@ export const prefetchTimersControllerGetAllTimersQuery = async <TData = Awaited<
 
   const queryOptions = getTimersControllerGetAllTimersQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -18615,7 +18714,7 @@ export const prefetchTimersControllerGetRecentTimerHistoryQuery = async <TData =
 
   const queryOptions = getTimersControllerGetRecentTimerHistoryQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -18775,7 +18874,7 @@ export const prefetchTimersControllerGetTimersQuery = async <TData = Awaited<Ret
 
   const queryOptions = getTimersControllerGetTimersQueryOptions({ guildId },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -18946,7 +19045,7 @@ export const prefetchTimersControllerSearchNpcsWithTimerDataQuery = async <TData
 
   const queryOptions = getTimersControllerSearchNpcsWithTimerDataQueryOptions({ guildId },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -19372,7 +19471,7 @@ export const prefetchTimersControllerGetTimerHistoryQuery = async <TData = Await
 
   const queryOptions = getTimersControllerGetTimerHistoryQueryOptions({ guildId, timerIdentifier },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -19684,7 +19783,7 @@ export const prefetchUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQ
 
   const queryOptions = getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryOptions({ accountId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -20007,7 +20106,7 @@ export const prefetchTimerSettingsControllerGetGlobalSettingsQuery = async <TDat
 
   const queryOptions = getTimerSettingsControllerGetGlobalSettingsQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -20240,7 +20339,7 @@ export const prefetchTimerSettingsControllerGetGuildSettingsQuery = async <TData
 
   const queryOptions = getTimerSettingsControllerGetGuildSettingsQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -20569,7 +20668,7 @@ export const prefetchSettingsDocumentsControllerGetPreferencesQuery = async <TDa
 
   const queryOptions = getSettingsDocumentsControllerGetPreferencesQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -20807,7 +20906,7 @@ export const prefetchSettingsDocumentsControllerGetGuildPreferencesQuery = async
 
   const queryOptions = getSettingsDocumentsControllerGetGuildPreferencesQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -20975,7 +21074,7 @@ export const prefetchLootsControllerFetchLootsByGuildIdQuery = async <TData = Aw
 
   const queryOptions = getLootsControllerFetchLootsByGuildIdQueryOptions({ guildId },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -21138,7 +21237,7 @@ export const prefetchLootsControllerGetLootStatsQuery = async <TData = Awaited<R
 
   const queryOptions = getLootsControllerGetLootStatsQueryOptions({ guildId },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -21301,7 +21400,7 @@ export const prefetchLootsControllerResolveLootItemByHidQuery = async <TData = A
 
   const queryOptions = getLootsControllerResolveLootItemByHidQueryOptions({ guildId },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -21448,7 +21547,7 @@ export const prefetchLootsControllerFetchLootByIdQuery = async <TData = Awaited<
 
   const queryOptions = getLootsControllerFetchLootByIdQueryOptions({ guildId, lootId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -21756,7 +21855,7 @@ export const prefetchLootsControllerGetCommentsQuery = async <TData = Awaited<Re
 
   const queryOptions = getLootsControllerGetCommentsQueryOptions({ guildId, lootId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -22080,7 +22179,7 @@ export const prefetchLootlogConfigControllerGetLootlogConfigQuery = async <TData
 
   const queryOptions = getLootlogConfigControllerGetLootlogConfigQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -22314,7 +22413,7 @@ export const prefetchHealthzControllerHealthCheckQuery = async <TData = Awaited<
 
   const queryOptions = getHealthzControllerHealthCheckQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -22458,7 +22557,7 @@ export const prefetchChatControllerGetChatMessagesQuery = async <TData = Awaited
 
   const queryOptions = getChatControllerGetChatMessagesQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -22842,7 +22941,7 @@ export const prefetchGlobalChatControllerGetWorldsQuery = async <TData = Awaited
 
   const queryOptions = getGlobalChatControllerGetWorldsQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -22993,7 +23092,7 @@ export const prefetchGlobalChatControllerGetMessagesQuery = async <TData = Await
 
   const queryOptions = getGlobalChatControllerGetMessagesQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -23481,7 +23580,7 @@ export const prefetchGlobalChatControllerGetMutesQuery = async <TData = Awaited<
 
   const queryOptions = getGlobalChatControllerGetMutesQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -23872,7 +23971,7 @@ export const prefetchListReservationSpotsQuery = async <TData = Awaited<ReturnTy
 
   const queryOptions = getListReservationSpotsQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -24031,7 +24130,7 @@ export const prefetchListSpotReservationsQuery = async <TData = Awaited<ReturnTy
 
   const queryOptions = getListSpotReservationsQueryOptions({ guildId, spotId },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -24495,7 +24594,7 @@ export const prefetchListMyReservationsQuery = async <TData = Awaited<ReturnType
 
   const queryOptions = getListMyReservationsQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -24801,7 +24900,7 @@ export const prefetchListReservationSharesQuery = async <TData = Awaited<ReturnT
 
   const queryOptions = getListReservationSharesQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -25166,7 +25265,7 @@ export const prefetchPreviewReservationShareInvitationQuery = async <TData = Awa
 
   const queryOptions = getPreviewReservationShareInvitationQueryOptions({ token },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -25399,7 +25498,7 @@ export const prefetchNotificationsGuildControllerGetGuildTargetsQuery = async <T
 
   const queryOptions = getNotificationsGuildControllerGetGuildTargetsQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -25633,7 +25732,7 @@ export const prefetchNotificationsGuildControllerGetAvailableGuildTargetsQuery =
 
   const queryOptions = getNotificationsGuildControllerGetAvailableGuildTargetsQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -25942,7 +26041,7 @@ export const prefetchNotificationsGuildControllerGetGuildRulesQuery = async <TDa
 
   const queryOptions = getNotificationsGuildControllerGetGuildRulesQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -26491,7 +26590,7 @@ export const prefetchNotificationsGuildControllerGetGuildJobsQuery = async <TDat
 
   const queryOptions = getNotificationsGuildControllerGetGuildJobsQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -26710,7 +26809,7 @@ export const prefetchNotificationsUserControllerGetUserTargetsQuery = async <TDa
 
   const queryOptions = getNotificationsUserControllerGetUserTargetsQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -27183,7 +27282,7 @@ export const prefetchNotificationsUserControllerGetUserRulesQuery = async <TData
 
   const queryOptions = getNotificationsUserControllerGetUserRulesQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -27581,7 +27680,7 @@ export const prefetchNotificationsUserControllerGetUserJobsQuery = async <TData 
 
   const queryOptions = getNotificationsUserControllerGetUserJobsQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -27725,7 +27824,7 @@ export const prefetchNotificationsUserControllerGetWatchedItemsQuery = async <TD
 
   const queryOptions = getNotificationsUserControllerGetWatchedItemsQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -28298,7 +28397,7 @@ export const prefetchPartyReadyRoomControllerActiveQuery = async <TData = Awaite
 
   const queryOptions = getPartyReadyRoomControllerActiveQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -28426,7 +28525,7 @@ export const prefetchPartyReadyRoomControllerListQuery = async <TData = Awaited<
 
   const queryOptions = getPartyReadyRoomControllerListQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -28642,7 +28741,7 @@ export const prefetchPartyReadyRoomControllerGetQuery = async <TData = Awaited<R
 
   const queryOptions = getPartyReadyRoomControllerGetQueryOptions({ notificationId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -29278,7 +29377,7 @@ export const prefetchSoundSettingsControllerGetSettingsQuery = async <TData = Aw
 
   const queryOptions = getSoundSettingsControllerGetSettingsQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -29527,7 +29626,7 @@ export const prefetchListEventsQuery = async <TData = Awaited<ReturnType<typeof 
 
   const queryOptions = getListEventsQueryOptions({ guildId },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -29764,7 +29863,7 @@ export const prefetchShowEventQuery = async <TData = Awaited<ReturnType<typeof s
 
   const queryOptions = getShowEventQueryOptions({ guildId, eventId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -30073,7 +30172,7 @@ export const prefetchShowEventOverviewQuery = async <TData = Awaited<ReturnType<
 
   const queryOptions = getShowEventOverviewQueryOptions({ guildId, eventId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -30217,7 +30316,7 @@ export const prefetchShowEventWrappedQuery = async <TData = Awaited<ReturnType<t
 
   const queryOptions = getShowEventWrappedQueryOptions({ guildId, eventId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -30361,7 +30460,7 @@ export const prefetchListEventMapsQuery = async <TData = Awaited<ReturnType<type
 
   const queryOptions = getListEventMapsQueryOptions({ guildId, eventId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -31324,7 +31423,7 @@ export const prefetchEventsAssignmentControllerGetLocationsQuery = async <TData 
 
   const queryOptions = getEventsAssignmentControllerGetLocationsQueryOptions({ guildId, eventId, heroId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -31903,7 +32002,7 @@ export const prefetchListPendingParticipationConfirmationsQuery = async <TData =
 
   const queryOptions = getListPendingParticipationConfirmationsQueryOptions({ guildId, eventId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -32211,7 +32310,7 @@ export const prefetchListEventRankingQuery = async <TData = Awaited<ReturnType<t
 
   const queryOptions = getListEventRankingQueryOptions({ guildId, eventId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -32461,7 +32560,7 @@ export const prefetchListEventHeroTimersQuery = async <TData = Awaited<ReturnTyp
 
   const queryOptions = getListEventHeroTimersQueryOptions({ guildId, eventId },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -32608,7 +32707,7 @@ export const prefetchEventsRankingControllerGetEventHeroStatsQuery = async <TDat
 
   const queryOptions = getEventsRankingControllerGetEventHeroStatsQueryOptions({ guildId, eventId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -32768,7 +32867,7 @@ export const prefetchListEventKillHistoryQuery = async <TData = Awaited<ReturnTy
 
   const queryOptions = getListEventKillHistoryQueryOptions({ guildId, eventId },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -32915,7 +33014,7 @@ export const prefetchEventsRankingControllerGetKillDetailQuery = async <TData = 
 
   const queryOptions = getEventsRankingControllerGetKillDetailQueryOptions({ guildId, eventId, heroId, killId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -33149,7 +33248,7 @@ export const prefetchEventsMonitoringControllerGetCoordinationQuery = async <TDa
 
   const queryOptions = getEventsMonitoringControllerGetCoordinationQueryOptions({ guildId, eventId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -33293,7 +33392,7 @@ export const prefetchEventsMonitoringControllerGetKillTimelineDataQuery = async 
 
   const queryOptions = getEventsMonitoringControllerGetKillTimelineDataQueryOptions({ guildId, eventId, heroId, killId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -33437,7 +33536,7 @@ export const prefetchEventsMonitoringControllerGetHeroCoverageGapsQuery = async 
 
   const queryOptions = getEventsMonitoringControllerGetHeroCoverageGapsQueryOptions({ guildId, eventId, heroId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -33581,7 +33680,7 @@ export const prefetchEventsMonitoringControllerGetMapCoverageGapsQuery = async <
 
   const queryOptions = getEventsMonitoringControllerGetMapCoverageGapsQueryOptions({ guildId, eventId, mapId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -33725,7 +33824,7 @@ export const prefetchEventsMonitoringControllerGetActiveGapForMapQuery = async <
 
   const queryOptions = getEventsMonitoringControllerGetActiveGapForMapQueryOptions({ guildId, eventId, mapId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -33869,7 +33968,7 @@ export const prefetchEventsMonitoringControllerGetActiveGapsForHeroQuery = async
 
   const queryOptions = getEventsMonitoringControllerGetActiveGapsForHeroQueryOptions({ guildId, eventId, heroId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -34013,7 +34112,7 @@ export const prefetchEventsMonitoringControllerGetHeroPresenceStatsQuery = async
 
   const queryOptions = getEventsMonitoringControllerGetHeroPresenceStatsQueryOptions({ guildId, eventId, heroId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -34157,7 +34256,7 @@ export const prefetchEventsMonitoringControllerGetHeroRespawnConfigQuery = async
 
   const queryOptions = getEventsMonitoringControllerGetHeroRespawnConfigQueryOptions({ guildId, eventId, heroId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -34480,7 +34579,7 @@ export const prefetchListPinnedEventsQuery = async <TData = Awaited<ReturnType<t
 
   const queryOptions = getListPinnedEventsQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -34772,7 +34871,7 @@ export const prefetchMapsControllerGetMapsQuery = async <TData = Awaited<ReturnT
 
   const queryOptions = getMapsControllerGetMapsQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -34916,7 +35015,7 @@ export const prefetchMapTemplatesControllerGetTemplatesQuery = async <TData = Aw
 
   const queryOptions = getMapTemplatesControllerGetTemplatesQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -35428,7 +35527,7 @@ export const prefetchKillsControllerGetGuildKillStatsQuery = async <TData = Awai
 
   const queryOptions = getKillsControllerGetGuildKillStatsQueryOptions({ guildId },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -35590,7 +35689,7 @@ export const prefetchKillsControllerGetUserKillStatsQuery = async <TData = Await
 
   const queryOptions = getKillsControllerGetUserKillStatsQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -35741,7 +35840,7 @@ export const prefetchKillsControllerGetUserKillAnalyticsQuery = async <TData = A
 
   const queryOptions = getKillsControllerGetUserKillAnalyticsQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -35891,7 +35990,7 @@ export const prefetchKillsControllerGetUserKillActivityQuery = async <TData = Aw
 
   const queryOptions = getKillsControllerGetUserKillActivityQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -36050,7 +36149,7 @@ export const prefetchKillsControllerGetUserNpcKillsQuery = async <TData = Awaite
 
   const queryOptions = getKillsControllerGetUserNpcKillsQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -36210,7 +36309,7 @@ export const prefetchKillsControllerGetGuildTopNpcsQuery = async <TData = Awaite
 
   const queryOptions = getKillsControllerGetGuildTopNpcsQueryOptions({ guildId },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -36373,7 +36472,7 @@ export const prefetchKillsControllerGetGuildTopKillersByTypeQuery = async <TData
 
   const queryOptions = getKillsControllerGetGuildTopKillersByTypeQueryOptions({ guildId },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -36536,7 +36635,7 @@ export const prefetchKillsControllerGetNpcKillersQuery = async <TData = Awaited<
 
   const queryOptions = getKillsControllerGetNpcKillersQueryOptions({ guildId, npcId },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -36707,7 +36806,7 @@ export const prefetchKillsControllerGetMemberKillsQuery = async <TData = Awaited
 
   const queryOptions = getKillsControllerGetMemberKillsQueryOptions({ guildId, memberId },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -36929,7 +37028,7 @@ export const prefetchPublicGuildStatsCardControllerGetStatsCardQuery = async <TD
 
   const queryOptions = getPublicGuildStatsCardControllerGetStatsCardQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -37073,7 +37172,7 @@ export const prefetchDocsControllerGetDocumentsQuery = async <TData = Awaited<Re
 
   const queryOptions = getDocsControllerGetDocumentsQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -37307,7 +37406,7 @@ export const prefetchDocsControllerGetTrashQuery = async <TData = Awaited<Return
 
   const queryOptions = getDocsControllerGetTrashQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -37451,7 +37550,7 @@ export const prefetchDocsControllerGetHistoryQuery = async <TData = Awaited<Retu
 
   const queryOptions = getDocsControllerGetHistoryQueryOptions({ guildId, docId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -37595,7 +37694,7 @@ export const prefetchDocsControllerGetHistorySnapshotQuery = async <TData = Awai
 
   const queryOptions = getDocsControllerGetHistorySnapshotQueryOptions({ guildId, docId, historyId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -37739,7 +37838,7 @@ export const prefetchDocsControllerGetDocumentQuery = async <TData = Awaited<Ret
 
   const queryOptions = getDocsControllerGetDocumentQueryOptions({ guildId, docId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }

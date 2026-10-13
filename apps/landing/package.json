@@ -18,12 +18,12 @@
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "^1.169.1",
     "better-auth": "1.7.7",
-    "framer-motion": "^14.0.0",
-    "i18next": "^26.4.2",
-    "lucide-react": "^1.51.0",
+    "framer-motion": "^14.2.0",
+    "i18next": "^26.4.4",
+    "lucide-react": "^1.56.0",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-i18next": "^17.0.15"
+    "react-i18next": "^17.0.16"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",

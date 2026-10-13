@@ -203,14 +203,16 @@ describe("loot detail concurrent reads", () => {
     expect(reads).toBe(2);
   });
 
-  it("releases an interrupted owner while healthy waiters retry independently", async () => {
+  it("keeps shared work for waiters when the initiating request disconnects", async () => {
+    const finish = Promise.withResolvers<void>();
     let reads = 0;
 
     const operations = makeOperations(() =>
-      Effect.suspend(() => {
+      Effect.promise(async () => {
         reads += 1;
+        await finish.promise;
 
-        return reads === 1 ? Effect.never : Effect.succeed(loot);
+        return loot;
       }),
     );
 
@@ -221,19 +223,16 @@ describe("loot detail concurrent reads", () => {
       { signal: controller.signal },
     );
 
-    const waiter = Effect.runPromiseExit(
+    const waiter = Effect.runPromise(
       operations.fetchLootById(guild, policy, [role], 42),
     );
 
     controller.abort();
-    expect((await first)._tag).toBe("Failure");
-    expect(Exit.isSuccess(await waiter)).toBe(true);
-    expect(
-      await Effect.runPromise(
-        operations.fetchLootById(guild, policy, [role], 42),
-      ),
-    ).toEqual(loot);
-    expect(reads).toBe(3);
+    expect(Exit.isFailure(await first)).toBe(true);
+
+    finish.resolve();
+    expect(await waiter).toEqual(loot);
+    expect(reads).toBe(1);
   });
 
   it("does not cancel or evict shared work when a waiting request disconnects", async () => {
