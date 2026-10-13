@@ -72,7 +72,7 @@ export const createEventHeroesTableColumns = ({
 
         return (
           <TextLink
-            className="flex min-w-0 items-center gap-2.5 py-0.5 text-sm"
+            className="flex min-w-0 items-center gap-2.5 text-sm"
             render=<Link
               to="/$guildId/events/$eventId/heroes/$heroId"
               params={{ guildId, eventId, heroId: hero.id }}

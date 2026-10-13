@@ -44,7 +44,7 @@ export const BattlePanelH2hSkeleton = () => {
             }
           />
           <div className="relative min-h-0 flex-1 overflow-hidden">
-            <TableRowsSkeleton withHeader />
+            <TableRowsSkeleton withHeader rowContent="text" />
           </div>
           <TablePaginationFooter
             totalLabel=<Skeleton className="h-4 w-36" />

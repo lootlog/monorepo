@@ -30,7 +30,7 @@ export const ActivityLogsPageSkeleton = () => (
       }
       footer={<div className="h-14 shrink-0 border-t border-border" />}
     >
-      <TableRowsSkeleton rows={20} />
+      <TableRowsSkeleton rows={20} withHeader rowContent="text" />
     </ResultsSurface>
   </div>
 );

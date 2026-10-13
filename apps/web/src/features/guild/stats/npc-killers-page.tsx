@@ -100,7 +100,7 @@ export const NpcKillersPage = () => {
   });
 
   if (isLoading) {
-    return <StatsDetailPageSkeleton />;
+    return <StatsDetailPageSkeleton rowContent="text" />;
   }
 
   const npc = data?.npc;

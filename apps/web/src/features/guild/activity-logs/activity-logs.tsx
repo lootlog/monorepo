@@ -110,7 +110,13 @@ export const ActivityLogs = () => {
     }
 
     if (isLoading) {
-      return <TableRowsSkeleton rows={ACTIVITY_LOGS_PAGE_LIMIT} />;
+      return (
+        <TableRowsSkeleton
+          rows={ACTIVITY_LOGS_PAGE_LIMIT}
+          withHeader
+          rowContent="text"
+        />
+      );
     }
 
     if (activities.length === 0) {
