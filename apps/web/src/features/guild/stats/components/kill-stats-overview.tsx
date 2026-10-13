@@ -125,7 +125,7 @@ export const KillStatsOverview = ({
                 className={cn(
                   "flex min-w-0 flex-col gap-1 rounded-md border px-3 py-2 text-left outline-none transition-colors",
                   "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
-                  "enabled:hover:bg-muted/60 disabled:cursor-default",
+                  "enabled:cursor-pointer enabled:hover:bg-muted/60 disabled:cursor-default",
                   selected
                     ? "border-primary/60 bg-primary/10"
                     : "border-border/70",
