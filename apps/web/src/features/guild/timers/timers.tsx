@@ -24,6 +24,7 @@ import { useViewMode } from "@/hooks/use-view-mode";
 import { useTranslation } from "react-i18next";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { getTimersControllerGetTimersQueryKey } from "@lootlog/client/main";
+import { getTimerPhase, getTimerTimeLeft } from "@lootlog/domain/timers";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { useGuildTimers } from "./use-guild-timers";
 import { useTimerDisplaySettings } from "./use-timer-display-settings";
@@ -54,11 +55,11 @@ const getTimerListState = <Timer extends { npc?: { name: string } | null }>(
 export const Timers = () => {
   const guildId = useGuildId();
 
-  const { world, timers, isPending, isError, isFetching, fetchedAt, refetch } =
-    useGuildTimers();
-
   const { removeTimerAfterMs, countdownMode, getPaint, isPinned } =
     useTimerDisplaySettings();
+
+  const { world, timers, isPending, isError, isFetching, fetchedAt, refetch } =
+    useGuildTimers(removeTimerAfterMs);
 
   useTimerExpiry(
     timers,
@@ -80,18 +81,24 @@ export const Timers = () => {
   const { filtered, hasFilteredTimers, showsNoSearchResults } =
     getTimerListState(timers, search);
 
-  // Kept timers sit below the live ones, most recent first, as in the game.
-  const isKept = (timer: { maxSpawnTime: string }) =>
-    Date.parse(timer.maxSpawnTime) + removeTimerAfterMs <= now;
+  // Kept timers sit below the live ones, most recent first, as in the game;
+  // a deleted timer counts from its deletion, as its row does.
+  const sorted = sortBy(
+    (filtered ?? []).map((timer) => {
+      const timeLeft = getTimerTimeLeft(timer, now);
 
-  const sorted = sortBy(filtered ?? [], [
-    (timer) => getNpcTypeSortIndex(timer.npc?.type),
-    (timer) => (isKept(timer) ? 1 : 0),
-    (timer) =>
-      isKept(timer)
-        ? -Date.parse(timer.maxSpawnTime)
-        : Date.parse(timer.maxSpawnTime),
-  ]);
+      return {
+        timer,
+        maxTimeLeft: timeLeft.maxTimeLeft,
+        isKept: getTimerPhase(timeLeft, removeTimerAfterMs) === "expired",
+      };
+    }),
+    [
+      ({ timer }) => getNpcTypeSortIndex(timer.npc?.type),
+      ({ isKept }) => (isKept ? 1 : 0),
+      ({ isKept, maxTimeLeft }) => (isKept ? -maxTimeLeft : maxTimeLeft),
+    ],
+  ).map(({ timer }) => timer);
 
   const groups = groupBy(sorted, (timer) => timer.npc?.type ?? "");
 
