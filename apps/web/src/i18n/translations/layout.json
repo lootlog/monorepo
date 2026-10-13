@@ -14,11 +14,16 @@
     "docs": "Dokumenty",
     "events": "Eventy",
     "stats": "Statystyki",
-    "activityLogs": "Logi aktywności"
+    "activityLogs": "Logi aktywności",
+    "groups": {
+      "account": "Konto",
+      "management": "Zarządzanie"
+    }
   },
   "guildsSelector": {
     "unreadLootsOverflow": "99+",
-    "refreshError": "Nie udało się odświeżyć listy Lootlogów."
+    "refreshError": "Nie udało się odświeżyć listy Lootlogów.",
+    "noAccess": "Brak dostępu"
   },
   "userMenu": {
     "live": "Połączono",

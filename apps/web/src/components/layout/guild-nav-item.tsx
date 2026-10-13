@@ -5,7 +5,6 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
-import { Badge } from "@lootlog/ui/components/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -13,7 +12,8 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import type { FC, MouseEvent } from "react";
 import { Link } from "@tanstack/react-router";
-import { ThemeCircularFrame, useThemeMeta } from "@/themes";
+import { ThemeCircularFrame } from "@/themes";
+import { RailItemIndicator } from "./rail-item-indicator";
 import { useTranslation } from "react-i18next";
 import {
   ContextMenu,
@@ -22,6 +22,7 @@ import {
   ContextMenuTrigger,
 } from "@lootlog/ui/components/context-menu";
 import { Eye, EyeOff } from "lucide-react";
+import { GuildNavItemMarks } from "./guild-nav-item-marks";
 
 export type GuildNavItemProps = {
   guild: Guild;
@@ -40,11 +41,13 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
   isHidden = false,
   onToggleHidden,
 }) => {
-  const { isRukiaTheme } = useThemeMeta();
   const { t } = useTranslation();
 
   const isActive =
     currentGuildId === guild.id || currentGuildId === guild.vanityUrl;
+
+  // Stale access data may already be outdated, so it never shows a lock.
+  const isLocked = !guild.hasLootlogAccess && !guild.isAccessDataStale;
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (isDragging) {
@@ -60,23 +63,20 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
   };
 
   const avatarElement = (
-    <Avatar
-      className={cn(
-        "size-11 rounded-xl after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit] after:ring-2 after:ring-inset after:ring-primary after:opacity-0 after:transition-opacity after:duration-200 motion-reduce:after:transition-none",
-        isActive && !isRukiaTheme && "after:opacity-100",
-      )}
-    >
+    <Avatar className="size-11 rounded-xl">
       <AvatarImage
         src={guild.icon ?? undefined}
         alt={guild.name}
         className={cn(
-          "pointer-events-none select-none transition-opacity",
+          "pointer-events-none select-none transition-[opacity,filter]",
+          isLocked && "opacity-60 grayscale",
           isHidden && "opacity-35",
         )}
       />
       <AvatarFallback
         className={cn(
           "rounded-none font-medium text-white transition-opacity",
+          isLocked && "opacity-60",
           isHidden && "opacity-35",
         )}
       >
@@ -93,7 +93,8 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
             <Tooltip>
               <TooltipTrigger
                 render={
-                  <div className="relative mb-2 flex w-full items-center justify-center">
+                  <div className="group/rail-item relative mb-2 flex w-full items-center justify-center">
+                    <RailItemIndicator isActive={isActive} />
                     <Link
                       to="/$guildId"
                       params={{ guildId: guild.vanityUrl ?? guild.id }}
@@ -105,28 +106,22 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
                       <ThemeCircularFrame isActive={isActive}>
                         {avatarElement}
                       </ThemeCircularFrame>
-                      {isHidden ? (
-                        <EyeOff
-                          aria-hidden
-                          className="pointer-events-none absolute top-0.5 right-0.5 z-20 size-4 rounded-full border border-sidebar-border bg-sidebar p-0.5 text-muted-foreground"
-                        />
-                      ) : null}
-                      {unreadLootsCount > 0 && !isActive && (
-                        <Badge
-                          variant="destructive"
-                          className="pointer-events-none absolute bottom-0.5 right-0.5 z-20 h-4.5 min-w-4.5 justify-center px-1 text-[9px] leading-none ring-2 ring-sidebar"
-                        >
-                          {unreadLootsCount > 99
-                            ? t("layout.guildsSelector.unreadLootsOverflow")
-                            : unreadLootsCount}
-                        </Badge>
-                      )}
+                      <GuildNavItemMarks
+                        isHidden={isHidden}
+                        isLocked={isLocked}
+                        unreadLootsCount={isActive ? 0 : unreadLootsCount}
+                      />
                     </Link>
                   </div>
                 }
               />
               <TooltipContent side="right" className="font-medium">
                 <div>{guild.name}</div>
+                {isLocked ? (
+                  <div className="text-xs font-normal text-muted-foreground">
+                    {t("layout.guildsSelector.noAccess")}
+                  </div>
+                ) : null}
                 {isHidden ? (
                   <div className="text-xs font-normal text-muted-foreground">
                     {t("settings.servers.hiddenInGameClient")}

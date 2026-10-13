@@ -13,6 +13,7 @@ import { SidebarProvider } from "@lootlog/ui/components/sidebar";
 import { Outlet, useLocation, useMatches } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { GlobalModals } from "@/components/common/global-modals";
+import { getRouteErrorStatus } from "@/lib/router/route-errors";
 
 const ThemeAnnouncement = lazy(() =>
   import("@/components/common/theme-announcement").then((module) => ({
@@ -47,14 +48,21 @@ export const AppLayout = () => {
     guildRouteMatch?.status === "error" ||
     guildRouteMatch?.status === "notFound";
 
-  // A failed Organization route has no navigation or server details to show,
-  // so the sidebar narrows to the server rail instead of an empty column.
-  const isCompactSidebar = isStandaloneRoute || hasFailedGuildRoute;
+  const guildRouteFailure = hasFailedGuildRoute
+    ? getRouteErrorStatus(guildRouteMatch.error) === 403
+      ? "forbidden"
+      : "unavailable"
+    : undefined;
 
+  const isCompactSidebar = isStandaloneRoute;
+
+  // A failed Organization route keeps the navigation column: without an
+  // access policy its sections collapse, so moving between servers with and
+  // without access never shifts the layout.
   const sidebarNavigation = isCompactSidebar ? null : isUserRoute ? (
     <UserSidebarNav />
-  ) : showGuildNav ? (
-    <GuildsSidebarNav />
+  ) : showGuildNav || hasFailedGuildRoute ? (
+    <GuildsSidebarNav routeFailure={guildRouteFailure} />
   ) : (
     <GuildSidebarNavPlaceholder />
   );

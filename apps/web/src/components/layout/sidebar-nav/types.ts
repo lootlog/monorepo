@@ -7,10 +7,9 @@ export interface MenuItem {
   path: string;
   available: boolean;
   enabled: boolean;
-  divided?: boolean;
+  group?: string;
   badge?: {
     content: string | number;
     variant?: "default" | "secondary" | "destructive" | "outline" | "white";
   };
-  highlight?: boolean;
 }
