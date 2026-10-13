@@ -13,7 +13,7 @@ export const MapTemplatesSkeleton = () => {
             <Skeleton className="h-5 w-36" />
             <Skeleton className="ml-7 h-3 w-48" />
           </div>
-          <Skeleton className="h-9 w-32 rounded-xl" />
+          <Skeleton className="h-8 w-32 rounded-xl" />
         </div>
         <SectionCardContent className="p-0">
           <MapTemplateRowsSkeleton />

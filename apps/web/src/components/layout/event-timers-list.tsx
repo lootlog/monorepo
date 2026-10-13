@@ -83,14 +83,14 @@ const TimerItem: FC<TimerItemProps> = ({
               heroId: timer.heroId ?? "",
             }}
             onClick={onNavigate}
-            className="group block"
+            className="group/timer block"
           >
-            <div className="flex items-center gap-2 px-2 py-1 rounded transition-[background-color,transform] duration-200 motion-safe:hover:translate-x-0.5 hover:bg-signal-timer/10">
+            <div className="flex items-center gap-2 rounded-sm px-2 py-1.5 transition-colors group-hover/timer:bg-primary/10">
               <Clock
                 aria-hidden="true"
                 className={cn("size-3 shrink-0", signalClassName)}
               />
-              <span className="text-xs truncate flex-1 text-muted-foreground">
+              <span className="flex-1 truncate text-xs text-muted-foreground transition-colors group-hover/timer:text-foreground">
                 {timer.npc.name}
               </span>
               <span
@@ -197,8 +197,8 @@ export const EventTimersList: FC<EventTimersListProps> = ({
   const hasMore = activeTimers.length > 3;
 
   return (
-    <div className="border-t border-signal-timer/20">
-      <div className="py-1">
+    <div className="border-t border-sidebar-border">
+      <div className="p-1">
         {visibleTimers.map((timer) => (
           <TimerItem
             key={timer.npcId}
@@ -209,35 +209,35 @@ export const EventTimersList: FC<EventTimersListProps> = ({
             onNavigate={onNavigate}
           />
         ))}
-      </div>
 
-      {hasMore && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setIsExpanded((currentValue) => !currentValue);
-          }}
-          className="w-full px-2 py-1 flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:bg-signal-timer/10 transition-colors"
-          aria-expanded={isExpanded}
-        >
-          <span>
-            {isExpanded
-              ? t("events.sidebarBanner.collapse")
-              : t("events.sidebarBanner.showMore", {
-                  count: activeTimers.length - 3,
-                })}
-          </span>
-          <div
-            className={`flex items-center transition-transform duration-200 ${
-              isExpanded ? "rotate-180" : ""
-            }`}
+        {hasMore && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsExpanded((currentValue) => !currentValue);
+            }}
+            className="flex w-full items-center justify-center gap-1 rounded-sm px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-primary/10 hover:text-foreground"
+            aria-expanded={isExpanded}
           >
-            <ChevronDown className="size-3" />
-          </div>
-        </button>
-      )}
+            <span>
+              {isExpanded
+                ? t("events.sidebarBanner.collapse")
+                : t("events.sidebarBanner.showMore", {
+                    count: activeTimers.length - 3,
+                  })}
+            </span>
+            <div
+              className={`flex items-center transition-transform duration-200 ${
+                isExpanded ? "rotate-180" : ""
+              }`}
+            >
+              <ChevronDown className="size-3" />
+            </div>
+          </button>
+        )}
+      </div>
     </div>
   );
 };

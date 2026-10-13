@@ -63,12 +63,11 @@ export function DashboardRecentBattleActions({
               <Button
                 type="button"
                 variant="ghost"
-                size="icon"
+                size="icon-sm"
                 aria-label={t(`battlePanel.actions.${key}`)}
                 disabled={actions.isRowActionBusy}
                 onClick={onClick}
                 className={cn(
-                  "size-8",
                   key === "delete"
                     ? "text-destructive hover:bg-destructive/10 hover:text-destructive"
                     : "text-muted-foreground hover:bg-primary/10 hover:text-primary",

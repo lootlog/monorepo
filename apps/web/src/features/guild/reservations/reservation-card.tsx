@@ -88,8 +88,8 @@ export function ReservationCard({
           )}
           <Button
             type="button"
-            size="icon"
-            className="pointer-events-auto size-8"
+            size="icon-sm"
+            className="pointer-events-auto"
             variant={spot.isPinned ? "secondary" : "ghost"}
             disabled={pinDisabled}
             loading={pinPending}

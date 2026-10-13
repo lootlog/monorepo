@@ -13,6 +13,9 @@ export const LOOTS_LIST_INSET_CLASS = "inset-x-3";
 
 export const LOOTS_GRID_CLASS = "grid grid-cols-1 gap-3 xl:grid-cols-2";
 
+/** Tailwind `xl`, where `LOOTS_GRID_CLASS` gets its second column. */
+export const LOOTS_GRID_MEDIA_QUERY = "(min-width: 80rem)";
+
 /** Horizontal inset shared by every loot card section and the details dialog body. */
 export const LOOT_CARD_INSET_CLASS = "px-3 sm:px-4";
 

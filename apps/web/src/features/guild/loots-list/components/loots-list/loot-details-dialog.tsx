@@ -249,8 +249,7 @@ export const LootDetailsDialog: FC<LootDetailsDialogProps> = ({
               render={
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="size-8"
+                  size="icon-sm"
                   aria-label={t("common.close")}
                 />
               }

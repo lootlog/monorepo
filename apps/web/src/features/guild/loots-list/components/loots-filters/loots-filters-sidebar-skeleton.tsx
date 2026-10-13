@@ -12,7 +12,7 @@ export const LootsFiltersSidebarSkeleton = () => (
   >
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-filters-sidebar">
       <div className="space-y-3 border-b border-border/70 p-3 sm:p-4">
-        <div className="flex min-h-7 items-center">
+        <div className="flex min-h-8 items-center">
           <Skeleton className="h-4 w-24" />
         </div>
         <div className="flex flex-wrap gap-1.5">

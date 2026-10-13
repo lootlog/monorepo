@@ -35,7 +35,6 @@ export const SidebarNavItem = ({
   const buttonContent = (
     <Button
       variant={isActive ? "default" : "ghost"}
-      size="sm"
       render={
         available ? (
           <Link
@@ -55,11 +54,7 @@ export const SidebarNavItem = ({
           "text-muted-foreground hover:text-primary hover:!bg-primary/10",
         highlight &&
           !isActive && [
-            "overflow-hidden",
-            "bg-signal-timer/10 hover:bg-signal-timer/20",
-            "border border-signal-timer/30",
-            "shadow-[0_0_12px] shadow-signal-timer/30",
-            "motion-safe:animate-pulse",
+            "border border-primary/30 bg-primary/10 hover:!bg-primary/15",
             "text-foreground",
           ],
       )}

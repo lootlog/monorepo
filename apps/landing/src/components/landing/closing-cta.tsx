@@ -32,7 +32,7 @@ export function ClosingCta() {
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button
-              size="lg"
+              size="xl"
               className="landing-action landing-action-dark"
               render={
                 <a href={ADDON_URL} target="_blank" rel="noopener noreferrer">
@@ -43,7 +43,7 @@ export function ClosingCta() {
               nativeButton={false}
             />
             <Button
-              size="lg"
+              size="xl"
               variant="outline"
               className="landing-action landing-action-outline"
               render={

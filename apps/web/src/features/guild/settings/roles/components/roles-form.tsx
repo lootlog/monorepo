@@ -142,7 +142,6 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                         type="number"
                         max={500}
                         min={0}
-                        className="h-9"
                         {...field}
                       />
                     />
@@ -163,7 +162,6 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                         type="number"
                         max={500}
                         min={0}
-                        className="h-9"
                         {...field}
                       />
                     />

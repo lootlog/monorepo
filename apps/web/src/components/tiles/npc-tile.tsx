@@ -5,15 +5,21 @@ import { useTranslation } from "react-i18next";
 
 type NpcTileProps = {
   className?: string;
+  imageClassName?: string;
   npc: Partial<NpcHitDtoOutput>;
 };
 
-export const NpcTile: FC<NpcTileProps> = ({ className = "", npc }) => {
+export const NpcTile: FC<NpcTileProps> = ({
+  className = "",
+  imageClassName,
+  npc,
+}) => {
   const { t } = useTranslation();
 
   return (
     <SharedNpcTile
       className={className}
+      imageClassName={imageClassName}
       levelLabel={(level) => t("common.levelShort", { level })}
       npc={npc}
     />

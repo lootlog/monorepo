@@ -64,9 +64,9 @@ export function ActorNameSelector({
     >
       <div className={cn("relative", className)}>
         <ComboboxTrigger
-          render={<Button variant="outline" />}
+          render={<Button variant="outline" size="lg" />}
           aria-label={placeholder}
-          className={cn("h-10 w-full justify-between gap-2", value && "pr-10")}
+          className={cn("w-full justify-between gap-2", value && "pr-10")}
         >
           <Search className="size-4 shrink-0 text-muted-foreground" />
           <span

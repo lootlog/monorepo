@@ -1,5 +1,3 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { configureApiClients } from "@lootlog/client/transport";
 import { RouterProvider } from "@tanstack/react-router";
 import { createOrganizationTestRouter } from "@/lib/testing/router";
 import { initializeTestTranslations } from "@/lib/testing/i18n";
@@ -12,7 +10,7 @@ import {
   render as renderElement,
   screen,
 } from "@testing-library/react";
-import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { EventHeroesTable } from "./event-heroes-table";
 
 await initializeTestTranslations({
@@ -20,27 +18,7 @@ await initializeTestTranslations({
 });
 
 async function render(element: ReactNode) {
-  const queryClient = new QueryClient();
-  onTestFinished(() => queryClient.clear());
-  onTestFinished(
-    configureApiClients({
-      main: {
-        baseUrl: "https://api.test",
-        fetch: async () =>
-          Response.json({
-            hasTimer: true,
-            windowStatus: "WAITING",
-            minSpawnTime: "2026-08-12T09:00:00Z",
-            maxSpawnTime: "2026-08-12T09:30:00Z",
-            overdueMs: null,
-          }),
-      },
-    }),
-  );
-
-  const router = createOrganizationTestRouter(
-    <QueryClientProvider client={queryClient}>{element}</QueryClientProvider>,
-  );
+  const router = createOrganizationTestRouter(element);
 
   await router.load();
 
@@ -140,9 +118,6 @@ describe("EventHeroesTable", () => {
 
     expect(screen.getByText("Potulny Berserker")).toBeTruthy();
     expect(screen.getByText("284w")).toBeTruthy();
-    expect(
-      await screen.findByText("events.respawn.status.waiting"),
-    ).toBeTruthy();
     expect(screen.getByText("ID: 410452")).toBeTruthy();
     expect(screen.getByText("events.maps.mapCount")).toBeTruthy();
     expect(screen.getByText("events.heroes.killCount")).toBeTruthy();

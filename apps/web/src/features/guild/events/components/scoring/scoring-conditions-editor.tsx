@@ -95,7 +95,7 @@ export const ScoringConditionsEditor = ({
           type="button"
           variant="ghost"
           size="sm"
-          className="h-7 text-[11px] text-muted-foreground hover:text-foreground"
+          className="text-[11px] text-muted-foreground hover:text-foreground"
           onClick={() => append(createDefaultScoringCondition())}
         >
           <Plus className="h-3 w-3 mr-1" />
@@ -185,7 +185,7 @@ const ConditionRow = ({
               >
                 <SelectTrigger
                   size="sm"
-                  className="h-7 text-[11px] bg-transparent border-0 shadow-none px-1 w-auto max-w-[200px] hover:bg-muted/40"
+                  className="text-[11px] bg-transparent border-0 shadow-none px-1 w-auto max-w-[200px] hover:bg-muted/40"
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -207,10 +207,9 @@ const ConditionRow = ({
             <Button
               type="button"
               variant="ghost"
-              size="icon"
+              size="icon-sm"
               aria-label={t("events.delete")}
               onClick={onRemove}
-              className="size-8"
             >
               <X className="size-3" />
             </Button>

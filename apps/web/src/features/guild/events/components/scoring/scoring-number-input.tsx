@@ -28,7 +28,7 @@ export const ScoringNumberInput = ({
   id,
   max,
   step = 0.01,
-  className = "h-8 text-[12px] font-mono",
+  className = "text-[12px] font-mono",
 }: ScoringNumberInputProps) => {
   const { t } = useTranslation();
   const errorId = useId();
@@ -45,6 +45,7 @@ export const ScoringNumberInput = ({
         min={0}
         max={max}
         step={step}
+        size="sm"
         className={className}
         aria-label={label}
         aria-invalid={!!error}

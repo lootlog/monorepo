@@ -58,7 +58,7 @@ export const WrappedProgress = ({
         type="button"
         variant="ghost"
         size="icon"
-        className="size-9 rounded-lg"
+        className="rounded-lg"
         onClick={onTogglePaused}
         aria-label={
           isUserPaused

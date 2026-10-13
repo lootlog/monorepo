@@ -186,7 +186,7 @@ export const EventEditSettingsPage = () => {
                   <Input
                     id={`${fieldIdPrefix}-name`}
                     {...form.register("name", { required: true })}
-                    className="h-9 text-sm"
+                    className="text-sm"
                   />
                 </div>
 
@@ -202,7 +202,7 @@ export const EventEditSettingsPage = () => {
                       type="datetime-local"
                       id={`${fieldIdPrefix}-startsAt`}
                       {...form.register("startsAt")}
-                      className="h-9 text-sm"
+                      className="text-sm"
                     />
                   </div>
                   <div className="space-y-2">
@@ -216,7 +216,7 @@ export const EventEditSettingsPage = () => {
                       type="datetime-local"
                       id={`${fieldIdPrefix}-endsAt`}
                       {...form.register("endsAt")}
-                      className="h-9 text-sm"
+                      className="text-sm"
                     />
                   </div>
                 </div>
@@ -239,7 +239,7 @@ export const EventEditSettingsPage = () => {
                       {...form.register("assignmentTimeoutMinutes", {
                         valueAsNumber: true,
                       })}
-                      className="h-9 text-sm"
+                      className="text-sm"
                     />
                     <p className="text-xs text-muted-foreground">
                       {t("events.settings.assignmentTimeoutDescription")}
@@ -260,7 +260,7 @@ export const EventEditSettingsPage = () => {
                       {...form.register("participationConfirmationMinutes", {
                         valueAsNumber: true,
                       })}
-                      className="h-9 text-sm"
+                      className="text-sm"
                     />
                     <p className="text-xs text-muted-foreground">
                       {t(
@@ -283,7 +283,7 @@ export const EventEditSettingsPage = () => {
                       {...form.register("mapAssignmentCap", {
                         valueAsNumber: true,
                       })}
-                      className="h-9 text-sm"
+                      className="text-sm"
                     />
                     <p className="text-xs text-muted-foreground">
                       {t("events.settings.mapAssignmentCapDescription")}

@@ -25,7 +25,7 @@ export const StandaloneShell = ({ children }: StandaloneShellProps) => {
               type="button"
               variant="ghost"
               size="sm"
-              className="size-9 px-0 sm:w-auto sm:px-3"
+              className="w-8 px-0 sm:w-auto sm:px-3"
               aria-label={t("common.routeErrors.actions.goToDashboard")}
               onClick={() => navigate({ to: ROUTES.user.dashboard })}
             >

@@ -9,7 +9,7 @@ export const UserNotificationsPageSkeleton = () => {
     <ScrollArea className="h-full min-h-0">
       <div className="flex flex-col gap-3 px-3 py-3">
         <PageHeaderSkeleton
-          actions={<Skeleton className="size-10 rounded-md" />}
+          actions={<Skeleton className="size-9 rounded-md" />}
         />
 
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">

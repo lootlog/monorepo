@@ -47,7 +47,6 @@ export const AuthenticationRecovery = ({
             className="w-full sm:w-auto"
             loading={actionPending}
             onClick={onAction}
-            size="sm"
           >
             {t(`${translationKey}.button`)}
           </Button>

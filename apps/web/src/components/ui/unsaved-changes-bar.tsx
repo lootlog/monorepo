@@ -56,18 +56,12 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
                 onClick={onReset}
                 disabled={isSubmitting}
               >
                 {effectiveResetLabel}
               </Button>
-              <Button
-                type="submit"
-                variant="default"
-                size="sm"
-                loading={isSubmitting}
-              >
+              <Button type="submit" variant="default" loading={isSubmitting}>
                 {effectiveSaveLabel}
               </Button>
             </div>

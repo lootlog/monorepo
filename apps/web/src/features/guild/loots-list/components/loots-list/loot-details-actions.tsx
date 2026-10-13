@@ -69,7 +69,7 @@ export const LootDetailsActions: FC<LootDetailsActionsProps> = ({
           <Button
             variant="destructive"
             size="sm"
-            className="h-8 px-2.5 text-xs"
+            className="text-xs"
             icon={<Trash2 className="size-3.5" />}
           >
             {t("common.delete")}

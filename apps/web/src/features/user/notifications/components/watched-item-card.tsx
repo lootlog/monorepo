@@ -132,7 +132,7 @@ export const WatchedItemCard = ({
           trigger={
             <Button
               type="button"
-              size="icon"
+              size="icon-sm"
               variant="destructive"
               aria-label={t("settings.notifications.actions.delete")}
               disabled={deleteWatchedItem.isPending}

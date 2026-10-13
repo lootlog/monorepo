@@ -8,6 +8,7 @@ import { LootsListSkeleton } from "./components/loots-list/loots-list-skeleton";
 import {
   LOOTS_COMPACT_FILTERS_BREAKPOINT,
   LOOTS_FILTERS_OPEN_KEY,
+  LOOTS_GRID_MEDIA_QUERY,
   LOOTS_VIEW_MODE_KEY,
 } from "./loots-list-layout";
 
@@ -19,7 +20,12 @@ export const LootsListPageSkeleton = () => {
   const isMobile = useIsMobile();
   const usesOverlayFilters = useMaxWidth(LOOTS_COMPACT_FILTERS_BREAKPOINT);
   const [isFiltersOpen] = useLocalStorage(LOOTS_FILTERS_OPEN_KEY, true);
-  const { viewMode } = useViewMode(LOOTS_VIEW_MODE_KEY);
+
+  const { viewMode, canChooseViewMode } = useViewMode(
+    LOOTS_VIEW_MODE_KEY,
+    "grid",
+    LOOTS_GRID_MEDIA_QUERY,
+  );
 
   return (
     <div
@@ -30,6 +36,7 @@ export const LootsListPageSkeleton = () => {
         <LootFiltersHeaderSkeleton
           isMobile={isMobile}
           isCompactLayout={usesOverlayFilters}
+          showsViewModeToggle={canChooseViewMode}
         />
       </div>
 

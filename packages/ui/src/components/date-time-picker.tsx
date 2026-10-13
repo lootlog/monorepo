@@ -21,6 +21,7 @@ export interface DateTimePickerProps {
   onChange?: (date: Date | undefined) => void;
   placeholder?: string;
   className?: string;
+  size?: "default" | "lg";
   disabled?: Matcher | Matcher[];
   locale?: Locale;
   min?: Date;
@@ -64,6 +65,7 @@ export function DateTimePicker({
   onChange,
   placeholder = "Wybierz datę i czas",
   className,
+  size,
   disabled,
   locale = pl,
   min,
@@ -151,6 +153,7 @@ export function DateTimePicker({
           render={
             <Button
               variant="outline"
+              size={size}
               className={cn(
                 "min-w-0 flex-1 justify-start text-left font-normal",
                 !selectedDate && "text-muted-foreground",
@@ -194,8 +197,7 @@ export function DateTimePicker({
         <Button
           type="button"
           variant="ghost"
-          size="icon"
-          className="size-8"
+          size="icon-sm"
           aria-label={clearLabel}
           onClick={handleClear}
         >
