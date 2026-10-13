@@ -30,6 +30,7 @@ import { useLootSearchCommand } from "./use-loot-search-command";
 import {
   allTrue,
   containerVariants,
+  getPlayerRowValue,
   isInScope,
   renderIf,
   type GuildSearchScope,
@@ -93,7 +94,7 @@ export const LootSearchCommand = (
     showSearchResults,
     npcValues: npcResults.map((npc) => `npc-${npc.name}`),
     itemValues: itemResults.map((item) => `item-${item.name}`),
-    playerValues: playerResults.map((player) => `player-${player.id}`),
+    playerValues: playerResults.map(getPlayerRowValue),
     hidValue: isHid && hidItem ? `hid-${hidItem.hid}` : null,
     canSearchDirectly,
   });

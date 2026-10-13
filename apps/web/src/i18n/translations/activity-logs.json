@@ -22,9 +22,6 @@
     },
     "open": "Filtry",
     "clear": "Wyczyść filtry",
-    "world": "Świat",
-    "worldSearchPlaceholder": "Szukaj świata...",
-    "noWorlds": "Brak światów",
     "typeShort": "Typ",
     "selectedCount_one": "{{count}} wybrany",
     "selectedCount_few": "{{count}} wybrane",
@@ -32,7 +29,6 @@
     "chips": {
       "player": "Gracz: {{value}}",
       "clan": "Klan: {{value}}",
-      "world": "Świat: {{value}}",
       "from": "Od: {{value}}",
       "to": "Do: {{value}}"
     },

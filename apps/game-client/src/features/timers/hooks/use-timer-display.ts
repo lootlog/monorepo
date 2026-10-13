@@ -1,8 +1,10 @@
 import { getNpcTypeNames } from "@/constants/margonem";
 import type { Timer } from "@/api/timers.api";
 import { useTimersStore } from "@/store/timers.store";
-import { getTimerColorConfig } from "../utils/timer-helpers";
-import { resolveTimerColorPaint } from "../constants/timer-colors";
+import {
+  getTimerColorConfig,
+  resolveTimerColorPaint,
+} from "@lootlog/domain/timer-colors";
 import { useShallow } from "zustand/react/shallow";
 
 const MANUAL_TIMER_MARGONEM_TYPE = 999;

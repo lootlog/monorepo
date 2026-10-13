@@ -38,6 +38,11 @@ panel nie odtworzy zdarzeń, które miały miejsce wcześniej.
 
 ## Nawigacja między sekcjami
 
+Górny pasek pokazuje nazwę otwartej strony. Na stronie szczegółów, np. roli,
+dokumentu albo rankingu eventu, przed nazwą jest przycisk z nazwą strony
+nadrzędnej, który do niej wraca. Na telefonie ten przycisk ma postać strzałki.
+Zakładki sekcji, np. statystyk czy ustawień, mają w pasku nazwę całej sekcji.
+
 Pierwsze naciśnięcie Tab odsłania link **Przejdź do treści**. Naciśnij Enter,
 aby ominąć panel boczny i przejść do głównej zawartości.
 
@@ -237,12 +242,16 @@ Aby usunąć skrócony link, wyczyść pole i zapisz ustawienia.
 
 ### Lista łupów
 
-Świat wybierasz w górnym pasku, obok nazwy strony. Ten sam wybór obowiązuje na
-liście łupów i w timerach, a panel zapamiętuje go osobno dla każdej organizacji.
+Świat wybierasz przy prawej krawędzi górnego paska. Ten sam wybór obowiązuje na
+liście łupów, w timerach, statystykach i logach aktywności, a panel zapamiętuje
+go osobno dla każdej organizacji. Opcja **Wszystkie światy** pokazuje dane ze
+wszystkich światów organizacji; łupy i timery mają wtedy przy sobie nazwę świata.
+Adres strony zawiera wybrany świat, więc wysłany link otworzy się na tym samym
+świecie.
 
 W prawym górnym rogu jest wyszukiwarka organizacji. Otworzysz ją polem
-**Szukaj…**, polem wyszukiwania na liście łupów albo skrótem **Ctrl + K**
-(na Macu **⌘ + K**) na każdej stronie organizacji. Znajdziesz w niej strony
+**Szukaj…** albo skrótem **Ctrl + K** (na Macu **⌘ + K**) na każdej stronie
+organizacji. Znajdziesz w niej strony
 panelu, przedmioty, potwory i graczy z wybranego świata, a wyniki zawęzisz do
 jednej grupy. Możesz też wkleić identyfikator HID przedmiotu. Wybrany przedmiot,
 potwór lub gracz otwiera listę łupów z tym filtrem.
@@ -257,26 +266,35 @@ Zmiana filtrów lub świata przewija listę łupów na początek. Po pojawieniu 
 nowych łupów rozwinięty stos przedmiotów w widoku listy i siatki pozostaje przypisany
 do tego samego łupu.
 
-Na telefonie wyszukiwarka zajmuje osobny wiersz, a pod nią jest przycisk
-**Filtry**, który otwiera pozostałe filtry. Kropka na przycisku oznacza
-aktywne filtry.
+Przełącznik widoku listy i siatki oraz przycisk filtrów (ikona lejka) są
+w górnym pasku, obok wyszukiwarki. Przycisk otwiera i zamyka panel filtrów;
+kropka na nim oznacza aktywne filtry, gdy panel jest zamknięty. Na telefonie
+filtry otwierasz okrągłym przyciskiem w prawym dolnym rogu ekranu.
 
 ### Timery
 
 Nowe timery, zmiany czasu odrodzenia i usunięcia pojawiają się na żywo
-dla wybranej organizacji i świata. Po ponownym połączeniu panel pobiera
+dla wybranej organizacji i świata. Przy opcji **Wszystkie światy** panel
+pobiera timery każdego świata osobno, tak jak dodatek, i przy każdym timerze
+pokazuje nazwę świata. Po ponownym połączeniu panel pobiera
 aktualną listę, aby uzupełnić zmiany z czasu rozłączenia.
 
-Świat wybierasz w górnym pasku, obok nazwy strony, tak samo jak na liście łupów.
+Świat wybierasz przy prawej krawędzi górnego paska, tak samo jak na liście łupów.
 Podczas pobierania danych nowego świata panel nie pokazuje timerów poprzedniego.
 
 Jeśli pobranie się nie powiedzie, wybierz **Spróbuj ponownie**. Po błędzie
 odświeżania ostatnio pobrane timery pozostają widoczne z ostrzeżeniem,
 że mogą być nieaktualne.
 
-Timer, którego maksymalny czas odrodzenia już minął, ma etykietę **Po czasie**
-zamiast odliczania. W oknie odrodzenia odliczanie ma kolor gotowości, a przy
-ostatnich 30 sekundach kolor ostrzeżenia.
+Timery wyglądają i zachowują się tak jak w dodatku w grze i korzystają z jego
+ustawień zapisanych na koncie. Napis jest biały do minimalnego czasu odrodzenia,
+pomarańczowy w oknie odrodzenia, a po maksymalnym czasie czerwony, z ujemnym
+odliczaniem. Po czasie usuwania ustawionym w dodatku (domyślnie 30 sekund)
+timer znika, chyba że w grze wybrano dla niego **Zostaw po wyzerowaniu**. Taki
+timer zostaje na liście z przygaszonym kolorem, pod aktywnymi timerami.
+Wiersze mają kolory, które przypisano potworom w dodatku, a odliczanie
+pokazuje czas do minimalnego albo maksymalnego odrodzenia, zgodnie z
+ustawieniem trybu odliczania.
 
 ### Gracze na mapie przy legendzie z elity II
 

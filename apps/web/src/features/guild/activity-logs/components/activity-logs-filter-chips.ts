@@ -1,5 +1,4 @@
 import type { FilterChip } from "@/components/common/filter-chip-list";
-import { upperFirst } from "es-toolkit";
 import type {
   ActivitiesControllerFindByGuildSourceItem as ActivitySource,
   ActivitiesControllerFindByGuildTypeItem as ActivityType,
@@ -10,7 +9,6 @@ import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 type ActivityLogsChipFilters = {
   name: string;
   clanName: string;
-  world: string;
   startDate: string;
   endDate: string;
 };
@@ -37,11 +35,6 @@ export const buildActivityLogsFilterChips = ({
   const textChips = [
     { id: "name", key: "player", value: filters.name },
     { id: "clanName", key: "clan", value: filters.clanName },
-    {
-      id: "world",
-      key: "world",
-      value: filters.world && upperFirst(filters.world),
-    },
   ] as const;
 
   const dateChips = [

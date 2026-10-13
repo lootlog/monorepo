@@ -1,3 +1,4 @@
+import { getTimerTimeLeft as getSharedTimerTimeLeft } from "@lootlog/domain/timers";
 import type { Timer } from "@/api/timers.api";
 import type { GuildMember } from "@/types/guild-member";
 
@@ -50,20 +51,5 @@ export const isManualTimer = (timer: Timer) =>
 export const getTimerTimeLeft = (
   timer: Timer,
   now = Date.now(),
-): Pick<TimerWithTimeLeft, "maxTimeLeft" | "minTimeLeft"> => {
-  const deletedAt = timer.deletedAt ? getTimerEpoch(timer.deletedAt) : null;
-
-  if (deletedAt !== null) {
-    const deletedTimeLeft = deletedAt - now;
-
-    return {
-      maxTimeLeft: deletedTimeLeft,
-      minTimeLeft: deletedTimeLeft,
-    };
-  }
-
-  return {
-    maxTimeLeft: getTimerEpoch(timer.maxSpawnTime) - now,
-    minTimeLeft: getTimerEpoch(timer.minSpawnTime) - now,
-  };
-};
+): Pick<TimerWithTimeLeft, "maxTimeLeft" | "minTimeLeft"> =>
+  getSharedTimerTimeLeft(timer, now, getTimerEpoch);

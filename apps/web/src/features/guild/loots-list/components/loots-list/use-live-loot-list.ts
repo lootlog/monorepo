@@ -1,5 +1,5 @@
 import { chunk } from "es-toolkit";
-import { useGuildContext } from "@/hooks/context/use-guild-context";
+import { useGuildWorld } from "@/hooks/context/use-guild-world";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { useViewMode } from "@/hooks/use-view-mode";
@@ -132,7 +132,7 @@ export const useLiveLootList = () => {
   const { t } = useTranslation();
   const themedKey = useThemedKey();
   const guildId = useGuildId();
-  const { world } = useGuildContext();
+  const { world } = useGuildWorld();
   const { socket, connected } = useGateway();
   const queryClient = useQueryClient();
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
@@ -198,7 +198,7 @@ export const useLiveLootList = () => {
         ? lastPage[lastPage.length - 1]?.id
         : undefined,
     initialPageParam: 0,
-    enabled: !!guildId && !!world,
+    enabled: !!guildId,
     staleTime: LOOTS_QUERY_STALE_TIME_MS,
     gcTime: LOOTS_QUERY_GC_TIME_MS,
     retry: false,
@@ -309,7 +309,7 @@ export const useLiveLootList = () => {
   );
 
   useEffect(() => {
-    if (!guildId || !world) return;
+    if (!guildId) return;
 
     const reconciliation = createLootListReconciliation({
       canRefresh: () =>

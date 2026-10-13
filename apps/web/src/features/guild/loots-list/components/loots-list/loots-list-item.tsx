@@ -11,9 +11,18 @@ import { LootPresentation } from "./loot-presentation";
 import { LootHeaderActions } from "./loot-header-actions";
 import { LootItemStackLootIdContext } from "./loot-item-stack-context";
 
-type Props = { loot: Loot; variant?: "card" | "embedded" };
+type Props = {
+  loot: Loot;
+  variant?: "card" | "embedded";
+  /** Names the loot's world, for lists that span every world. */
+  showWorld?: boolean;
+};
 
-export const LootsListItem = ({ loot, variant = "card" }: Props) => {
+export const LootsListItem = ({
+  loot,
+  variant = "card",
+  showWorld = false,
+}: Props) => {
   const { filters, setFilters } = useLootsFilters();
   const { isRukiaTheme } = useThemeMeta();
 
@@ -34,6 +43,7 @@ export const LootsListItem = ({ loot, variant = "card" }: Props) => {
         }
         selectedPlayerNames={filters.players}
         selectedItemNames={filters.itemNames}
+        showWorld={showWorld}
       />
     </LootItemStackLootIdContext>
   );

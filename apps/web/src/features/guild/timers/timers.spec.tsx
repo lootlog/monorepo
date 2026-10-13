@@ -20,10 +20,12 @@ import {
   getTimersControllerGetTimersQueryKey,
   type TimerResponseDto,
 } from "@lootlog/client/main";
+import type { UpdateTimerSettingsPayload } from "@lootlog/schema/timer-settings";
 import { Storage as MemoryStorage } from "happy-dom";
 import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
-import { GuildContext } from "@/contexts/guild.context";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { ThemeContext } from "@/contexts/theme-context";
+import { storeGuildWorld } from "@/hooks/context/use-guild-world";
 import { queryClient } from "@/lib/query-client";
 import { Timers } from "./timers";
 import "@/i18n/config";
@@ -61,7 +63,12 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-async function mount(fetchTimers: () => Promise<Response>) {
+async function mount(
+  fetchTimers: (url: URL) => Promise<Response>,
+  world: string | null = "tempest",
+  timerSettings: UpdateTimerSettingsPayload = {},
+  worldsResponse: () => Response = () => Response.json(["tempest", "pandora"]),
+) {
   const client = new QueryClient({
     defaultOptions: {
       queries: { ...queryClient.getDefaultOptions().queries, retry: false },
@@ -76,9 +83,15 @@ async function mount(fetchTimers: () => Promise<Response>) {
         fetch: async (input) => {
           const url = new URL(String(input));
 
-          if (url.pathname.endsWith("/timers")) return fetchTimers();
+          if (url.pathname.endsWith("/timers")) return fetchTimers(url);
 
-          return Response.json(["tempest", "pandora"]);
+          if (url.pathname.endsWith("/preferences")) {
+            return Response.json({
+              domains: { timers: { effective: timerSettings } },
+            });
+          }
+
+          return worldsResponse();
         },
       },
     }),
@@ -97,9 +110,9 @@ async function mount(fetchTimers: () => Promise<Response>) {
     history: createMemoryHistory({ initialEntries: ["/one/timers"] }),
   });
 
-  const tree = (world: string) => (
+  const tree = (
     <QueryClientProvider client={client}>
-      <GuildContext value={{ world, setWorld: () => undefined }}>
+      <NuqsTestingAdapter>
         <ThemeContext
           value={{
             theme: "default",
@@ -110,17 +123,18 @@ async function mount(fetchTimers: () => Promise<Response>) {
         >
           <RouterProvider router={router} />
         </ThemeContext>
-      </GuildContext>
+      </NuqsTestingAdapter>
     </QueryClientProvider>
   );
 
+  storeGuildWorld("one", world);
   await router.load();
-  const view = render(tree("tempest"));
+  render(tree);
 
   return {
     client,
     router,
-    changeWorld: (world: string) => view.rerender(tree(world)),
+    changeWorld: (world: string) => storeGuildWorld("one", world),
   };
 }
 
@@ -143,11 +157,13 @@ it.each(["world", "organization"])(
 
     await act(async () => {
       if (scope === "world") changeWorld("pandora");
-      else
+      else {
+        storeGuildWorld("two", "tempest");
         await router.navigate({
           to: "/$guildId/timers",
           params: { guildId: "two" },
         });
+      }
     });
     await waitFor(() => expect(fetchTimers).toHaveBeenCalledTimes(2));
     expect(screen.queryByText("Original NPC")).toBeNull();
@@ -226,4 +242,83 @@ it("orders timer groups by NPC type, then spawn time, preserving tied timers", a
       .getAllByText(/^(Late|First tied|Titan|Second tied) NPC$/)
       .map((element) => element.textContent),
   ).toEqual(["Titan NPC", "First tied NPC", "Second tied NPC", "Late NPC"]);
+});
+
+it("reads every world one at a time when the Organization shows all worlds", async () => {
+  const fetchTimers = vi.fn(async (url: URL) => {
+    const world = url.searchParams.get("world") ?? "";
+
+    return Response.json([
+      { ...timer, world, member: { name: `Member ${world}` } },
+    ]);
+  });
+
+  await mount(fetchTimers, null);
+
+  // The same monster on two worlds stays two timers, each naming its world.
+  expect(await screen.findAllByText("Original NPC")).toHaveLength(2);
+  expect(screen.getByText(/^Tempest/)).toBeTruthy();
+  expect(screen.getByText(/^Pandora/)).toBeTruthy();
+  expect(
+    fetchTimers.mock.calls.map(([url]) => url.searchParams.get("world")),
+  ).toEqual(["tempest", "pandora"]);
+});
+
+it("counts past the maximum and drops a timer after the player's removal delay unless pinned", async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  vi.setSystemTime("2026-10-14T12:00:00.000Z");
+  const now = Date.now();
+
+  const expiredTimer = (timerKey: string, name: string, maxAgoMs: number) => ({
+    ...timer,
+    timerKey,
+    npc: { ...timer.npc, name },
+    minSpawnTime: new Date(now - maxAgoMs - 60_000).toISOString(),
+    maxSpawnTime: new Date(now - maxAgoMs).toISOString(),
+  });
+
+  await mount(
+    async () =>
+      Response.json([
+        expiredTimer("overdue", "Overdue NPC", 2_000),
+        expiredTimer("dropped", "Dropped NPC", 6_000),
+        expiredTimer("kept", "Kept NPC", 600_000),
+      ]),
+    "tempest",
+    {
+      generalConfig: { removeTimerAfterMs: 5_000 },
+      alwaysVisibleExpiredTimers: { tempest: ["kept"] },
+    },
+  );
+
+  await screen.findByText("Kept NPC");
+  expect(screen.getByText("Overdue NPC")).toBeTruthy();
+  expect(screen.getByText("-00:00:02")).toBeTruthy();
+  expect(screen.queryByText("Dropped NPC")).toBeNull();
+
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(3_000);
+  });
+  expect(screen.queryByText("Overdue NPC")).toBeNull();
+  expect(screen.getByText("Kept NPC")).toBeTruthy();
+  vi.useRealTimers();
+});
+
+it("offers a retry when the Organization's worlds cannot be read for all worlds", async () => {
+  const worlds = vi
+    .fn<() => Response>()
+    .mockReturnValueOnce(new Response(null, { status: 503 }))
+    .mockReturnValue(Response.json(["tempest"]));
+
+  await mount(async () => Response.json([timer]), null, {}, worlds);
+
+  fireEvent.click(
+    await screen.findByRole(
+      "button",
+      { name: "Spróbuj ponownie" },
+      { timeout: 5_000 },
+    ),
+  );
+  expect(await screen.findByText("Original NPC")).toBeTruthy();
+  expect(worlds).toHaveBeenCalledTimes(2);
 });

@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
-import { Calendar, MapPin, Users, Package } from "lucide-react";
+import { upperFirst } from "es-toolkit";
+import { Calendar, Globe, MapPin, Users, Package } from "lucide-react";
 import { cn } from "cn";
 import {
   LOOT_CARD_DIVIDER_CLASS,
@@ -8,11 +9,14 @@ import {
 import { LootMetaItem } from "./loot-meta-item";
 
 export const LootFooter = ({
+  world,
   location,
   date,
   playersCount,
   itemsCount,
 }: {
+  /** Shown when the list spans every world. */
+  world?: string;
   location: string;
   date: string;
   playersCount: number;
@@ -29,6 +33,15 @@ export const LootFooter = ({
       )}
     >
       {/* One row: the location truncates and the counters keep their width. */}
+      {world && (
+        <LootMetaItem
+          icon={Globe}
+          label={t("loots.list.worldLabel")}
+          className="min-h-5 shrink-0"
+        >
+          {upperFirst(world)}
+        </LootMetaItem>
+      )}
       <LootMetaItem
         icon={MapPin}
         className="min-h-5 min-w-0 flex-1"

@@ -1,5 +1,4 @@
 import { FilterBar } from "@/components/common/filter-bar";
-import { WorldSwitcher } from "@/components/common/world-switcher";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
 import { PeriodSelector } from "@/components/filters/period-selector";
 import type { LootsControllerGetLootStatsPeriod } from "@lootlog/client/main";
@@ -10,19 +9,15 @@ import { Filter } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 type LootStatsFilterBarProps = {
-  world: string | null;
   period: LootsControllerGetLootStatsPeriod;
   excludeColossus: boolean;
-  onWorldChange: (value: string | null) => void;
   onPeriodChange: (value: LootsControllerGetLootStatsPeriod) => void;
   onExcludeColossusChange: (value: boolean) => void;
 };
 
 export const LootStatsFilterBar = ({
-  world,
   period,
   excludeColossus,
-  onWorldChange,
   onPeriodChange,
   onExcludeColossusChange,
 }: LootStatsFilterBarProps) => {
@@ -59,14 +54,6 @@ export const LootStatsFilterBar = ({
           }
         >
           <div className="space-y-2">
-            <Label>{t("kills.filters.world")}</Label>
-            <WorldSwitcher
-              value={world}
-              onValueChange={onWorldChange}
-              width="w-full"
-            />
-          </div>
-          <div className="space-y-2">
             <Label>{t("kills.filters.period")}</Label>
             <PeriodSelector
               value={period}
@@ -79,7 +66,6 @@ export const LootStatsFilterBar = ({
       </div>
 
       <div className="hidden flex-wrap items-center gap-2 md:flex">
-        <WorldSwitcher value={world} onValueChange={onWorldChange} />
         <PeriodSelector value={period} onValueChange={onPeriodChange} />
         {renderExcludeColossus("exclude-colossus")}
       </div>

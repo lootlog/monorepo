@@ -1,23 +1,23 @@
 import { updateSettingsField } from "./update-settings-field";
 import { useLocalStorage } from "usehooks-ts";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useGuildWorld } from "@/hooks/context/use-guild-world";
 import type { LootsControllerGetLootStatsPeriod } from "@lootlog/client/main";
 
-export type LootStatsSettings = {
+type LootStatsSettings = {
   period: LootsControllerGetLootStatsPeriod;
-  world: string | null;
   excludeColossus: boolean;
 };
 
 const DEFAULT_SETTINGS: LootStatsSettings = {
   period: "7d",
-  world: null,
   excludeColossus: false,
 };
 
 export const useLootStatsSettings = () => {
   const guildId = useGuildId();
   const storageKey = `loot-stats-settings-${guildId}`;
+  const { world } = useGuildWorld();
 
   const [settings, setSettings] = useLocalStorage<LootStatsSettings>(
     storageKey,
@@ -28,10 +28,6 @@ export const useLootStatsSettings = () => {
     setSettings((previous) => updateSettingsField(previous, "period", period));
   };
 
-  const setWorld = (world: string | null) => {
-    setSettings((previous) => updateSettingsField(previous, "world", world));
-  };
-
   const setExcludeColossus = (excludeColossus: boolean) => {
     setSettings((previous) =>
       updateSettingsField(previous, "excludeColossus", excludeColossus),
@@ -39,9 +35,13 @@ export const useLootStatsSettings = () => {
   };
 
   return {
-    settings,
+    // The page's own filters, with the Organization's world they apply to.
+    settings: {
+      period: settings.period,
+      excludeColossus: settings.excludeColossus,
+      world,
+    },
     setPeriod,
-    setWorld,
     setExcludeColossus,
   };
 };

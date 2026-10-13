@@ -1,11 +1,9 @@
 import { upperFirst } from "es-toolkit";
 import { Globe } from "lucide-react";
-import { useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "usehooks-ts";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { cn } from "cn";
-import { GuildContext } from "@/contexts/guild.context";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getGuildsControllerGetWorldsByGuildIdQueryKey,
@@ -17,8 +15,9 @@ const ALL_WORLDS_SENTINEL = "__ALL__";
 
 type WorldSwitcherProps = {
   className?: string;
-  value?: string | null;
-  onValueChange?: (world: string | null) => void;
+  /** The selected world; `null` is all worlds. */
+  value: string | null;
+  onValueChange: (world: string | null) => void;
   showAllOption?: boolean;
   width?: string;
   size?: "sm" | "default" | "lg";
@@ -62,14 +61,8 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
   );
 
   const worlds = externalWorlds ?? fetchedWorlds;
-  const guildContext = useContext(GuildContext);
-  const contextWorld = guildContext?.world ?? "";
-  const setContextWorld = guildContext?.setWorld;
   const storageKey = `lootlog:guild:${guildId ?? "global"}:world-order`;
   const [worldOrder, setWorldOrder] = useLocalStorage<string[]>(storageKey, []);
-
-  const isControlled = value !== undefined;
-  const currentWorld = isControlled ? value : contextWorld;
 
   const availableWorlds = new Set(worlds);
   const orderedWorldNames = new Set(worldOrder);
@@ -100,11 +93,7 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
     const actualWorld =
       selectedValue === ALL_WORLDS_SENTINEL ? null : selectedValue;
 
-    if (isControlled) {
-      onValueChange?.(actualWorld);
-    } else {
-      setContextWorld?.(actualWorld ?? "");
-    }
+    onValueChange(actualWorld);
 
     if (actualWorld) {
       setWorldOrder((prev) => [
@@ -115,7 +104,7 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
   };
 
   const displayValue =
-    currentWorld ?? (showAllOption ? ALL_WORLDS_SENTINEL : undefined);
+    value ?? (showAllOption ? ALL_WORLDS_SENTINEL : undefined);
 
   return (
     <div className="relative">

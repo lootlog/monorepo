@@ -2,7 +2,7 @@ import { Option, Schema } from "effect";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
-import { withFallback } from "@/lib/stored-value-schema";
+import { withFallback } from "@lootlog/schema/stored-value";
 
 type HiddenPartyGatherings = Record<string, Record<string, number>>;
 

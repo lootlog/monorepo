@@ -1,7 +1,6 @@
 import { createOrganizationTestWrapper } from "@/lib/testing/router";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { Storage as MemoryStorage } from "happy-dom";
-import { GuildContextProvider } from "@/contexts/guild-provider";
 // @vitest-environment happy-dom
 
 import { initializeTestTranslations } from "@/lib/testing/i18n";
@@ -69,9 +68,7 @@ it("cancels obsolete HID lookups and can fetch again after unmounting", async ()
   const wrapper = ({ children }: PropsWithChildren) => (
     <RouterWrapper>
       <NuqsTestingAdapter>
-        <GuildContextProvider>
-          <QueryClientProvider client={client}>{children}</QueryClientProvider>
-        </GuildContextProvider>
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
       </NuqsTestingAdapter>
     </RouterWrapper>
   );
@@ -187,11 +184,9 @@ describe("LootSearchCommand search failures", () => {
         render(
           <RouterWrapper>
             <NuqsTestingAdapter>
-              <GuildContextProvider>
-                <QueryClientProvider client={client}>
-                  <LootSearchCommand open onOpenChange={() => {}} />
-                </QueryClientProvider>
-              </GuildContextProvider>
+              <QueryClientProvider client={client}>
+                <LootSearchCommand open onOpenChange={() => {}} />
+              </QueryClientProvider>
             </NuqsTestingAdapter>
           </RouterWrapper>,
         );
@@ -252,11 +247,9 @@ describe("LootSearchCommand direct loot search", () => {
           searchParams={options.searchParams ?? ""}
           onUrlUpdate={options.onUrlUpdate}
         >
-          <GuildContextProvider>
-            <QueryClientProvider client={client}>
-              <LootSearchCommand open onOpenChange={() => {}} />
-            </QueryClientProvider>
-          </GuildContextProvider>
+          <QueryClientProvider client={client}>
+            <LootSearchCommand open onOpenChange={() => {}} />
+          </QueryClientProvider>
         </NuqsTestingAdapter>
       </RouterWrapper>,
     );
@@ -363,11 +356,9 @@ describe("LootSearchCommand as the Organization search", () => {
       getParentRoute: () => organization,
       path: "timers",
       component: () => (
-        <GuildContextProvider>
-          <QueryClientProvider client={client}>
-            <LootSearchCommand open onOpenChange={() => {}} />
-          </QueryClientProvider>
-        </GuildContextProvider>
+        <QueryClientProvider client={client}>
+          <LootSearchCommand open onOpenChange={() => {}} />
+        </QueryClientProvider>
       ),
     });
 
@@ -431,22 +422,20 @@ describe("LootSearchCommand as the Organization search", () => {
       render(
         <RouterWrapper>
           <NuqsTestingAdapter>
-            <GuildContextProvider>
-              <QueryClientProvider client={client}>
-                <LootSearchCommand
-                  open
-                  onOpenChange={() => {}}
-                  canSearchLoots={false}
-                  pages={[
-                    {
-                      id: "organization-timers",
-                      label: "Timery",
-                      href: "/test-org/timers",
-                    },
-                  ]}
-                />
-              </QueryClientProvider>
-            </GuildContextProvider>
+            <QueryClientProvider client={client}>
+              <LootSearchCommand
+                open
+                onOpenChange={() => {}}
+                canSearchLoots={false}
+                pages={[
+                  {
+                    id: "organization-timers",
+                    label: "Timery",
+                    href: "/test-org/timers",
+                  },
+                ]}
+              />
+            </QueryClientProvider>
           </NuqsTestingAdapter>
         </RouterWrapper>,
       );

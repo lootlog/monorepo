@@ -37,7 +37,6 @@ export const KillStats = () => {
     settings,
     debouncedMinLvl,
     debouncedMaxLvl,
-    setWorld,
     setMinLvl,
     setMaxLvl,
     setPeriod,
@@ -65,7 +64,6 @@ export const KillStats = () => {
   );
 
   const hasActiveFilters =
-    Boolean(settings.world) ||
     Boolean(settings.minLvl) ||
     Boolean(settings.maxLvl) ||
     settings.period !== "all";
@@ -75,9 +73,7 @@ export const KillStats = () => {
       <div className="flex flex-col gap-3 px-3 pb-3">
         <h1 className="sr-only">{t("common.stats.kills")}</h1>
         <KillStatsFilterBar
-          world={settings.world}
           period={settings.period}
-          onWorldChange={setWorld}
           onPeriodChange={setPeriod}
           level={{
             minLvl: settings.minLvl,

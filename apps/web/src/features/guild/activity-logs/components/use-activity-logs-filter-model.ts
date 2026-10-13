@@ -5,8 +5,6 @@ import {
   getActivitiesControllerSuggestActorNamesQueryOptions,
   getActivitiesControllerSuggestClanNamesQueryKey,
   getActivitiesControllerSuggestClanNamesQueryOptions,
-  getActivitiesControllerSuggestWorldsQueryKey,
-  getActivitiesControllerSuggestWorldsQueryOptions,
 } from "@lootlog/client/activity";
 
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -83,24 +81,6 @@ export const useActivityLogsFilterModel = () => {
     ),
   );
 
-  const { data: worldSuggestionsResponse } = useQuery(
-    getActivitiesControllerSuggestWorldsQueryOptions(
-      { guildId: guildId ?? "" },
-      { limit: 20 },
-      {
-        query: {
-          enabled: Boolean(guildId),
-          queryKey: getActivitiesControllerSuggestWorldsQueryKey(
-            { guildId: guildId ?? "" },
-            { limit: 20 },
-          ),
-          staleTime: 5 * 60 * 1000,
-        },
-      },
-    ),
-  );
-
-  const worlds = worldSuggestionsResponse?.worlds ?? [];
   const nameSuggestions = nameSuggestionsResponse?.suggestions ?? [];
   const clanNameSuggestions = clanNameSuggestionsResponse?.suggestions ?? [];
 
@@ -163,7 +143,6 @@ export const useActivityLogsFilterModel = () => {
         endDate: mergedFilters.endDate || null,
         name: mergedFilters.name || null,
         clanName: mergedFilters.clanName || null,
-        world: mergedFilters.world || null,
       };
     });
   };
@@ -206,7 +185,6 @@ export const useActivityLogsFilterModel = () => {
 
   return {
     filters,
-    worlds,
     selectedTypes,
     selectedSources,
     activeFilterChips,

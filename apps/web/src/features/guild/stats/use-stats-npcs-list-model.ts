@@ -1,3 +1,4 @@
+import { useWorldScopedCursor } from "./hooks/use-world-scoped-cursor";
 import { findNpcType } from "@/constants/npc";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useState } from "react";
@@ -25,18 +26,18 @@ export const useStatsNpcsListModel = () => {
   });
 
   const navigate = useNavigate();
-  const [cursor, setCursor] = useState(0);
 
   const {
     settings,
     debouncedMinLvl,
     debouncedMaxLvl,
-    setWorld,
     setMinLvl,
     setMaxLvl,
     setNpcType,
     setPeriod,
   } = useStatsSettings("npcs-list");
+
+  const [cursor, setCursor] = useWorldScopedCursor(settings.world);
 
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
@@ -68,7 +69,6 @@ export const useStatsNpcsListModel = () => {
   const topNpcs = data?.topNpcs ?? [];
 
   const hasActiveFilters =
-    Boolean(settings.world) ||
     Boolean(settings.minLvl) ||
     Boolean(settings.maxLvl) ||
     settings.period !== "all" ||
@@ -97,11 +97,6 @@ export const useStatsNpcsListModel = () => {
     setCursor(0);
   };
 
-  const handleWorldChange = (value: string | null) => {
-    setWorld(value);
-    setCursor(0);
-  };
-
   const handleMinLvlChange = (value: string) => {
     setMinLvl(value);
     setCursor(0);
@@ -127,7 +122,6 @@ export const useStatsNpcsListModel = () => {
     search,
     handleSearchChange,
     settings,
-    handleWorldChange,
     handleNpcTypeChange,
     handleMinLvlChange,
     handleMaxLvlChange,

@@ -3,6 +3,7 @@ import { updateSettingsField } from "./update-settings-field";
 import { useLocalStorage } from "usehooks-ts";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
+import { useGuildWorld } from "@/hooks/context/use-guild-world";
 import type { NpcType } from "@lootlog/client/main";
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 
@@ -13,16 +14,17 @@ type StatsSettingsPage =
   | "npcs-list"
   | "npc-killers";
 
-export type StatsSettings = {
-  world: string | null;
+type StoredStatsSettings = {
   minLvl: string;
   maxLvl: string;
   npcType?: NpcType | "ALL";
   period?: KillStatsPeriod;
 };
 
-const DEFAULT_SETTINGS: StatsSettings = {
-  world: null,
+/** The page's own filters, with the Organization's world they apply to. */
+export type StatsSettings = StoredStatsSettings & { world: string | null };
+
+const DEFAULT_SETTINGS: StoredStatsSettings = {
   minLvl: "",
   maxLvl: "",
   npcType: "ALL",
@@ -33,7 +35,9 @@ export const useStatsSettings = (page: StatsSettingsPage) => {
   const guildId = useGuildId();
   const storageKey = `stats-settings-${guildId}-${page}`;
 
-  const [settings, setSettings] = useLocalStorage<StatsSettings>(
+  const { world } = useGuildWorld();
+
+  const [settings, setSettings] = useLocalStorage<StoredStatsSettings>(
     storageKey,
     DEFAULT_SETTINGS,
   );
@@ -41,10 +45,6 @@ export const useStatsSettings = (page: StatsSettingsPage) => {
   // Debounced values for API calls
   const debouncedMinLvl = useDebounce(settings.minLvl, 500);
   const debouncedMaxLvl = useDebounce(settings.maxLvl, 500);
-
-  const setWorld = (world: string | null) => {
-    setSettings((previous) => updateSettingsField(previous, "world", world));
-  };
 
   const setMinLvl = (minLvl: string) => {
     setSettings((previous) => updateSettingsField(previous, "minLvl", minLvl));
@@ -71,11 +71,11 @@ export const useStatsSettings = (page: StatsSettingsPage) => {
   return {
     settings: {
       ...settings,
+      world,
       period: settings.period ?? "all",
     },
     debouncedMinLvl: parseKillStatsLevel(debouncedMinLvl),
     debouncedMaxLvl: parseKillStatsLevel(debouncedMaxLvl),
-    setWorld,
     setMinLvl,
     setMaxLvl,
     setNpcType,

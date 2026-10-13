@@ -9,7 +9,7 @@ import {
 import { Storage as MemoryStorage } from "happy-dom";
 import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
 import { configureApiClients } from "@lootlog/client/transport";
-import { GuildContext } from "@/contexts/guild.context";
+import { storeGuildWorld } from "@/hooks/context/use-guild-world";
 import { createTestGateway } from "@/lib/testing/gateway";
 import { createLoot } from "@/lib/testing/loot";
 import { createLootTestWrapper } from "@/lib/testing/loot-wrapper";
@@ -73,17 +73,14 @@ async function mountList(viewMode: string) {
     }),
   );
 
-  const renderApp = (world: string) => (
+  storeGuildWorld("guild-1", "tempest");
+  render(
     <GatewayWrapper>
-      <GuildContext value={{ world, setWorld: () => undefined }}>
-        <LootWrapper>
-          <LootsList />
-        </LootWrapper>
-      </GuildContext>
-    </GatewayWrapper>
+      <LootWrapper>
+        <LootsList />
+      </LootWrapper>
+    </GatewayWrapper>,
   );
-
-  const view = render(renderApp("tempest"));
   await act(async () => {
     await vi.advanceTimersByTimeAsync(1);
   });
@@ -101,8 +98,8 @@ async function mountList(viewMode: string) {
       });
     },
     changeWorld: async () => {
-      view.rerender(renderApp("katahha"));
       await act(async () => {
+        storeGuildWorld("guild-1", "katahha");
         await vi.advanceTimersByTimeAsync(1);
       });
     },
