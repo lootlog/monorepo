@@ -1,7 +1,15 @@
 /** Endpoints owned by the internal HTTP module. */
-import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/http-api";
-import { OrganizationSummary } from "#src/contracts/shared";
 import {
+  HttpApiEndpoint,
+  HttpApiGroup,
+  HttpApiSchema,
+  OpenApi,
+} from "effect/http-api";
+import { OrganizationSummary } from "#src/contracts/shared";
+import { HttpErrorResponse } from "../shared.js";
+import {
+  InternalMemberIdentityPath,
+  InternalMemberIdentityResponse,
   OrganizationLookupPath,
   InternalUserPermissionsResponse,
   InternalUserPermissionsQuery,
@@ -38,5 +46,20 @@ export class InternalGroup extends HttpApiGroup.make("internal").add(
     .annotate(
       OpenApi.Description,
       "Internal endpoint for services that need to resolve a guild identifier to its canonical guild data.",
+    ),
+  HttpApiEndpoint.get(
+    "GuildsInternalControllerGetMemberIdentity",
+    "/internal/guilds/:guildId/members/:discordId/identity",
+    {
+      params: InternalMemberIdentityPath,
+      success: InternalMemberIdentityResponse,
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+    },
+  )
+    .annotate(OpenApi.Identifier, "GuildsInternalController_getMemberIdentity")
+    .annotate(OpenApi.Summary, "[Internal] Resolve an active member's User")
+    .annotate(
+      OpenApi.Description,
+      "Internal endpoint for the Discord bot to resolve the Lootlog User behind an active member's Discord identity in a guild.",
     ),
 ) {}

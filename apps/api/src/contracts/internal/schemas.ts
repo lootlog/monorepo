@@ -30,3 +30,17 @@ export type OrganizationLookupPath = typeof OrganizationLookupPath.Type;
 export const OrganizationLookupPath = Schema.Struct({
   idOrVanityUrl: Schema.String,
 });
+
+export type InternalMemberIdentityPath = typeof InternalMemberIdentityPath.Type;
+
+export const InternalMemberIdentityPath = Schema.Struct({
+  guildId: Schema.String,
+  discordId: Schema.String,
+});
+
+export type InternalMemberIdentityResponse =
+  typeof InternalMemberIdentityResponse.Type;
+
+export const InternalMemberIdentityResponse = Schema.Struct({
+  userId: Schema.String,
+}).annotate({ identifier: "InternalMemberIdentityDto" });

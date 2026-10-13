@@ -26,7 +26,10 @@ import { yieldToEventLoop } from "#src/platform/background-tasks";
 import type { RedisGatewayStore } from "#src/platform/redis-store";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
-import { canReadPreciseLocation } from "#src/realtime/subscription-policy";
+import {
+  canReadPreciseLocation,
+  type PermissionViewer,
+} from "#src/realtime/subscription-policy";
 import type { CoveragePublisher } from "#src/rabbit/coverage-publisher";
 import { Effect, Option, Schedule, Schema } from "effect";
 import {
@@ -1000,7 +1003,7 @@ export class PresenceStore {
   }
 
   snapshot(
-    viewer: SessionData,
+    viewer: PermissionViewer,
     organizationId: string,
     world?: string,
   ): Effect.Effect<Snapshot, PresenceFailure> {
