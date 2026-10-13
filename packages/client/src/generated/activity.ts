@@ -849,7 +849,7 @@ export const prefetchHealthzControllerCheckQuery = async <TData = Awaited<Return
 
   const queryOptions = getHealthzControllerCheckQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -993,7 +993,7 @@ export const prefetchReadyzControllerCheckQuery = async <TData = Awaited<ReturnT
 
   const queryOptions = getReadyzControllerCheckQueryOptions(options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -1160,7 +1160,7 @@ export const prefetchActivitiesControllerFindByGuildQuery = async <TData = Await
 
   const queryOptions = getActivitiesControllerFindByGuildQueryOptions({ guildId },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -1322,7 +1322,7 @@ export const prefetchActivitiesControllerSuggestActorNamesQuery = async <TData =
 
   const queryOptions = getActivitiesControllerSuggestActorNamesQueryOptions({ guildId },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -1484,7 +1484,7 @@ export const prefetchActivitiesControllerSuggestWorldsQuery = async <TData = Awa
 
   const queryOptions = getActivitiesControllerSuggestWorldsQueryOptions({ guildId },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -1646,7 +1646,7 @@ export const prefetchActivitiesControllerSuggestClanNamesQuery = async <TData = 
 
   const queryOptions = getActivitiesControllerSuggestClanNamesQueryOptions({ guildId },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -1816,7 +1816,7 @@ export const prefetchActivitiesControllerFindByUserQuery = async <TData = Awaite
 
   const queryOptions = getActivitiesControllerFindByUserQueryOptions({ guildId, userId },params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -1962,7 +1962,7 @@ export const prefetchActivitiesControllerGetMemberActivityStatsQuery = async <TD
 
   const queryOptions = getActivitiesControllerGetMemberActivityStatsQueryOptions({ guildId },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -2105,7 +2105,7 @@ export const prefetchActivitiesControllerFindOneQuery = async <TData = Awaited<R
 
   const queryOptions = getActivitiesControllerFindOneQueryOptions({ guildId, id },options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }
@@ -2330,7 +2330,7 @@ export const prefetchUsersActivityControllerGetOnlineQuery = async <TData = Awai
 
   const queryOptions = getUsersActivityControllerGetOnlineQueryOptions(params,options)
 
-  await queryClient.prefetchQuery(queryOptions);
+  await queryClient.query(queryOptions).catch(() => {});
 
   return queryClient;
 }

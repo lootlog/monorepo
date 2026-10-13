@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.27.0
 
-FROM oven/bun:1.4.2-alpine@sha256:d888c0ae6c86d7866ff10c5aafdd9077b36aee6455b33dd270fb93c0dd5cef6f AS build-base
+FROM oven/bun:1.4.3-alpine@sha256:629e17411f1f129dbec3af78d5af9c9f2a937435c80349437206c6b0b7422373 AS build-base
 
 ENV HUSKY=0
 ENV TURBO_TELEMETRY_DISABLED=1
@@ -50,7 +50,7 @@ RUN rm -rf node_modules/typescript node_modules/.bun/typescript@* node_modules/.
 COPY --from=pruner /pruned/full/ .
 COPY --from=builder "/usr/src/app/${APP_DIR}/dist" "/usr/src/app/${APP_DIR}/dist"
 
-FROM oven/bun:1.4.2-alpine@sha256:d888c0ae6c86d7866ff10c5aafdd9077b36aee6455b33dd270fb93c0dd5cef6f AS runtime
+FROM oven/bun:1.4.3-alpine@sha256:629e17411f1f129dbec3af78d5af9c9f2a937435c80349437206c6b0b7422373 AS runtime
 
 ARG APP_DIR
 ARG GITHUB_SHA
