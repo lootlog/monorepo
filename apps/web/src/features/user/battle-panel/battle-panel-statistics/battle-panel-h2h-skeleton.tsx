@@ -9,6 +9,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Swords } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { HeadToHeadFilterChipsSkeleton } from "./components/head-to-head-filter-chips-skeleton";
 import type { HeadToHeadPageVariantProps } from "./use-head-to-head-page";
 
 const noop = () => undefined;
@@ -18,7 +19,7 @@ type BattlePanelH2hSkeletonProps = {
   mobileCard: ReactNode;
 } & (
   | ({
-      /** `HeadToHeadPageVariant`: static titles, and a character filter chip by default. */
+      /** `HeadToHeadPageVariant`: static titles, and the character filter chip once a character is known. */
       variant: "head-to-head";
     } & Pick<HeadToHeadPageVariantProps, "subtitleKey" | "titleKey">)
   | {
@@ -90,12 +91,7 @@ export const BattlePanelH2hSkeleton = (props: BattlePanelH2hSkeletonProps) => {
               )
             }
           />
-          {isHeadToHead && (
-            <div className="flex items-center gap-2 border-b border-border bg-background/55 px-3 py-2">
-              <Skeleton className="h-7 w-[88px] rounded-xl" />
-              <Skeleton className="ml-auto h-7 w-[98px] rounded-xl" />
-            </div>
-          )}
+          {isHeadToHead && <HeadToHeadFilterChipsSkeleton />}
           <div className="relative min-h-0 flex-1 overflow-hidden">
             <TableRowsSkeleton
               withHeader
