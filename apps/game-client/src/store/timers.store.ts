@@ -2,14 +2,14 @@ import {
   getCharacterFilterKey,
   migrateCharacterFilters,
 } from "@/lib/character-filter-scope";
-import { decodeTimerSettings } from "./timer-settings-codec";
-import type {
-  UpdateTimerSettingsPayload,
-  TimersFilters,
-  TimersDisplayConfig,
-  TimersGeneralConfig as SharedTimersGeneralConfig,
-  CustomTimerColor,
-  CustomTimerList,
+import {
+  decodeTimerSettings,
+  type UpdateTimerSettingsPayload,
+  type TimersFilters,
+  type TimersDisplayConfig,
+  type TimersGeneralConfig as SharedTimersGeneralConfig,
+  type CustomTimerColor,
+  type CustomTimerList,
 } from "@lootlog/schema/timer-settings";
 import { NpcType } from "@/api/npcs.api";
 import { create } from "zustand";

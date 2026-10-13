@@ -60,6 +60,7 @@ it("refreshes simultaneous expiries once, preserves scope, and handles a reset t
         currentTimers,
         queryKey,
         Date.parse("2026-09-05T12:00:00Z"),
+        0,
       );
     },
     {
@@ -132,6 +133,7 @@ it.each([
           [{ world: "tempest", timerKey: "expired", maxSpawnTime: expiredAt }],
           queryKey,
           Date.parse("2026-09-05T12:00:00Z"),
+          0,
         ),
       {
         wrapper: ({ children }: PropsWithChildren) => (

@@ -4,7 +4,7 @@ import { createTimerFixture } from "../timer-fixtures";
 import { TimerClockProvider } from "./timer-clock-provider";
 
 import { TimerLiveTile } from "./timer-live-tile";
-import { TIMERS_COLORS } from "../constants/timer-colors";
+import { TIMERS_COLORS } from "@lootlog/domain/timer-colors";
 
 const NOW = new Date("2026-07-20T10:00:00.000Z");
 

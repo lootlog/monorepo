@@ -1,5 +1,4 @@
 import { uniqBy } from "es-toolkit";
-import type { UserTimerSettings } from "@lootlog/schema/timer-settings";
 import type { Timer } from "@/api/timers.api";
 import type { GuildMember } from "@/types/guild-member";
 
@@ -40,36 +39,4 @@ export const getMembersWithGuilds = (
 
     return { id: member.id, memberLabel, characterLabel };
   });
-};
-
-export const calculateTimeLeft = (
-  minTimeLeft: number,
-  maxTimeLeft: number,
-  countdownMode: "min" | "max",
-  isMinSpawnTime: boolean,
-) => {
-  if (countdownMode === "max" || isMinSpawnTime) {
-    return maxTimeLeft;
-  }
-
-  return minTimeLeft;
-};
-
-export const getTimerColorConfig = (
-  npcName: string,
-  timersColors: UserTimerSettings["timersColors"],
-  customColors: Record<
-    string,
-    { id: string; name: string; backgroundColor: string; borderColor: string }
-  >,
-  overriddenDefaultColors: Record<
-    string,
-    { backgroundColor: string; borderColor: string }
-  >,
-) => {
-  const selectedColor = timersColors[npcName] ?? "white";
-  const customColor = customColors[selectedColor];
-  const overriddenColor = overriddenDefaultColors[selectedColor];
-
-  return { selectedColor, customColor, overriddenColor };
 };

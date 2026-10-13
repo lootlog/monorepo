@@ -7,7 +7,7 @@ import { useSettingsStore } from "@/store/settings.store";
 import { useGlobalStore } from "@/store/global.store";
 import { useGameStore } from "@/store/game.store";
 import { TIMERS_STORAGE_KEY, useTimersStore } from "@/store/timers.store";
-import { decodeTimerSettings } from "@/store/timer-settings-codec";
+import { decodeTimerSettings } from "@lootlog/schema/timer-settings";
 import { GLOBAL_TIMER_SETTINGS_KEY } from "@/store/timer-settings-sync";
 import { npcsDetectionProcessor } from "@/processors/npcs-detection-processor";
 import {

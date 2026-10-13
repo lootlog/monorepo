@@ -232,6 +232,8 @@ export const LootsList = () => {
             })}
           </div>
         )}
+        {/* Keeps the last loot clear of the phone's floating filters button. */}
+        <div aria-hidden="true" className="h-20 md:hidden" />
       </ScrollArea>
     </SharedTooltipProvider>
   );

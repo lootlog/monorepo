@@ -9,7 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
+import { TIMERS_COLORS } from "@lootlog/domain/timer-colors";
 import { getDefaultColorName } from "@/features/timers/utils/get-default-color-name";
 import { useTimersStore } from "@/store/timers.store";
 import { Plus } from "lucide-react";

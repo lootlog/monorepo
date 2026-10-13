@@ -3,10 +3,8 @@ import { NpcType } from "@/api/npcs.api";
 import type { Timer } from "@/api/timers.api";
 import { useTimersStore } from "@/store/timers.store";
 import {
-  calculateTimeLeft,
   getLevelSuffix,
   getMembersWithGuilds,
-  getTimerColorConfig,
   getTimerMembers,
 } from "./timer-helpers";
 
@@ -109,63 +107,5 @@ describe("timer-helpers", () => {
       { id: 1, memberLabel: "Alice (Alpha)", characterLabel: undefined },
       { id: 2, memberLabel: "Bob (Beta)", characterLabel: undefined },
     ]);
-  });
-
-  it("chooses the correct countdown based on mode and min-spawn state", () => {
-    expect(calculateTimeLeft(5_000, 10_000, "max", false)).toBe(10_000);
-    expect(calculateTimeLeft(5_000, 10_000, "min", false)).toBe(5_000);
-    expect(calculateTimeLeft(-1, 10_000, "min", true)).toBe(10_000);
-  });
-
-  it("resolves selected default, custom, and overridden colors", () => {
-    expect(
-      getTimerColorConfig(
-        "Tanroth",
-        {
-          Tanroth: "white",
-        },
-        {},
-        {
-          white: {
-            backgroundColor: "#111",
-            borderColor: "#222",
-          },
-        },
-      ),
-    ).toEqual({
-      selectedColor: "white",
-      customColor: undefined,
-      overriddenColor: {
-        backgroundColor: "#111",
-        borderColor: "#222",
-      },
-    });
-
-    expect(
-      getTimerColorConfig(
-        "Mushita",
-        {
-          Mushita: "custom-red",
-        },
-        {
-          "custom-red": {
-            id: "custom-red",
-            name: "Custom Red",
-            backgroundColor: "#faa",
-            borderColor: "#f00",
-          },
-        },
-        {},
-      ),
-    ).toEqual({
-      selectedColor: "custom-red",
-      customColor: {
-        id: "custom-red",
-        name: "Custom Red",
-        backgroundColor: "#faa",
-        borderColor: "#f00",
-      },
-      overriddenColor: undefined,
-    });
   });
 });

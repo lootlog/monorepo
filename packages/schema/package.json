@@ -32,6 +32,7 @@
     "./settings-documents": "./src/settings-documents.ts",
     "./sound-settings": "./src/sound-settings.ts",
     "./stable-json": "./src/stable-json.ts",
+    "./stored-value": "./src/stored-value.ts",
     "./timer-settings": "./src/timer-settings.ts",
     "./user-preferences": "./src/user-preferences.ts",
     "./records": "./src/records.ts",

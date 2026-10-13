@@ -12,13 +12,18 @@ const getTimerIdentity = (
   timer: Pick<TimerResponseDto, "world" | "timerKey">,
 ) => `${timer.world}:${timer.timerKey}`;
 
-/** Refetches the timers list `queryKey` names once one of its timers expires. */
+/**
+ * Refetches the timer lists under `queryKey` once one of their timers has been
+ * past its maximum spawn time for the removal delay, when the game client drops
+ * it too; the server then keeps only the timers the player pinned.
+ */
 export function useTimerExpiry(
   timers:
     | Pick<TimerResponseDto, "world" | "timerKey" | "maxSpawnTime">[]
     | undefined,
   queryKey: QueryKey | null,
   fetchedAt: number,
+  removeTimerAfterMs: number,
 ) {
   const queryClient = useQueryClient();
   const expiredRef = useRef(new Map<string, string>());
@@ -30,11 +35,11 @@ export function useTimerExpiry(
     let hasNewExpiry = false;
 
     for (const timer of timers ?? []) {
-      const maxSpawnTime = Date.parse(timer.maxSpawnTime);
+      const removedAt = Date.parse(timer.maxSpawnTime) + removeTimerAfterMs;
 
       if (
-        maxSpawnTime > currentTime ||
-        maxSpawnTime <= fetchedAt - RESPONSE_LATENCY_ALLOWANCE_MS
+        removedAt > currentTime ||
+        removedAt <= fetchedAt - RESPONSE_LATENCY_ALLOWANCE_MS
       )
         continue;
       const identity = getTimerIdentity(timer);
@@ -49,7 +54,7 @@ export function useTimerExpiry(
     expiredRef.current = expired;
 
     if (hasNewExpiry && queryKey) {
-      void queryClient.invalidateQueries({ queryKey, exact: true });
+      void queryClient.invalidateQueries({ queryKey });
     }
   });
 

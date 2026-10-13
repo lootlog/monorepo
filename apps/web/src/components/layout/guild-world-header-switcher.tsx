@@ -12,13 +12,14 @@ export const GuildWorldHeaderSwitcher = () => {
         value={world}
         onValueChange={setWorld}
         showAllOption
-        size="sm"
-        variant="ghost"
+        size="default"
+        variant="outline"
         align="end"
         width="w-auto max-w-52"
         iconClassName="text-primary"
         contentClassName="w-48 max-w-none"
-        triggerClassName="rounded-md"
+        // Matches the view toggle and filters button in the same bar.
+        triggerClassName="rounded-md border-border"
       />
     </HeaderSlotPortal>
   );

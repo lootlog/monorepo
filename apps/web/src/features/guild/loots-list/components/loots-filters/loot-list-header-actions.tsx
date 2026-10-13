@@ -1,10 +1,12 @@
 import { Button } from "@lootlog/ui/components/button";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
+import { cn } from "cn";
 import { Filter } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
 import { ViewModeToggle } from "@/components/ui/view-mode-toggle";
 import { useViewMode } from "@/hooks/use-view-mode";
+import { LootFiltersActiveDot } from "./loot-filters-active-dot";
 import {
   LOOTS_GRID_MEDIA_QUERY,
   LOOTS_VIEW_MODE_KEY,
@@ -45,24 +47,27 @@ export const LootListHeaderActions = ({
           size="default"
         />
       )}
-      <Button
-        type="button"
-        variant={isFiltersOpen ? "default" : "outline"}
-        size={isMobile ? "icon-sm" : "default"}
-        onClick={onToggleFilters}
-        aria-label={isMobile ? t("loots.header.filtersButton") : undefined}
-        aria-expanded={isFiltersOpen}
-        className="relative shrink-0"
-      >
-        <Filter aria-hidden="true" />
-        {!isMobile && t("loots.header.filtersButton")}
-        {hasActiveFilters && !isFiltersOpen && (
-          <span
-            aria-hidden="true"
-            className="absolute -top-1 -right-1 size-3 animate-pop-in rounded-full border-2 border-background bg-primary motion-reduce:animate-none"
-          />
-        )}
-      </Button>
+      {/* Phones open the filters from a floating button instead. */}
+      {!isMobile && (
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={onToggleFilters}
+          aria-label={t("loots.header.filtersButton")}
+          aria-expanded={isFiltersOpen}
+          // Drawn like the view toggle beside it: the border stays and an open
+          // panel fills only the inside, as the toggle's selected segment does.
+          className={cn(
+            "relative shrink-0 rounded-md border-border bg-background",
+            isFiltersOpen &&
+              "bg-primary text-primary-foreground hover:border-border hover:bg-primary/90 hover:text-primary-foreground",
+          )}
+        >
+          <Filter aria-hidden="true" />
+          {hasActiveFilters && !isFiltersOpen && <LootFiltersActiveDot />}
+        </Button>
+      )}
     </HeaderSlotPortal>
   );
 };
