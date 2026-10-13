@@ -39,7 +39,7 @@ export const EventMemberSkeleton = () => {
       </div>
       <SectionCard className="w-full overflow-hidden">
         <SectionCardHeader icon={Skull} title={t("events.kills.title")} />
-        <TableRowsSkeleton rows={7} withHeader />
+        <TableRowsSkeleton rows={7} withHeader rowContent="text" />
       </SectionCard>
     </div>
   );

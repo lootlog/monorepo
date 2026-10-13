@@ -19,6 +19,7 @@ import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { Button } from "@lootlog/ui/components/button";
 import { EmptyState } from "@/components/common/empty-state";
 import { ResultsSurface } from "@/components/common/results-surface";
+import { CardListSkeleton } from "@/components/common/card-list-skeleton";
 import { CircleAlert, FilterX, SearchX, Skull } from "lucide-react";
 import {
   KillsFilters,
@@ -26,6 +27,7 @@ import {
 } from "./components/kills-filters";
 import { createKillsColumns } from "./components/kills-columns";
 import { KillsMobileList } from "./components/kills-mobile-list";
+import { KillsMobileCardSkeleton } from "./components/kills-mobile-card-skeleton";
 import { NPC_TYPES, type NpcType } from "@/features/user/kills/npc-types";
 import {
   type KillsControllerGetUserNpcKillsParams,
@@ -185,7 +187,14 @@ export const KillsPage: React.FC = () => {
 
   const renderResults = () => {
     if (isLoading) {
-      return <TableRowsSkeleton withHeader withNpcTile trailingColumns={2} />;
+      return (
+        <TableRowsSkeleton
+          withHeader
+          withNpcTile
+          trailingColumns={2}
+          mobileList={<CardListSkeleton card={<KillsMobileCardSkeleton />} />}
+        />
+      );
     }
 
     if (isError && !data) {

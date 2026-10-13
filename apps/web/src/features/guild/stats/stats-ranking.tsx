@@ -7,6 +7,7 @@ import { KillStatsFilterBar } from "@/features/kills/components/kill-stats-filte
 import { MemberNameWithColor } from "./components/member-name-with-color";
 import { StatsCountCell } from "./components/stats-count-cell";
 import { StatsMemberAvatar } from "./components/stats-member-avatar";
+import { StatsMobileListSkeleton } from "./components/stats-mobile-list-skeleton";
 import { RankBadge } from "@/components/common/rank-badge";
 import {
   STATS_TABLE_COUNT_COLUMN_ID,
@@ -126,6 +127,10 @@ export const StatsRanking = () => {
 
       <StatsTableCard
         isLoading={isLoading}
+        rowContent="text"
+        mobileSkeleton={
+          <StatsMobileListSkeleton media="avatar" withTypeCounts />
+        }
         emptyMessage={
           paginatedData.length === 0
             ? t(
