@@ -66,7 +66,7 @@
   --font-mono:
     "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     monospace;
-  --radius: 0.75rem;
+  --radius: 0.625rem;
   --shadow-2xs: 0 2px 6px -3px rgb(0 0 0 / 0.3);
   --shadow-xs: 0 4px 12px -6px rgb(0 0 0 / 0.36);
   --shadow-sm: 0 8px 20px -12px rgb(0 0 0 / 0.42);
@@ -421,7 +421,8 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
+  /* Card and divider borders sit halfway between the theme border and the card. */
+  --color-border: color-mix(in oklab, var(--border) 50%, var(--card));
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-chart-1: var(--chart-1);
@@ -456,7 +457,7 @@
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 2px);
 
   --shadow-2xs: var(--shadow-2xs);
   --shadow-xs: var(--shadow-xs);
@@ -966,10 +967,6 @@ body {
 }
 
 /* ===== CAT THEME: Wspólne dekoracje ===== */
-:is(.cat-pink, .cat-purple, .cat-blue) {
-  --radius: 0.75rem;
-}
-
 /* Cat paw spinner — tinted via theme filter */
 .cat-paw-spinner {
   filter: var(--cat-spinner-filter);

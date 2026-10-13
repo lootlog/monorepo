@@ -8,7 +8,7 @@ export const SettingsTableSkeleton = () => (
   <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden px-3 pb-3">
     <SectionCard className="min-h-0 flex-1 overflow-hidden">
       <TableFilterToolbar>
-        <Skeleton className="h-10 w-full rounded-xl" />
+        <Skeleton className="h-10 w-full rounded-lg" />
       </TableFilterToolbar>
       <TableRowsSkeleton
         rows={8}

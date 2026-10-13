@@ -51,7 +51,7 @@ export const HeroTimerCountdownContent = ({ timer }: { timer: EventTimer }) => {
           <button
             type="button"
             className={cn(
-              "flex h-9 items-center gap-1.5 rounded-xl px-3 text-sm font-medium",
+              "flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium",
               isWaiting
                 ? "bg-signal-timer/10 text-signal-timer"
                 : "bg-signal-ready/10 text-signal-ready",

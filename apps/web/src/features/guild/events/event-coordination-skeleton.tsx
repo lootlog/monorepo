@@ -54,7 +54,7 @@ export const EventCoordinationSkeleton = () => {
           />
           <div className="space-y-3 p-3">
             <div className="flex flex-wrap items-center gap-2">
-              <Skeleton className="size-10 shrink-0 rounded-xl" />
+              <Skeleton className="size-10 shrink-0 rounded-lg" />
               <Skeleton className="h-5 w-16 rounded-full" />
               <Skeleton className="h-5 w-24 rounded-full" />
               <Skeleton className="h-5 w-28 rounded-full" />

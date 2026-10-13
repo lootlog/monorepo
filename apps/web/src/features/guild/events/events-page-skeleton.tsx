@@ -6,7 +6,7 @@ export const EventsPageSkeleton = () => (
   <div aria-busy="true" className="flex h-full min-h-0 flex-col">
     <div className="px-3 pt-3">
       <FilterBar>
-        <Skeleton className="h-10 min-w-0 flex-1 rounded-xl" />
+        <Skeleton className="h-10 min-w-0 flex-1 rounded-lg" />
         <Skeleton className="h-10 w-full rounded-md sm:w-36" />
       </FilterBar>
     </div>

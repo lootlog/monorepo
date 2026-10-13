@@ -38,7 +38,7 @@ export const InfoSettingsSkeletonCards = () => {
               {t("settings.guildInfo.syncStatusDescription")}
             </span>
           }
-          actions=<Skeleton className="h-8 w-28 rounded-xl" />
+          actions=<Skeleton className="h-8 w-28 rounded-lg" />
         />
         <SectionCardContent>
           <dl className="grid gap-3 lg:grid-cols-3">

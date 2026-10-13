@@ -22,8 +22,8 @@ export const GuildDocEditorSkeleton = () => {
             status=<Skeleton className="h-[22px] w-24 rounded-full" />
             actions={
               <>
-                <Skeleton className="size-9 rounded-xl" />
-                <Skeleton className="size-9 rounded-xl" />
+                <Skeleton className="size-9 rounded-lg" />
+                <Skeleton className="size-9 rounded-lg" />
               </>
             }
           />
@@ -32,7 +32,7 @@ export const GuildDocEditorSkeleton = () => {
             <SectionCardContent className="flex min-h-0 flex-col gap-3">
               <div className="space-y-2">
                 <Skeleton className="h-3.5 w-24" />
-                <Skeleton className="h-9 w-full rounded-xl" />
+                <Skeleton className="h-9 w-full rounded-lg" />
               </div>
               <div className="flex min-h-[420px] flex-col overflow-hidden rounded-md border border-border bg-background">
                 <div className="shrink-0 border-b border-border bg-muted/30 p-2">

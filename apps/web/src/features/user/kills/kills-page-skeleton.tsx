@@ -11,12 +11,12 @@ export const KillsPageSkeleton = () => {
     <div className="flex h-full min-h-0 flex-col gap-3 p-3">
       <PageHeaderSkeleton />
       <FilterBar>
-        <Skeleton className="h-10 min-w-0 flex-1 rounded-xl md:w-[220px] md:flex-none" />
-        <Skeleton className="size-10 rounded-xl md:hidden" />
-        <Skeleton className="hidden h-10 w-[200px] rounded-xl md:block" />
-        <Skeleton className="hidden h-10 w-[200px] rounded-xl md:block" />
-        <Skeleton className="hidden h-10 w-[200px] rounded-xl md:block" />
-        <Skeleton className="hidden h-10 w-[167px] rounded-xl md:block" />
+        <Skeleton className="h-10 min-w-0 flex-1 rounded-lg md:w-[220px] md:flex-none" />
+        <Skeleton className="size-10 rounded-lg md:hidden" />
+        <Skeleton className="hidden h-10 w-[200px] rounded-lg md:block" />
+        <Skeleton className="hidden h-10 w-[200px] rounded-lg md:block" />
+        <Skeleton className="hidden h-10 w-[200px] rounded-lg md:block" />
+        <Skeleton className="hidden h-10 w-[167px] rounded-lg md:block" />
       </FilterBar>
       <SectionCard className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="min-h-0 flex-1 overflow-hidden">

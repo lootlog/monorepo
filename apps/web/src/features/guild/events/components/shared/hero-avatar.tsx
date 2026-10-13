@@ -16,8 +16,9 @@ type HeroAvatarProps = {
 export const HeroAvatar = ({ hero, size = "default" }: HeroAvatarProps) => (
   <div
     className={cn(
-      "flex shrink-0 items-center justify-center rounded-xl",
-      size === "default" && "size-10",
+      "flex shrink-0 items-center justify-center",
+      size === "default" && "size-10 rounded-lg",
+      size === "portrait" && "rounded-xl",
       size === "portrait" && (hero.npcIcon ? "h-16" : "size-16"),
       !hero.npcIcon && "bg-yellow-500/10 ring-1 ring-inset ring-border/70",
     )}

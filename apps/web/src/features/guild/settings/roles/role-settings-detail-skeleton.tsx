@@ -31,9 +31,9 @@ export const RoleSettingsDetailSkeleton = () => {
           />
           <SectionCardContent>
             <div className="flex items-center gap-3">
-              <Skeleton className="h-9 w-full max-w-[100px] rounded-xl" />
+              <Skeleton className="h-9 w-full max-w-[100px] rounded-lg" />
               <span className="text-muted-foreground">-</span>
-              <Skeleton className="h-9 w-full max-w-[100px] rounded-xl" />
+              <Skeleton className="h-9 w-full max-w-[100px] rounded-lg" />
             </div>
           </SectionCardContent>
         </SectionCard>

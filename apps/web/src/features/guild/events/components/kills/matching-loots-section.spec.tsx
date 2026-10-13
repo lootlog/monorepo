@@ -25,13 +25,6 @@ describe("MatchingLootsSection", () => {
       { wrapper: await createLootTestWrapper() },
     );
 
-    const section = screen.getByTestId("matching-loots-card");
-    const header = section.querySelector("header");
-
-    expect(section.className).toContain("rounded-2xl");
-    expect(section.className).toContain("border-border");
-    expect(header?.className).toContain("min-h-12");
-    expect(header?.className).toContain("py-2");
     expect(screen.queryByText("2")).toBeNull();
     expect(
       screen

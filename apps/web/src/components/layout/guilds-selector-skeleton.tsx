@@ -10,7 +10,7 @@ export const GuildsSelectorSkeleton: FC = () => {
   return (
     <div className="flex flex-col items-center gap-2.5 px-[10px] pt-1">
       {skeletonItems.map((i) => (
-        <Skeleton key={i} className="size-11 rounded-xl" />
+        <Skeleton key={i} className="size-11 rounded-lg" />
       ))}
     </div>
   );

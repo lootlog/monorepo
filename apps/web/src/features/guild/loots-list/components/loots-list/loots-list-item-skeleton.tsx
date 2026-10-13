@@ -44,8 +44,8 @@ export const LootsListItemSkeleton: React.FC<Props> = ({ index = 0 }) => {
           {index % 2 === 0 && <Skeleton className="h-5 w-12 rounded-md" />}
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <Skeleton className="h-8 w-11 rounded-xl" />
-          <Skeleton className="h-8 w-8 rounded-xl sm:w-24" />
+          <Skeleton className="h-8 w-11 rounded-lg" />
+          <Skeleton className="h-8 w-8 rounded-lg sm:w-24" />
         </div>
       </div>
 

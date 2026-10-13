@@ -130,7 +130,7 @@ export const LootsFiltersSidebar = (
             embeddedValue(
               embedded,
               "border-0",
-              "rounded-2xl border border-border",
+              "rounded-xl border border-border",
             ),
           )}
         >

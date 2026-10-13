@@ -29,8 +29,8 @@ export const HeadToHeadFilterChipsSkeleton = () => {
 
   return (
     <div className="flex items-center gap-2 border-b border-border bg-background/55 px-3 py-2">
-      <Skeleton className="h-7 w-[88px] rounded-xl" />
-      <Skeleton className="ml-auto h-7 w-[98px] rounded-xl" />
+      <Skeleton className="h-7 w-[88px] rounded-lg" />
+      <Skeleton className="ml-auto h-7 w-[98px] rounded-lg" />
     </div>
   );
 };
