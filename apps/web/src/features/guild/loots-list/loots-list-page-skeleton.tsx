@@ -30,7 +30,7 @@ export const LootsListPageSkeleton = () => {
       className="flex h-full w-full flex-col overflow-hidden"
     >
       <div className="flex flex-1 overflow-hidden">
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden pt-3">
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <LootsListSkeleton viewMode={viewMode} />
         </div>
         {!usesOverlayFilters && isFiltersOpen && (

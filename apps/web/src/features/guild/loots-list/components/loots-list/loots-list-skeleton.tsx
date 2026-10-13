@@ -16,7 +16,7 @@ export const LootsListSkeleton = ({ viewMode, className }: Props) => (
     role="status"
     aria-busy="true"
     className={cn(
-      "px-3 pb-3",
+      "p-3",
       viewMode === "grid" ? LOOTS_GRID_CLASS : "flex flex-col gap-3",
       className,
     )}
