@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "bun:test";
 import { Effect, Layer, Redacted } from "effect";
 import { FetchHttpClient } from "effect/http";
 import { BotConfig } from "#src/config/bot-config";
-import { FAILURE_MESSAGES } from "./command-messages.js";
+import { COMMAND_TEXT, FAILURE_MESSAGES } from "./command-messages.js";
 import { LootlogClient } from "./lootlog-client.js";
 import type { CommandInvocation, CommandReply } from "./slash-command.js";
 import { answerCommand } from "./slash-command-interactions.js";
@@ -199,6 +199,79 @@ describe("slash commands", () => {
     expect(lines).toHaveLength(2);
     expect(lines[0]).toContain("Open");
     expect(lines[1]).toContain("Later");
+  });
+
+  it("tells the player an NPC has no visible kills instead of reporting an outage", async () => {
+    answers = [
+      linkedMember,
+      {
+        path: `/guilds/${guildId}/stats/kills/npcs/999/killers`,
+        answer: () => Response.json({ npc: null, killers: [] }),
+      },
+    ];
+
+    const reply = await invoke("npc", { strings: { nazwa: "999" } });
+
+    expect(reply.content).toBe(COMMAND_TEXT.npc.notFound);
+  });
+
+  it("keeps an event ranking with many heroes within Discord's embed limits", async () => {
+    const heroNames = Array.from(
+      { length: 30 },
+      (_, index) => `Heros ${index}`,
+    );
+
+    answers = [
+      linkedMember,
+      {
+        path: `/guilds/${guildId}/events`,
+        answer: () =>
+          Response.json([
+            {
+              id: "event-1",
+              name: "Event",
+              world: "Aldous",
+              active: true,
+              startsAt: null,
+              endsAt: null,
+              createdAt: new Date().toISOString(),
+              heroNpcs: heroNames.map((npcName) => ({
+                npcId: null,
+                npcName,
+                npcLvl: null,
+              })),
+            },
+          ]),
+      },
+      {
+        path: `/guilds/${guildId}/events/event-1/ranking`,
+        answer: () =>
+          Response.json(
+            heroNames.flatMap((heroNpcName) =>
+              Array.from({ length: 10 }, (_, index) => ({
+                heroNpcName,
+                totalPoints: 100 - index,
+                totalKills: 10,
+                member: { name: `Członek z długim nickiem ${index}` },
+              })),
+            ),
+          ),
+      },
+    ];
+
+    const reply = await invoke("event", { subcommand: "ranking" });
+    const embed = reply.embeds?.[0]?.toJSON();
+    const fields = embed?.fields ?? [];
+
+    expect(fields.length).toBeGreaterThan(0);
+    expect(fields.length).toBeLessThanOrEqual(25);
+    expect(
+      [
+        embed?.title,
+        embed?.footer?.text,
+        ...fields.flatMap((f) => [f.name, f.value]),
+      ].join("").length,
+    ).toBeLessThanOrEqual(6000);
   });
 
   it("counts characters in the game once and leaves out Web sessions", async () => {

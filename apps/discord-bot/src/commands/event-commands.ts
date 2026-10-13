@@ -22,6 +22,14 @@ import {
 
 const RANKING_PER_HERO = 10;
 
+// Discord rejects an embed with more than 25 fields or 6000 characters; the
+// margin keeps room for the title and the remainder note.
+const MAX_RANKING_FIELDS = 24;
+
+const MAX_RANKING_FIELD_CHARACTERS = 5500;
+
+const MAX_FIELD_NAME_LENGTH = 256;
+
 const EVENT_OPTION = "event";
 
 const Events = Schema.Array(
@@ -134,7 +142,7 @@ const rankingReply = (
       ]),
     ];
 
-    const fields = heroNames.flatMap((heroName) => {
+    const heroFields = heroNames.flatMap((heroName) => {
       const entries = ranking
         .filter((entry) => entry.heroNpcName === heroName)
         .slice(0, RANKING_PER_HERO);
@@ -143,7 +151,7 @@ const rankingReply = (
         ? []
         : [
             {
-              name: heroName,
+              name: heroName.slice(0, MAX_FIELD_NAME_LENGTH),
               value: rankedLines(
                 entries,
                 (entry) =>
@@ -153,11 +161,32 @@ const rankingReply = (
           ];
     });
 
+    const fields: typeof heroFields = [];
+    let characters = 0;
+
+    for (const field of heroFields) {
+      const size = field.name.length + field.value.length;
+
+      if (
+        fields.length === MAX_RANKING_FIELDS ||
+        characters + size > MAX_RANKING_FIELD_CHARACTERS
+      )
+        break;
+
+      fields.push(field);
+      characters += size;
+    }
+
     const embed = lootlogEmbed(COMMAND_TEXT.events.rankingTitle(event.name));
 
     if (fields.length === 0)
       embed.setDescription(COMMAND_TEXT.events.rankingEmpty);
     else embed.addFields(fields);
+
+    if (heroFields.length > fields.length)
+      embed.setFooter({
+        text: COMMAND_TEXT.events.moreHeroes(heroFields.length - fields.length),
+      });
 
     return { embeds: [embed] };
   });

@@ -128,6 +128,8 @@ export const COMMAND_TEXT = {
     notFound: "Nie ma takiego eventu. Wybierz go z podpowiedzi.",
     rankingTitle: (name: string) => `Ranking eventu: ${name}`,
     rankingEmpty: "Nikt jeszcze nie zdobył punktów w tym evencie.",
+    moreHeroes: (count: number) =>
+      `Kolejni herosi (${count}) są na stronie Lootloga.`,
     points: (points: number, kills: number) => `${points} pkt · ${kills} bić`,
     statusTitle: (name: string) => `Event: ${name}`,
     active: "Trwa",
