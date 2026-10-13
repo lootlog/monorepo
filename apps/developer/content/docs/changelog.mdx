@@ -6,8 +6,11 @@ description: A reference for HTTP, realtime, and game client integrations.
 ## Unreleased (breaking): Deprecated event kill lists removed
 
 The event, member and hero kill lists deprecated in favour of
-`GET /guilds/{guildId}/events/{eventId}/kill-history` are removed. Release the
-SDK as a breaking version.
+`GET /guilds/{guildId}/events/{eventId}/kill-history` are removed. There is no
+compatibility window: once this API version is deployed, the removed routes
+return `404`, including for SDK 0.1.1 and earlier and any other client still
+calling them. Migrate to `/kill-history` before the deployment. Release the SDK
+as a breaking version.
 
 | Removed GET route                                             | Replacement query on `/kill-history` |
 | ------------------------------------------------------------- | ------------------------------------ |
