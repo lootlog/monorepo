@@ -79,9 +79,11 @@ export const AppLayout = () => {
       <Suspense fallback={null}>
         <ThemeAnnouncement />
       </Suspense>
-      {/* Desktop navigation stays expanded; only the mobile sheet opens and closes. */}
+      {/* Desktop navigation stays expanded; only the mobile sheet opens and
+          closes, from its menu button, so Ctrl/Cmd+B stays with the page. */}
       <SidebarProvider
         open
+        keyboardShortcut={false}
         className="relative min-h-0 flex-1 md:overflow-hidden"
         style={sidebarStyle}
       >
