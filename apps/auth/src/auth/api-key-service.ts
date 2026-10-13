@@ -52,6 +52,9 @@ const grantFor = (key: StoredKey) => {
   return Option.getOrNull(grant);
 };
 
+const ownedApiKeyPredicate = (userId: string, keyId: string) =>
+  and(eq(authApiKeys.id, keyId), eq(authApiKeys.referenceId, userId));
+
 const active = (key: StoredKey, now: number) =>
   key.enabled === true &&
   (key.expiresAt === null || key.expiresAt.getTime() > now);
@@ -184,9 +187,7 @@ export class ApiKeyService extends Context.Service<
           database
             .select()
             .from(authApiKeys)
-            .where(
-              and(eq(authApiKeys.id, id), eq(authApiKeys.referenceId, userId)),
-            )
+            .where(ownedApiKeyPredicate(userId, id))
             .limit(1),
         );
 
@@ -363,12 +364,7 @@ export class ApiKeyService extends Context.Service<
             database
               .update(authApiKeys)
               .set({ name, updatedAt: new Date() })
-              .where(
-                and(
-                  eq(authApiKeys.id, id),
-                  eq(authApiKeys.referenceId, userId),
-                ),
-              )
+              .where(ownedApiKeyPredicate(userId, id))
               .returning(),
           );
 
@@ -383,12 +379,7 @@ export class ApiKeyService extends Context.Service<
           yield* query(
             database
               .delete(authApiKeys)
-              .where(
-                and(
-                  eq(authApiKeys.id, id),
-                  eq(authApiKeys.referenceId, userId),
-                ),
-              ),
+              .where(ownedApiKeyPredicate(userId, id)),
           );
 
           return { success: true };
