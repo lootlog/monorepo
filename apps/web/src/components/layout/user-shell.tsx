@@ -27,7 +27,9 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
       <AppContentFrame
         header={
           <AppTopBar>
-            <div className="flex w-full flex-row items-center justify-between gap-2">
+            {/* Equal side tracks keep the breadcrumbs centred, so page actions
+                arriving on the right never move them. */}
+            <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2">
               <div className="flex flex-row items-center gap-2">
                 <SidebarTrigger />
                 {parentPath && <TopBarBackButton to={parentPath} />}

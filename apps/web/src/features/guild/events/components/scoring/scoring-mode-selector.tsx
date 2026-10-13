@@ -61,7 +61,7 @@ export const ScoringModeSelector = ({
             <Field
               orientation="horizontal"
               className={cn(
-                "items-center rounded-lg border bg-card p-3 transition-all",
+                "items-center rounded-lg border bg-card p-3 transition-[border-color,box-shadow,opacity]",
                 isActive
                   ? `ring-1 ${mode.activeRing}`
                   : "border-border bg-card opacity-70 hover:opacity-90",

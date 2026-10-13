@@ -1,9 +1,9 @@
 import { useState } from "react";
-import * as m from "framer-motion/m";
 import { GripVertical, ChevronDown, Trash2 } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
+import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import type {
   BattleStatDefinition,
@@ -107,17 +107,17 @@ export const CategoryItem = ({
             name: localName,
           })}
         >
-          <m.div
-            animate={{ rotate: isExpanded ? 0 : -90 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
-          >
-            <ChevronDown className="size-4" />
-          </m.div>
+          <ChevronDown
+            className={cn(
+              "size-4 transition-[rotate] duration-200 ease-emphasized motion-reduce:transition-none",
+              !isExpanded && "-rotate-90",
+            )}
+          />
         </Button>
       </div>
 
       <div
-        className="grid transition-[grid-template-rows] duration-200 ease-in-out"
+        className="grid transition-[grid-template-rows] duration-200 ease-emphasized motion-reduce:transition-none"
         style={{
           gridTemplateRows: isExpanded ? "1fr" : "0fr",
         }}

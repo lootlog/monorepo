@@ -63,7 +63,7 @@ export const ScoringRuleCard = ({
     <Collapsible open={open} onOpenChange={setOpen}>
       <div
         className={cn(
-          "border-b border-border/70 bg-transparent transition-all overflow-hidden last:border-b-0",
+          "border-b border-border/70 bg-transparent transition-[box-shadow,opacity] overflow-hidden last:border-b-0",
           !isEnabled && "opacity-40",
           open && "ring-1 ring-border/80",
         )}
@@ -113,7 +113,7 @@ export const ScoringRuleCard = ({
                 )}
                 <ChevronDown
                   className={cn(
-                    "size-4 text-muted-foreground transition-transform duration-200",
+                    "size-4 text-muted-foreground transition-[rotate] duration-200 ease-emphasized motion-reduce:transition-none",
                     open && "rotate-180",
                   )}
                 />

@@ -1,6 +1,7 @@
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { cn } from "cn";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import type { ReactNode } from "react";
+import { SkeletonLine } from "../skeleton-line";
 import { SectionCard } from "./section-card";
 
 type SectionCardSkeletonProps = {
@@ -12,7 +13,11 @@ type SectionCardSkeletonProps = {
   className?: string;
 };
 
-/** A titled section card whose content is still loading. */
+/**
+ * A titled section card whose content is still loading. Its header is a real
+ * `SectionCardHeader` with line placeholders, so it is exactly as tall as the
+ * loaded one.
+ */
 export const SectionCardSkeleton = ({
   withIcon = false,
   withDescription = true,
@@ -20,15 +25,21 @@ export const SectionCardSkeleton = ({
   className,
 }: SectionCardSkeletonProps) => (
   <SectionCard className={className}>
-    <div className="flex min-h-12 flex-col justify-center gap-1.5 border-b border-border/70 px-3 py-2">
-      <div className="flex items-center gap-2">
-        {withIcon && <Skeleton className="size-5 shrink-0 rounded-md" />}
-        <Skeleton className={cn("h-4", withIcon ? "w-32" : "w-40")} />
-      </div>
-      {withDescription && (
-        <Skeleton className={cn("h-3 w-56 max-w-full", withIcon && "ml-7")} />
-      )}
-    </div>
+    <SectionCardHeader
+      title={
+        <span className="flex items-center gap-2">
+          {withIcon && <Skeleton className="size-5 shrink-0 rounded-md" />}
+          <SkeletonLine className="h-4 w-40" />
+        </span>
+      }
+      description={
+        withDescription ? (
+          <span className={withIcon ? "block pl-7" : "block"}>
+            <SkeletonLine className="h-3 w-56 max-w-full" />
+          </span>
+        ) : undefined
+      }
+    />
     {children ?? (
       <div className="p-3">
         <Skeleton className="h-64 w-full rounded-lg" />

@@ -185,7 +185,7 @@ export const KillsPage: React.FC = () => {
 
   const renderResults = () => {
     if (isLoading) {
-      return <TableRowsSkeleton withHeader trailingColumns={2} />;
+      return <TableRowsSkeleton withHeader withNpcTile trailingColumns={2} />;
     }
 
     if (isError && !data) {

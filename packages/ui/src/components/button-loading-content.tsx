@@ -1,10 +1,14 @@
 import { Children, type ReactNode } from "react";
-import { cn } from "cn";
 import { Spinner } from "@lootlog/ui/components/spinner";
 
-const isLeadingText = (value: ReactNode): value is string | number =>
+const isText = (value: ReactNode): value is string | number =>
   typeof value === "string" || typeof value === "number";
 
+/**
+ * Keeps the button's own children in place and lays the spinner over them, so
+ * the button never changes size while it loads. Runs of text become one span
+ * so the button can hide every child while keeping it in the accessible name.
+ */
 export function ButtonLoadingContent({
   loading = false,
   children,
@@ -12,42 +16,39 @@ export function ButtonLoadingContent({
   loading?: boolean;
   children: ReactNode;
 }) {
-  // Group only the leading content with the spinner so the button's other flex gaps stay intact.
-  const content = Children.toArray(children);
-  let leadingContentEnd = 1;
+  const content: ReactNode[] = [];
+  let text: (string | number)[] = [];
 
-  if (isLeadingText(content[0])) {
-    const firstElementIndex = content.findIndex(
-      (child) => !isLeadingText(child),
-    );
+  const flushText = () => {
+    if (text.length === 0) return;
 
-    leadingContentEnd =
-      firstElementIndex < 0 ? content.length : firstElementIndex;
+    content.push(<span key={`text-${content.length}`}>{text}</span>);
+    text = [];
+  };
+
+  for (const child of Children.toArray(children)) {
+    if (isText(child)) {
+      text.push(child);
+    } else {
+      flushText();
+      content.push(child);
+    }
   }
+
+  flushText();
 
   return (
     <>
-      <span
-        className="inline-flex min-w-0 items-center [column-gap:inherit] transition-[column-gap] duration-200 ease-out motion-reduce:transition-none"
-        style={loading ? undefined : { columnGap: 0 }}
-      >
+      {content}
+      {loading && (
         <span
           aria-hidden="true"
-          className={cn(
-            "inline-flex shrink-0 items-center overflow-hidden transition-[width,opacity] duration-200 ease-out motion-reduce:transition-none",
-            loading ? "w-4 opacity-100" : "w-0 opacity-0",
-          )}
+          data-button-spinner=""
+          className="absolute inset-0 grid place-items-center"
         >
-          <Spinner
-            className={cn(
-              "size-4 motion-reduce:animate-none",
-              !loading && "animate-none",
-            )}
-          />
+          <Spinner className="size-4 motion-reduce:animate-none" />
         </span>
-        {content.slice(0, leadingContentEnd)}
-      </span>
-      {content.slice(leadingContentEnd)}
+      )}
     </>
   );
 }

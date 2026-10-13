@@ -95,8 +95,11 @@ export const TopNpcsCard = ({
           rank={index + 1}
           media={
             npc.npcIcon && (
+              // Capped below the row's 48px so a tall sprite never grows it.
               <span className="w-8 shrink-0">
                 <NpcTile
+                  className="h-9"
+                  imageClassName="max-h-9"
                   npc={{
                     id: npc.npcId,
                     name: npc.npcName,

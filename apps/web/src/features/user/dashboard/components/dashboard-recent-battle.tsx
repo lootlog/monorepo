@@ -56,7 +56,7 @@ export function DashboardRecentBattle({
         </div>
         <ChevronRight
           aria-hidden
-          className="size-4 shrink-0 text-muted-foreground transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-primary"
+          className="size-4 shrink-0 text-muted-foreground transition-[color,translate] duration-150 ease-emphasized group-hover:translate-x-0.5 group-hover:text-primary motion-reduce:transition-none"
         />
       </Link>
       {actions}

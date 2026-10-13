@@ -229,7 +229,7 @@ export const EventTimersList: FC<EventTimersListProps> = ({
                   })}
             </span>
             <div
-              className={`flex items-center transition-transform duration-200 ${
+              className={`flex items-center transition-[rotate] duration-200 ease-emphasized motion-reduce:transition-none ${
                 isExpanded ? "rotate-180" : ""
               }`}
             >

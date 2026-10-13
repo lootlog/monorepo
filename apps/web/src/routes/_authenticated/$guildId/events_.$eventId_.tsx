@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { EventRouteLayout } from "@/features/guild/events/event-route-layout";
+import { EventRoutePending } from "@/features/guild/events/event-route-pending";
 import {
   getListEventRankingQueryOptions,
   getShowEventOverviewQueryOptions,
@@ -13,6 +14,7 @@ export const Route = createFileRoute(
   "/_authenticated/$guildId/events_/$eventId_",
 )({
   component: EventRouteLayout,
+  pendingComponent: EventRoutePending,
   loader: ({ abortController, context, params }) =>
     withRouteLoaderCancellation(abortController, async () => {
       try {

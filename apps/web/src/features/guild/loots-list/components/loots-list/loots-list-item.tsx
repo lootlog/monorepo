@@ -1,7 +1,6 @@
 import { ItemRarity, type Loot } from "@/lib/loots/loot-types";
 import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { cn } from "cn";
-import * as m from "framer-motion/m";
 import { useThemeMeta } from "@/themes";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import {
@@ -12,14 +11,9 @@ import { LootPresentation } from "./loot-presentation";
 import { LootHeaderActions } from "./loot-header-actions";
 import { LootItemStackLootIdContext } from "./loot-item-stack-context";
 
-type Props = { loot: Loot; isNew?: boolean; variant?: "card" | "embedded" };
+type Props = { loot: Loot; variant?: "card" | "embedded" };
 
-const animate = {
-  opacity: 1,
-  scale: 1,
-};
-
-export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
+export const LootsListItem = ({ loot, variant = "card" }: Props) => {
   const { filters, setFilters } = useLootsFilters();
   const { isRukiaTheme } = useThemeMeta();
 
@@ -45,12 +39,9 @@ export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
   );
 
   return (
-    <m.div
+    <div
       data-testid="loot-list-item"
       data-presentation={variant}
-      initial={isNew ? { opacity: 0, scale: 0.98 } : false}
-      animate={animate}
-      transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
         "h-full",
         variant === "embedded" &&
@@ -73,13 +64,12 @@ export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
           className={cn(
             "group relative flex h-full flex-col gap-0 overflow-visible rounded-xl border-border bg-card p-0",
             "transition-[background-color,border-color,box-shadow] duration-200 hover:border-primary/30 hover:shadow-md",
-            isNew && "border-primary/70 ring-1 ring-primary/40 shadow-lg",
             hasLegendaryItem && LEGENDARY_LOOT_CARD_CLASS,
           )}
         >
           {lootContent}
         </Card>
       )}
-    </m.div>
+    </div>
   );
 };

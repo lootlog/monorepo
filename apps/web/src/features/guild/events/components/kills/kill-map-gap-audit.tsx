@@ -103,7 +103,7 @@ export const KillMapGapAudit = ({ gaps, t }: KillMapGapAuditProps) => {
             )}
             <ChevronDown
               className={cn(
-                "ml-1 size-3.5 transition-transform",
+                "ml-1 size-3.5 transition-[rotate] duration-200 ease-emphasized motion-reduce:transition-none",
                 showAll && "rotate-180",
               )}
             />
