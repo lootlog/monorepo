@@ -15,6 +15,8 @@ interface EventActionsCardProps {
   onEdit: () => void;
   onToggleStatus: () => void;
   onDelete: () => void;
+  /** Placement classes; the card renders nothing without manage access. */
+  className?: string;
 }
 
 // Capabilities, persisted event activity, and independent update/delete mutations are separate concerns, not presentation variants.
@@ -28,6 +30,7 @@ export const EventActionsCard = ({
   onEdit,
   onToggleStatus,
   onDelete,
+  className,
 }: EventActionsCardProps) => {
   const { t } = useTranslation();
 
@@ -40,7 +43,12 @@ export const EventActionsCard = ({
     : "grid-cols-1 sm:grid-cols-2";
 
   return (
-    <SectionCard className="gap-0 overflow-hidden border-border bg-card p-0">
+    <SectionCard
+      className={cn(
+        "gap-0 overflow-hidden border-border bg-card p-0",
+        className,
+      )}
+    >
       <SectionCardHeader
         icon={Settings2}
         title={t("events.actionsCard.subtitle")}

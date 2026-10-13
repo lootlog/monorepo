@@ -176,18 +176,17 @@ export const EventDetail = () => {
             setRulesDialogOpen={setRulesDialogOpen}
           />
 
-          <div className="xl:hidden">
-            <EventActionsCard
-              canManage={canManage}
-              canDeleteEvent={canDeleteEvent}
-              isActive={isEventActive}
-              isUpdatePending={updateEvent.isPending}
-              isDeletePending={deleteEvent.isPending}
-              onEdit={navigateToEventEdit}
-              onToggleStatus={openEventStatusDialog}
-              onDelete={() => setDeleteDialogOpen(true)}
-            />
-          </div>
+          <EventActionsCard
+            className="xl:hidden"
+            canManage={canManage}
+            canDeleteEvent={canDeleteEvent}
+            isActive={isEventActive}
+            isUpdatePending={updateEvent.isPending}
+            isDeletePending={deleteEvent.isPending}
+            onEdit={navigateToEventEdit}
+            onToggleStatus={openEventStatusDialog}
+            onDelete={() => setDeleteDialogOpen(true)}
+          />
 
           {mapsError && (
             <SectionCard>
@@ -249,18 +248,17 @@ export const EventDetail = () => {
             </div>
 
             <div className="contents xl:block xl:min-w-0 xl:space-y-3">
-              <div className="hidden xl:block">
-                <EventActionsCard
-                  canManage={canManage}
-                  canDeleteEvent={canDeleteEvent}
-                  isActive={isEventActive}
-                  isUpdatePending={updateEvent.isPending}
-                  isDeletePending={deleteEvent.isPending}
-                  onEdit={navigateToEventEdit}
-                  onToggleStatus={openEventStatusDialog}
-                  onDelete={() => setDeleteDialogOpen(true)}
-                />
-              </div>
+              <EventActionsCard
+                className="hidden xl:flex"
+                canManage={canManage}
+                canDeleteEvent={canDeleteEvent}
+                isActive={isEventActive}
+                isUpdatePending={updateEvent.isPending}
+                isDeletePending={deleteEvent.isPending}
+                onEdit={navigateToEventEdit}
+                onToggleStatus={openEventStatusDialog}
+                onDelete={() => setDeleteDialogOpen(true)}
+              />
 
               <div className="order-2 xl:order-none">
                 <EventRankingPreview
