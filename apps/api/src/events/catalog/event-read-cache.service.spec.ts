@@ -4,7 +4,7 @@ import type {
   RedisGetOrSetJsonBestEffortOptions,
   RedisService,
 } from "#src/redis/redis.service";
-import { EventKillHistoryResponse } from "#src/events/kills/event-kill-response.schema";
+import { KillHistoryResponse } from "#src/events/history/event-kill-history.schema";
 import { makeEventReadCache } from "#src/events/catalog/event-read-cache.service";
 
 describe("EventReadCache", () => {
@@ -80,6 +80,7 @@ describe("EventReadCache", () => {
     const service = makeEventReadCache(redis);
 
     const value = {
+      kind: "event" as const,
       data: [
         {
           id: "kill-1",
@@ -95,7 +96,7 @@ describe("EventReadCache", () => {
             npcIcon: null,
             npcLvl: 300,
           },
-          points: [],
+          participantCount: 0,
         },
       ],
       nextCursor: null,
@@ -104,7 +105,7 @@ describe("EventReadCache", () => {
     await Effect.runPromise(
       service.getOrSet(
         service.getEventEntry("guild-1", "event-1", "test"),
-        EventKillHistoryResponse,
+        KillHistoryResponse,
         () => Effect.succeed(value),
       ),
     );
@@ -112,12 +113,12 @@ describe("EventReadCache", () => {
     const result = await Effect.runPromise(
       service.getOrSet(
         service.getEventEntry("guild-1", "event-1", "test"),
-        EventKillHistoryResponse,
+        KillHistoryResponse,
         () => Effect.die("cache miss"),
       ),
     );
 
-    const encoded = Schema.encodeSync(EventKillHistoryResponse)(result);
+    const encoded = Schema.encodeSync(KillHistoryResponse)(result);
 
     expect(encoded.data[0]?.minSpawnTimeAtKill).toBe(
       "2026-06-19T09:00:00.000Z",

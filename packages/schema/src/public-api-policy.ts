@@ -1277,31 +1277,6 @@ export const PUBLIC_API_OPERATIONS = [
     access: "read",
     data: "organization",
   },
-  // TODO(kill-history-legacy): Remove the next three deprecated list operations with their API routes.
-  {
-    service: "main",
-    method: "GET",
-    path: "/guilds/{guildId}/events/{eventId}/kills",
-    operationId: "EventsRankingController_getEventKillHistory",
-    access: "read",
-    data: "organization",
-  },
-  {
-    service: "main",
-    method: "GET",
-    path: "/guilds/{guildId}/events/{eventId}/members/{memberId}/kills",
-    operationId: "EventsRankingController_getMemberKillHistory",
-    access: "read",
-    data: "organization",
-  },
-  {
-    service: "main",
-    method: "GET",
-    path: "/guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills",
-    operationId: "EventsRankingController_getHeroKillHistory",
-    access: "read",
-    data: "organization",
-  },
   {
     service: "main",
     method: "GET",

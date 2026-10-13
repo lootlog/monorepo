@@ -1,7 +1,6 @@
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import { and, eq } from "drizzle-orm";
 import { Effect } from "effect";
-import { groupBy } from "es-toolkit";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
@@ -12,21 +11,12 @@ import {
 import type { EventAccess } from "#src/events/event-access";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
 import type { EventPoints } from "#src/events/kills/event-points.service";
-import {
-  EventKillHistoryResponse,
-  EventMemberKillHistoryResponse,
-} from "#src/events/kills/event-kill-response.schema";
-import {
-  InvalidRequestError,
-  ResourceNotFoundError,
-} from "#src/shared/http/http-errors";
+import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import {
   decodeHistoryCursor,
-  decodeLegacyHistoryCursor,
   encodeHistoryCursor,
   parseHistoryLimit,
   parseHistoryMemberId,
-  type HistoryBoundary,
   type HistoryCursorScope,
 } from "#src/events/history/event-kill-history.cursor";
 import {
@@ -239,155 +229,6 @@ export const makeEventKillHistory = ({
     );
   });
 
-  // TODO(kill-history-legacy): Remove legacyPage, prepareLegacy, legacyEvent and legacyMember
-  // after client retirement; see README.md. Keep list, detail, timeline and their shared authorization.
-  const legacyPage = Effect.fnUntraced(function* (
-    authorized: Effect.Success<ReturnType<typeof authorize>>,
-    limit: number,
-    boundary?: HistoryBoundary,
-  ) {
-    const { kills, hasMore } = yield* authorized.store.findPage({
-      limit,
-      boundary,
-      memberId: authorized.memberId,
-    });
-
-    const [heroes, pointRows] = yield* Effect.all([
-      authorized.store.findHeroes(),
-      authorized.store.findPoints(
-        kills.map((kill) => kill.id),
-        authorized.memberId,
-      ),
-    ]);
-
-    const heroById = new Map(heroes.map((hero) => [hero.id, hero]));
-    const pointsByKill = groupBy(pointRows, (point) => point.killId);
-
-    const entries = kills.flatMap((kill) => {
-      const heroNpc = heroById.get(kill.heroNpcId);
-
-      return heroNpc
-        ? [{ ...kill, heroNpc, points: pointsByKill[kill.id] ?? [] }]
-        : [];
-    });
-
-    const windows =
-      yield* authorized.projection.getEffectiveWindowStartByKillId(entries);
-
-    const mapData =
-      yield* authorized.projection.buildKillPointMapDataByKillMember(
-        entries,
-        windows,
-      );
-
-    return {
-      data: entries.map((kill) => ({
-        ...kill,
-        points: kill.points.map((point) => ({
-          ...point,
-          mapData: mapData.get(`${kill.id}:${point.memberId}`) ?? [],
-        })),
-      })),
-      nextCursor: hasMore ? (kills.at(-1)?.id ?? null) : null,
-    };
-  });
-
-  const prepareLegacy = Effect.fnUntraced(function* (
-    context: HistoryContext,
-    query: HistoryQuery,
-  ) {
-    const limit = yield* parseHistoryLimit(query.limit);
-    const authorized = yield* authorize(context, query);
-
-    const cursor =
-      query.cursor === undefined
-        ? undefined
-        : yield* decodeLegacyHistoryCursor(query.cursor);
-
-    const boundary =
-      cursor === undefined
-        ? undefined
-        : yield* authorized.store.findAnchor(cursor, authorized.memberId);
-
-    if (query.cursor !== undefined && !boundary)
-      return yield* Effect.fail(new InvalidRequestError("Invalid cursor"));
-
-    return { authorized, limit, boundary };
-  });
-
-  const legacyEvent = Effect.fn("events.history.legacyEvent")(function* (
-    context: HistoryContext,
-    query: Omit<HistoryQuery, "memberId">,
-  ) {
-    const { authorized, limit, boundary } = yield* prepareLegacy(
-      context,
-      query,
-    );
-
-    return yield* readCache.getOrSet(
-      readCache.getEventEntry(
-        context.guildId,
-        context.eventId,
-        "legacy-kill-history:v3",
-        {
-          ...authorized.scope,
-          visibleHeroIds: authorized.heroIds,
-          limit,
-          cursor: query.cursor,
-        },
-      ),
-      EventKillHistoryResponse,
-      () => legacyPage(authorized, limit, boundary),
-    );
-  });
-
-  const legacyMember = Effect.fn("events.history.legacyMember")(function* (
-    context: HistoryContext,
-    query: HistoryQuery & { memberId: string },
-  ) {
-    const { authorized, limit, boundary } = yield* prepareLegacy(
-      context,
-      query,
-    );
-
-    const member = authorized.member;
-
-    if (!member)
-      return yield* Effect.fail(new ResourceNotFoundError("Member not found"));
-
-    return yield* readCache.getOrSet(
-      readCache.getEventEntry(
-        context.guildId,
-        context.eventId,
-        "legacy-member-kill-history:v3",
-        {
-          ...authorized.scope,
-          visibleHeroIds: authorized.heroIds,
-          limit,
-          cursor: query.cursor,
-        },
-      ),
-      EventMemberKillHistoryResponse,
-      () =>
-        legacyPage(authorized, limit, boundary).pipe(
-          Effect.map(({ data, nextCursor }) => ({
-            member,
-            data: data.map(({ points: killPoints, ...kill }) => ({
-              ...kill,
-              memberPoint: killPoints[0]
-                ? normalizeKillPointTracking(
-                    killPoints[0],
-                    kill.killedAt,
-                    kill.minSpawnTimeAtKill,
-                  )
-                : null,
-            })),
-            nextCursor,
-          })),
-        ),
-    );
-  });
-
   const detail = Effect.fn("events.history.detail")(function* (
     context: HistoryContext,
     query: { heroId: string; killId: string },
@@ -406,7 +247,7 @@ export const makeEventKillHistory = ({
     return yield* authorized.projection.timeline(query.heroId, query.killId);
   });
 
-  return { list, legacyEvent, legacyMember, detail, timeline };
+  return { list, detail, timeline };
 };
 
 export type EventKillHistory = ReturnType<typeof makeEventKillHistory>;

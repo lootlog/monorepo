@@ -130,16 +130,6 @@ export const makeEventKillHistoryStore = (
       .orderBy(desc(eventHeroKillTable.killedAt), desc(eventHeroKillTable.id))
       .limit(query.limit + 1);
 
-  // TODO(kill-history-legacy): Remove this full-row page adapter; orderedKills still serves findLeanPage.
-  const findPage = (query: HistoryPageQuery) =>
-    orderedKills(query).pipe(
-      Effect.map((rows) => {
-        const { rows: kills, hasMore } = takeKeysetPage(rows, query.limit);
-
-        return { kills, hasMore };
-      }),
-    );
-
   const findLeanPage = (query: HistoryPageQuery) => {
     const page = database.$with("history_page").as(orderedKills(query));
 
@@ -222,24 +212,7 @@ export const makeEventKillHistoryStore = (
       );
   };
 
-  // TODO(kill-history-legacy): Remove UUID anchor lookup when the three old lists are retired.
-  const findAnchor = (id: string, memberId?: number) =>
-    database
-      .select({
-        id: eventHeroKillTable.id,
-        killedAt: eventHeroKillTable.killedAt,
-      })
-      .from(eventHeroKillTable)
-      .where(
-        and(
-          eq(eventHeroKillTable.id, id),
-          pageConditions({ limit: 1, memberId }),
-        ),
-      )
-      .limit(1)
-      .pipe(Effect.map((rows) => rows[0]));
-
-  const findPoints = (killIds: string[], memberId?: number) => {
+  const findPoints = (killIds: string[]) => {
     if (killIds.length === 0) return Effect.succeed([]);
 
     return database
@@ -255,9 +228,6 @@ export const makeEventKillHistoryStore = (
           killScope,
           eq(memberTable.guildId, scope.guildId),
           inArray(eventKillPointTable.killId, killIds),
-          memberId === undefined
-            ? undefined
-            : eq(eventKillPointTable.memberId, memberId),
         ),
       )
       .orderBy(
@@ -279,13 +249,6 @@ export const makeEventKillHistoryStore = (
         ),
       );
   };
-
-  // TODO(kill-history-legacy): Remove this legacy page hydration query; retain scopedHeroes.
-  const findHeroes = () =>
-    database
-      .select()
-      .from(eventHeroNpcTable)
-      .where(inArray(eventHeroNpcTable.id, scopedHeroes));
 
   const findKill = (heroId: string, killId: string) =>
     database
@@ -380,23 +343,20 @@ export const makeEventKillHistoryStore = (
     };
   });
 
-  const findMapsForHeroes = (heroIds: string[]) =>
+  const findMaps = (heroId: string) =>
     database
       .select()
       .from(eventMapTable)
       .where(
         and(
           inArray(eventMapTable.heroNpcId, scopedHeroes),
-          inArray(eventMapTable.heroNpcId, heroIds),
+          eq(eventMapTable.heroNpcId, heroId),
         ),
       );
 
-  const findMaps = (heroId: string) => findMapsForHeroes([heroId]);
-
   const findAssignments = (params: {
-    mapIds?: string[];
-    heroNpcIds?: string[];
-    memberIds?: number[];
+    mapIds: string[];
+    memberIds: number[];
     killedAt: Date;
     overlapStart: Date;
   }) =>
@@ -411,18 +371,8 @@ export const makeEventKillHistoryStore = (
         and(
           inArray(eventMapAssignmentHistoryTable.heroNpcId, scopedHeroes),
           eq(memberTable.guildId, scope.guildId),
-          params.mapIds
-            ? inArray(eventMapAssignmentHistoryTable.mapId, params.mapIds)
-            : undefined,
-          params.heroNpcIds
-            ? inArray(
-                eventMapAssignmentHistoryTable.heroNpcId,
-                params.heroNpcIds,
-              )
-            : undefined,
-          params.memberIds
-            ? inArray(eventMapAssignmentHistoryTable.memberId, params.memberIds)
-            : undefined,
+          inArray(eventMapAssignmentHistoryTable.mapId, params.mapIds),
+          inArray(eventMapAssignmentHistoryTable.memberId, params.memberIds),
           lte(eventMapAssignmentHistoryTable.assignedAt, params.killedAt),
           or(
             isNull(eventMapAssignmentHistoryTable.unassignedAt),
@@ -503,15 +453,10 @@ export const makeEventKillHistoryStore = (
       );
 
   return {
-    findPage,
     findLeanPage,
-    findAnchor,
-    findPoints,
-    findHeroes,
     findKill,
     findKillDetail,
     findMaps,
-    findMapsForHeroes,
     findAssignments,
     findWindowSummaries,
     findWindowSummary,
