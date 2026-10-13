@@ -130,29 +130,11 @@ export const combatProfileCalculator = (() => {
         battleId: battle.id,
       });
 
-      setHighlight(highlights, "biggestDamage", {
-        battleId: battle.id,
-        createdAt: battle.createdAt.toISOString(),
-        type: "biggestDamage",
-        label: "biggestDamage",
-        value: damage,
-      });
-      setHighlight(highlights, "biggestMitigation", {
-        battleId: battle.id,
-        createdAt: battle.createdAt.toISOString(),
-        type: "biggestMitigation",
-        label: "biggestMitigation",
-        value: blockedDamage,
-      });
+      setHighlight(highlights, battle, "biggestDamage", damage);
+      setHighlight(highlights, battle, "biggestMitigation", blockedDamage);
 
       if (isWin) {
-        setHighlight(highlights, "biggestComeback", {
-          battleId: battle.id,
-          createdAt: battle.createdAt.toISOString(),
-          type: "biggestComeback",
-          label: "biggestComeback",
-          value: damageTaken,
-        });
+        setHighlight(highlights, battle, "biggestComeback", damageTaken);
       }
     };
 
@@ -321,13 +303,20 @@ export const combatProfileCalculator = (() => {
 
   function setHighlight(
     highlights: Map<string, CombatProfileHighlight>,
+    battle: CombatProfileBattle,
     key: string,
-    value: CombatProfileHighlight,
+    value: number,
   ): void {
     const current = highlights.get(key);
 
-    if (!current || value.value > current.value) {
-      highlights.set(key, value);
+    if (!current || value > current.value) {
+      highlights.set(key, {
+        battleId: battle.id,
+        createdAt: battle.createdAt.toISOString(),
+        type: key,
+        label: key,
+        value,
+      });
     }
   }
 
