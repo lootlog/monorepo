@@ -16,11 +16,10 @@ interface ScrapedItem {
   cl: number;
 }
 
-const BASE_URL =
-  SCRAPER_CONFIG.margoworld.baseUrl + SCRAPER_CONFIG.margoworld.itemsPath;
+const ITEMS_URL = `${SCRAPER_CONFIG.margoworld.baseUrl}${SCRAPER_CONFIG.margoworld.itemsPath}?name=&minLvl=&maxLvl=&cl=&unique=on&heroic=on&upgraded=on&legendary=on`;
 
 async function scrapePage(page: number): Promise<ScrapedItem[]> {
-  const url = `${BASE_URL}?name=&minLvl=&maxLvl=&cl=&unique=on&heroic=on&upgraded=on&legendary=on&p=${page}`;
+  const url = `${ITEMS_URL}&p=${page}`;
 
   try {
     const response = await fetch(url);
@@ -72,9 +71,7 @@ async function scrapePage(page: number): Promise<ScrapedItem[]> {
 }
 
 async function getNumberOfPages(): Promise<number> {
-  const url = `${BASE_URL}?name=&minLvl=&maxLvl=&cl=&unique=on&heroic=on&upgraded=on&legendary=on`;
-
-  const response = await fetch(url);
+  const response = await fetch(ITEMS_URL);
   const html = await response.text();
 
   const parsed = parse(html);
