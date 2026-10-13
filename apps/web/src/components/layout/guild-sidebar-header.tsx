@@ -18,6 +18,8 @@ import * as m from "framer-motion/m";
 import { useThemeMeta } from "@/themes";
 import {
   getLootsControllerFetchLootsByGuildIdQueryKey,
+  getGuildsControllerGetGuildByIdQueryKey,
+  useGuildsControllerGetGuildById,
   invalidateGuildsControllerGetGuildPermissions,
   getMembersControllerGetMeQueryKey,
   invalidateMembersControllerGetMe,
@@ -27,20 +29,41 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useCurrentUserGuild } from "@/hooks/api/use-current-user-guild";
 
-export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
+export const GuildSidebarHeader = ({
+  guildId,
+  isRouteFailed,
+}: {
+  guildId?: string;
+  /** The Organization route failed, so its member queries would fail too. */
+  isRouteFailed: boolean;
+}) => {
   const queryClient = useQueryClient();
   const hasGuildId = Boolean(guildId);
+  const hasAccess = hasGuildId && !isRouteFailed;
 
-  // The rail entry names the server even without Lootlog access, and it is
-  // already loaded, so switching servers never blanks the header.
-  const guild = useCurrentUserGuild(guildId);
-  const hasAccess = guild?.hasLootlogAccess !== false;
+  const { data: loadedGuild } = useGuildsControllerGetGuildById(
+    { guildId: guildId ?? "" },
+    {
+      query: {
+        enabled: hasAccess,
+        queryKey: getGuildsControllerGetGuildByIdQueryKey({
+          guildId: guildId ?? "",
+        }),
+        retry: false,
+      },
+    },
+  );
+
+  // The route loader fetches the Organization; a failed route still has its
+  // server-rail entry to name it.
+  const railGuild = useCurrentUserGuild(guildId);
+  const guild = loadedGuild ?? railGuild;
 
   const { data: member } = useMembersControllerGetMe(
     { guildId: guildId ?? "" },
     {
       query: {
-        enabled: hasGuildId && hasAccess,
+        enabled: hasAccess,
         queryKey: getMembersControllerGetMeQueryKey({
           guildId: guildId ?? "",
         }),
