@@ -58,6 +58,17 @@ class NotificationJobStoreFailure extends TaggedErrorClass<NotificationJobStoreF
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
 
+// A queued retry may claim or block a job its failed attempt left PROCESSING;
+// a first attempt never overrides another worker's claim.
+const eligibleJobForAttempt = (jobId: string, retrying: boolean) =>
+  and(
+    eq(notificationJobTable.id, jobId),
+    inArray(
+      notificationJobTable.status,
+      retrying ? ["PENDING", "BLOCKED", "PROCESSING"] : ["PENDING", "BLOCKED"],
+    ),
+  );
+
 export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
   const failure = (operation: string) => (cause: unknown) =>
     new NotificationJobStoreFailure({ operation, cause });
@@ -111,17 +122,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
         attemptCount: sql`${notificationJobTable.attemptCount} + 1`,
         updatedAt: new Date(),
       })
-      .where(
-        and(
-          eq(notificationJobTable.id, jobId),
-          inArray(
-            notificationJobTable.status,
-            retrying
-              ? ["PENDING", "BLOCKED", "PROCESSING"]
-              : ["PENDING", "BLOCKED"],
-          ),
-        ),
-      )
+      .where(eligibleJobForAttempt(jobId, retrying))
       .returning({ id: notificationJobTable.id })
       .pipe(
         Effect.mapError(failure("notifications.jobStore.claim")),
@@ -152,8 +153,6 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
         Effect.map((rows) => rows.length > 0),
       );
 
-  // A queued retry may block a job its failed attempt left PROCESSING, as it
-  // may claim it; a first attempt never overrides another worker's claim.
   const blockJob = (jobId: string, reason: string, retrying = false) =>
     database
       .update(notificationJobTable)
@@ -163,17 +162,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
         lastError: reason,
         updatedAt: new Date(),
       })
-      .where(
-        and(
-          eq(notificationJobTable.id, jobId),
-          inArray(
-            notificationJobTable.status,
-            retrying
-              ? ["PENDING", "BLOCKED", "PROCESSING"]
-              : ["PENDING", "BLOCKED"],
-          ),
-        ),
-      )
+      .where(eligibleJobForAttempt(jobId, retrying))
       .pipe(Effect.mapError(failure("notifications.jobStore.block")));
 
   const findOverdue = (before: Date, limit: number) =>
