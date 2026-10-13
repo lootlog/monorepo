@@ -14,6 +14,7 @@ import type {
 import { LOOT_RARITY_CHART_COLORS } from "@/features/guild/loots-list/loot-rarity-colors";
 import { getLootRarityChartConfig } from "./loot-rarity-chart-config";
 import { ChartCard } from "@/components/common/chart-card";
+import { CHART_SERIES_ANIMATION } from "@/lib/motion";
 
 type LootTimelineChartProps = {
   data?: LootStatsResponseDtoOutputTimelineItem[];
@@ -114,6 +115,7 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
             />
           />
           <Area
+            {...CHART_SERIES_ANIMATION}
             type="monotone"
             dataKey="LEGENDARY"
             stackId="1"
@@ -122,6 +124,7 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
             fillOpacity={0.6}
           />
           <Area
+            {...CHART_SERIES_ANIMATION}
             type="monotone"
             dataKey="HEROIC"
             stackId="1"

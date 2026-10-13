@@ -215,7 +215,7 @@ export const GuildBreadcrumbs: FC = () => {
 
   return (
     <AppTopBar>
-      <div className="flex w-full min-w-0 flex-row items-center justify-between gap-2 overflow-hidden">
+      <div className="grid w-full min-w-0 grid-cols-[1fr_auto_1fr] items-center gap-2 overflow-hidden">
         <div className="flex min-w-0 shrink-0 flex-row gap-2 items-center">
           <SidebarTrigger />
           {parentPath && <TopBarBackButton to={parentPath} />}

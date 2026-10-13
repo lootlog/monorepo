@@ -39,7 +39,7 @@ export const KillMonsterCell = ({
     <div className="flex min-w-0 items-center gap-2">
       {kill.heroNpc.npcIcon ? (
         <NpcTile
-          className={cn("shrink-0", !isPreview && "hidden lg:block")}
+          className={cn("shrink-0", !isPreview && "hidden lg:flex")}
           npc={{
             id: kill.heroNpc.npcId ?? undefined,
             name: kill.heroNpc.npcName,

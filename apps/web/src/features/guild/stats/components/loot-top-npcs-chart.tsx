@@ -14,6 +14,7 @@ import type { LootStatsResponseDtoOutputTopNpcsItem } from "@lootlog/client/main
 import { LOOT_RARITY_CHART_COLORS } from "@/features/guild/loots-list/loot-rarity-colors";
 import { getLootRarityChartConfig } from "./loot-rarity-chart-config";
 import { ChartCard } from "@/components/common/chart-card";
+import { CHART_SERIES_ANIMATION } from "@/lib/motion";
 
 type LootTopNpcsChartProps = {
   data?: LootStatsResponseDtoOutputTopNpcsItem[];
@@ -83,12 +84,14 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
           />
           <ChartLegend content=<ChartLegendContent /> />
           <Bar
+            {...CHART_SERIES_ANIMATION}
             dataKey="LEGENDARY"
             stackId="a"
             fill={LOOT_RARITY_CHART_COLORS.LEGENDARY}
             radius={[0, 0, 0, 0]}
           />
           <Bar
+            {...CHART_SERIES_ANIMATION}
             dataKey="HEROIC"
             stackId="a"
             fill={LOOT_RARITY_CHART_COLORS.HEROIC}

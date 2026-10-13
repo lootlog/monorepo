@@ -17,6 +17,7 @@ import {
 } from "./statistics-search";
 import { StatisticsContent } from "./statistics-content";
 import { HorizontalMenu } from "@/components/layout/horizontal-menu";
+import { StatisticsOverviewSkeleton } from "./statistics-overview-skeleton";
 
 export function Statistics() {
   const { t } = useTranslation();
@@ -92,7 +93,14 @@ export function Statistics() {
             search: { ...search, tab },
           }))}
         />
-        <StatisticsQueryState query={analytics}>
+        <StatisticsQueryState
+          query={analytics}
+          loading={
+            search.tab === "overview" ? (
+              <StatisticsOverviewSkeleton />
+            ) : undefined
+          }
+        >
           {data && (
             <StatisticsContent
               data={data}

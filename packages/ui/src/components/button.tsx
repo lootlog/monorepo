@@ -22,7 +22,10 @@ function Button({
     icon?: ReactNode;
   }) {
   const hasIndicator = loading !== undefined || icon !== undefined;
-  const expandsForSpinner = loading !== undefined && !icon;
+  const isIconButton = size?.startsWith("icon") ?? false;
+
+  const overlaysSpinner =
+    (isIconButton && hasIndicator) || (loading !== undefined && !icon);
 
   const indicator = (
     <span
@@ -36,36 +39,28 @@ function Button({
     </span>
   );
 
-  let content = (
+  const content = overlaysSpinner ? (
+    <ButtonLoadingContent loading={loading}>
+      {isIconButton ? (children ?? icon) : children}
+    </ButtonLoadingContent>
+  ) : (
     <>
       {hasIndicator && indicator}
       {children}
     </>
   );
 
-  if (size?.startsWith("icon") && hasIndicator) {
-    content = (
-      <span className="relative inline-grid place-items-center">
-        <span className={cn("inline-flex", loading && "opacity-0")}>
-          {children ?? icon}
-        </span>
-        {loading && (
-          <span aria-hidden="true" className="absolute inline-flex">
-            <Spinner className="size-4 motion-reduce:animate-none" />
-          </span>
-        )}
-      </span>
-    );
-  } else if (expandsForSpinner) {
-    content = (
-      <ButtonLoadingContent loading={loading}>{children}</ButtonLoadingContent>
-    );
-  }
-
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(
+        // The spinner overlays the hidden children, so the button keeps its size.
+        overlaysSpinner && "relative",
+        overlaysSpinner &&
+          loading &&
+          "[&>:not([data-button-spinner])]:opacity-0",
+        buttonVariants({ variant, size, className }),
+      )}
       {...props}
       disabled={disabled || loading}
       aria-busy={loading || props["aria-busy"]}

@@ -1,85 +1,60 @@
-import { SectionCardFooter } from "@/components/common/section-card/section-card-footer";
-import { PageHeaderSkeleton } from "@/components/common/page-header-skeleton";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { PageHeader } from "@/components/common/page-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
+import { SkeletonLine } from "@/components/common/skeleton-line";
+import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
+import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { Swords } from "lucide-react";
 
+const noop = () => undefined;
+
+// Stands in for the head-to-head pages: a page header above a `ResultsSurface`
+// whose header carries the filter toolbar. The titles differ per route, so
+// they stay placeholders; the toolbar mirrors `HeadToHeadFilterToolbar`.
 export const BattlePanelH2hSkeleton = () => {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <div className="px-3 pt-3 pb-0">
-        <PageHeaderSkeleton />
+        <PageHeader
+          icon={Swords}
+          title=<SkeletonLine className="h-5 w-56 max-w-full" />
+          description=<SkeletonLine className="h-3 w-72 max-w-full" />
+        />
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-3">
-          <SectionCard className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <SectionCardHeader
-              title=<Skeleton render={<span />} className="block h-4 w-32" />
-            />
-            <SectionCardContent className="flex min-h-0 flex-1 flex-col p-0">
-              <div className="min-h-0 flex-1">
-                {Array.from({ length: 8 }).map((_, rowIndex) => (
-                  <div
-                    key={rowIndex}
-                    className="flex h-14 items-center gap-4 border-b border-border px-4"
-                  >
-                    {Array.from({ length: 6 }).map((_, columnIndex) => (
-                      <Skeleton key={columnIndex} className="h-4 flex-1" />
-                    ))}
-                  </div>
-                ))}
-              </div>
-              <SectionCardFooter className="shrink-0 justify-between">
-                <Skeleton className="h-4 w-28" />
-                <div className="flex gap-2">
-                  {Array.from({ length: 2 }).map((_, index) => (
-                    <Skeleton key={index} className="h-8 w-24 rounded-md" />
-                  ))}
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-3">
+        <SectionCard className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden border-border bg-card p-0">
+          <SectionCardHeader
+            className="shrink-0"
+            title=<SkeletonLine className="h-4 w-40" />
+            actions={
+              <>
+                <div className="flex min-w-0 items-center gap-2 md:hidden">
+                  <Skeleton className="h-10 w-[200px] rounded-md" />
+                  <Skeleton className="h-10 w-[84px] shrink-0 rounded-md" />
                 </div>
-              </SectionCardFooter>
-            </SectionCardContent>
-          </SectionCard>
-        </div>
-
-        <div className="hidden h-full w-[320px] shrink-0 flex-col overflow-hidden bg-background py-3 pr-3 md:flex">
-          <SectionCard className="flex min-h-0 flex-1 flex-col gap-0 border-border bg-filters-sidebar p-0">
-            <div className="space-y-4 p-4">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="space-y-2">
-                  <Skeleton className="h-3 w-24" />
-                  {index === 3 ? (
-                    <div className="flex items-center gap-2">
-                      <Skeleton className="h-10 flex-1 rounded-xl" />
-                      <span
-                        className="text-xs text-muted-foreground"
-                        aria-hidden="true"
-                      >
-                        –
-                      </span>
-                      <Skeleton className="h-10 flex-1 rounded-xl" />
-                    </div>
-                  ) : index === 4 ? (
-                    <div className="flex items-center justify-between rounded-xl border p-3">
-                      <div className="flex items-center gap-2">
-                        <Skeleton className="size-4 rounded-sm" />
-                        <Skeleton className="h-4 w-28" />
-                      </div>
-                      <Skeleton className="size-4 rounded-sm" />
-                    </div>
-                  ) : (
-                    <Skeleton className="h-10 w-full rounded-xl" />
-                  )}
-                  {index < 4 ? <div className="h-px bg-border" /> : null}
+                <div className="hidden min-w-0 flex-wrap items-center gap-2 md:flex">
+                  <Skeleton className="h-10 min-w-[260px] flex-1 rounded-md xl:max-w-[360px]" />
+                  <Skeleton className="h-10 w-[190px] rounded-md" />
+                  <Skeleton className="h-10 w-[170px] rounded-md" />
+                  <Skeleton className="h-10 w-24 rounded-md" />
                 </div>
-              ))}
-            </div>
-          </SectionCard>
-        </div>
+              </>
+            }
+          />
+          <div className="relative min-h-0 flex-1 overflow-hidden">
+            <TableRowsSkeleton withHeader />
+          </div>
+          <TablePaginationFooter
+            totalLabel=<Skeleton className="h-4 w-36" />
+            hasPrev={false}
+            hasNext={false}
+            onPreviousPage={noop}
+            onNextPage={noop}
+          />
+        </SectionCard>
       </div>
-
-      <Skeleton className="fixed bottom-4 right-4 z-20 size-14 rounded-full shadow-lg md:hidden" />
     </div>
   );
 };

@@ -7,7 +7,6 @@ import { UserNavItem } from "@/components/layout/user-nav-item";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { Reorder } from "framer-motion";
-import * as m from "framer-motion/m";
 import { useState, useEffect, useLayoutEffect, useRef, type FC } from "react";
 import { GuildsSelectorSkeleton } from "@/components/layout/guilds-selector-skeleton";
 import { useLootUnreadCounts } from "@/contexts/loot-unread-context";
@@ -204,7 +203,7 @@ export const GuildsSelector: FC = () => {
               className="flex flex-col gap-0.5 pt-1 pb-2"
               as="div"
             >
-              {guildList.map((guild, index) => (
+              {guildList.map((guild) => (
                 <Reorder.Item
                   key={guild.id}
                   value={guild}
@@ -219,16 +218,7 @@ export const GuildsSelector: FC = () => {
                   dragListener
                   dragControls={undefined}
                 >
-                  <m.div
-                    className="w-full"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{
-                      duration: 0.2,
-                      delay: index * 0.03,
-                      ease: "easeOut",
-                    }}
-                  >
+                  <div className="w-full">
                     <GuildNavItem
                       guild={guild}
                       isDragging={isDragging}
@@ -243,7 +233,7 @@ export const GuildsSelector: FC = () => {
                         )
                       }
                     />
-                  </m.div>
+                  </div>
                 </Reorder.Item>
               ))}
             </Reorder.Group>

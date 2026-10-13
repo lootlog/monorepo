@@ -12,6 +12,7 @@ import { LoadingState } from "./event-summary/loading-state";
 import { WrappedProgress } from "./event-summary/wrapped-progress";
 import { WrappedSlideContent } from "./event-summary/wrapped-slide-content";
 import { WrappedSparseSummary } from "./event-summary/wrapped-sparse-summary";
+import { EASE_EMPHASIZED, MOTION_DURATION } from "@/lib/motion";
 import {
   useEventSummaryDialog,
   type EventSummaryDialogProps,
@@ -112,7 +113,12 @@ export const EventSummaryDialog = ({
                 ? { opacity: 0 }
                 : { opacity: 0, x: direction * -40 }
             }
-            transition={{ duration: prefersReducedMotion ? 0.12 : 0.24 }}
+            transition={{
+              duration: prefersReducedMotion
+                ? MOTION_DURATION.short
+                : MOTION_DURATION.long,
+              ease: EASE_EMPHASIZED,
+            }}
             className="h-full"
           >
             <WrappedSlideContent

@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "cn";
 
-const progressIndicatorVariants = cva("h-full transition-all", {
+const progressIndicatorVariants = cva("h-full transition-[width]", {
   variants: {
     variant: {
       default: "bg-primary",

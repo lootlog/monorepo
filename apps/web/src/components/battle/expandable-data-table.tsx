@@ -28,6 +28,7 @@ import { sortedTableFeatures } from "@/lib/tanstack-table-features";
 import { getColumnAriaSort } from "@/components/ui/get-column-aria-sort";
 import { SortableColumnHeader } from "@/components/ui/sortable-column-header";
 import type { BattleStatsExpansionType } from "./battle-stats-table-columns-full";
+import { EASE_EMPHASIZED, MOTION_DURATION } from "@/lib/motion";
 
 interface ExpandableDataTableProps<TData extends Warrior> {
   columns: ColumnDef<typeof sortedTableFeatures, TData>[];
@@ -166,8 +167,14 @@ export function ExpandableDataTable<TData extends Warrior>({
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{
-                        layout: { duration: 0.3, ease: "easeInOut" },
-                        opacity: { duration: 0.2 },
+                        layout: {
+                          duration: MOTION_DURATION.long,
+                          ease: EASE_EMPHASIZED,
+                        },
+                        opacity: {
+                          duration: MOTION_DURATION.medium,
+                          ease: EASE_EMPHASIZED,
+                        },
                       }}
                     >
                       <TableCell
@@ -180,8 +187,8 @@ export function ExpandableDataTable<TData extends Warrior>({
                           exit={{ opacity: 0, scaleY: 0.96 }}
                           style={{ transformOrigin: "top" }}
                           transition={{
-                            duration: 0.3,
-                            ease: "easeInOut",
+                            duration: MOTION_DURATION.long,
+                            ease: EASE_EMPHASIZED,
                           }}
                           layout
                         >
@@ -192,8 +199,8 @@ export function ExpandableDataTable<TData extends Warrior>({
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 0.95 }}
                               transition={{
-                                duration: 0.2,
-                                ease: "easeInOut",
+                                duration: MOTION_DURATION.medium,
+                                ease: EASE_EMPHASIZED,
                               }}
                             >
                               {renderExpandedContent(expansionType, warrior)}

@@ -263,7 +263,7 @@ export const KillParticipantRow = ({
           >
             <ChevronDown
               className={cn(
-                "size-4 transition-transform",
+                "size-4 transition-[rotate] duration-200 ease-emphasized motion-reduce:transition-none",
                 isExpanded && "rotate-180",
               )}
             />

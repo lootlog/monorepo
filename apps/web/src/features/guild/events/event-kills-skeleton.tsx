@@ -1,9 +1,9 @@
 import { KpiCard } from "@/components/common/kpi-card";
-import { Swords } from "lucide-react";
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
+import { Skull, Swords } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SkeletonFilterBar } from "./components/skeleton-filter-bar";
-import { PageHeaderSkeleton } from "@/components/common/page-header-skeleton";
-import { SectionCardSkeleton } from "@/components/common/section-card/section-card-skeleton";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 
 export const EventKillsSkeleton = () => {
@@ -11,7 +11,7 @@ export const EventKillsSkeleton = () => {
 
   return (
     <div aria-busy="true" className="flex flex-col gap-3 px-3 py-3">
-      <PageHeaderSkeleton withMetadata />
+      <SkeletonFilterBar />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiCard
           icon={Swords}
@@ -20,10 +20,10 @@ export const EventKillsSkeleton = () => {
           isLoading
         />
       </div>
-      <SkeletonFilterBar />
-      <SectionCardSkeleton withIcon withDescription={false}>
+      <SectionCard className="w-full min-w-0 overflow-hidden">
+        <SectionCardHeader icon={Skull} title={t("events.kills.title")} />
         <TableRowsSkeleton rows={7} withHeader />
-      </SectionCardSkeleton>
+      </SectionCard>
     </div>
   );
 };

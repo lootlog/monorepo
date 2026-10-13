@@ -46,18 +46,21 @@ export function DashboardRecentBattles() {
         query={query}
         compact
         loading={
-          <div
-            role="status"
-            aria-label={t("common.loading")}
-            className="space-y-3 p-3"
-          >
-            {[0, 1, 2].map((key) => (
-              <Skeleton
-                key={key}
-                className="h-12 w-full motion-reduce:animate-none"
-              />
-            ))}
-          </div>
+          // One placeholder row per requested battle, sized like a loaded row.
+          <ul role="status" aria-label={t("common.loading")}>
+            {Array.from(
+              { length: DASHBOARD_RECENT_BATTLES_PARAMS.size },
+              (_, key) => (
+                <li
+                  key={key}
+                  className="border-b border-border px-3 py-2 last:border-b-0"
+                >
+                  <Skeleton className="h-5 w-40 max-w-full" />
+                  <Skeleton className="mt-1 h-4 w-28 max-w-full" />
+                </li>
+              ),
+            )}
+          </ul>
         }
       >
         {query.data?.battles.length === 0 ? (

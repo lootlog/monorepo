@@ -23,6 +23,7 @@ import {
   formatStatisticsDate,
   formatStatisticsDay,
 } from "./format-statistics-date";
+import { CHART_SERIES_ANIMATION } from "@/lib/motion";
 
 type KillAnalyticsTrendPoint = {
   date: string;
@@ -119,11 +120,11 @@ export function KillAnalyticsTrend({ title, data }: KillAnalyticsTrendProps) {
                   }}
                 />
                 <Bar
+                  {...CHART_SERIES_ANIMATION}
                   dataKey="kills"
                   name={t("statistics.kills")}
                   fill="var(--primary)"
                   radius={[3, 3, 0, 0]}
-                  isAnimationActive={false}
                 />
               </BarChart>
             </ResponsiveContainer>
