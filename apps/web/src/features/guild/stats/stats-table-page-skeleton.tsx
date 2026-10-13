@@ -2,14 +2,17 @@ import { SectionCard } from "@/components/common/section-card/section-card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { StatsFilterBarSkeleton } from "./components/stats-filter-bar-skeleton";
 import { StatsTableCard } from "./components/stats-table-card";
+import type { ComponentProps } from "react";
 
 type StatsTablePageSkeletonProps = {
   /** Detail pages open with a header card and have no navigation above them. */
   withHeader?: boolean;
+  rowContent?: ComponentProps<typeof StatsTableCard>["rowContent"];
 };
 
 export const StatsTablePageSkeleton = ({
   withHeader = false,
+  rowContent,
 }: StatsTablePageSkeletonProps) => (
   <div
     className={
@@ -31,6 +34,8 @@ export const StatsTablePageSkeleton = ({
       </SectionCard>
     )}
     <StatsFilterBarSkeleton />
-    <StatsTableCard isLoading>{null}</StatsTableCard>
+    <StatsTableCard isLoading rowContent={rowContent}>
+      {null}
+    </StatsTableCard>
   </div>
 );

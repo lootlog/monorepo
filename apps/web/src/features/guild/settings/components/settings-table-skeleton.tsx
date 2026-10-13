@@ -10,7 +10,12 @@ export const SettingsTableSkeleton = () => (
       <TableFilterToolbar>
         <Skeleton className="h-10 w-full rounded-xl" />
       </TableFilterToolbar>
-      <TableRowsSkeleton rows={8} trailingColumns={2} withHeader />
+      <TableRowsSkeleton
+        rows={8}
+        trailingColumns={2}
+        withHeader
+        rowContent="text"
+      />
     </SectionCard>
   </div>
 );
