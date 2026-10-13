@@ -40,8 +40,307 @@ paths:
                 $ref: "#/components/schemas/GatewayUnavailable"
       description: "Reports whether this instance accepts new WebSocket sessions: it is subscribed to realtime federation and not draining."
       summary: Readiness check
+  /organizations/{organizationId}/presence:
+    get:
+      tags:
+        - presence
+      operationId: presence.GatewayOrganizationPresence
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: world
+          in: query
+          schema:
+            nullable: true
+            type: string
+            minLength: 1
+          required: false
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  organizationId:
+                    type: string
+                    minLength: 1
+                  world:
+                    nullable: true
+                    type: string
+                    minLength: 1
+                  revision:
+                    type: integer
+                    minimum: 0
+                  presences:
+                    type: array
+                    items:
+                      anyOf:
+                        - type: object
+                          properties:
+                            userId:
+                              type: string
+                              minLength: 1
+                            discordId:
+                              nullable: true
+                              type: string
+                              minLength: 1
+                            sessionId:
+                              type: string
+                              minLength: 1
+                            organizationIds:
+                              type: array
+                              items:
+                                type: string
+                                minLength: 1
+                            platform:
+                              type: string
+                              enum:
+                                - game
+                                - web-app
+                            status:
+                              type: string
+                              enum:
+                                - online
+                                - offline
+                            confidence:
+                              type: string
+                              enum:
+                                - verified
+                                - reported
+                            isAfk:
+                              type: boolean
+                            lastSeen:
+                              type: integer
+                              minimum: 0
+                            character:
+                              nullable: true
+                              type: object
+                              properties:
+                                world:
+                                  type: string
+                                  minLength: 1
+                                name:
+                                  type: string
+                                  minLength: 1
+                                lvl:
+                                  type: integer
+                                  minimum: 0
+                                icon:
+                                  type: string
+                                characterId:
+                                  type: string
+                                  minLength: 1
+                                accountId:
+                                  type: string
+                                  minLength: 1
+                                prof:
+                                  type: string
+                                clan:
+                                  nullable: true
+                                  type: object
+                                  properties:
+                                    id:
+                                      nullable: true
+                                      type: integer
+                                      minimum: 0
+                                    name:
+                                      nullable: true
+                                      type: string
+                                    rank:
+                                      nullable: true
+                                      type: integer
+                                  additionalProperties: false
+                              required:
+                                - world
+                                - name
+                                - lvl
+                                - icon
+                                - characterId
+                                - accountId
+                                - prof
+                              additionalProperties: false
+                            location:
+                              type: object
+                              properties:
+                                mapId:
+                                  nullable: true
+                                  type: integer
+                                  minimum: 0
+                                map:
+                                  type: string
+                                  minLength: 1
+                                x:
+                                  nullable: true
+                                  type: integer
+                                  minimum: 0
+                                y:
+                                  nullable: true
+                                  type: integer
+                                  minimum: 0
+                              required:
+                                - map
+                          required:
+                            - userId
+                            - sessionId
+                            - organizationIds
+                            - platform
+                            - status
+                            - confidence
+                            - isAfk
+                            - lastSeen
+                            - location
+                        - type: object
+                          properties:
+                            userId:
+                              type: string
+                              minLength: 1
+                            discordId:
+                              nullable: true
+                              type: string
+                              minLength: 1
+                            sessionId:
+                              type: string
+                              minLength: 1
+                            organizationIds:
+                              type: array
+                              items:
+                                type: string
+                                minLength: 1
+                            platform:
+                              type: string
+                              enum:
+                                - game
+                                - web-app
+                            status:
+                              type: string
+                              enum:
+                                - online
+                                - offline
+                            confidence:
+                              type: string
+                              enum:
+                                - verified
+                                - reported
+                            isAfk:
+                              type: boolean
+                            lastSeen:
+                              type: integer
+                              minimum: 0
+                            character:
+                              nullable: true
+                              type: object
+                              properties:
+                                world:
+                                  type: string
+                                  minLength: 1
+                                name:
+                                  type: string
+                                  minLength: 1
+                                lvl:
+                                  type: integer
+                                  minimum: 0
+                                icon:
+                                  type: string
+                                characterId:
+                                  type: string
+                                  minLength: 1
+                                accountId:
+                                  type: string
+                                  minLength: 1
+                                prof:
+                                  type: string
+                                clan:
+                                  nullable: true
+                                  type: object
+                                  properties:
+                                    id:
+                                      nullable: true
+                                      type: integer
+                                      minimum: 0
+                                    name:
+                                      nullable: true
+                                      type: string
+                                    rank:
+                                      nullable: true
+                                      type: integer
+                                  additionalProperties: false
+                              required:
+                                - world
+                                - name
+                                - lvl
+                                - icon
+                                - characterId
+                                - accountId
+                                - prof
+                              additionalProperties: false
+                          required:
+                            - userId
+                            - sessionId
+                            - organizationIds
+                            - platform
+                            - status
+                            - confidence
+                            - isAfk
+                            - lastSeen
+                required:
+                  - organizationId
+                  - revision
+                  - presences
+        "401":
+          description: PresenceUnauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresenceUnauthorized"
+        "403":
+          description: PresenceForbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresenceForbidden"
+        "503":
+          description: PresenceUnavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresenceUnavailable"
+      description: Returns the presence snapshot a WebSocket subscriber with the same identity receives for `organization.presence`. Requires `LOOTLOG_ONLINE_PLAYERS_READ`; locations require `LOOTLOG_PRESENCE_LOCATION_READ`. API keys are refused.
+      summary: Read an Organization's online players
 components:
   schemas:
+    PresenceUnavailable:
+      type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - UNAVAILABLE
+      required:
+        - code
+    PresenceForbidden:
+      type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - FORBIDDEN
+      required:
+        - code
+    PresenceUnauthorized:
+      type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - UNAUTHORIZED
+      required:
+        - code
     GatewayUnavailable:
       type: object
       properties:

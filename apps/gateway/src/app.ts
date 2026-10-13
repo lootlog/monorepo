@@ -47,8 +47,13 @@ import {
   GatewayConfig,
   type GatewayConfiguration,
 } from "#src/config/gateway-config";
-import { makeGuildStore } from "#src/guilds/guild-store";
-import { makeGatewayHttpBoundary } from "#src/http-api/gateway-http";
+import { makeGuildStore, type GuildStore } from "#src/guilds/guild-store";
+import {
+  isOrganizationPresencePath,
+  makeGatewayHttpBoundary,
+  ORGANIZATION_PRESENCE_ROUTE,
+  type GatewayHttpDependencies,
+} from "#src/http-api/gateway-http";
 import {
   makeBackgroundTaskRunner,
   type BackgroundTaskRunner,
@@ -76,6 +81,7 @@ export interface GatewayApplicationService {
   readonly auth: GatewayAuth;
   readonly hub: RealtimeHub;
   readonly presence: PresenceStore;
+  readonly guilds: GuildStore;
   readonly commands: CommandHandler;
   readonly ingress: CommandIngress;
   readonly activity: ActivityPublisher;
@@ -278,6 +284,7 @@ class GatewayApplication extends Context.Service<
         auth,
         hub,
         presence,
+        guilds,
         commands,
         ingress,
         activity,
@@ -396,10 +403,10 @@ const websocketResponseHeaders = (
 const probePaths = new Set(["/healthz", "/readyz"]);
 
 export const createGatewayFetch = (
-  application: Pick<GatewayApplicationService, "auth" | "runPromise"> & {
-    config: Pick<GatewayConfiguration, "websocketPath" | "environment">;
-    hub: Pick<RealtimeHub, "unavailableReason">;
-  },
+  application: GatewayHttpDependencies &
+    Pick<GatewayApplicationService, "auth" | "runPromise"> & {
+      config: Pick<GatewayConfiguration, "websocketPath" | "environment">;
+    },
   httpHandler?: (request: Request) => Promise<Response>,
 ) => {
   let defaultBoundary: ReturnType<typeof makeGatewayHttpBoundary> | undefined;
@@ -407,7 +414,7 @@ export const createGatewayFetch = (
   const handleHttp =
     httpHandler ??
     ((request: Request) => {
-      defaultBoundary ??= makeGatewayHttpBoundary(application.hub);
+      defaultBoundary ??= makeGatewayHttpBoundary(application);
 
       return defaultBoundary.handler(request);
     });
@@ -420,9 +427,12 @@ export const createGatewayFetch = (
     const startedAt = performance.now();
     let status = 500;
 
-    const route =
-      probePaths.has(url.pathname) ||
-      url.pathname === application.config.websocketPath
+    const isPresenceRead = isOrganizationPresencePath(url.pathname);
+
+    const route = isPresenceRead
+      ? ORGANIZATION_PRESENCE_ROUTE
+      : probePaths.has(url.pathname) ||
+          url.pathname === application.config.websocketPath
         ? url.pathname
         : undefined;
 
@@ -433,7 +443,7 @@ export const createGatewayFetch = (
     };
 
     const handle = async () => {
-      if (probePaths.has(url.pathname)) {
+      if (probePaths.has(url.pathname) || isPresenceRead) {
         return complete(await handleHttp(request));
       }
 
@@ -663,7 +673,7 @@ export const GatewayServer = Layer.effectDiscard(
     const application = yield* GatewayApplication;
 
     const httpBoundary = yield* Effect.acquireRelease(
-      Effect.sync(() => makeGatewayHttpBoundary(application.hub)),
+      Effect.sync(() => makeGatewayHttpBoundary(application)),
       (boundary) => Effect.tryPromise(boundary.dispose).pipe(Effect.orDie),
     );
 

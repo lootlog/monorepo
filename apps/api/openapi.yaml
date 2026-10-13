@@ -2292,6 +2292,80 @@ paths:
                 additionalProperties: false
       description: Internal endpoint for services that need to resolve a guild identifier to its canonical guild data.
       summary: "[Internal] Get guild by ID or vanity URL"
+  /internal/guilds/{guildId}/members/{discordId}/identity:
+    get:
+      tags:
+        - internal
+      operationId: GuildsInternalController_getMemberIdentity
+      parameters:
+        - name: guildId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: discordId
+          in: path
+          schema:
+            type: string
+          required: true
+      security: []
+      responses:
+        "200":
+          description: InternalMemberIdentityDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalMemberIdentityDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "403":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Internal endpoint for the Discord bot to resolve the Lootlog User behind an active member's Discord identity in a guild.
+      summary: "[Internal] Resolve an active member's User"
   /guilds/{guildId}/roles:
     get:
       tags:
@@ -29830,6 +29904,14 @@ components:
         - permissions
         - lvlRangeFrom
         - lvlRangeTo
+      additionalProperties: false
+    InternalMemberIdentityDto:
+      type: object
+      properties:
+        userId:
+          type: string
+      required:
+        - userId
       additionalProperties: false
     GuildResponseDto_Output:
       type: object

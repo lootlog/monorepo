@@ -10,7 +10,10 @@ import {
   Redacted,
 } from "effect";
 import { makeObservabilityLayer } from "@lootlog/instrumentation/observability";
+import { Permission } from "@lootlog/schema/permissions";
 import { makeGatewayAuth } from "../src/auth/auth-service.js";
+import type { UserGuildData } from "../src/guilds/guild.js";
+import type { GatewayHttpDependencies } from "../src/http-api/gateway-http.js";
 
 import { createGatewayFetch } from "../src/app.js";
 
@@ -21,11 +24,51 @@ const auth = makeGatewayAuth({
 
 const hub = { unavailableReason: () => undefined };
 
+const memberGrant = (
+  organizationId: string,
+  permissions: ReadonlyArray<Permission>,
+): UserGuildData => ({
+  guild: { id: organizationId, ownerId: "discord-owner" },
+  roles: [{ id: "role", lvlRangeFrom: 0, lvlRangeTo: 500, permissions }],
+});
+
+const grantsByDiscordId = new Map<string, UserGuildData[]>([
+  [
+    "discord-reader",
+    [memberGrant("organization-1", [Permission.LOOTLOG_ONLINE_PLAYERS_READ])],
+  ],
+  [
+    "discord-member",
+    [
+      memberGrant("organization-1", [Permission.LOOTLOG_ACCESS]),
+      memberGrant("organization-2", [Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+    ],
+  ],
+]);
+
+const snapshotReads: Array<{ organizationId: string; world?: string }> = [];
+
+const guilds: GatewayHttpDependencies["guilds"] = {
+  getUserGuilds: ({ discordId }) =>
+    Effect.succeed(grantsByDiscordId.get(discordId) ?? []),
+};
+
+const presence: GatewayHttpDependencies["presence"] = {
+  snapshot: (_viewer, organizationId, world) =>
+    Effect.sync(() => {
+      snapshotReads.push({ organizationId, world });
+
+      return { organizationId, world, revision: 1, presences: [] };
+    }),
+};
+
 const application = {
   config: { websocketPath: "/ws", environment: "test" },
   runPromise: Effect.runPromise,
   auth,
   hub,
+  guilds,
+  presence,
 };
 
 const server = { upgrade: () => false };
@@ -294,6 +337,42 @@ describe("gateway HTTP boundary", () => {
     expect(upgraded).toBe(true);
   });
 
+  test("serves Organization presence only to viewers allowed to read online players there", async () => {
+    snapshotReads.length = 0;
+    const fetch = createGatewayFetch(application);
+
+    const read = (discordId?: string) =>
+      fetch(
+        new Request(
+          "https://gateway.example/organizations/organization-1/presence?world=Aldous",
+          {
+            headers: discordId
+              ? { "x-auth-user-id": "user-1", "x-auth-discord-id": discordId }
+              : {},
+          },
+        ),
+        server,
+      );
+
+    expect((await read())?.status).toBe(401);
+    // Online-player access in another Organization grants nothing here.
+    expect((await read("discord-member"))?.status).toBe(403);
+    expect(snapshotReads).toEqual([]);
+
+    const allowed = await read("discord-reader");
+
+    expect(allowed?.status).toBe(200);
+    expect(await allowed?.json()).toEqual({
+      organizationId: "organization-1",
+      world: "Aldous",
+      revision: 1,
+      presences: [],
+    });
+    expect(snapshotReads).toEqual([
+      { organizationId: "organization-1", world: "Aldous" },
+    ]);
+  });
+
   test("rejects credentials in websocket URLs before upgrade", async () => {
     const response = await createGatewayFetch(application)(
       new Request("https://gateway.example/ws?ticket=secret"),
@@ -362,6 +441,8 @@ describe("gateway HTTP boundary", () => {
         runPromise: Effect.runPromise,
         auth,
         hub,
+        guilds,
+        presence,
       };
 
       const request = new Request("https://gateway.example/ws", {
@@ -421,6 +502,8 @@ describe("gateway HTTP boundary", () => {
       runPromise: Effect.runPromise,
       auth,
       hub,
+      guilds,
+      presence,
     };
 
     const request = new Request("https://gateway.example/ws", {

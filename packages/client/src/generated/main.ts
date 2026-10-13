@@ -8739,6 +8739,10 @@ export interface UpdateRolePermissionsDto {
   lvlRangeTo: number;
 }
 
+export interface InternalMemberIdentityDto {
+  userId: string;
+}
+
 export interface GuildResponseDtoOutput {
   id: string;
   name: string;
@@ -10812,6 +10816,22 @@ export type GuildsInternalControllerGetGuildByIdOrVanityUrl403 = {
 };
 
 export type GuildsInternalControllerGetGuildByIdOrVanityUrl429 = {
+  message: string;
+};
+
+export type GuildsInternalControllerGetMemberIdentityPathParameters = {
+ guildId: string,
+    discordId: string,
+ }
+export type GuildsInternalControllerGetMemberIdentity401 = {
+  message: string;
+};
+
+export type GuildsInternalControllerGetMemberIdentity403 = {
+  message: string;
+};
+
+export type GuildsInternalControllerGetMemberIdentity429 = {
   message: string;
 };
 
@@ -18152,6 +18172,150 @@ export const useGetGuildsInternalControllerGetGuildByIdOrVanityUrlQueryData = ()
   const queryClient = useQueryClient();
   return ({ idOrVanityUrl }: GuildsInternalControllerGetGuildByIdOrVanityUrlPathParameters,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof guildsInternalControllerGetGuildByIdOrVanityUrl>>>(getGuildsInternalControllerGetGuildByIdOrVanityUrlQueryKey({ idOrVanityUrl }));
+}
+
+
+
+export const getGuildsInternalControllerGetMemberIdentityUrl = ({ guildId, discordId }: GuildsInternalControllerGetMemberIdentityPathParameters,) => {
+
+
+
+
+  return `/internal/guilds/${guildId}/members/${discordId}/identity`
+}
+
+/**
+ * Internal endpoint for the Discord bot to resolve the Lootlog User behind an active member's Discord identity in a guild.
+ * @summary [Internal] Resolve an active member's User
+ */
+export const guildsInternalControllerGetMemberIdentity = async ({ guildId, discordId }: GuildsInternalControllerGetMemberIdentityPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<InternalMemberIdentityDto> => {
+
+  return mainFetch<InternalMemberIdentityDto>(getGuildsInternalControllerGetMemberIdentityUrl({ guildId, discordId }),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGuildsInternalControllerGetMemberIdentityQueryKey = ({ guildId, discordId }: GuildsInternalControllerGetMemberIdentityPathParameters,) => {
+    return [
+    `/internal/guilds/${guildId}/members/${discordId}/identity`
+    ] as const;
+    }
+
+
+export const getGuildsInternalControllerGetMemberIdentityQueryOptions = <TData = Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>>, TError = ErrorType<RequestValidationError | GuildsInternalControllerGetMemberIdentity401 | GuildsInternalControllerGetMemberIdentity403 | HttpErrorResponse | GuildsInternalControllerGetMemberIdentity429>>({ guildId, discordId }: GuildsInternalControllerGetMemberIdentityPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGuildsInternalControllerGetMemberIdentityQueryKey({ guildId, discordId });
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>>> = ({ signal }) => guildsInternalControllerGetMemberIdentity({ guildId, discordId }, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: guildId !== null && guildId !== undefined && discordId !== null && discordId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GuildsInternalControllerGetMemberIdentityQueryResult = NonNullable<Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>>>
+export type GuildsInternalControllerGetMemberIdentityQueryError = ErrorType<RequestValidationError | GuildsInternalControllerGetMemberIdentity401 | GuildsInternalControllerGetMemberIdentity403 | HttpErrorResponse | GuildsInternalControllerGetMemberIdentity429>
+
+
+export function useGuildsInternalControllerGetMemberIdentity<TData = Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>>, TError = ErrorType<RequestValidationError | GuildsInternalControllerGetMemberIdentity401 | GuildsInternalControllerGetMemberIdentity403 | HttpErrorResponse | GuildsInternalControllerGetMemberIdentity429>>(
+ pathParams: GuildsInternalControllerGetMemberIdentityPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>>,
+          TError,
+          Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGuildsInternalControllerGetMemberIdentity<TData = Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>>, TError = ErrorType<RequestValidationError | GuildsInternalControllerGetMemberIdentity401 | GuildsInternalControllerGetMemberIdentity403 | HttpErrorResponse | GuildsInternalControllerGetMemberIdentity429>>(
+ pathParams: GuildsInternalControllerGetMemberIdentityPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>>,
+          TError,
+          Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGuildsInternalControllerGetMemberIdentity<TData = Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>>, TError = ErrorType<RequestValidationError | GuildsInternalControllerGetMemberIdentity401 | GuildsInternalControllerGetMemberIdentity403 | HttpErrorResponse | GuildsInternalControllerGetMemberIdentity429>>(
+ pathParams: GuildsInternalControllerGetMemberIdentityPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary [Internal] Resolve an active member's User
+ */
+
+export function useGuildsInternalControllerGetMemberIdentity<TData = Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>>, TError = ErrorType<RequestValidationError | GuildsInternalControllerGetMemberIdentity401 | GuildsInternalControllerGetMemberIdentity403 | HttpErrorResponse | GuildsInternalControllerGetMemberIdentity429>>(
+ { guildId, discordId }: GuildsInternalControllerGetMemberIdentityPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGuildsInternalControllerGetMemberIdentityQueryOptions({ guildId, discordId },options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary [Internal] Resolve an active member's User
+ */
+export const prefetchGuildsInternalControllerGetMemberIdentityQuery = async <TData = Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>>, TError = ErrorType<RequestValidationError | GuildsInternalControllerGetMemberIdentity401 | GuildsInternalControllerGetMemberIdentity403 | HttpErrorResponse | GuildsInternalControllerGetMemberIdentity429>>(
+ queryClient: QueryClient, { guildId, discordId }: GuildsInternalControllerGetMemberIdentityPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getGuildsInternalControllerGetMemberIdentityQueryOptions({ guildId, discordId },options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useGuildsInternalControllerGetMemberIdentity} query
+ */
+export const invalidateGuildsInternalControllerGetMemberIdentity = async (
+ queryClient: QueryClient, { guildId, discordId }: GuildsInternalControllerGetMemberIdentityPathParameters, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getGuildsInternalControllerGetMemberIdentityQueryKey({ guildId, discordId }) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary [Internal] Resolve an active member's User
+ */
+export const useSetGuildsInternalControllerGetMemberIdentityQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId, discordId }: GuildsInternalControllerGetMemberIdentityPathParameters,updater: Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>> | undefined | ((old: Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>> | undefined) => Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>>>({ exact: $exactMatch, queryKey: getGuildsInternalControllerGetMemberIdentityQueryKey({ guildId, discordId }) }, updater);
+  };
+}
+
+/**
+ * @summary [Internal] Resolve an active member's User
+ */
+export const useGetGuildsInternalControllerGetMemberIdentityQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId, discordId }: GuildsInternalControllerGetMemberIdentityPathParameters,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof guildsInternalControllerGetMemberIdentity>>>(getGuildsInternalControllerGetMemberIdentityQueryKey({ guildId, discordId }));
 }
 
 

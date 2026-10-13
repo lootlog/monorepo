@@ -9,6 +9,9 @@ type Topic = typeof RealtimeLogicalTopic.Type;
 
 type Scope = typeof SubscriptionScope.Type;
 
+/** The identity and Organization grants that every permission check reads. */
+export type PermissionViewer = Pick<SessionData, "discordId" | "guilds">;
+
 const TOPIC_PERMISSION = new Map<Topic, Permission>([
   ["organization.activity", Permission.LOOTLOG_ACCESS],
   ["organization.chat", Permission.LOOTLOG_CHAT_READ],
@@ -24,7 +27,7 @@ const TOPIC_PERMISSION = new Map<Topic, Permission>([
 ]);
 
 export const hasPermission = (
-  session: SessionData,
+  session: PermissionViewer,
   organizationId: string,
   permission: Permission,
 ): boolean => {
@@ -80,7 +83,7 @@ export const canSubscribe = (session: SessionData, scope: Scope): boolean => {
 };
 
 export const canReadPreciseLocation = (
-  session: SessionData,
+  session: PermissionViewer,
   organizationId: string,
 ): boolean =>
   hasPermission(
