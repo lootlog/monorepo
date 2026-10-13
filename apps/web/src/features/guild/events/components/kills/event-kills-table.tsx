@@ -65,13 +65,19 @@ const getColumnClassName = (columnId: string, isPreview: boolean) => {
     return "hidden w-0 sm:table-cell sm:w-28 lg:w-36";
   }
 
+  // The preview card is narrow at every viewport, so its columns follow the
+  // card width instead of the screen.
   if (columnId === "respawnTime") {
+    if (isPreview) {
+      return "hidden w-0 text-right @md/kills:table-cell @md/kills:w-32";
+    }
+
     return "hidden w-0 text-right xl:table-cell xl:w-32";
   }
 
   if (columnId === "participants") {
     if (isPreview) {
-      return "hidden w-0";
+      return "hidden w-0 text-right @xs/kills:table-cell @xs/kills:w-28";
     }
 
     return "hidden w-0 text-right lg:table-cell lg:w-28";
@@ -210,7 +216,12 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
   };
 
   return (
-    <Container className="w-full min-w-0 overflow-hidden">
+    <Container
+      className={cn(
+        "w-full min-w-0 overflow-hidden",
+        isPreview && "@container/kills",
+      )}
+    >
       {!isPreview && (
         <SectionCardHeader icon={Skull} title={t("events.kills.title")} />
       )}

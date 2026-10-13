@@ -10,8 +10,11 @@ import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 type KillMonsterCellProps = {
   eventId: string;
   guildId: string;
-  /** Keeps the kill date under the name when the table has no date column. */
-  isDateAlwaysVisible?: boolean;
+  /**
+   * Sits in a preview card with no date column: the date stays under the name
+   * and the sprite shows at every viewport width.
+   */
+  isPreview?: boolean;
   kill: {
     heroNpc: Pick<KillHistoryEntryHeroNpc, "npcIcon" | "npcId" | "npcName">;
     heroNpcId: string;
@@ -23,7 +26,7 @@ type KillMonsterCellProps = {
 export const KillMonsterCell = ({
   eventId,
   guildId,
-  isDateAlwaysVisible = false,
+  isPreview = false,
   kill,
 }: KillMonsterCellProps) => {
   const { t } = useTranslation();
@@ -36,7 +39,7 @@ export const KillMonsterCell = ({
     <div className="flex min-w-0 items-center gap-2">
       {kill.heroNpc.npcIcon ? (
         <NpcTile
-          className="hidden shrink-0 lg:block"
+          className={cn("shrink-0", !isPreview && "hidden lg:block")}
           npc={{
             id: kill.heroNpc.npcId ?? undefined,
             name: kill.heroNpc.npcName,
@@ -44,7 +47,12 @@ export const KillMonsterCell = ({
           }}
         />
       ) : (
-        <Skull className="hidden size-4 shrink-0 text-muted-foreground lg:block" />
+        <Skull
+          className={cn(
+            "size-4 shrink-0 text-muted-foreground",
+            !isPreview && "hidden lg:block",
+          )}
+        />
       )}
       <div className="min-w-0 flex-1">
         <TextLink
@@ -66,7 +74,7 @@ export const KillMonsterCell = ({
         <div
           className={cn(
             "mt-0.5 truncate text-[10px] text-muted-foreground tabular-nums",
-            !isDateAlwaysVisible && "sm:hidden",
+            !isPreview && "sm:hidden",
           )}
         >
           {timestampToDate(kill.killedAt)}
