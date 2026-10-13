@@ -52,8 +52,8 @@ export const Route = createFileRoute(
   component: PlayerVsPlayerFullPage,
   pendingComponent: () => (
     <BattlePanelH2hSkeleton
+      variant="player-vs-player"
       mobileCard={<BattlePanelPvpBattleCardSkeleton />}
-      withPlayerTile
     />
   ),
 });
