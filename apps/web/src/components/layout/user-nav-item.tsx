@@ -30,7 +30,7 @@ export const UserNavItem = () => {
   const isActive = pathname.startsWith("/@me");
 
   const avatarElement = (
-    <Avatar className="size-11 rounded-xl">
+    <Avatar className="size-11 rounded-lg">
       <AvatarImage src={data?.user.image ?? ""} alt="" />
       <AvatarFallback className="rounded-none">
         {data?.user?.name[0] || ""}

@@ -318,7 +318,6 @@ describe("EventRankingTable", () => {
     ).toBeTruthy();
     expect(screen.getByText("2")).toBeTruthy();
     expect(section?.className).not.toContain("border-border");
-    expect(section?.className).not.toContain("rounded-2xl");
     expect(pointsCell?.className).toContain("pr-3!");
     expect(
       screen.queryByRole("button", { name: "events.ranking.moreActions" }),

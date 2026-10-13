@@ -67,25 +67,25 @@ export const BattlePanelH2hSkeleton = (props: BattlePanelH2hSkeletonProps) => {
               isHeadToHead ? (
                 <>
                   <div className="flex min-w-0 items-center gap-2 md:hidden">
-                    <Skeleton className="h-10 w-[212px] min-w-0 rounded-xl" />
-                    <Skeleton className="h-10 w-[84px] shrink-0 rounded-xl" />
+                    <Skeleton className="h-10 w-[212px] min-w-0 rounded-lg" />
+                    <Skeleton className="h-10 w-[84px] shrink-0 rounded-lg" />
                   </div>
                   <div className="hidden min-w-0 flex-wrap items-center gap-2 md:flex">
-                    <Skeleton className="h-10 min-w-[260px] flex-1 rounded-xl xl:max-w-[360px]" />
-                    <Skeleton className="h-10 w-[190px] rounded-xl" />
-                    <Skeleton className="h-10 w-[170px] rounded-xl" />
-                    <Skeleton className="h-10 w-[94px] rounded-xl" />
+                    <Skeleton className="h-10 min-w-[260px] flex-1 rounded-lg xl:max-w-[360px]" />
+                    <Skeleton className="h-10 w-[190px] rounded-lg" />
+                    <Skeleton className="h-10 w-[170px] rounded-lg" />
+                    <Skeleton className="h-10 w-[94px] rounded-lg" />
                   </div>
                 </>
               ) : (
                 <>
                   <div className="flex w-full min-w-0 items-center gap-2 md:hidden">
-                    <Skeleton className="h-10 min-w-[175px] flex-1 rounded-xl" />
-                    <Skeleton className="h-10 w-[84px] shrink-0 rounded-xl" />
+                    <Skeleton className="h-10 min-w-[175px] flex-1 rounded-lg" />
+                    <Skeleton className="h-10 w-[84px] shrink-0 rounded-lg" />
                   </div>
                   <div className="hidden min-w-0 flex-wrap items-center gap-2 md:flex">
-                    <Skeleton className="h-10 w-[190px] rounded-xl" />
-                    <Skeleton className="h-10 w-[94px] rounded-xl" />
+                    <Skeleton className="h-10 w-[190px] rounded-lg" />
+                    <Skeleton className="h-10 w-[94px] rounded-lg" />
                   </div>
                 </>
               )

@@ -48,7 +48,7 @@ export const StatisticsFiltersDesktop = ({
         onMaxLevelChange={onMaxLevelChange}
       />
 
-      <div className="flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-3 transition-colors hover:border-foreground/20 hover:bg-foreground/[0.04]">
+      <div className="flex h-10 items-center gap-2 rounded-lg border border-border bg-background px-3 transition-colors hover:border-foreground/20 hover:bg-foreground/[0.04]">
         <Award className="size-4" aria-hidden="true" />
         <Label htmlFor="ph-filter" className="cursor-pointer text-sm">
           {t("battlePanel.filters.honorPoints")}

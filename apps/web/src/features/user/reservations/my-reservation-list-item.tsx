@@ -56,11 +56,11 @@ export function MyReservationListItem({
         <Tooltip>
           <TooltipTrigger
             render=<span
-              className="shrink-0 rounded-xl"
+              className="shrink-0 rounded-lg"
               aria-label={reservation.sourceOrganization.name}
             />
           >
-            <Avatar className="size-9 rounded-xl" aria-hidden>
+            <Avatar className="size-9 rounded-lg" aria-hidden>
               <AvatarImage src={organizationIconUrl ?? undefined} alt="" />
               <AvatarFallback className="rounded-none text-sm font-semibold">
                 {reservation.sourceOrganization.name.charAt(0).toUpperCase() ||

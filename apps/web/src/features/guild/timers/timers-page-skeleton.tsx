@@ -16,10 +16,10 @@ export const TimersPageSkeleton = () => {
     <div aria-busy="true" className="flex h-full min-h-0 flex-col">
       <div className="px-3 pt-3">
         <FilterBar>
-          <Skeleton className="h-10 min-w-0 basis-full rounded-xl sm:flex-1 sm:basis-0" />
-          <Skeleton className="h-10 w-[140px] rounded-xl md:w-[200px]" />
+          <Skeleton className="h-10 min-w-0 basis-full rounded-lg sm:flex-1 sm:basis-0" />
+          <Skeleton className="h-10 w-[140px] rounded-lg md:w-[200px]" />
           {canChooseViewMode && (
-            <Skeleton className="h-10 w-[4.5rem] rounded-xl" />
+            <Skeleton className="h-10 w-[4.5rem] rounded-lg" />
           )}
         </FilterBar>
       </div>

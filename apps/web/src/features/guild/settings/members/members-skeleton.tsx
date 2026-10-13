@@ -19,9 +19,9 @@ export const MembersSettingsSkeleton = () => {
     <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden px-3 pb-3">
       <SectionCard className="min-h-0 flex-1 overflow-hidden">
         <TableFilterToolbar>
-          <Skeleton className="h-10 w-full rounded-xl sm:min-w-[200px] sm:flex-1" />
+          <Skeleton className="h-10 w-full rounded-lg sm:min-w-[200px] sm:flex-1" />
           <Skeleton className="h-10 w-full rounded-md sm:w-110" />
-          <Skeleton className="h-10 w-48 shrink-0 rounded-xl" />
+          <Skeleton className="h-10 w-48 shrink-0 rounded-lg" />
         </TableFilterToolbar>
 
         <div className="min-h-0 flex-1 overflow-hidden">
