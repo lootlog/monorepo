@@ -35,7 +35,8 @@
   "filtersLabel": "Filtry eventów",
   "searchLabel": "Szukaj eventu",
   "heroTabs": {
-    "label": "Wybór herosa"
+    "label": "Wybór herosa",
+    "all": "Wszystkie"
   },
   "backToList": "Powrót do listy",
   "end": "Zakończ",
