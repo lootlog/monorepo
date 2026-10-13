@@ -93,6 +93,9 @@ const userKey = (id: string) => `${USER_PREFIX}${id}`;
 const characterKey = (world: string, id: string) =>
   `${CHARACTER_PREFIX}${encodeURIComponent(world)}:${encodeURIComponent(id)}`;
 
+const discoveryKey = (guildId: string, world: string) =>
+  `party-ready-room:v3:discovery:${encodeURIComponent(guildId)}:${encodeURIComponent(world)}`;
+
 const remainingTtl = (aggregate: ReadyRoomAggregate, clock: () => number) =>
   Math.ceil((Date.parse(aggregate.expiresAt) - clock()) / 1000);
 
@@ -180,10 +183,7 @@ export const makeReadyRoomRepository = (
       redis
         .eval(
           FIND_ACTIVE_READY_ROOM_IDS_SCRIPT,
-          guildIds.map(
-            (id) =>
-              `party-ready-room:v3:discovery:${encodeURIComponent(id)}:${encodeURIComponent(world)}`,
-          ),
+          guildIds.map((id) => discoveryKey(id, world)),
           [clock()],
         )
         .pipe(
@@ -261,10 +261,7 @@ export const makeReadyRoomRepository = (
             aggregate.world,
             aggregate.organizerCharacter.characterId,
           ),
-          ...aggregate.guildIds.map(
-            (id) =>
-              `party-ready-room:v3:discovery:${encodeURIComponent(id)}:${encodeURIComponent(aggregate.world)}`,
-          ),
+          ...aggregate.guildIds.map((id) => discoveryKey(id, aggregate.world)),
           ...READY_ROOM_PUBLICATION_KEYS,
         ],
         [
