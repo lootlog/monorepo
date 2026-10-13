@@ -293,6 +293,26 @@ describe("GuildsSelector", () => {
         .filter((href) => href?.startsWith("/guild-")),
     ).toEqual(["/guild-1", "/guild-2"]);
   });
+  it("reorders guilds by touch after a press and hold", async () => {
+    mockGuildItemRects();
+    await renderSelector();
+    await nextFrame();
+    const item = guildLink("guild-1").closest("li");
+
+    if (!item) throw new Error("Missing reorder item");
+    dispatchPointer(item, "pointerdown", 20, "touch");
+    await act(() => vi.advanceTimersByTimeAsync(300));
+    dispatchPointer(item, "pointermove", 30, "touch");
+    dispatchPointer(item, "pointermove", 40, "touch");
+    await nextFrame();
+    dispatchPointer(item, "pointermove", 140, "touch");
+    await nextFrame();
+    dispatchPointer(item, "pointerup", 140, "touch");
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(await requests[0]?.json()).toEqual({
+      guildsOrder: ["guild-2", "guild-1"],
+    });
+  });
   it("does not retry a rejected guild order automatically", async () => {
     mockGuildItemRects();
     let rejectWrite = (_error: Error) => {};
