@@ -66,8 +66,10 @@ const relativeLuminance = (rgb: RgbColor) => {
 };
 
 const contrastRatio = (left: RgbColor, right: RgbColor) => {
-  const lighter = Math.max(relativeLuminance(left), relativeLuminance(right));
-  const darker = Math.min(relativeLuminance(left), relativeLuminance(right));
+  const leftLuminance = relativeLuminance(left);
+  const rightLuminance = relativeLuminance(right);
+  const lighter = Math.max(leftLuminance, rightLuminance);
+  const darker = Math.min(leftLuminance, rightLuminance);
 
   return (lighter + 0.05) / (darker + 0.05);
 };
