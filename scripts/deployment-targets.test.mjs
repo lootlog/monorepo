@@ -64,6 +64,7 @@ describe("deployment targets", () => {
       ".github/workflows/dev-deploy.yml",
       "scripts/deployment-targets.mjs",
       "scripts/deployment-input.ts",
+      "scripts/development-deployment-base.mjs",
     ]) {
       const plan = await createDeploymentPlan({
         mode: "dev",

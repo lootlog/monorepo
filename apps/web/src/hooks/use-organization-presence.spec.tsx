@@ -79,7 +79,9 @@ it("shares presence across member and event views without refetching on rerender
     }),
   );
   await waitFor(() => expect(gateway.request).toHaveBeenCalledTimes(2));
-  expect(result.current.game?.get("discord-1")).toHaveLength(1);
+  expect(result.current.game).toBeUndefined();
+  expect(result.current.web).toBeUndefined();
+  expect(result.current.event.presenceData).toBeUndefined();
 });
 
 it("keeps the remaining subscriber live and isolates Organizations", async () => {
