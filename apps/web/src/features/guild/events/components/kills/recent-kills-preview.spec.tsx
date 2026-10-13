@@ -77,7 +77,7 @@ describe("RecentKillsPreview", () => {
     expect(screen.getAllByText("Zorin").length).toBeGreaterThan(0);
   });
 
-  it("keeps the fetched history and header destination on the selected hero", async () => {
+  it("starts on all heroes and keeps the fetched history and header destination on the selected tab", async () => {
     const requests: string[] = [];
     renderPreview(
       <RecentKillsPreview
@@ -111,7 +111,8 @@ describe("RecentKillsPreview", () => {
       (
         await screen.findByRole("link", { name: "events.kills.viewAll" })
       ).getAttribute("href"),
-    ).toContain("/heroes/hero-1/kills");
+    ).toBe("/guild-1/events/event-1/kills");
+    expect(requests[requests.length - 1]).not.toContain("heroId");
     fireEvent.click(screen.getByRole("tab", { name: "Maddok" }));
     await waitFor(() =>
       expect(requests[requests.length - 1]).toContain(
@@ -123,6 +124,12 @@ describe("RecentKillsPreview", () => {
         await screen.findByRole("link", { name: "events.kills.viewAll" })
       ).getAttribute("href"),
     ).toContain("/heroes/hero-2/kills");
+    fireEvent.click(screen.getByRole("tab", { name: "events.heroTabs.all" }));
+    expect(
+      (
+        await screen.findByRole("link", { name: "events.kills.viewAll" })
+      ).getAttribute("href"),
+    ).toBe("/guild-1/events/event-1/kills");
   });
 
   it("keeps recent kills visible and recovers from a failed refresh", async () => {

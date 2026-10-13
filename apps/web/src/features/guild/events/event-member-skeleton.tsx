@@ -1,5 +1,5 @@
 import { KpiCard } from "@/components/common/kpi-card";
-import { Clock, Gauge, Moon, Sparkles, Swords, Timer } from "lucide-react";
+import { Clock, Moon, Sparkles, Swords } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SkeletonFilterBar } from "./components/skeleton-filter-bar";
 import { PageHeaderSkeleton } from "@/components/common/page-header-skeleton";
@@ -11,8 +11,6 @@ const KPIS = [
   { icon: Sparkles, labelKey: "events.kills.kpiPoints" },
   { icon: Clock, labelKey: "events.kills.kpiTotalTime" },
   { icon: Moon, labelKey: "events.kills.kpiAvgAfk" },
-  { icon: Gauge, labelKey: "events.kills.kpiAvgPointsPerKill" },
-  { icon: Timer, labelKey: "events.kills.kpiAvgTimePerKill" },
 ] as const;
 
 export const EventMemberSkeleton = () => {
@@ -21,7 +19,8 @@ export const EventMemberSkeleton = () => {
   return (
     <div aria-busy="true" className="flex flex-col gap-3 px-3 py-3">
       <PageHeaderSkeleton withMetadata />
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <SkeletonFilterBar />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {KPIS.map((kpi) => (
           <KpiCard
             key={kpi.labelKey}
@@ -32,7 +31,6 @@ export const EventMemberSkeleton = () => {
           />
         ))}
       </div>
-      <SkeletonFilterBar />
       <SectionCardSkeleton withIcon withDescription={false}>
         <TableRowsSkeleton rows={7} withHeader />
       </SectionCardSkeleton>

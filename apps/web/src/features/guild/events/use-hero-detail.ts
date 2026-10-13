@@ -23,6 +23,7 @@ import {
   useShowEventOverview,
 } from "@lootlog/client/main";
 import { useQueryClient } from "@tanstack/react-query";
+import { useEventHeroProfession } from "./hooks/queries/use-event-hero-profession";
 import { useParams } from "@tanstack/react-router";
 import { Timer, X } from "lucide-react";
 import { useState } from "react";
@@ -401,6 +402,12 @@ export const useHeroDetail = () => {
     },
   );
 
+  const heroProf = useEventHeroProfession({
+    guildId: queryGuildId,
+    eventId: queryEventId,
+    heroId: queryHeroId,
+  });
+
   const activeGapsMap = new Map(activeGaps.map((gap) => [gap.mapId, gap]));
 
   const hero = getEventHero(event, eventMaps, heroId);
@@ -669,6 +676,7 @@ export const useHeroDetail = () => {
   return {
     status: "ready" as const,
     hero,
+    heroProf,
     event,
     heroTimer,
     windowStatus,

@@ -20,20 +20,33 @@ const tabsListSizes = {
   lg: "h-10",
 };
 
+const tabsListVariants = {
+  /** A bordered, rounded control that stands on its own. */
+  pill: "rounded-xl border border-border",
+  /** A square strip that fills a card row between its separators. */
+  flush: "rounded-none",
+};
+
 /** Looks like the animated toggle group: a lime pill slides to the active tab. */
 function TabsList({
   className,
   size = "default",
+  variant = "pill",
   children,
   ...props
-}: TabsPrimitive.List.Props & { size?: keyof typeof tabsListSizes }) {
+}: TabsPrimitive.List.Props & {
+  size?: keyof typeof tabsListSizes;
+  variant?: keyof typeof tabsListVariants;
+}) {
   return (
     <TabsPrimitive.List
       data-slot="tabs-list"
       data-size={size}
+      data-variant={variant}
       className={cn(
         tabsListSizes[size],
-        "relative isolate inline-flex w-fit max-w-full items-stretch overflow-x-auto rounded-xl border border-border bg-background [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        tabsListVariants[variant],
+        "relative isolate inline-flex w-fit max-w-full items-stretch overflow-x-auto bg-background [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
         className,
       )}
       {...props}

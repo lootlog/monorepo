@@ -5,12 +5,14 @@ import { TabsList } from "@lootlog/ui/components/tabs";
 interface EventScrollableTabsListProps {
   ariaLabel: string;
   size: ComponentProps<typeof TabsList>["size"];
+  variant?: ComponentProps<typeof TabsList>["variant"];
   children: ReactNode;
 }
 
 export const EventScrollableTabsList = ({
   ariaLabel,
   size,
+  variant,
   children,
 }: EventScrollableTabsListProps) => {
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -21,6 +23,7 @@ export const EventScrollableTabsList = ({
       ref={viewportRef}
       aria-label={ariaLabel}
       size={size}
+      variant={variant}
       className="grid w-full grid-flow-col auto-cols-[minmax(max-content,1fr)]"
     >
       {children}

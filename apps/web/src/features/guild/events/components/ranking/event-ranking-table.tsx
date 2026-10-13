@@ -68,7 +68,7 @@ const getColumnClassName = (
 
   if (columnId === "points") {
     if (variant === "compact") {
-      return "w-20 text-right @md/ranking:w-28";
+      return "w-20 text-right @md/ranking:w-36";
     }
 
     return "w-28 text-right md:w-36";

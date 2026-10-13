@@ -8,12 +8,17 @@ import {
 } from "./scoring-rule-display";
 
 interface ScoringRulesListProps {
+  label: string;
+  hint: string;
   highlightedRuleIds: string[];
   rules: EventScoringRule[];
   t: TFunction;
 }
 
+/** One group of scoring rules under a small heading that explains it. */
 export const ScoringRulesList = ({
+  label,
+  hint,
   highlightedRuleIds,
   rules,
   t,
@@ -21,53 +26,66 @@ export const ScoringRulesList = ({
   const highlightedIds = new Set(highlightedRuleIds);
 
   return (
-    <ul
-      className="divide-y divide-border/60"
-      aria-label={t("events.killDetail.multipliers.configuredRules")}
-    >
-      {rules.map((rule) => {
-        const isDisabled = rule.enabled === false;
-        const isApplied = !isDisabled && highlightedIds.has(rule.id);
+    <section>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 px-3 pt-3 pb-1">
+        <h3 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          {label}
+        </h3>
+        <p className="text-[11px] text-muted-foreground">{hint}</p>
+      </div>
+      <ul className="divide-y divide-border/60" aria-label={label}>
+        {rules.map((rule) => {
+          const isDisabled = rule.enabled === false;
+          const isApplied = !isDisabled && highlightedIds.has(rule.id);
 
-        return (
-          <li
-            key={rule.id}
-            className={cn(
-              "relative grid gap-1.5 px-3 py-2.5 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-x-4",
-              isApplied &&
-                "pl-5 before:absolute before:bottom-2.5 before:left-3 before:top-2.5 before:w-px before:bg-cyan-400",
-              isDisabled && "bg-muted/15",
-            )}
-          >
-            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1 sm:col-start-1 sm:row-start-1">
-              <span className="min-w-0 text-sm font-semibold leading-snug text-foreground">
-                {getScoringRuleName(rule, t)}
-              </span>
-              {isApplied ? (
-                <span className="shrink-0 text-xs font-medium text-cyan-400">
-                  {t("events.killDetail.multipliers.appliedStatus")}
-                </span>
-              ) : null}
-              {isDisabled ? (
-                <span className="shrink-0 text-xs font-medium text-muted-foreground">
-                  {t("events.killDetail.multipliers.disabledStatus")}
-                </span>
-              ) : null}
-            </div>
-            <p className="text-xs leading-relaxed text-muted-foreground sm:col-start-1 sm:row-start-2">
-              {getScoringRuleCondition(rule, t)}
-            </p>
-            <span
+          return (
+            <li
+              key={rule.id}
               className={cn(
-                "justify-self-end text-right text-sm font-semibold text-emerald-500 sm:col-start-2 sm:row-start-1",
-                isDisabled && "text-muted-foreground",
+                "relative flex items-start justify-between gap-3 px-3 py-2.5",
+                isApplied &&
+                  "pl-5 before:absolute before:bottom-2.5 before:left-3 before:top-2.5 before:w-px before:bg-cyan-400",
               )}
             >
-              {getScoringRuleAction(rule.action, t)}
-            </span>
-          </li>
-        );
-      })}
-    </ul>
+              <div className="min-w-0">
+                <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                  <span
+                    className={cn(
+                      "min-w-0 text-sm font-medium leading-snug",
+                      isDisabled ? "text-muted-foreground" : "text-foreground",
+                    )}
+                  >
+                    {getScoringRuleName(rule, t)}
+                  </span>
+                  {isApplied ? (
+                    <span className="shrink-0 text-xs font-medium text-cyan-400">
+                      {t("events.killDetail.multipliers.appliedStatus")}
+                    </span>
+                  ) : null}
+                  {isDisabled ? (
+                    <span className="shrink-0 text-xs font-medium text-muted-foreground">
+                      {t("events.killDetail.multipliers.disabledStatus")}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                  {getScoringRuleCondition(rule, t)}
+                </p>
+              </div>
+              <span
+                className={cn(
+                  "shrink-0 rounded-md px-1.5 py-0.5 text-xs font-semibold whitespace-nowrap tabular-nums",
+                  isDisabled
+                    ? "bg-muted/40 text-muted-foreground line-through"
+                    : "bg-primary/10 text-primary",
+                )}
+              >
+                {getScoringRuleAction(rule.action, t)}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 };

@@ -282,9 +282,11 @@ find it unchanged on the next.
 - Before adding or copying logic, search by behavior as well as symbol name
   across the relevant apps and packages. Reuse the existing owner, standard
   library, or installed dependency before writing another implementation.
-- Use `es-toolkit` functions when they cover the required behavior instead of
-  writing custom collection or utility helpers. Keep simple native operations
-  when equally clear, and preserve ordering, mutation, and edge-case semantics.
+- Use built-in JavaScript and TypeScript features, such as `Object.groupBy`,
+  `Array.prototype.toSorted`, or `structuredClone`, when the workspace's
+  TypeScript `lib` and target runtime provide them. Use `es-toolkit` only for
+  behavior the language does not provide, instead of writing custom collection
+  or utility helpers. Preserve ordering, mutation, and edge-case semantics.
 - When equivalent logic has multiple callers, keep one implementation in the
   narrowest suitable owning module. Migrate every equivalent occurrence in
   the affected family, including inline copies and differently named helpers;
