@@ -1,6 +1,12 @@
 import { matchmakingH2HColumns } from "./components/matchmaking-h2h-columns";
 import { HeadToHeadPageVariant } from "./head-to-head-page-variant";
 
+/** Shared with the route's pending skeleton, which renders the same titles. */
+export const matchmakingH2HPageCopy = {
+  subtitleKey: "battlePanel.statistics.matchmaking.fullDescription",
+  titleKey: "battlePanel.statistics.matchmaking.fullTitle",
+};
+
 export function MatchmakingH2HFullPage() {
   return (
     <HeadToHeadPageVariant
@@ -10,8 +16,7 @@ export function MatchmakingH2HFullPage() {
       matchmaking
       showPhFilter={false}
       showRatingDelta
-      subtitleKey="battlePanel.statistics.matchmaking.fullDescription"
-      titleKey="battlePanel.statistics.matchmaking.fullTitle"
+      {...matchmakingH2HPageCopy}
       trailingSkeletonColumns={3}
     />
   );
