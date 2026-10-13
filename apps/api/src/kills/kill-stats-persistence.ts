@@ -19,6 +19,7 @@ import {
 import { Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
+  guildKillBucketTable,
   memberKillBucketTable,
   memberTable,
 } from "#src/database/drizzle/schema";
@@ -28,6 +29,7 @@ import {
   type GuildKillSource,
   type MemberKillSource,
 } from "./kill-source.js";
+import type { KillTimelineUnit } from "./kill-stats-period.js";
 
 type NpcType = (typeof memberKillBucketTable.npcType.enumValues)[number];
 
@@ -155,6 +157,26 @@ const guildColumns = (source: GuildKillSource): FilterColumns => ({
   npcLvl: source.npcLvl,
   npcName: source.npcName,
 });
+
+const guildBucketColumns: FilterColumns = {
+  guildId: guildKillBucketTable.guildId,
+  npcId: guildKillBucketTable.npcId,
+  world: guildKillBucketTable.world,
+  npcType: guildKillBucketTable.npcType,
+  npcLvl: guildKillBucketTable.npcLvl,
+  npcName: guildKillBucketTable.npcName,
+};
+
+/** Organization buckets, which keep the hour of every kill even for all-time statistics. */
+const guildBucketCondition = (filter: KillStatsFilter) =>
+  and(
+    buildKillStatsCondition(guildBucketColumns, filter),
+    filter.periodStart?.gte
+      ? gte(guildKillBucketTable.periodStart, filter.periodStart.gte)
+      : undefined,
+  );
+
+const warsawTime = sql`(${guildKillBucketTable.periodStart} at time zone 'Europe/Warsaw')`;
 
 const memberSource = (filter: KillStatsFilter) =>
   memberKillSource(filter.periodStart?.gte);
@@ -406,7 +428,51 @@ export const makeKillStatsPersistence = (
     );
   };
 
+  const guildKillTimeline = (
+    filter: KillStatsFilter,
+    unit: KillTimelineUnit,
+  ) => {
+    const date =
+      unit === "hour"
+        ? sql<string>`to_char(${guildKillBucketTable.periodStart} at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')`
+        : sql<string>`to_char(${warsawTime}, 'YYYY-MM-DD')`;
+
+    return protect(
+      "kills.stats.guild-timeline",
+      database
+        .select({
+          date,
+          kills: sum(guildKillBucketTable.kills).mapWith(Number),
+        })
+        .from(guildKillBucketTable)
+        .where(guildBucketCondition(filter))
+        .groupBy(date)
+        .orderBy(date),
+    );
+  };
+
+  const guildKillHourlyWeekday = (filter: KillStatsFilter) => {
+    const weekday = sql<number>`extract(isodow from ${warsawTime})::int`;
+    const hour = sql<number>`extract(hour from ${warsawTime})::int`;
+
+    return protect(
+      "kills.stats.guild-hourly-weekday",
+      database
+        .select({
+          weekday,
+          hour,
+          kills: sum(guildKillBucketTable.kills).mapWith(Number),
+        })
+        .from(guildKillBucketTable)
+        .where(guildBucketCondition(filter))
+        .groupBy(weekday, hour)
+        .orderBy(weekday, hour),
+    );
+  };
+
   return {
+    guildKillTimeline,
+    guildKillHourlyWeekday,
     topGuildNpcs,
     topMembersByType,
     topNpcKillers,
