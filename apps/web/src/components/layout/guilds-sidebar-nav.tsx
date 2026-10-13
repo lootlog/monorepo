@@ -9,6 +9,7 @@ import {
   ClipboardList,
   Clock,
   FileText,
+  Lock,
   Logs,
   Settings,
   Trophy,
@@ -18,6 +19,8 @@ import { SidebarNav } from "./sidebar-nav/sidebar-nav";
 import type { MenuItem } from "./sidebar-nav/types";
 import { GuildSidebarHeader } from "./guild-sidebar-header";
 import { GuildPinnedEventsSection } from "./guild-pinned-events-section";
+import { CollapsePresence } from "@/components/common/collapse-presence";
+import { useCurrentUserGuild } from "@/hooks/api/use-current-user-guild";
 import { getListEventsQueryKey, useListEvents } from "@lootlog/client/main";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useMatches } from "@tanstack/react-router";
@@ -52,6 +55,7 @@ export const GuildsSidebarNav: FC = () => {
   const { t } = useTranslation();
   const matches = useMatches();
   const navigation = resolveAppNavigation({ matches, accessPolicy });
+  const hasAccess = useCurrentUserGuild(guildId)?.hasLootlogAccess !== false;
 
   const eventsNavigationItem = navigation.sidebarItems.find(
     ({ id }) => id === "organization-events",
@@ -96,12 +100,11 @@ export const GuildsSidebarNav: FC = () => {
         : organizationNavigationIcons[item.id],
     label: item.label,
     path: item.href,
-    divided: item.id === "organization-activity",
+    group: item.group,
     badge:
       item.id === "organization-events" && hasActiveEvents
         ? { content: activeEventCount, variant: "default" }
         : undefined,
-    highlight: item.id === "organization-events" && hasActiveEvents,
   }));
 
   const handleItemClick = () => {
@@ -115,12 +118,19 @@ export const GuildsSidebarNav: FC = () => {
       items={menuItems}
       header={sidebarHeader}
       beforeItems={
-        eventsNavigationItem?.visible ? (
+        <>
+          <CollapsePresence open={!hasAccess}>
+            <p className="flex items-center gap-2.5 px-5 pt-5 text-sm font-medium text-muted-foreground">
+              <Lock aria-hidden="true" className="size-4 shrink-0" />
+              {t("layout.guildsSelector.noAccess")}
+            </p>
+          </CollapsePresence>
           <GuildPinnedEventsSection
             guildId={guildId ?? ""}
+            enabled={Boolean(eventsNavigationItem?.visible)}
             onNavigate={handleItemClick}
           />
-        ) : undefined
+        </>
       }
       ariaLabel={t("layout.navigation.guildAriaLabel")}
     />

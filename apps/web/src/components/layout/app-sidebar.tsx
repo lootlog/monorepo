@@ -6,6 +6,7 @@ import {
   SidebarFooter,
 } from "@lootlog/ui/components/sidebar";
 import type { ReactNode } from "react";
+import { cn } from "cn";
 
 /** Fits the server rail alone, without the navigation column. */
 export const COMPACT_SIDEBAR_WIDTH = "4rem";
@@ -23,7 +24,11 @@ export const AppSidebar = ({
   // instead of the viewport and starts below the announcement bar.
   return (
     <Sidebar
-      className="absolute h-auto border-r border-sidebar-border bg-sidebar"
+      // The compact sidebar is the server rail alone, which draws its own edge.
+      className={cn(
+        "absolute h-auto bg-sidebar",
+        !compact && "border-r border-sidebar-border",
+      )}
       mobileWidth={compact ? COMPACT_SIDEBAR_WIDTH : undefined}
     >
       <SidebarContent className="h-full bg-sidebar">

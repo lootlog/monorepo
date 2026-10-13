@@ -271,6 +271,9 @@
   "sidebarBanner": {
     "pinnedEvent": "Przypięty event",
     "showMore": "+{{count}} więcej",
+    "moreEvents_one": "Jeszcze {{count}} przypięty event",
+    "moreEvents_few": "Jeszcze {{count}} przypięte eventy",
+    "moreEvents_many": "Jeszcze {{count}} przypiętych eventów",
     "collapse": "Zwiń"
   },
   "maps": {
