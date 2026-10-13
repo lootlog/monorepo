@@ -21,6 +21,7 @@ import {
 } from "@lootlog/ui/components/avatar";
 import { Info, SearchX, ServerOff, TriangleAlert } from "lucide-react";
 import { useGlobalContext } from "@/hooks/context/use-global-context";
+import { useAnimatedInitialOpen } from "@/hooks/utils/use-animated-initial-open";
 import { useTranslation } from "react-i18next";
 import {
   getGuildsControllerGetManageableUserGuildsQueryKey,
@@ -35,6 +36,7 @@ export const CreateGuildModal: FC = () => {
   const [searchValue, setSearchValue] = useState("");
   const debouncedValue = useDebounce(searchValue, 200);
   const { createGuildModal } = useGlobalContext();
+  const open = useAnimatedInitialOpen(createGuildModal.state.isOpen);
   const { t } = useTranslation();
 
   const manageableGuildsQuery = useGuildsControllerGetManageableUserGuilds({
@@ -159,10 +161,7 @@ export const CreateGuildModal: FC = () => {
   const hasGuilds = (manageableGuilds?.length ?? 0) > 0;
 
   return (
-    <Dialog
-      open={createGuildModal.state.isOpen}
-      onOpenChange={handleModalClose}
-    >
+    <Dialog open={open} onOpenChange={handleModalClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("ui.modals.createLootlog.title")}</DialogTitle>
