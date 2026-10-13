@@ -18,6 +18,7 @@ import {
   TAMPERMONKEY_URL,
 } from "@/config/addon";
 import { useGlobalContext } from "@/hooks/context/use-global-context";
+import { useAnimatedInitialOpen } from "@/hooks/utils/use-animated-initial-open";
 
 const EXTENSION_TITLE_ID = "install-addon-extension-title";
 
@@ -25,6 +26,7 @@ const USERSCRIPT_TITLE_ID = "install-addon-userscript-title";
 
 export const InstallAddonModal: FC = () => {
   const { installAddonModal } = useGlobalContext();
+  const open = useAnimatedInitialOpen(installAddonModal.state.isOpen);
   const { t } = useTranslation();
 
   const handleModalClose = () => {
@@ -34,10 +36,7 @@ export const InstallAddonModal: FC = () => {
   const newTab = <span className="sr-only">{t("ui.externalLink.newTab")}</span>;
 
   return (
-    <Dialog
-      open={installAddonModal.state.isOpen}
-      onOpenChange={handleModalClose}
-    >
+    <Dialog open={open} onOpenChange={handleModalClose}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{t("ui.modals.installAddon.title")}</DialogTitle>
