@@ -1,6 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { MatchmakingH2HFullPage } from "@/features/user/battle-panel/battle-panel-statistics/matchmaking-h2h-full-page";
 import { BattlePanelH2hSkeleton } from "@/features/user/battle-panel/battle-panel-statistics/battle-panel-h2h-skeleton";
+import { BattlePanelH2hCardSkeleton } from "@/features/user/battle-panel/components/battle-panel-h2h-card-skeleton";
 import { ensureBattlePanelCharacterId } from "@/features/user/battle-panel/battle-panel-route-loader";
 import {
   battlePanelHeadToHeadSearchSchema,
@@ -62,5 +63,9 @@ export const Route = createFileRoute(
       return null;
     }),
   component: MatchmakingH2HFullPage,
-  pendingComponent: BattlePanelH2hSkeleton,
+  pendingComponent: () => (
+    <BattlePanelH2hSkeleton
+      mobileCard={<BattlePanelH2hCardSkeleton withRatingDelta />}
+    />
+  ),
 });

@@ -12,6 +12,8 @@ type StatsTableCardProps = {
   /** Shown instead of the rows when the list is empty. */
   emptyMessage?: string;
   footer?: ReactNode;
+  /** The loading placeholder for pages that render a card list instead of the table below `md`. */
+  mobileSkeleton?: ReactNode;
   children: ReactNode;
 };
 
@@ -21,6 +23,7 @@ export const StatsTableCard = ({
   rowContent,
   emptyMessage,
   footer,
+  mobileSkeleton,
   children,
 }: StatsTableCardProps) => (
   <SectionCard
@@ -29,7 +32,11 @@ export const StatsTableCard = ({
   >
     <ScrollArea className="relative min-h-0 flex-1">
       {isLoading ? (
-        <TableRowsSkeleton withHeader rowContent={rowContent} />
+        <TableRowsSkeleton
+          withHeader
+          rowContent={rowContent}
+          mobileList={mobileSkeleton}
+        />
       ) : emptyMessage ? (
         <EmptyState icon={SearchX} title={emptyMessage} />
       ) : (
