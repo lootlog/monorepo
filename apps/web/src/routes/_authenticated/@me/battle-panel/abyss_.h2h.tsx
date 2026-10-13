@@ -1,5 +1,8 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { MatchmakingH2HFullPage } from "@/features/user/battle-panel/battle-panel-statistics/matchmaking-h2h-full-page";
+import {
+  MatchmakingH2HFullPage,
+  matchmakingH2HPageCopy,
+} from "@/features/user/battle-panel/battle-panel-statistics/matchmaking-h2h-full-page";
 import { BattlePanelH2hSkeleton } from "@/features/user/battle-panel/battle-panel-statistics/battle-panel-h2h-skeleton";
 import { BattlePanelH2hCardSkeleton } from "@/features/user/battle-panel/components/battle-panel-h2h-card-skeleton";
 import { ensureBattlePanelCharacterId } from "@/features/user/battle-panel/battle-panel-route-loader";
@@ -65,6 +68,8 @@ export const Route = createFileRoute(
   component: MatchmakingH2HFullPage,
   pendingComponent: () => (
     <BattlePanelH2hSkeleton
+      variant="head-to-head"
+      {...matchmakingH2HPageCopy}
       mobileCard={<BattlePanelH2hCardSkeleton withRatingDelta />}
     />
   ),
