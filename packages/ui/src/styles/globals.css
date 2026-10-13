@@ -38,7 +38,6 @@
   --destructive: #ff665b;
   --destructive-foreground: #07111f;
   --border: #2b3b53;
-  --input: #354760;
   --ring: #35d3e4;
   --chart-1: #3157f6;
   --chart-2: #35d3e4;
@@ -98,7 +97,6 @@
   --destructive: oklch(0.73 0.166 25);
   --destructive-foreground: var(--background);
   --border: oklch(0.25 0.06 300);
-  --input: oklch(0.56 0.08 300);
   --ring: var(--primary);
   --chart-1: var(--primary);
   --chart-2: oklch(0.65 0.11 195);
@@ -134,7 +132,6 @@
   --destructive: oklch(0.73 0.166 25);
   --destructive-foreground: var(--background);
   --border: oklch(0.32 0.04 280);
-  --input: oklch(0.58 0.05 280);
   --ring: var(--primary);
   --chart-1: var(--primary);
   --chart-2: oklch(0.68 0.14 280);
@@ -170,7 +167,6 @@
   --destructive: oklch(0.73 0.166 25);
   --destructive-foreground: var(--background);
   --border: oklch(0.28 0.06 310);
-  --input: oklch(0.555 0.08 310);
   --ring: var(--primary);
   --chart-1: var(--primary);
   --chart-2: oklch(0.68 0.194 45);
@@ -206,7 +202,6 @@
   --destructive: oklch(0.73 0.166 25);
   --destructive-foreground: var(--background);
   --border: oklch(0.3 0.05 40);
-  --input: oklch(0.57 0.06 40);
   --ring: var(--primary);
   --chart-1: var(--primary);
   --chart-2: oklch(0.62 0.112 220);
@@ -242,7 +237,6 @@
   --destructive: oklch(0.73 0.166 25);
   --destructive-foreground: var(--background);
   --border: oklch(0.28 0.05 150);
-  --input: oklch(0.555 0.06 150);
   --ring: var(--primary);
   --chart-1: var(--primary);
   --chart-2: oklch(0.8 0.168 75);
@@ -278,7 +272,6 @@
   --destructive: oklch(0.765 0.139 25);
   --destructive-foreground: var(--background);
   --border: oklch(0.3 0.06 20);
-  --input: oklch(0.58 0.08 20);
   --ring: var(--primary);
   --chart-1: var(--primary);
   --chart-2: oklch(0.76 0.155 85);
@@ -314,7 +307,6 @@
   --destructive: oklch(0.77 0.135 25);
   --destructive-foreground: var(--background);
   --border: oklch(0.28 0.04 310);
-  --input: oklch(0.565 0.04 310);
   --ring: var(--primary);
   --chart-1: var(--primary);
   --chart-2: oklch(0.72 0.17 50);
@@ -350,7 +342,6 @@
   --destructive: oklch(0.73 0.166 25);
   --destructive-foreground: var(--background);
   --border: oklch(0.22 0.04 330);
-  --input: oklch(0.54 0.05 330);
   --ring: var(--primary);
   --chart-1: var(--primary);
   --chart-2: oklch(0.56 0.2 295);
@@ -386,7 +377,6 @@
   --destructive: oklch(0.745 0.154 25);
   --destructive-foreground: var(--background);
   --border: oklch(0.26 0.09 30);
-  --input: oklch(0.55 0.08 30);
   --ring: var(--primary);
   --chart-1: var(--primary);
   --chart-2: oklch(0.57 0.22 295);
@@ -423,7 +413,8 @@
   --color-destructive-foreground: var(--destructive-foreground);
   /* Card and divider borders sit halfway between the theme border and the card. */
   --color-border: color-mix(in oklab, var(--border) 50%, var(--card));
-  --color-input: var(--input);
+  /* Controls keep the theme's full border, a step above the quieter card border. */
+  --color-input: var(--border);
   --color-ring: var(--ring);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -541,7 +532,6 @@ body {
   --destructive: oklch(0.745 0.154 25);
   --destructive-foreground: var(--background);
   --border: oklch(0.26 0.05 240);
-  --input: oklch(0.535 0 0);
   --ring: var(--primary);
   --chart-1: var(--primary);
   --chart-2: oklch(0.75 0.153 85);
@@ -577,7 +567,6 @@ body {
   --destructive: oklch(0.76 0.142 25);
   --destructive-foreground: var(--background);
   --border: oklch(0.38 0.05 290);
-  --input: oklch(0.555 0.055 290);
   --ring: var(--primary);
   --chart-1: var(--primary);
   --chart-2: oklch(0.78 0.159 85);
@@ -613,7 +602,6 @@ body {
   --destructive: oklch(0.755 0.146 25);
   --destructive-foreground: var(--background);
   --border: oklch(0.28 0.1 10);
-  --input: oklch(0.55 0.055 250);
   --ring: var(--primary);
   --chart-1: var(--primary);
   --chart-2: oklch(0.555 0.087 240);
@@ -651,7 +639,6 @@ body {
   --destructive: oklch(0.745 0.154 25);
   --destructive-foreground: var(--background);
   --border: oklch(0.26 0.035 230);
-  --input: oklch(0.55 0.04 230);
   --ring: var(--primary);
   --chart-1: var(--primary);
   --chart-2: oklch(0.65 0.16 280);
@@ -688,7 +675,6 @@ body {
   --destructive: oklch(0.75 0.15 25);
   --destructive-foreground: var(--background);
   --border: oklch(0.28 0.05 345);
-  --input: oklch(0.545 0.05 345);
   --ring: var(--primary);
   --chart-1: var(--primary);
   --chart-2: oklch(0.56 0.12 330);
@@ -865,7 +851,6 @@ body {
   --destructive: oklch(0.73 0.166 25);
   --destructive-foreground: var(--background);
   --border: oklch(0.38 0.05 350);
-  --input: oklch(0.6 0.05 350);
   --ring: var(--primary);
   --chart-1: var(--primary);
   --chart-2: oklch(0.72 0.07 340);
@@ -904,7 +889,6 @@ body {
   --destructive: oklch(0.73 0.166 25);
   --destructive-foreground: var(--background);
   --border: oklch(0.38 0.05 300);
-  --input: oklch(0.6 0.05 300);
   --ring: var(--primary);
   --chart-1: var(--primary);
   --chart-2: oklch(0.68 0.07 290);
@@ -943,7 +927,6 @@ body {
   --destructive: oklch(0.73 0.166 25);
   --destructive-foreground: var(--background);
   --border: oklch(0.38 0.05 230);
-  --input: oklch(0.595 0.05 230);
   --ring: var(--primary);
   --chart-1: var(--primary);
   --chart-2: oklch(0.72 0.07 220);
