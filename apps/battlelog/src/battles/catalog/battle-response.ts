@@ -1,3 +1,4 @@
+import { CursorPaginationSchema } from "#src/battles/analytics/pagination";
 import {
   DateTimeString,
   type DeepMutable,
@@ -150,15 +151,6 @@ const BattleResponseSchema = Schema.Struct({
   warriors: Schema.Array(BattleWarriorResponseSchema),
 });
 
-const BattlesPaginationSchema = Schema.Struct({
-  size: Schema.Number,
-  hasNext: Schema.Boolean,
-  hasPrev: Schema.Boolean,
-  nextCursor: Schema.optional(Schema.String),
-  previousCursor: Schema.optional(Schema.String),
-  total: Schema.optional(Schema.Number),
-});
-
 const BattlesPerformanceSchema = Schema.Struct({
   queryTime: Schema.Number,
   countTime: Schema.optional(Schema.Number),
@@ -168,7 +160,7 @@ const BattlesPerformanceSchema = Schema.Struct({
 
 const BattlesListResponseSchema = Schema.Struct({
   battles: Schema.Array(BattleResponseSchema),
-  pagination: BattlesPaginationSchema,
+  pagination: CursorPaginationSchema,
   meta: Schema.Struct({
     performance: BattlesPerformanceSchema,
   }),
