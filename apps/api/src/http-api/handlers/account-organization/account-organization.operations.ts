@@ -18,7 +18,7 @@ import { SqlError } from "effect/sql/SqlError";
 import { DiscordGuildSyncStateResponse as DiscordGuildSyncStateCodec } from "#src/shared/schema/discord-guild-sync";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
 import { eq } from "drizzle-orm";
-import { compact, uniq } from "es-toolkit";
+import { compact } from "es-toolkit";
 
 import {
   Permission,
@@ -321,9 +321,11 @@ export class GuildConfigurationData extends Context.Service<
                 // The row is cached under every key it was looked up by, so a
                 // change must evict the id entry and both vanity entries.
                 yield* Effect.all(
-                  uniq(
-                    compact([guildId, oldGuild?.vanityUrl, guild.vanityUrl]),
-                  ).map((key) => cache.del(getGuildCacheKey(key))),
+                  [
+                    ...new Set(
+                      compact([guildId, oldGuild?.vanityUrl, guild.vanityUrl]),
+                    ),
+                  ].map((key) => cache.del(getGuildCacheKey(key))),
                 );
 
                 return guild;
