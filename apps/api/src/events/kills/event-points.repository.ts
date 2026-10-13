@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { and, asc, eq, gte, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
 import { Clock, Effect } from "effect";
-import { chunk, sortBy } from "es-toolkit";
+import { chunk } from "es-toolkit";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   eventHeroKillTable,
@@ -113,18 +113,20 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
 
           // Rows are locked in conflict-key order so concurrent kills sharing
           // members cannot deadlock.
-          const rows = sortBy(entries, ["memberId"]).map((entry) => ({
-            id: randomUUID(),
-            eventId,
-            memberId: entry.memberId,
-            heroNpcName,
-            totalPoints: entry.points,
-            totalKills: 1,
-            totalTimeSeconds: entry.trackingSeconds,
-            avgAfkPercentage: entry.afkPercentage,
-            pointsModified: entry.pointsModified,
-            updatedAt: now,
-          }));
+          const rows = entries
+            .toSorted((left, right) => left.memberId - right.memberId)
+            .map((entry) => ({
+              id: randomUUID(),
+              eventId,
+              memberId: entry.memberId,
+              heroNpcName,
+              totalPoints: entry.points,
+              totalKills: 1,
+              totalTimeSeconds: entry.trackingSeconds,
+              avgAfkPercentage: entry.afkPercentage,
+              pointsModified: entry.pointsModified,
+              updatedAt: now,
+            }));
 
           for (const batch of chunk(rows, RANKING_UPSERT_BATCH_SIZE))
             yield* transaction

@@ -12,7 +12,7 @@ import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { DependencyUnavailableError } from "#src/shared/http/http-errors";
 import { and, desc, eq, inArray, isNull, ne, or } from "drizzle-orm";
 import { Clock, Effect } from "effect";
-import { omit, zip } from "es-toolkit";
+import { zip } from "es-toolkit";
 import { lootPublicationOutboxTable } from "#src/database/drizzle/loot-publication-outbox.schema";
 import type { LootPublication } from "./loot-publication-outbox.js";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -476,7 +476,9 @@ export const makeLootSubmissionAcceptancePersistence = (
         // overlapping concurrent loots cannot wait on each other's keys in reverse.
         const itemSnapshotIds = yield* resolveItemSnapshotIds(
           transaction,
-          data.items.map((item) => omit(item, ["hid", "instanceStat"])),
+          data.items.map(
+            ({ hid: _hid, instanceStat: _instanceStat, ...item }) => item,
+          ),
         );
 
         if (itemSnapshotIds.length > 0) {
@@ -515,7 +517,7 @@ export const makeLootSubmissionAcceptancePersistence = (
         const acceptedNpcs = yield* resolveNpcSnapshots(
           transaction,
           data.gameVersion,
-          data.npcs.map((npc) => omit(npc, ["runtimeNpcId"])),
+          data.npcs.map(({ runtimeNpcId: _runtimeNpcId, ...npc }) => npc),
         );
 
         if (acceptedNpcs.length > 0) {

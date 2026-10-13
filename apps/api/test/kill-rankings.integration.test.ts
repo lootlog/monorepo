@@ -6,7 +6,6 @@ import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
 import { eq, inArray } from "drizzle-orm";
 import { Effect, ManagedRuntime } from "effect";
-import { sortBy } from "es-toolkit";
 import {
   ApiDatabase,
   ApiDatabaseLive,
@@ -566,7 +565,9 @@ test("event rankings accumulate concurrent kills and count a retried kill once",
         .from(eventRankingTable)
         .where(eq(eventRankingTable.eventId, eventId));
 
-      expect(sortBy(rankings, ["memberId"])).toEqual(
+      expect(
+        rankings.toSorted((left, right) => left.memberId - right.memberId),
+      ).toEqual(
         crew
           .toSorted((left, right) => left - right)
           .map((memberId) => {

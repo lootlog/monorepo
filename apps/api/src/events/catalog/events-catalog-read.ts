@@ -7,7 +7,6 @@ import {
 } from "@lootlog/domain/access-policy";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
-import { groupBy } from "es-toolkit";
 import { eventReadCacheEntry } from "#src/events/catalog/event-read-cache.service";
 import superjson from "superjson";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -155,14 +154,14 @@ export const makeEventsCatalogRead = (
 
       const heroes = yield* findHeroes([eventId]);
 
-      const maps = groupBy(
+      const maps = Map.groupBy(
         yield* heroMaps(heroes.map(({ id }) => id)),
         ({ heroNpcId }) => heroNpcId,
       );
 
       const heroNpcs = heroes.map((hero) => ({
         ...hero,
-        maps: maps[hero.id] ?? [],
+        maps: maps.get(hero.id) ?? [],
       }));
 
       return {
