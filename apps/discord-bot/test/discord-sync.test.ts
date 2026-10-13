@@ -70,11 +70,12 @@ async function fixture(cacheMembers = true) {
 
   const guild: Pick<
     APIGuild,
-    "id" | "name" | "icon" | "owner_id" | "emojis" | "features"
+    "id" | "name" | "icon" | "banner" | "owner_id" | "emojis" | "features"
   > & { roles: (typeof role)[] } = {
     id: guildId,
     name: "Guild",
     icon: null,
+    banner: null,
     owner_id: guildId,
     roles: [{ ...role, id: guildId, name: "@everyone", position: 0 }],
     emojis: [],
@@ -248,6 +249,7 @@ describe("Discord SDK to RabbitMQ contracts", () => {
         guildId,
         name: "Guild",
         icon: null,
+        banner: null,
         ownerId: guildId,
         roles: [
           {
@@ -263,12 +265,13 @@ describe("Discord SDK to RabbitMQ contracts", () => {
     });
   });
 
-  test("publishes rename, icon addition/removal and ownership changes", async () => {
+  test("publishes rename, icon and banner addition/removal and ownership changes", async () => {
     const f = await fixture();
 
-    for (const icon of [null, "a_12345678901234567890123456789012", null]) {
+    for (const image of [null, "a_12345678901234567890123456789012", null]) {
       f.guild.name = "testowankox";
-      f.guild.icon = icon;
+      f.guild.icon = image;
+      f.guild.banner = image;
       f.guild.owner_id = roleId;
       const updated = await f.fetchGuild();
       await Effect.runPromise(f.sync.handleGuildUpdate(f.sdkGuild, updated));
@@ -278,6 +281,10 @@ describe("Discord SDK to RabbitMQ contracts", () => {
           guildId,
           name: "testowankox",
           icon: updated.iconURL(),
+          // An animated banner is published still.
+          banner:
+            image &&
+            `https://cdn.discordapp.com/banners/${guildId}/${image}.webp?size=512`,
           ownerId: roleId,
         },
       });

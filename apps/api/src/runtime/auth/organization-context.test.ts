@@ -22,6 +22,7 @@ const guild = {
   id: guildId,
   name: "Organization",
   icon: null,
+  banner: null,
   ownerId: "owner",
   vanityUrl: null,
   notificationRuleLimit: 20,

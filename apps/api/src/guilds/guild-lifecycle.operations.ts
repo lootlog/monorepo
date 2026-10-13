@@ -151,6 +151,7 @@ export const makeGuildLifecycle = (
               id: data.guildId,
               name: data.name,
               icon: data.icon,
+              banner: data.banner,
               ownerId: data.ownerId,
               active: true,
               createdAt: now,
@@ -161,6 +162,9 @@ export const makeGuildLifecycle = (
               set: {
                 name: data.name,
                 icon: data.icon,
+                // Drizzle skips undefined, so an event without a banner keeps
+                // the stored one.
+                banner: data.banner,
                 ownerId: data.ownerId,
                 active: true,
                 updatedAt: now,
@@ -278,6 +282,7 @@ export const makeGuildLifecycle = (
             .set({
               name: data.name,
               icon: data.icon,
+              banner: data.banner,
               ownerId: data.ownerId,
               updatedAt: now,
             })
