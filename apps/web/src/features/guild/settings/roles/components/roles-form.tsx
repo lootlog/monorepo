@@ -1,6 +1,8 @@
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCard } from "@/components/common/section-card/section-card";
+import { BandSection } from "@/components/common/band-section";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -19,13 +21,6 @@ import { useTranslation } from "react-i18next";
 import { Input } from "@lootlog/ui/components/input";
 
 import { toast } from "sonner";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@lootlog/ui/components/accordion";
-import { Settings } from "lucide-react";
 import { cn } from "cn";
 
 import { PERMISSION_CATEGORIES } from "../constants/permission-categories";
@@ -117,136 +112,112 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="w-full mx-auto pb-24"
-        noValidate
-      >
-        <SectionCard>
-          <SectionCardHeader
-            title={t("settings.roles.levelRangeTitle")}
-            description={t("settings.roles.levelRangeDescription")}
-            icon={Settings}
-          />
-          <SectionCardContent>
-            <div className="flex gap-3 items-center ">
-              <FormField
-                control={form.control}
-                name="lvlRangeFrom"
-                render={({ field }) => (
-                  <FormItem className="flex-1 max-w-[100px]">
-                    <FormControl
-                      render=<Input
-                        placeholder={DEFAULT_LVL_RANGE_FROM}
-                        aria-label={t("settings.roles.levelRangeFrom")}
-                        type="number"
-                        max={500}
-                        min={0}
-                        {...field}
-                      />
+      {/* Room below the last section for the docked save bar. */}
+      <form onSubmit={form.handleSubmit(onSubmit)} className="pb-24" noValidate>
+        <BandSection
+          id="role-level-range"
+          title={t("settings.roles.levelRangeTitle")}
+          description={t("settings.roles.levelRangeDescription")}
+        >
+          <div className="flex items-start gap-3">
+            <FormField
+              control={form.control}
+              name="lvlRangeFrom"
+              render={({ field }) => (
+                <FormItem className="w-25">
+                  <FormControl
+                    render=<Input
+                      placeholder={DEFAULT_LVL_RANGE_FROM}
+                      aria-label={t("settings.roles.levelRangeFrom")}
+                      type="number"
+                      max={500}
+                      min={0}
+                      {...field}
                     />
-                    <FormMessage role="alert" />
-                  </FormItem>
-                )}
-              />
-              <span className="text-muted-foreground">-</span>
-              <FormField
-                control={form.control}
-                name="lvlRangeTo"
-                render={({ field }) => (
-                  <FormItem className="flex-1 max-w-[100px]">
-                    <FormControl
-                      render=<Input
-                        placeholder={DEFAULT_LVL_RANGE_TO}
-                        aria-label={t("settings.roles.levelRangeTo")}
-                        type="number"
-                        max={500}
-                        min={0}
-                        {...field}
-                      />
+                  />
+                  <FormMessage role="alert" />
+                </FormItem>
+              )}
+            />
+            <span className="flex h-9 items-center text-muted-foreground">
+              -
+            </span>
+            <FormField
+              control={form.control}
+              name="lvlRangeTo"
+              render={({ field }) => (
+                <FormItem className="w-25">
+                  <FormControl
+                    render=<Input
+                      placeholder={DEFAULT_LVL_RANGE_TO}
+                      aria-label={t("settings.roles.levelRangeTo")}
+                      type="number"
+                      max={500}
+                      min={0}
+                      {...field}
                     />
-                    <FormMessage role="alert" />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </SectionCardContent>
-        </SectionCard>
+                  />
+                  <FormMessage role="alert" />
+                </FormItem>
+              )}
+            />
+          </div>
+        </BandSection>
 
-        <div className="space-y-3 pt-3">
-          <Accordion
-            multiple
-            defaultValue={PERMISSION_CATEGORIES.map((g) => g.groupKey)}
-            className="space-y-3"
-          >
-            {PERMISSION_CATEGORIES.map((group) => {
-              const IconComponent = group.icon;
+        {PERMISSION_CATEGORIES.map((group) => {
+          const enabledCount = group.permissions.filter((permission) =>
+            form.watch(`permissions.${permission}`),
+          ).length;
 
-              const enabledCount = group.permissions.filter((p) =>
-                form.watch(`permissions.${p}`),
-              ).length;
-
-              return (
-                <SectionCard key={group.groupKey} className="overflow-hidden">
-                  <AccordionItem value={group.groupKey} className="border-0">
-                    <SectionCardHeader
-                      icon={IconComponent}
-                      title={
-                        <AccordionTrigger className="p-0 hover:no-underline">
-                          {t(`permissions.groups.${group.groupKey}.name`)}
-                        </AccordionTrigger>
-                      }
-                      description={t(
-                        `permissions.groups.${group.groupKey}.description`,
+          return (
+            <BandSection
+              key={group.groupKey}
+              id={`role-permissions-${group.groupKey}`}
+              title={t(`permissions.groups.${group.groupKey}.name`)}
+              description={t(
+                `permissions.groups.${group.groupKey}.description`,
+              )}
+              count={`${enabledCount}/${group.permissions.length}`}
+              tiled
+            >
+              {group.permissions.map((permission) => (
+                <FormField
+                  key={permission}
+                  control={form.control}
+                  name={`permissions.${permission}`}
+                  render={({ field }) => (
+                    <FormItem
+                      data-list-tile
+                      className={cn(
+                        "relative flex flex-row items-center gap-3 py-3 transition-colors hover:bg-muted/30 motion-reduce:transition-none",
+                        LIST_TILE_RULE_CLASS,
+                        LIST_TILE_INSET_CLASS,
+                        field.value && "bg-primary/5",
                       )}
-                      actions={
-                        <span className="text-xs text-muted-foreground">
-                          {enabledCount}/{group.permissions.length}
-                        </span>
-                      }
-                    />
-                    <AccordionContent className="pb-0 pt-0">
-                      <div className="divide-y divide-border/50 border-t border-border/50">
-                        {group.permissions.map((perm) => (
-                          <FormField
-                            key={perm}
-                            control={form.control}
-                            name={`permissions.${perm}`}
-                            render={({ field }) => (
-                              <FormItem
-                                className={cn(
-                                  "relative flex flex-row items-start space-x-3 space-y-0 py-3 px-4 pl-6 items-center",
-                                  "transition-colors hover:bg-muted/20",
-                                  field.value && "bg-primary/5",
-                                )}
-                              >
-                                <FormControl
-                                  render=<Checkbox
-                                    checked={!!field.value}
-                                    onCheckedChange={field.onChange}
-                                  />
-                                />
-                                <div className="space-y-0.5 leading-none flex-1">
-                                  <FormLabel className="text-sm font-medium cursor-pointer after:absolute after:inset-0">
-                                    {t(`permissions.${perm}`)}
-                                  </FormLabel>
-                                  <FormDescription className="text-xs">
-                                    {t(`permissions.descriptions.${perm}`)}
-                                  </FormDescription>
-                                  <FormMessage />
-                                </div>
-                              </FormItem>
-                            )}
-                          />
-                        ))}
+                    >
+                      <FormControl
+                        render=<Checkbox
+                          checked={!!field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      />
+                      <div className="flex min-w-0 flex-1 flex-col gap-1">
+                        {/* The label covers the tile, so the whole tile toggles. */}
+                        <FormLabel className="cursor-pointer text-sm font-medium after:absolute after:inset-0">
+                          {t(`permissions.${permission}`)}
+                        </FormLabel>
+                        <FormDescription className="text-xs">
+                          {t(`permissions.descriptions.${permission}`)}
+                        </FormDescription>
+                        <FormMessage />
                       </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </SectionCard>
-              );
-            })}
-          </Accordion>
-        </div>
+                    </FormItem>
+                  )}
+                />
+              ))}
+            </BandSection>
+          );
+        })}
 
         <UnsavedChangesBar
           isDirty={form.formState.isDirty}

@@ -1,52 +1,38 @@
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import type { TOptions } from "i18next";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { BandSection } from "@/components/common/band-section";
+import { DetailField } from "@/components/common/detail-field";
+import { ListTileEmpty } from "@/components/common/list-tile-empty";
 import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";
 import type { MemberActivityStats } from "@/features/guild/settings/members/member-activity-stats-api";
-import type { ReactNode } from "react";
-import type { Permission } from "@lootlog/schema/permissions";
 import { useTranslation } from "react-i18next";
-import { cn } from "cn";
-import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";
-import { Badge, type BadgeProps } from "@lootlog/ui/components/badge";
-
 import {
   Activity,
   AlertTriangle,
-  CheckCircle2,
   Clock3,
+  Gamepad2,
   Globe2,
   MousePointerClick,
-  ShieldCheck,
-  UserMinus,
+  Shield,
 } from "lucide-react";
-import { getRelativeTime } from "@/utils/date/get-relative-time";
 import {
   getMemberAccessState,
   isMemberProblematic,
 } from "@/features/guild/settings/members/member-list-item.utils";
+import { getMemberAccessSummary } from "../member-access-summary";
+import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { getMemberDiscordSyncPresentation } from "@/features/guild/settings/members/member-discord-sync.utils";
-import { getColorFromRoleColor } from "@/utils/get-color-from-role";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
+import { RoleTile } from "../../roles/role-tile";
 
 export type MemberDataProps = {
   member: GuildMember;
+  /** The Organization as the route names it, for links to the member's roles. */
+  guildId: string;
   webActivityStats?: MemberActivityStats;
   gameActivityStats?: MemberActivityStats;
   isOnlineOnWeb?: boolean;
   isOnlineInGame?: boolean;
-};
-
-const getPermissionStyle = (permission: Permission) => {
-  const category = PERMISSION_CATEGORIES.find((cat) =>
-    cat.permissions.includes(permission),
-  );
-
-  return category
-    ? { icon: category.icon, color: category.color, bgColor: category.bgColor }
-    : null;
 };
 
 const formatDateTime = (
@@ -60,50 +46,16 @@ const formatDateTime = (
   return `${getRelativeTime(timestamp)} (${timestampToDate(timestamp)})`;
 };
 
-const DetailSection = ({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) => (
-  <SectionCard>
-    <SectionCardHeader title={title} />
-    <SectionCardContent>{children}</SectionCardContent>
-  </SectionCard>
-);
-
-const DetailField = ({ label, value }: { label: string; value: ReactNode }) => (
-  <div className="grid grid-cols-[minmax(8rem,0.75fr)_minmax(0,1fr)] gap-3 py-2 text-sm">
-    <dt className="text-xs text-muted-foreground">{label}</dt>
-    <dd className="min-w-0 break-words text-xs font-medium">{value}</dd>
-  </div>
-);
-
 type Translate = (key: string, options?: TOptions) => string;
 
 const getMemberActivityPresentation = ({
   gameActivityStats,
-  isOnlineInGame,
-  isOnlineOnWeb,
   t,
   webActivityStats,
-}: Pick<
-  MemberDataProps,
-  "gameActivityStats" | "isOnlineInGame" | "isOnlineOnWeb" | "webActivityStats"
-> & { t: Translate }) => {
+}: Pick<MemberDataProps, "gameActivityStats" | "webActivityStats"> & {
+  t: Translate;
+}) => {
   const emptyValueLabel = t("settings.members.discordSync.values.notAvailable");
-  let onlineStatusLabel = t("settings.members.webActivity.offline");
-
-  if (isOnlineOnWeb && isOnlineInGame) {
-    onlineStatusLabel = t(
-      "settings.members.webActivity.onlineSources.webAndGame",
-    );
-  } else if (isOnlineOnWeb) {
-    onlineStatusLabel = t("settings.members.webActivity.onlineSources.web");
-  } else if (isOnlineInGame) {
-    onlineStatusLabel = t("settings.members.webActivity.onlineSources.game");
-  }
 
   return {
     emptyValueLabel,
@@ -114,7 +66,6 @@ const getMemberActivityPresentation = ({
     lastActivityLabel: webActivityStats?.lastSeenAt
       ? getRelativeTime(webActivityStats.lastSeenAt)
       : t("settings.members.webActivity.noData"),
-    onlineStatusLabel,
     webLastSeenAt: formatDateTime(
       webActivityStats?.lastSeenAt,
       emptyValueLabel,
@@ -159,269 +110,150 @@ const getMemberSyncRows = (
 
 export const MemberData = ({
   member,
+  guildId,
   webActivityStats,
   gameActivityStats,
   isOnlineOnWeb = false,
   isOnlineInGame = false,
 }: MemberDataProps) => {
   const { t } = useTranslation();
-  const isOnline = isOnlineOnWeb || isOnlineInGame;
-  const accessState = getMemberAccessState({ member, isOnline });
-  const hasProblem = isMemberProblematic(member);
   const syncPresentation = getMemberDiscordSyncPresentation(member);
 
-  const {
-    emptyValueLabel,
-    gameLastSeenAt,
-    lastActivityLabel,
-    onlineStatusLabel,
-    webLastSeenAt,
-  } = getMemberActivityPresentation({
-    gameActivityStats,
-    isOnlineInGame,
-    isOnlineOnWeb,
-    t,
-    webActivityStats,
+  const accessState = getMemberAccessState({
+    member,
+    isOnline: isOnlineOnWeb || isOnlineInGame,
   });
 
-  const accessSummary: {
-    label: string;
-    description: string;
-    icon: typeof ShieldCheck;
-    variant: BadgeProps["variant"];
-    className?: string;
-  } = (
-    {
-      active: {
-        label: t("settings.members.access.ok"),
-        description: t("settings.members.access.okDescription"),
-        icon: ShieldCheck,
-        variant: "ready",
-      },
-      inactive: {
-        label: t("settings.members.access.inactive"),
-        description: t("settings.members.access.inactiveDescription"),
-        icon: UserMinus,
-        variant: "outline",
-        className: "bg-background text-muted-foreground",
-      },
-      online: {
-        label: t("settings.members.access.ok"),
-        description: t("settings.members.access.onlineDescription"),
-        icon: CheckCircle2,
-        variant: "ready",
-      },
-      problem: {
-        label: t("settings.members.access.problem"),
-        description: t("settings.members.access.problemDescription"),
-        icon: AlertTriangle,
-        variant: "timer",
-      },
-    } as const
-  )[accessState];
+  const { emptyValueLabel, gameLastSeenAt, lastActivityLabel, webLastSeenAt } =
+    getMemberActivityPresentation({ gameActivityStats, t, webActivityStats });
 
-  const AccessIcon = accessSummary.icon;
   const syncRows = getMemberSyncRows(member, emptyValueLabel, t);
 
   return (
-    <div className="min-h-full space-y-3 pb-3">
-      <SectionCard>
-        <SectionCardContent className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge
-              variant={accessSummary.variant}
-              className={cn("gap-1.5", accessSummary.className)}
-            >
-              <AccessIcon className="size-3.5" />
-              {accessSummary.label}
-            </Badge>
-            <Badge
-              variant={isOnline ? "live" : "outline"}
-              className={cn(!isOnline && "bg-background text-muted-foreground")}
-            >
-              {onlineStatusLabel}
-            </Badge>
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            {accessSummary.description}
-          </p>
-          {(!member.active || hasProblem) && (
-            <Alert variant="alert" className="mt-3">
-              <AlertTriangle />
-              <AlertDescription>
-                {member.active
-                  ? t("settings.members.syncProblemHint")
-                  : t("settings.members.reactivateHint")}
-              </AlertDescription>
-            </Alert>
-          )}
-        </SectionCardContent>
-      </SectionCard>
-
-      <DetailSection title={t("settings.members.access.title")}>
+    <div className="pb-6">
+      <BandSection
+        id="member-access"
+        title={t("settings.members.access.title")}
+        description={getMemberAccessSummary(accessState, t).description}
+      >
+        {(!member.active || isMemberProblematic(member)) && (
+          <Alert variant="alert">
+            <AlertTriangle />
+            <AlertDescription>
+              {member.active
+                ? t("settings.members.syncProblemHint")
+                : t("settings.members.reactivateHint")}
+            </AlertDescription>
+          </Alert>
+        )}
         <dl className="divide-y divide-border/60">
-          <DetailField
-            label={t("settings.members.access.status")}
-            value={
-              member.active
-                ? t("settings.members.statusActive")
-                : t("settings.members.statusInactive")
-            }
-          />
-          <DetailField
-            label={t("settings.members.access.discord")}
-            value={t(
+          <DetailField label={t("settings.members.access.status")}>
+            {member.active
+              ? t("settings.members.statusActive")
+              : t("settings.members.statusInactive")}
+          </DetailField>
+          <DetailField label={t("settings.members.access.discord")}>
+            {t(
               `settings.members.discordSync.status.${syncPresentation.copyKey}.title`,
             )}
-          />
-          <DetailField
-            label={t("settings.members.access.lastActivity")}
-            value={lastActivityLabel}
-          />
-          <DetailField
-            label={t("settings.members.table.roles")}
-            value={member.roles.length}
-          />
+          </DetailField>
+          <DetailField label={t("settings.members.access.lastActivity")}>
+            {lastActivityLabel}
+          </DetailField>
         </dl>
-      </DetailSection>
+      </BandSection>
 
-      <DetailSection title={t("settings.members.discordSync.title")}>
+      <BandSection
+        id="member-discord-sync"
+        title={t("settings.members.discordSync.title")}
+      >
         <dl className="divide-y divide-border/60">
           {syncRows.map((row) => (
-            <DetailField key={row.label} label={row.label} value={row.value} />
+            <DetailField key={row.label} label={row.label}>
+              {row.value}
+            </DetailField>
           ))}
         </dl>
         {member.isStale && (
-          <Alert variant="alert" className="mt-3">
+          <Alert variant="alert">
             <Clock3 />
             <AlertDescription>
               {t("settings.members.discordSync.staleAccessHint")}
             </AlertDescription>
           </Alert>
         )}
-      </DetailSection>
+      </BandSection>
 
-      <DetailSection title={t("settings.members.webActivity.title")}>
+      <BandSection
+        id="member-activity"
+        title={t("settings.members.webActivity.title")}
+      >
         <dl className="divide-y divide-border/60">
           <DetailField
             label={t("settings.members.webActivity.fields.lastSeenAt")}
-            value={webLastSeenAt}
-          />
+          >
+            {webLastSeenAt}
+          </DetailField>
           <DetailField
             label={t("settings.members.webActivity.fields.lastSeenInGameAt")}
-            value={gameLastSeenAt}
-          />
+          >
+            {gameLastSeenAt}
+          </DetailField>
           <DetailField
             label={t("settings.members.webActivity.fields.webVisitCount")}
-            value={
-              <span className="inline-flex items-center gap-1.5">
-                <MousePointerClick className="size-3.5 text-muted-foreground" />
-                {webActivityStats?.visitCount ?? 0}
-              </span>
-            }
-          />
+          >
+            <span className="flex items-center gap-1.5 tabular-nums">
+              <MousePointerClick className="size-3.5 text-muted-foreground" />
+              {webActivityStats?.visitCount ?? 0}
+            </span>
+          </DetailField>
           <DetailField
             label={t("settings.members.webActivity.fields.gameVisitCount")}
-            value={
-              <span className="inline-flex items-center gap-1.5">
-                <MousePointerClick className="size-3.5 text-muted-foreground" />
-                {gameActivityStats?.visitCount ?? 0}
-              </span>
-            }
-          />
+          >
+            <span className="flex items-center gap-1.5 tabular-nums">
+              <Gamepad2 className="size-3.5 text-muted-foreground" />
+              {gameActivityStats?.visitCount ?? 0}
+            </span>
+          </DetailField>
           <DetailField
             label={t("settings.members.webActivity.fields.webStatus")}
-            value={
-              <span className="inline-flex items-center gap-1.5">
-                <Activity className="size-3.5 text-muted-foreground" />
-                {isOnlineOnWeb
-                  ? t("settings.members.webActivity.onlineSources.web")
-                  : t("settings.members.webActivity.offline")}
-              </span>
-            }
-          />
+          >
+            <span className="flex items-center gap-1.5">
+              <Activity className="size-3.5 text-muted-foreground" />
+              {isOnlineOnWeb
+                ? t("settings.members.webActivity.onlineSources.web")
+                : t("settings.members.webActivity.offline")}
+            </span>
+          </DetailField>
           <DetailField
             label={t("settings.members.webActivity.fields.gameStatus")}
-            value={
-              <span className="inline-flex items-center gap-1.5">
-                <Globe2 className="size-3.5 text-muted-foreground" />
-                {isOnlineInGame
-                  ? t("settings.members.webActivity.onlineSources.game")
-                  : t("settings.members.webActivity.offline")}
-              </span>
-            }
-          />
+          >
+            <span className="flex items-center gap-1.5">
+              <Globe2 className="size-3.5 text-muted-foreground" />
+              {isOnlineInGame
+                ? t("settings.members.webActivity.onlineSources.game")
+                : t("settings.members.webActivity.offline")}
+            </span>
+          </DetailField>
         </dl>
-      </DetailSection>
+      </BandSection>
 
-      <DetailSection title={t("settings.members.rolesTitle")}>
+      <BandSection
+        id="member-roles"
+        title={t("settings.members.rolesTitle")}
+        count={member.roles.length}
+        tiled
+      >
         {member.roles.length === 0 ? (
-          <p className="text-xs text-muted-foreground">
+          <ListTileEmpty icon={Shield}>
             {t("settings.members.noRoles")}
-          </p>
+          </ListTileEmpty>
         ) : (
-          <div className="divide-y divide-border/60">
-            {member.roles.map((role) => {
-              const color = getColorFromRoleColor(role.color);
-
-              const filteredPermissions = role.permissions.filter(
-                (permission) => permission !== "OWNER",
-              );
-
-              return (
-                <div key={role.id} className="py-3">
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="size-2.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: `#${color}` }}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="truncate text-sm font-semibold"
-                          style={{ color: `#${color}` }}
-                        >
-                          {role.name}
-                        </span>
-                        <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
-                          {role.lvlRangeFrom} - {role.lvlRangeTo}
-                        </span>
-                      </div>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {t("settings.members.permissionsCount", {
-                          count: filteredPermissions.length,
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                  {filteredPermissions.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1.5 pl-5">
-                      {filteredPermissions.map((permission) => {
-                        const style = getPermissionStyle(permission);
-                        const IconComponent = style?.icon;
-
-                        return (
-                          <span
-                            key={permission}
-                            className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-background px-2 py-1 text-[11px] text-muted-foreground"
-                          >
-                            {IconComponent && (
-                              <IconComponent
-                                className={cn("size-3", style?.color)}
-                              />
-                            )}
-                            {t(`permissions.${permission}`)}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          member.roles.map((role) => (
+            <RoleTile key={role.id} guildId={guildId} role={role} />
+          ))
         )}
-      </DetailSection>
+      </BandSection>
     </div>
   );
 };

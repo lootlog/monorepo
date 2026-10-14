@@ -54,8 +54,7 @@ export function HorizontalMenu({
 
       if (!slide) highlight.style.transition = "none";
       highlight.style.width = `${active.offsetWidth}px`;
-      highlight.style.height = `${active.offsetHeight}px`;
-      highlight.style.transform = `translate(${active.offsetLeft}px, ${active.offsetTop}px)`;
+      highlight.style.transform = `translateX(${active.offsetLeft}px)`;
 
       if (!slide) {
         // Commit the snapped position before transitions are restored.
@@ -97,17 +96,17 @@ export function HorizontalMenu({
     <nav className={cn("min-w-0 shrink-0", className)} {...props}>
       <div
         ref={viewportRef}
-        className="overflow-x-auto rounded-xl border border-border bg-card [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="h-full overflow-x-auto px-0 [scrollbar-width:none] sm:px-1 [&::-webkit-scrollbar]:hidden"
       >
         <ul
           ref={listRef}
-          className="relative isolate flex w-max min-w-full flex-nowrap gap-1 p-1 [&>li]:shrink-0 [&>li>a]:relative [&>li>a]:z-10 [&>li>a]:whitespace-nowrap [&>li>a]:rounded-[calc(var(--radius-xl)-5px)] [&>li>a]:px-4 [&>li>a]:py-2"
+          className="relative isolate flex h-full w-max min-w-full flex-nowrap [&>li]:shrink-0 [&>li>a]:relative [&>li>a]:z-10 [&>li>a]:flex [&>li>a]:h-full [&>li>a]:items-center [&>li>a]:whitespace-nowrap [&>li>a]:px-3"
         >
           <li
             ref={highlightRef}
             aria-hidden
             role="presentation"
-            className="pointer-events-none absolute left-0 top-0 z-0 rounded-[calc(var(--radius-xl)-5px)] bg-primary transition-[transform,width,height] duration-150 ease-emphasized motion-reduce:transition-none"
+            className="pointer-events-none absolute bottom-0 left-0 z-0 h-0.5 rounded-full bg-primary transition-[transform,width] duration-150 ease-emphasized motion-reduce:transition-none"
           />
           {children}
         </ul>

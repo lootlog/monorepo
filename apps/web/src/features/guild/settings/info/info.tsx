@@ -1,21 +1,18 @@
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { BandSection } from "@/components/common/band-section";
+import { DetailField } from "@/components/common/detail-field";
 import { GuildDiscordSyncNotice } from "@/components/common/guild-discord-sync-notice";
 import { useGuildDiscordSync } from "@/hooks/api/use-guild-discord-sync";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
-
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { History, Info, KeyRound, RefreshCw, ShieldCheck } from "lucide-react";
-import { InfoField } from "./info-field";
-import { InfoSettingsSkeletonCards } from "./info-skeleton-cards";
+import { RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { DiscordGuildSyncStateResponseDto } from "@lootlog/client/main";
 import {
   DATE_TIME_WITH_SECONDS_FORMAT,
   timestampToDate,
 } from "@/utils/date/parse-timestamp-to-date";
+import { SettingsTabPage } from "../components/settings-tab-page";
+import { InfoSettingsSkeletonSections } from "./info-skeleton-sections";
 
 const getGuildSyncPresentation = (
   data: DiscordGuildSyncStateResponseDto | undefined,
@@ -71,122 +68,98 @@ export const InfoSettings = () => {
   );
 
   return (
-    <div className="flex flex-col h-full min-h-0">
-      <ScrollArea className="flex-1 min-h-0">
-        <div className="flex flex-col gap-3 px-3 pb-3">
-          <h1 className="sr-only">{t("settings.guildInfo.title")}</h1>
+    <SettingsTabPage title={t("settings.guildInfo.title")}>
+      {!hasRequiredPermissions && (
+        <div className="p-3">
           <GuildDiscordSyncNotice sync={sync} />
-
-          {isLoading ? (
-            <InfoSettingsSkeletonCards />
-          ) : (
-            <>
-              <SectionCard>
-                <SectionCardHeader
-                  title={t("settings.guildInfo.syncStatus")}
-                  icon={hasRequiredPermissions ? ShieldCheck : Info}
-                  description={t("settings.guildInfo.syncStatusDescription")}
-                  actions={
-                    hasRequiredPermissions ? (
-                      <Button
-                        size="sm"
-                        onClick={refresh}
-                        disabled={!guildId || query.isFetching}
-                        loading={isRefreshing}
-                        icon={<RefreshCw />}
-                      >
-                        {t("settings.guildInfo.refresh")}
-                      </Button>
-                    ) : undefined
-                  }
-                />
-                <SectionCardContent>
-                  <dl className="grid gap-3 lg:grid-cols-3">
-                    <InfoField label={t("settings.guildInfo.fields.status")}>
-                      <Badge variant="outline">
-                        {t(`settings.guildInfo.statuses.${status}`)}
-                      </Badge>
-                    </InfoField>
-                    <InfoField label={t("settings.guildInfo.fields.channels")}>
-                      {data
-                        ? t("settings.guildInfo.channelCounts", {
-                            total: channelCount,
-                            selectable: selectableChannelCount,
-                          })
-                        : t("settings.guildInfo.notAvailable")}
-                    </InfoField>
-                    <InfoField
-                      label={t("settings.guildInfo.fields.permissions")}
-                    >
-                      <Badge
-                        variant={hasRequiredPermissions ? "default" : "outline"}
-                      >
-                        {t(
-                          `settings.guildInfo.permissions.${permissionStatus}`,
-                        )}
-                      </Badge>
-                    </InfoField>
-                  </dl>
-                </SectionCardContent>
-              </SectionCard>
-
-              <SectionCard>
-                <SectionCardHeader
-                  title={t("settings.guildInfo.permissionSection.title")}
-                  icon={KeyRound}
-                  description={t(
-                    "settings.guildInfo.permissionSection.description",
-                  )}
-                />
-                <SectionCardContent className="flex flex-col gap-3">
-                  <ul className="flex flex-wrap gap-2">
-                    {requiredPermissions.map((permission) => (
-                      <li key={permission}>
-                        <Badge variant="outline">
-                          {t(
-                            `settings.guildInfo.discordPermissions.${permission}`,
-                            { defaultValue: permission },
-                          )}
-                        </Badge>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {hasRequiredPermissions ? (
-                    <p className="text-sm text-muted-foreground">
-                      {t("settings.guildInfo.reinstall.notNeeded")}
-                    </p>
-                  ) : null}
-                </SectionCardContent>
-              </SectionCard>
-
-              <SectionCard>
-                <SectionCardHeader
-                  title={t("settings.guildInfo.activity.title")}
-                  icon={History}
-                />
-                <SectionCardContent>
-                  <dl className="grid gap-3 lg:grid-cols-3">
-                    <InfoField
-                      label={t("settings.guildInfo.fields.lastAttempt")}
-                    >
-                      {lastAttempt}
-                    </InfoField>
-                    <InfoField
-                      label={t("settings.guildInfo.fields.lastSuccess")}
-                    >
-                      {lastSuccess}
-                    </InfoField>
-                    <InfoField label={t("settings.guildInfo.fields.lastError")}>
-                      {data ? lastError : t("settings.guildInfo.notAvailable")}
-                    </InfoField>
-                  </dl>
-                </SectionCardContent>
-              </SectionCard>
-            </>
-          )}
         </div>
-      </ScrollArea>
-    </div>
+      )}
+      {isLoading ? (
+        <InfoSettingsSkeletonSections />
+      ) : (
+        <>
+          <BandSection
+            id="guild-info-sync"
+            title={t("settings.guildInfo.syncStatus")}
+            description={t("settings.guildInfo.syncStatusDescription")}
+            trailing={
+              hasRequiredPermissions ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={refresh}
+                  disabled={!guildId || query.isFetching}
+                  loading={isRefreshing}
+                  icon={<RefreshCw />}
+                >
+                  {t("settings.guildInfo.refresh")}
+                </Button>
+              ) : undefined
+            }
+          >
+            <dl className="divide-y divide-border/60">
+              <DetailField label={t("settings.guildInfo.fields.status")}>
+                <Badge variant="outline">
+                  {t(`settings.guildInfo.statuses.${status}`)}
+                </Badge>
+              </DetailField>
+              <DetailField label={t("settings.guildInfo.fields.channels")}>
+                {data
+                  ? t("settings.guildInfo.channelCounts", {
+                      total: channelCount,
+                      selectable: selectableChannelCount,
+                    })
+                  : t("settings.guildInfo.notAvailable")}
+              </DetailField>
+              <DetailField label={t("settings.guildInfo.fields.permissions")}>
+                <Badge variant={hasRequiredPermissions ? "default" : "outline"}>
+                  {t(`settings.guildInfo.permissions.${permissionStatus}`)}
+                </Badge>
+              </DetailField>
+            </dl>
+          </BandSection>
+
+          <BandSection
+            id="guild-info-permissions"
+            title={t("settings.guildInfo.permissionSection.title")}
+            description={t("settings.guildInfo.permissionSection.description")}
+          >
+            <ul className="flex flex-wrap gap-2">
+              {requiredPermissions.map((permission) => (
+                <li key={permission} className="flex">
+                  <Badge variant="outline">
+                    {t(`settings.guildInfo.discordPermissions.${permission}`, {
+                      defaultValue: permission,
+                    })}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+            {hasRequiredPermissions && (
+              <p className="text-sm text-muted-foreground">
+                {t("settings.guildInfo.reinstall.notNeeded")}
+              </p>
+            )}
+          </BandSection>
+
+          <BandSection
+            id="guild-info-activity"
+            title={t("settings.guildInfo.activity.title")}
+          >
+            <dl className="divide-y divide-border/60">
+              <DetailField label={t("settings.guildInfo.fields.lastAttempt")}>
+                {lastAttempt}
+              </DetailField>
+              <DetailField label={t("settings.guildInfo.fields.lastSuccess")}>
+                {lastSuccess}
+              </DetailField>
+              <DetailField label={t("settings.guildInfo.fields.lastError")}>
+                {data ? lastError : t("settings.guildInfo.notAvailable")}
+              </DetailField>
+            </dl>
+          </BandSection>
+        </>
+      )}
+    </SettingsTabPage>
   );
 };

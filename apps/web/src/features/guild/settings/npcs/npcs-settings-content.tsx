@@ -1,72 +1,115 @@
-import { SettingsTableCard } from "@/features/guild/settings/components/settings-table-card";
-import { NpcsTable } from "@/features/guild/settings/npcs/npcs-table";
+import { ListToolbar } from "@/components/common/list-toolbar";
+import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   useLootlogConfigControllerGetLootlogConfig,
   NpcType,
 } from "@lootlog/client/main";
-
-import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
-import { Settings2 } from "lucide-react";
+import { SearchX, Settings2 } from "lucide-react";
 import { startTransition, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { SettingsClearFilterButton } from "../components/settings-clear-filter-button";
+import { SettingsListEmpty } from "../components/settings-list-empty";
+import { SettingsListError } from "../components/settings-list-error";
+import { SettingsTabPage } from "../components/settings-tab-page";
+import { NpcTile } from "./npc-tile";
 
 export const NpcsSettingsContent = () => {
   const { t } = useTranslation();
-  const guildId = useGuildId();
+  const guildId = useGuildId() ?? "";
 
-  const { data: config } = useLootlogConfigControllerGetLootlogConfig({
-    guildId: guildId ?? "",
-  });
+  const {
+    data: config,
+    isError,
+    isFetching,
+    refetch,
+  } = useLootlogConfigControllerGetLootlogConfig({ guildId });
 
   const [searchValue, setSearchValue] = useState("");
-  const isMobile = useIsMobile();
   const normalizedSearchValue = searchValue.trim().toLowerCase();
 
-  const filteredNpcs = [...(config?.npcs ?? [])]
-    .filter((npc) => {
-      const npcName = t(`npcType.${npc.npcType}`).toLowerCase();
-
-      return (
+  const filteredNpcs = (config?.npcs ?? [])
+    .filter(
+      (npc) =>
         npc.npcType !== NpcType.COMMON &&
-        npcName.includes(normalizedSearchValue)
-      );
-    })
+        t(`npcType.${npc.npcType}`)
+          .toLowerCase()
+          .includes(normalizedSearchValue),
+    )
     .sort((firstNpc, secondNpc) =>
       t(`npcType.${firstNpc.npcType}`).localeCompare(
         t(`npcType.${secondNpc.npcType}`),
       ),
     );
 
-  const hasActiveFilters = normalizedSearchValue !== "";
+  const configuredNpcs = (config?.npcs ?? []).filter(
+    (npc) => npc.npcType !== NpcType.COMMON,
+  );
+
+  const renderContent = () => {
+    if (!config && isError) {
+      return (
+        <SettingsListError
+          title={t("settings.npcs.empty.loadError")}
+          isRetrying={isFetching}
+          onRetry={() => void refetch()}
+        />
+      );
+    }
+
+    if (!config) {
+      return (
+        <div aria-hidden="true">
+          {Array.from({ length: 8 }, (_, index) => (
+            <ListTileSkeleton key={index} media="none" />
+          ))}
+        </div>
+      );
+    }
+
+    if (configuredNpcs.length === 0) {
+      return (
+        <SettingsListEmpty
+          icon={Settings2}
+          title={t("settings.npcs.empty.title")}
+          description={t("settings.npcs.empty.description")}
+        />
+      );
+    }
+
+    if (filteredNpcs.length === 0) {
+      return (
+        <SettingsListEmpty
+          icon={SearchX}
+          title={t("settings.npcs.empty.filteredTitle", {
+            query: searchValue.trim(),
+          })}
+          description={t("settings.npcs.empty.filteredDescription")}
+          action={
+            <SettingsClearFilterButton
+              onClear={() => startTransition(() => setSearchValue(""))}
+            />
+          }
+        />
+      );
+    }
+
+    return filteredNpcs.map((npc) => (
+      <NpcTile key={npc.id} guildId={guildId} npc={npc} />
+    ));
+  };
 
   return (
-    <SettingsTableCard
-      title={t("settings.npcs.title")}
-      search={{
-        value: searchValue,
-        placeholder: t("settings.npcs.searchPlaceholder"),
-        onChange: setSearchValue,
-      }}
-      isEmpty={filteredNpcs.length === 0}
-      empty={{
-        icon: Settings2,
-        title:
-          config?.npcs?.length === 0
-            ? t("settings.npcs.emptyGuildTitle")
-            : t("settings.npcs.emptyTitle"),
-        description: hasActiveFilters
-          ? t("settings.npcs.emptyFilteredDescription")
-          : t("settings.npcs.emptyDescription"),
-      }}
-      hasActiveFilters={hasActiveFilters}
-      onResetFilters={() => startTransition(() => setSearchValue(""))}
-    >
-      <NpcsTable
-        guildId={guildId ?? ""}
-        isMobile={isMobile}
-        npcs={filteredNpcs}
+    <SettingsTabPage title={t("settings.npcs.title")}>
+      <ListToolbar
+        search={searchValue}
+        onSearchChange={setSearchValue}
+        placeholder={t("settings.npcs.searchPlaceholder")}
+        label={t("settings.npcs.searchPlaceholder")}
+        clearLabel={t("settings.clearFilter")}
+        disabled={configuredNpcs.length === 0}
       />
-    </SettingsTableCard>
+      {renderContent()}
+    </SettingsTabPage>
   );
 };

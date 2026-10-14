@@ -1,67 +1,105 @@
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCard } from "@/components/common/section-card/section-card";
-
+import { BandSection } from "@/components/common/band-section";
+import { DetailField } from "@/components/common/detail-field";
+import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
+import { SkeletonLine } from "@/components/common/skeleton-line";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { useTranslation } from "react-i18next";
+import { SettingsDetailSkeleton } from "../components/settings-detail-skeleton";
 
-const detailRows = Array.from({ length: 4 });
-
-const sections = Array.from({ length: 4 });
+/** Each section's always-present fields, as `MemberData` labels them. */
+const SECTIONS = [
+  {
+    id: "member-access-skeleton",
+    titleKey: "settings.members.access.title",
+    hasDescription: true,
+    fieldKeys: [
+      "settings.members.access.status",
+      "settings.members.access.discord",
+      "settings.members.access.lastActivity",
+    ],
+  },
+  {
+    id: "member-discord-sync-skeleton",
+    titleKey: "settings.members.discordSync.title",
+    hasDescription: false,
+    fieldKeys: [
+      "settings.members.discordSync.fields.technicalStatus",
+      "settings.members.discordSync.fields.lastAttemptAt",
+      "settings.members.discordSync.fields.lastConfirmedAt",
+    ],
+  },
+  {
+    id: "member-activity-skeleton",
+    titleKey: "settings.members.webActivity.title",
+    hasDescription: false,
+    fieldKeys: [
+      "settings.members.webActivity.fields.lastSeenAt",
+      "settings.members.webActivity.fields.lastSeenInGameAt",
+      "settings.members.webActivity.fields.webVisitCount",
+      "settings.members.webActivity.fields.gameVisitCount",
+      "settings.members.webActivity.fields.webStatus",
+      "settings.members.webActivity.fields.gameStatus",
+    ],
+  },
+];
 
 export const MemberSettingsDetailSkeleton = () => {
+  const { t } = useTranslation();
+
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden p-3">
-      <SectionCard className="shrink-0 border-b border-t">
-        <SectionCardContent className="flex flex-col gap-3">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 items-center gap-3">
-              <Skeleton className="size-9 shrink-0 rounded-lg" />
-              <div className="min-w-0 space-y-1.5">
-                <Skeleton className="h-3 w-28" />
-                <Skeleton className="h-5 w-40" />
-              </div>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <Skeleton className="h-9 w-40 rounded-md" />
-              <Skeleton className="h-9 w-28 rounded-md" />
-            </div>
-          </div>
-        </SectionCardContent>
-      </SectionCard>
-
-      <div className="min-h-0 flex-1 overflow-hidden">
-        <div className="min-h-full space-y-3 pb-3">
-          <SectionCard>
-            <SectionCardContent className="flex flex-col gap-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <Skeleton className="h-6 w-28 rounded-full" />
-                <Skeleton className="h-6 w-20 rounded-full" />
-              </div>
-              <Skeleton className="mt-3 h-3 w-full max-w-md" />
-            </SectionCardContent>
-          </SectionCard>
-
-          {sections.map((_, sectionIndex) => (
-            <SectionCard key={sectionIndex}>
-              <SectionCardContent className="flex flex-col gap-3">
-                <section>
-                  <Skeleton className="mb-3 h-3 w-36" />
-                  <div className="divide-y divide-border/60">
-                    {detailRows.map((__, rowIndex) => (
-                      <div
-                        key={rowIndex}
-                        className="grid grid-cols-[minmax(8rem,0.75fr)_minmax(0,1fr)] gap-3 py-2"
-                      >
-                        <Skeleton className="h-3 w-28" />
-                        <Skeleton className="h-3 w-full max-w-xs" />
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              </SectionCardContent>
-            </SectionCard>
-          ))}
-        </div>
+    <SettingsDetailSkeleton
+      meta={
+        <>
+          <span className="flex items-center gap-2">
+            <Skeleton className="h-5.5 w-27 rounded-full" />
+            <Skeleton className="h-5.5 w-30 rounded-full" />
+          </span>
+          <span className="text-xs leading-tight">
+            <SkeletonLine className="h-3 w-20" />
+          </span>
+        </>
+      }
+      actions={
+        <>
+          <Skeleton className="h-8 w-47 rounded-lg" />
+          <Skeleton className="h-8 w-30 rounded-lg" />
+        </>
+      }
+    >
+      <div className="pb-6">
+        {SECTIONS.map((section) => (
+          <BandSection
+            key={section.id}
+            id={section.id}
+            title={t(section.titleKey)}
+          >
+            {section.hasDescription && (
+              <span className="text-sm">
+                <SkeletonLine className="h-3 w-80 max-w-full" />
+                {/* Phones wrap the sentence onto a second line. */}
+                <span className="sm:hidden">
+                  <SkeletonLine className="h-3 w-40" />
+                </span>
+              </span>
+            )}
+            <dl className="divide-y divide-border/60">
+              {section.fieldKeys.map((fieldKey) => (
+                <DetailField key={fieldKey} label={t(fieldKey)}>
+                  <SkeletonLine className="h-3 w-32" />
+                </DetailField>
+              ))}
+            </dl>
+          </BandSection>
+        ))}
+        <BandSection
+          id="member-roles-skeleton"
+          title={t("settings.members.rolesTitle")}
+          tiled
+        >
+          <ListTileSkeleton />
+          <ListTileSkeleton />
+        </BandSection>
       </div>
-    </div>
+    </SettingsDetailSkeleton>
   );
 };

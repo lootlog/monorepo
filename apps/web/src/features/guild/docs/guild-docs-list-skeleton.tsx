@@ -1,6 +1,6 @@
 import { ListToolbarSkeleton } from "@/components/common/list-toolbar-skeleton";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { GuildDocTileSkeleton } from "./guild-doc-tile-skeleton";
+import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
 
 /** Route-level stand-in for the documents page: its toolbar above the tiles. */
 export const GuildDocsListSkeleton = () => (
@@ -12,7 +12,7 @@ export const GuildDocsListSkeleton = () => (
       </div>
     </ListToolbarSkeleton>
     {Array.from({ length: 6 }).map((_, index) => (
-      <GuildDocTileSkeleton key={index} hasActions={false} />
+      <ListTileSkeleton key={index} />
     ))}
   </div>
 );

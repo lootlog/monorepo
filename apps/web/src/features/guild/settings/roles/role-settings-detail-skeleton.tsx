@@ -1,82 +1,79 @@
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { PageHeader } from "@/components/common/page-header";
+import { BandSection } from "@/components/common/band-section";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
 import { SkeletonLine } from "@/components/common/skeleton-line";
 import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";
-
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { Settings } from "lucide-react";
+import { cn } from "cn";
 import { useTranslation } from "react-i18next";
+import { SettingsDetailSkeleton } from "../components/settings-detail-skeleton";
+
+const metaSkeleton = (
+  <span className="text-xs leading-tight">
+    <SkeletonLine className="h-3 w-24" />
+  </span>
+);
 
 export const RoleSettingsDetailSkeleton = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto p-3 custom-scrollbar [scrollbar-gutter:stable]">
-      <PageHeader
-        media={<Skeleton className="size-9 shrink-0 rounded-lg" />}
-        title=<SkeletonLine className="h-5 w-40" />
-        description=<SkeletonLine className="h-3 w-56 max-w-full" />
-        metadata={Array.from({ length: 3 }, (_, index) => (
-          <Skeleton key={index} className="size-7 rounded-md" />
-        ))}
-      />
+    <SettingsDetailSkeleton
+      meta={
+        <>
+          {metaSkeleton}
+          {metaSkeleton}
+        </>
+      }
+    >
       <div className="pb-24">
-        <SectionCard>
-          <SectionCardHeader
-            title={t("settings.roles.levelRangeTitle")}
-            description={t("settings.roles.levelRangeDescription")}
-            icon={Settings}
-          />
-          <SectionCardContent>
-            <div className="flex items-center gap-3">
-              <Skeleton className="h-9 w-full max-w-[100px] rounded-lg" />
-              <span className="text-muted-foreground">-</span>
-              <Skeleton className="h-9 w-full max-w-[100px] rounded-lg" />
-            </div>
-          </SectionCardContent>
-        </SectionCard>
-        <div className="space-y-3 pt-3">
-          {PERMISSION_CATEGORIES.map((group) => (
-            <SectionCard key={group.groupKey} className="overflow-hidden">
-              <SectionCardHeader
-                icon={group.icon}
-                // The loaded title is an accordion trigger with text-sm type.
-                title={
-                  <span className="block text-sm">
-                    {t(`permissions.groups.${group.groupKey}.name`)}
-                  </span>
-                }
-                description={t(
-                  `permissions.groups.${group.groupKey}.description`,
+        <BandSection
+          id="role-level-range-skeleton"
+          title={t("settings.roles.levelRangeTitle")}
+          description={t("settings.roles.levelRangeDescription")}
+        >
+          <div className="flex items-start gap-3">
+            <Skeleton className="h-9 w-25 rounded-lg" />
+            <span className="flex h-9 items-center text-muted-foreground">
+              -
+            </span>
+            <Skeleton className="h-9 w-25 rounded-lg" />
+          </div>
+        </BandSection>
+        {PERMISSION_CATEGORIES.map((group) => (
+          <BandSection
+            key={group.groupKey}
+            id={`role-permissions-${group.groupKey}-skeleton`}
+            title={t(`permissions.groups.${group.groupKey}.name`)}
+            description={t(`permissions.groups.${group.groupKey}.description`)}
+            tiled
+          >
+            {group.permissions.map((permission) => (
+              <div
+                key={permission}
+                data-list-tile
+                className={cn(
+                  "flex items-center gap-3 py-3",
+                  LIST_TILE_RULE_CLASS,
+                  LIST_TILE_INSET_CLASS,
                 )}
-                actions={
-                  <span className="text-xs">
-                    <SkeletonLine className="h-3 w-6" />
+              >
+                <Skeleton className="size-4 shrink-0 rounded-[4px]" />
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="text-sm font-medium">
+                    {t(`permissions.${permission}`)}
                   </span>
-                }
-              />
-              <div className="divide-y divide-border/50 border-t border-border/50">
-                {group.permissions.map((permission) => (
-                  <div
-                    key={permission}
-                    className="flex items-center gap-3 px-4 py-3 pl-6"
-                  >
-                    <Skeleton className="size-4 shrink-0 rounded-sm" />
-                    <div className="flex-1 space-y-0.5">
-                      <Skeleton className="h-3.5 w-40 max-w-full" />
-                      <div className="text-xs">
-                        <SkeletonLine className="h-3 w-64 max-w-full" />
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  <span className="text-xs text-muted-foreground">
+                    {t(`permissions.descriptions.${permission}`)}
+                  </span>
+                </div>
               </div>
-            </SectionCard>
-          ))}
-        </div>
+            ))}
+          </BandSection>
+        ))}
       </div>
-    </div>
+    </SettingsDetailSkeleton>
   );
 };

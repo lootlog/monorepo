@@ -1,3 +1,4 @@
+import { cn } from "cn";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { StatsFilterBarSkeleton } from "./components/stats-filter-bar-skeleton";
@@ -18,11 +19,9 @@ export const StatsTablePageSkeleton = ({
   mobileSkeleton,
 }: StatsTablePageSkeletonProps) => (
   <div
-    className={
-      withHeader
-        ? "flex h-full min-h-0 flex-col gap-3 p-3"
-        : "flex h-full min-h-0 flex-col gap-3 px-3 pb-3"
-    }
+    // Under the stats tabs it fills the page; a member page has no tabs.
+    data-fills-page={withHeader ? undefined : true}
+    className={cn("flex min-h-0 flex-col gap-3 p-3", withHeader && "h-full")}
   >
     {withHeader && (
       <SectionCard className="shrink-0">

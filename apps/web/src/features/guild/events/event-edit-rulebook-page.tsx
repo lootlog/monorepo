@@ -12,7 +12,6 @@ import { toast } from "sonner";
 import { BookOpenText } from "lucide-react";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { Label } from "@lootlog/ui/components/label";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Textarea } from "@lootlog/ui/components/textarea";
 import {
   type EventOverviewResponseDto,
@@ -101,40 +100,35 @@ export const EventEditRulebookPage = () => {
   }
 
   return (
-    <ScrollArea className="h-full">
-      <div className="flex flex-col gap-3 px-3 py-3">
-        <PageHeader icon={BookOpenText} title={event.name} />
+    <div className="flex flex-col gap-3 px-3 py-3">
+      <PageHeader icon={BookOpenText} title={event.name} />
 
-        <form
-          className="space-y-3 pb-24"
-          onSubmit={form.handleSubmit(onSubmit)}
-        >
-          <SectionCard>
-            <SectionCardContent className="flex min-h-0 flex-col gap-3">
-              <div className="space-y-2">
-                <Label
-                  htmlFor={rulebookFieldId}
-                  className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-                >
-                  {t("events.rulebook.label")}
-                </Label>
-                <Textarea
-                  id={rulebookFieldId}
-                  {...form.register("rulebookMarkdown")}
-                  placeholder={t("events.rulebook.placeholder")}
-                  className="min-h-[360px] text-sm"
-                />
-              </div>
-            </SectionCardContent>
-          </SectionCard>
+      <form className="space-y-3 pb-24" onSubmit={form.handleSubmit(onSubmit)}>
+        <SectionCard>
+          <SectionCardContent className="flex min-h-0 flex-col gap-3">
+            <div className="space-y-2">
+              <Label
+                htmlFor={rulebookFieldId}
+                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+              >
+                {t("events.rulebook.label")}
+              </Label>
+              <Textarea
+                id={rulebookFieldId}
+                {...form.register("rulebookMarkdown")}
+                placeholder={t("events.rulebook.placeholder")}
+                className="min-h-[360px] text-sm"
+              />
+            </div>
+          </SectionCardContent>
+        </SectionCard>
 
-          <UnsavedChangesBar
-            isDirty={form.formState.isDirty}
-            isSubmitting={form.formState.isSubmitting}
-            onReset={() => form.reset()}
-          />
-        </form>
-      </div>
-    </ScrollArea>
+        <UnsavedChangesBar
+          isDirty={form.formState.isDirty}
+          isSubmitting={form.formState.isSubmitting}
+          onReset={() => form.reset()}
+        />
+      </form>
+    </div>
   );
 };

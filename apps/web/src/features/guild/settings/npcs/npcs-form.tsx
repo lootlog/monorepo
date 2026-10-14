@@ -1,6 +1,8 @@
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCard } from "@/components/common/section-card/section-card";
+import { BandSection } from "@/components/common/band-section";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,7 +28,6 @@ import {
 import { cn } from "cn";
 import { toast } from "sonner";
 
-import { Sparkles } from "lucide-react";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useQueryClient } from "@tanstack/react-query";
@@ -105,63 +106,62 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="w-full mx-auto pb-24"
-      >
-        <SectionCard className="overflow-hidden">
-          <SectionCardHeader
-            icon={Sparkles}
-            title={t("settings.npcs.raritiesTitle")}
-            description={t("settings.npcs.raritiesDescription")}
-            actions={
-              <span className="text-xs text-muted-foreground">
-                {enabledCount}/{NPC_RARITY_CONFIG.length}
-              </span>
-            }
-          />
-          <SectionCardContent className="p-0">
-            <div className="border-t border-border/50 divide-y divide-border/50">
-              {NPC_RARITY_CONFIG.map((rarity) => (
-                <FormField
-                  key={rarity.key}
-                  control={form.control}
-                  name={rarity.key}
-                  render={({ field }) => (
-                    <FormItem
-                      className={cn(
-                        "relative flex flex-row items-center space-x-3 space-y-0 py-3 px-4 pl-6",
-                        "transition-colors hover:bg-muted/20",
-                        field.value && "bg-primary/5",
-                      )}
-                    >
-                      <FormControl
-                        render=<Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      />
-                      <div className="flex items-center gap-2 flex-1">
-                        <div className={cn("p-1 rounded", rarity.bgColor)}>
-                          <rarity.icon className={cn("size-3", rarity.color)} />
-                        </div>
-                        <FormLabel
-                          className={cn(
-                            "text-sm font-medium cursor-pointer after:absolute after:inset-0",
-                            rarity.color,
-                          )}
-                        >
-                          {t(`itemRarity.${rarity.key}`)}
-                        </FormLabel>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
+      {/* Room below the last section for the docked save bar. */}
+      <form onSubmit={form.handleSubmit(onSubmit)} className="pb-24">
+        <BandSection
+          id="npc-rarities"
+          title={t("settings.npcs.raritiesTitle")}
+          description={t("settings.npcs.raritiesDescription")}
+          count={`${enabledCount}/${NPC_RARITY_CONFIG.length}`}
+          tiled
+        >
+          {NPC_RARITY_CONFIG.map((rarity) => (
+            <FormField
+              key={rarity.key}
+              control={form.control}
+              name={rarity.key}
+              render={({ field }) => (
+                <FormItem
+                  data-list-tile
+                  className={cn(
+                    "relative flex flex-row items-center gap-3 py-3 transition-colors hover:bg-muted/30 motion-reduce:transition-none",
+                    LIST_TILE_RULE_CLASS,
+                    LIST_TILE_INSET_CLASS,
+                    field.value && "bg-primary/5",
                   )}
-                />
-              ))}
-            </div>
-          </SectionCardContent>
-        </SectionCard>
+                >
+                  <FormControl
+                    render=<Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  />
+                  <span
+                    className={cn(
+                      "inline-flex size-7 shrink-0 items-center justify-center rounded-md",
+                      rarity.bgColor,
+                    )}
+                  >
+                    <rarity.icon
+                      aria-hidden
+                      className={cn("size-4", rarity.color)}
+                    />
+                  </span>
+                  {/* The label covers the tile, so the whole tile toggles. */}
+                  <FormLabel
+                    className={cn(
+                      "flex-1 cursor-pointer text-sm font-medium after:absolute after:inset-0",
+                      rarity.color,
+                    )}
+                  >
+                    {t(`itemRarity.${rarity.key}`)}
+                  </FormLabel>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ))}
+        </BandSection>
 
         <UnsavedChangesBar
           isDirty={form.formState.isDirty}
