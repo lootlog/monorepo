@@ -5,7 +5,6 @@ import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { useViewMode } from "@/hooks/use-view-mode";
 import {
   LOOTS_GRID_MEDIA_QUERY,
-  LOOTS_LIST_TOP_GAP,
   LOOTS_VIEW_MODE_KEY,
 } from "@/features/guild/loots-list/loots-list-layout";
 import {
@@ -437,7 +436,6 @@ export const useLiveLootList = () => {
     scrollElement,
     getItemKey: (index) => allLoots[index]?.id ?? "loots-loader",
     estimateSize: () => 180,
-    paddingStart: LOOTS_LIST_TOP_GAP,
     overscan: 5,
     useAnimationFrameWithResizeObserver: true,
     enabled: viewMode === "list",
@@ -449,7 +447,6 @@ export const useLiveLootList = () => {
     getItemKey: (index) =>
       gridRows[index]?.map((loot) => loot.id).join(":") ?? "loots-loader",
     estimateSize: () => 220,
-    paddingStart: LOOTS_LIST_TOP_GAP,
     overscan: 3,
     useAnimationFrameWithResizeObserver: true,
     enabled: viewMode === "grid",

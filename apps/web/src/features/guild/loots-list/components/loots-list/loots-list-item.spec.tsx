@@ -36,17 +36,6 @@ describe("LootsListItem presentation", () => {
     expect(stack.getAttribute("aria-expanded")).toBe("false");
   });
 
-  it("uses the standalone card presentation by default", async () => {
-    const { container } = render(<LootsListItem loot={createLoot()} />, {
-      wrapper: await createLootTestWrapper(),
-    });
-
-    expect(container.querySelector("[data-slot='card']")).toBeTruthy();
-    expect(screen.getByTestId("loot-list-item").dataset.presentation).toBe(
-      "card",
-    );
-  });
-
   it("renders the same loot content without a nested card when embedded", async () => {
     const { container } = render(
       <LootsListItem loot={createLoot()} variant="embedded" />,

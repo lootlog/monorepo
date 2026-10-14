@@ -2,10 +2,7 @@ import { useTranslation } from "react-i18next";
 import { upperFirst } from "es-toolkit";
 import { Calendar, Globe, MapPin, Users, Package } from "lucide-react";
 import { cn } from "cn";
-import {
-  LOOT_CARD_DIVIDER_CLASS,
-  LOOT_CARD_INSET_CLASS,
-} from "@/features/guild/loots-list/loots-list-layout";
+import { LOOT_CARD_INSET_CLASS } from "@/features/guild/loots-list/loots-list-layout";
 import { LootMetaItem } from "./loot-meta-item";
 
 export const LootFooter = ({
@@ -28,7 +25,6 @@ export const LootFooter = ({
     <div
       className={cn(
         "mt-auto flex items-center justify-between gap-4 py-1.5",
-        LOOT_CARD_DIVIDER_CLASS,
         LOOT_CARD_INSET_CLASS,
       )}
     >
