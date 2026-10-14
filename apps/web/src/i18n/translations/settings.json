@@ -2,6 +2,7 @@
   "navigationLabel": "Ustawienia",
   "filtersLabel": "Filtry",
   "resetFilters": "Wyczyść filtry",
+  "clearFilter": "Wyczyść filtr",
   "servers": {
     "navigation": "Lootlogi",
     "title": "Widoczność Lootlogów",
@@ -92,7 +93,7 @@
       "levelOrder": "Poziom końcowy nie może być niższy od początkowego."
     },
     "title": "Ustawienia ról",
-    "searchPlaceholder": "Szukaj roli",
+    "searchPlaceholder": "Filtruj po nazwie roli…",
     "emptyTitle": "Nie znaleziono ról",
     "emptyDescription": "Brak ról do wyświetlenia.",
     "emptyFilteredDescription": "Nie znaleziono ról pasujących do wyszukiwania.",
@@ -108,21 +109,11 @@
     "permissionCountCompact_few": "{{count}} uprawnienia",
     "permissionCountCompact_many": "{{count}} uprawnień",
     "updateSuccess": "Zaktualizowano ustawienia roli",
-    "updateError": "Nie udało się zaktualizować ustawień roli",
-    "table": {
-      "role": "Rola",
-      "levelRange": "Zakres poziomów",
-      "permissions": "Uprawnienia",
-      "actions": "Akcje"
-    },
-    "actions": {
-      "more": "Więcej akcji",
-      "viewDetails": "Zobacz szczegóły"
-    }
+    "updateError": "Nie udało się zaktualizować ustawień roli"
   },
   "npcs": {
     "title": "Potwory i NPC",
-    "searchPlaceholder": "Szukaj potwora",
+    "searchPlaceholder": "Filtruj po nazwie potwora…",
     "emptyTitle": "Nie znaleziono potworów",
     "emptyDescription": "Brak potworów do wyświetlenia.",
     "emptyFilteredDescription": "Nie znaleziono potworów pasujących do wyszukiwania.",
@@ -135,16 +126,7 @@
     "rarityCountCompact": "{{count}}/{{total}} rzadkości",
     "noRarities": "Brak rzadkości",
     "updateSuccess": "Zaktualizowano ustawienia potwora",
-    "updateError": "Nie udało się zaktualizować ustawień potwora",
-    "table": {
-      "npc": "Potwór",
-      "rarities": "Rzadkości",
-      "actions": "Akcje"
-    },
-    "actions": {
-      "more": "Więcej akcji",
-      "viewDetails": "Zobacz szczegóły"
-    }
+    "updateError": "Nie udało się zaktualizować ustawień potwora"
   },
   "reservations": {
     "toasts": {
@@ -204,6 +186,9 @@
       "pendingInvite": "Niewykorzystane zaproszenie",
       "expires": "Wygasa {{date}}",
       "revoke": "Wycofaj",
+      "revokeInvitation": "Wycofaj zaproszenie",
+      "revokeTitle": "Wycofać zaproszenie?",
+      "revokeDescription": "Link zaproszenia przestanie działać. W każdej chwili możesz utworzyć nowe.",
       "loadError": "Nie udało się pobrać współdzielonych rezerwacji",
       "loadErrorDescription": "Spróbuj ponownie, aby odświeżyć Lootlogi w sojuszu i oczekujące zaproszenia.",
       "noPartners": "Brak Lootlogów w sojuszu.",
@@ -217,24 +202,9 @@
   },
   "members": {
     "title": "Członkowie",
-    "searchPlaceholder": "Szukaj członka po nicku lub Discord ID",
+    "searchPlaceholder": "Filtruj po nicku lub Discord ID…",
     "details": "Szczegóły członka",
     "owner": "Właściciel Lootloga",
-    "summary": {
-      "total_one": "{{count}} członek",
-      "total_few": "{{count}} członków",
-      "total_many": "{{count}} członków",
-      "active_one": "{{count}} aktywny",
-      "active_few": "{{count}} aktywnych",
-      "active_many": "{{count}} aktywnych",
-      "inactive_one": "{{count}} nieaktywny",
-      "inactive_few": "{{count}} nieaktywnych",
-      "inactive_many": "{{count}} nieaktywnych",
-      "online": "{{count}} online",
-      "problems_one": "{{count}} problem",
-      "problems_few": "{{count}} problemy",
-      "problems_many": "{{count}} problemów"
-    },
     "filters": {
       "all": "Wszyscy",
       "active": "Aktywni",
@@ -243,16 +213,13 @@
       "problems": "Problemy"
     },
     "table": {
-      "member": "Członek",
       "status": "Status",
       "discord": "Synchronizacja",
       "activity": "Aktywność",
-      "visits": "Wejścia",
-      "roles": "Role",
-      "actions": "Akcje"
+      "roles": "Role"
     },
     "actions": {
-      "more": "Więcej akcji",
+      "moreNamed": "Więcej akcji: {{name}}",
       "viewDetails": "Zobacz szczegóły"
     },
     "refreshingProgress": "Odświeżanie {{processed}}/{{total}}",
@@ -365,8 +332,6 @@
         "webAndGame": "Online na stronie i w grze",
         "margonemVerified": "Zweryfikowane konto Margonem"
       },
-      "webVisitCountShort": "Web {{count}}",
-      "gameVisitCountShort": "Gra {{count}}",
       "onlineNowCompact": "Online teraz",
       "lastSeenCompact": "Online {{time}}",
       "noVisitsCompact": "Online: brak danych",
@@ -955,8 +920,10 @@
   },
   "mapTemplates": {
     "title": "Szablony map",
-    "description": "Zarządzaj szablonami list mapek",
     "newTemplate": "Nowy szablon",
+    "filterPlaceholder": "Filtruj po nazwie szablonu…",
+    "noResults": "Nie znaleziono szablonów",
+    "noResultsDescription": "Żaden szablon nie pasuje do filtra.",
     "editTemplate": "Edytuj szablon {{name}}",
     "deleteTemplate": "Usuń szablon {{name}}",
     "cancel": "Anuluj",

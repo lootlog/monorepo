@@ -1,56 +1,71 @@
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCard } from "@/components/common/section-card/section-card";
-
+import { BandSection } from "@/components/common/band-section";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { useTranslation } from "react-i18next";
+import { SettingsTabSkeleton } from "../components/settings-tab-skeleton";
+import { ReservationShareGroup } from "./reservation-share-group";
+
+/** Each section's fields, so the skeleton shows their labels and descriptions. */
+const FORM_SECTIONS = [
+  ["duration", ["minDuration", "maxDuration"]],
+  ["schedule", ["granularity", "maxAdvance"]],
+  ["limits", ["activeLimit"]],
+] as const;
 
 export const ReservationsSettingsSkeleton = () => {
+  const { t } = useTranslation();
+
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="min-h-0 flex-1 overflow-hidden">
-        <div className="flex w-full flex-col gap-3 px-3 pb-3">
-          <SectionCard className="overflow-hidden">
-            <SectionCardContent className="flex flex-col gap-3">
-              {Array.from({ length: 3 }).map((_, sectionIndex) => (
-                <div
-                  key={sectionIndex}
-                  className="space-y-4 border-b border-border p-4 last:border-b-0"
-                >
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="size-8 shrink-0 rounded-lg" />
-                    <div className="space-y-1.5">
-                      <Skeleton className="h-3.5 w-32" />
-                      <Skeleton className="h-3 w-64 max-w-full" />
-                    </div>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {Array.from({ length: sectionIndex === 2 ? 1 : 2 }).map(
-                      (_, fieldIndex) => (
-                        <div key={fieldIndex} className="space-y-2">
-                          <Skeleton className="h-3 w-32" />
-                          <Skeleton className="h-9 w-full" />
-                          <Skeleton className="h-3 w-48 max-w-full" />
-                        </div>
-                      ),
-                    )}
-                  </div>
+    <SettingsTabSkeleton>
+      <div className="pb-24">
+        {FORM_SECTIONS.map(([section, fields]) => (
+          <BandSection
+            key={section}
+            id={`reservation-settings-${section}-skeleton`}
+            title={t(`settings.reservations.${section}.title`)}
+            description={t(`settings.reservations.${section}.description`)}
+          >
+            <div className="grid gap-4 md:grid-cols-2">
+              {fields.map((field) => (
+                <div key={field} className="grid gap-2">
+                  <span className="text-sm leading-none font-medium">
+                    {t(`settings.reservations.fields.${field}.label`)}
+                  </span>
+                  <Skeleton className="h-9 w-full rounded-lg" />
+                  <p className="text-sm text-muted-foreground">
+                    {t(`settings.reservations.fields.${field}.description`)}
+                  </p>
                 </div>
               ))}
-            </SectionCardContent>
-          </SectionCard>
-          <SectionCard className="space-y-4">
-            <SectionCardContent className="flex flex-col gap-3">
-              <div className="flex items-center gap-3">
-                <Skeleton className="size-8 shrink-0 rounded-lg" />
-                <div className="space-y-1.5">
-                  <Skeleton className="h-3.5 w-40" />
-                  <Skeleton className="h-3 w-72 max-w-full" />
-                </div>
-              </div>
-              <Skeleton className="h-20 w-full" />
-            </SectionCardContent>
-          </SectionCard>
-        </div>
+            </div>
+          </BandSection>
+        ))}
+        <BandSection
+          id="reservation-sharing-skeleton"
+          title={t("settings.reservations.sharing.title")}
+          description={t("settings.reservations.sharing.description")}
+          tiled
+          trailing=<Skeleton className="h-8 w-44 rounded-lg" />
+        >
+          <ReservationShareGroup
+            id="reservation-partners-skeleton"
+            title={t("settings.reservations.sharing.partners")}
+            count={undefined}
+            isPending
+            emptyLabel=""
+          >
+            {null}
+          </ReservationShareGroup>
+          <ReservationShareGroup
+            id="reservation-invitations-skeleton"
+            title={t("settings.reservations.sharing.pending")}
+            count={undefined}
+            isPending
+            emptyLabel=""
+          >
+            {null}
+          </ReservationShareGroup>
+        </BandSection>
       </div>
-    </div>
+    </SettingsTabSkeleton>
   );
 };

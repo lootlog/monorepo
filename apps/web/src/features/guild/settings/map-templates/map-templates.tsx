@@ -1,30 +1,16 @@
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCard } from "@/components/common/section-card/section-card";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@lootlog/ui/components/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@lootlog/ui/components/collapsible";
-import {
-  ChevronRight,
-  FileText,
-  MapPin,
-  Pencil,
-  Plus,
-  Trash2,
-} from "lucide-react";
-import { cn } from "cn";
+import { FileText, Plus } from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
+import { ListToolbar } from "@/components/common/list-toolbar";
 import { toast } from "sonner";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
 import { MapTemplateFormDialog } from "./map-template-form-dialog";
 import { MapTemplateRowsSkeleton } from "./map-template-rows-skeleton";
+import { MapTemplateTile } from "./map-template-tile";
+import { SettingsListEmpty } from "../components/settings-list-empty";
+import { SettingsTabPage } from "../components/settings-tab-page";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
@@ -63,16 +49,12 @@ export const MapTemplatesSettings = () => {
   const [editingTemplate, setEditingTemplate] =
     useState<MapTemplateResponseDto | null>(null);
 
-  const [expandedTemplates, setExpandedTemplates] = useState<
-    Record<string, boolean>
-  >({});
+  const [searchValue, setSearchValue] = useState("");
+  const normalizedSearchValue = searchValue.trim().toLowerCase();
 
-  const toggleExpanded = (templateId: string) => {
-    setExpandedTemplates((prev) => ({
-      ...prev,
-      [templateId]: !prev[templateId],
-    }));
-  };
+  const filteredTemplates = (templates ?? []).filter((template) =>
+    template.name.toLowerCase().includes(normalizedSearchValue),
+  );
 
   const handleEdit = (template: MapTemplateResponseDto) => {
     setEditingTemplate(template);
@@ -96,135 +78,70 @@ export const MapTemplatesSettings = () => {
     }
   };
 
-  const renderCreateButton = (size?: "sm") => (
-    <Button size={size} onClick={() => setCreateDialogOpen(true)}>
-      <Plus data-icon="inline-start" aria-hidden />
-      {t("settings.mapTemplates.newTemplate")}
-    </Button>
-  );
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div role="status" aria-label={t("common.loading")}>
+          <MapTemplateRowsSkeleton />
+        </div>
+      );
+    }
 
-  const isEmpty = !isLoading && templates?.length === 0;
+    if (filteredTemplates.length === 0) {
+      return normalizedSearchValue ? (
+        <SettingsListEmpty
+          icon={FileText}
+          title={t("settings.mapTemplates.noResults")}
+          description={t("settings.mapTemplates.noResultsDescription")}
+          hasActiveFilters
+          onResetFilters={() => setSearchValue("")}
+        />
+      ) : (
+        <div className="p-3">
+          <EmptyState
+            framed
+            icon={FileText}
+            title={t("settings.mapTemplates.noTemplates")}
+            description={t("settings.mapTemplates.noTemplatesDescription")}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <ul>
+        {filteredTemplates.map((template) => (
+          <MapTemplateTile
+            key={template.id}
+            template={template}
+            onEdit={() => handleEdit(template)}
+            onDelete={() => handleDelete(template.id)}
+          />
+        ))}
+      </ul>
+    );
+  };
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-y-auto">
-      <h1 className="sr-only">{t("settings.mapTemplates.title")}</h1>
-      <ScrollArea className="min-h-48 flex-1">
-        <div className="flex flex-col gap-3 px-3 pb-3">
-          <SectionCard>
-            <SectionCardHeader
-              icon={FileText}
-              title={t("settings.mapTemplates.title")}
-              description={t("settings.mapTemplates.description")}
-              actions={!isEmpty && renderCreateButton("sm")}
-            />
-            <SectionCardContent className="p-0">
-              {isLoading ? (
-                <div role="status" aria-label={t("common.loading")}>
-                  <MapTemplateRowsSkeleton />
-                </div>
-              ) : isEmpty ? (
-                <EmptyState
-                  icon={FileText}
-                  title={t("settings.mapTemplates.noTemplates")}
-                  description={t(
-                    "settings.mapTemplates.noTemplatesDescription",
-                  )}
-                  action={renderCreateButton()}
-                />
-              ) : (
-                <ul className="divide-y divide-border">
-                  {templates?.map((template) => {
-                    const isExpanded = expandedTemplates[template.id] ?? false;
-
-                    return (
-                      <li key={template.id}>
-                        <Collapsible
-                          open={isExpanded}
-                          onOpenChange={() => toggleExpanded(template.id)}
-                        >
-                          <div className="flex min-h-14 items-center gap-1 pr-3 transition-colors hover:bg-muted/40">
-                            <CollapsibleTrigger className="flex min-w-0 flex-1 items-center gap-3 self-stretch py-2 pl-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
-                              <ChevronRight
-                                aria-hidden
-                                className={cn(
-                                  "size-4 shrink-0 text-muted-foreground transition-[rotate] duration-200 ease-emphasized motion-reduce:transition-none",
-                                  isExpanded && "rotate-90",
-                                )}
-                              />
-                              <span className="min-w-0">
-                                <span className="block truncate text-sm font-semibold">
-                                  {template.name}
-                                </span>
-                                <span className="block text-xs text-muted-foreground">
-                                  {t("settings.mapTemplates.mapCount", {
-                                    count: template.maps.length,
-                                  })}
-                                </span>
-                              </span>
-                            </CollapsibleTrigger>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              aria-label={t(
-                                "settings.mapTemplates.editTemplate",
-                                {
-                                  name: template.name,
-                                },
-                              )}
-                              onClick={() => handleEdit(template)}
-                            >
-                              <Pencil className="size-4" />
-                            </Button>
-                            <ConfirmDeleteDialog
-                              onConfirm={() => handleDelete(template.id)}
-                              title={t(
-                                "settings.mapTemplates.deleteConfirmTitle",
-                              )}
-                              description={t(
-                                "settings.mapTemplates.deleteConfirmDescription",
-                                { name: template.name },
-                              )}
-                              trigger={
-                                <Button
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  aria-label={t(
-                                    "settings.mapTemplates.deleteTemplate",
-                                    { name: template.name },
-                                  )}
-                                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                                >
-                                  <Trash2 className="size-4" />
-                                </Button>
-                              }
-                            />
-                          </div>
-                          <CollapsibleContent>
-                            <ul className="flex flex-wrap gap-2 px-3 pb-3 pl-10">
-                              {template.maps.map((map) => (
-                                <li
-                                  key={map.id}
-                                  className="inline-flex items-center gap-1.5 rounded bg-primary/10 px-2 py-1 text-xs text-primary"
-                                >
-                                  <MapPin className="size-3" aria-hidden />
-                                  {map.name}
-                                  <span className="text-muted-foreground">
-                                    ({map.id})
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          </CollapsibleContent>
-                        </Collapsible>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </SectionCardContent>
-          </SectionCard>
-        </div>
-      </ScrollArea>
+    <SettingsTabPage title={t("settings.mapTemplates.title")}>
+      <ListToolbar
+        search={searchValue}
+        onSearchChange={setSearchValue}
+        placeholder={t("settings.mapTemplates.filterPlaceholder")}
+        label={t("settings.mapTemplates.filterPlaceholder")}
+        clearLabel={t("settings.clearFilter")}
+        disabled={isLoading}
+      >
+        <Button
+          size="sm"
+          className="shrink-0"
+          onClick={() => setCreateDialogOpen(true)}
+        >
+          <Plus data-icon="inline-start" aria-hidden />
+          {t("settings.mapTemplates.newTemplate")}
+        </Button>
+      </ListToolbar>
+      {renderContent()}
 
       <MapTemplateFormDialog
         mode="create"
@@ -240,6 +157,6 @@ export const MapTemplatesSettings = () => {
           template={editingTemplate}
         />
       )}
-    </div>
+    </SettingsTabPage>
   );
 };

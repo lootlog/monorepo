@@ -3,11 +3,21 @@ import {
   isMemberOnlineInGame,
 } from "@/features/guild/settings/members/member-game-presence.utils";
 import { getMemberOnlineSources } from "@/features/guild/settings/members/member-list-item.utils";
-import { isMemberOnlineOnWeb } from "@/lib/web-presence";
+import {
+  isMemberOnlineOnWeb,
+  type MemberWebPresenceByDiscordId,
+} from "@/lib/web-presence";
 import type { GuildMember } from "@/features/guild/settings/members/members.types";
 import { getColorFromRole } from "@/utils/get-color-from-role";
+import type { MemberActivityStatsByDiscordId } from "./member-activity-stats.utils";
+import type { MemberGamePresenceByDiscordId } from "./member-game-presence.utils";
 
-import type { MembersTableProps } from "./members-table";
+/** Presence and activity of every member, as the member list receives them. */
+export type MemberActivitySources = {
+  activityStatsByDiscordIdAndSource: MemberActivityStatsByDiscordId;
+  memberGamePresenceByDiscordId: MemberGamePresenceByDiscordId | undefined;
+  memberWebPresenceByDiscordId: MemberWebPresenceByDiscordId | undefined;
+};
 
 export const getMemberDisplayData = (
   member: GuildMember,
@@ -15,12 +25,7 @@ export const getMemberDisplayData = (
     activityStatsByDiscordIdAndSource,
     memberGamePresenceByDiscordId,
     memberWebPresenceByDiscordId,
-  }: Pick<
-    MembersTableProps,
-    | "activityStatsByDiscordIdAndSource"
-    | "memberGamePresenceByDiscordId"
-    | "memberWebPresenceByDiscordId"
-  >,
+  }: MemberActivitySources,
 ) => {
   const webActivityStats = activityStatsByDiscordIdAndSource.get(
     member.userId,

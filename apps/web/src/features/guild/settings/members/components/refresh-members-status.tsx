@@ -1,6 +1,7 @@
 import { Button } from "@lootlog/ui/components/button";
 import { Progress } from "@lootlog/ui/components/progress";
 import { Clock, RefreshCw } from "lucide-react";
+import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useTranslation } from "react-i18next";
 
 type RefreshDisplayJob = {
@@ -35,6 +36,7 @@ export const RefreshMembersStatus = ({
   onRefresh,
 }: RefreshMembersStatusProps) => {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
 
   const isRefreshing =
     displayJob?.status === "PROCESSING" || displayJob?.status === "PENDING";
@@ -96,9 +98,32 @@ export const RefreshMembersStatus = ({
     );
   }
 
+  // Phones keep the icon alone, so the button fits beside the member filter.
+  if (isMobile) {
+    const label =
+      displayJob?.status === "FAILED"
+        ? `${t("settings.members.refreshError")} · ${t("settings.members.retry")}`
+        : t("settings.members.refreshAll");
+
+    return (
+      <Button
+        size="icon-sm"
+        variant="outline"
+        onClick={onRefresh}
+        disabled={!countdown.isExpired}
+        loading={isPending}
+        aria-label={label}
+        title={label}
+      >
+        <RefreshCw className="size-4" />
+      </Button>
+    );
+  }
+
   return (
     <Button
-      size="lg"
+      size="sm"
+      variant="outline"
       onClick={onRefresh}
       disabled={!countdown.isExpired}
       loading={isPending}
