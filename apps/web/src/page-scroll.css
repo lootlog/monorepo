@@ -8,6 +8,21 @@
   body {
     overflow: hidden;
   }
+
+  /*
+   * The fixed shell has nothing to rubber-band, so the viewport and each
+   * page's own scroller stop at their edges instead of bouncing. Scrollers
+   * nested in a page keep chaining to it. Below `md` the document keeps its
+   * overscroll for pull-to-refresh.
+   */
+  html,
+  body,
+  #main-content
+    [data-slot="scroll-area-viewport"]:not(
+      [data-slot="scroll-area-viewport"] [data-slot="scroll-area-viewport"]
+    ) {
+    overscroll-behavior: none;
+  }
 }
 
 /*
