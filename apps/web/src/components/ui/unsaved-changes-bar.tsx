@@ -75,10 +75,13 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
           transition={SPRING}
           className="fixed right-0 bottom-0 left-0 z-50 md:left-(--sidebar-width)"
         >
-          {/* The top bar's surface, blur and hairline, mirrored at the bottom edge. */}
+          {/*
+            The top bar's surface, blur and hairline, mirrored at the bottom
+            edge; its hairline continues the sidebar footer's.
+          */}
           <div
             className={cn(
-              "flex h-[calc(--spacing(14)+env(safe-area-inset-bottom))] items-center gap-1 border-t border-sidebar-border bg-sidebar/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg backdrop-saturate-150",
+              "box-content flex h-14 items-center gap-1 border-t border-sidebar-border bg-sidebar/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg backdrop-saturate-150",
               LIST_TILE_INSET_CLASS,
             )}
           >
