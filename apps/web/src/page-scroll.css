@@ -42,6 +42,15 @@
 }
 
 /*
+ * Sticky page content, such as list toolbars (z-10) and the activity log's
+ * filter bar (z-20), would otherwise paint over the page scrollbar where they
+ * overlap it.
+ */
+[data-under-top-bar] > [data-slot="scroll-area-scrollbar"] {
+  z-index: 30;
+}
+
+/*
  * From `md` up, a page scroller marked `data-under-top-bar` reaches up beneath
  * the translucent app bar, so its content blurs through the bar as it scrolls.
  * The content frame slides up by the bar's height, the scroller insets its
