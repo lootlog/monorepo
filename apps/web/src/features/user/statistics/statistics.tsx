@@ -47,6 +47,16 @@ export function Statistics() {
 
   return (
     <ScrollArea data-under-top-bar className="h-full min-h-0">
+      <HorizontalMenu
+        ariaLabel={t("statistics.title")}
+        activeId={search.tab}
+        items={STATISTICS_TABS.map((tab) => ({
+          id: tab,
+          label: t(`statistics.${tab}`),
+          href: "/@me/statistics",
+          search: { ...search, tab },
+        }))}
+      />
       <div className="min-w-0 space-y-3 p-3">
         <PageHeader
           className="@container/page-heading [&>header>div:last-child]:basis-full @2xl/page-heading:[&>header>div:last-child]:basis-auto"
@@ -81,17 +91,6 @@ export function Statistics() {
               />
             </div>
           }
-        />
-        <HorizontalMenu
-          ariaLabel={t("statistics.title")}
-          className="p-0"
-          activeId={search.tab}
-          items={STATISTICS_TABS.map((tab) => ({
-            id: tab,
-            label: t(`statistics.${tab}`),
-            href: "/@me/statistics",
-            search: { ...search, tab },
-          }))}
         />
         <StatisticsQueryState
           query={analytics}

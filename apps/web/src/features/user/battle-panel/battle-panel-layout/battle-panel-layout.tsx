@@ -37,7 +37,6 @@ export const BattlePanelLayout = () => {
         <HorizontalMenu
           items={navigationItems}
           ariaLabel={t("battlePanel.navigation.title")}
-          className="shrink-0 pb-0"
         />
       )}
       <div className="min-h-0 min-w-0 flex-1 overflow-hidden">

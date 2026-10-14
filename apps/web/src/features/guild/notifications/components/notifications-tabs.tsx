@@ -11,7 +11,6 @@ export const NotificationsTabs = () => {
   return (
     <HorizontalMenu
       ariaLabel={t("settings.notifications.tabs.label")}
-      className="pb-3"
       items={[
         {
           id: "rules",

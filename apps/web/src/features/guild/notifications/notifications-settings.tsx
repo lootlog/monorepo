@@ -40,7 +40,7 @@ export const NotificationsSettings = () => {
             <GuildDiscordSyncNotice sync={overview.sync} />
           </div>
         )}
-        <div className="border-t border-sidebar-border">
+        <div>
           <ListToolbar
             search={search}
             onSearchChange={setSearch}

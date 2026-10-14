@@ -17,13 +17,7 @@ export const StatsTablePageSkeleton = ({
   rowContent,
   mobileSkeleton,
 }: StatsTablePageSkeletonProps) => (
-  <div
-    className={
-      withHeader
-        ? "flex h-full min-h-0 flex-col gap-3 p-3"
-        : "flex h-full min-h-0 flex-col gap-3 px-3 pb-3"
-    }
-  >
+  <div className="flex h-full min-h-0 flex-col gap-3 p-3">
     {withHeader && (
       <SectionCard className="shrink-0">
         <div className="flex items-center gap-3 p-4">
