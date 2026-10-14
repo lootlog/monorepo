@@ -28,7 +28,7 @@ export function LiveFeedSkeleton() {
                 <div className="flex items-center gap-2">
                   <Skeleton className={cn("h-4", hasLoot ? "w-40" : "w-32")} />
                   <Skeleton className="h-4 w-12" />
-                  <Skeleton className="ml-auto size-8 rounded-xl" />
+                  <Skeleton className="ml-auto size-8 rounded-lg" />
                 </div>
                 {hasLoot && (
                   <div className="flex gap-1">

@@ -212,7 +212,7 @@ export const EventCoordinationPage = () => {
         variant="destructive"
       />
 
-      <ScrollArea className="flex-1 min-h-0">
+      <ScrollArea data-under-top-bar className="flex-1 min-h-0">
         <div className="flex flex-col gap-3 px-3 py-3">
           <EventCoordinationSummaryCard coordination={coordination} />
 

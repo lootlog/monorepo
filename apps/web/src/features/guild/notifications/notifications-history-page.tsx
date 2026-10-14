@@ -47,7 +47,7 @@ export const NotificationsHistoryPage = () => {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <ScrollArea className="min-h-0 flex-1">
+      <ScrollArea data-under-top-bar className="min-h-0 flex-1">
         <div className="flex flex-col gap-3 px-3 py-3">
           <PageHeader
             icon={History}

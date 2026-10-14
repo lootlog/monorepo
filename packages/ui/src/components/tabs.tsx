@@ -22,7 +22,7 @@ const tabsListSizes = {
 
 const tabsListVariants = {
   /** A bordered, rounded control that stands on its own. */
-  pill: "rounded-xl border border-border",
+  pill: "rounded-lg border border-border",
   /** A square strip that fills a card row between its separators. */
   flush: "rounded-none",
 };

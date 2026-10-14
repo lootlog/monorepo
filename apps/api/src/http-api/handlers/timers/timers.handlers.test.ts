@@ -35,6 +35,7 @@ const guild = {
   id: "guild-a",
   name: "Guild A",
   icon: null,
+  banner: null,
   ownerId: "owner-a",
   vanityUrl: null,
   notificationRuleLimit: 20,

@@ -7,9 +7,9 @@ export const StatsFilterBarSkeleton = () => {
 
   return (
     <FilterBar ariaLabel={t("kills.filters.title")}>
-      <Skeleton className="h-10 w-full rounded-xl md:w-[200px]" />
-      <Skeleton className="hidden h-10 w-[200px] rounded-xl md:block" />
-      <Skeleton className="hidden h-10 w-[200px] rounded-xl md:block" />
+      <Skeleton className="h-10 w-full rounded-lg md:w-[200px]" />
+      <Skeleton className="hidden h-10 w-[200px] rounded-lg md:block" />
+      <Skeleton className="hidden h-10 w-[200px] rounded-lg md:block" />
     </FilterBar>
   );
 };

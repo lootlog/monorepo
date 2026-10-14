@@ -63,7 +63,7 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
   };
 
   const avatarElement = (
-    <Avatar className="size-11 rounded-xl">
+    <Avatar className="size-11 rounded-lg">
       <AvatarImage
         src={guild.icon ?? undefined}
         alt={guild.name}

@@ -67,7 +67,7 @@ export function ReservationCard({
         type="button"
         onClick={onOpen}
         aria-label={t("reservations.card.open", { name: spot.name })}
-        className="absolute inset-0 z-0 cursor-pointer rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="absolute inset-0 z-0 cursor-pointer rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       />
 
       <div className="pointer-events-none relative z-10 flex min-w-0 items-start justify-between gap-3">

@@ -62,7 +62,7 @@ export const LootsList = () => {
 
   if (isFailed) {
     return (
-      <div className="px-3 pb-3">
+      <div className="p-3">
         <EmptyState
           framed
           icon={CircleAlert}
@@ -85,7 +85,7 @@ export const LootsList = () => {
 
   if (isEmpty) {
     return (
-      <div className="px-3 pb-3">
+      <div className="p-3">
         {hasActiveFilters ? (
           <EmptyState
             framed
@@ -118,6 +118,7 @@ export const LootsList = () => {
     <SharedTooltipProvider>
       <ScrollArea
         id="loots-list"
+        data-under-top-bar
         className="h-24 flex-1 relative"
         ref={setScrollElement}
         onScroll={resumeReconciliation}
@@ -125,7 +126,7 @@ export const LootsList = () => {
         {/* Phones scroll the document under the app bar; wider screens scroll this viewport. */}
         <div
           aria-live="polite"
-          className="pointer-events-none fixed inset-x-0 top-16 z-10 flex justify-center md:sticky md:inset-x-auto md:top-2 md:h-0"
+          className="pointer-events-none fixed inset-x-0 top-16 z-10 flex justify-center md:sticky md:inset-x-auto md:top-16 md:h-0"
         >
           {newLootCount > 0 && (
             <Button

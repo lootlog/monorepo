@@ -266,7 +266,7 @@ export const LootDetailsDialog: FC<LootDetailsDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeLootDetails()}>
       <DialogContent
         // A fixed height keeps the dialog still while comments are added.
-        className="flex h-[min(85dvh,52rem)] w-[calc(100%-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-2xl border-border bg-background p-0 sm:max-w-3xl"
+        className="flex h-[min(85dvh,52rem)] w-[calc(100%-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-xl border-border bg-background p-0 sm:max-w-3xl"
         aria-describedby={undefined}
         initialFocus={false}
       >

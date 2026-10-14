@@ -51,8 +51,10 @@ export type AppNavigationSidebarItem = {
 
 export type AppNavigationHeading = {
   title: string;
-  /** The page one step up; tabs of a section have none. */
-  parent: { label: string; path: string } | null;
+  /** The pages above this one, from the section down; tabs of a section have none. */
+  trail: { label: string; path: string }[];
+  /** The sidebar item the page belongs to, whose icon leads the heading. */
+  section: AppNavigationItemId | null;
 };
 
 export type AppNavigation = {
@@ -157,23 +159,46 @@ function resolveHeading(
   breadcrumbs: readonly Breadcrumb[],
   parentPath: string | null,
   scope: AppNavigation["scope"],
+  sidebarItems: readonly AppNavigationSidebarItem[],
 ): AppNavigationHeading {
   const pageBreadcrumbs =
     scope === "organization" && breadcrumbs.length > 1
       ? breadcrumbs.slice(1)
       : breadcrumbs;
 
+  const section = sidebarItems.find((item) => item.active)?.id ?? null;
+
   if (parentPath === null) {
-    return { title: pageBreadcrumbs[0]?.label ?? "", parent: null };
+    return { title: pageBreadcrumbs[0]?.label ?? "", trail: [], section };
   }
 
-  const parent =
-    pageBreadcrumbs.find((breadcrumb) => breadcrumb.path === parentPath) ??
-    pageBreadcrumbs[pageBreadcrumbs.length - 2];
+  const current = getCurrentBreadcrumb(pageBreadcrumbs);
+
+  const ancestors = pageBreadcrumbs.slice(
+    0,
+    current ? pageBreadcrumbs.indexOf(current) : -1,
+  );
+
+  const parentIndex = ancestors.findIndex(
+    (breadcrumb) => breadcrumb.path === parentPath,
+  );
+
+  // The trail ends at the page the back action returns to.
+  const upToParent =
+    parentIndex >= 0
+      ? ancestors.slice(0, parentIndex + 1)
+      : ancestors.map((breadcrumb, index) =>
+          index === ancestors.length - 1
+            ? { ...breadcrumb, path: parentPath }
+            : breadcrumb,
+        );
 
   return {
-    title: getCurrentBreadcrumb(pageBreadcrumbs)?.label ?? "",
-    parent: parent ? { label: parent.label, path: parentPath } : null,
+    title: current?.label ?? "",
+    trail: upToParent.flatMap(({ label, path }) =>
+      path === null ? [] : [{ label, path }],
+    ),
+    section,
   };
 }
 
@@ -649,7 +674,7 @@ function createPublicNavigation(documentTitle: string): AppNavigation {
   return {
     scope: "public",
     breadcrumbs: [],
-    heading: { title: documentTitle, parent: null },
+    heading: { title: documentTitle, trail: [], section: null },
     documentTitle,
     parentPath: null,
     sidebarItems: [],
@@ -665,6 +690,11 @@ function resolveUserAppNavigation(
     getBattleRouteLabel(lastMatch, t, { currentBattle }),
   );
 
+  const sidebarItems = resolveSidebarItems(
+    lastMatch.pathname,
+    buildUserSidebarRegistry(),
+  );
+
   return {
     scope: "user",
     breadcrumbs: userNavigation.breadcrumbs,
@@ -672,16 +702,14 @@ function resolveUserAppNavigation(
       userNavigation.breadcrumbs,
       userNavigation.backPath ?? null,
       "user",
+      sidebarItems,
     ),
     documentTitle: resolveDocumentContext(
       userNavigation,
       userNavigation.breadcrumbs[0]?.label,
     ),
     parentPath: userNavigation.backPath ?? null,
-    sidebarItems: resolveSidebarItems(
-      lastMatch.pathname,
-      buildUserSidebarRegistry(),
-    ),
+    sidebarItems,
   };
 }
 
@@ -691,7 +719,7 @@ function createMissingOrganizationNavigation(): AppNavigation {
   return {
     scope: "organization",
     breadcrumbs: [{ label: fallbackLabel, path: null }],
-    heading: { title: fallbackLabel, parent: null },
+    heading: { title: fallbackLabel, trail: [], section: null },
     documentTitle: formatDocumentTitle(fallbackLabel),
     parentPath: null,
     sidebarItems: [],
@@ -786,6 +814,12 @@ function resolveOrganizationAppNavigation(
   const documentContext =
     loaderContext.event?.event?.name ?? resolvedOrganizationName;
 
+  const sidebarItems = resolveSidebarItems(
+    lastMatch.pathname,
+    buildOrganizationSidebarRegistry(organizationId),
+    accessPolicy,
+  );
+
   return {
     scope: "organization",
     breadcrumbs: organizationNavigation.breadcrumbs,
@@ -793,17 +827,14 @@ function resolveOrganizationAppNavigation(
       organizationNavigation.breadcrumbs,
       organizationNavigation.backPath ?? null,
       "organization",
+      sidebarItems,
     ),
     documentTitle: resolveDocumentContext(
       organizationNavigation,
       documentContext,
     ),
     parentPath: organizationNavigation.backPath ?? null,
-    sidebarItems: resolveSidebarItems(
-      lastMatch.pathname,
-      buildOrganizationSidebarRegistry(organizationId),
-      accessPolicy,
-    ),
+    sidebarItems,
   };
 }
 

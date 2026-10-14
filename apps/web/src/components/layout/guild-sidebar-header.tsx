@@ -26,6 +26,7 @@ import {
 } from "@lootlog/client/main";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCurrentUserGuild } from "@/hooks/api/use-current-user-guild";
+import { GuildSidebarBanner } from "./guild-sidebar-banner";
 
 export const GuildSidebarHeader = ({
   guildId,
@@ -114,6 +115,9 @@ export const GuildSidebarHeader = ({
 
   return (
     <>
+      {loadedGuild?.banner && (
+        <GuildSidebarBanner key={loadedGuild.banner} src={loadedGuild.banner} />
+      )}
       <div className="flex min-w-0 flex-1 items-center pl-3">
         <span
           key={guild?.id ?? "loading"}

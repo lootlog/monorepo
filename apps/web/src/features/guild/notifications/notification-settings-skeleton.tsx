@@ -23,8 +23,8 @@ export const NotificationSettingsSkeleton = ({
         icon={Settings}
       />
       <SectionCardContent className="flex flex-col gap-2">
-        <Skeleton className="h-9 w-full rounded-xl" />
-        <Skeleton className="h-9 w-full rounded-xl" />
+        <Skeleton className="h-9 w-full rounded-lg" />
+        <Skeleton className="h-9 w-full rounded-lg" />
       </SectionCardContent>
     </SectionCard>
   );

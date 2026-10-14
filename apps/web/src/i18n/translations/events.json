@@ -269,7 +269,7 @@
     "close": "Zamknij"
   },
   "sidebarBanner": {
-    "pinnedEvent": "Przypięty event",
+    "activeEvent": "Aktywny event",
     "showMore": "+{{count}} więcej",
     "moreEvents_one": "Jeszcze {{count}} przypięty event",
     "moreEvents_few": "Jeszcze {{count}} przypięte eventy",

@@ -141,5 +141,6 @@
   )
   .app-content-frame
   [data-slot="card"] {
-  background-color: color-mix(in srgb, var(--card) 30%, transparent);
+  /* Opaque enough to read over the brightest parts of the wallpaper. */
+  background-color: color-mix(in srgb, var(--card) 85%, transparent);
 }

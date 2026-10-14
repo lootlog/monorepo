@@ -96,7 +96,7 @@ export const LootsListPage: React.FC = () => {
 
       <div className="w-full flex flex-col h-full overflow-hidden">
         <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden pt-3">
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             <LootsList />
           </div>
 
@@ -105,7 +105,9 @@ export const LootsListPage: React.FC = () => {
             axis="horizontal"
             className="h-full"
           >
-            <LootsFiltersSidebar />
+            <div data-top-bar-inset className="flex h-full">
+              <LootsFiltersSidebar />
+            </div>
           </CollapsePresence>
         </div>
       </div>

@@ -106,7 +106,11 @@ export const EventKillsHistoryContent = ({
         eventId={eventId}
       />
 
-      <ScrollArea ref={setScrollElement} className="min-h-0 flex-1">
+      <ScrollArea
+        data-under-top-bar
+        ref={setScrollElement}
+        className="min-h-0 flex-1"
+      >
         <div className="flex w-full min-w-0 max-w-full flex-col gap-3 px-3 py-3">
           <h1 className="sr-only">{t("events.kills.title")}</h1>
 

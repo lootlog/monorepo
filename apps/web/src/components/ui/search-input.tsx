@@ -19,7 +19,7 @@ const SearchInput = forwardRef<
     <InputGroup
       size={size}
       className={cn(
-        "has-[>[data-align=inline-start]]:[&>input]:pl-2 rounded-xl border-border bg-background dark:bg-background hover:border-foreground/20 hover:bg-foreground/[0.04] dark:hover:bg-foreground/[0.04]",
+        "has-[>[data-align=inline-start]]:[&>input]:pl-2 rounded-lg bg-background dark:bg-background hover:border-foreground/20 hover:bg-foreground/[0.04] dark:hover:bg-foreground/[0.04]",
         wrapperClassName,
         className,
       )}

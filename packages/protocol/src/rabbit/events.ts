@@ -41,10 +41,15 @@ const GuildRole = Schema.Struct({
   position: Schema.Number,
 });
 
+// A bot released before banners omits `banner`; the API then keeps the stored
+// one instead of clearing it.
+const GuildBanner = Schema.optionalKey(NullableString);
+
 export const GuildCreated = Schema.Struct({
   guildId: Schema.NonEmptyString,
   name: Schema.NonEmptyString,
   icon: NullableString,
+  banner: GuildBanner,
   ownerId: Schema.NonEmptyString,
   roles: Schema.Array(GuildRole),
 });
@@ -53,6 +58,7 @@ export const GuildUpdated = Schema.Struct({
   guildId: Schema.NonEmptyString,
   name: Schema.NonEmptyString,
   icon: NullableString,
+  banner: GuildBanner,
   ownerId: Schema.NonEmptyString,
 });
 
