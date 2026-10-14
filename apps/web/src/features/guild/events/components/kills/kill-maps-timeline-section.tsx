@@ -44,7 +44,7 @@ export const KillMapsTimelineSection = ({
 
   if (isLoading) {
     return (
-      <SectionCard className="overflow-hidden bg-card">
+      <SectionCard className="overflow-clip bg-card">
         <div className="space-y-2 p-3">
           {Array.from({ length: 3 }).map((_, index) => (
             <Skeleton key={index} className="h-12 rounded-lg" />
@@ -68,7 +68,7 @@ export const KillMapsTimelineSection = ({
   });
 
   return (
-    <SectionCard className="overflow-hidden bg-card">
+    <SectionCard className="overflow-clip bg-card">
       <SectionCardHeader
         icon={Map}
         title={t("events.killDetail.mapCoverage.title")}

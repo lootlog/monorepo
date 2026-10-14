@@ -1,7 +1,7 @@
 import { upperFirst } from "es-toolkit";
 import { Clock, Globe, MapPin, PackageX, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { LootMetaItem } from "@/features/guild/loots-list/components/loots-list/loot-meta-item";
+import { MetaItem } from "@/components/common/meta-item";
 import { LiveFeedTime } from "./live-feed-time";
 
 type Props = {
@@ -26,28 +26,23 @@ export function LiveFeedEventMeta({
 
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-      <LootMetaItem
+      <MetaItem
         icon={location ? MapPin : Globe}
         className="min-w-0"
         title={place}
       >
         <span className="truncate">{place}</span>
-      </LootMetaItem>
-      <LootMetaItem icon={Clock}>
+      </MetaItem>
+      <MetaItem icon={Clock}>
         <LiveFeedTime occurredAt={occurredAt} now={now} />
-      </LootMetaItem>
+      </MetaItem>
       {players > 0 && (
-        <LootMetaItem
-          icon={Users}
-          label={t("statistics.feedPlayersCountLabel")}
-        >
+        <MetaItem icon={Users} label={t("statistics.feedPlayersCountLabel")}>
           {players}
-        </LootMetaItem>
+        </MetaItem>
       )}
       {!hasLoot && (
-        <LootMetaItem icon={PackageX}>
-          {t("statistics.feedNoLoot")}
-        </LootMetaItem>
+        <MetaItem icon={PackageX}>{t("statistics.feedNoLoot")}</MetaItem>
       )}
     </div>
   );

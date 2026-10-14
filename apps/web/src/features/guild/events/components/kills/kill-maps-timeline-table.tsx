@@ -1,3 +1,4 @@
+import { PAGE_STICKY_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
 import { useState } from "react";
 import type { TFunction } from "i18next";
 import {
@@ -189,7 +190,9 @@ export const KillMapsTimelineTable = ({
           />
         ))}
       </colgroup>
-      <TableHeader className="sticky top-0 z-10 bg-background max-md:sr-only">
+      <TableHeader
+        className={cn(PAGE_STICKY_TABLE_HEADER_CLASS, "max-md:sr-only")}
+      >
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={headerGroup.id} className="border-b-1! border-border">
             {headerGroup.headers.map((header) => (

@@ -26,6 +26,7 @@ export const LootsListSkeleton = ({ viewMode, className }: Props) => (
     {Array.from({ length: SKELETON_TILE_COUNT }, (_, index) => (
       <div
         key={index}
+        data-list-tile
         className={viewMode === "grid" ? LOOTS_GRID_CELL_CLASS : undefined}
       >
         <LootsListItemSkeleton index={index} />

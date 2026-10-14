@@ -1,3 +1,4 @@
+import { PAGE_STICKY_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
 import { EmptyState } from "@/components/common/empty-state";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { cn } from "cn";
@@ -165,7 +166,7 @@ export const MemberKillsList = ({
       <Table className="w-full table-auto xl:table-fixed">
         <TanStackTableHeader
           table={table}
-          className="sticky top-0 z-10 bg-background"
+          className={PAGE_STICKY_TABLE_HEADER_CLASS}
           rowClassName="border-b-1! border-border hover:bg-transparent"
           getHeadClassName={(header) =>
             cn(
@@ -214,7 +215,7 @@ export const MemberKillsList = ({
   };
 
   return (
-    <SectionCard className="w-full overflow-hidden">
+    <SectionCard className="w-full overflow-clip">
       <SectionCardHeader icon={Skull} title={t("events.kills.title")} />
       {renderContent()}
     </SectionCard>

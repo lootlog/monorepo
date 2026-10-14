@@ -1,11 +1,16 @@
 import { SkeletonLine } from "@/components/common/skeleton-line";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { cn } from "cn";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
 
 type ActivityLogsMobileListSkeletonProps = {
   rows: number;
 };
 
-/** Stands in for the list `ActivityLogsTable` renders below `md`. */
+/** Stands in for the list `ActivityLogsTable` renders below `xl`. */
 export const ActivityLogsMobileListSkeleton = ({
   rows,
 }: ActivityLogsMobileListSkeletonProps) => (
@@ -13,7 +18,12 @@ export const ActivityLogsMobileListSkeleton = ({
     {Array.from({ length: rows }, (_, index) => (
       <li
         key={index}
-        className="flex h-[88px] flex-col justify-center gap-2 border-b border-border px-3"
+        data-list-tile
+        className={cn(
+          "flex h-[88px] flex-col justify-center gap-2",
+          LIST_TILE_RULE_CLASS,
+          LIST_TILE_INSET_CLASS,
+        )}
       >
         <div className="flex min-w-0 items-center gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-3">

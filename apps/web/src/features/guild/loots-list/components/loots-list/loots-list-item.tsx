@@ -1,7 +1,7 @@
 import { ItemRarity, type Loot } from "@/lib/loots/loot-types";
 import { cn } from "cn";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
-import { LOOT_TILE_CLASS } from "@/features/guild/loots-list/loots-list-layout";
+import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
 import { LootPresentation } from "./loot-presentation";
 import { LootHeaderActions } from "./loot-header-actions";
 import { LootItemStackLootIdContext } from "./loot-item-stack-context";
@@ -32,7 +32,7 @@ export const LootsListItem = ({
       data-presentation={variant}
       className={cn(
         "group relative flex h-full flex-col transition-colors hover:bg-muted/20",
-        variant === "tile" && LOOT_TILE_CLASS,
+        variant === "tile" && LIST_TILE_RULE_CLASS,
         // Alternate embedded rows so neighbouring kills stay apart in a dense
         // list; legendary rows keep their own glow.
         variant === "embedded" && !hasLegendaryItem && "even:bg-background/40",

@@ -1,7 +1,12 @@
-import { PageHeader } from "@/components/common/page-header";
 import { EmptyState } from "@/components/common/empty-state";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
+import { MetaItem } from "@/components/common/meta-item";
+import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
+import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,26 +17,32 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@lootlog/ui/components/alert-dialog";
-import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { FileText, FileX2, History, LockKeyhole, Trash2 } from "lucide-react";
-
-import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
-import { Input } from "@lootlog/ui/components/input";
-import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
+import { cn } from "cn";
+import {
+  Clock3,
+  FileX2,
+  History,
+  LockKeyhole,
+  PenLine,
+  Trash2,
+} from "lucide-react";
 import { GuildDocHistoryDialog } from "./components/guild-doc-history-dialog";
-import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
+import { GuildDocTitleField } from "./components/guild-doc-title-field";
 import { GuildDocEditor } from "./editor/guild-doc-editor";
+import { GUILD_DOC_COLUMN_CLASS } from "./guild-doc-column";
 import { GuildDocEditorSkeleton } from "./guild-doc-editor-skeleton";
-
-import { TITLE_MAX_LENGTH, useGuildDocDraft } from "./use-guild-doc-draft";
+import {
+  GUILD_DOC_FORM_ID,
+  TITLE_MAX_LENGTH,
+  useGuildDocDraft,
+} from "./use-guild-doc-draft";
 
 export const GuildDocEditorPage = () => {
   const {
@@ -91,122 +102,142 @@ export const GuildDocEditorPage = () => {
     );
   }
 
+  const lastEdit = t("docs.editor.lastEdit", {
+    name: document.updatedBy.name ?? t("docs.list.unknownEditor"),
+    date: timestampToDate(document.updatedAt),
+  });
+
+  const updatedAt = (
+    <MetaItem icon={Clock3} label={t("docs.list.updatedAtLabel")}>
+      {timestampToDate(document.updatedAt)}
+    </MetaItem>
+  );
+
+  const version = (
+    <MetaItem icon={History}>
+      {t("docs.list.version", { version: document.version })}
+    </MetaItem>
+  );
+
+  // The details close the toolbar where it has room; the editor shows on hover.
+  const toolbarActions = (
+    <>
+      <span title={lastEdit} className="mr-2 hidden items-center gap-3 xl:flex">
+        <span className="sr-only">{lastEdit}</span>
+        {updatedAt}
+        {version}
+      </span>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="ghost"
+              aria-label={t("docs.editor.history")}
+              className="text-muted-foreground"
+              onClick={() => setHistoryOpen(true)}
+            >
+              <History className="size-4" />
+            </Button>
+          }
+        />
+        <TooltipContent side="bottom">
+          {t("docs.editor.history")}
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="ghost"
+              aria-label={t("docs.trash.move")}
+              className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+              disabled={deleteDocument.isPending}
+              onClick={() => setTrashConfirmOpen(true)}
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          }
+        />
+        <TooltipContent side="bottom">{t("docs.trash.move")}</TooltipContent>
+      </Tooltip>
+    </>
+  );
+
+  const readerDetails = (
+    <>
+      <MetaItem icon={PenLine} label={t("docs.list.editorLabel")}>
+        {document.updatedBy.name ?? t("docs.list.unknownEditor")}
+      </MetaItem>
+      {updatedAt}
+      {version}
+    </>
+  );
+
+  // Readers get no formatting toolbar: a bar in its place says why and shows
+  // the details the toolbar would end with.
+  const readerBar = !canWrite && (
+    <div
+      data-list-tile
+      className={cn(
+        "sticky top-(--page-sticky-top) z-10 flex min-h-12 flex-wrap items-center gap-x-4 gap-y-1 py-2 backdrop-blur-sm",
+        LIST_TILE_RULE_CLASS,
+        LIST_TILE_INSET_CLASS,
+      )}
+    >
+      <span className="flex h-8 items-center gap-2 text-sm text-muted-foreground">
+        <LockKeyhole aria-hidden="true" className="size-4 shrink-0" />
+        {/* Phones keep the lock alone, so the details fit beside it. */}
+        <span className="max-sm:sr-only">{t("docs.editor.readOnly")}</span>
+      </span>
+      <span className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1">
+        {readerDetails}
+      </span>
+    </div>
+  );
+
   return (
     <div className="flex h-full min-h-0 flex-col">
+      <h1 className="sr-only">{document.title}</h1>
+      {canWrite && (
+        <HeaderSlotPortal slot="title">
+          <GuildDocTitleField
+            form={GUILD_DOC_FORM_ID}
+            value={title}
+            onChange={setTitle}
+            label={t("docs.editor.titleLabel")}
+            placeholder={t("docs.editor.titlePlaceholder")}
+            maxLength={TITLE_MAX_LENGTH}
+          />
+        </HeaderSlotPortal>
+      )}
       <ScrollArea data-under-top-bar className="min-h-0 flex-1">
-        <div className="flex min-h-full flex-col gap-3 px-3 py-3">
-          <PageHeader
-            icon={FileText}
-            title={document.title}
-            description={
-              <>
-                {t("docs.editor.updatedMeta", {
-                  date: timestampToDate(document.updatedAt),
-                  version: document.version,
-                })}
-              </>
-            }
-            status={
-              canWrite ? (
-                <Badge variant="secondary">{t("docs.editor.manualSave")}</Badge>
-              ) : (
-                <Badge variant="outline" className="gap-1">
-                  <LockKeyhole className="size-3" aria-hidden="true" />
-                  {t("docs.editor.readOnly")}
-                </Badge>
-              )
-            }
-            actions={
-              <>
-                {canWrite && (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            aria-label={t("docs.editor.history")}
-                            onClick={() => setHistoryOpen(true)}
-                          >
-                            <History className="size-4" />
-                          </Button>
-                        }
-                      />
-                      <TooltipContent side="bottom">
-                        {t("docs.editor.history")}
-                      </TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            aria-label={t("docs.trash.move")}
-                            className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                            disabled={deleteDocument.isPending}
-                            onClick={() => setTrashConfirmOpen(true)}
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        }
-                      />
-                      <TooltipContent side="bottom">
-                        {t("docs.trash.move")}
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                )}
-              </>
-            }
+        <form
+          id={GUILD_DOC_FORM_ID}
+          className="flex min-h-full flex-col"
+          onSubmit={saveDraft}
+        >
+          <GuildDocEditor
+            key={`${docId}-${editorSeed}`}
+            className="flex-1"
+            contentClassName={cn("flex-1 pt-6 pb-24", GUILD_DOC_COLUMN_CLASS)}
+            content={content}
+            editable={canWrite}
+            header={readerBar}
+            namespace={`guild-doc-${docId}-${editorSeed}`}
+            toolbarActions={toolbarActions}
+            onChange={setContent}
           />
 
-          <form className="flex min-h-0 flex-1 flex-col" onSubmit={saveDraft}>
-            <SectionCard className="flex min-h-0 flex-1 flex-col">
-              <SectionCardHeader title={t("docs.list.title")} />
-              <SectionCardContent className="flex min-h-0 flex-col gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="guild-doc-editor-title">
-                    {t("docs.editor.titleLabel")}
-                  </Label>
-                  <Input
-                    id="guild-doc-editor-title"
-                    name="guild-doc-editor-title"
-                    value={title}
-                    disabled={!canWrite}
-                    maxLength={TITLE_MAX_LENGTH}
-                    placeholder={t("docs.editor.titlePlaceholder")}
-                    onChange={(event) => setTitle(event.target.value)}
-                  />
-                </div>
-
-                {!canWrite && (
-                  <p className="text-xs text-muted-foreground">
-                    {t("docs.editor.readOnlyNotice")}
-                  </p>
-                )}
-
-                <GuildDocEditor
-                  key={`${docId}-${editorSeed}`}
-                  className="flex-1"
-                  content={content}
-                  editable={canWrite}
-                  namespace={`guild-doc-${docId}-${editorSeed}`}
-                  onChange={setContent}
-                />
-              </SectionCardContent>
-            </SectionCard>
-
-            <UnsavedChangesBar
-              isDirty={isDirty}
-              isSubmitting={updateDocument.isPending}
-              onReset={resetDraft}
-            />
-          </form>
-        </div>
+          <UnsavedChangesBar
+            isDirty={isDirty}
+            isSubmitting={updateDocument.isPending}
+            onReset={resetDraft}
+          />
+        </form>
       </ScrollArea>
 
       {canWrite && (

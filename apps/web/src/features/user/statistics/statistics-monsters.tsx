@@ -1,3 +1,5 @@
+import { PAGE_STICKY_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
+import { TableScroller } from "@/components/common/table-scroller";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { Table } from "@lootlog/ui/components/table";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
@@ -65,11 +67,11 @@ export function StatisticsMonsters({
       <SectionCard>
         <SectionCardHeader title={t("statistics.typeDistribution")} />
         <SectionCardContent className="p-0">
-          <div className="overflow-x-auto">
+          <TableScroller>
             <Table>
               <TanStackTableHeader
                 table={table}
-                className="sticky top-0 z-10 bg-background"
+                className={PAGE_STICKY_TABLE_HEADER_CLASS}
                 rowClassName="border-b-1! border-border"
               />
               <TanStackTableBody
@@ -78,7 +80,7 @@ export function StatisticsMonsters({
                 rowClassName="h-14 border-b border-border hover:bg-muted/40"
               />
             </Table>
-          </div>
+          </TableScroller>
         </SectionCardContent>
       </SectionCard>
       <SectionCard>

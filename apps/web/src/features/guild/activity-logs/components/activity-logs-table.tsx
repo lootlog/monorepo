@@ -12,6 +12,11 @@ import {
 import { flexRender, useTable } from "@tanstack/react-table";
 import type { VirtualItem } from "@tanstack/react-virtual";
 import { cn } from "cn";
+import type { CSSProperties } from "react";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
 import { useTranslation } from "react-i18next";
 import { ActivityLogDetailsPopover } from "./activity-log-details-popover";
 import { ActivityLogEvent } from "./activity-log-event";
@@ -22,19 +27,25 @@ import {
 
 type ActivityLogsTableProps = {
   activities: Activity[];
-  isMobile: boolean;
+  /** Wide pages show a table; narrower ones list each entry on two lines. */
+  usesTable: boolean;
+  /** Where the table header pins: under the page's sticky filter bar. */
+  headerTop: number;
   memberNameByDiscordId: Map<string, string>;
   virtualRows: VirtualItem[];
   /** Spacer heights standing in for the rows outside the rendered range. */
   padding: { top: number; bottom: number };
 };
 
-// The mobile list is not a table, so it builds no row model.
+type HeaderTopStyle = CSSProperties & { "--activity-logs-header-top": string };
+
+// The list is not a table, so it builds no row model.
 const NO_TABLE_ROWS: Activity[] = [];
 
 export const ActivityLogsTable = ({
   activities,
-  isMobile,
+  usesTable,
+  headerTop,
   memberNameByDiscordId,
   virtualRows,
   padding,
@@ -44,15 +55,20 @@ export const ActivityLogsTable = ({
 
   const table = useTable({
     features: coreTableFeatures,
-    data: isMobile ? NO_TABLE_ROWS : activities,
+    data: usesTable ? activities : NO_TABLE_ROWS,
     columns,
     getRowId: (activity) => activity.id,
   });
 
   const rows = table.getRowModel().rows;
+
+  const headerTopStyle: HeaderTopStyle = {
+    "--activity-logs-header-top": `${headerTop}px`,
+  };
+
   const { top: topPadding, bottom: bottomPadding } = padding;
 
-  if (isMobile) {
+  if (!usesTable) {
     return (
       <ul>
         {topPadding > 0 && (
@@ -66,7 +82,12 @@ export const ActivityLogsTable = ({
           return (
             <li
               key={virtualRow.key}
-              className="flex h-[88px] flex-col justify-center gap-2 border-b border-border px-3"
+              data-list-tile
+              className={cn(
+                "flex h-[88px] flex-col justify-center gap-2",
+                LIST_TILE_RULE_CLASS,
+                LIST_TILE_INSET_CLASS,
+              )}
             >
               <div className="flex min-w-0 items-center gap-2">
                 <div className="min-w-0 flex-1">
@@ -115,7 +136,10 @@ export const ActivityLogsTable = ({
   }
 
   return (
-    <Table className="min-w-[960px] table-fixed border-b">
+    <Table
+      className="min-w-[960px] table-fixed border-b"
+      style={headerTopStyle}
+    >
       {/* Virtualized rows come and go, so content must not size the columns. */}
       <colgroup>
         <col className="w-[170px]" />
@@ -128,7 +152,7 @@ export const ActivityLogsTable = ({
       </colgroup>
       <TanStackTableHeader
         table={table}
-        className="sticky top-0 z-10 bg-background"
+        className="sticky top-(--activity-logs-header-top) z-10 bg-background"
         rowClassName="border-b-1! border-border hover:bg-transparent"
       />
       <TableBody>

@@ -127,7 +127,11 @@ const SelectedValueChips = ({
           {options.slice(0, maxCount).map((option) => (
             <ComboboxChip
               key={option.value}
-              className={cn(multiSelectVariants({ variant }), "h-auto")}
+              className={cn(
+                multiSelectVariants({ variant }),
+                // Keeps a chosen value within the 36px field.
+                "h-auto [&_[data-slot=combobox-chip-remove]]:size-5",
+              )}
               removeLabel={t("common.removeOption", { label: option.label })}
             >
               <span className="max-w-28 truncate">{option.label}</span>
@@ -362,7 +366,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
           ref={ref}
           {...props}
           className={cn(
-            "group min-h-9 w-full cursor-text rounded-lg border-input bg-background px-2.5 py-1.5 text-foreground focus-within:ring-2 focus-within:ring-ring aria-disabled:pointer-events-none aria-disabled:opacity-50",
+            "group min-h-9 w-full cursor-text rounded-lg border-input bg-background px-2.5 py-1 text-foreground focus-within:ring-2 focus-within:ring-ring aria-disabled:pointer-events-none aria-disabled:opacity-50",
             className,
           )}
           aria-disabled={disabled}

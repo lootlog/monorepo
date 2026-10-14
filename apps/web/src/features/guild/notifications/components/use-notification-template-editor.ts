@@ -39,7 +39,6 @@ type NotificationTemplateEditorProps = {
   roles: GuildRole[];
   triggerType?: CreateNotificationRuleDtoTriggerType;
   disabled?: boolean;
-  previewButtonClassName?: string;
   onChange: (value: string) => void;
 };
 
@@ -56,14 +55,12 @@ export const useNotificationTemplateEditor = ({
   roles,
   triggerType,
   disabled = false,
-  previewButtonClassName,
   onChange,
 }: NotificationTemplateEditorProps) => {
   const isScheduledMessage =
     triggerType === NotificationTriggerType.SCHEDULED_MESSAGE;
 
   const { t } = useTranslation();
-  const [isPreviewVisible, setIsPreviewVisible] = useState(false);
 
   const [activeSuggestion, setActiveSuggestion] =
     useState<ActiveSuggestion>(null);
@@ -237,6 +234,11 @@ export const useNotificationTemplateEditor = ({
 
     editor.focus();
     editor.update(() => {
+      // A variable inserted before the player typed anything goes at the end.
+      if (!$isRangeSelection($getSelection())) {
+        $getRoot().selectEnd();
+      }
+
       const selection = $getSelection();
 
       if (!$isRangeSelection(selection)) {
@@ -404,8 +406,6 @@ export const useNotificationTemplateEditor = ({
     disabled,
     applyPreset,
     value,
-    previewButtonClassName,
-    setIsPreviewVisible,
     t,
     roles,
     editorSurfaceRef,
@@ -421,7 +421,6 @@ export const useNotificationTemplateEditor = ({
     setHighlightedSuggestion,
     activeSuggestionIdentity,
     insertSuggestion,
-    isPreviewVisible,
     previewTemplateValues,
     variableSuggestions,
   };

@@ -1,6 +1,6 @@
 import { WatchableItemTile } from "@/components/tiles/watchable-item-tile";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
-import { LOOT_CARD_INSET_CLASS } from "@/features/guild/loots-list/loots-list-layout";
+import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { cn } from "cn";
 import { PackageOpen } from "lucide-react";
@@ -48,7 +48,7 @@ export const LootPlayersSection = ({
           <li
             className={cn(
               "flex flex-wrap items-center gap-x-3 gap-y-2 py-2 @xs:flex-nowrap",
-              LOOT_CARD_INSET_CLASS,
+              LIST_TILE_INSET_CLASS,
             )}
           >
             <span
@@ -77,7 +77,7 @@ export const LootPlayersSection = ({
           <h3
             className={cn(
               "border-y border-border/70 bg-muted/20 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground",
-              LOOT_CARD_INSET_CLASS,
+              LIST_TILE_INSET_CLASS,
             )}
           >
             {t("loots.details.bystanders", { count: bystanders.length })}
@@ -99,7 +99,7 @@ export const LootPlayersSection = ({
         <p
           className={cn(
             "border-t border-border/70 py-2.5 text-xs text-muted-foreground",
-            LOOT_CARD_INSET_CLASS,
+            LIST_TILE_INSET_CLASS,
           )}
         >
           {t("loots.details.mapPlayersUnavailable")}

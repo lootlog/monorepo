@@ -5,7 +5,7 @@ import { cn } from "cn";
 import { ThemeDecoration } from "@lootlog/ui/components/theme-decoration";
 
 const cardVariants = cva(
-  "bg-card text-card-foreground relative flex flex-col gap-5 overflow-hidden rounded-xl border border-border py-5 shadow-xs",
+  "bg-card text-card-foreground relative flex flex-col gap-5 overflow-clip rounded-xl border border-border py-5 shadow-xs",
   {
     variants: {
       variant: {

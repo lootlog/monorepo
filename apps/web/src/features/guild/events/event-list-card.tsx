@@ -1,5 +1,10 @@
 import { upperFirst } from "es-toolkit";
-import { SectionCard as Card } from "@/components/common/section-card/section-card";
+import { MetaItem } from "@/components/common/meta-item";
+import {
+  getListTileLinkClassName,
+  LIST_TILE_ACTIONS_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { Link } from "@tanstack/react-router";
@@ -60,106 +65,101 @@ export const EventListCard = ({
   }
 
   return (
-    <Card
-      className={cn(
-        "flex-row items-stretch gap-0 overflow-hidden border-border bg-card p-0 transition-colors",
-        isEventActive && "border-signal-live/40 bg-signal-live/[0.025]",
-      )}
-    >
-      <Link
-        to="/$guildId/events/$eventId"
-        params={{ guildId: guildId ?? "", eventId: event.id }}
-        className="group/event flex min-w-0 flex-1 items-center gap-3 p-4 outline-none transition-colors hover:bg-muted/20 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset"
+    <div data-list-tile className={LIST_TILE_RULE_CLASS}>
+      <div
+        className={cn(
+          "flex items-center transition-colors hover:bg-muted/30 motion-reduce:transition-none",
+          isEventActive && "bg-signal-live/[0.04] hover:bg-signal-live/[0.08]",
+        )}
       >
-        <div
-          className={cn(
-            "relative flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted",
-            isEventActive && "bg-signal-live/10",
-          )}
+        <Link
+          to="/$guildId/events/$eventId"
+          params={{ guildId: guildId ?? "", eventId: event.id }}
+          className={cn(getListTileLinkClassName(true), "group/event")}
         >
-          <Trophy
+          <div
             className={cn(
-              "size-4 text-muted-foreground",
-              isEventActive && "text-signal-live",
+              "relative flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted",
+              isEventActive && "bg-signal-live/10",
             )}
-          />
-          {isEventActive && (
-            <span className="absolute -right-0.5 -top-0.5 flex size-2">
-              <span className="absolute inline-flex size-full rounded-full bg-signal-live opacity-75 motion-safe:animate-ping" />
-              <span className="relative inline-flex size-2 rounded-full bg-signal-live" />
-            </span>
-          )}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <h3 className="min-w-0 break-words text-base font-semibold leading-tight">
-              {event.name}
-            </h3>
-            <Badge
-              variant={eventStatusVariant}
-              className="h-5 px-2 text-[11px]"
-            >
-              {t(eventStatusLabelKey)}
-            </Badge>
+          >
+            <Trophy
+              className={cn(
+                "size-4 text-muted-foreground",
+                isEventActive && "text-signal-live",
+              )}
+            />
+            {isEventActive && (
+              <span className="absolute -right-0.5 -top-0.5 flex size-2">
+                <span className="absolute inline-flex size-full rounded-full bg-signal-live opacity-75 motion-safe:animate-ping" />
+                <span className="relative inline-flex size-2 rounded-full bg-signal-live" />
+              </span>
+            )}
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <Globe className="size-3.5" />
-              {formattedWorld}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Swords className="size-3.5" />
-              {t("events.heroes.count", {
-                count: event.heroNpcs?.length ?? 0,
-              })}
-            </span>
-            <span className="inline-flex min-w-0 items-center gap-1.5">
-              <CalendarDays className="size-3.5 shrink-0" />
-              <span>
+
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <h3 className="min-w-0 break-words text-sm font-semibold">
+                {event.name}
+              </h3>
+              <Badge
+                variant={eventStatusVariant}
+                className="h-5 px-2 text-[11px]"
+              >
+                {t(eventStatusLabelKey)}
+              </Badge>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <MetaItem icon={Globe}>{formattedWorld}</MetaItem>
+              <MetaItem icon={Swords}>
+                {t("events.heroes.count", {
+                  count: event.heroNpcs?.length ?? 0,
+                })}
+              </MetaItem>
+              <MetaItem icon={CalendarDays}>
                 {formatDateRange(
                   new Date(event.startsAt ?? event.createdAt),
                   event.endsAt ? new Date(event.endsAt) : null,
                   t("events.ongoing"),
                 )}
-              </span>
-            </span>
+              </MetaItem>
+            </div>
           </div>
-        </div>
 
-        <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-[color,translate] duration-150 ease-emphasized group-hover/event:translate-x-0.5 group-hover/event:text-foreground motion-reduce:transition-none" />
-      </Link>
+          <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-[color,translate] duration-150 ease-emphasized group-hover/event:translate-x-0.5 group-hover/event:text-foreground motion-reduce:transition-none" />
+        </Link>
 
-      <div className="flex shrink-0 items-center gap-1 border-l border-border px-2">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          title={pinActionLabel}
-          loading={isPinPending(event.id)}
-          aria-label={pinActionLabel}
-          disabled={!event.active || isPinPending(event.id)}
-          onClick={() => togglePin(event)}
-        >
-          <Star
-            className={cn(
-              "size-4 text-muted-foreground",
-              isPinned(event.id) && "fill-yellow-500 text-yellow-500",
-            )}
-          />
-        </Button>
-        {canDeleteEvent && (
+        <div className={LIST_TILE_ACTIONS_CLASS}>
           <Button
             variant="ghost"
             size="icon-sm"
-            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-            aria-label={t("events.deleteNamed", { name: event.name })}
-            title={t("events.deleteNamed", { name: event.name })}
-            onClick={() => setEventToDelete(event)}
+            title={pinActionLabel}
+            loading={isPinPending(event.id)}
+            aria-label={pinActionLabel}
+            disabled={!event.active || isPinPending(event.id)}
+            onClick={() => togglePin(event)}
           >
-            <Trash2 className="size-4" />
+            <Star
+              className={cn(
+                "size-4 text-muted-foreground",
+                isPinned(event.id) && "fill-yellow-500 text-yellow-500",
+              )}
+            />
           </Button>
-        )}
+          {canDeleteEvent && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+              aria-label={t("events.deleteNamed", { name: event.name })}
+              title={t("events.deleteNamed", { name: event.name })}
+              onClick={() => setEventToDelete(event)}
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          )}
+        </div>
       </div>
-    </Card>
+    </div>
   );
 };

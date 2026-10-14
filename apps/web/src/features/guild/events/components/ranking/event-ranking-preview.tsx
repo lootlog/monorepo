@@ -47,7 +47,7 @@ export const EventRankingPreview = ({
   }
 
   return (
-    <SectionCard className="overflow-hidden">
+    <SectionCard className="overflow-clip">
       <SectionCardHeader
         icon={Trophy}
         title={t("events.ranking.title")}

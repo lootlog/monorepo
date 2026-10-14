@@ -144,3 +144,20 @@
   /* Opaque enough to read over the brightest parts of the wallpaper. */
   background-color: color-mix(in srgb, var(--card) 85%, transparent);
 }
+
+/* Lists that tile the page edge to edge, such as loots and timers, keep the
+ * content surface under every tile, so no wallpaper shows through their text;
+ * it shows around the list instead. Without a wallpaper this changes nothing. */
+.app-content-frame [data-list-tile] {
+  background-color: color-mix(
+    in srgb,
+    var(--background) var(--list-tile-cover, 88%),
+    transparent
+  );
+}
+
+/* Drawn wallpapers are faint enough to show a little more through the tiles. */
+:is(.cyberpunk, .pastel, .fantasy, .shonen, .onepiece, .goth)
+  .app-content-frame {
+  --list-tile-cover: 72%;
+}

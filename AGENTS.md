@@ -271,6 +271,11 @@ find it unchanged on the next.
   look through its variants and props, and only to match an existing pattern; a
   utility class can silently lose to the primitive's own selector.
 - A card that navigates from its header uses `ChevronLink`.
+- Never add a coloured accent border or stripe on the left edge of a row,
+  card, tile, alert, or list item (`border-l-*` accents, absolutely
+  positioned bars). Show colour, state, or rarity with a fill, text, or icon
+  colour instead. A neutral 1px rule between panels is a separator, not an
+  accent.
 - When a pattern changes, migrate every page in the affected family in the same
   change.
 - Verify against the reference by measurement: compare computed size, color,

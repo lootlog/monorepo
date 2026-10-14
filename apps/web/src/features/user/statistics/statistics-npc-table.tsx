@@ -1,3 +1,5 @@
+import { PAGE_STICKY_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
+import { TableScroller } from "@/components/common/table-scroller";
 import { formatLevel } from "@lootlog/domain/profession";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { Table } from "@lootlog/ui/components/table";
@@ -110,11 +112,11 @@ export function StatisticsNpcTable({
     return <EmptyState icon={Skull} title={t("statistics.noData")} />;
 
   return (
-    <div className="overflow-x-auto">
+    <TableScroller>
       <Table className="min-w-[680px]">
         <TanStackTableHeader
           table={table}
-          className="sticky top-0 z-10 bg-background"
+          className={PAGE_STICKY_TABLE_HEADER_CLASS}
           rowClassName="border-b-1! border-border"
         />
         <TanStackTableBody
@@ -123,6 +125,6 @@ export function StatisticsNpcTable({
           rowClassName="h-14 border-b border-border hover:bg-muted/40"
         />
       </Table>
-    </div>
+    </TableScroller>
   );
 }

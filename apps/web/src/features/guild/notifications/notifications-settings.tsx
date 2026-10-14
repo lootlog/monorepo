@@ -1,227 +1,97 @@
 import { GuildDiscordSyncNotice } from "@/components/common/guild-discord-sync-notice";
-import { useGuildDiscordSync } from "@/hooks/api/use-guild-discord-sync";
-import { NotificationSettingsSkeleton } from "./notification-settings-skeleton";
-import { useState } from "react";
-import { BellRing, Info } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
+import { ListToolbar } from "@/components/common/list-toolbar";
+import { ROUTES } from "@/config/routes";
 import { Button } from "@lootlog/ui/components/button";
-
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { PageHeader } from "@/components/common/page-header";
-import { NotificationsActionsCard } from "./components/notifications-actions-card";
-import { NotificationsPendingJobsCard } from "./components/notifications-jobs-card";
-import { NotificationsRecentHistoryCard } from "./components/notifications-recent-history-card";
-import { NotificationsRulesCard } from "./components/notifications-rules-card";
-import { NotificationsTargetsCard } from "./components/notifications-targets-card";
-import { NotificationTargetDialog } from "./components/notification-target-dialog";
-import { NotificationsInfoDialog } from "./components/notifications-info-dialog";
-import {
-  getNotificationsGuildControllerGetGuildJobsQueryKey,
-  getNotificationsGuildControllerGetGuildRulesQueryKey,
-  getNotificationsGuildControllerGetGuildTargetsQueryKey,
-  useNotificationsGuildControllerGetGuildJobs,
-  useNotificationsGuildControllerGetGuildRules,
-  useNotificationsGuildControllerGetGuildTargets,
-  type NotificationTargetResponseDto,
-} from "@lootlog/client/main";
-import { useGuildId } from "@/hooks/context/use-guild-id";
-import { isSupportedGuildNotificationTrigger } from "./utils/notification-settings.utils";
+import { Link } from "@tanstack/react-router";
+import { Plus } from "lucide-react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { NotificationRuleGroups } from "./components/notification-rule-groups";
+import { NotificationsInfoButton } from "./components/notifications-info-button";
+import { NotificationsTabs } from "./components/notifications-tabs";
+import { NotificationRuleGroupsSkeleton } from "./notification-rule-groups-skeleton";
+import { useNotificationsOverview } from "./use-notifications-overview";
+import { getNotificationTriggerTranslationKey } from "./utils/notification-settings.utils";
 
-const getResolvedGuildId = (guildId: string | undefined) => guildId ?? "";
-
+/** The rules tab: each rule with what it sends, where, and its deliveries. */
 export const NotificationsSettings = () => {
   const { t } = useTranslation();
-  const guildId = useGuildId();
-  const hasGuildId = Boolean(guildId);
-  const resolvedGuildId = getResolvedGuildId(guildId);
+  const overview = useNotificationsOverview();
+  const [search, setSearch] = useState("");
+  const { guildId, hasRequiredPermissions, limits } = overview;
+  const normalizedSearch = search.trim().toLocaleLowerCase("pl");
 
-  const sync = useGuildDiscordSync();
-
-  const targetsQuery = useNotificationsGuildControllerGetGuildTargets(
-    { guildId: resolvedGuildId },
-    {
-      query: {
-        enabled: hasGuildId,
-        queryKey: getNotificationsGuildControllerGetGuildTargetsQueryKey({
-          guildId: resolvedGuildId,
-        }),
-      },
-    },
+  const rules = overview.rules.filter((rule) =>
+    (rule.name ?? t(getNotificationTriggerTranslationKey(rule.triggerType)))
+      .toLocaleLowerCase("pl")
+      .includes(normalizedSearch),
   );
 
-  const rulesQuery = useNotificationsGuildControllerGetGuildRules(
-    { guildId: resolvedGuildId },
-    {
-      query: {
-        enabled: hasGuildId,
-        queryKey: getNotificationsGuildControllerGetGuildRulesQueryKey({
-          guildId: resolvedGuildId,
-        }),
-      },
-    },
-  );
-
-  const jobsQuery = useNotificationsGuildControllerGetGuildJobs(
-    { guildId: resolvedGuildId },
-    {
-      query: {
-        enabled: hasGuildId,
-        queryKey: getNotificationsGuildControllerGetGuildJobsQueryKey({
-          guildId: resolvedGuildId,
-        }),
-        refetchInterval: (query) => {
-          const jobs = query.state.data;
-
-          if (!jobs || jobs.pending.length === 0) {
-            return false;
-          }
-
-          return 5000;
-        },
-      },
-    },
-  );
-
-  const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
-
-  const [isCreateTargetDialogOpen, setIsCreateTargetDialogOpen] =
-    useState(false);
-
-  const [editedTarget, setEditedTarget] = useState<
-    NotificationTargetResponseDto | undefined
-  >();
-
-  const hasRequiredPermissions = sync.permissionStatus === "ok";
-  const targets = targetsQuery.data ?? [];
-  const notificationLimits = rulesQuery.data?.limits;
-
-  const visibleRules =
-    rulesQuery.data?.items.filter((rule) =>
-      isSupportedGuildNotificationTrigger(rule.triggerType),
-    ) ?? [];
-
-  const jobsData = jobsQuery.data;
-  const isLoading = targetsQuery.isLoading || rulesQuery.isLoading;
-
-  const isRuleLimitReached =
-    notificationLimits !== undefined &&
-    notificationLimits.ruleCount >= notificationLimits.ruleLimit;
+  const addRuleLabel = t("settings.notifications.actions.addRule");
 
   return (
-    <>
-      <div className="flex h-full min-h-0 flex-col">
-        <ScrollArea data-under-top-bar className="min-h-0 flex-1">
-          <div className="flex flex-col gap-3 px-3 py-3">
-            <PageHeader
-              icon={BellRing}
-              title={t("settings.notifications.title")}
-              description={t("settings.notifications.description")}
-              actions={
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        aria-label={t("settings.notifications.info.title")}
-                        onClick={() => setIsInfoDialogOpen(true)}
-                      >
-                        <Info className="size-4" aria-hidden="true" />
-                      </Button>
-                    }
-                  />
-                  <TooltipContent>
-                    {t("settings.notifications.info.title")}
-                  </TooltipContent>
-                </Tooltip>
+    <div className="flex h-full min-h-0 flex-col">
+      <h1 className="sr-only">{t("settings.notifications.title")}</h1>
+      <ScrollArea data-under-top-bar className="min-h-0 flex-1">
+        <NotificationsTabs />
+        {!hasRequiredPermissions && (
+          <div className="px-3 pb-3">
+            <GuildDiscordSyncNotice sync={overview.sync} />
+          </div>
+        )}
+        <div className="border-t border-sidebar-border">
+          <ListToolbar
+            search={search}
+            onSearchChange={setSearch}
+            placeholder={t("settings.notifications.ruleFilterPlaceholder")}
+            label={t("settings.notifications.ruleFilterLabel")}
+            clearLabel={t("settings.notifications.clearFilter")}
+            disabled={overview.isLoading}
+          >
+            <div className="flex items-center gap-2">
+              {limits && (
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {t("settings.notifications.ruleLimitUsage", {
+                    count: limits.ruleCount,
+                    limit: limits.ruleLimit,
+                  })}
+                </span>
+              )}
+              {hasRequiredPermissions && !overview.isRuleLimitReached ? (
+                <Button
+                  size="sm"
+                  icon=<Plus className="size-4" />
+                  render={
+                    <Link to={ROUTES.guild.notifications.create(guildId)}>
+                      {addRuleLabel}
+                    </Link>
+                  }
+                  nativeButton={false}
+                />
+              ) : (
+                <Button size="sm" disabled icon=<Plus className="size-4" />>
+                  {addRuleLabel}
+                </Button>
+              )}
+              <NotificationsInfoButton />
+            </div>
+          </ListToolbar>
+          {overview.isLoading ? (
+            <NotificationRuleGroupsSkeleton />
+          ) : (
+            <NotificationRuleGroups
+              overview={overview}
+              rules={rules}
+              emptyLabel={
+                normalizedSearch
+                  ? t("settings.notifications.empty.filteredRules")
+                  : t("settings.notifications.empty.rules")
               }
             />
-
-            <GuildDiscordSyncNotice sync={sync} />
-
-            {isLoading ? (
-              <NotificationSettingsSkeleton showActions={false} />
-            ) : (
-              <>
-                <div className="lg:hidden">
-                  <NotificationsActionsCard
-                    hasRequiredPermissions={hasRequiredPermissions}
-                    isRuleLimitReached={isRuleLimitReached}
-                    onAddTarget={() => setIsCreateTargetDialogOpen(true)}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-                  <div className="flex flex-col gap-3 lg:col-span-2">
-                    <NotificationsTargetsCard
-                      targets={targets}
-                      rules={visibleRules}
-                      actionsDisabled={!hasRequiredPermissions}
-                      onEditTarget={setEditedTarget}
-                    />
-                    <NotificationsRulesCard
-                      rules={visibleRules}
-                      limits={notificationLimits}
-                      actionsDisabled={!hasRequiredPermissions}
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-3">
-                    <div className="hidden lg:block">
-                      <NotificationsActionsCard
-                        hasRequiredPermissions={hasRequiredPermissions}
-                        isRuleLimitReached={isRuleLimitReached}
-                        onAddTarget={() => setIsCreateTargetDialogOpen(true)}
-                      />
-                    </div>
-
-                    {jobsData ? (
-                      <NotificationsPendingJobsCard
-                        pendingJobs={jobsData.pending}
-                      />
-                    ) : null}
-
-                    {jobsData ? (
-                      <NotificationsRecentHistoryCard
-                        historyJobs={jobsData.history}
-                      />
-                    ) : null}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </ScrollArea>
-      </div>
-
-      <NotificationsInfoDialog
-        open={isInfoDialogOpen}
-        onOpenChange={setIsInfoDialogOpen}
-      />
-
-      <NotificationTargetDialog
-        open={isCreateTargetDialogOpen}
-        mode="create"
-        existingTargets={targets}
-        onOpenChange={setIsCreateTargetDialogOpen}
-      />
-
-      <NotificationTargetDialog
-        open={editedTarget !== undefined}
-        mode="edit"
-        target={editedTarget}
-        existingTargets={targets}
-        onOpenChange={(nextOpen) => {
-          if (!nextOpen) {
-            setEditedTarget(undefined);
-          }
-        }}
-      />
-    </>
+          )}
+        </div>
+      </ScrollArea>
+    </div>
   );
 };

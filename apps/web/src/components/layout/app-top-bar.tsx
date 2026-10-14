@@ -4,7 +4,7 @@ type AppTopBarProps = {
 
 export const AppTopBar: React.FC<AppTopBarProps> = ({ children }) => {
   return (
-    <div className="@container/top-bar sticky top-0 z-50 box-border flex h-14 min-h-14 shrink-0 items-center justify-between border-b border-sidebar-border bg-background/75 px-3 backdrop-blur-lg backdrop-saturate-150">
+    <div className="@container/top-bar sticky top-0 z-50 box-border flex h-14 min-h-14 shrink-0 items-center justify-between border-b border-sidebar-border bg-sidebar/80 px-3 backdrop-blur-lg backdrop-saturate-150">
       {children}
     </div>
   );
