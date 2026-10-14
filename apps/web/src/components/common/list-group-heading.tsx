@@ -10,6 +10,7 @@ type ListGroupHeadingProps = {
   count?: ReactNode;
   /** A control at the heading's end, such as a link to the full list. */
   trailing?: ReactNode;
+  className?: string;
 };
 
 /** The heading above a group of tiles in a tiled list. */
@@ -18,8 +19,11 @@ export const ListGroupHeading = ({
   children,
   count,
   trailing,
+  className,
 }: ListGroupHeadingProps) => (
-  <div className={cn(LIST_GROUP_HEADING_CLASS, LIST_TILE_INSET_CLASS)}>
+  <div
+    className={cn(LIST_GROUP_HEADING_CLASS, LIST_TILE_INSET_CLASS, className)}
+  >
     <h2 id={id} className="flex min-w-0 items-center gap-2">
       <span className="truncate">{children}</span>
       {count !== undefined && (

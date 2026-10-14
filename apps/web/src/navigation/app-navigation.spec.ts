@@ -218,10 +218,20 @@ describe("resolveAppNavigation", () => {
         { label: "Powiadomienia", path: "/guild-1/notifications" },
         { label: "Historia", path: null },
       ],
-      parentPath: "/guild-1/notifications",
+      parentPath: null,
       pathname: "/guild-1/notifications/history",
       routeId: "/_authenticated/$guildId/notifications/history",
       title: "Historia - Nocna Straż - Lootlog.pl",
+    },
+    {
+      breadcrumbs: [
+        { label: "Powiadomienia", path: "/guild-1/notifications" },
+        { label: "Kanały", path: null },
+      ],
+      parentPath: null,
+      pathname: "/guild-1/notifications/channels",
+      routeId: "/_authenticated/$guildId/notifications/channels",
+      title: "Kanały - Nocna Straż - Lootlog.pl",
     },
     {
       breadcrumbs: [

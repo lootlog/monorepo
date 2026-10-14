@@ -1,8 +1,5 @@
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import {
-  useNotificationsGuildControllerCancelGuildJob,
-  type NotificationJobsResponseDto,
-} from "@lootlog/client/main";
+import { useNotificationsGuildControllerCancelGuildJob } from "@lootlog/client/main";
 import { getApiErrorMessage } from "@lootlog/client/transport";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -13,16 +10,9 @@ import {
   removeGuildNotificationJobFromCache,
   type GuildNotificationCacheSnapshot,
 } from "../notifications-api";
-import { NotificationPendingJobTile } from "./notification-pending-job-tile";
-import { NotificationsSection } from "./notifications-section";
 
-type NotificationsPendingJobsSectionProps = {
-  pendingJobs: NotificationJobsResponseDto["pending"];
-};
-
-export const NotificationsPendingJobsSection = ({
-  pendingJobs,
-}: NotificationsPendingJobsSectionProps) => {
+/** Cancels a queued delivery, dropping it from the cached queue at once. */
+export const useCancelNotificationJob = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
@@ -54,7 +44,7 @@ export const NotificationsPendingJobsSection = ({
     },
   });
 
-  const handleCancelJob = async (jobId: string) => {
+  const cancelJob = async (jobId: string) => {
     if (!guildId) {
       const error = new Error("Missing guild id.");
       toast.error(
@@ -78,25 +68,5 @@ export const NotificationsPendingJobsSection = ({
     }
   };
 
-  return (
-    <NotificationsSection
-      id="notifications-pending"
-      title={t("settings.notifications.jobs.pending")}
-      count={pendingJobs.length}
-      emptyLabel={
-        pendingJobs.length === 0
-          ? t("settings.notifications.empty.pendingJobs")
-          : undefined
-      }
-    >
-      {pendingJobs.map((job) => (
-        <NotificationPendingJobTile
-          key={job.id}
-          job={job}
-          cancelDisabled={cancelGuildJob.isPending}
-          onCancel={() => handleCancelJob(job.id)}
-        />
-      ))}
-    </NotificationsSection>
-  );
+  return { cancelJob, isCanceling: cancelGuildJob.isPending };
 };

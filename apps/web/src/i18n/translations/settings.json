@@ -420,12 +420,30 @@
   },
   "notifications": {
     "title": "Powiadomienia",
-    "filterPlaceholder": "Filtruj reguły i kanały…",
-    "filterLabel": "Filtruj reguły i kanały po nazwie",
     "historyFilterPlaceholder": "Filtruj po nazwie reguły…",
     "historyFilterLabel": "Filtruj historię po nazwie reguły",
     "historyStatusesLabel": "Statusy wysyłek",
     "clearFilter": "Wyczyść filtr",
+    "ruleFilterPlaceholder": "Filtruj reguły po nazwie…",
+    "ruleFilterLabel": "Filtruj reguły po nazwie",
+    "channelFilterPlaceholder": "Filtruj kanały po nazwie…",
+    "channelFilterLabel": "Filtruj kanały po nazwie",
+    "tabs": {
+      "label": "Widoki powiadomień",
+      "rules": "Reguły",
+      "channels": "Kanały",
+      "history": "Historia"
+    },
+    "groups": {
+      "TIMER_BEFORE_SPAWN": "Przypomnienia przed spawnem",
+      "SCHEDULED_MESSAGE": "Zaplanowane wiadomości"
+    },
+    "rows": {
+      "nextDelivery": "Następna wysyłka",
+      "lastDelivery": "{{status}} {{time}}",
+      "usedBy": "Wysyłają tu: {{rules}}",
+      "unused": "Żadna reguła tu nie wysyła"
+    },
     "info": {
       "title": "Jak działają powiadomienia?",
       "targets": {
@@ -456,22 +474,22 @@
       "addTarget": "Dodaj kanał docelowy",
       "addTargetShort": "Dodaj kanał",
       "addRule": "Dodaj regułę",
-      "testNow": "Testuj",
+      "moreNamed": "Więcej akcji: {{name}}",
+      "editRule": "Edytuj regułę",
+      "sendTest": "Wyślij test",
+      "rescheduleJobs": "Zaplanuj wysyłki od nowa",
+      "cancelNextJob": "Anuluj najbliższą wysyłkę",
+      "deleteRule": "Usuń regułę",
+      "editChannel": "Edytuj kanał",
+      "deleteChannel": "Usuń kanał",
       "delete": "Usuń",
-      "deleteRuleNamed": "Usuń regułę {{name}}",
-      "deleteTargetNamed": "Usuń kanał {{name}}",
-      "editTargetNamed": "Edytuj kanał {{name}}",
       "cancel": "Anuluj",
       "cancelPending": "Anuluj oczekujące",
-      "cancelPendingNamed": "Anuluj wysyłkę: {{name}}",
-      "rebuildPending": "Przebuduj kolejkę",
       "save": "Zapisz",
-      "create": "Utwórz",
-      "showAllHistory": "Pokaż ostatnie {{count}}"
+      "create": "Utwórz"
     },
     "sections": {
-      "targets": "Kanały docelowe",
-      "rules": "Reguły"
+      "targets": "Kanały docelowe"
     },
     "permissionsBlocked": {
       "title": "Brak wymaganych uprawnień bota",
@@ -528,18 +546,10 @@
       "5": "Piątek",
       "6": "Sobota"
     },
-    "targetCount_one": "{{count}} kanał",
-    "targetCount_few": "{{count}} kanały",
-    "targetCount_many": "{{count}} kanałów",
-    "targetUsageCount_one": "Używany w {{count}} regule",
-    "targetUsageCount_few": "Używany w {{count}} regułach",
-    "targetUsageCount_many": "Używany w {{count}} regułach",
     "npcCount_one": "{{count}} NPC",
     "npcCount_few": "{{count}} NPC",
     "npcCount_many": "{{count}} NPC",
     "ruleLimitUsage": "{{count}} / {{limit}} reguł",
-    "ruleLimitShort": "{{count}} / {{limit}}",
-    "testTriggerUsage": "{{used}}/{{limit}} testów ({{minutes}} min)",
     "testTriggerNextAvailable": "Następny test dostępny: {{date}}",
     "targetInactive": "(nieaktywny)",
     "targetTypes": {
@@ -550,8 +560,6 @@
     "allWorlds": "Wszystkie światy",
     "allNpcs": "Wszystkie NPC",
     "jobs": {
-      "pending": "Oczekujące",
-      "history": "Historia",
       "sendsIn": "Wysyłka za {{time}}",
       "sendsNow": "Wysyłka teraz",
       "now": "teraz"
@@ -587,7 +595,6 @@
       "filteredTargets": "Żaden kanał nie pasuje do filtra",
       "rules": "Brak skonfigurowanych reguł",
       "filteredRules": "Żadna reguła nie pasuje do filtra",
-      "pendingJobs": "Brak oczekujących powiadomień",
       "historyJobs": "Brak historii powiadomień",
       "filteredHistory": "Żadna wysyłka nie pasuje do filtrów",
       "availableChannels": "Wszystkie dostępne kanały są już dodane.",

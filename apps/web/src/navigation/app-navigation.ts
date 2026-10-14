@@ -1284,13 +1284,32 @@ function resolveNotificationRoutes(
     };
   }
 
-  let leafLabel = t("common.breadcrumbs.notificationEdit");
+  // Channels and history are tabs beside the rules, so they need no way back.
+  const tabLabel =
+    path === `${routes.notifications}/channels`
+      ? t("common.breadcrumbs.notificationChannels")
+      : path === `${routes.notifications}/history`
+        ? t("common.breadcrumbs.notificationHistory")
+        : null;
 
-  if (path === `${routes.notifications}/create`) {
-    leafLabel = t("common.breadcrumbs.notificationCreate");
-  } else if (path === `${routes.notifications}/history`) {
-    leafLabel = t("common.breadcrumbs.notificationHistory");
+  if (tabLabel) {
+    return {
+      breadcrumbs: [
+        guildBreadcrumb,
+        {
+          label: t("common.breadcrumbs.notifications"),
+          path: routes.notifications,
+        },
+        { label: tabLabel, path: null },
+      ],
+      showBack: false,
+    };
   }
+
+  const leafLabel =
+    path === `${routes.notifications}/create`
+      ? t("common.breadcrumbs.notificationCreate")
+      : t("common.breadcrumbs.notificationEdit");
 
   return {
     breadcrumbs: [
