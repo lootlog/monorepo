@@ -40,7 +40,7 @@ export const ReservationDetailSkeleton = () => {
     >
       <header
         className={cn(
-          "shrink-0 border-b bg-background max-md:sticky max-md:top-14 max-md:z-30",
+          "shrink-0 border-b bg-background max-md:sticky max-md:top-(--page-sticky-top) max-md:z-30",
           isCompact
             ? "flex items-center gap-1 px-2 py-1"
             : "flex items-center gap-2 px-3 py-2",

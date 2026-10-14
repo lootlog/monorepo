@@ -36,7 +36,7 @@ export const TimersToolbar = ({
     <div
       data-list-tile
       className={cn(
-        "sticky top-0 z-10 flex min-h-12 flex-wrap items-center gap-x-4 gap-y-2 border-b border-sidebar-border py-2 backdrop-blur-sm transition-colors has-[input:focus-visible]:border-primary motion-reduce:transition-none",
+        "sticky top-(--page-sticky-top) z-10 flex min-h-12 flex-wrap items-center gap-x-4 gap-y-2 border-b border-sidebar-border py-2 backdrop-blur-sm transition-colors has-[input:focus-visible]:border-primary motion-reduce:transition-none",
         TIMER_ROW_INSET_CLASS,
       )}
     >
