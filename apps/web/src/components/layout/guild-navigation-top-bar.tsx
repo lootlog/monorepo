@@ -1,4 +1,4 @@
-import type { FC, Ref } from "react";
+import { useContext, type FC, type Ref } from "react";
 import {
   getRouteApi,
   useLocation,
@@ -6,7 +6,9 @@ import {
   useParams,
 } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { GuildSearchContext } from "@/contexts/guild-search-context";
 import { AppNavigationTopBar } from "./app-navigation-top-bar";
+import { GuildSearchButton } from "./guild-search-button";
 import { resolveAppNavigation } from "@/navigation/app-navigation";
 import {
   getMembersControllerGetGuildMembersQueryKey,
@@ -148,6 +150,7 @@ export const GuildNavigationTopBar: FC<GuildNavigationTopBarProps> = ({
   contextRef,
 }) => {
   const { t } = useTranslation();
+  const { setIsOpen: setIsSearchOpen } = useContext(GuildSearchContext);
   const location = useLocation();
   const params = useParams({ strict: false });
   const guildRouteData = guildRouteApi.useLoaderData();
@@ -220,6 +223,7 @@ export const GuildNavigationTopBar: FC<GuildNavigationTopBarProps> = ({
       heading={resolveNavigationInfo().heading}
       actionsRef={actionsRef}
       contextRef={contextRef}
+      search={<GuildSearchButton onClick={() => setIsSearchOpen(true)} />}
     />
   );
 };
