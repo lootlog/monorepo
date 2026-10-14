@@ -36,6 +36,7 @@ import { Route as AuthenticatedGuildIdDocsDocIdRouteImport } from './routes/_aut
 import { Route as AuthenticatedGuildIdEventsEventIdRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_'
 import { Route as AuthenticatedGuildIdNotificationsIndexRouteImport } from './routes/_authenticated/$guildId/notifications/index'
 import { Route as AuthenticatedGuildIdNotificationsRuleIdRouteImport } from './routes/_authenticated/$guildId/notifications/$ruleId'
+import { Route as AuthenticatedGuildIdNotificationsChannelsRouteImport } from './routes/_authenticated/$guildId/notifications/channels'
 import { Route as AuthenticatedGuildIdNotificationsCreateRouteImport } from './routes/_authenticated/$guildId/notifications/create'
 import { Route as AuthenticatedGuildIdNotificationsHistoryRouteImport } from './routes/_authenticated/$guildId/notifications/history'
 import { Route as AuthenticatedGuildIdReservationsIndexRouteImport } from './routes/_authenticated/$guildId/reservations/index'
@@ -235,6 +236,12 @@ const AuthenticatedGuildIdNotificationsRuleIdRoute =
   AuthenticatedGuildIdNotificationsRuleIdRouteImport.update({
     id: '/$ruleId',
     path: '/$ruleId',
+    getParentRoute: () => AuthenticatedGuildIdNotificationsRoute,
+  } as any)
+const AuthenticatedGuildIdNotificationsChannelsRoute =
+  AuthenticatedGuildIdNotificationsChannelsRouteImport.update({
+    id: '/channels',
+    path: '/channels',
     getParentRoute: () => AuthenticatedGuildIdNotificationsRoute,
   } as any)
 const AuthenticatedGuildIdNotificationsCreateRoute =
@@ -548,6 +555,7 @@ export interface FileRoutesByFullPath {
   '/$guildId/docs/$docId': typeof AuthenticatedGuildIdDocsDocIdRoute
   '/$guildId/events/$eventId': typeof AuthenticatedGuildIdEventsEventIdRouteWithChildren
   '/$guildId/notifications/$ruleId': typeof AuthenticatedGuildIdNotificationsRuleIdRoute
+  '/$guildId/notifications/channels': typeof AuthenticatedGuildIdNotificationsChannelsRoute
   '/$guildId/notifications/create': typeof AuthenticatedGuildIdNotificationsCreateRoute
   '/$guildId/notifications/history': typeof AuthenticatedGuildIdNotificationsHistoryRoute
   '/$guildId/reservations/$reservationId': typeof AuthenticatedGuildIdReservationsReservationIdRoute
@@ -614,6 +622,7 @@ export interface FileRoutesByTo {
   '/@me': typeof AuthenticatedAtmeIndexRoute
   '/$guildId/docs/$docId': typeof AuthenticatedGuildIdDocsDocIdRoute
   '/$guildId/notifications/$ruleId': typeof AuthenticatedGuildIdNotificationsRuleIdRoute
+  '/$guildId/notifications/channels': typeof AuthenticatedGuildIdNotificationsChannelsRoute
   '/$guildId/notifications/create': typeof AuthenticatedGuildIdNotificationsCreateRoute
   '/$guildId/notifications/history': typeof AuthenticatedGuildIdNotificationsHistoryRoute
   '/$guildId/reservations/$reservationId': typeof AuthenticatedGuildIdReservationsReservationIdRoute
@@ -690,6 +699,7 @@ export interface FileRoutesById {
   '/_authenticated/$guildId/docs/$docId': typeof AuthenticatedGuildIdDocsDocIdRoute
   '/_authenticated/$guildId/events_/$eventId_': typeof AuthenticatedGuildIdEventsEventIdRouteWithChildren
   '/_authenticated/$guildId/notifications/$ruleId': typeof AuthenticatedGuildIdNotificationsRuleIdRoute
+  '/_authenticated/$guildId/notifications/channels': typeof AuthenticatedGuildIdNotificationsChannelsRoute
   '/_authenticated/$guildId/notifications/create': typeof AuthenticatedGuildIdNotificationsCreateRoute
   '/_authenticated/$guildId/notifications/history': typeof AuthenticatedGuildIdNotificationsHistoryRoute
   '/_authenticated/$guildId/reservations/$reservationId': typeof AuthenticatedGuildIdReservationsReservationIdRoute
@@ -768,6 +778,7 @@ export interface FileRouteTypes {
     | '/$guildId/docs/$docId'
     | '/$guildId/events/$eventId'
     | '/$guildId/notifications/$ruleId'
+    | '/$guildId/notifications/channels'
     | '/$guildId/notifications/create'
     | '/$guildId/notifications/history'
     | '/$guildId/reservations/$reservationId'
@@ -834,6 +845,7 @@ export interface FileRouteTypes {
     | '/@me'
     | '/$guildId/docs/$docId'
     | '/$guildId/notifications/$ruleId'
+    | '/$guildId/notifications/channels'
     | '/$guildId/notifications/create'
     | '/$guildId/notifications/history'
     | '/$guildId/reservations/$reservationId'
@@ -909,6 +921,7 @@ export interface FileRouteTypes {
     | '/_authenticated/$guildId/docs/$docId'
     | '/_authenticated/$guildId/events_/$eventId_'
     | '/_authenticated/$guildId/notifications/$ruleId'
+    | '/_authenticated/$guildId/notifications/channels'
     | '/_authenticated/$guildId/notifications/create'
     | '/_authenticated/$guildId/notifications/history'
     | '/_authenticated/$guildId/reservations/$reservationId'
@@ -1156,6 +1169,13 @@ declare module '@tanstack/react-router' {
       path: '/$ruleId'
       fullPath: '/$guildId/notifications/$ruleId'
       preLoaderRoute: typeof AuthenticatedGuildIdNotificationsRuleIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdNotificationsRoute
+    }
+    '/_authenticated/$guildId/notifications/channels': {
+      id: '/_authenticated/$guildId/notifications/channels'
+      path: '/channels'
+      fullPath: '/$guildId/notifications/channels'
+      preLoaderRoute: typeof AuthenticatedGuildIdNotificationsChannelsRouteImport
       parentRoute: typeof AuthenticatedGuildIdNotificationsRoute
     }
     '/_authenticated/$guildId/notifications/create': {
@@ -1508,6 +1528,7 @@ const AuthenticatedGuildIdDocsRouteWithChildren =
 
 interface AuthenticatedGuildIdNotificationsRouteChildren {
   AuthenticatedGuildIdNotificationsRuleIdRoute: typeof AuthenticatedGuildIdNotificationsRuleIdRoute
+  AuthenticatedGuildIdNotificationsChannelsRoute: typeof AuthenticatedGuildIdNotificationsChannelsRoute
   AuthenticatedGuildIdNotificationsCreateRoute: typeof AuthenticatedGuildIdNotificationsCreateRoute
   AuthenticatedGuildIdNotificationsHistoryRoute: typeof AuthenticatedGuildIdNotificationsHistoryRoute
   AuthenticatedGuildIdNotificationsIndexRoute: typeof AuthenticatedGuildIdNotificationsIndexRoute
@@ -1517,6 +1538,8 @@ const AuthenticatedGuildIdNotificationsRouteChildren: AuthenticatedGuildIdNotifi
   {
     AuthenticatedGuildIdNotificationsRuleIdRoute:
       AuthenticatedGuildIdNotificationsRuleIdRoute,
+    AuthenticatedGuildIdNotificationsChannelsRoute:
+      AuthenticatedGuildIdNotificationsChannelsRoute,
     AuthenticatedGuildIdNotificationsCreateRoute:
       AuthenticatedGuildIdNotificationsCreateRoute,
     AuthenticatedGuildIdNotificationsHistoryRoute:

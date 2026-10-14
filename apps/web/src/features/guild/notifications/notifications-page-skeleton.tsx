@@ -1,17 +1,18 @@
-import { ListToolbarSkeleton } from "@/components/common/list-toolbar-skeleton";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { NotificationSettingsSkeleton } from "./notification-settings-skeleton";
+import { NotificationRuleGroupsSkeleton } from "./notification-rule-groups-skeleton";
+import { NotificationsTabSkeleton } from "./notifications-tab-skeleton";
 
-/** Route-level stand-in for the notifications page: its toolbar above the sections. */
+/** Route-level stand-in for the rules tab. */
 export const NotificationsPageSkeleton = () => (
-  <div aria-busy="true" className="min-h-0 flex-1 overflow-hidden">
-    <ListToolbarSkeleton>
-      <div className="flex items-center gap-2">
-        <Skeleton className="h-8 w-20 rounded-lg" />
-        <Skeleton className="h-8 w-20 rounded-lg" />
+  <NotificationsTabSkeleton
+    actions={
+      <>
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="h-8 w-28 rounded-lg" />
         <Skeleton className="size-8 rounded-lg" />
-      </div>
-    </ListToolbarSkeleton>
-    <NotificationSettingsSkeleton />
-  </div>
+      </>
+    }
+  >
+    <NotificationRuleGroupsSkeleton />
+  </NotificationsTabSkeleton>
 );
