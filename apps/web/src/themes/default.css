@@ -1,7 +1,17 @@
+/*
+ * The app lifts the shared navy content surfaces so content sits a step above
+ * the sidebar, as in every other theme; public surfaces keep the `:root` navy.
+ */
 :root.default {
+  --background: #121d2c;
+  --card: #192639;
+  --popover: #192639;
+  --secondary: #203148;
+  --muted: #24354c;
+  --border: #384961;
   --primary: #c8f135;
   --primary-foreground: #07111f;
-  --accent: #273321;
+  --accent: #34402e;
   --accent-foreground: #f7f8f2;
   --chart-1: #7991ff;
   --ring: #c8f135;
