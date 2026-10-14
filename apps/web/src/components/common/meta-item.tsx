@@ -1,7 +1,7 @@
 import { cn } from "cn";
 import type { FC, ReactNode } from "react";
 
-export const LootMetaItem = ({
+export const MetaItem = ({
   icon: Icon,
   children,
   className,

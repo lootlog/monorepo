@@ -1,5 +1,5 @@
 import { EmptyState } from "@/components/common/empty-state";
-import { FilterBar } from "@/components/common/filter-bar";
+import { ListToolbar } from "@/components/common/list-toolbar";
 import { EventListCard } from "./event-list-card";
 import { EventListCardSkeleton } from "./event-list-card-skeleton";
 import { EventLoadError } from "./components/event-load-error";
@@ -10,8 +10,6 @@ import { Plus, SearchX, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { EventActionDialog } from "./components/dialogs/event-action-dialog";
 import { EventCreateDialog } from "./components/dialogs/event-create-dialog";
-
-import { SearchInput } from "@/components/ui/search-input";
 
 import { useEventList } from "./use-event-list";
 
@@ -51,94 +49,102 @@ export const Events = () => {
     );
   }
 
-  const createButton = (
-    <Button
-      size="lg"
-      className="w-full shrink-0 sm:w-auto"
-      onClick={() => setCreateDialogOpen(true)}
-      icon=<Plus className="size-4" />
-    >
-      {t("events.create")}
-    </Button>
-  );
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div aria-hidden="true">
+          {Array.from({ length: 4 }, (_, index) => (
+            <EventListCardSkeleton
+              key={index}
+              canDeleteEvent={canDeleteEvent}
+            />
+          ))}
+        </div>
+      );
+    }
+
+    if (!hasEvents) {
+      return (
+        <div className="p-3">
+          <EmptyState
+            framed
+            icon={Trophy}
+            title={t("events.noEvents")}
+            description={t("events.emptyDescription")}
+            action={
+              <Button
+                onClick={() => setCreateDialogOpen(true)}
+                icon=<Plus className="size-4" />
+              >
+                {t("events.create")}
+              </Button>
+            }
+          />
+        </div>
+      );
+    }
+
+    if (!hasFilteredEvents) {
+      return (
+        <div className="p-3">
+          <EmptyState
+            framed
+            icon={SearchX}
+            title={t("events.noResults")}
+            description={t("events.noResultsDescription")}
+            action={
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setSearchValue("")}
+              >
+                {t("events.clearSearch")}
+              </Button>
+            }
+          />
+        </div>
+      );
+    }
+
+    return filteredEvents.map((event) => (
+      <EventListCard
+        key={event.id}
+        event={event}
+        currentTimestamp={currentTimestamp}
+        t={t}
+        isPinned={isPinned}
+        guildId={guildId}
+        isPinPending={isPinPending}
+        togglePin={togglePin}
+        canDeleteEvent={canDeleteEvent}
+        setEventToDelete={setEventToDelete}
+      />
+    ));
+  };
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("events.title")}</h1>
-      <div className="px-3 pt-3">
-        <FilterBar ariaLabel={t("events.filtersLabel")}>
-          <SearchInput
-            value={searchValue}
-            onChange={(event) => setSearchValue(event.target.value)}
-            placeholder={t("events.searchPlaceholder")}
-            aria-label={t("events.searchLabel")}
-            size="lg"
-            wrapperClassName="min-w-0 flex-1 basis-56"
-            disabled={isLoading}
-          />
-          {createButton}
-        </FilterBar>
-      </div>
-
-      <div className="flex min-h-0 flex-1 flex-col">
-        {isLoading ? (
-          <div aria-busy="true" className="flex flex-col gap-2 px-3 py-3">
-            {Array.from({ length: 4 }, (_, index) => (
-              <EventListCardSkeleton
-                key={index}
-                canDeleteEvent={canDeleteEvent}
-              />
-            ))}
-          </div>
-        ) : !hasEvents ? (
-          <div className="px-3 py-3">
-            <EmptyState
-              framed
-              icon={Trophy}
-              title={t("events.noEvents")}
-              description={t("events.emptyDescription")}
-              action={createButton}
-            />
-          </div>
-        ) : !hasFilteredEvents ? (
-          <div className="px-3 py-3">
-            <EmptyState
-              framed
-              icon={SearchX}
-              title={t("events.noResults")}
-              description={t("events.noResultsDescription")}
-              action={
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setSearchValue("")}
-                >
-                  {t("events.clearSearch")}
-                </Button>
-              }
-            />
-          </div>
-        ) : (
-          <ScrollArea className="min-h-0 flex-1">
-            <div className="flex flex-col gap-2 px-3 py-3">
-              {filteredEvents.map((event) => (
-                <EventListCard
-                  key={event.id}
-                  event={event}
-                  currentTimestamp={currentTimestamp}
-                  t={t}
-                  isPinned={isPinned}
-                  guildId={guildId}
-                  isPinPending={isPinPending}
-                  togglePin={togglePin}
-                  canDeleteEvent={canDeleteEvent}
-                  setEventToDelete={setEventToDelete}
-                />
-              ))}
-            </div>
-          </ScrollArea>
-        )}
-      </div>
+      <ScrollArea data-under-top-bar className="min-h-0 flex-1">
+        <ListToolbar
+          search={searchValue}
+          onSearchChange={setSearchValue}
+          placeholder={t("events.filterPlaceholder")}
+          label={t("events.filterLabel")}
+          clearLabel={t("events.clearSearch")}
+          disabled={isLoading}
+        >
+          <Button
+            size="sm"
+            className="shrink-0"
+            onClick={() => setCreateDialogOpen(true)}
+            icon=<Plus className="size-4" />
+          >
+            {t("events.create")}
+          </Button>
+        </ListToolbar>
+        {renderContent()}
+      </ScrollArea>
       <EventCreateDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}

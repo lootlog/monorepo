@@ -1,18 +1,17 @@
 {
   "loadError": "Nie udało się pobrać rezerwacji.",
-  "searchPlaceholder": "Szukaj expowiska...",
-  "toolbarLabel": "Wyszukiwanie i filtry expowisk",
+  "filterPlaceholder": "Filtruj po nazwie expowiska…",
+  "filterLabel": "Filtruj expowiska po nazwie",
+  "clearSearch": "Wyczyść wyszukiwanie",
   "view": {
     "list": "Widok listy",
     "grid": "Widok siatki"
   },
   "filters": {
     "label": "Filtry expowisk",
-    "all": "Wszystkie",
     "available": "Wolne teraz",
     "pinned": "Przypięte",
-    "partners": "Sojusz",
-    "partnersCompact": "Sojusz"
+    "partners": "Sojusz"
   },
   "pin": {
     "error": "Nie udało się zmienić przypięcia expowiska."

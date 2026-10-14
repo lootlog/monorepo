@@ -1,5 +1,6 @@
 import { EmptyState } from "@/components/common/empty-state";
-import { FilterBar } from "@/components/common/filter-bar";
+import { ListToolbar } from "@/components/common/list-toolbar";
+import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
 import { useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { useQueryClient } from "@tanstack/react-query";
@@ -17,13 +18,15 @@ import {
 
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { SearchInput } from "@/components/ui/search-input";
 import { ViewModeToggle } from "@/components/ui/view-mode-toggle";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useViewMode } from "@/hooks/use-view-mode";
 import { ReservationCard } from "./reservation-card";
 import { ReservationCardSkeleton } from "./reservation-card-skeleton";
-import { getReservationCollectionClassName } from "./reservation-collection-layout";
+import {
+  getReservationCollectionClassName,
+  RESERVATIONS_VIEW_MODE_KEY,
+} from "./reservation-collection-layout";
 import {
   ReservationFilters,
   type ReservationFilter,
@@ -51,7 +54,7 @@ export function Reservations() {
     "all",
   );
 
-  const { viewMode, setViewMode } = useViewMode("reservations-view-mode");
+  const { viewMode, setViewMode } = useViewMode(RESERVATIONS_VIEW_MODE_KEY);
 
   const spotsQuery = useListReservationSpots(
     { guildId },
@@ -103,115 +106,115 @@ export function Reservations() {
     mutation.mutate({ pathParams: { guildId, spotId } });
   };
 
+  const tiles = spotsQuery.isPending ? (
+    <div aria-hidden="true" className="overflow-hidden">
+      <div className={getReservationCollectionClassName(viewMode)}>
+        {Array.from({ length: 8 }).map((_, index) => (
+          <ReservationCardSkeleton key={index} viewMode={viewMode} />
+        ))}
+      </div>
+    </div>
+  ) : sortedSpots.length === 0 ? (
+    <div className="p-3">
+      <EmptyState
+        framed
+        icon={SearchX}
+        title={t("reservations.empty.title")}
+        description={
+          normalizedSearch
+            ? t("reservations.empty.searchDescription")
+            : t("reservations.empty.description")
+        }
+        action={
+          normalizedSearch || filter !== "all" ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setSearchValue("");
+                setFilter("all");
+              }}
+            >
+              {t("reservations.empty.clearFilters")}
+            </Button>
+          ) : undefined
+        }
+      />
+    </div>
+  ) : (
+    <div className="overflow-hidden">
+      <div className={getReservationCollectionClassName(viewMode)}>
+        {sortedSpots.map((spot) => (
+          <ReservationCard
+            key={spot.id}
+            spot={spot}
+            viewMode={viewMode}
+            pinDisabled={pinMutation.isPending || unpinMutation.isPending}
+            pinPending={
+              (pinMutation.isPending &&
+                pinMutation.variables?.pathParams.spotId === spot.id) ||
+              (unpinMutation.isPending &&
+                unpinMutation.variables?.pathParams.spotId === spot.id)
+            }
+            onPinChange={(isPinned) => handlePinChange(spot.id, isPinned)}
+            onOpen={() =>
+              navigate({ to: `/${guildId}/reservations/${spot.id}` })
+            }
+          />
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("layout.navigation.reservations")}</h1>
-      <div className="px-3 pt-3">
-        <FilterBar ariaLabel={t("reservations.toolbarLabel")}>
-          <SearchInput
-            value={searchValue}
-            onChange={(event) => setSearchValue(event.target.value)}
-            placeholder={t("reservations.searchPlaceholder")}
-            aria-label={t("reservations.searchPlaceholder")}
-            size="lg"
-            wrapperClassName="min-w-0 flex-1 basis-48"
-            disabled={spotsQuery.isPending}
-          />
-          <ReservationFilters
-            value={filter}
-            onChange={setFilter}
-            className="order-last basis-full xl:order-none xl:basis-auto"
-          />
-          <ViewModeToggle
-            value={viewMode}
-            onChange={setViewMode}
-            listLabel={t("reservations.view.list")}
-            gridLabel={t("reservations.view.grid")}
-          />
-        </FilterBar>
-      </div>
+      {/* The view sits in the top bar, as on the loot and timer lists. */}
+      <HeaderSlotPortal slot="actions">
+        <ViewModeToggle
+          value={viewMode}
+          onChange={setViewMode}
+          listLabel={t("reservations.view.list")}
+          gridLabel={t("reservations.view.grid")}
+          size="default"
+        />
+      </HeaderSlotPortal>
 
-      <div className="flex min-h-0 flex-1 flex-col pt-3">
-        {spotsQuery.isPending ? (
-          <ScrollArea className="min-h-0 flex-1">
-            <div className={getReservationCollectionClassName(viewMode)}>
-              {Array.from({ length: 8 }).map((_, index) => (
-                <ReservationCardSkeleton key={index} viewMode={viewMode} />
-              ))}
-            </div>
-          </ScrollArea>
-        ) : spotsQuery.isError ? (
-          <div className="px-3 pb-3">
-            <EmptyState
-              framed
-              icon={CircleAlert}
-              title={t("reservations.error.title")}
-              description={t("reservations.error.description")}
-              action={
-                <Button
-                  type="button"
-                  variant="outline"
-                  loading={spotsQuery.isFetching}
-                  icon=<RotateCcw className="size-3.5" />
-                  onClick={() => void spotsQuery.refetch()}
-                >
-                  {t("common.actions.retry")}
-                </Button>
-              }
-            />
-          </div>
-        ) : sortedSpots.length === 0 ? (
-          <div className="px-3 pb-3">
-            <EmptyState
-              framed
-              icon={SearchX}
-              title={t("reservations.empty.title")}
-              description={
-                normalizedSearch
-                  ? t("reservations.empty.searchDescription")
-                  : t("reservations.empty.description")
-              }
-              action={
-                normalizedSearch || filter !== "all" ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setSearchValue("");
-                      setFilter("all");
-                    }}
-                  >
-                    {t("reservations.empty.clearFilters")}
-                  </Button>
-                ) : undefined
-              }
-            />
-          </div>
-        ) : (
-          <ScrollArea className="min-h-0 flex-1">
-            <div className={getReservationCollectionClassName(viewMode)}>
-              {sortedSpots.map((spot) => (
-                <ReservationCard
-                  key={spot.id}
-                  spot={spot}
-                  viewMode={viewMode}
-                  pinDisabled={pinMutation.isPending || unpinMutation.isPending}
-                  pinPending={
-                    (pinMutation.isPending &&
-                      pinMutation.variables?.pathParams.spotId === spot.id) ||
-                    (unpinMutation.isPending &&
-                      unpinMutation.variables?.pathParams.spotId === spot.id)
-                  }
-                  onPinChange={(isPinned) => handlePinChange(spot.id, isPinned)}
-                  onOpen={() =>
-                    navigate({ to: `/${guildId}/reservations/${spot.id}` })
-                  }
-                />
-              ))}
-            </div>
-          </ScrollArea>
-        )}
-      </div>
+      {spotsQuery.isError ? (
+        <div className="p-3">
+          <EmptyState
+            framed
+            icon={CircleAlert}
+            title={t("reservations.error.title")}
+            description={t("reservations.error.description")}
+            action={
+              <Button
+                type="button"
+                variant="outline"
+                loading={spotsQuery.isFetching}
+                icon=<RotateCcw className="size-3.5" />
+                onClick={() => void spotsQuery.refetch()}
+              >
+                {t("common.actions.retry")}
+              </Button>
+            }
+          />
+        </div>
+      ) : (
+        <ScrollArea data-under-top-bar className="min-h-0 flex-1">
+          <ListToolbar
+            search={searchValue}
+            onSearchChange={setSearchValue}
+            placeholder={t("reservations.filterPlaceholder")}
+            label={t("reservations.filterLabel")}
+            clearLabel={t("reservations.clearSearch")}
+            disabled={spotsQuery.isPending}
+          >
+            <ReservationFilters value={filter} onChange={setFilter} />
+          </ListToolbar>
+          {tiles}
+        </ScrollArea>
+      )}
     </div>
   );
 }

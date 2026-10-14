@@ -12,7 +12,7 @@ import { cn } from "cn";
 import { formatItemHid } from "@/lib/utils/hid-detection";
 import { WatchableItemTile } from "@/components/tiles/watchable-item-tile";
 import { useTranslation } from "react-i18next";
-import { LOOT_CARD_INSET_CLASS } from "@/features/guild/loots-list/loots-list-layout";
+import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
 import { buildLootItemOwnerMap } from "@/features/guild/loots-list/utils/build-loot-share-maps";
 
 export type LootItemIdsProps = {
@@ -60,7 +60,7 @@ export const LootItemIds: FC<LootItemIdsProps> = ({ loot }) => {
               type="button"
               className={cn(
                 "flex min-h-12 w-full items-center justify-between gap-3 py-2 text-left transition-colors hover:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
-                LOOT_CARD_INSET_CLASS,
+                LIST_TILE_INSET_CLASS,
               )}
             >
               <h2 id={titleId} className="text-base font-semibold">
@@ -87,7 +87,7 @@ export const LootItemIds: FC<LootItemIdsProps> = ({ loot }) => {
                   key={`${item.hid}:${index}`}
                   className={cn(
                     "flex items-center gap-3 py-2.5",
-                    LOOT_CARD_INSET_CLASS,
+                    LIST_TILE_INSET_CLASS,
                   )}
                 >
                   <WatchableItemTile item={item} watchContext={watchContext} />

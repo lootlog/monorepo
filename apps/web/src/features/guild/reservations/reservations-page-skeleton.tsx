@@ -1,28 +1,29 @@
-import { FilterBar } from "@/components/common/filter-bar";
+import { ListToolbarSkeleton } from "@/components/common/list-toolbar-skeleton";
 import { useViewMode } from "@/hooks/use-view-mode";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ReservationCardSkeleton } from "./reservation-card-skeleton";
-import { getReservationCollectionClassName } from "./reservation-collection-layout";
+import {
+  getReservationCollectionClassName,
+  RESERVATIONS_VIEW_MODE_KEY,
+} from "./reservation-collection-layout";
 
-/** Route-level stand-in for the reservations page: its filter bar above the spots. */
+/** Route-level stand-in for the reservations page: its toolbar above the spots. */
 export const ReservationsPageSkeleton = () => {
-  const { viewMode } = useViewMode("reservations-view-mode");
+  const { viewMode } = useViewMode(RESERVATIONS_VIEW_MODE_KEY);
 
   return (
-    <div aria-busy="true" className="flex h-full min-h-0 flex-col">
-      <div className="px-3 pt-3">
-        <FilterBar>
-          <Skeleton className="h-10 min-w-0 flex-1 basis-48 rounded-lg" />
-          <Skeleton className="order-last h-10 basis-full rounded-lg xl:order-none xl:w-80 xl:basis-auto" />
-          <Skeleton className="h-10 w-[4.5rem] rounded-lg" />
-        </FilterBar>
-      </div>
-      <div className="min-h-0 flex-1 overflow-hidden pt-3">
-        <div className={getReservationCollectionClassName(viewMode)}>
-          {Array.from({ length: 8 }).map((_, index) => (
-            <ReservationCardSkeleton key={index} viewMode={viewMode} />
-          ))}
+    <div aria-busy="true" className="min-h-0 flex-1 overflow-hidden">
+      <ListToolbarSkeleton>
+        <div className="flex gap-1.5">
+          <Skeleton className="h-8 w-24 rounded-lg" />
+          <Skeleton className="h-8 w-20 rounded-lg" />
+          <Skeleton className="h-8 w-16 rounded-lg" />
         </div>
+      </ListToolbarSkeleton>
+      <div className={getReservationCollectionClassName(viewMode)}>
+        {Array.from({ length: 8 }).map((_, index) => (
+          <ReservationCardSkeleton key={index} viewMode={viewMode} />
+        ))}
       </div>
     </div>
   );

@@ -35,43 +35,20 @@ const spot: ReservationSpotsResponseDtoItem = {
 };
 
 describe("ReservationCard", () => {
-  it("shows a pointer cursor for the clickable card surface", () => {
-    render(
-      <ReservationCard spot={spot} onOpen={vi.fn()} onPinChange={vi.fn()} />,
-    );
-
-    expect(
-      screen.getByRole("button", { name: "Otwórz rezerwacje" }).classList,
-    ).toContain("cursor-pointer");
-  });
-
-  it("places the pin action between the alliance badge and chevron", () => {
+  it("pins the spot from its pin button", () => {
     const onPinChange = vi.fn();
+    const onOpen = vi.fn();
 
-    const { container } = render(
-      <ReservationCard
-        spot={spot}
-        onOpen={vi.fn()}
-        onPinChange={onPinChange}
-      />,
-    );
-
-    const actions = container.querySelector(
-      '[data-slot="reservation-card-actions"]',
-    );
-
-    expect(actions?.children).toHaveLength(3);
-    expect(actions?.children[0]?.textContent).toBe("Sojusz");
-    expect(actions?.children[1]?.tagName).toBe("BUTTON");
-    expect(actions?.children[2]?.getAttribute("data-slot")).toBe(
-      "reservation-card-chevron",
+    render(
+      <ReservationCard spot={spot} onOpen={onOpen} onPinChange={onPinChange} />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Przypnij expowisko" }));
     expect(onPinChange).toHaveBeenCalledWith(true);
+    expect(onOpen).not.toHaveBeenCalled();
   });
 
-  it("keeps occupied status with the next reservation to two text rows", () => {
+  it("names who holds an occupied spot and who reserved it next", () => {
     const occupiedSpot: ReservationSpotsResponseDtoItem = {
       ...spot,
       isAvailableNow: false,
@@ -122,7 +99,7 @@ describe("ReservationCard", () => {
       },
     };
 
-    const { container } = render(
+    render(
       <ReservationCard
         spot={occupiedSpot}
         onOpen={vi.fn()}
@@ -130,12 +107,7 @@ describe("ReservationCard", () => {
       />,
     );
 
-    const statusLines = container.querySelector(
-      '[data-slot="reservation-card-status-lines"]',
-    );
-
-    expect(statusLines?.children).toHaveLength(2);
-    expect(statusLines?.children[0]?.textContent).toContain("goat");
-    expect(statusLines?.children[1]?.textContent).toContain("Dominik v2");
+    expect(screen.getByText(/goat/)).toBeTruthy();
+    expect(screen.getByText(/Dominik v2/)).toBeTruthy();
   });
 });

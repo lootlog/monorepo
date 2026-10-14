@@ -25,8 +25,8 @@ import {
   DATE_TIME_WITH_SECONDS_FORMAT,
   timestampToDate,
 } from "@/utils/date/parse-timestamp-to-date";
-import { LootMetaItem } from "@/features/guild/loots-list/components/loots-list/loot-meta-item";
-import { TIMER_ROW_INSET_CLASS } from "./timers-layout";
+import { MetaItem } from "@/components/common/meta-item";
+import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
 
 // The game client's colours: white until the spawn window opens, orange
 // inside it, red past the maximum, and a dimmed red for a kept timer.
@@ -95,7 +95,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
             }}
             className={cn(
               "flex h-full w-full items-center gap-3 py-2.5 text-left outline-none transition-colors hover:bg-muted/30 focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset motion-reduce:transition-none",
-              TIMER_ROW_INSET_CLASS,
+              LIST_TILE_INSET_CLASS,
               phase === "expired" && "opacity-75",
             )}
           >
@@ -113,20 +113,20 @@ export const SingleTimer: FC<SingleTimerProps> = ({
               </span>
               <span className="flex min-w-0 items-center gap-x-3">
                 {showWorld && (
-                  <LootMetaItem
+                  <MetaItem
                     icon={Globe}
                     label={t("loots.list.worldLabel")}
                     className="shrink-0"
                   >
                     {upperFirst(timer.world)}
-                  </LootMetaItem>
+                  </MetaItem>
                 )}
                 {timer.member?.name && (
-                  <LootMetaItem icon={User} className="min-w-0">
+                  <MetaItem icon={User} className="min-w-0">
                     <span className="min-w-0 truncate">
                       {timer.member.name}
                     </span>
-                  </LootMetaItem>
+                  </MetaItem>
                 )}
               </span>
             </span>

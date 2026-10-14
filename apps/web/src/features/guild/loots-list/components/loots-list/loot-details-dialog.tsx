@@ -15,7 +15,7 @@ import { LootNpcs } from "@/features/guild/loots-list/components/loots-list/loot
 import { LootComments } from "@/features/guild/loots-list/components/loots-list/loot-comments";
 import { LootItemIds } from "@/features/guild/loots-list/components/loots-list/loot-item-ids";
 import { LootPlayersSection } from "@/features/guild/loots-list/components/loots-list/loot-players-section";
-import { LootMetaItem } from "@/features/guild/loots-list/components/loots-list/loot-meta-item";
+import { MetaItem } from "@/components/common/meta-item";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { LootDetailsActions } from "@/features/guild/loots-list/components/loots-list/loot-details-actions";
@@ -97,27 +97,27 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
               <LootNpcs npcs={loot.npcs} size="lg" />
             </Title>
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-              <LootMetaItem
+              <MetaItem
                 icon={MapPin}
                 className="min-w-0 max-w-full whitespace-normal"
               >
                 <span className="min-w-0 break-words">{loot.location}</span>
-              </LootMetaItem>
-              <LootMetaItem icon={Calendar}>
+              </MetaItem>
+              <MetaItem icon={Calendar}>
                 {t("loots.details.obtainedAt", { date })}
-              </LootMetaItem>
-              <LootMetaItem
+              </MetaItem>
+              <MetaItem
                 icon={Users}
                 label={t("statistics.feedPlayersCountLabel")}
               >
                 {loot.players.length}
-              </LootMetaItem>
-              <LootMetaItem
+              </MetaItem>
+              <MetaItem
                 icon={Package}
                 label={t("statistics.feedItemsCountLabel")}
               >
                 {loot.items.length}
-              </LootMetaItem>
+              </MetaItem>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
