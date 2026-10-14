@@ -333,9 +333,12 @@ export const useLootFiltersSidebar = () => {
     setCustomFilters((prev) => prev.filter((filter) => filter.id !== id));
   };
 
+  // A quick filter replaces the filters but keeps a direct text search.
   const applyFilter = (filterData: SavedFilter["filters"]) => {
+    const { search } = filters;
+
     clearFilters();
-    updateFilters(filterData);
+    updateFilters({ ...filterData, search });
   };
 
   const allQuickFilters = [
@@ -375,7 +378,7 @@ export const useLootFiltersSidebar = () => {
   // Picking the applied view again takes it off.
   const toggleQuickFilter = (filterData: SavedFilter["filters"]) => {
     if (isQuickFilterApplied(filterData)) {
-      clearFilters();
+      applyFilter({});
 
       return;
     }

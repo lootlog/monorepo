@@ -50,7 +50,7 @@ export const LootQuickFilters = ({
         const isApplied = isQuickFilterApplied(filter.filters);
 
         return (
-          <div key={filter.id} className="group/quick-filter relative flex">
+          <div key={filter.id} className="group/quick-filter flex items-center">
             {/* Drawn like the section pills, so every pressed pill means
                 the same thing: it narrows the list. */}
             <button
@@ -66,16 +66,18 @@ export const LootQuickFilters = ({
               {filter.label}
             </button>
             {!("category" in filter) && (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon-xs"
                 aria-label={t("loots.filtersPanel.quickFilters.remove", {
                   label: filter.label,
                 })}
-                className="absolute -top-1.5 -right-1.5 grid size-4 cursor-pointer place-items-center rounded-full border border-sidebar-border bg-sidebar text-muted-foreground opacity-100 transition-opacity outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:opacity-0 sm:group-hover/quick-filter:opacity-100 sm:group-focus-within/quick-filter:opacity-100"
+                className="text-muted-foreground opacity-100 transition-opacity sm:opacity-0 sm:group-hover/quick-filter:opacity-100 sm:group-focus-within/quick-filter:opacity-100"
                 onClick={() => handleRemoveCustomFilter(filter.id)}
               >
-                <X aria-hidden="true" className="size-2.5" />
-              </button>
+                <X aria-hidden="true" className="size-3" />
+              </Button>
             )}
           </div>
         );

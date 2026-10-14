@@ -47,6 +47,24 @@ export const LootsListPage: React.FC = () => {
   const usesSideSheet = usesOverlayFilters && !isMobile;
   const isPanelDocked = !usesOverlayFilters && isFiltersOpen;
 
+  const filtersLayout = isMobile
+    ? "drawer"
+    : usesOverlayFilters
+      ? "sheet"
+      : "docked";
+
+  // Crossing a breakpoint swaps the filters surface: an overlay opened for
+  // the old layout closes, and a pending focus handoff is dropped so the
+  // remounted surface never takes focus on its own.
+  const [renderedFiltersLayout, setRenderedFiltersLayout] =
+    useState(filtersLayout);
+
+  if (renderedFiltersLayout !== filtersLayout) {
+    setRenderedFiltersLayout(filtersLayout);
+    setIsOverlayOpen(false);
+    setFocusHandoff(undefined);
+  }
+
   const openFilters = (section?: LootFilterSectionKey) => {
     setRequestedSection(section);
 
