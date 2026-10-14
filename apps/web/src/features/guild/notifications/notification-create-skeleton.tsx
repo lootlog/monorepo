@@ -1,10 +1,10 @@
 import {
+  LIST_BAND_HEADING_CLASS,
   LIST_GROUP_HEADING_CLASS,
   LIST_TILE_INSET_CLASS,
 } from "@/components/common/list-tile";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
-import { NOTIFICATION_GROUP_HEADING_CLASS } from "./components/notification-rule-groups";
 
 /** How many fields each form section holds: rule, when, where and content. */
 const SECTION_FIELDS = [2, 3, 1, 1];
@@ -18,7 +18,7 @@ export const NotificationCreateSkeleton = () => (
           className={cn(
             LIST_GROUP_HEADING_CLASS,
             LIST_TILE_INSET_CLASS,
-            NOTIFICATION_GROUP_HEADING_CLASS,
+            LIST_BAND_HEADING_CLASS,
           )}
         >
           <Skeleton className="h-3.5 w-28" />

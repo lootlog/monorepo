@@ -6,7 +6,6 @@ import {
 import { ListToolbar } from "@/components/common/list-toolbar";
 import type { NotificationTargetResponseDto } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "cn";
 import { Plus } from "lucide-react";
 import { useState } from "react";
@@ -14,7 +13,6 @@ import { useTranslation } from "react-i18next";
 import { NotificationChannelRow } from "./components/notification-channel-row";
 import { NotificationTargetDialog } from "./components/notification-target-dialog";
 import { NotificationsInfoButton } from "./components/notifications-info-button";
-import { NotificationsTabs } from "./components/notifications-tabs";
 import { NotificationChannelRowsSkeleton } from "./notification-channel-rows-skeleton";
 import { useNotificationsOverview } from "./use-notifications-overview";
 import { getGuildNotificationTargetLabel } from "./utils/notification-settings.utils";
@@ -71,40 +69,35 @@ export const NotificationsChannelsPage = () => {
 
   return (
     <>
-      <div className="flex h-full min-h-0 flex-col">
-        <h1 className="sr-only">{t("settings.notifications.tabs.channels")}</h1>
-        <ScrollArea data-under-top-bar className="min-h-0 flex-1">
-          <NotificationsTabs />
-          {!hasRequiredPermissions && (
-            <div className="px-3 pb-3">
-              <GuildDiscordSyncNotice sync={overview.sync} />
-            </div>
-          )}
-          <div className="border-t border-sidebar-border">
-            <ListToolbar
-              search={search}
-              onSearchChange={setSearch}
-              placeholder={t("settings.notifications.channelFilterPlaceholder")}
-              label={t("settings.notifications.channelFilterLabel")}
-              clearLabel={t("settings.notifications.clearFilter")}
-              disabled={overview.isLoading}
+      <h1 className="sr-only">{t("settings.notifications.tabs.channels")}</h1>
+      {!hasRequiredPermissions && (
+        <div className="px-3 pb-3">
+          <GuildDiscordSyncNotice sync={overview.sync} />
+        </div>
+      )}
+      <div>
+        <ListToolbar
+          search={search}
+          onSearchChange={setSearch}
+          placeholder={t("settings.notifications.channelFilterPlaceholder")}
+          label={t("settings.notifications.channelFilterLabel")}
+          clearLabel={t("settings.notifications.clearFilter")}
+          disabled={overview.isLoading}
+        >
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              disabled={!hasRequiredPermissions}
+              icon=<Plus className="size-4" />
+              onClick={() => setIsCreateOpen(true)}
             >
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  disabled={!hasRequiredPermissions}
-                  icon=<Plus className="size-4" />
-                  onClick={() => setIsCreateOpen(true)}
-                >
-                  {t("settings.notifications.actions.addTargetShort")}
-                </Button>
-                <NotificationsInfoButton />
-              </div>
-            </ListToolbar>
-            {renderChannels()}
+              {t("settings.notifications.actions.addTargetShort")}
+            </Button>
+            <NotificationsInfoButton />
           </div>
-        </ScrollArea>
+        </ListToolbar>
+        {renderChannels()}
       </div>
 
       <NotificationTargetDialog

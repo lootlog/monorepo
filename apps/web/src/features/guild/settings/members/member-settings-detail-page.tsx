@@ -1,14 +1,14 @@
 import { OrganizationPresenceStatus } from "@/components/common/organization-presence-status";
 import { useMemberActivity } from "@/features/guild/settings/members/use-member-activity";
-import { PageHeader } from "@/components/common/page-header";
-import { EmptyState } from "@/components/common/empty-state";
+import { MetaItem } from "@/components/common/meta-item";
+import { ROUTES } from "@/config/routes";
+import { SettingsDetailNotFound } from "../components/settings-detail-not-found";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { UserRoundX } from "lucide-react";
+import { RefreshCw, UserRoundX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "@tanstack/react-router";
@@ -28,6 +28,10 @@ import { MemberData } from "@/features/guild/settings/members/components/member-
 import { RefreshStatusProvider } from "@/features/guild/settings/members/contexts/refresh-status-provider";
 import { MemberSyncButton } from "@/features/guild/settings/members/components/member-sync-button";
 import { MemberDeactivationButton } from "@/features/guild/settings/members/components/member-deactivation-button";
+import { getMemberAccessState } from "@/features/guild/settings/members/member-list-item.utils";
+import { getRelativeTime } from "@/utils/date/get-relative-time";
+import { SettingsDetailPage } from "../components/settings-detail-page";
+import { MemberAccessBadges } from "./member-access-badges";
 
 const MemberSettingsDetailPageContent = () => {
   const { t } = useTranslation();
@@ -91,11 +95,12 @@ const MemberSettingsDetailPageContent = () => {
 
   if (members && !member) {
     return (
-      <EmptyState
+      <SettingsDetailNotFound
         icon={UserRoundX}
         title={t("settings.members.memberNotFound")}
         description={t("settings.members.memberNotFoundDescription")}
-        className="h-full"
+        backTo={ROUTES.guild.settings.members(guildId)}
+        backLabel={t("settings.members.backToList")}
       />
     );
   }
@@ -106,64 +111,87 @@ const MemberSettingsDetailPageContent = () => {
 
   const memberColor = getColorFromRole(member.roles);
 
+  const activityStats = memberActivityStatsByDiscordIdAndSource.get(
+    member.userId,
+  );
+
+  const isOnlineInGame = isMemberOnlineInGame(
+    memberGamePresenceByDiscordId,
+    member.userId,
+  );
+
+  const isOnlineOnWeb = isMemberOnlineOnWeb(
+    memberWebPresenceByDiscordId,
+    member.userId,
+  );
+
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto p-3 custom-scrollbar [scrollbar-gutter:stable]">
-      <PageHeader
-        media={
-          <Avatar className="size-9 shrink-0 rounded-lg" aria-hidden>
-            <AvatarImage
-              src={getDiscordAvatarUrl(member.userId, member.avatar)}
-              alt=""
-            />
-            <AvatarFallback className="rounded-lg">
-              {member.name.slice(0, 1)}
-            </AvatarFallback>
-          </Avatar>
-        }
-        title={<span style={{ color: memberColor }}>{member.name}</span>}
-        description={t("settings.members.details")}
-        actions={
-          <>
-            <MemberSyncButton
-              member={member}
-              variant="secondary"
-              onMemberUpdated={handleMemberUpdated}
-            />
-            {canManageMembers && (
-              <MemberDeactivationButton
-                member={member}
-                onDeactivated={(updatedMember) =>
-                  handleMemberUpdated(updatedMember)
-                }
-              />
-            )}
-          </>
-        }
-      />
-      <ScrollArea className="min-h-48 flex-1">
-        <div className="mx-auto w-full">
-          <OrganizationPresenceStatus guildId={resolvedGuildId} />
-          <MemberData
-            member={member}
-            webActivityStats={
-              memberActivityStatsByDiscordIdAndSource.get(member.userId)
-                ?.WEB_APP
-            }
-            gameActivityStats={
-              memberActivityStatsByDiscordIdAndSource.get(member.userId)?.GAME
-            }
-            isOnlineInGame={isMemberOnlineInGame(
-              memberGamePresenceByDiscordId,
-              member.userId,
-            )}
-            isOnlineOnWeb={isMemberOnlineOnWeb(
-              memberWebPresenceByDiscordId,
-              member.userId,
-            )}
+    <SettingsDetailPage
+      name={member.name}
+      media={
+        <Avatar className="size-5 shrink-0 rounded-md" aria-hidden>
+          <AvatarImage
+            src={getDiscordAvatarUrl(member.userId, member.avatar)}
+            alt=""
           />
-        </div>
-      </ScrollArea>
-    </div>
+          <AvatarFallback className="rounded-md text-[10px]">
+            {member.name.slice(0, 1)}
+          </AvatarFallback>
+        </Avatar>
+      }
+      nameStyle={{ color: memberColor }}
+      meta={
+        <>
+          <MemberAccessBadges
+            accessState={getMemberAccessState({
+              member,
+              isOnline: isOnlineOnWeb || isOnlineInGame,
+            })}
+            isOnlineOnWeb={isOnlineOnWeb}
+            isOnlineInGame={isOnlineInGame}
+          />
+          <MetaItem
+            icon={RefreshCw}
+            label={t("settings.members.table.discord")}
+          >
+            {member.lastDiscordSyncAt
+              ? t("settings.members.discordSync.lastConfirmedCompact", {
+                  time: getRelativeTime(member.lastDiscordSyncAt),
+                })
+              : t("settings.members.discordSync.neverSyncedCompact")}
+          </MetaItem>
+        </>
+      }
+      actions={
+        <>
+          <MemberSyncButton
+            member={member}
+            size="sm"
+            variant="outline"
+            onMemberUpdated={handleMemberUpdated}
+          />
+          {canManageMembers && (
+            <MemberDeactivationButton
+              member={member}
+              size="sm"
+              onDeactivated={(updatedMember) =>
+                handleMemberUpdated(updatedMember)
+              }
+            />
+          )}
+        </>
+      }
+    >
+      <OrganizationPresenceStatus guildId={resolvedGuildId} />
+      <MemberData
+        member={member}
+        guildId={guildId}
+        webActivityStats={activityStats?.WEB_APP}
+        gameActivityStats={activityStats?.GAME}
+        isOnlineInGame={isOnlineInGame}
+        isOnlineOnWeb={isOnlineOnWeb}
+      />
+    </SettingsDetailPage>
   );
 };
 

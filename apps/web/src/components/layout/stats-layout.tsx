@@ -1,6 +1,6 @@
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { Outlet, useLocation } from "@tanstack/react-router";
-import { HorizontalMenu } from "@/components/layout/horizontal-menu";
+import { Outlet } from "@tanstack/react-router";
+import { PageTabsLayout } from "@/components/layout/page-tabs-layout";
 import { GuildWorldHeaderSwitcher } from "@/components/layout/guild-world-header-switcher";
 import { ROUTE_SEGMENTS } from "@/config/routes";
 import { useTranslation } from "react-i18next";
@@ -8,7 +8,6 @@ import { useTranslation } from "react-i18next";
 export const StatsLayout = () => {
   const guildId = useGuildId();
   const { t } = useTranslation();
-  const { pathname } = useLocation();
 
   const navigationItems = [
     {
@@ -33,28 +32,16 @@ export const StatsLayout = () => {
     },
   ];
 
-  const basePath = `/${guildId}`;
-  const normalizedPathname = pathname.replace(/\/$/, "");
-
-  // Member and monster pages are reached from a list, so they keep the back arrow instead.
-  const showNavigation = navigationItems.some(
-    (item) => `${basePath}${item.href}` === normalizedPathname,
-  );
-
   return (
     <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col">
       <GuildWorldHeaderSwitcher />
-      {showNavigation && (
-        <HorizontalMenu
-          items={navigationItems}
-          basePath={basePath}
-          ariaLabel={t("common.breadcrumbs.stats")}
-          className="shrink-0"
-        />
-      )}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <PageTabsLayout
+        tabs={navigationItems}
+        basePath={`/${guildId}`}
+        ariaLabel={t("common.breadcrumbs.stats")}
+      >
         <Outlet />
-      </div>
+      </PageTabsLayout>
     </div>
   );
 };

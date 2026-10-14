@@ -1,6 +1,4 @@
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCard } from "@/components/common/section-card/section-card";
+import { BandSection } from "@/components/common/band-section";
 import { getGuildSettingsErrorMessage } from "../get-guild-settings-error-message";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,8 +15,6 @@ import { Input } from "@lootlog/ui/components/input";
 import { normalizeVanityUrl } from "@lootlog/domain/organization-vanity-url";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-
-import { Link2 } from "lucide-react";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
@@ -37,7 +33,7 @@ import {
   createGeneralFormSchema,
   type GeneralFormValues,
 } from "./general-form.schema";
-import { StatsCardSettingsCard } from "./stats-card-settings-card";
+import { StatsCardSettingsSection } from "./stats-card-settings-section";
 
 export const GeneralForm = () => {
   const { t } = useTranslation();
@@ -120,52 +116,41 @@ export const GeneralForm = () => {
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="w-full mx-auto pb-24"
-      >
-        <div className="flex flex-col gap-3 px-3 pb-3">
-          <SectionCard>
-            <SectionCardHeader
-              title={t("settings.general.vanityUrl.title")}
-              description={t("settings.general.vanityUrl.description")}
-              icon={Link2}
-            />
-            <SectionCardContent>
-              <FormField
-                control={form.control}
-                name="vanityUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {t("settings.general.vanityUrl.label")}
-                    </FormLabel>
-                    <FormControl
-                      render=<Input
-                        placeholder={t(
-                          "settings.general.vanityUrl.placeholder",
-                        )}
-                        className="max-w-xs"
-                        {...field}
-                      />
-                    />
-                    <FormDescription>
-                      {t("settings.general.vanityUrl.example")}{" "}
-                      <span className="font-medium text-foreground">
-                        {window.location.origin}/
-                        {normalizeVanityUrl(field.value) ||
-                          t("settings.general.vanityUrl.exampleSlug")}
-                      </span>
-                    </FormDescription>
-                    <FormMessage role="alert" />
-                  </FormItem>
-                )}
-              />
-            </SectionCardContent>
-          </SectionCard>
+      {/* Room below the last section for the docked save bar. */}
+      <form onSubmit={form.handleSubmit(onSubmit)} className="pb-24">
+        <BandSection
+          id="settings-vanity-url"
+          title={t("settings.general.vanityUrl.title")}
+          description={t("settings.general.vanityUrl.description")}
+        >
+          <FormField
+            control={form.control}
+            name="vanityUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("settings.general.vanityUrl.label")}</FormLabel>
+                <FormControl
+                  render=<Input
+                    placeholder={t("settings.general.vanityUrl.placeholder")}
+                    className="max-w-xs"
+                    {...field}
+                  />
+                />
+                <FormDescription>
+                  {t("settings.general.vanityUrl.example")}{" "}
+                  <span className="font-medium text-foreground">
+                    {window.location.origin}/
+                    {normalizeVanityUrl(field.value) ||
+                      t("settings.general.vanityUrl.exampleSlug")}
+                  </span>
+                </FormDescription>
+                <FormMessage role="alert" />
+              </FormItem>
+            )}
+          />
+        </BandSection>
 
-          {guild && <StatsCardSettingsCard form={form} guild={guild} />}
-        </div>
+        {guild && <StatsCardSettingsSection form={form} guild={guild} />}
 
         <UnsavedChangesBar
           isDirty={form.formState.isDirty}

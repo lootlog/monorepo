@@ -10,6 +10,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -29,6 +30,8 @@ await initializeTestTranslations({
   "settings.reservations.sharing.pendingInvite": "Zaproszenie",
   "settings.reservations.sharing.expires": "Wygasa",
   "settings.reservations.sharing.revoke": "Wycofaj",
+  "settings.reservations.sharing.revokeInvitation": "Wycofaj zaproszenie",
+  "settings.reservations.sharing.revokeTitle": "Wycofać zaproszenie?",
 });
 
 type InvitationResponse = {
@@ -144,7 +147,14 @@ describe("ReservationSharingSettings", () => {
       await screen.findByRole("textbox", { name: "Link zaproszenia" }),
     ).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Wycofaj" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Wycofaj zaproszenie" }),
+    );
+    fireEvent.click(
+      within(await screen.findByRole("alertdialog")).getByRole("button", {
+        name: "Wycofaj",
+      }),
+    );
 
     await waitFor(() => {
       expect(

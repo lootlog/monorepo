@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { LogOut, Trash2 } from "lucide-react";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { Button } from "@lootlog/ui/components/button";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
 import { authClient } from "@/lib/auth-client";
 import { useUser } from "@/hooks/api/user/use-user";
@@ -37,66 +36,61 @@ export const AccountSettings: FC = () => {
   };
 
   return (
-    <ScrollArea className="h-full">
-      <div className="flex flex-col gap-3 px-3 pb-3">
-        <h1 className="sr-only">{t("settings.account.title")}</h1>
-        <SectionCard>
-          <SectionCardHeader
-            icon={LogOut}
-            title={t("settings.account.session.title")}
-            description={t("settings.account.session.description")}
-          />
-          <SectionCardContent>
-            <Button
-              variant="outline"
-              className="w-full justify-center sm:w-auto"
-              loading={isLoggingOut}
-              icon=<LogOut className="size-3.5" />
-              onClick={logout}
-            >
-              {t("settings.account.session.logout")}
-            </Button>
-          </SectionCardContent>
-        </SectionCard>
+    <div className="flex flex-col gap-3 p-3">
+      <h1 className="sr-only">{t("settings.account.title")}</h1>
+      <SectionCard>
+        <SectionCardHeader
+          icon={LogOut}
+          title={t("settings.account.session.title")}
+          description={t("settings.account.session.description")}
+        />
+        <SectionCardContent>
+          <Button
+            variant="outline"
+            className="w-full justify-center sm:w-auto"
+            loading={isLoggingOut}
+            icon=<LogOut className="size-3.5" />
+            onClick={logout}
+          >
+            {t("settings.account.session.logout")}
+          </Button>
+        </SectionCardContent>
+      </SectionCard>
 
-        <SectionCard>
-          <SectionCardHeader
-            icon={Trash2}
-            title={t("settings.account.dangerZone.title")}
-            description={t("settings.account.dangerZone.description")}
+      <SectionCard>
+        <SectionCardHeader
+          icon={Trash2}
+          title={t("settings.account.dangerZone.title")}
+          description={t("settings.account.dangerZone.description")}
+        />
+        <SectionCardContent>
+          <ConfirmDeleteDialog
+            onConfirm={handleDeleteAccount}
+            title={t("settings.account.dangerZone.deleteConfirmTitle")}
+            description={t(
+              "settings.account.dangerZone.deleteConfirmDescription",
+            )}
+            confirmText={user?.name}
+            confirmLabel={t("settings.account.dangerZone.deleteConfirmLabel", {
+              name: user?.name,
+            })}
+            confirmButtonLabel={t(
+              "settings.account.dangerZone.deleteConfirmButton",
+            )}
+            disabled={isDeleteDisabled}
+            trigger={
+              <Button
+                variant="destructive"
+                className="w-full justify-center sm:w-auto"
+                disabled={isDeleteDisabled}
+              >
+                <Trash2 className="size-3.5" />
+                {t("settings.account.dangerZone.deleteAccount")}
+              </Button>
+            }
           />
-          <SectionCardContent>
-            <ConfirmDeleteDialog
-              onConfirm={handleDeleteAccount}
-              title={t("settings.account.dangerZone.deleteConfirmTitle")}
-              description={t(
-                "settings.account.dangerZone.deleteConfirmDescription",
-              )}
-              confirmText={user?.name}
-              confirmLabel={t(
-                "settings.account.dangerZone.deleteConfirmLabel",
-                {
-                  name: user?.name,
-                },
-              )}
-              confirmButtonLabel={t(
-                "settings.account.dangerZone.deleteConfirmButton",
-              )}
-              disabled={isDeleteDisabled}
-              trigger={
-                <Button
-                  variant="destructive"
-                  className="w-full justify-center sm:w-auto"
-                  disabled={isDeleteDisabled}
-                >
-                  <Trash2 className="size-3.5" />
-                  {t("settings.account.dangerZone.deleteAccount")}
-                </Button>
-              }
-            />
-          </SectionCardContent>
-        </SectionCard>
-      </div>
-    </ScrollArea>
+        </SectionCardContent>
+      </SectionCard>
+    </div>
   );
 };

@@ -13,7 +13,6 @@ import { toast } from "sonner";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { RefreshCw, Trophy } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   type EventScoringMode,
@@ -74,13 +73,11 @@ export const EventEditScoringPage = () => {
   }
 
   return (
-    <ScrollArea className="h-full">
-      <EventEditScoringForm
-        key={`${event.id}:${event.updatedAt}:${event.scoringMode}`}
-        event={event}
-        routeParams={routeParams}
-      />
-    </ScrollArea>
+    <EventEditScoringForm
+      key={`${event.id}:${event.updatedAt}:${event.scoringMode}`}
+      event={event}
+      routeParams={routeParams}
+    />
   );
 };
 

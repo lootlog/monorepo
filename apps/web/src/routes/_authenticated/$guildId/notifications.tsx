@@ -1,13 +1,6 @@
-import { Outlet, createFileRoute } from "@tanstack/react-router";
-
-function GuildNotificationsLayout() {
-  return (
-    <div className="flex h-full min-h-0 flex-col">
-      <Outlet />
-    </div>
-  );
-}
+import { NotificationsLayout } from "@/features/guild/notifications/notifications-layout";
+import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/$guildId/notifications")({
-  component: GuildNotificationsLayout,
+  component: NotificationsLayout,
 });

@@ -1,5 +1,6 @@
 import { ListGroupHeading } from "@/components/common/list-group-heading";
 import {
+  LIST_BAND_HEADING_CLASS,
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
@@ -10,14 +11,6 @@ import { useTranslation } from "react-i18next";
 import type { NotificationsOverview } from "../use-notifications-overview";
 import { NotificationRuleRow } from "./notification-rule-row";
 import { useCancelNotificationJob } from "./use-cancel-notification-job";
-
-/**
- * Group headings carry a band, so each kind of rule reads as its own block.
- * The band is opaque, so a heading pinned while the page scrolls hides what
- * passes under it.
- */
-export const NOTIFICATION_GROUP_HEADING_CLASS =
-  "h-10 bg-[color-mix(in_oklab,var(--muted)_45%,var(--background))] text-[13px] text-foreground";
 
 const GROUP_ORDER = [
   NotificationTriggerType.TIMER_BEFORE_SPAWN,
@@ -65,7 +58,7 @@ export const NotificationRuleGroups = ({
         <ListGroupHeading
           id={`notification-rules-${type}`}
           count={groupRules.length}
-          className={NOTIFICATION_GROUP_HEADING_CLASS}
+          className={LIST_BAND_HEADING_CLASS}
         >
           {t(`settings.notifications.groups.${type}`)}
         </ListGroupHeading>

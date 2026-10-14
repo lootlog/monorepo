@@ -13,7 +13,8 @@ export const ListToolbarSkeleton = ({ children }: { children?: ReactNode }) => (
       LIST_TILE_INSET_CLASS,
     )}
   >
-    <div className="flex min-w-48 flex-1 items-center gap-2">
+    {/* As tall as the filter input, so the bar keeps its loaded height. */}
+    <div className="flex h-8 min-w-48 flex-1 items-center gap-2">
       <Skeleton className="size-4 shrink-0 rounded" />
       <Skeleton className="h-4 w-48" />
     </div>

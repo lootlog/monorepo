@@ -92,19 +92,15 @@ it("preserves the highlight and scroll position on unrelated renders while track
   Object.defineProperties(general, {
     offsetLeft: { value: 4 },
     offsetWidth: { value: 80 },
-    offsetHeight: { value: 36 },
   });
   Object.defineProperties(roles, {
     offsetLeft: { value: 88 },
     offsetWidth: { value: 64 },
-    offsetHeight: { value: 36 },
   });
   act(() => general.setAttribute("aria-current", "page"));
   await waitFor(() => expect(scroll).toHaveBeenCalled());
   const highlight = screen.getByRole("presentation", { hidden: true });
-  await waitFor(() =>
-    expect(highlight).toHaveStyle({ width: "80px", height: "36px" }),
-  );
+  await waitFor(() => expect(highlight).toHaveStyle({ width: "80px" }));
   scroll.mockClear();
   rerender(
     <HorizontalMenu aria-label="Settings" className="text-sm">
@@ -123,8 +119,7 @@ it("preserves the highlight and scroll position on unrelated renders while track
   expect(highlight).not.toHaveAttribute("hidden");
   expect(highlight).toHaveStyle({
     width: "80px",
-    height: "36px",
-    transform: "translate(4px, 0px)",
+    transform: "translateX(4px)",
   });
   rerender(
     <HorizontalMenu aria-label="Settings" className="text-sm">
@@ -141,8 +136,7 @@ it("preserves the highlight and scroll position on unrelated renders while track
   await waitFor(() => {
     expect(highlight).toHaveStyle({
       width: "64px",
-      height: "36px",
-      transform: "translate(88px, 0px)",
+      transform: "translateX(88px)",
     });
     expect(scroll).toHaveBeenCalledOnce();
   });

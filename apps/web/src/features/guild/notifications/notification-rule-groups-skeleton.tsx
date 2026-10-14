@@ -1,10 +1,10 @@
 import {
+  LIST_BAND_HEADING_CLASS,
   LIST_GROUP_HEADING_CLASS,
   LIST_TILE_INSET_CLASS,
 } from "@/components/common/list-tile";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
-import { NOTIFICATION_GROUP_HEADING_CLASS } from "./components/notification-rule-groups";
 import { NotificationRuleRowSkeleton } from "./notification-rule-row-skeleton";
 
 const GROUP_SIZES = [3, 4];
@@ -18,7 +18,7 @@ export const NotificationRuleGroupsSkeleton = () => (
           className={cn(
             LIST_GROUP_HEADING_CLASS,
             LIST_TILE_INSET_CLASS,
-            NOTIFICATION_GROUP_HEADING_CLASS,
+            LIST_BAND_HEADING_CLASS,
           )}
         >
           <Skeleton className="h-3.5 w-44" />

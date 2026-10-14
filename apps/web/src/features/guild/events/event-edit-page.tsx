@@ -1,4 +1,4 @@
-import { HorizontalMenu } from "@/components/layout/horizontal-menu";
+import { PageTabsLayout } from "@/components/layout/page-tabs-layout";
 import { Outlet, useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
@@ -28,16 +28,14 @@ export const EventEditPage = () => {
   ];
 
   return (
-    <div className="w-full h-full flex flex-col min-h-0">
-      <HorizontalMenu
-        items={navItems}
+    <div className="flex h-full min-h-0 w-full flex-col">
+      <PageTabsLayout
+        tabs={navItems}
         basePath={basePath}
         ariaLabel={t("events.editSections.ariaLabel")}
-        className="shrink-0 pb-0"
-      />
-      <div className="flex-1 min-h-0 overflow-hidden">
+      >
         <Outlet />
-      </div>
+      </PageTabsLayout>
     </div>
   );
 };

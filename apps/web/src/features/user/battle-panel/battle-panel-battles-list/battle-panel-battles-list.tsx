@@ -191,7 +191,10 @@ export const BattlePanelBattlesList = () => {
         </MobileFiltersDrawer>
       )}
 
-      <div className="w-full min-w-0 flex flex-col h-full overflow-hidden">
+      <div
+        data-fills-page
+        className="flex w-full min-w-0 flex-col overflow-hidden"
+      >
         <div className="flex-1 min-w-0 flex overflow-hidden">
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden p-3">
             <BattlesList

@@ -9,12 +9,14 @@ import { MemberDeactivationDialog } from "./member-deactivation-dialog";
 export type MemberDeactivationButtonProps = {
   member: GuildMember;
   onDeactivated: (member: GuildMember) => void;
+  size?: "sm";
   className?: string;
 };
 
 export const MemberDeactivationButton = ({
   member,
   onDeactivated,
+  size,
   className,
 }: MemberDeactivationButtonProps) => {
   const { t } = useTranslation();
@@ -31,6 +33,7 @@ export const MemberDeactivationButton = ({
       <Button
         ref={buttonRef}
         variant="destructive"
+        size={size}
         className={className}
         disabled={!guildId || !member.active || target !== null}
         onClick={() => {
