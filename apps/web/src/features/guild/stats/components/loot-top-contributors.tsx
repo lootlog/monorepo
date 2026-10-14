@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { LEADERBOARD_SIZE } from "../constants";
 import { useGuildMemberMap } from "../hooks/use-guild-member-map";
 import { MemberNameWithColor } from "./member-name-with-color";
-import { StatsMemberAvatar } from "./stats-member-avatar";
+import { MemberAvatar } from "@/components/common/member-avatar";
 import { StatsLeaderboardCard } from "./stats-leaderboard-card";
 import { StatsLeaderboardRow } from "./stats-leaderboard-row";
 
@@ -37,7 +37,7 @@ export const LootTopContributors = ({
           key={member.userId}
           rank={index + 1}
           media={
-            <StatsMemberAvatar
+            <MemberAvatar
               userId={member.userId}
               avatar={member.avatar}
               name={member.name}

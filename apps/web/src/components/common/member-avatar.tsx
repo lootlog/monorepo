@@ -6,7 +6,7 @@ import {
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { cn } from "cn";
 
-type StatsMemberAvatarProps = {
+type MemberAvatarProps = {
   userId: string;
   avatar: string | null;
   name: string;
@@ -15,13 +15,14 @@ type StatsMemberAvatarProps = {
   imageSize?: number;
 };
 
-export const StatsMemberAvatar = ({
+/** A member's Discord avatar, with their initial while it loads. */
+export const MemberAvatar = ({
   userId,
   avatar,
   name,
   className,
   imageSize = 64,
-}: StatsMemberAvatarProps) => (
+}: MemberAvatarProps) => (
   <Avatar className={cn("size-8 shrink-0", className)}>
     <AvatarImage src={getDiscordAvatarUrl(userId, avatar, imageSize)} alt="" />
     <AvatarFallback className="text-xs">{name[0]}</AvatarFallback>

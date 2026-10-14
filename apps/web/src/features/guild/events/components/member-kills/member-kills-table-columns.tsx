@@ -1,19 +1,12 @@
 import type { TFunction } from "i18next";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ChevronDown, Info } from "lucide-react";
-import { Button } from "@lootlog/ui/components/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
-import { cn } from "cn";
 import type { KillHistoryMemberEntry } from "@lootlog/client/main";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
-import { formatPoints } from "../../utils/format-points";
 import { KillMonsterCell } from "../kills/kill-monster-cell";
 import { createKillNumberColumn } from "../kills/event-kills-table-columns";
 import { getMemberKillScoringViewModel } from "./member-kills-view-model";
+import { MemberKillBreakdownToggle } from "./member-kill-breakdown-toggle";
+import { MemberKillPoints } from "./member-kill-points";
 import type { coreTableFeatures } from "@/lib/tanstack-table-features";
 
 type CreateMemberKillsTableColumnsOptions = {
@@ -75,72 +68,19 @@ export const createMemberKillsTableColumns = ({
   {
     id: "points",
     header: t("events.kills.points"),
-    cell: ({ row }) => {
-      const { point, hasManualPointsAdjustment } =
-        getMemberKillScoringViewModel(row.original, t);
-
-      return (
-        <div className="flex items-center justify-end gap-1">
-          {hasManualPointsAdjustment && (
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <span
-                    className="inline-flex size-6 shrink-0 items-center justify-center text-amber-400"
-                    tabIndex={0}
-                    aria-label={t("events.points.modified")}
-                  >
-                    <Info className="size-3.5" />
-                  </span>
-                }
-              />
-              <TooltipContent>
-                <p>{t("events.points.modified")}</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-          <span className="font-bold text-primary tabular-nums">
-            {formatPoints(point.points)}
-            <span className="ml-1 hidden text-xs font-medium text-primary/75 sm:inline">
-              {t("events.common.pointsShort")}
-            </span>
-          </span>
-        </div>
-      );
-    },
+    cell: ({ row }) => <MemberKillPoints kill={row.original} />,
     enableSorting: false,
   },
   {
     id: "actions",
     header: () => <span className="sr-only">{t("events.kills.actions")}</span>,
-    cell: ({ row }) => {
-      const kill = row.original;
-      const isExpanded = expandedKillIds.includes(kill.id);
-
-      return (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-expanded={isExpanded}
-          aria-label={t(
-            isExpanded
-              ? "events.kills.collapseBreakdown"
-              : "events.kills.expandBreakdown",
-            { monsterName: kill.heroNpc.npcName },
-          )}
-          onClick={() => onExpandedToggle(kill.id)}
-          className="text-muted-foreground hover:text-foreground"
-        >
-          <ChevronDown
-            className={cn(
-              "size-4 transition-[rotate] duration-200 ease-emphasized motion-reduce:transition-none",
-              isExpanded && "rotate-180",
-            )}
-          />
-        </Button>
-      );
-    },
+    cell: ({ row }) => (
+      <MemberKillBreakdownToggle
+        monsterName={row.original.heroNpc.npcName}
+        isExpanded={expandedKillIds.includes(row.original.id)}
+        onToggle={() => onExpandedToggle(row.original.id)}
+      />
+    ),
     enableSorting: false,
   },
 ];

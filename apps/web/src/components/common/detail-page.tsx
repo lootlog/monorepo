@@ -1,6 +1,6 @@
 import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties, ReactNode, Ref } from "react";
 import { DetailBar } from "./detail-bar";
 
 type DetailPageProps = {
@@ -13,6 +13,8 @@ type DetailPageProps = {
   meta: ReactNode;
   /** Controls at the end of the details row. */
   actions?: ReactNode;
+  /** The page's scroll viewport, for content that loads more as it scrolls. */
+  scrollRef?: Ref<HTMLDivElement>;
   children: ReactNode;
 };
 
@@ -26,6 +28,7 @@ export const DetailPage = ({
   nameStyle,
   meta,
   actions,
+  scrollRef,
   children,
 }: DetailPageProps) => (
   <div className="flex h-full min-h-0 flex-col">
@@ -42,7 +45,7 @@ export const DetailPage = ({
         </span>
       </span>
     </HeaderSlotPortal>
-    <ScrollArea data-under-top-bar className="min-h-0 flex-1">
+    <ScrollArea data-under-top-bar ref={scrollRef} className="min-h-0 flex-1">
       <DetailBar meta={meta} actions={actions} />
       {children}
     </ScrollArea>

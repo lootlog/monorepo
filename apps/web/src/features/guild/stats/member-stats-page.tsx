@@ -14,7 +14,7 @@ import { KillStatsFilters } from "@/features/kills/components/kill-stats-filters
 import { TRACKABLE_NPC_TYPES } from "./constants";
 import { StatsCountCell } from "./components/stats-count-cell";
 import { StatsDetailMeta } from "./components/stats-detail-meta";
-import { StatsMemberAvatar } from "./components/stats-member-avatar";
+import { MemberAvatar } from "@/components/common/member-avatar";
 import { StatsNpcCell } from "./components/stats-npc-cell";
 import { RankBadge } from "@/components/common/rank-badge";
 import {
@@ -163,7 +163,7 @@ export const MemberStatsPage = () => {
       name={member.memberName}
       nameStyle={{ color: memberColor }}
       media={
-        <StatsMemberAvatar
+        <MemberAvatar
           userId={member.memberUserId}
           avatar={member.memberAvatar}
           name={member.memberName}

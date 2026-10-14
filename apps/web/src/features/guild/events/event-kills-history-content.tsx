@@ -11,6 +11,7 @@ import { EventLoadError } from "./components/event-load-error";
 import { HeroTabs } from "./components/shared/hero-tabs";
 import { EventKillsSkeleton } from "./event-kills-skeleton";
 import { EventKillsTable } from "./components/kills/event-kills-table";
+import { EVENT_HISTORY_PAGE_SIZE } from "./components/shared/event-history-page-size";
 import { useEventKillHistory } from "./hooks/queries/use-event-kill-history";
 
 type EventKillsHistoryContentProps = {
@@ -77,7 +78,7 @@ export const EventKillsHistoryContent = ({
     guildId: routeIds.guildId,
     eventId: routeIds.eventId,
     heroId: selectedHeroId,
-    limit: 20,
+    limit: EVENT_HISTORY_PAGE_SIZE,
   });
 
   if (eventLoading) {
@@ -119,24 +120,22 @@ export const EventKillsHistoryContent = ({
           value={selectedHeroId}
           onValueChange={setSelectedHeroId}
         />
-        <div className="flex w-full min-w-0 max-w-full flex-col gap-3 px-3 py-3">
-          <EventKillsTable
-            kills={allKills}
-            guildId={routeIds.guildId}
-            eventId={routeIds.eventId}
-            scrollElement={scrollElement}
-            resetKey={selectedHeroId ?? "all"}
-            isLoading={killsLoading}
-            hasError={killsHasError}
-            hasNextPage={hasNextPage}
-            isFetchingNextPage={isFetchingNextPage}
-            fetchNextPage={fetchNextPage}
-            onRetry={() =>
-              void (isFetchNextPageError ? fetchNextPage() : refetch())
-            }
-            isRetrying={isFetching}
-          />
-        </div>
+        <EventKillsTable
+          kills={allKills}
+          guildId={routeIds.guildId}
+          eventId={routeIds.eventId}
+          scrollElement={scrollElement}
+          resetKey={selectedHeroId ?? "all"}
+          isLoading={killsLoading}
+          hasError={killsHasError}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          fetchNextPage={fetchNextPage}
+          onRetry={() =>
+            void (isFetchNextPageError ? fetchNextPage() : refetch())
+          }
+          isRetrying={isFetching}
+        />
       </ScrollArea>
     </div>
   );
