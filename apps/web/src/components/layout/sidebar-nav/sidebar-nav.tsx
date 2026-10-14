@@ -77,7 +77,7 @@ export const SidebarNav = ({
     <div className="relative flex flex-col w-full flex-1 overflow-hidden">
       <ThemeSidebarBackground />
       {header && (
-        <div className="group/sidebar-header relative h-14 min-h-14 flex flex-row items-center justify-between border-b border-sidebar-border px-2 font-semibold">
+        <div className="group/sidebar-header relative isolate h-14 min-h-14 flex flex-row items-center justify-between border-b border-sidebar-border px-2 font-semibold">
           {header}
         </div>
       )}
