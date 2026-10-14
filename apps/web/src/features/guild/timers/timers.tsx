@@ -21,8 +21,8 @@ import {
 } from "./timers-layout";
 import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
 import { cn } from "cn";
+import { TimersToolbar } from "./timers-toolbar";
 
-import { SearchInput } from "@/components/ui/search-input";
 import { GuildWorldHeaderSwitcher } from "@/components/layout/guild-world-header-switcher";
 import { useViewMode } from "@/hooks/use-view-mode";
 import { useTranslation } from "react-i18next";
@@ -73,6 +73,7 @@ export const Timers = () => {
   );
   const now = useMinuteTimestamp();
   const [search, setSearch] = useState("");
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
 
   const { viewMode, setViewMode, canChooseViewMode } = useViewMode(
     TIMERS_VIEW_MODE_KEY,
@@ -105,6 +106,30 @@ export const Timers = () => {
   ).map(({ timer }) => timer);
 
   const groups = groupBy(sorted, (timer) => timer.npc?.type ?? "");
+
+  const groupLabel = (key: string) => {
+    const npcType = findNpcType(key);
+
+    return npcType ? t(`npcType.${npcType}`) : t("timers.npcType.manual");
+  };
+
+  const visibleGroups = Object.entries(groups).filter(
+    ([key]) => selectedGroups.length === 0 || selectedGroups.includes(key),
+  );
+
+  const toolbar = (
+    <TimersToolbar
+      search={search}
+      onSearchChange={setSearch}
+      groups={Object.entries(groups).map(([key, groupTimers]) => ({
+        key,
+        label: groupLabel(key),
+        count: groupTimers.length,
+      }))}
+      selectedGroups={selectedGroups}
+      onSelectedGroupsChange={setSelectedGroups}
+    />
+  );
 
   const retryButton = (
     <Button
@@ -144,6 +169,9 @@ export const Timers = () => {
     if (!hasFilteredTimers) {
       return (
         <div className="p-3">
+          {showsNoSearchResults && (
+            <div className="-mx-3 -mt-3 mb-3">{toolbar}</div>
+          )}
           {showsNoSearchResults ? (
             <EmptyState
               framed
@@ -178,16 +206,15 @@ export const Timers = () => {
 
     return (
       <ScrollArea data-under-top-bar className="min-h-0 flex-1">
-        {Object.entries(groups).map(([key, groupTimers]) => {
-          const npcType = findNpcType(key);
-
+        {toolbar}
+        {visibleGroups.map(([key, groupTimers]) => {
           return (
             <section key={key} aria-labelledby={`timers-group-${key}`}>
               <h2
                 id={`timers-group-${key}`}
                 className={cn(TIMER_GROUP_HEADING_CLASS, TIMER_ROW_INSET_CLASS)}
               >
-                {npcType ? t(`npcType.${npcType}`) : t("timers.npcType.manual")}
+                {groupLabel(key)}
                 <span className="rounded-full bg-foreground/10 px-1.5 text-[11px] leading-4 font-medium tabular-nums">
                   {groupTimers.length}
                 </span>
@@ -227,27 +254,18 @@ export const Timers = () => {
     <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("layout.navigation.timers")}</h1>
       <GuildWorldHeaderSwitcher />
-      {/* Searching and the view sit in the top bar, as on the loot list. */}
-      <HeaderSlotPortal slot="actions">
-        <div className="flex items-center gap-2">
-          <SearchInput
-            placeholder={t("timers.searchPlaceholder")}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            wrapperClassName="w-40 md:w-56"
-            aria-label={t("timers.searchPlaceholder")}
+      {/* The view sits in the top bar, as on the loot list. */}
+      {canChooseViewMode && (
+        <HeaderSlotPortal slot="actions">
+          <ViewModeToggle
+            value={viewMode}
+            onChange={setViewMode}
+            listLabel={t("timers.view.list")}
+            gridLabel={t("timers.view.grid")}
+            size="default"
           />
-          {canChooseViewMode && (
-            <ViewModeToggle
-              value={viewMode}
-              onChange={setViewMode}
-              listLabel={t("timers.view.list")}
-              gridLabel={t("timers.view.grid")}
-              size="default"
-            />
-          )}
-        </div>
-      </HeaderSlotPortal>
+        </HeaderSlotPortal>
+      )}
 
       <div className="flex min-h-0 flex-1 flex-col">
         {isError && timers !== undefined && (

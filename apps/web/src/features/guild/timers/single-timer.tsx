@@ -88,7 +88,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
 
   const fill = veil(paint.fill, phase === "expired");
   // A softer wash than the game tile keeps long lists of painted rows calm.
-  const wash = `color-mix(in srgb, ${fill} 55%, transparent)`;
+  const wash = `color-mix(in srgb, ${fill} 25%, transparent)`;
   const npcName = timer.npc?.name ?? "";
   const npcIcon = timer.npc?.icon ?? null;
 

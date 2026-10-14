@@ -10,9 +10,19 @@ import {
 
 const GROUP_SIZES = [3, 5];
 
-/** Mirrors the grouped timer rows: a group heading above `SingleTimer` rows. */
+/** Mirrors the timer list: the toolbar row, then group headings above `SingleTimer` rows. */
 export const TimersListSkeleton = ({ viewMode }: { viewMode: ViewMode }) => (
   <div aria-hidden="true">
+    <div
+      data-list-tile
+      className={cn(
+        "flex min-h-12 items-center gap-2 border-b border-sidebar-border py-2",
+        TIMER_ROW_INSET_CLASS,
+      )}
+    >
+      <Skeleton className="size-4 shrink-0 rounded" />
+      <Skeleton className="h-4 w-48" />
+    </div>
     {GROUP_SIZES.map((size, groupIndex) => (
       <div key={groupIndex}>
         <div className={cn(TIMER_GROUP_HEADING_CLASS, TIMER_ROW_INSET_CLASS)}>

@@ -1,5 +1,7 @@
 {
-  "searchPlaceholder": "Szukaj timerów...",
+  "filterPlaceholder": "Filtruj po nazwie potwora…",
+  "filterLabel": "Filtruj timery po nazwie potwora",
+  "groupsLabel": "Grupy timerów",
   "loadError": "Nie udało się pobrać timerów",
   "loadErrorDescription": "Sprawdź połączenie i spróbuj ponownie.",
   "refreshError": "Nie udało się odświeżyć timerów. Widoczne dane mogą być nieaktualne. Spróbuj ponownie.",
