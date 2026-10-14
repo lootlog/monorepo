@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildsControllerGetGuildById } from "@lootlog/client/main";
+import { SettingsTabPage } from "../components/settings-tab-page";
 import { ReservationsSettingsForm } from "./reservations-settings-form";
 import { ReservationSharingSettings } from "./reservation-sharing-settings";
 
@@ -14,14 +14,12 @@ export const ReservationsSettings = () => {
   });
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <h1 className="sr-only">{t("settings.guildNavigation.reservations")}</h1>
-      <ScrollArea className="min-h-0 flex-1">
-        <div className="flex w-full flex-col gap-3 px-3 pb-24">
-          {guild && <ReservationsSettingsForm guild={guild} />}
-          <ReservationSharingSettings />
-        </div>
-      </ScrollArea>
-    </div>
+    <SettingsTabPage title={t("settings.guildNavigation.reservations")}>
+      {/* Room below the last section for the docked save bar. */}
+      <div className="pb-24">
+        {guild && <ReservationsSettingsForm guild={guild} />}
+        <ReservationSharingSettings />
+      </div>
+    </SettingsTabPage>
   );
 };

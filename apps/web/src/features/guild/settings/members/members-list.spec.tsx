@@ -26,7 +26,7 @@ import {
 import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
 import { loadAuthenticatedTranslations } from "@/i18n/config";
 import { MemberDeactivationButton } from "./components/member-deactivation-button";
-import { MembersTable } from "./members-table";
+import { MembersList } from "./members-list";
 
 await loadAuthenticatedTranslations();
 
@@ -43,7 +43,7 @@ const members: MemberResponseDto[] = ["Alice", "Bob", "Carol"].map(
   }),
 );
 
-function MemberList({ table }: { table: boolean }) {
+function MemberList({ list }: { list: boolean }) {
   const [viewport, setViewport] = useState<HTMLDivElement | null>(null);
 
   const { data = [] } = useMembersControllerGetGuildMembers({
@@ -52,13 +52,12 @@ function MemberList({ table }: { table: boolean }) {
 
   return (
     <div ref={setViewport}>
-      {table ? (
-        <MembersTable
+      {list ? (
+        <MembersList
           members={data}
           guildOwnerId="owner"
           activityStatsByDiscordIdAndSource={new Map()}
           scrollElement={viewport}
-          isMobile={false}
           canManageMembers
           memberGamePresenceByDiscordId={undefined}
           memberWebPresenceByDiscordId={undefined}
@@ -86,7 +85,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-async function mount(table: boolean) {
+async function mount(list: boolean) {
   const requests: string[] = [];
 
   const client = new QueryClient({
@@ -116,7 +115,7 @@ async function mount(table: boolean) {
   const route = createRoute({
     getParentRoute: () => root,
     path: "$guildId/settings/members",
-    component: () => <MemberList table={table} />,
+    component: () => <MemberList list={list} />,
   });
 
   const router = createRouter({
@@ -146,12 +145,13 @@ async function mount(table: boolean) {
   return { requests, replaceMembers };
 }
 
-it("keeps a deactivation confirmation attached to its member after preceding rows disappear", async () => {
+it("keeps a deactivation confirmation attached to its member after preceding tiles disappear", async () => {
   const { requests, replaceMembers } = await mount(true);
-  const row = (await screen.findByText("Bob")).closest("tr");
+  const tile = (await screen.findByText("Bob")).closest("[data-member-id]");
 
-  if (!row) throw new Error("Member must have a table row");
-  fireEvent.click(within(row).getByRole("button"));
+  if (!(tile instanceof HTMLElement))
+    throw new Error("Member must have a tile");
+  fireEvent.click(within(tile).getByRole("button"));
   fireEvent.click(await screen.findByRole("button", { name: "Dezaktywuj" }));
   await screen.findByRole("alertdialog");
 
@@ -188,11 +188,12 @@ it("submits the member named when the confirmation opened even if its props chan
 
 it("returns keyboard focus to the same member after canceling on a refreshed list", async () => {
   const { replaceMembers } = await mount(true);
-  const row = (await screen.findByText("Bob")).closest("tr");
+  const tile = (await screen.findByText("Bob")).closest("[data-member-id]");
 
-  if (!row) throw new Error("Member must have a table row");
+  if (!(tile instanceof HTMLElement))
+    throw new Error("Member must have a tile");
 
-  const actions = within(row).getByRole("button");
+  const actions = within(tile).getByRole("button");
   actions.focus();
   fireEvent.click(actions);
   const deactivate = await screen.findByRole("button", { name: "Dezaktywuj" });
@@ -210,9 +211,16 @@ it("returns keyboard focus to the same member after canceling on a refreshed lis
   fireEvent.keyDown(cancel, { key: "Escape" });
 
   await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
-  const refreshedRow = screen.getByText("Bob").closest("tr");
+  const refreshedTile = screen.getByText("Bob").closest("[data-member-id]");
 
-  if (!refreshedRow) throw new Error("Member must remain in the table");
+  if (!(refreshedTile instanceof HTMLElement)) {
+    throw new Error("Member must remain in the list");
+  }
 
-  await waitFor(() => expect(document.activeElement).toBe(refreshedRow));
+  // Focus returns to the member's actions, which opened the dialog.
+  await waitFor(() =>
+    expect(document.activeElement).toBe(
+      within(refreshedTile).getByRole("button"),
+    ),
+  );
 });
