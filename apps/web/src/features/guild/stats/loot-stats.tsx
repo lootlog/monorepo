@@ -55,7 +55,7 @@ export const LootStats = () => {
 
   return (
     <ScrollArea className="h-full">
-      <div className="flex min-h-full flex-col gap-3 px-3 pb-3">
+      <div className="flex min-h-full flex-col gap-3 p-3">
         <h1 className="sr-only">{t("common.stats.loots")}</h1>
         <LootStatsFilterBar
           period={settings.period}

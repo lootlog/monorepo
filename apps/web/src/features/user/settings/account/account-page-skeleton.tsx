@@ -11,7 +11,7 @@ export const AccountSettingsPageSkeleton = () => {
 
   return (
     <ScrollArea className="h-full min-h-0">
-      <div className="flex flex-col gap-3 px-3 pb-3">
+      <div className="flex flex-col gap-3 p-3">
         <SectionCard>
           <SectionCardHeader
             icon={LogOut}

@@ -25,6 +25,11 @@
   }
 }
 
+:root {
+  /* The height of page tabs (`HorizontalMenu`). */
+  --page-tabs-height: 2.75rem;
+}
+
 /*
  * Sticky page content, such as table headers and list toolbars, pins at
  * `top: var(--page-sticky-top)`: right under the app bar while the document
@@ -32,7 +37,8 @@
  * viewport already insets its content below the bar.
  */
 .app-content-frame {
-  --page-sticky-top: 0px;
+  --app-bar-sticky-top: 0px;
+  --page-sticky-top: var(--app-bar-sticky-top);
 }
 
 /* The app bar (`AppTopBar`, 3.5rem) stays pinned over the scrolling document. */
@@ -42,7 +48,11 @@
   }
 
   .app-content-frame {
-    --page-sticky-top: 3.5rem;
+    --app-bar-sticky-top: 3.5rem;
+  }
+
+  html:has(.app-content-frame [data-page-tabs]) {
+    scroll-padding-top: calc(3.5rem + var(--page-tabs-height));
   }
 
   /*
@@ -53,6 +63,29 @@
    */
   [data-under-top-bar] > [data-slot="scroll-area-viewport"] {
     overflow: visible !important;
+  }
+}
+
+/*
+ * Sticky page tabs pin right under the app bar, and the page content after
+ * them pins below the tabs. From `md` up, a scroller of its own inside that
+ * content, such as a sub-page's viewport under tabs that stay outside it,
+ * pins its content at its own top again.
+ */
+[data-page-tabs] ~ * {
+  --page-sticky-top: calc(var(--app-bar-sticky-top) + var(--page-tabs-height));
+}
+
+@media (width >= 48rem) {
+  [data-page-tabs] ~ * [data-slot="scroll-area-viewport"] {
+    --page-sticky-top: 0px;
+  }
+
+  [data-under-top-bar]:has(
+      > [data-slot="scroll-area-viewport"] > [data-page-tabs]
+    )
+    > [data-slot="scroll-area-viewport"] {
+    scroll-padding-top: calc(3.5rem + var(--page-tabs-height));
   }
 }
 

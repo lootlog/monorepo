@@ -49,7 +49,6 @@ export const StatsLayout = () => {
           items={navigationItems}
           basePath={basePath}
           ariaLabel={t("common.breadcrumbs.stats")}
-          className="shrink-0"
         />
       )}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">

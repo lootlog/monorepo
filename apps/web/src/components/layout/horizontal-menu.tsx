@@ -15,15 +15,19 @@ type HorizontalMenuProps = {
   basePath?: string;
   activeId?: string;
   ariaLabel: string;
-  className?: string;
 };
 
+/**
+ * A page's tabs: a strip across the page, edge to edge, that stays pinned
+ * under the app bar. Sticky content after it, such as a list toolbar, pins
+ * below it (see `page-scroll.css`), so render it first in the page scroller
+ * or right above the page's own scroller.
+ */
 export const HorizontalMenu = ({
   items,
   basePath = "",
   activeId,
   ariaLabel,
-  className,
 }: HorizontalMenuProps) => {
   const pathname = useLocation({ select: (location) => location.pathname });
 
@@ -36,7 +40,9 @@ export const HorizontalMenu = ({
   return (
     <HorizontalMenuRoot
       aria-label={ariaLabel}
-      className={cn("min-w-0 shrink-0 p-3", className)}
+      data-page-tabs
+      data-list-tile
+      className="sticky top-(--page-sticky-top) z-20 h-(--page-tabs-height) border-b border-sidebar-border backdrop-blur-sm"
     >
       {items.map((item) => {
         const url = `${basePath}${item.href}`;
@@ -45,7 +51,7 @@ export const HorizontalMenu = ({
           activeId === undefined ? url === activeUrl : item.id === activeId;
 
         return (
-          <li key={item.id} className="min-w-0 max-w-full">
+          <li key={item.id}>
             <Link
               to={url}
               search={item.search}
@@ -54,10 +60,10 @@ export const HorizontalMenu = ({
               activeOptions={{ exact: true }}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "block text-sm font-medium break-words outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+                "rounded-md text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
                 active
-                  ? "text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               {item.label}

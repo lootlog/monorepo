@@ -31,7 +31,7 @@ export const NotificationsHistoryPage = () => {
       </h1>
       <ScrollArea data-under-top-bar className="min-h-0 flex-1">
         <NotificationsTabs />
-        <div className="border-t border-sidebar-border">
+        <div>
           <NotificationHistoryList
             historyJobs={data?.history ?? []}
             isLoading={isLoading}

@@ -6,7 +6,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 export const AppearanceSettingsPageSkeleton = () => {
   return (
     <ScrollArea className="h-full min-h-0">
-      <div className="flex flex-col gap-3 px-3 pb-3">
+      <div className="flex flex-col gap-3 p-3">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
             <div

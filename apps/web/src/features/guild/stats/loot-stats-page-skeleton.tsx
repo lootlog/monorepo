@@ -9,7 +9,7 @@ export const LootStatsPageSkeleton = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="flex flex-col gap-3 px-3 pb-3">
+    <div className="flex flex-col gap-3 p-3">
       <StatsFilterBarSkeleton />
       <LootOverviewCards isLoading />
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">

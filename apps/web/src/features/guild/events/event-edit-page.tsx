@@ -33,7 +33,6 @@ export const EventEditPage = () => {
         items={navItems}
         basePath={basePath}
         ariaLabel={t("events.editSections.ariaLabel")}
-        className="shrink-0 pb-0"
       />
       <div className="flex-1 min-h-0 overflow-hidden">
         <Outlet />
