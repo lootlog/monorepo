@@ -42,9 +42,8 @@ export const ScoringRulesList = ({
             <li
               key={rule.id}
               className={cn(
-                "relative flex items-start justify-between gap-3 px-3 py-2.5",
-                isApplied &&
-                  "pl-5 before:absolute before:bottom-2.5 before:left-3 before:top-2.5 before:w-px before:bg-cyan-400",
+                "flex items-start justify-between gap-3 px-3 py-2.5",
+                isApplied && "bg-cyan-400/[0.06]",
               )}
             >
               <div className="min-w-0">
