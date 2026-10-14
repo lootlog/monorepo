@@ -1,3 +1,4 @@
+import { PAGE_STICKY_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
 import { EmptyState } from "@/components/common/empty-state";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useState } from "react";
@@ -75,7 +76,7 @@ export const EventHeroesTable = ({
   });
 
   return (
-    <SectionCard className="h-fit gap-0 overflow-hidden border-border bg-card p-0">
+    <SectionCard className="h-fit gap-0 overflow-clip border-border bg-card p-0">
       <SectionCardHeader
         icon={Swords}
         title={t("events.heroes.title")}
@@ -102,7 +103,7 @@ export const EventHeroesTable = ({
         <Table className="w-full table-auto lg:table-fixed">
           <TanStackTableHeader
             table={table}
-            className="sticky top-0 z-10 bg-background"
+            className={PAGE_STICKY_TABLE_HEADER_CLASS}
             rowClassName="border-b-1! border-border"
             getHeadClassName={(header) =>
               cn(

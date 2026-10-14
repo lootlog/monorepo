@@ -1,3 +1,4 @@
+import { PAGE_STICKY_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
 import { EmptyState } from "@/components/common/empty-state";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
@@ -178,7 +179,7 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
       <Table className="w-full table-auto xl:table-fixed">
         <TanStackTableHeader
           table={table}
-          className="sticky top-0 z-10 bg-background"
+          className={PAGE_STICKY_TABLE_HEADER_CLASS}
           rowClassName="border-b-1! border-border"
           getHeadClassName={(header) =>
             cn(
@@ -221,7 +222,7 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
   return (
     <Container
       className={cn(
-        "w-full min-w-0 overflow-hidden",
+        "w-full min-w-0 overflow-clip",
         isPreview && "@container/kills",
       )}
     >
