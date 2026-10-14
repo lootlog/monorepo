@@ -1,19 +1,13 @@
 import { UserNotificationsPageSkeleton } from "./notifications-page-skeleton";
 import { useState } from "react";
-import { BellRing, Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
-import { PageHeader } from "@/components/common/page-header";
-import { DmActionsCard } from "@/features/user/notifications/components/dm-actions-card";
+import { BandSection } from "@/components/common/band-section";
+import { InfoButton } from "@/components/common/info-button";
+import { DmTargetTile } from "@/features/user/notifications/components/dm-target-tile";
 import { UserNotificationsInfoDialog } from "@/features/user/notifications/components/user-notifications-info-dialog";
 import { WatchFormDialog } from "@/features/user/notifications/components/watch-item-form-dialog";
-import { WatchedItemsList } from "@/features/user/notifications/components/watched-items-list";
+import { WatchedItemsSection } from "@/features/user/notifications/components/watched-items-section";
 import {
   getNotificationsUserControllerGetUserTargetsQueryKey,
   getNotificationsUserControllerGetWatchedItemsQueryKey,
@@ -22,6 +16,10 @@ import {
   useUsersControllerGetCurrentUserAccessibleGuilds,
 } from "@lootlog/client/main";
 
+/**
+ * The player's own notifications: the direct messages they arrive by, then
+ * the items they watch, as banded sections like the Organization's settings.
+ */
 export const UserNotifications = () => {
   const { t } = useTranslation();
 
@@ -54,72 +52,33 @@ export const UserNotifications = () => {
   }));
 
   if (isLoading) {
-    return (
-      <div className="flex h-full min-h-0 flex-col">
-        <UserNotificationsPageSkeleton />
-      </div>
-    );
+    return <UserNotificationsPageSkeleton />;
   }
 
   return (
     <>
       <div className="flex h-full min-h-0 flex-col">
         <ScrollArea data-under-top-bar className="min-h-0 flex-1">
-          <div className="flex flex-col gap-3 px-3 py-3">
-            <PageHeader
-              icon={BellRing}
-              title={t("settings.userNotifications.title")}
-              description={t("settings.userNotifications.description")}
-              actions={
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        size="icon"
-                        aria-label={t(
-                          "settings.userNotifications.infoDialog.title",
-                        )}
-                        variant="ghost"
-                        onClick={() => setIsInfoDialogOpen(true)}
-                      >
-                        <Info className="h-4 w-4" />
-                      </Button>
-                    }
-                  />
-                  <TooltipContent>
-                    {t("settings.userNotifications.infoDialog.title")}
-                  </TooltipContent>
-                </Tooltip>
-              }
-            />
-
-            <div className="lg:hidden">
-              <DmActionsCard
-                dmTarget={dmTarget}
-                onAddWatch={() => setIsWatchFormOpen(true)}
+          <h1 className="sr-only">{t("settings.userNotifications.title")}</h1>
+          <BandSection
+            id="user-notifications-dm"
+            title={t("settings.userNotifications.dm.sectionTitle")}
+            tiled
+          >
+            <DmTargetTile dmTarget={dmTarget} />
+          </BandSection>
+          <WatchedItemsSection
+            watchedItems={watchedItems}
+            guilds={guilds}
+            canAddWatch={hasActiveDm}
+            onAddWatch={() => setIsWatchFormOpen(true)}
+            trailing={
+              <InfoButton
+                label={t("settings.userNotifications.infoDialog.title")}
+                onClick={() => setIsInfoDialogOpen(true)}
               />
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-              <div className="space-y-3 lg:col-span-2">
-                <WatchedItemsList
-                  watchedItems={watchedItems}
-                  guilds={guilds}
-                  canAddWatch={hasActiveDm}
-                  onAddWatch={() => setIsWatchFormOpen(true)}
-                />
-              </div>
-
-              <div className="space-y-3">
-                <div className="hidden lg:block">
-                  <DmActionsCard
-                    dmTarget={dmTarget}
-                    onAddWatch={() => setIsWatchFormOpen(true)}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+            }
+          />
         </ScrollArea>
       </div>
 
