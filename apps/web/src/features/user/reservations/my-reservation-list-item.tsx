@@ -1,10 +1,9 @@
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { Link } from "@tanstack/react-router";
-import { Bell, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { Bell, Clock3, Pencil, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MyReservationsResponseDtoItemsItem } from "@lootlog/client/main";
-import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
 import {
@@ -12,12 +11,17 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
-import { Separator } from "@lootlog/ui/components/separator";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
+import {
+  getListTileLinkClassName,
+  LIST_TILE_ACTIONS_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
+import { MetaItem } from "@/components/common/meta-item";
 import { useReservationOrganizationIcon } from "./use-reservation-organization-icon";
 
 type MyReservationListItemProps = {
@@ -31,6 +35,7 @@ type MyReservationListItemProps = {
   onCancel?: () => Promise<void>;
 };
 
+/** One of the player's reservations as a tile; the tile opens its calendar. */
 export function MyReservationListItem({
   reservation,
   showCancel = false,
@@ -46,125 +51,119 @@ export function MyReservationListItem({
     reservation.sourceOrganization,
   );
 
+  const canEdit = showEdit && reservation.canEdit;
+  const canCancel = showCancel && reservation.canCancel;
+  const hasActions = canEdit || canCancel;
+
   return (
-    <li className="group flex min-w-0 items-stretch border-b transition-colors last:border-b-0 hover:bg-muted/40 focus-within:bg-muted/40">
-      <Link
-        to={reservation.sourceOrganization.calendarPath}
-        className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-        aria-label={`${t("reservations.my.open", { spot: reservation.spotName })} — ${reservation.sourceOrganization.name}`}
-      >
-        <Tooltip>
-          <TooltipTrigger
-            render=<span
-              className="shrink-0 rounded-lg"
-              aria-label={reservation.sourceOrganization.name}
-            />
-          >
-            <Avatar className="size-9 rounded-lg" aria-hidden>
-              <AvatarImage src={organizationIconUrl ?? undefined} alt="" />
-              <AvatarFallback className="rounded-none text-sm font-semibold">
-                {reservation.sourceOrganization.name.charAt(0).toUpperCase() ||
-                  "?"}
-              </AvatarFallback>
-            </Avatar>
-          </TooltipTrigger>
-          <TooltipContent>{reservation.sourceOrganization.name}</TooltipContent>
-        </Tooltip>
-        <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="truncate text-sm font-semibold transition-colors group-hover:text-primary">
+    <li data-list-tile className={LIST_TILE_RULE_CLASS}>
+      <div className="flex h-full items-center transition-colors hover:bg-muted/30 motion-reduce:transition-none">
+        <Link
+          to={reservation.sourceOrganization.calendarPath}
+          className={getListTileLinkClassName(hasActions)}
+          aria-label={`${t("reservations.my.open", { spot: reservation.spotName })} — ${reservation.sourceOrganization.name}`}
+        >
+          <Tooltip>
+            <TooltipTrigger
+              render=<span
+                className="shrink-0 rounded-lg"
+                aria-label={reservation.sourceOrganization.name}
+              />
+            >
+              <Avatar className="size-9 rounded-lg" aria-hidden>
+                <AvatarImage src={organizationIconUrl ?? undefined} alt="" />
+                <AvatarFallback className="rounded-none text-sm font-semibold">
+                  {reservation.sourceOrganization.name
+                    .charAt(0)
+                    .toUpperCase() || "?"}
+                </AvatarFallback>
+              </Avatar>
+            </TooltipTrigger>
+            <TooltipContent>
+              {reservation.sourceOrganization.name}
+            </TooltipContent>
+          </Tooltip>
+          <span className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="truncate text-sm font-semibold">
               {reservation.spotName}
             </span>
-          </div>
-          <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="truncate text-xs text-muted-foreground">
-              {format(new Date(reservation.startsAt), "EEE, d MMM, HH:mm", {
-                locale: pl,
-              })}
-              {" – "}
-              {format(new Date(reservation.endsAt), "HH:mm", { locale: pl })}
+            <span className="flex min-w-0 items-center gap-x-3">
+              <MetaItem icon={Clock3} className="shrink-0">
+                {format(new Date(reservation.startsAt), "EEE, d MMM, HH:mm", {
+                  locale: pl,
+                })}
+                {" – "}
+                {format(new Date(reservation.endsAt), "HH:mm", { locale: pl })}
+              </MetaItem>
+              {reservation.reminderMinutesBefore !== null && (
+                <MetaItem icon={Bell} className="min-w-0">
+                  <span className="min-w-0 truncate">
+                    {t(
+                      `reservations.reminders.${reservation.reminderMinutesBefore}`,
+                    )}
+                  </span>
+                </MetaItem>
+              )}
             </span>
-            {reservation.reminderMinutesBefore !== null && (
-              <Badge
-                variant="secondary"
-                className="h-5 gap-1 rounded-md px-1.5 text-[10px] font-medium normal-case tracking-normal shadow-none"
-              >
-                <Bell className="size-3" />
-                <span>
-                  {t(
-                    `reservations.reminders.${reservation.reminderMinutesBefore}`,
-                  )}
-                </span>
-              </Badge>
+          </span>
+        </Link>
+        {hasActions && (
+          <div className={LIST_TILE_ACTIONS_CLASS}>
+            {canEdit && (
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="text-muted-foreground"
+                      onClick={onEdit}
+                      aria-label={t("reservations.my.edit", {
+                        spot: reservation.spotName,
+                      })}
+                    >
+                      <Pencil className="size-4" />
+                    </Button>
+                  }
+                />
+                <TooltipContent sideOffset={4}>
+                  {t("reservations.my.edit", { spot: reservation.spotName })}
+                </TooltipContent>
+              </Tooltip>
             )}
-          </div>
-        </div>
-        <ChevronRight
-          aria-hidden
-          className="size-4 shrink-0 text-muted-foreground transition-[color,translate] duration-150 ease-emphasized group-hover:translate-x-0.5 group-hover:text-primary motion-reduce:transition-none"
-        />
-      </Link>
-      {((showEdit && reservation.canEdit) ||
-        (showCancel && reservation.canCancel)) && (
-        <div className="flex shrink-0 items-center gap-0.5 pr-2">
-          <Separator
-            orientation="vertical"
-            className="mr-1 self-center data-[orientation=vertical]:h-8"
-          />
-          {showEdit && reservation.canEdit && (
-            <Tooltip>
-              <TooltipTrigger
-                render={
+            {canCancel && (
+              <ConfirmDeleteDialog
+                title={t("reservations.my.cancelConfirmTitle", {
+                  spot: reservation.spotName,
+                })}
+                description={t("reservations.my.cancelConfirmDescription")}
+                confirmButtonLabel={t("reservations.details.cancel")}
+                cancelButtonLabel={t("reservations.my.keep")}
+                disabled={cancelDisabled}
+                onConfirm={onCancel ?? (() => undefined)}
+                triggerTooltip={t("reservations.my.cancel", {
+                  spot: reservation.spotName,
+                })}
+                trigger={
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    className="text-muted-foreground hover:bg-primary/10 hover:text-primary"
-                    onClick={onEdit}
-                    aria-label={t("reservations.my.edit", {
+                    className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    loading={cancelPending}
+                    aria-label={t("reservations.my.cancel", {
                       spot: reservation.spotName,
                     })}
                   >
-                    <Pencil className="size-3.5" />
+                    <Trash2 className="size-4" />
                   </Button>
                 }
               />
-              <TooltipContent sideOffset={4}>
-                {t("reservations.my.edit", { spot: reservation.spotName })}
-              </TooltipContent>
-            </Tooltip>
-          )}
-          {showCancel && reservation.canCancel && (
-            <ConfirmDeleteDialog
-              title={t("reservations.my.cancelConfirmTitle", {
-                spot: reservation.spotName,
-              })}
-              description={t("reservations.my.cancelConfirmDescription")}
-              confirmButtonLabel={t("reservations.details.cancel")}
-              cancelButtonLabel={t("reservations.my.keep")}
-              disabled={cancelDisabled}
-              onConfirm={onCancel ?? (() => undefined)}
-              triggerTooltip={t("reservations.my.cancel", {
-                spot: reservation.spotName,
-              })}
-              trigger={
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  loading={cancelPending}
-                  aria-label={t("reservations.my.cancel", {
-                    spot: reservation.spotName,
-                  })}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              }
-            />
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        )}
+      </div>
     </li>
   );
 }

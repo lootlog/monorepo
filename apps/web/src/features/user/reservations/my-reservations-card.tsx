@@ -58,7 +58,8 @@ export function MyReservationsCard() {
           }
         >
           {reservations.length ? (
-            <ul>
+            // The card's own border closes the last tile.
+            <ul className="*:last:border-b-0">
               {reservations.map((reservation) => (
                 <MyReservationListItem
                   key={reservation.id}
