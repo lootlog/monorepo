@@ -1,3 +1,4 @@
+import { BandSection } from "@/components/common/band-section";
 import { PageHeader } from "@/components/common/page-header";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { NotificationCreateSkeleton } from "./notification-create-skeleton";
@@ -22,7 +23,6 @@ import { useFormState } from "react-hook-form";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { Plus } from "lucide-react";
 import { Switch } from "@lootlog/ui/components/switch";
-import { NotificationFormSection } from "./components/notification-form-section";
 import { NotificationMessagePreview } from "./components/notification-message-preview";
 import { NotificationTargetDialog } from "./components/notification-target-dialog";
 import { NotificationTemplateEditor } from "./components/notification-template-editor";
@@ -99,7 +99,7 @@ export const NotificationRuleFormPage = () => {
         <Form {...form}>
           {/* Room below the last section for the floating save bar. */}
           <form onSubmit={form.handleSubmit(handleSubmit)} className="pb-24">
-            <NotificationFormSection
+            <BandSection
               id="rule-form-basics"
               title={t("settings.notifications.ruleDialog.sections.rule")}
             >
@@ -154,9 +154,9 @@ export const NotificationRuleFormPage = () => {
                   )}
                 />
               )}
-            </NotificationFormSection>
+            </BandSection>
 
-            <NotificationFormSection
+            <BandSection
               id="rule-form-when"
               title={t("settings.notifications.ruleDialog.sections.when")}
               description={
@@ -187,9 +187,9 @@ export const NotificationRuleFormPage = () => {
                 t={t}
               />
               <NotificationScheduleFields form={form} t={t} />
-            </NotificationFormSection>
+            </BandSection>
 
-            <NotificationFormSection
+            <BandSection
               id="rule-form-where"
               title={t("settings.notifications.ruleDialog.sections.where")}
               description={t(
@@ -239,9 +239,9 @@ export const NotificationRuleFormPage = () => {
                   </FormItem>
                 )}
               />
-            </NotificationFormSection>
+            </BandSection>
 
-            <NotificationFormSection
+            <BandSection
               id="rule-form-content"
               title={t("settings.notifications.ruleDialog.sections.content")}
             >
@@ -271,7 +271,7 @@ export const NotificationRuleFormPage = () => {
                 contentTemplate={contentTemplate}
                 guildRoles={guildRoles}
               />
-            </NotificationFormSection>
+            </BandSection>
 
             <UnsavedChangesBar
               isDirty={isCreateMode || isDirty}

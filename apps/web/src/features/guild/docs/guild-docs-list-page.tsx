@@ -25,7 +25,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { GuildDocCreateDialog } from "./components/guild-doc-create-dialog";
 import { GuildDocTrashDialog } from "./components/guild-doc-trash-dialog";
 import { GuildDocTile } from "./guild-doc-tile";
-import { GuildDocTileSkeleton } from "./guild-doc-tile-skeleton";
+import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
 
 import { useGuildDocsList } from "./use-guild-docs-list";
 
@@ -105,7 +105,7 @@ export const GuildDocsListPage = () => {
       return (
         <div aria-hidden="true">
           {Array.from({ length: 6 }).map((_, index) => (
-            <GuildDocTileSkeleton key={index} hasActions={canWrite} />
+            <ListTileSkeleton key={index} actions={canWrite ? 1 : 0} />
           ))}
         </div>
       );
