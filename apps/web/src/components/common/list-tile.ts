@@ -15,6 +15,15 @@ export const LIST_GROUP_HEADING_CLASS =
   "flex h-9 items-center gap-2 border-b border-sidebar-border text-xs font-semibold text-muted-foreground";
 
 /**
+ * A group heading on a band, so each group, such as a kind of notification
+ * rule or a part of a form, reads as its own block. The band is opaque, so a
+ * heading pinned while the page scrolls hides what passes under it. Add it
+ * after `LIST_GROUP_HEADING_CLASS`, or pass it to `ListGroupHeading`.
+ */
+export const LIST_BAND_HEADING_CLASS =
+  "h-10 bg-[color-mix(in_oklab,var(--muted)_45%,var(--background))] text-[13px] text-foreground";
+
+/**
  * The hairline under each tile. A tile is isolated, so nothing raised inside
  * it, such as a focused row or stacked sprites, paints over the list toolbar
  * that the tiles scroll under.
