@@ -144,7 +144,10 @@ describe("Discord guild lifecycle against migrated PostgreSQL", () => {
         ]) {
           const updated = decodeUpdated({ guildId, ...changes });
           yield* lifecycle.updateGuild(updated);
+          const clearedAfterChange = clearedKeys.length;
+          // Every bot start republishes unchanged servers.
           yield* lifecycle.updateGuild(updated);
+          expect(clearedKeys).toHaveLength(clearedAfterChange);
 
           const rows = yield* db
             .select()
@@ -167,12 +170,12 @@ describe("Discord guild lifecycle against migrated PostgreSQL", () => {
         });
       }),
     );
-    expect(clearedKeys).toHaveLength(16);
+    expect(clearedKeys).toHaveLength(8);
     expect(new Set(clearedKeys)).toEqual(
       new Set([getGuildCacheKey(guildId), getGuildCacheKey("guild-alias")]),
     );
     expect(clearedPatterns).toEqual(
-      Array.from({ length: 8 }, () => getPermissionsCachePattern(guildId)),
+      Array.from({ length: 4 }, () => getPermissionsCachePattern(guildId)),
     );
   });
 
