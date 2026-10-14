@@ -6,6 +6,10 @@ import { Label } from "@lootlog/ui/components/label";
 import { cn } from "cn";
 import { useId } from "react";
 
+/** Pressed pills take the accent, as active filter chips do. */
+export const LOOT_FILTER_PILL_CLASS =
+  "text-muted-foreground aria-pressed:border-primary/55 aria-pressed:bg-primary/12 aria-pressed:text-foreground";
+
 export type LootFilterPillOption = {
   value: string;
   label: string;
@@ -48,11 +52,7 @@ export const LootFilterPills = ({
           <ToggleGroupItem
             key={option.value}
             value={option.value}
-            // Pressed pills take the accent, as active filter chips do.
-            className={cn(
-              "text-muted-foreground aria-pressed:border-primary/55 aria-pressed:bg-primary/12 aria-pressed:text-foreground",
-              option.className,
-            )}
+            className={cn(LOOT_FILTER_PILL_CLASS, option.className)}
           >
             {option.label}
           </ToggleGroupItem>
