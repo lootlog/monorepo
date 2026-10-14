@@ -13,7 +13,7 @@ import {
   useNpcsControllerGetNpcs,
   usePlayersControllerGetPlayers,
 } from "@lootlog/client/search";
-import { uniqBy } from "es-toolkit";
+import { isEqual, uniqBy } from "es-toolkit";
 import { useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
@@ -46,6 +46,17 @@ type SavedFilter = {
     itemNames?: string[];
   };
 };
+
+// Selection order does not change which loots match a saved filter.
+const normalizeSavedFilters = (filters: SavedFilter["filters"]) =>
+  Object.fromEntries(
+    Object.entries(filters)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => [
+        key,
+        Array.isArray(value) ? [...value].sort() : value,
+      ]),
+  );
 
 type LootFilters = ReturnType<typeof useLootsFilters>["filters"];
 
@@ -300,21 +311,6 @@ export const useLootFiltersSidebar = () => {
     };
   };
 
-  const isCurrentFilterAlreadySaved = (): boolean => {
-    const currentFilters = getCurrentFiltersForSaving();
-    const currentFiltersString = JSON.stringify(currentFilters);
-
-    const isInDefaults = defaultQuickFilters.some(
-      (filter) => JSON.stringify(filter.filters) === currentFiltersString,
-    );
-
-    const isInCustom = customFilters.some(
-      (filter) => JSON.stringify(filter.filters) === currentFiltersString,
-    );
-
-    return isInDefaults || isInCustom;
-  };
-
   const handleSaveFilter = () => {
     if (!newFilterName.trim()) return;
 
@@ -346,8 +342,16 @@ export const useLootFiltersSidebar = () => {
     ...customFilters.map((f) => ({ ...f, isDefault: false })),
   ];
 
+  const currentSavedFilters = normalizeSavedFilters(
+    getCurrentFiltersForSaving(),
+  );
+
+  const isQuickFilterApplied = (filter: SavedFilter["filters"]) =>
+    isEqual(normalizeSavedFilters(filter), currentSavedFilters);
+
   const canSaveCurrentFilter =
-    hasActiveFilters && !isCurrentFilterAlreadySaved();
+    hasActiveFilters &&
+    !allQuickFilters.some((filter) => isQuickFilterApplied(filter.filters));
 
   const {
     npcActiveFilterCount,
@@ -371,9 +375,6 @@ export const useLootFiltersSidebar = () => {
 
   const clearPlayerFilters = () =>
     updateFilters({ players: [], playerLevelMin: "", playerLevelMax: "" });
-
-  const isQuickFilterApplied = (filter: SavedFilter["filters"]) =>
-    JSON.stringify(filter) === JSON.stringify(getCurrentFiltersForSaving());
 
   // Picking the applied view again takes it off.
   const toggleQuickFilter = (filterData: SavedFilter["filters"]) => {
