@@ -69,8 +69,8 @@
 /*
  * Sticky page tabs pin right under the app bar, and the page content after
  * them pins below the tabs. From `md` up, a scroller of its own inside that
- * content, such as a sub-page's viewport under tabs that stay outside it,
- * pins its content at its own top again.
+ * content, such as a table that scrolls itself, pins its content at its own
+ * top again.
  */
 [data-page-tabs] ~ * {
   --page-sticky-top: calc(var(--app-bar-sticky-top) + var(--page-tabs-height));
@@ -79,6 +79,14 @@
 @media (width >= 48rem) {
   [data-page-tabs] ~ * [data-slot="scroll-area-viewport"] {
     --page-sticky-top: 0px;
+  }
+
+  /*
+   * A tab's page that scrolls itself, such as a table with a pinned footer,
+   * fills the page scroller under the tabs instead of growing with its rows.
+   */
+  [data-page-tabs] ~ [data-fills-page] {
+    height: calc(100% - var(--page-tabs-height));
   }
 
   [data-under-top-bar]:has(

@@ -33,7 +33,7 @@ import { cn } from "cn";
 import { startTransition, useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SettingsListError } from "../components/settings-list-error";
-import { SettingsScrollerContext } from "../settings-scroller-context";
+import { PageScrollerContext } from "@/components/layout/page-scroller-context";
 import { MembersEmptyState } from "./members-empty-state";
 import { MemberTileSkeleton } from "./member-tile-skeleton";
 import { SettingsTabPage } from "../components/settings-tab-page";
@@ -56,7 +56,7 @@ export const MembersSettingsContent = () => {
   const [statusFilter, setStatusFilter] =
     useState<MemberStatusFilter>(defaultStatusFilter);
 
-  const scrollElement = useContext(SettingsScrollerContext);
+  const scrollElement = useContext(PageScrollerContext);
 
   const routeGuildId = useGuildId() ?? "";
 

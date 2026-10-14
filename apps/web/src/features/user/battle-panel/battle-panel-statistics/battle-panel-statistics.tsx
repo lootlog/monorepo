@@ -14,7 +14,6 @@ import { HeadToHeadTable } from "./components/head-to-head-table";
 import { CurrentStreakCard } from "./components/current-streak-card";
 import { BattleDurationStatsCard } from "./components/battle-duration-stats";
 import { PhGrowthChart } from "./components/ph-growth-chart";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { FilterBar } from "@/components/common/filter-bar";
 import { useQueryStates } from "nuqs";
 import {
@@ -143,118 +142,111 @@ export function BattlePanelStatistics() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col pt-3">
-      <ScrollArea className="min-h-0 flex-1">
-        <div className="flex min-h-full flex-col gap-3 px-3 pb-3">
-          {charactersQuery.isError && (
-            <StatisticsQueryPanel query={charactersQuery} />
-          )}
-          <h1 className="sr-only">{t("battlePanel.statistics.title")}</h1>
-          <FilterBar ariaLabel={t("battlePanel.filters.title")}>
-            <StatisticsFilters
-              characterId={currentCharacterId}
-              period={period}
-              minLevel={minLevel}
-              maxLevel={maxLevel}
-              ph={ph}
-              onCharacterChange={(characterId) => {
-                startTransition(() => {
-                  void setQueryState({
-                    characterId: characterId ?? null,
-                  });
-                });
-              }}
-              onPeriodChange={(newPeriod) => {
-                startTransition(() => {
-                  void setQueryState({
-                    period: newPeriod,
-                  });
-                });
-              }}
-              onMinLevelChange={(newMinLevel) => {
-                startTransition(() => {
-                  void setQueryState({
-                    minLevel: newMinLevel ?? 1,
-                  });
-                });
-              }}
-              onMaxLevelChange={(newMaxLevel) => {
-                startTransition(() => {
-                  void setQueryState({
-                    maxLevel: newMaxLevel ?? 500,
-                  });
-                });
-              }}
-              onPhChange={(newPh) => {
-                startTransition(() => {
-                  void setQueryState({
-                    ph: newPh ? true : null,
-                  });
-                });
-              }}
-            />
-          </FilterBar>
+    <div className="flex flex-col gap-3 p-3">
+      {charactersQuery.isError && (
+        <StatisticsQueryPanel query={charactersQuery} />
+      )}
+      <h1 className="sr-only">{t("battlePanel.statistics.title")}</h1>
+      <FilterBar ariaLabel={t("battlePanel.filters.title")}>
+        <StatisticsFilters
+          characterId={currentCharacterId}
+          period={period}
+          minLevel={minLevel}
+          maxLevel={maxLevel}
+          ph={ph}
+          onCharacterChange={(characterId) => {
+            startTransition(() => {
+              void setQueryState({
+                characterId: characterId ?? null,
+              });
+            });
+          }}
+          onPeriodChange={(newPeriod) => {
+            startTransition(() => {
+              void setQueryState({
+                period: newPeriod,
+              });
+            });
+          }}
+          onMinLevelChange={(newMinLevel) => {
+            startTransition(() => {
+              void setQueryState({
+                minLevel: newMinLevel ?? 1,
+              });
+            });
+          }}
+          onMaxLevelChange={(newMaxLevel) => {
+            startTransition(() => {
+              void setQueryState({
+                maxLevel: newMaxLevel ?? 500,
+              });
+            });
+          }}
+          onPhChange={(newPh) => {
+            startTransition(() => {
+              void setQueryState({
+                ph: newPh ? true : null,
+              });
+            });
+          }}
+        />
+      </FilterBar>
 
-          <StatisticsQueryPanel query={combatProfileQuery}>
-            <CombatProfileOverview
-              data={combatProfile}
-              isLoading={isCombatProfileLoading}
-            />
-          </StatisticsQueryPanel>
+      <StatisticsQueryPanel query={combatProfileQuery}>
+        <CombatProfileOverview
+          data={combatProfile}
+          isLoading={isCombatProfileLoading}
+        />
+      </StatisticsQueryPanel>
 
-          <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-4">
-            <StatisticsQueryPanel query={streakQuery}>
-              <CurrentStreakCard
-                data={
-                  streakData ?? {
-                    current: { type: "none", count: 0 },
-                    longest: { wins: 0, losses: 0 },
-                  }
-                }
-                isLoading={isStreakLoading}
-              />
-            </StatisticsQueryPanel>
-            <StatisticsQueryPanel query={durationQuery}>
-              <BattleDurationStatsCard
-                data={
-                  durationData ?? {
-                    avgWinDuration: 0,
-                    avgLossDuration: 0,
-                    fastest: null,
-                    longest: null,
-                  }
-                }
-                isLoading={isDurationLoading}
-              />
-            </StatisticsQueryPanel>
-            <StatisticsQueryPanel
-              query={phGrowthQuery}
-              className="lg:col-span-2"
-            >
-              <PhGrowthChart
-                data={phGrowthData ?? []}
-                isLoading={isPhGrowthLoading}
-              />
-            </StatisticsQueryPanel>
-          </div>
+      <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-4">
+        <StatisticsQueryPanel query={streakQuery}>
+          <CurrentStreakCard
+            data={
+              streakData ?? {
+                current: { type: "none", count: 0 },
+                longest: { wins: 0, losses: 0 },
+              }
+            }
+            isLoading={isStreakLoading}
+          />
+        </StatisticsQueryPanel>
+        <StatisticsQueryPanel query={durationQuery}>
+          <BattleDurationStatsCard
+            data={
+              durationData ?? {
+                avgWinDuration: 0,
+                avgLossDuration: 0,
+                fastest: null,
+                longest: null,
+              }
+            }
+            isLoading={isDurationLoading}
+          />
+        </StatisticsQueryPanel>
+        <StatisticsQueryPanel query={phGrowthQuery} className="lg:col-span-2">
+          <PhGrowthChart
+            data={phGrowthData ?? []}
+            isLoading={isPhGrowthLoading}
+          />
+        </StatisticsQueryPanel>
+      </div>
 
-          <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
-            <StatisticsQueryPanel query={professionQuery}>
-              <ProfessionWinRateChart
-                data={professionData ?? []}
-                isLoading={isProfessionLoading}
-              />
-            </StatisticsQueryPanel>
-            <StatisticsQueryPanel query={headToHeadQuery}>
-              <HeadToHeadTable
-                data={headToHeadData?.records ?? []}
-                search={statisticsSearch}
-                isLoading={isHeadToHeadLoading}
-              />
-            </StatisticsQueryPanel>
-          </div>
-        </div>
-      </ScrollArea>
+      <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
+        <StatisticsQueryPanel query={professionQuery}>
+          <ProfessionWinRateChart
+            data={professionData ?? []}
+            isLoading={isProfessionLoading}
+          />
+        </StatisticsQueryPanel>
+        <StatisticsQueryPanel query={headToHeadQuery}>
+          <HeadToHeadTable
+            data={headToHeadData?.records ?? []}
+            search={statisticsSearch}
+            isLoading={isHeadToHeadLoading}
+          />
+        </StatisticsQueryPanel>
+      </div>
     </div>
   );
 }

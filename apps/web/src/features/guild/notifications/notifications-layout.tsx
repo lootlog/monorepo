@@ -1,61 +1,39 @@
+import { PageTabsLayout } from "@/components/layout/page-tabs-layout";
 import { ROUTES } from "@/config/routes";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import {
-  getPageScroller,
-  usePageScrollsDocument,
-} from "@/hooks/utils/use-page-scroll";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Outlet, useLocation } from "@tanstack/react-router";
-import { useLayoutEffect, useRef } from "react";
-import { NotificationsTabs } from "./components/notifications-tabs";
+import { Outlet } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 
-/**
- * The notifications section. Its tabs share one page scroller under the tabs,
- * so the tabs stay in place while a tab loads or changes; a rule's own page
- * scrolls by itself.
- */
+/** Rules, channels and history: the notification views, one tab each. */
 export const NotificationsLayout = () => {
+  const { t } = useTranslation();
   const guildId = useGuildId() ?? "";
-  const scrollsDocument = usePageScrollsDocument();
-  const viewportRef = useRef<HTMLDivElement>(null);
-
-  const pathname = useLocation({
-    select: (location) => location.pathname.replace(/\/$/, ""),
-  });
-
   const routes = ROUTES.guild.notifications;
-
-  const isTab = [
-    routes.base(guildId),
-    routes.channels(guildId),
-    routes.history(guildId),
-  ].includes(pathname);
-
-  const shownPathname = useRef(pathname);
-
-  // Each tab opens at its top, as it would in a scroller of its own.
-  useLayoutEffect(() => {
-    if (shownPathname.current === pathname) return;
-    shownPathname.current = pathname;
-    getPageScroller(viewportRef.current, scrollsDocument)?.scrollTo({
-      top: 0,
-    });
-  }, [pathname, scrollsDocument]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {isTab ? (
-        <ScrollArea
-          data-under-top-bar
-          ref={viewportRef}
-          className="min-h-0 flex-1"
-        >
-          <NotificationsTabs />
-          <Outlet />
-        </ScrollArea>
-      ) : (
+      <PageTabsLayout
+        ariaLabel={t("settings.notifications.tabs.label")}
+        tabs={[
+          {
+            id: "rules",
+            label: t("settings.notifications.tabs.rules"),
+            href: routes.base(guildId),
+          },
+          {
+            id: "channels",
+            label: t("settings.notifications.tabs.channels"),
+            href: routes.channels(guildId),
+          },
+          {
+            id: "history",
+            label: t("settings.notifications.tabs.history"),
+            href: routes.history(guildId),
+          },
+        ]}
+      >
         <Outlet />
-      )}
+      </PageTabsLayout>
     </div>
   );
 };
