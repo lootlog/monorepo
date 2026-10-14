@@ -36,11 +36,12 @@ export const TimersToolbar = ({
     <div
       data-list-tile
       className={cn(
-        "sticky top-0 z-10 flex min-h-12 flex-wrap items-center gap-x-4 gap-y-2 border-b border-sidebar-border py-2 backdrop-blur-sm",
+        "sticky top-0 z-10 flex min-h-12 flex-wrap items-center gap-x-4 gap-y-2 border-b border-sidebar-border py-2 backdrop-blur-sm transition-colors has-[input:focus-visible]:border-primary motion-reduce:transition-none",
         TIMER_ROW_INSET_CLASS,
       )}
     >
-      <label className="-mx-1 flex min-w-48 flex-1 items-center gap-2 rounded-md px-1 text-sm text-muted-foreground focus-within:text-foreground focus-within:ring-2 focus-within:ring-ring">
+      {/* The bar's bottom rule lights up while the filter has focus. */}
+      <label className="flex min-w-48 flex-1 items-center gap-2 text-sm text-muted-foreground focus-within:text-foreground">
         <Search aria-hidden className="size-4 shrink-0" />
         <input
           type="search"

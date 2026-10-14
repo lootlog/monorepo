@@ -20,10 +20,5 @@
   "details": {
     "minSpawnTime": "Min. czas respawnu",
     "maxSpawnTime": "Max. czas respawnu"
-  },
-  "phase": {
-    "untilWindow": "do okna",
-    "untilWindowEnd": "do końca okna",
-    "pastWindow": "po oknie"
   }
 }
