@@ -34,8 +34,7 @@
     "titleLabel": "Tytuł",
     "tooLong": "Dokument jest za długi.",
     "titleTooLong": "Tytuł może mieć maksymalnie 120 znaków.",
-    "lastEdit": "Ostatnia edycja: {{name}}, {{date}}",
-    "saveShortcut": "{{modifier}} + S"
+    "lastEdit": "Ostatnia edycja: {{name}}, {{date}}"
   },
   "toolbar": {
     "undo": "Cofnij",

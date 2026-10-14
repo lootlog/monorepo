@@ -1,23 +1,33 @@
 import { AnimatePresence } from "framer-motion";
 import * as m from "framer-motion/m";
 import { Button } from "@lootlog/ui/components/button";
-import { Kbd } from "@lootlog/ui/components/kbd";
-import type { FC } from "react";
+import { Kbd, KbdGroup } from "@lootlog/ui/components/kbd";
+import { cn } from "cn";
+import { useEffect, useRef, type FC } from "react";
 import { useTranslation } from "react-i18next";
-import { EASE_EMPHASIZED, MOTION_DURATION } from "@/lib/motion";
+import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { getPrimaryModifierKeyLabel } from "@/utils/platform/get-primary-modifier-key-label";
 
 export type UnsavedChangesBarProps = {
   isDirty: boolean;
   isSubmitting: boolean;
   onReset: () => void;
-  onSubmit?: () => void;
   unsavedChangesLabel?: string;
   resetLabel?: string;
   saveLabel?: string;
-  /** A keyboard shortcut the page handles to save, shown beside the message. */
-  saveShortcut?: { label: string; keys: string };
 };
 
+/** The sidebar's spring, so the bar settles like the navigation does. */
+const SPRING = { type: "spring", stiffness: 500, damping: 40 } as const;
+
+/** A looser spring for the bar's content, which overshoots a little as it lands. */
+const ARRIVAL_SPRING = { type: "spring", stiffness: 420, damping: 18 } as const;
+
+/**
+ * The save bar of a form page, docked to the bottom edge as the top bar is to
+ * the top. It renders inside the page's form, so its save button submits that
+ * form, and ⌘S or Ctrl+S presses it while there are changes.
+ */
 export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
   isDirty,
   isSubmitting,
@@ -25,15 +35,36 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
   unsavedChangesLabel,
   resetLabel,
   saveLabel,
-  saveShortcut,
 }) => {
   const { t } = useTranslation();
+  const submitRef = useRef<HTMLButtonElement>(null);
+  const modifier = getPrimaryModifierKeyLabel();
 
-  const effectiveUnsavedChangesLabel =
-    unsavedChangesLabel ?? t("common.unsavedChanges");
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.key.toLowerCase() !== "s" ||
+        !(event.metaKey || event.ctrlKey) ||
+        event.altKey ||
+        event.shiftKey
+      ) {
+        return;
+      }
 
-  const effectiveResetLabel = resetLabel ?? t("common.reset");
-  const effectiveSaveLabel = saveLabel ?? t("common.save");
+      // A form page saves its own changes instead of the browser saving the page.
+      event.preventDefault();
+
+      const submit = submitRef.current;
+
+      if (isDirty && !isSubmitting && !event.repeat && submit?.form) {
+        submit.form.requestSubmit(submit);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isDirty, isSubmitting]);
 
   return (
     <AnimatePresence>
@@ -41,47 +72,79 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
         <m.div
           key="unsaved-bar"
           aria-live="polite"
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          transition={{
-            duration: MOTION_DURATION.medium,
-            ease: EASE_EMPHASIZED,
-          }}
-          className="pointer-events-none fixed bottom-0 left-0 right-0 md:left-(--sidebar-width) z-50 flex justify-center px-4 pb-4"
+          initial={{ opacity: 0, y: "100%" }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: "100%" }}
+          transition={SPRING}
+          className="fixed right-0 bottom-0 left-0 z-50 md:left-(--sidebar-width)"
         >
-          {/* A raised, opaque surface, so the bar never blends into the page under it. */}
-          <div className="pointer-events-auto flex w-full max-w-xl items-center gap-3 rounded-xl border border-border bg-popover py-2 pr-2 pl-4 text-popover-foreground shadow-[0_16px_40px_-16px_rgb(0_0_0/0.65)]">
-            <span
-              aria-hidden="true"
-              className="size-2 shrink-0 rounded-full bg-signal-timer"
-            />
-            <p className="min-w-0 flex-1 truncate text-sm font-medium">
-              {effectiveUnsavedChangesLabel}
-            </p>
-            {saveShortcut && (
-              <Kbd aria-hidden="true" className="shrink-0 max-sm:hidden">
-                {saveShortcut.label}
-              </Kbd>
+          {/* The top bar's surface, blur and hairline, mirrored at the bottom edge. */}
+          <div
+            className={cn(
+              "flex h-[calc(--spacing(14)+env(safe-area-inset-bottom))] items-center gap-1 border-t border-sidebar-border bg-sidebar/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg backdrop-saturate-150",
+              LIST_TILE_INSET_CLASS,
             )}
-            <div className="flex shrink-0 gap-2">
+          >
+            <m.p
+              className="mr-auto line-clamp-2 min-w-0 text-sm leading-tight font-medium sm:line-clamp-1"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ...ARRIVAL_SPRING, delay: 0.08 }}
+            >
+              {unsavedChangesLabel ?? t("common.unsavedChanges")}
+            </m.p>
+            <m.div
+              className="flex shrink-0 items-center gap-1"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ...ARRIVAL_SPRING, delay: 0.16 }}
+            >
               <Button
                 type="button"
                 variant="ghost"
                 onClick={onReset}
                 disabled={isSubmitting}
+                className="text-muted-foreground hover:text-foreground"
               >
-                {effectiveResetLabel}
+                {resetLabel ?? t("common.reset")}
               </Button>
-              <Button
-                type="submit"
-                variant="default"
-                loading={isSubmitting}
-                aria-keyshortcuts={saveShortcut?.keys}
-              >
-                {effectiveSaveLabel}
-              </Button>
-            </div>
+              <span className="relative flex">
+                {/* Arrival cue, on trial: two accent rings ripple out of the save button. */}
+                <m.span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 rounded-lg ring-2 ring-primary"
+                  initial={{ opacity: 0.9, scale: 1 }}
+                  animate={{ opacity: 0, scale: 1.45 }}
+                  transition={{
+                    duration: 0.9,
+                    ease: "easeOut",
+                    delay: 0.35,
+                    repeat: 1,
+                    repeatDelay: 0.15,
+                  }}
+                />
+                <Button
+                  ref={submitRef}
+                  type="submit"
+                  loading={isSubmitting}
+                  aria-keyshortcuts="Meta+S Control+S"
+                >
+                  {saveLabel ?? t("common.save")}
+                  {/* Keyboards only: phones drop the hint. */}
+                  <KbdGroup
+                    aria-hidden="true"
+                    className="-mr-1.5 max-sm:hidden"
+                  >
+                    <Kbd className="bg-primary-foreground/15 text-primary-foreground">
+                      {modifier}
+                    </Kbd>
+                    <Kbd className="bg-primary-foreground/15 text-primary-foreground">
+                      S
+                    </Kbd>
+                  </KbdGroup>
+                </Button>
+              </span>
+            </m.div>
           </div>
         </m.div>
       )}

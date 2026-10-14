@@ -26,7 +26,7 @@ const CONTENT_MAX_LENGTH = 250_000;
 
 export const TITLE_MAX_LENGTH = 120;
 
-/** The page's form, which the title in the top bar and the save shortcut submit. */
+/** The page's form, which the title in the top bar is saved with. */
 export const GUILD_DOC_FORM_ID = "guild-doc-editor-form";
 
 const createDraftSignature = (title: string, content: GuildDocEditorContent) =>
@@ -104,40 +104,6 @@ export const useGuildDocDraft = () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [isDirty]);
-
-  // ⌘S or Ctrl+S saves a changed draft instead of saving the web page.
-  useEffect(() => {
-    if (!canWrite) {
-      return;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        event.key.toLowerCase() !== "s" ||
-        !(event.metaKey || event.ctrlKey) ||
-        event.altKey ||
-        event.shiftKey
-      ) {
-        return;
-      }
-
-      event.preventDefault();
-
-      if (isDirty) {
-        const form = window.document.getElementById(GUILD_DOC_FORM_ID);
-
-        if (form instanceof HTMLFormElement) {
-          form.requestSubmit();
-        }
-      }
-    };
-
-    window.document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [canWrite, isDirty]);
 
   const validateDraft = () => {
     if (title.trim().length > TITLE_MAX_LENGTH) {
