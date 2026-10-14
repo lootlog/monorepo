@@ -9,7 +9,7 @@ import { TooltipProvider } from "@lootlog/ui/components/tooltip";
 import { useParams } from "@tanstack/react-router";
 import { Gauge, KeyRound, ShieldX } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { SettingsDetailPage } from "../components/settings-detail-page";
+import { DetailPage } from "@/components/common/detail-page";
 import { getActivePermissionCategories } from "./active-permission-categories";
 
 export const RoleSettingsDetailPage = () => {
@@ -42,7 +42,7 @@ export const RoleSettingsDetailPage = () => {
   const activeCategories = getActivePermissionCategories(role.permissions);
 
   return (
-    <SettingsDetailPage
+    <DetailPage
       name={role.name}
       media={
         <span
@@ -85,6 +85,6 @@ export const RoleSettingsDetailPage = () => {
       }
     >
       <RolesForm role={role} />
-    </SettingsDetailPage>
+    </DetailPage>
   );
 };
