@@ -10,7 +10,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@lootlog/ui/components/alert-dialog";
-import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Archive,
@@ -56,24 +55,19 @@ export const GuildDocsListPage = () => {
 
   const toolbarActions = (
     <div className="flex items-center gap-2">
-      <Badge
-        variant="outline"
-        className="shrink-0 gap-1.5"
-        aria-label={t("docs.list.limit", {
-          max: limit.max,
-          used: limit.used,
-        })}
-        title={t("docs.list.limit", {
-          max: limit.max,
-          used: limit.used,
-        })}
+      {/* A readout, not a control: a button's height and shape without its border. */}
+      <span
+        title={t("docs.list.limit", { max: limit.max, used: limit.used })}
+        className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-muted/60 px-2.5 text-sm font-semibold tabular-nums text-muted-foreground"
       >
-        <FileText className="size-3.5" aria-hidden="true" />
-        {t("docs.list.limitShort", {
-          max: limit.max,
-          used: limit.used,
-        })}
-      </Badge>
+        <FileText className="size-4" aria-hidden="true" />
+        <span aria-hidden="true">
+          {t("docs.list.limitShort", { max: limit.max, used: limit.used })}
+        </span>
+        <span className="sr-only">
+          {t("docs.list.limit", { max: limit.max, used: limit.used })}
+        </span>
+      </span>
       {canWrite && (
         <Button
           type="button"
