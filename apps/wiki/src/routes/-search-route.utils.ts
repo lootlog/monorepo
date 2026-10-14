@@ -67,3 +67,17 @@ export function getBasicRouteSearchQueryParams(
 
   return world ? { ...params, world } : params;
 }
+
+export const getSearchStatus = (
+  hasActiveSearch: boolean,
+  isError: boolean,
+  isPending: boolean,
+): SearchStatus => {
+  if (!hasActiveSearch) return "idle";
+
+  if (isError) return "error";
+
+  if (isPending) return "loading";
+
+  return "ready";
+};
