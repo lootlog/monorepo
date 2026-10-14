@@ -10,7 +10,7 @@ type SettingsListSkeletonProps = {
   tiles?: number;
 };
 
-/** Route-level stand-in for a settings list: tabs, toolbar and tiles. */
+/** Route-level stand-in for a settings list under the tabs: toolbar and tiles. */
 export const SettingsListSkeleton = ({
   toolbar,
   tile,

@@ -30,9 +30,10 @@ import {
   ToggleGroupItem,
 } from "@lootlog/ui/components/toggle-group";
 import { cn } from "cn";
-import { startTransition, useState } from "react";
+import { startTransition, useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SettingsListError } from "../components/settings-list-error";
+import { SettingsScrollerContext } from "../settings-scroller-context";
 import { MembersEmptyState } from "./members-empty-state";
 import { MemberTileSkeleton } from "./member-tile-skeleton";
 import { SettingsTabPage } from "../components/settings-tab-page";
@@ -55,9 +56,7 @@ export const MembersSettingsContent = () => {
   const [statusFilter, setStatusFilter] =
     useState<MemberStatusFilter>(defaultStatusFilter);
 
-  const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
-    null,
-  );
+  const scrollElement = useContext(SettingsScrollerContext);
 
   const routeGuildId = useGuildId() ?? "";
 
@@ -176,10 +175,7 @@ export const MembersSettingsContent = () => {
   };
 
   return (
-    <SettingsTabPage
-      title={t("settings.members.title")}
-      scrollRef={setScrollElement}
-    >
+    <SettingsTabPage title={t("settings.members.title")}>
       <ListToolbar
         search={searchValue}
         onSearchChange={setSearchValue}
