@@ -420,7 +420,12 @@
   },
   "notifications": {
     "title": "Powiadomienia",
-    "description": "Zarządzaj kanałami docelowymi, regułami wysyłki i historią dostarczania powiadomień.",
+    "filterPlaceholder": "Filtruj reguły i kanały…",
+    "filterLabel": "Filtruj reguły i kanały po nazwie",
+    "historyFilterPlaceholder": "Filtruj po nazwie reguły…",
+    "historyFilterLabel": "Filtruj historię po nazwie reguły",
+    "historyStatusesLabel": "Statusy wysyłek",
+    "clearFilter": "Wyczyść filtr",
     "info": {
       "title": "Jak działają powiadomienia?",
       "targets": {
@@ -445,30 +450,28 @@
       }
     },
     "notificationsHistory": {
-      "title": "Historia powiadomień",
-      "description": "Przeglądaj historię wysłanych i nieudanych powiadomień, sprawdzaj szczegóły dostarczenia i powody ewentualnych błędów."
+      "title": "Historia powiadomień"
     },
     "actions": {
       "addTarget": "Dodaj kanał docelowy",
+      "addTargetShort": "Dodaj kanał",
       "addRule": "Dodaj regułę",
       "testNow": "Testuj",
-      "edit": "Edytuj",
       "delete": "Usuń",
+      "deleteRuleNamed": "Usuń regułę {{name}}",
+      "deleteTargetNamed": "Usuń kanał {{name}}",
+      "editTargetNamed": "Edytuj kanał {{name}}",
       "cancel": "Anuluj",
       "cancelPending": "Anuluj oczekujące",
+      "cancelPendingNamed": "Anuluj wysyłkę: {{name}}",
       "rebuildPending": "Przebuduj kolejkę",
       "save": "Zapisz",
       "create": "Utwórz",
       "showAllHistory": "Pokaż ostatnie {{count}}"
     },
     "sections": {
-      "actions": "Akcje",
       "targets": "Kanały docelowe",
-      "targetsDescription": "Kanały Discorda używane do wysyłki powiadomień.",
-      "rules": "Reguły",
-      "rulesDescription": "Automatyzacje określające kiedy i gdzie wysyłać powiadomienia.",
-      "jobsDescription": "Oczekujące wysyłki powiadomień.",
-      "historyDescription": "Historia wysłanych i nieudanych powiadomień."
+      "rules": "Reguły"
     },
     "permissionsBlocked": {
       "title": "Brak wymaganych uprawnień bota",
@@ -495,11 +498,9 @@
       "test": "Testowe"
     },
     "states": {
-      "active": "Aktywny",
       "inactive": "Nieaktywny",
       "enabled": "Aktywna",
       "disabled": "Nieaktywna",
-      "canSend": "Może wysyłać",
       "cannotSend": "Brak wysyłki"
     },
     "schedule": {
@@ -537,9 +538,9 @@
     "npcCount_few": "{{count}} NPC",
     "npcCount_many": "{{count}} NPC",
     "ruleLimitUsage": "{{count}} / {{limit}} reguł",
+    "ruleLimitShort": "{{count}} / {{limit}}",
     "testTriggerUsage": "{{used}}/{{limit}} testów ({{minutes}} min)",
     "testTriggerNextAvailable": "Następny test dostępny: {{date}}",
-    "targetLabels": "Kanały docelowe: {{targets}}",
     "targetInactive": "(nieaktywny)",
     "targetTypes": {
       "CHANNEL": "Kanał",
@@ -551,10 +552,9 @@
     "jobs": {
       "pending": "Oczekujące",
       "history": "Historia",
-      "targetLabel": "Kanał: {{target}}",
-      "scheduledFor": "Wysyłka: {{date}}",
       "sendsIn": "Wysyłka za {{time}}",
-      "sendsNow": "Wysyłka teraz"
+      "sendsNow": "Wysyłka teraz",
+      "now": "teraz"
     },
     "jobErrors": {
       "lootSourceNotVisible": "Łup nie jest już dostępny.",
@@ -584,9 +584,12 @@
     },
     "empty": {
       "targets": "Brak skonfigurowanych kanałów docelowych",
+      "filteredTargets": "Żaden kanał nie pasuje do filtra",
       "rules": "Brak skonfigurowanych reguł",
+      "filteredRules": "Żadna reguła nie pasuje do filtra",
       "pendingJobs": "Brak oczekujących powiadomień",
       "historyJobs": "Brak historii powiadomień",
+      "filteredHistory": "Żadna wysyłka nie pasuje do filtrów",
       "availableChannels": "Wszystkie dostępne kanały są już dodane.",
       "npcs": "Brak pasujących NPC.",
       "targetsSelect": "Brak dostępnych kanałów docelowych."

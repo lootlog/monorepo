@@ -1,17 +1,17 @@
+import { ListToolbarSkeleton } from "@/components/common/list-toolbar-skeleton";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { NotificationSettingsSkeleton } from "./notification-settings-skeleton";
-import { PageHeaderSkeleton } from "@/components/common/page-header-skeleton";
 
-export const NotificationsPageSkeleton = () => {
-  return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="flex flex-col gap-3 px-3 py-3">
-        <PageHeaderSkeleton
-          actions={<Skeleton className="size-9 rounded-md" />}
-        />
-
-        <NotificationSettingsSkeleton />
+/** Route-level stand-in for the notifications page: its toolbar above the sections. */
+export const NotificationsPageSkeleton = () => (
+  <div aria-busy="true" className="min-h-0 flex-1 overflow-hidden">
+    <ListToolbarSkeleton>
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-8 w-20 rounded-lg" />
+        <Skeleton className="h-8 w-20 rounded-lg" />
+        <Skeleton className="size-8 rounded-lg" />
       </div>
-    </div>
-  );
-};
+    </ListToolbarSkeleton>
+    <NotificationSettingsSkeleton />
+  </div>
+);

@@ -27,12 +27,12 @@ import {
   getNotificationTriggerTranslationKey,
 } from "../utils/notification-settings.utils";
 
-type NotificationRuleCardProps = {
+type NotificationRuleTileProps = {
   rule: GuildNotificationRulesResponseDto["items"][number];
   actionsDisabled: boolean;
 };
 
-type NotificationRule = NotificationRuleCardProps["rule"];
+type NotificationRule = NotificationRuleTileProps["rule"];
 
 type Translator = ReturnType<typeof useTranslation>["t"];
 
@@ -78,7 +78,7 @@ const getNpcLabel = (rule: NotificationRule, t: Translator) => {
     : t("settings.notifications.allNpcs");
 };
 
-const getNotificationRuleCardViewModel = (
+const getNotificationRuleTileViewModel = (
   rule: NotificationRule,
   t: Translator,
 ) => {
@@ -114,7 +114,7 @@ const getNotificationRuleCardViewModel = (
 export const useNotificationRuleActions = ({
   rule,
   actionsDisabled,
-}: NotificationRuleCardProps) => {
+}: NotificationRuleTileProps) => {
   const { t } = useTranslation();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
@@ -180,7 +180,7 @@ export const useNotificationRuleActions = ({
     return label;
   });
 
-  const viewModel = getNotificationRuleCardViewModel(rule, t);
+  const viewModel = getNotificationRuleTileViewModel(rule, t);
 
   const hasTestableTargets = rule.targets.some(
     ({ target }) => target.active && target.canSend,

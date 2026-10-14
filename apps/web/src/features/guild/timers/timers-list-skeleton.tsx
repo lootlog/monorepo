@@ -1,12 +1,11 @@
 import type { ViewMode } from "@/hooks/use-view-mode";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
+import { getTimerCellClassName, getTimerGroupClassName } from "./timers-layout";
 import {
-  getTimerCellClassName,
-  getTimerGroupClassName,
-  TIMER_GROUP_HEADING_CLASS,
-} from "./timers-layout";
-import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+  LIST_GROUP_HEADING_CLASS,
+  LIST_TILE_INSET_CLASS,
+} from "@/components/common/list-tile";
 import { ListToolbarSkeleton } from "@/components/common/list-toolbar-skeleton";
 
 const GROUP_SIZES = [3, 5];
@@ -17,7 +16,7 @@ export const TimersListSkeleton = ({ viewMode }: { viewMode: ViewMode }) => (
     <ListToolbarSkeleton />
     {GROUP_SIZES.map((size, groupIndex) => (
       <div key={groupIndex}>
-        <div className={cn(TIMER_GROUP_HEADING_CLASS, LIST_TILE_INSET_CLASS)}>
+        <div className={cn(LIST_GROUP_HEADING_CLASS, LIST_TILE_INSET_CLASS)}>
           <Skeleton className="h-3 w-20" />
         </div>
         <div className="overflow-hidden">

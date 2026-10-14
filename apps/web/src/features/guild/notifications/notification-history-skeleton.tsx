@@ -1,14 +1,18 @@
-import { NotificationHistoryRowsSkeleton } from "./notification-history-rows-skeleton";
-import { PageHeaderSkeleton } from "@/components/common/page-header-skeleton";
+import { ListToolbarSkeleton } from "@/components/common/list-toolbar-skeleton";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { NotificationTileSkeleton } from "./notification-tile-skeleton";
 
-export const NotificationHistorySkeleton = () => {
-  return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="flex flex-col gap-3 px-3 py-3">
-        <PageHeaderSkeleton />
-
-        <NotificationHistoryRowsSkeleton />
+/** Route-level stand-in for the notification history: toolbar above the rows. */
+export const NotificationHistorySkeleton = () => (
+  <div aria-busy="true" className="min-h-0 flex-1 overflow-hidden">
+    <ListToolbarSkeleton>
+      <div className="flex gap-1.5">
+        <Skeleton className="h-8 w-24 rounded-lg" />
+        <Skeleton className="h-8 w-20 rounded-lg" />
       </div>
-    </div>
-  );
-};
+    </ListToolbarSkeleton>
+    {Array.from({ length: 8 }, (_, index) => (
+      <NotificationTileSkeleton key={index} />
+    ))}
+  </div>
+);
