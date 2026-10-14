@@ -1,4 +1,4 @@
-import { SettingsTabSkeleton } from "../components/settings-tab-skeleton";
+import { SettingsTabSkeleton } from "@/components/common/settings-tab-skeleton";
 import { InfoSettingsSkeletonSections } from "./info-skeleton-sections";
 
 export const InfoSettingsSkeleton = () => (
