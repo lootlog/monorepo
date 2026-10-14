@@ -112,8 +112,12 @@ export const Timers = () => {
     return npcType ? t(`npcType.${npcType}`) : t("timers.npcType.manual");
   };
 
+  // A chosen group that the search or a refresh emptied stops filtering, so
+  // the list never ends up blank with no pill left to clear the choice.
+  const activeGroups = selectedGroups.filter((key) => key in groups);
+
   const visibleGroups = Object.entries(groups).filter(
-    ([key]) => selectedGroups.length === 0 || selectedGroups.includes(key),
+    ([key]) => activeGroups.length === 0 || activeGroups.includes(key),
   );
 
   const toolbar = (
@@ -125,7 +129,7 @@ export const Timers = () => {
         label: groupLabel(key),
         count: groupTimers.length,
       }))}
-      selectedGroups={selectedGroups}
+      selectedGroups={activeGroups}
       onSelectedGroupsChange={setSelectedGroups}
     />
   );
