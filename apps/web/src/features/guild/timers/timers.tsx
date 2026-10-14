@@ -14,11 +14,10 @@ import { TimersListSkeleton } from "./timers-list-skeleton";
 import {
   getTimerCellClassName,
   getTimerGroupClassName,
-  TIMER_GROUP_HEADING_CLASS,
   TIMERS_GRID_MEDIA_QUERY,
   TIMERS_VIEW_MODE_KEY,
 } from "./timers-layout";
-import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { ListGroupHeading } from "@/components/common/list-group-heading";
 import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
 import { cn } from "cn";
 import { TimersToolbar } from "./timers-toolbar";
@@ -210,15 +209,12 @@ export const Timers = () => {
         {visibleGroups.map(([key, groupTimers]) => {
           return (
             <section key={key} aria-labelledby={`timers-group-${key}`}>
-              <h2
+              <ListGroupHeading
                 id={`timers-group-${key}`}
-                className={cn(TIMER_GROUP_HEADING_CLASS, LIST_TILE_INSET_CLASS)}
+                count={groupTimers.length}
               >
                 {groupLabel(key)}
-                <span className="rounded-full bg-foreground/10 px-1.5 text-[11px] leading-4 font-medium tabular-nums">
-                  {groupTimers.length}
-                </span>
-              </h2>
+              </ListGroupHeading>
               <div className="overflow-hidden">
                 <div className={getTimerGroupClassName(viewMode)}>
                   {groupTimers.map((timer) => (

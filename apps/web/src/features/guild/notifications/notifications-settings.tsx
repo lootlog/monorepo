@@ -2,7 +2,7 @@ import { GuildDiscordSyncNotice } from "@/components/common/guild-discord-sync-n
 import { useGuildDiscordSync } from "@/hooks/api/use-guild-discord-sync";
 import { NotificationSettingsSkeleton } from "./notification-settings-skeleton";
 import { useState } from "react";
-import { BellRing, Info } from "lucide-react";
+import { Info, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   Tooltip,
@@ -12,12 +12,13 @@ import {
 import { Button } from "@lootlog/ui/components/button";
 
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { PageHeader } from "@/components/common/page-header";
-import { NotificationsActionsCard } from "./components/notifications-actions-card";
-import { NotificationsPendingJobsCard } from "./components/notifications-jobs-card";
-import { NotificationsRecentHistoryCard } from "./components/notifications-recent-history-card";
-import { NotificationsRulesCard } from "./components/notifications-rules-card";
-import { NotificationsTargetsCard } from "./components/notifications-targets-card";
+import { Link } from "@tanstack/react-router";
+import { ListToolbar } from "@/components/common/list-toolbar";
+import { ROUTES } from "@/config/routes";
+import { NotificationsPendingJobsSection } from "./components/notifications-pending-jobs-section";
+import { NotificationsRecentHistorySection } from "./components/notifications-recent-history-section";
+import { NotificationsRulesSection } from "./components/notifications-rules-section";
+import { NotificationsTargetsSection } from "./components/notifications-targets-section";
 import { NotificationTargetDialog } from "./components/notification-target-dialog";
 import { NotificationsInfoDialog } from "./components/notifications-info-dialog";
 import {
@@ -30,7 +31,16 @@ import {
   type NotificationTargetResponseDto,
 } from "@lootlog/client/main";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { isSupportedGuildNotificationTrigger } from "./utils/notification-settings.utils";
+import {
+  getGuildNotificationTargetLabel,
+  getNotificationTriggerTranslationKey,
+  isSupportedGuildNotificationTrigger,
+} from "./utils/notification-settings.utils";
+import {
+  NOTIFICATIONS_COLUMNS_CLASS,
+  NOTIFICATIONS_MAIN_CLASS,
+  NOTIFICATIONS_RAIL_CLASS,
+} from "./notifications-layout";
 
 const getResolvedGuildId = (guildId: string | undefined) => guildId ?? "";
 
@@ -88,6 +98,7 @@ export const NotificationsSettings = () => {
   );
 
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
   const [isCreateTargetDialogOpen, setIsCreateTargetDialogOpen] =
     useState(false);
@@ -112,90 +123,126 @@ export const NotificationsSettings = () => {
     notificationLimits !== undefined &&
     notificationLimits.ruleCount >= notificationLimits.ruleLimit;
 
+  const normalizedSearch = search.trim().toLocaleLowerCase("pl");
+  const isFiltered = normalizedSearch.length > 0;
+
+  const matchesSearch = (name: string) =>
+    name.toLocaleLowerCase("pl").includes(normalizedSearch);
+
+  const filteredRules = visibleRules.filter((rule) =>
+    matchesSearch(
+      rule.name ?? t(getNotificationTriggerTranslationKey(rule.triggerType)),
+    ),
+  );
+
+  const filteredTargets = targets.filter((target) =>
+    matchesSearch(getGuildNotificationTargetLabel(target)),
+  );
+
+  const canAddRule = hasRequiredPermissions && !isRuleLimitReached;
+
   return (
     <>
       <div className="flex h-full min-h-0 flex-col">
+        <h1 className="sr-only">{t("settings.notifications.title")}</h1>
         <ScrollArea data-under-top-bar className="min-h-0 flex-1">
-          <div className="flex flex-col gap-3 px-3 py-3">
-            <PageHeader
-              icon={BellRing}
-              title={t("settings.notifications.title")}
-              description={t("settings.notifications.description")}
-              actions={
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        aria-label={t("settings.notifications.info.title")}
-                        onClick={() => setIsInfoDialogOpen(true)}
-                      >
-                        <Info className="size-4" aria-hidden="true" />
-                      </Button>
-                    }
+          <ListToolbar
+            search={search}
+            onSearchChange={setSearch}
+            placeholder={t("settings.notifications.filterPlaceholder")}
+            label={t("settings.notifications.filterLabel")}
+            clearLabel={t("settings.notifications.clearFilter")}
+            disabled={isLoading}
+          >
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!hasRequiredPermissions}
+                icon=<Plus className="size-4" />
+                onClick={() => setIsCreateTargetDialogOpen(true)}
+              >
+                {t("settings.notifications.actions.addTargetShort")}
+              </Button>
+              {canAddRule ? (
+                <Button
+                  size="sm"
+                  icon=<Plus className="size-4" />
+                  render={
+                    <Link to={ROUTES.guild.notifications.create(guildId ?? "")}>
+                      {t("settings.notifications.actions.addRule")}
+                    </Link>
+                  }
+                  nativeButton={false}
+                />
+              ) : (
+                <Button size="sm" disabled icon=<Plus className="size-4" />>
+                  {t("settings.notifications.actions.addRule")}
+                </Button>
+              )}
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      className="text-muted-foreground"
+                      aria-label={t("settings.notifications.info.title")}
+                      onClick={() => setIsInfoDialogOpen(true)}
+                    >
+                      <Info className="size-4" aria-hidden="true" />
+                    </Button>
+                  }
+                />
+                <TooltipContent>
+                  {t("settings.notifications.info.title")}
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </ListToolbar>
+
+          {sync.permissionStatus !== "ok" && (
+            <div className="p-3">
+              <GuildDiscordSyncNotice sync={sync} />
+            </div>
+          )}
+
+          {isLoading ? (
+            <NotificationSettingsSkeleton />
+          ) : (
+            <div className={NOTIFICATIONS_COLUMNS_CLASS}>
+              <div className={NOTIFICATIONS_MAIN_CLASS}>
+                <NotificationsRulesSection
+                  rules={filteredRules}
+                  limits={notificationLimits}
+                  actionsDisabled={!hasRequiredPermissions}
+                  isFiltered={isFiltered}
+                />
+                <NotificationsTargetsSection
+                  targets={filteredTargets}
+                  rules={visibleRules}
+                  actionsDisabled={!hasRequiredPermissions}
+                  isFiltered={isFiltered}
+                  onEditTarget={setEditedTarget}
+                />
+              </div>
+
+              <div className={NOTIFICATIONS_RAIL_CLASS}>
+                {jobsData && (
+                  <NotificationsPendingJobsSection
+                    pendingJobs={jobsData.pending}
                   />
-                  <TooltipContent>
-                    {t("settings.notifications.info.title")}
-                  </TooltipContent>
-                </Tooltip>
-              }
-            />
-
-            <GuildDiscordSyncNotice sync={sync} />
-
-            {isLoading ? (
-              <NotificationSettingsSkeleton showActions={false} />
-            ) : (
-              <>
-                <div className="lg:hidden">
-                  <NotificationsActionsCard
-                    hasRequiredPermissions={hasRequiredPermissions}
-                    isRuleLimitReached={isRuleLimitReached}
-                    onAddTarget={() => setIsCreateTargetDialogOpen(true)}
+                )}
+                {jobsData && (
+                  <NotificationsRecentHistorySection
+                    historyJobs={jobsData.history}
                   />
-                </div>
-
-                <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-                  <div className="flex flex-col gap-3 lg:col-span-2">
-                    <NotificationsTargetsCard
-                      targets={targets}
-                      rules={visibleRules}
-                      actionsDisabled={!hasRequiredPermissions}
-                      onEditTarget={setEditedTarget}
-                    />
-                    <NotificationsRulesCard
-                      rules={visibleRules}
-                      limits={notificationLimits}
-                      actionsDisabled={!hasRequiredPermissions}
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-3">
-                    <div className="hidden lg:block">
-                      <NotificationsActionsCard
-                        hasRequiredPermissions={hasRequiredPermissions}
-                        isRuleLimitReached={isRuleLimitReached}
-                        onAddTarget={() => setIsCreateTargetDialogOpen(true)}
-                      />
-                    </div>
-
-                    {jobsData ? (
-                      <NotificationsPendingJobsCard
-                        pendingJobs={jobsData.pending}
-                      />
-                    ) : null}
-
-                    {jobsData ? (
-                      <NotificationsRecentHistoryCard
-                        historyJobs={jobsData.history}
-                      />
-                    ) : null}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+                )}
+              </div>
+            </div>
+          )}
         </ScrollArea>
       </div>
 

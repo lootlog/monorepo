@@ -9,6 +9,8 @@ import { Button } from "@lootlog/ui/components/button";
 import { useTranslation } from "react-i18next";
 
 type NotificationDeleteActionProps = {
+  /** Names what is deleted, for a list of several such buttons. */
+  label?: string;
   description: string;
   disabled: boolean;
   onConfirm: () => void | Promise<void>;
@@ -16,6 +18,7 @@ type NotificationDeleteActionProps = {
 };
 
 export const NotificationDeleteAction = ({
+  label,
   description,
   disabled,
   onConfirm,
@@ -39,10 +42,13 @@ export const NotificationDeleteAction = ({
                 <Button
                   type="button"
                   size="icon-sm"
-                  variant="destructive"
-                  aria-label={t("settings.notifications.actions.delete")}
+                  variant="ghost"
+                  className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  aria-label={
+                    label ?? t("settings.notifications.actions.delete")
+                  }
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="size-4" />
                 </Button>
               }
             />

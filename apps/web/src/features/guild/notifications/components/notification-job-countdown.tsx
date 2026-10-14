@@ -59,13 +59,20 @@ export const NotificationJobCountdown = ({
     return subscribeToSecondClock(updateRemainingTime);
   }, [scheduledFor]);
 
+  const label = remainingTimeLabel
+    ? t("settings.notifications.jobs.sendsIn", { time: remainingTimeLabel })
+    : t("settings.notifications.jobs.sendsNow");
+
+  // Reads like a timer's countdown: the time alone, named for screen readers.
   return (
-    <p className="text-xs font-medium text-primary">
-      {remainingTimeLabel
-        ? t("settings.notifications.jobs.sendsIn", {
-            time: remainingTimeLabel,
-          })
-        : t("settings.notifications.jobs.sendsNow")}
-    </p>
+    <span
+      title={label}
+      className="shrink-0 text-[15px] leading-5 font-semibold tabular-nums text-primary"
+    >
+      <span aria-hidden="true">
+        {remainingTimeLabel ?? t("settings.notifications.jobs.now")}
+      </span>
+      <span className="sr-only">{label}</span>
+    </span>
   );
 };

@@ -379,7 +379,7 @@ it("enables notification configuration only while Discord permissions are confir
 
   const addTargetButtons = await screen.findAllByRole<HTMLButtonElement>(
     "button",
-    { name: "settings.notifications.actions.addTarget" },
+    { name: "settings.notifications.actions.addTargetShort" },
   );
 
   expect(addTargetButtons.every((button) => button.disabled)).toBe(true);
