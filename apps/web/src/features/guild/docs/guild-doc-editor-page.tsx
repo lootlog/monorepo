@@ -1,7 +1,7 @@
-import { PageHeader } from "@/components/common/page-header";
 import { EmptyState } from "@/components/common/empty-state";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { MetaItem } from "@/components/common/meta-item";
+import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,25 +12,26 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@lootlog/ui/components/alert-dialog";
-import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { FileText, FileX2, History, LockKeyhole, Trash2 } from "lucide-react";
-
-import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
-import { Input } from "@lootlog/ui/components/input";
-import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
+import { cn } from "cn";
+import {
+  Clock3,
+  FileX2,
+  History,
+  LockKeyhole,
+  PenLine,
+  Trash2,
+} from "lucide-react";
 import { GuildDocHistoryDialog } from "./components/guild-doc-history-dialog";
-import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { GuildDocEditor } from "./editor/guild-doc-editor";
+import { GUILD_DOC_COLUMN_CLASS } from "./guild-doc-column";
 import { GuildDocEditorSkeleton } from "./guild-doc-editor-skeleton";
-
 import { TITLE_MAX_LENGTH, useGuildDocDraft } from "./use-guild-doc-draft";
 
 export const GuildDocEditorPage = () => {
@@ -91,122 +92,113 @@ export const GuildDocEditorPage = () => {
     );
   }
 
+  const editorName = document.updatedBy.name ?? t("docs.list.unknownEditor");
+
+  const toolbarActions = (
+    <>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="ghost"
+              aria-label={t("docs.editor.history")}
+              className="text-muted-foreground"
+              onClick={() => setHistoryOpen(true)}
+            >
+              <History className="size-4" />
+            </Button>
+          }
+        />
+        <TooltipContent side="bottom">
+          {t("docs.editor.history")}
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="ghost"
+              aria-label={t("docs.trash.move")}
+              className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+              disabled={deleteDocument.isPending}
+              onClick={() => setTrashConfirmOpen(true)}
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          }
+        />
+        <TooltipContent side="bottom">{t("docs.trash.move")}</TooltipContent>
+      </Tooltip>
+    </>
+  );
+
+  const header = (
+    <header
+      className={cn("flex flex-col gap-2 pt-6 pb-4", GUILD_DOC_COLUMN_CLASS)}
+    >
+      {canWrite ? (
+        <>
+          <h1 className="sr-only">{document.title}</h1>
+          {/* The title reads as the document's heading; the padding keeps its focus ring off the text. */}
+          <input
+            id="guild-doc-editor-title"
+            name="guild-doc-editor-title"
+            value={title}
+            maxLength={TITLE_MAX_LENGTH}
+            aria-label={t("docs.editor.titleLabel")}
+            placeholder={t("docs.editor.titlePlaceholder")}
+            onChange={(event) => setTitle(event.target.value)}
+            className="-mx-2 h-10 min-w-0 rounded-md bg-transparent px-2 text-2xl font-semibold outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+          />
+        </>
+      ) : (
+        <h1 className="flex min-h-10 items-center text-2xl font-semibold break-words">
+          {document.title}
+        </h1>
+      )}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <MetaItem icon={PenLine} label={t("docs.list.editorLabel")}>
+          {editorName}
+        </MetaItem>
+        <MetaItem icon={Clock3} label={t("docs.list.updatedAtLabel")}>
+          {timestampToDate(document.updatedAt)}
+        </MetaItem>
+        <MetaItem icon={History}>
+          {t("docs.list.version", { version: document.version })}
+        </MetaItem>
+        {!canWrite && (
+          <MetaItem icon={LockKeyhole}>{t("docs.editor.readOnly")}</MetaItem>
+        )}
+      </div>
+    </header>
+  );
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <ScrollArea data-under-top-bar className="min-h-0 flex-1">
-        <div className="flex min-h-full flex-col gap-3 px-3 py-3">
-          <PageHeader
-            icon={FileText}
-            title={document.title}
-            description={
-              <>
-                {t("docs.editor.updatedMeta", {
-                  date: timestampToDate(document.updatedAt),
-                  version: document.version,
-                })}
-              </>
-            }
-            status={
-              canWrite ? (
-                <Badge variant="secondary">{t("docs.editor.manualSave")}</Badge>
-              ) : (
-                <Badge variant="outline" className="gap-1">
-                  <LockKeyhole className="size-3" aria-hidden="true" />
-                  {t("docs.editor.readOnly")}
-                </Badge>
-              )
-            }
-            actions={
-              <>
-                {canWrite && (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            aria-label={t("docs.editor.history")}
-                            onClick={() => setHistoryOpen(true)}
-                          >
-                            <History className="size-4" />
-                          </Button>
-                        }
-                      />
-                      <TooltipContent side="bottom">
-                        {t("docs.editor.history")}
-                      </TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            aria-label={t("docs.trash.move")}
-                            className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                            disabled={deleteDocument.isPending}
-                            onClick={() => setTrashConfirmOpen(true)}
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        }
-                      />
-                      <TooltipContent side="bottom">
-                        {t("docs.trash.move")}
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                )}
-              </>
-            }
+        <form className="flex min-h-full flex-col" onSubmit={saveDraft}>
+          <GuildDocEditor
+            key={`${docId}-${editorSeed}`}
+            className="flex-1"
+            contentClassName={cn("flex-1 pb-24", GUILD_DOC_COLUMN_CLASS)}
+            content={content}
+            editable={canWrite}
+            header={header}
+            namespace={`guild-doc-${docId}-${editorSeed}`}
+            toolbarActions={toolbarActions}
+            onChange={setContent}
           />
 
-          <form className="flex min-h-0 flex-1 flex-col" onSubmit={saveDraft}>
-            <SectionCard className="flex min-h-0 flex-1 flex-col">
-              <SectionCardHeader title={t("docs.list.title")} />
-              <SectionCardContent className="flex min-h-0 flex-col gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="guild-doc-editor-title">
-                    {t("docs.editor.titleLabel")}
-                  </Label>
-                  <Input
-                    id="guild-doc-editor-title"
-                    name="guild-doc-editor-title"
-                    value={title}
-                    disabled={!canWrite}
-                    maxLength={TITLE_MAX_LENGTH}
-                    placeholder={t("docs.editor.titlePlaceholder")}
-                    onChange={(event) => setTitle(event.target.value)}
-                  />
-                </div>
-
-                {!canWrite && (
-                  <p className="text-xs text-muted-foreground">
-                    {t("docs.editor.readOnlyNotice")}
-                  </p>
-                )}
-
-                <GuildDocEditor
-                  key={`${docId}-${editorSeed}`}
-                  className="flex-1"
-                  content={content}
-                  editable={canWrite}
-                  namespace={`guild-doc-${docId}-${editorSeed}`}
-                  onChange={setContent}
-                />
-              </SectionCardContent>
-            </SectionCard>
-
-            <UnsavedChangesBar
-              isDirty={isDirty}
-              isSubmitting={updateDocument.isPending}
-              onReset={resetDraft}
-            />
-          </form>
-        </div>
+          <UnsavedChangesBar
+            isDirty={isDirty}
+            isSubmitting={updateDocument.isPending}
+            onReset={resetDraft}
+          />
+        </form>
       </ScrollArea>
 
       {canWrite && (

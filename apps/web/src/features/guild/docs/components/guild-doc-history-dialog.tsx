@@ -205,7 +205,8 @@ export const GuildDocHistoryDialog = ({
                     )}
                     editable={false}
                     namespace={`guild-doc-history-${snapshotQuery.data.id}`}
-                    className="min-h-0 flex-1 border-border/80 bg-card/20"
+                    className="min-h-[420px] flex-1 overflow-hidden rounded-md border border-border/80 bg-card/20"
+                    contentClassName="min-h-0 flex-1 overflow-auto p-4"
                   />
                 </div>
               </div>

@@ -16,6 +16,7 @@ import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin
 import { TablePlugin } from "@lexical/react/LexicalTablePlugin";
 import { TRANSFORMERS } from "@lexical/markdown";
 import { cn } from "cn";
+import type { ReactNode } from "react";
 import { GuildDocEditorEditablePlugin } from "./guild-doc-editor-editable-plugin";
 import { GuildDocCodeHighlightPlugin } from "./guild-doc-code-highlight-plugin";
 import {
@@ -29,6 +30,11 @@ import { GuildDocEditorToolbar } from "./guild-doc-editor-toolbar";
 
 type GuildDocEditorProps = {
   className?: string;
+  contentClassName?: string;
+  /** Shown between the toolbar and the text, such as the document's title. */
+  header?: ReactNode;
+  /** The document's own actions at the end of the toolbar. */
+  toolbarActions?: ReactNode;
   content: GuildDocEditorContent;
   editable: boolean;
   namespace: string;
@@ -49,6 +55,9 @@ const AUTO_LINK_MATCHERS = [
 
 export const GuildDocEditor = ({
   className,
+  contentClassName,
+  header,
+  toolbarActions,
   content,
   editable,
   namespace,
@@ -69,56 +78,50 @@ export const GuildDocEditor = ({
         theme: guildDocEditorTheme,
       }}
     >
-      <div
-        className={cn(
-          "flex min-h-[420px] flex-col overflow-hidden rounded-md border border-border bg-background",
-          className,
-        )}
-      >
-        {editable && <GuildDocEditorToolbar />}
-        <div className="relative min-h-[420px] flex-1">
-          <RichTextPlugin
-            contentEditable=<ContentEditable
-              className={cn(
-                "absolute inset-0 overflow-auto px-4 py-4 text-sm outline-none",
-                "selection:bg-primary/20",
-                editable ? "cursor-text" : "cursor-default",
-              )}
-            />
-            placeholder={null}
-            ErrorBoundary={LexicalErrorBoundary}
+      <div className={cn("flex flex-col", className)}>
+        {editable && <GuildDocEditorToolbar actions={toolbarActions} />}
+        {header}
+        <RichTextPlugin
+          contentEditable=<ContentEditable
+            className={cn(
+              "text-sm outline-none selection:bg-primary/20",
+              editable ? "cursor-text" : "cursor-default",
+              contentClassName,
+            )}
           />
-          <HistoryPlugin />
-          <ListPlugin />
-          <CheckListPlugin />
-          <LinkPlugin />
-          <AutoLinkPlugin matchers={AUTO_LINK_MATCHERS} />
-          <ClickableLinkPlugin newTab disabled={editable} />
-          <TablePlugin />
-          <HorizontalRulePlugin />
-          <GuildDocCodeHighlightPlugin />
-          <TabIndentationPlugin />
-          <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
-          <GuildDocEditorEditablePlugin editable={editable} />
-          {onChange && (
-            <OnChangePlugin
-              ignoreSelectionChange
-              onChange={(editorState) => {
-                if (!editable) {
-                  return;
-                }
+          placeholder={null}
+          ErrorBoundary={LexicalErrorBoundary}
+        />
+        <HistoryPlugin />
+        <ListPlugin />
+        <CheckListPlugin />
+        <LinkPlugin />
+        <AutoLinkPlugin matchers={AUTO_LINK_MATCHERS} />
+        <ClickableLinkPlugin newTab disabled={editable} />
+        <TablePlugin />
+        <HorizontalRulePlugin />
+        <GuildDocCodeHighlightPlugin />
+        <TabIndentationPlugin />
+        <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+        <GuildDocEditorEditablePlugin editable={editable} />
+        {onChange && (
+          <OnChangePlugin
+            ignoreSelectionChange
+            onChange={(editorState) => {
+              if (!editable) {
+                return;
+              }
 
-                const nextContent = serializeGuildDocEditorState(
-                  editorState.toJSON(),
-                );
+              const nextContent = serializeGuildDocEditorState(
+                editorState.toJSON(),
+              );
 
-                if (nextContent) {
-                  onChange(nextContent);
-                }
-              }}
-            />
-          )}
-        </div>
+              if (nextContent) {
+                onChange(nextContent);
+              }
+            }}
+          />
+        )}
       </div>
     </LexicalComposer>
   );

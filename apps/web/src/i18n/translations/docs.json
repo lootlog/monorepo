@@ -26,15 +26,12 @@
   "editor": {
     "titlePlaceholder": "Tytuł dokumentu",
     "readOnly": "Tylko odczyt",
-    "manualSave": "Zapis ręczny",
     "history": "Historia",
     "saved": "Dokument zapisany",
     "saveError": "Nie udało się zapisać dokumentu.",
     "loadError": "Nie udało się wczytać dokumentu",
     "loadErrorDescription": "Sprawdź połączenie i spróbuj ponownie.",
     "titleLabel": "Tytuł",
-    "updatedMeta": "Wersja {{version}} · {{date}}",
-    "readOnlyNotice": "Masz dostęp tylko do odczytu.",
     "tooLong": "Dokument jest za długi.",
     "titleTooLong": "Tytuł może mieć maksymalnie 120 znaków."
   },
