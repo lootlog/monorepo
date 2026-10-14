@@ -146,18 +146,8 @@
 }
 
 /* Lists that tile the page edge to edge, such as loots and timers, keep the
- * content surface under every tile; the wallpaper shows around them. */
-:is(
-    .anime,
-    .waguri,
-    .halloween,
-    .realmadrid,
-    .realmadrid-3rd,
-    .barcelona,
-    .rukia,
-    .rias
-  )
-  .app-content-frame
-  [data-list-tile] {
+ * content surface under every tile, so no wallpaper shows through their text;
+ * it shows around the list instead. Without a wallpaper this changes nothing. */
+.app-content-frame [data-list-tile] {
   background-color: color-mix(in srgb, var(--background) 88%, transparent);
 }
