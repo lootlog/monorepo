@@ -1,5 +1,8 @@
 import { Button } from "@lootlog/ui/components/button";
-import { BookmarkPlus, X } from "lucide-react";
+import { toggleVariants } from "@lootlog/ui/lib/toggle-variants";
+import { cn } from "cn";
+import { BookmarkPlus, X, Zap } from "lucide-react";
+import { LOOT_FILTER_PILL_CLASS } from "./loot-filter-pills";
 import type { LootFiltersState } from "./loot-filter-sections";
 
 type LootQuickFiltersProps = Pick<
@@ -23,16 +26,18 @@ export const LootQuickFilters = ({
   canSaveCurrentFilter,
   setIsDialogOpen,
 }: LootQuickFiltersProps) => (
-  <div className="border-b border-sidebar-border px-4 pt-2 pb-3">
-    <div className="flex h-8 items-center justify-between">
-      <h3 className="text-xs font-medium text-muted-foreground">
+  // A peer of the filter sections, so its header reads like theirs.
+  <div className="border-b border-sidebar-border">
+    <div className="flex h-11 items-center gap-1 pr-2 pl-4">
+      <h3 className="flex min-w-0 flex-1 items-center gap-2 text-sm font-medium">
+        <Zap aria-hidden="true" className="size-4 text-muted-foreground" />
         {t("loots.filtersPanel.quickFilters.title")}
       </h3>
       {canSaveCurrentFilter && (
         <Button
           variant="ghost"
           size="xs"
-          className="-mr-2 text-primary hover:text-primary"
+          className="text-primary hover:text-primary"
           onClick={() => setIsDialogOpen(true)}
         >
           <BookmarkPlus aria-hidden="true" />
@@ -40,35 +45,37 @@ export const LootQuickFilters = ({
         </Button>
       )}
     </div>
-    <div className="-mx-2 mt-1 flex flex-wrap gap-1">
+    <div className="flex flex-wrap gap-1.5 px-4 pt-1 pb-4">
       {allQuickFilters.map((filter) => {
         const isApplied = isQuickFilterApplied(filter.filters);
 
         return (
-          <div key={filter.id} className="group flex items-center">
-            <Button
+          <div key={filter.id} className="group/quick-filter relative flex">
+            {/* Drawn like the section pills, so every pressed pill means
+                the same thing: it narrows the list. */}
+            <button
               type="button"
-              variant={isApplied ? "default" : "ghost"}
-              size="sm"
               aria-pressed={isApplied}
               onClick={() => toggleQuickFilter(filter.filters)}
-              className={isApplied ? undefined : "text-muted-foreground"}
+              className={cn(
+                toggleVariants({ variant: "outline", size: "sm" }),
+                "cursor-pointer",
+                LOOT_FILTER_PILL_CLASS,
+              )}
             >
               {filter.label}
-            </Button>
+            </button>
             {!("category" in filter) && (
-              <Button
+              <button
                 type="button"
-                variant="ghost"
-                size="icon-xs"
                 aria-label={t("loots.filtersPanel.quickFilters.remove", {
                   label: filter.label,
                 })}
-                className="opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+                className="absolute -top-1.5 -right-1.5 grid size-4 cursor-pointer place-items-center rounded-full border border-sidebar-border bg-sidebar text-muted-foreground opacity-100 transition-opacity outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:opacity-0 sm:group-hover/quick-filter:opacity-100 sm:group-focus-within/quick-filter:opacity-100"
                 onClick={() => handleRemoveCustomFilter(filter.id)}
               >
-                <X className="size-3" />
-              </Button>
+                <X aria-hidden="true" className="size-2.5" />
+              </button>
             )}
           </div>
         );
