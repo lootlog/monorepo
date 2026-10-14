@@ -244,6 +244,29 @@ it("orders timer groups by NPC type, then spawn time, preserving tied timers", a
   ).toEqual(["Titan NPC", "First tied NPC", "Second tied NPC", "Late NPC"]);
 });
 
+it("shows the remaining timers when the search empties the chosen group", async () => {
+  await mount(async () =>
+    Response.json([
+      {
+        ...timer,
+        timerKey: "titan",
+        npc: { ...timer.npc, id: 20, name: "Titan NPC", type: "TITAN" },
+      },
+      { ...timer, timerKey: "elite", npc: { ...timer.npc, id: 21 } },
+    ]),
+  );
+  await screen.findByText("Titan NPC");
+
+  fireEvent.click(screen.getByRole("button", { name: /Tytan/ }));
+  expect(screen.queryByText("Original NPC")).toBeNull();
+
+  fireEvent.change(
+    screen.getByRole("searchbox", { name: "Filtruj timery po nazwie potwora" }),
+    { target: { value: "Original" } },
+  );
+  await screen.findByText("Original NPC");
+});
+
 it("reads every world one at a time when the Organization shows all worlds", async () => {
   const fetchTimers = vi.fn(async (url: URL) => {
     const world = url.searchParams.get("world") ?? "";

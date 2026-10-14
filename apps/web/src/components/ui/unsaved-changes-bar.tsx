@@ -23,7 +23,8 @@ const SPRING = { type: "spring", stiffness: 500, damping: 40 } as const;
 /**
  * The save bar of a form page, docked to the bottom edge as the top bar is to
  * the top. It renders inside the page's form, so its save button submits that
- * form, and ⌘S or Ctrl+S presses it while there are changes.
+ * form, and ⌘S or Ctrl+S presses it while there are changes, unless the keys
+ * come from a dialog or another form.
  */
 export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
   isDirty,
@@ -48,14 +49,33 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
         return;
       }
 
+      const target = event.target instanceof Element ? event.target : null;
+
+      // A dialog over the page, such as one adding a channel, keeps its keys:
+      // the shortcut must not save the form underneath it.
+      if (target?.closest('[role="dialog"], [role="alertdialog"]')) {
+        return;
+      }
+
       // A form page saves its own changes instead of the browser saving the page.
       event.preventDefault();
 
       const submit = submitRef.current;
+      const form = submit?.form;
+      const targetForm = target?.closest("form");
 
-      if (isDirty && !isSubmitting && !event.repeat && submit?.form) {
-        submit.form.requestSubmit(submit);
+      if (
+        !isDirty ||
+        isSubmitting ||
+        event.repeat ||
+        !submit ||
+        !form ||
+        (targetForm && targetForm !== form)
+      ) {
+        return;
       }
+
+      form.requestSubmit(submit);
     };
 
     document.addEventListener("keydown", handleKeyDown);
