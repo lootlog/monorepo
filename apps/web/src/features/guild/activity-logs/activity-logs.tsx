@@ -1,6 +1,10 @@
 import { EmptyState } from "@/components/common/empty-state";
 import { InfiniteListStatusRow } from "@/components/common/infinite-list-status-row";
-import { ResultsSurface } from "@/components/common/results-surface";
+import { FilterChipList } from "@/components/common/filter-chip-list";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import {
   useResetScrollTop,
@@ -8,7 +12,8 @@ import {
 } from "@/hooks/utils/use-virtual-infinite-scroll";
 import { useThemedKey } from "@/themes";
 import { useMembersControllerGetGuildMemberReferences } from "@lootlog/client/main";
-import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { cn } from "cn";
 import {
   getVirtualListPadding,
   usePageVirtualizer,
@@ -18,13 +23,15 @@ import { useParams } from "@tanstack/react-router";
 import { useGuildWorld } from "@/hooks/context/use-guild-world";
 import { GuildWorldHeaderSwitcher } from "@/components/layout/guild-world-header-switcher";
 import { AlertCircle, SearchX } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useMediaQuery } from "usehooks-ts";
 import { useTranslation } from "react-i18next";
 import { activityLogsInfiniteQueryOptions } from "./activity-logs.queries";
 import { ActivityLogsFilterToolbar } from "./components/activity-logs-filter-toolbar";
 import { ActivityLogsMobileListSkeleton } from "./components/activity-logs-mobile-list-skeleton";
 import { ActivityLogsTable } from "./components/activity-logs-table";
 import { useActivityLogsFilterModel } from "./components/use-activity-logs-filter-model";
+import { ACTIVITY_LOGS_TABLE_MEDIA_QUERY } from "./activity-logs-layout";
 
 const ACTIVITY_LOGS_PAGE_LIMIT = 20;
 
@@ -33,7 +40,25 @@ export const ActivityLogs = () => {
 
   const { t } = useTranslation();
   const themedKey = useThemedKey();
-  const isMobile = useIsMobile();
+  const usesTable = useMediaQuery(ACTIVITY_LOGS_TABLE_MEDIA_QUERY);
+  const listRef = useRef<HTMLDivElement>(null);
+  // The table header pins right under the filter bar, whatever its height.
+  const [stickyBarHeight, setStickyBarHeight] = useState(0);
+
+  const observeStickyBar = (bar: HTMLDivElement | null) => {
+    if (!bar) return;
+
+    const measure = () =>
+      setStickyBarHeight(bar.getBoundingClientRect().height);
+
+    // Measured on mount, then again whenever filter chips change its height.
+    const observer = new ResizeObserver(measure);
+
+    measure();
+    observer.observe(bar);
+
+    return () => observer.disconnect();
+  };
 
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
     null,
@@ -85,7 +110,8 @@ export const ActivityLogs = () => {
   const virtualizer = usePageVirtualizer<HTMLElement>({
     count: activities.length,
     scrollElement,
-    estimateSize: () => (isMobile ? 88 : 56),
+    listRef,
+    estimateSize: () => (usesTable ? 56 : 88),
     overscan: 8,
   });
 
@@ -106,32 +132,37 @@ export const ActivityLogs = () => {
   const renderResults = () => {
     if (error && activities.length === 0) {
       return (
-        <EmptyState
-          icon={AlertCircle}
-          title={t("common.activityLogs.loadError")}
-        />
+        <div className="p-3">
+          <EmptyState
+            framed
+            icon={AlertCircle}
+            title={t("common.activityLogs.loadError")}
+          />
+        </div>
       );
     }
 
     if (isLoading) {
-      return (
+      return usesTable ? (
         <TableRowsSkeleton
           rows={ACTIVITY_LOGS_PAGE_LIMIT}
           withHeader
           rowContent="text"
-          mobileList={
-            <ActivityLogsMobileListSkeleton rows={ACTIVITY_LOGS_PAGE_LIMIT} />
-          }
         />
+      ) : (
+        <ActivityLogsMobileListSkeleton rows={ACTIVITY_LOGS_PAGE_LIMIT} />
       );
     }
 
     if (activities.length === 0) {
       return (
-        <EmptyState
-          icon={SearchX}
-          title={t(themedKey("common.activityLogs.empty"))}
-        />
+        <div className="p-3">
+          <EmptyState
+            framed
+            icon={SearchX}
+            title={t(themedKey("common.activityLogs.empty"))}
+          />
+        </div>
       );
     }
 
@@ -139,7 +170,8 @@ export const ActivityLogs = () => {
       <>
         <ActivityLogsTable
           activities={activities}
-          isMobile={isMobile}
+          usesTable={usesTable}
+          headerTop={stickyBarHeight}
           memberNameByDiscordId={memberNameByDiscordId}
           virtualRows={virtualRows}
           padding={getVirtualListPadding(
@@ -164,20 +196,43 @@ export const ActivityLogs = () => {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col p-3">
+    <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("activityLogs.title")}</h1>
       <GuildWorldHeaderSwitcher />
-      <ResultsSurface
-        chips={activeFilterChips}
-        clearFiltersLabel={t("activityLogs.filters.clear")}
-        onClearFilters={filterModel.clearFilters}
-        scrollRef={setScrollElement}
-        toolbar={<ActivityLogsFilterToolbar model={filterModel} />}
-        toolbarLabel={t("activityLogs.filters.title")}
-        withHorizontalScroll={!isMobile}
+      <ScrollArea
+        data-under-top-bar
+        ref={setScrollElement}
+        className="min-h-0 flex-1"
       >
-        {renderResults()}
-      </ResultsSurface>
+        {/* The filters and their chips stay on top while the log scrolls. */}
+        <div
+          ref={observeStickyBar}
+          data-list-tile
+          className="sticky top-(--page-sticky-top) z-20 backdrop-blur-sm"
+        >
+          <div
+            role="group"
+            aria-label={t("activityLogs.filters.title")}
+            className={cn(
+              "flex min-h-12 items-center py-2",
+              LIST_TILE_RULE_CLASS,
+              LIST_TILE_INSET_CLASS,
+            )}
+          >
+            <ActivityLogsFilterToolbar model={filterModel} />
+          </div>
+          <FilterChipList
+            chips={activeFilterChips}
+            clearLabel={t("activityLogs.filters.clear")}
+            onClear={filterModel.clearFilters}
+            className={cn(
+              "border-sidebar-border bg-transparent",
+              LIST_TILE_INSET_CLASS,
+            )}
+          />
+        </div>
+        <div ref={listRef}>{renderResults()}</div>
+      </ScrollArea>
     </div>
   );
 };
