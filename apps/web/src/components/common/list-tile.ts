@@ -10,8 +10,12 @@ import { cn } from "cn";
 /** Horizontal inset of every tile, heading and toolbar in a tiled list. */
 export const LIST_TILE_INSET_CLASS = "px-3 sm:px-4";
 
-/** The hairline under each tile. */
-export const LIST_TILE_RULE_CLASS = "border-b border-sidebar-border";
+/**
+ * The hairline under each tile. A tile is isolated, so nothing raised inside
+ * it, such as a focused row or stacked sprites, paints over the list toolbar
+ * that the tiles scroll under.
+ */
+export const LIST_TILE_RULE_CLASS = "isolate border-b border-sidebar-border";
 
 /**
  * A grid of tiles inside an `overflow-hidden` wrapper. Each cell rules its
