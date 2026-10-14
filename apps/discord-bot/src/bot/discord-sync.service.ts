@@ -495,10 +495,24 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
       ),
     );
 
+  // discord.js emits guildCreate only for servers joined after login, so
+  // changes made while the bot was offline (and banners of servers it joined
+  // before banners were synced) would never reach the API. The API ignores
+  // snapshots that change nothing.
   const handleClientReady = (readyClient: Client) =>
-    Effect.sync(() => {
+    Effect.gen(function* () {
+      const guilds = readyClient.guilds.cache.filter(
+        (guild) => guild.available,
+      );
+
       logger.log(
-        `Bot is ready and logged in as ${readyClient.user?.username ?? "unknown"}`,
+        `Bot is ready and logged in as ${readyClient.user?.username ?? "unknown"}; publishing ${guilds.size} guild snapshots`,
+      );
+
+      yield* Effect.forEach(
+        guilds.values(),
+        (guild) => publish(RoutingKey.GUILDS_UPDATE, guildSnapshot(guild)),
+        { discard: true },
       );
     });
 

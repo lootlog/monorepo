@@ -267,6 +267,9 @@ export const makeGuildLifecycle = (
         Effect.gen(function* () {
           const rows = yield* transaction
             .select({
+              name: guildTable.name,
+              icon: guildTable.icon,
+              banner: guildTable.banner,
               vanityUrl: guildTable.vanityUrl,
               ownerId: guildTable.ownerId,
             })
@@ -276,6 +279,18 @@ export const makeGuildLifecycle = (
             .for("update");
 
           const oldGuild = rows[0] ?? null;
+
+          // The bot republishes every server whenever it starts, so a
+          // snapshot that changes nothing must not clear any cache.
+          if (
+            !oldGuild ||
+            (oldGuild.name === data.name &&
+              oldGuild.icon === data.icon &&
+              (data.banner === undefined || oldGuild.banner === data.banner) &&
+              oldGuild.ownerId === data.ownerId)
+          ) {
+            return { changed: false as const, oldGuild };
+          }
 
           yield* transaction
             .update(guildTable)
@@ -294,6 +309,7 @@ export const makeGuildLifecycle = (
               : [];
 
           return {
+            changed: true as const,
             oldGuild,
             owners: [data.ownerId, ...transferredFrom],
             ownerMemberIds:
@@ -309,6 +325,8 @@ export const makeGuildLifecycle = (
     );
 
     const { oldGuild } = update;
+
+    if (!update.changed) return oldGuild?.vanityUrl ?? null;
 
     yield* Effect.all(
       [

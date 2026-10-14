@@ -300,6 +300,28 @@ describe("Discord SDK to RabbitMQ contracts", () => {
     ]);
   });
 
+  test("publishes a snapshot of every known guild when the client is ready", async () => {
+    const f = await fixture();
+    f.guild.banner = "a_12345678901234567890123456789012";
+    const cached = await f.client.guilds.fetch({ guild: guildId, force: true });
+    // The gateway's GUILD_CREATE marks a guild available; a REST fetch does not.
+    cached.available = true;
+    await Effect.runPromise(f.sync.handleClientReady(f.client));
+
+    expect(f.events).toEqual([
+      {
+        routingKey: RabbitRoutingKey.GUILDS_UPDATE,
+        payload: {
+          guildId,
+          name: "Guild",
+          icon: null,
+          banner: `https://cdn.discordapp.com/banners/${guildId}/a_12345678901234567890123456789012.webp?size=512`,
+          ownerId: guildId,
+        },
+      },
+    ]);
+  });
+
   test("publishes role creation, edits, administrator removal and deletion", async () => {
     const f = await fixture();
     let previous = await f.sdkGuild.roles.fetch(roleId);
