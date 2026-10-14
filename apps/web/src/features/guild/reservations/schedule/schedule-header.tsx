@@ -157,7 +157,7 @@ export function ScheduleHeader({
         className={cn(
           // Below `md` the document scrolls the schedule, so the day navigation
           // pins under the app bar.
-          "shrink-0 border-b bg-background max-md:sticky max-md:top-14 max-md:z-30",
+          "shrink-0 border-b bg-background max-md:sticky max-md:top-(--page-sticky-top) max-md:z-30",
           compactValue(
             isCompact,
             "flex items-center gap-1 px-2 py-1",
