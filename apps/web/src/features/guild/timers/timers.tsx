@@ -1,7 +1,6 @@
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { findNpcType, getNpcTypeSortIndex } from "@/constants/npc";
 import { EmptyState } from "@/components/common/empty-state";
-import { FilterBar } from "@/components/common/filter-bar";
 import { ViewModeToggle } from "@/components/ui/view-mode-toggle";
 import { useTimerExpiry } from "./use-timer-expiry";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -13,10 +12,15 @@ import { useState } from "react";
 import { SingleTimer } from "./single-timer";
 import { TimersListSkeleton } from "./timers-list-skeleton";
 import {
+  getTimerCellClassName,
   getTimerGroupClassName,
+  TIMER_GROUP_HEADING_CLASS,
+  TIMER_ROW_INSET_CLASS,
   TIMERS_GRID_MEDIA_QUERY,
   TIMERS_VIEW_MODE_KEY,
 } from "./timers-layout";
+import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
+import { cn } from "cn";
 
 import { SearchInput } from "@/components/ui/search-input";
 import { GuildWorldHeaderSwitcher } from "@/components/layout/guild-world-header-switcher";
@@ -117,7 +121,7 @@ export const Timers = () => {
   const renderContent = () => {
     if (isError && timers === undefined) {
       return (
-        <div className="px-3 pb-3">
+        <div className="p-3">
           <EmptyState
             framed
             icon={CircleAlert}
@@ -139,7 +143,7 @@ export const Timers = () => {
 
     if (!hasFilteredTimers) {
       return (
-        <div className="px-3 pb-3">
+        <div className="p-3">
           {showsNoSearchResults ? (
             <EmptyState
               framed
@@ -173,39 +177,47 @@ export const Timers = () => {
     }
 
     return (
-      <ScrollArea className="min-h-0 flex-1">
-        <div className="flex flex-col gap-4 px-3 pb-3">
-          {Object.entries(groups).map(([key, groupTimers]) => {
-            const npcType = findNpcType(key);
+      <ScrollArea data-under-top-bar className="min-h-0 flex-1">
+        {Object.entries(groups).map(([key, groupTimers]) => {
+          const npcType = findNpcType(key);
 
-            return (
-              <section key={key} aria-labelledby={`timers-group-${key}`}>
-                <h2
-                  id={`timers-group-${key}`}
-                  className="mb-2 px-1 text-xs font-medium text-muted-foreground"
-                >
-                  {npcType
-                    ? t(`npcType.${npcType}`)
-                    : t("timers.npcType.manual")}{" "}
-                  ({groupTimers.length})
-                </h2>
+          return (
+            <section key={key} aria-labelledby={`timers-group-${key}`}>
+              <h2
+                id={`timers-group-${key}`}
+                className={cn(TIMER_GROUP_HEADING_CLASS, TIMER_ROW_INSET_CLASS)}
+              >
+                {npcType ? t(`npcType.${npcType}`) : t("timers.npcType.manual")}
+                <span className="rounded-full bg-foreground/10 px-1.5 text-[11px] leading-4 font-medium tabular-nums">
+                  {groupTimers.length}
+                </span>
+              </h2>
+              <div className="overflow-hidden">
                 <div className={getTimerGroupClassName(viewMode)}>
                   {groupTimers.map((timer) => (
-                    <SingleTimer
+                    <div
                       key={`${timer.world}:${timer.timerKey}`}
-                      timer={timer}
-                      paint={getPaint(timer.npc?.name ?? "")}
-                      countdownMode={countdownMode}
-                      removeTimerAfterMs={removeTimerAfterMs}
-                      isPinned={isPinned(timer)}
-                      showWorld={world === null}
-                    />
+                      className={cn(
+                        getTimerCellClassName(viewMode),
+                        // A dropped timer renders nothing; its cell goes too.
+                        "empty:hidden",
+                      )}
+                    >
+                      <SingleTimer
+                        timer={timer}
+                        paint={getPaint(timer.npc?.name ?? "")}
+                        countdownMode={countdownMode}
+                        removeTimerAfterMs={removeTimerAfterMs}
+                        isPinned={isPinned(timer)}
+                        showWorld={world === null}
+                      />
+                    </div>
                   ))}
                 </div>
-              </section>
-            );
-          })}
-        </div>
+              </div>
+            </section>
+          );
+        })}
       </ScrollArea>
     );
   };
@@ -214,14 +226,14 @@ export const Timers = () => {
     <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("layout.navigation.timers")}</h1>
       <GuildWorldHeaderSwitcher />
-      <div className="px-3 pt-3">
-        <FilterBar ariaLabel={t("timers.toolbarLabel")}>
+      {/* Searching and the view sit in the top bar, as on the loot list. */}
+      <HeaderSlotPortal slot="actions">
+        <div className="flex items-center gap-2">
           <SearchInput
             placeholder={t("timers.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            size="lg"
-            wrapperClassName="min-w-0 basis-full sm:flex-1 sm:basis-0"
+            wrapperClassName="w-40 md:w-56"
             aria-label={t("timers.searchPlaceholder")}
           />
           {canChooseViewMode && (
@@ -230,16 +242,17 @@ export const Timers = () => {
               onChange={setViewMode}
               listLabel={t("timers.view.list")}
               gridLabel={t("timers.view.grid")}
+              size="default"
             />
           )}
-        </FilterBar>
-      </div>
+        </div>
+      </HeaderSlotPortal>
 
-      <div className="flex min-h-0 flex-1 flex-col pt-3">
+      <div className="flex min-h-0 flex-1 flex-col">
         {isError && timers !== undefined && (
           <Alert
             variant="destructive"
-            className="mx-3 mb-3 flex w-auto flex-wrap items-center justify-between gap-3"
+            className="m-3 flex w-auto flex-wrap items-center justify-between gap-3"
           >
             <AlertDescription>{t("timers.refreshError")}</AlertDescription>
             {retryButton}
