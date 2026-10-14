@@ -1,6 +1,7 @@
 import { AnimatePresence } from "framer-motion";
 import * as m from "framer-motion/m";
 import { Button } from "@lootlog/ui/components/button";
+import { Kbd } from "@lootlog/ui/components/kbd";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { EASE_EMPHASIZED, MOTION_DURATION } from "@/lib/motion";
@@ -13,6 +14,8 @@ export type UnsavedChangesBarProps = {
   unsavedChangesLabel?: string;
   resetLabel?: string;
   saveLabel?: string;
+  /** A keyboard shortcut the page handles to save, shown beside the message. */
+  saveShortcut?: { label: string; keys: string };
 };
 
 export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
@@ -22,6 +25,7 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
   unsavedChangesLabel,
   resetLabel,
   saveLabel,
+  saveShortcut,
 }) => {
   const { t } = useTranslation();
 
@@ -55,6 +59,11 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
             <p className="min-w-0 flex-1 truncate text-sm font-medium">
               {effectiveUnsavedChangesLabel}
             </p>
+            {saveShortcut && (
+              <Kbd aria-hidden="true" className="shrink-0 max-sm:hidden">
+                {saveShortcut.label}
+              </Kbd>
+            )}
             <div className="flex shrink-0 gap-2">
               <Button
                 type="button"
@@ -64,7 +73,12 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
               >
                 {effectiveResetLabel}
               </Button>
-              <Button type="submit" variant="default" loading={isSubmitting}>
+              <Button
+                type="submit"
+                variant="default"
+                loading={isSubmitting}
+                aria-keyshortcuts={saveShortcut?.keys}
+              >
                 {effectiveSaveLabel}
               </Button>
             </div>
