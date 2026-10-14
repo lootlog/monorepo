@@ -21,7 +21,7 @@ import {
   readStoredGuildWorld,
   storeGuildWorld,
   useGuildWorld,
-  useGuildWorldUrlSync,
+  useGuildWorldFromUrl,
 } from "./use-guild-world";
 
 beforeEach(() => {
@@ -34,7 +34,7 @@ afterEach(() => {
 });
 
 function OrganizationPages() {
-  useGuildWorldUrlSync();
+  useGuildWorldFromUrl();
 
   return <Outlet />;
 }
@@ -85,37 +85,40 @@ async function mount(initialEntry: string) {
   return { router, navigate };
 }
 
-it("keeps a shared link's world for the Organization's other pages", async () => {
+it("remembers a shared link's world and drops it from the URL", async () => {
   storeGuildWorld("one", "tempest");
-  const { router, navigate } = await mount("/one/timers?world=pandora");
+  const { router, navigate } = await mount("/one/timers?world=pandora&tab=a");
 
   expect(screen.getByRole("status").textContent).toBe("pandora");
+  await waitFor(() =>
+    expect(router.state.location.search).not.toHaveProperty("world"),
+  );
+  expect(router.state.location.search).toMatchObject({ tab: "a" });
   expect(readStoredGuildWorld("one")).toBe("pandora");
 
   await navigate("/one/loots");
 
   expect(screen.getByRole("status").textContent).toBe("pandora");
-  await waitFor(() =>
-    expect(router.state.location.search).toMatchObject({ world: "pandora" }),
-  );
 });
 
-it("opens another Organization on its own world, never the previous one's", async () => {
+it("opens each Organization on its own remembered world without touching the URL", async () => {
   storeGuildWorld("one", "tempest");
   const { router, navigate } = await mount("/one/timers");
 
+  const settle = () =>
+    act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    });
+
   expect(screen.getByRole("status").textContent).toBe("tempest");
-  await waitFor(() =>
-    expect(router.state.location.search).toMatchObject({ world: "tempest" }),
-  );
+  await settle();
+  expect(router.history.location.search).toBe("");
 
   await navigate("/two/timers");
 
   expect(screen.getByRole("status").textContent).toBe("all");
-  await act(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  });
-  expect(router.state.location.search).not.toHaveProperty("world");
+  await settle();
+  expect(router.history.location.search).toBe("");
   expect(readStoredGuildWorld("two")).toBeNull();
 });
 
