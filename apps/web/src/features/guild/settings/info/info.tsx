@@ -11,7 +11,7 @@ import {
   DATE_TIME_WITH_SECONDS_FORMAT,
   timestampToDate,
 } from "@/utils/date/parse-timestamp-to-date";
-import { SettingsTabPage } from "../components/settings-tab-page";
+import { SettingsTabPage } from "@/components/common/settings-tab-page";
 import { InfoSettingsSkeletonSections } from "./info-skeleton-sections";
 
 const getGuildSyncPresentation = (

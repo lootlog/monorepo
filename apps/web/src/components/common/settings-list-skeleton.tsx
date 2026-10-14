@@ -1,7 +1,7 @@
 import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
 import { ListToolbarSkeleton } from "@/components/common/list-toolbar-skeleton";
 import type { ComponentProps, ReactNode } from "react";
-import { SettingsTabSkeleton } from "./settings-tab-skeleton";
+import { SettingsTabSkeleton } from "@/components/common/settings-tab-skeleton";
 
 type SettingsListSkeletonProps = {
   /** Stands in for the toolbar's controls after the filter. */

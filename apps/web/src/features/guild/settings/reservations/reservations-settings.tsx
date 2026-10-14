@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildsControllerGetGuildById } from "@lootlog/client/main";
-import { SettingsTabPage } from "../components/settings-tab-page";
+import { SettingsTabPage } from "@/components/common/settings-tab-page";
 import { ReservationsSettingsForm } from "./reservations-settings-form";
 import { ReservationSharingSettings } from "./reservation-sharing-settings";
 

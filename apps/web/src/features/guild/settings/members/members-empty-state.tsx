@@ -9,8 +9,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { SettingsClearFilterButton } from "../components/settings-clear-filter-button";
-import { SettingsListEmpty } from "../components/settings-list-empty";
+import { SettingsClearFilterButton } from "@/components/common/settings-clear-filter-button";
+import { SettingsListEmpty } from "@/components/common/settings-list-empty";
 import type { MemberStatusFilter } from "./member-list-item.utils";
 
 /** Each status that can come up empty: what that means, and its icon. */

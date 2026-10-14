@@ -1,5 +1,5 @@
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { SettingsListSkeleton } from "../components/settings-list-skeleton";
+import { SettingsListSkeleton } from "@/components/common/settings-list-skeleton";
 
 export const MapTemplatesSkeleton = () => (
   <SettingsListSkeleton

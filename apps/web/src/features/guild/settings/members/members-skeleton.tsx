@@ -1,7 +1,7 @@
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 import { ListToolbarSkeleton } from "@/components/common/list-toolbar-skeleton";
-import { SettingsTabSkeleton } from "../components/settings-tab-skeleton";
+import { SettingsTabSkeleton } from "@/components/common/settings-tab-skeleton";
 import { MemberTileSkeleton } from "./member-tile-skeleton";
 import type { MemberStatusFilter } from "./member-list-item.utils";
 

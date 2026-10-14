@@ -2,7 +2,7 @@ import { GeneralForm } from "@/features/guild/settings/general/general-form";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildsControllerGetGuildById } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
-import { SettingsTabPage } from "../components/settings-tab-page";
+import { SettingsTabPage } from "@/components/common/settings-tab-page";
 
 export const GeneralSettings = () => {
   const { t } = useTranslation();

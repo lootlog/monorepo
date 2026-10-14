@@ -32,11 +32,11 @@ import {
 import { cn } from "cn";
 import { startTransition, useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { SettingsListError } from "../components/settings-list-error";
+import { SettingsListError } from "@/components/common/settings-list-error";
 import { PageScrollerContext } from "@/components/layout/page-scroller-context";
 import { MembersEmptyState } from "./members-empty-state";
 import { MemberTileSkeleton } from "./member-tile-skeleton";
-import { SettingsTabPage } from "../components/settings-tab-page";
+import { SettingsTabPage } from "@/components/common/settings-tab-page";
 import { RefreshMembersButton } from "./components/refresh-members-button";
 import { MembersList } from "./members-list";
 import type { MembersStats } from "./members.types";
