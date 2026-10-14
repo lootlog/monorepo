@@ -1,46 +1,52 @@
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCard } from "@/components/common/section-card/section-card";
-
+import { BandSection } from "@/components/common/band-section";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
+import { SkeletonLine } from "@/components/common/skeleton-line";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { cn } from "cn";
+import { useTranslation } from "react-i18next";
+import { SettingsDetailSkeleton } from "../components/settings-detail-skeleton";
+import { NPC_RARITY_CONFIG } from "./npc-rarity-config";
 
 export const NpcSettingsDetailSkeleton = () => {
+  const { t } = useTranslation();
+
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 p-3">
-      <SectionCard className="shrink-0 border-b border-t">
-        <SectionCardContent className="flex flex-col gap-3">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 items-center gap-3">
-              <Skeleton className="size-9 shrink-0 rounded-lg" />
-              <div className="min-w-0 space-y-1.5">
-                <Skeleton className="h-3 w-36" />
-                <Skeleton className="h-4 w-24" />
-              </div>
+    <SettingsDetailSkeleton
+      meta={
+        <span className="text-xs leading-tight">
+          <SkeletonLine className="h-3 w-24" />
+        </span>
+      }
+    >
+      <div className="pb-24">
+        <BandSection
+          id="npc-rarities-skeleton"
+          title={t("settings.npcs.raritiesTitle")}
+          description={t("settings.npcs.raritiesDescription")}
+          tiled
+        >
+          {NPC_RARITY_CONFIG.map((rarity) => (
+            <div
+              key={rarity.key}
+              data-list-tile
+              className={cn(
+                "flex items-center gap-3 py-3",
+                LIST_TILE_RULE_CLASS,
+                LIST_TILE_INSET_CLASS,
+              )}
+            >
+              <Skeleton className="size-4 shrink-0 rounded-[4px]" />
+              <Skeleton className="size-7 shrink-0 rounded-md" />
+              <span className={cn("text-sm font-medium", rarity.color)}>
+                {t(`itemRarity.${rarity.key}`)}
+              </span>
             </div>
-            <div className="flex min-h-8 shrink-0 items-center gap-1">
-              <Skeleton className="size-8 rounded-md" />
-              <Skeleton className="size-8 rounded-md" />
-            </div>
-          </div>
-        </SectionCardContent>
-      </SectionCard>
-      <SectionCard className="overflow-hidden">
-        <SectionCardContent className="flex flex-col gap-3">
-          <div className="px-4 py-3">
-            <div className="flex items-center gap-3">
-              <Skeleton className="size-9 shrink-0 rounded-lg" />
-              <div className="space-y-1.5">
-                <Skeleton className="h-4 w-40" />
-                <Skeleton className="h-3 w-72 max-w-full" />
-              </div>
-            </div>
-          </div>
-          <div className="divide-y divide-border/50 border-t border-border/50">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <Skeleton key={index} className="h-14 w-full rounded-none" />
-            ))}
-          </div>
-        </SectionCardContent>
-      </SectionCard>
-    </div>
+          ))}
+        </BandSection>
+      </div>
+    </SettingsDetailSkeleton>
   );
 };

@@ -98,7 +98,6 @@
     "emptyDescription": "Brak ról do wyświetlenia.",
     "emptyFilteredDescription": "Nie znaleziono ról pasujących do wyszukiwania.",
     "emptyGuildTitle": "Brak ról w tym Lootlogu",
-    "details": "Szczegóły roli",
     "roleNotFound": "Nie znaleziono roli",
     "roleNotFoundDescription": "Ta rola nie istnieje w tym Lootlogu albo nie ma jej już w pobranej liście.",
     "levelRange": "Poziom {{from}} - {{to}}",
@@ -118,7 +117,6 @@
     "emptyDescription": "Brak potworów do wyświetlenia.",
     "emptyFilteredDescription": "Nie znaleziono potworów pasujących do wyszukiwania.",
     "emptyGuildTitle": "Brak konfiguracji potworów w tym Lootlogu",
-    "details": "Szczegóły konfiguracji",
     "npcNotFound": "Nie znaleziono potwora",
     "npcNotFoundDescription": "Ten wpis konfiguracji nie istnieje w tym Lootlogu albo nie ma go już w pobranej konfiguracji.",
     "raritiesTitle": "Zbierane rzadkości",
@@ -203,7 +201,6 @@
   "members": {
     "title": "Członkowie",
     "searchPlaceholder": "Filtruj po nicku lub Discord ID…",
-    "details": "Szczegóły członka",
     "owner": "Właściciel Lootloga",
     "filters": {
       "all": "Wszyscy",
@@ -215,8 +212,7 @@
     "table": {
       "status": "Status",
       "discord": "Synchronizacja",
-      "activity": "Aktywność",
-      "roles": "Role"
+      "activity": "Aktywność"
     },
     "actions": {
       "moreNamed": "Więcej akcji: {{name}}",
@@ -372,9 +368,6 @@
     },
     "rolesTitle": "Role i uprawnienia",
     "noRoles": "Brak przypisanych ról. Może być potrzebna synchronizacja członka.",
-    "permissionsCount_one": "{{count}} uprawnienie",
-    "permissionsCount_few": "{{count}} uprawnienia",
-    "permissionsCount_many": "{{count}} uprawnień",
     "deactivate": "Dezaktywuj",
     "deactivateSuccess": "Członek został dezaktywowany",
     "deactivateError": "Nie udało się dezaktywować członka",
