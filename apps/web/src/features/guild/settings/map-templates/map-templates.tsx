@@ -2,14 +2,15 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@lootlog/ui/components/button";
-import { FileText, Plus } from "lucide-react";
-import { EmptyState } from "@/components/common/empty-state";
+import { FileText, Plus, SearchX } from "lucide-react";
 import { ListToolbar } from "@/components/common/list-toolbar";
 import { toast } from "sonner";
 import { MapTemplateFormDialog } from "./map-template-form-dialog";
 import { MapTemplateRowsSkeleton } from "./map-template-rows-skeleton";
 import { MapTemplateTile } from "./map-template-tile";
+import { SettingsClearFilterButton } from "../components/settings-clear-filter-button";
 import { SettingsListEmpty } from "../components/settings-list-empty";
+import { SettingsListError } from "../components/settings-list-error";
 import { SettingsTabPage } from "../components/settings-tab-page";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -25,9 +26,13 @@ export const MapTemplatesSettings = () => {
   const guildId = useGuildId();
   const queryClient = useQueryClient();
 
-  const { data: templates, isLoading } = useMapTemplatesControllerGetTemplates({
-    guildId: guildId ?? "",
-  });
+  const {
+    data: templates,
+    isLoading,
+    isError,
+    isFetching,
+    refetch,
+  } = useMapTemplatesControllerGetTemplates({ guildId: guildId ?? "" });
 
   const deleteTemplate = useMapTemplatesControllerDeleteTemplate({
     mutation: {
@@ -78,7 +83,31 @@ export const MapTemplatesSettings = () => {
     }
   };
 
+  const hasTemplates = Boolean(templates?.length);
+
+  // Small in the toolbar, regular as the empty state's call to action.
+  const renderCreateButton = (size?: "sm") => (
+    <Button
+      size={size}
+      className="shrink-0"
+      onClick={() => setCreateDialogOpen(true)}
+    >
+      <Plus data-icon="inline-start" aria-hidden />
+      {t("settings.mapTemplates.newTemplate")}
+    </Button>
+  );
+
   const renderContent = () => {
+    if (!templates && isError) {
+      return (
+        <SettingsListError
+          title={t("settings.mapTemplates.loadError")}
+          isRetrying={isFetching}
+          onRetry={() => void refetch()}
+        />
+      );
+    }
+
     if (isLoading) {
       return (
         <div role="status" aria-label={t("common.loading")}>
@@ -87,24 +116,30 @@ export const MapTemplatesSettings = () => {
       );
     }
 
-    if (filteredTemplates.length === 0) {
-      return normalizedSearchValue ? (
+    // The first template starts here; the toolbar offers it once there is a list.
+    if (!hasTemplates) {
+      return (
         <SettingsListEmpty
           icon={FileText}
-          title={t("settings.mapTemplates.noResults")}
-          description={t("settings.mapTemplates.noResultsDescription")}
-          hasActiveFilters
-          onResetFilters={() => setSearchValue("")}
+          title={t("settings.mapTemplates.noTemplates")}
+          description={t("settings.mapTemplates.noTemplatesDescription")}
+          action={renderCreateButton()}
         />
-      ) : (
-        <div className="p-3">
-          <EmptyState
-            framed
-            icon={FileText}
-            title={t("settings.mapTemplates.noTemplates")}
-            description={t("settings.mapTemplates.noTemplatesDescription")}
-          />
-        </div>
+      );
+    }
+
+    if (filteredTemplates.length === 0) {
+      return (
+        <SettingsListEmpty
+          icon={SearchX}
+          title={t("settings.mapTemplates.noResults", {
+            query: searchValue.trim(),
+          })}
+          description={t("settings.mapTemplates.noResultsDescription")}
+          action={
+            <SettingsClearFilterButton onClear={() => setSearchValue("")} />
+          }
+        />
       );
     }
 
@@ -130,16 +165,9 @@ export const MapTemplatesSettings = () => {
         placeholder={t("settings.mapTemplates.filterPlaceholder")}
         label={t("settings.mapTemplates.filterPlaceholder")}
         clearLabel={t("settings.clearFilter")}
-        disabled={isLoading}
+        disabled={!hasTemplates}
       >
-        <Button
-          size="sm"
-          className="shrink-0"
-          onClick={() => setCreateDialogOpen(true)}
-        >
-          <Plus data-icon="inline-start" aria-hidden />
-          {t("settings.mapTemplates.newTemplate")}
-        </Button>
+        {hasTemplates && renderCreateButton("sm")}
       </ListToolbar>
       {renderContent()}
 

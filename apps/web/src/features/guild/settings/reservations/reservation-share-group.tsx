@@ -1,9 +1,6 @@
 import { ListGroupHeading } from "@/components/common/list-group-heading";
-import {
-  LIST_TILE_INSET_CLASS,
-  LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
-import { cn } from "cn";
+import { ListTileEmpty } from "@/components/common/list-tile-empty";
+import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { ReservationShareTileSkeleton } from "./reservation-share-tile-skeleton";
 
@@ -14,6 +11,7 @@ export const ReservationShareGroup = ({
   count,
   isPending,
   emptyLabel,
+  emptyIcon,
   children,
 }: {
   id: string;
@@ -21,6 +19,8 @@ export const ReservationShareGroup = ({
   count: number | undefined;
   isPending: boolean;
   emptyLabel: string;
+  /** The icon the group's tiles lead with. */
+  emptyIcon: LucideIcon;
   children: ReactNode;
 }) => (
   <section aria-labelledby={id} aria-busy={isPending}>
@@ -34,16 +34,7 @@ export const ReservationShareGroup = ({
     ) : count ? (
       <ul>{children}</ul>
     ) : (
-      <p
-        data-list-tile
-        className={cn(
-          LIST_TILE_RULE_CLASS,
-          LIST_TILE_INSET_CLASS,
-          "flex min-h-14 items-center py-2 text-sm text-muted-foreground",
-        )}
-      >
-        {emptyLabel}
-      </p>
+      <ListTileEmpty icon={emptyIcon}>{emptyLabel}</ListTileEmpty>
     )}
   </section>
 );

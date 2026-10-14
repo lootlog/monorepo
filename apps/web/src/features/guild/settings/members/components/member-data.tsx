@@ -2,14 +2,10 @@ import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import type { TOptions } from "i18next";
 import { BandSection } from "@/components/common/band-section";
 import { DetailField } from "@/components/common/detail-field";
-import {
-  LIST_TILE_INSET_CLASS,
-  LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+import { ListTileEmpty } from "@/components/common/list-tile-empty";
 import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";
 import type { MemberActivityStats } from "@/features/guild/settings/members/member-activity-stats-api";
 import { useTranslation } from "react-i18next";
-import { cn } from "cn";
 import {
   Activity,
   AlertTriangle,
@@ -17,6 +13,7 @@ import {
   Gamepad2,
   Globe2,
   MousePointerClick,
+  Shield,
 } from "lucide-react";
 import {
   getMemberAccessState,
@@ -248,16 +245,9 @@ export const MemberData = ({
         tiled
       >
         {member.roles.length === 0 ? (
-          <p
-            data-list-tile
-            className={cn(
-              "flex min-h-14 items-center py-2 text-sm text-muted-foreground",
-              LIST_TILE_RULE_CLASS,
-              LIST_TILE_INSET_CLASS,
-            )}
-          >
+          <ListTileEmpty icon={Shield}>
             {t("settings.members.noRoles")}
-          </p>
+          </ListTileEmpty>
         ) : (
           member.roles.map((role) => (
             <RoleTile key={role.id} guildId={guildId} role={role} />

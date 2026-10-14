@@ -10,6 +10,7 @@ import {
   buildGuildRolePositionById,
   computeMembersStats,
   getFilteredSortedMembers,
+  memberMatchesSearch,
   type MemberStatusFilter,
 } from "@/features/guild/settings/members/member-list-item.utils";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
@@ -29,10 +30,11 @@ import {
   ToggleGroupItem,
 } from "@lootlog/ui/components/toggle-group";
 import { cn } from "cn";
-import { Users } from "lucide-react";
 import { startTransition, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { SettingsListEmpty } from "../components/settings-list-empty";
+import { SettingsListError } from "../components/settings-list-error";
+import { MembersEmptyState } from "./members-empty-state";
+import { MemberTileSkeleton } from "./member-tile-skeleton";
 import { SettingsTabPage } from "../components/settings-tab-page";
 import { RefreshMembersButton } from "./components/refresh-members-button";
 import { MembersList } from "./members-list";
@@ -59,7 +61,12 @@ export const MembersSettingsContent = () => {
 
   const routeGuildId = useGuildId() ?? "";
 
-  const { data: members } = useMembersControllerGetGuildMembers(
+  const {
+    data: members,
+    isError,
+    isFetching,
+    refetch,
+  } = useMembersControllerGetGuildMembers(
     { guildId: routeGuildId },
     { includeInactive: true },
   );
@@ -91,8 +98,14 @@ export const MembersSettingsContent = () => {
     accessPolicy?.allows(Permission.OWNER),
   );
 
+  // The pills count the members the name filter leaves, so each shows where
+  // a name can be found.
+  const searchedMembers = members?.filter((member) =>
+    memberMatchesSearch({ member, search: searchValue }),
+  );
+
   const memberStats = computeMembersStats({
-    members,
+    members: searchedMembers,
     memberGamePresenceByDiscordId,
     memberWebPresenceByDiscordId,
   });
@@ -106,13 +119,60 @@ export const MembersSettingsContent = () => {
     statusFilter,
   });
 
-  const hasActiveFilters =
-    statusFilter !== defaultStatusFilter || searchValue.trim() !== "";
-
   const changeStatusFilter = (filter: MemberStatusFilter) => {
     // The list starts over, so its top stays under the toolbar.
     getPageScroller(scrollElement, scrollsDocument)?.scrollTo({ top: 0 });
     startTransition(() => setStatusFilter(filter));
+  };
+
+  const renderContent = () => {
+    if (!members && isError) {
+      return (
+        <SettingsListError
+          title={t("settings.members.empty.loadError")}
+          isRetrying={isFetching}
+          onRetry={() => void refetch()}
+        />
+      );
+    }
+
+    if (!members) {
+      return (
+        <div aria-hidden="true">
+          {Array.from({ length: 12 }, (_, index) => (
+            <MemberTileSkeleton key={index} />
+          ))}
+        </div>
+      );
+    }
+
+    if (filteredMembers.length === 0) {
+      return (
+        <MembersEmptyState
+          hasMembers={members.length > 0}
+          searchMatchCount={memberStats.totalMembers}
+          search={searchValue}
+          statusFilter={statusFilter}
+          onClearSearch={() => setSearchValue("")}
+          onShowAll={() => changeStatusFilter("all")}
+        />
+      );
+    }
+
+    return (
+      <MembersList
+        members={filteredMembers}
+        guildOwnerId={guild?.ownerId}
+        activityStatsByDiscordIdAndSource={
+          memberActivityStatsByDiscordIdAndSource
+        }
+        scrollElement={scrollElement}
+        canManageMembers={canManageMembers}
+        memberGamePresenceByDiscordId={memberGamePresenceByDiscordId}
+        memberWebPresenceByDiscordId={memberWebPresenceByDiscordId}
+        guildId={routeGuildId}
+      />
+    );
   };
 
   return (
@@ -126,7 +186,7 @@ export const MembersSettingsContent = () => {
         placeholder={t("settings.members.searchPlaceholder")}
         label={t("settings.members.searchPlaceholder")}
         clearLabel={t("settings.clearFilter")}
-        disabled={!members}
+        disabled={!members?.length}
       >
         {/* On phones the pills scroll sideways in one row under the filter. */}
         <div className="max-sm:order-last max-sm:-mx-3 max-sm:w-[calc(100%+1.5rem)] max-sm:overflow-x-auto max-sm:px-3 max-sm:[scrollbar-width:none]">
@@ -170,39 +230,7 @@ export const MembersSettingsContent = () => {
         <RefreshMembersButton />
       </ListToolbar>
       <OrganizationPresenceStatus guildId={resolvedGuildId} />
-      {members && filteredMembers.length === 0 ? (
-        <SettingsListEmpty
-          icon={Users}
-          title={
-            members.length === 0
-              ? t("settings.members.emptyGuildTitle")
-              : t("settings.members.emptyTitle")
-          }
-          description={
-            hasActiveFilters
-              ? t("settings.members.emptyFilteredDescription")
-              : t("settings.members.emptyDescription")
-          }
-          hasActiveFilters={hasActiveFilters}
-          onResetFilters={() => {
-            setSearchValue("");
-            setStatusFilter(defaultStatusFilter);
-          }}
-        />
-      ) : (
-        <MembersList
-          members={filteredMembers}
-          guildOwnerId={guild?.ownerId}
-          activityStatsByDiscordIdAndSource={
-            memberActivityStatsByDiscordIdAndSource
-          }
-          scrollElement={scrollElement}
-          canManageMembers={canManageMembers}
-          memberGamePresenceByDiscordId={memberGamePresenceByDiscordId}
-          memberWebPresenceByDiscordId={memberWebPresenceByDiscordId}
-          guildId={routeGuildId}
-        />
-      )}
+      {renderContent()}
     </SettingsTabPage>
   );
 };
