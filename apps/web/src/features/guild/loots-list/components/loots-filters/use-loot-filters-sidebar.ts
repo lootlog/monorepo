@@ -47,11 +47,6 @@ type SavedFilter = {
   };
 };
 
-type LootsFiltersSidebarProps = {
-  className?: string;
-  embedded?: boolean;
-};
-
 type LootFilters = ReturnType<typeof useLootsFilters>["filters"];
 
 // Selected names need no lookup: the filter value is the label.
@@ -79,26 +74,36 @@ const getHidQueryState = (
 const uniqueByName = <Hit extends { name: string }>(hits: Hit[] | undefined) =>
   uniqBy(hits ?? [], (hit) => hit.name);
 
+const hasLevelRange = (min: string, max: string) => Number(Boolean(min || max));
+
+// Every selected value counts, and a level range counts once, so a section's
+// count matches what the player picked in it.
 const getFilterSectionState = (filters: LootFilters) => {
   const npcActiveFilterCount =
-    Number(filters.npcTypes.length > 0) +
-    Number(filters.npcs.length > 0) +
-    Number(Boolean(filters.npcLevelMin || filters.npcLevelMax));
+    filters.npcTypes.length +
+    filters.npcs.length +
+    hasLevelRange(filters.npcLevelMin, filters.npcLevelMax);
 
   const itemActiveFilterCount =
-    Number(filters.rarities.length > 0) +
-    Number(filters.professions.length > 0) +
-    Number(filters.itemNames.length > 0 || Boolean(filters.hid)) +
-    Number(Boolean(filters.itemLevelMin || filters.itemLevelMax));
+    filters.rarities.length +
+    filters.professions.length +
+    filters.itemNames.length +
+    Number(Boolean(filters.hid)) +
+    hasLevelRange(filters.itemLevelMin, filters.itemLevelMax);
 
   const playerActiveFilterCount =
-    Number(filters.players.length > 0) +
-    Number(Boolean(filters.playerLevelMin || filters.playerLevelMax));
+    filters.players.length +
+    hasLevelRange(filters.playerLevelMin, filters.playerLevelMax);
 
   return {
     npcActiveFilterCount,
     itemActiveFilterCount,
     playerActiveFilterCount,
+    totalActiveFilterCount:
+      npcActiveFilterCount +
+      itemActiveFilterCount +
+      playerActiveFilterCount +
+      Number(Boolean(filters.search)),
   };
 };
 
@@ -124,10 +129,7 @@ const getLootLevelRanges = (filters: LootFilters) => ({
   },
 });
 
-export const useLootFiltersSidebar = ({
-  className,
-  embedded = false,
-}: LootsFiltersSidebarProps) => {
+export const useLootFiltersSidebar = () => {
   const { t } = useTranslation();
 
   const {
@@ -348,10 +350,38 @@ export const useLootFiltersSidebar = ({
     npcActiveFilterCount,
     itemActiveFilterCount,
     playerActiveFilterCount,
+    totalActiveFilterCount,
   } = getFilterSectionState(filters);
+
+  const clearNpcFilters = () =>
+    updateFilters({ npcTypes: [], npcs: [], npcLevelMin: "", npcLevelMax: "" });
+
+  const clearItemFilters = () =>
+    updateFilters({
+      rarities: [],
+      professions: [],
+      itemNames: [],
+      hid: "",
+      itemLevelMin: "",
+      itemLevelMax: "",
+    });
+
+  const clearPlayerFilters = () =>
+    updateFilters({ players: [], playerLevelMin: "", playerLevelMax: "" });
 
   const isQuickFilterApplied = (filter: SavedFilter["filters"]) =>
     JSON.stringify(filter) === JSON.stringify(getCurrentFiltersForSaving());
+
+  // Picking the applied view again takes it off.
+  const toggleQuickFilter = (filterData: SavedFilter["filters"]) => {
+    if (isQuickFilterApplied(filterData)) {
+      clearFilters();
+
+      return;
+    }
+
+    applyFilter(filterData);
+  };
 
   const selectedNpcTypes = new Set(filters.npcTypes);
   const selectedRarities = new Set(filters.rarities);
@@ -361,17 +391,19 @@ export const useLootFiltersSidebar = ({
     isDialogOpen,
     setIsDialogOpen,
     t,
-    className,
     newFilterName,
     setNewFilterName,
     handleSaveFilter,
-    embedded,
     canSaveCurrentFilter,
     allQuickFilters,
     isQuickFilterApplied,
     filters,
-    applyFilter,
+    toggleQuickFilter,
     handleRemoveCustomFilter,
+    totalActiveFilterCount,
+    clearNpcFilters,
+    clearItemFilters,
+    clearPlayerFilters,
     npcActiveFilterCount,
     npcTypeOptions,
     selectedNpcTypes,
