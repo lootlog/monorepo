@@ -662,14 +662,14 @@
       "searchTargets": "Szukaj kanałów"
     },
     "templateEditor": {
-      "label": "Edytor wiadomości",
-      "description": "Treść wiadomości wysyłanej na Discorda. Obsługiwany jest Markdown oraz wzmianki ról.",
+      "insertVariable": "Wstaw zmienną",
+      "previewEmpty": "Wiadomość jest pusta.",
+      "discordAppTag": "Aplikacja",
+      "variableExample": "Przykład: {{value}}",
+      "hint": "Obsługiwany jest Markdown. Wpisz {{variable}}, aby wybrać zmienną, albo {{mention}}, aby wspomnieć rolę.",
       "placeholder": "Napisz treść powiadomienia...",
-      "showPreview": "Podgląd",
       "emptySuggestions": "Brak pasujących sugestii.",
-      "availableVariables": "Dostępne zmienne",
       "previewLabel": "Podgląd wiadomości",
-      "previewDescription": "Podgląd wiadomości z przykładowymi danymi podstawionymi za zmienne.",
       "previewNotice": "Zmienne zostały zastąpione przykładowymi danymi. Wygląd może się nieznacznie różnić od wiadomości na Discordzie.",
       "previewValues": {
         "ruleName": "Timer herosów",
@@ -712,6 +712,7 @@
       },
       "whenTimer": "Lootlog wyśle przypomnienie, gdy ktoś z Lootloga ustawi timer wybranego potwora.",
       "whenScheduledMessage": "Lootlog wyśle wiadomość w wybranym terminie, a przy harmonogramie w każdym kolejnym.",
+      "unsavedNewRule": "Nowa reguła nie jest jeszcze zapisana",
       "targetsDescription": "Wybierz jeden lub więcej kanałów docelowych. Możesz też dodać nowy bez opuszczania formularza."
     },
     "manualNpcEntry": {

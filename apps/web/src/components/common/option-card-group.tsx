@@ -17,8 +17,6 @@ export type OptionCard<Value extends string> = {
   /** The icon's colour; the primary colour by default. */
   iconClassName?: string;
   iconBackgroundClassName?: string;
-  /** The ring and border of the chosen card. */
-  activeClassName?: string;
 };
 
 type OptionCardGroupProps<Value extends string> = {
@@ -51,23 +49,15 @@ export const OptionCardGroup = <Value extends string>({
     className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2", className)}
   >
     {options.map((option) => {
-      const isActive = value === option.value;
       const Icon = option.icon;
 
+      // The label draws the card; a chosen card takes a clear primary border.
       return (
-        <FieldLabel key={option.value} className="cursor-pointer">
-          <Field
-            orientation="horizontal"
-            className={cn(
-              "items-center rounded-lg border bg-card p-3 transition-[border-color,box-shadow,opacity]",
-              isActive
-                ? cn(
-                    "ring-1",
-                    option.activeClassName ?? "border-primary ring-primary/30",
-                  )
-                : "border-border bg-card opacity-70 hover:opacity-90",
-            )}
-          >
+        <FieldLabel
+          key={option.value}
+          className="cursor-pointer has-data-checked:border-primary/60 dark:has-data-checked:border-primary/60"
+        >
+          <Field orientation="horizontal" className="items-center">
             <RadioGroupItem value={option.value} aria-label={option.title} />
             <div
               className={cn(

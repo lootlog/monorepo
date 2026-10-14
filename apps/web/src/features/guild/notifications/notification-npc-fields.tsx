@@ -1,4 +1,3 @@
-import { upperFirst } from "es-toolkit";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { AlertTriangle } from "lucide-react";
@@ -9,13 +8,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@lootlog/ui/components/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@lootlog/ui/components/select";
+import { WorldSwitcher } from "@/components/common/world-switcher";
 import { Switch } from "@lootlog/ui/components/switch";
 import { Textarea } from "@lootlog/ui/components/textarea";
 import type { useNotificationRuleForm } from "./hooks/use-notification-rule-form";
@@ -64,45 +57,20 @@ export const NotificationNpcFields = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t("settings.notifications.fields.world")}</FormLabel>
-              <Select
-                value={field.value}
-                onValueChange={(value) => {
-                  if (!value) return;
-                  field.onChange(value);
-                }}
-                items={[
-                  {
-                    value: ALL_WORLDS_VALUE,
-                    label: <>{t("settings.notifications.allWorlds")}</>,
-                  },
-                  ...worldOptions.map((world) => ({
-                    value: world,
-                    label: <>{upperFirst(world)}</>,
-                  })),
-                ]}
-              >
-                <FormControl
-                  render={
-                    <SelectTrigger className="w-full">
-                      <SelectValue>
-                        {field.value === ALL_WORLDS_VALUE
-                          ? t("settings.notifications.allWorlds")
-                          : upperFirst(field.value ?? "")}
-                      </SelectValue>
-                    </SelectTrigger>
-                  }
-                />
-                <SelectContent>
-                  <SelectItem value={ALL_WORLDS_VALUE}>
-                    {t("settings.notifications.allWorlds")}
-                  </SelectItem>
-                  {worldOptions.map((world) => (
-                    <SelectItem key={world} value={world}>
-                      {upperFirst(world)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <WorldSwitcher
+                showAllOption
+                worlds={worldOptions}
+                size="default"
+                width="w-full"
+                value={
+                  field.value === ALL_WORLDS_VALUE
+                    ? null
+                    : (field.value ?? null)
+                }
+                onValueChange={(world) =>
+                  field.onChange(world ?? ALL_WORLDS_VALUE)
+                }
+              />
               <FormMessage />
             </FormItem>
           )}

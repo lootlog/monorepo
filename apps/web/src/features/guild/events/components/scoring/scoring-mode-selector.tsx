@@ -29,7 +29,6 @@ export const ScoringModeSelector = ({
           description: t("events.scoring.modeSimpleDescription"),
           iconClassName: "text-blue-500",
           iconBackgroundClassName: "bg-blue-500/10",
-          activeClassName: "ring-blue-500/30 border-blue-500",
         },
         {
           value: "ADVANCED",
@@ -38,7 +37,6 @@ export const ScoringModeSelector = ({
           description: t("events.scoring.modeAdvancedDescription"),
           iconClassName: "text-amber-500",
           iconBackgroundClassName: "bg-amber-500/10",
-          activeClassName: "ring-amber-500/30 border-amber-500",
         },
       ]}
     />

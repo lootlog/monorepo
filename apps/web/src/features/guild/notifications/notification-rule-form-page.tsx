@@ -1,5 +1,4 @@
 import { PageHeader } from "@/components/common/page-header";
-import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { NotificationCreateSkeleton } from "./notification-create-skeleton";
 import { NotificationNpcFields } from "./notification-npc-fields";
@@ -19,11 +18,12 @@ import {
 } from "@lootlog/ui/components/form";
 import { Input } from "@lootlog/ui/components/input";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { cn } from "cn";
+import { useFormState } from "react-hook-form";
+import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { Plus } from "lucide-react";
 import { Switch } from "@lootlog/ui/components/switch";
 import { NotificationFormSection } from "./components/notification-form-section";
-import { NotificationRulePreviewPanel } from "./components/notification-rule-preview-panel";
+import { NotificationMessagePreview } from "./components/notification-message-preview";
 import { NotificationTargetDialog } from "./components/notification-target-dialog";
 import { NotificationTemplateEditor } from "./components/notification-template-editor";
 import { useNotificationRuleForm } from "./hooks/use-notification-rule-form";
@@ -63,6 +63,8 @@ export const NotificationRuleFormPage = () => {
     handleSubmit,
   } = useNotificationRuleForm();
 
+  const { isDirty } = useFormState({ control: form.control });
+
   if (isLoading) return <NotificationCreateSkeleton />;
 
   if (isError || (!isCreateMode && !rule)) {
@@ -95,7 +97,8 @@ export const NotificationRuleFormPage = () => {
       </h1>
       <ScrollArea data-under-top-bar className="min-h-0 flex-1">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)}>
+          {/* Room below the last section for the floating save bar. */}
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="pb-24">
             <NotificationFormSection
               id="rule-form-basics"
               title={t("settings.notifications.ruleDialog.sections.rule")}
@@ -241,63 +244,55 @@ export const NotificationRuleFormPage = () => {
             <NotificationFormSection
               id="rule-form-content"
               title={t("settings.notifications.ruleDialog.sections.content")}
-              wide
             >
-              <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,48rem)_minmax(0,22rem)] xl:items-start">
-                <FormField
-                  control={form.control}
-                  name="contentTemplate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        {t("settings.notifications.fields.contentTemplate")}
-                      </FormLabel>
-                      <FormControl
-                        render=<NotificationTemplateEditor
-                          key={`${rule?.id ?? "create"}-${watchedTriggerType}-${formResetKey}`}
-                          value={field.value ?? ""}
-                          onChange={field.onChange}
-                          roles={guildRoles}
-                          triggerType={watchedTriggerType}
-                          disabled={isSubmitting}
-                          previewButtonClassName="xl:hidden"
-                        />
+              <FormField
+                control={form.control}
+                name="contentTemplate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("settings.notifications.fields.contentTemplate")}
+                    </FormLabel>
+                    <FormControl
+                      render=<NotificationTemplateEditor
+                        key={`${rule?.id ?? "create"}-${watchedTriggerType}-${formResetKey}`}
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        roles={guildRoles}
+                        triggerType={watchedTriggerType}
+                        disabled={isSubmitting}
                       />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="hidden xl:sticky xl:top-3 xl:block">
-                  <NotificationRulePreviewPanel
-                    contentTemplate={contentTemplate}
-                    guildRoles={guildRoles}
-                  />
-                </div>
-              </div>
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <NotificationMessagePreview
+                contentTemplate={contentTemplate}
+                guildRoles={guildRoles}
+              />
             </NotificationFormSection>
 
-            {/* Save stays in reach however long the form grows. */}
-            <div
-              data-list-tile
-              className={cn(
-                "sticky bottom-0 z-10 flex items-center justify-end gap-2 border-t border-sidebar-border py-3 backdrop-blur-sm",
-                LIST_TILE_INSET_CLASS,
-              )}
-            >
-              <Button
-                type="button"
-                variant="outline"
-                onClick={navigateBack}
-                disabled={isSubmitting}
-              >
-                {t("settings.notifications.actions.cancel")}
-              </Button>
-              <Button type="submit" loading={isSubmitting}>
-                {isCreateMode
+            <UnsavedChangesBar
+              isDirty={isCreateMode || isDirty}
+              isSubmitting={isSubmitting}
+              onReset={isCreateMode ? navigateBack : () => form.reset()}
+              unsavedChangesLabel={
+                isCreateMode
+                  ? t("settings.notifications.ruleDialog.unsavedNewRule")
+                  : undefined
+              }
+              resetLabel={
+                isCreateMode
+                  ? t("settings.notifications.actions.cancel")
+                  : undefined
+              }
+              saveLabel={
+                isCreateMode
                   ? t("settings.notifications.actions.create")
-                  : t("settings.notifications.actions.save")}
-              </Button>
-            </div>
+                  : t("settings.notifications.actions.save")
+              }
+            />
           </form>
         </Form>
       </ScrollArea>

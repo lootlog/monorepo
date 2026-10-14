@@ -11,9 +11,13 @@ import type { NotificationsOverview } from "../use-notifications-overview";
 import { NotificationRuleRow } from "./notification-rule-row";
 import { useCancelNotificationJob } from "./use-cancel-notification-job";
 
-/** Group headings carry a band, so each kind of rule reads as its own block. */
+/**
+ * Group headings carry a band, so each kind of rule reads as its own block.
+ * The band is opaque, so a heading pinned while the page scrolls hides what
+ * passes under it.
+ */
 export const NOTIFICATION_GROUP_HEADING_CLASS =
-  "h-10 bg-muted/45 text-[13px] text-foreground";
+  "h-10 bg-[color-mix(in_oklab,var(--muted)_45%,var(--background))] text-[13px] text-foreground";
 
 const GROUP_ORDER = [
   NotificationTriggerType.TIMER_BEFORE_SPAWN,
