@@ -15,7 +15,7 @@ import {
 import {
   getBasicRouteSearchQueryParams,
   isBasicRouteSearchActive,
-  type SearchStatus,
+  getSearchStatus,
   validateQueryRouteSearch,
 } from "./-search-route.utils";
 
@@ -56,15 +56,12 @@ function NpcsRoute() {
   });
 
   const data = hasActiveSearch ? (npcsQuery.data ?? []) : [];
-  let status: SearchStatus = "ready";
 
-  if (!hasActiveSearch) {
-    status = "idle";
-  } else if (npcsQuery.isError) {
-    status = "error";
-  } else if (npcsQuery.isPending) {
-    status = "loading";
-  }
+  const status = getSearchStatus(
+    hasActiveSearch,
+    npcsQuery.isError,
+    npcsQuery.isPending,
+  );
 
   return (
     <main className="page-wrap overflow-x-hidden px-3 pb-10 pt-6">

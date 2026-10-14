@@ -14,7 +14,7 @@ import {
 import {
   getBasicRouteSearchQueryParams,
   isBasicRouteSearchActive,
-  type SearchStatus,
+  getSearchStatus,
   validateQueryAndWorldRouteSearch,
 } from "./-search-route.utils";
 
@@ -55,15 +55,12 @@ function PlayersRoute() {
   });
 
   const data = hasActiveSearch ? (playersQuery.data ?? []) : [];
-  let status: SearchStatus = "ready";
 
-  if (!hasActiveSearch) {
-    status = "idle";
-  } else if (playersQuery.isError) {
-    status = "error";
-  } else if (playersQuery.isPending) {
-    status = "loading";
-  }
+  const status = getSearchStatus(
+    hasActiveSearch,
+    playersQuery.isError,
+    playersQuery.isPending,
+  );
 
   return (
     <main className="page-wrap overflow-x-hidden px-3 pb-10 pt-6">
