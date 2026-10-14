@@ -74,41 +74,44 @@ export const MemberSummaryStrip = ({
 
   return (
     <>
-      <PageHeader
-        media={
-          <Avatar className="size-14 shrink-0 rounded-xl bg-muted">
-            <AvatarImage src={avatarUrl} alt="" />
-            <AvatarFallback className="rounded-xl text-lg font-semibold">
-              {member?.name?.[0]?.toUpperCase() ?? "?"}
-            </AvatarFallback>
-          </Avatar>
-        }
-        title={
-          <span style={roleColor ? { color: roleColor } : undefined}>
-            {member?.name ?? `#${memberId}`}
-          </span>
-        }
-        description={eventName}
-        metadata={
-          rankingPlace ? (
-            <span className="inline-flex items-center gap-1.5">
-              <Trophy
-                aria-hidden
-                className={cn(
-                  "size-3.5 shrink-0",
-                  rankingPlace.position <= 3 && "text-primary",
-                )}
-              />
-              {t("events.kills.memberRankingPlace", {
-                position: rankingPlace.position,
-                count: rankingPlace.playerCount,
-              })}
+      {/* The hero tabs between the header and the totals span the page edge to edge. */}
+      <div className="px-3 pt-3">
+        <PageHeader
+          media={
+            <Avatar className="size-14 shrink-0 rounded-xl bg-muted">
+              <AvatarImage src={avatarUrl} alt="" />
+              <AvatarFallback className="rounded-xl text-lg font-semibold">
+                {member?.name?.[0]?.toUpperCase() ?? "?"}
+              </AvatarFallback>
+            </Avatar>
+          }
+          title={
+            <span style={roleColor ? { color: roleColor } : undefined}>
+              {member?.name ?? `#${memberId}`}
             </span>
-          ) : undefined
-        }
-      />
+          }
+          description={eventName}
+          metadata={
+            rankingPlace ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Trophy
+                  aria-hidden
+                  className={cn(
+                    "size-3.5 shrink-0",
+                    rankingPlace.position <= 3 && "text-primary",
+                  )}
+                />
+                {t("events.kills.memberRankingPlace", {
+                  position: rankingPlace.position,
+                  count: rankingPlace.playerCount,
+                })}
+              </span>
+            ) : undefined
+          }
+        />
+      </div>
       {filters}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 px-3 lg:grid-cols-4">
         <KpiCard
           icon={Swords}
           label={t("events.kills.kpiKills")}

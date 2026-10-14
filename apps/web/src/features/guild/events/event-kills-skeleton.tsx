@@ -9,17 +9,19 @@ export const EventKillsSkeleton = () => {
   const { t } = useTranslation();
 
   return (
-    <div aria-busy="true" className="flex flex-col gap-3 px-3 py-3">
+    <div aria-busy="true">
       <SkeletonFilterBar />
-      <SectionCard className="w-full min-w-0 overflow-hidden">
-        <SectionCardHeader icon={Skull} title={t("events.kills.title")} />
-        <TableRowsSkeleton
-          rows={7}
-          trailingColumns={3}
-          withHeader
-          withNpcTile
-        />
-      </SectionCard>
+      <div className="flex flex-col gap-3 px-3 py-3">
+        <SectionCard className="w-full min-w-0 overflow-hidden">
+          <SectionCardHeader icon={Skull} title={t("events.kills.title")} />
+          <TableRowsSkeleton
+            rows={7}
+            trailingColumns={3}
+            withHeader
+            withNpcTile
+          />
+        </SectionCard>
+      </div>
     </div>
   );
 };

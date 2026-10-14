@@ -1,4 +1,4 @@
-import { PAGE_STICKY_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
+import { FILTERED_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
 import { EmptyState } from "@/components/common/empty-state";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { cn } from "cn";
@@ -166,7 +166,7 @@ export const MemberKillsList = ({
       <Table className="w-full table-auto xl:table-fixed">
         <TanStackTableHeader
           table={table}
-          className={PAGE_STICKY_TABLE_HEADER_CLASS}
+          className={FILTERED_TABLE_HEADER_CLASS}
           rowClassName="border-b-1! border-border hover:bg-transparent"
           getHeadClassName={(header) =>
             cn(

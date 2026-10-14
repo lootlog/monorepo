@@ -4,10 +4,7 @@ import type {
   BattleListResponse as GetBattlesResponse,
 } from "@/lib/api/battlelog-types";
 import { BattlesTable } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-table";
-import { cn } from "cn";
-import { useRef, type ReactNode } from "react";
-import { getPrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
-import { useResetScrollTop } from "@/hooks/utils/use-virtual-infinite-scroll";
+import type { ReactNode } from "react";
 import type { FilterChip } from "@/components/common/filter-chip-list";
 
 type BattlesListProps = {
@@ -25,7 +22,6 @@ type BattlesListProps = {
   isRefreshing?: boolean;
   enableScrollToTop?: boolean;
   toolbar?: ReactNode;
-  toolbarEnd?: ReactNode;
 };
 
 const getCurrentFilters = (
@@ -55,12 +51,6 @@ const getBattlesTableState = (
   totalCount: battlesResponse?.pagination?.total ?? 0,
 });
 
-const getBattlesListClassName = (showPagination: boolean) =>
-  cn(
-    "flex min-h-0 min-w-0 flex-col overflow-hidden",
-    showPagination ? "h-full flex-1" : "w-full",
-  );
-
 const EMPTY_ACTIVEFILTERCHIPS: NonNullable<
   BattlesListProps["activeFilterChips"]
 > = [];
@@ -80,22 +70,9 @@ export const BattlesList = ({
   isRefreshing = false,
   enableScrollToTop = false,
   toolbar,
-  toolbarEnd,
 }: BattlesListProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-
   const currentFilters = getCurrentFilters(params);
   const tableState = getBattlesTableState(battlesResponse, pageSize, params);
-
-  useResetScrollTop({
-    behavior: getPrefersReducedMotion() ? "auto" : "smooth",
-    enabled: enableScrollToTop,
-    getScrollElement: () =>
-      containerRef.current?.closest<HTMLElement>(
-        '[data-slot="scroll-area-viewport"]',
-      ) ?? null,
-    resetKey: params?.cursor ?? "",
-  });
 
   const handleNextPage = () => {
     if (onCursorChange && battlesResponse?.pagination.nextCursor) {
@@ -137,34 +114,32 @@ export const BattlesList = ({
   };
 
   return (
-    <div ref={containerRef} className={getBattlesListClassName(showPagination)}>
-      <BattlesTable
-        activeFilterChips={activeFilterChips}
-        battles={tableState.battles}
-        pagination={
-          showPagination
-            ? {
-                hasNext: tableState.hasNext,
-                hasPrev: tableState.hasPrev,
-                pageIndex,
-                pageSize: tableState.pageSize ?? 20,
-                totalCount: tableState.totalCount,
-                onNextPage: handleNextPage,
-                onPreviousPage: handlePreviousPage,
-              }
-            : undefined
-        }
-        clearFiltersLabel={clearFiltersLabel}
-        isLoading={isLoading}
-        isRefreshing={isRefreshing}
-        onClearFilters={onClearFilters}
-        onMatchmakingClick={handleMatchmakingClick}
-        onPhClick={handlePhClick}
-        onWorldClick={handleWorldClick}
-        selectionLimit={tableState.selectionLimit}
-        toolbar={toolbar}
-        toolbarEnd={toolbarEnd}
-      />
-    </div>
+    <BattlesTable
+      activeFilterChips={activeFilterChips}
+      battles={tableState.battles}
+      pagination={
+        showPagination
+          ? {
+              hasNext: tableState.hasNext,
+              hasPrev: tableState.hasPrev,
+              pageIndex,
+              pageSize: tableState.pageSize ?? 20,
+              totalCount: tableState.totalCount,
+              onNextPage: handleNextPage,
+              onPreviousPage: handlePreviousPage,
+            }
+          : undefined
+      }
+      clearFiltersLabel={clearFiltersLabel}
+      isLoading={isLoading}
+      isRefreshing={isRefreshing}
+      onClearFilters={onClearFilters}
+      onMatchmakingClick={handleMatchmakingClick}
+      onPhClick={handlePhClick}
+      onWorldClick={handleWorldClick}
+      selectionLimit={tableState.selectionLimit}
+      toolbar={toolbar}
+      scrollResetKey={enableScrollToTop ? (params?.cursor ?? "") : undefined}
+    />
   );
 };

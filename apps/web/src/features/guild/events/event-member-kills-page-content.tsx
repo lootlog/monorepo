@@ -283,7 +283,7 @@ export const EventMemberKillsPageContent = ({
         ref={setScrollElement}
         className="min-h-0 flex-1"
       >
-        <div className="flex flex-col gap-3 px-3 py-3">
+        <div className="flex flex-col gap-3 pb-3">
           <MemberSummaryStrip
             member={member}
             memberId={memberId}
@@ -303,22 +303,24 @@ export const EventMemberKillsPageContent = ({
             }
           />
           {scrollElement && (
-            <MemberKillsList
-              guildId={queryGuildId}
-              eventId={queryEventId}
-              scrollElement={scrollElement}
-              resetKey={selectedHeroId ?? "all"}
-              allKills={allKills}
-              isLoading={killsLoading}
-              hasError={Boolean(killsError)}
-              hasNextPage={hasNextPage}
-              isFetchingNextPage={isFetchingNextPage}
-              fetchNextPage={fetchNextPage}
-              onRetry={() =>
-                void (isFetchNextPageError ? fetchNextPage() : refetch())
-              }
-              isRetrying={isFetching}
-            />
+            <div className="px-3">
+              <MemberKillsList
+                guildId={queryGuildId}
+                eventId={queryEventId}
+                scrollElement={scrollElement}
+                resetKey={selectedHeroId ?? "all"}
+                allKills={allKills}
+                isLoading={killsLoading}
+                hasError={Boolean(killsError)}
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                fetchNextPage={fetchNextPage}
+                onRetry={() =>
+                  void (isFetchNextPageError ? fetchNextPage() : refetch())
+                }
+                isRetrying={isFetching}
+              />
+            </div>
           )}
         </div>
       </ScrollArea>

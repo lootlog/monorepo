@@ -142,10 +142,7 @@ export function BattlePanelStatistics() {
   }
 
   return (
-    <div className="flex flex-col gap-3 p-3">
-      {charactersQuery.isError && (
-        <StatisticsQueryPanel query={charactersQuery} />
-      )}
+    <div>
       <h1 className="sr-only">{t("battlePanel.statistics.title")}</h1>
       <FilterBar ariaLabel={t("battlePanel.filters.title")}>
         <StatisticsFilters
@@ -192,60 +189,65 @@ export function BattlePanelStatistics() {
         />
       </FilterBar>
 
-      <StatisticsQueryPanel query={combatProfileQuery}>
-        <CombatProfileOverview
-          data={combatProfile}
-          isLoading={isCombatProfileLoading}
-        />
-      </StatisticsQueryPanel>
+      <div className="flex flex-col gap-3 p-3">
+        {charactersQuery.isError && (
+          <StatisticsQueryPanel query={charactersQuery} />
+        )}
+        <StatisticsQueryPanel query={combatProfileQuery}>
+          <CombatProfileOverview
+            data={combatProfile}
+            isLoading={isCombatProfileLoading}
+          />
+        </StatisticsQueryPanel>
 
-      <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-4">
-        <StatisticsQueryPanel query={streakQuery}>
-          <CurrentStreakCard
-            data={
-              streakData ?? {
-                current: { type: "none", count: 0 },
-                longest: { wins: 0, losses: 0 },
+        <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-4">
+          <StatisticsQueryPanel query={streakQuery}>
+            <CurrentStreakCard
+              data={
+                streakData ?? {
+                  current: { type: "none", count: 0 },
+                  longest: { wins: 0, losses: 0 },
+                }
               }
-            }
-            isLoading={isStreakLoading}
-          />
-        </StatisticsQueryPanel>
-        <StatisticsQueryPanel query={durationQuery}>
-          <BattleDurationStatsCard
-            data={
-              durationData ?? {
-                avgWinDuration: 0,
-                avgLossDuration: 0,
-                fastest: null,
-                longest: null,
+              isLoading={isStreakLoading}
+            />
+          </StatisticsQueryPanel>
+          <StatisticsQueryPanel query={durationQuery}>
+            <BattleDurationStatsCard
+              data={
+                durationData ?? {
+                  avgWinDuration: 0,
+                  avgLossDuration: 0,
+                  fastest: null,
+                  longest: null,
+                }
               }
-            }
-            isLoading={isDurationLoading}
-          />
-        </StatisticsQueryPanel>
-        <StatisticsQueryPanel query={phGrowthQuery} className="lg:col-span-2">
-          <PhGrowthChart
-            data={phGrowthData ?? []}
-            isLoading={isPhGrowthLoading}
-          />
-        </StatisticsQueryPanel>
-      </div>
+              isLoading={isDurationLoading}
+            />
+          </StatisticsQueryPanel>
+          <StatisticsQueryPanel query={phGrowthQuery} className="lg:col-span-2">
+            <PhGrowthChart
+              data={phGrowthData ?? []}
+              isLoading={isPhGrowthLoading}
+            />
+          </StatisticsQueryPanel>
+        </div>
 
-      <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
-        <StatisticsQueryPanel query={professionQuery}>
-          <ProfessionWinRateChart
-            data={professionData ?? []}
-            isLoading={isProfessionLoading}
-          />
-        </StatisticsQueryPanel>
-        <StatisticsQueryPanel query={headToHeadQuery}>
-          <HeadToHeadTable
-            data={headToHeadData?.records ?? []}
-            search={statisticsSearch}
-            isLoading={isHeadToHeadLoading}
-          />
-        </StatisticsQueryPanel>
+        <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
+          <StatisticsQueryPanel query={professionQuery}>
+            <ProfessionWinRateChart
+              data={professionData ?? []}
+              isLoading={isProfessionLoading}
+            />
+          </StatisticsQueryPanel>
+          <StatisticsQueryPanel query={headToHeadQuery}>
+            <HeadToHeadTable
+              data={headToHeadData?.records ?? []}
+              search={statisticsSearch}
+              isLoading={isHeadToHeadLoading}
+            />
+          </StatisticsQueryPanel>
+        </div>
       </div>
     </div>
   );

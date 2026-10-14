@@ -13,22 +13,11 @@ const SKELETON_PAGINATION = {
 
 export const BattlePanelBattlesSkeleton = () => {
   return (
-    <div
-      data-fills-page
-      className="flex w-full min-w-0 flex-col overflow-hidden"
-    >
-      <div className="flex min-w-0 flex-1 overflow-hidden">
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-3">
-          <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-            <BattlesTable
-              battles={SKELETON_BATTLES}
-              isLoading
-              pagination={SKELETON_PAGINATION}
-              toolbar={<BattlesListFilterToolbarSkeleton />}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
+    <BattlesTable
+      battles={SKELETON_BATTLES}
+      isLoading
+      pagination={SKELETON_PAGINATION}
+      toolbar={<BattlesListFilterToolbarSkeleton />}
+    />
   );
 };

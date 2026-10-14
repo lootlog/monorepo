@@ -19,14 +19,16 @@ export const EventMemberSkeleton = () => {
   const { t } = useTranslation();
 
   return (
-    <div aria-busy="true" className="flex flex-col gap-3 px-3 py-3">
+    <div aria-busy="true" className="flex flex-col gap-3 pb-3">
       {/* The ranking place metadata shows only for a single hero, so the
           default all-heroes view has none. */}
-      <PageHeaderSkeleton
-        media={<Skeleton className="size-14 shrink-0 rounded-xl" />}
-      />
+      <div className="px-3 pt-3">
+        <PageHeaderSkeleton
+          media={<Skeleton className="size-14 shrink-0 rounded-xl" />}
+        />
+      </div>
       <SkeletonFilterBar />
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 px-3 lg:grid-cols-4">
         {KPIS.map((kpi) => (
           <KpiCard
             key={kpi.labelKey}
@@ -37,10 +39,12 @@ export const EventMemberSkeleton = () => {
           />
         ))}
       </div>
-      <SectionCard className="w-full overflow-hidden">
-        <SectionCardHeader icon={Skull} title={t("events.kills.title")} />
-        <TableRowsSkeleton rows={7} withHeader rowContent="text" />
-      </SectionCard>
+      <div className="px-3">
+        <SectionCard className="w-full overflow-hidden">
+          <SectionCardHeader icon={Skull} title={t("events.kills.title")} />
+          <TableRowsSkeleton rows={7} withHeader rowContent="text" />
+        </SectionCard>
+      </div>
     </div>
   );
 };

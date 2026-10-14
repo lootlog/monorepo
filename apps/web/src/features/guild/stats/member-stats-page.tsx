@@ -10,10 +10,10 @@ import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { UserX } from "lucide-react";
-import { KillStatsFilterBar } from "@/features/kills/components/kill-stats-filter-bar";
+import { KillStatsFilters } from "@/features/kills/components/kill-stats-filters";
 import { TRACKABLE_NPC_TYPES } from "./constants";
 import { StatsCountCell } from "./components/stats-count-cell";
-import { StatsDetailHeader } from "./components/stats-detail-header";
+import { StatsDetailMeta } from "./components/stats-detail-meta";
 import { StatsMemberAvatar } from "./components/stats-member-avatar";
 import { StatsNpcCell } from "./components/stats-npc-cell";
 import { RankBadge } from "@/components/common/rank-badge";
@@ -22,7 +22,9 @@ import {
   STATS_TABLE_POSITION_COLUMN_ID,
   StatsTable,
 } from "./components/stats-table";
-import { StatsTableCard } from "./components/stats-table-card";
+import { StatsTableResults } from "./components/stats-table-results";
+import { DetailPage } from "@/components/common/detail-page";
+import { ResultsSurface } from "@/components/common/results-surface";
 import type { useStatsSettings } from "./hooks/use-stats-settings";
 import { StatsDetailPageSkeleton } from "./stats-detail-page-skeleton";
 import { useMemberStatsPage } from "./use-member-stats-page";
@@ -157,61 +159,56 @@ export const MemberStatsPage = () => {
   });
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 p-3">
-      <StatsDetailHeader
-        media={
-          <StatsMemberAvatar
-            userId={member.memberUserId}
-            avatar={member.memberAvatar}
-            name={member.memberName}
-            className="size-12"
-            imageSize={128}
+    <DetailPage
+      name={member.memberName}
+      nameStyle={{ color: memberColor }}
+      media={
+        <StatsMemberAvatar
+          userId={member.memberUserId}
+          avatar={member.memberAvatar}
+          name={member.memberName}
+          className="size-5"
+        />
+      }
+      meta={
+        <StatsDetailMeta
+          subtitle={t("kills.memberStats.subtitle")}
+          metrics={[
+            {
+              key: "total",
+              label: t("kills.memberRanking.totalKills"),
+              value: totalParticipations,
+            },
+            ...typeMetrics,
+          ]}
+        />
+      }
+    >
+      <ResultsSurface
+        filters={
+          <KillStatsFilters
+            period={settings.period}
+            onPeriodChange={handlePeriodChange}
+            search={{
+              value: search,
+              placeholder: t("kills.memberStats.searchPlaceholder"),
+              onChange: handleSearchChange,
+            }}
+            level={{
+              minLvl: settings.minLvl,
+              maxLvl: settings.maxLvl,
+              onMinLvlChange: handleMinLvlChange,
+              onMaxLvlChange: handleMaxLvlChange,
+            }}
+            npcType={{
+              types: TRACKABLE_NPC_TYPES,
+              value: settings.npcType,
+              onValueChange: handleNpcTypeChange,
+            }}
           />
         }
-        title={<span style={{ color: memberColor }}>{member.memberName}</span>}
-        subtitle={t("kills.memberStats.subtitle")}
-        metrics={[
-          {
-            key: "total",
-            label: t("kills.memberRanking.totalKills"),
-            value: totalParticipations,
-          },
-          ...typeMetrics,
-        ]}
-      />
-
-      <KillStatsFilterBar
-        period={settings.period}
-        onPeriodChange={handlePeriodChange}
-        search={{
-          value: search,
-          placeholder: t("kills.memberStats.searchPlaceholder"),
-          onChange: handleSearchChange,
-        }}
-        level={{
-          minLvl: settings.minLvl,
-          maxLvl: settings.maxLvl,
-          onMinLvlChange: handleMinLvlChange,
-          onMaxLvlChange: handleMaxLvlChange,
-        }}
-        npcType={{
-          types: TRACKABLE_NPC_TYPES,
-          value: settings.npcType,
-          onValueChange: handleNpcTypeChange,
-        }}
-      />
-
-      <StatsTableCard
-        isLoading={isLoading}
-        emptyMessage={
-          npcs.length === 0
-            ? t(
-                hasActiveFilters
-                  ? "kills.memberStats.filteredNoData"
-                  : "kills.memberStats.noData",
-              )
-            : undefined
-        }
+        filtersLabel={t("kills.filters.title")}
+        scrollResetKey={cursor}
         footer={
           (hasPrev || npcs.length > 0) && (
             <TablePaginationFooter
@@ -224,8 +221,21 @@ export const MemberStatsPage = () => {
           )
         }
       >
-        <StatsTable table={table} className="border-b" />
-      </StatsTableCard>
-    </div>
+        <StatsTableResults
+          isLoading={isLoading}
+          emptyMessage={
+            npcs.length === 0
+              ? t(
+                  hasActiveFilters
+                    ? "kills.memberStats.filteredNoData"
+                    : "kills.memberStats.noData",
+                )
+              : undefined
+          }
+        >
+          <StatsTable table={table} className="border-b" />
+        </StatsTableResults>
+      </ResultsSurface>
+    </DetailPage>
   );
 };

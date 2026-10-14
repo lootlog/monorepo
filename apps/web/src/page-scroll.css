@@ -81,14 +81,6 @@
     --page-sticky-top: 0px;
   }
 
-  /*
-   * A tab's page that scrolls itself, such as a table with a pinned footer,
-   * fills the page scroller under the tabs instead of growing with its rows.
-   */
-  [data-page-tabs] ~ [data-fills-page] {
-    height: calc(100% - var(--page-tabs-height));
-  }
-
   [data-under-top-bar]:has(
       > [data-slot="scroll-area-viewport"] > [data-page-tabs]
     )

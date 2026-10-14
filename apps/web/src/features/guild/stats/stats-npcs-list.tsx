@@ -1,10 +1,11 @@
+import { cn } from "cn";
 import { formatLevel } from "@lootlog/domain/profession";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
-import { KillStatsFilterBar } from "@/features/kills/components/kill-stats-filter-bar";
+import { KillStatsFilters } from "@/features/kills/components/kill-stats-filters";
 import { TRACKABLE_NPC_TYPES } from "./constants";
 import { StatsCountCell } from "./components/stats-count-cell";
 import { StatsMobileListSkeleton } from "./components/stats-mobile-list-skeleton";
@@ -16,7 +17,12 @@ import {
   STATS_TABLE_TYPE_COLUMN_ID,
   StatsTable,
 } from "./components/stats-table";
-import { StatsTableCard } from "./components/stats-table-card";
+import { StatsTableResults } from "./components/stats-table-results";
+import { ResultsSurface } from "@/components/common/results-surface";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
 import { useStatsNpcsListModel } from "./use-stats-npcs-list-model";
 
 export const StatsNpcsList = () => {
@@ -99,41 +105,33 @@ export const StatsNpcsList = () => {
   });
 
   return (
-    <div data-fills-page className="flex min-h-0 flex-col gap-3 p-3">
+    <>
       <h1 className="sr-only">{t("kills.npcsList.title")}</h1>
-      <KillStatsFilterBar
-        period={settings.period}
-        onPeriodChange={handlePeriodChange}
-        search={{
-          value: search,
-          placeholder: t("kills.npcsList.searchPlaceholder"),
-          onChange: handleSearchChange,
-        }}
-        level={{
-          minLvl: settings.minLvl,
-          maxLvl: settings.maxLvl,
-          onMinLvlChange: handleMinLvlChange,
-          onMaxLvlChange: handleMaxLvlChange,
-        }}
-        npcType={{
-          types: TRACKABLE_NPC_TYPES,
-          value: settings.npcType,
-          onValueChange: handleNpcTypeChange,
-        }}
-      />
-
-      <StatsTableCard
-        isLoading={isLoading}
-        mobileSkeleton={<StatsMobileListSkeleton media="npcTile" />}
-        emptyMessage={
-          paginatedData.length === 0
-            ? t(
-                hasActiveFilters
-                  ? "kills.topNpcs.filteredNoData"
-                  : "kills.topNpcs.noData",
-              )
-            : undefined
+      <ResultsSurface
+        filters={
+          <KillStatsFilters
+            period={settings.period}
+            onPeriodChange={handlePeriodChange}
+            search={{
+              value: search,
+              placeholder: t("kills.npcsList.searchPlaceholder"),
+              onChange: handleSearchChange,
+            }}
+            level={{
+              minLvl: settings.minLvl,
+              maxLvl: settings.maxLvl,
+              onMinLvlChange: handleMinLvlChange,
+              onMaxLvlChange: handleMaxLvlChange,
+            }}
+            npcType={{
+              types: TRACKABLE_NPC_TYPES,
+              value: settings.npcType,
+              onValueChange: handleNpcTypeChange,
+            }}
+          />
         }
+        filtersLabel={t("kills.filters.title")}
+        scrollResetKey={cursor}
         footer={
           <TablePaginationFooter
             totalLabel={t("kills.npcsList.total", { count: total })}
@@ -144,43 +142,61 @@ export const StatsNpcsList = () => {
           />
         }
       >
-        <ul className="md:hidden">
-          {paginatedData.map((npc, index) => (
-            <li
-              key={npc.npcId}
-              className="border-b border-border last:border-b-0"
-            >
-              <Link
-                to="/$guildId/stats/npcs/$npcId"
-                params={{ guildId, npcId: String(npc.npcId) }}
-                className="flex min-w-0 items-center gap-3 p-3 outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+        <StatsTableResults
+          isLoading={isLoading}
+          mobileSkeleton={<StatsMobileListSkeleton media="npcTile" />}
+          emptyMessage={
+            paginatedData.length === 0
+              ? t(
+                  hasActiveFilters
+                    ? "kills.topNpcs.filteredNoData"
+                    : "kills.topNpcs.noData",
+                )
+              : undefined
+          }
+        >
+          <ul className="md:hidden">
+            {paginatedData.map((npc, index) => (
+              <li
+                key={npc.npcId}
+                data-list-tile
+                className={LIST_TILE_RULE_CLASS}
               >
-                <RankBadge rank={cursor + index + 1} />
-                <span className="min-w-0 flex-1">
-                  <StatsNpcCell
-                    npc={{
-                      id: npc.npcId,
-                      name: npc.npcName,
-                      lvl: npc.npcLvl,
-                      icon: npc.npcIcon,
-                    }}
-                    name={npc.npcName}
-                    subtitle={`${t(`npcType.${npc.npcType}`)} · ${t("kills.level", { level: formatLevel(npc.npcLvl) })}`}
-                  />
-                </span>
-                <span className="shrink-0 text-sm font-semibold tabular-nums">
-                  {npc.uniqueKills.toLocaleString("pl-PL")}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-        <StatsTable
-          table={table}
-          className="hidden border-b md:table"
-          onRowClick={handleRowClick}
-        />
-      </StatsTableCard>
-    </div>
+                <Link
+                  to="/$guildId/stats/npcs/$npcId"
+                  params={{ guildId, npcId: String(npc.npcId) }}
+                  className={cn(
+                    "flex min-w-0 items-center gap-3 py-3 outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                    LIST_TILE_INSET_CLASS,
+                  )}
+                >
+                  <RankBadge rank={cursor + index + 1} />
+                  <span className="min-w-0 flex-1">
+                    <StatsNpcCell
+                      npc={{
+                        id: npc.npcId,
+                        name: npc.npcName,
+                        lvl: npc.npcLvl,
+                        icon: npc.npcIcon,
+                      }}
+                      name={npc.npcName}
+                      subtitle={`${t(`npcType.${npc.npcType}`)} · ${t("kills.level", { level: formatLevel(npc.npcLvl) })}`}
+                    />
+                  </span>
+                  <span className="shrink-0 text-sm font-semibold tabular-nums">
+                    {npc.uniqueKills.toLocaleString("pl-PL")}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <StatsTable
+            table={table}
+            className="hidden border-b md:table"
+            onRowClick={handleRowClick}
+          />
+        </StatsTableResults>
+      </ResultsSurface>
+    </>
   );
 };

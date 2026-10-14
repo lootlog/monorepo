@@ -37,7 +37,6 @@ export type HeadToHeadPageVariantProps = {
   matchmaking: boolean;
   showPhFilter: boolean;
   showRatingDelta?: boolean;
-  subtitleKey: string;
   titleKey: string;
   trailingSkeletonColumns?: number;
 };

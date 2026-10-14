@@ -3,7 +3,9 @@ import {
   normalizeBattlePanelCharacterId,
 } from "@/features/user/battle-panel/battle-panel-search";
 import { useBattlesControllerGetUserCharacters } from "@lootlog/client/battlelog";
+import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { cn } from "cn";
 import { useQueryState } from "nuqs";
 
 /**
@@ -28,7 +30,12 @@ export const HeadToHeadFilterChipsSkeleton = () => {
   }
 
   return (
-    <div className="flex items-center gap-2 border-b border-border bg-background/55 px-3 py-2">
+    <div
+      className={cn(
+        "flex items-center gap-2 border-b border-sidebar-border py-2",
+        LIST_TILE_INSET_CLASS,
+      )}
+    >
       <Skeleton className="h-7 w-[88px] rounded-lg" />
       <Skeleton className="ml-auto h-7 w-[98px] rounded-lg" />
     </div>

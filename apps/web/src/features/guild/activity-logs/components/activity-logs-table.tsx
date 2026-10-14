@@ -12,7 +12,7 @@ import {
 import { flexRender, useTable } from "@tanstack/react-table";
 import type { VirtualItem } from "@tanstack/react-virtual";
 import { cn } from "cn";
-import type { CSSProperties } from "react";
+import { FILTERED_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
@@ -29,15 +29,11 @@ type ActivityLogsTableProps = {
   activities: Activity[];
   /** Wide pages show a table; narrower ones list each entry on two lines. */
   usesTable: boolean;
-  /** Where the table header pins: under the page's sticky filter bar. */
-  headerTop: number;
   memberNameByDiscordId: Map<string, string>;
   virtualRows: VirtualItem[];
   /** Spacer heights standing in for the rows outside the rendered range. */
   padding: { top: number; bottom: number };
 };
-
-type HeaderTopStyle = CSSProperties & { "--activity-logs-header-top": string };
 
 // The list is not a table, so it builds no row model.
 const NO_TABLE_ROWS: Activity[] = [];
@@ -45,7 +41,6 @@ const NO_TABLE_ROWS: Activity[] = [];
 export const ActivityLogsTable = ({
   activities,
   usesTable,
-  headerTop,
   memberNameByDiscordId,
   virtualRows,
   padding,
@@ -61,10 +56,6 @@ export const ActivityLogsTable = ({
   });
 
   const rows = table.getRowModel().rows;
-
-  const headerTopStyle: HeaderTopStyle = {
-    "--activity-logs-header-top": `${headerTop}px`,
-  };
 
   const { top: topPadding, bottom: bottomPadding } = padding;
 
@@ -136,10 +127,7 @@ export const ActivityLogsTable = ({
   }
 
   return (
-    <Table
-      className="min-w-[960px] table-fixed border-b"
-      style={headerTopStyle}
-    >
+    <Table className="min-w-[960px] table-fixed border-b">
       {/* Virtualized rows come and go, so content must not size the columns. */}
       <colgroup>
         <col className="w-[170px]" />
@@ -152,7 +140,7 @@ export const ActivityLogsTable = ({
       </colgroup>
       <TanStackTableHeader
         table={table}
-        className="sticky top-(--activity-logs-header-top) z-10 bg-background"
+        className={FILTERED_TABLE_HEADER_CLASS}
         rowClassName="border-b-1! border-border hover:bg-transparent"
       />
       <TableBody>

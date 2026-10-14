@@ -1,5 +1,5 @@
-import { PlayerTile } from "@/components/battle";
-import { PageHeader } from "@/components/common/page-header";
+import { DetailPage } from "@/components/common/detail-page";
+import { FILTERED_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
 import { PeriodSelector } from "@/components/filters/period-selector";
@@ -16,9 +16,8 @@ import { ResultsSurface } from "@/components/common/results-surface";
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
 import { Label } from "@lootlog/ui/components/label";
 import { Separator } from "@lootlog/ui/components/separator";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Table } from "@lootlog/ui/components/table";
-import { AlertCircle, SearchX, Swords } from "lucide-react";
+import { AlertCircle, SearchX } from "lucide-react";
 import { usePlayerVsPlayerPage } from "./use-player-vs-player-page";
 
 import { PlayerVsPlayerFilterToolbar } from "./components/player-vs-player-filter-toolbar";
@@ -125,32 +124,38 @@ export function PlayerVsPlayerFullPage() {
 
     if (isError) {
       return (
-        <EmptyState
-          icon={AlertCircle}
-          title={t("battlePanel.statistics.empty.errorTitle")}
-          description={
-            getRouteErrorMessage(error) ??
-            t("common.routeErrors.status.500.description")
-          }
-        />
+        <div className="p-3">
+          <EmptyState
+            framed
+            icon={AlertCircle}
+            title={t("battlePanel.statistics.empty.errorTitle")}
+            description={
+              getRouteErrorMessage(error) ??
+              t("common.routeErrors.status.500.description")
+            }
+          />
+        </div>
       );
     }
 
     if (!data || data.battles.length === 0) {
       return (
-        <EmptyState
-          icon={SearchX}
-          title={t("battlePanel.statistics.playerVsPlayer.emptyTitle")}
-          description={t(
-            "battlePanel.statistics.playerVsPlayer.emptyDescription",
-          )}
-        />
+        <div className="p-3">
+          <EmptyState
+            framed
+            icon={SearchX}
+            title={t("battlePanel.statistics.playerVsPlayer.emptyTitle")}
+            description={t(
+              "battlePanel.statistics.playerVsPlayer.emptyDescription",
+            )}
+          />
+        </div>
       );
     }
 
     if (isMobile) {
       return (
-        <div className="grid gap-2 p-3">
+        <div>
           {data.battles.map((battle) => (
             <BattlePanelPvpBattleCard
               key={battle.battleId}
@@ -166,7 +171,7 @@ export function PlayerVsPlayerFullPage() {
       <Table className="border-b">
         <TanStackTableHeader
           table={table}
-          className="sticky top-0 z-10 bg-background"
+          className={FILTERED_TABLE_HEADER_CLASS}
           rowClassName="border-b-1! border-border"
           headClassName="whitespace-nowrap"
         />
@@ -201,64 +206,33 @@ export function PlayerVsPlayerFullPage() {
         </MobileFiltersDrawer>
       )}
 
-      <div className="flex h-full w-full flex-col overflow-hidden">
-        <div className="px-3 pb-0 pt-3">
-          <PageHeader
-            icon={Swords}
-            title={
-              <>
-                {myCharacter?.name ??
-                  t(
-                    "battlePanel.statistics.playerVsPlayer.characterFallback",
-                  )}{" "}
-                {t("battleUi.overview.vs")} {opponentName}
-              </>
-            }
-            description={
-              isLoading ? (
-                <SkeletonLine className="h-3 w-40" />
-              ) : (
-                myCharacter &&
-                t("battlePanel.statistics.playerVsPlayer.subtitle", {
-                  level: myCharacter.lvl,
-                })
-              )
-            }
-            metadata={
-              isLoading ? (
-                <Skeleton className="h-12 w-8 rounded-lg" />
-              ) : (
-                myCharacter && (
-                  <PlayerTile
-                    player={{
-                      name: myCharacter.name,
-                      lvl: myCharacter.lvl,
-                      prof: myCharacter.prof,
-                      icon: myCharacter.icon,
-                    }}
-                  />
-                )
-              )
-            }
-          />
-        </div>
-
-        <div className="flex min-h-0 flex-1 overflow-hidden">
-          <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-3">
-            <ResultsSurface
-              title={t("battlePanel.navigation.battles")}
-              chips={activeFilterChips}
-              clearFiltersLabel={t("battlePanel.filters.clear")}
-              footer={paginationFooter}
-              onClearFilters={handleClearFilters}
-              toolbar={toolbar}
-              withHorizontalScroll={!isMobile}
-            >
-              {renderResults()}
-            </ResultsSurface>
-          </div>
-        </div>
-      </div>
+      <DetailPage
+        name={`${myCharacter?.name ?? t("battlePanel.statistics.playerVsPlayer.characterFallback")} ${t("battleUi.overview.vs")} ${opponentName}`}
+        meta={
+          <span className="text-xs leading-tight text-muted-foreground">
+            {isLoading ? (
+              <SkeletonLine className="h-3 w-40" />
+            ) : (
+              myCharacter &&
+              t("battlePanel.statistics.playerVsPlayer.subtitle", {
+                level: myCharacter.lvl,
+              })
+            )}
+          </span>
+        }
+      >
+        <ResultsSurface
+          filters={toolbar}
+          filtersLabel={t("battlePanel.filters.title")}
+          chips={activeFilterChips}
+          clearFiltersLabel={t("battlePanel.filters.clear")}
+          onClearFilters={handleClearFilters}
+          scrollResetKey={pageIndex}
+          footer={paginationFooter}
+        >
+          {renderResults()}
+        </ResultsSurface>
+      </DetailPage>
     </>
   );
 }

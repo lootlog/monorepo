@@ -1,4 +1,4 @@
-import { PAGE_STICKY_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
+import { FILTERED_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
 import { EmptyState } from "@/components/common/empty-state";
 import { RankBadge } from "@/components/common/rank-badge";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
@@ -321,7 +321,7 @@ export const EventRankingTable = ({
         <Table className="w-full table-fixed">
           <TanStackTableHeader
             table={table}
-            className={PAGE_STICKY_TABLE_HEADER_CLASS}
+            className={FILTERED_TABLE_HEADER_CLASS}
             rowClassName="border-b-1! border-border"
             getHeadClassName={(header) =>
               cn(
