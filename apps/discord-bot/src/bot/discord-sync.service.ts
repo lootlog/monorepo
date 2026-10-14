@@ -509,9 +509,18 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
         `Bot is ready and logged in as ${readyClient.user?.username ?? "unknown"}; publishing ${guilds.size} guild snapshots`,
       );
 
+      // One failed publish must not skip the servers after it.
       yield* Effect.forEach(
         guilds.values(),
-        (guild) => publish(RoutingKey.GUILDS_UPDATE, guildSnapshot(guild)),
+        (guild) =>
+          publish(RoutingKey.GUILDS_UPDATE, guildSnapshot(guild)).pipe(
+            Effect.catchCause((cause) =>
+              Effect.logError(
+                `Guild ${guild.id} snapshot was not published`,
+                cause,
+              ),
+            ),
+          ),
         { discard: true },
       );
     });
