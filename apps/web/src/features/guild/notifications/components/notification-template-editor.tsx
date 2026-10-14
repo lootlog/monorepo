@@ -7,9 +7,6 @@ import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { $getRoot } from "lexical";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { previewMarkdownComponents } from "../utils/notification-rule-form-preview.utils";
 
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -19,18 +16,14 @@ import {
   CommandItem,
   CommandList,
 } from "@lootlog/ui/components/command";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@lootlog/ui/components/dialog";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { cn } from "cn";
 import {
-  createTemplateEditorNodes,
-  renderTemplatePreview,
-} from "./notification-template-editor.utils";
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@lootlog/ui/components/tooltip";
+import { cn } from "cn";
+import { createTemplateEditorNodes } from "./notification-template-editor.utils";
 import { NotificationTemplateRoleNode } from "./notification-template-role-node";
 import { NotificationTemplateVariableNode } from "./notification-template-variable-node";
 
@@ -44,8 +37,6 @@ export const NotificationTemplateEditor = (
     disabled,
     applyPreset,
     value,
-    previewButtonClassName,
-    setIsPreviewVisible,
     t,
     roles,
     editorSurfaceRef,
@@ -61,10 +52,11 @@ export const NotificationTemplateEditor = (
     setHighlightedSuggestion,
     activeSuggestionIdentity,
     insertSuggestion,
-    isPreviewVisible,
     previewTemplateValues,
     variableSuggestions,
   } = useNotificationTemplateEditor(props);
+
+  const previewValueByKey = new Map(Object.entries(previewTemplateValues));
 
   return (
     <div className="space-y-3">
@@ -80,16 +72,6 @@ export const NotificationTemplateEditor = (
             {preset.label}
           </Button>
         ))}
-
-        <Button
-          type="button"
-          variant="outline"
-          disabled={disabled}
-          className={previewButtonClassName}
-          onClick={() => setIsPreviewVisible(true)}
-        >
-          {t("settings.notifications.templateEditor.showPreview")}
-        </Button>
       </div>
 
       <LexicalComposer
@@ -111,17 +93,50 @@ export const NotificationTemplateEditor = (
         }}
       >
         <div className="overflow-visible rounded-xl border border-border/70 bg-background">
-          <div className="border-b border-border/60 bg-muted/20 px-3 py-2">
-            <p className="text-sm font-medium">
-              {t("settings.notifications.templateEditor.label")}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {t("settings.notifications.templateEditor.description")}
-            </p>
+          {/* Variables go in at the caret; the button keeps the editor's selection. */}
+          <div
+            role="toolbar"
+            aria-label={t(
+              "settings.notifications.templateEditor.insertVariable",
+            )}
+            className="flex flex-wrap items-center gap-1.5 rounded-t-xl border-b border-border/60 bg-muted/20 px-3 py-2"
+          >
+            <span className="mr-1 text-xs font-medium text-muted-foreground">
+              {t("settings.notifications.templateEditor.insertVariable")}
+            </span>
+            {variableSuggestions.map((suggestion) => (
+              <Tooltip key={suggestion.key}>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="xs"
+                      disabled={disabled}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => insertSuggestion(suggestion)}
+                    >
+                      {suggestion.label}
+                    </Button>
+                  }
+                />
+                <TooltipContent>
+                  <p className="font-mono">{suggestion.snippet}</p>
+                  <p className="text-muted-foreground">
+                    {t(
+                      "settings.notifications.templateEditor.variableExample",
+                      {
+                        value: previewValueByKey.get(suggestion.templateKey),
+                      },
+                    )}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            ))}
           </div>
           <div
             ref={editorSurfaceRef}
-            className="relative min-h-[220px] bg-background"
+            className="relative min-h-[220px] rounded-b-xl bg-background"
           >
             <PlainTextPlugin
               contentEditable=<ContentEditable
@@ -222,44 +237,12 @@ export const NotificationTemplateEditor = (
         </div>
       </LexicalComposer>
 
-      <Dialog open={isPreviewVisible} onOpenChange={setIsPreviewVisible}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-base">
-              {t("settings.notifications.templateEditor.previewLabel")}
-            </DialogTitle>
-            <p className="text-xs text-muted-foreground">
-              {t("settings.notifications.templateEditor.previewDescription")}
-            </p>
-          </DialogHeader>
-          <div className="space-y-3">
-            <p className="text-xs text-muted-foreground">
-              {t("settings.notifications.templateEditor.previewNotice")}
-            </p>
-            <div className="py-3 text-sm">
-              <div className="max-w-none whitespace-pre-wrap break-words text-foreground [&_blockquote]:rounded-md [&_blockquote]:border [&_blockquote]:border-border [&_blockquote]:px-3 [&_blockquote]:py-2 [&_code]:rounded [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_hr]:border-border [&_li]:ml-4 [&_p]:leading-6 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-muted [&_pre]:p-3 [&_strong]:font-semibold">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={previewMarkdownComponents}
-                >
-                  {renderTemplatePreview(value, previewTemplateValues)}
-                </ReactMarkdown>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <div className="py-3">
-        <p className="text-sm font-medium">
-          {t("settings.notifications.templateEditor.availableVariables")}
-        </p>
-        <p className="mt-2 text-xs leading-6 text-muted-foreground">
-          {variableSuggestions
-            .map((suggestion) => suggestion.snippet)
-            .join(",")}
-        </p>
-      </div>
+      <p className="text-xs text-muted-foreground">
+        {t("settings.notifications.templateEditor.hint", {
+          variable: "{{",
+          mention: "@",
+        })}
+      </p>
     </div>
   );
 };

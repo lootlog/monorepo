@@ -22,7 +22,14 @@ export const NotificationFormSection = ({
   children,
 }: NotificationFormSectionProps) => (
   <section aria-labelledby={id}>
-    <ListGroupHeading id={id} className={NOTIFICATION_GROUP_HEADING_CLASS}>
+    {/* The section's name stays pinned while its fields scroll past. */}
+    <ListGroupHeading
+      id={id}
+      className={cn(
+        NOTIFICATION_GROUP_HEADING_CLASS,
+        "sticky top-(--page-sticky-top) z-10",
+      )}
+    >
       {title}
     </ListGroupHeading>
     <div className={cn("py-5", LIST_TILE_INSET_CLASS)}>
