@@ -1,17 +1,10 @@
-import { HorizontalMenu } from "@/components/layout/horizontal-menu";
+import { PageTabsLayout } from "@/components/layout/page-tabs-layout";
 import { ROUTES } from "@/config/routes";
-import { Outlet, useLocation } from "@tanstack/react-router";
+import { Outlet } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
 export const BattlePanelLayout = () => {
   const { t } = useTranslation();
-  const { pathname } = useLocation();
-  const normalizedPathname = pathname.replace(/\/$/, "");
-
-  const showTopLevelNavigation =
-    normalizedPathname === ROUTES.user.battlePanel.base ||
-    normalizedPathname === ROUTES.user.battlePanel.statistics ||
-    normalizedPathname === ROUTES.user.battlePanel.abyss;
 
   const navigationItems = [
     {
@@ -32,16 +25,13 @@ export const BattlePanelLayout = () => {
   ];
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 w-full flex-col">
-      {showTopLevelNavigation && (
-        <HorizontalMenu
-          items={navigationItems}
-          ariaLabel={t("battlePanel.navigation.title")}
-        />
-      )}
-      <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-col">
+      <PageTabsLayout
+        tabs={navigationItems}
+        ariaLabel={t("battlePanel.navigation.title")}
+      >
         <Outlet />
-      </div>
+      </PageTabsLayout>
     </div>
   );
 };

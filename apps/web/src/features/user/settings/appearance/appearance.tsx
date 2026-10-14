@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { useSearch } from "@tanstack/react-router";
 import { useTheme } from "@/hooks/context/use-theme";
 import { ThemeCard } from "@lootlog/ui/components/theme-card";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { THEME_CATALOG } from "@/themes/catalog";
 import { isThemeId } from "@/themes/resolver";
 
@@ -26,26 +25,24 @@ export const AppearanceSettings: FC = () => {
   const { t } = useTranslation();
 
   return (
-    <ScrollArea className="h-full">
-      <div className="flex flex-col gap-3 p-3">
-        <h1 className="sr-only">{t("settings.appearance.title")}</h1>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {THEME_CATALOG.map((themeOption) => (
-            <ThemeCard
-              key={themeOption.name}
-              name={themeOption.name}
-              title={t(`settings.appearance.themes.${themeOption.name}.title`)}
-              description={t(
-                `settings.appearance.themes.${themeOption.name}.description`,
-              )}
-              colors={themeOption.colors}
-              backgroundImage={themeOption.backgroundImage}
-              isActive={theme === themeOption.name}
-              onClick={() => setTheme(themeOption.name)}
-            />
-          ))}
-        </div>
+    <div className="flex flex-col gap-3 p-3">
+      <h1 className="sr-only">{t("settings.appearance.title")}</h1>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {THEME_CATALOG.map((themeOption) => (
+          <ThemeCard
+            key={themeOption.name}
+            name={themeOption.name}
+            title={t(`settings.appearance.themes.${themeOption.name}.title`)}
+            description={t(
+              `settings.appearance.themes.${themeOption.name}.description`,
+            )}
+            colors={themeOption.colors}
+            backgroundImage={themeOption.backgroundImage}
+            isActive={theme === themeOption.name}
+            onClick={() => setTheme(themeOption.name)}
+          />
+        ))}
       </div>
-    </ScrollArea>
+    </div>
   );
 };

@@ -6,7 +6,6 @@ import {
   useKillsControllerGetUserKillAnalytics,
   useKillsControllerGetUserKillStats,
 } from "@lootlog/client/main";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { PageHeader } from "@/components/common/page-header";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { StatisticsQueryState } from "./statistics-query-state";
@@ -16,7 +15,7 @@ import {
   type StatisticsSearch,
 } from "./statistics-search";
 import { StatisticsContent } from "./statistics-content";
-import { HorizontalMenu } from "@/components/layout/horizontal-menu";
+import { PageTabsLayout } from "@/components/layout/page-tabs-layout";
 import { StatisticsOverviewSkeleton } from "./statistics-overview-skeleton";
 
 export function Statistics() {
@@ -46,17 +45,16 @@ export function Statistics() {
   const data = analytics.data;
 
   return (
-    <ScrollArea data-under-top-bar className="h-full min-h-0">
-      <HorizontalMenu
-        ariaLabel={t("statistics.title")}
-        activeId={search.tab}
-        items={STATISTICS_TABS.map((tab) => ({
-          id: tab,
-          label: t(`statistics.${tab}`),
-          href: "/@me/statistics",
-          search: { ...search, tab },
-        }))}
-      />
+    <PageTabsLayout
+      ariaLabel={t("statistics.title")}
+      activeId={search.tab}
+      tabs={STATISTICS_TABS.map((tab) => ({
+        id: tab,
+        label: t(`statistics.${tab}`),
+        href: "/@me/statistics",
+        search: { ...search, tab },
+      }))}
+    >
       <div className="min-w-0 space-y-3 p-3">
         <PageHeader
           className="@container/page-heading [&>header>div:last-child]:basis-full @2xl/page-heading:[&>header>div:last-child]:basis-auto"
@@ -109,6 +107,6 @@ export function Statistics() {
           )}
         </StatisticsQueryState>
       </div>
-    </ScrollArea>
+    </PageTabsLayout>
   );
 }

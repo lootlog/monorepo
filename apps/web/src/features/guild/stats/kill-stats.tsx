@@ -3,7 +3,6 @@ import {
   useKillsControllerGetGuildKillStats,
   type NpcType,
 } from "@lootlog/client/main";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "usehooks-ts";
@@ -69,68 +68,66 @@ export const KillStats = () => {
     settings.period !== "all";
 
   return (
-    <ScrollArea className="h-full">
-      <div className="flex flex-col gap-3 p-3">
-        <h1 className="sr-only">{t("common.stats.kills")}</h1>
-        <KillStatsFilterBar
-          period={settings.period}
-          onPeriodChange={setPeriod}
-          level={{
-            minLvl: settings.minLvl,
-            maxLvl: settings.maxLvl,
-            onMinLvlChange: setMinLvl,
-            onMaxLvlChange: setMaxLvl,
-          }}
-        />
+    <div className="flex flex-col gap-3 p-3">
+      <h1 className="sr-only">{t("common.stats.kills")}</h1>
+      <KillStatsFilterBar
+        period={settings.period}
+        onPeriodChange={setPeriod}
+        level={{
+          minLvl: settings.minLvl,
+          maxLvl: settings.maxLvl,
+          onMinLvlChange: setMinLvl,
+          onMaxLvlChange: setMaxLvl,
+        }}
+      />
 
-        <KillStatsOverview
-          data={data?.overview}
-          isLoading={isLoading}
-          selectedType={npcType}
-          onSelectType={setNpcType}
-        />
+      <KillStatsOverview
+        data={data?.overview}
+        isLoading={isLoading}
+        selectedType={npcType}
+        onSelectType={setNpcType}
+      />
 
-        <section
-          aria-labelledby="kill-stats-leaders"
-          className="flex flex-col gap-3"
-        >
-          <h2 id="kill-stats-leaders" className="sr-only">
-            {t("kills.leaders.titleWithType", {
-              type: t(`npcType.${npcType}`),
-            })}
-          </h2>
-          <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-            <MemberLeaderboardCard
-              data={data?.memberRanking}
-              npcType={npcType}
-              isLoading={isLoading}
-              guildId={guildId}
-              hasActiveFilters={hasActiveFilters}
-            />
-            <TopNpcsCard
-              guildId={guildId}
-              npcType={npcType}
-              world={settings.world ?? undefined}
-              minLvl={debouncedMinLvl}
-              maxLvl={debouncedMaxLvl}
-              period={settings.period}
-            />
-          </div>
-        </section>
+      <section
+        aria-labelledby="kill-stats-leaders"
+        className="flex flex-col gap-3"
+      >
+        <h2 id="kill-stats-leaders" className="sr-only">
+          {t("kills.leaders.titleWithType", {
+            type: t(`npcType.${npcType}`),
+          })}
+        </h2>
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+          <MemberLeaderboardCard
+            data={data?.memberRanking}
+            npcType={npcType}
+            isLoading={isLoading}
+            guildId={guildId}
+            hasActiveFilters={hasActiveFilters}
+          />
+          <TopNpcsCard
+            guildId={guildId}
+            npcType={npcType}
+            world={settings.world ?? undefined}
+            minLvl={debouncedMinLvl}
+            maxLvl={debouncedMaxLvl}
+            period={settings.period}
+          />
+        </div>
+      </section>
 
-        <KillStatsTimeline data={data?.timeline} isLoading={isLoading} />
+      <KillStatsTimeline data={data?.timeline} isLoading={isLoading} />
 
-        {/* An API from before the timeline omits it during a rollout. */}
-        {data?.timeline && data.hourlyWeekday?.length > 0 && (
-          <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-3">
-            <KillStatsRecords data={data} />
-            <KillStatsActivity
-              cells={data.hourlyWeekday}
-              className="min-w-0 xl:col-span-2"
-            />
-          </div>
-        )}
-      </div>
-    </ScrollArea>
+      {/* An API from before the timeline omits it during a rollout. */}
+      {data?.timeline && data.hourlyWeekday?.length > 0 && (
+        <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-3">
+          <KillStatsRecords data={data} />
+          <KillStatsActivity
+            cells={data.hourlyWeekday}
+            className="min-w-0 xl:col-span-2"
+          />
+        </div>
+      )}
+    </div>
   );
 };

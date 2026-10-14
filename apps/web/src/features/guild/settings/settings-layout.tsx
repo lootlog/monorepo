@@ -1,67 +1,69 @@
+import { PageTabsLayout } from "@/components/layout/page-tabs-layout";
 import { ROUTES } from "@/config/routes";
+import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import {
-  getPageScroller,
-  usePageScrollsDocument,
-} from "@/hooks/utils/use-page-scroll";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Outlet, useLocation } from "@tanstack/react-router";
-import { useLayoutEffect, useRef, useState } from "react";
-import { SettingsTabs } from "./components/settings-tabs";
-import { SettingsScrollerContext } from "./settings-scroller-context";
+import { canManageGuild } from "@/lib/guild-permissions";
+import { Outlet } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 
 /**
- * The Organization's settings. Its tabs share one page scroller under the
- * tabs, so the tabs stay in place while a tab loads or changes; a role,
- * monster or member page scrolls by itself and shows a back arrow instead.
+ * The Organization's settings, one tab each; a role, monster or member page
+ * shows a back arrow instead of the tabs.
  */
 export const SettingsLayout = () => {
+  const { t } = useTranslation();
   const guildId = useGuildId() ?? "";
-  const scrollsDocument = usePageScrollsDocument();
-
-  const [viewport, setViewport] = useState<HTMLDivElement | null>(null);
-
-  const pathname = useLocation({
-    select: (location) => location.pathname.replace(/\/$/, ""),
-  });
-
+  const { data: accessPolicy } = useGuildPermissions();
   const routes = ROUTES.guild.settings;
-
-  const isTab = [
-    routes.base(guildId),
-    routes.roles(guildId),
-    routes.npcs(guildId),
-    routes.mapTemplates(guildId),
-    routes.reservationsSettings(guildId),
-    routes.members(guildId),
-    routes.info(guildId),
-  ].includes(pathname);
-
-  const shownPathname = useRef(pathname);
-
-  // Each tab opens at its top, as it would in a scroller of its own.
-  useLayoutEffect(() => {
-    if (shownPathname.current === pathname) return;
-    shownPathname.current = pathname;
-    getPageScroller(viewport, scrollsDocument)?.scrollTo({ top: 0 });
-  }, [pathname, scrollsDocument, viewport]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {isTab ? (
-        <ScrollArea
-          data-under-top-bar
-          ref={setViewport}
-          className="min-h-0 flex-1"
-        >
-          <SettingsTabs />
-          <SettingsScrollerContext.Provider value={viewport}>
-            <Outlet />
-          </SettingsScrollerContext.Provider>
-        </ScrollArea>
-      ) : (
+      <PageTabsLayout
+        ariaLabel={t("settings.navigationLabel")}
+        tabs={[
+          {
+            id: "general",
+            label: t("settings.guildNavigation.general"),
+            href: routes.base(guildId),
+          },
+          {
+            id: "roles",
+            label: t("settings.guildNavigation.roles"),
+            href: routes.roles(guildId),
+          },
+          {
+            id: "npcs",
+            label: t("settings.guildNavigation.npcs"),
+            href: routes.npcs(guildId),
+          },
+          {
+            id: "map-templates",
+            label: t("settings.guildNavigation.mapTemplates"),
+            href: routes.mapTemplates(guildId),
+          },
+          ...(canManageGuild(accessPolicy)
+            ? [
+                {
+                  id: "reservations",
+                  label: t("settings.guildNavigation.reservations"),
+                  href: routes.reservationsSettings(guildId),
+                },
+              ]
+            : []),
+          {
+            id: "members",
+            label: t("settings.guildNavigation.members"),
+            href: routes.members(guildId),
+          },
+          {
+            id: "info",
+            label: t("settings.guildNavigation.info"),
+            href: routes.info(guildId),
+          },
+        ]}
+      >
         <Outlet />
-      )}
+      </PageTabsLayout>
     </div>
   );
 };

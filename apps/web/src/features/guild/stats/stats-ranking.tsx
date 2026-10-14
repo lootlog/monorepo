@@ -105,7 +105,7 @@ export const StatsRanking = () => {
   });
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 p-3">
+    <div data-fills-page className="flex min-h-0 flex-col gap-3 p-3">
       <h1 className="sr-only">{t("kills.fullRanking.title")}</h1>
       <KillStatsFilterBar
         period={settings.period}

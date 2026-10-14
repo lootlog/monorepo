@@ -1,6 +1,5 @@
 import { BattlesTable } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-table";
 import { FilterBar } from "@/components/common/filter-bar";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
 import { AbyssSummaryCards } from "./abyss-summary-cards";
@@ -19,29 +18,17 @@ export const AbyssHubSkeleton = () => {
   const { t } = useTranslation();
 
   return (
-    <ScrollArea className="h-full min-h-0 pt-3">
-      <div
-        aria-busy="true"
-        className="flex min-h-full flex-col gap-3 px-3 pb-3"
-      >
-        <FilterBar ariaLabel={t("battlePanel.filters.title")}>
-          {FILTER_WIDTHS.map((width) => (
-            <Skeleton
-              key={width}
-              className={`h-10 w-full rounded-md ${width}`}
-            />
-          ))}
-        </FilterBar>
-        <AbyssSummaryCards isLoading />
-        <Skeleton className="h-11 w-full rounded-lg sm:w-80" />
-        <div className="flex min-h-[640px] min-w-0 flex-col">
-          <BattlesTable
-            battles={[]}
-            isLoading
-            pagination={SKELETON_PAGINATION}
-          />
-        </div>
+    <div aria-busy="true" className="flex flex-col gap-3 p-3">
+      <FilterBar ariaLabel={t("battlePanel.filters.title")}>
+        {FILTER_WIDTHS.map((width) => (
+          <Skeleton key={width} className={`h-10 w-full rounded-md ${width}`} />
+        ))}
+      </FilterBar>
+      <AbyssSummaryCards isLoading />
+      <Skeleton className="h-11 w-full rounded-lg sm:w-80" />
+      <div className="flex min-h-[640px] min-w-0 flex-col">
+        <BattlesTable battles={[]} isLoading pagination={SKELETON_PAGINATION} />
       </div>
-    </ScrollArea>
+    </div>
   );
 };
