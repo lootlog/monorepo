@@ -19,11 +19,11 @@ export const EventDetailSkeleton = () => {
         title=<SkeletonLine className="h-5 w-40" />
         status=<Skeleton className="h-5 w-16 rounded-full" />
         metadata=<SkeletonLine className="h-3 w-56 max-w-full" />
-        actions=<Skeleton className="h-9 w-9 rounded-xl sm:w-32" />
+        actions=<Skeleton className="h-9 w-9 rounded-lg sm:w-32" />
       >
         <SectionCardFooter className="grid gap-1 p-1.5 sm:grid-cols-3">
           {Array.from({ length: 3 }, (_, index) => (
-            <Skeleton key={index} className="h-8 w-full rounded-xl" />
+            <Skeleton key={index} className="h-8 w-full rounded-lg" />
           ))}
         </SectionCardFooter>
       </PageHeader>

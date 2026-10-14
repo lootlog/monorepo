@@ -122,12 +122,12 @@ export function ReservationShareInvitation({
           </>
         }
         status={
-          <Avatar className="size-12 shrink-0 rounded-xl border border-border bg-muted">
+          <Avatar className="size-12 shrink-0 rounded-lg border border-border bg-muted">
             <AvatarImage
               src={previewQuery.data.sourceOrganization.iconUrl ?? undefined}
               alt=""
             />
-            <AvatarFallback className="rounded-xl bg-primary/10 text-primary">
+            <AvatarFallback className="rounded-lg bg-primary/10 text-primary">
               <Link2 className="size-5" aria-hidden="true" />
             </AvatarFallback>
           </Avatar>

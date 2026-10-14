@@ -247,6 +247,8 @@ const guildSnapshot = (guild: Guild): GuildUpdated => ({
   guildId: guild.id,
   name: guild.name,
   icon: guild.iconURL(),
+  // The web sidebar shows the banner still and at most 240px wide.
+  banner: guild.bannerURL({ size: 512, forceStatic: true }),
   ownerId: guild.ownerId,
 });
 
@@ -493,10 +495,33 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
       ),
     );
 
+  // discord.js emits guildCreate only for servers joined after login, so
+  // changes made while the bot was offline (and banners of servers it joined
+  // before banners were synced) would never reach the API. The API ignores
+  // snapshots that change nothing.
   const handleClientReady = (readyClient: Client) =>
-    Effect.sync(() => {
+    Effect.gen(function* () {
+      const guilds = readyClient.guilds.cache.filter(
+        (guild) => guild.available,
+      );
+
       logger.log(
-        `Bot is ready and logged in as ${readyClient.user?.username ?? "unknown"}`,
+        `Bot is ready and logged in as ${readyClient.user?.username ?? "unknown"}; publishing ${guilds.size} guild snapshots`,
+      );
+
+      // One failed publish must not skip the servers after it.
+      yield* Effect.forEach(
+        guilds.values(),
+        (guild) =>
+          publish(RoutingKey.GUILDS_UPDATE, guildSnapshot(guild)).pipe(
+            Effect.catchCause((cause) =>
+              Effect.logError(
+                `Guild ${guild.id} snapshot was not published`,
+                cause,
+              ),
+            ),
+          ),
+        { discard: true },
       );
     });
 

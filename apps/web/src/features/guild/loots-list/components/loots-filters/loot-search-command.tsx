@@ -220,7 +220,7 @@ export const LootSearchCommand = (
               exit="exit"
               className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
             >
-              <div className="flex size-11 items-center justify-center rounded-xl border border-signal-timer/30 bg-signal-timer/10">
+              <div className="flex size-11 items-center justify-center rounded-lg border border-signal-timer/30 bg-signal-timer/10">
                 <CircleAlert className="size-5 text-signal-timer" />
               </div>
               <h3 className="mt-4 text-sm font-semibold text-foreground">
@@ -265,7 +265,7 @@ export const LootSearchCommand = (
               exit="exit"
               className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
             >
-              <div className="flex size-11 items-center justify-center rounded-xl border border-destructive/30 bg-destructive/10">
+              <div className="flex size-11 items-center justify-center rounded-lg border border-destructive/30 bg-destructive/10">
                 <CircleAlert className="size-5 text-destructive" />
               </div>
               <h3 className="mt-4 text-sm font-semibold text-foreground">
@@ -287,7 +287,7 @@ export const LootSearchCommand = (
               exit="exit"
               className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
             >
-              <div className="flex size-11 items-center justify-center rounded-xl border border-border bg-background">
+              <div className="flex size-11 items-center justify-center rounded-lg border border-border bg-background">
                 <SearchX className="size-5 text-muted-foreground" />
               </div>
               <h3 className="mt-4 text-sm font-semibold text-foreground">
@@ -440,7 +440,7 @@ export const LootSearchCommand = (
       description={t("loots.searchCommand.dialogDescription")}
       // Esc closes it on a keyboard; phones get the close button instead.
       showCloseButton={isMobile}
-      className="top-[12vh] w-[calc(100%-1rem)] max-w-[600px] translate-y-0 rounded-2xl border-border bg-card shadow-[0_24px_64px_rgba(0,0,0,0.55)] max-md:top-2 sm:max-w-[600px] [&_[data-slot=command]]:rounded-2xl [&_[data-slot=command]]:bg-card"
+      className="top-[12vh] w-[calc(100%-1rem)] max-w-[600px] translate-y-0 rounded-xl border-border bg-card shadow-[0_24px_64px_rgba(0,0,0,0.55)] max-md:top-2 sm:max-w-[600px] [&_[data-slot=command]]:rounded-xl [&_[data-slot=command]]:bg-card"
     >
       {dialogContent}
     </CommandDialog>

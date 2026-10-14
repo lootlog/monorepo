@@ -107,6 +107,7 @@ export function BattleDetailView({
 
   return (
     <ScrollArea
+      data-under-top-bar
       ref={scrollViewportRef}
       className="h-full min-h-0"
       onScroll={handleBattleScroll}

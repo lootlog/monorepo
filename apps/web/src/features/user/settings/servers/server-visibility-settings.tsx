@@ -134,7 +134,7 @@ export const ServerVisibilitySettings = () => {
                 actions={<Skeleton className="h-8 w-36 rounded-md" />}
               />
               <TableFilterToolbar>
-                <Skeleton className="h-10 w-full min-w-0 rounded-xl sm:min-w-[200px] sm:flex-1" />
+                <Skeleton className="h-10 w-full min-w-0 rounded-lg sm:min-w-[200px] sm:flex-1" />
                 <Skeleton className="h-10 w-full shrink-0 rounded-md sm:w-56" />
               </TableFilterToolbar>
               <div className="divide-y divide-border">

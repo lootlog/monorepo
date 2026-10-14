@@ -11,6 +11,12 @@ export const LOOTS_LIST_ROW_GAP_CLASS = "pb-3";
 
 export const LOOTS_LIST_INSET_CLASS = "inset-x-3";
 
+/**
+ * The gap above the first card, in pixels. It sits inside the scroller, so
+ * scrolled cards pass under the top bar instead of being cut off below it.
+ */
+export const LOOTS_LIST_TOP_GAP = 12;
+
 export const LOOTS_GRID_CLASS = "grid grid-cols-1 gap-3 xl:grid-cols-2";
 
 /** Tailwind `xl`, where `LOOTS_GRID_CLASS` gets its second column. */

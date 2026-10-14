@@ -10,15 +10,15 @@ export const LootsFiltersSidebarSkeleton = () => (
     aria-hidden="true"
     className="flex h-full w-[340px] shrink-0 flex-col bg-background py-3 pr-3"
   >
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-filters-sidebar">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-filters-sidebar">
       <div className="space-y-3 border-b border-border/70 p-3 sm:p-4">
         <div className="flex min-h-8 items-center">
           <Skeleton className="h-4 w-24" />
         </div>
         <div className="flex flex-wrap gap-1.5">
-          <Skeleton className="h-7 w-36 rounded-xl" />
-          <Skeleton className="h-7 w-28 rounded-xl" />
-          <Skeleton className="h-7 w-28 rounded-xl" />
+          <Skeleton className="h-7 w-36 rounded-lg" />
+          <Skeleton className="h-7 w-28 rounded-lg" />
+          <Skeleton className="h-7 w-28 rounded-lg" />
         </div>
       </div>
 
@@ -50,14 +50,14 @@ export const LootsFiltersSidebarSkeleton = () => (
             )}
             <div className="space-y-2">
               <Skeleton className="h-3 w-16" />
-              <Skeleton className="h-9 w-full rounded-xl" />
+              <Skeleton className="h-9 w-full rounded-lg" />
             </div>
             <div className="space-y-2">
               <Skeleton className="h-3 w-24" />
               <div className="flex items-center gap-2">
-                <Skeleton className="h-9 min-w-0 flex-1 rounded-xl" />
+                <Skeleton className="h-9 min-w-0 flex-1 rounded-lg" />
                 <Skeleton className="size-4 shrink-0" />
-                <Skeleton className="h-9 min-w-0 flex-1 rounded-xl" />
+                <Skeleton className="h-9 min-w-0 flex-1 rounded-lg" />
               </div>
             </div>
           </div>

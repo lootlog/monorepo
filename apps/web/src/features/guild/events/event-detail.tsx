@@ -156,7 +156,7 @@ export const EventDetail = () => {
         </>
       )}
 
-      <ScrollArea className="flex-1 min-h-0">
+      <ScrollArea data-under-top-bar className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-3">
           <EventDetailHeader
             event={event}

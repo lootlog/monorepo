@@ -20,7 +20,7 @@ export const GeneralSettingsSkeleton = () => {
         />
         <SectionCardContent className="grid gap-2">
           <Skeleton className="h-3.5 w-28" />
-          <Skeleton className="h-9 w-full max-w-xs rounded-xl" />
+          <Skeleton className="h-9 w-full max-w-xs rounded-lg" />
           <div className="text-sm">
             <SkeletonLine className="h-3 w-56 max-w-full" />
           </div>
@@ -39,8 +39,8 @@ export const GeneralSettingsSkeleton = () => {
           </div>
           <Skeleton className="aspect-[1200/630] w-full max-w-xl" />
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <Skeleton className="h-9 w-32 rounded-xl" />
-            <Skeleton className="h-9 w-32 rounded-xl" />
+            <Skeleton className="h-9 w-32 rounded-lg" />
+            <Skeleton className="h-9 w-32 rounded-lg" />
             <SkeletonLine className="h-3 w-48" />
           </div>
         </SectionCardContent>

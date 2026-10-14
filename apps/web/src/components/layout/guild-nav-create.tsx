@@ -24,7 +24,7 @@ export const GuildNavCreate: FC = () => {
             <button
               type="button"
               aria-label={t("ui.tooltips.createLootlog")}
-              className="flex size-11 cursor-pointer items-center justify-center rounded-xl border border-dashed border-sidebar-foreground/30 text-sidebar-foreground/60 transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
+              className="flex size-11 cursor-pointer items-center justify-center rounded-lg border border-dashed border-sidebar-foreground/30 text-sidebar-foreground/60 transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
               onClick={() => dispatch({ type: "OPEN" })}
             >
               <Plus aria-hidden="true" className="size-5" />

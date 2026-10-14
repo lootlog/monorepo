@@ -70,11 +70,12 @@ async function fixture(cacheMembers = true) {
 
   const guild: Pick<
     APIGuild,
-    "id" | "name" | "icon" | "owner_id" | "emojis" | "features"
+    "id" | "name" | "icon" | "banner" | "owner_id" | "emojis" | "features"
   > & { roles: (typeof role)[] } = {
     id: guildId,
     name: "Guild",
     icon: null,
+    banner: null,
     owner_id: guildId,
     roles: [{ ...role, id: guildId, name: "@everyone", position: 0 }],
     emojis: [],
@@ -101,6 +102,9 @@ async function fixture(cacheMembers = true) {
   };
 
   let channels = [channel];
+  // Guilds announced at login carry their channels, so discord.js caches
+  // them as available; a plain REST guild does not.
+  const gatewayGuildIds = new Set<string>();
   const restCalls: string[] = [];
   let memberFetchError: Error | undefined;
   let channelsGate: Promise<void> | undefined;
@@ -109,6 +113,12 @@ async function fixture(cacheMembers = true) {
 
     if (route === `/guilds/${guildId}/channels` && channelsGate) {
       await channelsGate;
+    }
+
+    const guildRoute = /^\/guilds\/(\d+)$/.exec(String(route));
+
+    if (guildRoute?.[1] && gatewayGuildIds.has(guildRoute[1])) {
+      return { ...guild, id: guildRoute[1], channels: [] };
     }
 
     if (route === `/guilds/${guildId}`) return guild;
@@ -140,29 +150,40 @@ async function fixture(cacheMembers = true) {
     configurable: true,
   });
   const events: { routingKey: string; payload: unknown }[] = [];
+  let rejectedGuildId: string | undefined;
 
   const sync = makeDiscordSync(
     {
       publish: (_exchange, routingKey, payload) =>
-        Effect.sync(() => {
-          // Every emitted wire payload must pass the same decoder as the API consumer.
-          const key = [
-            RabbitRoutingKey.GUILDS_CREATE,
-            RabbitRoutingKey.GUILDS_UPDATE,
-            RabbitRoutingKey.GUILDS_DELETE,
-            RabbitRoutingKey.GUILDS_CREATE_ROLE,
-            RabbitRoutingKey.GUILDS_UPDATE_ROLE,
-            RabbitRoutingKey.GUILDS_DELETE_ROLE,
-            RabbitRoutingKey.DISCORD_GUILD_SYNC_STATE_UPDATED,
-            RabbitRoutingKey.DISCORD_GUILD_CHANNEL_UPSERTED,
-            RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
-            RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNC_FAILED,
-          ].find((value) => value === routingKey);
+        Effect.suspend(() => {
+          if (
+            rejectedGuildId &&
+            "guildId" in payload &&
+            payload.guildId === rejectedGuildId
+          ) {
+            return Effect.fail(new Error("Publisher confirm failed"));
+          }
 
-          if (!key) throw new Error(`Unknown routing key: ${routingKey}`);
-          events.push({
-            routingKey,
-            payload: decodeRabbitEventJson(key, JSON.stringify(payload)),
+          return Effect.sync(() => {
+            // Every emitted wire payload must pass the same decoder as the API consumer.
+            const key = [
+              RabbitRoutingKey.GUILDS_CREATE,
+              RabbitRoutingKey.GUILDS_UPDATE,
+              RabbitRoutingKey.GUILDS_DELETE,
+              RabbitRoutingKey.GUILDS_CREATE_ROLE,
+              RabbitRoutingKey.GUILDS_UPDATE_ROLE,
+              RabbitRoutingKey.GUILDS_DELETE_ROLE,
+              RabbitRoutingKey.DISCORD_GUILD_SYNC_STATE_UPDATED,
+              RabbitRoutingKey.DISCORD_GUILD_CHANNEL_UPSERTED,
+              RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
+              RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNC_FAILED,
+            ].find((value) => value === routingKey);
+
+            if (!key) throw new Error(`Unknown routing key: ${routingKey}`);
+            events.push({
+              routingKey,
+              payload: decodeRabbitEventJson(key, JSON.stringify(payload)),
+            });
           });
         }),
     },
@@ -201,6 +222,13 @@ async function fixture(cacheMembers = true) {
     },
     gateChannels: (gate: Promise<void>) => {
       channelsGate = gate;
+    },
+    rejectPublishesFor: (id: string) => {
+      rejectedGuildId = id;
+    },
+    announceGuild: async (id: string) => {
+      gatewayGuildIds.add(id);
+      await client.guilds.fetch({ guild: id, force: true });
     },
   };
 }
@@ -248,6 +276,7 @@ describe("Discord SDK to RabbitMQ contracts", () => {
         guildId,
         name: "Guild",
         icon: null,
+        banner: null,
         ownerId: guildId,
         roles: [
           {
@@ -263,12 +292,13 @@ describe("Discord SDK to RabbitMQ contracts", () => {
     });
   });
 
-  test("publishes rename, icon addition/removal and ownership changes", async () => {
+  test("publishes rename, icon and banner addition/removal and ownership changes", async () => {
     const f = await fixture();
 
-    for (const icon of [null, "a_12345678901234567890123456789012", null]) {
+    for (const image of [null, "a_12345678901234567890123456789012", null]) {
       f.guild.name = "testowankox";
-      f.guild.icon = icon;
+      f.guild.icon = image;
+      f.guild.banner = image;
       f.guild.owner_id = roleId;
       const updated = await f.fetchGuild();
       await Effect.runPromise(f.sync.handleGuildUpdate(f.sdkGuild, updated));
@@ -278,6 +308,10 @@ describe("Discord SDK to RabbitMQ contracts", () => {
           guildId,
           name: "testowankox",
           icon: updated.iconURL(),
+          // An animated banner is published still.
+          banner:
+            image &&
+            `https://cdn.discordapp.com/banners/${guildId}/${image}.webp?size=512`,
           ownerId: roleId,
         },
       });
@@ -289,6 +323,30 @@ describe("Discord SDK to RabbitMQ contracts", () => {
       {
         routingKey: RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNC_FAILED,
         payload: expect.objectContaining({ guildId, status: "NOT_FOUND" }),
+      },
+    ]);
+  });
+
+  test("publishes a snapshot of every known guild when the client is ready, past a failed one", async () => {
+    const f = await fixture();
+    const failingGuildId = "999999999999999999";
+    f.guild.banner = "a_12345678901234567890123456789012";
+    // The failing guild is cached first.
+    await f.announceGuild(failingGuildId);
+    await f.announceGuild(guildId);
+    f.rejectPublishesFor(failingGuildId);
+    await Effect.runPromise(f.sync.handleClientReady(f.client));
+
+    expect(f.events).toEqual([
+      {
+        routingKey: RabbitRoutingKey.GUILDS_UPDATE,
+        payload: {
+          guildId,
+          name: "Guild",
+          icon: null,
+          banner: `https://cdn.discordapp.com/banners/${guildId}/a_12345678901234567890123456789012.webp?size=512`,
+          ownerId: guildId,
+        },
       },
     ]);
   });

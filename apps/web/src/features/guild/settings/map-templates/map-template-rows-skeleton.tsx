@@ -9,8 +9,8 @@ export const MapTemplateRowsSkeleton = () => (
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-3 w-16" />
         </div>
-        <Skeleton className="size-8 rounded-xl" />
-        <Skeleton className="size-8 rounded-xl" />
+        <Skeleton className="size-8 rounded-lg" />
+        <Skeleton className="size-8 rounded-lg" />
       </div>
     ))}
   </div>

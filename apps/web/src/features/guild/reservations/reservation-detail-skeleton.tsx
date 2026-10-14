@@ -22,12 +22,12 @@ export const ReservationDetailSkeleton = () => {
       )}
     >
       <Skeleton
-        className={cn("rounded-xl", isCompact ? "size-10" : "h-8 w-24")}
+        className={cn("rounded-lg", isCompact ? "size-10" : "h-8 w-24")}
       />
-      <Skeleton className={cn("rounded-xl", iconButton)} />
-      <Skeleton className={cn("rounded-xl", iconButton)} />
+      <Skeleton className={cn("rounded-lg", iconButton)} />
+      <Skeleton className={cn("rounded-lg", iconButton)} />
       <Skeleton
-        className={cn("rounded-xl", isCompact ? "size-10" : "h-8 w-8 sm:w-36")}
+        className={cn("rounded-lg", isCompact ? "size-10" : "h-8 w-8 sm:w-36")}
       />
     </div>
   );
@@ -54,7 +54,7 @@ export const ReservationDetailSkeleton = () => {
               : "flex",
           )}
         >
-          <Skeleton className={cn("rounded-xl", iconButton)} />
+          <Skeleton className={cn("rounded-lg", iconButton)} />
           <div
             className={cn(
               "flex min-w-0 flex-col items-center text-sm",
@@ -64,7 +64,7 @@ export const ReservationDetailSkeleton = () => {
             <SkeletonLine className="h-3.5 w-32 max-w-full" />
             <SkeletonLine className="h-3.5 w-40 max-w-full" />
           </div>
-          <Skeleton className={cn("rounded-xl", iconButton)} />
+          <Skeleton className={cn("rounded-lg", iconButton)} />
         </div>
 
         {!isCompact && actionToolbar}

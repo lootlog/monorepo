@@ -20,6 +20,7 @@ const guild: Guild = {
   name: "One",
   ownerId: "owner",
   icon: null,
+  banner: null,
   vanityUrl: null,
   notificationRuleLimit: 20,
   publicStatsCardEnabled: false,

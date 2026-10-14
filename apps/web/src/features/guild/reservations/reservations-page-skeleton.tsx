@@ -12,9 +12,9 @@ export const ReservationsPageSkeleton = () => {
     <div aria-busy="true" className="flex h-full min-h-0 flex-col">
       <div className="px-3 pt-3">
         <FilterBar>
-          <Skeleton className="h-10 min-w-0 flex-1 basis-48 rounded-xl" />
-          <Skeleton className="order-last h-10 basis-full rounded-xl xl:order-none xl:w-80 xl:basis-auto" />
-          <Skeleton className="h-10 w-[4.5rem] rounded-xl" />
+          <Skeleton className="h-10 min-w-0 flex-1 basis-48 rounded-lg" />
+          <Skeleton className="order-last h-10 basis-full rounded-lg xl:order-none xl:w-80 xl:basis-auto" />
+          <Skeleton className="h-10 w-[4.5rem] rounded-lg" />
         </FilterBar>
       </div>
       <div className="min-h-0 flex-1 overflow-hidden pt-3">

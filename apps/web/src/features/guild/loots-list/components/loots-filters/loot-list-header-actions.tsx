@@ -59,7 +59,7 @@ export const LootListHeaderActions = ({
           // Drawn like the view toggle beside it: the border stays and an open
           // panel fills only the inside, as the toggle's selected segment does.
           className={cn(
-            "relative shrink-0 rounded-md border-border bg-background",
+            "relative shrink-0",
             isFiltersOpen &&
               "bg-primary text-primary-foreground hover:border-border hover:bg-primary/90 hover:text-primary-foreground",
           )}

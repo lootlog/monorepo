@@ -115,18 +115,39 @@ describe("Discord guild lifecycle against migrated PostgreSQL", () => {
             .where(eq(roleTable.guildId, guildId)),
         ).toHaveLength(1);
 
-        for (const changes of [
-          { name: "testowankox", icon: null, ownerId: "original-owner" },
+        for (const { stored, ...changes } of [
+          {
+            name: "testowankox",
+            icon: null,
+            banner: null,
+            ownerId: "original-owner",
+          },
           {
             name: "testowankox",
             icon: "a_icon-hash",
+            banner: "banner-url",
             ownerId: "original-owner",
           },
-          { name: "testowankox", icon: null, ownerId: "new-owner" },
+          // A bot released before banners must not clear the stored one.
+          {
+            name: "testowankox",
+            icon: null,
+            ownerId: "new-owner",
+            stored: { banner: "banner-url" },
+          },
+          {
+            name: "testowankox",
+            icon: null,
+            banner: null,
+            ownerId: "new-owner",
+          },
         ]) {
           const updated = decodeUpdated({ guildId, ...changes });
           yield* lifecycle.updateGuild(updated);
+          const clearedAfterChange = clearedKeys.length;
+          // Every bot start republishes unchanged servers.
           yield* lifecycle.updateGuild(updated);
+          expect(clearedKeys).toHaveLength(clearedAfterChange);
 
           const rows = yield* db
             .select()
@@ -134,7 +155,7 @@ describe("Discord guild lifecycle against migrated PostgreSQL", () => {
             .where(eq(guildTable.id, guildId));
 
           expect(rows).toHaveLength(1);
-          expect(rows[0]).toMatchObject(changes);
+          expect(rows[0]).toMatchObject({ ...changes, ...stored });
         }
 
         const [other] = yield* db
@@ -149,12 +170,12 @@ describe("Discord guild lifecycle against migrated PostgreSQL", () => {
         });
       }),
     );
-    expect(clearedKeys).toHaveLength(12);
+    expect(clearedKeys).toHaveLength(8);
     expect(new Set(clearedKeys)).toEqual(
       new Set([getGuildCacheKey(guildId), getGuildCacheKey("guild-alias")]),
     );
     expect(clearedPatterns).toEqual(
-      Array.from({ length: 6 }, () => getPermissionsCachePattern(guildId)),
+      Array.from({ length: 4 }, () => getPermissionsCachePattern(guildId)),
     );
   });
 

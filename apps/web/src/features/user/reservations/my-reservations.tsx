@@ -42,7 +42,7 @@ export function MyReservations() {
     );
 
   return (
-    <ScrollArea className="h-full min-h-0">
+    <ScrollArea data-under-top-bar className="h-full min-h-0">
       <div className="flex w-full min-w-0 flex-col gap-3 p-3">
         <PageHeader
           icon={CalendarDays}
@@ -81,7 +81,7 @@ export function MyReservations() {
                       key={index}
                       className="flex items-center gap-2 px-3 py-2"
                     >
-                      <Skeleton className="size-9 rounded-xl" />
+                      <Skeleton className="size-9 rounded-lg" />
                       <div className="flex-1 space-y-1.5">
                         <Skeleton className="h-4 w-40" />
                         <Skeleton className="h-3 w-28" />

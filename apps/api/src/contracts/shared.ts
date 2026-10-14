@@ -20,6 +20,7 @@ export type OrganizationSummary = typeof OrganizationSummary.Type;
 
 export const OrganizationSummary = Schema.Struct({
   ...organizationSummaryFields,
+  banner: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
   reservationMaxDurationMinutes: FiniteNumber,
   reservationMinDurationMinutes: FiniteNumber,
   reservationTimeGranularityMinutes: FiniteNumber,

@@ -8728,6 +8728,8 @@ export interface GuildResponseDtoOutput {
   vanityUrl?: string | null;
   ownerId: string;
   publicStatsCardEnabled: boolean;
+  /** @nullable */
+  banner?: string | null;
   reservationMaxDurationMinutes: number;
   reservationMinDurationMinutes: number;
   reservationTimeGranularityMinutes: number;

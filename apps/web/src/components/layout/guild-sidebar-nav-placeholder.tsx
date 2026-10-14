@@ -9,7 +9,7 @@ const renderRows = (rows: number[]) => (
   <ul className="flex flex-col gap-1.5">
     {rows.map((i) => (
       <li key={i} className="list-none px-2">
-        <Skeleton className="h-9 rounded-xl" />
+        <Skeleton className="h-9 rounded-lg" />
       </li>
     ))}
   </ul>

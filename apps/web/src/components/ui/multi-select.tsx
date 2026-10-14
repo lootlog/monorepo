@@ -362,7 +362,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
           ref={ref}
           {...props}
           className={cn(
-            "group min-h-9 w-full cursor-text rounded-xl border-border bg-background px-2.5 py-1.5 text-foreground focus-within:ring-2 focus-within:ring-ring aria-disabled:pointer-events-none aria-disabled:opacity-50",
+            "group min-h-9 w-full cursor-text rounded-lg border-input bg-background px-2.5 py-1.5 text-foreground focus-within:ring-2 focus-within:ring-ring aria-disabled:pointer-events-none aria-disabled:opacity-50",
             className,
           )}
           aria-disabled={disabled}
