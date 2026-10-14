@@ -1,19 +1,23 @@
 import { Button } from "@lootlog/ui/components/button";
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
+import type { Ref } from "react";
 import { useTranslation } from "react-i18next";
 import type { AppNavigationHeading } from "@/navigation/app-navigation";
 import { APP_NAVIGATION_ICONS } from "@/navigation/app-navigation-icons";
 
 type TopBarHeadingProps = {
   heading: AppNavigationHeading;
+  /** Where a page renders its own title, such as an editable one. */
+  titleRef: Ref<HTMLDivElement>;
 };
 
 /**
  * The page's place in its section: the section's sidebar icon, the pages above
  * as quiet links, and the current page. A narrow bar keeps only a way back.
+ * A page may replace the current page's label through the title slot.
  */
-export const TopBarHeading = ({ heading }: TopBarHeadingProps) => {
+export const TopBarHeading = ({ heading, titleRef }: TopBarHeadingProps) => {
   const { t } = useTranslation();
   const { title, trail, section } = heading;
   const SectionIcon = section ? APP_NAVIGATION_ICONS[section] : null;
@@ -61,10 +65,11 @@ export const TopBarHeading = ({ heading }: TopBarHeadingProps) => {
             />
           </li>
         ))}
-        <li className="min-w-0">
+        <li className="flex min-w-0 items-center">
+          <div ref={titleRef} className="peer flex min-w-0 empty:hidden" />
           <span
             aria-current="page"
-            className="flex h-8 min-w-0 items-center gap-2 px-2 text-sm font-semibold text-foreground"
+            className="flex h-8 min-w-0 items-center gap-2 px-2 text-sm font-semibold text-foreground peer-[:not(:empty)]:hidden"
           >
             {trail.length === 0 && SectionIcon && (
               <SectionIcon

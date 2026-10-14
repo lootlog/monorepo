@@ -141,11 +141,13 @@ const useBreadcrumbLookupData = ({
 };
 
 type GuildNavigationTopBarProps = {
+  titleRef: Ref<HTMLDivElement>;
   actionsRef: Ref<HTMLDivElement>;
   contextRef: Ref<HTMLDivElement>;
 };
 
 export const GuildNavigationTopBar: FC<GuildNavigationTopBarProps> = ({
+  titleRef,
   actionsRef,
   contextRef,
 }) => {
@@ -221,6 +223,7 @@ export const GuildNavigationTopBar: FC<GuildNavigationTopBarProps> = ({
   return (
     <AppNavigationTopBar
       heading={resolveNavigationInfo().heading}
+      titleRef={titleRef}
       actionsRef={actionsRef}
       contextRef={contextRef}
       search={<GuildSearchButton onClick={() => setIsSearchOpen(true)} />}

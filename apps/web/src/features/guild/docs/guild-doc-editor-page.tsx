@@ -1,7 +1,13 @@
 import { EmptyState } from "@/components/common/empty-state";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
 import { MetaItem } from "@/components/common/meta-item";
+import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
+import { getPrimaryModifierKeyLabel } from "@/utils/platform/get-primary-modifier-key-label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,10 +35,15 @@ import {
   Trash2,
 } from "lucide-react";
 import { GuildDocHistoryDialog } from "./components/guild-doc-history-dialog";
+import { GuildDocTitleField } from "./components/guild-doc-title-field";
 import { GuildDocEditor } from "./editor/guild-doc-editor";
 import { GUILD_DOC_COLUMN_CLASS } from "./guild-doc-column";
 import { GuildDocEditorSkeleton } from "./guild-doc-editor-skeleton";
-import { TITLE_MAX_LENGTH, useGuildDocDraft } from "./use-guild-doc-draft";
+import {
+  GUILD_DOC_FORM_ID,
+  TITLE_MAX_LENGTH,
+  useGuildDocDraft,
+} from "./use-guild-doc-draft";
 
 export const GuildDocEditorPage = () => {
   const {
@@ -92,10 +103,31 @@ export const GuildDocEditorPage = () => {
     );
   }
 
-  const editorName = document.updatedBy.name ?? t("docs.list.unknownEditor");
+  const lastEdit = t("docs.editor.lastEdit", {
+    name: document.updatedBy.name ?? t("docs.list.unknownEditor"),
+    date: timestampToDate(document.updatedAt),
+  });
 
+  const updatedAt = (
+    <MetaItem icon={Clock3} label={t("docs.list.updatedAtLabel")}>
+      {timestampToDate(document.updatedAt)}
+    </MetaItem>
+  );
+
+  const version = (
+    <MetaItem icon={History}>
+      {t("docs.list.version", { version: document.version })}
+    </MetaItem>
+  );
+
+  // The details close the toolbar where it has room; the editor shows on hover.
   const toolbarActions = (
     <>
+      <span title={lastEdit} className="mr-2 hidden items-center gap-3 xl:flex">
+        <span className="sr-only">{lastEdit}</span>
+        {updatedAt}
+        {version}
+      </span>
       <Tooltip>
         <TooltipTrigger
           render={
@@ -136,58 +168,66 @@ export const GuildDocEditorPage = () => {
     </>
   );
 
-  const header = (
-    <header
-      className={cn("flex flex-col gap-2 pt-6 pb-4", GUILD_DOC_COLUMN_CLASS)}
-    >
-      {canWrite ? (
-        <>
-          <h1 className="sr-only">{document.title}</h1>
-          {/* The title reads as the document's heading; the padding keeps its focus ring off the text. */}
-          <input
-            id="guild-doc-editor-title"
-            name="guild-doc-editor-title"
-            value={title}
-            maxLength={TITLE_MAX_LENGTH}
-            aria-label={t("docs.editor.titleLabel")}
-            placeholder={t("docs.editor.titlePlaceholder")}
-            onChange={(event) => setTitle(event.target.value)}
-            className="-mx-2 h-10 min-w-0 rounded-md bg-transparent px-2 text-2xl font-semibold outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
-          />
-        </>
-      ) : (
-        <h1 className="flex min-h-10 items-center text-2xl font-semibold break-words">
-          {document.title}
-        </h1>
+  const readerDetails = (
+    <>
+      <MetaItem icon={PenLine} label={t("docs.list.editorLabel")}>
+        {document.updatedBy.name ?? t("docs.list.unknownEditor")}
+      </MetaItem>
+      {updatedAt}
+      {version}
+    </>
+  );
+
+  // Readers get no formatting toolbar: a bar in its place says why and shows
+  // the details the toolbar would end with.
+  const readerBar = !canWrite && (
+    <div
+      data-list-tile
+      className={cn(
+        "sticky top-(--page-sticky-top) z-10 flex min-h-12 flex-wrap items-center gap-x-4 gap-y-1 py-2 backdrop-blur-sm",
+        LIST_TILE_RULE_CLASS,
+        LIST_TILE_INSET_CLASS,
       )}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <MetaItem icon={PenLine} label={t("docs.list.editorLabel")}>
-          {editorName}
-        </MetaItem>
-        <MetaItem icon={Clock3} label={t("docs.list.updatedAtLabel")}>
-          {timestampToDate(document.updatedAt)}
-        </MetaItem>
-        <MetaItem icon={History}>
-          {t("docs.list.version", { version: document.version })}
-        </MetaItem>
-        {!canWrite && (
-          <MetaItem icon={LockKeyhole}>{t("docs.editor.readOnly")}</MetaItem>
-        )}
-      </div>
-    </header>
+    >
+      <span className="flex h-8 items-center gap-2 text-sm text-muted-foreground">
+        <LockKeyhole aria-hidden="true" className="size-4 shrink-0" />
+        {/* Phones keep the lock alone, so the details fit beside it. */}
+        <span className="max-sm:sr-only">{t("docs.editor.readOnly")}</span>
+      </span>
+      <span className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1">
+        {readerDetails}
+      </span>
+    </div>
   );
 
   return (
     <div className="flex h-full min-h-0 flex-col">
+      <h1 className="sr-only">{document.title}</h1>
+      {canWrite && (
+        <HeaderSlotPortal slot="title">
+          <GuildDocTitleField
+            form={GUILD_DOC_FORM_ID}
+            value={title}
+            onChange={setTitle}
+            label={t("docs.editor.titleLabel")}
+            placeholder={t("docs.editor.titlePlaceholder")}
+            maxLength={TITLE_MAX_LENGTH}
+          />
+        </HeaderSlotPortal>
+      )}
       <ScrollArea data-under-top-bar className="min-h-0 flex-1">
-        <form className="flex min-h-full flex-col" onSubmit={saveDraft}>
+        <form
+          id={GUILD_DOC_FORM_ID}
+          className="flex min-h-full flex-col"
+          onSubmit={saveDraft}
+        >
           <GuildDocEditor
             key={`${docId}-${editorSeed}`}
             className="flex-1"
-            contentClassName={cn("flex-1 pb-24", GUILD_DOC_COLUMN_CLASS)}
+            contentClassName={cn("flex-1 pt-6 pb-24", GUILD_DOC_COLUMN_CLASS)}
             content={content}
             editable={canWrite}
-            header={header}
+            header={readerBar}
             namespace={`guild-doc-${docId}-${editorSeed}`}
             toolbarActions={toolbarActions}
             onChange={setContent}
@@ -197,6 +237,12 @@ export const GuildDocEditorPage = () => {
             isDirty={isDirty}
             isSubmitting={updateDocument.isPending}
             onReset={resetDraft}
+            saveShortcut={{
+              label: t("docs.editor.saveShortcut", {
+                modifier: getPrimaryModifierKeyLabel(),
+              }),
+              keys: "Meta+S Control+S",
+            }}
           />
         </form>
       </ScrollArea>

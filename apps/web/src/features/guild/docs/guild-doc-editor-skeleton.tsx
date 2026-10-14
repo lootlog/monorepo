@@ -47,6 +47,9 @@ export const GuildDocEditorSkeleton = () => {
               ))}
             </div>
             <span className="mx-1 h-5 w-px shrink-0 bg-border" />
+            <span className="mr-2 hidden text-xs leading-tight xl:block">
+              <SkeletonLine className="h-3 w-50" />
+            </span>
             {Array.from({ length: 2 }, (_, index) => (
               <span
                 key={index}
@@ -57,22 +60,27 @@ export const GuildDocEditorSkeleton = () => {
             ))}
           </div>
         )}
+        {!canWrite && (
+          <div
+            data-list-tile
+            className={cn(
+              "flex min-h-12 items-center gap-x-4 py-2",
+              LIST_TILE_RULE_CLASS,
+              LIST_TILE_INSET_CLASS,
+            )}
+          >
+            <span className="flex h-8 items-center gap-2 text-sm">
+              <Skeleton className="size-4 shrink-0 rounded" />
+              <SkeletonLine className="h-3.5 w-20 max-sm:hidden" />
+            </span>
+            <span className="ml-auto text-xs leading-tight">
+              <SkeletonLine className="h-3 w-66 max-sm:w-56" />
+            </span>
+          </div>
+        )}
         <div
           className={cn(
-            "flex flex-col gap-2 pt-6 pb-4",
-            GUILD_DOC_COLUMN_CLASS,
-          )}
-        >
-          <div className="flex h-10 items-center">
-            <SkeletonLine className="h-6 w-56 max-w-full" />
-          </div>
-          <div className="text-xs leading-tight">
-            <SkeletonLine className="h-3 w-72 max-w-full" />
-          </div>
-        </div>
-        <div
-          className={cn(
-            "flex flex-col text-sm leading-5",
+            "flex flex-col pt-6 text-sm leading-5",
             GUILD_DOC_COLUMN_CLASS,
           )}
         >
