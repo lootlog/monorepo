@@ -3,10 +3,8 @@ import {
   getNotificationsGuildControllerGetGuildJobsQueryKey,
   useNotificationsGuildControllerGetGuildJobs,
 } from "@lootlog/client/main";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useTranslation } from "react-i18next";
 import { NotificationHistoryList } from "./components/notification-history-list";
-import { NotificationsTabs } from "./components/notifications-tabs";
 
 export const NotificationsHistoryPage = () => {
   const { t } = useTranslation();
@@ -25,19 +23,14 @@ export const NotificationsHistoryPage = () => {
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <>
       <h1 className="sr-only">
         {t("settings.notifications.notificationsHistory.title")}
       </h1>
-      <ScrollArea data-under-top-bar className="min-h-0 flex-1">
-        <NotificationsTabs />
-        <div>
-          <NotificationHistoryList
-            historyJobs={data?.history ?? []}
-            isLoading={isLoading}
-          />
-        </div>
-      </ScrollArea>
-    </div>
+      <NotificationHistoryList
+        historyJobs={data?.history ?? []}
+        isLoading={isLoading}
+      />
+    </>
   );
 };
