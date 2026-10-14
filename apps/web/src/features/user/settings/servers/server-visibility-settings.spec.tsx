@@ -39,8 +39,6 @@ const renderSettings = () =>
   );
 
 await initializeTestTranslations({
-  "settings.servers.visibleCount": "{{count}} widoczne",
-  "settings.servers.hiddenCount": "{{count}} ukryty",
   "settings.servers.switchLabel": "Pokaż {{name}} w grze",
   "settings.servers.title": "Widoczność serwerów",
   "settings.servers.description": "Opis",
@@ -110,7 +108,8 @@ describe("ServerVisibilitySettings", () => {
   it("renders ordered guilds and visibility counts", () => {
     renderSettings();
 
-    expect(screen.getByText("2 widoczne · 1 ukryty")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Widoczne 2" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ukryte 1" })).toBeTruthy();
     expect(
       screen
         .getAllByRole("switch")
@@ -125,11 +124,11 @@ describe("ServerVisibilitySettings", () => {
   it("filters, saves snapshots and preserves unavailable hidden IDs", async () => {
     renderSettings();
 
-    fireEvent.click(screen.getByRole("button", { name: "Ukryte" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ukryte 1" }));
     expect(screen.getByText("Beta")).toBeTruthy();
     expect(screen.queryByText("Alpha")).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "Wszystkie" }));
+    fireEvent.click(screen.getByRole("button", { name: "Wszystkie 3" }));
     fireEvent.change(screen.getByPlaceholderText("Szukaj serwera"), {
       target: { value: "alpha" },
     });

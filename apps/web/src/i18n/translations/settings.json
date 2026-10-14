@@ -16,14 +16,6 @@
     },
     "showAll": "Pokaż wszystkie",
     "switchLabel": "Pokaż {{name}} w grze",
-    "visibleCount_one": "{{count}} widoczny",
-    "visibleCount_few": "{{count}} widoczne",
-    "visibleCount_many": "{{count}} widocznych",
-    "visibleCount_other": "{{count}} widocznych",
-    "hiddenCount_one": "{{count}} ukryty",
-    "hiddenCount_few": "{{count}} ukryte",
-    "hiddenCount_many": "{{count}} ukrytych",
-    "hiddenCount_other": "{{count}} ukrytych",
     "visibleInGameClient": "Widoczny w grze",
     "hiddenInGameClient": "Ukryty w grze",
     "hideInGameClient": "Ukryj w grze",
@@ -33,7 +25,9 @@
     "loading": "Ładowanie Lootlogów...",
     "loadError": "Nie udało się pobrać Lootlogów.",
     "noGuilds": "Nie masz jeszcze dostępu do żadnego Lootloga.",
+    "noGuildsDescription": "Lootlogi pojawią się tutaj, gdy dołączysz do serwera Discord z Lootlogiem.",
     "noResults": "Nie znaleziono Lootlogów pasujących do wyszukiwania i filtra.",
+    "noResultsDescription": "Zmień frazę albo wybierz inny filtr widoczności.",
     "saving": "Zapisywanie...",
     "saved": "Zapisano",
     "saveError": "Nie udało się zapisać zmiany. Przywróciliśmy ostatni zapisany stan."
@@ -761,6 +755,7 @@
     "title": "Powiadomienia",
     "description": "Obserwuj przedmioty na wybranym świecie w swoich Lootlogach, a informację o dropie dostaniesz w prywatnej wiadomości na Discordzie.",
     "dm": {
+      "sectionTitle": "Kanał powiadomień",
       "title": "Prywatna wiadomość",
       "active": "Aktywne",
       "actionRequired": "Wymaga konfiguracji",
@@ -781,8 +776,7 @@
       "limitStatus": "Masz {{count}} z {{limit}} obserwowanych przedmiotów."
     },
     "watchList": {
-      "title": "Obserwowane przedmioty",
-      "description": "Lista aktywnych obserwacji przypiętych do Twojego konta."
+      "title": "Obserwowane przedmioty"
     },
     "infoDialog": {
       "title": "Jak działa obserwowanie przedmiotów?",
@@ -804,7 +798,8 @@
       }
     },
     "actions": {
-      "addWatch": "Dodaj przedmiot"
+      "addWatch": "Dodaj przedmiot",
+      "removeWatch": "Przestań obserwować: {{itemName}}"
     },
     "quickAdd": {
       "add": "Dodaj do obserwowanych",
@@ -839,8 +834,7 @@
     "empty": {
       "guilds": "Brak dostępnych Lootlogów.",
       "items": "Brak pasujących przedmiotów.",
-      "watchedItems": "Nie masz jeszcze żadnych obserwowanych przedmiotów.",
-      "watchedItemsDescription": "Dodaj przedmiot, a gdy dropnie w Twoim Lootlogu, dostaniesz prywatną wiadomość na Discordzie."
+      "watchedItems": "Nie masz jeszcze żadnych obserwowanych przedmiotów."
     },
     "loading": {
       "items": "Pobieranie przedmiotów..."
@@ -1010,6 +1004,10 @@
   },
   "appearance": {
     "title": "Wygląd",
+    "themeSection": {
+      "title": "Motyw",
+      "description": "Motyw zmienia kolory i tło całej aplikacji. Wybór zapisuje się na Twoim koncie."
+    },
     "saveError": "Nie udało się zapisać motywu na koncie. Podgląd pozostaje aktywny. Wybierz motyw ponownie, aby spróbować jeszcze raz.",
     "themes": {
       "default": {

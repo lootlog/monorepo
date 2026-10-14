@@ -8,10 +8,10 @@ import {
 import { SearchX, Settings2 } from "lucide-react";
 import { startTransition, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { SettingsClearFilterButton } from "../components/settings-clear-filter-button";
-import { SettingsListEmpty } from "../components/settings-list-empty";
-import { SettingsListError } from "../components/settings-list-error";
-import { SettingsTabPage } from "../components/settings-tab-page";
+import { SettingsClearFilterButton } from "@/components/common/settings-clear-filter-button";
+import { SettingsListEmpty } from "@/components/common/settings-list-empty";
+import { SettingsListError } from "@/components/common/settings-list-error";
+import { SettingsTabPage } from "@/components/common/settings-tab-page";
 import { NpcTile } from "./npc-tile";
 
 export const NpcsSettingsContent = () => {

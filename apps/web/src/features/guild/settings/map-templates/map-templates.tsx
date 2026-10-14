@@ -8,10 +8,10 @@ import { toast } from "sonner";
 import { MapTemplateFormDialog } from "./map-template-form-dialog";
 import { MapTemplateRowsSkeleton } from "./map-template-rows-skeleton";
 import { MapTemplateTile } from "./map-template-tile";
-import { SettingsClearFilterButton } from "../components/settings-clear-filter-button";
-import { SettingsListEmpty } from "../components/settings-list-empty";
-import { SettingsListError } from "../components/settings-list-error";
-import { SettingsTabPage } from "../components/settings-tab-page";
+import { SettingsClearFilterButton } from "@/components/common/settings-clear-filter-button";
+import { SettingsListEmpty } from "@/components/common/settings-list-empty";
+import { SettingsListError } from "@/components/common/settings-list-error";
+import { SettingsTabPage } from "@/components/common/settings-tab-page";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {

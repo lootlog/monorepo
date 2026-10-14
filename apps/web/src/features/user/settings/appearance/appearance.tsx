@@ -1,3 +1,5 @@
+import { BandSection } from "@/components/common/band-section";
+import { SettingsTabPage } from "@/components/common/settings-tab-page";
 import { useEffect, useEffectEvent, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearch } from "@tanstack/react-router";
@@ -25,24 +27,30 @@ export const AppearanceSettings: FC = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="flex flex-col gap-3 p-3">
-      <h1 className="sr-only">{t("settings.appearance.title")}</h1>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {THEME_CATALOG.map((themeOption) => (
-          <ThemeCard
-            key={themeOption.name}
-            name={themeOption.name}
-            title={t(`settings.appearance.themes.${themeOption.name}.title`)}
-            description={t(
-              `settings.appearance.themes.${themeOption.name}.description`,
-            )}
-            colors={themeOption.colors}
-            backgroundImage={themeOption.backgroundImage}
-            isActive={theme === themeOption.name}
-            onClick={() => setTheme(themeOption.name)}
-          />
-        ))}
-      </div>
-    </div>
+    <SettingsTabPage title={t("settings.appearance.title")}>
+      <BandSection
+        id="appearance-theme"
+        title={t("settings.appearance.themeSection.title")}
+        description={t("settings.appearance.themeSection.description")}
+        wide
+      >
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {THEME_CATALOG.map((themeOption) => (
+            <ThemeCard
+              key={themeOption.name}
+              name={themeOption.name}
+              title={t(`settings.appearance.themes.${themeOption.name}.title`)}
+              description={t(
+                `settings.appearance.themes.${themeOption.name}.description`,
+              )}
+              colors={themeOption.colors}
+              backgroundImage={themeOption.backgroundImage}
+              isActive={theme === themeOption.name}
+              onClick={() => setTheme(themeOption.name)}
+            />
+          ))}
+        </div>
+      </BandSection>
+    </SettingsTabPage>
   );
 };
