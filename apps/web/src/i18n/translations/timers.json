@@ -1,6 +1,5 @@
 {
   "searchPlaceholder": "Szukaj timerów...",
-  "toolbarLabel": "Wyszukiwanie i widok timerów",
   "loadError": "Nie udało się pobrać timerów",
   "loadErrorDescription": "Sprawdź połączenie i spróbuj ponownie.",
   "refreshError": "Nie udało się odświeżyć timerów. Widoczne dane mogą być nieaktualne. Spróbuj ponownie.",
@@ -19,5 +18,10 @@
   "details": {
     "minSpawnTime": "Min. czas respawnu",
     "maxSpawnTime": "Max. czas respawnu"
+  },
+  "phase": {
+    "untilWindow": "do okna",
+    "untilWindowEnd": "do końca okna",
+    "pastWindow": "po oknie"
   }
 }
