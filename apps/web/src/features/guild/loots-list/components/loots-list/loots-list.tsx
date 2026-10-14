@@ -175,7 +175,11 @@ export const LootsList = () => {
                   ) : rowLoots ? (
                     <div className={cn(LOOTS_GRID_CLASS, "items-stretch")}>
                       {rowLoots.map((loot) => (
-                        <div key={loot.id} className={LOOTS_GRID_CELL_CLASS}>
+                        <div
+                          key={loot.id}
+                          data-list-tile
+                          className={LOOTS_GRID_CELL_CLASS}
+                        >
                           <LootsListItem
                             loot={loot}
                             showWorld={world === null}
@@ -203,6 +207,7 @@ export const LootsList = () => {
                   key={virtualItem.key}
                   data-index={virtualItem.index}
                   ref={virtualizer.measureElement}
+                  data-list-tile={isLoaderRow ? undefined : ""}
                   className="absolute inset-x-0 top-0"
                   style={{
                     transform: `translateY(${virtualItem.start - virtualizer.options.scrollMargin}px)`,

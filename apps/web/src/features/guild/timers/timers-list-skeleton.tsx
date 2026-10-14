@@ -23,6 +23,7 @@ export const TimersListSkeleton = ({ viewMode }: { viewMode: ViewMode }) => (
             {Array.from({ length: size }).map((_, index) => (
               <div
                 key={index}
+                data-list-tile
                 className={cn(
                   getTimerCellClassName(viewMode),
                   TIMER_ROW_INSET_CLASS,

@@ -23,5 +23,6 @@ export const getTimerCellClassName = (viewMode: ViewMode) =>
 /** Horizontal inset shared by timer rows and group headings. */
 export const TIMER_ROW_INSET_CLASS = "px-3 sm:px-4";
 
+/** Transparent, so a theme's wallpaper shows through as it does behind rows. */
 export const TIMER_GROUP_HEADING_CLASS =
-  "sticky top-0 z-10 flex h-9 items-center gap-2 border-b border-sidebar-border bg-background/90 text-xs font-semibold text-muted-foreground backdrop-blur-sm";
+  "flex h-9 items-center gap-2 border-b border-sidebar-border text-xs font-semibold text-muted-foreground";
