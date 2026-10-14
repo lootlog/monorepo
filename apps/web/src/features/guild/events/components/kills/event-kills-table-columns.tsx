@@ -1,10 +1,9 @@
 import type { TFunction } from "i18next";
 import type { ColumnDef } from "@tanstack/react-table";
-import { differenceInSeconds } from "date-fns";
 import type { KillHistoryEntry } from "@lootlog/client/main";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { KillMonsterCell } from "./kill-monster-cell";
-import { formatDurationHuman } from "../../utils/format-duration";
+import { KillRespawnTime } from "./kill-respawn-time";
 import type { coreTableFeatures } from "@/lib/tanstack-table-features";
 
 type CreateEventKillsTableColumnsOptions = {
@@ -51,7 +50,7 @@ export const createEventKillsTableColumns = ({
       <KillMonsterCell
         eventId={eventId}
         guildId={guildId}
-        isPreview={isPreview}
+        alwaysShowsDate={isPreview}
         kill={row.original}
       />
     ),
@@ -73,28 +72,7 @@ export const createEventKillsTableColumns = ({
     header: () => (
       <span className="block text-right">{t("events.kills.respawnTime")}</span>
     ),
-    cell: ({ row }) => {
-      const kill = row.original;
-
-      if (kill.isManualClose) {
-        return (
-          <span className="block text-right text-xs font-medium text-amber-400">
-            {t("events.kills.manualCloseLabel")}
-          </span>
-        );
-      }
-
-      const respawnTimeSeconds = differenceInSeconds(
-        new Date(kill.killedAt),
-        new Date(kill.minSpawnTimeAtKill),
-      );
-
-      return (
-        <span className="block text-right font-medium tabular-nums">
-          {formatDurationHuman(respawnTimeSeconds)}
-        </span>
-      );
-    },
+    cell: ({ row }) => <KillRespawnTime kill={row.original} />,
     enableSorting: false,
   },
   {

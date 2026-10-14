@@ -10,8 +10,11 @@ import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 type KillMonsterCellProps = {
   eventId: string;
   guildId: string;
-  /** Sits in a preview card with no date column, so the date stays under the name. */
-  isPreview?: boolean;
+  /**
+   * Keeps the date under the name at every width, where no date column shows
+   * it, such as in a preview card or a tile.
+   */
+  alwaysShowsDate?: boolean;
   kill: {
     heroNpc: Pick<KillHistoryEntryHeroNpc, "npcIcon" | "npcId" | "npcName">;
     heroNpcId: string;
@@ -23,7 +26,7 @@ type KillMonsterCellProps = {
 export const KillMonsterCell = ({
   eventId,
   guildId,
-  isPreview = false,
+  alwaysShowsDate = false,
   kill,
 }: KillMonsterCellProps) => {
   const { t } = useTranslation();
@@ -67,7 +70,7 @@ export const KillMonsterCell = ({
         <div
           className={cn(
             "mt-0.5 truncate text-[10px] text-muted-foreground tabular-nums",
-            !isPreview && "sm:hidden",
+            !alwaysShowsDate && "sm:hidden",
           )}
         >
           {timestampToDate(kill.killedAt)}

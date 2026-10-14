@@ -10,7 +10,7 @@ import { KillStatsFilters } from "@/features/kills/components/kill-stats-filters
 import { MemberNameWithColor } from "./components/member-name-with-color";
 import { StatsCountCell } from "./components/stats-count-cell";
 import { StatsDetailMeta } from "./components/stats-detail-meta";
-import { StatsMemberAvatar } from "./components/stats-member-avatar";
+import { MemberAvatar } from "@/components/common/member-avatar";
 import { RankBadge } from "@/components/common/rank-badge";
 import {
   STATS_TABLE_COUNT_COLUMN_ID,
@@ -59,7 +59,7 @@ export const NpcKillersPage = () => {
       header: () => t("kills.npcKillers.member"),
       cell: ({ row: { original: killer } }) => (
         <div className="flex min-w-0 items-center gap-2.5">
-          <StatsMemberAvatar
+          <MemberAvatar
             userId={killer.memberUserId}
             avatar={killer.memberAvatar}
             name={killer.memberName}

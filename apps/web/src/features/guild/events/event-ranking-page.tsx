@@ -130,8 +130,8 @@ export const EventRankingPage = () => {
           value={effectiveSelectedHeroName ?? undefined}
           onValueChange={(heroName) => setSelectedHeroName(heroName ?? null)}
         />
-        <div className="flex w-full min-w-0 max-w-full flex-col gap-3 px-3 py-3">
-          {rankingError && (
+        {rankingError && (
+          <div className="p-3">
             <SectionCard>
               <QueryErrorNotice
                 message={t("events.ranking.error")}
@@ -139,19 +139,19 @@ export const EventRankingPage = () => {
                 isRetrying={isRankingFetching}
               />
             </SectionCard>
-          )}
+          </div>
+        )}
 
-          {/* A failed refresh keeps the last ranking; a failed first load has none to show. */}
-          {(!rankingError || rankings.length > 0) && (
-            <EventRankingTable
-              rankings={filteredRankings}
-              guildId={guildId}
-              eventId={eventId}
-              canEdit={canEditPoints}
-              currentMemberId={currentMember?.id}
-            />
-          )}
-        </div>
+        {/* A failed refresh keeps the last ranking; a failed first load has none to show. */}
+        {(!rankingError || rankings.length > 0) && (
+          <EventRankingTable
+            rankings={filteredRankings}
+            guildId={guildId}
+            eventId={eventId}
+            canEdit={canEditPoints}
+            currentMemberId={currentMember?.id}
+          />
+        )}
       </ScrollArea>
     </div>
   );

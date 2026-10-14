@@ -7,7 +7,7 @@ import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { KillStatsFilters } from "@/features/kills/components/kill-stats-filters";
 import { MemberNameWithColor } from "./components/member-name-with-color";
 import { StatsCountCell } from "./components/stats-count-cell";
-import { StatsMemberAvatar } from "./components/stats-member-avatar";
+import { MemberAvatar } from "@/components/common/member-avatar";
 import { StatsMobileListSkeleton } from "./components/stats-mobile-list-skeleton";
 import { RankBadge } from "@/components/common/rank-badge";
 import {
@@ -62,7 +62,7 @@ export const StatsRanking = () => {
       header: () => t("kills.memberRanking.member"),
       cell: ({ row: { original: member } }) => (
         <div className="flex items-center gap-2.5">
-          <StatsMemberAvatar
+          <MemberAvatar
             userId={member.memberUserId}
             avatar={member.memberAvatar}
             name={member.memberName}
@@ -175,7 +175,7 @@ export const StatsRanking = () => {
                 >
                   <span className="flex min-w-0 items-center gap-3">
                     <RankBadge rank={cursor + index + 1} />
-                    <StatsMemberAvatar
+                    <MemberAvatar
                       userId={member.memberUserId}
                       avatar={member.memberAvatar}
                       name={member.memberName}
