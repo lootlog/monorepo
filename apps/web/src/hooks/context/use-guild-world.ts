@@ -3,7 +3,7 @@ import { useEffect, useEffectEvent, useSyncExternalStore } from "react";
 import { z } from "zod";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 
-/** The search param that carries the Organization's world in shared links. */
+/** The search param a link may use to open an Organization on a world. */
 export const GUILD_WORLD_SEARCH_PARAM = "world";
 
 const GUILD_WORLD_CHANGE_EVENT = "lootlog:guild-world-change";
@@ -17,12 +17,19 @@ const storedGuildWorld = z.string().nullable().catch(null);
 // An empty value comes from the time a world had to be picked first.
 const toGuildWorld = (value: string | null | undefined) => value || null;
 
+// Without storage the chosen world still lasts for this tab.
+const unstoredGuildWorlds = new Map<string, string | null>();
+
 /** The world remembered for an Organization; `null` is all worlds. */
 export const readStoredGuildWorld = (
   guildId: string | undefined,
 ): string | null => {
+  const key = getGuildWorldStorageKey(guildId);
+
+  if (unstoredGuildWorlds.has(key)) return unstoredGuildWorlds.get(key) ?? null;
+
   try {
-    const stored = localStorage.getItem(getGuildWorldStorageKey(guildId));
+    const stored = localStorage.getItem(key);
 
     return toGuildWorld(
       stored ? storedGuildWorld.parse(JSON.parse(stored)) : null,
@@ -37,13 +44,13 @@ export const storeGuildWorld = (
   guildId: string | undefined,
   world: string | null,
 ) => {
+  const key = getGuildWorldStorageKey(guildId);
+
   try {
-    localStorage.setItem(
-      getGuildWorldStorageKey(guildId),
-      JSON.stringify(world),
-    );
+    localStorage.setItem(key, JSON.stringify(world));
+    unstoredGuildWorlds.delete(key);
   } catch {
-    // Without storage the world still lives in the URL.
+    unstoredGuildWorlds.set(key, world);
   }
 
   window.dispatchEvent(new Event(GUILD_WORLD_CHANGE_EVENT));
@@ -63,89 +70,63 @@ const guildWorldSearch = z.object({
   [GUILD_WORLD_SEARCH_PARAM]: z.string().optional(),
 });
 
-const useGuildWorldSources = () => {
-  const guildId = useGuildId();
-
+const useUrlWorld = () =>
   // The router's own search, not a copy that catches up a render later: on a
   // move between Organizations it must never pair one's world with the other.
-  const urlWorld = toGuildWorld(
+  toGuildWorld(
     guildWorldSearch.safeParse(useSearch({ strict: false })).data?.world,
   );
 
+const useStoredGuildWorld = (guildId: string | undefined) =>
+  // Read on every render, so moving to another Organization never shows the
+  // previous one's world for a render.
+  useSyncExternalStore(subscribeToStoredGuildWorld, () =>
+    readStoredGuildWorld(guildId),
+  );
+
+/**
+ * The world every Organization page is scoped to; `null` is all worlds. A
+ * link's `?world=` wins until it has been remembered for the Organization.
+ */
+export const useGuildWorld = () => {
+  const guildId = useGuildId();
+  const urlWorld = useUrlWorld();
+  const storedWorld = useStoredGuildWorld(guildId);
+
+  return {
+    world: urlWorld ?? storedWorld,
+    setWorld: (world: string | null) => storeGuildWorld(guildId, world),
+  };
+};
+
+/**
+ * Remembers the world a link carries and drops it from the URL, so the
+ * Organization's pages keep clean addresses and navigate once. Mount once,
+ * under the Organization route.
+ */
+export const useGuildWorldFromUrl = () => {
+  const guildId = useGuildId();
+  const urlWorld = useUrlWorld();
   const router = useRouter();
 
-  // Written through the router at once: a queued write would leave the old
-  // world in the URL long enough for the sync to remember it again.
-  const setUrlWorld = (world: string | null, replace: boolean) => {
-    const { pathname, searchStr } = router.state.location;
+  const forgetUrlWorld = useEffectEvent(() => {
+    const { pathname, searchStr, hash } = router.state.location;
     const searchParams = new URLSearchParams(searchStr);
 
-    if (world) {
-      searchParams.set(GUILD_WORLD_SEARCH_PARAM, world);
-    } else {
-      searchParams.delete(GUILD_WORLD_SEARCH_PARAM);
-    }
+    searchParams.delete(GUILD_WORLD_SEARCH_PARAM);
 
     const query = searchParams.toString();
 
     void router.navigate({
-      href: query ? `${pathname}?${query}` : pathname,
-      replace,
+      href: `${pathname}${query ? `?${query}` : ""}${hash ? `#${hash}` : ""}`,
+      replace: true,
     });
-  };
-
-  // Read on every render, so moving to another Organization never shows the
-  // previous one's world for a render.
-  const storedWorld = useSyncExternalStore(subscribeToStoredGuildWorld, () =>
-    readStoredGuildWorld(guildId),
-  );
-
-  return {
-    guildId,
-    urlWorld,
-    storedWorld,
-    setUrlWorld,
-  };
-};
-
-/**
- * The world every Organization page is scoped to; `null` is all worlds. A
- * shared link's `?world=` wins over the world remembered for the Organization.
- */
-export const useGuildWorld = () => {
-  const { guildId, urlWorld, storedWorld, setUrlWorld } =
-    useGuildWorldSources();
-
-  // Stored at once, so a navigation started right after the choice, such as
-  // opening the loot list for an item, already lands on the chosen world.
-  const setWorld = (world: string | null) => {
-    storeGuildWorld(guildId, world);
-    setUrlWorld(world, false);
-  };
-
-  return { world: urlWorld ?? storedWorld, setWorld };
-};
-
-/**
- * Keeps the remembered world and the URL in step for the Organization pages:
- * a link's world is remembered, and every page's URL names the world it shows
- * so it can be shared. Mount once, under the Organization route.
- */
-export const useGuildWorldUrlSync = () => {
-  const { guildId, urlWorld, storedWorld, setUrlWorld } =
-    useGuildWorldSources();
-
-  const showStoredWorldInUrl = useEffectEvent((world: string) => {
-    setUrlWorld(world, true);
   });
 
-  // Only a new URL world is remembered, so a choice still on its way to the
-  // URL is never overwritten by the world it replaces.
   useEffect(() => {
-    if (urlWorld) storeGuildWorld(guildId, urlWorld);
-  }, [guildId, urlWorld]);
+    if (!urlWorld) return;
 
-  useEffect(() => {
-    if (!urlWorld && storedWorld) showStoredWorldInUrl(storedWorld);
-  }, [urlWorld, storedWorld]);
+    storeGuildWorld(guildId, urlWorld);
+    forgetUrlWorld();
+  }, [guildId, urlWorld]);
 };
