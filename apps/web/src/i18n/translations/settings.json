@@ -700,8 +700,18 @@
     "ruleDialog": {
       "createTitle": "Dodaj regułę",
       "editTitle": "Edytuj regułę",
-      "triggerDescription": "Ten widok obsługuje tylko przypomnienia planowane przed spawnem.",
-      "triggerDescriptionScheduledMessage": "Wyślij wiadomość jednorazowo lub cyklicznie w określonym czasie.",
+      "sections": {
+        "rule": "Reguła",
+        "when": "Kiedy wysłać",
+        "where": "Dokąd wysłać",
+        "content": "Treść wiadomości"
+      },
+      "triggerOptions": {
+        "timerBeforeSpawn": "Gdy zbliża się respawn potwora z ustawionym timerem.",
+        "scheduledMessage": "O wybranej porze, jednorazowo lub cyklicznie."
+      },
+      "whenTimer": "Lootlog wyśle przypomnienie, gdy ktoś z Lootloga ustawi timer wybranego potwora.",
+      "whenScheduledMessage": "Lootlog wyśle wiadomość w wybranym terminie, a przy harmonogramie w każdym kolejnym.",
       "targetsDescription": "Wybierz jeden lub więcej kanałów docelowych. Możesz też dodać nowy bez opuszczania formularza."
     },
     "manualNpcEntry": {
