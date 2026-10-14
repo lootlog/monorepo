@@ -7,7 +7,6 @@ import { MetaItem } from "@/components/common/meta-item";
 import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
-import { getPrimaryModifierKeyLabel } from "@/utils/platform/get-primary-modifier-key-label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -237,12 +236,6 @@ export const GuildDocEditorPage = () => {
             isDirty={isDirty}
             isSubmitting={updateDocument.isPending}
             onReset={resetDraft}
-            saveShortcut={{
-              label: t("docs.editor.saveShortcut", {
-                modifier: getPrimaryModifierKeyLabel(),
-              }),
-              keys: "Meta+S Control+S",
-            }}
           />
         </form>
       </ScrollArea>
