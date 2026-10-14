@@ -148,7 +148,7 @@ export const KillDetail = () => {
         data-under-top-bar
         className="min-h-0 min-w-0 max-w-full flex-1"
       >
-        <div className="flex w-full min-w-0 max-w-full flex-col gap-3 overflow-x-hidden px-3 py-3">
+        <div className="flex w-full min-w-0 max-w-full flex-col gap-3 overflow-x-clip px-3 py-3">
           {error && (
             <QueryErrorNotice
               message={t("events.killDetail.error")}

@@ -1,3 +1,5 @@
+import { PAGE_STICKY_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
+import { TableScroller } from "@/components/common/table-scroller";
 import {
   Table,
   TableHeader,
@@ -40,9 +42,9 @@ export function StatisticsWorlds({
           }
         />
         <SectionCardContent className="p-0">
-          <div className="overflow-x-auto">
+          <TableScroller>
             <Table className="min-w-[450px]">
-              <TableHeader className="sticky top-0 z-10 bg-background">
+              <TableHeader className={PAGE_STICKY_TABLE_HEADER_CLASS}>
                 <TableRow className="border-b-1! border-border">
                   {[
                     "world",
@@ -96,7 +98,7 @@ export function StatisticsWorlds({
                 ))}
               </TableBody>
             </Table>
-          </div>
+          </TableScroller>
         </SectionCardContent>
       </SectionCard>
       <div className="grid gap-3 xl:grid-cols-2">
