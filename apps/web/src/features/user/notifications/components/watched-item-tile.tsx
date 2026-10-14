@@ -127,18 +127,19 @@ export const WatchedItemTile = ({
               <MetaItem icon={Globe} className="shrink-0">
                 {upperFirst(watchedItem.world)}
               </MetaItem>
-              {guildNames.length > 0 && (
-                <MetaItem
-                  icon={Users}
-                  label={t("settings.userNotifications.fields.guilds")}
-                  className="min-w-0"
-                >
-                  <span className="min-w-0 truncate">
-                    {guildNames.join(", ")}
-                  </span>
-                </MetaItem>
-              )}
             </span>
+            {/* Every watched Lootlog stays readable, so the line wraps. */}
+            {guildNames.length > 0 && (
+              <MetaItem
+                icon={Users}
+                label={t("settings.userNotifications.fields.guilds")}
+                className="items-start whitespace-normal"
+              >
+                <span className="min-w-0 break-words">
+                  {guildNames.join(", ")}
+                </span>
+              </MetaItem>
+            )}
             {hasMissingGuilds && (
               <span className="flex items-center gap-1 text-xs text-signal-timer">
                 <TriangleAlert aria-hidden className="size-3.5 shrink-0" />
