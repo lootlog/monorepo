@@ -47,6 +47,16 @@ type SavedFilter = {
   };
 };
 
+const getSavedFilterKey = (filters: SavedFilter["filters"]) =>
+  JSON.stringify(
+    Object.fromEntries(
+      Object.entries(filters).map(([key, value]) => [
+        key,
+        Array.isArray(value) ? [...value].sort() : value,
+      ]),
+    ),
+  );
+
 type LootFilters = ReturnType<typeof useLootsFilters>["filters"];
 
 // Selected names need no lookup: the filter value is the label.
@@ -300,21 +310,6 @@ export const useLootFiltersSidebar = () => {
     };
   };
 
-  const isCurrentFilterAlreadySaved = (): boolean => {
-    const currentFilters = getCurrentFiltersForSaving();
-    const currentFiltersString = JSON.stringify(currentFilters);
-
-    const isInDefaults = defaultQuickFilters.some(
-      (filter) => JSON.stringify(filter.filters) === currentFiltersString,
-    );
-
-    const isInCustom = customFilters.some(
-      (filter) => JSON.stringify(filter.filters) === currentFiltersString,
-    );
-
-    return isInDefaults || isInCustom;
-  };
-
   const handleSaveFilter = () => {
     if (!newFilterName.trim()) return;
 
@@ -346,8 +341,14 @@ export const useLootFiltersSidebar = () => {
     ...customFilters.map((f) => ({ ...f, isDefault: false })),
   ];
 
+  const currentFilterKey = getSavedFilterKey(getCurrentFiltersForSaving());
+
+  const isQuickFilterApplied = (filter: SavedFilter["filters"]) =>
+    getSavedFilterKey(filter) === currentFilterKey;
+
   const canSaveCurrentFilter =
-    hasActiveFilters && !isCurrentFilterAlreadySaved();
+    hasActiveFilters &&
+    !allQuickFilters.some((filter) => isQuickFilterApplied(filter.filters));
 
   const {
     npcActiveFilterCount,
@@ -371,9 +372,6 @@ export const useLootFiltersSidebar = () => {
 
   const clearPlayerFilters = () =>
     updateFilters({ players: [], playerLevelMin: "", playerLevelMax: "" });
-
-  const isQuickFilterApplied = (filter: SavedFilter["filters"]) =>
-    JSON.stringify(filter) === JSON.stringify(getCurrentFiltersForSaving());
 
   // Picking the applied view again takes it off.
   const toggleQuickFilter = (filterData: SavedFilter["filters"]) => {
