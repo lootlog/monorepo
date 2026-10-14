@@ -1,5 +1,6 @@
 import { MetaItem } from "@/components/common/meta-item";
-import { EmptyState } from "@/components/common/empty-state";
+import { ROUTES } from "@/config/routes";
+import { SettingsDetailNotFound } from "../components/settings-detail-not-found";
 import { PermissionCategoryTooltip } from "@/features/guild/settings/components/permission-category-tooltip";
 import { RolesForm } from "@/features/guild/settings/roles/components/roles-form";
 import { getColorFromRoleColor } from "@/utils/get-color-from-role";
@@ -23,11 +24,12 @@ export const RoleSettingsDetailPage = () => {
 
   if (roles && !role) {
     return (
-      <EmptyState
+      <SettingsDetailNotFound
         icon={ShieldX}
         title={t("settings.roles.roleNotFound")}
         description={t("settings.roles.roleNotFoundDescription")}
-        className="h-full"
+        backTo={ROUTES.guild.settings.roles(guildId)}
+        backLabel={t("settings.roles.backToList")}
       />
     );
   }

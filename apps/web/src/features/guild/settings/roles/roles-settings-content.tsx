@@ -3,17 +3,29 @@ import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useRolesControllerGetGuildRoles } from "@lootlog/client/main";
 import { Permission } from "@lootlog/schema/permissions";
-import { Shield } from "lucide-react";
+import { SearchX, Shield } from "lucide-react";
+import { Button } from "@lootlog/ui/components/button";
+import { Link } from "@tanstack/react-router";
+import { ROUTES } from "@/config/routes";
 import { startTransition, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { SettingsClearFilterButton } from "../components/settings-clear-filter-button";
 import { SettingsListEmpty } from "../components/settings-list-empty";
+import { SettingsListError } from "../components/settings-list-error";
 import { SettingsTabPage } from "../components/settings-tab-page";
 import { RoleTile } from "./role-tile";
 
 export const RolesSettingsContent = () => {
   const { t } = useTranslation();
   const guildId = useGuildId() ?? "";
-  const { data: roles } = useRolesControllerGetGuildRoles({ guildId });
+
+  const {
+    data: roles,
+    isError,
+    isFetching,
+    refetch,
+  } = useRolesControllerGetGuildRoles({ guildId });
+
   const [searchValue, setSearchValue] = useState("");
   const normalizedSearchValue = searchValue.trim().toLowerCase();
 
@@ -40,9 +52,17 @@ export const RolesSettingsContent = () => {
       return firstRole.name.localeCompare(secondRole.name);
     });
 
-  const hasActiveFilters = normalizedSearchValue !== "";
-
   const renderContent = () => {
+    if (!roles && isError) {
+      return (
+        <SettingsListError
+          title={t("settings.roles.empty.loadError")}
+          isRetrying={isFetching}
+          onRetry={() => void refetch()}
+        />
+      );
+    }
+
     if (!roles) {
       return (
         <div aria-hidden="true">
@@ -53,22 +73,38 @@ export const RolesSettingsContent = () => {
       );
     }
 
-    if (filteredRoles.length === 0) {
+    if (roles.length === 0) {
       return (
         <SettingsListEmpty
           icon={Shield}
-          title={
-            roles.length === 0
-              ? t("settings.roles.emptyGuildTitle")
-              : t("settings.roles.emptyTitle")
+          title={t("settings.roles.empty.title")}
+          description={t("settings.roles.empty.description")}
+          action={
+            <Button
+              variant="outline"
+              nativeButton={false}
+              render={<Link to={ROUTES.guild.settings.info(guildId)} />}
+            >
+              {t("settings.roles.empty.checkSync")}
+            </Button>
           }
-          description={
-            hasActiveFilters
-              ? t("settings.roles.emptyFilteredDescription")
-              : t("settings.roles.emptyDescription")
+        />
+      );
+    }
+
+    if (filteredRoles.length === 0) {
+      return (
+        <SettingsListEmpty
+          icon={SearchX}
+          title={t("settings.roles.empty.filteredTitle", {
+            query: searchValue.trim(),
+          })}
+          description={t("settings.roles.empty.filteredDescription")}
+          action={
+            <SettingsClearFilterButton
+              onClear={() => startTransition(() => setSearchValue(""))}
+            />
           }
-          hasActiveFilters={hasActiveFilters}
-          onResetFilters={() => startTransition(() => setSearchValue(""))}
         />
       );
     }
@@ -86,7 +122,7 @@ export const RolesSettingsContent = () => {
         placeholder={t("settings.roles.searchPlaceholder")}
         label={t("settings.roles.searchPlaceholder")}
         clearLabel={t("settings.clearFilter")}
-        disabled={!roles}
+        disabled={!roles?.length}
       />
       {renderContent()}
     </SettingsTabPage>

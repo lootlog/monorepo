@@ -1,8 +1,8 @@
 {
   "navigationLabel": "Ustawienia",
   "filtersLabel": "Filtry",
-  "resetFilters": "Wyczyść filtry",
   "clearFilter": "Wyczyść filtr",
+  "loadErrorDescription": "Sprawdź połączenie i spróbuj ponownie.",
   "servers": {
     "navigation": "Lootlogi",
     "title": "Widoczność Lootlogów",
@@ -94,10 +94,15 @@
     },
     "title": "Ustawienia ról",
     "searchPlaceholder": "Filtruj po nazwie roli…",
-    "emptyTitle": "Nie znaleziono ról",
-    "emptyDescription": "Brak ról do wyświetlenia.",
-    "emptyFilteredDescription": "Nie znaleziono ról pasujących do wyszukiwania.",
-    "emptyGuildTitle": "Brak ról w tym Lootlogu",
+    "empty": {
+      "title": "Brak ról",
+      "description": "Role pochodzą z serwera Discord tego Lootloga. Pojawią się tutaj po synchronizacji z Discordem.",
+      "checkSync": "Sprawdź synchronizację",
+      "filteredTitle": "Brak ról pasujących do „{{query}}”",
+      "filteredDescription": "Sprawdź pisownię nazwy albo wyczyść filtr.",
+      "loadError": "Nie udało się pobrać ról"
+    },
+    "backToList": "Wróć do ról",
     "roleNotFound": "Nie znaleziono roli",
     "roleNotFoundDescription": "Ta rola nie istnieje w tym Lootlogu albo nie ma jej już w pobranej liście.",
     "levelRange": "Poziom {{from}} - {{to}}",
@@ -113,10 +118,14 @@
   "npcs": {
     "title": "Potwory i NPC",
     "searchPlaceholder": "Filtruj po nazwie potwora…",
-    "emptyTitle": "Nie znaleziono potworów",
-    "emptyDescription": "Brak potworów do wyświetlenia.",
-    "emptyFilteredDescription": "Nie znaleziono potworów pasujących do wyszukiwania.",
-    "emptyGuildTitle": "Brak konfiguracji potworów w tym Lootlogu",
+    "empty": {
+      "title": "Brak ustawień potworów",
+      "description": "Ten Lootlog nie ma jeszcze ustawień zbieranych łupów dla żadnego rodzaju potworów.",
+      "filteredTitle": "Brak potworów pasujących do „{{query}}”",
+      "filteredDescription": "Sprawdź pisownię nazwy albo wyczyść filtr.",
+      "loadError": "Nie udało się pobrać ustawień potworów"
+    },
+    "backToList": "Wróć do potworów",
     "npcNotFound": "Nie znaleziono potwora",
     "npcNotFoundDescription": "Ten wpis konfiguracji nie istnieje w tym Lootlogu albo nie ma go już w pobranej konfiguracji.",
     "raritiesTitle": "Zbierane rzadkości",
@@ -189,7 +198,7 @@
       "revokeDescription": "Link zaproszenia przestanie działać. W każdej chwili możesz utworzyć nowe.",
       "loadError": "Nie udało się pobrać współdzielonych rezerwacji",
       "loadErrorDescription": "Spróbuj ponownie, aby odświeżyć Lootlogi w sojuszu i oczekujące zaproszenia.",
-      "noPartners": "Brak Lootlogów w sojuszu.",
+      "noPartners": "Brak Lootlogów w sojuszu. Utwórz zaproszenie i wyślij link liderowi drugiego Lootloga.",
       "noPending": "Brak oczekujących zaproszeń.",
       "disconnect": "Odłącz",
       "disconnectTitle": "Odłączyć współdzielone kalendarze?",
@@ -341,10 +350,34 @@
         "gameStatus": "Status gry"
       }
     },
-    "emptyTitle": "Nie znaleziono członków",
-    "emptyDescription": "Brak członków do wyświetlenia.",
-    "emptyFilteredDescription": "Nie znaleziono członków pasujących do filtrów.",
-    "emptyGuildTitle": "Brak członków w tym Lootlogu",
+    "empty": {
+      "title": "Brak członków",
+      "description": "Członkowie pochodzą z serwera Discord tego Lootloga. Odśwież wszystkich, aby pobrać ich ponownie.",
+      "filteredTitle": "Brak członków pasujących do „{{query}}”",
+      "filteredDescription": "Sprawdź pisownię nicku albo wpisz pełne Discord ID.",
+      "filteredInOtherStatuses": "W grupie „{{status}}” nikt nie pasuje do filtra, ale pasujące osoby są w innych grupach.",
+      "showAll": "Pokaż wszystkich",
+      "loadError": "Nie udało się pobrać członków",
+      "status": {
+        "active": {
+          "title": "Brak aktywnych członków",
+          "description": "Nikt nie ma teraz dostępu do tego Lootloga."
+        },
+        "inactive": {
+          "title": "Brak nieaktywnych członków",
+          "description": "Każdy członek z listy ma dostęp do tego Lootloga."
+        },
+        "online": {
+          "title": "Nikt nie jest teraz online",
+          "description": "Tu pojawią się członkowie, którzy mają otwartą stronę Lootloga albo grę z dodatkiem."
+        },
+        "problems": {
+          "title": "Wszystko w porządku",
+          "description": "Discord potwierdził dostęp każdego członka."
+        }
+      }
+    },
+    "backToList": "Wróć do członków",
     "memberNotFound": "Nie znaleziono członka",
     "memberNotFoundDescription": "Ten członek nie należy do tego Lootloga albo nie ma go już w pobranej liście.",
     "statusActive": "Aktywny",
@@ -915,8 +948,9 @@
     "title": "Szablony map",
     "newTemplate": "Nowy szablon",
     "filterPlaceholder": "Filtruj po nazwie szablonu…",
-    "noResults": "Nie znaleziono szablonów",
-    "noResultsDescription": "Żaden szablon nie pasuje do filtra.",
+    "noResults": "Brak szablonów pasujących do „{{query}}”",
+    "noResultsDescription": "Sprawdź pisownię nazwy albo wyczyść filtr.",
+    "loadError": "Nie udało się pobrać szablonów map",
     "editTemplate": "Edytuj szablon {{name}}",
     "deleteTemplate": "Usuń szablon {{name}}",
     "cancel": "Anuluj",

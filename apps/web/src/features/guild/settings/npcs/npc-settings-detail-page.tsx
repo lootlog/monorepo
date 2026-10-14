@@ -1,5 +1,6 @@
 import { MetaItem } from "@/components/common/meta-item";
-import { EmptyState } from "@/components/common/empty-state";
+import { ROUTES } from "@/config/routes";
+import { SettingsDetailNotFound } from "../components/settings-detail-not-found";
 import { NPC_RARITY_CONFIG } from "@/features/guild/settings/npcs/npc-rarity-config";
 import { NpcsForm } from "@/features/guild/settings/npcs/npcs-form";
 import { useLootlogConfigControllerGetLootlogConfig } from "@lootlog/client/main";
@@ -24,11 +25,12 @@ export const NpcSettingsDetailPage = () => {
 
   if (config && !npc) {
     return (
-      <EmptyState
+      <SettingsDetailNotFound
         icon={Settings2}
         title={t("settings.npcs.npcNotFound")}
         description={t("settings.npcs.npcNotFoundDescription")}
-        className="h-full"
+        backTo={ROUTES.guild.settings.npcs(guildId)}
+        backLabel={t("settings.npcs.backToList")}
       />
     );
   }

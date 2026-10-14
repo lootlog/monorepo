@@ -1,5 +1,6 @@
 import { BandSection } from "@/components/common/band-section";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { Hourglass, Link2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SettingsTabSkeleton } from "../components/settings-tab-skeleton";
 import { ReservationShareGroup } from "./reservation-share-group";
@@ -52,6 +53,7 @@ export const ReservationsSettingsSkeleton = () => {
             count={undefined}
             isPending
             emptyLabel=""
+            emptyIcon={Link2}
           >
             {null}
           </ReservationShareGroup>
@@ -61,6 +63,7 @@ export const ReservationsSettingsSkeleton = () => {
             count={undefined}
             isPending
             emptyLabel=""
+            emptyIcon={Hourglass}
           >
             {null}
           </ReservationShareGroup>

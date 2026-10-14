@@ -1,7 +1,8 @@
 import { OrganizationPresenceStatus } from "@/components/common/organization-presence-status";
 import { useMemberActivity } from "@/features/guild/settings/members/use-member-activity";
 import { MetaItem } from "@/components/common/meta-item";
-import { EmptyState } from "@/components/common/empty-state";
+import { ROUTES } from "@/config/routes";
+import { SettingsDetailNotFound } from "../components/settings-detail-not-found";
 import {
   Avatar,
   AvatarFallback,
@@ -94,11 +95,12 @@ const MemberSettingsDetailPageContent = () => {
 
   if (members && !member) {
     return (
-      <EmptyState
+      <SettingsDetailNotFound
         icon={UserRoundX}
         title={t("settings.members.memberNotFound")}
         description={t("settings.members.memberNotFoundDescription")}
-        className="h-full"
+        backTo={ROUTES.guild.settings.members(guildId)}
+        backLabel={t("settings.members.backToList")}
       />
     );
   }

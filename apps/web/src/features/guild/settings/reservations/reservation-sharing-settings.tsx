@@ -4,7 +4,15 @@ import {
   LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
 import { useState } from "react";
-import { Ban, CircleAlert, Copy, Link2, Plus, Unlink } from "lucide-react";
+import {
+  Ban,
+  CircleAlert,
+  Copy,
+  Hourglass,
+  Link2,
+  Plus,
+  Unlink,
+} from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -206,6 +214,7 @@ export function ReservationSharingSettings() {
             count={sharesQuery.data?.shares.length}
             isPending={sharesQuery.isPending}
             emptyLabel={t("settings.reservations.sharing.noPartners")}
+            emptyIcon={Link2}
           >
             {sharesQuery.data?.shares.map((share) => (
               <li key={share.id} data-list-tile className={SHARE_TILE_CLASS}>
@@ -253,6 +262,7 @@ export function ReservationSharingSettings() {
             count={sharesQuery.data?.pendingInvitations.length}
             isPending={sharesQuery.isPending}
             emptyLabel={t("settings.reservations.sharing.noPending")}
+            emptyIcon={Hourglass}
           >
             {sharesQuery.data?.pendingInvitations.map((invitation) => (
               <li
@@ -260,6 +270,7 @@ export function ReservationSharingSettings() {
                 data-list-tile
                 className={SHARE_TILE_CLASS}
               >
+                <Hourglass className="size-4 shrink-0 text-muted-foreground" />
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate text-sm font-semibold">
                     {t("settings.reservations.sharing.pendingInvite")}
