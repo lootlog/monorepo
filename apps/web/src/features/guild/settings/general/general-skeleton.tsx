@@ -2,7 +2,7 @@ import { BandSection } from "@/components/common/band-section";
 import { SkeletonLine } from "@/components/common/skeleton-line";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
-import { SettingsTabSkeleton } from "../components/settings-tab-skeleton";
+import { SettingsTabSkeleton } from "@/components/common/settings-tab-skeleton";
 
 export const GeneralSettingsSkeleton = () => {
   const { t } = useTranslation();

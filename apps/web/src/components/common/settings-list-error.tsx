@@ -1,7 +1,7 @@
 import { Button } from "@lootlog/ui/components/button";
 import { CircleAlert, RotateCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { SettingsListEmpty } from "./settings-list-empty";
+import { SettingsListEmpty } from "@/components/common/settings-list-empty";
 
 type SettingsListErrorProps = {
   title: string;

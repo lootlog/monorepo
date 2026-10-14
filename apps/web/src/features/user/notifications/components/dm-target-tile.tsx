@@ -1,19 +1,20 @@
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
 import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
 import {
   BellOff,
   BellRing,
+  CircleCheck,
   FlaskConical,
   MessageCircleMore,
-  Package,
-  ShieldAlert,
+  TriangleAlert,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Badge } from "@lootlog/ui/components/badge";
+import { cn } from "cn";
 import { Button } from "@lootlog/ui/components/button";
-import { SectionCard } from "@/components/common/section-card/section-card";
 import {
   useNotificationsUserControllerCreateUserTarget,
   useNotificationsUserControllerTriggerUserTargetTest,
@@ -34,9 +35,8 @@ import {
   timestampToDate,
 } from "@/utils/date/parse-timestamp-to-date";
 
-type DmActionsCardProps = {
+type DmTargetTileProps = {
   dmTarget: NotificationTargetWithTestTriggerResponseDto | null;
-  onAddWatch: () => void;
 };
 
 const resolveDmActionState = (
@@ -70,7 +70,11 @@ const getDmHint = (
   return t("settings.userNotifications.dm.reactivateHint");
 };
 
-export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
+/**
+ * The player's direct messages as the one channel their watched items send
+ * to, tinted like a guild channel that cannot deliver while it is off.
+ */
+export const DmTargetTile = ({ dmTarget }: DmTargetTileProps) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
@@ -171,93 +175,87 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
     }
   };
 
+  const testTrigger = dmTarget?.testTrigger;
+
   return (
-    <SectionCard>
-      <SectionCardHeader
-        icon={MessageCircleMore}
-        title={t("settings.userNotifications.dm.title")}
-        actions={
-          <Badge
-            variant={hasActiveDm ? "default" : "secondary"}
-            className="ml-auto"
-          >
-            {hasActiveDm
-              ? t("settings.userNotifications.dm.active")
-              : t("settings.userNotifications.dm.actionRequired")}
-          </Badge>
-        }
-      />
-      <SectionCardContent className="space-y-3">
-        {dmTarget?.displayName ? (
-          <p className="text-xs text-muted-foreground">
-            {t("settings.userNotifications.dm.targetLabel", {
-              name: dmTarget.displayName,
-            })}
-          </p>
-        ) : null}
-
-        {!hasActiveDm ? (
-          <p className="flex items-center gap-1.5 text-xs text-signal-timer">
-            <ShieldAlert className="size-3.5 shrink-0" />
-            {getDmHint(hasDmTarget, dmTarget?.canSend, t)}
-          </p>
-        ) : null}
-
-        <div className="flex flex-col gap-2">
+    // The actions move beside the text once the tile has room for both.
+    <div data-list-tile className={cn("@container", LIST_TILE_RULE_CLASS)}>
+      <div
+        className={cn(
+          "flex flex-col gap-3 py-3 @2xl:flex-row @2xl:items-center",
+          LIST_TILE_INSET_CLASS,
+          !hasActiveDm && "bg-signal-timer/[0.06]",
+        )}
+      >
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+            <MessageCircleMore
+              aria-hidden
+              className="size-4 text-muted-foreground"
+            />
+          </span>
+          <span className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="flex min-w-0 items-center gap-2">
+              <span className="min-w-0 truncate text-sm font-semibold">
+                {t("settings.userNotifications.dm.title")}
+              </span>
+              {hasActiveDm ? (
+                <span className="flex shrink-0 items-center gap-1 text-xs text-primary">
+                  <CircleCheck aria-hidden className="size-3.5" />
+                  {t("settings.userNotifications.dm.active")}
+                </span>
+              ) : (
+                <span className="flex shrink-0 items-center gap-1 text-xs text-signal-timer">
+                  <TriangleAlert aria-hidden className="size-3.5" />
+                  {t("settings.userNotifications.dm.actionRequired")}
+                </span>
+              )}
+            </span>
+            <span className="text-[13px] leading-5 text-text-supporting">
+              {hasActiveDm && dmTarget?.displayName
+                ? t("settings.userNotifications.dm.targetLabel", {
+                    name: dmTarget.displayName,
+                  })
+                : getDmHint(hasDmTarget, dmTarget?.canSend, t)}
+            </span>
+            {hasActiveDm && testTrigger && (
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {testTrigger.nextAvailableAt
+                  ? t("settings.userNotifications.dm.testNextAvailable", {
+                      date: timestampToDate(
+                        testTrigger.nextAvailableAt,
+                        DATE_TIME_WITH_SECONDS_FORMAT,
+                      ),
+                    })
+                  : t("settings.userNotifications.dm.testUsage", {
+                      used: testTrigger.used,
+                      limit: testTrigger.limit,
+                      minutes: Math.floor(testTrigger.windowSeconds / 60),
+                    })}
+              </span>
+            )}
+          </span>
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2 pl-12 @2xl:pl-0">
           {hasActiveDm ? (
             <>
-              <Button onClick={onAddWatch}>
-                <Package className="size-4" />
-                {t("settings.userNotifications.actions.addWatch")}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isDmActionPending || testTrigger?.remaining === 0}
+                onClick={handleTriggerDmTest}
+                loading={triggerUserTargetTest.isPending}
+                icon=<FlaskConical className="size-4" />
+              >
+                {t("settings.userNotifications.dm.test")}
               </Button>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <span>
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        disabled={
-                          isDmActionPending ||
-                          dmTarget?.testTrigger.remaining === 0
-                        }
-                        onClick={handleTriggerDmTest}
-                        loading={triggerUserTargetTest.isPending}
-                        icon=<FlaskConical className="size-4" />
-                      >
-                        {t("settings.userNotifications.dm.test")}
-                      </Button>
-                    </span>
-                  }
-                />
-                <TooltipContent>
-                  <p>
-                    {t("settings.userNotifications.dm.testUsage", {
-                      used: dmTarget?.testTrigger.used ?? 0,
-                      limit: dmTarget?.testTrigger.limit ?? 0,
-                      minutes: Math.floor(
-                        (dmTarget?.testTrigger.windowSeconds ?? 0) / 60,
-                      ),
-                    })}
-                  </p>
-                  {dmTarget?.testTrigger.nextAvailableAt ? (
-                    <p className="text-muted-foreground">
-                      {t("settings.userNotifications.dm.testNextAvailable", {
-                        date: timestampToDate(
-                          dmTarget.testTrigger.nextAvailableAt,
-                          DATE_TIME_WITH_SECONDS_FORMAT,
-                        ),
-                      })}
-                    </p>
-                  ) : null}
-                </TooltipContent>
-              </Tooltip>
               <Tooltip>
                 <TooltipTrigger
                   render={
                     <Button
                       variant="ghost"
-                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      size="sm"
+                      className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                       disabled={isDmActionPending}
                       onClick={handleDisableDm}
                       loading={isDisablePending}
@@ -267,13 +265,14 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
                     </Button>
                   }
                 />
-                <TooltipContent>
+                <TooltipContent className="max-w-xs">
                   {t("settings.userNotifications.dm.deactivateHint")}
                 </TooltipContent>
               </Tooltip>
             </>
           ) : (
             <Button
+              size="sm"
               disabled={isDmActionPending}
               onClick={handleEnableDm}
               loading={isEnablePending}
@@ -283,7 +282,7 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
             </Button>
           )}
         </div>
-      </SectionCardContent>
-    </SectionCard>
+      </div>
+    </div>
   );
 };
