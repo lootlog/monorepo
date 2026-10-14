@@ -1,6 +1,5 @@
 import { OptionCardGroup } from "@/components/common/option-card-group";
 import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/client/main";
-import { CalendarClock, Timer } from "lucide-react";
 import { useId } from "react";
 import { useWatch } from "react-hook-form";
 import { ALL_WORLDS_VALUE } from "./utils/notification-rule-form.schema";
@@ -47,7 +46,6 @@ export const NotificationTriggerField = ({
         options={[
           {
             value: NotificationTriggerType.TIMER_BEFORE_SPAWN,
-            icon: Timer,
             title: t(
               getNotificationTriggerTranslationKey(
                 NotificationTriggerType.TIMER_BEFORE_SPAWN,
@@ -59,7 +57,6 @@ export const NotificationTriggerField = ({
           },
           {
             value: NotificationTriggerType.SCHEDULED_MESSAGE,
-            icon: CalendarClock,
             title: t(
               getNotificationTriggerTranslationKey(
                 NotificationTriggerType.SCHEDULED_MESSAGE,
