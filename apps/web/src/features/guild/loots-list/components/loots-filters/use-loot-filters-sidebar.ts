@@ -386,10 +386,6 @@ export const useLootFiltersSidebar = () => {
     applyFilter(filterData);
   };
 
-  const selectedNpcTypes = new Set(filters.npcTypes);
-  const selectedRarities = new Set(filters.rarities);
-  const selectedProfessions = new Set(filters.professions);
-
   return {
     isDialogOpen,
     setIsDialogOpen,
@@ -409,7 +405,6 @@ export const useLootFiltersSidebar = () => {
     clearPlayerFilters,
     npcActiveFilterCount,
     npcTypeOptions,
-    selectedNpcTypes,
     updateFilters,
     npcHits,
     npcsSearchValue,
@@ -419,9 +414,7 @@ export const useLootFiltersSidebar = () => {
     levelRanges,
     itemActiveFilterCount,
     rarityOptions,
-    selectedRarities,
     professionOptions,
-    selectedProfessions,
     itemHits,
     itemsSearchValue,
     setItemsSearchValue,
