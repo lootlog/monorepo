@@ -1,38 +1,54 @@
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { PageHeader } from "@/components/common/page-header";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useState } from "react";
-import { CalendarDays, CalendarX2 } from "lucide-react";
+import { useSearch } from "@tanstack/react-router";
+import { CalendarX2, SearchX } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   useListMyReservations,
   type ListMyReservationsStatus,
   type MyReservationsResponseDtoItemsItem,
 } from "@lootlog/client/main";
+import { Button } from "@lootlog/ui/components/button";
 
 import { EmptyState } from "@/components/common/empty-state";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { AnimatedToggleGroup } from "@/components/ui/animated-toggle-group";
+import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
+import { ListToolbar } from "@/components/common/list-toolbar";
+import { PageTabsLayout } from "@/components/layout/page-tabs-layout";
+import { ROUTES } from "@/config/routes";
 import { StatisticsQueryState } from "@/features/user/statistics/statistics-query-state";
 import { EditMyReservationDialog } from "./edit-my-reservation-dialog";
 import { MyReservationListItem } from "./my-reservation-list-item";
+import { MY_RESERVATION_STATUSES } from "./my-reservations-search";
 import { useCancelMyReservation } from "./use-cancel-my-reservation";
 
-const STATUSES = [
-  "upcoming",
-  "past",
-] as const satisfies readonly ListMyReservationsStatus[];
+const matchesSearch = (
+  reservation: MyReservationsResponseDtoItemsItem,
+  search: string,
+) =>
+  [reservation.spotName, reservation.sourceOrganization.name].some((name) =>
+    name.toLocaleLowerCase("pl").includes(search),
+  );
 
+/** The player's reservations across Lootlogs: upcoming ones and history. */
 export function MyReservations() {
   const { t } = useTranslation();
-  const [status, setStatus] = useState<ListMyReservationsStatus>("upcoming");
+
+  const { status = "upcoming" } = useSearch({
+    from: "/_authenticated/@me/reservations",
+  });
+
+  const [search, setSearch] = useState("");
   const query = useListMyReservations({ status });
   const cancelMutation = useCancelMyReservation();
 
   const [editingReservation, setEditingReservation] =
     useState<MyReservationsResponseDtoItemsItem | null>(null);
+
+  const isUpcoming = status === "upcoming";
+  const normalizedSearch = search.trim().toLocaleLowerCase("pl");
+
+  const reservations = (query.data?.items ?? []).filter((reservation) =>
+    matchesSearch(reservation, normalizedSearch),
+  );
 
   const statusLabel = (value: ListMyReservationsStatus) =>
     t(
@@ -41,93 +57,93 @@ export function MyReservations() {
         : "reservations.my.history",
     );
 
-  return (
-    <ScrollArea data-under-top-bar className="h-full min-h-0">
-      <div className="flex w-full min-w-0 flex-col gap-3 p-3">
-        <PageHeader
-          icon={CalendarDays}
-          title={t("reservations.my.title")}
-          description={t("reservations.my.description")}
-          actions={
-            <AnimatedToggleGroup
-              label={t("reservations.my.tabsLabel")}
-              value={status}
-              onValueChange={setStatus}
-              size="lg"
-              className="w-full sm:w-fit"
-              options={STATUSES.map((value) => ({
-                value,
-                label: statusLabel(value),
-              }))}
-            />
-          }
-        />
+  const renderEmpty = () =>
+    normalizedSearch ? (
+      <EmptyState
+        framed
+        icon={SearchX}
+        title={t("reservations.my.emptyFiltered")}
+        description={t("reservations.empty.searchDescription")}
+        action={
+          <Button type="button" variant="outline" onClick={() => setSearch("")}>
+            {t("reservations.clearSearch")}
+          </Button>
+        }
+      />
+    ) : (
+      <EmptyState
+        framed
+        icon={CalendarX2}
+        title={t(
+          isUpcoming
+            ? "reservations.my.emptyUpcoming"
+            : "reservations.my.emptyHistory",
+        )}
+        description={t("reservations.my.emptyDescription")}
+      />
+    );
 
-        <SectionCard>
-          <SectionCardHeader title={statusLabel(status)} />
-          <SectionCardContent className="flex flex-col p-0">
-            <StatisticsQueryState
-              query={query}
-              compact
-              errorMessage={t("reservations.loadError")}
-              loading={
-                <div
-                  role="status"
-                  aria-label={t("common.loading")}
-                  className="divide-y divide-border"
-                >
-                  {Array.from({ length: 4 }, (_, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-2 px-3 py-2"
-                    >
-                      <Skeleton className="size-9 rounded-lg" />
-                      <div className="flex-1 space-y-1.5">
-                        <Skeleton className="h-4 w-40" />
-                        <Skeleton className="h-3 w-28" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              }
-            >
-              {query.data?.items.length ? (
-                <ul>
-                  {query.data.items.map((reservation) => (
-                    <MyReservationListItem
-                      key={reservation.id}
-                      reservation={reservation}
-                      showEdit={status === "upcoming"}
-                      showCancel={status === "upcoming"}
-                      cancelDisabled={cancelMutation.isPending}
-                      cancelPending={
-                        cancelMutation.isPending &&
-                        cancelMutation.variables?.pathParams.reservationId ===
-                          reservation.id
-                      }
-                      onEdit={() => setEditingReservation(reservation)}
-                      onCancel={async () => {
-                        await cancelMutation.mutateAsync({
-                          pathParams: { reservationId: reservation.id },
-                        });
-                      }}
-                    />
-                  ))}
-                </ul>
-              ) : (
-                <EmptyState
-                  icon={CalendarX2}
-                  title={t(
-                    status === "upcoming"
-                      ? "reservations.my.emptyUpcoming"
-                      : "reservations.my.emptyHistory",
-                  )}
-                  description={t("reservations.my.emptyDescription")}
-                />
-              )}
-            </StatisticsQueryState>
-          </SectionCardContent>
-        </SectionCard>
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <PageTabsLayout
+        ariaLabel={t("reservations.my.tabsLabel")}
+        activeId={status}
+        tabs={MY_RESERVATION_STATUSES.map((value) => ({
+          id: value,
+          label: statusLabel(value),
+          href: ROUTES.user.reservations,
+          search: { status: value === "upcoming" ? undefined : value },
+        }))}
+      >
+        <h1 className="sr-only">{t("reservations.my.title")}</h1>
+        <div>
+          <ListToolbar
+            search={search}
+            onSearchChange={setSearch}
+            placeholder={t("reservations.my.filterPlaceholder")}
+            label={t("reservations.my.filterLabel")}
+            clearLabel={t("reservations.clearSearch")}
+            disabled={query.isPending}
+          />
+          <StatisticsQueryState
+            query={query}
+            errorMessage={t("reservations.loadError")}
+            loading={
+              <div role="status" aria-label={t("common.loading")}>
+                {Array.from({ length: 6 }, (_, index) => (
+                  <ListTileSkeleton key={index} actions={isUpcoming ? 2 : 0} />
+                ))}
+              </div>
+            }
+          >
+            {reservations.length > 0 ? (
+              <ul>
+                {reservations.map((reservation) => (
+                  <MyReservationListItem
+                    key={reservation.id}
+                    reservation={reservation}
+                    showEdit={isUpcoming}
+                    showCancel={isUpcoming}
+                    cancelDisabled={cancelMutation.isPending}
+                    cancelPending={
+                      cancelMutation.isPending &&
+                      cancelMutation.variables?.pathParams.reservationId ===
+                        reservation.id
+                    }
+                    onEdit={() => setEditingReservation(reservation)}
+                    onCancel={async () => {
+                      await cancelMutation.mutateAsync({
+                        pathParams: { reservationId: reservation.id },
+                      });
+                    }}
+                  />
+                ))}
+              </ul>
+            ) : (
+              <div className="p-3">{renderEmpty()}</div>
+            )}
+          </StatisticsQueryState>
+        </div>
         <EditMyReservationDialog
           reservation={editingReservation}
           open={editingReservation !== null}
@@ -135,7 +151,7 @@ export function MyReservations() {
             if (!open) setEditingReservation(null);
           }}
         />
-      </div>
-    </ScrollArea>
+      </PageTabsLayout>
+    </div>
   );
 }

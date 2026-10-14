@@ -157,7 +157,6 @@
   },
   "my": {
     "title": "Moje rezerwacje",
-    "description": "Nadchodzące rezerwacje oraz historia z ostatnich 30 dni.",
     "showAll": "Pokaż wszystkie",
     "tabsLabel": "Zakres rezerwacji",
     "upcoming": "Nadchodzące",
@@ -165,6 +164,9 @@
     "emptyUpcoming": "Nie masz nadchodzących rezerwacji",
     "emptyHistory": "Brak rezerwacji w ostatnich 30 dniach",
     "emptyDescription": "Nowe rezerwacje pojawią się tutaj automatycznie.",
+    "emptyFiltered": "Żadna rezerwacja nie pasuje do filtra",
+    "filterPlaceholder": "Filtruj po expowisku lub Lootlogu…",
+    "filterLabel": "Filtruj rezerwacje po expowisku lub Lootlogu",
     "cancel": "Anuluj rezerwację na {{spot}}",
     "cancelConfirmTitle": "Anulować rezerwację na {{spot}}?",
     "cancelConfirmDescription": "Termin zwolni się dla innych graczy. Tej operacji nie można cofnąć.",
