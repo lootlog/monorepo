@@ -6,7 +6,7 @@ import {
 import { NpcSearchTile } from "@/components/tiles/npc-search-tile";
 import { cn } from "cn";
 import { upperFirst } from "es-toolkit";
-import { Globe, MapPin, User } from "lucide-react";
+import { Globe, User } from "lucide-react";
 import { useEffect, useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import type { TimerResponseDto } from "@lootlog/client/main";
@@ -36,20 +36,6 @@ const PHASE_TEXT_CLASS = {
   overdue: "text-red-400",
   expired: "text-red-400/70",
 } satisfies Record<TimerPhase, string>;
-
-/** What the countdown counts to; past the maximum it counts the overrun. */
-const PHASE_LABEL_KEY = {
-  waiting: {
-    min: "timers.phase.untilWindow",
-    max: "timers.phase.untilWindowEnd",
-  },
-  window: {
-    min: "timers.phase.untilWindowEnd",
-    max: "timers.phase.untilWindowEnd",
-  },
-  overdue: { min: "timers.phase.pastWindow", max: "timers.phase.pastWindow" },
-  expired: { min: "timers.phase.pastWindow", max: "timers.phase.pastWindow" },
-} satisfies Record<TimerPhase, Record<TimerCountdownMode, string>>;
 
 /** An expired timer keeps its colour, darkened, as in the game client. */
 const veil = (color: string, isExpired: boolean) =>
@@ -108,7 +94,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
               backgroundImage: `linear-gradient(${wash}, ${wash})`,
             }}
             className={cn(
-              "@container flex h-full w-full items-center gap-3 py-2.5 text-left outline-none transition-colors hover:bg-muted/30 focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset motion-reduce:transition-none",
+              "flex h-full w-full items-center gap-3 py-2.5 text-left outline-none transition-colors hover:bg-muted/30 focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset motion-reduce:transition-none",
               TIMER_ROW_INSET_CLASS,
               phase === "expired" && "opacity-75",
             )}
@@ -135,19 +121,8 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                     {upperFirst(timer.world)}
                   </LootMetaItem>
                 )}
-                {timer.npc?.location && (
-                  <LootMetaItem
-                    icon={MapPin}
-                    className="min-w-0"
-                    title={timer.npc.location}
-                  >
-                    <span className="min-w-0 truncate">
-                      {timer.npc.location}
-                    </span>
-                  </LootMetaItem>
-                )}
                 {timer.member?.name && (
-                  <LootMetaItem icon={User} className="min-w-0 @max-md:hidden">
+                  <LootMetaItem icon={User} className="min-w-0">
                     <span className="min-w-0 truncate">
                       {timer.member.name}
                     </span>
@@ -155,18 +130,13 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                 )}
               </span>
             </span>
-            <span className="flex shrink-0 flex-col items-end gap-0.5">
-              <span
-                className={cn(
-                  "text-[15px] leading-5 font-semibold tabular-nums",
-                  PHASE_TEXT_CLASS[phase],
-                )}
-              >
-                {parseMsToTime(getTimerCountdownMs(timeLeft, countdownMode))}
-              </span>
-              <span className="text-[11px] leading-4 text-muted-foreground">
-                {t(PHASE_LABEL_KEY[phase][countdownMode])}
-              </span>
+            <span
+              className={cn(
+                "shrink-0 text-[15px] leading-5 font-semibold tabular-nums",
+                PHASE_TEXT_CLASS[phase],
+              )}
+            >
+              {parseMsToTime(getTimerCountdownMs(timeLeft, countdownMode))}
             </span>
           </button>
         }
