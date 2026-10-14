@@ -197,6 +197,7 @@ export const Timers = () => {
                   {groupTimers.map((timer) => (
                     <div
                       key={`${timer.world}:${timer.timerKey}`}
+                      data-list-tile
                       className={cn(
                         getTimerCellClassName(viewMode),
                         // A dropped timer renders nothing; its cell goes too.

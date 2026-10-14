@@ -144,3 +144,20 @@
   /* Opaque enough to read over the brightest parts of the wallpaper. */
   background-color: color-mix(in srgb, var(--card) 85%, transparent);
 }
+
+/* Lists that tile the page edge to edge, such as loots and timers, keep the
+ * content surface under every tile; the wallpaper shows around them. */
+:is(
+    .anime,
+    .waguri,
+    .halloween,
+    .realmadrid,
+    .realmadrid-3rd,
+    .barcelona,
+    .rukia,
+    .rias
+  )
+  .app-content-frame
+  [data-list-tile] {
+  background-color: color-mix(in srgb, var(--background) 88%, transparent);
+}
