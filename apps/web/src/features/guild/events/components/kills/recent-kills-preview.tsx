@@ -49,7 +49,7 @@ export const RecentKillsPreview = ({
   });
 
   return (
-    <SectionCard className="overflow-hidden">
+    <SectionCard className="overflow-clip">
       <SectionCardHeader
         icon={Skull}
         title={t("events.kills.recentTitle")}

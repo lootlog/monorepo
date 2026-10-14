@@ -57,6 +57,7 @@ const ROUTES = {
       create: (guildId: string) => `/${guildId}/notifications/create`,
       rule: (guildId: string, ruleId: string) =>
         `/${guildId}/notifications/${ruleId}`,
+      channels: (guildId: string) => `/${guildId}/notifications/channels`,
       history: (guildId: string) => `/${guildId}/notifications/history`,
     },
     settings: {

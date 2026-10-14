@@ -17,7 +17,7 @@ type GuildShellProps = {
 export const GuildShell: FC<GuildShellProps> = ({ children, variant }) => {
   const { t } = useTranslation();
 
-  const { slots, actionsRef, contextRef } = useHeaderSlotTargets();
+  const { slots, titleRef, actionsRef, contextRef } = useHeaderSlotTargets();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   return (
@@ -29,6 +29,7 @@ export const GuildShell: FC<GuildShellProps> = ({ children, variant }) => {
           header={
             variant === "ready" ? (
               <GuildNavigationTopBar
+                titleRef={titleRef}
                 actionsRef={actionsRef}
                 contextRef={contextRef}
               />

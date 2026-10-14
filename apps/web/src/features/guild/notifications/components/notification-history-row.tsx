@@ -1,8 +1,17 @@
-import { useTranslation } from "react-i18next";
-import { Badge } from "@lootlog/ui/components/badge";
-
-import { cn } from "cn";
+import { MetaItem } from "@/components/common/meta-item";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
 import type { NotificationJobsResponseDto } from "@lootlog/client/main";
+import { Badge } from "@lootlog/ui/components/badge";
+import { cn } from "cn";
+import { Clock3, Send, TriangleAlert } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import {
+  DATE_TIME_WITH_SECONDS_FORMAT,
+  timestampToDate,
+} from "@/utils/date/parse-timestamp-to-date";
 import {
   getJobErrorMessage,
   getJobKindLabel,
@@ -10,59 +19,55 @@ import {
   getJobStatusLabel,
   getNotificationTriggerTranslationKey,
 } from "../utils/notification-settings.utils";
-import {
-  DATE_TIME_WITH_SECONDS_FORMAT,
-  timestampToDate,
-} from "@/utils/date/parse-timestamp-to-date";
 
 type Job = NotificationJobsResponseDto["history"][number];
 
+/** A finished delivery; the tile opens its details. */
 export function NotificationHistoryRow({
   job,
   openJobDetails,
-  compact = false,
 }: {
   job: Job;
   openJobDetails: (job: Job) => void;
-  compact?: boolean;
 }) {
   const { t } = useTranslation();
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      className="cursor-pointer border-b border-border/70 px-3 py-3 text-left transition-colors last:border-b-0 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring motion-reduce:transition-none"
-      onClick={() => openJobDetails(job)}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          openJobDetails(job);
-        }
-      }}
-    >
-      <div className={cn("flex flex-col", compact ? "gap-1" : "gap-2")}>
-        <div className="flex items-center justify-between gap-2">
-          <p className="min-w-0 truncate text-sm font-medium">
+    <div data-list-tile className={LIST_TILE_RULE_CLASS}>
+      <button
+        type="button"
+        className={cn(
+          "flex w-full items-center gap-3 py-3 text-left outline-none transition-colors hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset motion-reduce:transition-none",
+          LIST_TILE_INSET_CLASS,
+        )}
+        onClick={() => openJobDetails(job)}
+      >
+        <span className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="truncate text-sm font-semibold">
             {job.rule.name ??
               t(getNotificationTriggerTranslationKey(job.rule.triggerType))}
-          </p>
-          <div className="flex shrink-0 gap-1.5">
-            <Badge {...getJobStatusBadgeProps(job.status)}>
-              {getJobStatusLabel(job.status, t)}
-            </Badge>
-            <Badge variant="secondary">{getJobKindLabel(job.jobKind, t)}</Badge>
-          </div>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          {timestampToDate(job.updatedAt, DATE_TIME_WITH_SECONDS_FORMAT)}
-        </p>
-        {job.lastError ? (
-          <p className="text-xs text-destructive">
-            {getJobErrorMessage(job.lastError, t)}
-          </p>
-        ) : null}
-      </div>
+          </span>
+          <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+            <MetaItem icon={Clock3}>
+              {timestampToDate(job.updatedAt, DATE_TIME_WITH_SECONDS_FORMAT)}
+            </MetaItem>
+            <MetaItem icon={Send}>{getJobKindLabel(job.jobKind, t)}</MetaItem>
+          </span>
+          {job.lastError && (
+            <MetaItem icon={TriangleAlert} className="min-w-0 text-destructive">
+              <span className="min-w-0 truncate">
+                {getJobErrorMessage(job.lastError, t)}
+              </span>
+            </MetaItem>
+          )}
+        </span>
+        <Badge
+          {...getJobStatusBadgeProps(job.status)}
+          className="h-5 shrink-0 px-2 text-[11px]"
+        >
+          {getJobStatusLabel(job.status, t)}
+        </Badge>
+      </button>
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { toggleVariants } from "@lootlog/ui/lib/toggle-variants";
 import { cn } from "cn";
 import { BookmarkPlus, X, Zap } from "lucide-react";
-import { LOOT_FILTER_PILL_CLASS } from "./loot-filter-pills";
+import { FILTER_PILL_CLASS } from "@/components/common/filter-pill";
 import type { LootFiltersState } from "./loot-filter-sections";
 
 type LootQuickFiltersProps = Pick<
@@ -60,7 +60,7 @@ export const LootQuickFilters = ({
               className={cn(
                 toggleVariants({ variant: "outline", size: "sm" }),
                 "cursor-pointer",
-                LOOT_FILTER_PILL_CLASS,
+                FILTER_PILL_CLASS,
               )}
             >
               {filter.label}

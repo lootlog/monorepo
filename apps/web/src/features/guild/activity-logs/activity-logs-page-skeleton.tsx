@@ -1,6 +1,10 @@
-import { ResultsSurface } from "@/components/common/results-surface";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { cn } from "cn";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
 import { ActivityLogsMobileListSkeleton } from "./components/activity-logs-mobile-list-skeleton";
 
 const DESKTOP_FILTER_WIDTHS = [
@@ -11,32 +15,37 @@ const DESKTOP_FILTER_WIDTHS = [
   "w-[130px]",
 ];
 
+/** Route-level stand-in for the activity log: its filter bar above the entries. */
 export const ActivityLogsPageSkeleton = () => (
-  <div className="flex h-full min-h-0 flex-col p-3">
-    <ResultsSurface
-      toolbar={
-        <div
-          aria-hidden="true"
-          className="flex w-full min-w-0 flex-wrap items-center gap-2"
-        >
-          <Skeleton className="h-10 min-w-0 flex-1 rounded-md md:min-w-60" />
-          <Skeleton className="h-10 w-24 shrink-0 rounded-md md:hidden" />
+  <div aria-busy="true" className="min-h-0 flex-1 overflow-hidden">
+    <div
+      data-list-tile
+      aria-hidden="true"
+      className={cn(
+        "flex min-h-12 items-center py-2",
+        LIST_TILE_RULE_CLASS,
+        LIST_TILE_INSET_CLASS,
+      )}
+    >
+      {/* The same container query as `ActivityLogsFilterToolbar`. */}
+      <div className="@container/activity-filters w-full min-w-0">
+        <div className="flex w-full min-w-0 items-center gap-2">
+          <Skeleton className="h-10 min-w-0 flex-1 rounded-md @min-[66rem]/activity-filters:min-w-60" />
+          <Skeleton className="h-10 w-24 shrink-0 rounded-md @min-[66rem]/activity-filters:hidden" />
           {DESKTOP_FILTER_WIDTHS.map((width, index) => (
             <Skeleton
               key={index}
-              className={`hidden h-10 rounded-md md:block ${width}`}
+              className={`hidden h-10 rounded-md @min-[66rem]/activity-filters:block ${width}`}
             />
           ))}
         </div>
-      }
-      footer={<div className="h-14 shrink-0 border-t border-border" />}
-    >
-      <TableRowsSkeleton
-        rows={20}
-        withHeader
-        rowContent="text"
-        mobileList={<ActivityLogsMobileListSkeleton rows={20} />}
-      />
-    </ResultsSurface>
+      </div>
+    </div>
+    <div className="xl:hidden">
+      <ActivityLogsMobileListSkeleton rows={20} />
+    </div>
+    <div className="hidden xl:block">
+      <TableRowsSkeleton rows={20} withHeader rowContent="text" />
+    </div>
   </div>
 );

@@ -1,3 +1,4 @@
+import { PAGE_STICKY_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
 import { EmptyState } from "@/components/common/empty-state";
 import { RankBadge } from "@/components/common/rank-badge";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
@@ -310,7 +311,7 @@ export const EventRankingTable = ({
   const Container = variant === "default" ? SectionCard : "section";
 
   return (
-    <Container className="@container/ranking w-full min-w-0 overflow-hidden">
+    <Container className="@container/ranking w-full min-w-0 overflow-clip">
       {variant === "default" && (
         <SectionCardHeader icon={Trophy} title={t("events.ranking.title")} />
       )}
@@ -320,7 +321,7 @@ export const EventRankingTable = ({
         <Table className="w-full table-fixed">
           <TanStackTableHeader
             table={table}
-            className="sticky top-0 z-10 bg-background"
+            className={PAGE_STICKY_TABLE_HEADER_CLASS}
             rowClassName="border-b-1! border-border"
             getHeadClassName={(header) =>
               cn(

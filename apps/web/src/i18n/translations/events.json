@@ -21,7 +21,7 @@
   "ended": "Zakończony",
   "noEvents": "Brak eventów",
   "emptyDescription": "Utwórz event, aby rozpocząć koordynację w Lootlogu.",
-  "searchPlaceholder": "Szukaj eventu...",
+  "filterPlaceholder": "Filtruj po nazwie eventu…",
   "noResults": "Nie znaleziono eventów",
   "noResultsDescription": "Spróbuj zmienić wyszukiwaną frazę.",
   "clearSearch": "Wyczyść wyszukiwanie",
@@ -32,8 +32,7 @@
     "notFound": "Nie znaleziono eventu",
     "listTitle": "Nie udało się załadować eventów"
   },
-  "filtersLabel": "Filtry eventów",
-  "searchLabel": "Szukaj eventu",
+  "filterLabel": "Filtruj eventy po nazwie",
   "heroTabs": {
     "label": "Wybór herosa",
     "all": "Wszystkie"

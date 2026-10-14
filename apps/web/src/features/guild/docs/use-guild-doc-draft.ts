@@ -26,6 +26,9 @@ const CONTENT_MAX_LENGTH = 250_000;
 
 export const TITLE_MAX_LENGTH = 120;
 
+/** The page's form, which the title in the top bar is saved with. */
+export const GUILD_DOC_FORM_ID = "guild-doc-editor-form";
+
 const createDraftSignature = (title: string, content: GuildDocEditorContent) =>
   `${title.trim()}\n${stringifyGuildDocEditorContent(content)}`;
 
@@ -121,7 +124,12 @@ export const useGuildDocDraft = () => {
   const saveDraft = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!document || !canWrite || !validateDraft()) {
+    if (
+      !document ||
+      !canWrite ||
+      updateDocument.isPending ||
+      !validateDraft()
+    ) {
       return;
     }
 

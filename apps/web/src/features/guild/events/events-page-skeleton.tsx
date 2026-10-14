@@ -1,19 +1,15 @@
-import { FilterBar } from "@/components/common/filter-bar";
+import { ListToolbarSkeleton } from "@/components/common/list-toolbar-skeleton";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { EventListCardSkeleton } from "./event-list-card-skeleton";
 
+/** Route-level stand-in for the events page: its toolbar above the rows. */
 export const EventsPageSkeleton = () => (
-  <div aria-busy="true" className="flex h-full min-h-0 flex-col">
-    <div className="px-3 pt-3">
-      <FilterBar>
-        <Skeleton className="h-10 min-w-0 flex-1 rounded-lg" />
-        <Skeleton className="h-10 w-full rounded-md sm:w-36" />
-      </FilterBar>
-    </div>
-    <div className="flex flex-col gap-2 px-3 py-3">
-      {Array.from({ length: 4 }, (_, index) => (
-        <EventListCardSkeleton key={index} />
-      ))}
-    </div>
+  <div aria-busy="true" className="min-h-0 flex-1 overflow-hidden">
+    <ListToolbarSkeleton>
+      <Skeleton className="h-8 w-32 rounded-lg" />
+    </ListToolbarSkeleton>
+    {Array.from({ length: 4 }, (_, index) => (
+      <EventListCardSkeleton key={index} />
+    ))}
   </div>
 );

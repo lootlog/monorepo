@@ -1,91 +1,43 @@
-import { NotificationHistoryRowsSkeleton } from "./notification-history-rows-skeleton";
-import { NotificationHistoryRow } from "./components/notification-history-row";
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { NotificationJobDetailDialog } from "./components/notification-job-detail-dialog";
-import { History } from "lucide-react";
-import { EmptyState } from "@/components/common/empty-state";
-import { PageHeader } from "@/components/common/page-header";
-import { SectionCard } from "@/components/common/section-card/section-card";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getNotificationsGuildControllerGetGuildJobsQueryKey,
   useNotificationsGuildControllerGetGuildJobs,
-  type NotificationJobsResponseDto,
 } from "@lootlog/client/main";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { useTranslation } from "react-i18next";
+import { NotificationHistoryList } from "./components/notification-history-list";
+import { NotificationsTabs } from "./components/notifications-tabs";
 
 export const NotificationsHistoryPage = () => {
   const { t } = useTranslation();
-  const guildId = useGuildId();
-  const hasGuildId = Boolean(guildId);
+  const guildId = useGuildId() ?? "";
 
   const { data, isLoading } = useNotificationsGuildControllerGetGuildJobs(
-    { guildId: guildId ?? "" },
+    { guildId },
     {
       query: {
-        enabled: hasGuildId,
+        enabled: Boolean(guildId),
         queryKey: getNotificationsGuildControllerGetGuildJobsQueryKey({
-          guildId: guildId ?? "",
+          guildId,
         }),
       },
     },
   );
 
-  const [selectedJob, setSelectedJob] = useState<
-    NotificationJobsResponseDto["history"][number] | null
-  >(null);
-
-  const historyJobs = data?.history ?? [];
-
-  const openJobDetails = (
-    job: NotificationJobsResponseDto["history"][number],
-  ) => {
-    setSelectedJob(job);
-  };
-
   return (
     <div className="flex h-full min-h-0 flex-col">
+      <h1 className="sr-only">
+        {t("settings.notifications.notificationsHistory.title")}
+      </h1>
       <ScrollArea data-under-top-bar className="min-h-0 flex-1">
-        <div className="flex flex-col gap-3 px-3 py-3">
-          <PageHeader
-            icon={History}
-            title={t("settings.notifications.notificationsHistory.title")}
-            description={t(
-              "settings.notifications.notificationsHistory.description",
-            )}
+        <NotificationsTabs />
+        <div className="border-t border-sidebar-border">
+          <NotificationHistoryList
+            historyJobs={data?.history ?? []}
+            isLoading={isLoading}
           />
-
-          {isLoading ? (
-            <NotificationHistoryRowsSkeleton />
-          ) : historyJobs.length > 0 ? (
-            <SectionCard className="overflow-hidden">
-              {historyJobs.map((job) => (
-                <NotificationHistoryRow
-                  key={job.id}
-                  job={job}
-                  openJobDetails={openJobDetails}
-                />
-              ))}
-            </SectionCard>
-          ) : (
-            <EmptyState
-              framed
-              icon={History}
-              title={t("settings.notifications.empty.historyJobs")}
-            />
-          )}
         </div>
       </ScrollArea>
-      <NotificationJobDetailDialog
-        job={selectedJob}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSelectedJob(null);
-          }
-        }}
-      />
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import { PlayerTile } from "@/components/tiles/player-tile";
 import { WatchableItemTile } from "@/components/tiles/watchable-item-tile";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
-import { LOOT_CARD_INSET_CLASS } from "@/features/guild/loots-list/loots-list-layout";
+import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
 import { getShortnameByProf } from "@lootlog/domain/profession";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
@@ -33,7 +33,7 @@ export const LootRosterRow = ({
     <li
       className={cn(
         "flex flex-wrap items-center gap-x-3 gap-y-2 py-2 @xs:flex-nowrap",
-        LOOT_CARD_INSET_CLASS,
+        LIST_TILE_INSET_CLASS,
         muted && "opacity-70",
       )}
     >

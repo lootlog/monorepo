@@ -9,6 +9,7 @@ import {
 } from "@lootlog/client/main";
 import { getApiErrorMessage } from "@lootlog/client/transport";
 import { useQueryClient } from "@tanstack/react-query";
+import { upperFirst } from "es-toolkit";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
@@ -27,12 +28,12 @@ import {
   getNotificationTriggerTranslationKey,
 } from "../utils/notification-settings.utils";
 
-type NotificationRuleCardProps = {
+type NotificationRuleTileProps = {
   rule: GuildNotificationRulesResponseDto["items"][number];
   actionsDisabled: boolean;
 };
 
-type NotificationRule = NotificationRuleCardProps["rule"];
+type NotificationRule = NotificationRuleTileProps["rule"];
 
 type Translator = ReturnType<typeof useTranslation>["t"];
 
@@ -78,7 +79,43 @@ const getNpcLabel = (rule: NotificationRule, t: Translator) => {
     : t("settings.notifications.allNpcs");
 };
 
-const getNotificationRuleCardViewModel = (
+/** When and where the rule sends, as the parts of one sentence. */
+const getRuleSummary = (
+  rule: NotificationRule,
+  t: Translator,
+  labels: {
+    recurringScheduleLabel: string | undefined;
+    scheduledAtLabel: string | undefined;
+    timerScheduleLabel: string | undefined;
+    npcLabel: string | undefined;
+  },
+) => {
+  const world = rule.world
+    ? upperFirst(rule.world)
+    : t("settings.notifications.allWorlds");
+
+  if (rule.triggerType !== NotificationTriggerType.SCHEDULED_MESSAGE) {
+    return [labels.timerScheduleLabel, world, labels.npcLabel].filter(
+      (part) => part !== undefined,
+    );
+  }
+
+  if (labels.recurringScheduleLabel) {
+    return rule.scheduleIntervalType === NotificationScheduleIntervalType.WEEKLY
+      ? [
+          t("settings.notifications.intervalTypes.weekly"),
+          labels.recurringScheduleLabel,
+        ]
+      : [labels.recurringScheduleLabel];
+  }
+
+  return [
+    t("settings.notifications.intervalTypes.once"),
+    labels.scheduledAtLabel,
+  ].filter((part) => part !== undefined);
+};
+
+const getNotificationRuleTileViewModel = (
   rule: NotificationRule,
   t: Translator,
 ) => {
@@ -86,35 +123,49 @@ const getNotificationRuleCardViewModel = (
     getNotificationTriggerTranslationKey(rule.triggerType),
   );
 
+  const recurringScheduleLabel = getRecurringScheduleLabel(rule, t);
+
+  const scheduledAtLabel =
+    rule.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE &&
+    rule.scheduledAt
+      ? formatNotificationDateInTimeZone(
+          rule.scheduledAt,
+          rule.scheduleTimezone ?? "Europe/Warsaw",
+        )
+      : undefined;
+
+  const timerScheduleLabel =
+    rule.scheduleAnchor !== null && rule.scheduleOffsetMinutes !== null
+      ? t(getGuildNotificationRuleScheduleTranslationKey(rule), {
+          minutes: rule.scheduleOffsetMinutes,
+        })
+      : undefined;
+
+  const npcLabel = getNpcLabel(rule, t);
+
   return {
+    summary: getRuleSummary(rule, t, {
+      recurringScheduleLabel,
+      scheduledAtLabel,
+      timerScheduleLabel,
+      npcLabel,
+    }),
     triggerLabel,
     displayName: rule.name ?? triggerLabel,
     enabledLabel: rule.enabled
       ? t("settings.notifications.states.enabled")
       : t("settings.notifications.states.disabled"),
-    recurringScheduleLabel: getRecurringScheduleLabel(rule, t),
-    scheduledAtLabel:
-      rule.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE &&
-      rule.scheduledAt
-        ? formatNotificationDateInTimeZone(
-            rule.scheduledAt,
-            rule.scheduleTimezone ?? "Europe/Warsaw",
-          )
-        : undefined,
-    timerScheduleLabel:
-      rule.scheduleAnchor !== null && rule.scheduleOffsetMinutes !== null
-        ? t(getGuildNotificationRuleScheduleTranslationKey(rule), {
-            minutes: rule.scheduleOffsetMinutes,
-          })
-        : undefined,
-    npcLabel: getNpcLabel(rule, t),
+    recurringScheduleLabel,
+    scheduledAtLabel,
+    timerScheduleLabel,
+    npcLabel,
   };
 };
 
 export const useNotificationRuleActions = ({
   rule,
   actionsDisabled,
-}: NotificationRuleCardProps) => {
+}: NotificationRuleTileProps) => {
   const { t } = useTranslation();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
@@ -180,7 +231,7 @@ export const useNotificationRuleActions = ({
     return label;
   });
 
-  const viewModel = getNotificationRuleCardViewModel(rule, t);
+  const viewModel = getNotificationRuleTileViewModel(rule, t);
 
   const hasTestableTargets = rule.targets.some(
     ({ target }) => target.active && target.canSend,

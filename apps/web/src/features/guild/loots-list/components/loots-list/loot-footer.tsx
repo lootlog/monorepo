@@ -2,8 +2,8 @@ import { useTranslation } from "react-i18next";
 import { upperFirst } from "es-toolkit";
 import { Calendar, Globe, MapPin, Users, Package } from "lucide-react";
 import { cn } from "cn";
-import { LOOT_CARD_INSET_CLASS } from "@/features/guild/loots-list/loots-list-layout";
-import { LootMetaItem } from "./loot-meta-item";
+import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { MetaItem } from "@/components/common/meta-item";
 
 export const LootFooter = ({
   world,
@@ -25,40 +25,34 @@ export const LootFooter = ({
     <div
       className={cn(
         "mt-auto flex items-center justify-between gap-4 py-1.5",
-        LOOT_CARD_INSET_CLASS,
+        LIST_TILE_INSET_CLASS,
       )}
     >
       {/* One row: the location truncates and the counters keep their width. */}
       {world && (
-        <LootMetaItem
+        <MetaItem
           icon={Globe}
           label={t("loots.list.worldLabel")}
           className="min-h-5 shrink-0"
         >
           {upperFirst(world)}
-        </LootMetaItem>
+        </MetaItem>
       )}
-      <LootMetaItem
+      <MetaItem
         icon={MapPin}
         className="min-h-5 min-w-0 flex-1"
         title={location}
       >
         <span className="min-w-0 truncate">{location}</span>
-      </LootMetaItem>
+      </MetaItem>
       <div className="flex min-h-5 shrink-0 items-center gap-x-3">
-        <LootMetaItem icon={Calendar}>{date}</LootMetaItem>
-        <LootMetaItem
-          icon={Users}
-          label={t("statistics.feedPlayersCountLabel")}
-        >
+        <MetaItem icon={Calendar}>{date}</MetaItem>
+        <MetaItem icon={Users} label={t("statistics.feedPlayersCountLabel")}>
           {playersCount}
-        </LootMetaItem>
-        <LootMetaItem
-          icon={Package}
-          label={t("statistics.feedItemsCountLabel")}
-        >
+        </MetaItem>
+        <MetaItem icon={Package} label={t("statistics.feedItemsCountLabel")}>
           {itemsCount}
-        </LootMetaItem>
+        </MetaItem>
       </div>
     </div>
   );

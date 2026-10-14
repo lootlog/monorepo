@@ -1,6 +1,4 @@
 import { PageHeader } from "@/components/common/page-header";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { NotificationCreateSkeleton } from "./notification-create-skeleton";
 import { NotificationNpcFields } from "./notification-npc-fields";
@@ -20,8 +18,12 @@ import {
 } from "@lootlog/ui/components/form";
 import { Input } from "@lootlog/ui/components/input";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { useFormState } from "react-hook-form";
+import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
+import { Plus } from "lucide-react";
 import { Switch } from "@lootlog/ui/components/switch";
-import { NotificationRulePreviewPanel } from "./components/notification-rule-preview-panel";
+import { NotificationFormSection } from "./components/notification-form-section";
+import { NotificationMessagePreview } from "./components/notification-message-preview";
 import { NotificationTargetDialog } from "./components/notification-target-dialog";
 import { NotificationTemplateEditor } from "./components/notification-template-editor";
 import { useNotificationRuleForm } from "./hooks/use-notification-rule-form";
@@ -61,6 +63,8 @@ export const NotificationRuleFormPage = () => {
     handleSubmit,
   } = useNotificationRuleForm();
 
+  const { isDirty } = useFormState({ control: form.control });
+
   if (isLoading) return <NotificationCreateSkeleton />;
 
   if (isError || (!isCreateMode && !rule)) {
@@ -84,204 +88,213 @@ export const NotificationRuleFormPage = () => {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <ScrollArea data-under-top-bar className="flex-1 min-h-0">
-        <div className="flex flex-col gap-3 px-3 py-3">
-          <PageHeader
-            title={t(
-              isCreateMode
-                ? "settings.notifications.ruleDialog.createTitle"
-                : "settings.notifications.ruleDialog.editTitle",
-            )}
-          />
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-            <SectionCard className="lg:col-span-2">
-              <SectionCardContent className="flex flex-col gap-3">
-                <Form {...form}>
-                  <form
-                    onSubmit={form.handleSubmit(handleSubmit)}
-                    className="flex flex-col gap-5"
-                  >
-                    <NotificationTriggerField
-                      form={form}
-                      t={t}
-                      getDefaultContentTemplate={getDefaultContentTemplate}
-                      isScheduledMessage={isScheduledMessage}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            {t("settings.notifications.fields.name")}
-                          </FormLabel>
-                          <FormControl
-                            render=<Input
-                              {...field}
-                              placeholder={t(
-                                "settings.notifications.placeholders.name",
-                              )}
-                            />
-                          />
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <NotificationNpcFields
-                      isScheduledMessage={isScheduledMessage}
-                      form={form}
-                      t={t}
-                      worldOptions={worldOptions}
-                      handleManualNpcEntryChange={handleManualNpcEntryChange}
-                      isManualNpcEntry={isManualNpcEntry}
-                      maxNpcCount={maxNpcCount}
-                      npcOptions={npcOptions}
-                      npcSearch={npcSearch}
-                      setNpcSearch={setNpcSearch}
-                      searchedNpcQuery={searchedNpcQuery}
-                      npcSearchError={npcSearchError}
-                      isAllWorlds={isAllWorlds}
-                      hasAllWorldTimerNpcSelection={
-                        hasAllWorldTimerNpcSelection
-                      }
-                    />
-
-                    <NotificationScheduleFields form={form} t={t} />
-
-                    <FormField
-                      control={form.control}
-                      name="contentTemplate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            {t("settings.notifications.fields.contentTemplate")}
-                          </FormLabel>
-                          <FormControl
-                            render=<NotificationTemplateEditor
-                              key={`${rule?.id ?? "create"}-${watchedTriggerType}-${formResetKey}`}
-                              value={field.value ?? ""}
-                              onChange={field.onChange}
-                              roles={guildRoles}
-                              triggerType={watchedTriggerType}
-                              disabled={isSubmitting}
-                              previewButtonClassName="lg:hidden"
-                            />
-                          />
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <NotificationTimerFields
-                      isScheduledMessage={isScheduledMessage}
-                      form={form}
-                      t={t}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="targetIds"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                            <div>
-                              <FormLabel>
-                                {t("settings.notifications.fields.targets")}
-                              </FormLabel>
-                              <p className="mt-1 text-xs text-muted-foreground">
-                                {t(
-                                  "settings.notifications.ruleDialog.targetsDescription",
-                                )}
-                              </p>
-                            </div>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => setIsCreateTargetDialogOpen(true)}
-                            >
-                              {t("settings.notifications.actions.addTarget")}
-                            </Button>
-                          </div>
-                          <FormControl
-                            render=<MultiSelect
-                              options={targetOptions}
-                              value={field.value}
-                              onValueChange={field.onChange}
-                              onClose={field.onChange}
-                              placeholder={t(
-                                "settings.notifications.placeholders.targets",
-                              )}
-                              searchPlaceholder={t(
-                                "settings.notifications.placeholders.searchTargets",
-                              )}
-                              emptyMessage={t(
-                                "settings.notifications.empty.targetsSelect",
-                              )}
-                              commandSearch
-                            />
-                          />
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {!isCreateMode ? (
-                      <FormField
-                        control={form.control}
-                        name="enabled"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between border-b border-border/70 py-3">
-                            <div>
-                              <FormLabel className="text-sm font-medium">
-                                {t("settings.notifications.fields.enabled")}
-                              </FormLabel>
-                              <p className="text-xs text-muted-foreground">
-                                {t(
-                                  "settings.notifications.fields.enabledDescription",
-                                )}
-                              </p>
-                            </div>
-                            <FormControl
-                              render=<Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            />
-                          </FormItem>
+      <h1 className="sr-only">
+        {t(
+          isCreateMode
+            ? "settings.notifications.ruleDialog.createTitle"
+            : "settings.notifications.ruleDialog.editTitle",
+        )}
+      </h1>
+      <ScrollArea data-under-top-bar className="min-h-0 flex-1">
+        <Form {...form}>
+          {/* Room below the last section for the floating save bar. */}
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="pb-24">
+            <NotificationFormSection
+              id="rule-form-basics"
+              title={t("settings.notifications.ruleDialog.sections.rule")}
+            >
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("settings.notifications.fields.name")}
+                    </FormLabel>
+                    <FormControl
+                      render=<Input
+                        {...field}
+                        placeholder={t(
+                          "settings.notifications.placeholders.name",
                         )}
                       />
-                    ) : null}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <NotificationTriggerField
+                form={form}
+                t={t}
+                getDefaultContentTemplate={getDefaultContentTemplate}
+              />
+              {!isCreateMode && (
+                <FormField
+                  control={form.control}
+                  name="enabled"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between gap-4">
+                      <div>
+                        <FormLabel>
+                          {t("settings.notifications.fields.enabled")}
+                        </FormLabel>
+                        <p className="text-xs text-muted-foreground">
+                          {t(
+                            "settings.notifications.fields.enabledDescription",
+                          )}
+                        </p>
+                      </div>
+                      <FormControl
+                        render=<Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </NotificationFormSection>
 
-                    <div className="flex flex-wrap justify-end gap-2 border-t border-border/50 pt-4">
+            <NotificationFormSection
+              id="rule-form-when"
+              title={t("settings.notifications.ruleDialog.sections.when")}
+              description={
+                isScheduledMessage
+                  ? t("settings.notifications.ruleDialog.whenScheduledMessage")
+                  : t("settings.notifications.ruleDialog.whenTimer")
+              }
+            >
+              <NotificationNpcFields
+                isScheduledMessage={isScheduledMessage}
+                form={form}
+                t={t}
+                worldOptions={worldOptions}
+                handleManualNpcEntryChange={handleManualNpcEntryChange}
+                isManualNpcEntry={isManualNpcEntry}
+                maxNpcCount={maxNpcCount}
+                npcOptions={npcOptions}
+                npcSearch={npcSearch}
+                setNpcSearch={setNpcSearch}
+                searchedNpcQuery={searchedNpcQuery}
+                npcSearchError={npcSearchError}
+                isAllWorlds={isAllWorlds}
+                hasAllWorldTimerNpcSelection={hasAllWorldTimerNpcSelection}
+              />
+              <NotificationTimerFields
+                isScheduledMessage={isScheduledMessage}
+                form={form}
+                t={t}
+              />
+              <NotificationScheduleFields form={form} t={t} />
+            </NotificationFormSection>
+
+            <NotificationFormSection
+              id="rule-form-where"
+              title={t("settings.notifications.ruleDialog.sections.where")}
+              description={t(
+                "settings.notifications.ruleDialog.targetsDescription",
+              )}
+            >
+              <FormField
+                control={form.control}
+                name="targetIds"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("settings.notifications.fields.targets")}
+                    </FormLabel>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <div className="min-w-0 flex-1">
+                        <FormControl
+                          render=<MultiSelect
+                            options={targetOptions}
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            onClose={field.onChange}
+                            placeholder={t(
+                              "settings.notifications.placeholders.targets",
+                            )}
+                            searchPlaceholder={t(
+                              "settings.notifications.placeholders.searchTargets",
+                            )}
+                            emptyMessage={t(
+                              "settings.notifications.empty.targetsSelect",
+                            )}
+                            commandSearch
+                          />
+                        />
+                      </div>
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={navigateBack}
-                        disabled={isSubmitting}
+                        icon=<Plus className="size-4" />
+                        className="shrink-0"
+                        onClick={() => setIsCreateTargetDialogOpen(true)}
                       >
-                        {t("settings.notifications.actions.cancel")}
-                      </Button>
-                      <Button type="submit" loading={isSubmitting}>
-                        {isCreateMode
-                          ? t("settings.notifications.actions.create")
-                          : t("settings.notifications.actions.save")}
+                        {t("settings.notifications.actions.addTargetShort")}
                       </Button>
                     </div>
-                  </form>
-                </Form>
-              </SectionCardContent>
-            </SectionCard>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </NotificationFormSection>
 
-            <div className="hidden lg:block">
-              <NotificationRulePreviewPanel
+            <NotificationFormSection
+              id="rule-form-content"
+              title={t("settings.notifications.ruleDialog.sections.content")}
+            >
+              <FormField
+                control={form.control}
+                name="contentTemplate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("settings.notifications.fields.contentTemplate")}
+                    </FormLabel>
+                    <FormControl
+                      render=<NotificationTemplateEditor
+                        key={`${rule?.id ?? "create"}-${watchedTriggerType}-${formResetKey}`}
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        roles={guildRoles}
+                        triggerType={watchedTriggerType}
+                        disabled={isSubmitting}
+                      />
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <NotificationMessagePreview
                 contentTemplate={contentTemplate}
                 guildRoles={guildRoles}
               />
-            </div>
-          </div>
-        </div>
+            </NotificationFormSection>
+
+            <UnsavedChangesBar
+              isDirty={isCreateMode || isDirty}
+              isSubmitting={isSubmitting}
+              onReset={isCreateMode ? navigateBack : () => form.reset()}
+              unsavedChangesLabel={
+                isCreateMode
+                  ? t("settings.notifications.ruleDialog.unsavedNewRule")
+                  : undefined
+              }
+              resetLabel={
+                isCreateMode
+                  ? t("settings.notifications.actions.cancel")
+                  : undefined
+              }
+              saveLabel={
+                isCreateMode
+                  ? t("settings.notifications.actions.create")
+                  : t("settings.notifications.actions.save")
+              }
+            />
+          </form>
+        </Form>
       </ScrollArea>
 
       <NotificationTargetDialog

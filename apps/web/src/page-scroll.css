@@ -8,6 +8,31 @@
   body {
     overflow: hidden;
   }
+
+  /*
+   * The fixed shell has nothing to rubber-band, so the viewport and each
+   * page's own scroller stop at their edges instead of bouncing. Scrollers
+   * nested in a page keep chaining to it. Below `md` the document keeps its
+   * overscroll for pull-to-refresh.
+   */
+  html,
+  body,
+  #main-content
+    [data-slot="scroll-area-viewport"]:not(
+      [data-slot="scroll-area-viewport"] [data-slot="scroll-area-viewport"]
+    ) {
+    overscroll-behavior: none;
+  }
+}
+
+/*
+ * Sticky page content, such as table headers and list toolbars, pins at
+ * `top: var(--page-sticky-top)`: right under the app bar while the document
+ * scrolls, and at the top of the page viewport from `md` up, where that
+ * viewport already insets its content below the bar.
+ */
+.app-content-frame {
+  --page-sticky-top: 0px;
 }
 
 /* The app bar (`AppTopBar`, 3.5rem) stays pinned over the scrolling document. */
@@ -15,6 +40,29 @@
   html:has(.app-content-frame) {
     scroll-padding-top: 3.5rem;
   }
+
+  .app-content-frame {
+    --page-sticky-top: 3.5rem;
+  }
+
+  /*
+   * A page scroller only grows with its content here, but Base UI still makes
+   * its viewport a scroll container, which would trap sticky content inside
+   * it. Letting it overflow hands sticky positioning to the document, which
+   * keeps scrolling, collapsing toolbars and pull-to-refresh intact.
+   */
+  [data-under-top-bar] > [data-slot="scroll-area-viewport"] {
+    overflow: visible !important;
+  }
+}
+
+/*
+ * Sticky page content, such as list toolbars (z-10) and the activity log's
+ * filter bar (z-20), would otherwise paint over the page scrollbar where they
+ * overlap it.
+ */
+[data-under-top-bar] > [data-slot="scroll-area-scrollbar"] {
+  z-index: 30;
 }
 
 /*

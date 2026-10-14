@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import { NotificationsChannelsPage } from "@/features/guild/notifications/notifications-channels-page";
 import { NotificationsSettings } from "@/features/guild/notifications/notifications-settings";
 import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { createOrganizationTestRouter } from "@/lib/testing/router";
@@ -375,11 +376,11 @@ it("enables notification configuration only while Discord permissions are confir
     .mockImplementationOnce(() => firstResponse)
     .mockImplementation(async () => Response.json({}, { status: 503 }));
 
-  const { client } = await renderSettings(NotificationsSettings, getSync);
+  const { client } = await renderSettings(NotificationsChannelsPage, getSync);
 
   const addTargetButtons = await screen.findAllByRole<HTMLButtonElement>(
     "button",
-    { name: "settings.notifications.actions.addTarget" },
+    { name: "settings.notifications.actions.addTargetShort" },
   );
 
   expect(addTargetButtons.every((button) => button.disabled)).toBe(true);

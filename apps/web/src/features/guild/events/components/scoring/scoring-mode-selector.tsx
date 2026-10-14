@@ -1,42 +1,12 @@
 import { useTranslation } from "react-i18next";
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldLabel,
-  FieldTitle,
-} from "@lootlog/ui/components/field";
-import { RadioGroup, RadioGroupItem } from "@lootlog/ui/components/radio-group";
-import { Zap, Settings } from "lucide-react";
-import { cn } from "cn";
 import type { EventScoringMode } from "@lootlog/domain/scoring";
+import { OptionCardGroup } from "@/components/common/option-card-group";
 
 interface ScoringModeSelectorProps {
   value: EventScoringMode;
   onChange: (mode: EventScoringMode) => void;
   "aria-labelledby"?: string;
 }
-
-const modes = [
-  {
-    value: "SIMPLE" as const,
-    icon: Zap,
-    titleKey: "events.scoring.modeSimpleTitle",
-    descKey: "events.scoring.modeSimpleDescription",
-    color: "text-blue-500",
-    bgColor: "bg-blue-500/10",
-    activeRing: "ring-blue-500/30 border-blue-500",
-  },
-  {
-    value: "ADVANCED" as const,
-    icon: Settings,
-    titleKey: "events.scoring.modeAdvancedTitle",
-    descKey: "events.scoring.modeAdvancedDescription",
-    color: "text-amber-500",
-    bgColor: "bg-amber-500/10",
-    activeRing: "ring-amber-500/30 border-amber-500",
-  },
-];
 
 export const ScoringModeSelector = ({
   value,
@@ -46,44 +16,22 @@ export const ScoringModeSelector = ({
   const { t } = useTranslation();
 
   return (
-    <RadioGroup
+    <OptionCardGroup
       aria-labelledby={ariaLabelledBy}
       value={value}
-      onValueChange={(nextValue) => onChange(nextValue)}
-      className="grid grid-cols-1 gap-3 sm:grid-cols-2"
-    >
-      {modes.map((mode) => {
-        const isActive = value === mode.value;
-        const Icon = mode.icon;
-
-        return (
-          <FieldLabel key={mode.value} className="cursor-pointer">
-            <Field
-              orientation="horizontal"
-              className={cn(
-                "items-center rounded-lg border bg-card p-3 transition-[border-color,box-shadow,opacity]",
-                isActive
-                  ? `ring-1 ${mode.activeRing}`
-                  : "border-border bg-card opacity-70 hover:opacity-90",
-              )}
-            >
-              <RadioGroupItem
-                value={mode.value}
-                aria-label={t(mode.titleKey)}
-              />
-              <div className={cn("rounded-xl p-2", mode.bgColor)}>
-                <Icon className={cn("size-4", mode.color)} />
-              </div>
-              <FieldContent>
-                <FieldTitle>{t(mode.titleKey)}</FieldTitle>
-                <FieldDescription className="text-xs leading-tight">
-                  {t(mode.descKey)}
-                </FieldDescription>
-              </FieldContent>
-            </Field>
-          </FieldLabel>
-        );
-      })}
-    </RadioGroup>
+      onChange={onChange}
+      options={[
+        {
+          value: "SIMPLE",
+          title: t("events.scoring.modeSimpleTitle"),
+          description: t("events.scoring.modeSimpleDescription"),
+        },
+        {
+          value: "ADVANCED",
+          title: t("events.scoring.modeAdvancedTitle"),
+          description: t("events.scoring.modeAdvancedDescription"),
+        },
+      ]}
+    />
   );
 };

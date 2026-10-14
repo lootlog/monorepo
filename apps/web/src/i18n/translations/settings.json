@@ -420,7 +420,30 @@
   },
   "notifications": {
     "title": "Powiadomienia",
-    "description": "Zarządzaj kanałami docelowymi, regułami wysyłki i historią dostarczania powiadomień.",
+    "historyFilterPlaceholder": "Filtruj po nazwie reguły…",
+    "historyFilterLabel": "Filtruj historię po nazwie reguły",
+    "historyStatusesLabel": "Statusy wysyłek",
+    "clearFilter": "Wyczyść filtr",
+    "ruleFilterPlaceholder": "Filtruj reguły po nazwie…",
+    "ruleFilterLabel": "Filtruj reguły po nazwie",
+    "channelFilterPlaceholder": "Filtruj kanały po nazwie…",
+    "channelFilterLabel": "Filtruj kanały po nazwie",
+    "tabs": {
+      "label": "Widoki powiadomień",
+      "rules": "Reguły",
+      "channels": "Kanały",
+      "history": "Historia"
+    },
+    "groups": {
+      "TIMER_BEFORE_SPAWN": "Przypomnienia przed spawnem",
+      "SCHEDULED_MESSAGE": "Zaplanowane wiadomości"
+    },
+    "rows": {
+      "nextDelivery": "Następna wysyłka",
+      "lastDelivery": "{{status}} {{time}}",
+      "usedBy": "Wysyłają tu: {{rules}}",
+      "unused": "Żadna reguła tu nie wysyła"
+    },
     "info": {
       "title": "Jak działają powiadomienia?",
       "targets": {
@@ -445,30 +468,28 @@
       }
     },
     "notificationsHistory": {
-      "title": "Historia powiadomień",
-      "description": "Przeglądaj historię wysłanych i nieudanych powiadomień, sprawdzaj szczegóły dostarczenia i powody ewentualnych błędów."
+      "title": "Historia powiadomień"
     },
     "actions": {
       "addTarget": "Dodaj kanał docelowy",
+      "addTargetShort": "Dodaj kanał",
       "addRule": "Dodaj regułę",
-      "testNow": "Testuj",
-      "edit": "Edytuj",
+      "moreNamed": "Więcej akcji: {{name}}",
+      "editRule": "Edytuj regułę",
+      "sendTest": "Wyślij test",
+      "rescheduleJobs": "Zaplanuj wysyłki od nowa",
+      "cancelNextJob": "Anuluj najbliższą wysyłkę",
+      "deleteRule": "Usuń regułę",
+      "editChannel": "Edytuj kanał",
+      "deleteChannel": "Usuń kanał",
       "delete": "Usuń",
       "cancel": "Anuluj",
       "cancelPending": "Anuluj oczekujące",
-      "rebuildPending": "Przebuduj kolejkę",
       "save": "Zapisz",
-      "create": "Utwórz",
-      "showAllHistory": "Pokaż ostatnie {{count}}"
+      "create": "Utwórz"
     },
     "sections": {
-      "actions": "Akcje",
-      "targets": "Kanały docelowe",
-      "targetsDescription": "Kanały Discorda używane do wysyłki powiadomień.",
-      "rules": "Reguły",
-      "rulesDescription": "Automatyzacje określające kiedy i gdzie wysyłać powiadomienia.",
-      "jobsDescription": "Oczekujące wysyłki powiadomień.",
-      "historyDescription": "Historia wysłanych i nieudanych powiadomień."
+      "targets": "Kanały docelowe"
     },
     "permissionsBlocked": {
       "title": "Brak wymaganych uprawnień bota",
@@ -495,11 +516,9 @@
       "test": "Testowe"
     },
     "states": {
-      "active": "Aktywny",
       "inactive": "Nieaktywny",
       "enabled": "Aktywna",
       "disabled": "Nieaktywna",
-      "canSend": "Może wysyłać",
       "cannotSend": "Brak wysyłki"
     },
     "schedule": {
@@ -527,19 +546,11 @@
       "5": "Piątek",
       "6": "Sobota"
     },
-    "targetCount_one": "{{count}} kanał",
-    "targetCount_few": "{{count}} kanały",
-    "targetCount_many": "{{count}} kanałów",
-    "targetUsageCount_one": "Używany w {{count}} regule",
-    "targetUsageCount_few": "Używany w {{count}} regułach",
-    "targetUsageCount_many": "Używany w {{count}} regułach",
     "npcCount_one": "{{count}} NPC",
     "npcCount_few": "{{count}} NPC",
     "npcCount_many": "{{count}} NPC",
     "ruleLimitUsage": "{{count}} / {{limit}} reguł",
-    "testTriggerUsage": "{{used}}/{{limit}} testów ({{minutes}} min)",
     "testTriggerNextAvailable": "Następny test dostępny: {{date}}",
-    "targetLabels": "Kanały docelowe: {{targets}}",
     "targetInactive": "(nieaktywny)",
     "targetTypes": {
       "CHANNEL": "Kanał",
@@ -549,12 +560,9 @@
     "allWorlds": "Wszystkie światy",
     "allNpcs": "Wszystkie NPC",
     "jobs": {
-      "pending": "Oczekujące",
-      "history": "Historia",
-      "targetLabel": "Kanał: {{target}}",
-      "scheduledFor": "Wysyłka: {{date}}",
       "sendsIn": "Wysyłka za {{time}}",
-      "sendsNow": "Wysyłka teraz"
+      "sendsNow": "Wysyłka teraz",
+      "now": "teraz"
     },
     "jobErrors": {
       "lootSourceNotVisible": "Łup nie jest już dostępny.",
@@ -584,9 +592,11 @@
     },
     "empty": {
       "targets": "Brak skonfigurowanych kanałów docelowych",
+      "filteredTargets": "Żaden kanał nie pasuje do filtra",
       "rules": "Brak skonfigurowanych reguł",
-      "pendingJobs": "Brak oczekujących powiadomień",
+      "filteredRules": "Żadna reguła nie pasuje do filtra",
       "historyJobs": "Brak historii powiadomień",
+      "filteredHistory": "Żadna wysyłka nie pasuje do filtrów",
       "availableChannels": "Wszystkie dostępne kanały są już dodane.",
       "npcs": "Brak pasujących NPC.",
       "targetsSelect": "Brak dostępnych kanałów docelowych."
@@ -652,14 +662,14 @@
       "searchTargets": "Szukaj kanałów"
     },
     "templateEditor": {
-      "label": "Edytor wiadomości",
-      "description": "Treść wiadomości wysyłanej na Discorda. Obsługiwany jest Markdown oraz wzmianki ról.",
+      "insertVariable": "Wstaw zmienną",
+      "previewEmpty": "Wiadomość jest pusta.",
+      "discordAppTag": "Aplikacja",
+      "variableExample": "Przykład: {{value}}",
+      "hint": "Obsługiwany jest Markdown. Wpisz {{variable}}, aby wybrać zmienną, albo {{mention}}, aby wspomnieć rolę.",
       "placeholder": "Napisz treść powiadomienia...",
-      "showPreview": "Podgląd",
       "emptySuggestions": "Brak pasujących sugestii.",
-      "availableVariables": "Dostępne zmienne",
       "previewLabel": "Podgląd wiadomości",
-      "previewDescription": "Podgląd wiadomości z przykładowymi danymi podstawionymi za zmienne.",
       "previewNotice": "Zmienne zostały zastąpione przykładowymi danymi. Wygląd może się nieznacznie różnić od wiadomości na Discordzie.",
       "previewValues": {
         "ruleName": "Timer herosów",
@@ -690,8 +700,19 @@
     "ruleDialog": {
       "createTitle": "Dodaj regułę",
       "editTitle": "Edytuj regułę",
-      "triggerDescription": "Ten widok obsługuje tylko przypomnienia planowane przed spawnem.",
-      "triggerDescriptionScheduledMessage": "Wyślij wiadomość jednorazowo lub cyklicznie w określonym czasie.",
+      "sections": {
+        "rule": "Reguła",
+        "when": "Kiedy wysłać",
+        "where": "Dokąd wysłać",
+        "content": "Treść wiadomości"
+      },
+      "triggerOptions": {
+        "timerBeforeSpawn": "Gdy zbliża się respawn potwora z ustawionym timerem.",
+        "scheduledMessage": "O wybranej porze, jednorazowo lub cyklicznie."
+      },
+      "whenTimer": "Lootlog wyśle przypomnienie, gdy ktoś z Lootloga ustawi timer wybranego potwora.",
+      "whenScheduledMessage": "Lootlog wyśle wiadomość w wybranym terminie, a przy harmonogramie w każdym kolejnym.",
+      "unsavedNewRule": "Nowa reguła nie jest jeszcze zapisana",
       "targetsDescription": "Wybierz jeden lub więcej kanałów docelowych. Możesz też dodać nowy bez opuszczania formularza."
     },
     "manualNpcEntry": {

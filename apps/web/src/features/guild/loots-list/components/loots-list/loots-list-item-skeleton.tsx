@@ -1,9 +1,9 @@
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 import {
-  LOOT_CARD_INSET_CLASS,
-  LOOT_TILE_CLASS,
-} from "@/features/guild/loots-list/loots-list-layout";
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
 import { ItemSilhouetteSkeleton } from "./item-silhouette-skeleton";
 import { PlayerSilhouetteSkeleton } from "./player-silhouette-skeleton";
 
@@ -30,12 +30,12 @@ export const LootsListItemSkeleton: React.FC<Props> = ({ index = 0 }) => {
   return (
     <div
       aria-hidden="true"
-      className={cn("flex h-full flex-col", LOOT_TILE_CLASS)}
+      className={cn("flex h-full flex-col", LIST_TILE_RULE_CLASS)}
     >
       <div
         className={cn(
           "flex min-h-11 items-center justify-between gap-3 py-1.5",
-          LOOT_CARD_INSET_CLASS,
+          LIST_TILE_INSET_CLASS,
         )}
       >
         <div className="flex min-w-0 items-center gap-2">
@@ -51,7 +51,7 @@ export const LootsListItemSkeleton: React.FC<Props> = ({ index = 0 }) => {
       <div
         className={cn(
           "flex flex-1 flex-wrap gap-x-4 gap-y-2.5 py-2.5",
-          LOOT_CARD_INSET_CLASS,
+          LIST_TILE_INSET_CLASS,
         )}
       >
         <div className="flex min-w-0 flex-1 basis-48 flex-wrap content-start gap-x-2 gap-y-2.5">
@@ -70,7 +70,7 @@ export const LootsListItemSkeleton: React.FC<Props> = ({ index = 0 }) => {
       <div
         className={cn(
           "mt-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-1.5",
-          LOOT_CARD_INSET_CLASS,
+          LIST_TILE_INSET_CLASS,
         )}
       >
         <div className="flex min-h-5 min-w-0 flex-1 basis-40 items-center">

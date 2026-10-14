@@ -6,6 +6,7 @@ import {
 import { NpcSearchTile } from "@/components/tiles/npc-search-tile";
 import { cn } from "cn";
 import { upperFirst } from "es-toolkit";
+import { Globe, User } from "lucide-react";
 import { useEffect, useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import type { TimerResponseDto } from "@lootlog/client/main";
@@ -24,6 +25,8 @@ import {
   DATE_TIME_WITH_SECONDS_FORMAT,
   timestampToDate,
 } from "@/utils/date/parse-timestamp-to-date";
+import { MetaItem } from "@/components/common/meta-item";
+import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
 
 // The game client's colours: white until the spawn window opens, orange
 // inside it, red past the maximum, and a dimmed red for a kept timer.
@@ -70,6 +73,8 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   if (phase === "expired" && !isPinned) return null;
 
   const fill = veil(paint.fill, phase === "expired");
+  // A softer wash than the game tile keeps long lists of painted rows calm.
+  const wash = `color-mix(in srgb, ${fill} 25%, transparent)`;
   const npcName = timer.npc?.name ?? "";
   const npcIcon = timer.npc?.icon ?? null;
 
@@ -84,36 +89,53 @@ export const SingleTimer: FC<SingleTimerProps> = ({
         render={
           <button
             type="button"
-            // The player's colour tints the card the way it fills the game tile.
-            style={{ backgroundImage: `linear-gradient(${fill}, ${fill})` }}
+            // The player's colour tints the row the way it fills the game tile.
+            style={{
+              backgroundImage: `linear-gradient(${wash}, ${wash})`,
+            }}
             className={cn(
-              "flex w-full items-center gap-3 rounded-lg border border-border/50 bg-card px-3 py-2.5 text-left transition-colors outline-none hover:border-primary/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none",
-              PHASE_TEXT_CLASS[phase],
+              "flex h-full w-full items-center gap-3 py-2.5 text-left outline-none transition-colors hover:bg-muted/30 focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset motion-reduce:transition-none",
+              LIST_TILE_INSET_CLASS,
+              phase === "expired" && "opacity-75",
             )}
           >
             {npcIcon && <NpcSearchTile icon={npcIcon} />}
-            <span className="min-w-0 flex-1">
+            <span className="flex min-w-0 flex-1 flex-col gap-1">
               <span className="flex min-w-0 items-baseline gap-1.5">
-                <span className="min-w-0 truncate text-sm font-medium">
+                <span className="min-w-0 truncate text-sm font-semibold">
                   {npcName}
                 </span>
                 {npcLevel && (
-                  <span className="shrink-0 text-xs opacity-70">
+                  <span className="shrink-0 text-xs text-muted-foreground">
                     {npcLevel}
                   </span>
                 )}
               </span>
-              <span className="block truncate text-xs text-muted-foreground">
+              <span className="flex min-w-0 items-center gap-x-3">
                 {showWorld && (
-                  <span className="font-medium text-foreground/80">
+                  <MetaItem
+                    icon={Globe}
+                    label={t("loots.list.worldLabel")}
+                    className="shrink-0"
+                  >
                     {upperFirst(timer.world)}
-                    {timer.member?.name && " · "}
-                  </span>
+                  </MetaItem>
                 )}
-                {timer.member?.name ?? ""}
+                {timer.member?.name && (
+                  <MetaItem icon={User} className="min-w-0">
+                    <span className="min-w-0 truncate">
+                      {timer.member.name}
+                    </span>
+                  </MetaItem>
+                )}
               </span>
             </span>
-            <span className="shrink-0 text-sm font-medium tabular-nums">
+            <span
+              className={cn(
+                "shrink-0 text-[15px] leading-5 font-semibold tabular-nums",
+                PHASE_TEXT_CLASS[phase],
+              )}
+            >
               {parseMsToTime(getTimerCountdownMs(timeLeft, countdownMode))}
             </span>
           </button>
