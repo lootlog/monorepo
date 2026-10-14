@@ -102,6 +102,9 @@ async function fixture(cacheMembers = true) {
   };
 
   let channels = [channel];
+  // Guilds announced at login carry their channels, so discord.js caches
+  // them as available; a plain REST guild does not.
+  const gatewayGuildIds = new Set<string>();
   const restCalls: string[] = [];
   let memberFetchError: Error | undefined;
   let channelsGate: Promise<void> | undefined;
@@ -110,6 +113,12 @@ async function fixture(cacheMembers = true) {
 
     if (route === `/guilds/${guildId}/channels` && channelsGate) {
       await channelsGate;
+    }
+
+    const guildRoute = /^\/guilds\/(\d+)$/.exec(String(route));
+
+    if (guildRoute?.[1] && gatewayGuildIds.has(guildRoute[1])) {
+      return { ...guild, id: guildRoute[1], channels: [] };
     }
 
     if (route === `/guilds/${guildId}`) return guild;
@@ -141,29 +150,40 @@ async function fixture(cacheMembers = true) {
     configurable: true,
   });
   const events: { routingKey: string; payload: unknown }[] = [];
+  let rejectedGuildId: string | undefined;
 
   const sync = makeDiscordSync(
     {
       publish: (_exchange, routingKey, payload) =>
-        Effect.sync(() => {
-          // Every emitted wire payload must pass the same decoder as the API consumer.
-          const key = [
-            RabbitRoutingKey.GUILDS_CREATE,
-            RabbitRoutingKey.GUILDS_UPDATE,
-            RabbitRoutingKey.GUILDS_DELETE,
-            RabbitRoutingKey.GUILDS_CREATE_ROLE,
-            RabbitRoutingKey.GUILDS_UPDATE_ROLE,
-            RabbitRoutingKey.GUILDS_DELETE_ROLE,
-            RabbitRoutingKey.DISCORD_GUILD_SYNC_STATE_UPDATED,
-            RabbitRoutingKey.DISCORD_GUILD_CHANNEL_UPSERTED,
-            RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
-            RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNC_FAILED,
-          ].find((value) => value === routingKey);
+        Effect.suspend(() => {
+          if (
+            rejectedGuildId &&
+            "guildId" in payload &&
+            payload.guildId === rejectedGuildId
+          ) {
+            return Effect.fail(new Error("Publisher confirm failed"));
+          }
 
-          if (!key) throw new Error(`Unknown routing key: ${routingKey}`);
-          events.push({
-            routingKey,
-            payload: decodeRabbitEventJson(key, JSON.stringify(payload)),
+          return Effect.sync(() => {
+            // Every emitted wire payload must pass the same decoder as the API consumer.
+            const key = [
+              RabbitRoutingKey.GUILDS_CREATE,
+              RabbitRoutingKey.GUILDS_UPDATE,
+              RabbitRoutingKey.GUILDS_DELETE,
+              RabbitRoutingKey.GUILDS_CREATE_ROLE,
+              RabbitRoutingKey.GUILDS_UPDATE_ROLE,
+              RabbitRoutingKey.GUILDS_DELETE_ROLE,
+              RabbitRoutingKey.DISCORD_GUILD_SYNC_STATE_UPDATED,
+              RabbitRoutingKey.DISCORD_GUILD_CHANNEL_UPSERTED,
+              RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
+              RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNC_FAILED,
+            ].find((value) => value === routingKey);
+
+            if (!key) throw new Error(`Unknown routing key: ${routingKey}`);
+            events.push({
+              routingKey,
+              payload: decodeRabbitEventJson(key, JSON.stringify(payload)),
+            });
           });
         }),
     },
@@ -202,6 +222,13 @@ async function fixture(cacheMembers = true) {
     },
     gateChannels: (gate: Promise<void>) => {
       channelsGate = gate;
+    },
+    rejectPublishesFor: (id: string) => {
+      rejectedGuildId = id;
+    },
+    announceGuild: async (id: string) => {
+      gatewayGuildIds.add(id);
+      await client.guilds.fetch({ guild: id, force: true });
     },
   };
 }
@@ -300,12 +327,14 @@ describe("Discord SDK to RabbitMQ contracts", () => {
     ]);
   });
 
-  test("publishes a snapshot of every known guild when the client is ready", async () => {
+  test("publishes a snapshot of every known guild when the client is ready, past a failed one", async () => {
     const f = await fixture();
+    const failingGuildId = "999999999999999999";
     f.guild.banner = "a_12345678901234567890123456789012";
-    const cached = await f.client.guilds.fetch({ guild: guildId, force: true });
-    // The gateway's GUILD_CREATE marks a guild available; a REST fetch does not.
-    cached.available = true;
+    // The failing guild is cached first.
+    await f.announceGuild(failingGuildId);
+    await f.announceGuild(guildId);
+    f.rejectPublishesFor(failingGuildId);
     await Effect.runPromise(f.sync.handleClientReady(f.client));
 
     expect(f.events).toEqual([
