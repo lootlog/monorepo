@@ -1,3 +1,5 @@
+import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { cn } from "cn";
 import { Button } from "@lootlog/ui/components/button";
 import { Share2, Trash2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -27,7 +29,12 @@ export const BattlesBulkActionsBar = ({
 
   return (
     <div className="animate-in fade-in-0 slide-in-from-bottom-1 duration-150">
-      <div className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div
+        className={cn(
+          "flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between",
+          LIST_TILE_INSET_CLASS,
+        )}
+      >
         <span
           aria-live="polite"
           className="inline-flex min-h-8 items-center rounded-md border border-border bg-card px-2.5 text-xs font-medium text-muted-foreground"

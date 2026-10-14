@@ -13,8 +13,7 @@ import {
 import { Link } from "@tanstack/react-router";
 import { BarChart3, Swords, Trophy } from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { TableFilterToolbar } from "@/components/ui/table-filter-toolbar";
+import { ResultsSurface } from "@/components/common/results-surface";
 import { AbyssAnalyticsTab } from "./abyss-analytics-tab";
 import { AbyssBattlesTab } from "./abyss-battles-tab";
 import { getAbyssSeasonRangeLabel } from "./abyss-formatters";
@@ -99,158 +98,159 @@ export function AbyssHub() {
     <Tabs
       value={activeTab}
       onValueChange={handleTabChange}
-      className="flex min-w-0 flex-col gap-3 p-3"
+      className="flex min-w-0 flex-col gap-0"
     >
       <h1 className="sr-only">{t("battlePanel.abyss.title")}</h1>
 
-      <SectionCard className="shrink-0 overflow-hidden">
-        {showViews && (
-          <div className="flex flex-wrap items-center gap-2 border-b border-border/70 p-2">
-            <TabsList
-              aria-label={t("battlePanel.abyss.title")}
-              size="lg"
-              className="w-full sm:w-auto"
-            >
-              {views.map((view) => (
-                <TabsTrigger key={view.value} value={view.value}>
-                  <view.icon aria-hidden="true" />
-                  {view.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+      <ResultsSurface
+        filters={
+          <>
+            {showViews && (
+              <TabsList
+                aria-label={t("battlePanel.abyss.title")}
+                size="lg"
+                className="w-full sm:w-auto"
+              >
+                {views.map((view) => (
+                  <TabsTrigger key={view.value} value={view.value}>
+                    <view.icon aria-hidden="true" />
+                    {view.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            )}
 
-            <ChevronLink
-              className="px-1 sm:ml-auto"
-              render=<Link
-                to={ROUTES.user.battlePanel.matchmakingH2h}
-                search={h2hSearch}
-              />
-            >
-              {t("battlePanel.abyss.openH2h")}
-            </ChevronLink>
+            <CharacterSelector
+              characterId={currentCharacterId}
+              onCharacterChange={handleCharacterChange}
+              allowAllCharacters={false}
+              className="w-full md:w-[240px]"
+            />
+
+            <FilterPopover
+              icon={Trophy}
+              showSearch={false}
+              options={seasons.map((season, index) => ({
+                value: season.id,
+                label: getSeasonLabel(
+                  season,
+                  index,
+                  t("battlePanel.abyss.latestSeason"),
+                ),
+              }))}
+              value={selectedSeason?.id}
+              onValueChange={handleSeasonChange}
+              disabled={isLoadingSeasons || seasons.length === 0}
+              placeholder={
+                seasons.length === 0 && !isLoadingSeasons
+                  ? t("battlePanel.abyss.noSeason")
+                  : t("battlePanel.abyss.selectSeason")
+              }
+              emptyMessage={t("battlePanel.abyss.noSeason")}
+              width="w-full md:w-[260px]"
+              triggerClassName="min-w-0"
+              contentClassName="w-[260px]"
+            />
+
+            <LevelRangeFilter
+              layout="inline"
+              minLevel={minLevel}
+              maxLevel={maxLevel}
+              onMinLevelChange={handleMinLevelChange}
+              onMaxLevelChange={handleMaxLevelChange}
+            />
+
+            {showViews && (
+              <ChevronLink
+                className="px-1 sm:ml-auto"
+                render=<Link
+                  to={ROUTES.user.battlePanel.matchmakingH2h}
+                  search={h2hSearch}
+                />
+              >
+                {t("battlePanel.abyss.openH2h")}
+              </ChevronLink>
+            )}
+          </>
+        }
+        filtersLabel={t("battlePanel.filters.title")}
+      >
+        {isLoadingSeasons ? (
+          <div className="p-3">
+            <AbyssSummaryCards isLoading />
+          </div>
+        ) : selectedSeason ? (
+          <>
+            <div className="p-3">
+              <AbyssSummaryCards season={selectedSeason} />
+            </div>
+
+            <TabsContent value="battles" className="m-0">
+              {activeTab === "battles" ? (
+                <AbyssBattlesTab
+                  battlesResponse={battlesResponse}
+                  cursor={cursor}
+                  isLoading={isBattlesLoading}
+                  isRefreshing={isBattlesRefreshing}
+                  onCursorChange={handleCursorChange}
+                  pageIndex={pageIndex}
+                  pageSize={PAGE_SIZE}
+                  params={dashboardParams}
+                />
+              ) : null}
+            </TabsContent>
+
+            <TabsContent value="analytics" className="m-0 px-3 pb-3">
+              {activeTab === "analytics" ? (
+                <AbyssAnalyticsTab
+                  combatProfile={{
+                    data: combatProfile,
+                    isLoading: isCombatProfileLoading,
+                  }}
+                  duration={{
+                    data: durationData,
+                    isLoading: isDurationLoading,
+                  }}
+                  profession={{
+                    data: professionData,
+                    isLoading: isProfessionLoading,
+                  }}
+                  ratingDelta={{
+                    data: ratingDeltaData,
+                    isLoading: isRatingDeltaLoading,
+                  }}
+                  ratingGrowth={{
+                    data: ratingGrowthData,
+                    isLoading: isRatingGrowthLoading,
+                  }}
+                  search={h2hSearch}
+                  streak={{ data: streakData, isLoading: isStreakLoading }}
+                />
+              ) : null}
+            </TabsContent>
+
+            <TabsContent value="seasons" className="m-0 px-3 pb-3">
+              {activeTab === "seasons" ? (
+                <AbyssSeasonsTable
+                  isLoading={isLoadingSeasons}
+                  onSelect={handleSeasonSelect}
+                  seasons={seasons}
+                  selectedSeasonId={selectedSeason?.id}
+                />
+              ) : null}
+            </TabsContent>
+          </>
+        ) : (
+          <div className="p-3">
+            <EmptyState
+              framed
+              icon={Swords}
+              title={t("battlePanel.abyss.emptyTitle")}
+              description={t("battlePanel.abyss.emptyDescription")}
+            />
           </div>
         )}
-
-        <TableFilterToolbar
-          role="group"
-          aria-label={t("battlePanel.filters.title")}
-          className="border-b-0"
-        >
-          <CharacterSelector
-            characterId={currentCharacterId}
-            onCharacterChange={handleCharacterChange}
-            allowAllCharacters={false}
-            className="w-full md:w-[240px]"
-          />
-
-          <FilterPopover
-            icon={Trophy}
-            showSearch={false}
-            options={seasons.map((season, index) => ({
-              value: season.id,
-              label: getSeasonLabel(
-                season,
-                index,
-                t("battlePanel.abyss.latestSeason"),
-              ),
-            }))}
-            value={selectedSeason?.id}
-            onValueChange={handleSeasonChange}
-            disabled={isLoadingSeasons || seasons.length === 0}
-            placeholder={
-              seasons.length === 0 && !isLoadingSeasons
-                ? t("battlePanel.abyss.noSeason")
-                : t("battlePanel.abyss.selectSeason")
-            }
-            emptyMessage={t("battlePanel.abyss.noSeason")}
-            width="w-full md:w-[260px]"
-            triggerClassName="min-w-0"
-            contentClassName="w-[260px]"
-          />
-
-          <LevelRangeFilter
-            layout="inline"
-            minLevel={minLevel}
-            maxLevel={maxLevel}
-            onMinLevelChange={handleMinLevelChange}
-            onMaxLevelChange={handleMaxLevelChange}
-          />
-        </TableFilterToolbar>
-      </SectionCard>
-
-      {isLoadingSeasons ? (
-        <AbyssSummaryCards isLoading />
-      ) : selectedSeason ? (
-        <>
-          <AbyssSummaryCards season={selectedSeason} />
-
-          {/* From md up the battle list fills the rest of the page and scrolls inside its card. */}
-          <TabsContent
-            value="battles"
-            className="m-0 md:flex md:min-h-[480px] md:basis-0 md:flex-col"
-          >
-            {activeTab === "battles" ? (
-              <AbyssBattlesTab
-                battlesResponse={battlesResponse}
-                cursor={cursor}
-                isLoading={isBattlesLoading}
-                isRefreshing={isBattlesRefreshing}
-                onCursorChange={handleCursorChange}
-                pageIndex={pageIndex}
-                pageSize={PAGE_SIZE}
-                params={dashboardParams}
-              />
-            ) : null}
-          </TabsContent>
-
-          <TabsContent value="analytics" className="m-0 flex-none">
-            {activeTab === "analytics" ? (
-              <AbyssAnalyticsTab
-                combatProfile={{
-                  data: combatProfile,
-                  isLoading: isCombatProfileLoading,
-                }}
-                duration={{
-                  data: durationData,
-                  isLoading: isDurationLoading,
-                }}
-                profession={{
-                  data: professionData,
-                  isLoading: isProfessionLoading,
-                }}
-                ratingDelta={{
-                  data: ratingDeltaData,
-                  isLoading: isRatingDeltaLoading,
-                }}
-                ratingGrowth={{
-                  data: ratingGrowthData,
-                  isLoading: isRatingGrowthLoading,
-                }}
-                search={h2hSearch}
-                streak={{ data: streakData, isLoading: isStreakLoading }}
-              />
-            ) : null}
-          </TabsContent>
-
-          <TabsContent value="seasons" className="m-0 flex-none">
-            {activeTab === "seasons" ? (
-              <AbyssSeasonsTable
-                isLoading={isLoadingSeasons}
-                onSelect={handleSeasonSelect}
-                seasons={seasons}
-                selectedSeasonId={selectedSeason?.id}
-              />
-            ) : null}
-          </TabsContent>
-        </>
-      ) : (
-        <EmptyState
-          framed
-          icon={Swords}
-          title={t("battlePanel.abyss.emptyTitle")}
-          description={t("battlePanel.abyss.emptyDescription")}
-        />
-      )}
+      </ResultsSurface>
     </Tabs>
   );
 }

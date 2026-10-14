@@ -1,10 +1,6 @@
 import { EmptyState } from "@/components/common/empty-state";
 import { InfiniteListStatusRow } from "@/components/common/infinite-list-status-row";
-import { FilterChipList } from "@/components/common/filter-chip-list";
-import {
-  LIST_TILE_INSET_CLASS,
-  LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+import { ResultsSurface } from "@/components/common/results-surface";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import {
   useResetScrollTop,
@@ -13,7 +9,6 @@ import {
 import { useThemedKey } from "@/themes";
 import { useMembersControllerGetGuildMemberReferences } from "@lootlog/client/main";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { cn } from "cn";
 import {
   getVirtualListPadding,
   usePageVirtualizer,
@@ -42,23 +37,6 @@ export const ActivityLogs = () => {
   const themedKey = useThemedKey();
   const usesTable = useMediaQuery(ACTIVITY_LOGS_TABLE_MEDIA_QUERY);
   const listRef = useRef<HTMLDivElement>(null);
-  // The table header pins right under the filter bar, whatever its height.
-  const [stickyBarHeight, setStickyBarHeight] = useState(0);
-
-  const observeStickyBar = (bar: HTMLDivElement | null) => {
-    if (!bar) return;
-
-    const measure = () =>
-      setStickyBarHeight(bar.getBoundingClientRect().height);
-
-    // Measured on mount, then again whenever filter chips change its height.
-    const observer = new ResizeObserver(measure);
-
-    measure();
-    observer.observe(bar);
-
-    return () => observer.disconnect();
-  };
 
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
     null,
@@ -171,7 +149,6 @@ export const ActivityLogs = () => {
         <ActivityLogsTable
           activities={activities}
           usesTable={usesTable}
-          headerTop={stickyBarHeight}
           memberNameByDiscordId={memberNameByDiscordId}
           virtualRows={virtualRows}
           padding={getVirtualListPadding(
@@ -204,34 +181,15 @@ export const ActivityLogs = () => {
         ref={setScrollElement}
         className="min-h-0 flex-1"
       >
-        {/* The filters and their chips stay on top while the log scrolls. */}
-        <div
-          ref={observeStickyBar}
-          data-list-tile
-          className="sticky top-(--page-sticky-top) z-20 backdrop-blur-sm"
+        <ResultsSurface
+          filters={<ActivityLogsFilterToolbar model={filterModel} />}
+          filtersLabel={t("activityLogs.filters.title")}
+          chips={activeFilterChips}
+          clearFiltersLabel={t("activityLogs.filters.clear")}
+          onClearFilters={filterModel.clearFilters}
         >
-          <div
-            role="group"
-            aria-label={t("activityLogs.filters.title")}
-            className={cn(
-              "flex min-h-12 items-center py-2",
-              LIST_TILE_RULE_CLASS,
-              LIST_TILE_INSET_CLASS,
-            )}
-          >
-            <ActivityLogsFilterToolbar model={filterModel} />
-          </div>
-          <FilterChipList
-            chips={activeFilterChips}
-            clearLabel={t("activityLogs.filters.clear")}
-            onClear={filterModel.clearFilters}
-            className={cn(
-              "border-sidebar-border bg-transparent",
-              LIST_TILE_INSET_CLASS,
-            )}
-          />
-        </div>
-        <div ref={listRef}>{renderResults()}</div>
+          <div ref={listRef}>{renderResults()}</div>
+        </ResultsSurface>
       </ScrollArea>
     </div>
   );

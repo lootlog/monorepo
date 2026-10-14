@@ -122,16 +122,15 @@ export const EventRankingPage = () => {
         eventId={eventId}
       />
       <ScrollArea data-under-top-bar className="min-h-0 flex-1">
+        <h1 className="sr-only">{t("events.ranking.title")}</h1>
+        <HeroTabs
+          placement="page"
+          heroes={heroes}
+          valueKey="npcName"
+          value={effectiveSelectedHeroName ?? undefined}
+          onValueChange={(heroName) => setSelectedHeroName(heroName ?? null)}
+        />
         <div className="flex w-full min-w-0 max-w-full flex-col gap-3 px-3 py-3">
-          <h1 className="sr-only">{t("events.ranking.title")}</h1>
-          <HeroTabs
-            placement="page"
-            heroes={heroes}
-            valueKey="npcName"
-            value={effectiveSelectedHeroName ?? undefined}
-            onValueChange={(heroName) => setSelectedHeroName(heroName ?? null)}
-          />
-
           {rankingError && (
             <SectionCard>
               <QueryErrorNotice

@@ -9,12 +9,14 @@ export const EventRankingSkeleton = () => {
   const { t } = useTranslation();
 
   return (
-    <div aria-busy="true" className="flex flex-col gap-3 px-3 py-3">
+    <div aria-busy="true">
       <SkeletonFilterBar />
-      <SectionCard className="w-full min-w-0 overflow-hidden">
-        <SectionCardHeader icon={Trophy} title={t("events.ranking.title")} />
-        <TableRowsSkeleton rows={8} withHeader />
-      </SectionCard>
+      <div className="flex flex-col gap-3 px-3 py-3">
+        <SectionCard className="w-full min-w-0 overflow-hidden">
+          <SectionCardHeader icon={Trophy} title={t("events.ranking.title")} />
+          <TableRowsSkeleton rows={8} withHeader />
+        </SectionCard>
+      </div>
     </div>
   );
 };

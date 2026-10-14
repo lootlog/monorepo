@@ -12,7 +12,7 @@ export const BattlePanelStatisticsSkeleton = () => {
   const { t } = useTranslation();
 
   return (
-    <div aria-busy="true" className="flex flex-col gap-3 p-3">
+    <div aria-busy="true">
       <FilterBar ariaLabel={t("battlePanel.filters.title")}>
         {FILTER_WIDTHS.map((width, index) => (
           <Skeleton
@@ -22,56 +22,58 @@ export const BattlePanelStatisticsSkeleton = () => {
         ))}
       </FilterBar>
 
-      <CombatProfileOverview data={undefined} isLoading />
+      <div className="flex flex-col gap-3 p-3">
+        <CombatProfileOverview data={undefined} isLoading />
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-4">
-        <ChartCard
-          title={t("battlePanel.statistics.currentStreak.title")}
-          description={t("battlePanel.statistics.currentStreak.description")}
-          isLoading
-        >
-          {null}
-        </ChartCard>
-        <ChartCard
-          title={t("battlePanel.statistics.battleDuration.title")}
-          description={t("battlePanel.statistics.battleDuration.description")}
-          isLoading
-        >
-          {null}
-        </ChartCard>
-        <ChartCard
-          title={t("battlePanel.statistics.phGrowth.title")}
-          description={t("battlePanel.statistics.phGrowth.description")}
-          isLoading
-          className="lg:col-span-2"
-        >
-          {null}
-        </ChartCard>
-      </div>
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-4">
+          <ChartCard
+            title={t("battlePanel.statistics.currentStreak.title")}
+            description={t("battlePanel.statistics.currentStreak.description")}
+            isLoading
+          >
+            {null}
+          </ChartCard>
+          <ChartCard
+            title={t("battlePanel.statistics.battleDuration.title")}
+            description={t("battlePanel.statistics.battleDuration.description")}
+            isLoading
+          >
+            {null}
+          </ChartCard>
+          <ChartCard
+            title={t("battlePanel.statistics.phGrowth.title")}
+            description={t("battlePanel.statistics.phGrowth.description")}
+            isLoading
+            className="lg:col-span-2"
+          >
+            {null}
+          </ChartCard>
+        </div>
 
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-        <ChartCard
-          title={t("battlePanel.statistics.professionWinRate.title")}
-          description={t(
-            "battlePanel.statistics.professionWinRate.description",
-          )}
-          isLoading
-        >
-          {null}
-        </ChartCard>
-        <ChartCard
-          title={t("battlePanel.statistics.directMatchups.title")}
-          description={t("battlePanel.statistics.directMatchups.description")}
-          isLoading
-          actions={
-            // Reserves the width of the link to the full record.
-            <span className="flex h-8 items-center">
-              <Skeleton className="h-3 w-20" />
-            </span>
-          }
-        >
-          {null}
-        </ChartCard>
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+          <ChartCard
+            title={t("battlePanel.statistics.professionWinRate.title")}
+            description={t(
+              "battlePanel.statistics.professionWinRate.description",
+            )}
+            isLoading
+          >
+            {null}
+          </ChartCard>
+          <ChartCard
+            title={t("battlePanel.statistics.directMatchups.title")}
+            description={t("battlePanel.statistics.directMatchups.description")}
+            isLoading
+            actions={
+              // Reserves the width of the link to the full record.
+              <span className="flex h-8 items-center">
+                <Skeleton className="h-3 w-20" />
+              </span>
+            }
+          >
+            {null}
+          </ChartCard>
+        </div>
       </div>
     </div>
   );
