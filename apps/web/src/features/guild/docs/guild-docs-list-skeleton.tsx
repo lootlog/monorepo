@@ -1,21 +1,18 @@
-import { FilterBar } from "@/components/common/filter-bar";
+import { ListToolbarSkeleton } from "@/components/common/list-toolbar-skeleton";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { GuildDocsGridSkeleton } from "./guild-docs-grid-skeleton";
+import { GuildDocTileSkeleton } from "./guild-doc-tile-skeleton";
 
-/** Route-level stand-in for the documents page: its toolbar above the cards. */
-export const GuildDocsListSkeleton = () => {
-  return (
-    <div aria-busy="true" className="flex h-full min-h-0 flex-col">
-      <div className="px-3 pt-3">
-        <FilterBar>
-          <Skeleton className="h-10 min-w-0 flex-1 basis-full rounded-lg sm:basis-48" />
-          <Skeleton className="h-5 w-16 rounded-full" />
-          <Skeleton className="h-10 w-28 rounded-lg" />
-        </FilterBar>
+/** Route-level stand-in for the documents page: its toolbar above the tiles. */
+export const GuildDocsListSkeleton = () => (
+  <div aria-busy="true" className="min-h-0 flex-1 overflow-hidden">
+    <ListToolbarSkeleton>
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-5 w-14 rounded-full" />
+        <Skeleton className="h-8 w-24 rounded-lg" />
       </div>
-      <div className="flex min-h-0 flex-1 flex-col pt-3">
-        <GuildDocsGridSkeleton />
-      </div>
-    </div>
-  );
-};
+    </ListToolbarSkeleton>
+    {Array.from({ length: 6 }).map((_, index) => (
+      <GuildDocTileSkeleton key={index} hasActions={false} />
+    ))}
+  </div>
+);

@@ -1,35 +1,47 @@
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@lootlog/ui/components/toggle-group";
 import { useTranslation } from "react-i18next";
-import { AnimatedToggleGroup } from "@/components/ui/animated-toggle-group";
-import { cn } from "cn";
+import { FILTER_PILL_CLASS } from "@/components/common/filter-pill";
 
 export type ReservationFilter = "all" | "available" | "pinned" | "partners";
 
 type ReservationFiltersProps = {
   value: ReservationFilter;
   onChange: (value: ReservationFilter) => void;
-  className?: string;
 };
 
-const FILTERS: ReservationFilter[] = ["all", "available", "pinned", "partners"];
+const FILTERS = ["available", "pinned", "partners"] as const;
 
+/** Pills that narrow the spots to one kind; pressing the active one shows all. */
 export function ReservationFilters({
   value,
   onChange,
-  className,
 }: ReservationFiltersProps) {
   const { t } = useTranslation();
 
   return (
-    <AnimatedToggleGroup
-      label={t("reservations.filters.label")}
-      value={value}
-      onValueChange={onChange}
-      size="lg"
-      options={FILTERS.map((filter) => ({
-        value: filter,
-        label: t(`reservations.filters.${filter}`),
-      }))}
-      className={cn("w-full xl:w-fit", className)}
-    />
+    <ToggleGroup
+      variant="outline"
+      size="sm"
+      spacing={1.5}
+      value={value === "all" ? [] : [value]}
+      onValueChange={(values) =>
+        onChange(FILTERS.find((filter) => filter === values[0]) ?? "all")
+      }
+      aria-label={t("reservations.filters.label")}
+      className="flex-wrap"
+    >
+      {FILTERS.map((filter) => (
+        <ToggleGroupItem
+          key={filter}
+          value={filter}
+          className={FILTER_PILL_CLASS}
+        >
+          {t(`reservations.filters.${filter}`)}
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
   );
 }

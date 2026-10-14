@@ -1,9 +1,8 @@
 {
   "list": {
     "title": "Dokumenty",
-    "searchLabel": "Szukaj dokumentu",
-    "searchPlaceholder": "Szukaj dokumentu...",
-    "toolbarLabel": "Wyszukiwanie i akcje dokumentów",
+    "filterLabel": "Filtruj dokumenty po tytule",
+    "filterPlaceholder": "Filtruj po tytule…",
     "limit": "{{used}} / {{max}} dokumentów",
     "limitShort": "{{used}} / {{max}}",
     "create": "Nowy dokument",
@@ -19,8 +18,8 @@
     "loadError": "Nie udało się wczytać dokumentów",
     "loadErrorDescription": "Sprawdź połączenie i spróbuj ponownie.",
     "limitReached": "Limit dokumentów",
-    "open": "Otwórz",
-    "updatedBy": "Ostatnia edycja: {{name}}",
+    "editorLabel": "Ostatnia edycja",
+    "updatedAtLabel": "Zaktualizowano",
     "unknownEditor": "Nieznany użytkownik",
     "version": "Wersja {{version}}"
   },
@@ -105,6 +104,7 @@
     "emptyDescription": "Usunięte dokumenty pojawią się tutaj.",
     "loadError": "Nie udało się załadować kosza.",
     "move": "Do kosza",
+    "moveNamed": "Przenieś do kosza: {{title}}",
     "moveTitle": "Przenieść dokument do kosza?",
     "moveDescription": "Dokument „{{title}}” zniknie z listy, ale admin lub właściciel będzie mógł go przywrócić.",
     "moved": "Dokument przeniesiony do kosza",
