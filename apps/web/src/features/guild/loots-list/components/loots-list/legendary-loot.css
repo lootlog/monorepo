@@ -1,0 +1,204 @@
+/*
+ * Legendary loot: a lit top edge, a warm wash below it and embers rising
+ * from the bottom. The edge and wash paint once; each ember animates only
+ * `transform` and `opacity` along a fixed path, which the compositor runs
+ * off the main thread. Keyframes avoid `var()`: resolving it costs main-thread
+ * style work on every rendered frame.
+ */
+
+.loot-legendary {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-image:
+    linear-gradient(
+      90deg,
+      transparent 4%,
+      rgb(251 146 60 / 0.75) 50%,
+      transparent 96%
+    ),
+    radial-gradient(90% 75% at 50% 0%, rgb(234 88 12 / 0.1), transparent 72%);
+  background-repeat: no-repeat;
+  background-size:
+    100% 1px,
+    100% 100%;
+}
+
+.loot-sparks {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.loot-spark {
+  position: absolute;
+  border-radius: 9999px;
+  background: var(--spark-color);
+  box-shadow: 0 0 6px 1px
+    color-mix(in oklab, var(--spark-color) 55%, transparent);
+  opacity: 0;
+  animation-iteration-count: infinite;
+}
+
+@keyframes loot-spark-rise-1 {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  40% {
+    transform: translate3d(5px, -24px, 0) scale(0.9);
+  }
+
+  70% {
+    opacity: 0.75;
+    transform: translate3d(-3px, -43px, 0) scale(0.7);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(4px, -60px, 0) scale(0.3);
+  }
+}
+
+@keyframes loot-spark-rise-2 {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  35% {
+    transform: translate3d(-7px, -32px, 0) scale(0.9);
+  }
+
+  68% {
+    opacity: 0.75;
+    transform: translate3d(4px, -59px, 0) scale(0.7);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(-9px, -85px, 0) scale(0.3);
+  }
+}
+
+@keyframes loot-spark-rise-3 {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  42% {
+    transform: translate3d(8px, -44px, 0) scale(0.9);
+  }
+
+  72% {
+    opacity: 0.75;
+    transform: translate3d(-5px, -78px, 0) scale(0.7);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(12px, -105px, 0) scale(0.3);
+  }
+}
+
+@keyframes loot-spark-rise-4 {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  38% {
+    transform: translate3d(-4px, -45px, 0) scale(0.9);
+  }
+
+  66% {
+    opacity: 0.75;
+    transform: translate3d(9px, -85px, 0) scale(0.7);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(-14px, -125px, 0) scale(0.3);
+  }
+}
+
+@keyframes loot-spark-rise-5 {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  45% {
+    transform: translate3d(10px, -65px, 0) scale(0.9);
+  }
+
+  75% {
+    opacity: 0.75;
+    transform: translate3d(-8px, -112px, 0) scale(0.7);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(6px, -145px, 0) scale(0.3);
+  }
+}
+
+@keyframes loot-spark-rise-6 {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  40% {
+    transform: translate3d(-9px, -66px, 0) scale(0.9);
+  }
+
+  70% {
+    opacity: 0.75;
+    transform: translate3d(3px, -115px, 0) scale(0.7);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(-18px, -165px, 0) scale(0.3);
+  }
+}
+
+/* Scrolling renders main-thread frames, which tick every running animation;
+ * holding the embers still until the list settles keeps scrolling smooth. */
+:root[data-scrolling] .loot-spark {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loot-sparks {
+    display: none;
+  }
+}
