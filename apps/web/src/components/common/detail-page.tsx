@@ -1,10 +1,10 @@
 import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import type { CSSProperties, ReactNode } from "react";
-import { SettingsDetailBar } from "./settings-detail-bar";
+import { DetailBar } from "./detail-bar";
 
-type SettingsDetailPageProps = {
-  /** The role, monster or member the page is about. */
+type DetailPageProps = {
+  /** The subject of the page, such as a role, monster or member. */
   name: string;
   /** Sits before the name in the top bar, such as an avatar. */
   media?: ReactNode;
@@ -17,17 +17,17 @@ type SettingsDetailPageProps = {
 };
 
 /**
- * A role, monster or member page: the top bar names it, a row of details
- * opens the page, and banded sections follow.
+ * A page about one subject, such as a role, monster or member: the top bar
+ * names it, a row of details opens the page, and its content follows.
  */
-export const SettingsDetailPage = ({
+export const DetailPage = ({
   name,
   media,
   nameStyle,
   meta,
   actions,
   children,
-}: SettingsDetailPageProps) => (
+}: DetailPageProps) => (
   <div className="flex h-full min-h-0 flex-col">
     <h1 className="sr-only">{name}</h1>
     {/* The top bar shows the page's name, so it reads like a document title. */}
@@ -43,7 +43,7 @@ export const SettingsDetailPage = ({
       </span>
     </HeaderSlotPortal>
     <ScrollArea data-under-top-bar className="min-h-0 flex-1">
-      <SettingsDetailBar meta={meta} actions={actions} />
+      <DetailBar meta={meta} actions={actions} />
       {children}
     </ScrollArea>
   </div>

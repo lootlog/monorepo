@@ -30,7 +30,7 @@ import { MemberSyncButton } from "@/features/guild/settings/members/components/m
 import { MemberDeactivationButton } from "@/features/guild/settings/members/components/member-deactivation-button";
 import { getMemberAccessState } from "@/features/guild/settings/members/member-list-item.utils";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
-import { SettingsDetailPage } from "../components/settings-detail-page";
+import { DetailPage } from "@/components/common/detail-page";
 import { MemberAccessBadges } from "./member-access-badges";
 
 const MemberSettingsDetailPageContent = () => {
@@ -126,7 +126,7 @@ const MemberSettingsDetailPageContent = () => {
   );
 
   return (
-    <SettingsDetailPage
+    <DetailPage
       name={member.name}
       media={
         <Avatar className="size-5 shrink-0 rounded-md" aria-hidden>
@@ -191,7 +191,7 @@ const MemberSettingsDetailPageContent = () => {
         isOnlineInGame={isOnlineInGame}
         isOnlineOnWeb={isOnlineOnWeb}
       />
-    </SettingsDetailPage>
+    </DetailPage>
   );
 };
 

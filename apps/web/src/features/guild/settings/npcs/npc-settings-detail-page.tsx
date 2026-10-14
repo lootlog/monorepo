@@ -7,7 +7,7 @@ import { useLootlogConfigControllerGetLootlogConfig } from "@lootlog/client/main
 import { useParams } from "@tanstack/react-router";
 import { Gem, Settings2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { SettingsDetailPage } from "../components/settings-detail-page";
+import { DetailPage } from "@/components/common/detail-page";
 import { NpcRarityMarks } from "./npc-rarity-marks";
 
 export const NpcSettingsDetailPage = () => {
@@ -44,7 +44,7 @@ export const NpcSettingsDetailPage = () => {
   );
 
   return (
-    <SettingsDetailPage
+    <DetailPage
       name={t(`npcType.${npc.npcType}`)}
       meta={
         <>
@@ -65,6 +65,6 @@ export const NpcSettingsDetailPage = () => {
       }
     >
       <NpcsForm npc={npc} />
-    </SettingsDetailPage>
+    </DetailPage>
   );
 };
