@@ -47,10 +47,10 @@
       "levelValue": "Lvl {{level}}"
     },
     "saveDialog": {
-      "title": "Zapisz skrót",
-      "description": "Skrót zapamiętuje obecne filtry, żeby wrócić do nich jednym kliknięciem.",
-      "nameLabel": "Nazwa skrótu",
-      "namePlaceholder": "np. Legendy z tytanów",
+      "title": "Zapisz szybki filtr",
+      "description": "Nadaj nazwę swojemu szybkiemu filtrowi, aby łatwo go znaleźć później.",
+      "nameLabel": "Nazwa filtru",
+      "namePlaceholder": "np. Moje ulubione filtry",
       "cancel": "Anuluj",
       "save": "Zapisz"
     },
@@ -77,8 +77,8 @@
       "playersSearchPlaceholder": "Szukaj gracza..."
     },
     "quickFilters": {
-      "title": "Skróty",
-      "saveButton": "Zapisz jako skrót",
+      "title": "Szybkie filtry",
+      "saveButton": "Zapisz obecne",
       "clearButton": "Wyczyść filtry",
       "legendaryLabel": "Legendarny",
       "titanLabel": "Tytan",
@@ -86,7 +86,7 @@
       "itemCategory": "Przedmiot",
       "npcCategory": "Potwór",
       "applied": "Włączony. Kliknij, aby wyłączyć.",
-      "remove": "Usuń skrót {{label}}"
+      "remove": "Usuń szybki filtr {{label}}"
     }
   },
   "header": {
