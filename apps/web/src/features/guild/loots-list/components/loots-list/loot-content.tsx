@@ -5,10 +5,7 @@ import type { Loot, Item } from "@/lib/loots/loot-types";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
 import type { ReactNode } from "react";
 import { cn } from "cn";
-import {
-  LOOT_CARD_DIVIDER_CLASS,
-  LOOT_CARD_INSET_CLASS,
-} from "@/features/guild/loots-list/loots-list-layout";
+import { LOOT_CARD_INSET_CLASS } from "@/features/guild/loots-list/loots-list-layout";
 
 export const LootContent = ({
   sortedPlayers,
@@ -37,7 +34,6 @@ export const LootContent = ({
     <div
       className={cn(
         "@container flex flex-1 flex-wrap gap-x-4 gap-y-2.5 py-2.5",
-        LOOT_CARD_DIVIDER_CLASS,
         LOOT_CARD_INSET_CLASS,
       )}
     >

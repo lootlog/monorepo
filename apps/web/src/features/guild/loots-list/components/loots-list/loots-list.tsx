@@ -3,9 +3,8 @@ import { LootsListItem } from "@/features/guild/loots-list/components/loots-list
 import { LootsListSkeleton } from "@/features/guild/loots-list/components/loots-list/loots-list-skeleton";
 import { InfiniteListStatusRow } from "@/components/common/infinite-list-status-row";
 import {
+  LOOTS_GRID_CELL_CLASS,
   LOOTS_GRID_CLASS,
-  LOOTS_LIST_INSET_CLASS,
-  LOOTS_LIST_ROW_GAP_CLASS,
 } from "@/features/guild/loots-list/loots-list-layout";
 import { cn } from "cn";
 import { SharedTooltipProvider } from "@lootlog/ui/components/shared-tooltip-provider";
@@ -156,29 +155,27 @@ export const LootsList = () => {
                   key={virtualRow.key}
                   data-index={virtualRow.index}
                   ref={gridVirtualizer.measureElement}
-                  className={cn(
-                    "absolute top-0",
-                    LOOTS_LIST_INSET_CLASS,
-                    LOOTS_LIST_ROW_GAP_CLASS,
-                  )}
+                  className="absolute inset-x-0 top-0"
                   style={{
                     transform: `translateY(${virtualRow.start - gridVirtualizer.options.scrollMargin}px)`,
                   }}
                 >
                   {isLoaderRow ? (
-                    <InfiniteListStatusRow
-                      hasNextPage={hasNextPage}
-                      hasError={isError}
-                      onRetry={retry}
-                      loadingLabel={t(themedKey("loots.list.loadingMore"))}
-                      endLabel={t(themedKey("loots.list.end"))}
-                      errorLabel={t("loots.list.loadError")}
-                      retryLabel={t("common.actions.retry")}
-                    />
+                    <div className="p-3">
+                      <InfiniteListStatusRow
+                        hasNextPage={hasNextPage}
+                        hasError={isError}
+                        onRetry={retry}
+                        loadingLabel={t(themedKey("loots.list.loadingMore"))}
+                        endLabel={t(themedKey("loots.list.end"))}
+                        errorLabel={t("loots.list.loadError")}
+                        retryLabel={t("common.actions.retry")}
+                      />
+                    </div>
                   ) : rowLoots ? (
                     <div className={cn(LOOTS_GRID_CLASS, "items-stretch")}>
                       {rowLoots.map((loot) => (
-                        <div key={loot.id} className="h-full">
+                        <div key={loot.id} className={LOOTS_GRID_CELL_CLASS}>
                           <LootsListItem
                             loot={loot}
                             showWorld={world === null}
@@ -206,25 +203,23 @@ export const LootsList = () => {
                   key={virtualItem.key}
                   data-index={virtualItem.index}
                   ref={virtualizer.measureElement}
-                  className={cn(
-                    "absolute top-0",
-                    LOOTS_LIST_INSET_CLASS,
-                    LOOTS_LIST_ROW_GAP_CLASS,
-                  )}
+                  className="absolute inset-x-0 top-0"
                   style={{
                     transform: `translateY(${virtualItem.start - virtualizer.options.scrollMargin}px)`,
                   }}
                 >
                   {isLoaderRow ? (
-                    <InfiniteListStatusRow
-                      hasNextPage={hasNextPage}
-                      hasError={isError}
-                      onRetry={retry}
-                      loadingLabel={t(themedKey("loots.list.loadingMore"))}
-                      endLabel={t(themedKey("loots.list.end"))}
-                      errorLabel={t("loots.list.loadError")}
-                      retryLabel={t("common.actions.retry")}
-                    />
+                    <div className="p-3">
+                      <InfiniteListStatusRow
+                        hasNextPage={hasNextPage}
+                        hasError={isError}
+                        onRetry={retry}
+                        loadingLabel={t(themedKey("loots.list.loadingMore"))}
+                        endLabel={t(themedKey("loots.list.end"))}
+                        errorLabel={t("loots.list.loadError")}
+                        retryLabel={t("common.actions.retry")}
+                      />
+                    </div>
                   ) : loot ? (
                     <LootsListItem loot={loot} showWorld={world === null} />
                   ) : null}
