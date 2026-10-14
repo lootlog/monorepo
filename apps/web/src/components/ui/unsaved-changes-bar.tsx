@@ -20,9 +20,6 @@ export type UnsavedChangesBarProps = {
 /** The sidebar's spring, so the bar settles like the navigation does. */
 const SPRING = { type: "spring", stiffness: 500, damping: 40 } as const;
 
-/** A looser spring for the bar's content, which overshoots a little as it lands. */
-const ARRIVAL_SPRING = { type: "spring", stiffness: 420, damping: 18 } as const;
-
 /**
  * The save bar of a form page, docked to the bottom edge as the top bar is to
  * the top. It renders inside the page's form, so its save button submits that
@@ -72,9 +69,9 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
         <m.div
           key="unsaved-bar"
           aria-live="polite"
-          initial={{ opacity: 0, y: "100%" }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: "100%" }}
+          initial={{ y: "100%" }}
+          animate={{ y: 0 }}
+          exit={{ y: "100%" }}
           transition={SPRING}
           className="fixed right-0 bottom-0 left-0 z-50 md:left-(--sidebar-width)"
         >
@@ -85,20 +82,10 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
               LIST_TILE_INSET_CLASS,
             )}
           >
-            <m.p
-              className="mr-auto line-clamp-2 min-w-0 text-sm leading-tight font-medium sm:line-clamp-1"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ ...ARRIVAL_SPRING, delay: 0.08 }}
-            >
+            <p className="mr-auto line-clamp-2 min-w-0 text-sm leading-tight font-medium sm:line-clamp-1">
               {unsavedChangesLabel ?? t("common.unsavedChanges")}
-            </m.p>
-            <m.div
-              className="flex shrink-0 items-center gap-1"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ ...ARRIVAL_SPRING, delay: 0.16 }}
-            >
+            </p>
+            <div className="flex shrink-0 items-center gap-1">
               <Button
                 type="button"
                 variant="ghost"
@@ -109,7 +96,7 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
                 {resetLabel ?? t("common.reset")}
               </Button>
               <span className="relative flex">
-                {/* Arrival cue, on trial: two accent rings ripple out of the save button. */}
+                {/* Once the bar lands, two accent rings ripple out of the save button. */}
                 <m.span
                   aria-hidden="true"
                   className="pointer-events-none absolute inset-0 rounded-lg ring-2 ring-primary"
@@ -144,7 +131,7 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
                   </KbdGroup>
                 </Button>
               </span>
-            </m.div>
+            </div>
           </div>
         </m.div>
       )}
