@@ -1,9 +1,8 @@
-import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 import {
-  LOOT_CARD_DIVIDER_CLASS,
   LOOT_CARD_INSET_CLASS,
+  LOOT_TILE_CLASS,
 } from "@/features/guild/loots-list/loots-list-layout";
 import { ItemSilhouetteSkeleton } from "./item-silhouette-skeleton";
 import { PlayerSilhouetteSkeleton } from "./player-silhouette-skeleton";
@@ -12,7 +11,7 @@ type Props = {
   index?: number;
 };
 
-// Party sizes vary card to card so the placeholder reads like a real list.
+// Party sizes vary tile to tile so the placeholder reads like a real list.
 const PLAYER_COUNTS = [10, 1, 10, 3, 6, 2, 8, 4];
 
 const TITLE_WIDTHS = ["w-36", "w-28", "w-44", "w-32"];
@@ -20,8 +19,8 @@ const TITLE_WIDTHS = ["w-36", "w-28", "w-44", "w-32"];
 const LOCATION_WIDTHS = ["w-44", "w-56", "w-36", "w-48"];
 
 /**
- * Mirrors the loot card layout class for class so the list does not shift
- * when real cards replace the placeholders.
+ * Mirrors the loot tile layout class for class so the list does not shift
+ * when real tiles replace the placeholders.
  */
 export const LootsListItemSkeleton: React.FC<Props> = ({ index = 0 }) => {
   const playersCount = PLAYER_COUNTS[index % PLAYER_COUNTS.length] ?? 1;
@@ -29,9 +28,9 @@ export const LootsListItemSkeleton: React.FC<Props> = ({ index = 0 }) => {
   const locationWidth = LOCATION_WIDTHS[index % LOCATION_WIDTHS.length];
 
   return (
-    <Card
+    <div
       aria-hidden="true"
-      className="flex h-full flex-col gap-0 rounded-xl border-border bg-card p-0"
+      className={cn("flex h-full flex-col", LOOT_TILE_CLASS)}
     >
       <div
         className={cn(
@@ -52,7 +51,6 @@ export const LootsListItemSkeleton: React.FC<Props> = ({ index = 0 }) => {
       <div
         className={cn(
           "flex flex-1 flex-wrap gap-x-4 gap-y-2.5 py-2.5",
-          LOOT_CARD_DIVIDER_CLASS,
           LOOT_CARD_INSET_CLASS,
         )}
       >
@@ -72,7 +70,6 @@ export const LootsListItemSkeleton: React.FC<Props> = ({ index = 0 }) => {
       <div
         className={cn(
           "mt-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-1.5",
-          LOOT_CARD_DIVIDER_CLASS,
           LOOT_CARD_INSET_CLASS,
         )}
       >
@@ -85,6 +82,6 @@ export const LootsListItemSkeleton: React.FC<Props> = ({ index = 0 }) => {
           <Skeleton className="h-3 w-8" />
         </div>
       </div>
-    </Card>
+    </div>
   );
 };

@@ -6,29 +6,22 @@ export const LOOTS_VIEW_MODE_KEY = "loots-view-mode";
 /** Below this width the filters open as an overlay instead of a side panel. */
 export const LOOTS_COMPACT_FILTERS_BREAKPOINT = 1100;
 
-/** Cards, skeleton cards and sentinel rows share this side padding and gap. */
-export const LOOTS_LIST_ROW_GAP_CLASS = "pb-3";
-
-export const LOOTS_LIST_INSET_CLASS = "inset-x-3";
-
 /**
- * The gap above the first card, in pixels. It sits inside the scroller, so
- * scrolled cards pass under the top bar instead of being cut off below it.
+ * Loots tile the list edge to edge: no gaps, one hairline between
+ * neighbours. Tiles and skeleton tiles share the grid and cell classes.
  */
-export const LOOTS_LIST_TOP_GAP = 12;
+export const LOOTS_GRID_CLASS = "grid grid-cols-1 xl:grid-cols-2";
 
-export const LOOTS_GRID_CLASS = "grid grid-cols-1 gap-3 xl:grid-cols-2";
+export const LOOTS_GRID_CELL_CLASS =
+  "h-full border-sidebar-border xl:odd:border-r";
+
+export const LOOT_TILE_CLASS = "border-b border-sidebar-border";
 
 /** Tailwind `xl`, where `LOOTS_GRID_CLASS` gets its second column. */
 export const LOOTS_GRID_MEDIA_QUERY = "(min-width: 80rem)";
 
-/** Horizontal inset shared by every loot card section and the details dialog body. */
+/** Horizontal inset shared by every loot tile section and the details dialog body. */
 export const LOOT_CARD_INSET_CLASS = "px-3 sm:px-4";
 
-export const LOOT_CARD_DIVIDER_CLASS = "border-t border-border/40";
-
-/** Legendary drops share one accent with the legendary item frame. */
-export const LEGENDARY_LOOT_CARD_CLASS =
-  "border-orange-600/60 shadow-[0_0_14px_rgba(234,88,12,0.18)] hover:border-orange-600/80 hover:shadow-[0_0_18px_rgba(234,88,12,0.28)]";
-
+/** Compact feed rows tint legendary drops; loot tiles carry `loot-legendary`. */
 export const LEGENDARY_LOOT_ROW_CLASS = "bg-orange-600/[0.05]";
