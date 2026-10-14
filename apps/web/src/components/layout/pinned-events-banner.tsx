@@ -47,20 +47,24 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
         to="/$guildId/events/$eventId"
         params={{ guildId, eventId: featuredEvent.id }}
         onClick={onNavigate}
-        className={cn("group/event block px-5 pt-3 pb-2", rowClassName)}
+        className={cn(
+          "group/event flex items-center gap-3 px-5 pt-3 pb-2",
+          rowClassName,
+        )}
       >
-        <span className="block text-[0.6875rem] font-semibold tracking-wider text-primary uppercase">
-          {t("events.sidebarBanner.activeEvent")}
-        </span>
-        <span className="mt-1 flex items-center gap-3">
-          <span className="flex min-w-0 flex-1 items-center gap-1">
+        <span className="flex min-w-0 flex-1 flex-col">
+          {/* Never wraps: the heroes widen on hover and would reflow the block. */}
+          <span className="text-[0.6875rem] font-semibold tracking-wider whitespace-nowrap text-primary uppercase">
+            {t("events.sidebarBanner.activeEvent")}
+          </span>
+          <span className="mt-1 flex min-w-0 items-center gap-1">
             <span className="truncate text-base font-semibold text-sidebar-foreground">
               {featuredEvent.name}
             </span>
             <ChevronRight aria-hidden="true" className={chevronClassName} />
           </span>
-          <PinnedEventHeroes heroNpcs={featuredEvent.heroNpcs} />
         </span>
+        <PinnedEventHeroes heroNpcs={featuredEvent.heroNpcs} />
       </Link>
 
       <EventTimersList
