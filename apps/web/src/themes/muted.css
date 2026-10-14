@@ -28,7 +28,6 @@
   --signal-alert: oklch(0.71 0.095 25);
   --text-supporting: oklch(0.79 0.004 250);
   --sidebar: oklch(0.13 0.004 250);
-  --filters-sidebar: var(--sidebar);
   --sidebar-foreground: oklch(0.85 0.003 250);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);

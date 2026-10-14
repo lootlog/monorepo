@@ -1,5 +1,5 @@
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
-import type { Ref } from "react";
+import type { ReactNode, Ref } from "react";
 import { AppTopBar } from "@/components/layout/app-top-bar";
 import { TopBarHeading } from "@/components/layout/top-bar-heading";
 import type { AppNavigationHeading } from "@/navigation/app-navigation";
@@ -8,12 +8,15 @@ type AppNavigationTopBarProps = {
   heading: AppNavigationHeading;
   actionsRef: Ref<HTMLDivElement>;
   contextRef: Ref<HTMLDivElement>;
+  /** Shell-owned search, always between the page's actions and its context. */
+  search?: ReactNode;
 };
 
 export const AppNavigationTopBar = ({
   heading,
   actionsRef,
   contextRef,
+  search,
 }: AppNavigationTopBarProps) => {
   return (
     <AppTopBar>
@@ -24,7 +27,11 @@ export const AppNavigationTopBar = ({
         </div>
 
         <div className="flex shrink-0 items-center justify-end gap-2">
-          <div ref={actionsRef} className="flex items-center gap-2" />
+          <div
+            ref={actionsRef}
+            className="flex items-center gap-2 empty:hidden"
+          />
+          {search}
           {/* The context the page shows, such as the selected world. */}
           <div ref={contextRef} className="flex items-center" />
         </div>

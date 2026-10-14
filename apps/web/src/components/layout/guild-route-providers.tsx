@@ -12,12 +12,11 @@ export const GuildRouteProviders = () => {
 
   return (
     <GuildWatchedItemsProvider>
-      <GuildSearch>
-        {/* Another Organization's pages start fresh instead of keeping state. */}
-        <Fragment key={guildId}>
-          <Outlet />
-        </Fragment>
-      </GuildSearch>
+      <GuildSearch />
+      {/* Another Organization's pages start fresh instead of keeping state. */}
+      <Fragment key={guildId}>
+        <Outlet />
+      </Fragment>
     </GuildWatchedItemsProvider>
   );
 };

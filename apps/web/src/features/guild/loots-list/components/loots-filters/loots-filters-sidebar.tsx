@@ -1,4 +1,3 @@
-import { Accordion } from "@lootlog/ui/components/accordion";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
@@ -12,73 +11,87 @@ import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "cn";
-import { CollapsePresence } from "@/components/common/collapse-presence";
-import { Bookmark, Plus, X } from "lucide-react";
+import { Bookmark, PanelRightClose, SlidersHorizontal } from "lucide-react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ComponentType,
+  type ReactNode,
+} from "react";
 import { LootDirectSearchNotice } from "./loot-direct-search-notice";
+import { LootFilterCount } from "./loot-filter-count";
+import { LootFilterSection } from "./loot-filter-section";
+import {
+  LOOT_FILTER_SECTIONS,
+  getLootFilterSectionState,
+  type LootFilterSectionKey,
+  type LootFiltersState,
+} from "./loot-filter-sections";
+import { LootFiltersIconTooltip } from "./loot-filters-icon-tooltip";
 import { LootItemFilters } from "./loot-item-filters";
 import { LootNpcFilters } from "./loot-npc-filters";
 import { LootPlayerFilters } from "./loot-player-filters";
+import { LootQuickFilters } from "./loot-quick-filters";
 
-const embeddedValue = <Value,>(
-  embedded: boolean,
-  embeddedValue: Value,
-  sidebarValue: Value,
-) => (embedded ? embeddedValue : sidebarValue);
+type LootsFiltersSidebarProps = {
+  state: LootFiltersState;
+  /**
+   * Collapses the docked panel into the rail; overlays close themselves.
+   */
+  onCollapse?: () => void;
+  /** Keeps the header's end free for the overlay's own close button. */
+  hasOverlayCloseButton?: boolean;
+  /** The overlay's accessible title, or a heading in the docked panel. */
+  titleAs?: ComponentType<{ className?: string; children: ReactNode }>;
+  /** Opens this section, scrolls to it and focuses its title on mount. */
+  initialSection?: LootFilterSectionKey;
+  /** Focuses the collapse button on mount, after the rail handed over. */
+  autoFocus?: boolean;
+};
 
-import { useLootFiltersSidebar } from "./use-loot-filters-sidebar";
+const ALL_SECTIONS_OPEN: Record<LootFilterSectionKey, boolean> = {
+  npc: true,
+  item: true,
+  player: true,
+};
 
-export const LootsFiltersSidebar = (
-  props: Parameters<typeof useLootFiltersSidebar>[0],
-) => {
-  const {
-    isDialogOpen,
-    setIsDialogOpen,
-    t,
-    className,
-    newFilterName,
-    setNewFilterName,
-    handleSaveFilter,
-    embedded,
-    canSaveCurrentFilter,
-    allQuickFilters,
-    isQuickFilterApplied,
-    filters,
-    applyFilter,
-    handleRemoveCustomFilter,
-    npcActiveFilterCount,
-    npcTypeOptions,
-    selectedNpcTypes,
-    updateFilters,
-    npcHits,
-    npcsSearchValue,
-    setNpcsSearchValue,
-    isNpcsSearching,
-    npcsSearchError,
-    levelRanges,
-    itemActiveFilterCount,
-    rarityOptions,
-    selectedRarities,
-    professionOptions,
-    selectedProfessions,
-    itemHits,
-    itemsSearchValue,
-    setItemsSearchValue,
-    isItemsSearching,
-    itemsSearchError,
-    hidItem,
-    playerActiveFilterCount,
-    playerHits,
-    playersSearchValue,
-    setPlayersSearchValue,
-    isPlayersSearching,
-    playersSearchError,
-    hasActiveFilters,
-    clearFilters,
-  } = useLootFiltersSidebar(props);
+/** The loot filters: quick filters, then one section per dimension. */
+export const LootsFiltersSidebar = ({
+  state,
+  onCollapse,
+  hasOverlayCloseButton = false,
+  titleAs: Title,
+  initialSection,
+  autoFocus = false,
+}: LootsFiltersSidebarProps) => {
+  const { t } = state;
+  const [openSections, setOpenSections] = useState(ALL_SECTIONS_OPEN);
+
+  const sectionTriggers = useRef(
+    new Map<LootFilterSectionKey, HTMLButtonElement>(),
+  );
+
+  const collapseButton = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (initialSection) {
+      const trigger = sectionTriggers.current.get(initialSection);
+
+      trigger?.scrollIntoView({ block: "start" });
+      trigger?.focus({ preventScroll: true });
+
+      return;
+    }
+
+    if (autoFocus) collapseButton.current?.focus();
+  }, [initialSection, autoFocus]);
+
+  const title = t("loots.filtersPanel.title");
 
   return (
     <>
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={state.isDialogOpen} onOpenChange={state.setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -94,22 +107,28 @@ export const LootsFiltersSidebar = (
             </Label>
             <Input
               id="filterName"
-              value={newFilterName}
-              onChange={(e) => setNewFilterName(e.target.value)}
+              value={state.newFilterName}
+              onChange={(e) => state.setNewFilterName(e.target.value)}
               placeholder={t("loots.filtersPanel.saveDialog.namePlaceholder")}
               className="mt-2"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.nativeEvent.isComposing) {
-                  handleSaveFilter();
+                  state.handleSaveFilter();
                 }
               }}
             />
           </div>
           <DialogFooter className="p-4 pt-0">
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => state.setIsDialogOpen(false)}
+            >
               {t("loots.filtersPanel.saveDialog.cancel")}
             </Button>
-            <Button onClick={handleSaveFilter} disabled={!newFilterName.trim()}>
+            <Button
+              onClick={state.handleSaveFilter}
+              disabled={!state.newFilterName.trim()}
+            >
               <Bookmark className="h-4 w-4 mr-2" />
               {t("loots.filtersPanel.saveDialog.save")}
             </Button>
@@ -117,161 +136,103 @@ export const LootsFiltersSidebar = (
         </DialogContent>
       </Dialog>
 
-      <div
-        className={cn(
-          "h-full flex shrink-0 flex-col bg-background",
-          embeddedValue(embedded, "w-full p-0", "w-[340px] py-3 pr-3"),
-          className,
-        )}
-      >
+      <div className="flex h-full min-h-0 w-full flex-col">
         <div
           className={cn(
-            "flex min-h-0 flex-1 flex-col overflow-hidden bg-filters-sidebar",
-            embeddedValue(
-              embedded,
-              "border-0",
-              "rounded-xl border border-border",
-            ),
+            "flex h-12 shrink-0 items-center gap-2 border-b border-sidebar-border pl-4",
+            hasOverlayCloseButton ? "pr-12" : "pr-2",
           )}
         >
-          <div className="flex-1 overflow-hidden">
-            <ScrollArea className="h-full">
-              <div>
-                <div className="space-y-3 border-b border-border/70 p-3 sm:p-4">
-                  <div className="flex min-h-8 items-center justify-between">
-                    <Label className="text-sm font-semibold">
-                      {t("loots.filtersPanel.quickFilters.title")}
-                    </Label>
-                    {canSaveCurrentFilter && (
-                      <Button
-                        onClick={() => setIsDialogOpen(true)}
-                        variant="default"
-                        size="sm"
-                        className="text-xs"
-                      >
-                        <Plus className="h-3 w-3 mr-1" />
-                        {t("loots.filtersPanel.quickFilters.saveButton")}
-                      </Button>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {allQuickFilters.map((filter) => (
-                      <div
-                        key={filter.id}
-                        className="group flex items-center gap-1"
-                      >
-                        <Button
-                          type="button"
-                          variant={
-                            isQuickFilterApplied(filter.filters)
-                              ? "default"
-                              : "outline"
-                          }
-                          size="xs"
-                          onClick={() => applyFilter(filter.filters)}
-                          aria-pressed={isQuickFilterApplied(filter.filters)}
-                        >
-                          {"category" in filter && (
-                            <span className="text-xs opacity-80">
-                              {filter.category}:
-                            </span>
-                          )}
-                          {filter.label}
-                        </Button>
-                        {!("isDefault" in filter && filter.isDefault) && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-xs"
-                            aria-label={t("common.removeOption", {
-                              label: filter.label,
-                            })}
-                            className="opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
-                            onClick={() => handleRemoveCustomFilter(filter.id)}
-                          >
-                            <X className="size-3" />
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {filters.search !== "" && (
-                  <div className="border-b border-border/70 p-3 sm:p-4">
-                    <LootDirectSearchNotice
-                      term={filters.search}
-                      onClear={() => updateFilters({ search: "" })}
-                    />
-                  </div>
-                )}
-
-                <Accordion multiple defaultValue={["npc", "item", "player"]}>
-                  <LootNpcFilters
-                    t={t}
-                    npcActiveFilterCount={npcActiveFilterCount}
-                    npcTypeOptions={npcTypeOptions}
-                    selectedNpcTypes={selectedNpcTypes}
-                    filters={filters}
-                    updateFilters={updateFilters}
-                    npcHits={npcHits}
-                    npcsSearchValue={npcsSearchValue}
-                    setNpcsSearchValue={setNpcsSearchValue}
-                    isNpcsSearching={isNpcsSearching}
-                    npcsSearchError={npcsSearchError}
-                    levelRanges={levelRanges}
-                  />
-
-                  <LootItemFilters
-                    t={t}
-                    itemActiveFilterCount={itemActiveFilterCount}
-                    rarityOptions={rarityOptions}
-                    selectedRarities={selectedRarities}
-                    filters={filters}
-                    updateFilters={updateFilters}
-                    professionOptions={professionOptions}
-                    selectedProfessions={selectedProfessions}
-                    itemHits={itemHits}
-                    itemsSearchValue={itemsSearchValue}
-                    setItemsSearchValue={setItemsSearchValue}
-                    isItemsSearching={isItemsSearching}
-                    itemsSearchError={itemsSearchError}
-                    hidItem={hidItem}
-                    levelRanges={levelRanges}
-                  />
-
-                  <LootPlayerFilters
-                    t={t}
-                    playerActiveFilterCount={playerActiveFilterCount}
-                    filters={filters}
-                    updateFilters={updateFilters}
-                    playerHits={playerHits}
-                    playersSearchValue={playersSearchValue}
-                    setPlayersSearchValue={setPlayersSearchValue}
-                    isPlayersSearching={isPlayersSearching}
-                    playersSearchError={playersSearchError}
-                    levelRanges={levelRanges}
-                  />
-                </Accordion>
-              </div>
-            </ScrollArea>
+          {/* The icon that opens the panel, in the accent, tells the title from the section headers. */}
+          <SlidersHorizontal
+            aria-hidden="true"
+            className="size-4 shrink-0 text-primary"
+          />
+          {Title ? (
+            <Title className="text-sm font-semibold">{title}</Title>
+          ) : (
+            <h2 className="text-sm font-semibold">{title}</h2>
+          )}
+          <LootFilterCount count={state.totalActiveFilterCount} />
+          <div className="ml-auto flex items-center gap-1">
+            {state.hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground"
+                aria-label={t("loots.filtersPanel.quickFilters.clearButton")}
+                onClick={state.clearFilters}
+              >
+                {t("loots.filtersPanel.clear")}
+              </Button>
+            )}
+            {onCollapse && (
+              <LootFiltersIconTooltip
+                label={t("loots.filtersPanel.collapse")}
+                trigger={
+                  <Button
+                    ref={collapseButton}
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={t("loots.filtersPanel.collapse")}
+                    aria-expanded
+                    onClick={onCollapse}
+                    className="text-muted-foreground"
+                  >
+                    <PanelRightClose aria-hidden="true" />
+                  </Button>
+                }
+              />
+            )}
           </div>
-
-          <CollapsePresence open={hasActiveFilters}>
-            <div className="border-t border-border bg-background/95 px-3">
-              <div className="flex h-14 w-full items-center">
-                <Button
-                  onClick={clearFilters}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  {t("loots.filtersPanel.quickFilters.clearButton")}
-                </Button>
-              </div>
-            </div>
-          </CollapsePresence>
         </div>
+
+        <ScrollArea className="min-h-0 flex-1">
+          <LootQuickFilters
+            t={t}
+            allQuickFilters={state.allQuickFilters}
+            isQuickFilterApplied={state.isQuickFilterApplied}
+            toggleQuickFilter={state.toggleQuickFilter}
+            handleRemoveCustomFilter={state.handleRemoveCustomFilter}
+            canSaveCurrentFilter={state.canSaveCurrentFilter}
+            setIsDialogOpen={state.setIsDialogOpen}
+          />
+
+          {state.filters.search !== "" && (
+            <div className="border-b border-sidebar-border p-4">
+              <LootDirectSearchNotice
+                term={state.filters.search}
+                onClear={() => state.updateFilters({ search: "" })}
+              />
+            </div>
+          )}
+
+          {LOOT_FILTER_SECTIONS.map(({ key, icon, titleKey }) => {
+            const { count, clear } = getLootFilterSectionState(state, key);
+
+            return (
+              <LootFilterSection
+                key={key}
+                icon={icon}
+                title={t(titleKey)}
+                count={count}
+                open={openSections[key]}
+                onOpenChange={(open) =>
+                  setOpenSections((current) => ({ ...current, [key]: open }))
+                }
+                onClear={clear}
+                triggerRef={(node) => {
+                  if (node) sectionTriggers.current.set(key, node);
+                  else sectionTriggers.current.delete(key);
+                }}
+              >
+                {key === "npc" && <LootNpcFilters {...state} />}
+                {key === "item" && <LootItemFilters {...state} />}
+                {key === "player" && <LootPlayerFilters {...state} />}
+              </LootFilterSection>
+            );
+          })}
+        </ScrollArea>
       </div>
     </>
   );

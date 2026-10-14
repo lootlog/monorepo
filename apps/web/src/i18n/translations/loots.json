@@ -36,14 +36,12 @@
     }
   },
   "filtersPanel": {
-    "playersLabel": "Gracze",
-    "playersPlaceholder": "Wybierz graczy",
-    "npcsLabel": "Potwory",
-    "npcsPlaceholder": "Wybierz potwory",
-    "raritiesLabel": "Rzadkość przedmiotu",
-    "raritiesPlaceholder": "Wybierz rzadkość",
-    "npcTypesLabel": "Typ potwora",
-    "npcTypesPlaceholder": "Wybierz typ potwora",
+    "title": "Filtry",
+    "expand": "Pokaż filtry",
+    "collapse": "Zwiń filtry",
+    "clear": "Wyczyść",
+    "clearSection": "Wyczyść: {{section}}",
+    "activeCount": "Aktywne filtry: {{count}}",
     "common": {
       "levelRange": "Zakres poziomów",
       "levelValue": "Lvl {{level}}"
@@ -57,43 +55,44 @@
       "save": "Zapisz"
     },
     "npcSection": {
-      "title": "Filtry potworów",
-      "npcTypesLabel": "Typy potworów",
+      "title": "Potwory",
+      "npcTypesLabel": "Typ",
       "npcsLabel": "Potwory",
       "npcsPlaceholder": "Wybierz potwory",
       "npcsSearchPlaceholder": "Szukaj potwora..."
     },
     "itemSection": {
-      "title": "Filtry przedmiotów",
+      "title": "Przedmioty",
       "raritiesLabel": "Rzadkość",
-      "professionsLabel": "Profesje",
+      "professionsLabel": "Profesja",
       "itemsLabel": "Przedmioty",
       "itemsPlaceholder": "Wybierz przedmioty",
       "itemsSearchPlaceholder": "Szukaj przedmiotu...",
       "filteredItemLabel": "Filtrowany przedmiot (ID)"
     },
     "playerSection": {
-      "title": "Filtry graczy",
+      "title": "Gracze",
       "playersLabel": "Gracze",
       "playersPlaceholder": "Wybierz graczy",
       "playersSearchPlaceholder": "Szukaj gracza..."
     },
     "quickFilters": {
       "title": "Szybkie filtry",
-      "saveButton": "Zapisz",
+      "saveButton": "Zapisz obecne",
       "clearButton": "Wyczyść filtry",
       "legendaryLabel": "Legendarny",
       "titanLabel": "Tytan",
       "heroLabel": "Heros",
       "itemCategory": "Przedmiot",
-      "npcCategory": "Potwór"
+      "npcCategory": "Potwór",
+      "applied": "Włączony. Kliknij, aby wyłączyć.",
+      "remove": "Usuń szybki filtr {{label}}"
     }
   },
   "header": {
     "shortcut": "{{modifier}} + K",
     "listView": "Widok listy",
     "gridView": "Widok siatki",
-    "mobileFiltersTitle": "Filtry łupów",
     "filtersButton": "Filtry"
   },
   "searchCommand": {

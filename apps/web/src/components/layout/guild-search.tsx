@@ -1,16 +1,17 @@
-import { useEffect, useState, type PropsWithChildren } from "react";
+import { useContext, useEffect } from "react";
 import { useMatches } from "@tanstack/react-router";
 import { Capability } from "@lootlog/domain/access-policy";
 import { GuildSearchContext } from "@/contexts/guild-search-context";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { resolveAppNavigation } from "@/navigation/app-navigation";
 import { LootSearchCommand } from "@/features/guild/loots-list/components/loots-filters/loot-search-command";
-import { GuildSearchButton } from "./guild-search-button";
-import { HeaderSlotPortal } from "./header-slot-portal";
 
-/** The Organization search palette: header button, the shortcut, and its state. */
-export const GuildSearch = ({ children }: PropsWithChildren) => {
-  const [open, setOpen] = useState(false);
+/**
+ * The Organization search palette and its shortcut. The top bar renders the
+ * button; both share the open state the guild shell owns.
+ */
+export const GuildSearch = () => {
+  const { isOpen, setIsOpen } = useContext(GuildSearchContext);
   const { data: accessPolicy } = useGuildPermissions();
   const matches = useMatches();
 
@@ -27,27 +28,21 @@ export const GuildSearch = ({ children }: PropsWithChildren) => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "k" && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
-        setOpen((current) => !current);
+        setIsOpen((current) => !current);
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
 
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [setIsOpen]);
 
   return (
-    <GuildSearchContext.Provider value={setOpen}>
-      {children}
-      <HeaderSlotPortal slot="actions">
-        <GuildSearchButton onClick={() => setOpen(true)} />
-      </HeaderSlotPortal>
-      <LootSearchCommand
-        open={open}
-        onOpenChange={setOpen}
-        pages={pages}
-        canSearchLoots={canSearchLoots}
-      />
-    </GuildSearchContext.Provider>
+    <LootSearchCommand
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      pages={pages}
+      canSearchLoots={canSearchLoots}
+    />
   );
 };
