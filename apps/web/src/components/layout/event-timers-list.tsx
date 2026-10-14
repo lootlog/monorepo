@@ -209,7 +209,7 @@ export const EventTimersList: FC<EventTimersListProps> = ({
   const hasMore = activeTimers.length > 3;
 
   return (
-    <div>
+    <div className="mt-1.5">
       {visibleTimers.map((timer) => (
         <TimerItem
           key={timer.npcId}
