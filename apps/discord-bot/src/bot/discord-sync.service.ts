@@ -210,12 +210,7 @@ const channelSnapshot = (
     parentId: channel.parentId ?? null,
     position: channel.rawPosition,
     active: true,
-    canView: permissions.canView,
-    canSend: permissions.canSend,
-    hasRequiredPermissions: permissions.hasRequiredPermissions,
-    requiredPermissions: permissions.requiredPermissions,
-    grantedPermissions: permissions.grantedPermissions,
-    missingPermissions: permissions.missingPermissions,
+    ...permissions,
     lastSyncedAt: syncedAt,
   };
 };
