@@ -1,3 +1,4 @@
+import { CursorPaginationSchema } from "./pagination.js";
 import {
   DateTimeString,
   type DeepMutable,
@@ -53,14 +54,7 @@ const HeadToHeadRecordResponseSchema = Schema.Struct({
 
 const HeadToHeadPaginatedResponseSchema = Schema.Struct({
   records: Schema.Array(HeadToHeadRecordResponseSchema),
-  pagination: Schema.Struct({
-    size: Schema.Number,
-    hasNext: Schema.Boolean,
-    hasPrev: Schema.Boolean,
-    nextCursor: Schema.optional(Schema.String),
-    previousCursor: Schema.optional(Schema.String),
-    total: Schema.optional(Schema.Number),
-  }),
+  pagination: CursorPaginationSchema,
   meta: Schema.Struct({
     performance: Schema.Struct({
       queryTime: Schema.Number,
@@ -157,14 +151,7 @@ const PlayerVsPlayerBattleResponseSchema = Schema.Struct({
 
 const PlayerVsPlayerPaginatedResponseSchema = Schema.Struct({
   battles: Schema.Array(PlayerVsPlayerBattleResponseSchema),
-  pagination: Schema.Struct({
-    size: Schema.Number,
-    hasNext: Schema.Boolean,
-    hasPrev: Schema.Boolean,
-    nextCursor: Schema.optional(Schema.String),
-    previousCursor: Schema.optional(Schema.String),
-    total: Schema.optional(Schema.Number),
-  }),
+  pagination: CursorPaginationSchema,
   meta: Schema.Struct({
     performance: Schema.Struct({
       queryTime: Schema.Number,

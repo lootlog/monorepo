@@ -1,3 +1,5 @@
+import type { CursorPagination } from "./pagination.js";
+
 export type DateRangeQuery = {
   period?: string;
   startDate?: string;
@@ -17,13 +19,6 @@ export type InMemoryPaginationOptions = {
 
 export type InMemoryPaginationResult<TRecord> = {
   records: TRecord[];
-  pagination: {
-    size: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-    nextCursor?: string;
-    previousCursor?: string;
-    total?: number;
-  };
+  pagination: CursorPagination;
   totalRecords: number;
 };
