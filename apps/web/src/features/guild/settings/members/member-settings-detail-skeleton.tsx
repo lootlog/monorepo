@@ -4,7 +4,7 @@ import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
 import { SkeletonLine } from "@/components/common/skeleton-line";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
-import { SettingsDetailSkeleton } from "../components/settings-detail-skeleton";
+import { DetailSkeleton } from "@/components/common/detail-skeleton";
 
 /** Each section's always-present fields, as `MemberData` labels them. */
 const SECTIONS = [
@@ -47,7 +47,7 @@ export const MemberSettingsDetailSkeleton = () => {
   const { t } = useTranslation();
 
   return (
-    <SettingsDetailSkeleton
+    <DetailSkeleton
       meta={
         <>
           <span className="flex items-center gap-2">
@@ -100,6 +100,6 @@ export const MemberSettingsDetailSkeleton = () => {
           <ListTileSkeleton />
         </BandSection>
       </div>
-    </SettingsDetailSkeleton>
+    </DetailSkeleton>
   );
 };

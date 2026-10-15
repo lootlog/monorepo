@@ -9,7 +9,7 @@ import {
   useKillsControllerGetUserKillStats,
 } from "@lootlog/client/main";
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
-import { KillStatsFilterBar } from "@/features/kills/components/kill-stats-filter-bar";
+import { KillStatsFilters } from "@/features/kills/components/kill-stats-filters";
 
 export type KillsFiltersState = {
   world?: string;
@@ -64,7 +64,7 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
   };
 
   return (
-    <KillStatsFilterBar
+    <KillStatsFilters
       world={{
         value: filters.world ?? null,
         worlds,

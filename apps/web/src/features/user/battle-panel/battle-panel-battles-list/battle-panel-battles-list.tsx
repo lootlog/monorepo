@@ -191,44 +191,35 @@ export const BattlePanelBattlesList = () => {
         </MobileFiltersDrawer>
       )}
 
-      <div
-        data-fills-page
-        className="flex w-full min-w-0 flex-col overflow-hidden"
-      >
-        <div className="flex-1 min-w-0 flex overflow-hidden">
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden p-3">
-            <BattlesList
-              activeFilterChips={activeFilterChips}
-              battlesResponse={battlesResponse}
-              clearFiltersLabel={t("battlePanel.filters.clear")}
-              params={{
-                cursor: optionalQueryValue(queryState.cursor),
-                size: pageSize,
-                world: filters.world,
-                type: filters.type,
-                search: filters.search,
-                result: filters.result,
-                ph: filters.ph,
-                characterId: filters.characterId,
-                startDate: optionalQueryValue(queryState.startDate),
-                endDate: optionalQueryValue(queryState.endDate),
-                minLevel: filters.minLevel,
-                maxLevel: filters.maxLevel,
-              }}
-              onClearFilters={handleClearFilters}
-              onCursorChange={handleCursorChange}
-              onFiltersChange={handleFiltersChange}
-              pageIndex={pageIndex}
-              pageSize={pageSize}
-              showPagination
-              isLoading={isBattlesLoading}
-              isRefreshing={isBattlesRefreshing}
-              enableScrollToTop
-              toolbar={tableToolbar}
-            />
-          </div>
-        </div>
-      </div>
+      <BattlesList
+        activeFilterChips={activeFilterChips}
+        battlesResponse={battlesResponse}
+        clearFiltersLabel={t("battlePanel.filters.clear")}
+        params={{
+          cursor: optionalQueryValue(queryState.cursor),
+          size: pageSize,
+          world: filters.world,
+          type: filters.type,
+          search: filters.search,
+          result: filters.result,
+          ph: filters.ph,
+          characterId: filters.characterId,
+          startDate: optionalQueryValue(queryState.startDate),
+          endDate: optionalQueryValue(queryState.endDate),
+          minLevel: filters.minLevel,
+          maxLevel: filters.maxLevel,
+        }}
+        onClearFilters={handleClearFilters}
+        onCursorChange={handleCursorChange}
+        onFiltersChange={handleFiltersChange}
+        pageIndex={pageIndex}
+        pageSize={pageSize}
+        showPagination
+        isLoading={isBattlesLoading}
+        isRefreshing={isBattlesRefreshing}
+        enableScrollToTop
+        toolbar={tableToolbar}
+      />
     </>
   );
 };

@@ -5,18 +5,15 @@ import {
 import { cn } from "cn";
 import type { ReactNode } from "react";
 
-type SettingsDetailBarProps = {
+type DetailBarProps = {
   /** `MetaItem`s and other details about the page's subject. */
   meta: ReactNode;
   /** Controls at the row's end. */
   actions?: ReactNode;
 };
 
-/** The row of details that opens a role, monster or member page. */
-export const SettingsDetailBar = ({
-  meta,
-  actions,
-}: SettingsDetailBarProps) => (
+/** The row of details that opens a `DetailPage`. */
+export const DetailBar = ({ meta, actions }: DetailBarProps) => (
   <div
     data-list-tile
     className={cn(

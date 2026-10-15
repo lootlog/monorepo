@@ -9,8 +9,6 @@ await initializeTestTranslations({
   "events.kills.kpiShareOfEventKills":
     "events.kills.kpiShareOfEventKills:{{percentage}}",
   "events.kills.kpiActiveShare": "events.kills.kpiActiveShare:{{percentage}}",
-  "events.kills.memberRankingPlace":
-    "events.kills.memberRankingPlace:{{position}}/{{count}}",
 });
 
 afterEach(cleanup);
@@ -27,13 +25,7 @@ const contextStats = {
 describe("MemberSummaryStrip", () => {
   it("relates the member's kills and AFK time to the event", () => {
     render(
-      <MemberSummaryStrip
-        member={{ avatar: null, name: "Wild", userId: "user-1" }}
-        memberId="8112"
-        eventName="Wakacje 2026"
-        contextStats={contextStats}
-        eventKillCount={4}
-      />,
+      <MemberSummaryStrip contextStats={contextStats} eventKillCount={4} />,
     );
 
     expect(
@@ -42,39 +34,9 @@ describe("MemberSummaryStrip", () => {
     expect(screen.getByText("events.kills.kpiActiveShare:97.5")).toBeTruthy();
   });
 
-  it("shows the ranking place only when one hero's ranking applies", () => {
-    const { rerender } = render(
-      <MemberSummaryStrip
-        member={{ avatar: null, name: "Wild", userId: "user-1" }}
-        memberId="8112"
-        eventName="Wakacje 2026"
-        contextStats={contextStats}
-      />,
-    );
-
-    expect(screen.queryByText(/events.kills.memberRankingPlace/)).toBeNull();
-
-    rerender(
-      <MemberSummaryStrip
-        member={{ avatar: null, name: "Wild", userId: "user-1" }}
-        memberId="8112"
-        eventName="Wakacje 2026"
-        contextStats={contextStats}
-        rankingPlace={{ position: 2, playerCount: 14 }}
-      />,
-    );
-
-    expect(
-      screen.getByText("events.kills.memberRankingPlace:2/14"),
-    ).toBeTruthy();
-  });
-
-  it("keeps the overview useful without member details or kills", () => {
+  it("leaves out the shares while the member has no kills", () => {
     render(
       <MemberSummaryStrip
-        member={undefined}
-        memberId="8112"
-        eventName="Wakacje 2026"
         contextStats={{
           avgAfkPercentage: 0,
           avgPointsPerKill: 0,
@@ -87,7 +49,6 @@ describe("MemberSummaryStrip", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "#8112" })).toBeTruthy();
     expect(screen.queryByText(/events.kills.kpiShareOfEventKills/)).toBeNull();
     expect(screen.queryByText(/events.kills.kpiActiveShare/)).toBeNull();
   });

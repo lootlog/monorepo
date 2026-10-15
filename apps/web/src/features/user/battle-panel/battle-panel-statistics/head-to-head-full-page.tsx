@@ -3,7 +3,6 @@ import { HeadToHeadPageVariant } from "./head-to-head-page-variant";
 
 /** Shared with the route's pending skeleton, which renders the same titles. */
 export const headToHeadPageCopy = {
-  subtitleKey: "battlePanel.statistics.directMatchups.fullDescription",
   titleKey: "battlePanel.statistics.directMatchups.title",
 };
 

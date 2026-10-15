@@ -29,12 +29,7 @@ export function AbyssBattlesTab({
   const { t } = useTranslation();
 
   return (
-    // From md up the list fills the space left on the page and scrolls inside
-    // its card, so the table header and pagination stay in view.
-    <section
-      aria-label={t("battlePanel.abyss.tabs.battles")}
-      className="flex min-w-0 flex-col md:min-h-0 md:flex-1"
-    >
+    <section aria-label={t("battlePanel.abyss.tabs.battles")}>
       <BattlesList
         battlesResponse={battlesResponse}
         clearFiltersLabel={t("battlePanel.filters.clear")}

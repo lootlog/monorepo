@@ -1,24 +1,25 @@
 import { formatLevel } from "@lootlog/domain/profession";
 import { EmptyState } from "@/components/common/empty-state";
-import { NpcTile } from "@/components/tiles/npc-tile";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { Ghost } from "lucide-react";
-import { KillStatsFilterBar } from "@/features/kills/components/kill-stats-filter-bar";
+import { KillStatsFilters } from "@/features/kills/components/kill-stats-filters";
 import { MemberNameWithColor } from "./components/member-name-with-color";
 import { StatsCountCell } from "./components/stats-count-cell";
-import { StatsDetailHeader } from "./components/stats-detail-header";
-import { StatsMemberAvatar } from "./components/stats-member-avatar";
+import { StatsDetailMeta } from "./components/stats-detail-meta";
+import { MemberAvatar } from "@/components/common/member-avatar";
 import { RankBadge } from "@/components/common/rank-badge";
 import {
   STATS_TABLE_COUNT_COLUMN_ID,
   STATS_TABLE_POSITION_COLUMN_ID,
   StatsTable,
 } from "./components/stats-table";
-import { StatsTableCard } from "./components/stats-table-card";
+import { StatsTableResults } from "./components/stats-table-results";
+import { DetailPage } from "@/components/common/detail-page";
+import { ResultsSurface } from "@/components/common/results-surface";
 import { StatsDetailPageSkeleton } from "./stats-detail-page-skeleton";
 import { useNpcKillersPage } from "./use-npc-killers-page";
 
@@ -58,7 +59,7 @@ export const NpcKillersPage = () => {
       header: () => t("kills.npcKillers.member"),
       cell: ({ row: { original: killer } }) => (
         <div className="flex min-w-0 items-center gap-2.5">
-          <StatsMemberAvatar
+          <MemberAvatar
             userId={killer.memberUserId}
             avatar={killer.memberAvatar}
             name={killer.memberName}
@@ -115,59 +116,40 @@ export const NpcKillersPage = () => {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 p-3">
-      <StatsDetailHeader
-        media={
-          npc.npcIcon && (
-            <span className="w-12 shrink-0">
-              <NpcTile
-                npc={{
-                  id: npc.npcId,
-                  name: npc.npcName,
-                  lvl: npc.npcLvl,
-                  icon: npc.npcIcon,
-                }}
-              />
-            </span>
-          )
+    <DetailPage
+      name={npc.npcName}
+      meta={
+        <StatsDetailMeta
+          subtitle={`${t(`npcType.${npc.npcType}`)} · ${t("kills.level", { level: formatLevel(npc.npcLvl, npc.npcProf) })}`}
+          metrics={[
+            {
+              key: "kills",
+              label: t("kills.npcKillers.uniqueGuildKills"),
+              value: npc.uniqueGuildKills,
+            },
+            {
+              key: "members",
+              label: t("kills.npcKillers.totalMembers"),
+              value: killers.length,
+            },
+          ]}
+        />
+      }
+    >
+      <ResultsSurface
+        filters={
+          <KillStatsFilters
+            period={settings.period}
+            onPeriodChange={handlePeriodChange}
+            search={{
+              value: search,
+              placeholder: t("kills.npcKillers.searchPlaceholder"),
+              onChange: handleSearchChange,
+            }}
+          />
         }
-        title={npc.npcName}
-        subtitle={`${t(`npcType.${npc.npcType}`)} · ${t("kills.level", { level: formatLevel(npc.npcLvl, npc.npcProf) })}`}
-        metrics={[
-          {
-            key: "kills",
-            label: t("kills.npcKillers.uniqueGuildKills"),
-            value: npc.uniqueGuildKills,
-          },
-          {
-            key: "members",
-            label: t("kills.npcKillers.totalMembers"),
-            value: killers.length,
-          },
-        ]}
-      />
-
-      <KillStatsFilterBar
-        period={settings.period}
-        onPeriodChange={handlePeriodChange}
-        search={{
-          value: search,
-          placeholder: t("kills.npcKillers.searchPlaceholder"),
-          onChange: handleSearchChange,
-        }}
-      />
-
-      <StatsTableCard
-        isLoading={false}
-        emptyMessage={
-          paginatedKillers.length === 0
-            ? t(
-                hasActiveFilters
-                  ? "kills.npcKillers.filteredNoData"
-                  : "kills.npcKillers.noKillers",
-              )
-            : undefined
-        }
+        filtersLabel={t("kills.filters.title")}
+        scrollResetKey={cursor}
         footer={
           <TablePaginationFooter
             totalLabel={t("kills.fullRanking.total", { count: total })}
@@ -178,8 +160,21 @@ export const NpcKillersPage = () => {
           />
         }
       >
-        <StatsTable table={table} className="border-b" />
-      </StatsTableCard>
-    </div>
+        <StatsTableResults
+          isLoading={false}
+          emptyMessage={
+            paginatedKillers.length === 0
+              ? t(
+                  hasActiveFilters
+                    ? "kills.npcKillers.filteredNoData"
+                    : "kills.npcKillers.noKillers",
+                )
+              : undefined
+          }
+        >
+          <StatsTable table={table} className="border-b" />
+        </StatsTableResults>
+      </ResultsSurface>
+    </DetailPage>
   );
 };

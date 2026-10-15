@@ -1,10 +1,6 @@
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { cn } from "cn";
-import {
-  LIST_TILE_INSET_CLASS,
-  LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+import { FilterBar } from "@/components/common/filter-bar";
 import { ActivityLogsMobileListSkeleton } from "./components/activity-logs-mobile-list-skeleton";
 
 const DESKTOP_FILTER_WIDTHS = [
@@ -18,15 +14,7 @@ const DESKTOP_FILTER_WIDTHS = [
 /** Route-level stand-in for the activity log: its filter bar above the entries. */
 export const ActivityLogsPageSkeleton = () => (
   <div aria-busy="true" className="min-h-0 flex-1 overflow-hidden">
-    <div
-      data-list-tile
-      aria-hidden="true"
-      className={cn(
-        "flex min-h-12 items-center py-2",
-        LIST_TILE_RULE_CLASS,
-        LIST_TILE_INSET_CLASS,
-      )}
-    >
+    <FilterBar>
       {/* The same container query as `ActivityLogsFilterToolbar`. */}
       <div className="@container/activity-filters w-full min-w-0">
         <div className="flex w-full min-w-0 items-center gap-2">
@@ -40,7 +28,7 @@ export const ActivityLogsPageSkeleton = () => (
           ))}
         </div>
       </div>
-    </div>
+    </FilterBar>
     <div className="xl:hidden">
       <ActivityLogsMobileListSkeleton rows={20} />
     </div>

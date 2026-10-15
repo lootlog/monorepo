@@ -1,25 +1,10 @@
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { Skull } from "lucide-react";
-import { useTranslation } from "react-i18next";
 import { SkeletonFilterBar } from "./components/skeleton-filter-bar";
-import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
+import { EventKillRowsSkeleton } from "./components/kills/event-kill-rows-skeleton";
 
-export const EventKillsSkeleton = () => {
-  const { t } = useTranslation();
-
-  return (
-    <div aria-busy="true" className="flex flex-col gap-3 px-3 py-3">
-      <SkeletonFilterBar />
-      <SectionCard className="w-full min-w-0 overflow-hidden">
-        <SectionCardHeader icon={Skull} title={t("events.kills.title")} />
-        <TableRowsSkeleton
-          rows={7}
-          trailingColumns={3}
-          withHeader
-          withNpcTile
-        />
-      </SectionCard>
-    </div>
-  );
-};
+/** Route-level stand-in for the event's kill history: its hero tabs above the kills. */
+export const EventKillsSkeleton = () => (
+  <div aria-busy="true" className="min-h-0 flex-1 overflow-clip">
+    <SkeletonFilterBar />
+    <EventKillRowsSkeleton />
+  </div>
+);

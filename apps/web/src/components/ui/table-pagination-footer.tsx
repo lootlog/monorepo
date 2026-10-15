@@ -1,6 +1,8 @@
+import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
 import type { ReactNode } from "react";
 import { Button } from "@lootlog/ui/components/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 
 type TablePaginationFooterProps = {
@@ -21,7 +23,12 @@ export const TablePaginationFooter = ({
   const { t } = useTranslation();
 
   return (
-    <div className="h-14 shrink-0 border-t border-border py-4 flex items-center justify-between px-4">
+    <div
+      className={cn(
+        "flex h-14 shrink-0 items-center justify-between border-t border-sidebar-border",
+        LIST_TILE_INSET_CLASS,
+      )}
+    >
       <div className="text-sm text-muted-foreground whitespace-nowrap">
         {totalLabel}
       </div>

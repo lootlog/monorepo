@@ -1,3 +1,8 @@
+import { cn } from "cn";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
 import { formatLevel } from "@lootlog/domain/profession";
 import { Badge } from "@lootlog/ui/components/badge";
 import { NpcTile } from "@/components/tiles/npc-tile";
@@ -13,11 +18,12 @@ export const KillsMobileList = ({ npcs, startRank }: KillsMobileListProps) => {
   const { t } = useTranslation();
 
   return (
-    <div className="grid gap-2 p-3">
+    <div>
       {npcs.map((npc, index) => (
         <div
           key={`${npc.npcId}-${npc.npcName}`}
-          className="border-b border-border/70 p-3 last:border-b-0"
+          data-list-tile
+          className={cn("py-3", LIST_TILE_RULE_CLASS, LIST_TILE_INSET_CLASS)}
         >
           <div className="flex min-w-0 items-start gap-3">
             <div className="flex h-8 min-w-8 items-center justify-center rounded-md bg-muted text-sm font-semibold text-muted-foreground">

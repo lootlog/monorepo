@@ -1,3 +1,7 @@
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import type { PlayerVsPlayerBattle } from "@/lib/api/battlelog-types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
@@ -31,7 +35,12 @@ export const BattlePanelPvpBattleCard = ({
   return (
     <button
       type="button"
-      className="w-full border-b border-border/70 p-3 last:border-b-0 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      data-list-tile
+      className={cn(
+        "w-full py-3 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+        LIST_TILE_RULE_CLASS,
+        LIST_TILE_INSET_CLASS,
+      )}
       onClick={() => onBattleClick(battle.battleId)}
     >
       <div className="flex items-start justify-between gap-3">

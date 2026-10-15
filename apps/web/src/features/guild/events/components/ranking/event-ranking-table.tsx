@@ -1,8 +1,10 @@
-import { PAGE_STICKY_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
+import {
+  FILTERED_TABLE_HEADER_CLASS,
+  RESULTS_TABLE_MEDIA_QUERY,
+} from "@/components/common/page-sticky-table-header";
+import { useMediaQuery } from "usehooks-ts";
 import { EmptyState } from "@/components/common/empty-state";
 import { RankBadge } from "@/components/common/rank-badge";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCard } from "@/components/common/section-card/section-card";
 import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
@@ -16,8 +18,6 @@ import { Table } from "@lootlog/ui/components/table";
 import { cn } from "cn";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
-import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
-import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
 import type { EventRanking } from "../../types/api";
 import { invalidateRankingQueries } from "../../hooks/mutations/invalidate-ranking-queries";
 import { formatDurationHuman } from "../../utils/format-duration";
@@ -25,6 +25,8 @@ import { EventRankingActions } from "./event-ranking-actions";
 import { EventRankingPoints } from "./event-ranking-points";
 import { EventRankingPointsDialog } from "./event-ranking-points-dialog";
 import { getRankingMemberName } from "./get-ranking-member-name";
+import { EventRankingTiles } from "./event-ranking-tiles";
+import { RankingMemberName } from "./ranking-member-name";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { EMPTY_VALUE } from "@/constants/empty-value";
 
@@ -91,6 +93,7 @@ export const EventRankingTable = ({
   variant = "default",
 }: EventRankingTableProps) => {
   const { t } = useTranslation();
+  const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
   const queryClient = useQueryClient();
   const [editingRankingId, setEditingRankingId] = useState<string | null>(null);
 
@@ -158,24 +161,12 @@ export const EventRankingTable = ({
     {
       id: "member",
       header: t("events.ranking.player"),
-      cell: ({ row }) => {
-        const ranking = row.original;
-
-        const memberLabel = getRankingMemberName(ranking, t);
-
-        const roleCssColor = getCustomRoleCssColor(
-          getMemberDisplayRole(ranking.member?.roles)?.color,
-        );
-
-        return (
-          <span
-            className="block min-w-0 truncate text-xs font-semibold @md/ranking:text-sm"
-            style={roleCssColor ? { color: roleCssColor } : undefined}
-          >
-            {memberLabel}
-          </span>
-        );
-      },
+      cell: ({ row }) => (
+        <RankingMemberName
+          ranking={row.original}
+          className="text-xs @md/ranking:text-sm"
+        />
+      ),
       enableSorting: false,
     },
     {
@@ -308,54 +299,82 @@ export const EventRankingTable = ({
     );
   };
 
-  const Container = variant === "default" ? SectionCard : "section";
+  const isPage = variant === "default";
+
+  const renderRankings = () => {
+    if (rankings.length === 0) {
+      return isPage ? (
+        <div className="p-3">
+          <EmptyState
+            framed
+            icon={Trophy}
+            title={t("events.ranking.noRanking")}
+          />
+        </div>
+      ) : (
+        <EmptyState icon={Trophy} title={t("events.ranking.noRanking")} />
+      );
+    }
+
+    if (isPage && !usesTable && guildId && eventId) {
+      return (
+        <EventRankingTiles
+          rankings={sortedRankings}
+          guildId={guildId}
+          eventId={eventId}
+          canEdit={canEdit}
+          currentMemberId={currentMemberId}
+          onEditPoints={setEditingRankingId}
+          isEditPending={updateRankingPoints.isPending}
+        />
+      );
+    }
+
+    return (
+      <Table className={cn("w-full table-fixed", isPage && "border-b")}>
+        <TanStackTableHeader
+          table={table}
+          className={FILTERED_TABLE_HEADER_CLASS}
+          rowClassName="border-b-1! border-border hover:bg-transparent"
+          getHeadClassName={(header) =>
+            cn(
+              "whitespace-nowrap align-middle",
+              header.column.id === "position" && "pl-4",
+              getColumnClassName(header.column.id, variant),
+            )
+          }
+        />
+        <TanStackTableBody
+          table={table}
+          getRowClassName={(row) =>
+            cn(
+              "h-14 border-b border-border hover:bg-muted/40",
+              row.original.memberId === currentMemberId &&
+                "bg-primary/10 hover:bg-primary/15",
+            )
+          }
+          getCellClassName={(cell) =>
+            cn(
+              "h-14 overflow-hidden p-0! align-middle",
+              getColumnClassName(cell.column.id, variant),
+              variant === "compact" && cell.column.id === "points" && "pr-3!",
+            )
+          }
+          getRowProps={(row) => ({
+            id: `event-ranking-row-${row.original.id}`,
+            "aria-selected":
+              row.original.memberId === currentMemberId || undefined,
+          })}
+          renderCellContent={renderRankingLinkCell}
+        />
+      </Table>
+    );
+  };
 
   return (
-    <Container className="@container/ranking w-full min-w-0 overflow-clip">
-      {variant === "default" && (
-        <SectionCardHeader icon={Trophy} title={t("events.ranking.title")} />
-      )}
-      {rankings.length === 0 ? (
-        <EmptyState icon={Trophy} title={t("events.ranking.noRanking")} />
-      ) : (
-        <Table className="w-full table-fixed">
-          <TanStackTableHeader
-            table={table}
-            className={PAGE_STICKY_TABLE_HEADER_CLASS}
-            rowClassName="border-b-1! border-border"
-            getHeadClassName={(header) =>
-              cn(
-                "whitespace-nowrap align-middle",
-                header.column.id === "position" && "pl-4",
-                getColumnClassName(header.column.id, variant),
-              )
-            }
-          />
-          <TanStackTableBody
-            table={table}
-            getRowClassName={(row) =>
-              cn(
-                "h-14 border-b border-border hover:bg-muted/40",
-                row.original.memberId === currentMemberId &&
-                  "bg-primary/10 hover:bg-primary/15",
-              )
-            }
-            getCellClassName={(cell) =>
-              cn(
-                "h-14 overflow-hidden p-0! align-middle",
-                getColumnClassName(cell.column.id, variant),
-                variant === "compact" && cell.column.id === "points" && "pr-3!",
-              )
-            }
-            getRowProps={(row) => ({
-              id: `event-ranking-row-${row.original.id}`,
-              "aria-selected":
-                row.original.memberId === currentMemberId || undefined,
-            })}
-            renderCellContent={renderRankingLinkCell}
-          />
-        </Table>
-      )}
+    // The page lays the ranking edge to edge; the preview card frames it.
+    <section className="@container/ranking w-full min-w-0 overflow-clip">
+      {renderRankings()}
       {canEdit && editingRanking && (
         <EventRankingPointsDialog
           key={editingRanking.id}
@@ -365,6 +384,6 @@ export const EventRankingTable = ({
           onEditPoints={handleEditPoints}
         />
       )}
-    </Container>
+    </section>
   );
 };

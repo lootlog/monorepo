@@ -8,7 +8,7 @@ import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
-import { SettingsDetailSkeleton } from "../components/settings-detail-skeleton";
+import { DetailSkeleton } from "@/components/common/detail-skeleton";
 
 const metaSkeleton = (
   <span className="text-xs leading-tight">
@@ -20,7 +20,7 @@ export const RoleSettingsDetailSkeleton = () => {
   const { t } = useTranslation();
 
   return (
-    <SettingsDetailSkeleton
+    <DetailSkeleton
       meta={
         <>
           {metaSkeleton}
@@ -74,6 +74,6 @@ export const RoleSettingsDetailSkeleton = () => {
           </BandSection>
         ))}
       </div>
-    </SettingsDetailSkeleton>
+    </DetailSkeleton>
   );
 };

@@ -7,14 +7,14 @@ import { SkeletonLine } from "@/components/common/skeleton-line";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
-import { SettingsDetailSkeleton } from "../components/settings-detail-skeleton";
+import { DetailSkeleton } from "@/components/common/detail-skeleton";
 import { NPC_RARITY_CONFIG } from "./npc-rarity-config";
 
 export const NpcSettingsDetailSkeleton = () => {
   const { t } = useTranslation();
 
   return (
-    <SettingsDetailSkeleton
+    <DetailSkeleton
       meta={
         <span className="text-xs leading-tight">
           <SkeletonLine className="h-3 w-24" />
@@ -47,6 +47,6 @@ export const NpcSettingsDetailSkeleton = () => {
           ))}
         </BandSection>
       </div>
-    </SettingsDetailSkeleton>
+    </DetailSkeleton>
   );
 };

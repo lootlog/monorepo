@@ -1,4 +1,8 @@
-import { PageHeader } from "@/components/common/page-header";
+import {
+  FILTERED_TABLE_HEADER_CLASS,
+  RESULTS_TABLE_MEDIA_QUERY,
+} from "@/components/common/page-sticky-table-header";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -9,7 +13,7 @@ import {
   parseAsStringLiteral,
   useQueryStates,
 } from "nuqs";
-import { useDebounceCallback } from "usehooks-ts";
+import { useDebounceCallback, useMediaQuery } from "usehooks-ts";
 import { type SortingState, useTable } from "@tanstack/react-table";
 import { Table } from "@lootlog/ui/components/table";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
@@ -20,7 +24,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { EmptyState } from "@/components/common/empty-state";
 import { ResultsSurface } from "@/components/common/results-surface";
 import { CardListSkeleton } from "@/components/common/card-list-skeleton";
-import { CircleAlert, FilterX, SearchX, Skull } from "lucide-react";
+import { CircleAlert, FilterX, SearchX } from "lucide-react";
 import {
   KillsFilters,
   type KillsFiltersState,
@@ -36,7 +40,6 @@ import {
 } from "@lootlog/client/main";
 
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
-import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { sortingTableFeatures } from "@/lib/tanstack-table-features";
 
 const KILL_STATS_PERIODS = [
@@ -84,7 +87,7 @@ const hasKillsFilters = (filters: KillsFiltersState) =>
 export const KillsPage: React.FC = () => {
   const { t } = useTranslation();
   const [query, setQuery] = useQueryStates(killsSearchParsers);
-  const isMobile = useIsMobile();
+  const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
 
   // The search keeps a local draft; the URL (and with it the request) only
   // follows once typing pauses. The level range debounces its own drafts.
@@ -199,44 +202,50 @@ export const KillsPage: React.FC = () => {
 
     if (isError && !data) {
       return (
-        <EmptyState
-          icon={CircleAlert}
-          title={t("statistics.killsLoadError")}
-          action={
-            <Button
-              variant="outline"
-              loading={isFetching}
-              onClick={() => void refetch()}
-            >
-              {t("common.actions.retry")}
-            </Button>
-          }
-        />
+        <div className="p-3">
+          <EmptyState
+            framed
+            icon={CircleAlert}
+            title={t("statistics.killsLoadError")}
+            action={
+              <Button
+                variant="outline"
+                loading={isFetching}
+                onClick={() => void refetch()}
+              >
+                {t("common.actions.retry")}
+              </Button>
+            }
+          />
+        </div>
       );
     }
 
     if (!data || data.npcs.length === 0) {
       return (
-        <EmptyState
-          icon={SearchX}
-          title={t(
-            hasActiveFilters
-              ? "kills.ranking.filteredNoData"
-              : "kills.ranking.noData",
-          )}
-          action={
-            hasActiveFilters && (
-              <Button variant="outline" onClick={handleResetFilters}>
-                <FilterX data-icon="inline-start" aria-hidden />
-                {t("statistics.clearFilters")}
-              </Button>
-            )
-          }
-        />
+        <div className="p-3">
+          <EmptyState
+            framed
+            icon={SearchX}
+            title={t(
+              hasActiveFilters
+                ? "kills.ranking.filteredNoData"
+                : "kills.ranking.noData",
+            )}
+            action={
+              hasActiveFilters && (
+                <Button variant="outline" onClick={handleResetFilters}>
+                  <FilterX data-icon="inline-start" aria-hidden />
+                  {t("statistics.clearFilters")}
+                </Button>
+              )
+            }
+          />
+        </div>
       );
     }
 
-    if (isMobile) {
+    if (!usesTable) {
       return <KillsMobileList npcs={data.npcs} startRank={cursor} />;
     }
 
@@ -244,7 +253,7 @@ export const KillsPage: React.FC = () => {
       <Table className="border-b">
         <TanStackTableHeader
           table={table}
-          className="sticky top-0 z-10 bg-background"
+          className={FILTERED_TABLE_HEADER_CLASS}
           rowClassName="border-b-1! border-border"
           headClassName="whitespace-nowrap"
         />
@@ -260,29 +269,28 @@ export const KillsPage: React.FC = () => {
   const totalKills = data?.pagination?.total ?? 0;
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 p-3">
-      <PageHeader
-        icon={Skull}
-        title={t("kills.ranking.title")}
-        description={t("kills.ranking.description")}
-      />
-      <KillsFilters
-        filters={{ ...filters, search: searchDraft }}
-        minLvl={query.minLvl}
-        maxLvl={query.maxLvl}
-        onWorldChange={handleWorldChange}
-        onNpcTypeChange={handleNpcTypeChange}
-        onSearchChange={handleSearchChange}
-        onMinLvlChange={(minLvl) =>
-          setQuery({ minLvl: minLvl || null, cursor: null })
-        }
-        onMaxLvlChange={(maxLvl) =>
-          setQuery({ maxLvl: maxLvl || null, cursor: null })
-        }
-        onPeriodChange={handlePeriodChange}
-      />
+    <ScrollArea data-under-top-bar className="h-full min-h-0">
+      <h1 className="sr-only">{t("kills.ranking.title")}</h1>
       <ResultsSurface
-        withHorizontalScroll={!isMobile}
+        filters={
+          <KillsFilters
+            filters={{ ...filters, search: searchDraft }}
+            minLvl={query.minLvl}
+            maxLvl={query.maxLvl}
+            onWorldChange={handleWorldChange}
+            onNpcTypeChange={handleNpcTypeChange}
+            onSearchChange={handleSearchChange}
+            onMinLvlChange={(minLvl) =>
+              setQuery({ minLvl: minLvl || null, cursor: null })
+            }
+            onMaxLvlChange={(maxLvl) =>
+              setQuery({ maxLvl: maxLvl || null, cursor: null })
+            }
+            onPeriodChange={handlePeriodChange}
+          />
+        }
+        filtersLabel={t("kills.filters.title")}
+        scrollResetKey={cursor}
         footer={
           <TablePaginationFooter
             totalLabel={t("kills.ranking.total", { count: totalKills })}
@@ -295,6 +303,6 @@ export const KillsPage: React.FC = () => {
       >
         {renderResults()}
       </ResultsSurface>
-    </div>
+    </ScrollArea>
   );
 };
