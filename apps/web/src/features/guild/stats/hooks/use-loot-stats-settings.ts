@@ -9,7 +9,7 @@ type LootStatsSettings = {
   excludeColossus: boolean;
 };
 
-const DEFAULT_SETTINGS: LootStatsSettings = {
+export const DEFAULT_LOOT_STATS_SETTINGS: LootStatsSettings = {
   period: "7d",
   excludeColossus: false,
 };
@@ -21,7 +21,7 @@ export const useLootStatsSettings = () => {
 
   const [settings, setSettings] = useLocalStorage<LootStatsSettings>(
     storageKey,
-    DEFAULT_SETTINGS,
+    DEFAULT_LOOT_STATS_SETTINGS,
   );
 
   const setPeriod = (period: LootsControllerGetLootStatsPeriod) => {

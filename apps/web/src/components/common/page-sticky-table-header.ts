@@ -3,7 +3,7 @@
  * Headers of tables that scroll inside their own box use `sticky top-0`.
  */
 export const PAGE_STICKY_TABLE_HEADER_CLASS =
-  "sticky top-(--page-sticky-top) z-10 bg-background";
+  "sticky top-(--page-sticky-top) z-10 bg-sidebar";
 
 /**
  * A table header pinned right under the page's `FilterBar`, which publishes
@@ -11,7 +11,7 @@ export const PAGE_STICKY_TABLE_HEADER_CLASS =
  * `PAGE_STICKY_TABLE_HEADER_CLASS`.
  */
 export const FILTERED_TABLE_HEADER_CLASS =
-  "sticky top-[calc(var(--page-sticky-top)+var(--filter-bar-height,0px))] z-10 bg-background";
+  "sticky top-[calc(var(--page-sticky-top)+var(--filter-bar-height,0px))] z-10 bg-sidebar";
 
 /**
  * Where a table of filtered results fits beside the sidebar (Tailwind `xl`).

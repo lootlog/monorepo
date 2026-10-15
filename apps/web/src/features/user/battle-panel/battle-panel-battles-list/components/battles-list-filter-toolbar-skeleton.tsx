@@ -1,27 +1,19 @@
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
-const DESKTOP_FILTER_WIDTHS = [
+const FILTER_WIDTHS = [
   "w-[150px]",
-  "w-[160px]",
-  "w-[160px]",
   "w-[150px]",
+  "w-[220px]",
+  "w-[150px]",
+  "w-[94px]",
 ];
 
-export const BattlesListFilterToolbarSkeleton = () => {
-  return (
-    <div
+/** Stands in for `BattlesListFilterToolbar`, which narrow pages move to a panel. */
+export const BattlesListFilterToolbarSkeleton = () =>
+  FILTER_WIDTHS.map((width, index) => (
+    <Skeleton
+      key={index}
       aria-hidden="true"
-      className="flex w-full min-w-0 flex-wrap items-center gap-2"
-    >
-      <Skeleton className="h-10 min-w-0 flex-1 rounded-lg md:basis-full xl:min-w-60 xl:flex-1 xl:basis-0" />
-      <Skeleton className="h-10 w-24 shrink-0 rounded-lg md:hidden" />
-      {DESKTOP_FILTER_WIDTHS.map((width, index) => (
-        <Skeleton
-          key={index}
-          className={`hidden h-10 rounded-lg md:block ${width}`}
-        />
-      ))}
-      <Skeleton className="hidden h-10 w-[104px] rounded-lg md:block" />
-    </div>
-  );
-};
+      className={`hidden h-10 rounded-lg xl:block ${width}`}
+    />
+  ));

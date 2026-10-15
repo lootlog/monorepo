@@ -1,3 +1,4 @@
+import { countActiveKillStatsFilters } from "@/features/kills/components/count-active-kill-stats-filters";
 import { formatLevel } from "@lootlog/domain/profession";
 import { EmptyState } from "@/components/common/empty-state";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
@@ -10,7 +11,12 @@ import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { UserX } from "lucide-react";
-import { KillStatsFilters } from "@/features/kills/components/kill-stats-filters";
+import {
+  KillStatsFilters,
+  type KillStatsFiltersProps,
+} from "@/features/kills/components/kill-stats-filters";
+import { KillStatsSearch } from "@/features/kills/components/kill-stats-search";
+import { KillStatsStackedFilters } from "@/features/kills/components/kill-stats-stacked-filters";
 import { TRACKABLE_NPC_TYPES } from "./constants";
 import { StatsCountCell } from "./components/stats-count-cell";
 import { StatsDetailMeta } from "./components/stats-detail-meta";
@@ -126,6 +132,22 @@ export const MemberStatsPage = () => {
       },
     ];
 
+  const filterProps: KillStatsFiltersProps = {
+    period: settings.period,
+    onPeriodChange: handlePeriodChange,
+    level: {
+      minLvl: settings.minLvl,
+      maxLvl: settings.maxLvl,
+      onMinLvlChange: handleMinLvlChange,
+      onMaxLvlChange: handleMaxLvlChange,
+    },
+    npcType: {
+      types: TRACKABLE_NPC_TYPES,
+      value: settings.npcType,
+      onValueChange: handleNpcTypeChange,
+    },
+  };
+
   const table = useTable({
     features: coreTableFeatures,
     data: npcs,
@@ -185,28 +207,16 @@ export const MemberStatsPage = () => {
       }
     >
       <ResultsSurface
-        filters={
-          <KillStatsFilters
-            period={settings.period}
-            onPeriodChange={handlePeriodChange}
-            search={{
-              value: search,
-              placeholder: t("kills.memberStats.searchPlaceholder"),
-              onChange: handleSearchChange,
-            }}
-            level={{
-              minLvl: settings.minLvl,
-              maxLvl: settings.maxLvl,
-              onMinLvlChange: handleMinLvlChange,
-              onMaxLvlChange: handleMaxLvlChange,
-            }}
-            npcType={{
-              types: TRACKABLE_NPC_TYPES,
-              value: settings.npcType,
-              onValueChange: handleNpcTypeChange,
-            }}
+        search={
+          <KillStatsSearch
+            value={search}
+            placeholder={t("kills.memberStats.searchPlaceholder")}
+            onChange={handleSearchChange}
           />
         }
+        filters={<KillStatsFilters {...filterProps} />}
+        stackedFilters={<KillStatsStackedFilters {...filterProps} />}
+        activeFilterCount={countActiveKillStatsFilters(filterProps)}
         filtersLabel={t("kills.filters.title")}
         scrollResetKey={cursor}
         footer={

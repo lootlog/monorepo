@@ -1,33 +1,24 @@
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { FilterBar } from "@/components/common/filter-bar";
+import { InlineSearchFieldSkeleton } from "@/components/common/inline-search-field-skeleton";
+import { cn } from "cn";
 import { ActivityLogsMobileListSkeleton } from "./components/activity-logs-mobile-list-skeleton";
 
-const DESKTOP_FILTER_WIDTHS = [
-  "w-[200px]",
-  "w-[150px]",
-  "w-[160px]",
-  "w-[160px]",
-  "w-[130px]",
-];
+// The clan, type, source and date range filters of `ActivityLogsFilterFields`.
+const FILTER_WIDTHS = ["w-[200px]", "w-[140px]", "w-[140px]", "w-[130px]"];
 
 /** Route-level stand-in for the activity log: its filter bar above the entries. */
 export const ActivityLogsPageSkeleton = () => (
   <div aria-busy="true" className="min-h-0 flex-1 overflow-hidden">
-    <FilterBar>
-      {/* The same container query as `ActivityLogsFilterToolbar`. */}
-      <div className="@container/activity-filters w-full min-w-0">
-        <div className="flex w-full min-w-0 items-center gap-2">
-          <Skeleton className="h-10 min-w-0 flex-1 rounded-md @min-[66rem]/activity-filters:min-w-60" />
-          <Skeleton className="h-10 w-24 shrink-0 rounded-md @min-[66rem]/activity-filters:hidden" />
-          {DESKTOP_FILTER_WIDTHS.map((width, index) => (
-            <Skeleton
-              key={index}
-              className={`hidden h-10 rounded-md @min-[66rem]/activity-filters:block ${width}`}
-            />
-          ))}
-        </div>
-      </div>
+    {/* Narrower pages open the filters from a floating button instead. */}
+    <FilterBar search={<InlineSearchFieldSkeleton />}>
+      {FILTER_WIDTHS.map((width, index) => (
+        <Skeleton
+          key={index}
+          className={cn("hidden h-10 rounded-md xl:block", width)}
+        />
+      ))}
     </FilterBar>
     <div className="xl:hidden">
       <ActivityLogsMobileListSkeleton rows={20} />

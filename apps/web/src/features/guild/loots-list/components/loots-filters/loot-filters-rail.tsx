@@ -2,7 +2,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { cn } from "cn";
 import { FilterX, SlidersHorizontal } from "lucide-react";
 import { useEffect, useRef } from "react";
-import { LootFilterCount } from "./loot-filter-count";
+import { FilterCount } from "@/components/common/filter-count";
 import {
   LOOT_FILTER_SECTIONS,
   getLootFilterSectionState,
@@ -47,7 +47,7 @@ export const LootFiltersRail = ({
 
   const activeCountLabel =
     totalActiveFilterCount > 0
-      ? t("loots.filtersPanel.activeCount", { count: totalActiveFilterCount })
+      ? t("common.filters.activeCount", { count: totalActiveFilterCount })
       : undefined;
 
   return (
@@ -70,7 +70,7 @@ export const LootFiltersRail = ({
             className="relative shrink-0"
           >
             <SlidersHorizontal aria-hidden="true" />
-            <LootFilterCount
+            <FilterCount
               count={totalActiveFilterCount}
               variant="corner"
               className="ring-sidebar"
@@ -86,9 +86,7 @@ export const LootFiltersRail = ({
         const title = t(titleKey);
 
         const detail =
-          count > 0
-            ? t("loots.filtersPanel.activeCount", { count })
-            : undefined;
+          count > 0 ? t("common.filters.activeCount", { count }) : undefined;
 
         return (
           <LootFiltersIconTooltip

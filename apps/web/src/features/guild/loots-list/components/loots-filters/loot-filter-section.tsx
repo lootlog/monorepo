@@ -7,7 +7,7 @@ import {
 import { ChevronDown, type LucideIcon } from "lucide-react";
 import type { ReactNode, Ref } from "react";
 import { useTranslation } from "react-i18next";
-import { LootFilterCount } from "./loot-filter-count";
+import { FilterCount } from "@/components/common/filter-count";
 
 type LootFilterSectionProps = {
   icon: LucideIcon;
@@ -48,7 +48,7 @@ export const LootFilterSection = ({
         >
           <Icon aria-hidden="true" className="size-4 text-muted-foreground" />
           {title}
-          <LootFilterCount count={count} />
+          <FilterCount count={count} />
           <ChevronDown
             aria-hidden="true"
             className="ml-auto size-4 text-muted-foreground transition-transform duration-200 group-data-[panel-open]/section:rotate-180 motion-reduce:transition-none"

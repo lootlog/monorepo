@@ -17,7 +17,6 @@ import type {
 } from "@/lib/api/battlelog-types";
 import { sortingTableFeatures } from "@/lib/tanstack-table-features";
 import { useBattlesControllerGetHeadToHead } from "@lootlog/client/battlelog";
-import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useNavigate } from "@tanstack/react-router";
 import {
   functionalUpdate,
@@ -26,7 +25,7 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { useQueryStates } from "nuqs";
-import { useState, type KeyboardEvent } from "react";
+import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { createBattlePanelCursorActions } from "../components/battle-panel-cursor-actions";
 
@@ -60,8 +59,6 @@ export function useHeadToHeadPage({
 >) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
   const [queryState, setQueryState] = useQueryStates(
     battlePanelHeadToHeadSearchParsers,
@@ -315,8 +312,6 @@ export function useHeadToHeadPage({
     handleMaxLevelChange,
     handlePhChange,
     handleWarriorToggle,
-    isMobile,
-    setIsMobileFiltersOpen,
     data,
     t,
     handlePreviousPage,
@@ -329,7 +324,6 @@ export function useHeadToHeadPage({
     handleRowClick,
     table,
     handleRowKeyDown,
-    isMobileFiltersOpen,
     activeFilterChips,
     applyFilterState,
   };

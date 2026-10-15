@@ -7,13 +7,19 @@ import type { FilterChip } from "./filter-chip-list";
 import { TableScroller } from "./table-scroller";
 
 type ResultsSurfaceProps = {
+  /** The leading search of the page's `FilterBar`. */
+  search?: ReactNode;
   /**
-   * The controls of the page's `FilterBar`. Without them, the results sit
-   * under the filter bar of the page around them.
+   * The filters of the page's `FilterBar`. Without them or a search, the
+   * results sit under the filter bar of the page around them.
    */
   filters?: ReactNode;
+  /** The filters stacked for the panel narrow pages open them in. */
+  stackedFilters?: ReactNode;
   filtersLabel?: string;
   chips?: FilterChip[];
+  /** How many filters are active, for pages without chips; defaults to the chips. */
+  activeFilterCount?: number;
   clearFiltersLabel?: string;
   onClearFilters?: () => void;
   /** Stands in for the chips while the page loads. */
@@ -34,10 +40,37 @@ type ResultsSurfaceProps = {
  * `data-under-top-bar`: the `FilterBar` stays on top, a table header pins
  * right under it, and the footer stays at the bottom edge.
  */
+const DOCKED_FOOTER_HEIGHT_PROPERTY = "--docked-footer-height";
+
+// Publishes the docked footer's height on the surface, so a floating button,
+// such as the one opening the filters, rises above it.
+const publishDockedFooterHeight = (footer: HTMLDivElement | null) => {
+  const surface = footer?.parentElement;
+
+  if (!footer || !surface) return;
+
+  const observer = new ResizeObserver(() =>
+    surface.style.setProperty(
+      DOCKED_FOOTER_HEIGHT_PROPERTY,
+      `${footer.getBoundingClientRect().height}px`,
+    ),
+  );
+
+  observer.observe(footer);
+
+  return () => {
+    observer.disconnect();
+    surface.style.removeProperty(DOCKED_FOOTER_HEIGHT_PROPERTY);
+  };
+};
+
 export const ResultsSurface = ({
+  search,
   filters,
+  stackedFilters,
   filtersLabel,
   chips,
+  activeFilterCount,
   clearFiltersLabel,
   onClearFilters,
   chipsPlaceholder,
@@ -60,10 +93,13 @@ export const ResultsSurface = ({
 
   return (
     <div ref={surfaceRef} className={cn("flex min-w-0 flex-col", className)}>
-      {filters && (
+      {(search || filters) && (
         <FilterBar
           ariaLabel={filtersLabel}
+          search={search}
+          stackedFilters={stackedFilters}
           chips={chips}
+          activeFilterCount={activeFilterCount}
           clearFiltersLabel={clearFiltersLabel}
           onClearFilters={onClearFilters}
           chipsPlaceholder={chipsPlaceholder}
@@ -75,8 +111,8 @@ export const ResultsSurface = ({
       {(selectionBar || footer) && (
         // Overlaps the last row's rule while it sits right after the rows.
         <div
-          data-list-tile
-          className="sticky bottom-0 z-20 -mt-px backdrop-blur-sm"
+          ref={publishDockedFooterHeight}
+          className="sticky bottom-0 z-20 -mt-px bg-sidebar"
         >
           {selectionBar && (
             <div className="border-t border-sidebar-border">{selectionBar}</div>
