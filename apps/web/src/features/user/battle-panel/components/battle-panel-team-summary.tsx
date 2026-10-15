@@ -21,12 +21,19 @@ const getVisibleWarriorCount = (teamSize: number, maxVisible: number) =>
   // The overflow counter takes one sprite slot, so it never replaces a single warrior.
   teamSize > maxVisible ? maxVisible - 1 : teamSize;
 
-const renderSprite = (warrior: BattleWarrior, isUserWarrior: boolean) => (
+const renderSprite = (
+  warrior: BattleWarrior,
+  isUserWarrior: boolean,
+  isInGroup: boolean,
+) => (
   <div
     key={warrior.originalId}
     className={cn(
       "relative h-9 w-6 shrink-0 rounded-sm",
       isUserWarrior && "bg-green-500/10 ring-1 ring-inset ring-green-500/40",
+      // A group shows no names, so its sprites sit above the link that opens
+      // the battle and name each warrior on hover.
+      isInGroup && "z-1",
     )}
   >
     <PlayerTile
@@ -50,7 +57,7 @@ export const BattlePanelTeamSummary = ({
   if (team.length === 1 && soloWarrior) {
     return (
       <div className={cn("flex min-w-0 items-center gap-2", className)}>
-        {renderSprite(soloWarrior, false)}
+        {renderSprite(soloWarrior, false, false)}
         <div className="flex min-w-0 flex-col gap-0.5 leading-tight">
           <span className="truncate text-[13px] font-medium">
             {soloWarrior.name}
@@ -76,7 +83,7 @@ export const BattlePanelTeamSummary = ({
     <div className={cn("flex min-w-0 items-center gap-1", className)}>
       <span className="sr-only">{formatBattleTeamNames(orderedTeam)}</span>
       {visibleWarriors.map((warrior) =>
-        renderSprite(warrior, isUserWarrior(warrior)),
+        renderSprite(warrior, isUserWarrior(warrior), true),
       )}
       {hiddenWarriors.length > 0 && (
         <Tooltip>
@@ -84,7 +91,7 @@ export const BattlePanelTeamSummary = ({
             render={
               <span
                 aria-hidden="true"
-                className="flex h-9 min-w-6 shrink-0 items-center justify-center rounded-sm border border-border bg-muted/40 px-1 text-[11px] font-semibold tabular-nums text-muted-foreground"
+                className="relative z-1 flex h-9 min-w-6 shrink-0 items-center justify-center rounded-sm border border-border bg-muted/40 px-1 text-[11px] font-semibold tabular-nums text-muted-foreground"
               >
                 +{hiddenWarriors.length}
               </span>

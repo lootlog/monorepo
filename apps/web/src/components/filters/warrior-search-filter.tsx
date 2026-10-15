@@ -4,7 +4,6 @@ import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import {
   Combobox,
   ComboboxChipsInput,
-  ComboboxContent,
   ComboboxEmpty,
   ComboboxItem,
   ComboboxList,
@@ -15,6 +14,10 @@ import {
   INLINE_SEARCH_INPUT_CLASS,
   InlineSearchField,
 } from "@/components/common/inline-search-field";
+import {
+  INLINE_SEARCH_SUGGESTION_CLASS,
+  InlineSearchSuggestions,
+} from "@/components/common/inline-search-suggestions";
 import { CharacterAvatar } from "@/components/filters/character-avatar";
 import {
   getBattlesControllerSearchWarriorsQueryKey,
@@ -132,17 +135,14 @@ export const WarriorSearchFilter = ({
           )}
         />
       </InlineSearchField>
-      <ComboboxContent
-        anchor={anchor}
-        className="max-w-[min(24rem,calc(100vw-2rem))]"
-      >
+      <InlineSearchSuggestions anchor={anchor}>
         <ComboboxEmpty>{getEmptyLabel()}</ComboboxEmpty>
         <ComboboxList>
           {searchResults.map((warrior) => (
             <ComboboxItem
               key={warrior.name}
               value={warrior.name}
-              className="min-h-12 gap-3 px-2"
+              className={INLINE_SEARCH_SUGGESTION_CLASS}
             >
               <CharacterAvatar icon={warrior.icon} />
               <span className="flex min-w-0 flex-col leading-tight">
@@ -156,7 +156,7 @@ export const WarriorSearchFilter = ({
             </ComboboxItem>
           ))}
         </ComboboxList>
-      </ComboboxContent>
+      </InlineSearchSuggestions>
     </Combobox>
   );
 };
