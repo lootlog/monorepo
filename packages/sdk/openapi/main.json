@@ -23487,7 +23487,8 @@
                 ]
               },
               {
-                "type": "string"
+                "type": "string",
+                "pattern": "^custom:[\\dA-Fa-f]{8}-[\\dA-Fa-f]{4}-[\\dA-Fa-f]{4}-[\\dA-Fa-f]{4}-[\\dA-Fa-f]{12}$"
               }
             ]
           },

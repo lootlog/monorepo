@@ -91,41 +91,77 @@ export type SharedUserThemeResponseDtoDefinitionSurface = {
 };
 
 export type SharedUserThemeResponseDtoDefinitionOverrides = {
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   background?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   foreground?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   card?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'card-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   popover?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'popover-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   primary?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'primary-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   secondary?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'secondary-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   muted?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'muted-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   accent?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'accent-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   destructive?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'destructive-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   border?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   ring?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-1'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-2'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-3'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-4'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-5'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'signal-live'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'signal-ready'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'signal-timer'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'signal-alert'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'text-supporting'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   sidebar?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-primary'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-primary-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-accent'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-accent-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-border'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-ring'?: string;
 };
 
@@ -156,6 +192,7 @@ export const SharedUserThemeResponseDtoDefinitionRadius = {
 
 export type SharedUserThemeResponseDtoDefinition = {
   baseThemeId: SharedUserThemeResponseDtoDefinitionBaseThemeId;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   accent?: string;
   surface?: SharedUserThemeResponseDtoDefinitionSurface;
   overrides: SharedUserThemeResponseDtoDefinitionOverrides;
@@ -233,41 +270,77 @@ export type UserThemeResponseDtoDefinitionSurface = {
 };
 
 export type UserThemeResponseDtoDefinitionOverrides = {
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   background?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   foreground?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   card?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'card-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   popover?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'popover-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   primary?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'primary-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   secondary?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'secondary-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   muted?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'muted-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   accent?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'accent-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   destructive?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'destructive-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   border?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   ring?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-1'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-2'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-3'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-4'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-5'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'signal-live'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'signal-ready'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'signal-timer'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'signal-alert'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'text-supporting'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   sidebar?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-primary'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-primary-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-accent'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-accent-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-border'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-ring'?: string;
 };
 
@@ -298,6 +371,7 @@ export const UserThemeResponseDtoDefinitionRadius = {
 
 export type UserThemeResponseDtoDefinition = {
   baseThemeId: UserThemeResponseDtoDefinitionBaseThemeId;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   accent?: string;
   surface?: UserThemeResponseDtoDefinitionSurface;
   overrides: UserThemeResponseDtoDefinitionOverrides;
@@ -373,41 +447,77 @@ export type UpdateUserThemeDtoDefinitionSurface = {
 };
 
 export type UpdateUserThemeDtoDefinitionOverrides = {
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   background?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   foreground?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   card?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'card-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   popover?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'popover-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   primary?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'primary-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   secondary?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'secondary-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   muted?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'muted-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   accent?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'accent-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   destructive?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'destructive-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   border?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   ring?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-1'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-2'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-3'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-4'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-5'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'signal-live'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'signal-ready'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'signal-timer'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'signal-alert'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'text-supporting'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   sidebar?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-primary'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-primary-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-accent'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-accent-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-border'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-ring'?: string;
 };
 
@@ -438,6 +548,7 @@ export const UpdateUserThemeDtoDefinitionRadius = {
 
 export type UpdateUserThemeDtoDefinition = {
   baseThemeId: UpdateUserThemeDtoDefinitionBaseThemeId;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   accent?: string;
   surface?: UpdateUserThemeDtoDefinitionSurface;
   overrides: UpdateUserThemeDtoDefinitionOverrides;
@@ -506,41 +617,77 @@ export type CreateUserThemeDtoDefinitionSurface = {
 };
 
 export type CreateUserThemeDtoDefinitionOverrides = {
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   background?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   foreground?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   card?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'card-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   popover?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'popover-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   primary?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'primary-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   secondary?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'secondary-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   muted?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'muted-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   accent?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'accent-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   destructive?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'destructive-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   border?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   ring?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-1'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-2'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-3'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-4'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-5'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'signal-live'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'signal-ready'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'signal-timer'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'signal-alert'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'text-supporting'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   sidebar?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-primary'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-primary-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-accent'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-accent-foreground'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-border'?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-ring'?: string;
 };
 
@@ -571,6 +718,7 @@ export const CreateUserThemeDtoDefinitionRadius = {
 
 export type CreateUserThemeDtoDefinition = {
   baseThemeId: CreateUserThemeDtoDefinitionBaseThemeId;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   accent?: string;
   surface?: CreateUserThemeDtoDefinitionSurface;
   overrides: CreateUserThemeDtoDefinitionOverrides;

@@ -9,6 +9,8 @@ import {
   deriveCustomThemeTokens,
   deriveWallpaperCover,
   randomizeCustomTheme,
+  withAccent,
+  withSurface,
 } from "./custom-theme.js";
 
 const definition = (
@@ -85,6 +87,45 @@ describe("deriveCustomThemeTokens", () => {
       ).toBeGreaterThanOrEqual(4.5);
     },
   );
+
+  // A mid-grey accent on the lightest allowed surface defeats both the
+  // surface colour and near-white as its label.
+  test("keeps the label on a mid-tone accent over a light surface readable", () => {
+    const tokens = deriveCustomThemeTokens(
+      definition({
+        accent: "#808080",
+        surface: { hue: 0, lightness: 0.28, chroma: 0 },
+      }),
+    );
+
+    expect(
+      contrast(tokens["primary-foreground"], "#808080"),
+    ).toBeGreaterThanOrEqual(4.5);
+  });
+
+  // The simple pickers must take effect even after "More colours" set the
+  // same tokens; otherwise the new colour snaps back to the override.
+  test("lets the accent and background pickers replace earlier overrides", () => {
+    const overridden = definition({
+      overrides: {
+        primary: "#FF0000",
+        background: "#000000",
+        "chart-1": "#123456",
+      },
+    });
+
+    const accented = deriveCustomThemeTokens(withAccent(overridden, "#3FB950"));
+
+    const surfaced = deriveCustomThemeTokens(
+      withSurface(overridden, { hue: 250, lightness: 0.17, chroma: 0.02 }),
+    );
+
+    expect(accented.primary).toBe("#3FB950");
+    expect(surfaced.background).not.toBe("#000000");
+    // Overrides of tokens the picker does not derive stay.
+    expect(accented["chart-1"]).toBe("#123456");
+    expect(surfaced["chart-1"]).toBe("#123456");
+  });
 
   test("lets an override win over a derived token", () => {
     const tokens = deriveCustomThemeTokens(

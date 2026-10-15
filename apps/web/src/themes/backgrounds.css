@@ -93,6 +93,54 @@
   --theme-background-image: url("/themes/rias-bg.webp");
 }
 
+/*
+ * Drawn wallpapers are faint, so they have no overlay or translucent cards of
+ * their own; a custom theme that sets wallpaper transparency (marked by
+ * `data-wallpaper-cover`) adds both. Photo rules below come later, so a photo
+ * picked over a drawn base still wins.
+ */
+[data-wallpaper-cover]:is(
+    .cyberpunk,
+    .pastel,
+    .fantasy,
+    .shonen,
+    .onepiece,
+    .goth
+  )
+  .app-content-frame {
+  --app-wallpaper:
+    linear-gradient(
+      color-mix(
+        in srgb,
+        var(--background) var(--custom-wallpaper-overlay, 0%),
+        transparent
+      ),
+      color-mix(
+        in srgb,
+        var(--background) var(--custom-wallpaper-overlay, 0%),
+        transparent
+      )
+    ),
+    var(--theme-background-image);
+}
+
+[data-wallpaper-cover]:is(
+    .cyberpunk,
+    .pastel,
+    .fantasy,
+    .shonen,
+    .onepiece,
+    .goth
+  )
+  .app-content-frame
+  [data-slot="card"] {
+  background-color: color-mix(
+    in srgb,
+    var(--card) var(--custom-card-cover, 100%),
+    transparent
+  );
+}
+
 :is(
     .anime,
     .waguri,

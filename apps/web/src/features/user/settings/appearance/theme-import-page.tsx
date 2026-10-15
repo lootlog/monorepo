@@ -24,10 +24,18 @@ export const ThemeImportPage = () => {
     from: "/_authenticated/@me/settings/appearance_/import/$shareToken",
   });
 
-  const { data: sharedTheme, isError } = useUserThemesControllerGetSharedTheme(
+  const {
+    data: sharedThemeData,
+    isError,
+    isPlaceholderData,
+  } = useUserThemesControllerGetSharedTheme(
     { shareToken },
     { query: { retry: false } },
   );
+
+  // A placeholder is the previous link's theme: never preview or save it
+  // under this link.
+  const sharedTheme = isPlaceholderData ? undefined : sharedThemeData;
 
   useEffect(() => {
     if (sharedTheme) setPreview(sharedTheme.definition);

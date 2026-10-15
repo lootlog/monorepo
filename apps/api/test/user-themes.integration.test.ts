@@ -13,6 +13,7 @@ import {
   userSettingsTable,
   userThemeTable,
 } from "../src/database/drizzle/schema.js";
+import { makeUserAccountDeletion } from "../src/http-api/handlers/account-organization/user-account-deletion.data-layer.js";
 import {
   createUserTheme,
   deleteUserTheme,
@@ -170,11 +171,18 @@ describe("User themes against migrated PostgreSQL", () => {
 
   it("resolves a share link only while sharing is on, without the author", async () => {
     const theme = await create(owner);
-    const shared = await as(owner, shareUserTheme(theme.id));
-    const token = shared.shareToken ?? "";
+
+    // Concurrent tabs and retries must all receive the one link that works.
+    const shared = await Promise.all(
+      Array.from({ length: 4 }, () => as(owner, shareUserTheme(theme.id))),
+    );
+
+    const token = shared[0]?.shareToken ?? "";
 
     expect(token).not.toBe("");
-    expect((await as(owner, shareUserTheme(theme.id))).shareToken).toBe(token);
+    expect(new Set(shared.map(({ shareToken }) => shareToken))).toEqual(
+      new Set([token]),
+    );
     expect(await as(stranger, getSharedUserTheme(token))).toEqual({
       name: "Mój motyw",
       definition,
@@ -184,5 +192,31 @@ describe("User themes against migrated PostgreSQL", () => {
     expect(await failureOf(stranger, getSharedUserTheme(token))).toBeInstanceOf(
       UserThemeNotFound,
     );
+  });
+
+  it("removes the account's themes and their share links with the account", async () => {
+    const theme = await create(owner);
+    const token = (await as(owner, shareUserTheme(theme.id))).shareToken ?? "";
+    const kept = await create(stranger);
+
+    await runtime.runPromise(
+      Effect.flatMap(ApiDatabase, (db) =>
+        makeUserAccountDeletion(db, {
+          cleanupBattlelog: () => Effect.void,
+          deleteCacheKey: () => Effect.void,
+          invalidateCacheScopes: () => Effect.void,
+          deleteCachePattern: () => Effect.void,
+          publishMemberRemoved: () => Effect.void,
+        })({ userId: owner, discordId: "user-themes-owner-discord" }),
+      ),
+    );
+
+    expect(await as(owner, getUserThemes())).toEqual([]);
+    expect(await failureOf(stranger, getSharedUserTheme(token))).toBeInstanceOf(
+      UserThemeNotFound,
+    );
+    expect(await as(stranger, getUserTheme(kept.id))).toMatchObject({
+      id: kept.id,
+    });
   });
 });

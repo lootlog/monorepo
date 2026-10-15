@@ -161,6 +161,11 @@ export const applyThemeToRoot = (
 ) => {
   for (const property of STYLE_PROPERTIES) root.style.removeProperty(property);
   delete root.dataset.wallpaper;
+  delete root.dataset.wallpaperCover;
+
+  if (definition.wallpaperVisibility !== undefined) {
+    root.dataset.wallpaperCover = "";
+  }
 
   for (const [property, value] of Object.entries(
     customThemeStyle(definition),

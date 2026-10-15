@@ -17031,6 +17031,7 @@ components:
                 - cat-random
             accent:
               type: string
+              pattern: ^#[\dA-Fa-f]{6}$
             surface:
               type: object
               properties:
@@ -17056,76 +17057,112 @@ components:
               properties:
                 background:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 card:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 card-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 popover:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 popover-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 primary:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 primary-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 secondary:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 secondary-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 muted:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 muted-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 accent:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 accent-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 destructive:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 destructive-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 border:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 ring:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 chart-1:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 chart-2:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 chart-3:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 chart-4:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 chart-5:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 signal-live:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 signal-ready:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 signal-timer:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 signal-alert:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 text-supporting:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-primary:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-primary-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-accent:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-accent-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-border:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-ring:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
               additionalProperties: false
             wallpaper:
               type: string
@@ -17217,6 +17254,7 @@ components:
                 - cat-random
             accent:
               type: string
+              pattern: ^#[\dA-Fa-f]{6}$
             surface:
               type: object
               properties:
@@ -17242,76 +17280,112 @@ components:
               properties:
                 background:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 card:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 card-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 popover:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 popover-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 primary:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 primary-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 secondary:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 secondary-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 muted:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 muted-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 accent:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 accent-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 destructive:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 destructive-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 border:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 ring:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 chart-1:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 chart-2:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 chart-3:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 chart-4:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 chart-5:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 signal-live:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 signal-ready:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 signal-timer:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 signal-alert:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 text-supporting:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-primary:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-primary-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-accent:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-accent-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-border:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-ring:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
               additionalProperties: false
             wallpaper:
               type: string
@@ -17408,6 +17482,7 @@ components:
                 - cat-random
             accent:
               type: string
+              pattern: ^#[\dA-Fa-f]{6}$
             surface:
               type: object
               properties:
@@ -17433,76 +17508,112 @@ components:
               properties:
                 background:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 card:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 card-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 popover:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 popover-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 primary:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 primary-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 secondary:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 secondary-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 muted:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 muted-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 accent:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 accent-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 destructive:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 destructive-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 border:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 ring:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 chart-1:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 chart-2:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 chart-3:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 chart-4:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 chart-5:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 signal-live:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 signal-ready:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 signal-timer:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 signal-alert:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 text-supporting:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-primary:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-primary-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-accent:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-accent-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-border:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-ring:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
               additionalProperties: false
             wallpaper:
               type: string
@@ -17573,6 +17684,7 @@ components:
                 - cat-random
             accent:
               type: string
+              pattern: ^#[\dA-Fa-f]{6}$
             surface:
               type: object
               properties:
@@ -17598,76 +17710,112 @@ components:
               properties:
                 background:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 card:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 card-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 popover:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 popover-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 primary:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 primary-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 secondary:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 secondary-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 muted:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 muted-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 accent:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 accent-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 destructive:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 destructive-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 border:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 ring:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 chart-1:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 chart-2:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 chart-3:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 chart-4:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 chart-5:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 signal-live:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 signal-ready:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 signal-timer:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 signal-alert:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 text-supporting:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-primary:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-primary-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-accent:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-accent-foreground:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-border:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-ring:
                   type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
               additionalProperties: false
             wallpaper:
               type: string
@@ -32132,6 +32280,7 @@ components:
                 - cat-blue
                 - cat-random
             - type: string
+              pattern: ^custom:[\dA-Fa-f]{8}-[\dA-Fa-f]{4}-[\dA-Fa-f]{4}-[\dA-Fa-f]{4}-[\dA-Fa-f]{12}$
         chatAppearance:
           type: object
           properties:
