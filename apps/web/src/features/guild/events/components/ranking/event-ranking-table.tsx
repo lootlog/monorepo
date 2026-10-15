@@ -1,4 +1,8 @@
-import { FILTERED_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
+import {
+  FILTERED_TABLE_HEADER_CLASS,
+  RESULTS_TABLE_MEDIA_QUERY,
+} from "@/components/common/page-sticky-table-header";
+import { useMediaQuery } from "usehooks-ts";
 import { EmptyState } from "@/components/common/empty-state";
 import { RankBadge } from "@/components/common/rank-badge";
 import { useState, type ReactNode } from "react";
@@ -11,7 +15,6 @@ import { toast } from "sonner";
 import { useUpdateRankingPoints } from "@lootlog/client/main";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Table } from "@lootlog/ui/components/table";
-import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { cn } from "cn";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
@@ -90,7 +93,7 @@ export const EventRankingTable = ({
   variant = "default",
 }: EventRankingTableProps) => {
   const { t } = useTranslation();
-  const isMobile = useIsMobile();
+  const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
   const queryClient = useQueryClient();
   const [editingRankingId, setEditingRankingId] = useState<string | null>(null);
 
@@ -313,7 +316,7 @@ export const EventRankingTable = ({
       );
     }
 
-    if (isPage && isMobile && guildId && eventId) {
+    if (isPage && !usesTable && guildId && eventId) {
       return (
         <EventRankingTiles
           rankings={sortedRankings}

@@ -11,7 +11,9 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { stubResultsTableViewport } from "@/lib/testing/viewport";
+
 import type { KillHistoryMemberEntry } from "@lootlog/client/main";
 import { MemberKillsList } from "./member-kills-list";
 
@@ -20,6 +22,8 @@ await initializeTestTranslations();
 const wrapper = await createOrganizationTestWrapper();
 
 const renderList = (ui: ReactNode) => render(ui, { wrapper });
+
+beforeEach(() => stubResultsTableViewport());
 
 afterEach(() => {
   cleanup();

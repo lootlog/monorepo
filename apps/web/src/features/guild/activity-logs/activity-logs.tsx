@@ -1,3 +1,4 @@
+import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
 import { EmptyState } from "@/components/common/empty-state";
 import { InfiniteListStatusRow } from "@/components/common/infinite-list-status-row";
 import { ResultsSurface } from "@/components/common/results-surface";
@@ -26,7 +27,6 @@ import { ActivityLogsFilterToolbar } from "./components/activity-logs-filter-too
 import { ActivityLogsMobileListSkeleton } from "./components/activity-logs-mobile-list-skeleton";
 import { ActivityLogsTable } from "./components/activity-logs-table";
 import { useActivityLogsFilterModel } from "./components/use-activity-logs-filter-model";
-import { ACTIVITY_LOGS_TABLE_MEDIA_QUERY } from "./activity-logs-layout";
 
 const ACTIVITY_LOGS_PAGE_LIMIT = 20;
 
@@ -35,7 +35,7 @@ export const ActivityLogs = () => {
 
   const { t } = useTranslation();
   const themedKey = useThemedKey();
-  const usesTable = useMediaQuery(ACTIVITY_LOGS_TABLE_MEDIA_QUERY);
+  const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
   const listRef = useRef<HTMLDivElement>(null);
 
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(

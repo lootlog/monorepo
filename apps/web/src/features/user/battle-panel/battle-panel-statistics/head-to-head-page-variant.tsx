@@ -1,6 +1,10 @@
+import {
+  FILTERED_TABLE_HEADER_CLASS,
+  RESULTS_TABLE_MEDIA_QUERY,
+} from "@/components/common/page-sticky-table-header";
+import { useMediaQuery } from "usehooks-ts";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { FILTERED_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
@@ -115,6 +119,8 @@ export function HeadToHeadPageVariant({
     />
   );
 
+  const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
+
   const renderResults = () => {
     if (isLoading) {
       return (
@@ -162,7 +168,7 @@ export function HeadToHeadPageVariant({
       );
     }
 
-    if (isMobile) {
+    if (!usesTable) {
       return (
         <div>
           {data.records.map((record) => (

@@ -1,10 +1,13 @@
-import { FILTERED_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
+import {
+  FILTERED_TABLE_HEADER_CLASS,
+  RESULTS_TABLE_MEDIA_QUERY,
+} from "@/components/common/page-sticky-table-header";
+import { useMediaQuery } from "usehooks-ts";
 import { cn } from "cn";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTable } from "@tanstack/react-table";
 import { Table } from "@lootlog/ui/components/table";
-import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
@@ -73,7 +76,7 @@ export const MemberKillsList = ({
   isRetrying,
 }: MemberKillsListProps) => {
   const { t } = useTranslation();
-  const isMobile = useIsMobile();
+  const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
 
   // Expanded breakdowns belong to one filtered list, so a new reset key starts collapsed.
   const [expanded, setExpanded] = useState<{
@@ -121,7 +124,7 @@ export const MemberKillsList = ({
       isRetrying={isRetrying}
       skeleton={<MemberKillRowsSkeleton />}
     >
-      {isMobile ? (
+      {!usesTable ? (
         <MemberKillTiles
           kills={allKills}
           guildId={guildId}
