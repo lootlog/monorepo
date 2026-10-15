@@ -1,34 +1,27 @@
-import { PAGE_STICKY_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
-import { EmptyState } from "@/components/common/empty-state";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
+import {
+  FILTERED_TABLE_HEADER_CLASS,
+  RESULTS_TABLE_MEDIA_QUERY,
+} from "@/components/common/page-sticky-table-header";
+import { useMediaQuery } from "usehooks-ts";
 import { cn } from "cn";
-import { SectionCard } from "@/components/common/section-card/section-card";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTable } from "@tanstack/react-table";
-import { CircleAlert, RotateCcw, Skull } from "lucide-react";
-import { Button } from "@lootlog/ui/components/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from "@lootlog/ui/components/table";
-import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
+import { Table } from "@lootlog/ui/components/table";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
-import { useInfiniteScrollSentinel } from "@/hooks/utils/use-infinite-scroll-sentinel";
-import { useResetScrollTop } from "@/hooks/utils/use-virtual-infinite-scroll";
 import type { KillHistoryMemberEntry } from "@lootlog/client/main";
+import { EventHistoryResults } from "../shared/event-history-results";
 import { MemberKillBreakdownRow } from "./member-kill-breakdown-row";
+import { MemberKillRowsSkeleton } from "./member-kill-rows-skeleton";
+import { MemberKillTiles } from "./member-kill-tiles";
 import { createMemberKillsTableColumns } from "./member-kills-table-columns";
-import { EventHistoryPaginationStatus } from "../shared/event-history-pagination-status";
 
 type MemberKillsListProps = {
   guildId: string;
   eventId: string;
-  scrollElement: HTMLDivElement;
+  scrollElement: HTMLDivElement | null;
   resetKey: string;
   allKills: KillHistoryMemberEntry[];
   isLoading: boolean;
@@ -83,6 +76,7 @@ export const MemberKillsList = ({
   isRetrying,
 }: MemberKillsListProps) => {
   const { t } = useTranslation();
+  const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
 
   // Expanded breakdowns belong to one filtered list, so a new reset key starts collapsed.
   const [expanded, setExpanded] = useState<{
@@ -93,19 +87,19 @@ export const MemberKillsList = ({
   const expandedKillIds =
     expanded.resetKey === resetKey ? expanded.killIds : [];
 
+  const toggleExpanded = (killId: string) =>
+    setExpanded({
+      resetKey,
+      killIds: expandedKillIds.includes(killId)
+        ? expandedKillIds.filter((expandedKillId) => expandedKillId !== killId)
+        : [...expandedKillIds, killId],
+    });
+
   const columns = createMemberKillsTableColumns({
     eventId,
     expandedKillIds,
     guildId,
-    onExpandedToggle: (killId) =>
-      setExpanded({
-        resetKey,
-        killIds: expandedKillIds.includes(killId)
-          ? expandedKillIds.filter(
-              (expandedKillId) => expandedKillId !== killId,
-            )
-          : [...expandedKillIds, killId],
-      }),
+    onExpandedToggle: toggleExpanded,
     t,
   });
 
@@ -116,108 +110,63 @@ export const MemberKillsList = ({
     getRowId: (kill) => kill.id,
   });
 
-  useResetScrollTop({
-    getScrollElement: () => scrollElement,
-    resetKey,
-  });
-
-  const loaderRowRef = useInfiniteScrollSentinel<HTMLTableRowElement>({
-    enabled: !hasError,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    scrollElement,
-  });
-
-  const renderContent = () => {
-    if (isLoading) {
-      return (
-        <div aria-busy="true" aria-label={t("events.kills.loading")}>
-          <TableRowsSkeleton rows={7} withHeader rowContent="text" />
-        </div>
-      );
-    }
-
-    if (hasError && allKills.length === 0) {
-      return (
-        <EmptyState
-          icon={CircleAlert}
-          title={t("events.error")}
-          action={
-            <Button
-              type="button"
-              variant="outline"
-              loading={isRetrying ?? false}
-              icon=<RotateCcw className="size-3.5" />
-              onClick={onRetry}
-            >
-              {t("common.actions.retry")}
-            </Button>
-          }
-        />
-      );
-    }
-
-    if (allKills.length === 0 && !hasNextPage) {
-      return <EmptyState icon={Skull} title={t("events.kills.noKills")} />;
-    }
-
-    return (
-      <Table className="w-full table-auto xl:table-fixed">
-        <TanStackTableHeader
-          table={table}
-          className={PAGE_STICKY_TABLE_HEADER_CLASS}
-          rowClassName="border-b-1! border-border hover:bg-transparent"
-          getHeadClassName={(header) =>
-            cn(
-              "whitespace-nowrap align-middle",
-              HEAD_CLASS_NAMES.get(header.column.id),
-            )
-          }
-        />
-        <TanStackTableBody
-          table={table}
-          rowClassName="h-14 border-b border-border hover:bg-muted/40"
-          getCellClassName={(cell) =>
-            CELL_CLASS_NAMES.get(cell.column.id) ?? ""
-          }
-          getRowProps={(row) => ({
-            "data-state": expandedKillIds.includes(row.id)
-              ? "selected"
-              : undefined,
-          })}
-          renderRowDetail={(row) =>
-            expandedKillIds.includes(row.id) && (
-              <MemberKillBreakdownRow
-                columnCount={columns.length}
-                kill={row.original}
-              />
-            )
-          }
-        />
-        <TableBody>
-          <TableRow ref={loaderRowRef} className="hover:bg-transparent">
-            <TableCell
-              colSpan={columns.length}
-              className="h-14 text-center text-xs text-muted-foreground"
-            >
-              <EventHistoryPaginationStatus
-                hasError={hasError}
-                hasNextPage={hasNextPage}
-                isFetching={isRetrying ?? isFetchingNextPage}
-                onRetry={onRetry}
-              />
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-    );
-  };
-
   return (
-    <SectionCard className="w-full overflow-clip">
-      <SectionCardHeader icon={Skull} title={t("events.kills.title")} />
-      {renderContent()}
-    </SectionCard>
+    <EventHistoryResults
+      scrollElement={scrollElement}
+      resetKey={resetKey}
+      isEmpty={allKills.length === 0}
+      isLoading={isLoading}
+      hasError={hasError}
+      hasNextPage={hasNextPage}
+      isFetchingNextPage={isFetchingNextPage}
+      fetchNextPage={fetchNextPage}
+      onRetry={onRetry}
+      isRetrying={isRetrying}
+      skeleton={<MemberKillRowsSkeleton />}
+    >
+      {!usesTable ? (
+        <MemberKillTiles
+          kills={allKills}
+          guildId={guildId}
+          eventId={eventId}
+          expandedKillIds={expandedKillIds}
+          onExpandedToggle={toggleExpanded}
+        />
+      ) : (
+        <Table className="w-full table-auto border-b xl:table-fixed">
+          <TanStackTableHeader
+            table={table}
+            className={FILTERED_TABLE_HEADER_CLASS}
+            rowClassName="border-b-1! border-border hover:bg-transparent"
+            getHeadClassName={(header) =>
+              cn(
+                "whitespace-nowrap align-middle",
+                HEAD_CLASS_NAMES.get(header.column.id),
+              )
+            }
+          />
+          <TanStackTableBody
+            table={table}
+            rowClassName="h-14 border-b border-border hover:bg-muted/40"
+            getCellClassName={(cell) =>
+              CELL_CLASS_NAMES.get(cell.column.id) ?? ""
+            }
+            getRowProps={(row) => ({
+              "data-state": expandedKillIds.includes(row.id)
+                ? "selected"
+                : undefined,
+            })}
+            renderRowDetail={(row) =>
+              expandedKillIds.includes(row.id) && (
+                <MemberKillBreakdownRow
+                  columnCount={columns.length}
+                  kill={row.original}
+                />
+              )
+            }
+          />
+        </Table>
+      )}
+    </EventHistoryResults>
   );
 };

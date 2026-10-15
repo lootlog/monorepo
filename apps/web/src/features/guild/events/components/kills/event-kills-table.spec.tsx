@@ -11,7 +11,9 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { stubResultsTableViewport } from "@/lib/testing/viewport";
+
 import { createHeroKill as createKill } from "@/lib/testing/event-kill";
 import { EventKillsTable } from "./event-kills-table";
 
@@ -20,6 +22,8 @@ await initializeTestTranslations();
 const wrapper = await createOrganizationTestWrapper();
 
 const renderTable = (ui: ReactNode) => render(ui, { wrapper });
+
+beforeEach(() => stubResultsTableViewport());
 
 afterEach(() => {
   cleanup();
@@ -120,6 +124,8 @@ describe("EventKillsTable", () => {
   });
 
   it("watches the loader row against the screen when the document scrolls the page", () => {
+    // A phone, rather than the desktop the other cases render.
+    vi.unstubAllGlobals();
     const nativeMatchMedia = window.matchMedia.bind(window);
     vi.stubGlobal("matchMedia", (query: string) => {
       const result = nativeMatchMedia(query);

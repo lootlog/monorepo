@@ -1,3 +1,8 @@
+import {
+  FILTERED_TABLE_HEADER_CLASS,
+  RESULTS_TABLE_MEDIA_QUERY,
+} from "@/components/common/page-sticky-table-header";
+import { useMediaQuery } from "usehooks-ts";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { useBattleTableActions } from "@/features/user/battle-panel/battle-panel-battles-list/hooks/use-battle-table-actions";
@@ -11,7 +16,6 @@ import { ResultsSurface } from "@/components/common/results-surface";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { Table } from "@lootlog/ui/components/table";
-import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { Link } from "@tanstack/react-router";
 import { type Cell, useTable } from "@tanstack/react-table";
 import { cn } from "cn";
@@ -47,8 +51,10 @@ type BattlesTableProps = {
     onNextPage?: () => void;
     onPreviousPage?: () => void;
   };
+  /** The page's filters; without them the table sits under its page's filter bar. */
   toolbar?: ReactNode;
-  toolbarEnd?: ReactNode;
+  /** Scrolls the page back to its top when it changes, such as the page of results. */
+  scrollResetKey?: string;
 };
 
 // Cells whose whole area opens the battle, so a click anywhere outside the
@@ -82,10 +88,10 @@ export const BattlesTable = ({
   selectionLimit,
   pagination,
   toolbar,
-  toolbarEnd,
+  scrollResetKey,
 }: BattlesTableProps) => {
   const { t } = useTranslation();
-  const isMobile = useIsMobile();
+  const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
 
   const {
     clearSelection,
@@ -248,20 +254,22 @@ export const BattlesTable = ({
         footer={paginationFooter}
         onClearFilters={onClearFilters}
         selectionBar={selectionBar}
-        toolbar={toolbar}
-        toolbarEnd={toolbarEnd}
-        toolbarLabel={t("battlePanel.filters.title")}
-        withHorizontalScroll={!isMobile}
+        filters={toolbar}
+        filtersLabel={t("battlePanel.filters.title")}
+        scrollResetKey={scrollResetKey}
       >
         {!isLoading && battles.length === 0 ? (
-          <EmptyState
-            icon={Shield}
-            title={t("battlePanel.list.empty")}
-            description={t("battlePanel.list.emptyDescription")}
-            compact={!pagination}
-            className={pagination ? "min-h-[360px]" : "min-h-48"}
-          />
-        ) : isMobile ? (
+          <div className="p-3">
+            <EmptyState
+              framed
+              icon={Shield}
+              title={t("battlePanel.list.empty")}
+              description={t("battlePanel.list.emptyDescription")}
+              compact={!pagination}
+              className={pagination ? "min-h-[360px]" : "min-h-48"}
+            />
+          </div>
+        ) : !usesTable ? (
           <div
             aria-busy={isLoading || isRefreshing}
             className={cn("flex flex-col", isRefreshing && "opacity-60")}
@@ -283,11 +291,11 @@ export const BattlesTable = ({
         ) : (
           <Table
             aria-busy={isLoading || isRefreshing}
-            className="battle-panel-battles-table min-w-full table-fixed border-b md:min-w-[960px] md:table-auto"
+            className="battle-panel-battles-table min-w-[960px] table-auto border-b"
           >
             <TanStackTableHeader
               table={table}
-              className="sticky top-0 z-10 bg-background"
+              className={FILTERED_TABLE_HEADER_CLASS}
               rowClassName="border-b-1! border-border"
               getHeadClassName={(header) =>
                 cn(

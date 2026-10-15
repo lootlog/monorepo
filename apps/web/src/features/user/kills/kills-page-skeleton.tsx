@@ -1,40 +1,34 @@
 import { CardListSkeleton } from "@/components/common/card-list-skeleton";
-import { FilterBar } from "@/components/common/filter-bar";
-import { PageHeaderSkeleton } from "@/components/common/page-header-skeleton";
-import { SectionCard } from "@/components/common/section-card/section-card";
+import { ResultsSurface } from "@/components/common/results-surface";
+import { TablePaginationFooterSkeleton } from "@/components/ui/table-pagination-footer-skeleton";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { KillsMobileCardSkeleton } from "./components/kills-mobile-card-skeleton";
 
 export const KillsPageSkeleton = () => {
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 p-3">
-      <PageHeaderSkeleton />
-      <FilterBar>
-        <Skeleton className="h-10 min-w-0 flex-1 rounded-lg md:w-[220px] md:flex-none" />
-        <Skeleton className="size-10 rounded-lg md:hidden" />
-        <Skeleton className="hidden h-10 w-[200px] rounded-lg md:block" />
-        <Skeleton className="hidden h-10 w-[200px] rounded-lg md:block" />
-        <Skeleton className="hidden h-10 w-[200px] rounded-lg md:block" />
-        <Skeleton className="hidden h-10 w-[167px] rounded-lg md:block" />
-      </FilterBar>
-      <SectionCard className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="min-h-0 flex-1 overflow-hidden">
-          <TableRowsSkeleton
-            trailingColumns={2}
-            withHeader
-            withNpcTile
-            mobileList={<CardListSkeleton card={<KillsMobileCardSkeleton />} />}
-          />
-        </div>
-        <div className="flex h-14 shrink-0 items-center justify-between border-t border-border px-4">
-          <Skeleton className="h-4 w-24" />
-          <div className="flex gap-2">
-            <Skeleton className="size-8" />
-            <Skeleton className="size-8" />
-          </div>
-        </div>
-      </SectionCard>
-    </div>
+    <ScrollArea data-under-top-bar aria-busy="true" className="h-full min-h-0">
+      <ResultsSurface
+        filters={
+          <>
+            <Skeleton className="h-10 min-w-0 flex-1 rounded-lg md:w-[220px] md:flex-none" />
+            <Skeleton className="size-10 rounded-lg md:hidden" />
+            <Skeleton className="hidden h-10 w-[200px] rounded-lg md:block" />
+            <Skeleton className="hidden h-10 w-[200px] rounded-lg md:block" />
+            <Skeleton className="hidden h-10 w-[200px] rounded-lg md:block" />
+            <Skeleton className="hidden h-10 w-[167px] rounded-lg md:block" />
+          </>
+        }
+        footer={<TablePaginationFooterSkeleton />}
+      >
+        <TableRowsSkeleton
+          trailingColumns={2}
+          withHeader
+          withNpcTile
+          mobileList={<CardListSkeleton card={<KillsMobileCardSkeleton />} />}
+        />
+      </ResultsSurface>
+    </ScrollArea>
   );
 };

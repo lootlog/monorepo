@@ -1,3 +1,7 @@
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { upperFirst } from "es-toolkit";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
@@ -35,8 +39,11 @@ export const BattlePanelBattleCard = ({
 
   return (
     <article
+      data-list-tile
       className={cn(
-        "relative border-b border-border/70 p-3 transition-colors last:border-b-0 hover:bg-muted/30",
+        "relative py-3 transition-colors hover:bg-muted/30",
+        LIST_TILE_RULE_CLASS,
+        LIST_TILE_INSET_CLASS,
         isChecked && "bg-primary/10 ring-1 ring-inset ring-primary/45",
       )}
     >

@@ -1,7 +1,10 @@
-import { PAGE_STICKY_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
+import {
+  FILTERED_TABLE_HEADER_CLASS,
+  RESULTS_TABLE_MEDIA_QUERY,
+} from "@/components/common/page-sticky-table-header";
+import { useMediaQuery } from "usehooks-ts";
 import { EmptyState } from "@/components/common/empty-state";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCard } from "@/components/common/section-card/section-card";
+import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { useTranslation } from "react-i18next";
 import { useTable } from "@tanstack/react-table";
@@ -19,9 +22,9 @@ import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import type { KillHistoryEntry } from "@lootlog/client/main";
 import { createEventKillsTableColumns } from "./event-kills-table-columns";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
-import { useInfiniteScrollSentinel } from "@/hooks/utils/use-infinite-scroll-sentinel";
-import { useResetScrollTop } from "@/hooks/utils/use-virtual-infinite-scroll";
-import { EventHistoryPaginationStatus } from "../shared/event-history-pagination-status";
+import { EventHistoryResults } from "../shared/event-history-results";
+import { EventKillRowsSkeleton } from "./event-kill-rows-skeleton";
+import { EventKillTiles } from "./event-kill-tiles";
 
 type EventKillsTableBaseProps = {
   eventId: string;
@@ -49,9 +52,6 @@ type EventKillsTablePreviewProps = EventKillsTableBaseProps & {
 type EventKillsTableProps =
   | EventKillsTableHistoryProps
   | EventKillsTablePreviewProps;
-
-const getEventKillsTableVariant = (props: EventKillsTableProps) =>
-  props.variant === "preview" ? "preview" : "history";
 
 const getColumnClassName = (columnId: string, isPreview: boolean) => {
   if (columnId === "killNumber") {
@@ -91,20 +91,18 @@ const getColumnClassName = (columnId: string, isPreview: boolean) => {
   return "";
 };
 
+/**
+ * The event's kills: the whole history, edge to edge on its page and as tiles
+ * where the table would not fit, or the latest few in the event's preview card.
+ */
 export const EventKillsTable = (props: EventKillsTableProps) => {
   const { t } = useTranslation();
+  const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
 
   const { eventId, guildId, hasError, isLoading, kills, onRetry, isRetrying } =
     props;
 
-  const variant = getEventKillsTableVariant(props);
-  const isPreview = variant === "preview";
-  const historyProps = props.variant === "preview" ? undefined : props;
-  const fetchNextPage = historyProps?.fetchNextPage;
-  const hasNextPage = historyProps?.hasNextPage ?? false;
-  const isFetchingNextPage = historyProps?.isFetchingNextPage ?? false;
-  const resetKey = historyProps?.resetKey;
-  const scrollElement = historyProps?.scrollElement ?? null;
+  const isPreview = props.variant === "preview";
 
   const columns = createEventKillsTableColumns({
     eventId,
@@ -119,30 +117,81 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
     data: kills,
   });
 
-  useResetScrollTop({
-    enabled: !isPreview,
-    getScrollElement: () => scrollElement,
-    resetKey,
-  });
+  const killsTable = (
+    <Table
+      className={cn(
+        "w-full table-auto xl:table-fixed",
+        !isPreview && "border-b",
+      )}
+    >
+      <TanStackTableHeader
+        table={table}
+        className={FILTERED_TABLE_HEADER_CLASS}
+        rowClassName="border-b-1! border-border hover:bg-transparent"
+        getHeadClassName={(header) =>
+          cn(
+            "whitespace-nowrap align-middle",
+            getColumnClassName(header.column.id, isPreview),
+          )
+        }
+      />
+      <TanStackTableBody
+        table={table}
+        rowClassName="h-14 border-b border-border hover:bg-muted/40"
+        getCellClassName={(cell) =>
+          cn(
+            "h-14 overflow-hidden align-middle",
+            getColumnClassName(cell.column.id, isPreview),
+          )
+        }
+      />
+      {/* A failed refresh keeps the last kills; the notice says they may be stale. */}
+      {isPreview && hasError && (
+        <TableBody>
+          <TableRow className="hover:bg-transparent">
+            <TableCell colSpan={columns.length}>
+              <QueryErrorNotice
+                message={t("events.error")}
+                onRetry={onRetry}
+                isRetrying={isRetrying}
+              />
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      )}
+    </Table>
+  );
 
-  const loaderRowRef = useInfiniteScrollSentinel<HTMLTableRowElement>({
-    enabled: !hasError,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    scrollElement,
-  });
+  if (props.variant !== "preview") {
+    return (
+      <EventHistoryResults
+        scrollElement={props.scrollElement}
+        resetKey={props.resetKey}
+        isEmpty={kills.length === 0}
+        isLoading={isLoading}
+        hasError={hasError}
+        hasNextPage={props.hasNextPage}
+        isFetchingNextPage={props.isFetchingNextPage}
+        fetchNextPage={props.fetchNextPage}
+        onRetry={onRetry}
+        isRetrying={isRetrying}
+        skeleton={<EventKillRowsSkeleton />}
+      >
+        {!usesTable ? (
+          <EventKillTiles kills={kills} guildId={guildId} eventId={eventId} />
+        ) : (
+          killsTable
+        )}
+      </EventHistoryResults>
+    );
+  }
 
-  const Container = ({ history: SectionCard, preview: "section" } as const)[
-    variant
-  ];
-
-  const renderContent = () => {
+  const renderPreviewContent = () => {
     if (isLoading) {
       return (
         <div aria-busy="true" aria-label={t("events.kills.loading")}>
           <TableRowsSkeleton
-            rows={isPreview ? 5 : 7}
+            rows={5}
             trailingColumns={3}
             withHeader
             withNpcTile
@@ -171,65 +220,16 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
       );
     }
 
-    if (kills.length === 0 && !hasNextPage) {
+    if (kills.length === 0) {
       return <EmptyState icon={Skull} title={t("events.kills.noKills")} />;
     }
 
-    return (
-      <Table className="w-full table-auto xl:table-fixed">
-        <TanStackTableHeader
-          table={table}
-          className={PAGE_STICKY_TABLE_HEADER_CLASS}
-          rowClassName="border-b-1! border-border"
-          getHeadClassName={(header) =>
-            cn(
-              "whitespace-nowrap align-middle",
-              getColumnClassName(header.column.id, isPreview),
-            )
-          }
-        />
-        <TanStackTableBody
-          table={table}
-          rowClassName="h-14 border-b border-border hover:bg-muted/40"
-          getCellClassName={(cell) =>
-            cn(
-              "h-14 overflow-hidden align-middle",
-              getColumnClassName(cell.column.id, isPreview),
-            )
-          }
-        />
-        {(!isPreview || hasError) && (
-          <TableBody>
-            <TableRow ref={loaderRowRef} className="hover:bg-transparent">
-              <TableCell
-                colSpan={columns.length}
-                className="h-14 text-center text-xs text-muted-foreground"
-              >
-                <EventHistoryPaginationStatus
-                  hasError={hasError}
-                  hasNextPage={hasNextPage}
-                  isFetching={isRetrying ?? isFetchingNextPage}
-                  onRetry={onRetry}
-                />
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        )}
-      </Table>
-    );
+    return killsTable;
   };
 
   return (
-    <Container
-      className={cn(
-        "w-full min-w-0 overflow-clip",
-        isPreview && "@container/kills",
-      )}
-    >
-      {!isPreview && (
-        <SectionCardHeader icon={Skull} title={t("events.kills.title")} />
-      )}
-      {renderContent()}
-    </Container>
+    <section className="@container/kills w-full min-w-0 overflow-clip">
+      {renderPreviewContent()}
+    </section>
   );
 };

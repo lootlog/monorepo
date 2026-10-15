@@ -14,6 +14,8 @@ import {
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { stubResultsTableViewport } from "@/lib/testing/viewport";
+
 import { configureApiClients } from "@lootlog/client/transport";
 import type { EventRanking } from "../../types/api";
 import { EventRankingTable } from "./event-ranking-table";
@@ -32,6 +34,7 @@ describe("EventRankingTable", () => {
   let restoreApiClients: () => void;
 
   beforeEach(() => {
+    stubResultsTableViewport();
     vi.clearAllMocks();
     mocks.fetch.mockResolvedValue(
       new Response(JSON.stringify([]), {
@@ -49,6 +52,7 @@ describe("EventRankingTable", () => {
 
   afterEach(() => {
     cleanup();
+    vi.unstubAllGlobals();
     restoreApiClients();
   });
 

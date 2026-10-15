@@ -1,85 +1,89 @@
-import { TableFilterToolbar } from "@/components/ui/table-filter-toolbar";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
+import { useResetScrollTop } from "@/hooks/utils/use-virtual-infinite-scroll";
+import { getPrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import { cn } from "cn";
-import type { ReactNode, Ref } from "react";
-import { FilterChipList, type FilterChip } from "./filter-chip-list";
+import { useRef, type ReactNode } from "react";
+import { FilterBar } from "./filter-bar";
+import type { FilterChip } from "./filter-chip-list";
+import { TableScroller } from "./table-scroller";
 
 type ResultsSurfaceProps = {
-  title?: string;
+  /**
+   * The controls of the page's `FilterBar`. Without them, the results sit
+   * under the filter bar of the page around them.
+   */
+  filters?: ReactNode;
+  filtersLabel?: string;
   chips?: FilterChip[];
-  children: ReactNode;
   clearFiltersLabel?: string;
-  footer?: ReactNode;
   onClearFilters?: () => void;
-  /** The scroll viewport, for callers that virtualize their rows. */
-  scrollRef?: Ref<HTMLDivElement>;
+  /** Stands in for the chips while the page loads. */
+  chipsPlaceholder?: ReactNode;
+  /** The results; a table header in them uses `FILTERED_TABLE_HEADER_CLASS`. */
+  children: ReactNode;
+  /** Actions on the selected results, docked above the footer. */
   selectionBar?: ReactNode;
-  toolbar?: ReactNode;
-  toolbarEnd?: ReactNode;
-  /** Names the filter group when the toolbar replaces the titled header. */
-  toolbarLabel?: string;
-  withHorizontalScroll?: boolean;
+  /** Pagination, docked at the bottom edge while the results scroll. */
+  footer?: ReactNode;
+  /** Scrolls the page back to its top when it changes, such as the page of results. */
+  scrollResetKey?: string | number;
+  className?: string;
 };
 
-const EMPTY_CHIPS: NonNullable<ResultsSurfaceProps["chips"]> = [];
-
+/**
+ * A page of filtered results, edge to edge in the page scroller marked
+ * `data-under-top-bar`: the `FilterBar` stays on top, a table header pins
+ * right under it, and the footer stays at the bottom edge.
+ */
 export const ResultsSurface = ({
-  title,
-  chips = EMPTY_CHIPS,
-  children,
+  filters,
+  filtersLabel,
+  chips,
   clearFiltersLabel,
-  footer,
   onClearFilters,
-  scrollRef,
+  chipsPlaceholder,
+  children,
   selectionBar,
-  toolbar,
-  toolbarEnd,
-  toolbarLabel,
-  withHorizontalScroll = true,
+  footer,
+  scrollResetKey,
+  className,
 }: ResultsSurfaceProps) => {
-  const shouldShowChips =
-    chips.length > 0 && clearFiltersLabel !== undefined && onClearFilters;
+  const surfaceRef = useRef<HTMLDivElement>(null);
+
+  useResetScrollTop({
+    behavior: getPrefersReducedMotion() ? "auto" : "smooth",
+    getScrollElement: () =>
+      surfaceRef.current?.closest<HTMLElement>(
+        '[data-slot="scroll-area-viewport"]',
+      ) ?? null,
+    resetKey: scrollResetKey === undefined ? undefined : String(scrollResetKey),
+  });
 
   return (
-    <SectionCard className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden border-border bg-card p-0">
-      {title ? (
-        <SectionCardHeader
-          title={title}
-          actions={
-            <>
-              {toolbar}
-              {toolbarEnd}
-            </>
-          }
-          className="shrink-0"
-        />
-      ) : (
-        (toolbar || toolbarEnd) && (
-          <TableFilterToolbar role="group" aria-label={toolbarLabel}>
-            {toolbar && <div className="min-w-0 flex-1">{toolbar}</div>}
-            {toolbarEnd}
-          </TableFilterToolbar>
-        )
-      )}
-      {shouldShowChips && (
-        <FilterChipList
+    <div ref={surfaceRef} className={cn("flex min-w-0 flex-col", className)}>
+      {filters && (
+        <FilterBar
+          ariaLabel={filtersLabel}
           chips={chips}
-          clearLabel={clearFiltersLabel}
-          onClear={onClearFilters}
-        />
+          clearFiltersLabel={clearFiltersLabel}
+          onClearFilters={onClearFilters}
+          chipsPlaceholder={chipsPlaceholder}
+        >
+          {filters}
+        </FilterBar>
       )}
-      <ScrollArea className="relative min-h-0 flex-1" ref={scrollRef}>
-        <div className={cn(!withHorizontalScroll && "min-w-0")}>{children}</div>
-        {withHorizontalScroll && <ScrollBar orientation="horizontal" />}
-      </ScrollArea>
-      {selectionBar && (
-        <div className="shrink-0 border-t border-border bg-background/95">
-          {selectionBar}
+      <TableScroller className="min-w-0">{children}</TableScroller>
+      {(selectionBar || footer) && (
+        // Overlaps the last row's rule while it sits right after the rows.
+        <div
+          data-list-tile
+          className="sticky bottom-0 z-20 -mt-px backdrop-blur-sm"
+        >
+          {selectionBar && (
+            <div className="border-t border-sidebar-border">{selectionBar}</div>
+          )}
+          {footer}
         </div>
       )}
-      {footer}
-    </SectionCard>
+    </div>
   );
 };

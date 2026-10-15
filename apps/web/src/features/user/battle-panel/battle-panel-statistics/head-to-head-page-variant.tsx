@@ -1,5 +1,10 @@
+import {
+  FILTERED_TABLE_HEADER_CLASS,
+  RESULTS_TABLE_MEDIA_QUERY,
+} from "@/components/common/page-sticky-table-header";
+import { useMediaQuery } from "usehooks-ts";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
-import { PageHeader } from "@/components/common/page-header";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
@@ -12,7 +17,7 @@ import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/compon
 import { ResultsSurface } from "@/components/common/results-surface";
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
 import { Table } from "@lootlog/ui/components/table";
-import { AlertCircle, SearchX, Swords } from "lucide-react";
+import { AlertCircle, SearchX } from "lucide-react";
 import { HeadToHeadFilterToolbar } from "./components/head-to-head-filter-toolbar";
 import { HeadToHeadFiltersPanel } from "./components/head-to-head-filters-panel";
 import {
@@ -27,7 +32,6 @@ export function HeadToHeadPageVariant({
   matchmaking,
   showPhFilter,
   showRatingDelta = false,
-  subtitleKey,
   titleKey,
   trailingSkeletonColumns,
 }: HeadToHeadPageVariantProps) {
@@ -115,6 +119,8 @@ export function HeadToHeadPageVariant({
     />
   );
 
+  const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
+
   const renderResults = () => {
     if (isLoading) {
       return (
@@ -135,30 +141,36 @@ export function HeadToHeadPageVariant({
 
     if (isError) {
       return (
-        <EmptyState
-          icon={AlertCircle}
-          title={t("battlePanel.statistics.empty.errorTitle")}
-          description={
-            getRouteErrorMessage(error) ??
-            t("common.routeErrors.status.500.description")
-          }
-        />
+        <div className="p-3">
+          <EmptyState
+            framed
+            icon={AlertCircle}
+            title={t("battlePanel.statistics.empty.errorTitle")}
+            description={
+              getRouteErrorMessage(error) ??
+              t("common.routeErrors.status.500.description")
+            }
+          />
+        </div>
       );
     }
 
     if (!data || data.records.length === 0) {
       return (
-        <EmptyState
-          icon={SearchX}
-          title={t(emptyTitleKey)}
-          description={t(emptyDescriptionKey)}
-        />
+        <div className="p-3">
+          <EmptyState
+            framed
+            icon={SearchX}
+            title={t(emptyTitleKey)}
+            description={t(emptyDescriptionKey)}
+          />
+        </div>
       );
     }
 
-    if (isMobile) {
+    if (!usesTable) {
       return (
-        <div className="grid gap-2 p-3">
+        <div>
           {data.records.map((record) => (
             <BattlePanelH2hCard
               key={record.opponentId}
@@ -175,7 +187,7 @@ export function HeadToHeadPageVariant({
       <Table className="border-b">
         <TanStackTableHeader
           table={table}
-          className="sticky top-0 z-10 bg-background"
+          className={FILTERED_TABLE_HEADER_CLASS}
           rowClassName="border-b-1! border-border"
           headClassName="whitespace-nowrap"
         />
@@ -210,29 +222,20 @@ export function HeadToHeadPageVariant({
         </MobileFiltersDrawer>
       )}
 
-      <div className="flex h-full w-full flex-col overflow-hidden">
-        <div className="px-3 pb-0 pt-3">
-          <PageHeader
-            icon={Swords}
-            title={t(titleKey)}
-            description={t(subtitleKey)}
-          />
-        </div>
-
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-3">
-          <ResultsSurface
-            title={t(titleKey)}
-            chips={activeFilterChips}
-            clearFiltersLabel={t("battlePanel.filters.clear")}
-            footer={paginationFooter}
-            onClearFilters={() => applyFilterState(getResetHeadToHeadFilters())}
-            toolbar={toolbar}
-            withHorizontalScroll={!isMobile}
-          >
-            {renderResults()}
-          </ResultsSurface>
-        </div>
-      </div>
+      <ScrollArea data-under-top-bar className="h-full min-h-0">
+        <h1 className="sr-only">{t(titleKey)}</h1>
+        <ResultsSurface
+          filters={toolbar}
+          filtersLabel={t("battlePanel.filters.title")}
+          chips={activeFilterChips}
+          clearFiltersLabel={t("battlePanel.filters.clear")}
+          onClearFilters={() => applyFilterState(getResetHeadToHeadFilters())}
+          scrollResetKey={pageIndex}
+          footer={paginationFooter}
+        >
+          {renderResults()}
+        </ResultsSurface>
+      </ScrollArea>
     </>
   );
 }

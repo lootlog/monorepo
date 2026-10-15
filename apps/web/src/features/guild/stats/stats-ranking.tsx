@@ -1,12 +1,13 @@
+import { cn } from "cn";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
-import { KillStatsFilterBar } from "@/features/kills/components/kill-stats-filter-bar";
+import { KillStatsFilters } from "@/features/kills/components/kill-stats-filters";
 import { MemberNameWithColor } from "./components/member-name-with-color";
 import { StatsCountCell } from "./components/stats-count-cell";
-import { StatsMemberAvatar } from "./components/stats-member-avatar";
+import { MemberAvatar } from "@/components/common/member-avatar";
 import { StatsMobileListSkeleton } from "./components/stats-mobile-list-skeleton";
 import { RankBadge } from "@/components/common/rank-badge";
 import {
@@ -14,7 +15,12 @@ import {
   STATS_TABLE_POSITION_COLUMN_ID,
   StatsTable,
 } from "./components/stats-table";
-import { StatsTableCard } from "./components/stats-table-card";
+import { StatsTableResults } from "./components/stats-table-results";
+import { ResultsSurface } from "@/components/common/results-surface";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
 import { useStatsRankingModel } from "./use-stats-ranking-model";
 
 export const StatsRanking = () => {
@@ -56,7 +62,7 @@ export const StatsRanking = () => {
       header: () => t("kills.memberRanking.member"),
       cell: ({ row: { original: member } }) => (
         <div className="flex items-center gap-2.5">
-          <StatsMemberAvatar
+          <MemberAvatar
             userId={member.memberUserId}
             avatar={member.memberAvatar}
             name={member.memberName}
@@ -105,38 +111,27 @@ export const StatsRanking = () => {
   });
 
   return (
-    <div data-fills-page className="flex min-h-0 flex-col gap-3 p-3">
+    <>
       <h1 className="sr-only">{t("kills.fullRanking.title")}</h1>
-      <KillStatsFilterBar
-        period={settings.period}
-        onPeriodChange={handlePeriodChange}
-        search={{
-          placeholder: t("kills.fullRanking.searchPlaceholder"),
-          onChange: handleSearchChange,
-        }}
-        level={{
-          minLvl: settings.minLvl,
-          maxLvl: settings.maxLvl,
-          onMinLvlChange: handleMinLvlChange,
-          onMaxLvlChange: handleMaxLvlChange,
-        }}
-      />
-
-      <StatsTableCard
-        isLoading={isLoading}
-        rowContent="text"
-        mobileSkeleton={
-          <StatsMobileListSkeleton media="avatar" withTypeCounts />
+      <ResultsSurface
+        filters={
+          <KillStatsFilters
+            period={settings.period}
+            onPeriodChange={handlePeriodChange}
+            search={{
+              placeholder: t("kills.fullRanking.searchPlaceholder"),
+              onChange: handleSearchChange,
+            }}
+            level={{
+              minLvl: settings.minLvl,
+              maxLvl: settings.maxLvl,
+              onMinLvlChange: handleMinLvlChange,
+              onMaxLvlChange: handleMaxLvlChange,
+            }}
+          />
         }
-        emptyMessage={
-          paginatedData.length === 0
-            ? t(
-                hasActiveFilters
-                  ? "kills.memberRanking.filteredNoData"
-                  : "kills.memberRanking.noData",
-              )
-            : undefined
-        }
+        filtersLabel={t("kills.filters.title")}
+        scrollResetKey={cursor}
         footer={
           <TablePaginationFooter
             totalLabel={t("kills.fullRanking.total", { count: total })}
@@ -147,58 +142,79 @@ export const StatsRanking = () => {
           />
         }
       >
-        <ul className="md:hidden">
-          {paginatedData.map((member, index) => (
-            <li
-              key={member.memberId}
-              className="border-b border-border last:border-b-0"
-            >
-              <Link
-                to="/$guildId/stats/members/$memberId"
-                params={{ guildId, memberId: String(member.memberId) }}
-                className="block p-3 outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+        <StatsTableResults
+          isLoading={isLoading}
+          rowContent="text"
+          mobileSkeleton={
+            <StatsMobileListSkeleton media="avatar" withTypeCounts />
+          }
+          emptyMessage={
+            paginatedData.length === 0
+              ? t(
+                  hasActiveFilters
+                    ? "kills.memberRanking.filteredNoData"
+                    : "kills.memberRanking.noData",
+                )
+              : undefined
+          }
+        >
+          <ul className="xl:hidden">
+            {paginatedData.map((member, index) => (
+              <li
+                key={member.memberId}
+                data-list-tile
+                className={LIST_TILE_RULE_CLASS}
               >
-                <span className="flex min-w-0 items-center gap-3">
-                  <RankBadge rank={cursor + index + 1} />
-                  <StatsMemberAvatar
-                    userId={member.memberUserId}
-                    avatar={member.memberAvatar}
-                    name={member.memberName}
-                  />
-                  <span className="min-w-0 flex-1 truncate text-sm">
-                    <MemberNameWithColor
+                <Link
+                  to="/$guildId/stats/members/$memberId"
+                  params={{ guildId, memberId: String(member.memberId) }}
+                  className={cn(
+                    "block py-3 outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                    LIST_TILE_INSET_CLASS,
+                  )}
+                >
+                  <span className="flex min-w-0 items-center gap-3">
+                    <RankBadge rank={cursor + index + 1} />
+                    <MemberAvatar
+                      userId={member.memberUserId}
+                      avatar={member.memberAvatar}
                       name={member.memberName}
-                      member={membersMap.get(member.memberUserId)}
                     />
+                    <span className="min-w-0 flex-1 truncate text-sm">
+                      <MemberNameWithColor
+                        name={member.memberName}
+                        member={membersMap.get(member.memberUserId)}
+                      />
+                    </span>
+                    <span className="shrink-0 text-sm font-semibold tabular-nums">
+                      {member.totalParticipations.toLocaleString("pl-PL")}
+                    </span>
                   </span>
-                  <span className="shrink-0 text-sm font-semibold tabular-nums">
-                    {member.totalParticipations.toLocaleString("pl-PL")}
-                  </span>
-                </span>
-                {activeNpcTypes.length > 0 && (
-                  <span className="mt-2 flex flex-wrap gap-x-3 gap-y-1 pl-9 text-xs text-muted-foreground">
-                    {activeNpcTypes.map((type) => (
-                      <span key={type}>
-                        {t(`npcType.${type}`)}{" "}
-                        <span className="font-medium tabular-nums text-foreground">
-                          {(
-                            member.participationsByType[type] ?? 0
-                          ).toLocaleString("pl-PL")}
+                  {activeNpcTypes.length > 0 && (
+                    <span className="mt-2 flex flex-wrap gap-x-3 gap-y-1 pl-9 text-xs text-muted-foreground">
+                      {activeNpcTypes.map((type) => (
+                        <span key={type}>
+                          {t(`npcType.${type}`)}{" "}
+                          <span className="font-medium tabular-nums text-foreground">
+                            {(
+                              member.participationsByType[type] ?? 0
+                            ).toLocaleString("pl-PL")}
+                          </span>
                         </span>
-                      </span>
-                    ))}
-                  </span>
-                )}
-              </Link>
-            </li>
-          ))}
-        </ul>
-        <StatsTable
-          table={table}
-          className="hidden border-b md:table"
-          onRowClick={(member) => handleRowClick(member.memberId)}
-        />
-      </StatsTableCard>
-    </div>
+                      ))}
+                    </span>
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <StatsTable
+            table={table}
+            className="hidden border-b xl:table"
+            onRowClick={(member) => handleRowClick(member.memberId)}
+          />
+        </StatsTableResults>
+      </ResultsSurface>
+    </>
   );
 };

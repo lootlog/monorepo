@@ -1,3 +1,7 @@
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
 import { SkeletonLine } from "@/components/common/skeleton-line";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
@@ -20,7 +24,11 @@ export const StatsMobileListSkeleton = ({
 }: StatsMobileListSkeletonProps) => (
   <ul aria-hidden="true">
     {Array.from({ length: rows }, (_, index) => (
-      <li key={index} className="border-b border-border p-3 last:border-b-0">
+      <li
+        key={index}
+        data-list-tile
+        className={cn("py-3", LIST_TILE_RULE_CLASS, LIST_TILE_INSET_CLASS)}
+      >
         <div className="flex min-w-0 items-center gap-3">
           <Skeleton className="size-6 shrink-0 rounded-md" />
           {media === "avatar" ? (

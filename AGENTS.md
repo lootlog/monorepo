@@ -262,8 +262,12 @@ find it unchanged on the next.
 - Before building or restyling a page, find the shipped page that solves the
   same problem and match it: components, control sizes, spacing, copy tone,
   empty and loading states, mobile behavior, and interactions. In `apps/web`
-  the battle panel is the reference for navigation tabs, filter bars, KPI
-  tiles, tables, and empty states.
+  the activity log is the reference for filter bars, tables, and their empty
+  states: an edge-to-edge `FilterBar` pinned in the page scroller, the table
+  edge to edge under it with its header pinned to the bar (`ResultsSurface`),
+  and tiles instead of rows wherever the table would not fit
+  (`RESULTS_TABLE_MEDIA_QUERY`), so it never scrolls sideways. The battle panel is the reference for
+  navigation tabs and KPI tiles.
 - Reuse the shared component. When a second feature needs a feature-local
   component, move it to `components/common` or `packages/ui` and migrate its
   callers; a restyled copy is a defect.

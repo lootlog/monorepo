@@ -1,3 +1,4 @@
+import { FILTERED_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import type { coreTableFeatures } from "@/lib/tanstack-table-features";
@@ -43,7 +44,7 @@ type StatsTableProps<TData extends RowData> = {
   onRowClick?: (row: TData) => void;
 };
 
-/** Same header treatment as the battle panel lists: pinned, on the page background. */
+/** A stats table in a `ResultsSurface`, its header pinned under the filter bar. */
 export const StatsTable = <TData extends RowData>({
   table,
   className,
@@ -52,7 +53,7 @@ export const StatsTable = <TData extends RowData>({
   <Table className={className}>
     <TanStackTableHeader
       table={table}
-      className="sticky top-0 z-10 bg-background"
+      className={FILTERED_TABLE_HEADER_CLASS}
       rowClassName="border-b-1! border-border hover:bg-transparent"
       getHeadClassName={(header) => getHeadClassName(header.column.id)}
     />

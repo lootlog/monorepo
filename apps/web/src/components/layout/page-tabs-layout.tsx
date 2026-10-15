@@ -29,10 +29,8 @@ type PageTabsLayoutProps = {
 /**
  * A section split into tabs. On a tab, the tabs and the tab's page share one
  * page scroller, so the tabs stay mounted while a tab loads or changes and
- * the active tab's underline slides to the next one. A page that fills the
- * scroller instead of growing with its content, such as a table that scrolls
- * itself, marks its root `data-fills-page`. Any other page of the section,
- * such as a detail page reached from a tab, renders without the tabs.
+ * the active tab's underline slides to the next one. Any other page of the
+ * section, such as a detail page reached from a tab, renders without the tabs.
  */
 export const PageTabsLayout = ({
   tabs,

@@ -1,7 +1,8 @@
 import { EventLoadError } from "./components/event-load-error";
 import { EventMemberSkeleton } from "./event-member-skeleton";
 import { useState } from "react";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { DetailPage } from "@/components/common/detail-page";
+import { MemberAvatar } from "@/components/common/member-avatar";
 import {
   getEventsRankingControllerGetEventHeroStatsQueryKey,
   getListEventRankingQueryKey,
@@ -15,8 +16,13 @@ import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { HeroTabs } from "./components/shared/hero-tabs";
 import { MemberKillsList } from "./components/member-kills/member-kills-list";
+import { MemberEventMeta } from "./components/member-kills/member-event-meta";
 import { MemberSummaryStrip } from "./components/member-kills/member-summary-strip";
-import type { MemberStatsSummary } from "./components/member-kills/member-kills-view-model";
+import { EVENT_HISTORY_PAGE_SIZE } from "./components/shared/event-history-page-size";
+import type {
+  MemberIdentity,
+  MemberStatsSummary,
+} from "./components/member-kills/member-kills-view-model";
 import { useEventMemberKillHistory } from "./hooks/queries/use-event-member-kill-history";
 import type { EventHeroNpc, EventRanking } from "./types/api";
 
@@ -131,6 +137,10 @@ const getMemberEventContext = ({
   };
 };
 
+/** The member's details arrive with their kills, so their id stands in until then. */
+const getMemberName = (member: MemberIdentity | undefined, memberId: string) =>
+  member?.name ?? `#${memberId}`;
+
 type EventMemberKillsPageContentProps = {
   guildId?: string;
   eventId?: string;
@@ -193,7 +203,7 @@ export const EventMemberKillsPageContent = ({
     eventId: queryEventId,
     memberId: queryMemberId,
     heroId: selectedHeroId,
-    limit: 20,
+    limit: EVENT_HISTORY_PAGE_SIZE,
   });
 
   const { data: rankings = [] } = useListEventRanking(
@@ -272,56 +282,55 @@ export const EventMemberKillsPageContent = ({
   });
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <DetailPage
+      name={getMemberName(member, queryMemberId)}
+      nameStyle={{ color: roleColor }}
+      media={
+        member && (
+          <MemberAvatar
+            userId={member.userId}
+            avatar={member.avatar ?? null}
+            name={member.name}
+            className="size-5"
+          />
+        )
+      }
+      meta={
+        <MemberEventMeta eventName={event.name} rankingPlace={rankingPlace} />
+      }
+      scrollRef={setScrollElement}
+    >
       <EventParticipationConfirmationDialog
         guildId={guildId}
         eventId={eventId}
       />
-
-      <ScrollArea
-        data-under-top-bar
-        ref={setScrollElement}
-        className="min-h-0 flex-1"
-      >
-        <div className="flex flex-col gap-3 px-3 py-3">
-          <MemberSummaryStrip
-            member={member}
-            memberId={memberId}
-            eventName={event.name}
-            contextStats={contextStats}
-            roleColor={roleColor}
-            rankingPlace={rankingPlace}
-            eventKillCount={eventKillCount}
-            filters={
-              <HeroTabs
-                placement="page"
-                heroes={heroes}
-                includeAll
-                value={selectedHeroId}
-                onValueChange={setSelectedHeroId}
-              />
-            }
-          />
-          {scrollElement && (
-            <MemberKillsList
-              guildId={queryGuildId}
-              eventId={queryEventId}
-              scrollElement={scrollElement}
-              resetKey={selectedHeroId ?? "all"}
-              allKills={allKills}
-              isLoading={killsLoading}
-              hasError={Boolean(killsError)}
-              hasNextPage={hasNextPage}
-              isFetchingNextPage={isFetchingNextPage}
-              fetchNextPage={fetchNextPage}
-              onRetry={() =>
-                void (isFetchNextPageError ? fetchNextPage() : refetch())
-              }
-              isRetrying={isFetching}
-            />
-          )}
-        </div>
-      </ScrollArea>
-    </div>
+      <HeroTabs
+        placement="page"
+        heroes={heroes}
+        includeAll
+        value={selectedHeroId}
+        onValueChange={setSelectedHeroId}
+      />
+      <MemberSummaryStrip
+        contextStats={contextStats}
+        eventKillCount={eventKillCount}
+      />
+      <MemberKillsList
+        guildId={queryGuildId}
+        eventId={queryEventId}
+        scrollElement={scrollElement}
+        resetKey={selectedHeroId ?? "all"}
+        allKills={allKills}
+        isLoading={killsLoading}
+        hasError={Boolean(killsError)}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        fetchNextPage={fetchNextPage}
+        onRetry={() =>
+          void (isFetchNextPageError ? fetchNextPage() : refetch())
+        }
+        isRetrying={isFetching}
+      />
+    </DetailPage>
   );
 };

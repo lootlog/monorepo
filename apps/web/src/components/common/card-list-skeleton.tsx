@@ -6,12 +6,12 @@ type CardListSkeletonProps = {
   rows?: number;
 };
 
-/** Stands in for a mobile results list that stacks cards in a padded grid. */
+/** Stands in for a mobile results list of edge-to-edge tiles. */
 export const CardListSkeleton = ({
   card,
   rows = 10,
 }: CardListSkeletonProps) => (
-  <div aria-hidden="true" className="grid gap-2 p-3">
+  <div aria-hidden="true">
     {Array.from({ length: rows }, (_, index) => (
       <Fragment key={index}>{card}</Fragment>
     ))}

@@ -1,5 +1,4 @@
 import { parseKillStatsLevel } from "@/features/kills/parse-kill-stats-level";
-import { FilterBar } from "@/components/common/filter-bar";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
@@ -14,7 +13,7 @@ import { Label } from "@lootlog/ui/components/label";
 import { Filter } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-type KillStatsFilterBarProps = {
+type KillStatsFiltersProps = {
   /** Omit where the world is the Organization's context instead of a filter. */
   world?: {
     value: string | null;
@@ -51,14 +50,15 @@ const LEVEL_COMMIT_DELAY_MS = 300;
 const toLevelParam = (value: number | undefined) =>
   value === undefined ? "" : String(value);
 
-export const KillStatsFilterBar = ({
+/** The kill statistics filters, for a `FilterBar` or `ResultsSurface`. */
+export const KillStatsFilters = ({
   world,
   period = "all",
   onPeriodChange,
   search,
   level,
   npcType,
-}: KillStatsFilterBarProps) => {
+}: KillStatsFiltersProps) => {
   const { t } = useTranslation();
 
   const renderLevelRange = (layout: "inline" | "fill") =>
@@ -74,7 +74,7 @@ export const KillStatsFilterBar = ({
     );
 
   return (
-    <FilterBar ariaLabel={t("kills.filters.title")}>
+    <>
       {search && (
         <SearchInput
           aria-label={search.placeholder}
@@ -163,6 +163,6 @@ export const KillStatsFilterBar = ({
         {npcType && <KillStatsNpcTypeSelect {...npcType} />}
         {renderLevelRange("inline")}
       </div>
-    </FilterBar>
+    </>
   );
 };

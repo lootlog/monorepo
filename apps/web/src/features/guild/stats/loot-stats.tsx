@@ -53,7 +53,7 @@ export const LootStats = () => {
   );
 
   return (
-    <div className="flex flex-col gap-3 p-3">
+    <div>
       <h1 className="sr-only">{t("common.stats.loots")}</h1>
       <LootStatsFilterBar
         period={settings.period}
@@ -62,7 +62,7 @@ export const LootStats = () => {
         onExcludeColossusChange={setExcludeColossus}
       />
 
-      <>
+      <div className="flex flex-col gap-3 p-3">
         <LootOverviewCards data={data?.overview} isLoading={isLoading} />
 
         <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-3">
@@ -102,7 +102,7 @@ export const LootStats = () => {
           />
           <LootTopItems data={data?.topItems} isLoading={isLoading} />
         </div>
-      </>
+      </div>
     </div>
   );
 };
