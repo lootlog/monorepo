@@ -90,12 +90,17 @@
 }
 
 /*
- * Sticky page content, such as list toolbars (z-10) and the activity log's
- * filter bar (z-20), would otherwise paint over the page scrollbar where they
- * overlap it.
+ * Sticky page content, such as list toolbars (z-10) and filter bars (z-20),
+ * and the search suggestions band hung from a filter bar inside the scroller
+ * (z-50), would otherwise paint over the page scrollbar where they overlap it.
  */
 [data-under-top-bar] > [data-slot="scroll-area-scrollbar"] {
-  z-index: 30;
+  z-index: 60;
+}
+
+/* Keeps those layers among themselves, under the app bar and overlays. */
+[data-under-top-bar] {
+  isolation: isolate;
 }
 
 /*

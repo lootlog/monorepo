@@ -36,10 +36,7 @@ const renderSprite = (
       isInGroup && "z-1",
     )}
   >
-    <PlayerTile
-      player={warrior}
-      className="absolute left-0 top-0 origin-top-left scale-75"
-    />
+    <PlayerTile player={warrior} size="compact" />
   </div>
 );
 

@@ -30,7 +30,7 @@ export const ActivityLogActor = ({ activity }: ActivityLogActorProps) => {
               prof: actor.prof,
               icon: actor.icon,
             }}
-            className="absolute left-0 top-0 origin-top-left scale-75"
+            size="compact"
             accountId={actor.accountId}
             characterId={actor.characterId}
             world={activity.world ?? undefined}

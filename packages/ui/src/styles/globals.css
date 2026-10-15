@@ -448,9 +448,44 @@
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
 
-  /* Motion: one curve for state changes, one overshoot for confirmations. */
+  /*
+   * Motion: one curve for state changes, one overshoot for confirmations, and
+   * a damped spring (about 4% overshoot) for surfaces that resize as their
+   * content changes. The spring settles within ~450ms.
+   */
   --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
   --ease-overshoot: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-spring: linear(
+    0,
+    0.0545,
+    0.1819,
+    0.3398,
+    0.5,
+    0.6455,
+    0.7676,
+    0.8636,
+    0.9344,
+    0.9831,
+    1.0138,
+    1.0306,
+    1.0376,
+    1.0379,
+    1.0343,
+    1.0288,
+    1.0226,
+    1.0166,
+    1.0114,
+    1.0071,
+    1.0039,
+    1.0016,
+    1,
+    0.9991,
+    0.9987,
+    0.9985,
+    0.9986,
+    0.9988,
+    1
+  );
 
   /*
    * Loading placeholders stay invisible for the first moments so a response
