@@ -26,11 +26,11 @@ import {
 } from "@lootlog/client/search";
 import { renderItemStat } from "@/components/render-item-stat";
 
+import { getSearchStatus } from "./-search-route.utils";
+
 const SEARCH_DEBOUNCE_MS = 300;
 
 const SEARCH_LIMIT = 96;
-
-type SearchStatus = "error" | "idle" | "loading" | "ready";
 
 type ItemsRouteSearch = {
   advancedFilter: string;
@@ -249,20 +249,6 @@ const getItemsSearchRequest = (search: ItemsRouteSearch, filters: string[]) => {
         search.sort && search.sort !== "relevance" ? [search.sort] : undefined,
     },
   };
-};
-
-const getSearchStatus = (
-  hasActiveSearch: boolean,
-  isError: boolean,
-  isPending: boolean,
-): SearchStatus => {
-  if (!hasActiveSearch) return "idle";
-
-  if (isError) return "error";
-
-  if (isPending) return "loading";
-
-  return "ready";
 };
 
 export const Route = createFileRoute("/items")({
