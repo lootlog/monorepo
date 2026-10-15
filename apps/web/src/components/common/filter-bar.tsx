@@ -94,6 +94,7 @@ export const FilterBar = ({
           <div
             role={ariaLabel ? "group" : undefined}
             aria-label={ariaLabel}
+            data-inline-search-bar
             className={cn(
               // The bar's bottom rule lights up while the search has focus.
               "flex min-h-12 flex-wrap items-center gap-x-4 gap-y-2 py-2 transition-colors has-[[data-slot=inline-search]_input:focus-visible]:border-primary motion-reduce:transition-none",

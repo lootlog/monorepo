@@ -18,6 +18,10 @@ import {
   INLINE_SEARCH_INPUT_CLASS,
   InlineSearchField,
 } from "@/components/common/inline-search-field";
+import {
+  INLINE_SEARCH_SUGGESTION_CLASS,
+  InlineSearchSuggestions,
+} from "@/components/common/inline-search-suggestions";
 import { cn } from "cn";
 
 interface ActorNameSelectorProps {
@@ -63,6 +67,31 @@ export function ActorNameSelector({
     onValueChange("");
     onSearchChange("");
   };
+
+  const suggestionsList = (
+    <>
+      <ComboboxEmpty>
+        {customValue
+          ? t("activityLogs.filters.suggestions.empty")
+          : t("activityLogs.filters.suggestions.hint")}
+      </ComboboxEmpty>
+      <ComboboxList>
+        {items.map((suggestion) => (
+          <ComboboxItem
+            key={suggestion}
+            value={suggestion}
+            className={inline ? INLINE_SEARCH_SUGGESTION_CLASS : undefined}
+          >
+            {showCustomOption && suggestion === customValue
+              ? t("activityLogs.filters.suggestions.useCustom", {
+                  value: customValue,
+                })
+              : suggestion}
+          </ComboboxItem>
+        ))}
+      </ComboboxList>
+    </>
+  );
 
   return (
     <Combobox
@@ -123,35 +152,20 @@ export function ActorNameSelector({
           )}
         </div>
       )}
-      <ComboboxContent
-        anchor={inline ? anchor : undefined}
-        align="start"
-        className={inline ? "max-w-[min(24rem,calc(100vw-2rem))]" : "w-[250px]"}
-      >
-        {!inline && (
+      {inline ? (
+        <InlineSearchSuggestions anchor={anchor}>
+          {suggestionsList}
+        </InlineSearchSuggestions>
+      ) : (
+        <ComboboxContent align="start" className="w-[250px]">
           <ComboboxInput
             showTrigger={false}
             placeholder={t("activityLogs.filters.suggestions.inputPlaceholder")}
             aria-label={t("activityLogs.filters.suggestions.inputPlaceholder")}
           />
-        )}
-        <ComboboxEmpty>
-          {customValue
-            ? t("activityLogs.filters.suggestions.empty")
-            : t("activityLogs.filters.suggestions.hint")}
-        </ComboboxEmpty>
-        <ComboboxList>
-          {items.map((suggestion) => (
-            <ComboboxItem key={suggestion} value={suggestion}>
-              {showCustomOption && suggestion === customValue
-                ? t("activityLogs.filters.suggestions.useCustom", {
-                    value: customValue,
-                  })
-                : suggestion}
-            </ComboboxItem>
-          ))}
-        </ComboboxList>
-      </ComboboxContent>
+          {suggestionsList}
+        </ComboboxContent>
+      )}
     </Combobox>
   );
 }
