@@ -20,7 +20,7 @@ export const ThemeRowSkeleton = ({ action = false }: { action?: boolean }) => (
           <SkeletonLine className="h-3 w-40 max-w-full" />
         </div>
       </div>
-      <Skeleton className="h-5 w-17 shrink-0 rounded-md sm:h-6 sm:w-20" />
+      <Skeleton className="h-6 w-20 shrink-0 rounded-md max-sm:hidden" />
     </div>
     {action && (
       <div className={LIST_TILE_ACTIONS_CLASS}>

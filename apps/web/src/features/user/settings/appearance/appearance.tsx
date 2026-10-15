@@ -19,10 +19,20 @@ import {
 import { CUSTOM_THEME_LIMIT } from "@lootlog/schema/custom-theme";
 import { Button } from "@lootlog/ui/components/button";
 import { Link, useSearch } from "@tanstack/react-router";
-import { Palette, Pencil, Plus, SlidersHorizontal, Trash2 } from "lucide-react";
+import {
+  Download,
+  Palette,
+  Pencil,
+  Plus,
+  Share2,
+  SlidersHorizontal,
+  Trash2,
+} from "lucide-react";
 import { useEffect, useEffectEvent, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { DeleteThemeDialog } from "./delete-theme-dialog";
+import { ImportThemeDialog } from "./import-theme-dialog";
+import { ShareThemeDialog } from "./share-theme-dialog";
 import { ThemeRow } from "./theme-row";
 import { ThemeRowSkeleton } from "./theme-row-skeleton";
 import { useCreateTheme } from "./use-create-theme";
@@ -50,6 +60,7 @@ export const AppearanceSettings: FC = () => {
   const themeCount = userThemes?.length ?? 0;
   const canCreate = !isPending && themeCount < CUSTOM_THEME_LIMIT;
   const createLabel = t("settings.appearance.customSection.create");
+  const importLabel = t("settings.appearance.import.action");
   const inUseLabel = t("settings.appearance.actions.inUse");
 
   // Each custom theme's row shows its own font.
@@ -70,8 +81,21 @@ export const AppearanceSettings: FC = () => {
         count={`${themeCount}/${CUSTOM_THEME_LIMIT}`}
         tiled
         trailing={
-          // On phones the button keeps only its icon, so the title fits.
-          <>
+          // On phones the buttons keep only their icons, so the title fits.
+          <span className="flex items-center gap-1.5">
+            <ImportThemeDialog
+              trigger={
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!canCreate}
+                  icon=<Download className="size-4" />
+                  aria-label={importLabel}
+                >
+                  <span className="max-sm:sr-only">{importLabel}</span>
+                </Button>
+              }
+            />
             <Button
               size="sm"
               className="max-sm:hidden"
@@ -92,7 +116,7 @@ export const AppearanceSettings: FC = () => {
             >
               <Plus className="size-4" />
             </Button>
-          </>
+          </span>
         }
       >
         {isPending ? (
@@ -129,6 +153,21 @@ export const AppearanceSettings: FC = () => {
                     >
                       <Pencil className="size-4" />
                     </Button>
+                    <ShareThemeDialog
+                      theme={userTheme}
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={t(
+                            "settings.appearance.actions.shareLabel",
+                            { name: userTheme.name },
+                          )}
+                        >
+                          <Share2 className="size-4" />
+                        </Button>
+                      }
+                    />
                     <DeleteThemeDialog
                       theme={userTheme}
                       trigger={

@@ -38,7 +38,6 @@ import {
   type ThemeEditorFormValues,
 } from "./theme-editor-form.schema";
 import { ThemeColorsSection } from "./theme-colors-section";
-import { ThemeShareSection } from "./theme-share-section";
 import { ThemeWallpaperSection } from "./theme-wallpaper-section";
 
 const toFormValues = (theme: UserThemeResponseDto): ThemeEditorFormValues => ({
@@ -239,8 +238,6 @@ export const ThemeEditorForm = ({
               )}
             />
           </BandSection>
-
-          <ThemeShareSection theme={theme} />
 
           <UnsavedChangesBar
             isDirty={form.formState.isDirty}
