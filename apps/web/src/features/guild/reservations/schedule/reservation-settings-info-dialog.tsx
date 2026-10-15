@@ -1,4 +1,3 @@
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import {
   CalendarClock,
   Clock3,
@@ -94,7 +93,7 @@ export const ReservationSettingsInfoDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
-        <DialogHeader className="pb-4 px-1">
+        <DialogHeader className="pb-4">
           <DialogTitle>
             {t("reservations.schedule.infoDialog.title")}
           </DialogTitle>
@@ -102,23 +101,25 @@ export const ReservationSettingsInfoDialog = ({
             {t("reservations.schedule.infoDialog.description")}
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col gap-4 px-5 pt-2 pb-5">
-          {sections.map((section) => (
-            <section key={section.title}>
-              <SectionCardHeader
-                icon={section.icon}
-                title={section.title}
-                description={section.description}
-                actions={
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    {section.value}
-                  </span>
-                }
-              />
-            </section>
-          ))}
+        <div className="flex flex-col gap-4 px-4 pb-5">
+          {/* Laid out as the reservation's own details are. */}
+          <dl className="divide-y border-y text-sm">
+            {sections.map(({ icon: Icon, title, value, description }) => (
+              <div
+                key={title}
+                className="grid grid-cols-[1.25rem_minmax(0,1fr)_auto] gap-x-3 gap-y-0.5 py-3"
+              >
+                <Icon aria-hidden className="mt-0.5 size-4 text-primary" />
+                <dt className="font-medium">{title}</dt>
+                <dd className="font-semibold tabular-nums">{value}</dd>
+                <dd className="col-span-2 col-start-2 text-xs text-muted-foreground">
+                  {description}
+                </dd>
+              </div>
+            ))}
+          </dl>
 
-          <div className="mt-1 rounded-md border border-border/70 bg-muted/30 p-3">
+          <div className="rounded-md border border-border/70 bg-muted/30 p-3">
             <div className="mb-2 flex items-center gap-2">
               <ShieldAlert className="size-4 text-destructive" />
               <p className="text-sm font-medium">

@@ -19,6 +19,8 @@ import {
   useLootlogConfigControllerGetLootlogConfig,
   getDocsControllerGetDocumentQueryKey,
   useDocsControllerGetDocument,
+  getListReservationSpotsQueryKey,
+  useListReservationSpots,
 } from "@lootlog/client/main";
 
 const guildRouteApi = getRouteApi("/_authenticated/$guildId");
@@ -30,6 +32,7 @@ const getBreadcrumbRouteFlags = ({
   roleId,
   npcId,
   docId,
+  reservationId,
   path,
 }: {
   guildId?: string;
@@ -38,6 +41,7 @@ const getBreadcrumbRouteFlags = ({
   roleId?: string;
   npcId?: string;
   docId?: string;
+  reservationId?: string;
   path: string;
 }) => {
   const isEventRoute = Boolean(eventId && guildId && path.includes("/events"));
@@ -56,6 +60,9 @@ const getBreadcrumbRouteFlags = ({
     isDocsDetailRoute: Boolean(
       guildId && docId && path.startsWith(`/${guildId}/docs/`),
     ),
+    isReservationSpotRoute: Boolean(
+      guildId && reservationId && path.startsWith(`/${guildId}/reservations/`),
+    ),
     isEventMemberRoute: Boolean(
       memberId && path.includes("/members/") && isEventRoute,
     ),
@@ -69,6 +76,7 @@ const useBreadcrumbLookupData = ({
   isSettingsRoleRoute,
   isSettingsNpcRoute,
   isDocsDetailRoute,
+  isReservationSpotRoute,
 }: {
   guildId?: string;
   docId?: string;
@@ -76,6 +84,7 @@ const useBreadcrumbLookupData = ({
   isSettingsRoleRoute: boolean;
   isSettingsNpcRoute: boolean;
   isDocsDetailRoute: boolean;
+  isReservationSpotRoute: boolean;
 }) => {
   const queryGuildId = guildId ?? "";
   const queryDocId = docId ?? "";
@@ -132,11 +141,23 @@ const useBreadcrumbLookupData = ({
     },
   );
 
+  const { data: reservationSpots } = useListReservationSpots(
+    { guildId: queryGuildId },
+    {
+      query: {
+        enabled: isReservationSpotRoute,
+        queryKey: getListReservationSpotsQueryKey({ guildId: queryGuildId }),
+        staleTime: 30_000,
+      },
+    },
+  );
+
   return {
     settingsMembers,
     settingsRoles,
     settingsLootlogConfig,
     currentDocument,
+    reservationSpots,
   };
 };
 
@@ -159,7 +180,9 @@ export const GuildNavigationTopBar: FC<GuildNavigationTopBarProps> = ({
   const matches = useMatches();
   const guild = guildRouteData?.guild;
 
-  const { guildId, eventId, memberId, npcId, roleId, docId } = params;
+  const { guildId, eventId, memberId, npcId, roleId, docId, reservationId } =
+    params;
+
   const path = location.pathname;
 
   const routeFlags = getBreadcrumbRouteFlags({
@@ -169,6 +192,7 @@ export const GuildNavigationTopBar: FC<GuildNavigationTopBarProps> = ({
     roleId,
     npcId,
     docId,
+    reservationId,
     path,
   });
 
@@ -177,6 +201,7 @@ export const GuildNavigationTopBar: FC<GuildNavigationTopBarProps> = ({
     settingsRoles,
     settingsLootlogConfig,
     currentDocument,
+    reservationSpots,
   } = useBreadcrumbLookupData({
     guildId,
     docId,
@@ -184,6 +209,7 @@ export const GuildNavigationTopBar: FC<GuildNavigationTopBarProps> = ({
     isSettingsRoleRoute: routeFlags.isSettingsRoleRoute,
     isSettingsNpcRoute: routeFlags.isSettingsNpcRoute,
     isDocsDetailRoute: routeFlags.isDocsDetailRoute,
+    isReservationSpotRoute: routeFlags.isReservationSpotRoute,
   });
 
   const resolveSettingsNpcName = () => {
@@ -209,6 +235,10 @@ export const GuildNavigationTopBar: FC<GuildNavigationTopBarProps> = ({
 
     const settingsNpcName = resolveSettingsNpcName();
 
+    const reservationSpotName = routeFlags.isReservationSpotRoute
+      ? reservationSpots?.find((spot) => spot.id === reservationId)?.name
+      : undefined;
+
     return resolveAppNavigation({
       matches,
       organizationName: guild?.name,
@@ -216,6 +246,7 @@ export const GuildNavigationTopBar: FC<GuildNavigationTopBarProps> = ({
         settingsMemberName ??
         settingsNpcName ??
         settingsRoleName ??
+        reservationSpotName ??
         (routeFlags.isDocsDetailRoute ? currentDocument?.title : undefined),
     });
   };
