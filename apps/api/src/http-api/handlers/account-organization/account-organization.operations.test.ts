@@ -15,6 +15,7 @@ import { GuildsHandlers } from "../guilds/guilds.handlers.js";
 import {
   GuildConfigurationData,
   getCurrentUserPreferences,
+  updateCurrentUserPreferences,
   updateGuildConfiguration,
   AccountOrganizationAccessDenied,
   AccountOrganizationAuthorization,
@@ -70,6 +71,7 @@ const makeData = (
   AccountOrganizationData.of({
     deleteAccount: () => Effect.succeed(undefined),
     getUserPreferences: () => Effect.succeed(userPreferences),
+    userOwnsTheme: () => Effect.succeed(true),
     updateUserPreferences: () => Effect.succeed(userPreferences),
     getCurrentUserGuilds: () => Effect.succeed([]),
     getCurrentUserAccessibleGuilds: () => Effect.succeed([]),
@@ -249,6 +251,42 @@ describe("Users and Guilds HttpApi handlers", () => {
     expect(userIds).toEqual([identity.userId]);
     expect(response).toEqual(userPreferences);
     expect(Schema.is(UserPreferencesResponse)(response)).toBe(true);
+  });
+
+  it("refuses to select another User's theme before saving preferences", async () => {
+    const ownershipChecks: Array<[string, string]> = [];
+
+    let saved = false;
+
+    const layer = provideServices(
+      makeAuthorization(),
+      makeData({
+        userOwnsTheme: (userId, themeId) => {
+          ownershipChecks.push([userId, themeId]);
+
+          return Effect.succeed(false);
+        },
+        updateUserPreferences: () => {
+          saved = true;
+
+          return Effect.succeed(userPreferences);
+        },
+      }),
+    );
+
+    const themeId = "123e4567-e89b-12d3-a456-426614174000";
+
+    const error = await Effect.runPromise(
+      Effect.flip(
+        updateCurrentUserPreferences({ theme: `custom:${themeId}` }).pipe(
+          Effect.provide(layer),
+        ),
+      ),
+    );
+
+    expect(ownershipChecks).toEqual([[identity.userId, themeId]]);
+    expect(error).toMatchObject({ status: 404, code: "USER_THEME_NOT_FOUND" });
+    expect(saved).toBe(false);
   });
 
   it("fails closed on missing authentication before user data access", async () => {

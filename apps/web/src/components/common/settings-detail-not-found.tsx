@@ -7,12 +7,12 @@ type SettingsDetailNotFoundProps = {
   icon: LucideIcon;
   title: string;
   description: string;
-  /** The list the role, monster or member would be on. */
+  /** The list the subject would be on. */
   backTo: string;
   backLabel: string;
 };
 
-/** A role, monster or member page for one that is not, or no longer, there. */
+/** A detail page, such as a role or a theme, for one that is not, or no longer, there. */
 export const SettingsDetailNotFound = ({
   icon,
   title,

@@ -101,13 +101,22 @@
     .realmadrid-3rd,
     .barcelona,
     .rukia,
-    .rias
+    .rias,
+    [data-wallpaper="photo"]
   )
   .app-content-frame {
   --app-wallpaper:
     linear-gradient(
-      color-mix(in srgb, var(--background) 78%, transparent),
-      color-mix(in srgb, var(--background) 78%, transparent)
+      color-mix(
+        in srgb,
+        var(--background) var(--custom-wallpaper-overlay, 78%),
+        transparent
+      ),
+      color-mix(
+        in srgb,
+        var(--background) var(--custom-wallpaper-overlay, 78%),
+        transparent
+      )
     ),
     var(--theme-background-image);
   --app-wallpaper-position: center, 65% center;
@@ -122,7 +131,8 @@
       .realmadrid-3rd,
       .barcelona,
       .rukia,
-      .rias
+      .rias,
+      [data-wallpaper="photo"]
     )
     .app-content-frame {
     --app-wallpaper-position: center, 75% center;
@@ -137,12 +147,18 @@
     .realmadrid-3rd,
     .barcelona,
     .rukia,
-    .rias
+    .rias,
+    [data-wallpaper="photo"]
   )
   .app-content-frame
   [data-slot="card"] {
-  /* Opaque enough to read over the brightest parts of the wallpaper. */
-  background-color: color-mix(in srgb, var(--card) 85%, transparent);
+  /* Opaque enough to read over the brightest parts of the wallpaper. A custom
+   * theme's wallpaper visibility sets the `--custom-*` covers on the root. */
+  background-color: color-mix(
+    in srgb,
+    var(--card) var(--custom-card-cover, 85%),
+    transparent
+  );
 }
 
 /* Lists that tile the page edge to edge, such as loots and timers, keep the
@@ -151,7 +167,7 @@
 .app-content-frame [data-list-tile] {
   background-color: color-mix(
     in srgb,
-    var(--background) var(--list-tile-cover, 88%),
+    var(--background) var(--custom-list-tile-cover, var(--list-tile-cover, 88%)),
     transparent
   );
 }

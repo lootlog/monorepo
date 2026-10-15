@@ -23,6 +23,11 @@ const ROUTES = {
     settings: {
       base: `${USER_BASE}/settings`,
       appearance: `${USER_BASE}/settings/appearance`,
+      newTheme: `${USER_BASE}/settings/appearance/themes/new`,
+      theme: (themeId: string) =>
+        `${USER_BASE}/settings/appearance/themes/${themeId}`,
+      sharedTheme: (shareToken: string) =>
+        `${USER_BASE}/settings/appearance/import/${shareToken}`,
       account: `${USER_BASE}/settings/account`,
       servers: `${USER_BASE}/settings/servers`,
     },

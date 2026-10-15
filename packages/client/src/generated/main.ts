@@ -46,6 +46,135 @@ export interface RequestValidationError {
   issues: RequestValidationErrorIssuesItem[];
 }
 
+export type SharedUserThemeResponseDtoDefinitionBaseThemeId = typeof SharedUserThemeResponseDtoDefinitionBaseThemeId[keyof typeof SharedUserThemeResponseDtoDefinitionBaseThemeId];
+
+
+export const SharedUserThemeResponseDtoDefinitionBaseThemeId = {
+  default: 'default',
+  muted: 'muted',
+  cyberpunk: 'cyberpunk',
+  pastel: 'pastel',
+  fantasy: 'fantasy',
+  shonen: 'shonen',
+  onepiece: 'onepiece',
+  anime: 'anime',
+  waguri: 'waguri',
+  goth: 'goth',
+  halloween: 'halloween',
+  realmadrid: 'realmadrid',
+  'realmadrid-3rd': 'realmadrid-3rd',
+  barcelona: 'barcelona',
+  rukia: 'rukia',
+  rias: 'rias',
+  'cat-pink': 'cat-pink',
+  'cat-purple': 'cat-purple',
+  'cat-blue': 'cat-blue',
+  'cat-random': 'cat-random',
+} as const;
+
+export type SharedUserThemeResponseDtoDefinitionSurface = {
+  /**
+     * @minimum 0
+     * @maximum 360
+     */
+  hue: number;
+  /**
+     * @minimum 0.08
+     * @maximum 0.28
+     */
+  lightness: number;
+  /**
+     * @minimum 0
+     * @maximum 0.08
+     */
+  chroma: number;
+};
+
+export type SharedUserThemeResponseDtoDefinitionOverrides = {
+  background?: string;
+  foreground?: string;
+  card?: string;
+  'card-foreground'?: string;
+  popover?: string;
+  'popover-foreground'?: string;
+  primary?: string;
+  'primary-foreground'?: string;
+  secondary?: string;
+  'secondary-foreground'?: string;
+  muted?: string;
+  'muted-foreground'?: string;
+  accent?: string;
+  'accent-foreground'?: string;
+  destructive?: string;
+  'destructive-foreground'?: string;
+  border?: string;
+  ring?: string;
+  'chart-1'?: string;
+  'chart-2'?: string;
+  'chart-3'?: string;
+  'chart-4'?: string;
+  'chart-5'?: string;
+  'signal-live'?: string;
+  'signal-ready'?: string;
+  'signal-timer'?: string;
+  'signal-alert'?: string;
+  'text-supporting'?: string;
+  sidebar?: string;
+  'sidebar-foreground'?: string;
+  'sidebar-primary'?: string;
+  'sidebar-primary-foreground'?: string;
+  'sidebar-accent'?: string;
+  'sidebar-accent-foreground'?: string;
+  'sidebar-border'?: string;
+  'sidebar-ring'?: string;
+};
+
+export type SharedUserThemeResponseDtoDefinitionFont = typeof SharedUserThemeResponseDtoDefinitionFont[keyof typeof SharedUserThemeResponseDtoDefinitionFont];
+
+
+export const SharedUserThemeResponseDtoDefinitionFont = {
+  geist: 'geist',
+  inter: 'inter',
+  'mona-sans': 'mona-sans',
+  'ibm-plex-sans': 'ibm-plex-sans',
+  nunito: 'nunito',
+  'space-grotesk': 'space-grotesk',
+  lexend: 'lexend',
+  'atkinson-hyperlegible': 'atkinson-hyperlegible',
+} as const;
+
+export type SharedUserThemeResponseDtoDefinitionRadius = typeof SharedUserThemeResponseDtoDefinitionRadius[keyof typeof SharedUserThemeResponseDtoDefinitionRadius];
+
+
+export const SharedUserThemeResponseDtoDefinitionRadius = {
+  sharp: 'sharp',
+  soft: 'soft',
+  default: 'default',
+  round: 'round',
+  pill: 'pill',
+} as const;
+
+export type SharedUserThemeResponseDtoDefinition = {
+  baseThemeId: SharedUserThemeResponseDtoDefinitionBaseThemeId;
+  accent?: string;
+  surface?: SharedUserThemeResponseDtoDefinitionSurface;
+  overrides: SharedUserThemeResponseDtoDefinitionOverrides;
+  /** @pattern ^[a-z\d-]{1,48}$ */
+  wallpaper: string;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  wallpaperVisibility?: number;
+  font: SharedUserThemeResponseDtoDefinitionFont;
+  radius: SharedUserThemeResponseDtoDefinitionRadius;
+};
+
+export interface SharedUserThemeResponseDto {
+  name: string;
+  definition: SharedUserThemeResponseDtoDefinition;
+}
+
 export type _ReauthenticationRequiredEncodedTag = typeof _ReauthenticationRequiredEncodedTag[keyof typeof _ReauthenticationRequiredEncodedTag];
 
 
@@ -57,6 +186,412 @@ export interface ReauthenticationRequiredEncoded {
   _tag: _ReauthenticationRequiredEncodedTag;
   code: string;
   requiresReauth: true;
+}
+
+export type UserThemeResponseDtoDefinitionBaseThemeId = typeof UserThemeResponseDtoDefinitionBaseThemeId[keyof typeof UserThemeResponseDtoDefinitionBaseThemeId];
+
+
+export const UserThemeResponseDtoDefinitionBaseThemeId = {
+  default: 'default',
+  muted: 'muted',
+  cyberpunk: 'cyberpunk',
+  pastel: 'pastel',
+  fantasy: 'fantasy',
+  shonen: 'shonen',
+  onepiece: 'onepiece',
+  anime: 'anime',
+  waguri: 'waguri',
+  goth: 'goth',
+  halloween: 'halloween',
+  realmadrid: 'realmadrid',
+  'realmadrid-3rd': 'realmadrid-3rd',
+  barcelona: 'barcelona',
+  rukia: 'rukia',
+  rias: 'rias',
+  'cat-pink': 'cat-pink',
+  'cat-purple': 'cat-purple',
+  'cat-blue': 'cat-blue',
+  'cat-random': 'cat-random',
+} as const;
+
+export type UserThemeResponseDtoDefinitionSurface = {
+  /**
+     * @minimum 0
+     * @maximum 360
+     */
+  hue: number;
+  /**
+     * @minimum 0.08
+     * @maximum 0.28
+     */
+  lightness: number;
+  /**
+     * @minimum 0
+     * @maximum 0.08
+     */
+  chroma: number;
+};
+
+export type UserThemeResponseDtoDefinitionOverrides = {
+  background?: string;
+  foreground?: string;
+  card?: string;
+  'card-foreground'?: string;
+  popover?: string;
+  'popover-foreground'?: string;
+  primary?: string;
+  'primary-foreground'?: string;
+  secondary?: string;
+  'secondary-foreground'?: string;
+  muted?: string;
+  'muted-foreground'?: string;
+  accent?: string;
+  'accent-foreground'?: string;
+  destructive?: string;
+  'destructive-foreground'?: string;
+  border?: string;
+  ring?: string;
+  'chart-1'?: string;
+  'chart-2'?: string;
+  'chart-3'?: string;
+  'chart-4'?: string;
+  'chart-5'?: string;
+  'signal-live'?: string;
+  'signal-ready'?: string;
+  'signal-timer'?: string;
+  'signal-alert'?: string;
+  'text-supporting'?: string;
+  sidebar?: string;
+  'sidebar-foreground'?: string;
+  'sidebar-primary'?: string;
+  'sidebar-primary-foreground'?: string;
+  'sidebar-accent'?: string;
+  'sidebar-accent-foreground'?: string;
+  'sidebar-border'?: string;
+  'sidebar-ring'?: string;
+};
+
+export type UserThemeResponseDtoDefinitionFont = typeof UserThemeResponseDtoDefinitionFont[keyof typeof UserThemeResponseDtoDefinitionFont];
+
+
+export const UserThemeResponseDtoDefinitionFont = {
+  geist: 'geist',
+  inter: 'inter',
+  'mona-sans': 'mona-sans',
+  'ibm-plex-sans': 'ibm-plex-sans',
+  nunito: 'nunito',
+  'space-grotesk': 'space-grotesk',
+  lexend: 'lexend',
+  'atkinson-hyperlegible': 'atkinson-hyperlegible',
+} as const;
+
+export type UserThemeResponseDtoDefinitionRadius = typeof UserThemeResponseDtoDefinitionRadius[keyof typeof UserThemeResponseDtoDefinitionRadius];
+
+
+export const UserThemeResponseDtoDefinitionRadius = {
+  sharp: 'sharp',
+  soft: 'soft',
+  default: 'default',
+  round: 'round',
+  pill: 'pill',
+} as const;
+
+export type UserThemeResponseDtoDefinition = {
+  baseThemeId: UserThemeResponseDtoDefinitionBaseThemeId;
+  accent?: string;
+  surface?: UserThemeResponseDtoDefinitionSurface;
+  overrides: UserThemeResponseDtoDefinitionOverrides;
+  /** @pattern ^[a-z\d-]{1,48}$ */
+  wallpaper: string;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  wallpaperVisibility?: number;
+  font: UserThemeResponseDtoDefinitionFont;
+  radius: UserThemeResponseDtoDefinitionRadius;
+};
+
+export interface UserThemeResponseDto {
+  id: string;
+  name: string;
+  definition: UserThemeResponseDtoDefinition;
+  /** @nullable */
+  shareToken: string | null;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  createdAt: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  updatedAt: string;
+}
+
+export interface SuccessResponseDtoOutput {
+  success: boolean;
+}
+
+export type UpdateUserThemeDtoDefinitionBaseThemeId = typeof UpdateUserThemeDtoDefinitionBaseThemeId[keyof typeof UpdateUserThemeDtoDefinitionBaseThemeId];
+
+
+export const UpdateUserThemeDtoDefinitionBaseThemeId = {
+  default: 'default',
+  muted: 'muted',
+  cyberpunk: 'cyberpunk',
+  pastel: 'pastel',
+  fantasy: 'fantasy',
+  shonen: 'shonen',
+  onepiece: 'onepiece',
+  anime: 'anime',
+  waguri: 'waguri',
+  goth: 'goth',
+  halloween: 'halloween',
+  realmadrid: 'realmadrid',
+  'realmadrid-3rd': 'realmadrid-3rd',
+  barcelona: 'barcelona',
+  rukia: 'rukia',
+  rias: 'rias',
+  'cat-pink': 'cat-pink',
+  'cat-purple': 'cat-purple',
+  'cat-blue': 'cat-blue',
+  'cat-random': 'cat-random',
+} as const;
+
+export type UpdateUserThemeDtoDefinitionSurface = {
+  /**
+     * @minimum 0
+     * @maximum 360
+     */
+  hue: number;
+  /**
+     * @minimum 0.08
+     * @maximum 0.28
+     */
+  lightness: number;
+  /**
+     * @minimum 0
+     * @maximum 0.08
+     */
+  chroma: number;
+};
+
+export type UpdateUserThemeDtoDefinitionOverrides = {
+  background?: string;
+  foreground?: string;
+  card?: string;
+  'card-foreground'?: string;
+  popover?: string;
+  'popover-foreground'?: string;
+  primary?: string;
+  'primary-foreground'?: string;
+  secondary?: string;
+  'secondary-foreground'?: string;
+  muted?: string;
+  'muted-foreground'?: string;
+  accent?: string;
+  'accent-foreground'?: string;
+  destructive?: string;
+  'destructive-foreground'?: string;
+  border?: string;
+  ring?: string;
+  'chart-1'?: string;
+  'chart-2'?: string;
+  'chart-3'?: string;
+  'chart-4'?: string;
+  'chart-5'?: string;
+  'signal-live'?: string;
+  'signal-ready'?: string;
+  'signal-timer'?: string;
+  'signal-alert'?: string;
+  'text-supporting'?: string;
+  sidebar?: string;
+  'sidebar-foreground'?: string;
+  'sidebar-primary'?: string;
+  'sidebar-primary-foreground'?: string;
+  'sidebar-accent'?: string;
+  'sidebar-accent-foreground'?: string;
+  'sidebar-border'?: string;
+  'sidebar-ring'?: string;
+};
+
+export type UpdateUserThemeDtoDefinitionFont = typeof UpdateUserThemeDtoDefinitionFont[keyof typeof UpdateUserThemeDtoDefinitionFont];
+
+
+export const UpdateUserThemeDtoDefinitionFont = {
+  geist: 'geist',
+  inter: 'inter',
+  'mona-sans': 'mona-sans',
+  'ibm-plex-sans': 'ibm-plex-sans',
+  nunito: 'nunito',
+  'space-grotesk': 'space-grotesk',
+  lexend: 'lexend',
+  'atkinson-hyperlegible': 'atkinson-hyperlegible',
+} as const;
+
+export type UpdateUserThemeDtoDefinitionRadius = typeof UpdateUserThemeDtoDefinitionRadius[keyof typeof UpdateUserThemeDtoDefinitionRadius];
+
+
+export const UpdateUserThemeDtoDefinitionRadius = {
+  sharp: 'sharp',
+  soft: 'soft',
+  default: 'default',
+  round: 'round',
+  pill: 'pill',
+} as const;
+
+export type UpdateUserThemeDtoDefinition = {
+  baseThemeId: UpdateUserThemeDtoDefinitionBaseThemeId;
+  accent?: string;
+  surface?: UpdateUserThemeDtoDefinitionSurface;
+  overrides: UpdateUserThemeDtoDefinitionOverrides;
+  /** @pattern ^[a-z\d-]{1,48}$ */
+  wallpaper: string;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  wallpaperVisibility?: number;
+  font: UpdateUserThemeDtoDefinitionFont;
+  radius: UpdateUserThemeDtoDefinitionRadius;
+};
+
+export interface UpdateUserThemeDto {
+  /**
+     * @minLength 1
+     * @maxLength 40
+     */
+  name?: string;
+  definition?: UpdateUserThemeDtoDefinition;
+}
+
+export type CreateUserThemeDtoDefinitionBaseThemeId = typeof CreateUserThemeDtoDefinitionBaseThemeId[keyof typeof CreateUserThemeDtoDefinitionBaseThemeId];
+
+
+export const CreateUserThemeDtoDefinitionBaseThemeId = {
+  default: 'default',
+  muted: 'muted',
+  cyberpunk: 'cyberpunk',
+  pastel: 'pastel',
+  fantasy: 'fantasy',
+  shonen: 'shonen',
+  onepiece: 'onepiece',
+  anime: 'anime',
+  waguri: 'waguri',
+  goth: 'goth',
+  halloween: 'halloween',
+  realmadrid: 'realmadrid',
+  'realmadrid-3rd': 'realmadrid-3rd',
+  barcelona: 'barcelona',
+  rukia: 'rukia',
+  rias: 'rias',
+  'cat-pink': 'cat-pink',
+  'cat-purple': 'cat-purple',
+  'cat-blue': 'cat-blue',
+  'cat-random': 'cat-random',
+} as const;
+
+export type CreateUserThemeDtoDefinitionSurface = {
+  /**
+     * @minimum 0
+     * @maximum 360
+     */
+  hue: number;
+  /**
+     * @minimum 0.08
+     * @maximum 0.28
+     */
+  lightness: number;
+  /**
+     * @minimum 0
+     * @maximum 0.08
+     */
+  chroma: number;
+};
+
+export type CreateUserThemeDtoDefinitionOverrides = {
+  background?: string;
+  foreground?: string;
+  card?: string;
+  'card-foreground'?: string;
+  popover?: string;
+  'popover-foreground'?: string;
+  primary?: string;
+  'primary-foreground'?: string;
+  secondary?: string;
+  'secondary-foreground'?: string;
+  muted?: string;
+  'muted-foreground'?: string;
+  accent?: string;
+  'accent-foreground'?: string;
+  destructive?: string;
+  'destructive-foreground'?: string;
+  border?: string;
+  ring?: string;
+  'chart-1'?: string;
+  'chart-2'?: string;
+  'chart-3'?: string;
+  'chart-4'?: string;
+  'chart-5'?: string;
+  'signal-live'?: string;
+  'signal-ready'?: string;
+  'signal-timer'?: string;
+  'signal-alert'?: string;
+  'text-supporting'?: string;
+  sidebar?: string;
+  'sidebar-foreground'?: string;
+  'sidebar-primary'?: string;
+  'sidebar-primary-foreground'?: string;
+  'sidebar-accent'?: string;
+  'sidebar-accent-foreground'?: string;
+  'sidebar-border'?: string;
+  'sidebar-ring'?: string;
+};
+
+export type CreateUserThemeDtoDefinitionFont = typeof CreateUserThemeDtoDefinitionFont[keyof typeof CreateUserThemeDtoDefinitionFont];
+
+
+export const CreateUserThemeDtoDefinitionFont = {
+  geist: 'geist',
+  inter: 'inter',
+  'mona-sans': 'mona-sans',
+  'ibm-plex-sans': 'ibm-plex-sans',
+  nunito: 'nunito',
+  'space-grotesk': 'space-grotesk',
+  lexend: 'lexend',
+  'atkinson-hyperlegible': 'atkinson-hyperlegible',
+} as const;
+
+export type CreateUserThemeDtoDefinitionRadius = typeof CreateUserThemeDtoDefinitionRadius[keyof typeof CreateUserThemeDtoDefinitionRadius];
+
+
+export const CreateUserThemeDtoDefinitionRadius = {
+  sharp: 'sharp',
+  soft: 'soft',
+  default: 'default',
+  round: 'round',
+  pill: 'pill',
+} as const;
+
+export type CreateUserThemeDtoDefinition = {
+  baseThemeId: CreateUserThemeDtoDefinitionBaseThemeId;
+  accent?: string;
+  surface?: CreateUserThemeDtoDefinitionSurface;
+  overrides: CreateUserThemeDtoDefinitionOverrides;
+  /** @pattern ^[a-z\d-]{1,48}$ */
+  wallpaper: string;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  wallpaperVisibility?: number;
+  font: CreateUserThemeDtoDefinitionFont;
+  radius: CreateUserThemeDtoDefinitionRadius;
+};
+
+export interface CreateUserThemeDto {
+  /**
+     * @minLength 1
+     * @maxLength 40
+     */
+  name: string;
+  definition: CreateUserThemeDtoDefinition;
 }
 
 export interface DocsMutationResponseDto {
@@ -1856,10 +2391,6 @@ export interface AssignMemberDto {
      * @maximum 9007199254740991
      */
   memberId: number;
-}
-
-export interface SuccessResponseDtoOutput {
-  success: boolean;
 }
 
 export type EventMapsResponseDtoOutputHeroNpcsItemLocationsItemMapsItemAssignedMembersItemRolesItem = {
@@ -9656,32 +10187,6 @@ export interface UserPreferencesResponseDtoOutput {
   mutes: UserPreferencesResponseDtoOutputMutes;
 }
 
-export type UpdateUserPreferencesDtoTheme = typeof UpdateUserPreferencesDtoTheme[keyof typeof UpdateUserPreferencesDtoTheme];
-
-
-export const UpdateUserPreferencesDtoTheme = {
-  default: 'default',
-  muted: 'muted',
-  cyberpunk: 'cyberpunk',
-  pastel: 'pastel',
-  fantasy: 'fantasy',
-  shonen: 'shonen',
-  onepiece: 'onepiece',
-  anime: 'anime',
-  goth: 'goth',
-  halloween: 'halloween',
-  realmadrid: 'realmadrid',
-  'realmadrid-3rd': 'realmadrid-3rd',
-  barcelona: 'barcelona',
-  waguri: 'waguri',
-  rukia: 'rukia',
-  rias: 'rias',
-  'cat-pink': 'cat-pink',
-  'cat-purple': 'cat-purple',
-  'cat-blue': 'cat-blue',
-  'cat-random': 'cat-random',
-} as const;
-
 export type UpdateUserPreferencesDtoChatAppearanceNpcLayout = typeof UpdateUserPreferencesDtoChatAppearanceNpcLayout[keyof typeof UpdateUserPreferencesDtoChatAppearanceNpcLayout];
 
 
@@ -9750,7 +10255,7 @@ export interface UpdateUserPreferencesDto {
   guildsOrder?: string[];
   /** @items.minLength 1 */
   hiddenGuildIds?: string[];
-  theme?: UpdateUserPreferencesDtoTheme;
+  theme?: 'default' | 'muted' | 'cyberpunk' | 'pastel' | 'fantasy' | 'shonen' | 'onepiece' | 'anime' | 'waguri' | 'goth' | 'halloween' | 'realmadrid' | 'realmadrid-3rd' | 'barcelona' | 'rukia' | 'rias' | 'cat-pink' | 'cat-purple' | 'cat-blue' | 'cat-random' | string;
   chatAppearance?: UpdateUserPreferencesDtoChatAppearance;
   mutes?: UpdateUserPreferencesDtoMutes;
 }
@@ -14051,6 +14556,120 @@ export type DocsControllerPurgeDocument429 = {
   message: string;
 };
 
+export type UserThemesControllerGetThemes401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type UserThemesControllerGetThemes403 = {
+  message: string;
+};
+
+export type UserThemesControllerGetThemes429 = {
+  message: string;
+};
+
+export type UserThemesControllerCreateTheme401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type UserThemesControllerCreateTheme403 = {
+  message: string;
+};
+
+export type UserThemesControllerCreateTheme429 = {
+  message: string;
+};
+
+export type UserThemesControllerGetThemePathParameters = {
+ themeId: string,
+ }
+export type UserThemesControllerGetTheme401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type UserThemesControllerGetTheme403 = {
+  message: string;
+};
+
+export type UserThemesControllerGetTheme429 = {
+  message: string;
+};
+
+export type UserThemesControllerUpdateThemePathParameters = {
+ themeId: string,
+ }
+export type UserThemesControllerUpdateTheme401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type UserThemesControllerUpdateTheme403 = {
+  message: string;
+};
+
+export type UserThemesControllerUpdateTheme429 = {
+  message: string;
+};
+
+export type UserThemesControllerDeleteThemePathParameters = {
+ themeId: string,
+ }
+export type UserThemesControllerDeleteTheme401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type UserThemesControllerDeleteTheme403 = {
+  message: string;
+};
+
+export type UserThemesControllerDeleteTheme429 = {
+  message: string;
+};
+
+export type UserThemesControllerShareThemePathParameters = {
+ themeId: string,
+ }
+export type UserThemesControllerShareTheme401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type UserThemesControllerShareTheme403 = {
+  message: string;
+};
+
+export type UserThemesControllerShareTheme429 = {
+  message: string;
+};
+
+export type UserThemesControllerUnshareThemePathParameters = {
+ themeId: string,
+ }
+export type UserThemesControllerUnshareTheme401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type UserThemesControllerUnshareTheme403 = {
+  message: string;
+};
+
+export type UserThemesControllerUnshareTheme429 = {
+  message: string;
+};
+
+export type UserThemesControllerGetSharedThemePathParameters = {
+ shareToken: string,
+ }
+export type UserThemesControllerGetSharedTheme401 = {
+  message: string;
+};
+
+export type UserThemesControllerGetSharedTheme403 = {
+  message: string;
+};
+
+export type UserThemesControllerGetSharedTheme429 = {
+  message: string;
+};
+
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
@@ -14490,7 +15109,7 @@ return mainFetch<UserPreferencesResponseDtoOutput>(getUsersControllerUpdateUserP
 
 export const getUsersControllerUpdateUserPreferencesMutationKey = () => ['usersControllerUpdateUserPreferences'] as const;
 
-export const getUsersControllerUpdateUserPreferencesMutationOptions = <TError = ErrorType<RequestValidationError | UsersControllerUpdateUserPreferences401 | UsersControllerUpdateUserPreferences403 | UsersControllerUpdateUserPreferences429>,
+export const getUsersControllerUpdateUserPreferencesMutationOptions = <TError = ErrorType<RequestValidationError | UsersControllerUpdateUserPreferences401 | UsersControllerUpdateUserPreferences403 | HttpErrorResponse | UsersControllerUpdateUserPreferences429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerUpdateUserPreferences>>, TError,UsersControllerUpdateUserPreferencesMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof usersControllerUpdateUserPreferences>>, TError,UsersControllerUpdateUserPreferencesMutationVariables, TContext> => {
 
@@ -14519,13 +15138,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UsersControllerUpdateUserPreferencesMutationResult = NonNullable<Awaited<ReturnType<typeof usersControllerUpdateUserPreferences>>>
     export type UsersControllerUpdateUserPreferencesMutationBody = BodyType<UpdateUserPreferencesDto>
-    export type UsersControllerUpdateUserPreferencesMutationError = ErrorType<RequestValidationError | UsersControllerUpdateUserPreferences401 | UsersControllerUpdateUserPreferences403 | UsersControllerUpdateUserPreferences429>
+    export type UsersControllerUpdateUserPreferencesMutationError = ErrorType<RequestValidationError | UsersControllerUpdateUserPreferences401 | UsersControllerUpdateUserPreferences403 | HttpErrorResponse | UsersControllerUpdateUserPreferences429>
     export type UsersControllerUpdateUserPreferencesMutationVariables = {data: BodyType<UpdateUserPreferencesDto>}
 
     /**
  * @summary Update user preferences
  */
-export const useUsersControllerUpdateUserPreferences = <TError = ErrorType<RequestValidationError | UsersControllerUpdateUserPreferences401 | UsersControllerUpdateUserPreferences403 | UsersControllerUpdateUserPreferences429>,
+export const useUsersControllerUpdateUserPreferences = <TError = ErrorType<RequestValidationError | UsersControllerUpdateUserPreferences401 | UsersControllerUpdateUserPreferences403 | HttpErrorResponse | UsersControllerUpdateUserPreferences429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerUpdateUserPreferences>>, TError,UsersControllerUpdateUserPreferencesMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof usersControllerUpdateUserPreferences>>,
@@ -38205,3 +38824,837 @@ export const useDocsControllerPurgeDocument = <TError = ErrorType<RequestValidat
       > => {
       return useMutation(getDocsControllerPurgeDocumentMutationOptions(options), queryClient);
     }
+
+export const getUserThemesControllerGetThemesUrl = () => {
+
+
+
+
+  return `/users/@me/themes`
+}
+
+/**
+ * Retrieve the authenticated user's own web themes
+ * @summary Get user themes
+ */
+export const userThemesControllerGetThemes = async ( options?: Parameters<typeof mainFetch>[1]): Promise<UserThemeResponseDto[]> => {
+
+  return mainFetch<UserThemeResponseDto[]>(getUserThemesControllerGetThemesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUserThemesControllerGetThemesQueryKey = () => {
+    return [
+    `/users/@me/themes`
+    ] as const;
+    }
+
+
+export const getUserThemesControllerGetThemesQueryOptions = <TData = Awaited<ReturnType<typeof userThemesControllerGetThemes>>, TError = ErrorType<RequestValidationError | UserThemesControllerGetThemes401 | UserThemesControllerGetThemes403 | UserThemesControllerGetThemes429>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userThemesControllerGetThemes>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUserThemesControllerGetThemesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof userThemesControllerGetThemes>>> = ({ signal }) => userThemesControllerGetThemes({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof userThemesControllerGetThemes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UserThemesControllerGetThemesQueryResult = NonNullable<Awaited<ReturnType<typeof userThemesControllerGetThemes>>>
+export type UserThemesControllerGetThemesQueryError = ErrorType<RequestValidationError | UserThemesControllerGetThemes401 | UserThemesControllerGetThemes403 | UserThemesControllerGetThemes429>
+
+
+export function useUserThemesControllerGetThemes<TData = Awaited<ReturnType<typeof userThemesControllerGetThemes>>, TError = ErrorType<RequestValidationError | UserThemesControllerGetThemes401 | UserThemesControllerGetThemes403 | UserThemesControllerGetThemes429>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof userThemesControllerGetThemes>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof userThemesControllerGetThemes>>,
+          TError,
+          Awaited<ReturnType<typeof userThemesControllerGetThemes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUserThemesControllerGetThemes<TData = Awaited<ReturnType<typeof userThemesControllerGetThemes>>, TError = ErrorType<RequestValidationError | UserThemesControllerGetThemes401 | UserThemesControllerGetThemes403 | UserThemesControllerGetThemes429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userThemesControllerGetThemes>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof userThemesControllerGetThemes>>,
+          TError,
+          Awaited<ReturnType<typeof userThemesControllerGetThemes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUserThemesControllerGetThemes<TData = Awaited<ReturnType<typeof userThemesControllerGetThemes>>, TError = ErrorType<RequestValidationError | UserThemesControllerGetThemes401 | UserThemesControllerGetThemes403 | UserThemesControllerGetThemes429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userThemesControllerGetThemes>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get user themes
+ */
+
+export function useUserThemesControllerGetThemes<TData = Awaited<ReturnType<typeof userThemesControllerGetThemes>>, TError = ErrorType<RequestValidationError | UserThemesControllerGetThemes401 | UserThemesControllerGetThemes403 | UserThemesControllerGetThemes429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userThemesControllerGetThemes>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUserThemesControllerGetThemesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get user themes
+ */
+export const prefetchUserThemesControllerGetThemesQuery = async <TData = Awaited<ReturnType<typeof userThemesControllerGetThemes>>, TError = ErrorType<RequestValidationError | UserThemesControllerGetThemes401 | UserThemesControllerGetThemes403 | UserThemesControllerGetThemes429>>(
+ queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userThemesControllerGetThemes>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getUserThemesControllerGetThemesQueryOptions(options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useUserThemesControllerGetThemes} query
+ */
+export const invalidateUserThemesControllerGetThemes = async (
+ queryClient: QueryClient,  options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getUserThemesControllerGetThemesQueryKey() }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get user themes
+ */
+export const useSetUserThemesControllerGetThemesQueryData = () => {
+  const queryClient = useQueryClient();
+  return (updater: Awaited<ReturnType<typeof userThemesControllerGetThemes>> | undefined | ((old: Awaited<ReturnType<typeof userThemesControllerGetThemes>> | undefined) => Awaited<ReturnType<typeof userThemesControllerGetThemes>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof userThemesControllerGetThemes>>>({ exact: $exactMatch, queryKey: getUserThemesControllerGetThemesQueryKey() }, updater);
+  };
+}
+
+/**
+ * @summary Get user themes
+ */
+export const useGetUserThemesControllerGetThemesQueryData = () => {
+  const queryClient = useQueryClient();
+  return () =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof userThemesControllerGetThemes>>>(getUserThemesControllerGetThemesQueryKey());
+}
+
+
+
+export const getUserThemesControllerCreateThemeUrl = () => {
+
+
+
+
+  return `/users/@me/themes`
+}
+
+/**
+ * Create a web theme for the authenticated user; fails with 409 once the user has reached the theme limit
+ * @summary Create user theme
+ */
+export const userThemesControllerCreateTheme = async (createUserThemeDto: CreateUserThemeDto, options?: Parameters<typeof mainFetch>[1]): Promise<UserThemeResponseDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return mainFetch<UserThemeResponseDto>(getUserThemesControllerCreateThemeUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createUserThemeDto)
+  }
+);}
+
+
+
+
+
+export const getUserThemesControllerCreateThemeMutationKey = () => ['userThemesControllerCreateTheme'] as const;
+
+export const getUserThemesControllerCreateThemeMutationOptions = <TError = ErrorType<RequestValidationError | UserThemesControllerCreateTheme401 | UserThemesControllerCreateTheme403 | HttpErrorResponse | UserThemesControllerCreateTheme429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof userThemesControllerCreateTheme>>, TError,UserThemesControllerCreateThemeMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof userThemesControllerCreateTheme>>, TError,UserThemesControllerCreateThemeMutationVariables, TContext> => {
+
+const mutationKey = getUserThemesControllerCreateThemeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof userThemesControllerCreateTheme>>, UserThemesControllerCreateThemeMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  userThemesControllerCreateTheme(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UserThemesControllerCreateThemeMutationResult = NonNullable<Awaited<ReturnType<typeof userThemesControllerCreateTheme>>>
+    export type UserThemesControllerCreateThemeMutationBody = BodyType<CreateUserThemeDto>
+    export type UserThemesControllerCreateThemeMutationError = ErrorType<RequestValidationError | UserThemesControllerCreateTheme401 | UserThemesControllerCreateTheme403 | HttpErrorResponse | UserThemesControllerCreateTheme429>
+    export type UserThemesControllerCreateThemeMutationVariables = {data: BodyType<CreateUserThemeDto>}
+
+    /**
+ * @summary Create user theme
+ */
+export const useUserThemesControllerCreateTheme = <TError = ErrorType<RequestValidationError | UserThemesControllerCreateTheme401 | UserThemesControllerCreateTheme403 | HttpErrorResponse | UserThemesControllerCreateTheme429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof userThemesControllerCreateTheme>>, TError,UserThemesControllerCreateThemeMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof userThemesControllerCreateTheme>>,
+        TError,
+        UserThemesControllerCreateThemeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUserThemesControllerCreateThemeMutationOptions(options), queryClient);
+    }
+
+export const getUserThemesControllerGetThemeUrl = ({ themeId }: UserThemesControllerGetThemePathParameters,) => {
+
+
+
+
+  return `/users/@me/themes/${themeId}`
+}
+
+/**
+ * Retrieve one of the user's own themes
+ * @summary Get user theme
+ */
+export const userThemesControllerGetTheme = async ({ themeId }: UserThemesControllerGetThemePathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<UserThemeResponseDto> => {
+
+  return mainFetch<UserThemeResponseDto>(getUserThemesControllerGetThemeUrl({ themeId }),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUserThemesControllerGetThemeQueryKey = ({ themeId }: UserThemesControllerGetThemePathParameters,) => {
+    return [
+    `/users/@me/themes/${themeId}`
+    ] as const;
+    }
+
+
+export const getUserThemesControllerGetThemeQueryOptions = <TData = Awaited<ReturnType<typeof userThemesControllerGetTheme>>, TError = ErrorType<RequestValidationError | UserThemesControllerGetTheme401 | UserThemesControllerGetTheme403 | void | UserThemesControllerGetTheme429>>({ themeId }: UserThemesControllerGetThemePathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userThemesControllerGetTheme>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUserThemesControllerGetThemeQueryKey({ themeId });
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof userThemesControllerGetTheme>>> = ({ signal }) => userThemesControllerGetTheme({ themeId }, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: themeId !== null && themeId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof userThemesControllerGetTheme>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UserThemesControllerGetThemeQueryResult = NonNullable<Awaited<ReturnType<typeof userThemesControllerGetTheme>>>
+export type UserThemesControllerGetThemeQueryError = ErrorType<RequestValidationError | UserThemesControllerGetTheme401 | UserThemesControllerGetTheme403 | void | UserThemesControllerGetTheme429>
+
+
+export function useUserThemesControllerGetTheme<TData = Awaited<ReturnType<typeof userThemesControllerGetTheme>>, TError = ErrorType<RequestValidationError | UserThemesControllerGetTheme401 | UserThemesControllerGetTheme403 | void | UserThemesControllerGetTheme429>>(
+ pathParams: UserThemesControllerGetThemePathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof userThemesControllerGetTheme>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof userThemesControllerGetTheme>>,
+          TError,
+          Awaited<ReturnType<typeof userThemesControllerGetTheme>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUserThemesControllerGetTheme<TData = Awaited<ReturnType<typeof userThemesControllerGetTheme>>, TError = ErrorType<RequestValidationError | UserThemesControllerGetTheme401 | UserThemesControllerGetTheme403 | void | UserThemesControllerGetTheme429>>(
+ pathParams: UserThemesControllerGetThemePathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userThemesControllerGetTheme>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof userThemesControllerGetTheme>>,
+          TError,
+          Awaited<ReturnType<typeof userThemesControllerGetTheme>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUserThemesControllerGetTheme<TData = Awaited<ReturnType<typeof userThemesControllerGetTheme>>, TError = ErrorType<RequestValidationError | UserThemesControllerGetTheme401 | UserThemesControllerGetTheme403 | void | UserThemesControllerGetTheme429>>(
+ pathParams: UserThemesControllerGetThemePathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userThemesControllerGetTheme>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get user theme
+ */
+
+export function useUserThemesControllerGetTheme<TData = Awaited<ReturnType<typeof userThemesControllerGetTheme>>, TError = ErrorType<RequestValidationError | UserThemesControllerGetTheme401 | UserThemesControllerGetTheme403 | void | UserThemesControllerGetTheme429>>(
+ { themeId }: UserThemesControllerGetThemePathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userThemesControllerGetTheme>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUserThemesControllerGetThemeQueryOptions({ themeId },options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get user theme
+ */
+export const prefetchUserThemesControllerGetThemeQuery = async <TData = Awaited<ReturnType<typeof userThemesControllerGetTheme>>, TError = ErrorType<RequestValidationError | UserThemesControllerGetTheme401 | UserThemesControllerGetTheme403 | void | UserThemesControllerGetTheme429>>(
+ queryClient: QueryClient, { themeId }: UserThemesControllerGetThemePathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userThemesControllerGetTheme>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getUserThemesControllerGetThemeQueryOptions({ themeId },options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useUserThemesControllerGetTheme} query
+ */
+export const invalidateUserThemesControllerGetTheme = async (
+ queryClient: QueryClient, { themeId }: UserThemesControllerGetThemePathParameters, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getUserThemesControllerGetThemeQueryKey({ themeId }) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get user theme
+ */
+export const useSetUserThemesControllerGetThemeQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ themeId }: UserThemesControllerGetThemePathParameters,updater: Awaited<ReturnType<typeof userThemesControllerGetTheme>> | undefined | ((old: Awaited<ReturnType<typeof userThemesControllerGetTheme>> | undefined) => Awaited<ReturnType<typeof userThemesControllerGetTheme>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof userThemesControllerGetTheme>>>({ exact: $exactMatch, queryKey: getUserThemesControllerGetThemeQueryKey({ themeId }) }, updater);
+  };
+}
+
+/**
+ * @summary Get user theme
+ */
+export const useGetUserThemesControllerGetThemeQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ themeId }: UserThemesControllerGetThemePathParameters,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof userThemesControllerGetTheme>>>(getUserThemesControllerGetThemeQueryKey({ themeId }));
+}
+
+
+
+export const getUserThemesControllerUpdateThemeUrl = ({ themeId }: UserThemesControllerUpdateThemePathParameters,) => {
+
+
+
+
+  return `/users/@me/themes/${themeId}`
+}
+
+/**
+ * Rename or change one of the user's themes
+ * @summary Update user theme
+ */
+export const userThemesControllerUpdateTheme = async ({ themeId }: UserThemesControllerUpdateThemePathParameters,
+    updateUserThemeDto: UpdateUserThemeDto, options?: Parameters<typeof mainFetch>[1]): Promise<UserThemeResponseDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return mainFetch<UserThemeResponseDto>(getUserThemesControllerUpdateThemeUrl({ themeId }),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateUserThemeDto)
+  }
+);}
+
+
+
+
+
+export const getUserThemesControllerUpdateThemeMutationKey = () => ['userThemesControllerUpdateTheme'] as const;
+
+export const getUserThemesControllerUpdateThemeMutationOptions = <TError = ErrorType<RequestValidationError | UserThemesControllerUpdateTheme401 | UserThemesControllerUpdateTheme403 | void | UserThemesControllerUpdateTheme429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof userThemesControllerUpdateTheme>>, TError,UserThemesControllerUpdateThemeMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof userThemesControllerUpdateTheme>>, TError,UserThemesControllerUpdateThemeMutationVariables, TContext> => {
+
+const mutationKey = getUserThemesControllerUpdateThemeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof userThemesControllerUpdateTheme>>, UserThemesControllerUpdateThemeMutationVariables> = (props) => {
+          const {pathParams,data} = props ?? {};
+
+          return  userThemesControllerUpdateTheme(pathParams,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UserThemesControllerUpdateThemeMutationResult = NonNullable<Awaited<ReturnType<typeof userThemesControllerUpdateTheme>>>
+    export type UserThemesControllerUpdateThemeMutationBody = BodyType<UpdateUserThemeDto>
+    export type UserThemesControllerUpdateThemeMutationError = ErrorType<RequestValidationError | UserThemesControllerUpdateTheme401 | UserThemesControllerUpdateTheme403 | void | UserThemesControllerUpdateTheme429>
+    export type UserThemesControllerUpdateThemeMutationVariables = {pathParams: UserThemesControllerUpdateThemePathParameters;data: BodyType<UpdateUserThemeDto>}
+
+    /**
+ * @summary Update user theme
+ */
+export const useUserThemesControllerUpdateTheme = <TError = ErrorType<RequestValidationError | UserThemesControllerUpdateTheme401 | UserThemesControllerUpdateTheme403 | void | UserThemesControllerUpdateTheme429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof userThemesControllerUpdateTheme>>, TError,UserThemesControllerUpdateThemeMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof userThemesControllerUpdateTheme>>,
+        TError,
+        UserThemesControllerUpdateThemeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUserThemesControllerUpdateThemeMutationOptions(options), queryClient);
+    }
+
+export const getUserThemesControllerDeleteThemeUrl = ({ themeId }: UserThemesControllerDeleteThemePathParameters,) => {
+
+
+
+
+  return `/users/@me/themes/${themeId}`
+}
+
+/**
+ * Delete one of the user's themes; a user who had it selected falls back to its base theme
+ * @summary Delete user theme
+ */
+export const userThemesControllerDeleteTheme = async ({ themeId }: UserThemesControllerDeleteThemePathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<SuccessResponseDtoOutput> => {
+
+  return mainFetch<SuccessResponseDtoOutput>(getUserThemesControllerDeleteThemeUrl({ themeId }),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getUserThemesControllerDeleteThemeMutationKey = () => ['userThemesControllerDeleteTheme'] as const;
+
+export const getUserThemesControllerDeleteThemeMutationOptions = <TError = ErrorType<RequestValidationError | UserThemesControllerDeleteTheme401 | UserThemesControllerDeleteTheme403 | void | UserThemesControllerDeleteTheme429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof userThemesControllerDeleteTheme>>, TError,UserThemesControllerDeleteThemeMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof userThemesControllerDeleteTheme>>, TError,UserThemesControllerDeleteThemeMutationVariables, TContext> => {
+
+const mutationKey = getUserThemesControllerDeleteThemeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof userThemesControllerDeleteTheme>>, UserThemesControllerDeleteThemeMutationVariables> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  userThemesControllerDeleteTheme(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UserThemesControllerDeleteThemeMutationResult = NonNullable<Awaited<ReturnType<typeof userThemesControllerDeleteTheme>>>
+
+    export type UserThemesControllerDeleteThemeMutationError = ErrorType<RequestValidationError | UserThemesControllerDeleteTheme401 | UserThemesControllerDeleteTheme403 | void | UserThemesControllerDeleteTheme429>
+    export type UserThemesControllerDeleteThemeMutationVariables = {pathParams: UserThemesControllerDeleteThemePathParameters}
+
+    /**
+ * @summary Delete user theme
+ */
+export const useUserThemesControllerDeleteTheme = <TError = ErrorType<RequestValidationError | UserThemesControllerDeleteTheme401 | UserThemesControllerDeleteTheme403 | void | UserThemesControllerDeleteTheme429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof userThemesControllerDeleteTheme>>, TError,UserThemesControllerDeleteThemeMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof userThemesControllerDeleteTheme>>,
+        TError,
+        UserThemesControllerDeleteThemeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUserThemesControllerDeleteThemeMutationOptions(options), queryClient);
+    }
+
+export const getUserThemesControllerShareThemeUrl = ({ themeId }: UserThemesControllerShareThemePathParameters,) => {
+
+
+
+
+  return `/users/@me/themes/${themeId}/share`
+}
+
+/**
+ * Create a share link token for the theme, or return the existing one
+ * @summary Share user theme
+ */
+export const userThemesControllerShareTheme = async ({ themeId }: UserThemesControllerShareThemePathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<UserThemeResponseDto> => {
+
+  return mainFetch<UserThemeResponseDto>(getUserThemesControllerShareThemeUrl({ themeId }),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getUserThemesControllerShareThemeMutationKey = () => ['userThemesControllerShareTheme'] as const;
+
+export const getUserThemesControllerShareThemeMutationOptions = <TError = ErrorType<RequestValidationError | UserThemesControllerShareTheme401 | UserThemesControllerShareTheme403 | void | UserThemesControllerShareTheme429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof userThemesControllerShareTheme>>, TError,UserThemesControllerShareThemeMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof userThemesControllerShareTheme>>, TError,UserThemesControllerShareThemeMutationVariables, TContext> => {
+
+const mutationKey = getUserThemesControllerShareThemeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof userThemesControllerShareTheme>>, UserThemesControllerShareThemeMutationVariables> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  userThemesControllerShareTheme(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UserThemesControllerShareThemeMutationResult = NonNullable<Awaited<ReturnType<typeof userThemesControllerShareTheme>>>
+
+    export type UserThemesControllerShareThemeMutationError = ErrorType<RequestValidationError | UserThemesControllerShareTheme401 | UserThemesControllerShareTheme403 | void | UserThemesControllerShareTheme429>
+    export type UserThemesControllerShareThemeMutationVariables = {pathParams: UserThemesControllerShareThemePathParameters}
+
+    /**
+ * @summary Share user theme
+ */
+export const useUserThemesControllerShareTheme = <TError = ErrorType<RequestValidationError | UserThemesControllerShareTheme401 | UserThemesControllerShareTheme403 | void | UserThemesControllerShareTheme429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof userThemesControllerShareTheme>>, TError,UserThemesControllerShareThemeMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof userThemesControllerShareTheme>>,
+        TError,
+        UserThemesControllerShareThemeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUserThemesControllerShareThemeMutationOptions(options), queryClient);
+    }
+
+export const getUserThemesControllerUnshareThemeUrl = ({ themeId }: UserThemesControllerUnshareThemePathParameters,) => {
+
+
+
+
+  return `/users/@me/themes/${themeId}/share`
+}
+
+/**
+ * Revoke the theme's share link so it no longer resolves
+ * @summary Stop sharing user theme
+ */
+export const userThemesControllerUnshareTheme = async ({ themeId }: UserThemesControllerUnshareThemePathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<UserThemeResponseDto> => {
+
+  return mainFetch<UserThemeResponseDto>(getUserThemesControllerUnshareThemeUrl({ themeId }),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getUserThemesControllerUnshareThemeMutationKey = () => ['userThemesControllerUnshareTheme'] as const;
+
+export const getUserThemesControllerUnshareThemeMutationOptions = <TError = ErrorType<RequestValidationError | UserThemesControllerUnshareTheme401 | UserThemesControllerUnshareTheme403 | void | UserThemesControllerUnshareTheme429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof userThemesControllerUnshareTheme>>, TError,UserThemesControllerUnshareThemeMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof userThemesControllerUnshareTheme>>, TError,UserThemesControllerUnshareThemeMutationVariables, TContext> => {
+
+const mutationKey = getUserThemesControllerUnshareThemeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof userThemesControllerUnshareTheme>>, UserThemesControllerUnshareThemeMutationVariables> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  userThemesControllerUnshareTheme(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UserThemesControllerUnshareThemeMutationResult = NonNullable<Awaited<ReturnType<typeof userThemesControllerUnshareTheme>>>
+
+    export type UserThemesControllerUnshareThemeMutationError = ErrorType<RequestValidationError | UserThemesControllerUnshareTheme401 | UserThemesControllerUnshareTheme403 | void | UserThemesControllerUnshareTheme429>
+    export type UserThemesControllerUnshareThemeMutationVariables = {pathParams: UserThemesControllerUnshareThemePathParameters}
+
+    /**
+ * @summary Stop sharing user theme
+ */
+export const useUserThemesControllerUnshareTheme = <TError = ErrorType<RequestValidationError | UserThemesControllerUnshareTheme401 | UserThemesControllerUnshareTheme403 | void | UserThemesControllerUnshareTheme429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof userThemesControllerUnshareTheme>>, TError,UserThemesControllerUnshareThemeMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof userThemesControllerUnshareTheme>>,
+        TError,
+        UserThemesControllerUnshareThemeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUserThemesControllerUnshareThemeMutationOptions(options), queryClient);
+    }
+
+export const getUserThemesControllerGetSharedThemeUrl = ({ shareToken }: UserThemesControllerGetSharedThemePathParameters,) => {
+
+
+
+
+  return `/public/themes/${shareToken}`
+}
+
+/**
+ * Read a theme shared by link; the response names no author
+ * @summary Get shared theme
+ */
+export const userThemesControllerGetSharedTheme = async ({ shareToken }: UserThemesControllerGetSharedThemePathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<SharedUserThemeResponseDto> => {
+
+  return mainFetch<SharedUserThemeResponseDto>(getUserThemesControllerGetSharedThemeUrl({ shareToken }),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUserThemesControllerGetSharedThemeQueryKey = ({ shareToken }: UserThemesControllerGetSharedThemePathParameters,) => {
+    return [
+    `/public/themes/${shareToken}`
+    ] as const;
+    }
+
+
+export const getUserThemesControllerGetSharedThemeQueryOptions = <TData = Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>, TError = ErrorType<RequestValidationError | UserThemesControllerGetSharedTheme401 | UserThemesControllerGetSharedTheme403 | void | UserThemesControllerGetSharedTheme429>>({ shareToken }: UserThemesControllerGetSharedThemePathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUserThemesControllerGetSharedThemeQueryKey({ shareToken });
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>> = ({ signal }) => userThemesControllerGetSharedTheme({ shareToken }, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: shareToken !== null && shareToken !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UserThemesControllerGetSharedThemeQueryResult = NonNullable<Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>>
+export type UserThemesControllerGetSharedThemeQueryError = ErrorType<RequestValidationError | UserThemesControllerGetSharedTheme401 | UserThemesControllerGetSharedTheme403 | void | UserThemesControllerGetSharedTheme429>
+
+
+export function useUserThemesControllerGetSharedTheme<TData = Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>, TError = ErrorType<RequestValidationError | UserThemesControllerGetSharedTheme401 | UserThemesControllerGetSharedTheme403 | void | UserThemesControllerGetSharedTheme429>>(
+ pathParams: UserThemesControllerGetSharedThemePathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>,
+          TError,
+          Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUserThemesControllerGetSharedTheme<TData = Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>, TError = ErrorType<RequestValidationError | UserThemesControllerGetSharedTheme401 | UserThemesControllerGetSharedTheme403 | void | UserThemesControllerGetSharedTheme429>>(
+ pathParams: UserThemesControllerGetSharedThemePathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>,
+          TError,
+          Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUserThemesControllerGetSharedTheme<TData = Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>, TError = ErrorType<RequestValidationError | UserThemesControllerGetSharedTheme401 | UserThemesControllerGetSharedTheme403 | void | UserThemesControllerGetSharedTheme429>>(
+ pathParams: UserThemesControllerGetSharedThemePathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get shared theme
+ */
+
+export function useUserThemesControllerGetSharedTheme<TData = Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>, TError = ErrorType<RequestValidationError | UserThemesControllerGetSharedTheme401 | UserThemesControllerGetSharedTheme403 | void | UserThemesControllerGetSharedTheme429>>(
+ { shareToken }: UserThemesControllerGetSharedThemePathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUserThemesControllerGetSharedThemeQueryOptions({ shareToken },options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get shared theme
+ */
+export const prefetchUserThemesControllerGetSharedThemeQuery = async <TData = Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>, TError = ErrorType<RequestValidationError | UserThemesControllerGetSharedTheme401 | UserThemesControllerGetSharedTheme403 | void | UserThemesControllerGetSharedTheme429>>(
+ queryClient: QueryClient, { shareToken }: UserThemesControllerGetSharedThemePathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getUserThemesControllerGetSharedThemeQueryOptions({ shareToken },options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useUserThemesControllerGetSharedTheme} query
+ */
+export const invalidateUserThemesControllerGetSharedTheme = async (
+ queryClient: QueryClient, { shareToken }: UserThemesControllerGetSharedThemePathParameters, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getUserThemesControllerGetSharedThemeQueryKey({ shareToken }) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get shared theme
+ */
+export const useSetUserThemesControllerGetSharedThemeQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ shareToken }: UserThemesControllerGetSharedThemePathParameters,updater: Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>> | undefined | ((old: Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>> | undefined) => Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>>({ exact: $exactMatch, queryKey: getUserThemesControllerGetSharedThemeQueryKey({ shareToken }) }, updater);
+  };
+}
+
+/**
+ * @summary Get shared theme
+ */
+export const useGetUserThemesControllerGetSharedThemeQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ shareToken }: UserThemesControllerGetSharedThemePathParameters,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof userThemesControllerGetSharedTheme>>>(getUserThemesControllerGetSharedThemeQueryKey({ shareToken }));
+}

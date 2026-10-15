@@ -29,7 +29,9 @@
     "./settings-documents": "./src/settings-documents.ts",
     "./settings-paths": "./src/settings-paths.ts",
     "./guild-preferences": "./src/guild-preferences.ts",
-    "./guild-documents": "./src/guild-documents.ts"
+    "./guild-documents": "./src/guild-documents.ts",
+    "./color": "./src/color.ts",
+    "./custom-theme": "./src/custom-theme.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

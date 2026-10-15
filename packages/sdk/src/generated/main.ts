@@ -256,31 +256,10 @@ export interface UserPreferencesResponseDtoOutput {
   mutes: UserPreferencesResponseDtoOutputMutes;
 }
 
-export type UpdateUserPreferencesDtoTheme = typeof UpdateUserPreferencesDtoTheme[keyof typeof UpdateUserPreferencesDtoTheme];
-
-
-export const UpdateUserPreferencesDtoTheme = {
-  default: 'default',
-  muted: 'muted',
-  cyberpunk: 'cyberpunk',
-  pastel: 'pastel',
-  fantasy: 'fantasy',
-  shonen: 'shonen',
-  onepiece: 'onepiece',
-  anime: 'anime',
-  goth: 'goth',
-  halloween: 'halloween',
-  realmadrid: 'realmadrid',
-  'realmadrid-3rd': 'realmadrid-3rd',
-  barcelona: 'barcelona',
-  waguri: 'waguri',
-  rukia: 'rukia',
-  rias: 'rias',
-  'cat-pink': 'cat-pink',
-  'cat-purple': 'cat-purple',
-  'cat-blue': 'cat-blue',
-  'cat-random': 'cat-random',
-} as const;
+export type HttpErrorResponse = {[key: string]: unknown} & {
+  code?: string;
+  message?: unknown;
+};
 
 export type UpdateUserPreferencesDtoChatAppearanceNpcLayout = typeof UpdateUserPreferencesDtoChatAppearanceNpcLayout[keyof typeof UpdateUserPreferencesDtoChatAppearanceNpcLayout];
 
@@ -350,7 +329,7 @@ export interface UpdateUserPreferencesDto {
   guildsOrder?: string[];
   /** @items.minLength 1 */
   hiddenGuildIds?: string[];
-  theme?: UpdateUserPreferencesDtoTheme;
+  theme?: 'default' | 'muted' | 'cyberpunk' | 'pastel' | 'fantasy' | 'shonen' | 'onepiece' | 'anime' | 'waguri' | 'goth' | 'halloween' | 'realmadrid' | 'realmadrid-3rd' | 'barcelona' | 'rukia' | 'rias' | 'cat-pink' | 'cat-purple' | 'cat-blue' | 'cat-random' | string;
   chatAppearance?: UpdateUserPreferencesDtoChatAppearance;
   mutes?: UpdateUserPreferencesDtoMutes;
 }
@@ -1075,11 +1054,6 @@ export interface GuildResponseDtoOutput {
   reservationMaxAdvanceDays: number;
   reservationActiveLimitPerSpot: number;
 }
-
-export type HttpErrorResponse = {[key: string]: unknown} & {
-  code?: string;
-  message?: unknown;
-};
 
 export interface UpdateGuildConfigDto {
   /**

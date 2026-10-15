@@ -263,6 +263,12 @@ paths:
                 required:
                   - message
                 additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
         "429":
           description: Error
           content:
@@ -16414,6 +16420,549 @@ paths:
                 additionalProperties: false
       description: Permanently delete a guild document from trash
       summary: Permanently delete guild document
+  /users/@me/themes:
+    get:
+      tags:
+        - user-themes
+      operationId: UserThemesController_getThemes
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserThemeResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Retrieve the authenticated user's own web themes
+      summary: Get user themes
+    post:
+      tags:
+        - user-themes
+      operationId: UserThemesController_createTheme
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "201":
+          description: UserThemeResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserThemeResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "409":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Create a web theme for the authenticated user; fails with 409 once the user has reached the theme limit
+      summary: Create user theme
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserThemeDto"
+        required: true
+  /users/@me/themes/{themeId}:
+    get:
+      tags:
+        - user-themes
+      operationId: UserThemesController_getTheme
+      parameters:
+        - name: themeId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: UserThemeResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserThemeResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "404":
+          description: <No Content>
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Retrieve one of the user's own themes
+      summary: Get user theme
+    patch:
+      tags:
+        - user-themes
+      operationId: UserThemesController_updateTheme
+      parameters:
+        - name: themeId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: UserThemeResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserThemeResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "404":
+          description: <No Content>
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Rename or change one of the user's themes
+      summary: Update user theme
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserThemeDto"
+        required: true
+    delete:
+      tags:
+        - user-themes
+      operationId: UserThemesController_deleteTheme
+      parameters:
+        - name: themeId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: SuccessResponseDto_Output
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "404":
+          description: <No Content>
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Delete one of the user's themes; a user who had it selected falls back to its base theme
+      summary: Delete user theme
+  /users/@me/themes/{themeId}/share:
+    post:
+      tags:
+        - user-themes
+      operationId: UserThemesController_shareTheme
+      parameters:
+        - name: themeId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: UserThemeResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserThemeResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "404":
+          description: <No Content>
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Create a share link token for the theme, or return the existing one
+      summary: Share user theme
+    delete:
+      tags:
+        - user-themes
+      operationId: UserThemesController_unshareTheme
+      parameters:
+        - name: themeId
+          in: path
+          schema:
+            type: string
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: UserThemeResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserThemeResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "404":
+          description: <No Content>
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Revoke the theme's share link so it no longer resolves
+      summary: Stop sharing user theme
+  /public/themes/{shareToken}:
+    get:
+      tags:
+        - user-themes
+      operationId: UserThemesController_getSharedTheme
+      parameters:
+        - name: shareToken
+          in: path
+          schema:
+            type: string
+          required: true
+      security: []
+      responses:
+        "200":
+          description: SharedUserThemeResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SharedUserThemeResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "403":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "404":
+          description: <No Content>
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Read a theme shared by link; the response names no author
+      summary: Get shared theme
 components:
   schemas:
     RequestValidationError:
@@ -16449,6 +16998,172 @@ components:
         - message
         - issues
       additionalProperties: false
+    SharedUserThemeResponseDto:
+      type: object
+      properties:
+        name:
+          type: string
+        definition:
+          type: object
+          properties:
+            baseThemeId:
+              type: string
+              enum:
+                - default
+                - muted
+                - cyberpunk
+                - pastel
+                - fantasy
+                - shonen
+                - onepiece
+                - anime
+                - waguri
+                - goth
+                - halloween
+                - realmadrid
+                - realmadrid-3rd
+                - barcelona
+                - rukia
+                - rias
+                - cat-pink
+                - cat-purple
+                - cat-blue
+                - cat-random
+            accent:
+              type: string
+            surface:
+              type: object
+              properties:
+                hue:
+                  type: number
+                  minimum: 0
+                  maximum: 360
+                lightness:
+                  type: number
+                  minimum: 0.08
+                  maximum: 0.28
+                chroma:
+                  type: number
+                  minimum: 0
+                  maximum: 0.08
+              required:
+                - hue
+                - lightness
+                - chroma
+              additionalProperties: false
+            overrides:
+              type: object
+              properties:
+                background:
+                  type: string
+                foreground:
+                  type: string
+                card:
+                  type: string
+                card-foreground:
+                  type: string
+                popover:
+                  type: string
+                popover-foreground:
+                  type: string
+                primary:
+                  type: string
+                primary-foreground:
+                  type: string
+                secondary:
+                  type: string
+                secondary-foreground:
+                  type: string
+                muted:
+                  type: string
+                muted-foreground:
+                  type: string
+                accent:
+                  type: string
+                accent-foreground:
+                  type: string
+                destructive:
+                  type: string
+                destructive-foreground:
+                  type: string
+                border:
+                  type: string
+                ring:
+                  type: string
+                chart-1:
+                  type: string
+                chart-2:
+                  type: string
+                chart-3:
+                  type: string
+                chart-4:
+                  type: string
+                chart-5:
+                  type: string
+                signal-live:
+                  type: string
+                signal-ready:
+                  type: string
+                signal-timer:
+                  type: string
+                signal-alert:
+                  type: string
+                text-supporting:
+                  type: string
+                sidebar:
+                  type: string
+                sidebar-foreground:
+                  type: string
+                sidebar-primary:
+                  type: string
+                sidebar-primary-foreground:
+                  type: string
+                sidebar-accent:
+                  type: string
+                sidebar-accent-foreground:
+                  type: string
+                sidebar-border:
+                  type: string
+                sidebar-ring:
+                  type: string
+              additionalProperties: false
+            wallpaper:
+              type: string
+              pattern: ^[a-z\d-]{1,48}$
+            wallpaperVisibility:
+              type: integer
+              minimum: 0
+              maximum: 100
+            font:
+              type: string
+              enum:
+                - geist
+                - inter
+                - mona-sans
+                - ibm-plex-sans
+                - nunito
+                - space-grotesk
+                - lexend
+                - atkinson-hyperlegible
+            radius:
+              type: string
+              enum:
+                - sharp
+                - soft
+                - default
+                - round
+                - pill
+          required:
+            - baseThemeId
+            - overrides
+            - wallpaper
+            - font
+            - radius
+          additionalProperties: false
+      required:
+        - name
+        - definition
+      additionalProperties: false
     ReauthenticationRequiredEncoded:
       type: object
       properties:
@@ -16466,6 +17181,530 @@ components:
         - _tag
         - code
         - requiresReauth
+      additionalProperties: false
+    UserThemeResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        definition:
+          type: object
+          properties:
+            baseThemeId:
+              type: string
+              enum:
+                - default
+                - muted
+                - cyberpunk
+                - pastel
+                - fantasy
+                - shonen
+                - onepiece
+                - anime
+                - waguri
+                - goth
+                - halloween
+                - realmadrid
+                - realmadrid-3rd
+                - barcelona
+                - rukia
+                - rias
+                - cat-pink
+                - cat-purple
+                - cat-blue
+                - cat-random
+            accent:
+              type: string
+            surface:
+              type: object
+              properties:
+                hue:
+                  type: number
+                  minimum: 0
+                  maximum: 360
+                lightness:
+                  type: number
+                  minimum: 0.08
+                  maximum: 0.28
+                chroma:
+                  type: number
+                  minimum: 0
+                  maximum: 0.08
+              required:
+                - hue
+                - lightness
+                - chroma
+              additionalProperties: false
+            overrides:
+              type: object
+              properties:
+                background:
+                  type: string
+                foreground:
+                  type: string
+                card:
+                  type: string
+                card-foreground:
+                  type: string
+                popover:
+                  type: string
+                popover-foreground:
+                  type: string
+                primary:
+                  type: string
+                primary-foreground:
+                  type: string
+                secondary:
+                  type: string
+                secondary-foreground:
+                  type: string
+                muted:
+                  type: string
+                muted-foreground:
+                  type: string
+                accent:
+                  type: string
+                accent-foreground:
+                  type: string
+                destructive:
+                  type: string
+                destructive-foreground:
+                  type: string
+                border:
+                  type: string
+                ring:
+                  type: string
+                chart-1:
+                  type: string
+                chart-2:
+                  type: string
+                chart-3:
+                  type: string
+                chart-4:
+                  type: string
+                chart-5:
+                  type: string
+                signal-live:
+                  type: string
+                signal-ready:
+                  type: string
+                signal-timer:
+                  type: string
+                signal-alert:
+                  type: string
+                text-supporting:
+                  type: string
+                sidebar:
+                  type: string
+                sidebar-foreground:
+                  type: string
+                sidebar-primary:
+                  type: string
+                sidebar-primary-foreground:
+                  type: string
+                sidebar-accent:
+                  type: string
+                sidebar-accent-foreground:
+                  type: string
+                sidebar-border:
+                  type: string
+                sidebar-ring:
+                  type: string
+              additionalProperties: false
+            wallpaper:
+              type: string
+              pattern: ^[a-z\d-]{1,48}$
+            wallpaperVisibility:
+              type: integer
+              minimum: 0
+              maximum: 100
+            font:
+              type: string
+              enum:
+                - geist
+                - inter
+                - mona-sans
+                - ibm-plex-sans
+                - nunito
+                - space-grotesk
+                - lexend
+                - atkinson-hyperlegible
+            radius:
+              type: string
+              enum:
+                - sharp
+                - soft
+                - default
+                - round
+                - pill
+          required:
+            - baseThemeId
+            - overrides
+            - wallpaper
+            - font
+            - radius
+          additionalProperties: false
+        shareToken:
+          nullable: true
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+      required:
+        - id
+        - name
+        - definition
+        - shareToken
+        - createdAt
+        - updatedAt
+      additionalProperties: false
+    SuccessResponseDto_Output:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
+      additionalProperties: false
+    UpdateUserThemeDto:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 40
+        definition:
+          type: object
+          properties:
+            baseThemeId:
+              type: string
+              enum:
+                - default
+                - muted
+                - cyberpunk
+                - pastel
+                - fantasy
+                - shonen
+                - onepiece
+                - anime
+                - waguri
+                - goth
+                - halloween
+                - realmadrid
+                - realmadrid-3rd
+                - barcelona
+                - rukia
+                - rias
+                - cat-pink
+                - cat-purple
+                - cat-blue
+                - cat-random
+            accent:
+              type: string
+            surface:
+              type: object
+              properties:
+                hue:
+                  type: number
+                  minimum: 0
+                  maximum: 360
+                lightness:
+                  type: number
+                  minimum: 0.08
+                  maximum: 0.28
+                chroma:
+                  type: number
+                  minimum: 0
+                  maximum: 0.08
+              required:
+                - hue
+                - lightness
+                - chroma
+              additionalProperties: false
+            overrides:
+              type: object
+              properties:
+                background:
+                  type: string
+                foreground:
+                  type: string
+                card:
+                  type: string
+                card-foreground:
+                  type: string
+                popover:
+                  type: string
+                popover-foreground:
+                  type: string
+                primary:
+                  type: string
+                primary-foreground:
+                  type: string
+                secondary:
+                  type: string
+                secondary-foreground:
+                  type: string
+                muted:
+                  type: string
+                muted-foreground:
+                  type: string
+                accent:
+                  type: string
+                accent-foreground:
+                  type: string
+                destructive:
+                  type: string
+                destructive-foreground:
+                  type: string
+                border:
+                  type: string
+                ring:
+                  type: string
+                chart-1:
+                  type: string
+                chart-2:
+                  type: string
+                chart-3:
+                  type: string
+                chart-4:
+                  type: string
+                chart-5:
+                  type: string
+                signal-live:
+                  type: string
+                signal-ready:
+                  type: string
+                signal-timer:
+                  type: string
+                signal-alert:
+                  type: string
+                text-supporting:
+                  type: string
+                sidebar:
+                  type: string
+                sidebar-foreground:
+                  type: string
+                sidebar-primary:
+                  type: string
+                sidebar-primary-foreground:
+                  type: string
+                sidebar-accent:
+                  type: string
+                sidebar-accent-foreground:
+                  type: string
+                sidebar-border:
+                  type: string
+                sidebar-ring:
+                  type: string
+              additionalProperties: false
+            wallpaper:
+              type: string
+              pattern: ^[a-z\d-]{1,48}$
+            wallpaperVisibility:
+              type: integer
+              minimum: 0
+              maximum: 100
+            font:
+              type: string
+              enum:
+                - geist
+                - inter
+                - mona-sans
+                - ibm-plex-sans
+                - nunito
+                - space-grotesk
+                - lexend
+                - atkinson-hyperlegible
+            radius:
+              type: string
+              enum:
+                - sharp
+                - soft
+                - default
+                - round
+                - pill
+          required:
+            - baseThemeId
+            - overrides
+            - wallpaper
+            - font
+            - radius
+          additionalProperties: false
+      additionalProperties: false
+    CreateUserThemeDto:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 40
+        definition:
+          type: object
+          properties:
+            baseThemeId:
+              type: string
+              enum:
+                - default
+                - muted
+                - cyberpunk
+                - pastel
+                - fantasy
+                - shonen
+                - onepiece
+                - anime
+                - waguri
+                - goth
+                - halloween
+                - realmadrid
+                - realmadrid-3rd
+                - barcelona
+                - rukia
+                - rias
+                - cat-pink
+                - cat-purple
+                - cat-blue
+                - cat-random
+            accent:
+              type: string
+            surface:
+              type: object
+              properties:
+                hue:
+                  type: number
+                  minimum: 0
+                  maximum: 360
+                lightness:
+                  type: number
+                  minimum: 0.08
+                  maximum: 0.28
+                chroma:
+                  type: number
+                  minimum: 0
+                  maximum: 0.08
+              required:
+                - hue
+                - lightness
+                - chroma
+              additionalProperties: false
+            overrides:
+              type: object
+              properties:
+                background:
+                  type: string
+                foreground:
+                  type: string
+                card:
+                  type: string
+                card-foreground:
+                  type: string
+                popover:
+                  type: string
+                popover-foreground:
+                  type: string
+                primary:
+                  type: string
+                primary-foreground:
+                  type: string
+                secondary:
+                  type: string
+                secondary-foreground:
+                  type: string
+                muted:
+                  type: string
+                muted-foreground:
+                  type: string
+                accent:
+                  type: string
+                accent-foreground:
+                  type: string
+                destructive:
+                  type: string
+                destructive-foreground:
+                  type: string
+                border:
+                  type: string
+                ring:
+                  type: string
+                chart-1:
+                  type: string
+                chart-2:
+                  type: string
+                chart-3:
+                  type: string
+                chart-4:
+                  type: string
+                chart-5:
+                  type: string
+                signal-live:
+                  type: string
+                signal-ready:
+                  type: string
+                signal-timer:
+                  type: string
+                signal-alert:
+                  type: string
+                text-supporting:
+                  type: string
+                sidebar:
+                  type: string
+                sidebar-foreground:
+                  type: string
+                sidebar-primary:
+                  type: string
+                sidebar-primary-foreground:
+                  type: string
+                sidebar-accent:
+                  type: string
+                sidebar-accent-foreground:
+                  type: string
+                sidebar-border:
+                  type: string
+                sidebar-ring:
+                  type: string
+              additionalProperties: false
+            wallpaper:
+              type: string
+              pattern: ^[a-z\d-]{1,48}$
+            wallpaperVisibility:
+              type: integer
+              minimum: 0
+              maximum: 100
+            font:
+              type: string
+              enum:
+                - geist
+                - inter
+                - mona-sans
+                - ibm-plex-sans
+                - nunito
+                - space-grotesk
+                - lexend
+                - atkinson-hyperlegible
+            radius:
+              type: string
+              enum:
+                - sharp
+                - soft
+                - default
+                - round
+                - pill
+          required:
+            - baseThemeId
+            - overrides
+            - wallpaper
+            - font
+            - radius
+          additionalProperties: false
+      required:
+        - name
+        - definition
       additionalProperties: false
     DocsMutationResponseDto:
       type: object
@@ -19657,14 +20896,6 @@ components:
           maximum: 9007199254740991
       required:
         - memberId
-      additionalProperties: false
-    SuccessResponseDto_Output:
-      type: object
-      properties:
-        success:
-          type: boolean
-      required:
-        - success
       additionalProperties: false
     EventMapsResponseDto_Output:
       type: object
@@ -30877,28 +32108,30 @@ components:
             type: string
             minLength: 1
         theme:
-          type: string
-          enum:
-            - default
-            - muted
-            - cyberpunk
-            - pastel
-            - fantasy
-            - shonen
-            - onepiece
-            - anime
-            - goth
-            - halloween
-            - realmadrid
-            - realmadrid-3rd
-            - barcelona
-            - waguri
-            - rukia
-            - rias
-            - cat-pink
-            - cat-purple
-            - cat-blue
-            - cat-random
+          anyOf:
+            - type: string
+              enum:
+                - default
+                - muted
+                - cyberpunk
+                - pastel
+                - fantasy
+                - shonen
+                - onepiece
+                - anime
+                - waguri
+                - goth
+                - halloween
+                - realmadrid
+                - realmadrid-3rd
+                - barcelona
+                - rukia
+                - rias
+                - cat-pink
+                - cat-purple
+                - cat-blue
+                - cat-random
+            - type: string
         chatAppearance:
           type: object
           properties:
@@ -31417,4 +32650,5 @@ tags:
   - name: guild-stats-card
   - name: public-guild-stats-card
   - name: docs
+  - name: user-themes
 servers: []

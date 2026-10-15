@@ -24,6 +24,7 @@ import {
   Permission,
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
+import { CUSTOM_THEME_PREFERENCE_PREFIX } from "@lootlog/schema/custom-theme";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { guildTable, timerTable } from "#src/database/drizzle/schema";
 import {
@@ -111,6 +112,10 @@ export class AccountOrganizationData extends Context.Service<
   {
     readonly deleteAccount: (identity: AuthenticatedIdentity) => DataEffect;
     readonly getUserPreferences: (userId: string) => DataEffect;
+    readonly userOwnsTheme: (
+      userId: string,
+      themeId: string,
+    ) => Effect.Effect<boolean, AccountOrganizationOperationError>;
     readonly updateUserPreferences: (
       userId: string,
       payload: UpdateUserPreferencesRequest,
@@ -455,6 +460,22 @@ export const updateCurrentUserPreferences = Effect.fn(
   "updateCurrentUserPreferences",
 )(function* (payload: UpdateUserPreferencesRequest) {
   const current = yield* identity;
+
+  // A User may select only their own theme; another User's id reads as missing.
+  if (payload.theme?.startsWith(CUSTOM_THEME_PREFERENCE_PREFIX)) {
+    const themeId = payload.theme.slice(CUSTOM_THEME_PREFERENCE_PREFIX.length);
+
+    const owned = yield* data((service) =>
+      service.userOwnsTheme(current.userId, themeId),
+    );
+
+    if (!owned) {
+      return yield* new AccountOrganizationNotFound({
+        status: 404,
+        code: "USER_THEME_NOT_FOUND",
+      });
+    }
+  }
 
   const value = yield* data((service) =>
     service.updateUserPreferences(current.userId, payload),

@@ -1,4 +1,5 @@
 import { Predicate } from "effect";
+import { contrastRatio, hexToRgb, rgbToHex, type RgbColor } from "./color.js";
 import {
   COMBAT_NPC_TYPES,
   DEFAULT_NPC_TYPE_COLORS,
@@ -6,7 +7,7 @@ import {
   type NpcTypeColors,
 } from "@lootlog/schema/npc-appearance";
 
-const DARK_SURFACE_RGB = [3, 7, 18] as const;
+const DARK_SURFACE_RGB: RgbColor = [3, 7, 18];
 
 const MINIMUM_TEXT_CONTRAST = 3;
 
@@ -31,51 +32,8 @@ export const normalizeNpcTypeColors = (value: unknown): NpcTypeColors => {
   return colors;
 };
 
-const hexToRgb = (color: string) => {
-  const normalized = normalizeAppearanceColor(color, "#FFFFFF").slice(1);
-
-  return [
-    Number.parseInt(normalized.slice(0, 2), 16),
-    Number.parseInt(normalized.slice(2, 4), 16),
-    Number.parseInt(normalized.slice(4, 6), 16),
-  ] as const;
-};
-
-const toHex = (rgb: readonly number[]) =>
-  `#${rgb
-    .map((channel) => Math.round(channel).toString(16).padStart(2, "0"))
-    .join("")
-    .toUpperCase()}`;
-
-type RgbColor = readonly [number, number, number];
-
-const toLinearColorChannel = (channel: number) => {
-  const normalized = channel / 255;
-
-  return normalized <= 0.04045
-    ? normalized / 12.92
-    : ((normalized + 0.055) / 1.055) ** 2.4;
-};
-
-const relativeLuminance = (rgb: RgbColor) => {
-  const red = toLinearColorChannel(rgb[0]);
-  const green = toLinearColorChannel(rgb[1]);
-  const blue = toLinearColorChannel(rgb[2]);
-
-  return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
-};
-
-const contrastRatio = (left: RgbColor, right: RgbColor) => {
-  const leftLuminance = relativeLuminance(left);
-  const rightLuminance = relativeLuminance(right);
-  const lighter = Math.max(leftLuminance, rightLuminance);
-  const darker = Math.min(leftLuminance, rightLuminance);
-
-  return (lighter + 0.05) / (darker + 0.05);
-};
-
 const getReadableTextColor = (accent: string) => {
-  const accentRgb = hexToRgb(accent);
+  const accentRgb = hexToRgb(normalizeAppearanceColor(accent, "#FFFFFF"));
 
   if (contrastRatio(accentRgb, DARK_SURFACE_RGB) >= MINIMUM_TEXT_CONTRAST) {
     return normalizeAppearanceColor(accent, "#FFFFFF");
@@ -89,7 +47,7 @@ const getReadableTextColor = (accent: string) => {
     ] as const;
 
     if (contrastRatio(mixed, DARK_SURFACE_RGB) >= MINIMUM_TEXT_CONTRAST) {
-      return toHex(mixed);
+      return rgbToHex(mixed);
     }
   }
 

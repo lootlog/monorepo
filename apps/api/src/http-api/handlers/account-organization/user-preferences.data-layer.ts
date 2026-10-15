@@ -14,7 +14,7 @@ import {
   normalizePings,
   normalizeRoutingRules,
 } from "@lootlog/domain/account-preferences";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { Clock, Effect, type Schema, Predicate } from "effect";
 import {
   mergeChatAppearanceSettings,
@@ -39,7 +39,10 @@ import {
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { userSettingsTable } from "#src/database/drizzle/schema";
+import {
+  userSettingsTable,
+  userThemeTable,
+} from "#src/database/drizzle/schema";
 import type {
   SettingsDocuments,
   SettingsDocumentsResponse,
@@ -600,6 +603,20 @@ export const makeUserPreferencesData = (
     );
 
   return {
+    userOwnsTheme: (userId: string, themeId: string) =>
+      mapError(
+        database
+          .select({ id: userThemeTable.id })
+          .from(userThemeTable)
+          .where(
+            and(
+              eq(userThemeTable.id, themeId),
+              eq(userThemeTable.userId, userId),
+            ),
+          )
+          .limit(1)
+          .pipe(Effect.map((rows) => rows.length > 0)),
+      ),
     getUserPreferences: (userId: string) =>
       mapError(
         getUserPreferences(userId).pipe(Effect.flatMap(scopePreferences)),
