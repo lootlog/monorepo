@@ -51,8 +51,12 @@ type BattlesTableProps = {
     onNextPage?: () => void;
     onPreviousPage?: () => void;
   };
-  /** The page's filters; without them the table sits under its page's filter bar. */
+  /** The page's search; without it or filters the table sits under its page's filter bar. */
+  search?: ReactNode;
+  /** The page's filters. */
   toolbar?: ReactNode;
+  /** The page's filters stacked for the panel narrow pages open them in. */
+  stackedFilters?: ReactNode;
   /** Scrolls the page back to its top when it changes, such as the page of results. */
   scrollResetKey?: string;
 };
@@ -87,7 +91,9 @@ export const BattlesTable = ({
   onWorldClick,
   selectionLimit,
   pagination,
+  search,
   toolbar,
+  stackedFilters,
   scrollResetKey,
 }: BattlesTableProps) => {
   const { t } = useTranslation();
@@ -254,7 +260,9 @@ export const BattlesTable = ({
         footer={paginationFooter}
         onClearFilters={onClearFilters}
         selectionBar={selectionBar}
+        search={search}
         filters={toolbar}
+        stackedFilters={stackedFilters}
         filtersLabel={t("battlePanel.filters.title")}
         scrollResetKey={scrollResetKey}
       >

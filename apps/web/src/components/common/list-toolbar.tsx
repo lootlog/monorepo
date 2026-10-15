@@ -1,6 +1,9 @@
 import { cn } from "cn";
-import { Search, X } from "lucide-react";
 import type { ReactNode } from "react";
+import {
+  INLINE_SEARCH_INPUT_CLASS,
+  InlineSearchField,
+} from "./inline-search-field";
 import { LIST_TILE_INSET_CLASS, LIST_TILE_RULE_CLASS } from "./list-tile";
 
 type ListToolbarProps = {
@@ -38,8 +41,10 @@ export const ListToolbar = ({
     )}
   >
     {/* The bar's bottom rule lights up while the filter has focus. */}
-    <label className="flex min-w-48 flex-1 items-center gap-2 text-sm text-muted-foreground focus-within:text-foreground">
-      <Search aria-hidden className="size-4 shrink-0" />
+    <InlineSearchField
+      clearLabel={clearLabel}
+      onClear={search ? () => onSearchChange("") : undefined}
+    >
       <input
         type="search"
         value={search}
@@ -47,19 +52,9 @@ export const ListToolbar = ({
         onChange={(event) => onSearchChange(event.target.value)}
         placeholder={placeholder}
         aria-label={label}
-        className="h-8 min-w-0 flex-1 bg-transparent text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed [&::-webkit-search-cancel-button]:hidden"
+        className={INLINE_SEARCH_INPUT_CLASS}
       />
-      {search && (
-        <button
-          type="button"
-          aria-label={clearLabel}
-          onClick={() => onSearchChange("")}
-          className="flex size-6 items-center justify-center rounded-md hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-        >
-          <X aria-hidden className="size-3.5" />
-        </button>
-      )}
-    </label>
+    </InlineSearchField>
     {children}
   </div>
 );

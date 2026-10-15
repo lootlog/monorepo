@@ -21,7 +21,9 @@ type BattlesListProps = {
   isLoading?: boolean;
   isRefreshing?: boolean;
   enableScrollToTop?: boolean;
+  search?: ReactNode;
   toolbar?: ReactNode;
+  stackedFilters?: ReactNode;
 };
 
 const getCurrentFilters = (
@@ -69,7 +71,9 @@ export const BattlesList = ({
   isLoading = false,
   isRefreshing = false,
   enableScrollToTop = false,
+  search,
   toolbar,
+  stackedFilters,
 }: BattlesListProps) => {
   const currentFilters = getCurrentFilters(params);
   const tableState = getBattlesTableState(battlesResponse, pageSize, params);
@@ -138,7 +142,9 @@ export const BattlesList = ({
       onPhClick={handlePhClick}
       onWorldClick={handleWorldClick}
       selectionLimit={tableState.selectionLimit}
+      search={search}
       toolbar={toolbar}
+      stackedFilters={stackedFilters}
       scrollResetKey={enableScrollToTop ? (params?.cursor ?? "") : undefined}
     />
   );

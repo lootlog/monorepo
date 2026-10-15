@@ -1,26 +1,26 @@
 import { ChartCard } from "@/components/common/chart-card";
 import { FilterBar } from "@/components/common/filter-bar";
+import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
+import { useMediaQuery } from "usehooks-ts";
 import { CombatProfileOverview } from "./components/combat-profile-overview";
-
-const FILTER_WIDTHS = ["md:w-52", "md:w-60", "md:w-44", "md:w-40"];
+import { StatisticsFilterToolbarSkeleton } from "./components/statistics-filter-toolbar-skeleton";
 
 // The loaded cards are `ChartCard`s with static titles, so their own loading
 // state is the skeleton.
 export const BattlePanelStatisticsSkeleton = () => {
   const { t } = useTranslation();
+  // Narrower pages open the filters from a floating button, leaving no bar.
+  const listsFilters = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
 
   return (
     <div aria-busy="true">
-      <FilterBar ariaLabel={t("battlePanel.filters.title")}>
-        {FILTER_WIDTHS.map((width, index) => (
-          <Skeleton
-            key={width}
-            className={`h-10 w-full rounded-md ${width} ${index > 0 ? "hidden md:block" : ""}`}
-          />
-        ))}
-      </FilterBar>
+      {listsFilters && (
+        <FilterBar>
+          <StatisticsFilterToolbarSkeleton />
+        </FilterBar>
+      )}
 
       <div className="flex flex-col gap-3 p-3">
         <CombatProfileOverview data={undefined} isLoading />

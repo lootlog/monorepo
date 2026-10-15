@@ -1,6 +1,6 @@
+import { FilterPanelField } from "@/components/filters/filter-panel-field";
 import { Button } from "@lootlog/ui/components/button";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
-import { Label } from "@lootlog/ui/components/label";
 import {
   Popover,
   PopoverContent,
@@ -15,7 +15,7 @@ import type { useActivityLogsFilterModel } from "./use-activity-logs-filter-mode
 
 type ActivityLogsFilterFieldsProps = {
   model: ReturnType<typeof useActivityLogsFilterModel>;
-  /** Labelled, full-width fields for the mobile drawer instead of the toolbar row. */
+  /** Full-width `FilterPanelField` sections for the filters panel instead of the bar. */
   stacked?: boolean;
 };
 
@@ -37,10 +37,7 @@ export const ActivityLogsFilterFields = ({
 
   const renderField = (label: string, control: ReactNode) =>
     stacked ? (
-      <div className="space-y-2">
-        <Label>{label}</Label>
-        {control}
-      </div>
+      <FilterPanelField label={label}>{control}</FilterPanelField>
     ) : (
       control
     );
@@ -58,7 +55,7 @@ export const ActivityLogsFilterFields = ({
       endDateValue={model.endDateValue}
       isStartDateDisabled={model.isStartDateDisabled}
       isEndDateDisabled={model.isEndDateDisabled}
-      labelClassName={stacked ? undefined : "text-xs text-muted-foreground"}
+      labelClassName="text-xs text-muted-foreground"
     />
   );
 
@@ -121,7 +118,10 @@ export const ActivityLogsFilterFields = ({
         />,
       )}
       {stacked ? (
-        dateRangeFields
+        renderField(
+          t("activityLogs.filters.dateRange"),
+          <div className="flex flex-col gap-4">{dateRangeFields}</div>,
+        )
       ) : (
         <Popover>
           <PopoverTrigger

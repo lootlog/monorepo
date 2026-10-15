@@ -1,4 +1,3 @@
-import { useTranslation } from "react-i18next";
 import {
   findTrackableNpcType,
   TRACKABLE_NPC_TYPES,
@@ -8,8 +7,8 @@ import {
   getKillsControllerGetUserKillStatsQueryKey,
   useKillsControllerGetUserKillStats,
 } from "@lootlog/client/main";
+import type { KillStatsFiltersProps } from "@/features/kills/components/kill-stats-filters";
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
-import { KillStatsFilters } from "@/features/kills/components/kill-stats-filters";
 
 export type KillsFiltersState = {
   world?: string;
@@ -20,32 +19,29 @@ export type KillsFiltersState = {
   period: KillStatsPeriod;
 };
 
-type KillsFiltersProps = {
-  filters: Omit<KillsFiltersState, "minLvl" | "maxLvl">;
+type UseKillsFilterPropsOptions = {
+  filters: Pick<KillsFiltersState, "world" | "npcTypes" | "period">;
   /** Level bounds as the URL keeps them ("" when unset). */
   minLvl: string;
   maxLvl: string;
   onWorldChange: (world: string | undefined) => void;
   onNpcTypeChange: (npcTypes: NpcType[] | undefined) => void;
-  onSearchChange: (search: string) => void;
   onMinLvlChange: (minLvl: string) => void;
   onMaxLvlChange: (maxLvl: string) => void;
   onPeriodChange: (period: KillStatsPeriod) => void;
 };
 
-export const KillsFilters: React.FC<KillsFiltersProps> = ({
+/** The personal kills page's filters, over the worlds the User has kills on. */
+export const useKillsFilterProps = ({
   filters,
   minLvl,
   maxLvl,
   onWorldChange,
   onNpcTypeChange,
-  onSearchChange,
   onMinLvlChange,
   onMaxLvlChange,
   onPeriodChange,
-}) => {
-  const { t } = useTranslation();
-
+}: UseKillsFilterPropsOptions): KillStatsFiltersProps => {
   const { data } = useKillsControllerGetUserKillStats(undefined, {
     query: {
       queryKey: getKillsControllerGetUserKillStatsQueryKey(),
@@ -63,26 +59,19 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
     onNpcTypeChange(npcType ? [npcType] : undefined);
   };
 
-  return (
-    <KillStatsFilters
-      world={{
-        value: filters.world ?? null,
-        worlds,
-        onChange: (world) => onWorldChange(world ?? undefined),
-      }}
-      period={filters.period}
-      onPeriodChange={onPeriodChange}
-      search={{
-        value: filters.search ?? "",
-        placeholder: t("kills.ranking.search"),
-        onChange: onSearchChange,
-      }}
-      npcType={{
-        types: TRACKABLE_NPC_TYPES,
-        value: filters.npcTypes?.[0],
-        onValueChange: handleNpcTypeChange,
-      }}
-      level={{ minLvl, maxLvl, onMinLvlChange, onMaxLvlChange }}
-    />
-  );
+  return {
+    world: {
+      value: filters.world ?? null,
+      worlds,
+      onChange: (world) => onWorldChange(world ?? undefined),
+    },
+    period: filters.period,
+    onPeriodChange,
+    npcType: {
+      types: TRACKABLE_NPC_TYPES,
+      value: filters.npcTypes?.[0],
+      onValueChange: handleNpcTypeChange,
+    },
+    level: { minLvl, maxLvl, onMinLvlChange, onMaxLvlChange },
+  };
 };
