@@ -48,13 +48,9 @@ export const StandaloneShell = ({ children }: StandaloneShellProps) => {
         </AppTopBar>
       }
     >
-      <ScrollArea
-        data-under-top-bar
-        className="min-h-0 flex-1 [&>[data-slot=scroll-area-viewport]]:flex [&>[data-slot=scroll-area-viewport]]:flex-col"
-      >
-        <div className="flex min-h-full w-full shrink-0 items-center justify-center px-3 py-6 sm:px-6 sm:py-10">
-          {children}
-        </div>
+      {/* Pages render their sections straight in the page scroller. */}
+      <ScrollArea data-under-top-bar className="min-h-0 flex-1">
+        {children}
       </ScrollArea>
     </AppContentFrame>
   );

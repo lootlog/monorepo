@@ -19,14 +19,6 @@ import {
   useGuildsControllerGetGuildById,
 } from "@lootlog/client/main";
 
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@lootlog/ui/components/empty";
-import { CalendarX2 } from "lucide-react";
 import { GatewayEvent } from "@/config/gateway";
 import { ROUTES } from "@/config/routes";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
@@ -50,9 +42,9 @@ import {
   isReservationStartSelectable,
 } from "./reservation-settings";
 import { ScheduleHeader } from "./schedule-header";
+import { ScheduleStatus } from "./schedule-status";
 import type { ReservationRange } from "./types";
 import { useCompactScheduleLayout } from "./use-compact-schedule-layout";
-import { LoadingSlot } from "@/components/common/loading-slot";
 
 type ReservationChangedPayload =
   | ReservationChangedEventV2
@@ -262,51 +254,46 @@ export function ReservationsSchedule() {
     setCreateRange(range);
   };
 
+  const header = (
+    <ScheduleHeader
+      date={date}
+      isCompact={isCompact}
+      settings={settings}
+      settingsHref={
+        guildId
+          ? ROUTES.guild.settings.reservationsSettings(guildId)
+          : undefined
+      }
+      canManageReservationSettings={canManageReservationSettings}
+      isFindingNearestFreeSlot={isFindingNearestFreeSlot}
+      onPrevious={() =>
+        setDate((current) => addDays(current, isCompact ? -1 : -7))
+      }
+      onNext={() => setDate((current) => addDays(current, isCompact ? 1 : 7))}
+      onToday={() => setDate(new Date())}
+      onFindNearestFreeSlot={() => void findNearestFreeSlot()}
+      onAddReservation={openDefaultRange}
+    />
+  );
+
   return (
     <div
       ref={containerRef}
       className="relative flex h-full min-h-0 flex-col overflow-hidden max-md:overflow-clip"
     >
-      <ScheduleHeader
-        spotName={spotName}
-        date={date}
-        isCompact={isCompact}
-        settings={settings}
-        settingsHref={
-          guildId
-            ? ROUTES.guild.settings.reservationsSettings(guildId)
-            : undefined
-        }
-        canManageReservationSettings={canManageReservationSettings}
-        isFindingNearestFreeSlot={isFindingNearestFreeSlot}
-        onPrevious={() =>
-          setDate((current) => addDays(current, isCompact ? -1 : -7))
-        }
-        onNext={() => setDate((current) => addDays(current, isCompact ? 1 : 7))}
-        onToday={() => setDate(new Date())}
-        onFindNearestFreeSlot={() => void findNearestFreeSlot()}
-        onAddReservation={openDefaultRange}
-      />
+      {/* The top bar names the spot; the page keeps one heading for it. */}
+      <h1 className="sr-only">{spotName}</h1>
 
-      {reservationsQuery.isPending ? (
-        <div className="flex flex-1 items-center justify-center" role="status">
-          <LoadingSlot size="small" />
-          <span className="sr-only">{t("common.loading")}</span>
-        </div>
-      ) : reservationsQuery.isError ? (
-        <Empty className="m-auto max-w-lg">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <CalendarX2 />
-            </EmptyMedia>
-            <EmptyTitle>{t("reservations.schedule.error.title")}</EmptyTitle>
-            <EmptyDescription>
-              {t("reservations.schedule.error.description")}
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+      {reservationsQuery.isPending || reservationsQuery.isError ? (
+        <ScheduleStatus
+          header={header}
+          isError={reservationsQuery.isError}
+          isRetrying={reservationsQuery.isFetching}
+          onRetry={() => void reservationsQuery.refetch()}
+        />
       ) : isCompact ? (
         <MobileDaySchedule
+          header={header}
           date={date}
           dayIndex={dayIndex}
           segments={segments}
@@ -324,6 +311,7 @@ export function ReservationsSchedule() {
         />
       ) : (
         <DesktopWeekSchedule
+          header={header}
           weekStart={weekStart}
           segments={segments}
           settings={settings}

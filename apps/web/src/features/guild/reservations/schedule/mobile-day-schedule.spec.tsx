@@ -274,7 +274,7 @@ describe("MobileDaySchedule", () => {
       '[data-slot="mobile-day-preview-next"]',
     );
 
-    expect(swipeSurface?.className).toContain("overflow-hidden");
+    expect(swipeSurface?.className).toContain("overflow-clip");
     expect(swipeTrack?.className).toContain("-left-full");
     expect(swipeTrack?.className).toContain("w-[300%]");
     expect(previousDay).not.toBeNull();

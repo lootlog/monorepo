@@ -3,11 +3,13 @@ import { SkeletonLine } from "@/components/common/skeleton-line";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
+import { ScheduleActionDock } from "./schedule/schedule-action-dock";
+import { ScheduleBar } from "./schedule/schedule-bar";
 import { useCompactScheduleLayout } from "./schedule/use-compact-schedule-layout";
 
 /**
- * Route-level stand-in for `ReservationsSchedule`: its header and dock with
- * the same control sizes, above the schedule's own loading state.
+ * Route-level stand-in for `ReservationsSchedule`: its bar and dock with the
+ * same control sizes, above the schedule's own loading state.
  */
 export const ReservationDetailSkeleton = () => {
   const { t } = useTranslation();
@@ -38,14 +40,7 @@ export const ReservationDetailSkeleton = () => {
       aria-busy="true"
       className="relative flex h-full min-h-0 flex-col overflow-hidden max-md:overflow-clip"
     >
-      <header
-        className={cn(
-          "shrink-0 border-b bg-background max-md:sticky max-md:top-(--page-sticky-top) max-md:z-30",
-          isCompact
-            ? "flex items-center gap-1 px-2 py-1"
-            : "flex items-center gap-2 px-3 py-2",
-        )}
-      >
+      <ScheduleBar isCompact={isCompact}>
         <div
           className={cn(
             "items-center gap-1",
@@ -57,26 +52,21 @@ export const ReservationDetailSkeleton = () => {
           <Skeleton className={cn("rounded-lg", iconButton)} />
           <div
             className={cn(
-              "flex min-w-0 flex-col items-center text-sm",
-              !isCompact && "sm:min-w-52",
+              "flex min-w-0 justify-center text-sm",
+              !isCompact && "min-w-52",
             )}
           >
-            <SkeletonLine className="h-3.5 w-32 max-w-full" />
             <SkeletonLine className="h-3.5 w-40 max-w-full" />
           </div>
           <Skeleton className={cn("rounded-lg", iconButton)} />
         </div>
 
         {!isCompact && actionToolbar}
-      </header>
+      </ScheduleBar>
 
-      {isCompact && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] max-md:fixed">
-          {actionToolbar}
-        </div>
-      )}
+      {isCompact && <ScheduleActionDock>{actionToolbar}</ScheduleActionDock>}
 
-      <div className="flex flex-1 items-center justify-center" role="status">
+      <div className="flex justify-center py-16" role="status">
         <LoadingSlot size="small" />
         <span className="sr-only">{t("common.loading")}</span>
       </div>
