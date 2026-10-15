@@ -1,22 +1,23 @@
 import { formatLevel } from "@lootlog/domain/profession";
-import { useId, useState } from "react";
+import { useState } from "react";
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
-import { Search, ChevronsUpDown, Check } from "lucide-react";
-import { Button } from "@lootlog/ui/components/button";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@lootlog/ui/components/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@lootlog/ui/components/command";
+  Combobox,
+  ComboboxChipsInput,
+  ComboboxEmpty,
+  ComboboxItem,
+  ComboboxList,
+  useComboboxAnchor,
+} from "@lootlog/ui/components/combobox";
 import { cn } from "cn";
+import {
+  INLINE_SEARCH_INPUT_CLASS,
+  InlineSearchField,
+} from "@/components/common/inline-search-field";
+import {
+  INLINE_SEARCH_SUGGESTION_CLASS,
+  InlineSearchSuggestions,
+} from "@/components/common/inline-search-suggestions";
 import { CharacterAvatar } from "@/components/filters/character-avatar";
 import {
   getBattlesControllerSearchWarriorsQueryKey,
@@ -32,6 +33,13 @@ type WarriorSearchFilterProps = {
   className?: string;
 };
 
+const MINIMUM_SEARCH_LENGTH = 2;
+
+/**
+ * The filter bar's leading search: a borderless field typed into in place,
+ * like a list toolbar's filter, with the matching warriors listed under it.
+ * Picking a warrior toggles it and clears the field for the next one.
+ */
 export const WarriorSearchFilter = ({
   selectedWarriors,
   onWarriorToggle,
@@ -40,8 +48,8 @@ export const WarriorSearchFilter = ({
 }: WarriorSearchFilterProps) => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const debouncedQuery = useDebounce(searchQuery, 300);
-  const resultsListId = useId();
+  const debouncedQuery = useDebounce(searchQuery.trim(), 300);
+  const anchor = useComboboxAnchor();
   const { t } = useTranslation();
 
   const { data: searchResponse, isFetching } =
@@ -49,7 +57,7 @@ export const WarriorSearchFilter = ({
       { q: debouncedQuery },
       {
         query: {
-          enabled: debouncedQuery.length >= 2,
+          enabled: debouncedQuery.length >= MINIMUM_SEARCH_LENGTH,
           queryKey: getBattlesControllerSearchWarriorsQueryKey({
             q: debouncedQuery,
           }),
@@ -57,98 +65,98 @@ export const WarriorSearchFilter = ({
       },
     );
 
-  const searchResults = searchResponse?.warriors ?? [];
-  const [selectedWarrior] = selectedWarriors;
+  const searchResults =
+    searchQuery.trim().length >= MINIMUM_SEARCH_LENGTH
+      ? (searchResponse?.warriors ?? [])
+      : [];
+
+  const resultNames = searchResults.map((warrior) => warrior.name);
+  const selectedNames = selectedWarriors.map((warrior) => warrior.name);
+
+  // Selected warriors are restored from the URL by name only, so the field
+  // names them instead of showing a sprite, level or profession.
+  const fieldPlaceholder =
+    selectedNames.length > 0
+      ? selectedNames.join(", ")
+      : (placeholder ?? t("ui.warriorSearch.defaultPlaceholder"));
+
+  const handleValueChange = (nextNames: string[]) => {
+    const added = nextNames.find((name) => !selectedNames.includes(name));
+    const removed = selectedNames.find((name) => !nextNames.includes(name));
+
+    const warrior =
+      searchResults.find((result) => result.name === added) ??
+      selectedWarriors.find((selected) => selected.name === removed);
+
+    if (warrior) onWarriorToggle(warrior);
+    setSearchQuery("");
+    setOpen(false);
+  };
+
+  const getEmptyLabel = () => {
+    if (searchQuery.trim().length < MINIMUM_SEARCH_LENGTH) {
+      return t("ui.warriorSearch.typeAtLeastTwoCharacters");
+    }
+
+    if (isFetching || debouncedQuery !== searchQuery.trim()) {
+      return t("ui.warriorSearch.searching");
+    }
+
+    return t("ui.warriorSearch.empty");
+  };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        render={
-          <Button
-            variant="outline"
-            size="lg"
-            role="combobox"
-            aria-controls={resultsListId}
-            aria-expanded={open}
-            className={cn(
-              "min-w-[200px] flex-1 justify-between gap-2 px-2",
-              className,
-            )}
-          >
-            <span className="flex min-w-0 items-center gap-2">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted">
-                <Search className="size-4" aria-hidden="true" />
+    <Combobox
+      multiple
+      value={selectedNames}
+      items={resultNames}
+      filteredItems={resultNames}
+      open={open}
+      onOpenChange={setOpen}
+      inputValue={searchQuery}
+      onInputValueChange={(nextValue, details) => {
+        if (details.reason === "input-change") setSearchQuery(nextValue);
+      }}
+      onValueChange={handleValueChange}
+    >
+      <InlineSearchField
+        ref={anchor}
+        clearLabel={t("common.clear")}
+        onClear={searchQuery ? () => setSearchQuery("") : undefined}
+        className={className}
+      >
+        <ComboboxChipsInput
+          type="search"
+          aria-label={t("ui.warriorSearch.inputPlaceholder")}
+          placeholder={fieldPlaceholder}
+          className={cn(
+            INLINE_SEARCH_INPUT_CLASS,
+            selectedNames.length > 0 && "placeholder:text-foreground",
+          )}
+        />
+      </InlineSearchField>
+      <InlineSearchSuggestions anchor={anchor}>
+        <ComboboxEmpty>{getEmptyLabel()}</ComboboxEmpty>
+        <ComboboxList>
+          {searchResults.map((warrior) => (
+            <ComboboxItem
+              key={warrior.name}
+              value={warrior.name}
+              className={INLINE_SEARCH_SUGGESTION_CLASS}
+            >
+              <CharacterAvatar icon={warrior.icon} />
+              <span className="flex min-w-0 flex-col leading-tight">
+                <span className="truncate text-sm font-medium">
+                  {warrior.name}
+                </span>
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {formatLevel(warrior.lvl, warrior.prof)}
+                </span>
               </span>
-              {/* Selected warriors are restored from the URL by name only, so
-                  the trigger has no sprite, level or profession to show. */}
-              <span className="truncate">
-                {selectedWarriors.length > 1
-                  ? t("ui.warriorSearch.selectedCount", {
-                      count: selectedWarriors.length,
-                    })
-                  : (selectedWarrior?.name ??
-                    placeholder ??
-                    t("ui.warriorSearch.defaultPlaceholder"))}
-              </span>
-            </span>
-            <ChevronsUpDown
-              className="size-4 shrink-0 opacity-50"
-              aria-hidden="true"
-            />
-          </Button>
-        }
-      />
-      <PopoverContent align="start" className="w-[280px] p-0">
-        <Command shouldFilter={false}>
-          <CommandInput
-            placeholder={t("ui.warriorSearch.inputPlaceholder")}
-            value={searchQuery}
-            onValueChange={setSearchQuery}
-          />
-          <CommandList id={resultsListId}>
-            <CommandEmpty>
-              {isFetching
-                ? t("ui.warriorSearch.searching")
-                : searchQuery.length < 2
-                  ? t("ui.warriorSearch.typeAtLeastTwoCharacters")
-                  : t("ui.warriorSearch.empty")}
-            </CommandEmpty>
-            <CommandGroup>
-              {searchResults.map((warrior) => {
-                const isSelected = selectedWarriors.some(
-                  (w) => w.name === warrior.name,
-                );
-
-                return (
-                  <CommandItem
-                    key={warrior.name}
-                    value={warrior.name}
-                    onSelect={() => onWarriorToggle(warrior)}
-                    className="gap-2"
-                  >
-                    <CharacterAvatar icon={warrior.icon} />
-                    <span className="flex min-w-0 flex-col leading-tight">
-                      <span className="truncate text-sm font-medium">
-                        {warrior.name}
-                      </span>
-                      <span className="text-xs tabular-nums opacity-70">
-                        {formatLevel(warrior.lvl, warrior.prof)}
-                      </span>
-                    </span>
-                    <Check
-                      className={cn(
-                        "ml-auto size-4 shrink-0",
-                        isSelected ? "opacity-100" : "opacity-0",
-                      )}
-                      aria-hidden="true"
-                    />
-                  </CommandItem>
-                );
-              })}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+            </ComboboxItem>
+          ))}
+        </ComboboxList>
+      </InlineSearchSuggestions>
+    </Combobox>
   );
 };

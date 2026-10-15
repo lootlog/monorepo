@@ -3,7 +3,7 @@ import {
   RESULTS_TABLE_MEDIA_QUERY,
 } from "@/components/common/page-sticky-table-header";
 import { useMediaQuery } from "usehooks-ts";
-import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
+import { WarriorSearchFilter } from "@/components/filters/warrior-search-filter";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
@@ -18,8 +18,8 @@ import { ResultsSurface } from "@/components/common/results-surface";
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
 import { Table } from "@lootlog/ui/components/table";
 import { AlertCircle, SearchX } from "lucide-react";
-import { HeadToHeadFilterToolbar } from "./components/head-to-head-filter-toolbar";
-import { HeadToHeadFiltersPanel } from "./components/head-to-head-filters-panel";
+import { StatisticsFilterToolbar } from "./components/statistics-filter-toolbar";
+import { StatisticsStackedFilters } from "./components/statistics-stacked-filters";
 import {
   useHeadToHeadPage,
   type HeadToHeadPageVariantProps,
@@ -48,8 +48,6 @@ export function HeadToHeadPageVariant({
     handleMaxLevelChange,
     handlePhChange,
     handleWarriorToggle,
-    isMobile,
-    setIsMobileFiltersOpen,
     data,
     t,
     handlePreviousPage,
@@ -62,48 +60,23 @@ export function HeadToHeadPageVariant({
     handleRowClick,
     table,
     handleRowKeyDown,
-    isMobileFiltersOpen,
     activeFilterChips,
     applyFilterState,
   } = useHeadToHeadPage({ columns, matchmaking, showPhFilter });
 
-  const filtersContent = (
-    <HeadToHeadFiltersPanel
-      characterId={currentCharacterId}
-      period={period}
-      minLevel={minLevel}
-      maxLevel={maxLevel}
-      ph={ph ?? false}
-      selectedWarriors={selectedWarriors}
-      showPhFilter={showPhFilter}
-      onCharacterChange={handleCharacterChange}
-      onPeriodChange={handlePeriodChange}
-      onMinLevelChange={handleMinLevelChange}
-      onMaxLevelChange={handleMaxLevelChange}
-      onPhChange={showPhFilter ? handlePhChange : () => undefined}
-      onWarriorToggle={handleWarriorToggle}
-    />
-  );
-
-  const toolbar = (
-    <HeadToHeadFilterToolbar
-      characterId={currentCharacterId}
-      isMobile={isMobile}
-      maxLevel={maxLevel}
-      minLevel={minLevel}
-      onCharacterChange={handleCharacterChange}
-      onMaxLevelChange={handleMaxLevelChange}
-      onMinLevelChange={handleMinLevelChange}
-      onMobileFiltersOpen={() => setIsMobileFiltersOpen(true)}
-      onPeriodChange={handlePeriodChange}
-      onPhChange={showPhFilter ? handlePhChange : () => undefined}
-      onWarriorToggle={handleWarriorToggle}
-      period={period}
-      ph={ph}
-      selectedWarriors={selectedWarriors}
-      showPhFilter={showPhFilter}
-    />
-  );
+  const filterProps = {
+    characterId: currentCharacterId,
+    onCharacterChange: handleCharacterChange,
+    allowAllCharacters: true,
+    period,
+    onPeriodChange: handlePeriodChange,
+    minLevel,
+    maxLevel,
+    onMinLevelChange: handleMinLevelChange,
+    onMaxLevelChange: handleMaxLevelChange,
+    ph,
+    onPhChange: showPhFilter ? handlePhChange : undefined,
+  };
 
   const paginationFooter = (
     <BattlePanelPaginationFooter
@@ -209,33 +182,27 @@ export function HeadToHeadPageVariant({
   };
 
   return (
-    <>
-      {isMobile && (
-        <MobileFiltersDrawer
-          open={isMobileFiltersOpen}
-          onOpenChange={setIsMobileFiltersOpen}
-          trigger={null}
-          childrenClassName="p-0"
-          title={t("battlePanel.filters.headToHeadTitle")}
-        >
-          {filtersContent}
-        </MobileFiltersDrawer>
-      )}
-
-      <ScrollArea data-under-top-bar className="h-full min-h-0">
-        <h1 className="sr-only">{t(titleKey)}</h1>
-        <ResultsSurface
-          filters={toolbar}
-          filtersLabel={t("battlePanel.filters.title")}
-          chips={activeFilterChips}
-          clearFiltersLabel={t("battlePanel.filters.clear")}
-          onClearFilters={() => applyFilterState(getResetHeadToHeadFilters())}
-          scrollResetKey={pageIndex}
-          footer={paginationFooter}
-        >
-          {renderResults()}
-        </ResultsSurface>
-      </ScrollArea>
-    </>
+    <ScrollArea data-under-top-bar className="h-full min-h-0">
+      <h1 className="sr-only">{t(titleKey)}</h1>
+      <ResultsSurface
+        search={
+          <WarriorSearchFilter
+            selectedWarriors={selectedWarriors}
+            onWarriorToggle={handleWarriorToggle}
+            placeholder={t("battlePanel.filters.searchOpponent")}
+          />
+        }
+        filters={<StatisticsFilterToolbar {...filterProps} />}
+        stackedFilters={<StatisticsStackedFilters {...filterProps} />}
+        filtersLabel={t("battlePanel.filters.title")}
+        chips={activeFilterChips}
+        clearFiltersLabel={t("battlePanel.filters.clear")}
+        onClearFilters={() => applyFilterState(getResetHeadToHeadFilters())}
+        scrollResetKey={pageIndex}
+        footer={paginationFooter}
+      >
+        {renderResults()}
+      </ResultsSurface>
+    </ScrollArea>
   );
 }

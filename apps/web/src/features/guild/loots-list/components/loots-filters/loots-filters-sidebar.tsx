@@ -20,7 +20,7 @@ import {
   type ReactNode,
 } from "react";
 import { LootDirectSearchNotice } from "./loot-direct-search-notice";
-import { LootFilterCount } from "./loot-filter-count";
+import { FilterCount } from "@/components/common/filter-count";
 import { LootFilterSection } from "./loot-filter-section";
 import {
   LOOT_FILTER_SECTIONS,
@@ -153,7 +153,7 @@ export const LootsFiltersSidebar = ({
           ) : (
             <h2 className="text-sm font-semibold">{title}</h2>
           )}
-          <LootFilterCount count={state.totalActiveFilterCount} />
+          <FilterCount count={state.totalActiveFilterCount} />
           <div className="ml-auto flex items-center gap-1">
             {state.hasActiveFilters && (
               <Button

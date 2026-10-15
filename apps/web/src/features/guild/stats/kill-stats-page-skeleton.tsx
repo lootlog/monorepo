@@ -1,3 +1,5 @@
+import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
+import { useMediaQuery } from "usehooks-ts";
 import { ChartCard } from "@/components/common/chart-card";
 import { useTranslation } from "react-i18next";
 import { KillStatsOverview } from "./components/kill-stats-overview";
@@ -7,11 +9,13 @@ import { StatsLeaderboardCard } from "./components/stats-leaderboard-card";
 
 export const KillStatsPageSkeleton = () => {
   const { t } = useTranslation();
+  const usesFilterBar = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
 
   return (
     <div aria-busy="true">
+      {/* Narrow pages open their filters from a button instead of a bar. */}
       <FilterBar ariaLabel={t("kills.filters.title")}>
-        <StatsFiltersSkeleton />
+        {usesFilterBar && <StatsFiltersSkeleton />}
       </FilterBar>
       <div className="flex flex-col gap-3 p-3">
         <KillStatsOverview isLoading />

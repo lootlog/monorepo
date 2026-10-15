@@ -1,3 +1,4 @@
+import { countActiveKillStatsFilters } from "@/features/kills/components/count-active-kill-stats-filters";
 import {
   getKillsControllerGetGuildKillStatsQueryKey,
   useKillsControllerGetGuildKillStats,
@@ -7,7 +8,11 @@ import { useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "usehooks-ts";
 import { FilterBar } from "@/components/common/filter-bar";
-import { KillStatsFilters } from "@/features/kills/components/kill-stats-filters";
+import {
+  KillStatsFilters,
+  type KillStatsFiltersProps,
+} from "@/features/kills/components/kill-stats-filters";
+import { KillStatsStackedFilters } from "@/features/kills/components/kill-stats-stacked-filters";
 import { KillStatsActivity } from "./components/kill-stats-activity";
 import { KillStatsOverview } from "./components/kill-stats-overview";
 import { KillStatsRecords } from "./components/kill-stats-records";
@@ -68,20 +73,26 @@ export const KillStats = () => {
     Boolean(settings.maxLvl) ||
     settings.period !== "all";
 
+  const filterProps: KillStatsFiltersProps = {
+    period: settings.period,
+    onPeriodChange: setPeriod,
+    level: {
+      minLvl: settings.minLvl,
+      maxLvl: settings.maxLvl,
+      onMinLvlChange: setMinLvl,
+      onMaxLvlChange: setMaxLvl,
+    },
+  };
+
   return (
     <div>
       <h1 className="sr-only">{t("common.stats.kills")}</h1>
-      <FilterBar ariaLabel={t("kills.filters.title")}>
-        <KillStatsFilters
-          period={settings.period}
-          onPeriodChange={setPeriod}
-          level={{
-            minLvl: settings.minLvl,
-            maxLvl: settings.maxLvl,
-            onMinLvlChange: setMinLvl,
-            onMaxLvlChange: setMaxLvl,
-          }}
-        />
+      <FilterBar
+        ariaLabel={t("kills.filters.title")}
+        stackedFilters={<KillStatsStackedFilters {...filterProps} />}
+        activeFilterCount={countActiveKillStatsFilters(filterProps)}
+      >
+        <KillStatsFilters {...filterProps} />
       </FilterBar>
       <div className="flex flex-col gap-3 p-3">
         <KillStatsOverview

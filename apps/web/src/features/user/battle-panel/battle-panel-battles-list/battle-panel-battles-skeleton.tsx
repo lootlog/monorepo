@@ -1,3 +1,4 @@
+import { InlineSearchFieldSkeleton } from "@/components/common/inline-search-field-skeleton";
 import { BattlesListFilterToolbarSkeleton } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-list-filter-toolbar-skeleton";
 import { BattlesTable } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-table";
 
@@ -17,6 +18,7 @@ export const BattlePanelBattlesSkeleton = () => {
       battles={SKELETON_BATTLES}
       isLoading
       pagination={SKELETON_PAGINATION}
+      search={<InlineSearchFieldSkeleton />}
       toolbar={<BattlesListFilterToolbarSkeleton />}
     />
   );

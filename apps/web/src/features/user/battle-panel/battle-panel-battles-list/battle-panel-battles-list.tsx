@@ -5,14 +5,14 @@ import {
 } from "@/features/user/battle-panel/battle-panel-battles-list/utils/battle-filter-handlers";
 import { BattlesList } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-list";
 import { useResetRejectedBattlePanelCursor } from "@/features/user/battle-panel/components/use-reset-rejected-battle-panel-cursor";
-import { FiltersSidebar } from "@/features/user/battle-panel/battle-panel-battles-list/components/filters-sidebar";
+import { BattlesListStackedFilters } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-list-stacked-filters";
 import { BattlesListFilterToolbar } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-list-filter-toolbar";
+import { WarriorSearchFilter } from "@/components/filters/warrior-search-filter";
 import {
   buildBattleListFilterLabels,
   getResetBattleListFilters,
   removeBattleListFilter,
 } from "@/features/user/battle-panel/components/battle-panel-active-filter-helpers";
-import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
 import { useQueryStates } from "nuqs";
 
 import {
@@ -26,8 +26,6 @@ import {
   useBattlesControllerGetDashboardBattles,
   useBattlesControllerGetUserWorlds,
 } from "@lootlog/client/battlelog";
-import { useState } from "react";
-import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import type { SearchWarrior } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
 import { upperFirst } from "es-toolkit";
@@ -43,8 +41,6 @@ export const BattlePanelBattlesList = () => {
   );
 
   const pageSize = 20;
-  const isMobile = useIsMobile();
-  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const pageIndex = getBattlePanelPageIndex(queryState.page);
 
   const selectedWarriors = getSelectedWarriorsFromSearch(
@@ -158,68 +154,59 @@ export const BattlePanelBattlesList = () => {
   const tableToolbar = (
     <BattlesListFilterToolbar
       filters={filters}
-      isMobile={isMobile}
       onCharacterChange={handleCharacterChange}
       onMinLevelChange={handleMinLevelChange}
       onMaxLevelChange={handleMaxLevelChange}
-      onMobileFiltersOpen={() => setIsMobileFiltersOpen(true)}
       onPhToggle={handlePhToggle}
       onResultChange={handleResultChange}
       onTypeChange={handleTypeChange}
-      onWarriorToggle={handleWarriorToggle}
       onWorldChange={handleWorldChange}
-      selectedWarriors={selectedWarriors}
       worlds={worlds}
     />
   );
 
   return (
-    <>
-      {isMobile && (
-        <MobileFiltersDrawer
-          open={isMobileFiltersOpen}
-          onOpenChange={setIsMobileFiltersOpen}
-          trigger={null}
-          childrenClassName="p-0"
-          title={t("battlePanel.filters.battlesTitle")}
-        >
-          <FiltersSidebar
-            filters={filters}
-            onFiltersChange={handleFiltersChange}
-            className="h-auto w-full border-l-0 p-0"
-          />
-        </MobileFiltersDrawer>
-      )}
-
-      <BattlesList
-        activeFilterChips={activeFilterChips}
-        battlesResponse={battlesResponse}
-        clearFiltersLabel={t("battlePanel.filters.clear")}
-        params={{
-          cursor: optionalQueryValue(queryState.cursor),
-          size: pageSize,
-          world: filters.world,
-          type: filters.type,
-          search: filters.search,
-          result: filters.result,
-          ph: filters.ph,
-          characterId: filters.characterId,
-          startDate: optionalQueryValue(queryState.startDate),
-          endDate: optionalQueryValue(queryState.endDate),
-          minLevel: filters.minLevel,
-          maxLevel: filters.maxLevel,
-        }}
-        onClearFilters={handleClearFilters}
-        onCursorChange={handleCursorChange}
-        onFiltersChange={handleFiltersChange}
-        pageIndex={pageIndex}
-        pageSize={pageSize}
-        showPagination
-        isLoading={isBattlesLoading}
-        isRefreshing={isBattlesRefreshing}
-        enableScrollToTop
-        toolbar={tableToolbar}
-      />
-    </>
+    <BattlesList
+      activeFilterChips={activeFilterChips}
+      battlesResponse={battlesResponse}
+      clearFiltersLabel={t("battlePanel.filters.clear")}
+      params={{
+        cursor: optionalQueryValue(queryState.cursor),
+        size: pageSize,
+        world: filters.world,
+        type: filters.type,
+        search: filters.search,
+        result: filters.result,
+        ph: filters.ph,
+        characterId: filters.characterId,
+        startDate: optionalQueryValue(queryState.startDate),
+        endDate: optionalQueryValue(queryState.endDate),
+        minLevel: filters.minLevel,
+        maxLevel: filters.maxLevel,
+      }}
+      onClearFilters={handleClearFilters}
+      onCursorChange={handleCursorChange}
+      onFiltersChange={handleFiltersChange}
+      pageIndex={pageIndex}
+      pageSize={pageSize}
+      showPagination
+      isLoading={isBattlesLoading}
+      isRefreshing={isBattlesRefreshing}
+      enableScrollToTop
+      search={
+        <WarriorSearchFilter
+          selectedWarriors={selectedWarriors}
+          onWarriorToggle={handleWarriorToggle}
+        />
+      }
+      toolbar={tableToolbar}
+      stackedFilters={
+        <BattlesListStackedFilters
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          worlds={worlds}
+        />
+      }
+    />
   );
 };

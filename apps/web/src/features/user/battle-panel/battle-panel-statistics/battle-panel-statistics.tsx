@@ -1,3 +1,4 @@
+import { isLevelRangeActive } from "@/features/user/battle-panel/components/battle-panel-filter-state";
 import { startTransition, useEffect } from "react";
 import {
   useBattlesControllerGetCombatProfile,
@@ -8,7 +9,8 @@ import {
   useBattlesControllerGetProfessionWinRate,
   useBattlesControllerGetUserCharacters,
 } from "@lootlog/client/battlelog";
-import { StatisticsFilters } from "./components/statistics-filters";
+import { StatisticsFilterToolbar } from "./components/statistics-filter-toolbar";
+import { StatisticsStackedFilters } from "./components/statistics-stacked-filters";
 import { ProfessionWinRateChart } from "./components/profession-win-rate";
 import { HeadToHeadTable } from "./components/head-to-head-table";
 import { CurrentStreakCard } from "./components/current-streak-card";
@@ -19,6 +21,7 @@ import { useQueryStates } from "nuqs";
 import {
   battlePanelStatisticsSearchParsers,
   normalizeBattlePanelCharacterId,
+  type Period,
 } from "@/features/user/battle-panel/battle-panel-search";
 import { CombatProfileOverview } from "./components/combat-profile-overview";
 import { StatisticsQueryPanel } from "./components/statistics-query-panel";
@@ -129,6 +132,30 @@ export function BattlePanelStatistics() {
     matchmaking: false,
   };
 
+  // Filters apply in a transition, so the cards keep their data while the
+  // next statistics load.
+  const setFilters = (values: Parameters<typeof setQueryState>[0]) => {
+    startTransition(() => {
+      void setQueryState(values);
+    });
+  };
+
+  const filterProps = {
+    characterId: currentCharacterId,
+    onCharacterChange: (characterId: string | undefined) =>
+      setFilters({ characterId: characterId ?? null }),
+    period,
+    onPeriodChange: (newPeriod: Period) => setFilters({ period: newPeriod }),
+    minLevel,
+    maxLevel,
+    onMinLevelChange: (newMinLevel: number | undefined) =>
+      setFilters({ minLevel: newMinLevel ?? 1 }),
+    onMaxLevelChange: (newMaxLevel: number | undefined) =>
+      setFilters({ maxLevel: newMaxLevel ?? 500 }),
+    ph,
+    onPhChange: (newPh: boolean) => setFilters({ ph: newPh ? true : null }),
+  };
+
   if (!selectedCharacterId) {
     if (charactersQuery.isError) {
       return <StatisticsQueryPanel query={charactersQuery} />;
@@ -144,49 +171,18 @@ export function BattlePanelStatistics() {
   return (
     <div>
       <h1 className="sr-only">{t("battlePanel.statistics.title")}</h1>
-      <FilterBar ariaLabel={t("battlePanel.filters.title")}>
-        <StatisticsFilters
-          characterId={currentCharacterId}
-          period={period}
-          minLevel={minLevel}
-          maxLevel={maxLevel}
-          ph={ph}
-          onCharacterChange={(characterId) => {
-            startTransition(() => {
-              void setQueryState({
-                characterId: characterId ?? null,
-              });
-            });
-          }}
-          onPeriodChange={(newPeriod) => {
-            startTransition(() => {
-              void setQueryState({
-                period: newPeriod,
-              });
-            });
-          }}
-          onMinLevelChange={(newMinLevel) => {
-            startTransition(() => {
-              void setQueryState({
-                minLevel: newMinLevel ?? 1,
-              });
-            });
-          }}
-          onMaxLevelChange={(newMaxLevel) => {
-            startTransition(() => {
-              void setQueryState({
-                maxLevel: newMaxLevel ?? 500,
-              });
-            });
-          }}
-          onPhChange={(newPh) => {
-            startTransition(() => {
-              void setQueryState({
-                ph: newPh ? true : null,
-              });
-            });
-          }}
-        />
+      <FilterBar
+        ariaLabel={t("battlePanel.filters.title")}
+        stackedFilters={<StatisticsStackedFilters {...filterProps} />}
+        activeFilterCount={
+          [
+            period !== "30d",
+            isLevelRangeActive({ minLevel, maxLevel }),
+            ph === true,
+          ].filter(Boolean).length
+        }
+      >
+        <StatisticsFilterToolbar {...filterProps} />
       </FilterBar>
 
       <div className="flex flex-col gap-3 p-3">

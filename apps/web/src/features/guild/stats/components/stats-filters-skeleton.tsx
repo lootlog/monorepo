@@ -1,10 +1,19 @@
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
-/** The controls of a stats page's filter bar, still loading. */
+/** The filters of a stats page's filter bar, still loading; narrow pages move them to a panel. */
 export const StatsFiltersSkeleton = () => (
   <>
-    <Skeleton className="h-10 w-full rounded-lg md:w-[200px]" />
-    <Skeleton className="hidden h-10 w-[200px] rounded-lg md:block" />
-    <Skeleton className="hidden h-10 w-[200px] rounded-lg md:block" />
+    <Skeleton
+      aria-hidden="true"
+      className="hidden h-10 w-[200px] rounded-lg xl:block"
+    />
+    <Skeleton
+      aria-hidden="true"
+      className="hidden h-10 w-[200px] rounded-lg xl:block"
+    />
+    <Skeleton
+      aria-hidden="true"
+      className="hidden h-10 w-[200px] rounded-lg xl:block"
+    />
   </>
 );

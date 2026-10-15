@@ -14,11 +14,10 @@ import {
   useBattlesControllerGetPlayerVsPlayerBattles,
   type PlayerVsPlayerPaginatedResponseDtoOutput,
 } from "@lootlog/client/battlelog";
-import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useTable } from "@tanstack/react-table";
 import { useQueryStates } from "nuqs";
-import { useState, type KeyboardEvent } from "react";
+import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { createBattlePanelCursorActions } from "../components/battle-panel-cursor-actions";
 
@@ -48,8 +47,6 @@ const getPlayerVsPlayerTableView = (
 export function usePlayerVsPlayerPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const params = useParams({ strict: false });
 
   const opponentId = params.opponentId ?? params.myId;
@@ -239,8 +236,6 @@ export function usePlayerVsPlayerPage() {
     maxLevel,
     handleMinLevelChange,
     handleMaxLevelChange,
-    isMobile,
-    setIsMobileFiltersOpen,
     data,
     handlePreviousPage,
     handleNextPage,
@@ -255,7 +250,6 @@ export function usePlayerVsPlayerPage() {
     handleBattleOpen,
     table,
     handleBattleRowKeyDown,
-    isMobileFiltersOpen,
     myCharacter,
     opponentName,
     activeFilterChips,

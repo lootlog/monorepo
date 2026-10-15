@@ -1,3 +1,4 @@
+import { countActiveKillStatsFilters } from "@/features/kills/components/count-active-kill-stats-filters";
 import {
   FILTERED_TABLE_HEADER_CLASS,
   RESULTS_TABLE_MEDIA_QUERY,
@@ -26,9 +27,12 @@ import { ResultsSurface } from "@/components/common/results-surface";
 import { CardListSkeleton } from "@/components/common/card-list-skeleton";
 import { CircleAlert, FilterX, SearchX } from "lucide-react";
 import {
-  KillsFilters,
+  useKillsFilterProps,
   type KillsFiltersState,
-} from "./components/kills-filters";
+} from "./components/use-kills-filter-props";
+import { KillStatsFilters } from "@/features/kills/components/kill-stats-filters";
+import { KillStatsSearch } from "@/features/kills/components/kill-stats-search";
+import { KillStatsStackedFilters } from "@/features/kills/components/kill-stats-stacked-filters";
 import { createKillsColumns } from "./components/kills-columns";
 import { KillsMobileList } from "./components/kills-mobile-list";
 import { KillsMobileCardSkeleton } from "./components/kills-mobile-card-skeleton";
@@ -172,6 +176,19 @@ export const KillsPage: React.FC = () => {
     }
   };
 
+  const filterProps = useKillsFilterProps({
+    filters,
+    minLvl: query.minLvl,
+    maxLvl: query.maxLvl,
+    onWorldChange: handleWorldChange,
+    onNpcTypeChange: handleNpcTypeChange,
+    onMinLvlChange: (minLvl) =>
+      setQuery({ minLvl: minLvl || null, cursor: null }),
+    onMaxLvlChange: (maxLvl) =>
+      setQuery({ maxLvl: maxLvl || null, cursor: null }),
+    onPeriodChange: handlePeriodChange,
+  });
+
   const columns = createKillsColumns(cursor);
 
   const table = useTable({
@@ -272,23 +289,16 @@ export const KillsPage: React.FC = () => {
     <ScrollArea data-under-top-bar className="h-full min-h-0">
       <h1 className="sr-only">{t("kills.ranking.title")}</h1>
       <ResultsSurface
-        filters={
-          <KillsFilters
-            filters={{ ...filters, search: searchDraft }}
-            minLvl={query.minLvl}
-            maxLvl={query.maxLvl}
-            onWorldChange={handleWorldChange}
-            onNpcTypeChange={handleNpcTypeChange}
-            onSearchChange={handleSearchChange}
-            onMinLvlChange={(minLvl) =>
-              setQuery({ minLvl: minLvl || null, cursor: null })
-            }
-            onMaxLvlChange={(maxLvl) =>
-              setQuery({ maxLvl: maxLvl || null, cursor: null })
-            }
-            onPeriodChange={handlePeriodChange}
+        search={
+          <KillStatsSearch
+            value={searchDraft}
+            placeholder={t("kills.ranking.search")}
+            onChange={handleSearchChange}
           />
         }
+        filters={<KillStatsFilters {...filterProps} />}
+        stackedFilters={<KillStatsStackedFilters {...filterProps} />}
+        activeFilterCount={countActiveKillStatsFilters(filterProps)}
         filtersLabel={t("kills.filters.title")}
         scrollResetKey={cursor}
         footer={
