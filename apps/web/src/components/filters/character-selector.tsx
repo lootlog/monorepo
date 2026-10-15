@@ -123,14 +123,13 @@ export function CharacterSelector(props: CharacterSelectorProps) {
           >
             <span className="flex min-w-0 items-center gap-2">
               {selectedCharacters.length > 1 ? (
-                <span className="flex shrink-0 -space-x-2">
+                <span className="flex shrink-0 -space-x-1.5">
                   {selectedCharacters
                     .slice(0, MAX_TRIGGER_AVATARS)
                     .map((character) => (
                       <CharacterAvatar
                         key={character.id}
                         icon={character.icon}
-                        className="ring-2 ring-background"
                       />
                     ))}
                 </span>
