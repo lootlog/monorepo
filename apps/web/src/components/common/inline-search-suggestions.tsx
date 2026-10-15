@@ -66,7 +66,7 @@ export const InlineSearchSuggestions = ({
     )}
     sideOffset={0}
     collisionPadding={0}
-    className="h-(--suggestions-height) max-w-none overflow-hidden rounded-none border-0 border-b border-sidebar-border bg-sidebar shadow-[0_16px_24px_-20px_rgba(0,0,0,0.9)] ring-0 transition-[height] duration-450 ease-spring data-open:animate-none data-closed:animate-none data-starting-style:h-0 data-ending-style:h-0 motion-reduce:transition-none [&_[data-slot=combobox-empty]]:min-h-12 [&_[data-slot=combobox-empty]]:items-center [&_[data-slot=combobox-empty]]:justify-start [&_[data-slot=combobox-empty]]:px-3 sm:[&_[data-slot=combobox-empty]]:px-4 [&_[data-slot=combobox-list]]:p-0"
+    className="h-(--suggestions-height) max-w-none overflow-hidden rounded-none border-0 border-b border-sidebar-border bg-sidebar shadow-[0_16px_24px_-20px_rgba(0,0,0,0.9)] ring-0 transition-[height] duration-280 ease-emphasized data-ending-style:duration-150 data-open:animate-none data-closed:animate-none data-starting-style:h-0 data-ending-style:h-0 motion-reduce:transition-none [&_[data-slot=combobox-empty]]:min-h-12 [&_[data-slot=combobox-empty]]:items-center [&_[data-slot=combobox-empty]]:justify-start [&_[data-slot=combobox-empty]]:px-3 sm:[&_[data-slot=combobox-empty]]:px-4 [&_[data-slot=combobox-list]]:p-0 [&_[data-slot=combobox-item]]:animate-rise-in [&_[data-slot=combobox-item]]:[animation-delay:calc((sibling-index()-1)*30ms)] motion-reduce:[&_[data-slot=combobox-item]]:animate-none"
   >
     <div ref={publishSuggestionsHeight}>{children}</div>
   </ComboboxContent>

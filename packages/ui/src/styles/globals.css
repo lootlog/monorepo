@@ -501,6 +501,8 @@
     placeholder-in 200ms var(--ease-emphasized) 150ms backwards;
   /* Small confirmations (check marks, radio dots, status dots) pop into place. */
   --animate-pop-in: pop-in 200ms var(--ease-overshoot) backwards;
+  /* Rows joining a list that just opened or grew settle in from above. */
+  --animate-rise-in: rise-in 280ms var(--ease-emphasized) backwards;
   /* An ambient glow that slowly brightens and dims; it never travels, so it
    * does not read as progress. */
   --animate-glow-breathe: glow-breathe 4s ease-in-out infinite alternate;
@@ -509,6 +511,13 @@
     from {
       opacity: 0;
       scale: 0.5;
+    }
+  }
+
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      translate: 0 -6px;
     }
   }
 
