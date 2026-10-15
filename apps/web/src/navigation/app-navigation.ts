@@ -435,6 +435,7 @@ type GetNavigationInfoArgs = {
   docTitle?: string;
   settingsMemberName?: string;
   settingsNpcName?: string;
+  reservationSpotName?: string;
   npcKillersData?: { npc?: { npcName?: string } | null };
   memberKillsData?: { member?: { memberName?: string } | null };
   t: (key: string, options?: TOptions) => string;
@@ -807,6 +808,7 @@ function resolveOrganizationAppNavigation(
     settingsMemberName: currentEntityLabel,
     settingsNpcName: currentEntityLabel,
     settingsRoleName: currentEntityLabel,
+    reservationSpotName: currentEntityLabel,
     ...createCurrentEntityData(currentEntityLabel),
     t,
   });
@@ -1033,7 +1035,9 @@ function resolveSimpleRoute(
           path: routes.reservations,
         },
         {
-          label: reservationId ? upperFirst(reservationId) : "",
+          label:
+            args.reservationSpotName ??
+            (reservationId ? upperFirst(reservationId) : ""),
           path: null,
         },
       ],

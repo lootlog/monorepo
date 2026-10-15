@@ -1,6 +1,5 @@
-import { SectionCardFooter } from "@/components/common/section-card/section-card-footer";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { PageHeader } from "@/components/common/page-header";
+import { BandSection } from "@/components/common/band-section";
+import { SettingsListEmpty } from "@/components/common/settings-list-empty";
 import { useState } from "react";
 import { ArrowRight, CheckCircle2, Link2, TriangleAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -16,6 +15,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
+import { Label } from "@lootlog/ui/components/label";
 import {
   Select,
   SelectContent,
@@ -28,6 +28,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { getReservationErrorMessage } from "../get-reservation-error-message";
 
 type ReservationShareInvitationProps = { token: string };
+
+const SECTION_ID = "reservation-share-invitation";
 
 export function ReservationShareInvitation({
   token,
@@ -45,18 +47,21 @@ export function ReservationShareInvitation({
     },
   });
 
+  const heading = (
+    <h1 className="sr-only">{t("reservations.sharing.standaloneTitle")}</h1>
+  );
+
   if (accepted) {
     return (
-      <div className="w-full max-w-xl" aria-live="polite">
-        <PageHeader
+      <div aria-live="polite">
+        {heading}
+        <SettingsListEmpty
           icon={CheckCircle2}
-          title={<>{t("reservations.sharing.acceptedTitle")}</>}
-          description={<>{t("reservations.sharing.acceptedDescription")}</>}
-        >
-          <SectionCardFooter>
+          title={t("reservations.sharing.acceptedTitle")}
+          description={t("reservations.sharing.acceptedDescription")}
+          action={
             <Button
               type="button"
-              className="mt-6 w-full sm:w-auto"
               onClick={() =>
                 targetGuildId &&
                 navigate({
@@ -67,80 +72,79 @@ export function ReservationShareInvitation({
               {t("reservations.sharing.openSettings")}
               <ArrowRight className="size-4" aria-hidden="true" />
             </Button>
-          </SectionCardFooter>
-        </PageHeader>
+          }
+        />
       </div>
     );
   }
 
   if (previewQuery.isError) {
     return (
-      <div className="w-full max-w-xl" role="alert">
-        <PageHeader
+      <div role="alert">
+        {heading}
+        <SettingsListEmpty
           icon={TriangleAlert}
-          title={<>{t("reservations.sharing.invalidTitle")}</>}
-          description={<>{t("reservations.sharing.invalidDescription")}</>}
-        >
-          <SectionCardFooter>
+          title={t("reservations.sharing.invalidTitle")}
+          description={t("reservations.sharing.invalidDescription")}
+          action={
             <Button
               type="button"
               variant="outline"
-              className="mt-6 w-full sm:w-auto"
               onClick={() => navigate({ to: ROUTES.user.dashboard })}
             >
               {t("common.routeErrors.actions.goToDashboard")}
             </Button>
-          </SectionCardFooter>
-        </PageHeader>
+          }
+        />
       </div>
     );
   }
 
   if (!previewQuery.data) {
     return (
-      <div className="w-full max-w-xl" aria-busy="true">
-        <PageHeader
-          title={<>{t("reservations.sharing.loadingTitle")}</>}
-          description={<>{t("reservations.sharing.loadingDescription")}</>}
-          status=<Spinner className="size-6" />
-        />
+      <div aria-busy="true">
+        {heading}
+        <BandSection
+          id={SECTION_ID}
+          title={t("reservations.sharing.loadingTitle")}
+          description={t("reservations.sharing.loadingDescription")}
+        >
+          <Spinner className="size-6" />
+        </BandSection>
       </div>
     );
   }
 
-  const organizations = previewQuery.data?.eligibleTargetOrganizations ?? [];
+  const { sourceOrganization, eligibleTargetOrganizations: organizations } =
+    previewQuery.data;
 
   return (
-    <div className="w-full max-w-xl">
-      <PageHeader
-        title={<>{t("reservations.sharing.invitationTitle")}</>}
-        description={
-          <>
-            {t("reservations.sharing.invitationDescription", {
-              organization: previewQuery.data.sourceOrganization.name,
-            })}
-          </>
-        }
-        status={
-          <Avatar className="size-12 shrink-0 rounded-lg border border-border bg-muted">
-            <AvatarImage
-              src={previewQuery.data.sourceOrganization.iconUrl ?? undefined}
-              alt=""
-            />
+    <>
+      {heading}
+      <BandSection
+        id={SECTION_ID}
+        title={t("reservations.sharing.invitationTitle")}
+        description={t("reservations.sharing.invitationDescription", {
+          organization: sourceOrganization.name,
+        })}
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <Avatar className="size-10 shrink-0 rounded-lg border border-border bg-muted">
+            <AvatarImage src={sourceOrganization.iconUrl ?? undefined} alt="" />
             <AvatarFallback className="rounded-lg bg-primary/10 text-primary">
-              <Link2 className="size-5" aria-hidden="true" />
+              <Link2 className="size-4" aria-hidden="true" />
             </AvatarFallback>
           </Avatar>
-        }
-      >
-        <SectionCardContent>
-          <div className="space-y-2">
-            <label
-              className="text-sm font-semibold"
-              htmlFor="target-organization"
-            >
+          <p className="min-w-0 truncate text-sm font-semibold">
+            {sourceOrganization.name}
+          </p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-2">
+            <Label htmlFor="target-organization">
               {t("reservations.sharing.targetOrganizationLabel")}
-            </label>
+            </Label>
             <Select
               value={targetGuildId}
               onValueChange={setTargetGuildId}
@@ -162,35 +166,36 @@ export function ReservationShareInvitation({
                 ))}
               </SelectContent>
             </Select>
-            {organizations.length === 0 ? (
-              <div className="flex items-start gap-2 pt-1 text-sm leading-relaxed text-muted-foreground">
+            {organizations.length === 0 && (
+              <p className="flex items-start gap-2 text-sm text-muted-foreground">
                 <TriangleAlert
                   className="mt-0.5 size-4 shrink-0 text-signal-timer"
                   aria-hidden="true"
                 />
-                <p>{t("reservations.sharing.noEligibleOrganizations")}</p>
-              </div>
-            ) : null}
-            <Button
-              type="button"
-              className="mt-4 w-full"
-              size="xl"
-              disabled={!targetGuildId}
-              loading={acceptMutation.isPending}
-              icon=<Link2 className="size-4" aria-hidden="true" />
-              onClick={() =>
-                targetGuildId &&
-                acceptMutation.mutate({
-                  pathParams: { token },
-                  data: { targetGuildId },
-                })
-              }
-            >
-              {t("reservations.sharing.accept")}
-            </Button>
+                {t("reservations.sharing.noEligibleOrganizations")}
+              </p>
+            )}
           </div>
-        </SectionCardContent>
-      </PageHeader>
-    </div>
+        </div>
+
+        <div>
+          <Button
+            type="button"
+            disabled={!targetGuildId}
+            loading={acceptMutation.isPending}
+            icon=<Link2 className="size-4" aria-hidden="true" />
+            onClick={() =>
+              targetGuildId &&
+              acceptMutation.mutate({
+                pathParams: { token },
+                data: { targetGuildId },
+              })
+            }
+          >
+            {t("reservations.sharing.accept")}
+          </Button>
+        </div>
+      </BandSection>
+    </>
   );
 }
