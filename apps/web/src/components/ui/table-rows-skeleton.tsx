@@ -15,7 +15,7 @@ type TableRowsSkeletonProps = {
   rowContent?: "media" | "text";
   /** Rows lead with an `NpcTile` rather than an avatar. */
   withNpcTile?: boolean;
-  /** Replaces the rows below `md`, where the results render a card list instead of the table. */
+  /** Replaces the rows below `xl`, where the results list tiles instead of the table (`RESULTS_TABLE_MEDIA_QUERY`). */
   mobileList?: ReactNode;
 };
 
@@ -28,7 +28,7 @@ export const TableRowsSkeleton = ({
   mobileList,
 }: TableRowsSkeletonProps) => {
   const tableRows = (
-    <div className={cn(mobileList && "hidden md:block")}>
+    <div className={cn(mobileList && "hidden xl:block")}>
       {withHeader && (
         <div className="flex h-10 items-center gap-4 border-b border-border px-4">
           <Skeleton className="h-3 w-24" />
@@ -63,7 +63,7 @@ export const TableRowsSkeleton = ({
 
   return (
     <>
-      <div className="md:hidden">{mobileList}</div>
+      <div className="xl:hidden">{mobileList}</div>
       {tableRows}
     </>
   );

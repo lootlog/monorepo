@@ -6,7 +6,7 @@ import type { ComponentProps, ReactNode } from "react";
 
 type StatsTablePageSkeletonProps = {
   rowContent?: ComponentProps<typeof StatsTableResults>["rowContent"];
-  /** Passed to `StatsTableResults` for pages that render a card list below `md`. */
+  /** Passed to `StatsTableResults` for pages that list tiles below `xl`. */
   mobileSkeleton?: ReactNode;
 };
 

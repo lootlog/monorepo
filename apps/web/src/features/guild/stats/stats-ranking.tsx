@@ -158,7 +158,7 @@ export const StatsRanking = () => {
               : undefined
           }
         >
-          <ul className="md:hidden">
+          <ul className="xl:hidden">
             {paginatedData.map((member, index) => (
               <li
                 key={member.memberId}
@@ -210,7 +210,7 @@ export const StatsRanking = () => {
           </ul>
           <StatsTable
             table={table}
-            className="hidden border-b md:table"
+            className="hidden border-b xl:table"
             onRowClick={(member) => handleRowClick(member.memberId)}
           />
         </StatsTableResults>

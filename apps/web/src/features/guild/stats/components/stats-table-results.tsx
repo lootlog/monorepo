@@ -9,7 +9,7 @@ type StatsTableResultsProps = {
   rowContent?: ComponentProps<typeof TableRowsSkeleton>["rowContent"];
   /** Shown instead of the rows when the list is empty. */
   emptyMessage?: string;
-  /** The loading placeholder for pages that render a card list instead of the table below `md`. */
+  /** The loading placeholder for pages that list tiles instead of the table below `xl`. */
   mobileSkeleton?: ReactNode;
   children: ReactNode;
 };

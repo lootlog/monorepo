@@ -1,5 +1,9 @@
+import {
+  FILTERED_TABLE_HEADER_CLASS,
+  RESULTS_TABLE_MEDIA_QUERY,
+} from "@/components/common/page-sticky-table-header";
+import { useMediaQuery } from "usehooks-ts";
 import { DetailPage } from "@/components/common/detail-page";
-import { FILTERED_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
 import { PeriodSelector } from "@/components/filters/period-selector";
@@ -109,6 +113,8 @@ export function PlayerVsPlayerFullPage() {
     />
   );
 
+  const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
+
   const renderResults = () => {
     if (isLoading) {
       return (
@@ -153,7 +159,7 @@ export function PlayerVsPlayerFullPage() {
       );
     }
 
-    if (isMobile) {
+    if (!usesTable) {
       return (
         <div>
           {data.battles.map((battle) => (

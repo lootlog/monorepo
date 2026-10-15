@@ -155,7 +155,7 @@ export const StatsNpcsList = () => {
               : undefined
           }
         >
-          <ul className="md:hidden">
+          <ul className="xl:hidden">
             {paginatedData.map((npc, index) => (
               <li
                 key={npc.npcId}
@@ -192,7 +192,7 @@ export const StatsNpcsList = () => {
           </ul>
           <StatsTable
             table={table}
-            className="hidden border-b md:table"
+            className="hidden border-b xl:table"
             onRowClick={handleRowClick}
           />
         </StatsTableResults>

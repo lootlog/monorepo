@@ -1,4 +1,8 @@
-import { FILTERED_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
+import {
+  FILTERED_TABLE_HEADER_CLASS,
+  RESULTS_TABLE_MEDIA_QUERY,
+} from "@/components/common/page-sticky-table-header";
+import { useMediaQuery } from "usehooks-ts";
 import { EmptyState } from "@/components/common/empty-state";
 import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
@@ -12,7 +16,6 @@ import {
   TableCell,
   TableRow,
 } from "@lootlog/ui/components/table";
-import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { cn } from "cn";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
@@ -90,11 +93,11 @@ const getColumnClassName = (columnId: string, isPreview: boolean) => {
 
 /**
  * The event's kills: the whole history, edge to edge on its page and as tiles
- * on phones, or the latest few in the event's preview card.
+ * where the table would not fit, or the latest few in the event's preview card.
  */
 export const EventKillsTable = (props: EventKillsTableProps) => {
   const { t } = useTranslation();
-  const isMobile = useIsMobile();
+  const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
 
   const { eventId, guildId, hasError, isLoading, kills, onRetry, isRetrying } =
     props;
@@ -174,7 +177,7 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
         isRetrying={isRetrying}
         skeleton={<EventKillRowsSkeleton />}
       >
-        {isMobile ? (
+        {!usesTable ? (
           <EventKillTiles kills={kills} guildId={guildId} eventId={eventId} />
         ) : (
           killsTable

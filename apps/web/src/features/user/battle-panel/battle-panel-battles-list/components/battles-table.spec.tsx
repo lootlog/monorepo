@@ -4,12 +4,18 @@ import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { createOrganizationTestWrapper } from "@/lib/testing/router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, expect, it } from "vitest";
+import { stubResultsTableViewport } from "@/lib/testing/viewport";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { BattlesTable } from "./battles-table";
 
 await initializeTestTranslations();
 
-afterEach(cleanup);
+beforeEach(() => stubResultsTableViewport());
+
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 it("selects and clears a battle exactly once when clicking the whole selection cell", async () => {
   const Wrapper = await createOrganizationTestWrapper();

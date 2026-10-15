@@ -1,3 +1,8 @@
+import {
+  FILTERED_TABLE_HEADER_CLASS,
+  RESULTS_TABLE_MEDIA_QUERY,
+} from "@/components/common/page-sticky-table-header";
+import { useMediaQuery } from "usehooks-ts";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { useBattleTableActions } from "@/features/user/battle-panel/battle-panel-battles-list/hooks/use-battle-table-actions";
@@ -8,11 +13,9 @@ import type { FilterChip } from "@/components/common/filter-chip-list";
 import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/components/battle-panel-pagination-footer";
 import { EmptyState } from "@/components/common/empty-state";
 import { ResultsSurface } from "@/components/common/results-surface";
-import { FILTERED_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { Table } from "@lootlog/ui/components/table";
-import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { Link } from "@tanstack/react-router";
 import { type Cell, useTable } from "@tanstack/react-table";
 import { cn } from "cn";
@@ -88,7 +91,7 @@ export const BattlesTable = ({
   scrollResetKey,
 }: BattlesTableProps) => {
   const { t } = useTranslation();
-  const isMobile = useIsMobile();
+  const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
 
   const {
     clearSelection,
@@ -266,7 +269,7 @@ export const BattlesTable = ({
               className={pagination ? "min-h-[360px]" : "min-h-48"}
             />
           </div>
-        ) : isMobile ? (
+        ) : !usesTable ? (
           <div
             aria-busy={isLoading || isRefreshing}
             className={cn("flex flex-col", isRefreshing && "opacity-60")}
@@ -288,7 +291,7 @@ export const BattlesTable = ({
         ) : (
           <Table
             aria-busy={isLoading || isRefreshing}
-            className="battle-panel-battles-table min-w-full table-fixed border-b md:min-w-[960px] md:table-auto"
+            className="battle-panel-battles-table min-w-[960px] table-auto border-b"
           >
             <TanStackTableHeader
               table={table}

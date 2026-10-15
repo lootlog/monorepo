@@ -1,3 +1,7 @@
+import {
+  FILTERED_TABLE_HEADER_CLASS,
+  RESULTS_TABLE_MEDIA_QUERY,
+} from "@/components/common/page-sticky-table-header";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -9,7 +13,7 @@ import {
   parseAsStringLiteral,
   useQueryStates,
 } from "nuqs";
-import { useDebounceCallback } from "usehooks-ts";
+import { useDebounceCallback, useMediaQuery } from "usehooks-ts";
 import { type SortingState, useTable } from "@tanstack/react-table";
 import { Table } from "@lootlog/ui/components/table";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
@@ -19,7 +23,6 @@ import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { Button } from "@lootlog/ui/components/button";
 import { EmptyState } from "@/components/common/empty-state";
 import { ResultsSurface } from "@/components/common/results-surface";
-import { FILTERED_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
 import { CardListSkeleton } from "@/components/common/card-list-skeleton";
 import { CircleAlert, FilterX, SearchX } from "lucide-react";
 import {
@@ -37,7 +40,6 @@ import {
 } from "@lootlog/client/main";
 
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
-import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { sortingTableFeatures } from "@/lib/tanstack-table-features";
 
 const KILL_STATS_PERIODS = [
@@ -85,7 +87,7 @@ const hasKillsFilters = (filters: KillsFiltersState) =>
 export const KillsPage: React.FC = () => {
   const { t } = useTranslation();
   const [query, setQuery] = useQueryStates(killsSearchParsers);
-  const isMobile = useIsMobile();
+  const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
 
   // The search keeps a local draft; the URL (and with it the request) only
   // follows once typing pauses. The level range debounces its own drafts.
@@ -243,7 +245,7 @@ export const KillsPage: React.FC = () => {
       );
     }
 
-    if (isMobile) {
+    if (!usesTable) {
       return <KillsMobileList npcs={data.npcs} startRank={cursor} />;
     }
 
