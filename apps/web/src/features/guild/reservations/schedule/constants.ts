@@ -12,7 +12,8 @@ export const HOURS = Array.from(
 );
 
 /**
- * The schedule bar's height, as the list toolbar measures: a row of 32px
- * controls (40px on touch layouts) with its insets and hairline.
+ * The schedule bar's height, as the list toolbar measures: a row of 2rem
+ * controls with 0.5rem insets (2.5rem controls with 0.25rem insets on touch
+ * layouts) and its hairline. In rem, so it grows with resized text.
  */
-export const SCHEDULE_BAR_HEIGHT = 49;
+export const SCHEDULE_BAR_HEIGHT = "calc(3rem + 1px)";
