@@ -6,6 +6,7 @@ import {
 } from "@/components/common/list-tile";
 import { surfaceFromColor } from "@/themes/custom-theme";
 import { useRootColors } from "@/themes/root-colors";
+import { withAccent, withSurface } from "@lootlog/domain/custom-theme";
 import { CUSTOM_THEME_TOKEN_KEYS } from "@lootlog/schema/custom-theme";
 import {
   Collapsible,
@@ -77,7 +78,7 @@ export const ThemeColorsSection = () => {
           }
         >
           {colorField(accentLabel, pageColors.primary, (accent) =>
-            update({ ...definition, accent }),
+            update(withAccent(definition, accent)),
           )}
         </ThemeSettingRow>
 
@@ -93,7 +94,7 @@ export const ThemeColorsSection = () => {
           }
         >
           {colorField(backgroundLabel, pageColors.background, (color) =>
-            update({ ...definition, surface: surfaceFromColor(color) }),
+            update(withSurface(definition, surfaceFromColor(color))),
           )}
         </ThemeSettingRow>
 

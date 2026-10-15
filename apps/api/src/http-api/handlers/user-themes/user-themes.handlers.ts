@@ -7,7 +7,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomBytes, randomUUID } from "node:crypto";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
-import { and, asc, count, eq, sql } from "drizzle-orm";
+import { and, asc, count, eq, isNull, sql } from "drizzle-orm";
 import {
   BuiltInThemeIdSchema,
   CUSTOM_THEME_LIMIT,
@@ -75,10 +75,18 @@ export class UserThemesData extends Context.Service<
       payload: UpdateUserThemeRequest,
     ) => Persisted<StoredUserTheme | null>;
     readonly delete: (userId: string, themeId: string) => Persisted<boolean>;
-    readonly setShareToken: (
+    /**
+     * Sets the share token only while the theme has none, then returns the
+     * stored theme, so concurrent requests all receive the one winning link.
+     */
+    readonly claimShareToken: (
       userId: string,
       themeId: string,
-      shareToken: string | null,
+      shareToken: string,
+    ) => Persisted<StoredUserTheme | null>;
+    readonly clearShareToken: (
+      userId: string,
+      themeId: string,
     ) => Persisted<StoredUserTheme | null>;
     readonly findShared: (
       shareToken: string,
@@ -208,14 +216,42 @@ export class UserThemesData extends Context.Service<
               }),
             ),
           ),
-        setShareToken: (userId, themeId, shareToken) =>
+        claimShareToken: (userId, themeId, shareToken) =>
+          persisted(
+            Effect.gen(function* () {
+              const updatedAt = yield* now;
+
+              const [claimed] = yield* database
+                .update(userThemeTable)
+                .set({ shareToken, updatedAt })
+                .where(
+                  and(
+                    ownTheme(userId, themeId),
+                    isNull(userThemeTable.shareToken),
+                  ),
+                )
+                .returning();
+
+              if (claimed) return claimed;
+
+              // Another request set the token first, or the theme is gone.
+              const [current] = yield* database
+                .select()
+                .from(userThemeTable)
+                .where(ownTheme(userId, themeId))
+                .limit(1);
+
+              return current ?? null;
+            }),
+          ),
+        clearShareToken: (userId, themeId) =>
           persisted(
             Effect.gen(function* () {
               const updatedAt = yield* now;
 
               const rows = yield* database
                 .update(userThemeTable)
-                .set({ shareToken, updatedAt })
+                .set({ shareToken: null, updatedAt })
                 .where(ownTheme(userId, themeId))
                 .returning();
 
@@ -316,12 +352,9 @@ export const shareUserTheme = Effect.fn("shareUserTheme")(function* (
   themeId: string,
 ) {
   const { userId, data } = yield* currentUser;
-  const theme = yield* requireTheme(yield* data.find(userId, themeId));
-
-  if (theme.shareToken !== null) return theme;
 
   return yield* requireTheme(
-    yield* data.setShareToken(userId, themeId, makeShareToken()),
+    yield* data.claimShareToken(userId, themeId, makeShareToken()),
   );
 });
 
@@ -330,7 +363,7 @@ export const unshareUserTheme = Effect.fn("unshareUserTheme")(function* (
 ) {
   const { userId, data } = yield* currentUser;
 
-  return yield* requireTheme(yield* data.setShareToken(userId, themeId, null));
+  return yield* requireTheme(yield* data.clearShareToken(userId, themeId));
 });
 
 export const getSharedUserTheme = Effect.fn("getSharedUserTheme")(function* (

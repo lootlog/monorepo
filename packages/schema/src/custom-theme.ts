@@ -37,7 +37,8 @@ export const CUSTOM_THEME_PREFERENCE_PREFIX = "custom:";
 
 export const CustomThemePreferenceSchema = Schema.String.check(
   Schema.isPattern(
-    /^custom:[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/iu,
+    // Only the `u` flag: JSON Schema exports drop a pattern with other flags.
+    /^custom:[\dA-Fa-f]{8}-[\dA-Fa-f]{4}-[\dA-Fa-f]{4}-[\dA-Fa-f]{4}-[\dA-Fa-f]{12}$/u,
   ),
 );
 
@@ -122,7 +123,7 @@ export const CustomThemeTokenKeySchema = Schema.Literals(
 export type CustomThemeTokenKey = typeof CustomThemeTokenKeySchema.Type;
 
 export const HexColorSchema = Schema.String.check(
-  Schema.isPattern(/^#[\da-f]{6}$/iu),
+  Schema.isPattern(/^#[\dA-Fa-f]{6}$/u),
 );
 
 /** The content surfaces' hue, lightness and colourfulness, in OKLCH terms. */

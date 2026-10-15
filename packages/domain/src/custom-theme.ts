@@ -1,5 +1,7 @@
+import { omit } from "es-toolkit";
 import {
   CUSTOM_THEME_FONT_IDS,
+  CUSTOM_THEME_TOKEN_KEYS,
   CUSTOM_THEME_RADIUS_STEPS,
   type BuiltInThemeId,
   type CustomThemeDefinition,
@@ -124,16 +126,25 @@ const deriveSurfaceTokens = ({
 };
 
 /**
- * Text on the accent: the darkest surface when it reads, otherwise near-white,
- * so a pale or a deep accent both keep their label legible.
+ * Text on the accent: the darkest surface when it reads, otherwise
+ * near-white. A mid-tone accent can defeat both, so pure black or white
+ * settles it; one of them always clears 4.5:1.
  */
 const deriveAccentForeground = (accent: string, darkSurface: OklchColor) => {
   const accentRgb = hexToRgb(accent);
-  const dark = oklchToHex(darkSurface);
 
-  return contrastRatio(accentRgb, hexToRgb(dark)) >= SUPPORTING_TEXT_CONTRAST
-    ? dark
-    : "#FAFAFA";
+  const contrastWith = (color: string) =>
+    contrastRatio(accentRgb, hexToRgb(color));
+
+  const readable = [oklchToHex(darkSurface), "#FAFAFA"].find(
+    (color) => contrastWith(color) >= SUPPORTING_TEXT_CONTRAST,
+  );
+
+  if (readable) return readable;
+
+  return contrastWith("#000000") >= contrastWith("#FFFFFF")
+    ? "#000000"
+    : "#FFFFFF";
 };
 
 /** The surface a theme without its own surface knob is assumed to use. */
@@ -187,6 +198,41 @@ export const deriveCustomThemeTokens = (
       definition.surface ?? DEFAULT_SURFACE,
     )),
   ...definition.overrides,
+});
+
+/** The tokens a knob derives, read from the derivation itself. */
+const tokensDerivedBy = (tokens: CustomThemeTokens) =>
+  CUSTOM_THEME_TOKEN_KEYS.filter((token) => token in tokens);
+
+const ACCENT_TOKEN_KEYS = tokensDerivedBy(
+  deriveAccentTokens("#808080", DEFAULT_SURFACE),
+);
+
+const SURFACE_TOKEN_KEYS = tokensDerivedBy(
+  deriveSurfaceTokens(DEFAULT_SURFACE),
+);
+
+/**
+ * Sets the accent and drops overrides of the tokens it derives, since an
+ * override wins over the knob and would hide the new accent.
+ */
+export const withAccent = (
+  definition: CustomThemeDefinition,
+  accent: string,
+): CustomThemeDefinition => ({
+  ...definition,
+  accent,
+  overrides: omit(definition.overrides, ACCENT_TOKEN_KEYS),
+});
+
+/** Sets the surface and drops overrides of the tokens it derives. */
+export const withSurface = (
+  definition: CustomThemeDefinition,
+  surface: CustomThemeSurface,
+): CustomThemeDefinition => ({
+  ...definition,
+  surface,
+  overrides: omit(definition.overrides, SURFACE_TOKEN_KEYS),
 });
 
 /** Opacity, in percent, of each surface that sits over the wallpaper. */
