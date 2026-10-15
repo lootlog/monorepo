@@ -1,3 +1,4 @@
+import { InlineSearchFieldSkeleton } from "@/components/common/inline-search-field-skeleton";
 import { ResultsSurface } from "@/components/common/results-surface";
 import { TablePaginationFooterSkeleton } from "@/components/ui/table-pagination-footer-skeleton";
 import { StatsFiltersSkeleton } from "./components/stats-filters-skeleton";
@@ -15,6 +16,7 @@ export const StatsTablePageSkeleton = ({
   mobileSkeleton,
 }: StatsTablePageSkeletonProps) => (
   <ResultsSurface
+    search={<InlineSearchFieldSkeleton />}
     filters={<StatsFiltersSkeleton />}
     footer={<TablePaginationFooterSkeleton />}
   >

@@ -4,7 +4,9 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
 import { AbyssSummaryCards } from "./abyss-summary-cards";
 
-const FILTER_WIDTHS = ["md:w-52", "md:w-[260px]", "md:w-44"];
+// The character, season and level range filters, which narrower pages move
+// to a panel.
+const FILTER_WIDTHS = ["w-[220px]", "w-[260px]", "w-44"];
 
 const SKELETON_PAGINATION = {
   hasNext: false,
@@ -20,17 +22,14 @@ export const AbyssHubSkeleton = () => {
   return (
     <div aria-busy="true">
       <ResultsSurface
-        filters={
-          <>
-            <Skeleton className="h-10 w-full rounded-lg sm:w-80" />
-            {FILTER_WIDTHS.map((width) => (
-              <Skeleton
-                key={width}
-                className={`h-10 w-full rounded-md ${width}`}
-              />
-            ))}
-          </>
-        }
+        search={<Skeleton className="h-10 w-full rounded-lg sm:w-[281px]" />}
+        filters={FILTER_WIDTHS.map((width) => (
+          <Skeleton
+            key={width}
+            aria-hidden="true"
+            className={`hidden h-10 rounded-lg xl:block ${width}`}
+          />
+        ))}
         filtersLabel={t("battlePanel.filters.title")}
       >
         <div className="p-3">

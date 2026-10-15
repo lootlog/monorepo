@@ -68,3 +68,31 @@ it("clears both the actor filter and its search without opening the popup", () =
     "false",
   );
 });
+
+it("filters by the name typed into the inline search, a picked suggestion, and clears both", async () => {
+  const props = {
+    value: "Gr",
+    suggestions: ["Gracz"],
+    searchValue: "Gr",
+    onSearchChange: vi.fn(),
+    onValueChange: vi.fn(),
+    placeholder: "Szukaj",
+  };
+
+  render(<ActorNameSelector {...props} inline />);
+  const input = screen.getByRole("combobox", { name: "Szukaj" });
+
+  fireEvent.change(input, { target: { value: "Gra" } });
+  expect(props.onSearchChange).toHaveBeenCalledWith("Gra");
+  fireEvent.keyDown(input, { key: "ArrowDown" });
+
+  fireEvent.click(await screen.findByRole("option", { name: "Gracz" }));
+  await waitFor(() =>
+    expect(props.onValueChange).toHaveBeenCalledWith("Gracz"),
+  );
+  expect(props.onSearchChange).toHaveBeenLastCalledWith("Gracz");
+
+  fireEvent.click(screen.getByRole("button", { name: "common.clear" }));
+  expect(props.onValueChange).toHaveBeenLastCalledWith("");
+  expect(props.onSearchChange).toHaveBeenLastCalledWith("");
+});

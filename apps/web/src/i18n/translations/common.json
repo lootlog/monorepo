@@ -173,5 +173,9 @@
     "next": "Następna",
     "previousPage": "Poprzednia strona",
     "nextPage": "Następna strona"
+  },
+  "filters": {
+    "title": "Filtry",
+    "activeCount": "Aktywne filtry: {{count}}"
   }
 }

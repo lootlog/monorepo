@@ -5,7 +5,10 @@ import { SkeletonLine } from "@/components/common/skeleton-line";
 import { TablePaginationFooterSkeleton } from "@/components/ui/table-pagination-footer-skeleton";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { InlineSearchFieldSkeleton } from "@/components/common/inline-search-field-skeleton";
+import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
+import { useMediaQuery } from "usehooks-ts";
+import { StatisticsFilterToolbarSkeleton } from "./components/statistics-filter-toolbar-skeleton";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { HeadToHeadFilterChipsSkeleton } from "./components/head-to-head-filter-chips-skeleton";
@@ -26,39 +29,19 @@ type BattlePanelH2hSkeletonProps = {
 );
 
 // Stands in for the head-to-head pages: a `ResultsSurface` whose filter bar
-// carries the filter toolbar. Control widths are the loaded controls'
-// intrinsic widths, so the bar wraps where the page's does.
+// carries the opponent search and, on wide pages, the filter toolbar.
 export const BattlePanelH2hSkeleton = (props: BattlePanelH2hSkeletonProps) => {
   const { t } = useTranslation();
   const isHeadToHead = props.variant === "head-to-head";
+  const listsFilters = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
 
   const results = (
     <ResultsSurface
+      search={isHeadToHead && <InlineSearchFieldSkeleton />}
+      // Without a search, narrower pages leave no bar above the results.
       filters={
-        isHeadToHead ? (
-          <>
-            <div className="flex w-full min-w-0 items-center gap-2 md:hidden">
-              <Skeleton className="h-10 w-[212px] min-w-0 rounded-lg" />
-              <Skeleton className="h-10 w-[84px] shrink-0 rounded-lg" />
-            </div>
-            <div className="hidden w-full min-w-0 flex-wrap items-center gap-2 md:flex">
-              <Skeleton className="h-10 min-w-[260px] flex-1 rounded-lg xl:max-w-[360px]" />
-              <Skeleton className="h-10 w-[190px] rounded-lg" />
-              <Skeleton className="h-10 w-[170px] rounded-lg" />
-              <Skeleton className="h-10 w-[94px] rounded-lg" />
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="flex w-full min-w-0 items-center gap-2 md:hidden">
-              <Skeleton className="h-10 min-w-[175px] flex-1 rounded-lg" />
-              <Skeleton className="h-10 w-[84px] shrink-0 rounded-lg" />
-            </div>
-            <div className="hidden w-full min-w-0 flex-wrap items-center gap-2 md:flex">
-              <Skeleton className="h-10 w-[190px] rounded-lg" />
-              <Skeleton className="h-10 w-[94px] rounded-lg" />
-            </div>
-          </>
+        (isHeadToHead || listsFilters) && (
+          <StatisticsFilterToolbarSkeleton withCharacter={isHeadToHead} />
         )
       }
       filtersLabel={t("battlePanel.filters.title")}

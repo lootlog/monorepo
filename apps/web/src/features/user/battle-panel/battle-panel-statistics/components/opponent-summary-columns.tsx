@@ -28,7 +28,7 @@ export const getOpponentSummaryColumns = <Record extends OpponentSummary>(
               prof: row.original.opponentProf,
               icon: row.original.opponentIcon,
             }}
-            className="absolute left-0 top-0 origin-top-left scale-75"
+            size="compact"
           />
         </div>
         <div className="flex min-w-0 flex-col gap-0.5 leading-tight">

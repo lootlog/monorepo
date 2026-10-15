@@ -4,9 +4,6 @@ import {
 } from "@/components/common/page-sticky-table-header";
 import { useMediaQuery } from "usehooks-ts";
 import { DetailPage } from "@/components/common/detail-page";
-import { LevelRangeFilter } from "@/components/filters/level-range-filter";
-import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
-import { PeriodSelector } from "@/components/filters/period-selector";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
@@ -18,13 +15,11 @@ import { BattlePanelPvpBattleCard } from "@/features/user/battle-panel/component
 import { BattlePanelPvpBattleCardSkeleton } from "@/features/user/battle-panel/components/battle-panel-pvp-battle-card-skeleton";
 import { ResultsSurface } from "@/components/common/results-surface";
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
-import { Label } from "@lootlog/ui/components/label";
-import { Separator } from "@lootlog/ui/components/separator";
 import { Table } from "@lootlog/ui/components/table";
 import { AlertCircle, SearchX } from "lucide-react";
 import { usePlayerVsPlayerPage } from "./use-player-vs-player-page";
-
-import { PlayerVsPlayerFilterToolbar } from "./components/player-vs-player-filter-toolbar";
+import { StatisticsFilterToolbar } from "./components/statistics-filter-toolbar";
+import { StatisticsStackedFilters } from "./components/statistics-stacked-filters";
 
 export function PlayerVsPlayerFullPage() {
   const {
@@ -35,8 +30,6 @@ export function PlayerVsPlayerFullPage() {
     maxLevel,
     handleMinLevelChange,
     handleMaxLevelChange,
-    isMobile,
-    setIsMobileFiltersOpen,
     data,
     handlePreviousPage,
     handleNextPage,
@@ -50,54 +43,20 @@ export function PlayerVsPlayerFullPage() {
     handleBattleOpen,
     table,
     handleBattleRowKeyDown,
-    isMobileFiltersOpen,
     myCharacter,
     opponentName,
     activeFilterChips,
     handleClearFilters,
   } = usePlayerVsPlayerPage();
 
-  const filtersContent = (
-    <div className="space-y-4 p-4">
-      <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">
-          {t("battlePanel.filters.period")}
-        </Label>
-        <PeriodSelector
-          value={period}
-          onValueChange={handlePeriodChange}
-          width="w-full"
-        />
-      </div>
-
-      <Separator />
-
-      <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">
-          {t("battlePanel.filters.levelRange")}
-        </Label>
-        <LevelRangeFilter
-          minLevel={minLevel}
-          maxLevel={maxLevel}
-          onMinLevelChange={handleMinLevelChange}
-          onMaxLevelChange={handleMaxLevelChange}
-        />
-      </div>
-    </div>
-  );
-
-  const toolbar = (
-    <PlayerVsPlayerFilterToolbar
-      isMobile={isMobile}
-      maxLevel={maxLevel}
-      minLevel={minLevel}
-      onMaxLevelChange={handleMaxLevelChange}
-      onMinLevelChange={handleMinLevelChange}
-      onMobileFiltersOpen={() => setIsMobileFiltersOpen(true)}
-      onPeriodChange={handlePeriodChange}
-      period={period}
-    />
-  );
+  const filterProps = {
+    period,
+    onPeriodChange: handlePeriodChange,
+    minLevel,
+    maxLevel,
+    onMinLevelChange: handleMinLevelChange,
+    onMaxLevelChange: handleMaxLevelChange,
+  };
 
   const paginationFooter = (
     <BattlePanelPaginationFooter
@@ -199,46 +158,33 @@ export function PlayerVsPlayerFullPage() {
   };
 
   return (
-    <>
-      {isMobile && (
-        <MobileFiltersDrawer
-          open={isMobileFiltersOpen}
-          onOpenChange={setIsMobileFiltersOpen}
-          trigger={null}
-          childrenClassName="p-0"
-          title={t("battlePanel.filters.title")}
-        >
-          {filtersContent}
-        </MobileFiltersDrawer>
-      )}
-
-      <DetailPage
-        name={`${myCharacter?.name ?? t("battlePanel.statistics.playerVsPlayer.characterFallback")} ${t("battleUi.overview.vs")} ${opponentName}`}
-        meta={
-          <span className="text-xs leading-tight text-muted-foreground">
-            {isLoading ? (
-              <SkeletonLine className="h-3 w-40" />
-            ) : (
-              myCharacter &&
-              t("battlePanel.statistics.playerVsPlayer.subtitle", {
-                level: myCharacter.lvl,
-              })
-            )}
-          </span>
-        }
+    <DetailPage
+      name={`${myCharacter?.name ?? t("battlePanel.statistics.playerVsPlayer.characterFallback")} ${t("battleUi.overview.vs")} ${opponentName}`}
+      meta={
+        <span className="text-xs leading-tight text-muted-foreground">
+          {isLoading ? (
+            <SkeletonLine className="h-3 w-40" />
+          ) : (
+            myCharacter &&
+            t("battlePanel.statistics.playerVsPlayer.subtitle", {
+              level: myCharacter.lvl,
+            })
+          )}
+        </span>
+      }
+    >
+      <ResultsSurface
+        filters={<StatisticsFilterToolbar {...filterProps} />}
+        stackedFilters={<StatisticsStackedFilters {...filterProps} />}
+        filtersLabel={t("battlePanel.filters.title")}
+        chips={activeFilterChips}
+        clearFiltersLabel={t("battlePanel.filters.clear")}
+        onClearFilters={handleClearFilters}
+        scrollResetKey={pageIndex}
+        footer={paginationFooter}
       >
-        <ResultsSurface
-          filters={toolbar}
-          filtersLabel={t("battlePanel.filters.title")}
-          chips={activeFilterChips}
-          clearFiltersLabel={t("battlePanel.filters.clear")}
-          onClearFilters={handleClearFilters}
-          scrollResetKey={pageIndex}
-          footer={paginationFooter}
-        >
-          {renderResults()}
-        </ResultsSurface>
-      </DetailPage>
-    </>
+        {renderResults()}
+      </ResultsSurface>
+    </DetailPage>
   );
 }

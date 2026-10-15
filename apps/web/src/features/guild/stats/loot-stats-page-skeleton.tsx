@@ -1,3 +1,5 @@
+import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
+import { useMediaQuery } from "usehooks-ts";
 import { useTranslation } from "react-i18next";
 import { LootOverviewCards } from "./components/loot-overview-cards";
 import { LootTopContributors } from "./components/loot-top-contributors";
@@ -8,11 +10,13 @@ import { StatsFiltersSkeleton } from "./components/stats-filters-skeleton";
 
 export const LootStatsPageSkeleton = () => {
   const { t } = useTranslation();
+  const usesFilterBar = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
 
   return (
     <div aria-busy="true">
+      {/* Narrow pages open their filters from a button instead of a bar. */}
       <FilterBar ariaLabel={t("kills.filters.title")}>
-        <StatsFiltersSkeleton />
+        {usesFilterBar && <StatsFiltersSkeleton />}
       </FilterBar>
       <div className="flex flex-col gap-3 p-3">
         <LootOverviewCards isLoading />

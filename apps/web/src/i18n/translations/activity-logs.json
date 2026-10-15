@@ -20,7 +20,6 @@
       "GAME": "Gra",
       "WEB_APP": "Strona internetowa"
     },
-    "open": "Filtry",
     "clear": "Wyczyść filtry",
     "typeShort": "Typ",
     "selectedCount_one": "{{count}} wybrany",

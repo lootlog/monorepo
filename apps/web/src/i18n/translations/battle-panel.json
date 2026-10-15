@@ -9,9 +9,6 @@
   },
   "filters": {
     "title": "Filtry",
-    "battlesTitle": "Filtry walk",
-    "statisticsTitle": "Filtry statystyk",
-    "headToHeadTitle": "Filtry bilansów",
     "clear": "Wyczyść filtry",
     "more": "Więcej",
     "moreWithCount": "Więcej ({{count}})",
@@ -138,7 +135,6 @@
     "seasonsTitle": "Sezony Otchłani",
     "seasonsSubtitle": "Sezony wykrywamy po przerwach między walkami",
     "currentSeason": "Wybrany",
-    "openH2h": "Bilans z przeciwnikami",
     "emptyTitle": "Brak walk w Otchłani",
     "emptyDescription": "Ta postać nie ma zapisanych walk w Otchłani. Wybierz inną postać.",
     "pointsUnavailable": "brak danych o punktach",
@@ -174,7 +170,8 @@
       "rating": "zmiana w sezonie",
       "peakRating": "w tym sezonie",
       "points": "zdobyte w sezonie"
-    }
+    },
+    "season": "Sezon"
   },
   "single": {
     "statistics": {

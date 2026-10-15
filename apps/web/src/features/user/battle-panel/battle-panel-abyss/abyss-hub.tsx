@@ -1,34 +1,23 @@
-import { CharacterSelector } from "@/components/filters/character-selector";
-import { LevelRangeFilter } from "@/components/filters/level-range-filter";
-import { ROUTES } from "@/config/routes";
-import type { AbyssSeason } from "@/lib/api/battlelog-types";
-import { ChevronLink } from "@lootlog/ui/components/chevron-link";
-import { FilterPopover } from "@lootlog/ui/components/filter-popover";
+import { isLevelRangeActive } from "@/features/user/battle-panel/components/battle-panel-filter-state";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@lootlog/ui/components/tabs";
-import { Link } from "@tanstack/react-router";
 import { BarChart3, Swords, Trophy } from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { ResultsSurface } from "@/components/common/results-surface";
 import { AbyssAnalyticsTab } from "./abyss-analytics-tab";
 import { AbyssBattlesTab } from "./abyss-battles-tab";
-import { getAbyssSeasonRangeLabel } from "./abyss-formatters";
+import { AbyssFilterToolbar } from "./abyss-filter-toolbar";
+import { AbyssStackedFilters } from "./abyss-stacked-filters";
 import { AbyssSeasonsTable } from "./abyss-seasons-table";
 import { AbyssHubSkeleton } from "./abyss-hub-skeleton";
 import { AbyssSummaryCards } from "./abyss-summary-cards";
 import { useAbyssHub } from "./use-abyss-hub";
 
 const PAGE_SIZE = 20;
-
-const getSeasonLabel = (
-  season: AbyssSeason,
-  index: number,
-  latestSeasonLabel: string,
-) => (index === 0 ? latestSeasonLabel : getAbyssSeasonRangeLabel(season));
 
 export function AbyssHub() {
   const {
@@ -94,6 +83,19 @@ export function AbyssHub() {
     },
   ];
 
+  const filterProps = {
+    characterId: currentCharacterId,
+    onCharacterChange: handleCharacterChange,
+    seasons,
+    selectedSeasonId: selectedSeason?.id,
+    isLoadingSeasons,
+    onSeasonChange: handleSeasonChange,
+    minLevel,
+    maxLevel,
+    onMinLevelChange: handleMinLevelChange,
+    onMaxLevelChange: handleMaxLevelChange,
+  };
+
   return (
     <Tabs
       value={activeTab}
@@ -103,76 +105,26 @@ export function AbyssHub() {
       <h1 className="sr-only">{t("battlePanel.abyss.title")}</h1>
 
       <ResultsSurface
-        filters={
-          <>
-            {showViews && (
-              <TabsList
-                aria-label={t("battlePanel.abyss.title")}
-                size="lg"
-                className="w-full sm:w-auto"
-              >
-                {views.map((view) => (
-                  <TabsTrigger key={view.value} value={view.value}>
-                    <view.icon aria-hidden="true" />
-                    {view.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            )}
-
-            <CharacterSelector
-              characterId={currentCharacterId}
-              onCharacterChange={handleCharacterChange}
-              allowAllCharacters={false}
-              className="w-full md:w-[240px]"
-            />
-
-            <FilterPopover
-              icon={Trophy}
-              showSearch={false}
-              options={seasons.map((season, index) => ({
-                value: season.id,
-                label: getSeasonLabel(
-                  season,
-                  index,
-                  t("battlePanel.abyss.latestSeason"),
-                ),
-              }))}
-              value={selectedSeason?.id}
-              onValueChange={handleSeasonChange}
-              disabled={isLoadingSeasons || seasons.length === 0}
-              placeholder={
-                seasons.length === 0 && !isLoadingSeasons
-                  ? t("battlePanel.abyss.noSeason")
-                  : t("battlePanel.abyss.selectSeason")
-              }
-              emptyMessage={t("battlePanel.abyss.noSeason")}
-              width="w-full md:w-[260px]"
-              triggerClassName="min-w-0"
-              contentClassName="w-[260px]"
-            />
-
-            <LevelRangeFilter
-              layout="inline"
-              minLevel={minLevel}
-              maxLevel={maxLevel}
-              onMinLevelChange={handleMinLevelChange}
-              onMaxLevelChange={handleMaxLevelChange}
-            />
-
-            {showViews && (
-              <ChevronLink
-                className="px-1 sm:ml-auto"
-                render=<Link
-                  to={ROUTES.user.battlePanel.matchmakingH2h}
-                  search={h2hSearch}
-                />
-              >
-                {t("battlePanel.abyss.openH2h")}
-              </ChevronLink>
-            )}
-          </>
+        // The views are navigation, so they stay in the bar at every width.
+        search={
+          showViews && (
+            <TabsList
+              aria-label={t("battlePanel.abyss.title")}
+              size="lg"
+              className="w-full sm:w-auto"
+            >
+              {views.map((view) => (
+                <TabsTrigger key={view.value} value={view.value}>
+                  <view.icon aria-hidden="true" />
+                  {view.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          )
         }
+        filters={<AbyssFilterToolbar {...filterProps} />}
+        stackedFilters={<AbyssStackedFilters {...filterProps} />}
+        activeFilterCount={isLevelRangeActive({ minLevel, maxLevel }) ? 1 : 0}
         filtersLabel={t("battlePanel.filters.title")}
       >
         {isLoadingSeasons ? (

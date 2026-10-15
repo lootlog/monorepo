@@ -5,7 +5,7 @@ import type { LootFilterSectionKey } from "@/features/guild/loots-list/component
 import { useLootFiltersSidebar } from "@/features/guild/loots-list/components/loots-filters/use-loot-filters-sidebar";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { LootListHeaderActions } from "@/features/guild/loots-list/components/loots-filters/loot-list-header-actions";
-import { LootFiltersFab } from "@/features/guild/loots-list/components/loots-filters/loot-filters-fab";
+import { FiltersFab } from "@/components/filters/filters-fab";
 import { useState } from "react";
 import { GuildWorldHeaderSwitcher } from "@/components/layout/guild-world-header-switcher";
 import {
@@ -150,7 +150,7 @@ export const LootsListPage: React.FC = () => {
       </div>
 
       {isMobile && (
-        <LootFiltersFab
+        <FiltersFab
           activeFilterCount={filtersState.totalActiveFilterCount}
           onOpenFilters={() => openFilters()}
         />

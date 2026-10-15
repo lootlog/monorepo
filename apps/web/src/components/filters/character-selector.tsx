@@ -45,7 +45,7 @@ type CharacterSelectorProps = (
 const MAX_TRIGGER_AVATARS = 3;
 
 const renderPlaceholderAvatar = () => (
-  <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted">
+  <span className="flex size-7 shrink-0 items-center justify-center">
     <Users className="size-4" aria-hidden="true" />
   </span>
 );
@@ -113,25 +113,30 @@ export function CharacterSelector(props: CharacterSelectorProps) {
             role="combobox"
             aria-controls={listId}
             aria-expanded={open}
-            className={cn("min-w-0 justify-between gap-2 px-2", className)}
+            className={cn(
+              "min-w-0 justify-between gap-2",
+              // Without a character, the icon and label line up with the
+              // filter popovers beside it.
+              selectedCharacter ? "px-2" : "px-3",
+              className,
+            )}
           >
             <span className="flex min-w-0 items-center gap-2">
               {selectedCharacters.length > 1 ? (
-                <span className="flex shrink-0 -space-x-2">
+                <span className="flex shrink-0 -space-x-1.5">
                   {selectedCharacters
                     .slice(0, MAX_TRIGGER_AVATARS)
                     .map((character) => (
                       <CharacterAvatar
                         key={character.id}
                         icon={character.icon}
-                        className="ring-2 ring-background"
                       />
                     ))}
                 </span>
               ) : selectedCharacter ? (
                 <CharacterAvatar icon={selectedCharacter.icon} />
               ) : (
-                renderPlaceholderAvatar()
+                <Users className="size-4 shrink-0" aria-hidden="true" />
               )}
               <span className="flex min-w-0 flex-col items-start leading-tight">
                 <span className="max-w-full truncate">

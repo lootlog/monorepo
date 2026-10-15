@@ -23,9 +23,10 @@ import { useRef, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { useTranslation } from "react-i18next";
 import { activityLogsInfiniteQueryOptions } from "./activity-logs.queries";
-import { ActivityLogsFilterToolbar } from "./components/activity-logs-filter-toolbar";
+import { ActivityLogsFilterFields } from "./components/activity-logs-filter-fields";
 import { ActivityLogsMobileListSkeleton } from "./components/activity-logs-mobile-list-skeleton";
 import { ActivityLogsTable } from "./components/activity-logs-table";
+import { ActorNameSelector } from "./components/actor-name-selector";
 import { useActivityLogsFilterModel } from "./components/use-activity-logs-filter-model";
 
 const ACTIVITY_LOGS_PAGE_LIMIT = 20;
@@ -49,8 +50,14 @@ export const ActivityLogs = () => {
   const filterModel = useActivityLogsFilterModel();
   const { world } = useGuildWorld();
 
-  const { filters, selectedTypes, selectedSources, activeFilterChips } =
-    filterModel;
+  const {
+    filters,
+    updateFilters,
+    nameSuggestions,
+    selectedTypes,
+    selectedSources,
+    activeFilterChips,
+  } = filterModel;
 
   const {
     data: activityLogs,
@@ -182,7 +189,21 @@ export const ActivityLogs = () => {
         className="min-h-0 flex-1"
       >
         <ResultsSurface
-          filters={<ActivityLogsFilterToolbar model={filterModel} />}
+          search={
+            <ActorNameSelector
+              inline
+              value={filters.name ?? ""}
+              suggestions={nameSuggestions}
+              searchValue={filters.name ?? ""}
+              onSearchChange={(value) => updateFilters({ name: value })}
+              onValueChange={(value) => updateFilters({ name: value })}
+              placeholder={t("activityLogs.filters.nameSearchPlaceholder")}
+            />
+          }
+          filters={<ActivityLogsFilterFields model={filterModel} />}
+          stackedFilters={
+            <ActivityLogsFilterFields model={filterModel} stacked />
+          }
           filtersLabel={t("activityLogs.filters.title")}
           chips={activeFilterChips}
           clearFiltersLabel={t("activityLogs.filters.clear")}

@@ -25,7 +25,7 @@ export const TablePaginationFooter = ({
   return (
     <div
       className={cn(
-        "flex h-14 shrink-0 items-center justify-between border-t border-sidebar-border",
+        "box-content flex h-14 shrink-0 items-center justify-between border-t border-sidebar-border",
         LIST_TILE_INSET_CLASS,
       )}
     >

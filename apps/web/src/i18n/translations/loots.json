@@ -41,7 +41,6 @@
     "collapse": "Zwiń filtry",
     "clear": "Wyczyść",
     "clearSection": "Wyczyść: {{section}}",
-    "activeCount": "Aktywne filtry: {{count}}",
     "common": {
       "levelRange": "Zakres poziomów",
       "levelValue": "Lvl {{level}}"
@@ -92,8 +91,7 @@
   "header": {
     "shortcut": "{{modifier}} + K",
     "listView": "Widok listy",
-    "gridView": "Widok siatki",
-    "filtersButton": "Filtry"
+    "gridView": "Widok siatki"
   },
   "searchCommand": {
     "dialogTitle": "Szukaj w Lootlogu",
