@@ -2,12 +2,14 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "cn";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
+import type { ReactNode } from "react";
 import {
   DAYS,
   HEADER_HEIGHT,
   HOURS,
   LABEL_COLUMN_WIDTH,
   MIN_ROW_HEIGHT,
+  SCHEDULE_BAR_HEIGHT,
 } from "./constants";
 import { isEventInsideElement } from "./is-event-inside-element";
 import { ReservationBlock } from "./reservation-block";
@@ -20,7 +22,11 @@ import {
   type DesktopWeekScheduleProps,
 } from "./use-desktop-week-selection";
 
+// The day headings pin under the schedule bar, which pins under the app bar.
+const dayHeadingTop = `calc(var(--page-sticky-top) + ${SCHEDULE_BAR_HEIGHT}px)`;
+
 export function DesktopWeekSchedule({
+  header,
   weekStart,
   segments,
   settings,
@@ -28,7 +34,10 @@ export function DesktopWeekSchedule({
   onReservationSelect,
   onReservationCancel,
   cancellingReservationId,
-}: DesktopWeekScheduleProps) {
+}: DesktopWeekScheduleProps & {
+  /** The schedule bar, which scrolls with the hours in the page scroller. */
+  header?: ReactNode;
+}) {
   const {
     gridRef,
     nowRef,
@@ -58,11 +67,13 @@ export function DesktopWeekSchedule({
   });
 
   return (
-    <ScrollArea className="min-h-0 flex-1 select-none">
+    <ScrollArea data-under-top-bar className="min-h-0 flex-1 select-none">
+      {header}
+      {/* Isolated, so reservations scrolling past stay under the bar. */}
       <div
         ref={gridRef}
         className={cn(
-          "relative grid w-full",
+          "relative isolate grid w-full",
           isPointerOverUnavailableSlot
             ? "cursor-not-allowed"
             : "cursor-crosshair",
@@ -136,7 +147,10 @@ export function DesktopWeekSchedule({
           setIsPointerOverUnavailableSlot(false);
         }}
       >
-        <div className="sticky left-0 top-0 z-40 border-b border-r bg-background" />
+        <div
+          className="sticky left-0 z-40 border-b border-r bg-background"
+          style={{ top: dayHeadingTop }}
+        />
         {DAYS.map((_, index) => {
           const date = new Date(weekStart);
           date.setDate(date.getDate() + index);
@@ -146,9 +160,10 @@ export function DesktopWeekSchedule({
             <div
               key={date.toISOString()}
               className={cn(
-                "sticky top-0 z-30 flex flex-col items-center justify-center border-b border-r bg-background",
+                "sticky z-30 flex flex-col items-center justify-center border-b border-r bg-background",
                 isToday && "border-b-primary",
               )}
+              style={{ top: dayHeadingTop }}
             >
               <span className="text-xs capitalize text-muted-foreground">
                 {format(date, "EEE", { locale: pl })}

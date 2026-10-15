@@ -2,6 +2,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "cn";
 import { addDays } from "date-fns";
 import * as m from "framer-motion/m";
+import type { ReactNode } from "react";
 import { HOURS, LABEL_COLUMN_WIDTH, MIN_ROW_HEIGHT } from "./constants";
 import { isEventInsideElement } from "./is-event-inside-element";
 import {
@@ -20,6 +21,7 @@ import {
 } from "./use-mobile-day-schedule";
 
 export function MobileDaySchedule({
+  header,
   date,
   dayIndex,
   segments,
@@ -30,7 +32,10 @@ export function MobileDaySchedule({
   onReservationSelect,
   onReservationCancel,
   cancellingReservationId,
-}: MobileDayScheduleProps) {
+}: MobileDayScheduleProps & {
+  /** The schedule bar, which scrolls with the hours in the page scroller. */
+  header?: ReactNode;
+}) {
   const {
     swipeSurfaceRef,
     isDaySwipeEnabled,
@@ -61,23 +66,30 @@ export function MobileDaySchedule({
     cancellingReservationId,
   });
 
+  // Below `md` the document scrolls the page, and a viewport that hid its
+  // horizontal overflow there would become a scroller of its own.
   return (
-    <div
-      ref={swipeSurfaceRef}
-      data-slot="mobile-day-swipe-surface"
-      className={cn(
-        "flex min-h-0 flex-1 overflow-hidden",
-        isDaySwipeEnabled && "touch-pan-y",
-      )}
+    <ScrollArea
+      data-under-top-bar
+      orientation="vertical"
+      className="min-h-0 flex-1 md:[&_[data-slot=scroll-area-viewport]]:!overflow-x-hidden"
+      onScroll={(event) => {
+        if (event.currentTarget.scrollLeft !== 0) {
+          event.currentTarget.scrollLeft = 0;
+        }
+      }}
     >
-      <ScrollArea
-        orientation="vertical"
-        className="min-h-0 flex-1 [&_[data-slot=scroll-area-viewport]]:!overflow-x-hidden"
-        onScroll={(event) => {
-          if (event.currentTarget.scrollLeft !== 0) {
-            event.currentTarget.scrollLeft = 0;
-          }
-        }}
+      {header}
+      {/* Isolated, so reservations scrolling past stay under the bar. It clips
+          the day track rather than hiding it, so focusing an hour cannot
+          scroll the track sideways. */}
+      <div
+        ref={swipeSurfaceRef}
+        data-slot="mobile-day-swipe-surface"
+        className={cn(
+          "isolate overflow-clip",
+          isDaySwipeEnabled && "touch-pan-y",
+        )}
       >
         <div
           data-slot="compact-schedule-scroll-content"
@@ -300,7 +312,7 @@ export function MobileDaySchedule({
             )}
           </m.div>
         </div>
-      </ScrollArea>
-    </div>
+      </div>
+    </ScrollArea>
   );
 }

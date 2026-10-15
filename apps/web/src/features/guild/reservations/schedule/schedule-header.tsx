@@ -16,10 +16,11 @@ import type { ReservationSettings } from "@lootlog/domain/reservations";
 import { Button } from "@lootlog/ui/components/button";
 import { cn } from "cn";
 import { ReservationSettingsInfoDialog } from "./reservation-settings-info-dialog";
+import { ScheduleActionDock } from "./schedule-action-dock";
+import { ScheduleBar } from "./schedule-bar";
 import { ScheduleIconButton } from "./schedule-icon-button";
 
 type ScheduleHeaderProps = {
-  spotName: string;
   date: Date;
   isCompact: boolean;
   settings: ReservationSettings;
@@ -59,7 +60,6 @@ const getScheduleDateLabels = (date: Date, isCompact: boolean) => {
 };
 
 export function ScheduleHeader({
-  spotName,
   date,
   isCompact,
   settings,
@@ -153,18 +153,7 @@ export function ScheduleHeader({
 
   return (
     <>
-      <header
-        className={cn(
-          // Below `md` the document scrolls the schedule, so the day navigation
-          // pins under the app bar.
-          "shrink-0 border-b bg-background max-md:sticky max-md:top-(--page-sticky-top) max-md:z-30",
-          compactValue(
-            isCompact,
-            "flex items-center gap-1 px-2 py-1",
-            "flex items-center gap-2 px-3 py-2",
-          ),
-        )}
-      >
+      <ScheduleBar isCompact={isCompact}>
         <div
           data-slot="schedule-date-navigation"
           className={cn(
@@ -187,38 +176,29 @@ export function ScheduleHeader({
           >
             <ChevronLeft />
           </ScheduleIconButton>
-          <div className="min-w-0 text-center">
-            <h1 className="truncate text-sm font-semibold" title={spotName}>
-              {spotName}
-            </h1>
-            <p
-              aria-live="polite"
-              className={cn(
-                "min-w-0 truncate text-sm font-semibold capitalize",
-                compactValue(
-                  isCompact,
-                  "text-center",
-                  "sm:min-w-52 sm:text-center",
-                ),
+          <p
+            aria-live="polite"
+            className={cn(
+              "min-w-0 truncate text-center text-sm font-semibold capitalize",
+              compactValue(isCompact, undefined, "min-w-52"),
+            )}
+            title={compactTitle}
+          >
+            <span
+              className={compactValue(
+                isCompact,
+                "max-[400px]:hidden",
+                undefined,
               )}
-              title={compactTitle}
             >
-              <span
-                className={compactValue(
-                  isCompact,
-                  "max-[400px]:hidden",
-                  undefined,
-                )}
-              >
-                {label}
+              {label}
+            </span>
+            {isCompact && (
+              <span className="hidden max-[400px]:inline">
+                {shortCompactLabel}
               </span>
-              {isCompact && (
-                <span className="hidden max-[400px]:inline">
-                  {shortCompactLabel}
-                </span>
-              )}
-            </p>
-          </div>
+            )}
+          </p>
           <ScheduleIconButton
             label={compactValue(
               isCompact,
@@ -233,17 +213,9 @@ export function ScheduleHeader({
         </div>
 
         {!isCompact && actionToolbar}
-      </header>
+      </ScheduleBar>
 
-      {/* Below `md` the document scrolls the schedule, so the dock pins to the screen. */}
-      {isCompact && (
-        <div
-          data-slot="schedule-action-dock"
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] max-md:fixed"
-        >
-          {actionToolbar}
-        </div>
-      )}
+      {isCompact && <ScheduleActionDock>{actionToolbar}</ScheduleActionDock>}
 
       <ReservationSettingsInfoDialog
         open={infoOpen}
