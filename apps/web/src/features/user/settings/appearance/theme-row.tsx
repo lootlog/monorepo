@@ -31,8 +31,10 @@ type ThemeRowProps = {
   isActive?: boolean;
   /** Replaces the description on the theme in use. */
   activeLabel?: string;
-  /** Picks the theme. */
-  onSelect: () => void;
+  /** Picks the theme; left out, the row only shows it, as a preview. */
+  onSelect?: () => void;
+  /** Shows the theme without waiting to be pointed at, as in a preview. */
+  alwaysThemed?: boolean;
   /** A control at the row's end, such as editing the theme. */
   action?: ReactNode;
 };
@@ -50,11 +52,14 @@ export const ThemeRow = ({
   isActive,
   activeLabel,
   onSelect,
+  alwaysThemed = false,
   action,
 }: ThemeRowProps) => {
   // The row takes on its theme while pointed at or focused, so the list stays
   // calm and each theme shows itself on demand.
-  const [isThemed, setIsThemed] = useState(false);
+  const Content = onSelect ? "button" : "div";
+  const [isPointedAt, setIsPointedAt] = useState(false);
+  const isThemed = alwaysThemed || isPointedAt;
 
   return (
     <li
@@ -70,22 +75,24 @@ export const ThemeRow = ({
           : "from-transparent to-transparent hover:from-muted/30 hover:to-muted/30",
       )}
       style={isThemed ? themeStyle : undefined}
-      onPointerEnter={() => setIsThemed(true)}
-      onPointerLeave={() => setIsThemed(false)}
-      onFocus={() => setIsThemed(true)}
+      onPointerEnter={() => setIsPointedAt(true)}
+      onPointerLeave={() => setIsPointedAt(false)}
+      onFocus={() => setIsPointedAt(true)}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) {
-          setIsThemed(false);
+          setIsPointedAt(false);
         }
       }}
     >
-      <button
-        type="button"
-        aria-pressed={isActive}
-        onClick={onSelect}
+      <Content
+        {...(onSelect && {
+          type: "button" as const,
+          "aria-pressed": isActive,
+          onClick: onSelect,
+        })}
         className={cn(
           getListTileLinkClassName(action !== undefined),
-          "cursor-pointer text-left",
+          onSelect && "cursor-pointer text-left",
         )}
       >
         <span
@@ -124,12 +131,12 @@ export const ThemeRow = ({
         */}
         <span
           aria-hidden
-          className="mr-2 flex shrink-0 items-center gap-1 sm:mr-3"
+          className="mr-3 flex shrink-0 items-center gap-1 max-sm:hidden"
         >
           {preview.colors.map((color, index) => (
             <span
               key={PALETTE_SLOTS[index]}
-              className="size-5 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.16)] sm:size-6"
+              className="size-6 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.16)]"
               style={{
                 backgroundColor: color,
                 borderRadius: SWATCH_RADIUS[preview.radius],
@@ -137,7 +144,7 @@ export const ThemeRow = ({
             />
           ))}
         </span>
-      </button>
+      </Content>
       {action && <div className={LIST_TILE_ACTIONS_CLASS}>{action}</div>}
     </li>
   );

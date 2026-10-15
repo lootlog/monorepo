@@ -7,9 +7,10 @@ import { toCustomThemePreference } from "@/themes/custom-theme";
 import { getCustomThemePreview } from "@/themes/theme-preview";
 import { Button } from "@lootlog/ui/components/button";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { Check, Layers, PaletteIcon, Trash2 } from "lucide-react";
+import { Check, Layers, PaletteIcon, Share2, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { DeleteThemeDialog } from "./delete-theme-dialog";
+import { ShareThemeDialog } from "./share-theme-dialog";
 import { ThemeEditorForm } from "./theme-editor-form";
 
 export const ThemeEditorPage = () => {
@@ -84,6 +85,18 @@ export const ThemeEditorPage = () => {
               {t("settings.appearance.editor.apply")}
             </Button>
           )}
+          <ShareThemeDialog
+            theme={theme}
+            trigger={
+              <Button
+                size="sm"
+                variant="outline"
+                icon=<Share2 className="size-4" />
+              >
+                {t("settings.appearance.editor.share.action")}
+              </Button>
+            }
+          />
           <DeleteThemeDialog
             theme={theme}
             onDeleted={async () => {
