@@ -1189,6 +1189,32 @@ export const userSettingsTable = pgTable(
   (table) => [uniqueIndex("UserSettings_userId_key").on(table["userId"])],
 );
 
+/**
+ * A User's own web theme: a built-in base plus their changes. A share token,
+ * while set, lets anyone with the link read the theme to save a copy.
+ */
+export const userThemeTable = pgTable(
+  "UserTheme",
+  {
+    id: text("id").notNull().primaryKey(),
+    userId: text("userId").notNull(),
+    name: text("name").notNull(),
+    definition: jsonb("definition").notNull(),
+    shareToken: text("shareToken"),
+    createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updatedAt", { mode: "date", precision: 3 }).notNull(),
+  },
+  (table) => [
+    index("UserTheme_userId_createdAt_idx").on(
+      table["userId"],
+      table["createdAt"],
+    ),
+    uniqueIndex("UserTheme_shareToken_key").on(table["shareToken"]),
+  ],
+);
+
 export const userSettingDocumentTable = pgTable(
   "UserSettingDocument",
   {

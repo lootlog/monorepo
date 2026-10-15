@@ -57,6 +57,7 @@ export class UsersGroup extends HttpApiGroup.make("users").add(
     {
       payload: UpdateUserPreferencesRequest,
       success: UserPreferencesResponse,
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
     },
   )
     .middleware(BearerSecurityMiddleware)

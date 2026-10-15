@@ -272,6 +272,16 @@
               }
             }
           },
+          "404": {
+            "description": "HttpErrorResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpErrorResponse"
+                }
+              }
+            }
+          },
           "429": {
             "description": "Error",
             "content": {
@@ -23417,6 +23427,21 @@
         ],
         "additionalProperties": false
       },
+      "HttpErrorResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {}
+        },
+        "allOf": [
+          {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        ]
+      },
       "UpdateUserPreferencesDto": {
         "type": "object",
         "properties": {
@@ -23435,28 +23460,35 @@
             }
           },
           "theme": {
-            "type": "string",
-            "enum": [
-              "default",
-              "muted",
-              "cyberpunk",
-              "pastel",
-              "fantasy",
-              "shonen",
-              "onepiece",
-              "anime",
-              "goth",
-              "halloween",
-              "realmadrid",
-              "realmadrid-3rd",
-              "barcelona",
-              "waguri",
-              "rukia",
-              "rias",
-              "cat-pink",
-              "cat-purple",
-              "cat-blue",
-              "cat-random"
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "default",
+                  "muted",
+                  "cyberpunk",
+                  "pastel",
+                  "fantasy",
+                  "shonen",
+                  "onepiece",
+                  "anime",
+                  "waguri",
+                  "goth",
+                  "halloween",
+                  "realmadrid",
+                  "realmadrid-3rd",
+                  "barcelona",
+                  "rukia",
+                  "rias",
+                  "cat-pink",
+                  "cat-purple",
+                  "cat-blue",
+                  "cat-random"
+                ]
+              },
+              {
+                "type": "string"
+              }
             ]
           },
           "chatAppearance": {
@@ -25130,21 +25162,6 @@
           "reservationActiveLimitPerSpot"
         ],
         "additionalProperties": false
-      },
-      "HttpErrorResponse": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "message": {}
-        },
-        "allOf": [
-          {
-            "type": "object",
-            "additionalProperties": {}
-          }
-        ]
       },
       "UpdateGuildConfigDto": {
         "type": "object",

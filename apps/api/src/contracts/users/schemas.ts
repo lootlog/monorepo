@@ -8,6 +8,7 @@ import {
   PositiveSafeInteger,
 } from "@lootlog/schema/http-scalars";
 import { ChatNpcLayoutSchema } from "@lootlog/schema/chat-appearance";
+import { ThemePreferenceSchema } from "@lootlog/schema/custom-theme";
 import { organizationSummaryFields } from "#src/contracts/shared";
 
 const MutedPlayer = Schema.Struct({
@@ -129,30 +130,7 @@ export const UpdateUserPreferencesRequest = Schema.Struct({
     ),
   ),
   hiddenGuildIds: Schema.optionalKey(Schema.Array(NonEmptyString)),
-  theme: Schema.optionalKey(
-    Schema.Literals([
-      "default",
-      "muted",
-      "cyberpunk",
-      "pastel",
-      "fantasy",
-      "shonen",
-      "onepiece",
-      "anime",
-      "goth",
-      "halloween",
-      "realmadrid",
-      "realmadrid-3rd",
-      "barcelona",
-      "waguri",
-      "rukia",
-      "rias",
-      "cat-pink",
-      "cat-purple",
-      "cat-blue",
-      "cat-random",
-    ]),
-  ),
+  theme: Schema.optionalKey(ThemePreferenceSchema),
   chatAppearance: Schema.optionalKey(
     Schema.Struct({
       npcLayout: Schema.optionalKey(ChatNpcLayoutSchema),

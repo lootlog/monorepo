@@ -1,3 +1,4 @@
+import { TEST_THEME_CONTEXT } from "@/lib/testing/theme-context";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
@@ -60,14 +61,7 @@ export async function createLootTestWrapper() {
     return (
       <RouterWrapper>
         <QueryClientProvider client={client}>
-          <ThemeContext.Provider
-            value={{
-              theme: "default",
-              resolvedTheme: "default",
-              setTheme: () => {},
-              isLoading: false,
-            }}
-          >
+          <ThemeContext.Provider value={TEST_THEME_CONTEXT}>
             <NuqsTestingAdapter>
               <GuildWatchedItemsProvider>{children}</GuildWatchedItemsProvider>
             </NuqsTestingAdapter>

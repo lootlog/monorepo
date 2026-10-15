@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { TEST_THEME_CONTEXT } from "@/lib/testing/theme-context";
 import { initializeTestTranslations } from "@/lib/testing/i18n";
 import {
   act,
@@ -159,14 +160,7 @@ async function renderSelector() {
       <GatewayWrapper>
         <QueryClientProvider client={client}>
           <GlobalContextProvider>
-            <ThemeContext.Provider
-              value={{
-                theme: "default",
-                resolvedTheme: "default",
-                setTheme: () => {},
-                isLoading: false,
-              }}
-            >
+            <ThemeContext.Provider value={TEST_THEME_CONTEXT}>
               <GuildsSelector />
               <Toaster />
             </ThemeContext.Provider>

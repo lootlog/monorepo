@@ -7,11 +7,14 @@ import {
 } from "@lootlog/ui/components/field";
 import { RadioGroup, RadioGroupItem } from "@lootlog/ui/components/radio-group";
 import { cn } from "cn";
+import type { CSSProperties } from "react";
 
 export type OptionCard<Value extends string> = {
   value: Value;
   title: string;
   description: string;
+  /** Shows the option in its own look, such as a font in that font. */
+  style?: CSSProperties;
 };
 
 type OptionCardGroupProps<Value extends string> = {
@@ -51,7 +54,7 @@ export const OptionCardGroup = <Value extends string>({
       >
         <Field orientation="horizontal" className="items-center">
           <RadioGroupItem value={option.value} aria-label={option.title} />
-          <FieldContent>
+          <FieldContent style={option.style}>
             <FieldTitle>{option.title}</FieldTitle>
             <FieldDescription className="text-xs leading-tight">
               {option.description}

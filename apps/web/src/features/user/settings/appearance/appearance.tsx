@@ -1,22 +1,44 @@
 import { BandSection } from "@/components/common/band-section";
+import { ListTileEmpty } from "@/components/common/list-tile-empty";
 import { SettingsTabPage } from "@/components/common/settings-tab-page";
+import { ROUTES } from "@/config/routes";
+import { useUserThemes } from "@/hooks/api/user/use-user-themes";
+import { useTheme } from "@/hooks/context/use-theme";
+import { THEME_CATALOG } from "@/themes/catalog";
+import {
+  createDefinitionFromBase,
+  customThemeStyle,
+  loadCustomThemeFont,
+  toCustomThemePreference,
+} from "@/themes/custom-theme";
+import { isThemeId, previewThemeClass } from "@/themes/resolver";
+import {
+  getBuiltInThemePreview,
+  getCustomThemePreview,
+} from "@/themes/theme-preview";
+import { CUSTOM_THEME_LIMIT } from "@lootlog/schema/custom-theme";
+import { Button } from "@lootlog/ui/components/button";
+import { Link, useSearch } from "@tanstack/react-router";
+import { Palette, Pencil, Plus, SlidersHorizontal, Trash2 } from "lucide-react";
 import { useEffect, useEffectEvent, type FC } from "react";
 import { useTranslation } from "react-i18next";
-import { useSearch } from "@tanstack/react-router";
-import { useTheme } from "@/hooks/context/use-theme";
-import { ThemeCard } from "@lootlog/ui/components/theme-card";
-import { THEME_CATALOG } from "@/themes/catalog";
-import { isThemeId } from "@/themes/resolver";
+import { DeleteThemeDialog } from "./delete-theme-dialog";
+import { ThemeRow } from "./theme-row";
+import { ThemeRowSkeleton } from "./theme-row-skeleton";
+import { useCreateTheme } from "./use-create-theme";
 
 export const AppearanceSettings: FC = () => {
-  const { theme, setTheme } = useTheme();
+  const { t } = useTranslation();
+  const { selection, setTheme } = useTheme();
+  const { data: userThemes, isPending } = useUserThemes();
+  const { create, isPending: isCreating } = useCreateTheme();
 
   const { theme: themeParam } = useSearch({
     from: "/_authenticated/@me/settings/appearance",
   });
 
   const applyThemeParam = useEffectEvent(() => {
-    if (themeParam && isThemeId(themeParam) && themeParam !== theme) {
+    if (themeParam && isThemeId(themeParam) && themeParam !== selection) {
       setTheme(themeParam);
     }
   });
@@ -24,32 +46,157 @@ export const AppearanceSettings: FC = () => {
   useEffect(() => {
     applyThemeParam();
   }, [themeParam]);
-  const { t } = useTranslation();
+
+  const themeCount = userThemes?.length ?? 0;
+  const canCreate = !isPending && themeCount < CUSTOM_THEME_LIMIT;
+  const createLabel = t("settings.appearance.customSection.create");
+  const inUseLabel = t("settings.appearance.actions.inUse");
+
+  // Each custom theme's row shows its own font.
+  useEffect(() => {
+    for (const userTheme of userThemes ?? []) {
+      loadCustomThemeFont(userTheme.definition);
+    }
+  }, [userThemes]);
+
+  const themeTitle = (themeId: string) =>
+    t(`settings.appearance.themes.${themeId}.title`);
 
   return (
     <SettingsTabPage title={t("settings.appearance.title")}>
       <BandSection
-        id="appearance-theme"
-        title={t("settings.appearance.themeSection.title")}
-        description={t("settings.appearance.themeSection.description")}
-        wide
+        id="appearance-custom-themes"
+        title={t("settings.appearance.customSection.title")}
+        count={`${themeCount}/${CUSTOM_THEME_LIMIT}`}
+        tiled
+        trailing={
+          // On phones the button keeps only its icon, so the title fits.
+          <>
+            <Button
+              size="sm"
+              className="max-sm:hidden"
+              disabled={!canCreate}
+              icon=<Plus className="size-4" />
+              nativeButton={false}
+              render={<Link to={ROUTES.user.settings.newTheme} />}
+            >
+              {createLabel}
+            </Button>
+            <Button
+              size="icon-sm"
+              className="sm:hidden"
+              disabled={!canCreate}
+              aria-label={createLabel}
+              nativeButton={false}
+              render={<Link to={ROUTES.user.settings.newTheme} />}
+            >
+              <Plus className="size-4" />
+            </Button>
+          </>
+        }
       >
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {THEME_CATALOG.map((themeOption) => (
-            <ThemeCard
-              key={themeOption.name}
-              name={themeOption.name}
-              title={t(`settings.appearance.themes.${themeOption.name}.title`)}
-              description={t(
-                `settings.appearance.themes.${themeOption.name}.description`,
-              )}
-              colors={themeOption.colors}
-              backgroundImage={themeOption.backgroundImage}
-              isActive={theme === themeOption.name}
-              onClick={() => setTheme(themeOption.name)}
+        {isPending ? (
+          <ul aria-hidden>
+            <ThemeRowSkeleton action />
+          </ul>
+        ) : themeCount > 0 ? (
+          <ul>
+            {userThemes?.map((userTheme) => (
+              <ThemeRow
+                key={userTheme.id}
+                title={userTheme.name}
+                description={t("settings.appearance.basedOn", {
+                  base: themeTitle(userTheme.definition.baseThemeId),
+                })}
+                preview={getCustomThemePreview(userTheme.definition)}
+                themeClass={previewThemeClass(userTheme.definition.baseThemeId)}
+                themeStyle={customThemeStyle(userTheme.definition)}
+                activeLabel={inUseLabel}
+                isActive={selection === toCustomThemePreference(userTheme.id)}
+                onSelect={() => setTheme(toCustomThemePreference(userTheme.id))}
+                action={
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={t("settings.appearance.actions.editLabel", {
+                        name: userTheme.name,
+                      })}
+                      nativeButton={false}
+                      render={
+                        <Link to={ROUTES.user.settings.theme(userTheme.id)} />
+                      }
+                    >
+                      <Pencil className="size-4" />
+                    </Button>
+                    <DeleteThemeDialog
+                      theme={userTheme}
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={t(
+                            "settings.appearance.actions.deleteLabel",
+                            { name: userTheme.name },
+                          )}
+                          className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      }
+                    />
+                  </>
+                }
+              />
+            ))}
+          </ul>
+        ) : (
+          <ListTileEmpty icon={Palette}>
+            {t("settings.appearance.customSection.empty")}
+          </ListTileEmpty>
+        )}
+      </BandSection>
+
+      <BandSection
+        id="appearance-built-in-themes"
+        title={t("settings.appearance.builtInSection.title")}
+        tiled
+      >
+        <ul>
+          {THEME_CATALOG.map(({ name }) => (
+            <ThemeRow
+              key={name}
+              title={themeTitle(name)}
+              description={t(`settings.appearance.themes.${name}.description`)}
+              preview={getBuiltInThemePreview(name)}
+              themeClass={previewThemeClass(name)}
+              themeStyle={customThemeStyle(createDefinitionFromBase(name))}
+              activeLabel={inUseLabel}
+              isActive={selection === name}
+              onSelect={() => setTheme(name)}
+              action={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  disabled={!canCreate || isCreating}
+                  aria-label={t("settings.appearance.actions.customizeLabel", {
+                    name: themeTitle(name),
+                  })}
+                  onClick={() =>
+                    create(
+                      t("settings.appearance.copyName", {
+                        name: themeTitle(name),
+                      }),
+                      createDefinitionFromBase(name),
+                    )
+                  }
+                >
+                  <SlidersHorizontal className="size-4" />
+                </Button>
+              }
             />
           ))}
-        </div>
+        </ul>
       </BandSection>
     </SettingsTabPage>
   );

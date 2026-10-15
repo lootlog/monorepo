@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import { TEST_THEME_CONTEXT } from "@/lib/testing/theme-context";
 import { act, cleanup, render, screen, within } from "@testing-library/react";
 import {
   createMemoryHistory,
@@ -16,12 +17,7 @@ import { UserShell } from "./user-shell";
 import { HeaderSlotPortal } from "./header-slot-portal";
 import "@/i18n/config";
 
-const theme = {
-  theme: "default",
-  resolvedTheme: "default",
-  setTheme: () => {},
-  isLoading: false,
-} as const;
+const theme = TEST_THEME_CONTEXT;
 
 const renderAccountPage = async () => {
   const root = createRootRoute({

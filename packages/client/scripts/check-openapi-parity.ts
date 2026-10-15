@@ -1091,6 +1091,17 @@ const normalizeActivityLiveness = (
   };
 };
 
+// Selecting another User's custom theme answers 404; verified by
+// account-organization.operations.test.ts.
+const normalizeForeignThemeSelection = (
+  service: string,
+  operationKey: string,
+  operation: JsonValue,
+): JsonValue =>
+  service === "api" && operationKey === "PATCH /users/@me/preferences"
+    ? removeResponseStatus(operation, "404")
+    : operation;
+
 export const normalizeAllowedChanges = (
   service: string,
   operationKey: string,
@@ -1128,6 +1139,11 @@ export const normalizeAllowedChanges = (
   );
   normalized = normalizeActivityLiveness(service, operationKey, normalized);
   normalized = normalizeTimerNpcSearchQuery(service, operationKey, normalized);
+  normalized = normalizeForeignThemeSelection(
+    service,
+    operationKey,
+    normalized,
+  );
 
   if (service === "api" && operationKey === "GET /guilds/@me/manageable") {
     normalized = normalizeManageableOrganizationResponse(normalized, schemas);
@@ -1390,6 +1406,288 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
       },
     },
     api: {
+      // Verified by apps/api/test/user-themes.integration.test.ts.
+      "GET /users/@me/themes": {
+        operationId: "UserThemesController_getThemes",
+        parameters: [],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Success",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    $ref: "#/components/schemas/UserThemeResponseDto",
+                  },
+                },
+              },
+            },
+          },
+        },
+        description: "Retrieve the authenticated user's own web themes",
+      },
+      "POST /users/@me/themes": {
+        operationId: "UserThemesController_createTheme",
+        parameters: [],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        responses: {
+          "201": {
+            description: "UserThemeResponseDto",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/UserThemeResponseDto",
+                },
+              },
+            },
+          },
+          "409": {
+            description: "HttpErrorResponse",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/HttpErrorResponse",
+                },
+              },
+            },
+          },
+        },
+        description:
+          "Create a web theme for the authenticated user; fails with 409 once the user has reached the theme limit",
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/CreateUserThemeDto",
+              },
+            },
+          },
+          required: true,
+        },
+      },
+      "GET /users/@me/themes/{themeId}": {
+        operationId: "UserThemesController_getTheme",
+        parameters: [
+          {
+            name: "themeId",
+            in: "path",
+            schema: {
+              type: "string",
+            },
+            required: true,
+          },
+        ],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "UserThemeResponseDto",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/UserThemeResponseDto",
+                },
+              },
+            },
+          },
+          "404": {
+            description: "<No Content>",
+          },
+        },
+        description: "Retrieve one of the user's own themes",
+      },
+      "PATCH /users/@me/themes/{themeId}": {
+        operationId: "UserThemesController_updateTheme",
+        parameters: [
+          {
+            name: "themeId",
+            in: "path",
+            schema: {
+              type: "string",
+            },
+            required: true,
+          },
+        ],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "UserThemeResponseDto",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/UserThemeResponseDto",
+                },
+              },
+            },
+          },
+          "404": {
+            description: "<No Content>",
+          },
+        },
+        description: "Rename or change one of the user's themes",
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/UpdateUserThemeDto",
+              },
+            },
+          },
+          required: true,
+        },
+      },
+      "DELETE /users/@me/themes/{themeId}": {
+        operationId: "UserThemesController_deleteTheme",
+        parameters: [
+          {
+            name: "themeId",
+            in: "path",
+            schema: {
+              type: "string",
+            },
+            required: true,
+          },
+        ],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "SuccessResponseDto_Output",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/SuccessResponseDto_Output",
+                },
+              },
+            },
+          },
+          "404": {
+            description: "<No Content>",
+          },
+        },
+        description:
+          "Delete one of the user's themes; a user who had it selected falls back to its base theme",
+      },
+      "POST /users/@me/themes/{themeId}/share": {
+        operationId: "UserThemesController_shareTheme",
+        parameters: [
+          {
+            name: "themeId",
+            in: "path",
+            schema: {
+              type: "string",
+            },
+            required: true,
+          },
+        ],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "UserThemeResponseDto",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/UserThemeResponseDto",
+                },
+              },
+            },
+          },
+          "404": {
+            description: "<No Content>",
+          },
+        },
+        description:
+          "Create a share link token for the theme, or return the existing one",
+      },
+      "DELETE /users/@me/themes/{themeId}/share": {
+        operationId: "UserThemesController_unshareTheme",
+        parameters: [
+          {
+            name: "themeId",
+            in: "path",
+            schema: {
+              type: "string",
+            },
+            required: true,
+          },
+        ],
+        security: [
+          {
+            bearer: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "UserThemeResponseDto",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/UserThemeResponseDto",
+                },
+              },
+            },
+          },
+          "404": {
+            description: "<No Content>",
+          },
+        },
+        description: "Revoke the theme's share link so it no longer resolves",
+      },
+      "GET /public/themes/{shareToken}": {
+        operationId: "UserThemesController_getSharedTheme",
+        parameters: [
+          {
+            name: "shareToken",
+            in: "path",
+            schema: {
+              type: "string",
+            },
+            required: true,
+          },
+        ],
+        security: [],
+        responses: {
+          "200": {
+            description: "SharedUserThemeResponseDto",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/SharedUserThemeResponseDto",
+                },
+              },
+            },
+          },
+          "404": {
+            description: "<No Content>",
+          },
+        },
+        description:
+          "Read a theme shared by link; the response names no author",
+      },
       "GET /guilds/{guildId}/events/{eventId}/kill-history":
         KILL_HISTORY_ADDITION,
       // Verified by ready-room-visibility.test.ts and ready-room-cas.integration.test.ts.

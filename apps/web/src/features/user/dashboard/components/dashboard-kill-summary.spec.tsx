@@ -1,3 +1,4 @@
+import { TEST_THEME_CONTEXT } from "@/lib/testing/theme-context";
 import { configureApiClients } from "@lootlog/client/transport";
 import type { UserKillStatsResponseDtoOutput } from "@lootlog/client/main";
 // @vitest-environment happy-dom
@@ -11,7 +12,7 @@ import {
 } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeContext } from "@/contexts/theme-context";
-import { afterEach, expect, it, onTestFinished, vi } from "vitest";
+import { afterEach, expect, it, onTestFinished } from "vitest";
 import "@/i18n/config";
 import { DashboardKillSummary } from "./dashboard-kill-summary";
 
@@ -65,14 +66,7 @@ it("filters lifetime totals by world and carries the selection to statistics", a
   onTestFinished(() => queryClient.clear());
   render(
     <QueryClientProvider client={queryClient}>
-      <ThemeContext.Provider
-        value={{
-          theme: "default",
-          resolvedTheme: "default",
-          setTheme: vi.fn(),
-          isLoading: false,
-        }}
-      >
+      <ThemeContext.Provider value={TEST_THEME_CONTEXT}>
         <RouterProvider router={router} />
       </ThemeContext.Provider>
     </QueryClientProvider>,
