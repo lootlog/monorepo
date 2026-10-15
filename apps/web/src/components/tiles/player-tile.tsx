@@ -40,6 +40,11 @@ type PlayerTileProps = {
   world?: string;
   onShowLoots?: () => void;
   highlighted?: boolean;
+  /**
+   * `compact` draws the sprite at three quarters inside a 24×36 button, so
+   * the button, which the details hang from, covers the sprite as drawn.
+   */
+  size?: "default" | "compact";
 };
 
 /**
@@ -57,6 +62,7 @@ export const PlayerTile: FC<PlayerTileProps> = ({
   world,
   onShowLoots,
   highlighted = false,
+  size = "default",
 }) => {
   const sharedTooltip = useSharedTooltip();
   const { t } = useTranslation();
@@ -109,6 +115,7 @@ export const PlayerTile: FC<PlayerTileProps> = ({
       aria-label={t("loots.list.playerActions.label", { name })}
       className={cn(
         "inline-flex cursor-pointer appearance-none rounded-lg border-0 bg-transparent p-0 outline-none",
+        size === "compact" && "relative h-9 w-6 shrink-0 rounded-sm",
         !highlighted &&
           "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       )}
@@ -120,7 +127,11 @@ export const PlayerTile: FC<PlayerTileProps> = ({
         icon={icon}
         idx={idx}
         color={color}
-        className={className}
+        className={cn(
+          size === "compact" &&
+            "absolute top-0 left-0 origin-top-left scale-75",
+          className,
+        )}
         cdnBaseUrl={MARGONEM_CDN_CHARACTERS_URL}
       />
     </button>
