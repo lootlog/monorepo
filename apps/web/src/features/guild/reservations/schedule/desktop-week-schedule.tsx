@@ -23,7 +23,7 @@ import {
 } from "./use-desktop-week-selection";
 
 // The day headings pin under the schedule bar, which pins under the app bar.
-const dayHeadingTop = `calc(var(--page-sticky-top) + ${SCHEDULE_BAR_HEIGHT}px)`;
+const dayHeadingTop = `calc(var(--page-sticky-top) + ${SCHEDULE_BAR_HEIGHT})`;
 
 export function DesktopWeekSchedule({
   header,
