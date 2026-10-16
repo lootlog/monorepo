@@ -153,6 +153,7 @@ export function ActivityHeatmap({
                   tabIndex={activeIndex === index ? 0 : -1}
                   className={cn(
                     "block size-full rounded-[3px] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
+                    !showDetails && "cursor-default",
                     activityLevelClasses[
                       activityLevel(
                         unknownDisplay === "lowest"

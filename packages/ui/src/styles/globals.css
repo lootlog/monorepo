@@ -515,6 +515,25 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+  /* Tailwind v4 leaves buttons with the default cursor. Utilities still win,
+   * so a control without a click action opts out with `cursor-default`. */
+  :is(
+    button,
+    [role="button"],
+    [role="tab"],
+    [role="checkbox"],
+    [role="switch"],
+    [role="radio"],
+    summary,
+    select
+  ):not(:disabled, [aria-disabled="true"], [data-disabled]),
+  :is([role="checkbox"], [role="switch"], [role="radio"]):not(
+      [aria-disabled="true"],
+      [data-disabled]
+    )
+    ~ label {
+    cursor: pointer;
+  }
 }
 
 .realmadrid {
