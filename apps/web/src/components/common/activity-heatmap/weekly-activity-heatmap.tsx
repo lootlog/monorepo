@@ -100,7 +100,7 @@ export function WeeklyActivityHeatmap({
                       aria-label={describe(index)}
                       tabIndex={activeIndex === index ? 0 : -1}
                       className={cn(
-                        "block aspect-square w-full rounded-[3px] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
+                        "block aspect-square w-full cursor-default rounded-[3px] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
                         activityLevelClasses[activityLevel(value, maximum)],
                         index === peakIndex &&
                           value > 0 &&
