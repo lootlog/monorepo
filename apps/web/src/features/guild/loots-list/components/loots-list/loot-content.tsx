@@ -37,7 +37,7 @@ export const LootContent = ({
         LIST_TILE_INSET_CLASS,
       )}
     >
-      <div className="flex min-w-0 flex-1 basis-48 flex-wrap content-start gap-x-2 gap-y-2.5">
+      <div className="flex min-w-0 flex-1 basis-48 flex-wrap content-start gap-x-0.75 gap-y-2.5 sm:gap-x-2">
         {sortedPlayers.map((player) => (
           <LootPlayerWithItems
             key={player.id}
