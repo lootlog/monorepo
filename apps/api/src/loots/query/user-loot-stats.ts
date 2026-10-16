@@ -159,9 +159,10 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
     const legendMonsterKey = (row: (typeof legendRows)[number]) =>
       monsterKey({ world: row.world, name: row.npc_name });
 
-    const legendMonsterNames = [
-      ...new Set(legendRows.map((row) => row.npc_name)),
-    ];
+    // Each monster that dropped a legend, on the world it dropped it.
+    const legendMonsters = Object.values(
+      groupBy(legendRows, legendMonsterKey),
+    ).flatMap(([row]) => (row ? [row] : []));
 
     const killBuckets =
       characterId === undefined
@@ -198,8 +199,8 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
             or(
               inArray(killBuckets.npcType, [...BOSS_TYPES]),
               // Any monster that dropped a legend, whatever its type.
-              legendMonsterNames.length
-                ? sql`${killBuckets.npcName} = ANY(${sql.param(legendMonsterNames)}::text[])`
+              legendMonsters.length
+                ? sql`(${killBuckets.world}, ${killBuckets.npcName}) IN (SELECT * FROM unnest(${sql.param(legendMonsters.map((row) => row.world))}::text[], ${sql.param(legendMonsters.map((row) => row.npc_name))}::text[]))`
                 : undefined,
             ),
           ),

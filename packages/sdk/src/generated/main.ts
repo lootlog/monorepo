@@ -17477,7 +17477,7 @@ export const getKillsControllerGetUserKillAnalyticsUrl = (params?: KillsControll
 }
 
 /**
- * Calendar-day analytics in Europe/Warsaw. Current-day/hour data is partial; untimed lifetime history is never distributed backwards. The NPC ranking is bounded to 20 NPCs. Comparisons exclude the current incomplete hour.
+ * Calendar-day analytics in Europe/Warsaw. Current-day/hour data is partial; untimed lifetime history is never distributed backwards. The NPC ranking lists up to 500 NPCs killed in the period, most killed first. Comparisons exclude the current incomplete hour.
  * @summary Get personal kill analytics
  */
 export const killsControllerGetUserKillAnalytics = async (params?: KillsControllerGetUserKillAnalyticsParams, options?: Parameters<typeof mainFetch>[1]): Promise<UserKillAnalyticsResponseDtoOutput> => {

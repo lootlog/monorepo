@@ -192,7 +192,13 @@ export function StatisticsLegendsTable({
                 {legend.name}
               </span>
               <span className="truncate text-xs text-muted-foreground">
-                {`${legend.npc.name} · ${upperFirst(legend.world)}`}
+                {[
+                  legend.npc.name,
+                  upperFirst(legend.world),
+                  t("statistics.legendsTable.killsDetail", {
+                    count: legend.npcKills,
+                  }),
+                ].join(" · ")}
               </span>
             </span>
             <span className="flex shrink-0 flex-col items-end">

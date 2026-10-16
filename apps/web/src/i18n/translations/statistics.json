@@ -63,7 +63,8 @@
       "legends": {
         "legends": "Spadło",
         "caught": "Złapane",
-        "kills": "Bicia potwora"
+        "kills": "Bicia potwora",
+        "killsDetail": "bicia: {{count}}"
       }
     }
   },
