@@ -45,7 +45,6 @@ export function StatisticsQueryPanel({
       {query.isError && !hasData && (
         <div role="alert" className="flex min-w-0 flex-1 flex-col">
           <EmptyState
-            framed
             compact
             icon={CircleAlert}
             title={t("battlePanel.statistics.empty.errorTitle")}

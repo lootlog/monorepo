@@ -55,6 +55,7 @@ export function StatisticsQueryState({
           icon={CircleAlert}
           title={message}
           compact={compact}
+          fill={!compact}
           className="flex-1"
           action={
             <Button

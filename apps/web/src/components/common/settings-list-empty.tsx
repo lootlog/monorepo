@@ -19,7 +19,7 @@ export const SettingsListEmpty = ({
 }: SettingsListEmptyProps) => (
   <div className="p-3">
     <EmptyState
-      framed
+      fill
       icon={icon}
       title={title}
       description={description}

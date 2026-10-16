@@ -8141,6 +8141,12 @@ export type UserLootStatsResponseDtoOutputLegendsItemNpc = {
   icon: string | null;
 };
 
+export type UserLootStatsResponseDtoOutputLegendsItemCaughtByItem = {
+  characterId: string;
+  name: string;
+  caught: number;
+};
+
 export type UserLootStatsResponseDtoOutputLegendsItem = {
   itemId: number;
   name: string;
@@ -8152,6 +8158,7 @@ export type UserLootStatsResponseDtoOutputLegendsItem = {
   npc: UserLootStatsResponseDtoOutputLegendsItemNpc;
   count: number;
   caught: number;
+  caughtBy: UserLootStatsResponseDtoOutputLegendsItemCaughtByItem[];
   npcKills: number;
 };
 

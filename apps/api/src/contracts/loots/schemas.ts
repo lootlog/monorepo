@@ -171,6 +171,14 @@ export const UserLootStatsResponse = Schema.Struct({
       /** Drops the user's characters were present at. */
       count: FiniteNumber,
       caught: FiniteNumber,
+      /** The user's characters that caught it, most catches first. */
+      caughtBy: Schema.Array(
+        Schema.Struct({
+          characterId: Schema.String,
+          name: Schema.String,
+          caught: FiniteNumber,
+        }),
+      ),
       /** The user's kills of the monster on the world in the period. */
       npcKills: FiniteNumber,
     }),

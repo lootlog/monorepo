@@ -195,7 +195,7 @@ export function AbyssHub() {
         ) : (
           <div className="p-3">
             <EmptyState
-              framed
+              fill
               icon={Swords}
               title={t("battlePanel.abyss.emptyTitle")}
               description={t("battlePanel.abyss.emptyDescription")}

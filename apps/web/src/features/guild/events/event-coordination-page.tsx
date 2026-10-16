@@ -218,7 +218,7 @@ export const EventCoordinationPage = () => {
 
           {coordination.heroes.length === 0 ? (
             <EmptyState
-              framed
+              fill
               icon={Crosshair}
               title={t("events.coordination.empty")}
             />

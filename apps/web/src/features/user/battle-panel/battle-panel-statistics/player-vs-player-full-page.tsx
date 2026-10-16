@@ -91,7 +91,7 @@ export function PlayerVsPlayerFullPage() {
       return (
         <div className="p-3">
           <EmptyState
-            framed
+            fill
             icon={AlertCircle}
             title={t("battlePanel.statistics.empty.errorTitle")}
             description={
@@ -107,7 +107,7 @@ export function PlayerVsPlayerFullPage() {
       return (
         <div className="p-3">
           <EmptyState
-            framed
+            fill
             icon={SearchX}
             title={t("battlePanel.statistics.playerVsPlayer.emptyTitle")}
             description={t(
