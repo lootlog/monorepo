@@ -51,6 +51,7 @@ export const ThemeAnnouncement = () => {
         <div className="flex shrink-0 items-center gap-2">
           <Button
             size="sm"
+            nativeButton={false}
             render={<Link to={ROUTES.user.settings.newTheme} />}
             onClick={handleDismiss}
           >
