@@ -59,6 +59,7 @@ export function Reservations() {
     RESERVATIONS_VIEW_MODE_KEY,
     "grid",
     RESERVATIONS_GRID_MEDIA_QUERY,
+    "grid",
   );
 
   const spotsQuery = useListReservationSpots(
