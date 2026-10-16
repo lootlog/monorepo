@@ -75,6 +75,7 @@
   "weeksSummary_few": "Do dziś {{count}} bicia, porównane z tymi samymi dniami poprzedniego tygodnia.",
   "weeksSummary_many": "Do dziś {{count}} bić, porównane z tymi samymi dniami poprzedniego tygodnia.",
   "weeksSummary_other": "Do dziś {{count}} bicia, porównane z tymi samymi dniami poprzedniego tygodnia.",
+  "weeksIncomplete": "Część tych dni nie ma jeszcze historii bić, więc tygodni nie da się porównać.",
   "noGains": "Żaden potwór nie był bity częściej niż w poprzednim okresie.",
   "date": "Data",
   "view": "Widok danych",
