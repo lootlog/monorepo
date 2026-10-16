@@ -210,6 +210,8 @@
     "averageOnline": "śr. {{duration}} na dzień gry",
     "online": "W grze dziś",
     "onlineNow": "Teraz w grze",
+    "onlineStale": "Dane mogą być niepełne",
+    "onlineError": "Nie udało się pobrać czasu w grze.",
     "duration": "{{hours}} h {{minutes}} min",
     "minutes": "{{minutes}} min",
     "weekMonster": "Potwór tygodnia"
