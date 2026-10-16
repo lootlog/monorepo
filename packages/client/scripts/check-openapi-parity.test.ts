@@ -283,6 +283,7 @@ test.each([
   ["activity", "/users/@me/activity/online"],
   ["api", "/users/@me/stats/kills/analytics"],
   ["api", "/users/@me/stats/kills/activity"],
+  ["api", "/users/@me/stats/kills/characters"],
   ["api", "/users/@me/feed"],
   ["api", "/guilds/{guildId}/events/{eventId}/kill-history"],
 ] as const)(

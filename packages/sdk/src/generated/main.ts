@@ -8336,6 +8336,14 @@ export type CreateKillDtoNpc = {
   icon?: string;
 };
 
+export type CreateKillDtoCharacter = {
+  /** @minLength 1 */
+  name: string;
+  lvl: number;
+  prof?: string;
+  icon?: string;
+};
+
 export interface CreateKillDto {
   /** @minLength 1 */
   world: string;
@@ -8344,6 +8352,7 @@ export interface CreateKillDto {
   characterId: string;
   /** @minLength 1 */
   accountId: string;
+  character?: CreateKillDtoCharacter;
 }
 
 export type GuildKillStatsResponseDtoOutputOverviewKillsByType = {
@@ -8509,6 +8518,10 @@ export type UserKillAnalyticsResponseDtoOutputMeta = {
   days: number;
   /** @nullable */
   world: string | null;
+  /** @nullable */
+  characterId: string | null;
+  /** @nullable */
+  trackedSince: string | null;
   startDate: string;
   endDate: string;
   /** @nullable */
@@ -8838,6 +8851,10 @@ export type UserKillActivityResponseDtoOutputMeta = {
   days: number;
   /** @nullable */
   world: string | null;
+  /** @nullable */
+  characterId: string | null;
+  /** @nullable */
+  trackedSince: string | null;
   startDate: string;
   endDate: string;
   /** @nullable */
@@ -12028,6 +12045,11 @@ days?: KillsControllerGetUserKillAnalyticsDays;
  */
 world?: string;
 npcType?: NpcType;
+/**
+ * @minLength 1
+ * @maxLength 100
+ */
+characterId?: string;
 };
 
 export type KillsControllerGetUserKillAnalyticsDays = typeof KillsControllerGetUserKillAnalyticsDays[keyof typeof KillsControllerGetUserKillAnalyticsDays];
@@ -12058,6 +12080,11 @@ export type KillsControllerGetUserKillActivityParams = {
  * @maxLength 100
  */
 world?: string;
+/**
+ * @minLength 1
+ * @maxLength 100
+ */
+characterId?: string;
 };
 
 export type KillsControllerGetUserKillActivity401 = ReauthenticationRequiredEncoded | {

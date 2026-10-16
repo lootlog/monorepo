@@ -6,7 +6,9 @@ import {
   memberKillBucketTable,
   memberTable,
   memberToRoleTable,
+  userCharacterKillBucketTable,
   userCharactersLootlogSettingsTable,
+  userKillCharacterTable,
   userKillTotalTable,
   userKillBucketTable,
   userPinnedEventTable,
@@ -92,6 +94,14 @@ const deletePersistedAccount = (
       yield* transaction
         .delete(userKillTotalTable)
         .where(eq(userKillTotalTable.discordUserId, identity.discordId));
+      yield* transaction
+        .delete(userCharacterKillBucketTable)
+        .where(
+          eq(userCharacterKillBucketTable.discordUserId, identity.discordId),
+        );
+      yield* transaction
+        .delete(userKillCharacterTable)
+        .where(eq(userKillCharacterTable.discordUserId, identity.discordId));
       yield* transaction
         .delete(userCharactersLootlogSettingsTable)
         .where(

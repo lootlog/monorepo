@@ -1,7 +1,10 @@
-import { sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { DateTime } from "effect";
 import {
+  userCharacterKillBucketTable,
   userKillBucketTable,
+  userKillCharacterTable,
   userKillTotalTable,
 } from "#src/database/drizzle/schema";
 
@@ -34,19 +37,47 @@ export const getKillAnalyticsRange = (now: DateTime.Utc, days: number) => {
 
 export type KillAnalyticsRange = ReturnType<typeof getKillAnalyticsRange>;
 
+export type UserKillAnalyticsScope = {
+  readonly world?: string;
+  /** Reads the character's own tables, which start when per-character tracking began. */
+  readonly characterId?: string;
+};
+
+const ISO_UTC = 'YYYY-MM-DD"T"HH24:MI:SS"Z"';
+
 /** Both variants aggregate inside PostgreSQL. The activity variant never computes NPC ranks or hourly grids. */
 export const userKillAnalyticsSql = (
   discordUserId: string,
-  world: string | undefined,
+  { world, characterId }: UserKillAnalyticsScope,
   range: KillAnalyticsRange,
   activityOnly: boolean,
   npcType?: string,
 ) => {
-  const bucket = userKillBucketTable;
-  const total = userKillTotalTable;
+  const bucket = characterId
+    ? userCharacterKillBucketTable
+    : userKillBucketTable;
 
-  const scope = (table: typeof bucket | typeof total) =>
-    sql`${table.discordUserId} = ${discordUserId} ${world ? sql`and ${table.world} = ${world}` : sql``}`;
+  const total = characterId ? userKillCharacterTable : userKillTotalTable;
+
+  const scope = (table: {
+    readonly discordUserId: AnyPgColumn;
+    readonly world: AnyPgColumn;
+    readonly characterId?: AnyPgColumn;
+  }) =>
+    and(
+      eq(table.discordUserId, discordUserId),
+      world ? eq(table.world, world) : undefined,
+      characterId && table.characterId
+        ? eq(table.characterId, characterId)
+        : undefined,
+    );
+
+  // Every kill since the user's first per-character kill has a character, so
+  // a character's history is known from then on, even before its own first kill.
+  const trackedSince = characterId
+    ? sql`(select to_char(min(${userKillCharacterTable.firstKilledAt}) at time zone 'UTC', ${ISO_UTC})
+        from ${userKillCharacterTable} where ${eq(userKillCharacterTable.discordUserId, discordUserId)})`
+    : sql`null`;
 
   const start = sql`${range.start}::timestamptz`;
   const previousThrough = sql`${range.previousThrough}::timestamptz`;
@@ -58,7 +89,7 @@ export const userKillAnalyticsSql = (
       select coalesce(sum(${total.kills}), 0)::float8 as total from ${total} where ${scope(total)}
     ), coverage as (
       select coalesce(sum(${bucket.kills}), 0)::float8 as timed,
-        to_char(min(${bucket.periodStart}) at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as first
+        to_char(min(${bucket.periodStart}) at time zone 'UTC', ${ISO_UTC}) as first
       from ${bucket} where ${scope(bucket)}
     ), buckets as materialized (
       select ${bucket.world} as world, ${bucket.npcId} as "npcId", ${bucket.npcName} as "npcName",
@@ -97,7 +128,7 @@ export const userKillAnalyticsSql = (
     )`
     }
     select json_build_object(
-      'allTimeKills', lifetime.total, 'timedKills', coverage.timed, 'firstBucketAt', coverage.first,
+      'allTimeKills', lifetime.total, 'timedKills', coverage.timed, 'firstBucketAt', coverage.first, 'trackedSince', ${trackedSince},
       'daily', coalesce((select json_agg(d order by d.date, d.world) from daily d), '[]'::json)
       ${
         activityOnly

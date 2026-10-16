@@ -16,8 +16,10 @@ import {
   memberKillBucketTable,
   memberKillTotalTable,
   memberTable,
+  userCharacterKillBucketTable,
   userCharactersLootlogSettingsTable,
   userKillBucketTable,
+  userKillCharacterTable,
   userKillTotalTable,
 } from "#src/database/drizzle/schema";
 import type { ApplicationLogger } from "#src/shared/application-logger";
@@ -62,6 +64,14 @@ type KillInput = {
   readonly npcProf: string | null;
   readonly npcIcon: string | null;
   readonly lastKilledAt: Date;
+};
+
+type CharacterInput = {
+  readonly characterId: string;
+  readonly name: string | null;
+  readonly level: number | null;
+  readonly profession: string | null;
+  readonly icon: string | null;
 };
 
 export const makeKillCreation = (
@@ -132,11 +142,33 @@ export const makeKillCreation = (
     lastKilledAt: input.lastKilledAt,
   });
 
-  const incrementUser = (input: KillInput, periodStart: Date) => {
+  /**
+   * The account-wide and per-character rows change together, so a kill counts
+   * for its character exactly when it counts for the account.
+   */
+  const incrementUser = (
+    input: KillInput,
+    character: CharacterInput,
+    periodStart: Date,
+  ) => {
     const key = {
       discordUserId: input.userId,
       world: input.world,
       npcId: input.npcId,
+    };
+
+    const characterKey = { ...key, characterId: character.characterId };
+
+    const characterDetails = {
+      name: character.name,
+      level: character.level,
+      profession: character.profession,
+      icon: character.icon,
+    };
+
+    const characterCount = {
+      kills: sql`${userKillCharacterTable.kills} + 1`,
+      lastKilledAt: input.lastKilledAt,
     };
 
     return protect(
@@ -172,6 +204,51 @@ export const makeKillCreation = (
                   kills: sql`${userKillBucketTable.kills} + 1`,
                   ...descriptive(input),
                 },
+              }),
+            transaction
+              .insert(userCharacterKillBucketTable)
+              .values({
+                ...characterKey,
+                periodStart,
+                ...descriptive(input),
+                kills: 1,
+              })
+              .onConflictDoUpdate({
+                target: [
+                  userCharacterKillBucketTable.discordUserId,
+                  userCharacterKillBucketTable.world,
+                  userCharacterKillBucketTable.characterId,
+                  userCharacterKillBucketTable.npcId,
+                  userCharacterKillBucketTable.periodStart,
+                ],
+                set: {
+                  kills: sql`${userCharacterKillBucketTable.kills} + 1`,
+                  ...descriptive(input),
+                },
+              }),
+            transaction
+              .insert(userKillCharacterTable)
+              .values({
+                discordUserId: input.userId,
+                world: input.world,
+                characterId: character.characterId,
+                ...characterDetails,
+                kills: 1,
+                firstKilledAt: input.lastKilledAt,
+                lastKilledAt: input.lastKilledAt,
+              })
+              .onConflictDoUpdate({
+                target: [
+                  userKillCharacterTable.discordUserId,
+                  userKillCharacterTable.world,
+                  userKillCharacterTable.characterId,
+                ],
+                // An older Game client reports only the id; keep the last
+                // known details.
+                set:
+                  character.name === null
+                    ? characterCount
+                    : { ...characterCount, ...characterDetails },
               }),
           ],
           { discard: true },
@@ -349,7 +426,17 @@ export const makeKillCreation = (
       personalUpdated = yield* writeOnce(
         userDedupKey,
         "kills.dedup.user",
-        incrementUser(input, periodStart),
+        incrementUser(
+          input,
+          {
+            characterId: data.characterId,
+            name: data.character?.name ?? null,
+            level: data.character?.lvl ?? null,
+            profession: data.character?.prof ?? null,
+            icon: data.character?.icon ?? null,
+          },
+          periodStart,
+        ),
       ).pipe(
         Effect.catch((error) =>
           error.operation === "kills.dedup.user"

@@ -118,6 +118,11 @@ export const recordsDataLayer = (services: RecordsServices) =>
         "KillsController_getUserKillActivity",
         services.userKillQueries.getUserKillActivity(caller.discordId, query),
       ),
+    getUserKillCharacters: (caller) =>
+      lootOperation(
+        "KillsController_getUserKillCharacters",
+        services.userKillQueries.getUserKillCharacters(caller.discordId),
+      ),
     getUserKillStats: (caller, query) =>
       lootOperation(
         "KillsController_getUserKillStats",

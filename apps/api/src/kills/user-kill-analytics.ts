@@ -14,6 +14,7 @@ import {
   getKillAnalyticsRange,
   userKillAnalyticsSql,
   type KillAnalyticsRange,
+  type UserKillAnalyticsScope,
 } from "./user-kill-analytics-query.js";
 
 const RawDaily = Schema.Struct({
@@ -26,6 +27,7 @@ const RawBase = Schema.Struct({
   allTimeKills: Schema.Number,
   timedKills: Schema.Number,
   firstBucketAt: Schema.NullOr(Schema.String),
+  trackedSince: Schema.NullOr(Schema.String),
   daily: Schema.Array(RawDaily),
 });
 
@@ -90,21 +92,31 @@ const dateAfter = (date: string, days: number) =>
 const percentChange = (current: number, previous: number) =>
   previous === 0 ? null : ((current - previous) / previous) * 100;
 
+const toLocalDate = (instant: string) =>
+  DateTime.formatIsoDate(
+    DateTime.setZoneNamedUnsafe(DateTime.makeUnsafe(instant), "Europe/Warsaw"),
+  );
+
 export const buildKillActivity = (
   raw: typeof RawBase.Type,
   range: KillAnalyticsRange,
-  world?: string,
+  scope: UserKillAnalyticsScope = {},
 ): UserKillActivityResponse => {
-  const firstDate = raw.firstBucketAt
-    ? DateTime.formatIsoDate(
-        DateTime.setZoneNamedUnsafe(
-          DateTime.makeUnsafe(raw.firstBucketAt),
-          "Europe/Warsaw",
-        ),
-      )
-    : null;
-
   const untimedKills = Math.max(0, raw.allTimeKills - raw.timedKills);
+
+  // Days before history starts are unknown, never zero: lifetime kills older
+  // than the first bucket, or kills older than per-character tracking.
+  const historyStart = scope.characterId
+    ? raw.trackedSince
+    : untimedKills > 0
+      ? raw.firstBucketAt
+      : undefined;
+
+  const firstDate =
+    historyStart === undefined || historyStart === null
+      ? historyStart
+      : toLocalDate(historyStart);
+
   const byDate = new Map<string, number>();
   const worldsByDate = new Map<string, Set<string>>();
 
@@ -122,21 +134,23 @@ export const buildKillActivity = (
     const date = dateAfter(range.startDate, index);
 
     const unknown =
-      untimedKills > 0 && (firstDate === null || date < firstDate);
+      firstDate !== undefined && (firstDate === null || date < firstDate);
 
     return {
       date,
       kills: unknown ? null : (byDate.get(date) ?? 0),
       worlds: [...(worldsByDate.get(date) ?? [])].sort(),
-      partial:
-        unknown ||
-        date === range.endDate ||
-        (untimedKills > 0 && date === firstDate),
+      partial: unknown || date === range.endDate || date === firstDate,
     };
   });
 
-  const coverage =
-    raw.timedKills === 0 && raw.allTimeKills > 0
+  const coverage = scope.characterId
+    ? firstDate === null || firstDate === undefined
+      ? "unavailable"
+      : firstDate > range.startDate
+        ? "partial"
+        : "complete"
+    : raw.timedKills === 0 && raw.allTimeKills > 0
       ? "unavailable"
       : raw.allTimeKills !== raw.timedKills
         ? "partial"
@@ -147,7 +161,9 @@ export const buildKillActivity = (
       timezone: "Europe/Warsaw",
       generatedAt: range.generatedAt,
       days: range.days,
-      world: world ?? null,
+      world: scope.world ?? null,
+      characterId: scope.characterId ?? null,
+      trackedSince: raw.trackedSince,
       startDate: range.startDate,
       endDate: range.endDate,
       firstBucketAt: raw.firstBucketAt,
@@ -246,9 +262,9 @@ const killStreaks = (daily: ReadonlyArray<DailyPoint>) => {
 export const buildKillAnalytics = (
   raw: typeof RawAnalytics.Type,
   range: KillAnalyticsRange,
-  world?: string,
+  scope: UserKillAnalyticsScope = {},
 ): UserKillAnalyticsResponse => {
-  const activity = buildKillActivity(raw, range, world);
+  const activity = buildKillActivity(raw, range, scope);
   const { daily } = activity;
   const { currentStreak, longestStreak } = killStreaks(daily);
   const totalKills = daily.reduce((total, day) => total + (day.kills ?? 0), 0);
@@ -358,6 +374,13 @@ export const buildKillAnalytics = (
   };
 };
 
+const scopeOf = (
+  query: UserKillAnalyticsQuery | UserKillActivityQuery,
+): UserKillAnalyticsScope => ({
+  world: query.world,
+  characterId: query.characterId,
+});
+
 export const makeUserKillAnalytics = (
   database: typeof ApiDatabase.Service,
   cache: KillQueryCache,
@@ -370,7 +393,13 @@ export const makeUserKillAnalytics = (
 
     const load = Effect.gen(function* () {
       const rows = yield* database.execute(
-        userKillAnalyticsSql(userId, query.world, range, false, query.npcType),
+        userKillAnalyticsSql(
+          userId,
+          scopeOf(query),
+          range,
+          false,
+          query.npcType,
+        ),
       );
 
       const decoded = yield* Schema.decodeUnknownEffect(
@@ -386,7 +415,7 @@ export const makeUserKillAnalytics = (
           new Error("Missing kill analytics aggregate"),
         );
 
-      return buildKillAnalytics(row.payload, range, query.world);
+      return buildKillAnalytics(row.payload, range, scopeOf(query));
     });
 
     return yield* cache.getOrSet(
@@ -394,8 +423,9 @@ export const makeUserKillAnalytics = (
         days: query.days ?? 30,
         world: query.world,
         npcType: query.npcType,
+        characterId: query.characterId,
         through: range.through,
-        version: 2,
+        version: 3,
       }),
       UserKillAnalyticsResponse,
       load,
@@ -412,7 +442,7 @@ export const makeUserKillAnalytics = (
 
     const load = Effect.gen(function* () {
       const rows = yield* database.execute(
-        userKillAnalyticsSql(userId, query.world, range, true),
+        userKillAnalyticsSql(userId, scopeOf(query), range, true),
       );
 
       const decoded = yield* Schema.decodeUnknownEffect(
@@ -426,15 +456,16 @@ export const makeUserKillAnalytics = (
       if (!row)
         return yield* Effect.fail(new Error("Missing kill activity aggregate"));
 
-      return buildKillActivity(row.payload, range, query.world);
+      return buildKillActivity(row.payload, range, scopeOf(query));
     });
 
     return yield* cache.getOrSet(
       buildKillQueryCacheKey("user-activity", userId, {
         days: range.days,
         world: query.world,
+        characterId: query.characterId,
         through: range.through,
-        version: 2,
+        version: 3,
       }),
       UserKillActivityResponse,
       load,

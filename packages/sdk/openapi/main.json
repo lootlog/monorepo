@@ -20451,6 +20451,16 @@
               "$ref": "#/components/schemas/NpcType"
             },
             "required": false
+          },
+          {
+            "name": "characterId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "required": false
           }
         ],
         "security": [
@@ -20551,6 +20561,16 @@
         "parameters": [
           {
             "name": "world",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "required": false
+          },
+          {
+            "name": "characterId",
             "in": "query",
             "schema": {
               "type": "string",
@@ -38200,6 +38220,26 @@
           "accountId": {
             "type": "string",
             "minLength": 1
+          },
+          "character": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "lvl": {
+                "type": "number"
+              },
+              "prof": {
+                "type": "string"
+              },
+              "icon": {
+                "type": "string"
+              }
+            },
+            "required": ["name", "lvl"],
+            "additionalProperties": false
           }
         },
         "required": ["world", "npc", "characterId", "accountId"],
@@ -38543,6 +38583,14 @@
                 "nullable": true,
                 "type": "string"
               },
+              "characterId": {
+                "nullable": true,
+                "type": "string"
+              },
+              "trackedSince": {
+                "nullable": true,
+                "type": "string"
+              },
               "startDate": {
                 "type": "string"
               },
@@ -38582,6 +38630,8 @@
               "generatedAt",
               "days",
               "world",
+              "characterId",
+              "trackedSince",
               "startDate",
               "endDate",
               "firstBucketAt",
@@ -39129,6 +39179,14 @@
                 "nullable": true,
                 "type": "string"
               },
+              "characterId": {
+                "nullable": true,
+                "type": "string"
+              },
+              "trackedSince": {
+                "nullable": true,
+                "type": "string"
+              },
               "startDate": {
                 "type": "string"
               },
@@ -39168,6 +39226,8 @@
               "generatedAt",
               "days",
               "world",
+              "characterId",
+              "trackedSince",
               "startDate",
               "endDate",
               "firstBucketAt",
