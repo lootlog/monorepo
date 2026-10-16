@@ -89,7 +89,7 @@ export const AppearanceSettings: FC = () => {
               trigger={
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant="ghost"
                   disabled={!canCreate}
                   icon=<Download className="size-4" />
                   aria-label={importLabel}

@@ -103,7 +103,7 @@ export const ThemeEditorPage = () => {
             trigger={
               <Button
                 size="sm"
-                variant="outline"
+                variant="ghost"
                 icon={
                   theme.shareToken ? (
                     <Link2 className="size-4" />
@@ -112,8 +112,7 @@ export const ThemeEditorPage = () => {
                   )
                 }
                 className={cn(
-                  theme.shareToken &&
-                    "border-primary/55 text-primary hover:text-primary",
+                  theme.shareToken && "text-primary hover:text-primary",
                 )}
               >
                 {theme.shareToken
