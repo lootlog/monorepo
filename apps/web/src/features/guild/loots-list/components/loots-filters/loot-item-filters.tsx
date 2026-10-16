@@ -67,11 +67,7 @@ export const LootItemFilters = ({
         ? t("loots.searchCommand.level", { level: item.lvl })
         : undefined,
     icon: (
-      <ItemImage
-        icon={item.icon}
-        rarity={resolveItemRarity(item.rarity)}
-        className="[&>div]:cursor-default"
-      />
+      <ItemImage icon={item.icon} rarity={resolveItemRarity(item.rarity)} />
     ),
   }));
 
