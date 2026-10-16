@@ -1,90 +1,65 @@
-import {
-  CalendarCheck,
-  CalendarDays,
-  CalendarRange,
-  Gauge,
-  Ghost,
-  History,
-  Skull,
-  TrendingUp,
-} from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { KpiCard } from "@/components/common/kpi-card";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { BandSection } from "@/components/common/band-section";
+import { KillStatsOverview } from "@/components/common/kill-analytics/kill-stats-overview";
 import { KillAnalyticsTrendSkeleton } from "@/components/common/kill-analytics/kill-analytics-trend-skeleton";
+import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
+import { TRACKABLE_NPC_TYPES } from "@/features/user/kills/npc-types";
+import { StatsLeaderboardSection } from "@/components/common/stats-leaderboard-section";
+import { StatsSectionColumns } from "@/components/common/stats-section-columns";
+import { STATISTICS_RANKINGS } from "./statistics-search";
 
-const METRICS = [
-  { key: "total", icon: Skull },
-  { key: "activeDays", icon: CalendarCheck },
-  { key: "average", icon: Gauge },
-  { key: "uniqueNpcs", icon: Ghost },
-] as const;
-
-const COMPARISON = [
-  { key: "current", icon: TrendingUp },
-  { key: "previous", icon: History },
-  { key: "change", icon: Gauge },
-] as const;
-
-const RECORDS = [
-  { key: "bestDay", icon: CalendarCheck },
-  { key: "bestWeek", icon: CalendarRange },
-  { key: "bestMonth", icon: CalendarDays },
-] as const;
-
-/** StatisticsOverview's layout with its static labels, while the numbers load. */
+/** StatisticsOverview's layout while the numbers load. */
 export function StatisticsOverviewSkeleton() {
   const { t } = useTranslation();
 
   return (
-    <div role="status" aria-label={t("common.loading")} className="space-y-3">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {METRICS.map(({ key, icon }) => (
-          <KpiCard
-            key={key}
-            icon={icon}
-            label={t(`statistics.${key}`)}
-            value={null}
-            isLoading
-          />
-        ))}
-      </div>
-      <div className="grid gap-3 xl:grid-cols-2">
+    <div role="status" aria-label={t("common.loading")}>
+      <KillStatsOverview
+        isLoading
+        types={TRACKABLE_NPC_TYPES.flatMap((type) =>
+          type === "ELITE3" ? [] : [{ type, kills: 0 }],
+        )}
+      />
+      <BandSection
+        id="statistics-records-loading"
+        title={t("kills.records.title")}
+        tiled
+      >
+        <StatsTileGrid className="sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }, (_, index) => (
+            <StatsTile
+              key={index}
+              media={<Skeleton className="size-10 shrink-0 rounded-lg" />}
+              label=""
+              value={<Skeleton className="h-7 w-24" />}
+              detail={<Skeleton className="h-4 w-16" />}
+            />
+          ))}
+        </StatsTileGrid>
+      </BandSection>
+      <StatsSectionColumns className="xl:grid-cols-3 xl:*:first:col-span-2">
         <KillAnalyticsTrendSkeleton title={t("statistics.daily")} />
-        <KillAnalyticsTrendSkeleton title={t("statistics.weekly")} />
-      </div>
-      <div className="space-y-2">
-        <div className="px-1">
-          <p className="text-sm font-semibold">{t("statistics.comparison")}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {t("statistics.alignedComparison")}
-          </p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          {COMPARISON.map(({ key, icon }) => (
-            <KpiCard
-              key={key}
-              icon={icon}
-              label={t(`statistics.${key}`)}
-              value={null}
-              isLoading
-            />
-          ))}
-        </div>
-      </div>
-      <div className="space-y-2">
-        <p className="px-1 text-sm font-semibold">{t("statistics.records")}</p>
-        <div className="grid gap-3 sm:grid-cols-3">
-          {RECORDS.map(({ key, icon }) => (
-            <KpiCard
-              key={key}
-              icon={icon}
-              label={t(`statistics.${key}`)}
-              value={null}
-              isLoading
-            />
-          ))}
-        </div>
-      </div>
+        <StatsLeaderboardSection
+          title={t("statistics.worlds")}
+          isLoading
+          loadingRows={3}
+        >
+          {null}
+        </StatsLeaderboardSection>
+      </StatsSectionColumns>
+      <StatsSectionColumns className="xl:grid-cols-2">
+        {STATISTICS_RANKINGS.map((ranking) => (
+          <StatsLeaderboardSection
+            key={ranking}
+            title={t(`statistics.rankings.${ranking}`)}
+            isLoading
+            loadingRows={5}
+          >
+            {null}
+          </StatsLeaderboardSection>
+        ))}
+      </StatsSectionColumns>
     </div>
   );
 }

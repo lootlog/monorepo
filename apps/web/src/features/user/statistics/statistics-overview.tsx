@@ -1,166 +1,131 @@
-import { createCachedFormatter } from "@lootlog/datetime";
-import type { UserKillAnalyticsResponseDtoOutput } from "@lootlog/client/main";
-import {
-  CalendarCheck,
-  CalendarDays,
-  CalendarRange,
-  Gauge,
-  Ghost,
-  History,
-  Skull,
-  TrendingUp,
-} from "lucide-react";
+import { maxBy, upperFirst } from "es-toolkit";
+import { Crown, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { KpiCard } from "@/components/common/kpi-card";
+import { KillStatsOverview } from "@/components/common/kill-analytics/kill-stats-overview";
+import { BandSection } from "@/components/common/band-section";
+import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
+import { getKillShift } from "@/components/common/kill-analytics/kill-shift";
 import { KillAnalyticsTrend } from "@/components/common/kill-analytics/kill-analytics-trend";
-import { formatStatisticsDateRange } from "@/components/common/kill-analytics/format-statistics-date";
-import { EMPTY_VALUE } from "@/constants/empty-value";
+import {
+  formatIsoWeekday,
+  formatStatisticsWeekdayDate,
+} from "@/components/common/kill-analytics/format-statistics-date";
+import { NpcTile } from "@/components/tiles/npc-tile";
+import { TRACKABLE_NPC_TYPES } from "@/features/user/kills/npc-types";
+import { useNavigate } from "@tanstack/react-router";
+import type { StatisticsTabProps } from "./statistics-content";
+import { toNpcType } from "./statistics-filters";
+import { StatisticsDelta } from "./statistics-delta";
+import { StatisticsTopNpcs } from "./statistics-top-npcs";
+import { StatisticsWorldsSection } from "./statistics-worlds-section";
+import { StatsSectionColumns } from "@/components/common/stats-section-columns";
 
-const getOverviewDateFormatter = createCachedFormatter("pl-PL", {});
+const numberFormatter = new Intl.NumberFormat("pl-PL");
 
-const countFormatter = new Intl.NumberFormat("pl-PL", {
-  maximumFractionDigits: 1,
-});
-
-const deltaFormatter = new Intl.NumberFormat("pl-PL", {
-  signDisplay: "exceptZero",
-});
-
-const percentFormatter = new Intl.NumberFormat("pl-PL", {
-  style: "percent",
-  maximumFractionDigits: 1,
-  signDisplay: "exceptZero",
-});
-
-const RECORDS = [
-  { key: "bestDay", icon: CalendarCheck },
-  { key: "bestWeek", icon: CalendarRange },
-  { key: "bestMonth", icon: CalendarDays },
-] as const;
-
-export function StatisticsOverview({
-  data,
-}: {
-  data: UserKillAnalyticsResponseDtoOutput;
-}) {
+export function StatisticsOverview({ data, search }: StatisticsTabProps) {
   const { t } = useTranslation();
-  const dateFormatter = getOverviewDateFormatter(data.meta.timezone);
-  const previousStart = new Date(data.meta.startDate);
-  previousStart.setUTCDate(previousStart.getUTCDate() - data.meta.days);
-
+  const navigate = useNavigate({ from: "/@me/statistics" });
   const { overview, comparison } = data;
+  const favourite = data.npcs[0];
+  const bestDay = data.records.bestDay;
+  const peak = maxBy(data.hourlyWeekday, (cell) => cell.kills);
 
-  const metrics = [
-    { key: "total", icon: Skull, value: overview.totalKills },
-    { key: "activeDays", icon: CalendarCheck, value: overview.activeDays },
-    {
-      key: "average",
-      icon: Gauge,
-      value: overview.activeDays
-        ? overview.totalKills / overview.activeDays
-        : null,
-    },
-    { key: "uniqueNpcs", icon: Ghost, value: overview.uniqueNpcs },
-  ] as const;
+  // The records come from the same kills, so they show together or not at all.
+  const hasRecords = favourite && bestDay && peak && peak.kills > 0;
+  const shift = getKillShift(peak?.hour ?? 0);
 
   return (
     <>
-      <section aria-labelledby="statistics-overview-title">
-        <h2 id="statistics-overview-title" className="sr-only">
-          {t("statistics.overview")}
-        </h2>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {metrics.map(({ key, icon, value }) => (
-            <KpiCard
-              key={key}
-              icon={icon}
-              label={t(`statistics.${key}`)}
-              value={
-                value === null ? EMPTY_VALUE : countFormatter.format(value)
-              }
+      <KillStatsOverview
+        total={overview.totalKills}
+        totalDetail={
+          <span className="flex flex-wrap items-center gap-1">
+            <StatisticsDelta
+              delta={comparison.deltaKills}
+              percent={comparison.deltaPercent}
             />
-          ))}
-        </div>
-      </section>
-      <div className="grid gap-3 xl:grid-cols-2">
-        <KillAnalyticsTrend title={t("statistics.daily")} data={data.daily} />
-        <KillAnalyticsTrend
-          title={t("statistics.weekly")}
-          data={data.weekly.map((week) => ({
-            date: week.startDate,
-            kills: week.kills,
-            partial: week.partial,
-          }))}
-        />
-      </div>
-      <section
-        aria-labelledby="statistics-comparison-title"
-        className="space-y-2"
-      >
-        <div className="px-1">
-          <h2
-            id="statistics-comparison-title"
-            className="text-sm font-semibold"
-          >
-            {t("statistics.comparison")}
-          </h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {t("statistics.alignedComparison")}
-          </p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <KpiCard
-            icon={TrendingUp}
-            label={t("statistics.current")}
-            value={countFormatter.format(comparison.currentKills)}
-            detail={`${dateFormatter.format(new Date(data.meta.startDate))} – ${dateFormatter.format(new Date(comparison.currentThrough))}`}
-          />
-          <KpiCard
-            icon={History}
-            label={t("statistics.previous")}
-            value={countFormatter.format(comparison.previousKills)}
-            detail={`${dateFormatter.format(previousStart)} – ${dateFormatter.format(new Date(comparison.previousThrough))}`}
-          />
-          <KpiCard
-            icon={Gauge}
-            label={t("statistics.change")}
-            value={deltaFormatter.format(comparison.deltaKills)}
-            detail={
-              comparison.deltaPercent === null
-                ? undefined
-                : percentFormatter.format(comparison.deltaPercent / 100)
-            }
-          />
-        </div>
-      </section>
-      <section aria-labelledby="statistics-records-title" className="space-y-2">
-        <h2
-          id="statistics-records-title"
-          className="px-1 text-sm font-semibold"
-        >
-          {t("statistics.records")}
-        </h2>
-        <div className="grid gap-3 sm:grid-cols-3">
-          {RECORDS.map(({ key, icon }) => {
-            const record = data.records[key];
+            {t("statistics.versusPrevious", { days: search.days })}
+          </span>
+        }
+        types={TRACKABLE_NPC_TYPES.flatMap((type) => {
+          const kills =
+            data.types.find((entry) => entry.npcType === type)?.totalKills ?? 0;
 
-            return (
-              <KpiCard
-                key={key}
-                icon={icon}
-                label={t(`statistics.${key}`)}
-                value={
-                  record ? countFormatter.format(record.kills) : EMPTY_VALUE
-                }
-                detail={
-                  record &&
-                  `${formatStatisticsDateRange(record.startDate, record.endDate)}${record.partial ? ` · ${t("statistics.partial")}` : ""}`
-                }
-              />
-            );
-          })}
-        </div>
-      </section>
+          // Few players hunt Elite III, so its tile shows only once they do.
+          return type === "ELITE3" && kills === 0 ? [] : [{ type, kills }];
+        })}
+        onSelectType={(type) =>
+          void navigate({
+            search: (current) => ({
+              ...current,
+              tab: "monsters",
+              npcType: toNpcType(type),
+            }),
+          })
+        }
+      />
+      {hasRecords && (
+        <BandSection
+          id="statistics-records"
+          title={t("kills.records.title")}
+          tiled
+        >
+          <StatsTileGrid className="sm:grid-cols-2 xl:grid-cols-4">
+            <StatsTile
+              media={
+                favourite.npcIcon ? (
+                  <span className="w-10 shrink-0">
+                    <NpcTile
+                      npc={{
+                        id: favourite.npcId,
+                        name: favourite.npcName,
+                        lvl: favourite.npcLvl,
+                        icon: favourite.npcIcon,
+                      }}
+                    />
+                  </span>
+                ) : undefined
+              }
+              icon={Crown}
+              label={t("statistics.favouriteNpc")}
+              value={favourite.npcName}
+              detail={`${t("statistics.count", { count: favourite.totalKills })} · ${upperFirst(favourite.world)}`}
+            />
+            <StatsTile
+              icon={Crown}
+              label={t("kills.records.bestDay")}
+              value={numberFormatter.format(bestDay.kills)}
+              detail={formatStatisticsWeekdayDate(bestDay.startDate)}
+            />
+            <StatsTile
+              icon={Zap}
+              label={t("kills.records.streak")}
+              value={t("statistics.days", { count: overview.currentStreak })}
+              detail={t("statistics.longestStreakDetail", {
+                count: overview.longestStreak,
+              })}
+            />
+            <StatsTile
+              icon={shift.icon}
+              label={t("statistics.peakTime")}
+              value={`${formatIsoWeekday(peak.weekday, true)} ${peak.hour}:00`}
+              detail={t(`kills.records.shift.${shift.key}`)}
+            />
+          </StatsTileGrid>
+        </BandSection>
+      )}
+      <StatsSectionColumns className="xl:grid-cols-3 xl:*:first:col-span-2">
+        <KillAnalyticsTrend title={t("statistics.daily")} data={data.daily} />
+        <StatisticsWorldsSection worlds={data.worlds} search={search} />
+      </StatsSectionColumns>
+      <StatsSectionColumns className="xl:grid-cols-2">
+        <StatisticsTopNpcs ranking="top" npcs={data.npcs} search={search} />
+        <StatisticsTopNpcs
+          ranking="gains"
+          npcs={data.npcGains}
+          search={search}
+        />
+      </StatsSectionColumns>
     </>
   );
 }

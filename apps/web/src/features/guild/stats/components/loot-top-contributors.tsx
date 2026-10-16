@@ -1,12 +1,14 @@
 import type { LootStatsResponseDtoOutputTopContributorsItem } from "@lootlog/client/main";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useTranslation } from "react-i18next";
-import { LEADERBOARD_SIZE } from "../constants";
 import { useGuildMemberMap } from "../hooks/use-guild-member-map";
 import { MemberNameWithColor } from "./member-name-with-color";
 import { MemberAvatar } from "@/components/common/member-avatar";
-import { StatsLeaderboardCard } from "./stats-leaderboard-card";
-import { StatsLeaderboardRow } from "./stats-leaderboard-row";
+import {
+  LEADERBOARD_SIZE,
+  StatsLeaderboardSection,
+} from "@/components/common/stats-leaderboard-section";
+import { StatsLeaderboardRow } from "@/components/common/stats-leaderboard-row";
 
 type LootTopContributorsProps = {
   data?: LootStatsResponseDtoOutputTopContributorsItem[];
@@ -22,7 +24,7 @@ export const LootTopContributors = ({
   const contributors = data?.slice(0, LEADERBOARD_SIZE) ?? [];
 
   return (
-    <StatsLeaderboardCard
+    <StatsLeaderboardSection
       title={t("loots.stats.topContributors.title")}
       description={t("loots.stats.topContributors.description")}
       isLoading={isLoading}
@@ -53,6 +55,6 @@ export const LootTopContributors = ({
           maxValue={contributors[0]?.count ?? 0}
         />
       ))}
-    </StatsLeaderboardCard>
+    </StatsLeaderboardSection>
   );
 };

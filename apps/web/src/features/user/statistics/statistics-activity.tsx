@@ -1,80 +1,91 @@
-import type { UserKillAnalyticsResponseDtoOutput } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { ActivityHeatmap } from "@/components/common/activity-heatmap/activity-heatmap";
-import { KpiCard } from "@/components/common/kpi-card";
-import { Flame, Trophy } from "lucide-react";
-import { WeeklyActivityHeatmap } from "@/components/common/activity-heatmap/weekly-activity-heatmap";
-import { formatIsoWeekday } from "@/components/common/kill-analytics/format-statistics-date";
-import { summarizeActivityDistributions } from "@/components/common/kill-analytics/summarize-activity-distributions";
-import { StatisticsDistribution } from "./statistics-distribution";
+import { useUsersActivityControllerGetOnline } from "@lootlog/client/activity";
+import { ChartSection } from "@/components/common/chart-section";
+import { KillStatsActivity } from "@/components/common/kill-analytics/kill-stats-activity";
+import { StatsSectionColumns } from "@/components/common/stats-section-columns";
+import type { StatisticsTabProps } from "./statistics-content";
+import { StatisticsPlayTimeChart } from "./statistics-play-time-chart";
+import { StatisticsPlayTimeTiles } from "./statistics-play-time-tiles";
+import { StatisticsWeeks } from "./statistics-weeks";
+import { summarizePlayTime } from "./summarize-play-time";
 
-export function StatisticsActivity({
-  data,
-}: {
-  data: UserKillAnalyticsResponseDtoOutput;
-}) {
+/** How long the activity service keeps online history. */
+const ONLINE_HISTORY_DAYS = 112;
+
+/** The last `days` calendar days through `to`, as the online history takes them. */
+const rangeEnding = (to: string, days: number) => {
+  const from = new Date(`${to}T12:00:00Z`);
+  from.setUTCDate(from.getUTCDate() - days + 1);
+
+  return { from: from.toISOString().slice(0, 10), to };
+};
+
+export function StatisticsActivity({ data, search }: StatisticsTabProps) {
   const { t } = useTranslation();
-  const distributions = summarizeActivityDistributions(data.hourlyWeekday);
+
+  const online = useUsersActivityControllerGetOnline(
+    rangeEnding(data.meta.endDate, Math.min(search.days, ONLINE_HISTORY_DAYS)),
+    { query: { staleTime: 60_000 } },
+  );
+
+  const formatDuration = (seconds: number) =>
+    t("statistics.duration", {
+      hours: Math.floor(seconds / 3600),
+      minutes: Math.floor((seconds % 3600) / 60),
+    });
+
+  const available =
+    online.data !== undefined && online.data.status !== "unavailable";
+
+  const days = online.data?.days ?? [];
+  const playTime = summarizePlayTime(days, data.daily);
+  const killsByDate = new Map(data.daily.map((day) => [day.date, day.kills]));
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3">
-        <KpiCard
-          icon={Flame}
-          label={t("statistics.currentStreak")}
-          value={t("statistics.days", { count: data.overview.currentStreak })}
-        />
-        <KpiCard
-          icon={Trophy}
-          label={t("statistics.longestStreak")}
-          value={t("statistics.days", { count: data.overview.longestStreak })}
-        />
-      </div>
-      <SectionCard>
-        <SectionCardHeader title={t("statistics.activity")} />
-        <SectionCardContent>
-          <ActivityHeatmap
-            days={data.daily.map((day) => ({
+      <StatisticsPlayTimeTiles
+        playTime={playTime}
+        available={available}
+        world={search.world}
+        coverage={
+          search.days > ONLINE_HISTORY_DAYS
+            ? t("statistics.onlineLastDays", { days: ONLINE_HISTORY_DAYS })
+            : undefined
+        }
+        formatDuration={formatDuration}
+      />
+      <StatsSectionColumns className="xl:grid-cols-3 xl:*:first:col-span-2">
+        <ChartSection
+          title={t("statistics.onlineTitle")}
+          description={
+            online.data?.status === "stale"
+              ? t("statistics.onlineStale")
+              : undefined
+          }
+          isLoading={online.isPending}
+          emptyMessage={
+            online.isError
+              ? t("statistics.loadError")
+              : available && playTime.totalSeconds > 0
+                ? undefined
+                : t("statistics.onlineUnavailable")
+          }
+        >
+          <StatisticsPlayTimeChart
+            points={days.map((day) => ({
               date: day.date,
-              value: day.kills,
-              partial: day.partial,
+              seconds: day.onlineSeconds,
+              kills: killsByDate.get(day.date) ?? null,
             }))}
-            label={t("statistics.activity")}
-            formatValue={(value) => t("statistics.count", { count: value })}
+            formatDuration={formatDuration}
           />
-        </SectionCardContent>
-      </SectionCard>
-      <div className="grid items-start gap-3 lg:grid-cols-2">
-        <StatisticsDistribution
-          title={t("statistics.hourlyDistribution")}
-          rows={distributions.hourly.map(({ hour, kills }) => ({
-            label: `${String(hour).padStart(2, "0")}:00`,
-            kills,
-          }))}
+        </ChartSection>
+        <KillStatsActivity
+          cells={data.hourlyWeekday}
+          title={t("statistics.whenYouKill")}
         />
-        <StatisticsDistribution
-          title={t("statistics.weekdayDistribution")}
-          rows={distributions.weekdays.map(({ weekday, kills }) => ({
-            label: formatIsoWeekday(weekday),
-            kills,
-          }))}
-        />
-      </div>
-      <SectionCard>
-        <SectionCardHeader
-          title={t("statistics.hours")}
-          description={t("statistics.polishTime")}
-        />
-        <SectionCardContent>
-          <WeeklyActivityHeatmap
-            cells={data.hourlyWeekday}
-            label={t("statistics.hours")}
-          />
-        </SectionCardContent>
-      </SectionCard>
+      </StatsSectionColumns>
+      <StatisticsWeeks world={search.world} />
     </>
   );
 }

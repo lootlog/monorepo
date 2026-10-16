@@ -66,7 +66,7 @@ export function WeeklyActivityHeatmap({
         role="group"
         aria-label={label}
       >
-        <div className="grid min-w-[32rem] max-w-[50rem] grid-cols-[2.5rem_repeat(24,minmax(0,1fr))] gap-[3px]">
+        <div className="grid min-w-[18rem] max-w-[50rem] grid-cols-[2.5rem_repeat(24,minmax(0,1fr))] gap-[3px]">
           <span aria-hidden />
           {HOURS.map((hour) => (
             <span
