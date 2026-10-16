@@ -17,6 +17,8 @@ import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
 import { calendarRange } from "@/components/common/activity-heatmap/activity-calendar";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { EMPTY_VALUE } from "@/constants/empty-value";
+import { QueryErrorNotice } from "@/components/common/query-error-notice";
+import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { StatisticsDelta } from "@/features/user/statistics/statistics-delta";
 
@@ -40,24 +42,40 @@ const summarizeOnline = (
     day.onlineSeconds ? [day.onlineSeconds] : [],
   );
 
+  // Without collection there is no time to show, only an unknown.
+  const known = data !== undefined && data.status !== "unavailable";
+
   return {
-    seconds: data?.days.find((day) => day.date === today)?.onlineSeconds,
-    average: played.length ? sum(played) / played.length : null,
+    seconds: known
+      ? data.days.find((day) => day.date === today)?.onlineSeconds
+      : null,
+    average: known && played.length ? sum(played) / played.length : null,
     isOnlineNow:
       data?.status === "fresh" &&
       now - Date.parse(lastObservedAt ?? "") < ONLINE_NOW_MS,
+    isStale: data?.status === "stale",
   };
 };
 
+/**
+ * This week's kills, or `null` when they are unknown: not loaded, failed, or
+ * outside the history Lootlog has. A day the API cannot count stays unknown
+ * rather than zero.
+ */
 const summarizeWeek = (
   data: UserKillAnalyticsResponseDtoOutput | undefined,
   today: string,
-) => ({
-  todayKills: data?.daily.find((day) => day.date === today)?.kills ?? 0,
-  average: data?.overview.averagePerDay ?? 0,
-  favourite: data?.npcs[0],
-  streak: data?.overview.currentStreak ?? 0,
-});
+) => {
+  if (data === undefined || data.meta.coverage === "unavailable") return null;
+
+  return {
+    todayKills: data.daily.find((day) => day.date === today)?.kills ?? null,
+    average: data.overview.averagePerDay ?? 0,
+    favourite: data.npcs[0],
+    streak: data.overview.currentStreak,
+    longestStreak: data.overview.longestStreak,
+  };
+};
 
 /** Today's play next to the week: kills, time in game, streak and the week's monster. */
 export function DashboardToday() {
@@ -74,15 +92,14 @@ export function DashboardToday() {
     query: { staleTime: 60_000 },
   });
 
-  const { todayKills, average, favourite, streak } = summarizeWeek(
-    week.data,
-    range.to,
-  );
+  const summary = summarizeWeek(week.data, range.to);
+  const favourite = summary?.favourite;
 
   const {
     seconds: todayOnline,
     average: averageOnline,
     isOnlineNow,
+    isStale,
   } = summarizeOnline(online.data, range.to, now);
 
   const formatOnline = (seconds: number | null | undefined) =>
@@ -95,8 +112,17 @@ export function DashboardToday() {
             minutes: Math.floor((seconds % 3600) / 60),
           });
 
-  const loading = (value: string) =>
-    week.isPending ? <Skeleton className="my-0.5 h-6 w-16" /> : value;
+  const loading = (value: string | undefined) =>
+    week.isPending ? (
+      <Skeleton className="my-0.5 h-6 w-16" />
+    ) : (
+      (value ?? EMPTY_VALUE)
+    );
+
+  const failed = [
+    { query: week, message: t("statistics.loadError") },
+    { query: online, message: t("statistics.today.onlineError") },
+  ].filter(({ query }) => query.isError);
 
   return (
     <BandSection
@@ -118,12 +144,17 @@ export function DashboardToday() {
         <StatsTile
           icon={Swords}
           label={t("statistics.today.kills")}
-          value={loading(numberFormatter.format(todayKills))}
+          value={loading(
+            summary?.todayKills === null || summary === null
+              ? undefined
+              : numberFormatter.format(summary.todayKills),
+          )}
           detail={
-            week.data && (
+            summary &&
+            summary.todayKills !== null && (
               <span className="flex items-center gap-1">
                 <StatisticsDelta
-                  delta={Math.round(todayKills - average)}
+                  delta={Math.round(summary.todayKills - summary.average)}
                   percent={null}
                 />
                 {t("statistics.today.versusAverage")}
@@ -142,7 +173,11 @@ export function DashboardToday() {
             )
           }
           detail={
-            isOnlineNow ? (
+            isStale ? (
+              <span className="text-signal-timer">
+                {t("statistics.today.onlineStale")}
+              </span>
+            ) : isOnlineNow ? (
               <span className="flex items-center gap-1.5 text-signal-ready">
                 <span className="size-1.5 rounded-full bg-current" />
                 {t("statistics.today.onlineNow")}
@@ -159,14 +194,14 @@ export function DashboardToday() {
           icon={Zap}
           label={t("kills.records.streak")}
           value={loading(
-            t("statistics.days", {
-              count: streak,
-            }),
+            summary
+              ? t("statistics.days", { count: summary.streak })
+              : undefined,
           )}
           detail={
-            week.data &&
+            summary &&
             t("statistics.longestStreakDetail", {
-              count: week.data.overview.longestStreak,
+              count: summary.longestStreak,
             })
           }
         />
@@ -187,12 +222,23 @@ export function DashboardToday() {
             ) : undefined
           }
           label={t("statistics.today.weekMonster")}
-          value={loading(favourite?.npcName ?? EMPTY_VALUE)}
+          value={loading(favourite?.npcName)}
           detail={
             favourite && t("statistics.count", { count: favourite.totalKills })
           }
         />
       </StatsTileGrid>
+      {/* The tiles keep the last good values, or show them as unknown. */}
+      {failed.map(({ query, message }) => (
+        <QueryErrorNotice
+          key={message}
+          message={message}
+          detail={query.data === undefined ? undefined : t("statistics.stale")}
+          onRetry={() => void query.refetch()}
+          isRetrying={query.isFetching}
+          className={LIST_TILE_RULE_CLASS}
+        />
+      ))}
     </BandSection>
   );
 }
