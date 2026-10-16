@@ -4,12 +4,17 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ReservationCardSkeleton } from "./reservation-card-skeleton";
 import {
   getReservationCollectionClassName,
+  RESERVATIONS_GRID_MEDIA_QUERY,
   RESERVATIONS_VIEW_MODE_KEY,
 } from "./reservation-collection-layout";
 
 /** Route-level stand-in for the reservations page: its toolbar above the spots. */
 export const ReservationsPageSkeleton = () => {
-  const { viewMode } = useViewMode(RESERVATIONS_VIEW_MODE_KEY);
+  const { viewMode } = useViewMode(
+    RESERVATIONS_VIEW_MODE_KEY,
+    "grid",
+    RESERVATIONS_GRID_MEDIA_QUERY,
+  );
 
   return (
     <div aria-busy="true" className="min-h-0 flex-1 overflow-hidden">
