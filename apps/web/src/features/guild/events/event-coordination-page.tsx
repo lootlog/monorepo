@@ -20,6 +20,7 @@ import { EventActionDialog } from "./components/dialogs/event-action-dialog";
 import { EventLoadError } from "./components/event-load-error";
 import { EventCoordinationSkeleton } from "./event-coordination-skeleton";
 import { EventCoordinationHeroCard } from "./components/coordination/event-coordination-hero-card";
+import { EventHeader } from "./components/header/event-header";
 import { EventCoordinationSummaryCard } from "./components/coordination/event-coordination-summary-card";
 import { invalidateMapQueries } from "./hooks/mutations/invalidate-map-queries";
 import { invalidateRespawnQueries } from "./hooks/mutations/invalidate-respawn-queries";
@@ -213,41 +214,36 @@ export const EventCoordinationPage = () => {
       />
 
       <ScrollArea data-under-top-bar className="flex-1 min-h-0">
-        <div className="flex flex-col gap-3 px-3 py-3">
-          <EventCoordinationSummaryCard coordination={coordination} />
+        <EventHeader tab="coordination" />
+        <EventCoordinationSummaryCard coordination={coordination} />
 
-          {coordination.heroes.length === 0 ? (
-            <EmptyState
-              fill
-              icon={Crosshair}
-              title={t("events.coordination.empty")}
+        {coordination.heroes.length === 0 ? (
+          <EmptyState
+            fill
+            icon={Crosshair}
+            title={t("events.coordination.empty")}
+          />
+        ) : (
+          coordination.heroes.map((hero) => (
+            <EventCoordinationHeroCard
+              key={hero.heroId}
+              hero={hero}
+              guildId={resolvedGuildId}
+              eventId={resolvedEventId}
+              assignmentTimeoutMinutes={coordination.assignmentTimeoutMinutes}
+              canWrite={canWrite}
+              canManage={canManage}
+              assigningMapId={assigningMapId}
+              closingHeroId={
+                closeRespawnWindow.isPending
+                  ? (closingHero?.heroId ?? null)
+                  : null
+              }
+              onSelfAssign={handleSelfAssign}
+              onCloseWindow={setClosingHero}
             />
-          ) : (
-            <div className="flex flex-col gap-3">
-              {coordination.heroes.map((hero) => (
-                <EventCoordinationHeroCard
-                  key={hero.heroId}
-                  hero={hero}
-                  guildId={resolvedGuildId}
-                  eventId={resolvedEventId}
-                  assignmentTimeoutMinutes={
-                    coordination.assignmentTimeoutMinutes
-                  }
-                  canWrite={canWrite}
-                  canManage={canManage}
-                  assigningMapId={assigningMapId}
-                  closingHeroId={
-                    closeRespawnWindow.isPending
-                      ? (closingHero?.heroId ?? null)
-                      : null
-                  }
-                  onSelfAssign={handleSelfAssign}
-                  onCloseWindow={setClosingHero}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+          ))
+        )}
       </ScrollArea>
     </div>
   );

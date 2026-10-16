@@ -1,12 +1,11 @@
 import { getRankingSelection } from "./event-ranking-selection";
 import { EmptyState } from "@/components/common/empty-state";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Trophy } from "lucide-react";
 import type { EventRanking, EventHeroNpc } from "../../types/api";
-import { SectionCard } from "@/components/common/section-card/section-card";
+import { BandSection } from "@/components/common/band-section";
 import { useState } from "react";
 import { HeroTabs } from "../shared/hero-tabs";
 import { EventRankingTable } from "./event-ranking-table";
@@ -47,24 +46,23 @@ export const EventRankingPreview = ({
   }
 
   return (
-    <SectionCard className="overflow-clip">
-      <SectionCardHeader
-        icon={Trophy}
-        title={t("events.ranking.title")}
-        actions={
-          rankings.length > 0 ? (
-            <ChevronLink
-              render=<Link
-                to="/$guildId/events/$eventId/ranking"
-                params={{ guildId, eventId }}
-              />
-            >
-              {t("events.ranking.viewAll")}
-            </ChevronLink>
-          ) : null
-        }
-      />
-
+    <BandSection
+      id="event-ranking-preview"
+      title={t("events.ranking.title")}
+      tiled
+      trailing={
+        rankings.length > 0 ? (
+          <ChevronLink
+            render=<Link
+              to="/$guildId/events/$eventId/ranking"
+              params={{ guildId, eventId }}
+            />
+          >
+            {t("events.ranking.viewAll")}
+          </ChevronLink>
+        ) : null
+      }
+    >
       <HeroTabs
         placement="section"
         heroes={heroNpcs}
@@ -92,6 +90,6 @@ export const EventRankingPreview = ({
           />
         )}
       </div>
-    </SectionCard>
+    </BandSection>
   );
 };

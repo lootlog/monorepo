@@ -1,5 +1,4 @@
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCard } from "@/components/common/section-card/section-card";
+import { BandSection } from "@/components/common/band-section";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -89,21 +88,12 @@ export const KillParticipantsCard = ({
   };
 
   return (
-    <SectionCard className="w-full min-w-0 overflow-hidden bg-card">
-      <SectionCardHeader
-        icon={Users}
-        title={t("events.killDetail.participants")}
-        actions={
-          <>
-            <span className="text-xs tabular-nums text-muted-foreground">
-              {t("events.kills.participantCount", {
-                count: sortedParticipants.length,
-              })}
-            </span>
-          </>
-        }
-      />
-
+    <BandSection
+      id="kill-participants"
+      title={t("events.killDetail.participants")}
+      count={sortedParticipants.length}
+      tiled
+    >
       {sortedParticipants.length === 0 ? (
         <EmptyState
           compact
@@ -112,7 +102,7 @@ export const KillParticipantsCard = ({
         />
       ) : (
         <>
-          <div className="hidden h-10 grid-cols-[2rem_minmax(0,1fr)_7rem_5rem_6.5rem_5rem] items-center gap-2 border-b border-border bg-background px-3 text-xs font-semibold text-muted-foreground lg:grid">
+          <div className="hidden h-10 grid-cols-[2rem_minmax(0,1fr)_7rem_5rem_6.5rem_5rem] items-center gap-2 border-b border-sidebar-border bg-sidebar px-3 text-xs font-semibold text-muted-foreground lg:grid">
             <span className="text-center">#</span>
             <span>{t("events.ranking.player")}</span>
             <span className="text-right">{t("events.ranking.time")}</span>
@@ -138,6 +128,6 @@ export const KillParticipantsCard = ({
           </div>
         </>
       )}
-    </SectionCard>
+    </BandSection>
   );
 };

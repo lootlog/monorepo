@@ -8,7 +8,7 @@ type StatsSectionColumnsProps = {
 };
 
 /**
- * Banded sections side by side from `xl`, one hairline between them; narrower
+ * Banded sections side by side from `xl`, one rule between them; narrower
  * pages stack them.
  */
 export const StatsSectionColumns = ({
@@ -17,7 +17,7 @@ export const StatsSectionColumns = ({
 }: StatsSectionColumnsProps) => (
   <div
     className={cn(
-      "grid min-w-0 grid-cols-1 *:min-w-0 xl:*:border-sidebar-border xl:[&>*+*]:border-l",
+      "grid min-w-0 grid-cols-1 *:min-w-0 xl:*:border-border xl:[&>*+*]:border-l",
       className,
     )}
   >

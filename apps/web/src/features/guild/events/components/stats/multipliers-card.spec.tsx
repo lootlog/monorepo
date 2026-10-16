@@ -129,9 +129,6 @@ describe("MultipliersCard", () => {
     expect(
       screen.queryByText("events.killDetail.multipliers.appliedStatus"),
     ).toBeNull();
-    expect(
-      screen.getByText("events.killDetail.multipliers.ruleCount"),
-    ).toBeTruthy();
   });
 
   it.each(staticScoringStates)(
@@ -147,14 +144,13 @@ describe("MultipliersCard", () => {
       expect(screen.getByText(text)).toBeTruthy();
       expect(container.querySelector("button")).toBeNull();
 
+      // Only advanced scoring has rules to count next to the heading.
+      const heading = screen.getByRole("heading").textContent;
+
       if (scoringMode === "SIMPLE") {
-        expect(
-          screen.queryByText("events.killDetail.multipliers.ruleCount"),
-        ).toBeNull();
+        expect(heading).toBe("events.killDetail.multipliers.title");
       } else {
-        expect(
-          screen.getByText("events.killDetail.multipliers.ruleCount"),
-        ).toBeTruthy();
+        expect(heading).not.toBe("events.killDetail.multipliers.title");
       }
     },
   );

@@ -1,62 +1,69 @@
-import { SectionCard } from "@/components/common/section-card/section-card";
+import { BandSection } from "@/components/common/band-section";
+import { DetailBar } from "@/components/common/detail-bar";
 import { SkeletonLine } from "@/components/common/skeleton-line";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { MapPin, Package, Skull, Trophy } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { HeroDetailResponsiveLayout } from "./components/heroes/hero-detail-responsive-layout";
 import { EmbeddedLootRowsSkeleton } from "./components/shared/embedded-loot-rows-skeleton";
-import { PageHeaderSkeleton } from "@/components/common/page-header-skeleton";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 
 export const EventHeroSkeleton = () => {
   const { t } = useTranslation();
 
   return (
-    <div aria-busy="true" className="flex flex-col gap-3 px-3 py-3">
-      <PageHeaderSkeleton
-        media={<Skeleton className="size-16 shrink-0 rounded-xl" />}
-      />
-
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
-        <div>
-          <SectionCard className="overflow-hidden">
-            <SectionCardHeader
-              icon={MapPin}
-              title={
-                <span className="flex items-center gap-1.5">
-                  {t("events.maps.title")}
-                  <SkeletonLine className="h-4 w-10" />
-                </span>
-              }
-            />
-            <div className="divide-y divide-border/70">
+    <ScrollArea data-under-top-bar className="min-h-0 flex-1">
+      <div aria-busy="true" className="min-w-0">
+        <DetailBar
+          meta={
+            <span className="flex items-center gap-2.5">
+              <Skeleton className="size-10 rounded-lg" />
+              <SkeletonLine className="h-4 w-40" />
+            </span>
+          }
+        />
+        <HeroDetailResponsiveLayout
+          maps={
+            <BandSection
+              id="hero-maps-skeleton"
+              title={t("events.maps.title")}
+              tiled
+            >
               {Array.from({ length: 6 }, (_, index) => (
-                <Skeleton key={index} className="h-14 w-full rounded-none" />
+                <Skeleton
+                  key={index}
+                  className="h-14 w-full rounded-none border-b border-sidebar-border"
+                />
               ))}
-            </div>
-          </SectionCard>
-        </div>
-        <div className="space-y-3">
-          <SectionCard className="overflow-hidden">
-            <SectionCardHeader
-              icon={Trophy}
-              title={t("events.ranking.title")}
-            />
-            <TableRowsSkeleton rows={5} withHeader />
-          </SectionCard>
-          <SectionCard className="overflow-hidden">
-            <SectionCardHeader
-              icon={Skull}
-              title={t("events.kills.recentTitle")}
-            />
-            <TableRowsSkeleton rows={5} withHeader />
-          </SectionCard>
-          <SectionCard className="overflow-hidden">
-            <SectionCardHeader icon={Package} title={t("events.loots.title")} />
-            <EmbeddedLootRowsSkeleton rows={3} />
-          </SectionCard>
-        </div>
+            </BandSection>
+          }
+          sidebar={
+            <>
+              <BandSection
+                id="hero-ranking-skeleton"
+                title={t("events.ranking.title")}
+                tiled
+              >
+                <TableRowsSkeleton rows={5} withHeader />
+              </BandSection>
+              <BandSection
+                id="hero-kills-skeleton"
+                title={t("events.kills.recentTitle")}
+                tiled
+              >
+                <TableRowsSkeleton rows={5} withHeader />
+              </BandSection>
+              <BandSection
+                id="hero-loots-skeleton"
+                title={t("events.loots.title")}
+                tiled
+              >
+                <EmbeddedLootRowsSkeleton rows={3} />
+              </BandSection>
+            </>
+          }
+        />
       </div>
-    </div>
+    </ScrollArea>
   );
 };

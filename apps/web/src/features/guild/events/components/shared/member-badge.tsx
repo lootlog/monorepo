@@ -21,7 +21,7 @@ export const MemberBadge = ({ eventId, guildId, member }: MemberBadgeProps) => {
         eventId,
         memberId: String(member.id),
       }}
-      className="flex min-w-0 items-center gap-2 border-b border-r border-border/70 bg-card px-3 py-2.5 outline-none transition-colors hover:bg-muted/30 focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+      className="flex min-w-0 items-center gap-2 border-b border-r border-sidebar-border px-3 py-2.5 outline-none transition-colors hover:bg-muted/30 focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
     >
       {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
       <img src={avatarUrl} alt="" className="size-7 shrink-0 rounded-full" />

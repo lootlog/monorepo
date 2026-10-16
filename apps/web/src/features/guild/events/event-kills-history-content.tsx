@@ -9,6 +9,7 @@ import {
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { EventLoadError } from "./components/event-load-error";
 import { HeroTabs } from "./components/shared/hero-tabs";
+import { EventHeader } from "./components/header/event-header";
 import { EventKillsSkeleton } from "./event-kills-skeleton";
 import { EventKillsTable } from "./components/kills/event-kills-table";
 import { EVENT_HISTORY_PAGE_SIZE } from "./components/shared/event-history-page-size";
@@ -112,7 +113,12 @@ export const EventKillsHistoryContent = ({
         ref={setScrollElement}
         className="min-h-0 flex-1"
       >
-        <h1 className="sr-only">{t("events.kills.title")}</h1>
+        {/* A hero's kills open from its page, outside the event's tabs. */}
+        {initialHeroId ? (
+          <h1 className="sr-only">{t("events.kills.title")}</h1>
+        ) : (
+          <EventHeader tab="kills" />
+        )}
         <HeroTabs
           placement="page"
           heroes={heroes}
