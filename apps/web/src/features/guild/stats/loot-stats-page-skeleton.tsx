@@ -1,7 +1,7 @@
 import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
 import { useMediaQuery } from "usehooks-ts";
 import { useTranslation } from "react-i18next";
-import { LootOverviewCards } from "./components/loot-overview-cards";
+import { LootOverviewCards } from "@/components/common/loot-stats/loot-overview-cards";
 import { LootTopContributors } from "./components/loot-top-contributors";
 import { LootTopItems } from "./components/loot-top-items";
 import { ChartSection } from "@/components/common/chart-section";

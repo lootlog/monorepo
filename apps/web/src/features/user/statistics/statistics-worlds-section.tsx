@@ -44,7 +44,6 @@ export function StatisticsWorldsSection({
             </span>
           }
           value={world.totalKills}
-          maxValue={played[0]?.totalKills ?? 0}
           link={{
             to: "/@me/statistics",
             search: { ...search, world: world.world },

@@ -7,7 +7,8 @@ import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
 import { TRACKABLE_NPC_TYPES } from "@/features/user/kills/npc-types";
 import { StatsLeaderboardSection } from "@/components/common/stats-leaderboard-section";
 import { StatsSectionColumns } from "@/components/common/stats-section-columns";
-import { STATISTICS_RANKINGS } from "./statistics-search";
+import { StatisticsLegends } from "./statistics-legends";
+import { STATISTICS_PREVIEW_SIZE } from "./statistics-top-npcs";
 
 /** StatisticsOverview's layout while the numbers load. */
 export function StatisticsOverviewSkeleton() {
@@ -49,16 +50,14 @@ export function StatisticsOverviewSkeleton() {
         </StatsLeaderboardSection>
       </StatsSectionColumns>
       <StatsSectionColumns className="xl:grid-cols-2">
-        {STATISTICS_RANKINGS.map((ranking) => (
-          <StatsLeaderboardSection
-            key={ranking}
-            title={t(`statistics.rankings.${ranking}`)}
-            isLoading
-            loadingRows={5}
-          >
-            {null}
-          </StatsLeaderboardSection>
-        ))}
+        <StatsLeaderboardSection
+          title={t("statistics.ranking")}
+          isLoading
+          loadingRows={STATISTICS_PREVIEW_SIZE}
+        >
+          {null}
+        </StatsLeaderboardSection>
+        <StatisticsLegends isLoading size={STATISTICS_PREVIEW_SIZE} />
       </StatsSectionColumns>
     </div>
   );

@@ -6,7 +6,7 @@ import {
 import { lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 
-import { LootOverviewCards } from "./components/loot-overview-cards";
+import { LootOverviewCards } from "@/components/common/loot-stats/loot-overview-cards";
 import { LootStatsFilterBar } from "./components/loot-stats-filter-bar";
 import { LootTopContributors } from "./components/loot-top-contributors";
 import { LootTopItems } from "./components/loot-top-items";
@@ -16,15 +16,19 @@ import { useLootStatsSettings } from "./hooks/use-loot-stats-settings";
 import { buildLootStatsParams } from "./utils/build-stats-query-params";
 
 const LootTimelineChart = lazy(() =>
-  import("./components/loot-timeline-chart").then((module) => ({
-    default: module.LootTimelineChart,
-  })),
+  import("@/components/common/loot-stats/loot-timeline-chart").then(
+    (module) => ({
+      default: module.LootTimelineChart,
+    }),
+  ),
 );
 
 const LootTopNpcsChart = lazy(() =>
-  import("./components/loot-top-npcs-chart").then((module) => ({
-    default: module.LootTopNpcsChart,
-  })),
+  import("@/components/common/loot-stats/loot-top-npcs-chart").then(
+    (module) => ({
+      default: module.LootTopNpcsChart,
+    }),
+  ),
 );
 
 export const LootStats = () => {
@@ -74,7 +78,7 @@ export const LootStats = () => {
         >
           <LootTimelineChart
             data={data?.timeline}
-            period={settings.period}
+            hourly={settings.period === "24h" || settings.period === "3d"}
             isLoading={isLoading}
           />
         </Suspense>

@@ -40,7 +40,8 @@ export const PageTabs = ({
             activeOptions={{ exact: true }}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "rounded-md text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+              // Keyboard focus rings the label, not the strip's full height.
+              "text-sm font-medium outline-none transition-colors after:pointer-events-none after:absolute after:inset-x-1 after:inset-y-2 after:rounded-md focus-visible:after:ring-2 focus-visible:after:ring-ring",
               active
                 ? "text-foreground"
                 : "text-muted-foreground hover:text-foreground",

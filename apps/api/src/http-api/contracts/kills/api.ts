@@ -92,7 +92,7 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
     .annotate(OpenApi.Summary, "Get personal kill analytics")
     .annotate(
       OpenApi.Description,
-      "Calendar-day analytics in Europe/Warsaw. Current-day/hour data is partial; untimed lifetime history is never distributed backwards. Rankings are bounded to 20 NPCs and 10 gains. Comparisons exclude the current incomplete hour.",
+      "Calendar-day analytics in Europe/Warsaw. Current-day/hour data is partial; untimed lifetime history is never distributed backwards. The NPC ranking is bounded to 20 NPCs. Comparisons exclude the current incomplete hour.",
     ),
   HttpApiEndpoint.get(
     "KillsControllerGetUserKillActivity",

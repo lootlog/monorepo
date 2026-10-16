@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { StatisticsOverview } from "./statistics-overview";
 import { StatisticsActivity } from "./statistics-activity";
 import { StatisticsMonsters } from "./statistics-monsters";
-import type { StatisticsSearch } from "./statistics-search";
+import type { StatisticsSearch, StatisticsTab } from "./statistics-search";
 
 export type StatisticsTabProps = {
   data: UserKillAnalyticsResponseDtoOutput;
@@ -18,9 +18,13 @@ const tabs = {
   monsters: StatisticsMonsters,
 };
 
-export function StatisticsContent(props: StatisticsTabProps) {
+/** A kill statistics tab; loots read their own statistics. */
+export function StatisticsContent({
+  tab,
+  ...props
+}: StatisticsTabProps & { tab: Exclude<StatisticsTab, "loots" | "legends"> }) {
   const { t } = useTranslation();
-  const Content = tabs[props.search.tab];
+  const Content = tabs[tab];
 
   if (props.data.meta.coverage === "unavailable")
     return (

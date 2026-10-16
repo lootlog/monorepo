@@ -30,6 +30,7 @@ function renderStatistics(
   response?: UserKillAnalyticsResponseDtoOutput,
 ) {
   const requests: URL[] = [];
+  const lootRequests: URL[] = [];
   onTestFinished(
     configureApiClients({
       main: {
@@ -69,6 +70,12 @@ function renderStatistics(
                 ],
               }),
             );
+
+          if (url.pathname.endsWith("/stats/loots")) {
+            lootRequests.push(url);
+
+            return new Promise<Response>(() => {});
+          }
 
           if (url.pathname.endsWith("/analytics")) {
             requests.push(url);
@@ -123,11 +130,11 @@ function renderStatistics(
     </QueryClientProvider>,
   );
 
-  return { router, requests };
+  return { router, requests, lootRequests };
 }
 
 it("restores URL filters, keeps them while changing tabs, narrows only the monster ranking to the NPC type, and fetches the selected period", async () => {
-  const { router, requests } = renderStatistics(
+  const { router, requests, lootRequests } = renderStatistics(
     "/@me/statistics?tab=activity&days=90&world=luvia&npcType=HERO",
   );
 
@@ -181,6 +188,20 @@ it("restores URL filters, keeps them while changing tabs, narrows only the monst
       ),
     ).toBe(true),
   );
+  fireEvent.keyDown(document.activeElement ?? document.body, {
+    key: "Escape",
+  });
+  fireEvent.click(await screen.findByRole("link", { name: "Łupy" }));
+  await waitFor(() =>
+    expect(
+      lootRequests.some(
+        (request) =>
+          request.searchParams.get("days") === "7" &&
+          request.searchParams.get("world") === "luvia" &&
+          !request.searchParams.has("npcType"),
+      ),
+    ).toBe(true),
+  );
 });
 
 it("does not present unavailable dated history as zero kills", async () => {
@@ -214,7 +235,6 @@ it("does not present unavailable dated history as zero kills", async () => {
     hourlyWeekday: [],
     types: [],
     npcs: [],
-    npcGains: [],
     worlds: [],
     records: { bestDay: null, bestWeek: null, bestMonth: null },
     comparison: {
@@ -270,7 +290,6 @@ it("narrows to a character on its world, says when its history starts, and drops
     hourlyWeekday: [],
     types: [],
     npcs: [],
-    npcGains: [],
     worlds: [],
     records: { bestDay: null, bestWeek: null, bestMonth: null },
     comparison: {
@@ -335,6 +354,38 @@ it("narrows to a character on its world, says when its history starts, and drops
       tab: "overview",
       days: 30,
       world: "luvia",
+    }),
+  );
+});
+
+it("sorts a ranking from the filter panel of a narrow page, keeping the sort in the URL", async () => {
+  const { router } = renderStatistics("/@me/statistics?tab=monsters&days=30");
+
+  fireEvent.click(await screen.findByRole("button", { name: /^Filtry/ }));
+  fireEvent.click(
+    await screen.findByRole("combobox", { name: "Sortuj według" }),
+  );
+  const option = await screen.findByRole("option", { name: "Legendy" });
+  fireEvent.pointerDown(option, { pointerType: "mouse" });
+  fireEvent.click(option);
+  await waitFor(() =>
+    expect(router.state.location.search).toMatchObject({
+      tab: "monsters",
+      sort: "legends",
+    }),
+  );
+  fireEvent.click(await screen.findByRole("combobox", { name: "Kolejność" }));
+
+  const ascending = await screen.findByRole("option", {
+    name: "Od najmniejszych",
+  });
+
+  fireEvent.pointerDown(ascending, { pointerType: "mouse" });
+  fireEvent.click(ascending);
+  await waitFor(() =>
+    expect(router.state.location.search).toMatchObject({
+      sort: "legends",
+      asc: true,
     }),
   );
 });

@@ -22,6 +22,11 @@ import { GameVersionSchema } from "@lootlog/schema/game-version";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
 import { LootSourceSchema } from "@lootlog/schema/loot";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
+import {
+  CharacterIdQuery,
+  characterNeedsWorld,
+  UserStatsDays,
+} from "#src/contracts/kills/analytics-schemas";
 
 const LootSubmission = Schema.Struct({
   guildId: Schema.String,
@@ -57,16 +62,50 @@ export const LootResponse = LootRecord.annotate({
   identifier: "LootResponseDto",
 });
 
+const LootStatsOverview = Schema.Struct({
+  totalLoots: FiniteNumber,
+  totalItems: FiniteNumber,
+  legendaryItems: FiniteNumber,
+  heroicItems: FiniteNumber,
+  avgItemLevel: FiniteNumber,
+});
+
+const LootStatsTimeline = Schema.Array(
+  Schema.Struct({
+    date: Schema.String,
+    total: FiniteNumber,
+    byRarity: Schema.Record(Schema.String, FiniteNumber),
+  }),
+);
+
+const LootStatsTopNpcs = Schema.Array(
+  Schema.Struct({
+    npcId: FiniteNumber,
+    name: Schema.String,
+    type: Schema.Union([NpcTypeSchema, Schema.Null]),
+    lvl: Schema.Union([FiniteNumber, Schema.Null]),
+    icon: Schema.Union([Schema.String, Schema.Null]),
+    count: FiniteNumber,
+    byRarity: Schema.Record(Schema.String, FiniteNumber),
+  }),
+);
+
+const LootStatsTopItems = Schema.Array(
+  Schema.Struct({
+    itemId: FiniteNumber,
+    hid: Schema.String,
+    name: Schema.String,
+    icon: Schema.String,
+    rarity: ItemRaritySchema,
+    lvl: FiniteNumber,
+    count: FiniteNumber,
+  }),
+);
+
 export type LootStatsResponse = typeof LootStatsResponse.Type;
 
 export const LootStatsResponse = Schema.Struct({
-  overview: Schema.Struct({
-    totalLoots: FiniteNumber,
-    totalItems: FiniteNumber,
-    legendaryItems: FiniteNumber,
-    heroicItems: FiniteNumber,
-    avgItemLevel: FiniteNumber,
-  }),
+  overview: LootStatsOverview,
   byRarity: Schema.Record(
     Schema.String,
     Schema.Struct({
@@ -74,24 +113,8 @@ export const LootStatsResponse = Schema.Struct({
       percentage: FiniteNumber,
     }),
   ),
-  timeline: Schema.Array(
-    Schema.Struct({
-      date: Schema.String,
-      total: FiniteNumber,
-      byRarity: Schema.Record(Schema.String, FiniteNumber),
-    }),
-  ),
-  topNpcs: Schema.Array(
-    Schema.Struct({
-      npcId: FiniteNumber,
-      name: Schema.String,
-      type: Schema.Union([NpcTypeSchema, Schema.Null]),
-      lvl: Schema.Union([FiniteNumber, Schema.Null]),
-      icon: Schema.Union([Schema.String, Schema.Null]),
-      count: FiniteNumber,
-      byRarity: Schema.Record(Schema.String, FiniteNumber),
-    }),
-  ),
+  timeline: LootStatsTimeline,
+  topNpcs: LootStatsTopNpcs,
   topContributors: Schema.Array(
     Schema.Struct({
       memberId: FiniteNumber,
@@ -102,18 +125,76 @@ export const LootStatsResponse = Schema.Struct({
       byRarity: Schema.Record(Schema.String, FiniteNumber),
     }),
   ),
-  topItems: Schema.Array(
+  topItems: LootStatsTopItems,
+}).annotate({ identifier: "LootStatsResponseDto_Output" });
+
+export type UserLootStatsQuery = typeof UserLootStatsQuery.Type;
+
+export const UserLootStatsQuery = Schema.Struct({
+  days: Schema.optionalKey(UserStatsDays),
+  world: Schema.optionalKey(
+    Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(100)),
+  ),
+  characterId: CharacterIdQuery,
+}).check(characterNeedsWorld);
+
+export type UserLootStatsResponse = typeof UserLootStatsResponse.Type;
+
+/**
+ * Loots of fights a character of the user took part in, as their
+ * Organizations show them. An item is caught when its loot share gives it to
+ * one of the user's characters, or when that character fought alone.
+ */
+export const UserLootStatsResponse = Schema.Struct({
+  overview: Schema.Struct({
+    ...LootStatsOverview.fields,
+    caughtLegendaryItems: FiniteNumber,
+  }),
+  timeline: LootStatsTimeline,
+  topNpcs: LootStatsTopNpcs,
+  /** Every legendary item, per world and the monster it dropped from. */
+  legends: Schema.Array(
     Schema.Struct({
       itemId: FiniteNumber,
-      hid: Schema.String,
       name: Schema.String,
       icon: Schema.String,
-      rarity: ItemRaritySchema,
-      lvl: FiniteNumber,
+      /** The item's stats, for its tooltip. */
+      stat: Schema.String,
+      type: Schema.NullOr(Schema.String),
+      world: Schema.String,
+      npc: Schema.Struct({
+        id: FiniteNumber,
+        name: Schema.String,
+        lvl: Schema.Union([FiniteNumber, Schema.Null]),
+        icon: Schema.Union([Schema.String, Schema.Null]),
+      }),
+      /** Drops the user's characters were present at. */
       count: FiniteNumber,
+      caught: FiniteNumber,
+      /** The user's kills of the monster on the world in the period. */
+      npcKills: FiniteNumber,
     }),
   ),
-}).annotate({ identifier: "LootStatsResponseDto_Output" });
+  /**
+   * Every boss the user killed in the period and every monster that dropped
+   * them a legend, with its legends dropped and caught. A monster is keyed by
+   * the id its kills carry: one stable id for a colossus.
+   */
+  monsters: Schema.Array(
+    Schema.Struct({
+      world: Schema.String,
+      npc: Schema.Struct({
+        id: FiniteNumber,
+        name: Schema.String,
+        lvl: Schema.Union([FiniteNumber, Schema.Null]),
+        icon: Schema.Union([Schema.String, Schema.Null]),
+      }),
+      kills: FiniteNumber,
+      legends: FiniteNumber,
+      caught: FiniteNumber,
+    }),
+  ),
+}).annotate({ identifier: "UserLootStatsResponseDto_Output" });
 
 export type ResolvedLootItemResponse = typeof ResolvedLootItemResponse.Type;
 

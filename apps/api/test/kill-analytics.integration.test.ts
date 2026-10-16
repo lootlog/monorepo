@@ -213,7 +213,6 @@ describe("personal kill analytics PostgreSQL boundary", () => {
     const analytics = await readAnalytics();
     expect(analytics.overview.totalKills).toBe(10000);
     expect(analytics.npcs).toHaveLength(20);
-    expect(analytics.npcGains).toHaveLength(10);
     expect(analytics.daily).toHaveLength(7);
     expect(analytics.hourlyWeekday).toHaveLength(168);
     expect(JSON.stringify(analytics).length).toBeLessThan(35000);
