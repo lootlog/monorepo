@@ -1,103 +1,155 @@
-import { PAGE_STICKY_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
-import { TableScroller } from "@/components/common/table-scroller";
+import { cn } from "cn";
+import { upperFirst } from "es-toolkit";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
-import { Table } from "@lootlog/ui/components/table";
-import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
-import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
-import { coreTableFeatures } from "@/lib/tanstack-table-features";
+import { formatLevel } from "@lootlog/domain/profession";
 import type { UserKillAnalyticsResponseDtoOutput } from "@lootlog/client/main";
+import { Skull } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { StatisticsNpcTable } from "./statistics-npc-table";
+import { EmptyState } from "@/components/common/empty-state";
+import { RankBadge } from "@/components/common/rank-badge";
+import { ResultsSurface } from "@/components/common/results-surface";
+import { StatsCountCell } from "@/components/common/stats-count-cell";
+import { StatsNpcCell } from "@/components/common/stats-npc-cell";
+import {
+  STATS_TABLE_COUNT_COLUMN_ID,
+  STATS_TABLE_POSITION_COLUMN_ID,
+  StatsTable,
+} from "@/components/common/stats-table";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
+import { formatStatisticsDate } from "@/components/common/kill-analytics/format-statistics-date";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
+import type { StatisticsTabProps } from "./statistics-content";
+import { StatisticsDelta } from "./statistics-delta";
 
-export function StatisticsMonsters({
-  data,
-}: {
-  data: UserKillAnalyticsResponseDtoOutput;
-}) {
+type Npc = UserKillAnalyticsResponseDtoOutput["npcs"][number];
+
+export function StatisticsMonsters({ data, search }: StatisticsTabProps) {
   const { t } = useTranslation();
+  const npcs = search.ranking === "gains" ? data.npcGains : data.npcs;
 
-  const columns: ColumnDef<
-    typeof coreTableFeatures,
-    UserKillAnalyticsResponseDtoOutput["types"][number]
-  >[] = [
+  const describe = (npc: Npc) =>
+    `${t(`npcType.${npc.npcType}`)} · ${t("kills.level", { level: formatLevel(npc.npcLvl, npc.npcProf) })}`;
+
+  const npcCell = (npc: Npc, subtitle: string) => (
+    <StatsNpcCell
+      npc={{
+        id: npc.npcId,
+        name: npc.npcName,
+        lvl: npc.npcLvl,
+        icon: npc.npcIcon,
+      }}
+      name={npc.npcName}
+      subtitle={subtitle}
+    />
+  );
+
+  const columns: ColumnDef<typeof coreTableFeatures, Npc>[] = [
     {
-      accessorKey: "npcType",
-      header: () => t("statistics.type"),
-      cell: ({ row: { original: type } }) => (
-        <>{t(`npcType.${type.npcType}`)}</>
-      ),
+      id: STATS_TABLE_POSITION_COLUMN_ID,
+      header: () => t("kills.memberRanking.position"),
+      cell: ({ row }) => <RankBadge rank={row.index + 1} />,
     },
     {
-      accessorKey: "totalKills",
+      id: "npc",
+      header: () => t("statistics.npc"),
+      cell: ({ row: { original: npc } }) => npcCell(npc, describe(npc)),
+    },
+    {
+      id: "world",
+      header: () => t("statistics.world"),
+      cell: ({ row: { original: npc } }) => upperFirst(npc.world),
+    },
+    {
+      id: STATS_TABLE_COUNT_COLUMN_ID,
       header: () => t("statistics.kills"),
-      cell: ({ row: { original: type } }) =>
-        type.totalKills.toLocaleString("pl-PL"),
-    },
-    {
-      accessorKey: "uniqueNpcs",
-      header: () => t("statistics.uniqueNpcs"),
-      cell: ({ row: { original: type } }) => type.uniqueNpcs,
-    },
-    {
-      accessorKey: "share",
-      header: () => t("statistics.share"),
-      cell: ({ row: { original: type } }) => (
-        <>
-          {type.share.toLocaleString("pl-PL", {
-            maximumFractionDigits: 1,
-          })}
-          %
-        </>
+      cell: ({ row: { original: npc } }) => (
+        <StatsCountCell value={npc.totalKills} emphasized />
       ),
+    },
+    {
+      id: `${STATS_TABLE_COUNT_COLUMN_ID}:change`,
+      header: () => t("statistics.change"),
+      cell: ({ row: { original: npc } }) => (
+        <StatisticsDelta
+          className="justify-end"
+          delta={npc.deltaKills}
+          percent={npc.deltaPercent}
+        />
+      ),
+    },
+    {
+      id: "bestDay",
+      header: () => t("kills.records.bestDay"),
+      cell: ({ row: { original: npc } }) =>
+        npc.bestDay?.kills ? (
+          <span className="flex flex-col">
+            <span className="tabular-nums">
+              {formatStatisticsDate(npc.bestDay.date)}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {t("statistics.count", { count: npc.bestDay.kills })}
+            </span>
+          </span>
+        ) : null,
     },
   ];
 
   const table = useTable({
     features: coreTableFeatures,
-    data: data.types,
+    data: npcs,
     columns,
-    getRowId: (type) => type.npcType,
+    getRowId: (npc) => `${npc.world}:${npc.npcId}`,
   });
 
-  return (
-    <>
-      <SectionCard>
-        <SectionCardHeader title={t("statistics.typeDistribution")} />
-        <SectionCardContent className="p-0">
-          <TableScroller>
-            <Table>
-              <TanStackTableHeader
-                table={table}
-                className={PAGE_STICKY_TABLE_HEADER_CLASS}
-                rowClassName="border-b-1! border-border"
-              />
-              <TanStackTableBody
-                table={table}
-                rowHeaderColumnId="npcType"
-                rowClassName="h-14 border-b border-border hover:bg-muted/40"
-              />
-            </Table>
-          </TableScroller>
-        </SectionCardContent>
-      </SectionCard>
-      <SectionCard>
-        <SectionCardHeader
-          title={t("statistics.ranking")}
-          description={t("statistics.alignedComparison")}
+  if (!npcs.length)
+    return (
+      <div className="p-3">
+        <EmptyState
+          framed
+          icon={Skull}
+          title={t(
+            search.ranking === "gains"
+              ? "statistics.noGains"
+              : "statistics.noData",
+          )}
         />
-        <SectionCardContent className="p-0">
-          <StatisticsNpcTable npcs={data.npcs} />
-        </SectionCardContent>
-      </SectionCard>
-      <SectionCard>
-        <SectionCardHeader title={t("statistics.growth")} />
-        <SectionCardContent className="p-0">
-          <StatisticsNpcTable npcs={data.npcGains} />
-        </SectionCardContent>
-      </SectionCard>
-    </>
+      </div>
+    );
+
+  return (
+    <ResultsSurface>
+      <ul className="xl:hidden">
+        {npcs.map((npc, index) => (
+          <li
+            key={`${npc.world}:${npc.npcId}`}
+            data-list-tile
+            className={cn(
+              "flex min-w-0 items-center gap-3 py-3",
+              LIST_TILE_RULE_CLASS,
+              LIST_TILE_INSET_CLASS,
+            )}
+          >
+            <RankBadge rank={index + 1} />
+            <span className="min-w-0 flex-1">
+              {npcCell(npc, `${describe(npc)} · ${upperFirst(npc.world)}`)}
+            </span>
+            <span className="flex shrink-0 flex-col items-end">
+              <span className="text-sm font-semibold tabular-nums">
+                {npc.totalKills.toLocaleString("pl-PL")}
+              </span>
+              <StatisticsDelta
+                className="text-xs"
+                delta={npc.deltaKills}
+                percent={npc.deltaPercent}
+              />
+            </span>
+          </li>
+        ))}
+      </ul>
+      <StatsTable table={table} className="hidden border-b xl:table" />
+    </ResultsSurface>
   );
 }

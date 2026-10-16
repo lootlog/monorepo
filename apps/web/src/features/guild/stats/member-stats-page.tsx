@@ -18,16 +18,16 @@ import {
 import { KillStatsSearch } from "@/features/kills/components/kill-stats-search";
 import { KillStatsStackedFilters } from "@/features/kills/components/kill-stats-stacked-filters";
 import { TRACKABLE_NPC_TYPES } from "./constants";
-import { StatsCountCell } from "./components/stats-count-cell";
+import { StatsCountCell } from "@/components/common/stats-count-cell";
 import { StatsDetailMeta } from "./components/stats-detail-meta";
 import { MemberAvatar } from "@/components/common/member-avatar";
-import { StatsNpcCell } from "./components/stats-npc-cell";
+import { StatsNpcCell } from "@/components/common/stats-npc-cell";
 import { RankBadge } from "@/components/common/rank-badge";
 import {
   STATS_TABLE_COUNT_COLUMN_ID,
   STATS_TABLE_POSITION_COLUMN_ID,
   StatsTable,
-} from "./components/stats-table";
+} from "@/components/common/stats-table";
 import { StatsTableResults } from "./components/stats-table-results";
 import { DetailPage } from "@/components/common/detail-page";
 import { ResultsSurface } from "@/components/common/results-surface";

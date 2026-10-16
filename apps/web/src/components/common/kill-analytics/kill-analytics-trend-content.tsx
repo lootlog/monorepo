@@ -22,9 +22,7 @@ import {
   Tooltip,
 } from "recharts";
 import { useTranslation } from "react-i18next";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { ChartSection } from "@/components/common/chart-section";
 import {
   formatStatisticsDate,
   formatStatisticsDateHour,
@@ -130,83 +128,76 @@ export function KillAnalyticsTrend({
   });
 
   return (
-    <SectionCard>
-      <SectionCardHeader
-        title={title}
-        description={description}
-        actions=<AnimatedToggleGroup
-          size="sm"
-          label={t("statistics.view")}
-          value={view}
-          onValueChange={setView}
-          options={[
-            { value: "chart", label: t("statistics.chart") },
-            { value: "table", label: t("statistics.table") },
-          ]}
-        />
+    <ChartSection
+      title={title}
+      description={description}
+      actions=<AnimatedToggleGroup
+        size="sm"
+        label={t("statistics.view")}
+        value={view}
+        onValueChange={setView}
+        options={[
+          { value: "chart", label: t("statistics.chart") },
+          { value: "table", label: t("statistics.table") },
+        ]}
       />
-      <SectionCardContent className={view === "table" ? "p-0" : undefined}>
-        {view === "chart" ? (
-          <div className="h-64 min-w-0" role="img" aria-label={title}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data} accessibilityLayer>
-                <XAxis
-                  dataKey="date"
-                  tickFormatter={formatTick}
-                  minTickGap={36}
-                  tick={{ fontSize: 11 }}
-                />
-                <YAxis
-                  width={42}
-                  tick={{ fontSize: 11 }}
-                  allowDecimals={false}
-                />
-                <Tooltip
-                  cursor={{ fill: "var(--primary)", fillOpacity: 0.12 }}
-                  labelFormatter={(date) =>
-                    `${formatLabel(String(date))}${partialDates.has(String(date)) ? ` · ${t("statistics.partial")}` : ""}`
-                  }
-                  contentStyle={{
-                    background: "var(--card)",
-                    color: "var(--card-foreground)",
-                    borderColor: "var(--border)",
-                  }}
-                />
-                <Bar
-                  {...CHART_SERIES_ANIMATION}
-                  dataKey="kills"
-                  name={t("statistics.kills")}
-                  fill="var(--primary)"
-                  radius={[3, 3, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        ) : (
-          <ScrollArea className="h-[280px]">
-            <Table aria-label={title}>
-              <TanStackTableHeader
-                table={table}
-                className="sticky top-0 z-10 bg-background"
-                rowClassName="border-b-1! border-border"
-                getHeadClassName={(header) =>
-                  header.column.id === "kills" ? "text-right" : ""
-                }
+    >
+      {view === "chart" ? (
+        <div className="h-64 min-w-0" role="img" aria-label={title}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} accessibilityLayer>
+              <XAxis
+                dataKey="date"
+                tickFormatter={formatTick}
+                minTickGap={36}
+                tick={{ fontSize: 11 }}
               />
-              <TanStackTableBody
-                table={table}
-                rowHeaderColumnId="date"
-                rowClassName="h-14 border-b border-border hover:bg-muted/40"
-                getCellClassName={(cell) =>
-                  cell.column.id === "kills"
-                    ? "text-right font-medium tabular-nums"
-                    : "tabular-nums"
+              <YAxis width={42} tick={{ fontSize: 11 }} allowDecimals={false} />
+              <Tooltip
+                cursor={{ fill: "var(--primary)", fillOpacity: 0.12 }}
+                labelFormatter={(date) =>
+                  `${formatLabel(String(date))}${partialDates.has(String(date)) ? ` · ${t("statistics.partial")}` : ""}`
                 }
+                contentStyle={{
+                  background: "var(--card)",
+                  color: "var(--card-foreground)",
+                  borderColor: "var(--border)",
+                }}
               />
-            </Table>
-          </ScrollArea>
-        )}
-      </SectionCardContent>
-    </SectionCard>
+              <Bar
+                {...CHART_SERIES_ANIMATION}
+                dataKey="kills"
+                name={t("statistics.kills")}
+                fill="var(--primary)"
+                radius={[3, 3, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      ) : (
+        <ScrollArea className="h-[280px]">
+          <Table aria-label={title}>
+            <TanStackTableHeader
+              table={table}
+              className="sticky top-0 z-10 bg-background"
+              rowClassName="border-b-1! border-border"
+              getHeadClassName={(header) =>
+                header.column.id === "kills" ? "text-right" : ""
+              }
+            />
+            <TanStackTableBody
+              table={table}
+              rowHeaderColumnId="date"
+              rowClassName="h-14 border-b border-border hover:bg-muted/40"
+              getCellClassName={(cell) =>
+                cell.column.id === "kills"
+                  ? "text-right font-medium tabular-nums"
+                  : "tabular-nums"
+              }
+            />
+          </Table>
+        </ScrollArea>
+      )}
+    </ChartSection>
   );
 }

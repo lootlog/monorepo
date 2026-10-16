@@ -1,4 +1,5 @@
-import { KpiCard } from "@/components/common/kpi-card";
+import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import type { LootStatsResponseDtoOutputOverview } from "@lootlog/client/main";
 import { Crown, Layers, Package, Sword } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -60,17 +61,22 @@ export const LootOverviewCards = ({
   ] as const;
 
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <StatsTileGrid className="sm:grid-cols-2 xl:grid-cols-4">
       {kpis.map((kpi) => (
-        <KpiCard
+        <StatsTile
           key={kpi.key}
           icon={kpi.icon}
           label={t(`loots.stats.overview.${kpi.key}`)}
-          value={numberFormatter.format(kpi.value)}
-          detail={kpi.detail}
-          isLoading={isLoading}
+          value={
+            isLoading ? (
+              <Skeleton className="h-7 w-24" />
+            ) : (
+              numberFormatter.format(kpi.value)
+            )
+          }
+          detail={isLoading ? <Skeleton className="h-4 w-16" /> : kpi.detail}
         />
       ))}
-    </div>
+    </StatsTileGrid>
   );
 };

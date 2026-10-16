@@ -1,27 +1,33 @@
-import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { BarChart3, Calendar } from "lucide-react";
+import { cn } from "cn";
 import {
   useKillsControllerGetUserKillAnalytics,
   useKillsControllerGetUserKillStats,
 } from "@lootlog/client/main";
-import { PageHeader } from "@/components/common/page-header";
-import { WorldSwitcher } from "@/components/common/world-switcher";
+import { FilterBar } from "@/components/common/filter-bar";
+import { AnimatedToggleGroup } from "@/components/ui/animated-toggle-group";
+import { PageTabsLayout } from "@/components/layout/page-tabs-layout";
 import { StatisticsQueryState } from "./statistics-query-state";
 import {
-  STATISTICS_DAYS,
+  STATISTICS_RANKINGS,
   STATISTICS_TABS,
   type StatisticsSearch,
 } from "./statistics-search";
 import { StatisticsContent } from "./statistics-content";
-import { PageTabsLayout } from "@/components/layout/page-tabs-layout";
 import { StatisticsOverviewSkeleton } from "./statistics-overview-skeleton";
+import {
+  countActiveStatisticsFilters,
+  StatisticsFilters,
+  type StatisticsFiltersProps,
+} from "./statistics-filters";
+import { StatisticsStackedFilters } from "./statistics-stacked-filters";
 
 export function Statistics() {
   const { t } = useTranslation();
   const search = useSearch({ from: "/_authenticated/@me/statistics" });
   const navigate = useNavigate({ from: "/@me/statistics" });
+  const isMonsters = search.tab === "monsters";
 
   const update = (changes: Partial<StatisticsSearch>) => {
     void navigate({ search: (current) => ({ ...current, ...changes }) });
@@ -31,6 +37,8 @@ export function Statistics() {
     {
       days: ({ 7: "7", 30: "30", 90: "90", 365: "365" } as const)[search.days],
       world: search.world,
+      // Only the monster ranking narrows to a type; the totals never do.
+      npcType: isMonsters ? search.npcType : undefined,
     },
     { query: { staleTime: 30_000 } },
   );
@@ -44,6 +52,26 @@ export function Statistics() {
   if (search.world && !worlds.includes(search.world)) worlds.push(search.world);
   const data = analytics.data;
 
+  // Sections run edge to edge; a lone notice or placeholder keeps an inset.
+  const inset =
+    data === undefined
+      ? analytics.isError || search.tab !== "overview"
+      : data.meta.coverage === "unavailable";
+
+  const filterProps: StatisticsFiltersProps = {
+    world: search.world,
+    worlds,
+    onWorldChange: (world) => update({ world }),
+    days: search.days,
+    onDaysChange: (days) => update({ days }),
+    npcType: isMonsters
+      ? {
+          value: search.npcType,
+          onChange: (npcType) => update({ npcType }),
+        }
+      : undefined,
+  };
+
   return (
     <PageTabsLayout
       ariaLabel={t("statistics.title")}
@@ -55,57 +83,43 @@ export function Statistics() {
         search: { ...search, tab },
       }))}
     >
-      <div className="min-w-0 space-y-3 p-3">
-        <PageHeader
-          className="@container/page-heading [&>header>div:last-child]:basis-full @2xl/page-heading:[&>header>div:last-child]:basis-auto"
-          icon={BarChart3}
-          title={t("statistics.title")}
-          actions={
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <FilterPopover
-                icon={Calendar}
-                options={STATISTICS_DAYS.map((days) => ({
-                  value: String(days),
-                  label: t("statistics.days", { count: days }),
+      <div className="min-w-0">
+        <h1 className="sr-only">{t("statistics.title")}</h1>
+        <FilterBar
+          ariaLabel={t("kills.filters.title")}
+          search={
+            isMonsters && (
+              <AnimatedToggleGroup
+                size="lg"
+                label={t("statistics.ranking")}
+                value={search.ranking ?? "top"}
+                onValueChange={(ranking) =>
+                  update({ ranking: ranking === "top" ? undefined : ranking })
+                }
+                options={STATISTICS_RANKINGS.map((ranking) => ({
+                  value: ranking,
+                  label: t(`statistics.rankings.${ranking}`),
                 }))}
-                value={String(search.days)}
-                onValueChange={(days) => {
-                  const next = STATISTICS_DAYS.find(
-                    (value) => String(value) === days,
-                  );
-
-                  if (next !== undefined) update({ days: next });
-                }}
-                placeholder={t("statistics.period")}
-                emptyMessage={t("common.noResults")}
-                width="w-[140px]"
-                showSearch={false}
               />
-              <WorldSwitcher
-                value={search.world ?? null}
-                onValueChange={(world) => update({ world: world ?? undefined })}
-                worlds={worlds}
-                showAllOption
-              />
-            </div>
+            )
           }
-        />
-        <StatisticsQueryState
-          query={analytics}
-          loading={
-            search.tab === "overview" ? (
-              <StatisticsOverviewSkeleton />
-            ) : undefined
-          }
+          stackedFilters={<StatisticsStackedFilters {...filterProps} />}
+          activeFilterCount={countActiveStatisticsFilters(filterProps)}
         >
-          {data && (
-            <StatisticsContent
-              data={data}
-              tab={search.tab}
-              onClearWorld={() => update({ world: undefined })}
-            />
-          )}
-        </StatisticsQueryState>
+          <StatisticsFilters {...filterProps} />
+        </FilterBar>
+        <div className={cn(inset && "p-3")}>
+          <StatisticsQueryState
+            query={analytics}
+            loading={
+              search.tab === "overview" ? (
+                <StatisticsOverviewSkeleton />
+              ) : undefined
+            }
+          >
+            {data && <StatisticsContent data={data} search={search} />}
+          </StatisticsQueryState>
+        </div>
       </div>
     </PageTabsLayout>
   );
