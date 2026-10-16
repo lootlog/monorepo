@@ -28,6 +28,7 @@ import { Effect, Layer, Redacted } from "effect";
 import { HttpRouter, HttpServer } from "effect/http";
 import { PgClient } from "@effect/sql-pg";
 import { OnlineRepository } from "./online-repository.js";
+import { ONLINE_HISTORY_RETENTION_DAYS } from "./online-retention.js";
 import type { UserOnlineCheckpointV1 } from "@lootlog/protocol/rabbit/events";
 import { ActivityRoutes, ActivityReadiness } from "#src/http/activity-http";
 import { ActivityRepository } from "#src/activities/activity-repository";
@@ -612,7 +613,10 @@ describe("durable private online history", () => {
 
   it("cleans every batch while preserving retained history and tracking", async () => {
     const now = "2026-09-06T12:00:00Z";
-    const cutoff = new Date(Date.parse(now) - 112 * 86_400_000).toISOString();
+
+    const cutoff = new Date(
+      Date.parse(now) - ONLINE_HISTORY_RETENTION_DAYS * 86_400_000,
+    ).toISOString();
 
     await Effect.runPromise(
       Effect.gen(function* () {
@@ -658,7 +662,7 @@ describe("durable private online history", () => {
           version: 1,
           type: "collector",
           status: "healthy",
-          observedAt: "2025-10-25T00:00:00Z",
+          observedAt: "2025-08-01T00:00:00Z",
         });
         yield* repo.prune();
 
@@ -699,14 +703,14 @@ describe("durable private online history", () => {
         userId: "batch-retained",
         count: 2002,
         trimmed: true,
-        latestEnd: "2026-05-17 14:00:00+00",
+        latestEnd: "2025-09-06 14:00:00+00",
         worlds: true,
       },
     ]);
     expect(result.tracking).toEqual([{ userId: "batch-fresh" }]);
     expect(history.days).toEqual([
       {
-        date: "2026-05-17",
+        date: "2025-09-06",
         onlineSeconds: 7200,
         partial: true,
         worlds: ["luvia"],
@@ -863,7 +867,7 @@ describe("durable private online history", () => {
     expect(rows).toHaveLength(0);
   });
 
-  it("physically trims the 112-day boundary and replay cannot restore the forgotten start", async () => {
+  it("physically trims the retention boundary and replay cannot restore the forgotten start", async () => {
     await Effect.runPromise(
       Effect.gen(function* () {
         const sql = yield* PgClient.PgClient;
@@ -871,7 +875,7 @@ describe("durable private online history", () => {
       }).pipe(Effect.provide(database)),
     );
     const now = "2026-09-06T12:00:00Z";
-    const cutoff = Date.parse(now) - 112 * 86_400_000;
+    const cutoff = Date.parse(now) - ONLINE_HISTORY_RETENTION_DAYS * 86_400_000;
 
     const input = checkpoint(
       "retention-boundary",
@@ -1090,6 +1094,22 @@ describe("durable private online history", () => {
           },
           { onlineSeconds: 0, worlds: [], worldsComplete: true },
         ]);
+
+        // A world counts only its own time, not the overlapping union.
+        for (const [world, seconds] of [
+          ["luvia", [3600, 3600, 0]],
+          ["classic", [0, 3600, 0]],
+        ] as const) {
+          const narrowed = yield* repo.find("worlds", {
+            from: "2026-09-04",
+            to: "2026-09-06",
+            world,
+          });
+
+          expect(narrowed.days.map((day) => day.onlineSeconds)).toEqual([
+            ...seconds,
+          ]);
+        }
 
         const changedWorld = yield* repo
           .ingest({ ...known, world: "changed" })

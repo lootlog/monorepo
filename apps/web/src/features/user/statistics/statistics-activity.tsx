@@ -9,9 +9,6 @@ import { StatisticsPlayTimeTiles } from "./statistics-play-time-tiles";
 import { StatisticsWeeks } from "./statistics-weeks";
 import { summarizePlayTime } from "./summarize-play-time";
 
-/** How long the activity service keeps online history. */
-const ONLINE_HISTORY_DAYS = 112;
-
 /** The last `days` calendar days through `to`, as the online history takes them. */
 const rangeEnding = (to: string, days: number) => {
   const from = new Date(`${to}T12:00:00Z`);
@@ -24,7 +21,10 @@ export function StatisticsActivity({ data, search }: StatisticsTabProps) {
   const { t } = useTranslation();
 
   const online = useUsersActivityControllerGetOnline(
-    rangeEnding(data.meta.endDate, Math.min(search.days, ONLINE_HISTORY_DAYS)),
+    {
+      ...rangeEnding(data.meta.endDate, search.days),
+      world: search.world,
+    },
     { query: { staleTime: 60_000 } },
   );
 
@@ -38,7 +38,19 @@ export function StatisticsActivity({ data, search }: StatisticsTabProps) {
     online.data !== undefined && online.data.status !== "unavailable";
 
   const days = online.data?.days ?? [];
-  const playTime = summarizePlayTime(days, data.daily);
+
+  // A session an older Game client reported without its world may have been
+  // on this one, so such a day's time on the world is incomplete.
+  const playTime = summarizePlayTime(
+    search.world
+      ? days.map((day) => ({
+          ...day,
+          partial: day.partial || !day.worldsComplete,
+        }))
+      : days,
+    data.daily,
+  );
+
   const killsByDate = new Map(data.daily.map((day) => [day.date, day.kills]));
 
   return (
@@ -46,12 +58,8 @@ export function StatisticsActivity({ data, search }: StatisticsTabProps) {
       <StatisticsPlayTimeTiles
         playTime={playTime}
         available={available}
-        narrowed={Boolean(search.world || search.characterId)}
-        coverage={
-          search.days > ONLINE_HISTORY_DAYS
-            ? t("statistics.onlineLastDays", { days: ONLINE_HISTORY_DAYS })
-            : undefined
-        }
+        world={search.world}
+        characterSelected={Boolean(search.characterId)}
         formatDuration={formatDuration}
       />
       <StatsSectionColumns className="xl:grid-cols-3 xl:*:first:col-span-2">
