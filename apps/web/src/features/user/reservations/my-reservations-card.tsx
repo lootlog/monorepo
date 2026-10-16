@@ -1,8 +1,7 @@
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { CalendarDays, CalendarX2 } from "lucide-react";
+import { CalendarX2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   useListMyReservations,
@@ -10,8 +9,7 @@ import {
 } from "@lootlog/client/main";
 
 import { EmptyState } from "@/components/common/empty-state";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { BandSection } from "@/components/common/band-section";
 import { ROUTES } from "@/config/routes";
 import { StatisticsQueryState } from "@/features/user/statistics/statistics-query-state";
 import { EditMyReservationDialog } from "./edit-my-reservation-dialog";
@@ -29,68 +27,63 @@ export function MyReservationsCard() {
   const reservations = query.data?.items.slice(0, 5) ?? [];
 
   return (
-    <SectionCard
-      className={reservations.length ? "gap-0 py-0" : "min-h-48 gap-0 py-0"}
+    <BandSection
+      id="dashboard-my-reservations-title"
+      title={t("reservations.my.title")}
+      count={query.data?.items.length || undefined}
+      tiled
+      trailing={
+        <ChevronLink render=<Link to={ROUTES.user.reservations} />>
+          {t("reservations.my.showAll")}
+        </ChevronLink>
+      }
     >
-      <SectionCardHeader
-        id="dashboard-my-reservations-title"
-        icon={CalendarDays}
-        title={t("reservations.my.title")}
-        actions={
-          <ChevronLink render=<Link to={ROUTES.user.reservations} />>
-            {t("reservations.my.showAll")}
-          </ChevronLink>
+      <StatisticsQueryState
+        query={query}
+        compact
+        errorMessage={t("reservations.loadError")}
+        loading={
+          <p
+            role="status"
+            // As tall as the compact empty state, so the card keeps its height.
+            className="flex min-h-36 flex-1 items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground"
+          >
+            {t("common.loading")}
+          </p>
         }
-      />
-      <SectionCardContent className="flex flex-1 flex-col p-0">
-        <StatisticsQueryState
-          query={query}
-          compact
-          errorMessage={t("reservations.loadError")}
-          loading={
-            <p
-              role="status"
-              // As tall as the compact empty state, so the card keeps its height.
-              className="flex min-h-36 flex-1 items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground"
-            >
-              {t("common.loading")}
-            </p>
-          }
-        >
-          {reservations.length ? (
-            // The card's own border closes the last tile.
-            <ul className="*:last:border-b-0">
-              {reservations.map((reservation) => (
-                <MyReservationListItem
-                  key={reservation.id}
-                  reservation={reservation}
-                  showEdit
-                  showCancel
-                  cancelDisabled={cancelMutation.isPending}
-                  cancelPending={
-                    cancelMutation.isPending &&
-                    cancelMutation.variables?.pathParams.reservationId ===
-                      reservation.id
-                  }
-                  onEdit={() => setEditingReservation(reservation)}
-                  onCancel={async () => {
-                    await cancelMutation.mutateAsync({
-                      pathParams: { reservationId: reservation.id },
-                    });
-                  }}
-                />
-              ))}
-            </ul>
-          ) : (
-            <EmptyState
-              icon={CalendarX2}
-              title={t("reservations.my.emptyUpcoming")}
-              compact
-              className="flex-1"
-            />
-          )}
-        </StatisticsQueryState>
-      </SectionCardContent>
+      >
+        {reservations.length ? (
+          <ul>
+            {reservations.map((reservation) => (
+              <MyReservationListItem
+                key={reservation.id}
+                reservation={reservation}
+                showEdit
+                showCancel
+                cancelDisabled={cancelMutation.isPending}
+                cancelPending={
+                  cancelMutation.isPending &&
+                  cancelMutation.variables?.pathParams.reservationId ===
+                    reservation.id
+                }
+                onEdit={() => setEditingReservation(reservation)}
+                onCancel={async () => {
+                  await cancelMutation.mutateAsync({
+                    pathParams: { reservationId: reservation.id },
+                  });
+                }}
+              />
+            ))}
+          </ul>
+        ) : (
+          <EmptyState
+            icon={CalendarX2}
+            title={t("reservations.my.emptyUpcoming")}
+            compact
+            className="flex-1"
+          />
+        )}
+      </StatisticsQueryState>
       <EditMyReservationDialog
         reservation={editingReservation}
         open={editingReservation !== null}
@@ -98,6 +91,6 @@ export function MyReservationsCard() {
           if (!open) setEditingReservation(null);
         }}
       />
-    </SectionCard>
+    </BandSection>
   );
 }

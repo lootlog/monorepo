@@ -37,10 +37,3 @@ export const NPC_CATEGORY_APPEARANCE = {
     marker: "border-muted-foreground bg-muted-foreground",
   },
 } as const satisfies Record<ActivityFeedNpcCategory, NpcCategoryAppearance>;
-
-export const KILL_SUMMARY_NPC_CATEGORIES = [
-  "ELITE2",
-  "HERO",
-  "COLOSSUS",
-  "TITAN",
-] as const satisfies ReadonlyArray<ActivityFeedNpcCategory>;

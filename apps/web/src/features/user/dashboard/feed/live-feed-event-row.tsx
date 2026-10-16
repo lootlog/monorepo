@@ -35,7 +35,7 @@ export function LiveFeedEventRow({ group, now }: Props) {
       <span className="flex justify-center pt-4" aria-hidden>
         <span
           className={cn(
-            "relative size-3 rounded-full border-2 ring-4 ring-card",
+            "relative size-3 rounded-full border-2 ring-4 ring-background",
             appearance.marker,
           )}
         />

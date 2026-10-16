@@ -5,11 +5,15 @@ import { DashboardRecentBattleActions } from "./dashboard-recent-battle-actions"
 import { useBattlesControllerGetDashboardBattles } from "@lootlog/client/battlelog";
 import { Link } from "@tanstack/react-router";
 import { Swords } from "lucide-react";
+import { BandSection } from "@/components/common/band-section";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
+import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { SectionCard } from "@/components/common/section-card/section-card";
 import { StatisticsQueryState } from "@/features/user/statistics/statistics-query-state";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { DashboardRecentBattle } from "./dashboard-recent-battle";
@@ -32,16 +36,16 @@ export function DashboardRecentBattles() {
   );
 
   return (
-    <SectionCard>
-      <SectionCardHeader
-        icon={Swords}
-        title={t("statistics.recentBattles.title")}
-        actions={
-          <ChevronLink render=<Link to="/@me/battle-panel" />>
-            {t("statistics.recentBattles.showAll")}
-          </ChevronLink>
-        }
-      />
+    <BandSection
+      id="dashboard-recent-battles"
+      title={t("statistics.recentBattles.title")}
+      tiled
+      trailing={
+        <ChevronLink render=<Link to="/@me/battle-panel" />>
+          {t("statistics.recentBattles.showAll")}
+        </ChevronLink>
+      }
+    >
       <StatisticsQueryState
         query={query}
         compact
@@ -53,7 +57,11 @@ export function DashboardRecentBattles() {
               (_, key) => (
                 <li
                   key={key}
-                  className="border-b border-border px-3 py-2 last:border-b-0"
+                  className={cn(
+                    "py-3",
+                    LIST_TILE_RULE_CLASS,
+                    LIST_TILE_INSET_CLASS,
+                  )}
                 >
                   <Skeleton className="h-5 w-40 max-w-full" />
                   <Skeleton className="mt-1 h-4 w-28 max-w-full" />
@@ -97,6 +105,6 @@ export function DashboardRecentBattles() {
         selectedCount={0}
         singleDeleteBattle={actions.singleDeleteBattle}
       />
-    </SectionCard>
+    </BandSection>
   );
 }
