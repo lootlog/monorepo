@@ -177,7 +177,7 @@ export function StatisticsMonsters({ data, search }: StatisticsTabProps) {
     return (
       <div className="p-3">
         <EmptyState
-          framed
+          fill
           icon={Skull}
           title={t(npcs.length ? "common.noResults" : "statistics.noData")}
         />

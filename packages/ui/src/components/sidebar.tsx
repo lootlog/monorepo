@@ -8,6 +8,7 @@ import { PanelLeftIcon } from "lucide-react";
 
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { cn } from "cn";
+import { useUiLabels } from "@lootlog/ui/components/ui-labels";
 import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";
 import { Separator } from "@lootlog/ui/components/separator";
@@ -177,6 +178,7 @@ function Sidebar({
   /** The mobile sheet renders in a portal, outside the provider's width. */
   mobileWidth?: string;
 }) {
+  const labels = useUiLabels();
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
   if (collapsible === "none") {
@@ -211,8 +213,8 @@ function Sidebar({
           side={side}
         >
           <SheetHeader className="sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
-            <SheetDescription>Displays the mobile sidebar.</SheetDescription>
+            <SheetTitle>{labels.sidebarTitle}</SheetTitle>
+            <SheetDescription>{labels.sidebarDescription}</SheetDescription>
           </SheetHeader>
           <React.Activity mode={openMobile ? "visible" : "hidden"}>
             <div className="flex h-full w-full flex-col">{children}</div>
@@ -275,6 +277,7 @@ function SidebarTrigger({
   onClick,
   ...props
 }: React.ComponentProps<typeof Button>) {
+  const labels = useUiLabels();
   const { toggleSidebar } = useSidebar();
 
   return (
@@ -291,22 +294,23 @@ function SidebarTrigger({
       {...props}
     >
       <PanelLeftIcon />
-      <span className="sr-only">Toggle Sidebar</span>
+      <span className="sr-only">{labels.toggleSidebar}</span>
     </Button>
   );
 }
 
 function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
+  const labels = useUiLabels();
   const { toggleSidebar } = useSidebar();
 
   return (
     <button
       data-sidebar="rail"
       data-slot="sidebar-rail"
-      aria-label="Toggle Sidebar"
+      aria-label={labels.toggleSidebar}
       tabIndex={-1}
       onClick={toggleSidebar}
-      title="Toggle Sidebar"
+      title={labels.toggleSidebar}
       className={cn(
         "hover:after:bg-transparent-border absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] sm:flex",
         "in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize",

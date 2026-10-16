@@ -1,3 +1,4 @@
+import { upperFirst } from "es-toolkit";
 import { useTranslation } from "react-i18next";
 import { CalendarClock, Clock, Gauge, Swords } from "lucide-react";
 import { formatStatisticsWeekdayDate } from "@/components/common/kill-analytics/format-statistics-date";
@@ -13,8 +14,10 @@ type StatisticsPlayTimeTilesProps = {
   playTime: ReturnType<typeof summarizePlayTime>;
   /** False until online history loads, or when there is none. */
   available: boolean;
-  /** Online time covers the whole account, so a world or character has no kill rate. */
-  narrowed: boolean;
+  /** Online time is counted on this world only. */
+  world?: string;
+  /** Online time does not tell characters apart, so one has no kill rate. */
+  characterSelected: boolean;
   /** Names the shorter window online history covers, if it is shorter. */
   coverage?: string;
   formatDuration: (seconds: number) => string;
@@ -23,7 +26,8 @@ type StatisticsPlayTimeTilesProps = {
 export function StatisticsPlayTimeTiles({
   playTime,
   available,
-  narrowed,
+  world,
+  characterSelected,
   coverage,
   formatDuration,
 }: StatisticsPlayTimeTilesProps) {
@@ -40,7 +44,9 @@ export function StatisticsPlayTimeTiles({
         icon={Clock}
         label={t("statistics.onlineTotal")}
         value={show(playTime.totalSeconds)}
-        detail={coverage ?? t("statistics.wholeAccount")}
+        detail={
+          coverage ?? (world ? upperFirst(world) : t("statistics.wholeAccount"))
+        }
       />
       <StatsTile
         icon={CalendarClock}
@@ -52,14 +58,16 @@ export function StatisticsPlayTimeTiles({
         icon={Swords}
         label={t("statistics.killsPerHour")}
         value={
-          available && !narrowed && playTime.killsPerHour !== null
+          available && !characterSelected && playTime.killsPerHour !== null
             ? rateFormatter.format(playTime.killsPerHour)
             : EMPTY_VALUE
         }
         detail={
-          narrowed
-            ? t("statistics.killsPerHourWholeAccount")
-            : t("statistics.killsPerHourDetail")
+          characterSelected
+            ? t("statistics.killsPerHourNoCharacter")
+            : world
+              ? upperFirst(world)
+              : t("statistics.killsPerHourDetail")
         }
       />
       <StatsTile

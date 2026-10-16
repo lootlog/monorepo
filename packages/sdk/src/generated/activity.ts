@@ -207,6 +207,8 @@ export interface UserOnlineResponseDto {
      */
   lastObservedAt: string | null;
   status: UserOnlineResponseDtoStatus;
+  /** @nullable */
+  world: string | null;
   days: UserOnlineResponseDtoDaysItem[];
 }
 
@@ -544,6 +546,11 @@ export type ActivitiesControllerDeleteActivity503 = {
 export type UsersActivityControllerGetOnlineParams = {
 from: string;
 to: string;
+/**
+ * @minLength 1
+ * @nullable
+ */
+world?: string | null;
 };
 
 export type UsersActivityControllerGetOnline401 = {
@@ -830,7 +837,7 @@ export const getUsersActivityControllerGetOnlineUrl = (params: UsersActivityCont
 }
 
 /**
- * An inclusive range of at most 112 Warsaw calendar dates. Only the latest 16 weeks of confirmed online intervals are retained.
+ * An inclusive range of at most 365 Warsaw calendar dates. Only the latest 365 days of confirmed online intervals are retained.
  * @summary Get the signed-in user's confirmed game online time by Warsaw calendar day
  */
 export const usersActivityControllerGetOnline = async (params: UsersActivityControllerGetOnlineParams, options?: Parameters<typeof activityFetch>[1]): Promise<UserOnlineResponseDto> => {

@@ -115,7 +115,7 @@ export const GuildDocsListPage = () => {
       return (
         <div className="p-3">
           <EmptyState
-            framed
+            fill
             icon={FileText}
             title={t("docs.list.emptyTitle")}
             description={t("docs.list.emptyDescription")}
@@ -136,7 +136,7 @@ export const GuildDocsListPage = () => {
       return (
         <div className="p-3">
           <EmptyState
-            framed
+            fill
             icon={SearchX}
             title={t("docs.list.emptySearchTitle")}
             description={t("docs.list.emptySearchDescription")}
@@ -176,7 +176,7 @@ export const GuildDocsListPage = () => {
       {documentsQuery.isError ? (
         <div className="p-3">
           <EmptyState
-            framed
+            fill
             icon={FileX2}
             title={t("docs.list.loadError")}
             description={t("docs.list.loadErrorDescription")}

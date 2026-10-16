@@ -74,7 +74,7 @@ export const NotificationHistoryList = ({
       return (
         <div className="p-3">
           <EmptyState
-            framed
+            fill
             icon={History}
             title={t("settings.notifications.empty.historyJobs")}
           />
@@ -86,7 +86,7 @@ export const NotificationHistoryList = ({
       return (
         <div className="p-3">
           <EmptyState
-            framed
+            fill
             icon={SearchX}
             title={t("settings.notifications.empty.filteredHistory")}
             action={

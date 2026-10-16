@@ -53,6 +53,7 @@ const legend = (
     lvl: 100,
     icon: null,
   },
+  caughtBy: [],
   ...counts,
 });
 

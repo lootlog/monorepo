@@ -1387,12 +1387,20 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
       "GET /readyz": ACTIVITY_READINESS_ADDITION,
       "GET /users/@me/activity/online": {
         operationId: "UsersActivityController_getOnline",
-        parameters: ["from", "to"].map((name) => ({
-          name,
-          in: "query",
-          required: true,
-          schema: { type: "string" },
-        })),
+        parameters: [
+          ...["from", "to"].map((name) => ({
+            name,
+            in: "query",
+            required: true,
+            schema: { type: "string" },
+          })),
+          {
+            name: "world",
+            in: "query",
+            required: false,
+            schema: { nullable: true, type: "string", minLength: 1 },
+          },
+        ],
         security: [{ bearer: [] }],
         responses: {
           "200": {

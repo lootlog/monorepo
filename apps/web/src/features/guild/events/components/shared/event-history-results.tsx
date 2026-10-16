@@ -73,7 +73,7 @@ export const EventHistoryResults = ({
     return (
       <div className="p-3">
         <EmptyState
-          framed
+          fill
           icon={CircleAlert}
           title={t("events.error")}
           action={
@@ -95,7 +95,7 @@ export const EventHistoryResults = ({
   if (isEmpty && !hasNextPage) {
     return (
       <div className="p-3">
-        <EmptyState framed icon={Skull} title={t("events.kills.noKills")} />
+        <EmptyState fill icon={Skull} title={t("events.kills.noKills")} />
       </div>
     );
   }

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { Button } from "@lootlog/ui/components/button";
+import { UiLabelsProvider } from "@lootlog/ui/components/ui-labels";
 import { useTranslation } from "react-i18next";
 import { routeTree } from "./routeTree.gen";
 import { queryClient } from "@/lib/query-client";
@@ -122,27 +123,46 @@ function App() {
   const { t } = useTranslation();
 
   return (
-    <AppErrorBoundary
-      fallback={(reset) => (
-        <div className="flex min-h-dvh bg-background">
-          <RouteErrorState
-            status={500}
-            description={t("common.routeErrors.global.description")}
-            primaryAction=<RouteRetryButton onRetry={reset} />
-            secondaryAction={
-              <Button
-                variant="outline"
-                onClick={() => window.location.assign(ROUTES.user.dashboard)}
-              >
-                {t("common.routeErrors.actions.goToDashboard")}
-              </Button>
-            }
-          />
-        </div>
-      )}
+    <UiLabelsProvider
+      labels={{
+        close: t("common.close"),
+        sidebarTitle: t("common.uiLabels.sidebarTitle"),
+        sidebarDescription: t("common.uiLabels.sidebarDescription"),
+        toggleSidebar: t("common.uiLabels.toggleSidebar"),
+        commandPaletteTitle: t("common.uiLabels.commandPaletteTitle"),
+        commandPaletteDescription: t(
+          "common.uiLabels.commandPaletteDescription",
+        ),
+        pagination: t("common.uiLabels.pagination"),
+        previousPage: t("common.uiLabels.previousPage"),
+        nextPage: t("common.uiLabels.nextPage"),
+        previous: t("common.uiLabels.previous"),
+        next: t("common.uiLabels.next"),
+        morePages: t("common.uiLabels.morePages"),
+      }}
     >
-      <RouterProvider router={router} />
-    </AppErrorBoundary>
+      <AppErrorBoundary
+        fallback={(reset) => (
+          <div className="flex min-h-dvh bg-background">
+            <RouteErrorState
+              status={500}
+              description={t("common.routeErrors.global.description")}
+              primaryAction=<RouteRetryButton onRetry={reset} />
+              secondaryAction={
+                <Button
+                  variant="outline"
+                  onClick={() => window.location.assign(ROUTES.user.dashboard)}
+                >
+                  {t("common.routeErrors.actions.goToDashboard")}
+                </Button>
+              }
+            />
+          </div>
+        )}
+      >
+        <RouterProvider router={router} />
+      </AppErrorBoundary>
+    </UiLabelsProvider>
   );
 }
 

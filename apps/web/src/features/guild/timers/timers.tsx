@@ -151,7 +151,7 @@ export const Timers = () => {
       return (
         <div className="p-3">
           <EmptyState
-            framed
+            fill
             icon={CircleAlert}
             title={t("timers.loadError")}
             description={t("timers.loadErrorDescription")}
@@ -177,7 +177,7 @@ export const Timers = () => {
           )}
           {showsNoSearchResults ? (
             <EmptyState
-              framed
+              fill
               icon={SearchX}
               title={t("timers.noResults")}
               description={t("timers.noResultsDescription")}
@@ -193,7 +193,7 @@ export const Timers = () => {
             />
           ) : (
             <EmptyState
-              framed
+              fill
               media={
                 <EmptyMedia variant="icon">
                   <ThemeEmptyStateIcon fallback=<Clock3 /> />

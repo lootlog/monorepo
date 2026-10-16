@@ -29117,6 +29117,22 @@ components:
                 type: number
               caught:
                 type: number
+              caughtBy:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    characterId:
+                      type: string
+                    name:
+                      type: string
+                    caught:
+                      type: number
+                  required:
+                    - characterId
+                    - name
+                    - caught
+                  additionalProperties: false
               npcKills:
                 type: number
             required:
@@ -29129,6 +29145,7 @@ components:
               - npc
               - count
               - caught
+              - caughtBy
               - npcKills
             additionalProperties: false
         monsters:

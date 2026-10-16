@@ -67,7 +67,7 @@ export const Events = () => {
       return (
         <div className="p-3">
           <EmptyState
-            framed
+            fill
             icon={Trophy}
             title={t("events.noEvents")}
             description={t("events.emptyDescription")}
@@ -88,7 +88,7 @@ export const Events = () => {
       return (
         <div className="p-3">
           <EmptyState
-            framed
+            fill
             icon={SearchX}
             title={t("events.noResults")}
             description={t("events.noResultsDescription")}

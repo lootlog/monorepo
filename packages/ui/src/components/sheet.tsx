@@ -5,6 +5,7 @@ import { Dialog as SheetPrimitive } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
 
 import { cn } from "cn";
+import { useUiLabels } from "@lootlog/ui/components/ui-labels";
 
 function Sheet({ ...props }: SheetPrimitive.Root.Props) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />;
@@ -40,13 +41,15 @@ function SheetContent({
   children,
   side = "right",
   keepMounted = false,
-  closeLabel = "Close",
+  closeLabel,
   ...props
 }: SheetPrimitive.Popup.Props & {
   side?: "top" | "right" | "bottom" | "left";
   keepMounted?: SheetPrimitive.Portal.Props["keepMounted"];
   closeLabel?: string;
 }) {
+  const labels = useUiLabels();
+
   return (
     <SheetPortal keepMounted={keepMounted}>
       <SheetOverlay />
@@ -69,7 +72,7 @@ function SheetContent({
         {children}
         <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-open:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
           <XIcon className="size-4" />
-          <span className="sr-only">{closeLabel}</span>
+          <span className="sr-only">{closeLabel ?? labels.close}</span>
         </SheetPrimitive.Close>
       </SheetPrimitive.Popup>
     </SheetPortal>

@@ -63,20 +63,25 @@
       "legends": {
         "legends": "Spadło",
         "caught": "Złapane",
-        "kills": "Bicia potwora",
-        "killsDetail": "bicia: {{count}}"
+        "kills": "Bicia potwora"
       }
     }
   },
   "monsterLegends": "legendy: {{legends}}, złapane: {{caught}}",
   "legend": {
-    "caught": "złapane: {{count}}"
+    "caught": "złapane: {{count}}",
+    "caughtBy": "Złapane przez: {{characters}}",
+    "caughtByCharacter": "{{name}} ({{count}})",
+    "moreCount": "+{{count}}",
+    "moreCharacters": "Pozostałe postacie: {{characters}}"
   },
   "legendsTable": {
     "item": "Przedmiot",
     "present": "Spadło",
     "caught": "Złapane",
-    "kills": "Bicia potwora"
+    "kills": "Bicia potwora",
+    "killsDetail": "bicia: {{count}}",
+    "characters": "Złapane przez"
   },
   "monsterDrops": {
     "title": "Potwory i legendy"
@@ -105,7 +110,7 @@
   "playedDays_other": "{{count}} dnia gry",
   "killsPerHour": "Bicia na godzinę gry",
   "killsPerHourDetail": "Wszystkie światy",
-  "killsPerHourWholeAccount": "Tylko dla całego konta",
+  "killsPerHourNoCharacter": "Niedostępne dla jednej postaci",
   "longestOnline": "Najdłuższy dzień online",
   "weeks": "Ten tydzień a poprzedni",
   "thisWeek": "Ten tydzień",

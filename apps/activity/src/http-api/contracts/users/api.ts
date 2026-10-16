@@ -1,3 +1,4 @@
+import { ONLINE_HISTORY_RETENTION_DAYS } from "#src/online/online-retention";
 import { Schema } from "effect";
 import {
   HttpApiEndpoint,
@@ -25,7 +26,7 @@ export class UsersGroup extends HttpApiGroup.make("users").add(
     .annotate(OpenApi.Identifier, "UsersActivityController_getOnline")
     .annotate(
       OpenApi.Description,
-      "An inclusive range of at most 112 Warsaw calendar dates. Only the latest 16 weeks of confirmed online intervals are retained.",
+      `An inclusive range of at most ${ONLINE_HISTORY_RETENTION_DAYS} Warsaw calendar dates. Only the latest ${ONLINE_HISTORY_RETENTION_DAYS} days of confirmed online intervals are retained.`,
     )
     .annotate(
       OpenApi.Summary,

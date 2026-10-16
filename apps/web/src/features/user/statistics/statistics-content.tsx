@@ -27,9 +27,7 @@ export function StatisticsContent({
   const Content = tabs[tab];
 
   if (props.data.meta.coverage === "unavailable")
-    return (
-      <EmptyState framed icon={BarChart3} title={t("statistics.unknown")} />
-    );
+    return <EmptyState fill icon={BarChart3} title={t("statistics.unknown")} />;
 
   return <Content {...props} />;
 }

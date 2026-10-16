@@ -60,7 +60,7 @@ export function MyReservations() {
   const renderEmpty = () =>
     normalizedSearch ? (
       <EmptyState
-        framed
+        fill
         icon={SearchX}
         title={t("reservations.my.emptyFiltered")}
         description={t("reservations.empty.searchDescription")}
@@ -72,7 +72,7 @@ export function MyReservations() {
       />
     ) : (
       <EmptyState
-        framed
+        fill
         icon={CalendarX2}
         title={t(
           isUpcoming
