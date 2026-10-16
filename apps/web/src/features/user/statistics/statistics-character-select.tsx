@@ -12,13 +12,21 @@ export type StatisticsCharacter =
 
 type StatisticsCharacterSelectProps = {
   characterId: string | undefined;
+  /** The selected character's world; an id is unique only within one. */
+  world: string | undefined;
   onCharacterChange: (character: StatisticsCharacter | undefined) => void;
   className?: string;
 };
 
+// The same character id can exist on several worlds, so the selector keys
+// each character by both.
+const characterKey = (world: string, characterId: string) =>
+  `${world}:${characterId}`;
+
 /** The characters with tracked kills; picking one narrows the statistics to it. */
 export function StatisticsCharacterSelect({
   characterId,
+  world,
   onCharacterChange,
   className,
 }: StatisticsCharacterSelectProps) {
@@ -40,7 +48,7 @@ export function StatisticsCharacterSelect({
     );
 
     return {
-      id: character.characterId,
+      id: characterKey(character.world, character.characterId),
       world: character.world,
       name:
         character.name ??
@@ -55,10 +63,15 @@ export function StatisticsCharacterSelect({
   return (
     <CharacterSelector
       characters={characters}
-      characterId={characterId}
-      onCharacterChange={(id) =>
+      characterId={
+        world && characterId ? characterKey(world, characterId) : undefined
+      }
+      onCharacterChange={(key) =>
         onCharacterChange(
-          tracked.find((character) => character.characterId === id),
+          tracked.find(
+            (character) =>
+              characterKey(character.world, character.characterId) === key,
+          ),
         )
       }
       allowAllCharacters

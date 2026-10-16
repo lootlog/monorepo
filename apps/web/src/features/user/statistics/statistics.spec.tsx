@@ -54,6 +54,18 @@ function renderStatistics(
                     firstKilledAt: "2026-09-01T10:00:00Z",
                     lastKilledAt: "2026-09-05T10:00:00Z",
                   },
+                  // Another world reuses the same character id.
+                  {
+                    characterId: "7",
+                    world: "luvia",
+                    name: "Beta",
+                    level: 40,
+                    profession: "m",
+                    icon: null,
+                    kills: 1,
+                    firstKilledAt: "2026-09-02T10:00:00Z",
+                    lastKilledAt: "2026-09-02T10:00:00Z",
+                  },
                 ],
               }),
             );
@@ -297,6 +309,17 @@ it("narrows to a character on its world, says when its history starts, and drops
   expect(
     await screen.findByText(/Bicia postaci zapisujemy od 1\.09\.2026/),
   ).toBeTruthy();
+
+  fireEvent.click(
+    await screen.findByRole("combobox", { name: /^Postać: Alpha/ }),
+  );
+  fireEvent.click(await screen.findByRole("option", { name: /Beta/ }));
+  await waitFor(() =>
+    expect(router.state.location.search).toMatchObject({
+      characterId: "7",
+      world: "luvia",
+    }),
+  );
 
   await router.navigate({
     to: "/@me/statistics",
