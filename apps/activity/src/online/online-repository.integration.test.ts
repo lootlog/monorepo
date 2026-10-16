@@ -1106,6 +1106,7 @@ describe("durable private online history", () => {
             world,
           });
 
+          expect(narrowed.world).toBe(world);
           expect(narrowed.days.map((day) => day.onlineSeconds)).toEqual([
             ...seconds,
           ]);

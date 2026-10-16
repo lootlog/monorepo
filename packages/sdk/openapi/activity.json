@@ -1570,6 +1570,10 @@
             "type": "string",
             "enum": ["fresh", "stale", "unavailable"]
           },
+          "world": {
+            "nullable": true,
+            "type": "string"
+          },
           "days": {
             "type": "array",
             "items": {
@@ -1610,6 +1614,7 @@
           "trackingStartedAt",
           "lastObservedAt",
           "status",
+          "world",
           "days"
         ]
       }

@@ -20,6 +20,7 @@ const onlineDefaults: UserOnlineResponseDto = {
   trackingStartedAt: null,
   lastObservedAt: null,
   status: "fresh",
+  world: null,
   days: [],
 };
 

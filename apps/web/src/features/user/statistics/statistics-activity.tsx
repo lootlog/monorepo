@@ -9,6 +9,9 @@ import { StatisticsPlayTimeTiles } from "./statistics-play-time-tiles";
 import { StatisticsWeeks } from "./statistics-weeks";
 import { summarizePlayTime } from "./summarize-play-time";
 
+/** How much online history an activity revision before the yearly one keeps. */
+const PREVIOUS_ONLINE_HISTORY_DAYS = 112;
+
 /** The last `days` calendar days through `to`, as the online history takes them. */
 const rangeEnding = (to: string, days: number) => {
   const from = new Date(`${to}T12:00:00Z`);
@@ -20,7 +23,7 @@ const rangeEnding = (to: string, days: number) => {
 export function StatisticsActivity({ data, search }: StatisticsTabProps) {
   const { t } = useTranslation();
 
-  const online = useUsersActivityControllerGetOnline(
+  const yearly = useUsersActivityControllerGetOnline(
     {
       ...rangeEnding(data.meta.endDate, search.days),
       world: search.world,
@@ -28,28 +31,42 @@ export function StatisticsActivity({ data, search }: StatisticsTabProps) {
     { query: { staleTime: 60_000 } },
   );
 
+  // While a release rolls out, an older activity revision rejects a range
+  // longer than its own history; it still answers for what it keeps.
+  const rejected =
+    yearly.error?.status === 400 && search.days > PREVIOUS_ONLINE_HISTORY_DAYS;
+
+  const previous = useUsersActivityControllerGetOnline(
+    {
+      ...rangeEnding(data.meta.endDate, PREVIOUS_ONLINE_HISTORY_DAYS),
+      world: search.world,
+    },
+    { query: { staleTime: 60_000, enabled: rejected } },
+  );
+
+  const online = rejected ? previous : yearly;
+
   const formatDuration = (seconds: number) =>
     t("statistics.duration", {
       hours: Math.floor(seconds / 3600),
       minutes: Math.floor((seconds % 3600) / 60),
     });
 
-  const available =
-    online.data !== undefined && online.data.status !== "unavailable";
+  // An older activity revision ignores the world and counts every world.
+  const countedWorld = (online.data?.world ?? null) === (search.world ?? null);
 
-  const days = online.data?.days ?? [];
+  const available =
+    online.data !== undefined &&
+    online.data.status !== "unavailable" &&
+    countedWorld;
 
   // A session an older Game client reported without its world may have been
-  // on this one, so such a day's time on the world is incomplete.
-  const playTime = summarizePlayTime(
-    search.world
-      ? days.map((day) => ({
-          ...day,
-          partial: day.partial || !day.worldsComplete,
-        }))
-      : days,
-    data.daily,
+  // on this one, so such a day's time on the world is unknown.
+  const days = (countedWorld ? (online.data?.days ?? []) : []).map((day) =>
+    search.world && !day.worldsComplete ? { ...day, onlineSeconds: null } : day,
   );
+
+  const playTime = summarizePlayTime(days, data.daily);
 
   const killsByDate = new Map(data.daily.map((day) => [day.date, day.kills]));
 
@@ -60,6 +77,13 @@ export function StatisticsActivity({ data, search }: StatisticsTabProps) {
         available={available}
         world={search.world}
         characterSelected={Boolean(search.characterId)}
+        coverage={
+          rejected
+            ? t("statistics.onlineLastDays", {
+                days: PREVIOUS_ONLINE_HISTORY_DAYS,
+              })
+            : undefined
+        }
         formatDuration={formatDuration}
       />
       <StatsSectionColumns className="xl:grid-cols-3 xl:*:first:col-span-2">
