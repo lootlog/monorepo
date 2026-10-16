@@ -27,26 +27,33 @@ export type StatisticsSearch = {
   ranking?: StatisticsRanking;
 };
 
-export const parseStatisticsSearch = z.object({
-  tab: z.enum(STATISTICS_TABS).catch("overview"),
-  days: z.coerce
-    .number()
-    .transform((days) => STATISTICS_DAYS.find((value) => value === days) ?? 30)
-    .catch(30),
-  world: z
-    .string()
-    .transform((world) => world.trim().slice(0, 100) || undefined)
-    .optional()
-    .catch(undefined),
-  characterId: z
-    .string()
-    .transform((id) => id.trim().slice(0, 100) || undefined)
-    .optional()
-    .catch(undefined),
-  npcType: z
-    .string()
-    .transform((type) => TRACKABLE_NPC_TYPES.find((value) => value === type))
-    .optional()
-    .catch(undefined),
-  ranking: z.enum(STATISTICS_RANKINGS).optional().catch(undefined),
-}).parse;
+export const parseStatisticsSearch = z
+  .object({
+    tab: z.enum(STATISTICS_TABS).catch("overview"),
+    days: z.coerce
+      .number()
+      .transform(
+        (days) => STATISTICS_DAYS.find((value) => value === days) ?? 30,
+      )
+      .catch(30),
+    world: z
+      .string()
+      .transform((world) => world.trim().slice(0, 100) || undefined)
+      .optional()
+      .catch(undefined),
+    characterId: z
+      .string()
+      .transform((id) => id.trim().slice(0, 100) || undefined)
+      .optional()
+      .catch(undefined),
+    npcType: z
+      .string()
+      .transform((type) => TRACKABLE_NPC_TYPES.find((value) => value === type))
+      .optional()
+      .catch(undefined),
+    ranking: z.enum(STATISTICS_RANKINGS).optional().catch(undefined),
+  })
+  // A character id is unique only within its world, so it never stands alone.
+  .transform((search) =>
+    search.world ? search : { ...search, characterId: undefined },
+  ).parse;
