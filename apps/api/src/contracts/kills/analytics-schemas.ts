@@ -11,6 +11,11 @@ const NullableNumber = Schema.NullOr(FiniteNumber);
 
 const NullableString = Schema.NullOr(Schema.String);
 
+/** One Margonem character; its kills are recorded since per-character tracking began. */
+const CharacterIdQuery = Schema.optionalKey(
+  Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(100)),
+);
+
 export const UserKillAnalyticsQuery = Schema.Struct({
   days: Schema.optionalKey(Schema.Literals([7, 30, 90, 365])),
   world: Schema.optionalKey(
@@ -18,6 +23,7 @@ export const UserKillAnalyticsQuery = Schema.Struct({
   ),
   /** Narrows the NPC rankings, not the totals, to one NPC type. */
   npcType: Schema.optionalKey(NpcType),
+  characterId: CharacterIdQuery,
 });
 
 export type UserKillAnalyticsQuery = typeof UserKillAnalyticsQuery.Type;
@@ -26,6 +32,7 @@ export const UserKillActivityQuery = Schema.Struct({
   world: Schema.optionalKey(
     Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(100)),
   ),
+  characterId: CharacterIdQuery,
 });
 
 export type UserKillActivityQuery = typeof UserKillActivityQuery.Type;
@@ -35,6 +42,12 @@ export const KillAnalyticsMeta = Schema.Struct({
   generatedAt: Schema.String,
   days: Count,
   world: NullableString,
+  characterId: NullableString,
+  /**
+   * With `characterId`: when per-character tracking began for the user. Days
+   * before it are unknown (`kills: null`), not zero. Null without `characterId`.
+   */
+  trackedSince: NullableString,
   startDate: Schema.String,
   endDate: Schema.String,
   firstBucketAt: NullableString,
@@ -141,3 +154,23 @@ export const UserKillAnalyticsResponse = Schema.Struct({
 }).annotate({ identifier: "UserKillAnalyticsResponseDto_Output" });
 
 export type UserKillAnalyticsResponse = typeof UserKillAnalyticsResponse.Type;
+
+export const UserKillCharactersResponse = Schema.Struct({
+  characters: Schema.Array(
+    Schema.Struct({
+      characterId: Schema.String,
+      world: Schema.String,
+      /** Null until a Game client that reports character details records a kill. */
+      name: NullableString,
+      level: NullableNumber,
+      profession: NullableString,
+      icon: NullableString,
+      kills: Count,
+      /** When kills of this character started being recorded. */
+      firstKilledAt: Schema.String,
+      lastKilledAt: Schema.String,
+    }),
+  ),
+}).annotate({ identifier: "UserKillCharactersResponseDto_Output" });
+
+export type UserKillCharactersResponse = typeof UserKillCharactersResponse.Type;

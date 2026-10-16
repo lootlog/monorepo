@@ -71,6 +71,15 @@ export const CreateKillRequest = Schema.Struct({
   }),
   characterId: NonEmptyString,
   accountId: NonEmptyString,
+  /** The reporting character, shown when filtering personal statistics by character. */
+  character: Schema.optionalKey(
+    Schema.Struct({
+      name: NonEmptyString,
+      lvl: FiniteNumber,
+      prof: Schema.optionalKey(Schema.String),
+      icon: Schema.optionalKey(Schema.String),
+    }),
+  ),
 }).annotate({ identifier: "CreateKillDto" });
 
 export type CreateKillResponse = typeof CreateKillResponse.Type;

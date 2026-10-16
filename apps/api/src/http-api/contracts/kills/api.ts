@@ -3,6 +3,7 @@ import {
   UserKillAnalyticsResponse,
   UserKillActivityQuery,
   UserKillActivityResponse,
+  UserKillCharactersResponse,
 } from "#src/contracts/kills/analytics-schemas";
 /** Endpoints owned by the kills HTTP module. */
 import {
@@ -101,6 +102,18 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "KillsController_getUserKillActivity")
     .annotate(OpenApi.Summary, "Get 16 weeks of personal kill activity"),
+  HttpApiEndpoint.get(
+    "KillsControllerGetUserKillCharacters",
+    "/users/@me/stats/kills/characters",
+    { success: UserKillCharactersResponse },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "KillsController_getUserKillCharacters")
+    .annotate(OpenApi.Summary, "List characters with personal kills")
+    .annotate(
+      OpenApi.Description,
+      "Characters of the authenticated user with kills recorded since per-character tracking began, most recently active first.",
+    ),
   HttpApiEndpoint.get(
     "KillsControllerGetUserNpcKills",
     "/users/@me/kills/npcs",

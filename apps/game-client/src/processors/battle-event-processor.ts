@@ -340,6 +340,12 @@ export class BattleEventProcessor {
         npc: npcWithoutType,
         characterId: game.hero.characterId,
         accountId: game.hero.accountId,
+        character: {
+          name: game.hero.name,
+          lvl: game.hero.level,
+          prof: game.hero.profession,
+          icon: game.hero.icon,
+        },
       },
       lastKillHash: killHash,
     };

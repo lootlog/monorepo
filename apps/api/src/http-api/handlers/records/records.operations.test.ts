@@ -60,6 +60,7 @@ const makeData = (overrides: Partial<RecordsData["Service"]> = {}) =>
     getUserFeed: unimplemented,
     getUserKillAnalytics: unimplemented,
     getUserKillActivity: unimplemented,
+    getUserKillCharacters: unimplemented,
     getUserNpcKills: unimplemented,
     getGuildTopNpcs: unimplemented,
     getGuildTopKillersByType: unimplemented,

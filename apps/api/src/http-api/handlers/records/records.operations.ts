@@ -7,6 +7,7 @@ import type {
   UserKillAnalyticsResponse,
   UserKillActivityQuery,
   UserKillActivityResponse,
+  UserKillCharactersResponse,
 } from "#src/contracts/kills/analytics-schemas";
 import {
   statusCodeResponse,
@@ -144,6 +145,9 @@ export class RecordsData extends Context.Service<
       caller: AuthenticatedCaller,
       query: UserKillActivityQuery,
     ) => DataEffect<UserKillActivityResponse>;
+    readonly getUserKillCharacters: (
+      caller: AuthenticatedCaller,
+    ) => DataEffect<UserKillCharactersResponse>;
     readonly getUserKillStats: (
       caller: AuthenticatedCaller,
       query: UserKillStatsQuery,
@@ -522,6 +526,14 @@ export const getUserKillActivity = Effect.fn("kills.getUserKillActivity")(
     const caller = yield* requireCaller;
 
     return yield* data((service) => service.getUserKillActivity(caller, query));
+  },
+);
+
+export const getUserKillCharacters = Effect.fn("kills.getUserKillCharacters")(
+  function* () {
+    const caller = yield* requireCaller;
+
+    return yield* data((service) => service.getUserKillCharacters(caller));
   },
 );
 

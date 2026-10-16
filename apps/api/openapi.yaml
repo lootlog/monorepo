@@ -14879,6 +14879,13 @@ paths:
           schema:
             $ref: "#/components/schemas/NpcType"
           required: false
+        - name: characterId
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          required: false
       security:
         - bearer: []
       responses:
@@ -14947,6 +14954,13 @@ paths:
             minLength: 1
             maxLength: 100
           required: false
+        - name: characterId
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          required: false
       security:
         - bearer: []
       responses:
@@ -15001,6 +15015,67 @@ paths:
                   - message
                 additionalProperties: false
       summary: Get 16 weeks of personal kill activity
+  /users/@me/stats/kills/characters:
+    get:
+      tags:
+        - kills
+      operationId: KillsController_getUserKillCharacters
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: UserKillCharactersResponseDto_Output
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserKillCharactersResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Characters of the authenticated user with kills recorded since per-character tracking began, most recently active first.
+      summary: List characters with personal kills
   /users/@me/kills/npcs:
     get:
       tags:
@@ -18607,6 +18682,52 @@ components:
         - npcs
         - pagination
       additionalProperties: false
+    UserKillCharactersResponseDto_Output:
+      type: object
+      properties:
+        characters:
+          type: array
+          items:
+            type: object
+            properties:
+              characterId:
+                type: string
+              world:
+                type: string
+              name:
+                nullable: true
+                type: string
+              level:
+                nullable: true
+                type: number
+              profession:
+                nullable: true
+                type: string
+              icon:
+                nullable: true
+                type: string
+              kills:
+                type: integer
+                minimum: 0
+                maximum: 9007199254740991
+              firstKilledAt:
+                type: string
+              lastKilledAt:
+                type: string
+            required:
+              - characterId
+              - world
+              - name
+              - level
+              - profession
+              - icon
+              - kills
+              - firstKilledAt
+              - lastKilledAt
+            additionalProperties: false
+      required:
+        - characters
+      additionalProperties: false
     UserKillActivityResponseDto_Output:
       type: object
       properties:
@@ -18624,6 +18745,12 @@ components:
               minimum: 0
               maximum: 9007199254740991
             world:
+              nullable: true
+              type: string
+            characterId:
+              nullable: true
+              type: string
+            trackedSince:
               nullable: true
               type: string
             startDate:
@@ -18660,6 +18787,8 @@ components:
             - generatedAt
             - days
             - world
+            - characterId
+            - trackedSince
             - startDate
             - endDate
             - firstBucketAt
@@ -18714,6 +18843,12 @@ components:
             world:
               nullable: true
               type: string
+            characterId:
+              nullable: true
+              type: string
+            trackedSince:
+              nullable: true
+              type: string
             startDate:
               type: string
             endDate:
@@ -18748,6 +18883,8 @@ components:
             - generatedAt
             - days
             - world
+            - characterId
+            - trackedSince
             - startDate
             - endDate
             - firstBucketAt
@@ -19451,6 +19588,22 @@ components:
         accountId:
           type: string
           minLength: 1
+        character:
+          type: object
+          properties:
+            name:
+              type: string
+              minLength: 1
+            lvl:
+              type: number
+            prof:
+              type: string
+            icon:
+              type: string
+          required:
+            - name
+            - lvl
+          additionalProperties: false
       required:
         - world
         - npc
