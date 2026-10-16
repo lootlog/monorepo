@@ -379,8 +379,11 @@ export const buildUserLootIdsQuery = (
       ),
     )
     .innerJoin(lootPlayer, eq(lootPlayer.playerSnapshotId, player.id))
+    .innerJoin(loot, eq(loot.id, lootPlayer.lootId))
     .where(
       and(
+        // Dialog rewards list the player too, but only fights count.
+        eq(loot.source, "FIGHT"),
         // A loot's players are snapshots of its world.
         options.world ? eq(player.world, options.world) : undefined,
         options.characterId === undefined

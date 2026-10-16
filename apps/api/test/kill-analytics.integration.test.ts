@@ -212,9 +212,10 @@ describe("personal kill analytics PostgreSQL boundary", () => {
     );
     const analytics = await readAnalytics();
     expect(analytics.overview.totalKills).toBe(10000);
-    expect(analytics.npcs).toHaveLength(20);
+    // Every monster killed in the period, for the full ranking.
+    expect(analytics.npcs).toHaveLength(200);
     expect(analytics.daily).toHaveLength(7);
     expect(analytics.hourlyWeekday).toHaveLength(168);
-    expect(JSON.stringify(analytics).length).toBeLessThan(35000);
+    expect(JSON.stringify(analytics).length).toBeLessThan(100000);
   });
 });

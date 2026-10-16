@@ -45,6 +45,13 @@ export type UserKillAnalyticsScope = {
 
 const ISO_UTC = 'YYYY-MM-DD"T"HH24:MI:SS"Z"';
 
+/**
+ * Every monster an account kills in a year fits: the heaviest accounts kill
+ * about 400 different bosses. The bound keeps the response finite, not the
+ * ranking short.
+ */
+const USER_KILL_ANALYTICS_NPC_LIMIT = 500;
+
 /** Both variants aggregate inside PostgreSQL. The activity variant never computes NPC ranks or hourly grids. */
 export const userKillAnalyticsSql = (
   discordUserId: string,
@@ -139,7 +146,7 @@ export const userKillAnalyticsSql = (
         select "npcType" as "npcType", sum("totalKills")::float8 as "totalKills", count(*)::int as "uniqueNpcs"
         from npc_totals where "totalKills">0 group by "npcType" order by sum("totalKills") desc, "npcType"
       ) t), '[]'::json),
-      'npcs', coalesce((select json_agg(n) from (select * from npc_ranked where "totalKills">0 ${rankedType} order by "totalKills" desc, world, "npcId" limit 20) n), '[]'::json),
+      'npcs', coalesce((select json_agg(n) from (select * from npc_ranked where "totalKills">0 ${rankedType} order by "totalKills" desc, world, "npcId" limit ${USER_KILL_ANALYTICS_NPC_LIMIT}) n), '[]'::json),
       'worldComparisons', coalesce((select json_agg(w) from (
         select world, coalesce(sum(kills) filter(where "periodStart" >= ${start} and "periodStart" < ${through}),0)::float8 as "comparisonKills",
           coalesce(sum(kills) filter(where "periodStart" < ${previousThrough}),0)::float8 as "previousKills"

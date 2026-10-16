@@ -74,12 +74,14 @@ const loot = async (options: {
   shared?: boolean;
   /** An older Game client reported the template id, not the spawn id. */
   legacy?: boolean;
+  /** A dialog reward rather than a fight's loot. */
+  dialog?: boolean;
 }) => {
   const world = options.world ?? "tempest";
 
   const lootId = await one(
-    `INSERT INTO "Loot" ("uniqueId",world,"gameVersion",source,location,"createdAt","updatedAt") VALUES ($1,$2,'pl','FIGHT','map',now(),now()) RETURNING id`,
-    [randomUUID(), world],
+    `INSERT INTO "Loot" ("uniqueId",world,"gameVersion",source,location,"createdAt","updatedAt") VALUES ($1,$2,'pl',$3::"LootSource",'map',now(),now()) RETURNING id`,
+    [randomUUID(), world, options.dialog ? "DIALOG" : "FIGHT"],
   );
 
   for (const guildId of options.guildIds)
@@ -177,6 +179,8 @@ describe("personal loot statistics", () => {
       npc: { lvl: 200 },
     });
     await loot({ guildIds: [first], characterId: character, archived: true });
+    // A dialog reward lists the player but is no fight.
+    await loot({ guildIds: [first], characterId: character, dialog: true });
     // Someone else's fight.
     await loot({ guildIds: [first], characterId: stranger });
 
@@ -320,6 +324,26 @@ describe("personal loot statistics", () => {
     ]);
     expect(result.monsters).toEqual([
       expect.objectContaining({ kills: 50, legends: 2 }),
+    ]);
+  });
+
+  it("lists a non-boss that dropped a legend only on the world it dropped it", async () => {
+    const user = randomUUID();
+    const character = nextCharacterId++;
+    const guildId = await organization(user);
+    await registerCharacter(user, character);
+    await loot({
+      guildIds: [guildId],
+      characterId: character,
+      npc: { type: "ELITE" },
+    });
+    await client.query(
+      `INSERT INTO "UserKillBucket" ("periodStart","discordUserId",world,"npcId","npcName","npcType","npcLvl",kills,"lastKilledAt") VALUES (now(),$1,'tempest',77,'Hero','ELITE',100,7,now()),(now(),$1,'aldous',77,'Hero','ELITE',100,9,now())`,
+      [user],
+    );
+
+    expect((await stats(user)).monsters).toEqual([
+      expect.objectContaining({ world: "tempest", kills: 7, legends: 1 }),
     ]);
   });
 });
