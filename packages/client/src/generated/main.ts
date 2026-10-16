@@ -14235,6 +14235,7 @@ days?: KillsControllerGetUserKillAnalyticsDays;
  * @maxLength 100
  */
 world?: string;
+npcType?: NpcType;
 };
 
 export type KillsControllerGetUserKillAnalyticsDays = typeof KillsControllerGetUserKillAnalyticsDays[keyof typeof KillsControllerGetUserKillAnalyticsDays];

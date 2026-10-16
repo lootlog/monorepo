@@ -1,5 +1,6 @@
 import { FiniteNumber } from "@lootlog/schema/http-scalars";
 import { Schema } from "effect";
+import { NpcType } from "./schemas.js";
 
 const Count = FiniteNumber.check(
   Schema.isInt(),
@@ -15,6 +16,8 @@ export const UserKillAnalyticsQuery = Schema.Struct({
   world: Schema.optionalKey(
     Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(100)),
   ),
+  /** Narrows the NPC rankings, not the totals, to one NPC type. */
+  npcType: Schema.optionalKey(NpcType),
 });
 
 export type UserKillAnalyticsQuery = typeof UserKillAnalyticsQuery.Type;
