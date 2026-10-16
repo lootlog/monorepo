@@ -60,6 +60,11 @@
   --sidebar-accent-foreground: #f7f8f2;
   --sidebar-border: #24364d;
   --sidebar-ring: #35d3e4;
+  /*
+   * Every rule between panels, sections, rows and cards. Themes leave it to
+   * follow their border; a custom theme can set it on its own.
+   */
+  --separator: color-mix(in oklab, var(--border) 50%, var(--card));
   --font-sans:
     "Geist Variable", ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -404,8 +409,8 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-  /* Card and divider borders sit halfway between the theme border and the card. */
-  --color-border: color-mix(in oklab, var(--border) 50%, var(--card));
+  /* Cards, tables and dividers draw the theme's separator. */
+  --color-border: var(--separator);
   /* Controls keep the theme's full border, a step above the quieter card border. */
   --color-input: var(--border);
   --color-ring: var(--ring);
@@ -425,12 +430,8 @@
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  /* Sidebar rules sit closer to the sidebar surface than content borders. */
-  --color-sidebar-border: color-mix(
-    in oklab,
-    var(--sidebar-border) 55%,
-    var(--sidebar)
-  );
+  /* The sidebar's rules match every other separator in the app. */
+  --color-sidebar-border: var(--separator);
   --color-sidebar-ring: var(--sidebar-ring);
 
   --font-sans: var(--font-sans);

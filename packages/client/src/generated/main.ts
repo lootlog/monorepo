@@ -126,6 +126,8 @@ export type SharedUserThemeResponseDtoDefinitionOverrides = {
   /** @pattern ^#[\dA-Fa-f]{6}$ */
   border?: string;
   /** @pattern ^#[\dA-Fa-f]{6}$ */
+  separator?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   ring?: string;
   /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-1'?: string;
@@ -159,8 +161,6 @@ export type SharedUserThemeResponseDtoDefinitionOverrides = {
   'sidebar-accent'?: string;
   /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-accent-foreground'?: string;
-  /** @pattern ^#[\dA-Fa-f]{6}$ */
-  'sidebar-border'?: string;
   /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-ring'?: string;
 };
@@ -305,6 +305,8 @@ export type UserThemeResponseDtoDefinitionOverrides = {
   /** @pattern ^#[\dA-Fa-f]{6}$ */
   border?: string;
   /** @pattern ^#[\dA-Fa-f]{6}$ */
+  separator?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   ring?: string;
   /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-1'?: string;
@@ -338,8 +340,6 @@ export type UserThemeResponseDtoDefinitionOverrides = {
   'sidebar-accent'?: string;
   /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-accent-foreground'?: string;
-  /** @pattern ^#[\dA-Fa-f]{6}$ */
-  'sidebar-border'?: string;
   /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-ring'?: string;
 };
@@ -482,6 +482,8 @@ export type UpdateUserThemeDtoDefinitionOverrides = {
   /** @pattern ^#[\dA-Fa-f]{6}$ */
   border?: string;
   /** @pattern ^#[\dA-Fa-f]{6}$ */
+  separator?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   ring?: string;
   /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-1'?: string;
@@ -515,8 +517,6 @@ export type UpdateUserThemeDtoDefinitionOverrides = {
   'sidebar-accent'?: string;
   /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-accent-foreground'?: string;
-  /** @pattern ^#[\dA-Fa-f]{6}$ */
-  'sidebar-border'?: string;
   /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-ring'?: string;
 };
@@ -652,6 +652,8 @@ export type CreateUserThemeDtoDefinitionOverrides = {
   /** @pattern ^#[\dA-Fa-f]{6}$ */
   border?: string;
   /** @pattern ^#[\dA-Fa-f]{6}$ */
+  separator?: string;
+  /** @pattern ^#[\dA-Fa-f]{6}$ */
   ring?: string;
   /** @pattern ^#[\dA-Fa-f]{6}$ */
   'chart-1'?: string;
@@ -685,8 +687,6 @@ export type CreateUserThemeDtoDefinitionOverrides = {
   'sidebar-accent'?: string;
   /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-accent-foreground'?: string;
-  /** @pattern ^#[\dA-Fa-f]{6}$ */
-  'sidebar-border'?: string;
   /** @pattern ^#[\dA-Fa-f]{6}$ */
   'sidebar-ring'?: string;
 };
