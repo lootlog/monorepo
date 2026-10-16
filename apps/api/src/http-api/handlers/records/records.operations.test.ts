@@ -425,7 +425,7 @@ describe("Personal kill analytics authentication", () => {
 
     await Promise.all(
       [
-        getUserKillAnalytics({ days: 90, world: "tempest" }),
+        getUserKillAnalytics({ days: 90, world: "tempest", npcType: "HERO" }),
         getUserKillActivity({ world: "lunia" }),
       ].map(async (operation) => {
         expect(
@@ -436,7 +436,7 @@ describe("Personal kill analytics authentication", () => {
       }),
     );
     expect(received).toEqual([
-      { owner: caller, query: { days: 90, world: "tempest" } },
+      { owner: caller, query: { days: 90, world: "tempest", npcType: "HERO" } },
       { owner: caller, query: { world: "lunia" } },
     ]);
   });

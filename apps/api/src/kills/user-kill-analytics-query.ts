@@ -40,6 +40,7 @@ export const userKillAnalyticsSql = (
   world: string | undefined,
   range: KillAnalyticsRange,
   activityOnly: boolean,
+  npcType?: string,
 ) => {
   const bucket = userKillBucketTable;
   const total = userKillTotalTable;
@@ -50,6 +51,7 @@ export const userKillAnalyticsSql = (
   const start = sql`${range.start}::timestamptz`;
   const previousThrough = sql`${range.previousThrough}::timestamptz`;
   const through = sql`${range.through}::timestamptz`;
+  const rankedType = npcType ? sql`and "npcType" = ${npcType}` : sql``;
 
   return sql`
     with lifetime as (
@@ -112,8 +114,8 @@ export const userKillAnalyticsSql = (
         select "npcType" as "npcType", sum("totalKills")::float8 as "totalKills", count(*)::int as "uniqueNpcs"
         from npc_totals where "totalKills">0 group by "npcType" order by sum("totalKills") desc, "npcType"
       ) t), '[]'::json),
-      'npcs', coalesce((select json_agg(n) from (select * from npc_ranked where "totalKills">0 order by "totalKills" desc, world, "npcId" limit 20) n), '[]'::json),
-      'npcGains', coalesce((select json_agg(n) from (select * from npc_ranked where "deltaKills">0 order by "deltaKills" desc, world, "npcId" limit 10) n), '[]'::json),
+      'npcs', coalesce((select json_agg(n) from (select * from npc_ranked where "totalKills">0 ${rankedType} order by "totalKills" desc, world, "npcId" limit 20) n), '[]'::json),
+      'npcGains', coalesce((select json_agg(n) from (select * from npc_ranked where "deltaKills">0 ${rankedType} order by "deltaKills" desc, world, "npcId" limit 10) n), '[]'::json),
       'worldComparisons', coalesce((select json_agg(w) from (
         select world, coalesce(sum(kills) filter(where "periodStart" >= ${start} and "periodStart" < ${through}),0)::float8 as "comparisonKills",
           coalesce(sum(kills) filter(where "periodStart" < ${previousThrough}),0)::float8 as "previousKills"

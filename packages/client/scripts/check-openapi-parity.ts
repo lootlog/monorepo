@@ -2155,6 +2155,17 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
                 required: false,
                 schema: { type: "string", minLength: 1, maxLength: 100 },
               },
+              // Narrows only the analytics rankings to one NPC type.
+              ...(path === "analytics"
+                ? [
+                    {
+                      name: "npcType",
+                      in: "query",
+                      required: false,
+                      schema: { $ref: "#/components/schemas/NpcType" },
+                    },
+                  ]
+                : []),
             ],
             security: [{ bearer: [] }],
             responses: {

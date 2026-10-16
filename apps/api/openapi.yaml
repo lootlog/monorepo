@@ -14874,6 +14874,11 @@ paths:
             minLength: 1
             maxLength: 100
           required: false
+        - name: npcType
+          in: query
+          schema:
+            $ref: "#/components/schemas/NpcType"
+          required: false
       security:
         - bearer: []
       responses:
