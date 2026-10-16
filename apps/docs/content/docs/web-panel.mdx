@@ -6,14 +6,14 @@ description: Poznaj układ panelu Lootlog i przełączaj się pomiędzy danymi o
 Panel pod adresem [lootlog.pl/@me](https://lootlog.pl/@me) porządkuje dane
 zebrane przez dodatek. Logujesz się do niego tym samym kontem Discord.
 
-Na dashboardzie karta „Ostatnie walki” pokazuje pięć najnowszych zapisanych
+Na dashboardzie sekcja „Ostatnie walki” pokazuje pięć najnowszych zapisanych
 walk: przeciwników, poziomy, świat, wynik i czas. Kliknij wpis, aby otworzyć
 szczegóły, lub „Pokaż wszystkie”, aby przejść do Panelu walk. Przy wpisie możesz
 udostępnić walkę lub usunąć ją po potwierdzeniu. Dla publicznej walki dostępne
 są kopiowanie linku i wyłączenie udostępniania. Na telefonie
-karta znajduje się pod „Moje rezerwacje”, przed feedem aktywności.
+sekcja znajduje się pod feedem aktywności.
 
-Karta „Aktywność” zapamiętuje wybór „Online” lub „Bicia” w tej przeglądarce.
+Sekcja „Aktywność” zapamiętuje wybór „Online” lub „Bicia” w tej przeglądarce.
 
 ## Dostępność danych obecności
 
@@ -86,23 +86,31 @@ wylogować.
 Strefa osobista dotyczy twojego konta i postaci, niezależnie od wybranego
 klanu.
 
-| Widok         | Do czego służy                                               |
-| ------------- | ------------------------------------------------------------ |
-| Dashboard     | Łączne bicia, aktywność z 16 tygodni i najbliższe rezerwacje |
-| Statystyki    | Analiza bić i łupów z filtrem świata i zakresu czasu         |
-| Kille         | Historia pokonanych potworów                                 |
-| Panel walki   | Analiza obsługiwanych walk PvP                               |
-| Powiadomienia | Komunikaty związane z kontem                                 |
-| Ustawienia    | Preferencje i konfiguracja postaci                           |
+| Widok         | Do czego służy                                       |
+| ------------- | ---------------------------------------------------- |
+| Dashboard     | Twój dzień, feed, najbliższe rezerwacje i aktywność  |
+| Statystyki    | Analiza bić i łupów z filtrem świata i zakresu czasu |
+| Kille         | Historia pokonanych potworów                         |
+| Panel walki   | Analiza obsługiwanych walk PvP                       |
+| Powiadomienia | Komunikaty związane z kontem                         |
+| Ustawienia    | Preferencje i konfiguracja postaci                   |
 
 ### Dashboard
 
-Nad licznikami w karcie **Bicia** możesz wybrać świat albo wyświetlić wszystkie światy.
-Przycisk **Statystyki** zachowuje wybrany świat.
+Sekcja **Twój dzień** na górze dashboardu pokazuje:
 
-Dashboard pokazuje liczniki wszystkich bić oraz E2, herosów, kolosów i tytanów
-od początku zbierania danych, dla wybranego świata lub wszystkich światów.
-Obok najbliższych rezerwacji znajdziesz kompaktowy kalendarz aktywności
+- **Bicia dziś** — liczbę dzisiejszych bić i różnicę względem średniej dnia gry
+  z ostatnich 7 dni,
+- **W grze dziś** — dzisiejszy czas online; gdy dodatek właśnie przesłał dane,
+  zobaczysz **Teraz w grze**, a w innym wypadku średni czas dnia gry z 7 dni,
+- **Passa** — liczbę kolejnych dni z biciami i najdłuższą passę,
+- **Potwór tygodnia** — potwora najczęściej bitego przez Ciebie w ostatnich
+  7 dniach.
+
+Przycisk **Statystyki** otwiera pełne statystyki z ostatnich 7 dni. Łączne
+liczniki bić według typu potwora znajdziesz w zakładce **Przegląd** statystyk.
+
+Pod feedem lub obok niego znajdziesz kompaktowy kalendarz aktywności
 z ostatnich 16 tygodni (112 dni).
 Domyślny widok **Online** pokazuje czas całego konta. Nakładające się sesje
 postaci i światów liczymy tylko raz. Zakładka **Bicia** pokazuje dzienną liczbę
@@ -120,11 +128,11 @@ i opis dla czytnika ekranu mówią **Brak danych**, a nie zero. Pod kalendarzem 
 panelu szczegółów dnia. Komunikat o opóźnionym zbieraniu oznacza, że najnowsze
 wartości mogą jeszcze wzrosnąć.
 
-Karta **Moje rezerwacje** odróżnia brak rezerwacji od błędu pobierania. Po błędzie
+Sekcja **Moje rezerwacje** odróżnia brak rezerwacji od błędu pobierania. Po błędzie
 wybierz **Spróbuj ponownie**. Jeśli wcześniejsze dane są dostępne, pozostają
 widoczne z informacją, że są to ostatnie dostępne dane.
 
-Anulowanie rezerwacji z karty **Moje rezerwacje** lub ze strony **Moje rezerwacje** wymaga
+Anulowanie rezerwacji z sekcji **Moje rezerwacje** lub ze strony **Moje rezerwacje** wymaga
 potwierdzenia w oknie dialogowym. Jeśli anulowanie się nie powiedzie, okno
 pozostaje otwarte i możesz spróbować ponownie.
 
@@ -160,7 +168,8 @@ Lootlogami tylko wtedy, gdy obejmują dokładnie te same zdarzenia.
 Kliknięcie avatara otwiera listę łupów Lootloga. Kliknięcie nazwy potwora
 otwiera łup, a przy biciu bez łupu — statystyki potwora.
 
-Pod nagłówkiem feedu wybierasz, co chcesz widzieć:
+Przycisk filtrów w nagłówku feedu otwiera panel, w którym wybierasz, co chcesz
+widzieć:
 
 - **Lootlogi** — domyślnie wszystkie. Odznaczony Lootlog znika z feedu,
   a Lootlog, do którego dołączysz później, pojawia się automatycznie.
@@ -171,14 +180,14 @@ Filtry i pauzę zapisujemy na Twoim koncie, więc obowiązują na każdym
 urządzeniu. Jeśli żadne zdarzenie nie pasuje do filtrów, wybierz **Wyczyść
 filtry**, aby wrócić do ustawień domyślnych.
 
-Karta feedu rośnie razem z wpisami, tak jak karty po prawej stronie, i nie ma
-własnego przewijania. Aktywność i rezerwacje znajdują się po prawej stronie.
-Na telefonie feed znajduje się pod aktywnością, rezerwacjami i ostatnimi
-walkami.
+Feed rośnie razem z wpisami i przewija się razem ze stroną, a jego nagłówek
+zostaje u góry ekranu. Rezerwacje, ostatnie walki i aktywność znajdują się po
+prawej stronie. Na telefonie feed znajduje się pod rezerwacjami, a nad
+ostatnimi walkami i aktywnością.
 
 Jeżeli przewiniesz stronę poniżej początku feedu, aktualizacje czekają pod
-przyciskiem **Nowe zdarzenia**. Nie przesuwają automatycznie czytanej listy.
-Przycisk **Wstrzymaj** w prawym górnym rogu zatrzymuje aktualizacje, a **Wznów**
+przyciskiem **Nowe zdarzenia**, który pojawia się pod nagłówkiem feedu. Nie przesuwają automatycznie czytanej listy.
+Przycisk **Wstrzymaj** w nagłówku feedu zatrzymuje aktualizacje, a **Wznów**
 pobiera aktualną listę. Zmiana filtrów pobiera nową listę także podczas pauzy.
 Pauza dotyczy wyłącznie feedu.
 Odświeżenie zachowuje widoczną listę do otrzymania odpowiedzi. Wpisy pobrane
@@ -201,7 +210,7 @@ w historii przez 24 godziny i może pojawić się przy kolejnym pobraniu listy.
 
 ### Statystyki konta
 
-Otwórz **Statystyki** w menu albo przycisk w karcie **Bicia** na dashboardzie. W pasku
+Otwórz **Statystyki** w menu albo przycisk **Statystyki** w sekcji **Twój dzień** na dashboardzie. W pasku
 filtrów wybierz całe konto lub jeden świat oraz ostatnie **7, 30, 90 albo 365 dni**.
 Domyślny okres to 30 dni. Na telefonie filtry otwierasz okrągłym przyciskiem w rogu
 ekranu. Filtry i zakładka są zapisane w adresie strony, więc pozostają po odświeżeniu.

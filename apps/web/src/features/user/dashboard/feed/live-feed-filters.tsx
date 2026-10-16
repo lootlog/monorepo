@@ -17,6 +17,7 @@ import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { NpcTypeIcon } from "@lootlog/ui/components/npc-type-icon";
 import { Label } from "@lootlog/ui/components/label";
 import { Switch } from "@lootlog/ui/components/switch";
+import { FilterPanelField } from "@/components/filters/filter-panel-field";
 import { NPC_CATEGORY_APPEARANCE } from "../npc-category-appearance";
 
 type Props = {
@@ -51,102 +52,109 @@ export function LiveFeedFilters({ settings, disabled, onChange }: Props) {
       : t(`npcType.${category}`);
 
   return (
-    <div className="flex shrink-0 flex-col gap-2 border-b border-border/70 px-3 py-2 sm:flex-row sm:flex-wrap sm:items-center">
-      <FilterPopover
-        icon={Server}
-        multiSelect
-        options={guilds.map((guild) => ({
-          value: guild.id,
-          label: guild.name,
-          render: () => (
-            <span className="flex min-w-0 items-center gap-2">
-              <Avatar className="size-5 rounded-md" aria-hidden>
-                <AvatarImage src={guild.icon ?? undefined} alt="" />
-                <AvatarFallback className="rounded-none text-[0.625rem] font-medium">
-                  {guild.name.charAt(0).toUpperCase() || "?"}
-                </AvatarFallback>
-              </Avatar>
-              <span className="truncate">{guild.name}</span>
-            </span>
-          ),
-        }))}
-        value={includedGuildIds}
-        onValueChange={(guildId) =>
-          onChange({
-            excludedGuildIds: toggle(
-              settings.excludedGuildIds.filter((id) =>
-                guilds.some((guild) => guild.id === id),
-              ),
-              guildId,
-            ),
-          })
-        }
-        placeholder={t("statistics.feedLootlogs")}
-        searchPlaceholder={t("statistics.feedLootlogsSearch")}
-        emptyMessage={t("common.noResults")}
-        width="w-full sm:w-[200px]"
-        contentClassName="w-[200px]"
-        disabled={disabled || guilds.length === 0}
-        renderTriggerLabel={(count) =>
-          count === guilds.length
-            ? t("statistics.feedAllLootlogs")
-            : t("statistics.feedSelectedLootlogs", {
-                count,
-                total: guilds.length,
-              })
-        }
-      />
-      <FilterPopover
-        icon={Skull}
-        multiSelect
-        showSearch={false}
-        options={ACTIVITY_FEED_NPC_CATEGORIES.map((category) => {
-          const { color } = NPC_CATEGORY_APPEARANCE[category];
-
-          return {
-            value: category,
-            label: categoryLabel(category),
+    <>
+      <FilterPanelField label={t("statistics.feedLootlogs")}>
+        <FilterPopover
+          icon={Server}
+          multiSelect
+          options={guilds.map((guild) => ({
+            value: guild.id,
+            label: guild.name,
             render: () => (
-              <span className="flex items-center gap-2">
-                <NpcTypeIcon type={category} className={cn("size-4", color)} />
-                {categoryLabel(category)}
+              <span className="flex min-w-0 items-center gap-2">
+                <Avatar className="size-5 rounded-md" aria-hidden>
+                  <AvatarImage src={guild.icon ?? undefined} alt="" />
+                  <AvatarFallback className="rounded-none text-[0.625rem] font-medium">
+                    {guild.name.charAt(0).toUpperCase() || "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="truncate">{guild.name}</span>
               </span>
             ),
-          };
-        })}
-        value={includedCategories}
-        onValueChange={(category) =>
-          onChange({
-            excludedNpcCategories: toggle(
-              settings.excludedNpcCategories,
-              category,
-            ),
-          })
-        }
-        placeholder={t("kills.filters.npcType")}
-        width="w-full sm:w-[180px]"
-        contentClassName="w-[180px]"
-        disabled={disabled}
-        renderTriggerLabel={(count) =>
-          count === ACTIVITY_FEED_NPC_CATEGORIES.length
-            ? t("kills.filters.allTypes")
-            : t("statistics.feedSelectedTypes", {
-                count,
-                total: ACTIVITY_FEED_NPC_CATEGORIES.length,
-              })
-        }
-      />
-      <div className="flex h-10 items-center gap-2 px-1">
-        <Switch
-          id={lootOnlyId}
-          checked={settings.withLootOnly}
-          disabled={disabled}
-          onCheckedChange={(checked) => onChange({ withLootOnly: checked })}
+          }))}
+          value={includedGuildIds}
+          onValueChange={(guildId) =>
+            onChange({
+              excludedGuildIds: toggle(
+                settings.excludedGuildIds.filter((id) =>
+                  guilds.some((guild) => guild.id === id),
+                ),
+                guildId,
+              ),
+            })
+          }
+          placeholder={t("statistics.feedLootlogs")}
+          searchPlaceholder={t("statistics.feedLootlogsSearch")}
+          emptyMessage={t("common.noResults")}
+          width="w-full"
+          disabled={disabled || guilds.length === 0}
+          renderTriggerLabel={(count) =>
+            count === guilds.length
+              ? t("statistics.feedAllLootlogs")
+              : t("statistics.feedSelectedLootlogs", {
+                  count,
+                  total: guilds.length,
+                })
+          }
         />
-        <Label htmlFor={lootOnlyId} className="text-sm font-normal">
-          {t("statistics.feedWithLootOnly")}
-        </Label>
-      </div>
-    </div>
+      </FilterPanelField>
+      <FilterPanelField label={t("kills.filters.npcType")}>
+        <FilterPopover
+          icon={Skull}
+          multiSelect
+          showSearch={false}
+          options={ACTIVITY_FEED_NPC_CATEGORIES.map((category) => {
+            const { color } = NPC_CATEGORY_APPEARANCE[category];
+
+            return {
+              value: category,
+              label: categoryLabel(category),
+              render: () => (
+                <span className="flex items-center gap-2">
+                  <NpcTypeIcon
+                    type={category}
+                    className={cn("size-4", color)}
+                  />
+                  {categoryLabel(category)}
+                </span>
+              ),
+            };
+          })}
+          value={includedCategories}
+          onValueChange={(category) =>
+            onChange({
+              excludedNpcCategories: toggle(
+                settings.excludedNpcCategories,
+                category,
+              ),
+            })
+          }
+          placeholder={t("kills.filters.npcType")}
+          width="w-full"
+          disabled={disabled}
+          renderTriggerLabel={(count) =>
+            count === ACTIVITY_FEED_NPC_CATEGORIES.length
+              ? t("kills.filters.allTypes")
+              : t("statistics.feedSelectedTypes", {
+                  count,
+                  total: ACTIVITY_FEED_NPC_CATEGORIES.length,
+                })
+          }
+        />
+      </FilterPanelField>
+      <FilterPanelField>
+        <div className="flex items-center gap-2">
+          <Switch
+            id={lootOnlyId}
+            checked={settings.withLootOnly}
+            disabled={disabled}
+            onCheckedChange={(checked) => onChange({ withLootOnly: checked })}
+          />
+          <Label htmlFor={lootOnlyId} className="text-sm font-normal">
+            {t("statistics.feedWithLootOnly")}
+          </Label>
+        </div>
+      </FilterPanelField>
+    </>
   );
 }

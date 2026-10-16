@@ -1,15 +1,14 @@
 import { DashboardActivitySkeleton } from "./dashboard-activity-skeleton";
 import { useLocalStorage } from "usehooks-ts";
-import { Activity } from "lucide-react";
 import { useState, type CSSProperties } from "react";
 import "./dashboard-activity.css";
 import { useTranslation } from "react-i18next";
 import { useKillsControllerGetUserKillActivity } from "@lootlog/client/main";
 import { useUsersActivityControllerGetOnline } from "@lootlog/client/activity";
 import { AnimatedToggleGroup } from "@/components/ui/animated-toggle-group";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { BandSection } from "@/components/common/band-section";
+import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { cn } from "cn";
 import { ActivityHeatmap } from "@/components/common/activity-heatmap/activity-heatmap";
 import {
   calendarOffset,
@@ -45,12 +44,12 @@ export function DashboardActivity() {
     date >= range.from && date <= range.to;
 
   return (
-    <SectionCard className="w-full" style={calendarStyle}>
-      <SectionCardHeader
-        className="shrink-0"
-        icon={Activity}
+    <div className="w-full" style={calendarStyle}>
+      <BandSection
+        id="dashboard-activity"
         title={t("statistics.activity")}
-        actions=<AnimatedToggleGroup
+        tiled
+        trailing=<AnimatedToggleGroup
           size="sm"
           label={t("statistics.activity")}
           value={mode}
@@ -60,89 +59,97 @@ export function DashboardActivity() {
             { value: "kills", label: t("statistics.kills") },
           ]}
         />
-      />
-      <SectionCardContent className="dashboard-activity-content flex min-h-0 flex-col overflow-y-auto custom-scrollbar [scrollbar-gutter:stable]">
-        {mode === "online" ? (
-          <StatisticsQueryState
-            query={online}
-            compact
-            loading=<DashboardActivitySkeleton />
-          >
-            {online.data && (
-              <>
-                {online.data.status === "stale" && (
-                  <p
-                    role="status"
-                    className="mb-3 text-sm text-muted-foreground"
-                  >
-                    {t("statistics.onlineStale")}
-                  </p>
-                )}
+      >
+        <div
+          className={cn(
+            "dashboard-activity-content flex min-h-0 flex-col overflow-y-auto py-4 custom-scrollbar",
+            LIST_TILE_INSET_CLASS,
+          )}
+        >
+          {mode === "online" ? (
+            <StatisticsQueryState
+              query={online}
+              compact
+              loading=<DashboardActivitySkeleton />
+            >
+              {online.data && (
+                <>
+                  {online.data.status === "stale" && (
+                    <p
+                      role="status"
+                      className="mb-3 text-sm text-muted-foreground"
+                    >
+                      {t("statistics.onlineStale")}
+                    </p>
+                  )}
+                  <ActivityHeatmap
+                    fill
+                    showDetails={false}
+                    unknownDisplay="lowest"
+                    days={online.data.days.flatMap((day) =>
+                      isInRange(day)
+                        ? [
+                            {
+                              date: day.date,
+                              value: day.onlineSeconds,
+                              worlds: day.worlds,
+                              worldsComplete:
+                                day.worldsComplete ??
+                                (day.onlineSeconds === null ||
+                                  day.onlineSeconds === 0),
+                              partial: day.partial,
+                            },
+                          ]
+                        : [],
+                    )}
+                    label={t("statistics.online")}
+                    formatValue={(seconds) =>
+                      t("statistics.duration", {
+                        hours: Math.floor(seconds / 3600),
+                        minutes: Math.floor((seconds % 3600) / 60),
+                      })
+                    }
+                  />
+                </>
+              )}
+            </StatisticsQueryState>
+          ) : (
+            <StatisticsQueryState
+              query={kills}
+              compact
+              loading=<DashboardActivitySkeleton />
+            >
+              {kills.data && (
                 <ActivityHeatmap
                   fill
                   showDetails={false}
                   unknownDisplay="lowest"
-                  days={online.data.days.flatMap((day) =>
+                  days={kills.data.daily.flatMap((day) =>
                     isInRange(day)
                       ? [
                           {
                             date: day.date,
-                            value: day.onlineSeconds,
+                            value: day.kills,
                             worlds: day.worlds,
                             worldsComplete:
-                              day.worldsComplete ??
-                              (day.onlineSeconds === null ||
-                                day.onlineSeconds === 0),
+                              day.worlds !== undefined ||
+                              day.kills === null ||
+                              day.kills === 0,
                             partial: day.partial,
                           },
                         ]
                       : [],
                   )}
-                  label={t("statistics.online")}
-                  formatValue={(seconds) =>
-                    t("statistics.duration", {
-                      hours: Math.floor(seconds / 3600),
-                      minutes: Math.floor((seconds % 3600) / 60),
-                    })
+                  label={t("statistics.kills")}
+                  formatValue={(value) =>
+                    t("statistics.count", { count: value })
                   }
                 />
-              </>
-            )}
-          </StatisticsQueryState>
-        ) : (
-          <StatisticsQueryState
-            query={kills}
-            compact
-            loading=<DashboardActivitySkeleton />
-          >
-            {kills.data && (
-              <ActivityHeatmap
-                fill
-                showDetails={false}
-                unknownDisplay="lowest"
-                days={kills.data.daily.flatMap((day) =>
-                  isInRange(day)
-                    ? [
-                        {
-                          date: day.date,
-                          value: day.kills,
-                          worlds: day.worlds,
-                          worldsComplete:
-                            day.worlds !== undefined ||
-                            day.kills === null ||
-                            day.kills === 0,
-                          partial: day.partial,
-                        },
-                      ]
-                    : [],
-                )}
-                label={t("statistics.kills")}
-                formatValue={(value) => t("statistics.count", { count: value })}
-              />
-            )}
-          </StatisticsQueryState>
-        )}
-      </SectionCardContent>
-    </SectionCard>
+              )}
+            </StatisticsQueryState>
+          )}
+        </div>
+      </BandSection>
+    </div>
   );
 }

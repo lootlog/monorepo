@@ -1,14 +1,21 @@
 import { AnimatePresence } from "framer-motion";
-import { useEffect, useEffectEvent, useId, useRef } from "react";
+import { useEffect, useEffectEvent, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
-import { ArrowUp, Pause, Play, Radio } from "lucide-react";
+import { ArrowUp, Pause, Play, Radio, SlidersHorizontal } from "lucide-react";
 import { DEFAULT_ACTIVITY_FEED_SETTINGS } from "@lootlog/domain/activity-feed";
 import { Button } from "@lootlog/ui/components/button";
 import { LiveFeedSkeleton } from "./live-feed-skeleton";
 import { EmptyState } from "@/components/common/empty-state";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
+import { BandSection } from "@/components/common/band-section";
+import { FilterCount } from "@/components/common/filter-count";
+import {
+  LIST_GROUP_HEADING_CLASS,
+  LIST_TILE_INSET_CLASS,
+} from "@/components/common/list-tile";
+import { FiltersOverlay } from "@/components/filters/filters-overlay";
+import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
+import { useMediaQuery } from "usehooks-ts";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { useLiveFeed } from "./use-live-feed";
 import { useActivityFeedSettings } from "./use-activity-feed-settings";
@@ -44,7 +51,8 @@ export function DashboardLiveFeed() {
   });
 
   const paused = settings.paused;
-  const card = useRef<HTMLDivElement>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const isWide = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
   const top = useRef<HTMLDivElement>(null);
   const now = useMinuteTimestamp();
 
@@ -75,71 +83,107 @@ export function DashboardLiveFeed() {
     ) ?? [],
   ).filter((group) => isGroupVisible(group, settings));
 
-  const isFiltered =
-    settings.excludedGuildIds.length > 0 ||
-    settings.excludedNpcCategories.length > 0 ||
-    settings.withLootOnly;
+  const activeFilterCount = [
+    settings.excludedGuildIds.length > 0,
+    settings.excludedNpcCategories.length > 0,
+    settings.withLootOnly,
+  ].filter(Boolean).length;
 
+  const isFiltered = activeFilterCount > 0;
+
+  const clearFilters = () =>
+    update({
+      excludedGuildIds: DEFAULT_ACTIVITY_FEED_SETTINGS.excludedGuildIds,
+      excludedNpcCategories:
+        DEFAULT_ACTIVITY_FEED_SETTINGS.excludedNpcCategories,
+      withLootOnly: DEFAULT_ACTIVITY_FEED_SETTINGS.withLootOnly,
+    });
+
+  // Back to the newest entries, under the pinned headings.
   const showPending = () => {
     applyPending();
-    card.current?.scrollIntoView({ block: "nearest" });
+    top.current?.scrollIntoView({
+      block: "center",
+      behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+    });
   };
 
   return (
-    <SectionCard
-      ref={card}
-      aria-labelledby={titleId}
-      className="@container/feed min-w-0 @3xl/dashboard:col-start-1 @3xl/dashboard:row-start-1"
+    <BandSection
+      id={titleId}
+      title={t("statistics.feedTitle")}
+      tiled
+      trailing={
+        <div className="flex items-center gap-1">
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            disabled={!canSave}
+            aria-label={t(
+              paused
+                ? "statistics.feedResumeAction"
+                : "statistics.feedPauseAction",
+            )}
+            title={t(
+              paused
+                ? "statistics.feedResumeAction"
+                : "statistics.feedPauseAction",
+            )}
+            onClick={() => update({ paused: !paused })}
+          >
+            {paused ? (
+              <Play className="size-4" aria-hidden />
+            ) : (
+              <Pause className="size-4" aria-hidden />
+            )}
+          </Button>
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            className="relative"
+            disabled={!canSave}
+            aria-label={
+              isFiltered
+                ? `${t("common.filters.title")}. ${t("common.filters.activeCount", { count: activeFilterCount })}`
+                : t("common.filters.title")
+            }
+            title={t("common.filters.title")}
+            onClick={() => setFiltersOpen(true)}
+          >
+            <SlidersHorizontal className="size-4" aria-hidden />
+            <FilterCount count={activeFilterCount} variant="corner" />
+          </Button>
+        </div>
+      }
     >
-      <SectionCardHeader
-        id={titleId}
-        className="shrink-0"
-        icon={Radio}
-        title={t("statistics.feedTitle")}
-        actions={
-          <>
-            <Button
-              size="sm"
-              className={cn(!state.pending && "invisible")}
-              aria-label={t("statistics.feedNew")}
-              disabled={!state.pending || paused}
-              onClick={showPending}
-            >
-              <ArrowUp className="size-4" aria-hidden />
-              <span className="hidden @md/feed:inline">
-                {t("statistics.feedNew")}
-              </span>
-            </Button>
-            <Button
-              size="icon-sm"
-              variant="outline"
-              disabled={!canSave}
-              aria-label={t(
-                paused
-                  ? "statistics.feedResumeAction"
-                  : "statistics.feedPauseAction",
-              )}
-              title={t(
-                paused
-                  ? "statistics.feedResumeAction"
-                  : "statistics.feedPauseAction",
-              )}
-              onClick={() => update({ paused: !paused })}
-            >
-              {paused ? (
-                <Play className="size-4" aria-hidden />
-              ) : (
-                <Pause className="size-4" aria-hidden />
-              )}
-            </Button>
-          </>
-        }
-      />
-      <LiveFeedFilters
-        settings={settings}
-        disabled={!canSave}
-        onChange={update}
-      />
+      <FiltersOverlay
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+        title={t("statistics.feedFilters")}
+        activeFilterCount={activeFilterCount}
+        onClear={clearFilters}
+      >
+        <LiveFeedFilters
+          settings={settings}
+          disabled={!canSave}
+          onChange={update}
+        />
+      </FiltersOverlay>
+      {/* Floats under the pinned heading while older entries are on screen. */}
+      <div className="pointer-events-none sticky top-[calc(var(--page-sticky-top)+var(--filter-bar-height,0px)+3rem)] z-10 flex h-0 justify-center">
+        {state.pending && !paused && (
+          <Button
+            size="sm"
+            className="pointer-events-auto rounded-full shadow-lg shadow-black/40"
+            onClick={showPending}
+          >
+            <ArrowUp className="size-4" aria-hidden />
+            {t("statistics.feedNew")}
+          </Button>
+        )}
+      </div>
       {state.isError && (
         <div
           role="alert"
@@ -161,7 +205,7 @@ export function DashboardLiveFeed() {
       {state.items === undefined ? (
         !state.isError && <LiveFeedSkeleton />
       ) : (
-        <div aria-busy={state.isFetching} className="pb-2">
+        <div aria-busy={state.isFetching}>
           {groups.length === 0 && !state.isError && (
             <EmptyState
               icon={Radio}
@@ -170,22 +214,12 @@ export function DashboardLiveFeed() {
                   ? "statistics.feedEmptyFiltered"
                   : "statistics.feedEmpty",
               )}
-              compact
+              // Beside the side column, it centres in the screen it has.
+              fill={isWide}
+              compact={!isWide}
               action={
                 isFiltered && canSave ? (
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      update({
-                        excludedGuildIds:
-                          DEFAULT_ACTIVITY_FEED_SETTINGS.excludedGuildIds,
-                        excludedNpcCategories:
-                          DEFAULT_ACTIVITY_FEED_SETTINGS.excludedNpcCategories,
-                        withLootOnly:
-                          DEFAULT_ACTIVITY_FEED_SETTINGS.withLootOnly,
-                      })
-                    }
-                  >
+                  <Button variant="outline" onClick={clearFilters}>
                     {t("statistics.feedClearFilters")}
                   </Button>
                 ) : undefined
@@ -203,7 +237,10 @@ export function DashboardLiveFeed() {
               <section key={key} aria-labelledby={`${titleId}-${key}`}>
                 <h3
                   id={`${titleId}-${key}`}
-                  className="px-4 pt-3 pb-1 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted-foreground"
+                  className={cn(
+                    LIST_GROUP_HEADING_CLASS,
+                    LIST_TILE_INSET_CLASS,
+                  )}
                 >
                   {t(`statistics.feedSection.${key}`)}
                 </h3>
@@ -224,6 +261,6 @@ export function DashboardLiveFeed() {
           })}
         </div>
       )}
-    </SectionCard>
+    </BandSection>
   );
 }
