@@ -598,6 +598,23 @@ function resolveUserNavigationInfo(
     );
   }
 
+  if (path.startsWith(`${ROUTES.user.settings.appearance}/`)) {
+    return navigationInfo(
+      [
+        {
+          label: t("layout.navigation.settings"),
+          path: ROUTES.user.settings.base,
+        },
+        {
+          label: t("settings.appearance.title"),
+          path: ROUTES.user.settings.appearance,
+        },
+        { label: t("settings.appearance.editor.breadcrumb"), path: null },
+      ],
+      ROUTES.user.settings.appearance,
+    );
+  }
+
   if (path === ROUTES.user.settings.base) {
     return navigationInfo(
       [{ label: t("layout.navigation.settings"), path: null }],

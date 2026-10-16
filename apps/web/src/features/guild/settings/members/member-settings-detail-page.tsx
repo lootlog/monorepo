@@ -2,7 +2,7 @@ import { OrganizationPresenceStatus } from "@/components/common/organization-pre
 import { useMemberActivity } from "@/features/guild/settings/members/use-member-activity";
 import { MetaItem } from "@/components/common/meta-item";
 import { ROUTES } from "@/config/routes";
-import { SettingsDetailNotFound } from "../components/settings-detail-not-found";
+import { SettingsDetailNotFound } from "@/components/common/settings-detail-not-found";
 import {
   Avatar,
   AvatarFallback,

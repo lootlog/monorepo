@@ -1,8 +1,10 @@
 /*
  * The app lifts the shared navy content surfaces so content sits a step above
  * the sidebar, as in every other theme; public surfaces keep the `:root` navy.
+ * `.default` alone previews it on one element, such as a theme list row.
  */
-:root.default {
+:root.default,
+.default {
   --background: #121d2c;
   --card: #192639;
   --popover: #192639;

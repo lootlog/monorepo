@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import { TEST_THEME_CONTEXT } from "@/lib/testing/theme-context";
 import { createOrganizationTestWrapper } from "@/lib/testing/router";
 import { ThemeContext } from "@/contexts/theme-context";
 import { cleanup, render, screen } from "@testing-library/react";
@@ -30,14 +31,7 @@ describe("SidebarNavItem", () => {
 
 const renderSidebarNavItem = (isActive: boolean) =>
   render(
-    <ThemeContext.Provider
-      value={{
-        theme: "default",
-        resolvedTheme: "default",
-        setTheme: () => {},
-        isLoading: false,
-      }}
-    >
+    <ThemeContext.Provider value={TEST_THEME_CONTEXT}>
       <SidebarNavItem
         url="/events"
         available

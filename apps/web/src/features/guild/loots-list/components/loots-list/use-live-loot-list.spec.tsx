@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { TEST_THEME_CONTEXT } from "@/lib/testing/theme-context";
 import {
   act,
   cleanup,
@@ -140,14 +141,7 @@ async function mount(
   const app = (
     <GatewayWrapper>
       <QueryClientProvider client={client}>
-        <ThemeContext
-          value={{
-            theme: "default",
-            resolvedTheme: "default",
-            isLoading: false,
-            setTheme: () => undefined,
-          }}
-        >
+        <ThemeContext value={TEST_THEME_CONTEXT}>
           <NuqsTestingAdapter searchParams={searchParams} hasMemory>
             <RouterProvider router={router} />
           </NuqsTestingAdapter>

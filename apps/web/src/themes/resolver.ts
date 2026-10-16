@@ -9,6 +9,11 @@ import {
   type ThemeFamily,
   type ThemeId,
 } from "./catalog";
+import {
+  readCustomThemeId,
+  toCustomThemePreference,
+  type CustomThemeSelection,
+} from "./custom-theme";
 
 const isResolvedCatTheme = (
   theme: ResolvedThemeId | null | undefined,
@@ -108,3 +113,20 @@ export const isThemeId = (value: string): value is ThemeId =>
 export const resolveStoredTheme = (
   value: string | null | undefined,
 ): ThemeId => (value && isThemeId(value) ? value : DEFAULT_THEME_ID);
+
+/** What the User picked: a built-in theme or one of their own. */
+export type ThemeSelection = ThemeId | CustomThemeSelection;
+
+export const resolveStoredSelection = (
+  value: string | null | undefined,
+): ThemeSelection => {
+  const customThemeId = readCustomThemeId(value);
+
+  return customThemeId
+    ? toCustomThemePreference(customThemeId)
+    : resolveStoredTheme(value);
+};
+
+/** The class that previews a theme on one element; the cat roulette shows one cat. */
+export const previewThemeClass = (theme: ThemeId): ResolvedThemeId =>
+  theme === "cat-random" ? DEFAULT_CAT_THEME_VARIANT : theme;

@@ -1,18 +1,11 @@
+import { CopyLinkField } from "@/components/common/copy-link-field";
 import { BandSection } from "@/components/common/band-section";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
 import { useState } from "react";
-import {
-  Ban,
-  CircleAlert,
-  Copy,
-  Hourglass,
-  Link2,
-  Plus,
-  Unlink,
-} from "lucide-react";
+import { Ban, CircleAlert, Hourglass, Link2, Plus, Unlink } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -27,7 +20,6 @@ import {
 import { Button } from "@lootlog/ui/components/button";
 
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
-import { Input } from "@lootlog/ui/components/input";
 import {
   Alert,
   AlertAction,
@@ -65,7 +57,6 @@ const REMOVE_BUTTON_CLASS =
 export function ReservationSharingSettings() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [isCopying, setIsCopying] = useState(false);
   const guildId = useGuildId() ?? "";
 
   const [createdInvitation, setCreatedInvitation] =
@@ -141,41 +132,13 @@ export function ReservationSharingSettings() {
               <Link2 className="size-4 text-primary" />
               <p>{t("settings.reservations.sharing.inviteReady")}</p>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Input
-                value={createdInvitation.inviteUrl}
-                readOnly
-                aria-label={t("settings.reservations.sharing.inviteLink")}
-                className="min-w-0 font-mono text-xs"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                className="shrink-0"
-                loading={isCopying}
-                icon=<Copy />
-                onClick={() => {
-                  if (isCopying) return;
-                  setIsCopying(true);
-
-                  return Promise.resolve()
-                    .then(() =>
-                      navigator.clipboard.writeText(
-                        createdInvitation.inviteUrl,
-                      ),
-                    )
-                    .then(() => {
-                      toast.success(t("settings.reservations.sharing.copied"));
-                    })
-                    .catch(() => {
-                      toast.error(t("settings.reservations.sharing.copyError"));
-                    })
-                    .finally(() => setIsCopying(false));
-                }}
-              >
-                {t("settings.reservations.sharing.copy")}
-              </Button>
-            </div>
+            <CopyLinkField
+              url={createdInvitation.inviteUrl}
+              label={t("settings.reservations.sharing.inviteLink")}
+              copyLabel={t("settings.reservations.sharing.copy")}
+              copiedMessage={t("settings.reservations.sharing.copied")}
+              copyErrorMessage={t("settings.reservations.sharing.copyError")}
+            />
             <p className="text-xs text-muted-foreground">
               {t("settings.reservations.sharing.singleUseNotice")}
             </p>

@@ -81,6 +81,9 @@ import { Route as AuthenticatedGuildIdEventsEventIdEditScoringRouteImport } from
 import { Route as AuthenticatedGuildIdEventsEventIdEditSettingsRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.edit/settings'
 import { Route as AuthenticatedGuildIdEventsEventIdHeroesHeroIdRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.heroes_.$heroId'
 import { Route as AuthenticatedGuildIdEventsEventIdMembersMemberIdRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.members_.$memberId'
+import { Route as AuthenticatedAtmeSettingsAppearanceImportShareTokenRouteImport } from './routes/_authenticated/@me/settings/appearance_.import.$shareToken'
+import { Route as AuthenticatedAtmeSettingsAppearanceThemesThemeIdRouteImport } from './routes/_authenticated/@me/settings/appearance_.themes.$themeId'
+import { Route as AuthenticatedAtmeSettingsAppearanceThemesNewRouteImport } from './routes/_authenticated/@me/settings/appearance_.themes.new'
 import { Route as AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.heroes_.$heroId_.kills'
 import { Route as AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRouteImport } from './routes/_authenticated/@me/battle-panel/statistics_.player-vs-player.$myId.$opponentId'
 import { Route as AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.heroes_.$heroId_.kills_.$killId'
@@ -508,6 +511,24 @@ const AuthenticatedGuildIdEventsEventIdMembersMemberIdRoute =
     path: '/members/$memberId',
     getParentRoute: () => AuthenticatedGuildIdEventsEventIdRoute,
   } as any)
+const AuthenticatedAtmeSettingsAppearanceImportShareTokenRoute =
+  AuthenticatedAtmeSettingsAppearanceImportShareTokenRouteImport.update({
+    id: '/appearance_/import/$shareToken',
+    path: '/appearance/import/$shareToken',
+    getParentRoute: () => AuthenticatedAtmeSettingsRoute,
+  } as any)
+const AuthenticatedAtmeSettingsAppearanceThemesThemeIdRoute =
+  AuthenticatedAtmeSettingsAppearanceThemesThemeIdRouteImport.update({
+    id: '/appearance_/themes/$themeId',
+    path: '/appearance/themes/$themeId',
+    getParentRoute: () => AuthenticatedAtmeSettingsRoute,
+  } as any)
+const AuthenticatedAtmeSettingsAppearanceThemesNewRoute =
+  AuthenticatedAtmeSettingsAppearanceThemesNewRouteImport.update({
+    id: '/appearance_/themes/new',
+    path: '/appearance/themes/new',
+    getParentRoute: () => AuthenticatedAtmeSettingsRoute,
+  } as any)
 const AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute =
   AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRouteImport.update({
     id: '/heroes_/$heroId_/kills',
@@ -601,6 +622,9 @@ export interface FileRoutesByFullPath {
   '/$guildId/events/$eventId/edit/settings': typeof AuthenticatedGuildIdEventsEventIdEditSettingsRoute
   '/$guildId/events/$eventId/heroes/$heroId': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute
   '/$guildId/events/$eventId/members/$memberId': typeof AuthenticatedGuildIdEventsEventIdMembersMemberIdRoute
+  '/@me/settings/appearance/import/$shareToken': typeof AuthenticatedAtmeSettingsAppearanceImportShareTokenRoute
+  '/@me/settings/appearance/themes/$themeId': typeof AuthenticatedAtmeSettingsAppearanceThemesThemeIdRoute
+  '/@me/settings/appearance/themes/new': typeof AuthenticatedAtmeSettingsAppearanceThemesNewRoute
   '/$guildId/events/$eventId/edit/': typeof AuthenticatedGuildIdEventsEventIdEditIndexRoute
   '/$guildId/events/$eventId/heroes/$heroId/kills': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute
   '/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId': typeof AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute
@@ -667,6 +691,9 @@ export interface FileRoutesByTo {
   '/$guildId/events/$eventId/edit/settings': typeof AuthenticatedGuildIdEventsEventIdEditSettingsRoute
   '/$guildId/events/$eventId/heroes/$heroId': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute
   '/$guildId/events/$eventId/members/$memberId': typeof AuthenticatedGuildIdEventsEventIdMembersMemberIdRoute
+  '/@me/settings/appearance/import/$shareToken': typeof AuthenticatedAtmeSettingsAppearanceImportShareTokenRoute
+  '/@me/settings/appearance/themes/$themeId': typeof AuthenticatedAtmeSettingsAppearanceThemesThemeIdRoute
+  '/@me/settings/appearance/themes/new': typeof AuthenticatedAtmeSettingsAppearanceThemesNewRoute
   '/$guildId/events/$eventId/edit': typeof AuthenticatedGuildIdEventsEventIdEditIndexRoute
   '/$guildId/events/$eventId/heroes/$heroId/kills': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute
   '/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId': typeof AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute
@@ -745,6 +772,9 @@ export interface FileRoutesById {
   '/_authenticated/$guildId/events_/$eventId_/edit/settings': typeof AuthenticatedGuildIdEventsEventIdEditSettingsRoute
   '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute
   '/_authenticated/$guildId/events_/$eventId_/members_/$memberId': typeof AuthenticatedGuildIdEventsEventIdMembersMemberIdRoute
+  '/_authenticated/@me/settings/appearance_/import/$shareToken': typeof AuthenticatedAtmeSettingsAppearanceImportShareTokenRoute
+  '/_authenticated/@me/settings/appearance_/themes/$themeId': typeof AuthenticatedAtmeSettingsAppearanceThemesThemeIdRoute
+  '/_authenticated/@me/settings/appearance_/themes/new': typeof AuthenticatedAtmeSettingsAppearanceThemesNewRoute
   '/_authenticated/$guildId/events_/$eventId_/edit/': typeof AuthenticatedGuildIdEventsEventIdEditIndexRoute
   '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute
   '/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId': typeof AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute
@@ -824,6 +854,9 @@ export interface FileRouteTypes {
     | '/$guildId/events/$eventId/edit/settings'
     | '/$guildId/events/$eventId/heroes/$heroId'
     | '/$guildId/events/$eventId/members/$memberId'
+    | '/@me/settings/appearance/import/$shareToken'
+    | '/@me/settings/appearance/themes/$themeId'
+    | '/@me/settings/appearance/themes/new'
     | '/$guildId/events/$eventId/edit/'
     | '/$guildId/events/$eventId/heroes/$heroId/kills'
     | '/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId'
@@ -890,6 +923,9 @@ export interface FileRouteTypes {
     | '/$guildId/events/$eventId/edit/settings'
     | '/$guildId/events/$eventId/heroes/$heroId'
     | '/$guildId/events/$eventId/members/$memberId'
+    | '/@me/settings/appearance/import/$shareToken'
+    | '/@me/settings/appearance/themes/$themeId'
+    | '/@me/settings/appearance/themes/new'
     | '/$guildId/events/$eventId/edit'
     | '/$guildId/events/$eventId/heroes/$heroId/kills'
     | '/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId'
@@ -967,6 +1003,9 @@ export interface FileRouteTypes {
     | '/_authenticated/$guildId/events_/$eventId_/edit/settings'
     | '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId'
     | '/_authenticated/$guildId/events_/$eventId_/members_/$memberId'
+    | '/_authenticated/@me/settings/appearance_/import/$shareToken'
+    | '/_authenticated/@me/settings/appearance_/themes/$themeId'
+    | '/_authenticated/@me/settings/appearance_/themes/new'
     | '/_authenticated/$guildId/events_/$eventId_/edit/'
     | '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills'
     | '/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId'
@@ -1486,6 +1525,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdMembersMemberIdRouteImport
       parentRoute: typeof AuthenticatedGuildIdEventsEventIdRoute
     }
+    '/_authenticated/@me/settings/appearance_/import/$shareToken': {
+      id: '/_authenticated/@me/settings/appearance_/import/$shareToken'
+      path: '/appearance/import/$shareToken'
+      fullPath: '/@me/settings/appearance/import/$shareToken'
+      preLoaderRoute: typeof AuthenticatedAtmeSettingsAppearanceImportShareTokenRouteImport
+      parentRoute: typeof AuthenticatedAtmeSettingsRoute
+    }
+    '/_authenticated/@me/settings/appearance_/themes/$themeId': {
+      id: '/_authenticated/@me/settings/appearance_/themes/$themeId'
+      path: '/appearance/themes/$themeId'
+      fullPath: '/@me/settings/appearance/themes/$themeId'
+      preLoaderRoute: typeof AuthenticatedAtmeSettingsAppearanceThemesThemeIdRouteImport
+      parentRoute: typeof AuthenticatedAtmeSettingsRoute
+    }
+    '/_authenticated/@me/settings/appearance_/themes/new': {
+      id: '/_authenticated/@me/settings/appearance_/themes/new'
+      path: '/appearance/themes/new'
+      fullPath: '/@me/settings/appearance/themes/new'
+      preLoaderRoute: typeof AuthenticatedAtmeSettingsAppearanceThemesNewRouteImport
+      parentRoute: typeof AuthenticatedAtmeSettingsRoute
+    }
     '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills': {
       id: '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills'
       path: '/heroes/$heroId/kills'
@@ -1780,6 +1840,9 @@ interface AuthenticatedAtmeSettingsRouteChildren {
   AuthenticatedAtmeSettingsAppearanceRoute: typeof AuthenticatedAtmeSettingsAppearanceRoute
   AuthenticatedAtmeSettingsServersRoute: typeof AuthenticatedAtmeSettingsServersRoute
   AuthenticatedAtmeSettingsIndexRoute: typeof AuthenticatedAtmeSettingsIndexRoute
+  AuthenticatedAtmeSettingsAppearanceImportShareTokenRoute: typeof AuthenticatedAtmeSettingsAppearanceImportShareTokenRoute
+  AuthenticatedAtmeSettingsAppearanceThemesThemeIdRoute: typeof AuthenticatedAtmeSettingsAppearanceThemesThemeIdRoute
+  AuthenticatedAtmeSettingsAppearanceThemesNewRoute: typeof AuthenticatedAtmeSettingsAppearanceThemesNewRoute
 }
 
 const AuthenticatedAtmeSettingsRouteChildren: AuthenticatedAtmeSettingsRouteChildren =
@@ -1791,6 +1854,12 @@ const AuthenticatedAtmeSettingsRouteChildren: AuthenticatedAtmeSettingsRouteChil
     AuthenticatedAtmeSettingsServersRoute:
       AuthenticatedAtmeSettingsServersRoute,
     AuthenticatedAtmeSettingsIndexRoute: AuthenticatedAtmeSettingsIndexRoute,
+    AuthenticatedAtmeSettingsAppearanceImportShareTokenRoute:
+      AuthenticatedAtmeSettingsAppearanceImportShareTokenRoute,
+    AuthenticatedAtmeSettingsAppearanceThemesThemeIdRoute:
+      AuthenticatedAtmeSettingsAppearanceThemesThemeIdRoute,
+    AuthenticatedAtmeSettingsAppearanceThemesNewRoute:
+      AuthenticatedAtmeSettingsAppearanceThemesNewRoute,
   }
 
 const AuthenticatedAtmeSettingsRouteWithChildren =
