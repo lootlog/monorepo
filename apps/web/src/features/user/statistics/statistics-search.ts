@@ -20,6 +20,8 @@ export type StatisticsSearch = {
   tab: StatisticsTab;
   days: StatisticsDays;
   world?: string;
+  /** One Margonem character, counted since per-character tracking began. */
+  characterId?: string;
   /** Narrows the monster ranking. */
   npcType?: StatisticsNpcType;
   ranking?: StatisticsRanking;
@@ -34,6 +36,11 @@ export const parseStatisticsSearch = z.object({
   world: z
     .string()
     .transform((world) => world.trim().slice(0, 100) || undefined)
+    .optional()
+    .catch(undefined),
+  characterId: z
+    .string()
+    .transform((id) => id.trim().slice(0, 100) || undefined)
     .optional()
     .catch(undefined),
   npcType: z

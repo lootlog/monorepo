@@ -13,8 +13,8 @@ type StatisticsPlayTimeTilesProps = {
   playTime: ReturnType<typeof summarizePlayTime>;
   /** False until online history loads, or when there is none. */
   available: boolean;
-  /** Online time covers the whole account, so a world has no kill rate. */
-  world: string | undefined;
+  /** Online time covers the whole account, so a world or character has no kill rate. */
+  narrowed: boolean;
   /** Names the shorter window online history covers, if it is shorter. */
   coverage?: string;
   formatDuration: (seconds: number) => string;
@@ -23,7 +23,7 @@ type StatisticsPlayTimeTilesProps = {
 export function StatisticsPlayTimeTiles({
   playTime,
   available,
-  world,
+  narrowed,
   coverage,
   formatDuration,
 }: StatisticsPlayTimeTilesProps) {
@@ -52,13 +52,13 @@ export function StatisticsPlayTimeTiles({
         icon={Swords}
         label={t("statistics.killsPerHour")}
         value={
-          available && !world && playTime.killsPerHour !== null
+          available && !narrowed && playTime.killsPerHour !== null
             ? rateFormatter.format(playTime.killsPerHour)
             : EMPTY_VALUE
         }
         detail={
-          world
-            ? t("statistics.killsPerHourAllWorlds")
+          narrowed
+            ? t("statistics.killsPerHourWholeAccount")
             : t("statistics.killsPerHourDetail")
         }
       />

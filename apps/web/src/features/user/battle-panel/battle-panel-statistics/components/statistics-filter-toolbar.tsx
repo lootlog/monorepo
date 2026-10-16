@@ -1,4 +1,5 @@
 import { CharacterSelector } from "@/components/filters/character-selector";
+import { useBattleCharacters } from "@/components/filters/use-battle-characters";
 import { MoreFiltersPopover } from "@/components/filters/more-filters-popover";
 import { PeriodSelector } from "@/components/filters/period-selector";
 import type { Period } from "@/features/user/battle-panel/battle-panel-search";
@@ -34,12 +35,14 @@ export const StatisticsFilterToolbar = ({
   ph,
   onPhChange,
 }: StatisticsFiltersProps) => {
+  const characters = useBattleCharacters();
   const phCheckboxId = useId();
 
   return (
     <>
       {onCharacterChange && (
         <CharacterSelector
+          characters={characters}
           characterId={characterId}
           onCharacterChange={onCharacterChange}
           allowAllCharacters={allowAllCharacters}
