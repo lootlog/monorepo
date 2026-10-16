@@ -83,7 +83,6 @@ export const MemberLeaderboardCard = ({
             />
           }
           value={member.participations}
-          maxValue={leaders[0]?.participations ?? 0}
           link={{
             to: "/$guildId/stats/members/$memberId",
             params: { guildId, memberId: String(member.memberId) },

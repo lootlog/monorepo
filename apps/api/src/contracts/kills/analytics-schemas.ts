@@ -11,20 +11,23 @@ const NullableNumber = Schema.NullOr(FiniteNumber);
 
 const NullableString = Schema.NullOr(Schema.String);
 
-/** One Margonem character; its kills are recorded since per-character tracking began. */
-const CharacterIdQuery = Schema.optionalKey(
+/** One Margonem character, counted since per-character tracking began. */
+export const CharacterIdQuery = Schema.optionalKey(
   Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(100)),
 );
 
 // A character id is unique only within its world, so it never stands alone.
-const characterNeedsWorld = Schema.makeFilter(
+export const characterNeedsWorld = Schema.makeFilter(
   ({ world, characterId }: { world?: string; characterId?: string }) =>
     characterId === undefined || world !== undefined,
   { expected: "a world alongside characterId" },
 );
 
+/** Calendar days in Europe/Warsaw, ending today. */
+export const UserStatsDays = Schema.Literals([7, 30, 90, 365]);
+
 export const UserKillAnalyticsQuery = Schema.Struct({
-  days: Schema.optionalKey(Schema.Literals([7, 30, 90, 365])),
+  days: Schema.optionalKey(UserStatsDays),
   world: Schema.optionalKey(
     Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(100)),
   ),
@@ -93,9 +96,6 @@ const NpcAnalytics = Schema.Struct({
   deltaKills: FiniteNumber,
   deltaPercent: NullableNumber,
   share: FiniteNumber,
-  bestDay: Schema.NullOr(
-    Schema.Struct({ date: Schema.String, kills: NullableNumber }),
-  ),
 });
 
 export const UserKillActivityResponse = Schema.Struct({
@@ -143,7 +143,6 @@ export const UserKillAnalyticsResponse = Schema.Struct({
     }),
   ),
   npcs: Schema.Array(NpcAnalytics),
-  npcGains: Schema.Array(NpcAnalytics),
   worlds: Schema.Array(
     Schema.Struct({
       world: Schema.String,

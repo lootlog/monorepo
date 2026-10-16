@@ -6,6 +6,8 @@
   "overview": "Przegląd",
   "activity": "Aktywność",
   "monsters": "Potwory",
+  "loots": "Łupy",
+  "legends": "Legendy",
   "worlds": "Światy",
   "sourceWorlds": "Światy: {{worlds}}",
   "sourceWorldsIncomplete": "Część aktywności nie ma zapisanej informacji o świecie.",
@@ -40,11 +42,45 @@
   "onlineStale": "Zbieranie czasu online jest opóźnione. Ostatnie dni mogą być niepełne.",
   "partial": "Niepełny okres",
   "ranking": "Najczęściej bite potwory",
-  "rankings": {
-    "top": "Najczęściej bite",
-    "gains": "Największy przyrost"
-  },
   "allMonsters": "Wszystkie potwory",
+  "allLegends": "Wszystkie legendy",
+  "search": {
+    "monsters": "Szukaj potwora",
+    "legends": "Szukaj legendy lub potwora"
+  },
+  "sort": {
+    "by": "Sortuj według",
+    "order": "Kolejność",
+    "desc": "Od największych",
+    "asc": "Od najmniejszych",
+    "fields": {
+      "monsters": {
+        "kills": "Bicia",
+        "change": "Zmiana",
+        "legends": "Legendy",
+        "caught": "Złapane"
+      },
+      "legends": {
+        "legends": "Spadło",
+        "caught": "Złapane",
+        "kills": "Bicia potwora"
+      }
+    }
+  },
+  "monsterLegends": "legendy: {{legends}}, złapane: {{caught}}",
+  "legend": {
+    "caught": "złapane: {{count}}"
+  },
+  "legendsTable": {
+    "item": "Przedmiot",
+    "present": "Spadło",
+    "caught": "Złapane",
+    "kills": "Bicia potwora"
+  },
+  "monsterDrops": {
+    "title": "Potwory i legendy"
+  },
+
   "versusPrevious": "względem poprzednich {{days}} dni",
   "favouriteNpc": "Ulubiony potwór",
   "longestStreakDetail_one": "najdłuższa: {{count}} dzień",
@@ -78,7 +114,6 @@
   "weeksSummary_many": "Do dziś {{count}} bić, porównane z tymi samymi dniami poprzedniego tygodnia.",
   "weeksSummary_other": "Do dziś {{count}} bicia, porównane z tymi samymi dniami poprzedniego tygodnia.",
   "weeksIncomplete": "Część tych dni nie ma jeszcze historii bić, więc tygodni nie da się porównać.",
-  "noGains": "Żaden potwór nie był bity częściej niż w poprzednim okresie.",
   "date": "Data",
   "view": "Widok danych",
   "chart": "Wykres",

@@ -106,10 +106,7 @@ export const userKillAnalyticsSql = (
     ${
       activityOnly
         ? sql``
-        : sql`, npc_days as (
-      select world, "npcId", local_time::date as date, sum(kills)::float8 as kills
-      from buckets where "periodStart" >= ${start} group by 1,2,3
-    ), npc_totals as (
+        : sql`, npc_totals as (
       select world, "npcId", (array_agg("npcName" order by "periodStart" desc))[1] as "npcName",
         (array_agg("npcType" order by "periodStart" desc))[1]::text as "npcType",
         (array_agg("npcLvl" order by "periodStart" desc))[1] as "npcLvl",
@@ -119,12 +116,9 @@ export const userKillAnalyticsSql = (
         coalesce(sum(kills) filter (where "periodStart" >= ${start} and "periodStart" < ${through}), 0)::float8 as "comparisonKills",
         coalesce(sum(kills) filter (where "periodStart" < ${previousThrough}), 0)::float8 as "previousKills"
       from buckets group by world, "npcId"
-    ), npc_best_days as (
-      select distinct on (world, "npcId") world, "npcId", json_build_object('date', date::text, 'kills', kills) as "bestDay"
-      from npc_days order by world, "npcId", kills desc, date asc
     ), npc_ranked as (
-      select n.*, (n."comparisonKills" - n."previousKills") as "deltaKills", d."bestDay"
-      from npc_totals n left join npc_best_days d using (world, "npcId")
+      select n.*, (n."comparisonKills" - n."previousKills") as "deltaKills"
+      from npc_totals n
     )`
     }
     select json_build_object(
@@ -146,7 +140,6 @@ export const userKillAnalyticsSql = (
         from npc_totals where "totalKills">0 group by "npcType" order by sum("totalKills") desc, "npcType"
       ) t), '[]'::json),
       'npcs', coalesce((select json_agg(n) from (select * from npc_ranked where "totalKills">0 ${rankedType} order by "totalKills" desc, world, "npcId" limit 20) n), '[]'::json),
-      'npcGains', coalesce((select json_agg(n) from (select * from npc_ranked where "deltaKills">0 ${rankedType} order by "deltaKills" desc, world, "npcId" limit 10) n), '[]'::json),
       'worldComparisons', coalesce((select json_agg(w) from (
         select world, coalesce(sum(kills) filter(where "periodStart" >= ${start} and "periodStart" < ${through}),0)::float8 as "comparisonKills",
           coalesce(sum(kills) filter(where "periodStart" < ${previousThrough}),0)::float8 as "previousKills"

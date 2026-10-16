@@ -1407,15 +1407,6 @@ export type UserKillAnalyticsResponseDtoOutputTypesItem = {
   share: number;
 };
 
-/**
- * @nullable
- */
-export type UserKillAnalyticsResponseDtoOutputNpcsItemBestDay = {
-  date: string;
-  /** @nullable */
-  kills: number | null;
-} | null;
-
 export type UserKillAnalyticsResponseDtoOutputNpcsItem = {
   world: string;
   npcId: number;
@@ -1445,50 +1436,6 @@ export type UserKillAnalyticsResponseDtoOutputNpcsItem = {
   /** @nullable */
   deltaPercent: number | null;
   share: number;
-  /** @nullable */
-  bestDay: UserKillAnalyticsResponseDtoOutputNpcsItemBestDay;
-};
-
-/**
- * @nullable
- */
-export type UserKillAnalyticsResponseDtoOutputNpcGainsItemBestDay = {
-  date: string;
-  /** @nullable */
-  kills: number | null;
-} | null;
-
-export type UserKillAnalyticsResponseDtoOutputNpcGainsItem = {
-  world: string;
-  npcId: number;
-  npcName: string;
-  npcType: string;
-  npcLvl: number;
-  /** @nullable */
-  npcProf: string | null;
-  /** @nullable */
-  npcIcon: string | null;
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  totalKills: number;
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  previousKills: number;
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  comparisonKills: number;
-  deltaKills: number;
-  /** @nullable */
-  deltaPercent: number | null;
-  share: number;
-  /** @nullable */
-  bestDay: UserKillAnalyticsResponseDtoOutputNpcGainsItemBestDay;
 };
 
 export type UserKillAnalyticsResponseDtoOutputWorldsItemDailyItem = {
@@ -1531,7 +1478,6 @@ export interface UserKillAnalyticsResponseDtoOutput {
   hourlyWeekday: UserKillAnalyticsResponseDtoOutputHourlyWeekdayItem[];
   types: UserKillAnalyticsResponseDtoOutputTypesItem[];
   npcs: UserKillAnalyticsResponseDtoOutputNpcsItem[];
-  npcGains: UserKillAnalyticsResponseDtoOutputNpcGainsItem[];
   worlds: UserKillAnalyticsResponseDtoOutputWorldsItem[];
 }
 
@@ -8136,6 +8082,104 @@ export interface NullableLootItemResponseDtoOutput {
   prof: NullableLootItemResponseDtoOutputProfItem[];
 }
 
+export type UserLootStatsResponseDtoOutputOverview = {
+  totalLoots: number;
+  totalItems: number;
+  legendaryItems: number;
+  heroicItems: number;
+  avgItemLevel: number;
+  caughtLegendaryItems: number;
+};
+
+export type UserLootStatsResponseDtoOutputTimelineItemByRarity = {[key: string]: number};
+
+export type UserLootStatsResponseDtoOutputTimelineItem = {
+  date: string;
+  total: number;
+  byRarity: UserLootStatsResponseDtoOutputTimelineItemByRarity;
+};
+
+/**
+ * @nullable
+ */
+export type UserLootStatsResponseDtoOutputTopNpcsItemType = typeof UserLootStatsResponseDtoOutputTopNpcsItemType[keyof typeof UserLootStatsResponseDtoOutputTopNpcsItemType] | null;
+
+
+export const UserLootStatsResponseDtoOutputTopNpcsItemType = {
+  COMMON: 'COMMON',
+  ELITE: 'ELITE',
+  ELITE2: 'ELITE2',
+  ELITE3: 'ELITE3',
+  HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
+  COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
+  NPC: 'NPC',
+} as const;
+
+export type UserLootStatsResponseDtoOutputTopNpcsItemByRarity = {[key: string]: number};
+
+export type UserLootStatsResponseDtoOutputTopNpcsItem = {
+  npcId: number;
+  name: string;
+  /** @nullable */
+  type: UserLootStatsResponseDtoOutputTopNpcsItemType;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  icon: string | null;
+  count: number;
+  byRarity: UserLootStatsResponseDtoOutputTopNpcsItemByRarity;
+};
+
+export type UserLootStatsResponseDtoOutputLegendsItemNpc = {
+  id: number;
+  name: string;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  icon: string | null;
+};
+
+export type UserLootStatsResponseDtoOutputLegendsItem = {
+  itemId: number;
+  name: string;
+  icon: string;
+  stat: string;
+  /** @nullable */
+  type: string | null;
+  world: string;
+  npc: UserLootStatsResponseDtoOutputLegendsItemNpc;
+  count: number;
+  caught: number;
+  npcKills: number;
+};
+
+export type UserLootStatsResponseDtoOutputMonstersItemNpc = {
+  id: number;
+  name: string;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  icon: string | null;
+};
+
+export type UserLootStatsResponseDtoOutputMonstersItem = {
+  world: string;
+  npc: UserLootStatsResponseDtoOutputMonstersItemNpc;
+  kills: number;
+  legends: number;
+  caught: number;
+};
+
+export interface UserLootStatsResponseDtoOutput {
+  overview: UserLootStatsResponseDtoOutputOverview;
+  timeline: UserLootStatsResponseDtoOutputTimelineItem[];
+  topNpcs: UserLootStatsResponseDtoOutputTopNpcsItem[];
+  legends: UserLootStatsResponseDtoOutputLegendsItem[];
+  monsters: UserLootStatsResponseDtoOutputMonstersItem[];
+}
+
 export type LootStatsResponseDtoOutputOverview = {
   totalLoots: number;
   totalItems: number;
@@ -12018,6 +12062,42 @@ export type LootsControllerGetLootStats403 = HttpErrorResponse | {
 };
 
 export type LootsControllerGetLootStats429 = {
+  message: string;
+};
+
+export type LootsControllerGetUserLootStatsParams = {
+days?: LootsControllerGetUserLootStatsDays;
+/**
+ * @minLength 1
+ * @maxLength 100
+ */
+world?: string;
+/**
+ * @minLength 1
+ * @maxLength 100
+ */
+characterId?: string;
+};
+
+export type LootsControllerGetUserLootStatsDays = typeof LootsControllerGetUserLootStatsDays[keyof typeof LootsControllerGetUserLootStatsDays];
+
+
+export const LootsControllerGetUserLootStatsDays = {
+  NUMBER_7: '7',
+  NUMBER_30: '30',
+  NUMBER_90: '90',
+  NUMBER_365: '365',
+} as const;
+
+export type LootsControllerGetUserLootStats401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type LootsControllerGetUserLootStats403 = {
+  message: string;
+};
+
+export type LootsControllerGetUserLootStats429 = {
   message: string;
 };
 
@@ -22120,6 +22200,157 @@ export const useGetLootsControllerGetLootStatsQueryData = () => {
   return ({ guildId }: LootsControllerGetLootStatsPathParameters,
     params?: LootsControllerGetLootStatsParams,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof lootsControllerGetLootStats>>>(getLootsControllerGetLootStatsQueryKey({ guildId },params));
+}
+
+
+
+export const getLootsControllerGetUserLootStatsUrl = (params?: LootsControllerGetUserLootStatsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/users/@me/stats/loots?${stringifiedParams}` : `/users/@me/stats/loots`
+}
+
+/**
+ * Loots of fights that a character registered by the authenticated user took part in, limited to loots their Organizations let them read. Days are calendar days in Europe/Warsaw; the timeline is daily up to 30 days and weekly beyond.
+ * @summary Get personal loot statistics
+ */
+export const lootsControllerGetUserLootStats = async (params?: LootsControllerGetUserLootStatsParams, options?: Parameters<typeof mainFetch>[1]): Promise<UserLootStatsResponseDtoOutput> => {
+
+  return mainFetch<UserLootStatsResponseDtoOutput>(getLootsControllerGetUserLootStatsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getLootsControllerGetUserLootStatsQueryKey = (params?: LootsControllerGetUserLootStatsParams,) => {
+    return [
+    `/users/@me/stats/loots`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getLootsControllerGetUserLootStatsQueryOptions = <TData = Awaited<ReturnType<typeof lootsControllerGetUserLootStats>>, TError = ErrorType<RequestValidationError | LootsControllerGetUserLootStats401 | LootsControllerGetUserLootStats403 | LootsControllerGetUserLootStats429>>(params?: LootsControllerGetUserLootStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetUserLootStats>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getLootsControllerGetUserLootStatsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof lootsControllerGetUserLootStats>>> = ({ signal }) => lootsControllerGetUserLootStats(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetUserLootStats>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type LootsControllerGetUserLootStatsQueryResult = NonNullable<Awaited<ReturnType<typeof lootsControllerGetUserLootStats>>>
+export type LootsControllerGetUserLootStatsQueryError = ErrorType<RequestValidationError | LootsControllerGetUserLootStats401 | LootsControllerGetUserLootStats403 | LootsControllerGetUserLootStats429>
+
+
+export function useLootsControllerGetUserLootStats<TData = Awaited<ReturnType<typeof lootsControllerGetUserLootStats>>, TError = ErrorType<RequestValidationError | LootsControllerGetUserLootStats401 | LootsControllerGetUserLootStats403 | LootsControllerGetUserLootStats429>>(
+ params: undefined |  LootsControllerGetUserLootStatsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetUserLootStats>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof lootsControllerGetUserLootStats>>,
+          TError,
+          Awaited<ReturnType<typeof lootsControllerGetUserLootStats>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useLootsControllerGetUserLootStats<TData = Awaited<ReturnType<typeof lootsControllerGetUserLootStats>>, TError = ErrorType<RequestValidationError | LootsControllerGetUserLootStats401 | LootsControllerGetUserLootStats403 | LootsControllerGetUserLootStats429>>(
+ params?: LootsControllerGetUserLootStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetUserLootStats>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof lootsControllerGetUserLootStats>>,
+          TError,
+          Awaited<ReturnType<typeof lootsControllerGetUserLootStats>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useLootsControllerGetUserLootStats<TData = Awaited<ReturnType<typeof lootsControllerGetUserLootStats>>, TError = ErrorType<RequestValidationError | LootsControllerGetUserLootStats401 | LootsControllerGetUserLootStats403 | LootsControllerGetUserLootStats429>>(
+ params?: LootsControllerGetUserLootStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetUserLootStats>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get personal loot statistics
+ */
+
+export function useLootsControllerGetUserLootStats<TData = Awaited<ReturnType<typeof lootsControllerGetUserLootStats>>, TError = ErrorType<RequestValidationError | LootsControllerGetUserLootStats401 | LootsControllerGetUserLootStats403 | LootsControllerGetUserLootStats429>>(
+ params?: LootsControllerGetUserLootStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetUserLootStats>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getLootsControllerGetUserLootStatsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get personal loot statistics
+ */
+export const prefetchLootsControllerGetUserLootStatsQuery = async <TData = Awaited<ReturnType<typeof lootsControllerGetUserLootStats>>, TError = ErrorType<RequestValidationError | LootsControllerGetUserLootStats401 | LootsControllerGetUserLootStats403 | LootsControllerGetUserLootStats429>>(
+ queryClient: QueryClient, params?: LootsControllerGetUserLootStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof lootsControllerGetUserLootStats>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getLootsControllerGetUserLootStatsQueryOptions(params,options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useLootsControllerGetUserLootStats} query
+ */
+export const invalidateLootsControllerGetUserLootStats = async (
+ queryClient: QueryClient, params?: LootsControllerGetUserLootStatsParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getLootsControllerGetUserLootStatsQueryKey(params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get personal loot statistics
+ */
+export const useSetLootsControllerGetUserLootStatsQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: LootsControllerGetUserLootStatsParams | undefined,updater: Awaited<ReturnType<typeof lootsControllerGetUserLootStats>> | undefined | ((old: Awaited<ReturnType<typeof lootsControllerGetUserLootStats>> | undefined) => Awaited<ReturnType<typeof lootsControllerGetUserLootStats>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof lootsControllerGetUserLootStats>>>({ exact: $exactMatch, queryKey: getLootsControllerGetUserLootStatsQueryKey(params) }, updater);
+  };
+}
+
+/**
+ * @summary Get personal loot statistics
+ */
+export const useGetLootsControllerGetUserLootStatsQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params?: LootsControllerGetUserLootStatsParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof lootsControllerGetUserLootStats>>>(getLootsControllerGetUserLootStatsQueryKey(params));
 }
 
 
@@ -36589,7 +36820,7 @@ export const getKillsControllerGetUserKillAnalyticsUrl = (params?: KillsControll
 }
 
 /**
- * Calendar-day analytics in Europe/Warsaw. Current-day/hour data is partial; untimed lifetime history is never distributed backwards. Rankings are bounded to 20 NPCs and 10 gains. Comparisons exclude the current incomplete hour.
+ * Calendar-day analytics in Europe/Warsaw. Current-day/hour data is partial; untimed lifetime history is never distributed backwards. The NPC ranking is bounded to 20 NPCs. Comparisons exclude the current incomplete hour.
  * @summary Get personal kill analytics
  */
 export const killsControllerGetUserKillAnalytics = async (params?: KillsControllerGetUserKillAnalyticsParams, options?: Parameters<typeof mainFetch>[1]): Promise<UserKillAnalyticsResponseDtoOutput> => {

@@ -7,47 +7,30 @@ import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { StatsLeaderboardRow } from "@/components/common/stats-leaderboard-row";
 import { StatsLeaderboardSection } from "@/components/common/stats-leaderboard-section";
 import { NpcTile } from "@/components/tiles/npc-tile";
-import type { StatisticsRanking, StatisticsSearch } from "./statistics-search";
+import type { StatisticsSearch } from "./statistics-search";
 
-/** Rows of each monster preview on the overview. */
-const PREVIEW_SIZE = 5;
+/** Rows of each ranking preview on the overview. */
+export const STATISTICS_PREVIEW_SIZE = 5;
 
 type StatisticsTopNpcsProps = {
-  ranking: StatisticsRanking;
   npcs: UserKillAnalyticsResponseDtoOutput["npcs"];
   search: StatisticsSearch;
 };
 
-/** The first monsters of a ranking, opening the whole ranking from its heading. */
-export function StatisticsTopNpcs({
-  ranking,
-  npcs,
-  search,
-}: StatisticsTopNpcsProps) {
+/** The most killed monsters, opening the whole ranking from its heading. */
+export function StatisticsTopNpcs({ npcs, search }: StatisticsTopNpcsProps) {
   const { t } = useTranslation();
-  const top = npcs.slice(0, PREVIEW_SIZE);
-  const gains = ranking === "gains";
-
-  const value = (npc: (typeof top)[number]) =>
-    gains ? npc.deltaKills : npc.totalKills;
+  const top = npcs.slice(0, STATISTICS_PREVIEW_SIZE);
 
   return (
     <StatsLeaderboardSection
-      title={t(`statistics.rankings.${ranking}`)}
-      emptyMessage={
-        top.length
-          ? undefined
-          : t(gains ? "statistics.noGains" : "statistics.noData")
-      }
+      title={t("statistics.ranking")}
+      emptyMessage={top.length ? undefined : t("statistics.noData")}
       actions={
         <ChevronLink
           render=<Link
             to="/@me/statistics"
-            search={{
-              ...search,
-              tab: "monsters",
-              ranking: gains ? "gains" : undefined,
-            }}
+            search={{ ...search, tab: "monsters" }}
           />
         >
           {t("statistics.allMonsters")}
@@ -77,8 +60,7 @@ export function StatisticsTopNpcs({
           }
           title={npc.npcName}
           subtitle={`${t(`npcType.${npc.npcType}`)} · ${t("kills.level", { level: formatLevel(npc.npcLvl, npc.npcProf) })} · ${upperFirst(npc.world)}`}
-          value={value(npc)}
-          maxValue={top[0] ? value(top[0]) : 0}
+          value={npc.totalKills}
         />
       ))}
     </StatsLeaderboardSection>

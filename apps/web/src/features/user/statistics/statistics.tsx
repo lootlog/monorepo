@@ -6,15 +6,14 @@ import {
   useKillsControllerGetUserKillStats,
 } from "@lootlog/client/main";
 import { FilterBar } from "@/components/common/filter-bar";
-import { AnimatedToggleGroup } from "@/components/ui/animated-toggle-group";
 import { PageTabsLayout } from "@/components/layout/page-tabs-layout";
 import { StatisticsQueryState } from "./statistics-query-state";
-import {
-  STATISTICS_RANKINGS,
-  STATISTICS_TABS,
-  type StatisticsSearch,
-} from "./statistics-search";
+import { STATISTICS_TABS, type StatisticsSearch } from "./statistics-search";
+import { useStatisticsSortFilter } from "./use-statistics-sort";
+import { StatisticsBarSearch } from "./statistics-bar-search";
 import { StatisticsContent } from "./statistics-content";
+import { StatisticsLoots } from "./statistics-loots";
+import { StatisticsLegendsTab } from "./statistics-legends-tab";
 import { StatisticsOverviewSkeleton } from "./statistics-overview-skeleton";
 import {
   countActiveStatisticsFilters,
@@ -22,7 +21,6 @@ import {
   type StatisticsFiltersProps,
 } from "./statistics-filters";
 import { StatisticsStackedFilters } from "./statistics-stacked-filters";
-import { StatisticsCharacterSelect } from "./statistics-character-select";
 import { StatisticsCharacterHistoryNote } from "./statistics-character-history-note";
 
 export function Statistics() {
@@ -30,6 +28,9 @@ export function Statistics() {
   const search = useSearch({ from: "/_authenticated/@me/statistics" });
   const navigate = useNavigate({ from: "/@me/statistics" });
   const isMonsters = search.tab === "monsters";
+  const isLoots = search.tab === "loots" || search.tab === "legends";
+
+  const sort = useStatisticsSortFilter(search);
 
   const update = (changes: Partial<StatisticsSearch>) => {
     void navigate({ search: (current) => ({ ...current, ...changes }) });
@@ -43,7 +44,8 @@ export function Statistics() {
       // Only the monster ranking narrows to a type; the totals never do.
       npcType: isMonsters ? search.npcType : undefined,
     },
-    { query: { staleTime: 30_000 } },
+    // Loots come from their own statistics.
+    { query: { staleTime: 30_000, enabled: !isLoots } },
   );
 
   const lifetime = useKillsControllerGetUserKillStats(undefined, {
@@ -72,6 +74,7 @@ export function Statistics() {
       }),
     days: search.days,
     onDaysChange: (days) => update({ days }),
+    sort,
     npcType: isMonsters
       ? {
           value: search.npcType,
@@ -96,57 +99,38 @@ export function Statistics() {
         <FilterBar
           ariaLabel={t("kills.filters.title")}
           search={
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <StatisticsCharacterSelect
-                characterId={search.characterId}
-                world={search.world}
-                onCharacterChange={(character) =>
-                  update({
-                    characterId: character?.characterId,
-                    world: character ? character.world : search.world,
-                  })
-                }
-              />
-              {isMonsters && (
-                <AnimatedToggleGroup
-                  size="lg"
-                  label={t("statistics.ranking")}
-                  value={search.ranking ?? "top"}
-                  onValueChange={(ranking) =>
-                    update({ ranking: ranking === "top" ? undefined : ranking })
-                  }
-                  options={STATISTICS_RANKINGS.map((ranking) => ({
-                    value: ranking,
-                    label: t(`statistics.rankings.${ranking}`),
-                  }))}
-                />
-              )}
-            </div>
+            <StatisticsBarSearch search={search} rankingTab={sort?.tab} />
           }
           stackedFilters={<StatisticsStackedFilters {...filterProps} />}
           activeFilterCount={countActiveStatisticsFilters(filterProps)}
         >
           <StatisticsFilters {...filterProps} />
         </FilterBar>
-        {data?.meta.characterId &&
-          data.meta.trackedSince &&
-          data.meta.coverage === "partial" && (
-            <StatisticsCharacterHistoryNote
-              trackedSince={data.meta.trackedSince}
-            />
-          )}
-        <div className={cn(inset && "p-3")}>
-          <StatisticsQueryState
-            query={analytics}
-            loading={
-              search.tab === "overview" ? (
-                <StatisticsOverviewSkeleton />
-              ) : undefined
-            }
-          >
-            {data && <StatisticsContent data={data} search={search} />}
-          </StatisticsQueryState>
-        </div>
+        {!isLoots && <StatisticsCharacterHistoryNote meta={data?.meta} />}
+        {search.tab === "loots" ? (
+          <StatisticsLoots search={search} />
+        ) : search.tab === "legends" ? (
+          <StatisticsLegendsTab search={search} />
+        ) : (
+          <div className={cn(inset && "p-3")}>
+            <StatisticsQueryState
+              query={analytics}
+              loading={
+                search.tab === "overview" ? (
+                  <StatisticsOverviewSkeleton />
+                ) : undefined
+              }
+            >
+              {data && (
+                <StatisticsContent
+                  tab={search.tab}
+                  data={data}
+                  search={search}
+                />
+              )}
+            </StatisticsQueryState>
+          </div>
+        )}
       </div>
     </PageTabsLayout>
   );

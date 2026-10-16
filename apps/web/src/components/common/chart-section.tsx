@@ -12,6 +12,8 @@ type ChartSectionProps = {
   isLoading?: boolean;
   /** Shown instead of the content when there is nothing to show. */
   emptyMessage?: string;
+  /** Runs the content edge to edge, as a table rather than a chart. */
+  flush?: boolean;
   children: ReactNode;
 };
 
@@ -25,6 +27,7 @@ export const ChartSection = ({
   actions,
   isLoading = false,
   emptyMessage,
+  flush = false,
   children,
 }: ChartSectionProps) => (
   <BandSection
@@ -33,6 +36,7 @@ export const ChartSection = ({
     description={description}
     trailing={actions}
     wide
+    tiled={flush}
   >
     {isLoading ? (
       <Skeleton aria-busy className="h-64 w-full rounded-lg" />

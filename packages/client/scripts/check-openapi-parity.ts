@@ -2115,6 +2115,31 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
           "404": { description: "<No Content>" },
         },
       },
+      "GET /users/@me/stats/loots": {
+        operationId: "LootsController_getUserLootStats",
+        parameters: [
+          {
+            name: "days",
+            in: "query",
+            required: false,
+            schema: { type: "string", enum: ["7", "30", "90", "365"] },
+          },
+          USER_KILL_WORLD_PARAMETER,
+          USER_KILL_CHARACTER_PARAMETER,
+        ],
+        security: [{ bearer: [] }],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/UserLootStatsResponseDto_Output",
+                },
+              },
+            },
+          },
+        },
+      },
       "GET /users/@me/feed": {
         operationId: "UsersController_getUserFeed",
         parameters: USER_FEED_PARAMETERS,

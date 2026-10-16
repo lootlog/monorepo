@@ -20548,7 +20548,7 @@
             }
           }
         },
-        "description": "Calendar-day analytics in Europe/Warsaw. Current-day/hour data is partial; untimed lifetime history is never distributed backwards. Rankings are bounded to 20 NPCs and 10 gains. Comparisons exclude the current incomplete hour.",
+        "description": "Calendar-day analytics in Europe/Warsaw. Current-day/hour data is partial; untimed lifetime history is never distributed backwards. The NPC ranking is bounded to 20 NPCs. Comparisons exclude the current incomplete hour.",
         "summary": "Get personal kill analytics",
         "x-lootlog-access": "read",
         "x-lootlog-data": "personal"
@@ -38953,21 +38953,6 @@
                 },
                 "share": {
                   "type": "number"
-                },
-                "bestDay": {
-                  "nullable": true,
-                  "type": "object",
-                  "properties": {
-                    "date": {
-                      "type": "string"
-                    },
-                    "kills": {
-                      "nullable": true,
-                      "type": "number"
-                    }
-                  },
-                  "required": ["date", "kills"],
-                  "additionalProperties": false
                 }
               },
               "required": [
@@ -38983,96 +38968,7 @@
                 "comparisonKills",
                 "deltaKills",
                 "deltaPercent",
-                "share",
-                "bestDay"
-              ],
-              "additionalProperties": false
-            }
-          },
-          "npcGains": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "world": {
-                  "type": "string"
-                },
-                "npcId": {
-                  "type": "number"
-                },
-                "npcName": {
-                  "type": "string"
-                },
-                "npcType": {
-                  "type": "string"
-                },
-                "npcLvl": {
-                  "type": "number"
-                },
-                "npcProf": {
-                  "nullable": true,
-                  "type": "string"
-                },
-                "npcIcon": {
-                  "nullable": true,
-                  "type": "string"
-                },
-                "totalKills": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 9007199254740991
-                },
-                "previousKills": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 9007199254740991
-                },
-                "comparisonKills": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 9007199254740991
-                },
-                "deltaKills": {
-                  "type": "number"
-                },
-                "deltaPercent": {
-                  "nullable": true,
-                  "type": "number"
-                },
-                "share": {
-                  "type": "number"
-                },
-                "bestDay": {
-                  "nullable": true,
-                  "type": "object",
-                  "properties": {
-                    "date": {
-                      "type": "string"
-                    },
-                    "kills": {
-                      "nullable": true,
-                      "type": "number"
-                    }
-                  },
-                  "required": ["date", "kills"],
-                  "additionalProperties": false
-                }
-              },
-              "required": [
-                "world",
-                "npcId",
-                "npcName",
-                "npcType",
-                "npcLvl",
-                "npcProf",
-                "npcIcon",
-                "totalKills",
-                "previousKills",
-                "comparisonKills",
-                "deltaKills",
-                "deltaPercent",
-                "share",
-                "bestDay"
+                "share"
               ],
               "additionalProperties": false
             }
@@ -39152,7 +39048,6 @@
           "hourlyWeekday",
           "types",
           "npcs",
-          "npcGains",
           "worlds"
         ],
         "additionalProperties": false

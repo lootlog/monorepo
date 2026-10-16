@@ -3,6 +3,7 @@ import {
   getLootStatsCacheScope,
 } from "#src/shared/cache";
 import { makeUserFeed } from "#src/feed/user-feed";
+import { makeUserLootStats } from "#src/loots/query/user-loot-stats";
 import { makeGuildKillActivityPublisher } from "#src/kills/guild-kill-activity";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { makeJsonCodec } from "#src/redis/redis.service";
@@ -144,6 +145,7 @@ export const recordsServicesLive = Layer.effect(
       loots,
       layer: recordsDataLayer({
         userFeed: makeUserFeed(database),
+        userLootStats: makeUserLootStats(database),
         createKill: makeKillCreation(
           database,
           {

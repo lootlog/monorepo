@@ -131,6 +131,7 @@ export function KillAnalyticsTrend({
     <ChartSection
       title={title}
       description={description}
+      flush={view === "table"}
       actions=<AnimatedToggleGroup
         size="sm"
         label={t("statistics.view")}
@@ -179,8 +180,8 @@ export function KillAnalyticsTrend({
           <Table aria-label={title}>
             <TanStackTableHeader
               table={table}
-              className="sticky top-0 z-10 bg-background"
-              rowClassName="border-b-1! border-border"
+              className="sticky top-0 z-10 bg-sidebar"
+              rowClassName="border-b-1! border-border hover:bg-transparent"
               getHeadClassName={(header) =>
                 header.column.id === "kills" ? "text-right" : ""
               }
