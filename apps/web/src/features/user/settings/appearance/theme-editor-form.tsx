@@ -132,7 +132,7 @@ export const ThemeEditorForm = ({
             <Button
               type="button"
               size="sm"
-              variant="outline"
+              variant="ghost"
               icon=<Dices className="size-4" />
               onClick={randomize}
             >
