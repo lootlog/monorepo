@@ -1,5 +1,6 @@
 import { getBattleFilterOptions } from "../utils/battle-filter-options";
 import { CharacterSelector } from "@/components/filters/character-selector";
+import { useBattleCharacters } from "@/components/filters/use-battle-characters";
 import { MoreFiltersPopover } from "@/components/filters/more-filters-popover";
 import { upperFirst } from "es-toolkit";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
@@ -31,6 +32,7 @@ export const BattlesListFilterToolbar = ({
   onWorldChange,
   worlds,
 }: BattlesListFilterToolbarProps) => {
+  const characters = useBattleCharacters();
   const { t } = useTranslation();
 
   const { battleTypes, battleResults } = getBattleFilterOptions(t);
@@ -70,6 +72,7 @@ export const BattlesListFilterToolbar = ({
       />
 
       <CharacterSelector
+        characters={characters}
         multiple
         characterIds={filters.characterId}
         onCharacterToggle={onCharacterChange}

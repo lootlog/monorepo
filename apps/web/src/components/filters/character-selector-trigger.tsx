@@ -6,8 +6,10 @@ import { FilterChipTrigger } from "@lootlog/ui/components/filter-chip-trigger";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import { CharacterAvatar } from "@/components/filters/character-avatar";
-import type { BattleCharacter } from "@/lib/api/battlelog-types";
-import { getCharacterDetails } from "./character-details";
+import {
+  getCharacterDetails,
+  type SelectableCharacter,
+} from "./character-details";
 
 const MAX_TRIGGER_AVATARS = 3;
 
@@ -15,7 +17,7 @@ type CharacterSelectorTriggerProps = Omit<
   ComponentProps<typeof Button>,
   "children" | "variant"
 > & {
-  selectedCharacters: BattleCharacter[];
+  selectedCharacters: SelectableCharacter[];
   placeholder: string;
   active: boolean;
 };
@@ -53,12 +55,17 @@ export function CharacterSelectorTrigger({
         })
       : (selectedCharacter?.name ?? placeholder);
 
+  // A combobox takes no name from its content.
+  const accessibleName = `${t("ui.characterSelector.label")}: ${value}`;
+
   if (inFilterBar)
     return (
       <FilterChipTrigger
         {...props}
         role="combobox"
-        media={selectedCharacter && media}
+        aria-label={accessibleName}
+        // A character without a known sprite keeps the filter's icon.
+        media={selectedCharacter?.icon ? media : undefined}
         icon={Users}
         label={t("ui.characterSelector.label")}
         value={value}
@@ -72,6 +79,7 @@ export function CharacterSelectorTrigger({
       variant="outline"
       size={size}
       role="combobox"
+      aria-label={accessibleName}
       className={cn(
         "min-w-0 justify-between gap-2",
         // Without a character, the icon and label line up with the filter

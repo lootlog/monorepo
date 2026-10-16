@@ -1,4 +1,5 @@
 import { CharacterSelector } from "@/components/filters/character-selector";
+import { useBattleCharacters } from "@/components/filters/use-battle-characters";
 import { FilterPanelField } from "@/components/filters/filter-panel-field";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import { useTranslation } from "react-i18next";
@@ -15,12 +16,14 @@ export const AbyssStackedFilters = ({
   onMaxLevelChange,
   ...seasonFilter
 }: AbyssFiltersProps) => {
+  const characters = useBattleCharacters();
   const { t } = useTranslation();
 
   return (
     <>
       <FilterPanelField label={t("battlePanel.filters.character")}>
         <CharacterSelector
+          characters={characters}
           characterId={characterId}
           onCharacterChange={onCharacterChange}
           allowAllCharacters={false}

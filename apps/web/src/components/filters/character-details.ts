@@ -1,12 +1,19 @@
 import { upperFirst } from "es-toolkit";
-import type { BattleCharacter } from "@/lib/api/battlelog-types";
 
-// The level and profession come from the character's latest battle, so a
-// character without battles only has its world.
-export const getCharacterDetails = (character: BattleCharacter) => {
+/** A character a selector offers, from whichever service knows it. */
+export type SelectableCharacter = {
+  readonly id: string;
+  readonly name: string;
+  readonly world: string;
+  readonly icon?: string | null;
+  readonly lvl?: number | null;
+  readonly prof?: string | null;
+};
+
+// The level and profession come from the source's latest record of the
+// character, so a character without one only has its world.
+export const getCharacterDetails = (character: SelectableCharacter) => {
   const world = upperFirst(character.world);
-
-  // A battlelog deployed before these fields existed omits them entirely.
   const level = character.lvl ?? null;
   const profession = character.prof ?? null;
 

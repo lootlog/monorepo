@@ -22,6 +22,8 @@ import {
   type StatisticsFiltersProps,
 } from "./statistics-filters";
 import { StatisticsStackedFilters } from "./statistics-stacked-filters";
+import { StatisticsCharacterSelect } from "./statistics-character-select";
+import { StatisticsCharacterHistoryNote } from "./statistics-character-history-note";
 
 export function Statistics() {
   const { t } = useTranslation();
@@ -37,6 +39,7 @@ export function Statistics() {
     {
       days: ({ 7: "7", 30: "30", 90: "90", 365: "365" } as const)[search.days],
       world: search.world,
+      characterId: search.characterId,
       // Only the monster ranking narrows to a type; the totals never do.
       npcType: isMonsters ? search.npcType : undefined,
     },
@@ -61,7 +64,12 @@ export function Statistics() {
   const filterProps: StatisticsFiltersProps = {
     world: search.world,
     worlds,
-    onWorldChange: (world) => update({ world }),
+    // A character plays on one world; another world leaves it behind.
+    onWorldChange: (world) =>
+      update({
+        world,
+        characterId: world === search.world ? search.characterId : undefined,
+      }),
     days: search.days,
     onDaysChange: (days) => update({ days }),
     npcType: isMonsters
@@ -88,26 +96,45 @@ export function Statistics() {
         <FilterBar
           ariaLabel={t("kills.filters.title")}
           search={
-            isMonsters && (
-              <AnimatedToggleGroup
-                size="lg"
-                label={t("statistics.ranking")}
-                value={search.ranking ?? "top"}
-                onValueChange={(ranking) =>
-                  update({ ranking: ranking === "top" ? undefined : ranking })
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <StatisticsCharacterSelect
+                characterId={search.characterId}
+                world={search.world}
+                onCharacterChange={(character) =>
+                  update({
+                    characterId: character?.characterId,
+                    world: character ? character.world : search.world,
+                  })
                 }
-                options={STATISTICS_RANKINGS.map((ranking) => ({
-                  value: ranking,
-                  label: t(`statistics.rankings.${ranking}`),
-                }))}
               />
-            )
+              {isMonsters && (
+                <AnimatedToggleGroup
+                  size="lg"
+                  label={t("statistics.ranking")}
+                  value={search.ranking ?? "top"}
+                  onValueChange={(ranking) =>
+                    update({ ranking: ranking === "top" ? undefined : ranking })
+                  }
+                  options={STATISTICS_RANKINGS.map((ranking) => ({
+                    value: ranking,
+                    label: t(`statistics.rankings.${ranking}`),
+                  }))}
+                />
+              )}
+            </div>
           }
           stackedFilters={<StatisticsStackedFilters {...filterProps} />}
           activeFilterCount={countActiveStatisticsFilters(filterProps)}
         >
           <StatisticsFilters {...filterProps} />
         </FilterBar>
+        {data?.meta.characterId &&
+          data.meta.trackedSince &&
+          data.meta.coverage === "partial" && (
+            <StatisticsCharacterHistoryNote
+              trackedSince={data.meta.trackedSince}
+            />
+          )}
         <div className={cn(inset && "p-3")}>
           <StatisticsQueryState
             query={analytics}

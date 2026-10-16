@@ -991,3 +991,23 @@ queries are unchanged.
 After step 4 the API cannot be rolled back to a revision that reads or writes
 the old tables. Before step 4, rolling the API back to such a revision leaves
 the old tables without the kills the new API recorded.
+
+## Per-character personal kills
+
+`20261016032521_user_character_kills` adds `UserCharacterKillBucket` (hourly
+personal kills per Margonem character, a hypertable compressed like
+`UserKillBucket`) and `UserKillCharacter` (one row per character with its
+latest name, level, profession and icon, its kill count and when tracking it
+began). The API increments both in the same transaction and under the same
+dedup claim as `UserKillBucket` and `UserKillTotal`, so account-wide totals
+are unchanged and a kill reported by two characters of one account within the
+dedup window counts once, for the character that reported it first.
+
+The migration only creates empty tables. Kills recorded before the API that
+writes them was deployed have no character; they stay in the account-wide
+tables, and per-character statistics report history from the user's first
+tracked kill. Apply the migration before deploying the API.
+
+Rolling the API back stops new per-character rows but leaves the tables in
+place. The older API's account deletion does not clear them, so after rolling
+forward, delete their rows for accounts deleted in the meantime.
