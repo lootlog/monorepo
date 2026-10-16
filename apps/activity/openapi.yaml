@@ -995,6 +995,13 @@ paths:
           schema:
             type: string
           required: true
+        - name: world
+          in: query
+          schema:
+            nullable: true
+            type: string
+            minLength: 1
+          required: false
       security:
         - bearer: []
       responses:
@@ -1049,7 +1056,7 @@ paths:
                     type: string
                 required:
                   - message
-      description: An inclusive range of at most 112 Warsaw calendar dates. Only the latest 16 weeks of confirmed online intervals are retained.
+      description: An inclusive range of at most 365 Warsaw calendar dates. Only the latest 365 days of confirmed online intervals are retained.
       summary: Get the signed-in user's confirmed game online time by Warsaw calendar day
 components:
   schemas:

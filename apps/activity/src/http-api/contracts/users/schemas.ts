@@ -18,6 +18,8 @@ const CalendarDate = Schema.String.check(
 export const UserOnlineQuery = Schema.Struct({
   from: CalendarDate,
   to: CalendarDate,
+  /** Counts only time online on this world; days still list every world. */
+  world: Schema.optional(Schema.NonEmptyString),
 }).check(
   Schema.makeFilter(
     ({ from, to }) => {
@@ -25,7 +27,9 @@ export const UserOnlineQuery = Schema.Struct({
 
       return days >= 0 && days < ONLINE_HISTORY_RETENTION_DAYS;
     },
-    { expected: "an inclusive date range of 1 to 112 days" },
+    {
+      expected: `an inclusive date range of 1 to ${ONLINE_HISTORY_RETENTION_DAYS} days`,
+    },
   ),
 );
 

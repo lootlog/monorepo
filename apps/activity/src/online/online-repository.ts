@@ -151,8 +151,11 @@ export class OnlineRepository extends Context.Service<
             AND "endedAt" > ${cutoff}::timestamptz
             AND "endedAt" > (SELECT min(start) FROM days)
             AND "startedAt" < (SELECT max(finish) FROM days)
+        ), counted_intervals AS (
+          SELECT start, finish FROM source_intervals
+          WHERE ${query.world ?? null}::text IS NULL OR world = ${query.world ?? null}::text
         ), intervals AS (
-          SELECT unnest(range_agg(tstzrange(start, finish, '[)'))) AS span FROM source_intervals
+          SELECT unnest(range_agg(tstzrange(start, finish, '[)'))) AS span FROM counted_intervals
         )
         SELECT days.date::text AS date,
           ARRAY(SELECT DISTINCT world FROM source_intervals WHERE world IS NOT NULL
