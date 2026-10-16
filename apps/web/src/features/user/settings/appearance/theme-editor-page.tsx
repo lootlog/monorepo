@@ -7,7 +7,15 @@ import { toCustomThemePreference } from "@/themes/custom-theme";
 import { getCustomThemePreview } from "@/themes/theme-preview";
 import { Button } from "@lootlog/ui/components/button";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { Check, Layers, PaletteIcon, Share2, Trash2 } from "lucide-react";
+import {
+  Check,
+  Layers,
+  Link2,
+  PaletteIcon,
+  Share2,
+  Trash2,
+} from "lucide-react";
+import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import { DeleteThemeDialog } from "./delete-theme-dialog";
 import { ShareThemeDialog } from "./share-theme-dialog";
@@ -71,6 +79,11 @@ export const ThemeEditorPage = () => {
               {t("settings.appearance.editor.active")}
             </MetaItem>
           )}
+          {theme.shareToken && (
+            <MetaItem icon={Link2}>
+              {t("settings.appearance.editor.share.sharedMeta")}
+            </MetaItem>
+          )}
         </>
       }
       actions={
@@ -91,9 +104,21 @@ export const ThemeEditorPage = () => {
               <Button
                 size="sm"
                 variant="outline"
-                icon=<Share2 className="size-4" />
+                icon={
+                  theme.shareToken ? (
+                    <Link2 className="size-4" />
+                  ) : (
+                    <Share2 className="size-4" />
+                  )
+                }
+                className={cn(
+                  theme.shareToken &&
+                    "border-primary/55 text-primary hover:text-primary",
+                )}
               >
-                {t("settings.appearance.editor.share.action")}
+                {theme.shareToken
+                  ? t("settings.appearance.editor.share.shared")
+                  : t("settings.appearance.editor.share.action")}
               </Button>
             }
           />

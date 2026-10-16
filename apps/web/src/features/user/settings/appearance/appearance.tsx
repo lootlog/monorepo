@@ -19,6 +19,7 @@ import {
 import { CUSTOM_THEME_LIMIT } from "@lootlog/schema/custom-theme";
 import { Button } from "@lootlog/ui/components/button";
 import { Link, useSearch } from "@tanstack/react-router";
+import { cn } from "cn";
 import {
   Download,
   Palette,
@@ -62,6 +63,7 @@ export const AppearanceSettings: FC = () => {
   const createLabel = t("settings.appearance.customSection.create");
   const importLabel = t("settings.appearance.import.action");
   const inUseLabel = t("settings.appearance.actions.inUse");
+  const sharedLabel = t("settings.appearance.actions.shared");
 
   // Each custom theme's row shows its own font.
   useEffect(() => {
@@ -136,6 +138,7 @@ export const AppearanceSettings: FC = () => {
                 themeClass={previewThemeClass(userTheme.definition.baseThemeId)}
                 themeStyle={customThemeStyle(userTheme.definition)}
                 activeLabel={inUseLabel}
+                sharedLabel={userTheme.shareToken ? sharedLabel : undefined}
                 isActive={selection === toCustomThemePreference(userTheme.id)}
                 onSelect={() => setTheme(toCustomThemePreference(userTheme.id))}
                 action={
@@ -160,8 +163,16 @@ export const AppearanceSettings: FC = () => {
                           variant="ghost"
                           size="icon-sm"
                           aria-label={t(
-                            "settings.appearance.actions.shareLabel",
+                            userTheme.shareToken
+                              ? "settings.appearance.actions.sharedLabel"
+                              : "settings.appearance.actions.shareLabel",
                             { name: userTheme.name },
+                          )}
+                          // A live link is a state worth noticing, so a
+                          // shared theme's button takes the accent.
+                          className={cn(
+                            userTheme.shareToken &&
+                              "text-primary hover:text-primary",
                           )}
                         >
                           <Share2 className="size-4" />

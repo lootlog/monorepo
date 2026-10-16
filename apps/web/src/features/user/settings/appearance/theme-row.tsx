@@ -6,6 +6,7 @@ import {
 import type { CustomThemeStyle } from "@/themes/custom-theme";
 import type { ThemePreview } from "@/themes/theme-preview";
 import { cn } from "cn";
+import { Link2 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 const PALETTE_SLOTS = ["accent", "highlight", "background"] as const;
@@ -31,6 +32,8 @@ type ThemeRowProps = {
   isActive?: boolean;
   /** Replaces the description on the theme in use. */
   activeLabel?: string;
+  /** Set while the theme is shared by link; names the link icon by it. */
+  sharedLabel?: string;
   /** Picks the theme; left out, the row only shows it, as a preview. */
   onSelect?: () => void;
   /** Shows the theme without waiting to be pointed at, as in a preview. */
@@ -51,6 +54,7 @@ export const ThemeRow = ({
   themeStyle,
   isActive,
   activeLabel,
+  sharedLabel,
   onSelect,
   alwaysThemed = false,
   action,
@@ -106,13 +110,22 @@ export const ThemeRow = ({
           }}
         />
         <span className="flex min-w-0 flex-1 flex-col gap-1">
-          <span
-            className={cn(
-              "truncate text-sm font-semibold",
-              isActive && "text-primary",
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span
+              className={cn(
+                "truncate text-sm font-semibold",
+                isActive && "text-primary",
+              )}
+            >
+              {title}
+            </span>
+            {sharedLabel && (
+              <Link2
+                role="img"
+                aria-label={sharedLabel}
+                className="size-3.5 shrink-0 text-muted-foreground"
+              />
             )}
-          >
-            {title}
           </span>
           <span
             className={cn(
