@@ -52,6 +52,8 @@ import type {
   LootCommentsResponse,
   LootStatsResponse,
   LootStatsQuery,
+  UserLootStatsQuery,
+  UserLootStatsResponse,
   ResolvedLootItemResponse,
   ResolveLootItemQuery,
   LootShareResponse,
@@ -182,6 +184,10 @@ export class RecordsData extends Context.Service<
       caller: AuthorizedGuildCaller,
       query: LootStatsQuery,
     ) => DataEffect<LootStatsResponse>;
+    readonly getUserLootStats: (
+      caller: AuthenticatedCaller,
+      query: UserLootStatsQuery,
+    ) => DataEffect<UserLootStatsResponse>;
     readonly resolveLootItem: (
       caller: AuthorizedGuildCaller,
       query: ResolveLootItemQuery,
@@ -363,6 +369,14 @@ export const getLootStats = Effect.fn("loots.getLootStats")(function* (
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
 
   return yield* data((service) => service.getLootStats(caller, query));
+});
+
+export const getUserLootStats = Effect.fn("loots.getUserLootStats")(function* (
+  query: UserLootStatsQuery,
+) {
+  const caller = yield* requireCaller;
+
+  return yield* data((service) => service.getUserLootStats(caller, query));
 });
 
 export const resolveLootItem = Effect.fn("loots.resolveLootItem")(function* (

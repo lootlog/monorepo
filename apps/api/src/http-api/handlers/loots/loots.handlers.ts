@@ -9,6 +9,7 @@ import {
   fetchLoots,
   getComments,
   getLootStats,
+  getUserLootStats,
   resolveLootItem,
   toRecordsHttpResponse,
   updateLoot,
@@ -23,6 +24,9 @@ export const LootsHandlers = HttpApiBuilder.group(
         toRecordsHttpResponse(
           fetchLoots(optionalPathString(params.guildId), query),
         ),
+      )
+      .handle("LootsControllerGetUserLootStats", ({ query }) =>
+        toRecordsHttpResponse(getUserLootStats(query)),
       )
       .handle("LootsControllerGetLootStats", ({ params, query }) =>
         toRecordsHttpResponse(

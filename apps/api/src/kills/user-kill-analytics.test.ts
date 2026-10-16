@@ -35,7 +35,6 @@ const raw = {
   hourlyWeekday: [],
   types: [],
   npcs: [],
-  npcGains: [],
   worldComparisons: [
     { world: "tempest", comparisonKills: 19, previousKills: 5 },
     { world: "lunia", comparisonKills: 0, previousKills: 9 },

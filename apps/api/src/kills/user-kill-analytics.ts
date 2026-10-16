@@ -43,9 +43,6 @@ const RawNpc = Schema.Struct({
   previousKills: Schema.Number,
   comparisonKills: Schema.Number,
   deltaKills: Schema.Number,
-  bestDay: Schema.NullOr(
-    Schema.Struct({ date: Schema.String, kills: Schema.Number }),
-  ),
 });
 
 const RawAnalytics = Schema.Struct({
@@ -68,7 +65,6 @@ const RawAnalytics = Schema.Struct({
     }),
   ),
   npcs: Schema.Array(RawNpc),
-  npcGains: Schema.Array(RawNpc),
   worldComparisons: Schema.Array(
     Schema.Struct({
       world: Schema.String,
@@ -360,7 +356,6 @@ export const buildKillAnalytics = (
       share: totalKills ? (type.totalKills / totalKills) * 100 : 0,
     })),
     npcs: raw.npcs.map(mapNpc),
-    npcGains: raw.npcGains.map(mapNpc),
     worlds: [...worlds.values()]
       .map((entry) => ({
         ...entry,

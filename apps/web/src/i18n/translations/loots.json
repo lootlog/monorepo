@@ -8,7 +8,11 @@
       "itemsPerLoot": "średnio {{value}} na łup",
       "legendaryItems": "Legendarne",
       "heroicItems": "Heroiczne",
-      "itemShare": "{{value}} przedmiotów"
+      "itemShare": "{{value}} przedmiotów",
+      "caught_one": "{{count}} złapana",
+      "caught_few": "{{count}} złapane",
+      "caught_many": "{{count}} złapanych",
+      "caught_other": "{{count}} złapanych"
     },
     "rarity": {
       "legendary": "Legendarne",

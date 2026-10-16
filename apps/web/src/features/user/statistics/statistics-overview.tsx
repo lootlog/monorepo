@@ -17,6 +17,7 @@ import type { StatisticsTabProps } from "./statistics-content";
 import { toNpcType } from "./statistics-filters";
 import { StatisticsDelta } from "./statistics-delta";
 import { StatisticsTopNpcs } from "./statistics-top-npcs";
+import { StatisticsTopLegends } from "./statistics-top-legends";
 import { StatisticsWorldsSection } from "./statistics-worlds-section";
 import { StatsSectionColumns } from "@/components/common/stats-section-columns";
 
@@ -119,12 +120,8 @@ export function StatisticsOverview({ data, search }: StatisticsTabProps) {
         <StatisticsWorldsSection worlds={data.worlds} search={search} />
       </StatsSectionColumns>
       <StatsSectionColumns className="xl:grid-cols-2">
-        <StatisticsTopNpcs ranking="top" npcs={data.npcs} search={search} />
-        <StatisticsTopNpcs
-          ranking="gains"
-          npcs={data.npcGains}
-          search={search}
-        />
+        <StatisticsTopNpcs npcs={data.npcs} search={search} />
+        <StatisticsTopLegends search={search} />
       </StatsSectionColumns>
     </>
   );

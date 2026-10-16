@@ -19,6 +19,8 @@ import {
   LootCommentsResponse,
   LootStatsResponse,
   LootStatsQuery,
+  UserLootStatsQuery,
+  UserLootStatsResponse,
   ResolvedLootItemResponse,
   ResolveLootItemQuery,
   LootShareResponse,
@@ -64,6 +66,18 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     .annotate(
       OpenApi.Description,
       "Retrieve aggregated loot statistics for a guild with optional time period and filters",
+    ),
+  HttpApiEndpoint.get(
+    "LootsControllerGetUserLootStats",
+    "/users/@me/stats/loots",
+    { query: UserLootStatsQuery, success: UserLootStatsResponse },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "LootsController_getUserLootStats")
+    .annotate(OpenApi.Summary, "Get personal loot statistics")
+    .annotate(
+      OpenApi.Description,
+      "Loots of fights that a character registered by the authenticated user took part in, limited to loots their Organizations let them read. Days are calendar days in Europe/Warsaw; the timeline is daily up to 30 days and weekly beyond.",
     ),
   HttpApiEndpoint.get(
     "LootsControllerResolveLootItemByHid",

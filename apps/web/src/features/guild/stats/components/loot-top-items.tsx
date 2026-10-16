@@ -32,7 +32,6 @@ export const LootTopItems = ({ data, isLoading }: LootTopItemsProps) => {
           media={<ItemImage rarity={item.rarity} icon={item.icon} />}
           title={item.name}
           value={item.count}
-          maxValue={items[0]?.count ?? 0}
         />
       ))}
     </StatsLeaderboardSection>

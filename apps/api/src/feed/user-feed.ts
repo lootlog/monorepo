@@ -6,8 +6,6 @@ import {
   activityFeedNpcTypes,
   type ActivityFeedNpcCategory,
 } from "@lootlog/domain/activity-feed";
-import { createAccessPolicy, Capability } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
 import {
   and,
   desc,
@@ -33,56 +31,44 @@ import {
   npcSnapshotTable,
   lootItemTable,
   itemSnapshotTable,
-  memberTable,
   guildTable,
-  type roleTable,
 } from "#src/database/drizzle/schema";
-import { selectAccessibleGuilds } from "#src/members/member-access-query";
-import { hydrateMemberRoles } from "#src/members/member-role-hydration";
+import {
+  buildUserLootRecordCondition,
+  loadUserLootScopes,
+  userLootScopeAccess,
+  type UserLootScope,
+} from "#src/loots/query/user-loot-scopes";
 import { readableRoles, visibilityFilter } from "#src/kills/kill-query-support";
 import { buildKillStatsCondition } from "#src/kills/kill-stats-persistence";
-import { buildLootNpcVisibilityCondition } from "#src/loots/loot-visibility";
 import {
   UserFeedResponse,
   type UserFeedQuery,
 } from "#src/contracts/users/feed-schemas";
 
-export type FeedScope = {
-  guild: typeof guildTable.$inferSelect;
-  roles: ReadonlyArray<typeof roleTable.$inferSelect>;
-};
+const predicates = (
+  scopes: ReadonlyArray<UserLootScope>,
+  discordId: string,
+) => {
+  const kills = scopes.flatMap((scope) => {
+    const access = userLootScopeAccess(scope, discordId);
 
-const predicates = (scopes: ReadonlyArray<FeedScope>, discordId: string) => {
-  const kills: Array<SQL | undefined> = [],
-    loots: Array<SQL | undefined> = [];
-
-  for (const { guild, roles } of scopes) {
-    const permissions =
-      guild.ownerId === discordId
-        ? [Permission.OWNER]
-        : roles.flatMap((role) => role.permissions);
-
-    const policy = createAccessPolicy({ capabilities: permissions });
-
-    if (!policy.allows(Capability.LOOTLOG_LOOTS_READ)) continue;
-
-    const visibility = buildKillStatsCondition(
-      guildKillActivityTable,
-      visibilityFilter(policy, readableRoles(roles)),
-    );
-
-    kills.push(and(eq(guildKillActivityTable.guildId, guild.id), visibility));
-    loots.push(
-      and(
-        eq(organizationLootRecordTable.guildId, guild.id),
-        buildLootNpcVisibilityCondition(lootTable.id, permissions, roles),
-      ),
-    );
-  }
+    return access
+      ? [
+          and(
+            eq(guildKillActivityTable.guildId, scope.guild.id),
+            buildKillStatsCondition(
+              guildKillActivityTable,
+              visibilityFilter(access.policy, readableRoles(scope.roles)),
+            ),
+          ),
+        ]
+      : [];
+  });
 
   return {
     kills: or(...kills) ?? sql`false`,
-    loots: or(...loots) ?? sql`false`,
+    loots: buildUserLootRecordCondition(scopes, discordId, lootTable.id),
   };
 };
 
@@ -92,7 +78,7 @@ export type FeedFilters = {
 };
 
 export const buildUserFeedQuery = (
-  scopes: ReadonlyArray<FeedScope>,
+  scopes: ReadonlyArray<UserLootScope>,
   discordId: string,
   cutoff: string,
   selection?: {
@@ -447,34 +433,12 @@ export const makeUserFeed = (database: typeof ApiDatabase.Service) =>
 
     const excludedGuildIds = new Set(query.excludedGuildIds);
 
-    const guilds = (yield* selectAccessibleGuilds(database, discordId)).filter(
+    const scopes = (yield* loadUserLootScopes(database, discordId)).filter(
       ({ guild }) => !excludedGuildIds.has(guild.id),
     );
 
-    if (!guilds.length)
+    if (!scopes.length)
       return { generatedAt, windowStart, items: [] } satisfies UserFeedResponse;
-
-    const members = yield* database
-      .select()
-      .from(memberTable)
-      .where(
-        and(
-          eq(memberTable.userId, discordId),
-          eq(memberTable.active, true),
-          inArray(
-            memberTable.guildId,
-            guilds.map(({ guild }) => guild.id),
-          ),
-        ),
-      );
-
-    const hydrated = yield* hydrateMemberRoles(database, members);
-
-    const scopes = guilds.map(({ guild }) => ({
-      guild,
-      roles:
-        hydrated.find((member) => member.guildId === guild.id)?.roles ?? [],
-    }));
 
     const result = yield* database.execute(
       buildUserFeedQuery(scopes, discordId, windowStart, undefined, query),

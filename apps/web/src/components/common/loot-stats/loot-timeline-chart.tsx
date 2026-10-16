@@ -7,10 +7,7 @@ import {
 // eslint-disable-next-line react-doctor/prefer-dynamic-import
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useTranslation } from "react-i18next";
-import type {
-  LootStatsResponseDtoOutputTimelineItem,
-  LootsControllerGetLootStatsPeriod,
-} from "@lootlog/client/main";
+import type { LootStatsResponseDtoOutputTimelineItem } from "@lootlog/client/main";
 import { LOOT_RARITY_CHART_COLORS } from "@/features/guild/loots-list/loot-rarity-colors";
 import { getLootRarityChartConfig } from "./loot-rarity-chart-config";
 import { ChartSection } from "@/components/common/chart-section";
@@ -18,13 +15,14 @@ import { CHART_SERIES_ANIMATION } from "@/lib/motion";
 
 type LootTimelineChartProps = {
   data?: LootStatsResponseDtoOutputTimelineItem[];
-  period?: LootsControllerGetLootStatsPeriod;
+  /** Points are hours rather than days or weeks. */
+  hourly?: boolean;
   isLoading?: boolean;
 };
 
 export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
   data,
-  period = "7d",
+  hourly = false,
   isLoading,
 }) => {
   const { t } = useTranslation();
@@ -32,24 +30,9 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
 
-    if (period === "24h" || period === "3d") {
-      return date.toLocaleTimeString("pl-PL", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    }
-
-    if (period === "7d" || period === "14d" || period === "30d") {
-      return date.toLocaleDateString("pl-PL", {
-        day: "2-digit",
-        month: "2-digit",
-      });
-    }
-
-    return date.toLocaleDateString("pl-PL", {
-      day: "2-digit",
-      month: "2-digit",
-    });
+    return hourly
+      ? date.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" })
+      : date.toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit" });
   };
 
   const chartData =
@@ -105,8 +88,7 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
                   weekday: "short",
                   day: "numeric",
                   month: "short",
-                  hour: "2-digit",
-                  minute: "2-digit",
+                  ...(hourly && { hour: "2-digit", minute: "2-digit" }),
                 });
               }}
             />

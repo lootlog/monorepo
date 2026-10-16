@@ -52,7 +52,6 @@ export const LootTopContributors = ({
             />
           }
           value={member.count}
-          maxValue={contributors[0]?.count ?? 0}
         />
       ))}
     </StatsLeaderboardSection>

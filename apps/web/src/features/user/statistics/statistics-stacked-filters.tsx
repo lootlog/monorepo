@@ -5,6 +5,7 @@ import { TRACKABLE_NPC_TYPES } from "@/features/user/kills/npc-types";
 import { useTranslation } from "react-i18next";
 import { type StatisticsFiltersProps, toNpcType } from "./statistics-filters";
 import { StatisticsPeriodSelect } from "./statistics-period-select";
+import { StatisticsSortSelect } from "./statistics-sort-select";
 
 /** The statistics filters stacked for the panel narrow pages open. */
 export function StatisticsStackedFilters({
@@ -14,6 +15,7 @@ export function StatisticsStackedFilters({
   days,
   onDaysChange,
   npcType,
+  sort,
 }: StatisticsFiltersProps) {
   const { t } = useTranslation();
 
@@ -44,6 +46,14 @@ export function StatisticsStackedFilters({
             width="w-full"
           />
         </FilterPanelField>
+      )}
+      {sort && (
+        <StatisticsSortSelect
+          tab={sort.tab}
+          fields={sort.fields}
+          value={sort.value}
+          onValueChange={sort.onChange}
+        />
       )}
     </>
   );

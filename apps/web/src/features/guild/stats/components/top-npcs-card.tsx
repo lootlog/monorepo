@@ -114,7 +114,6 @@ export const TopNpcsCard = ({
           title={npc.npcName}
           subtitle={t("kills.level", { level: formatLevel(npc.npcLvl) })}
           value={npc.uniqueKills}
-          maxValue={topNpcs[0]?.uniqueKills ?? 0}
           link={{
             to: "/$guildId/stats/npcs/$npcId",
             params: { guildId, npcId: String(npc.npcId) },

@@ -13,11 +13,14 @@ const percentFormatter = new Intl.NumberFormat("pl-PL", {
 
 type LootOverviewCardsProps = {
   data?: LootStatsResponseDtoOutputOverview;
+  /** Legendary items the user's characters caught, in place of their share. */
+  caughtLegendaryItems?: number;
   isLoading?: boolean;
 };
 
 export const LootOverviewCards = ({
   data,
+  caughtLegendaryItems,
   isLoading = false,
 }: LootOverviewCardsProps) => {
   const { t } = useTranslation();
@@ -50,7 +53,10 @@ export const LootOverviewCards = ({
       key: "legendaryItems",
       icon: Crown,
       value: data?.legendaryItems ?? 0,
-      detail: itemShare(data?.legendaryItems ?? 0),
+      detail:
+        caughtLegendaryItems === undefined
+          ? itemShare(data?.legendaryItems ?? 0)
+          : t("loots.stats.overview.caught", { count: caughtLegendaryItems }),
     },
     {
       key: "heroicItems",
