@@ -1,15 +1,14 @@
 import { OrganizationPresenceStatus } from "@/components/common/organization-presence-status";
-import { SectionCard } from "@/components/common/section-card/section-card";
+import { BandSection } from "@/components/common/band-section";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
-import { Eraser, MapPin, Plus, Users } from "lucide-react";
+import { Eraser, Plus } from "lucide-react";
 import { EventLoadError } from "./components/event-load-error";
 import { EventHeroSkeleton } from "./event-hero-skeleton";
 import { getCoveredMapsColorClassName } from "./utils/get-map-coverage-color-class-name";
@@ -32,8 +31,8 @@ const getMapCoverageLabel = (
   totalMapsCount: number,
 ) =>
   canShowCoverageCount
-    ? `(${coveredMapsCount}/${totalMapsCount})`
-    : `(${totalMapsCount})`;
+    ? `${coveredMapsCount}/${totalMapsCount}`
+    : totalMapsCount;
 
 import { useHeroDetail } from "./use-hero-detail";
 
@@ -118,101 +117,96 @@ export const HeroDetail = () => {
       />
 
       <ScrollArea data-under-top-bar className="flex-1 min-h-0">
-        <div className="px-3 py-3 flex flex-col gap-3">
-          <HeroDetailHeader
-            hero={hero}
-            heroProf={heroProf}
-            event={event}
-            heroTimer={heroTimer}
-            canManage={canManage}
-            respawnAction={respawnAction}
-            handleRespawnActionClick={handleRespawnActionClick}
-            RespawnActionIcon={RespawnActionIcon}
-          />
+        <HeroDetailHeader
+          hero={hero}
+          heroProf={heroProf}
+          heroTimer={heroTimer}
+          canManage={canManage}
+          respawnAction={respawnAction}
+          handleRespawnActionClick={handleRespawnActionClick}
+          RespawnActionIcon={RespawnActionIcon}
+        />
 
-          <HeroDetailResponsiveLayout
-            maps={
-              <SectionCard className="@container/maps gap-0 overflow-hidden border-border bg-card p-0">
-                <SectionCardHeader
-                  icon={MapPin}
-                  title={
-                    <>
-                      <span className="truncate">{t("events.maps.title")}</span>
-                      <span
-                        className={cn(
-                          "shrink-0 font-normal",
-                          canShowCoverageCount
-                            ? getCoveredMapsColorClassName(
-                                coveredMapsCount,
-                                totalMapsCount,
-                              )
-                            : "text-muted-foreground",
-                        )}
-                      >
-                        {getMapCoverageLabel(
-                          canShowCoverageCount,
+        <HeroDetailResponsiveLayout
+          maps={
+            <div className="@container/maps">
+              <BandSection
+                id="hero-maps"
+                title={t("events.maps.title")}
+                count={
+                  <span
+                    className={cn(
+                      canShowCoverageCount &&
+                        getCoveredMapsColorClassName(
                           coveredMapsCount,
                           totalMapsCount,
-                        )}
-                      </span>
-                    </>
-                  }
-                  actions={
-                    canManage && (
-                      <div className="ml-auto flex shrink-0 items-center gap-1.5">
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <span className="inline-flex">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-8 px-0 @2xl/maps:w-auto @2xl/maps:px-3"
-                                  onClick={handleClearAllAssignments}
-                                  loading={isClearingAssignments}
-                                  icon=<Eraser className="size-4" />
-                                  disabled={
-                                    uniqueMembers.length === 0 ||
-                                    pendingAssignmentCount > 0
-                                  }
-                                  aria-label={t("events.maps.clearAll")}
-                                >
-                                  <span className="hidden @2xl/maps:inline">
-                                    {t("events.maps.clearAll")}
-                                  </span>
-                                </Button>
-                              </span>
-                            }
-                          />
-                          <TooltipContent>
-                            {t("events.maps.clearAll")}
-                          </TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
+                        ),
+                    )}
+                  >
+                    {getMapCoverageLabel(
+                      canShowCoverageCount,
+                      coveredMapsCount,
+                      totalMapsCount,
+                    )}
+                  </span>
+                }
+                tiled
+                trailing={
+                  canManage && (
+                    <div className="ml-auto flex shrink-0 items-center gap-1.5">
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <span className="inline-flex">
                               <Button
-                                variant="outline"
+                                variant="ghost"
                                 size="sm"
                                 className="w-8 px-0 @2xl/maps:w-auto @2xl/maps:px-3"
-                                onClick={() => setMapManageOpen(true)}
-                                aria-label={t("events.maps.manage")}
+                                onClick={handleClearAllAssignments}
+                                loading={isClearingAssignments}
+                                icon=<Eraser className="size-4" />
+                                disabled={
+                                  uniqueMembers.length === 0 ||
+                                  pendingAssignmentCount > 0
+                                }
+                                aria-label={t("events.maps.clearAll")}
                               >
-                                <Plus className="size-4" />
                                 <span className="hidden @2xl/maps:inline">
-                                  {t("events.maps.manage")}
+                                  {t("events.maps.clearAll")}
                                 </span>
                               </Button>
-                            }
-                          />
-                          <TooltipContent>
-                            {t("events.maps.manage")}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    )
-                  }
-                />
+                            </span>
+                          }
+                        />
+                        <TooltipContent>
+                          {t("events.maps.clearAll")}
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="w-8 px-0 @2xl/maps:w-auto @2xl/maps:px-3"
+                              onClick={() => setMapManageOpen(true)}
+                              aria-label={t("events.maps.manage")}
+                            >
+                              <Plus className="size-4" />
+                              <span className="hidden @2xl/maps:inline">
+                                {t("events.maps.manage")}
+                              </span>
+                            </Button>
+                          }
+                        />
+                        <TooltipContent>
+                          {t("events.maps.manage")}
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  )
+                }
+              >
                 <OrganizationPresenceStatus guildId={presenceGuildId} />
                 <EventMapGrid
                   locations={hero.locations}
@@ -230,21 +224,19 @@ export const HeroDetail = () => {
                   activeGapsMap={activeGapsMap}
                   vertical
                 />
-              </SectionCard>
-            }
-            participants={
-              uniqueMembers.length > 0 ? (
-                <SectionCard className="@container/participants gap-0 overflow-hidden border-border bg-card p-0">
-                  <SectionCardHeader
-                    icon={Users}
-                    title={t("events.participants.title")}
-                    actions={
-                      <span className="shrink-0 text-sm text-muted-foreground">
-                        ({uniqueMembers.length})
-                      </span>
-                    }
-                  />
-                  <div className="-mb-px -mr-px grid grid-cols-1 bg-card @sm/participants:grid-cols-2 @lg/participants:grid-cols-3 @2xl/participants:grid-cols-4">
+              </BandSection>
+            </div>
+          }
+          participants={
+            uniqueMembers.length > 0 ? (
+              <BandSection
+                id="hero-participants"
+                title={t("events.participants.title")}
+                count={uniqueMembers.length}
+                tiled
+              >
+                <div className="@container/participants overflow-hidden">
+                  <div className="-mb-px -mr-px grid grid-cols-1 @sm/participants:grid-cols-2 @lg/participants:grid-cols-3 @2xl/participants:grid-cols-4">
                     {uniqueMembers.map((member) => (
                       <MemberBadge
                         key={member.id}
@@ -254,38 +246,38 @@ export const HeroDetail = () => {
                       />
                     ))}
                   </div>
-                </SectionCard>
-              ) : null
-            }
-            sidebar={
-              <>
-                <EventRankingPreview
-                  rankings={rankings.filter(
-                    (r) => r.heroNpcName === hero.npcName,
-                  )}
-                  heroNpcs={[hero]}
-                  guildId={queryGuildId}
-                  eventId={queryEventId}
-                  limit={5}
-                />
+                </div>
+              </BandSection>
+            ) : null
+          }
+          sidebar={
+            <>
+              <EventRankingPreview
+                rankings={rankings.filter(
+                  (r) => r.heroNpcName === hero.npcName,
+                )}
+                heroNpcs={[hero]}
+                guildId={queryGuildId}
+                eventId={queryEventId}
+                limit={5}
+              />
 
-                <RecentKillsPreview
-                  guildId={queryGuildId}
-                  eventId={queryEventId}
-                  heroId={queryHeroId}
-                  limit={5}
-                />
+              <RecentKillsPreview
+                guildId={queryGuildId}
+                eventId={queryEventId}
+                heroId={queryHeroId}
+                limit={5}
+              />
 
-                <EventHeroLoots
-                  guildId={queryGuildId}
-                  heroNpcNames={[hero.npcName]}
-                  world={event.world}
-                  limit={3}
-                />
-              </>
-            }
-          />
-        </div>
+              <EventHeroLoots
+                guildId={queryGuildId}
+                heroNpcNames={[hero.npcName]}
+                world={event.world}
+                limit={5}
+              />
+            </>
+          }
+        />
       </ScrollArea>
       <MapManageDialog
         key={hero.id}

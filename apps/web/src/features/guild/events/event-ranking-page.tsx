@@ -1,7 +1,7 @@
 import { getRankingSelection } from "./components/ranking/event-ranking-selection";
 import { EventLoadError } from "./components/event-load-error";
 import { EventRankingSkeleton } from "./event-ranking-skeleton";
-import { SectionCard } from "@/components/common/section-card/section-card";
+import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
 import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { useTranslation } from "react-i18next";
 import { useParams } from "@tanstack/react-router";
@@ -9,16 +9,16 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Permission } from "@lootlog/schema/permissions";
 import { EventRankingTable } from "./components/ranking/event-ranking-table";
 import { HeroTabs } from "./components/shared/hero-tabs";
+import { EventHeader } from "./components/header/event-header";
 import { useState } from "react";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
+import { useCurrentMember } from "./hooks/queries/use-current-member";
 import {
   getListEventRankingQueryKey,
   getShowEventOverviewQueryKey,
   useListEventRanking,
   useShowEventOverview,
-  getMembersControllerGetMeQueryKey,
-  useMembersControllerGetMe,
 } from "@lootlog/client/main";
 
 export const EventRankingPage = () => {
@@ -31,18 +31,7 @@ export const EventRankingPage = () => {
 
   const { data: accessPolicy } = useGuildPermissions();
 
-  const { data: currentMember } = useMembersControllerGetMe(
-    { guildId: queryGuildId },
-    {
-      query: {
-        enabled: Boolean(guildId),
-        queryKey: getMembersControllerGetMeQueryKey({
-          guildId: queryGuildId,
-        }),
-        staleTime: 30_000,
-      },
-    },
-  );
+  const { data: currentMember } = useCurrentMember(guildId);
 
   const canEditPoints =
     accessPolicy?.allows(Permission.OWNER) ||
@@ -122,7 +111,7 @@ export const EventRankingPage = () => {
         eventId={eventId}
       />
       <ScrollArea data-under-top-bar className="min-h-0 flex-1">
-        <h1 className="sr-only">{t("events.ranking.title")}</h1>
+        <EventHeader tab="ranking" />
         <HeroTabs
           placement="page"
           heroes={heroes}
@@ -131,15 +120,12 @@ export const EventRankingPage = () => {
           onValueChange={(heroName) => setSelectedHeroName(heroName ?? null)}
         />
         {rankingError && (
-          <div className="p-3">
-            <SectionCard>
-              <QueryErrorNotice
-                message={t("events.ranking.error")}
-                onRetry={() => void refetchRanking()}
-                isRetrying={isRankingFetching}
-              />
-            </SectionCard>
-          </div>
+          <QueryErrorNotice
+            message={t("events.ranking.error")}
+            onRetry={() => void refetchRanking()}
+            isRetrying={isRankingFetching}
+            className={LIST_TILE_RULE_CLASS}
+          />
         )}
 
         {/* A failed refresh keeps the last ranking; a failed first load has none to show. */}

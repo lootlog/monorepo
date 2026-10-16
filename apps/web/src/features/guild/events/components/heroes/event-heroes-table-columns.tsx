@@ -1,4 +1,5 @@
 import { formatLevel } from "@lootlog/domain/profession";
+import { cn } from "cn";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import type { TFunction } from "i18next";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -16,6 +17,8 @@ import type { EventHeroNpc, EventTimer } from "../../types/api";
 import { HeroTimerDisplay } from "./hero-timer-display";
 import type { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { EMPTY_VALUE } from "@/constants/empty-value";
+import type { MyHeroScore } from "../../utils/my-hero-scores";
+import { formatPoints } from "../../utils/format-points";
 
 type EventHeroStats = {
   npcId: number | null;
@@ -27,6 +30,8 @@ export type EventHeroTableRow = {
   hero: EventHeroNpc;
   stats?: EventHeroStats;
   timer?: EventTimer;
+  /** The player's place in the hero's ranking, for a standings table. */
+  score?: MyHeroScore;
 };
 
 type CreateEventHeroesTableColumnsOptions = {
@@ -36,6 +41,8 @@ type CreateEventHeroesTableColumnsOptions = {
   onRequestDeleteHero: (hero: EventHeroNpc) => void;
   onEditHero: (hero: EventHeroNpc) => void;
   onManageMaps: (hero: EventHeroNpc) => void;
+  /** Adds the player's place in each hero's ranking and drops the game's NPC id. */
+  showStandings?: boolean;
   t: TFunction;
 };
 
@@ -52,6 +59,7 @@ export const createEventHeroesTableColumns = ({
   onRequestDeleteHero,
   onEditHero,
   onManageMaps,
+  showStandings = false,
   t,
 }: CreateEventHeroesTableColumnsOptions): ColumnDef<
   typeof coreTableFeatures,
@@ -62,7 +70,7 @@ export const createEventHeroesTableColumns = ({
       id: "hero",
       header: t("events.heroes.columns.hero"),
       cell: ({ row }) => {
-        const { hero, stats } = row.original;
+        const { hero, stats, score } = row.original;
         const totalMapsCount = getTotalMapsCount(hero);
         const killCount = stats?.killCount ?? 0;
 
@@ -91,15 +99,24 @@ export const createEventHeroesTableColumns = ({
                   ) : null}
                 </span>
               </div>
-              <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] leading-none text-muted-foreground">
-                <span>
-                  {t("events.heroes.columns.idValue", {
-                    id: hero.npcId ?? EMPTY_VALUE,
-                  })}
-                </span>
-                <span className="lg:hidden" aria-hidden="true">
-                  •
-                </span>
+              <div
+                className={cn(
+                  "mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] leading-none text-muted-foreground",
+                  showStandings && "lg:hidden",
+                )}
+              >
+                {!showStandings && (
+                  <>
+                    <span>
+                      {t("events.heroes.columns.idValue", {
+                        id: hero.npcId ?? EMPTY_VALUE,
+                      })}
+                    </span>
+                    <span className="lg:hidden" aria-hidden="true">
+                      •
+                    </span>
+                  </>
+                )}
                 <span className="lg:hidden">
                   {t("events.maps.mapCount", { count: totalMapsCount })}
                 </span>
@@ -109,6 +126,14 @@ export const createEventHeroesTableColumns = ({
                 <span className="lg:hidden">
                   {t("events.heroes.killCount", { count: killCount })}
                 </span>
+                {showStandings && score?.place !== undefined && (
+                  <>
+                    <span aria-hidden="true">•</span>
+                    <span className="font-medium text-foreground">
+                      {t("events.score.place", { place: score.place })}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
           </TextLink>
@@ -147,6 +172,33 @@ export const createEventHeroesTableColumns = ({
       ),
     },
   ];
+
+  if (showStandings) {
+    const mineColumn: ColumnDef<typeof coreTableFeatures, EventHeroTableRow> = {
+      id: "mine",
+      header: t("events.heroes.columns.mine"),
+      cell: ({ row }) => {
+        const score = row.original.score;
+
+        return score?.place === undefined ? (
+          <span className="text-muted-foreground">{EMPTY_VALUE}</span>
+        ) : (
+          <span className="flex flex-col items-end">
+            <span className="text-sm font-semibold tabular-nums">
+              {t("events.score.place", { place: score.place })}
+            </span>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {t("events.score.pointsValue", {
+                points: formatPoints(score.points),
+              })}
+            </span>
+          </span>
+        );
+      },
+    };
+
+    columns.splice(2, 0, mineColumn);
+  }
 
   if (canManage) {
     columns.push({

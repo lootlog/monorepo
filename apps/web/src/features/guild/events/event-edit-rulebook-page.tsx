@@ -1,17 +1,13 @@
 import { EventEditSkeleton } from "./event-edit-skeleton";
 import { EventLoadError } from "./components/event-load-error";
 import { useEventEditRoute } from "./hooks/queries/use-event-edit-route";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { PageHeader } from "@/components/common/page-header";
+import { BandSection } from "@/components/common/band-section";
 import { useEffect, useId } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { BookOpenText } from "lucide-react";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
-import { Label } from "@lootlog/ui/components/label";
 import { Textarea } from "@lootlog/ui/components/textarea";
 import {
   type EventOverviewResponseDto,
@@ -100,28 +96,19 @@ export const EventEditRulebookPage = () => {
   }
 
   return (
-    <div className="flex flex-col gap-3 px-3 py-3">
-      <PageHeader icon={BookOpenText} title={event.name} />
+    <>
+      <h1 className="sr-only">{event.name}</h1>
 
-      <form className="space-y-3 pb-24" onSubmit={form.handleSubmit(onSubmit)}>
-        <SectionCard>
-          <SectionCardContent className="flex min-h-0 flex-col gap-3">
-            <div className="space-y-2">
-              <Label
-                htmlFor={rulebookFieldId}
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
-                {t("events.rulebook.label")}
-              </Label>
-              <Textarea
-                id={rulebookFieldId}
-                {...form.register("rulebookMarkdown")}
-                placeholder={t("events.rulebook.placeholder")}
-                className="min-h-[360px] text-sm"
-              />
-            </div>
-          </SectionCardContent>
-        </SectionCard>
+      <form className="pb-24" onSubmit={form.handleSubmit(onSubmit)}>
+        <BandSection id="event-rulebook" title={t("events.rulebook.label")}>
+          <Textarea
+            id={rulebookFieldId}
+            aria-labelledby="event-rulebook"
+            {...form.register("rulebookMarkdown")}
+            placeholder={t("events.rulebook.placeholder")}
+            className="min-h-[360px]"
+          />
+        </BandSection>
 
         <UnsavedChangesBar
           isDirty={form.formState.isDirty}
@@ -129,6 +116,6 @@ export const EventEditRulebookPage = () => {
           onReset={() => form.reset()}
         />
       </form>
-    </div>
+    </>
   );
 };

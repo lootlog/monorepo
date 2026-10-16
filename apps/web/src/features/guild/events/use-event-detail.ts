@@ -1,28 +1,19 @@
-import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import {
   type EventOverviewResponseDto,
   getEventsRankingControllerGetEventHeroStatsQueryKey,
   getListEventHeroTimersQueryKey,
   getListEventMapsQueryKey,
   getListEventRankingQueryKey,
-  getListEventsQueryKey,
   getShowEventOverviewQueryKey,
-  useDeleteEvent,
   useEventsAssignmentControllerDeleteHero,
   useEventsRankingControllerGetEventHeroStats,
   useListEventHeroTimers,
   useListEventMaps,
   useListEventRanking,
   useShowEventOverview,
-  useUpdateEvent,
 } from "@lootlog/client/main";
-import {
-  normalizeEventScoringMode,
-  normalizeEventScoringRules,
-} from "@lootlog/domain/scoring";
-import { Permission } from "@lootlog/schema/permissions";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useParams } from "@tanstack/react-router";
+import { useParams } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -33,15 +24,9 @@ import type {
   EventMapsResponse,
 } from "./types/api";
 import { canManageEvent } from "./utils/event-access";
-import {
-  EVENT_STATUS_PRESENTATION,
-  getEventStatusAtTimestamp,
-} from "./utils/event-activity";
-import { formatDateRange } from "./utils/format-date";
 
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { invalidateEventDetailQueries } from "./hooks/mutations/invalidate-event-queries";
-import { useToggleEventPin } from "./hooks/mutations/use-toggle-event-pin";
 
 type EventDetailHero = EventHeroNpc & {
   locations: EventMapLocation[];
@@ -49,8 +34,6 @@ type EventDetailHero = EventHeroNpc & {
 };
 
 type EventOverview = EventOverviewResponseDto;
-
-type Translator = ReturnType<typeof useTranslation>["t"];
 
 const getEventHeroes = (
   event: EventOverview | undefined,
@@ -70,72 +53,6 @@ const getEventHeroes = (
     };
   });
 };
-
-const getEventDateRangeLabel = (
-  event: EventOverview | undefined,
-  t: Translator,
-) => {
-  if (!event) return "";
-
-  return formatDateRange(
-    new Date(event.startsAt || event.createdAt),
-    event.endsAt ? new Date(event.endsAt) : null,
-    t("events.ongoing"),
-  );
-};
-
-const getEventAccess = (
-  accessPolicy: ReturnType<typeof useGuildPermissions>["data"],
-) => ({
-  canManage: canManageEvent(accessPolicy),
-  canDeleteEvent: Boolean(
-    accessPolicy?.allows(Permission.ADMIN) ||
-    accessPolicy?.allows(Permission.OWNER),
-  ),
-});
-
-const getEventStatusView = (
-  event: EventOverview | undefined,
-  timestamp: number,
-  eventIsPinned: boolean,
-  t: Translator,
-) => {
-  const status = event ? getEventStatusAtTimestamp(event, timestamp) : "ended";
-  let pinActionLabel = t("events.pinEvent");
-
-  if (status !== "active") {
-    pinActionLabel = t("events.pinUnavailable");
-  } else if (eventIsPinned) {
-    pinActionLabel = t("events.unpinEvent");
-  }
-
-  const { labelKey, badgeVariant } = EVENT_STATUS_PRESENTATION[status];
-
-  return {
-    status,
-    isActive: status === "active",
-    pinActionLabel,
-    statusLabel: t(labelKey),
-    statusVariant: badgeVariant,
-  };
-};
-
-const getEventScoring = (event: EventOverview | undefined) => {
-  const scoringMode = normalizeEventScoringMode(event?.scoringMode);
-
-  return {
-    scoringMode,
-    scoringRules:
-      scoringMode === "ADVANCED"
-        ? normalizeEventScoringRules(event?.scoringRules)
-        : null,
-  };
-};
-
-const getEventPinnedState = (
-  eventId: string | undefined,
-  isPinned: (eventId: string) => boolean,
-) => (eventId ? isPinned(eventId) : false);
 
 const getEventRouteQuery = (
   guildId: string | undefined,
@@ -158,18 +75,8 @@ export const useEventDetail = () => {
     eventId,
   );
 
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
-
-  const {
-    togglePin,
-    isPinned,
-    isPending: isPinPending,
-  } = useToggleEventPin(queryGuildId);
-
-  const currentTimestamp = useMinuteTimestamp();
   const hasEventRouteParams = Boolean(guildId && eventId);
-  const eventIsPinned = getEventPinnedState(eventId, isPinned);
 
   const {
     data: event,
@@ -273,18 +180,6 @@ export const useEventDetail = () => {
     },
   );
 
-  const updateEvent = useUpdateEvent({
-    mutation: {
-      onSuccess: () => {
-        if (!guildId || !eventId) {
-          return;
-        }
-
-        invalidateEventDetailQueries(queryClient, guildId, eventId);
-      },
-    },
-  });
-
   const deleteHero = useEventsAssignmentControllerDeleteHero({
     mutation: {
       onSuccess: () => {
@@ -297,27 +192,8 @@ export const useEventDetail = () => {
     },
   });
 
-  const deleteEvent = useDeleteEvent({
-    mutation: {
-      onSuccess: () => {
-        if (!guildId) {
-          return;
-        }
-
-        queryClient.invalidateQueries({
-          queryKey: getListEventsQueryKey({ guildId }),
-        });
-      },
-    },
-  });
-
   const [heroDialogOpen, setHeroDialogOpen] = useState(false);
   const [mapDialogOpen, setMapDialogOpen] = useState(false);
-  const [endDialogOpen, setEndDialogOpen] = useState(false);
-  const [resumeDialogOpen, setResumeDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [rulesDialogOpen, setRulesDialogOpen] = useState(false);
-  const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
 
   const [selectedHeroId, setSelectedHeroId] = useState<string | null>(null);
 
@@ -332,16 +208,7 @@ export const useEventDetail = () => {
     setMapDialogOpen(false);
   }
 
-  const { scoringMode, scoringRules } = getEventScoring(event);
-  const eventDateRangeLabel = getEventDateRangeLabel(event, t);
-  const { canManage, canDeleteEvent } = getEventAccess(accessPolicy);
-
-  const {
-    isActive: isEventActive,
-    pinActionLabel,
-    statusLabel: eventStatusLabel,
-    statusVariant: eventStatusVariant,
-  } = getEventStatusView(event, currentTimestamp, eventIsPinned, t);
+  const canManage = canManageEvent(accessPolicy);
 
   const handleEditHero = (hero: EventHeroNpc) => {
     setSelectedHeroId(hero.id);
@@ -368,26 +235,6 @@ export const useEventDetail = () => {
     }
   };
 
-  const navigateToEventEdit = () => {
-    navigate({
-      to: "/$guildId/events/$eventId/edit",
-      params: {
-        guildId: queryGuildId,
-        eventId: queryEventId,
-      },
-    });
-  };
-
-  const openEventStatusDialog = () => {
-    if (isEventActive) {
-      setEndDialogOpen(true);
-
-      return;
-    }
-
-    setResumeDialogOpen(true);
-  };
-
   return {
     guildId,
     eventId,
@@ -399,35 +246,9 @@ export const useEventDetail = () => {
     selectedHero,
     mapDialogOpen,
     setMapDialogOpen,
-    endDialogOpen,
-    setEndDialogOpen,
-    updateEvent,
     t,
     error,
-    resumeDialogOpen,
-    setResumeDialogOpen,
-    deleteDialogOpen,
-    setDeleteDialogOpen,
-    deleteEvent,
-    navigate,
-    rulesDialogOpen,
-    setRulesDialogOpen,
-    scoringMode,
-    scoringRules,
-    summaryDialogOpen,
-    setSummaryDialogOpen,
-    eventStatusVariant,
-    eventStatusLabel,
-    eventDateRangeLabel,
-    isPinPending,
-    eventIsPinned,
-    pinActionLabel,
-    isEventActive,
-    togglePin,
     canManage,
-    canDeleteEvent,
-    navigateToEventEdit,
-    openEventStatusDialog,
     refetchEvent,
     mapsError,
     rankingError,

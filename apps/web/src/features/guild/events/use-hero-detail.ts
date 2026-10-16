@@ -1,4 +1,5 @@
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
+import { useCurrentMember } from "./hooks/queries/use-current-member";
 import {
   type EventOverviewResponseDto as EventOverview,
   getEventsMonitoringControllerGetActiveGapsForHeroQueryKey,
@@ -6,7 +7,6 @@ import {
   getListEventHeroTimersQueryKey,
   getListEventMapsQueryKey,
   getListEventRankingQueryKey,
-  getMembersControllerGetMeQueryKey,
   getShowEventOverviewQueryKey,
   useEventsAssignmentControllerAssignMember,
   useEventsAssignmentControllerSelfAssignMember,
@@ -19,7 +19,6 @@ import {
   useListEventHeroTimers,
   useListEventMaps,
   useListEventRanking,
-  useMembersControllerGetMe,
   useShowEventOverview,
 } from "@lootlog/client/main";
 import { useQueryClient } from "@tanstack/react-query";
@@ -207,18 +206,7 @@ export const useHeroDetail = () => {
 
   const { data: accessPolicy } = useGuildPermissions();
 
-  const { data: currentMember } = useMembersControllerGetMe(
-    { guildId: queryGuildId },
-    {
-      query: {
-        enabled: hasGuildId,
-        queryKey: getMembersControllerGetMeQueryKey({
-          guildId: queryGuildId,
-        }),
-        staleTime: 30_000,
-      },
-    },
-  );
+  const { data: currentMember } = useCurrentMember(guildId);
 
   const assignMember = useEventsAssignmentControllerAssignMember({
     mutation: {

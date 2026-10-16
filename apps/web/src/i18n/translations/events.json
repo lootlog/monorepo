@@ -355,7 +355,8 @@
       "kills": "Bicia",
       "timer": "Timer",
       "actions": "Akcje",
-      "idValue": "ID: {{id}}"
+      "idValue": "ID: {{id}}",
+      "mine": "Ty"
     },
     "addDescription": "Dodaj nowego herosa do eventu",
     "nameHint": "Nazwa musi być <strong>dokładnie</strong> taka sama jak w grze.",
@@ -540,7 +541,11 @@
     "datesHint": "Daty są opcjonalne. Możesz je ustawić później.",
     "endDateMustBeAfterStart": "Data zakończenia musi być późniejsza niż data rozpoczęcia",
     "saveSuccess": "Zapisano ustawienia eventu",
-    "saveError": "Nie udało się zapisać ustawień eventu"
+    "saveError": "Nie udało się zapisać ustawień eventu",
+    "sections": {
+      "general": "Nazwa i czas trwania",
+      "assignments": "Mapy i potwierdzenia"
+    }
   },
   "scoring": {
     "validation": {
@@ -704,7 +709,15 @@
   },
   "header": {
     "assignmentTimeoutTooltip": "Czas przed respawnem, kiedy można się przypisać do mapy",
-    "assignmentTimeoutValue": "{{minutes}} min"
+    "assignmentTimeoutValue": "{{minutes}} min",
+    "manage": "Zarządzaj eventem",
+    "world": "Świat",
+    "dates": "Czas trwania",
+    "rulesShort": "Zasady",
+    "summaryShort": "Podsumowanie",
+    "manageShort": "Zarządzaj",
+    "status": "Status",
+    "assignmentTimeout": "Przypisanie"
   },
   "points": {
     "edit": "Edytuj punkty",
@@ -748,5 +761,16 @@
       "duplicateName": "Lokacja o tej nazwie już istnieje",
       "assignFailed": "Błąd podczas przypisywania mapy do lokacji"
     }
+  },
+  "tabs": {
+    "label": "Sekcje eventu",
+    "overview": "Przegląd",
+    "ranking": "Ranking",
+    "kills": "Historia bić",
+    "coordination": "Koordynator"
+  },
+  "score": {
+    "place": "{{place}}. miejsce",
+    "pointsValue": "{{points}} pkt"
   }
 }

@@ -47,7 +47,7 @@ describe("MatchingLootsSection", () => {
     expect(showAllLink.getAttribute("class")).not.toContain("hover:bg-");
   });
 
-  it("keeps loading and empty states inside the shared card", async () => {
+  it("keeps loading and empty states inside the section", async () => {
     const { rerender } = render(
       <MatchingLootsSection
         hasError={false}
@@ -60,12 +60,12 @@ describe("MatchingLootsSection", () => {
       { wrapper: await createLootTestWrapper() },
     );
 
-    expect(screen.getByTestId("matching-loots-card")).toBeTruthy();
-    expect(
-      screen
-        .getByTestId("matching-loots-card")
-        .querySelectorAll("[data-slot='skeleton']"),
-    ).toHaveLength(3);
+    const section = () =>
+      screen.getByRole("region", { name: "events.killDetail.matchingLoots" });
+
+    expect(section().querySelectorAll("[data-slot='skeleton']")).toHaveLength(
+      3,
+    );
 
     rerender(
       <MatchingLootsSection
@@ -78,7 +78,6 @@ describe("MatchingLootsSection", () => {
       />,
     );
 
-    expect(screen.getByTestId("matching-loots-card")).toBeTruthy();
-    expect(screen.getByText("events.killDetail.noLoots")).toBeTruthy();
+    expect(section().textContent).toContain("events.killDetail.noLoots");
   });
 });

@@ -174,11 +174,4 @@ describe("EventHeroesTable", () => {
       screen.queryByRole("button", { name: "events.heroes.actions" }),
     ).toBeNull();
   });
-
-  it("keeps the empty state inside the card", async () => {
-    await render(<EventHeroesTable {...defaultProps} rows={[]} />);
-
-    const emptyState = screen.getByText("events.heroes.empty");
-    expect(emptyState.closest('[data-slot="card"]')).toBeTruthy();
-  });
 });

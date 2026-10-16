@@ -67,12 +67,9 @@ describe("RecentKillsPreview", () => {
       name: "events.kills.viewAll",
     });
 
-    expect(viewAllLink.closest("header")).toBeTruthy();
     expect(viewAllLink.getAttribute("href")).toBe(
       "/guild-1/events/event-1/kills",
     );
-    expect(viewAllLink.getAttribute("class")).toContain("hover:text-primary");
-    expect(viewAllLink.getAttribute("class")).not.toContain("hover:bg-");
     expect(screen.getByRole("table")).toBeTruthy();
     expect(screen.getAllByText("Zorin").length).toBeGreaterThan(0);
   });

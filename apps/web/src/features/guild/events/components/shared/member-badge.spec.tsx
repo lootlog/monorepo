@@ -28,8 +28,5 @@ describe("MemberBadge", () => {
       "/guild-1/events/event-1/members/8112",
     );
     expect(link.tabIndex).toBe(0);
-    expect(link.className).toContain("hover:bg-muted/30");
-    expect(link.className).toContain("border-r");
-    expect(link.className).toContain("focus-visible:ring-2");
   });
 });

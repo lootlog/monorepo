@@ -234,29 +234,6 @@ describe("KillDetail states", () => {
     expect(await screen.findByText("events.killDetail.noLoots")).toBeTruthy();
   });
 
-  it("groups participants and maps separately from loots and scoring rules", async () => {
-    await renderDetail();
-
-    const contentGrid = screen.getByTestId("kill-detail-content-grid");
-    const primaryColumn = screen.getByTestId("kill-detail-primary-column");
-    const secondaryColumn = screen.getByTestId("kill-detail-secondary-column");
-
-    expect(contentGrid.className).toContain("2xl:grid-cols");
-    await screen.findByText("Pradawne Wzgórze");
-    expect(primaryColumn.textContent).toContain(
-      "events.killDetail.mapCoverage.title",
-    );
-    expect(primaryColumn.textContent).not.toContain(
-      "events.killDetail.matchingLoots",
-    );
-    expect(secondaryColumn.textContent).toContain(
-      "events.killDetail.matchingLoots",
-    );
-    expect(secondaryColumn.firstElementChild?.textContent).toContain(
-      "events.killDetail.matchingLoots",
-    );
-  });
-
   it("passes manual close and long NPC names to the summary", async () => {
     const longNpcName = "Nadzwyczajnie Długa Nazwa Potulnego Berserkera";
     detail = createDetailData({ isManualClose: true, npcName: longNpcName });

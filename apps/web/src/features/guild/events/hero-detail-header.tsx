@@ -1,5 +1,8 @@
+import {
+  DETAIL_BAR_TOOLBAR_CELL_CLASS,
+  DetailBar,
+} from "@/components/common/detail-bar";
 import { formatLevel } from "@lootlog/domain/profession";
-import { PageHeader } from "@/components/common/page-header";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Tooltip,
@@ -14,7 +17,6 @@ type Props = Pick<
   Extract<ReturnType<typeof useHeroDetail>, { status: "ready" }>,
   | "hero"
   | "heroProf"
-  | "event"
   | "heroTimer"
   | "canManage"
   | "respawnAction"
@@ -22,53 +24,56 @@ type Props = Pick<
   | "RespawnActionIcon"
 >;
 
+/** The hero's sprite, level and respawn, with the respawn window action. */
 export const HeroDetailHeader = ({
   hero,
   heroProf,
-  event,
   heroTimer,
   canManage,
   respawnAction,
   handleRespawnActionClick,
   RespawnActionIcon,
 }: Props) => (
-  <PageHeader
-    title={
-      <>
-        {hero.npcName}
-        {hero.npcLvl ? (
-          <span className="ml-2 text-base font-normal text-muted-foreground">
-            {formatLevel(hero.npcLvl, heroProf)}
+  <>
+    <h1 className="sr-only">{hero.npcName}</h1>
+    <DetailBar
+      meta={
+        <>
+          <span className="flex min-w-0 items-center gap-2.5">
+            <HeroAvatar hero={hero} />
+            <span className="min-w-0 truncate text-sm font-semibold">
+              {hero.npcName}
+              {hero.npcLvl ? (
+                <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                  {formatLevel(hero.npcLvl, heroProf)}
+                </span>
+              ) : null}
+            </span>
           </span>
-        ) : null}
-      </>
-    }
-    description={event.name}
-    media={<HeroAvatar hero={hero} size="portrait" />}
-    actions={
-      <>
-        <HeroTimerCountdown timer={heroTimer} />
-        {canManage && (
+          <HeroTimerCountdown timer={heroTimer} />
+        </>
+      }
+      actions={
+        canManage && (
           <Tooltip>
             <TooltipTrigger
               render={
                 <Button
-                  variant="outline"
-                  className="shrink-0 px-2.5 lg:px-3"
+                  size="lg"
+                  variant="chip"
+                  className={DETAIL_BAR_TOOLBAR_CELL_CLASS}
                   aria-label={respawnAction.label}
                   onClick={handleRespawnActionClick}
                 >
                   <RespawnActionIcon className="size-4" />
-                  <span className="hidden lg:inline">
-                    {respawnAction.label}
-                  </span>
+                  {respawnAction.label}
                 </Button>
               }
             />
             <TooltipContent>{respawnAction.label}</TooltipContent>
           </Tooltip>
-        )}
-      </>
-    }
-  />
+        )
+      }
+    />
+  </>
 );

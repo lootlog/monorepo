@@ -1,8 +1,6 @@
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCard } from "@/components/common/section-card/section-card";
+import { BandSection } from "@/components/common/band-section";
 import type { TFunction } from "i18next";
 import { useParams } from "@tanstack/react-router";
-import { Map } from "lucide-react";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useEventsMonitoringControllerGetKillTimelineData } from "@lootlog/client/main";
 import { KillMapsTimelineTable } from "./kill-maps-timeline-table";
@@ -44,13 +42,18 @@ export const KillMapsTimelineSection = ({
 
   if (isLoading) {
     return (
-      <SectionCard className="overflow-clip bg-card">
-        <div className="space-y-2 p-3">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <Skeleton key={index} className="h-12 rounded-lg" />
-          ))}
-        </div>
-      </SectionCard>
+      <BandSection
+        id="kill-map-coverage"
+        title={t("events.killDetail.mapCoverage.title")}
+        tiled
+      >
+        {Array.from({ length: 3 }).map((_, index) => (
+          <Skeleton
+            key={index}
+            className="h-12 w-full rounded-none border-b border-sidebar-border"
+          />
+        ))}
+      </BandSection>
     );
   }
 
@@ -68,51 +71,44 @@ export const KillMapsTimelineSection = ({
   });
 
   return (
-    <SectionCard className="overflow-clip bg-card">
-      <SectionCardHeader
-        icon={Map}
-        title={t("events.killDetail.mapCoverage.title")}
-        actions={
-          <>
-            <span className="text-xs tabular-nums text-muted-foreground">
-              {t("events.killDetail.mapCoverage.mapCount", {
-                count: sortedMaps.length,
-              })}
-            </span>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <span
-                  className={cn(
-                    "size-2.5 rounded-full",
-                    COVERAGE_SEGMENT_BG_CLASS_NAMES.COVERED,
-                  )}
-                />
-                {t("events.killDetail.mapCoverage.covered")}
-              </span>
-              <span className="flex items-center gap-1">
-                <span
-                  className={cn(
-                    "size-2.5 rounded-full",
-                    COVERAGE_SEGMENT_BG_CLASS_NAMES.UNCOVERED,
-                  )}
-                />
-                {t("events.killDetail.mapCoverage.uncovered")}
-              </span>
-              <span className="flex items-center gap-1">
-                <span
-                  className={cn(
-                    "size-2.5 rounded-full",
-                    COVERAGE_SEGMENT_BG_CLASS_NAMES.UNASSIGNED,
-                  )}
-                />
-                {t("events.killDetail.mapCoverage.unassigned")}
-              </span>
-            </div>
-          </>
-        }
-      />
-
-      <div className="border-t border-border/70">
+    <BandSection
+      id="kill-map-coverage"
+      title={t("events.killDetail.mapCoverage.title")}
+      count={sortedMaps.length}
+      tiled
+      trailing={
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <span
+              className={cn(
+                "size-2.5 rounded-full",
+                COVERAGE_SEGMENT_BG_CLASS_NAMES.COVERED,
+              )}
+            />
+            {t("events.killDetail.mapCoverage.covered")}
+          </span>
+          <span className="flex items-center gap-1">
+            <span
+              className={cn(
+                "size-2.5 rounded-full",
+                COVERAGE_SEGMENT_BG_CLASS_NAMES.UNCOVERED,
+              )}
+            />
+            {t("events.killDetail.mapCoverage.uncovered")}
+          </span>
+          <span className="flex items-center gap-1">
+            <span
+              className={cn(
+                "size-2.5 rounded-full",
+                COVERAGE_SEGMENT_BG_CLASS_NAMES.UNASSIGNED,
+              )}
+            />
+            {t("events.killDetail.mapCoverage.unassigned")}
+          </span>
+        </div>
+      }
+    >
+      <div>
         {isError && (
           <QueryErrorNotice
             message={t("events.killDetail.mapCoverage.error")}
@@ -128,6 +124,6 @@ export const KillMapsTimelineSection = ({
           t={t}
         />
       </div>
-    </SectionCard>
+    </BandSection>
   );
 };

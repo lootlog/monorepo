@@ -16,6 +16,8 @@ import { useKillDetail } from "./hooks/queries/use-kill-detail";
 import { useMatchingLoots } from "./hooks/queries/use-matching-loots";
 import { useEventHeroProfession } from "./hooks/queries/use-event-hero-profession";
 import { normalizeBonusBreakdown } from "./utils/normalize-bonus-breakdown";
+import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
+import { KillDetailColumns } from "./components/kills/kill-detail-columns";
 import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { EventLoadError } from "./components/event-load-error";
 import { EventKillDetailSkeleton } from "./event-kill-detail-skeleton";
@@ -148,75 +150,56 @@ export const KillDetail = () => {
         data-under-top-bar
         className="min-h-0 min-w-0 max-w-full flex-1"
       >
-        <div className="flex w-full min-w-0 max-w-full flex-col gap-3 overflow-x-clip px-3 py-3">
-          {error && (
-            <QueryErrorNotice
-              message={t("events.killDetail.error")}
-              onRetry={() => void refetch()}
-              isRetrying={isFetching}
+        {error && (
+          <QueryErrorNotice
+            message={t("events.killDetail.error")}
+            onRetry={() => void refetch()}
+            isRetrying={isFetching}
+            className={LIST_TILE_RULE_CLASS}
+          />
+        )}
+        <KillDetailSummary kill={kill} heroProf={heroProf} />
+
+        <KillDetailColumns
+          participants={
+            <KillParticipantsCard
+              participants={participants}
+              guildId={guildId}
+              eventId={eventId}
+              killId={killId}
+              canEdit={canEditPoints}
             />
-          )}
-          <KillDetailSummary kill={kill} heroProf={heroProf} />
-
-          <div
-            data-testid="kill-detail-content-grid"
-            className="grid min-w-0 items-start gap-3 2xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]"
-          >
-            {/* One column below 2xl reads participants, scoring rules, loots,
-                then the long map table; 2xl splits them into two columns. */}
-            <div
-              data-testid="kill-detail-primary-column"
-              className="contents 2xl:flex 2xl:min-w-0 2xl:flex-col 2xl:gap-3"
-            >
-              <div className="order-1 min-w-0 2xl:order-none">
-                <KillParticipantsCard
-                  participants={participants}
-                  guildId={guildId}
-                  eventId={eventId}
-                  killId={killId}
-                  canEdit={canEditPoints}
-                />
-              </div>
-
-              <div className="order-4 min-w-0 2xl:order-none">
-                <KillMapsTimelineSection
-                  eventId={queryEventId}
-                  heroId={queryHeroId}
-                  killId={queryKillId}
-                  minSpawnTimeAtKill={kill.minSpawnTimeAtKill}
-                  killedAt={kill.killedAt}
-                  memberRoleColors={memberRoleColors}
-                  t={t}
-                />
-              </div>
-            </div>
-
-            <aside
-              data-testid="kill-detail-secondary-column"
-              className="contents 2xl:flex 2xl:min-w-0 2xl:flex-col 2xl:gap-3"
-            >
-              <div className="order-3 min-w-0 2xl:order-none">
-                <MatchingLootsSection
-                  loots={loots}
-                  isLoading={isLootsLoading}
-                  hasError={lootsHasError}
-                  onRetry={() => void refetchLoots()}
-                  isRetrying={isFetchingLoots}
-                  guildId={queryGuildId}
-                  npcName={kill.heroNpc.npcName}
-                />
-              </div>
-
-              <div className="order-2 min-w-0 2xl:order-none">
-                <MultipliersCard
-                  eventConfig={eventConfig}
-                  highlightedRuleIds={highlightedRuleIds}
-                  t={t}
-                />
-              </div>
-            </aside>
-          </div>
-        </div>
+          }
+          maps={
+            <KillMapsTimelineSection
+              eventId={queryEventId}
+              heroId={queryHeroId}
+              killId={queryKillId}
+              minSpawnTimeAtKill={kill.minSpawnTimeAtKill}
+              killedAt={kill.killedAt}
+              memberRoleColors={memberRoleColors}
+              t={t}
+            />
+          }
+          rules={
+            <MultipliersCard
+              eventConfig={eventConfig}
+              highlightedRuleIds={highlightedRuleIds}
+              t={t}
+            />
+          }
+          loots={
+            <MatchingLootsSection
+              loots={loots}
+              isLoading={isLootsLoading}
+              hasError={lootsHasError}
+              onRetry={() => void refetchLoots()}
+              isRetrying={isFetchingLoots}
+              guildId={queryGuildId}
+              npcName={kill.heroNpc.npcName}
+            />
+          }
+        />
       </ScrollArea>
     </div>
   );
