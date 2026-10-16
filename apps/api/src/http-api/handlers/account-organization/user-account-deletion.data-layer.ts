@@ -12,6 +12,7 @@ import {
   userPinnedEventTable,
   userSettingDocumentTable,
   userSettingsTable,
+  userThemeTable,
 } from "#src/database/drizzle/schema";
 import { getGuildMemberNotFoundCacheKey } from "#src/discord/discord-cache.util";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
@@ -99,6 +100,10 @@ const deletePersistedAccount = (
       yield* transaction
         .delete(userSettingsTable)
         .where(eq(userSettingsTable.userId, identity.userId));
+      // Deleting the themes also revokes their share links.
+      yield* transaction
+        .delete(userThemeTable)
+        .where(eq(userThemeTable.userId, identity.userId));
       yield* transaction
         .delete(userSettingDocumentTable)
         .where(eq(userSettingDocumentTable.userId, identity.userId));

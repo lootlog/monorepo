@@ -29,6 +29,7 @@ import { KillsGroup } from "./contracts/kills/api.js";
 import { GuildStatsCardGroup } from "./contracts/guild-stats-card/api.js";
 import { PublicGuildStatsCardGroup } from "./contracts/public-guild-stats-card/api.js";
 import { DocsGroup } from "./contracts/docs/api.js";
+import { UserThemesGroup } from "./contracts/user-themes/api.js";
 
 export class LootlogApi extends HttpApi.make("LootlogApi")
   .annotate(OpenApi.Title, "Lootlog API")
@@ -63,6 +64,7 @@ export class LootlogApi extends HttpApi.make("LootlogApi")
     GuildStatsCardGroup,
     PublicGuildStatsCardGroup,
     DocsGroup,
+    UserThemesGroup,
   )
   .middleware(ApiKeyEndpointPolicy)
   .middleware(SchemaErrorResponse) {}

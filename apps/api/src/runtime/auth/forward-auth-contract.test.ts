@@ -9,6 +9,7 @@ const PUBLIC_ENDPOINTS = [
   "health.HealthzControllerHealthCheck",
   "maps.MapsControllerGetMaps",
   "public-guild-stats-card.PublicGuildStatsCardControllerGetStatsCard",
+  "user-themes.UserThemesControllerGetSharedTheme",
 ];
 
 test("requires bearer authentication outside the explicit public allowlist", () => {

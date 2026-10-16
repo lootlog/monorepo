@@ -1,6 +1,6 @@
 import { MetaItem } from "@/components/common/meta-item";
 import { ROUTES } from "@/config/routes";
-import { SettingsDetailNotFound } from "../components/settings-detail-not-found";
+import { SettingsDetailNotFound } from "@/components/common/settings-detail-not-found";
 import { PermissionCategoryTooltip } from "@/features/guild/settings/components/permission-category-tooltip";
 import { RolesForm } from "@/features/guild/settings/roles/components/roles-form";
 import { getColorFromRoleColor } from "@/utils/get-color-from-role";
