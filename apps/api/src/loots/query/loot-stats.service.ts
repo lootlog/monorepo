@@ -126,11 +126,11 @@ export class LootStatsService {
           topItems,
         ] = yield* Effect.all(
           [
-            this.getOverview(queries.overview),
-            this.getRarityTimeline(queries.timeline),
-            this.getTopNpcs(queries.topNpcs),
+            readLootStatsOverview(queries.overview),
+            readLootStatsRarityTimeline(queries.timeline),
+            readLootStatsTopNpcs(queries.topNpcs),
             this.getTopContributors(queries.topContributors),
-            this.getTopLegendaryItems(queries.topItems),
+            readLootStatsTopItems(queries.topItems),
           ] as const,
           { concurrency: "unbounded" },
         );
@@ -213,77 +213,6 @@ export class LootStatsService {
     return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
   }
 
-  private getOverview(
-    query: ReturnType<typeof buildLootStatsQueries>["overview"],
-  ) {
-    return runLootStatsQuery("loot-stats.overview", query).pipe(
-      Effect.map((result): LootStatsOverview => {
-        const row = result[0];
-
-        return {
-          totalLoots: Number(row?.total_loots ?? 0),
-          totalItems: Number(row?.total_items ?? 0),
-          legendaryItems: Number(row?.legendary_items ?? 0),
-          heroicItems: Number(row?.heroic_items ?? 0),
-          avgItemLevel: row?.avg_item_level
-            ? Math.round(Number(row.avg_item_level))
-            : 0,
-        };
-      }),
-    );
-  }
-
-  private getRarityTimeline(
-    query: ReturnType<typeof buildLootStatsQueries>["timeline"],
-  ) {
-    return runLootStatsQuery("loot-stats.timeline", query).pipe(
-      Effect.map((result) => {
-        const timelineMap = new Map<
-          string,
-          { total: number; byRarity: Partial<Record<ItemRarity, number>> }
-        >();
-
-        // Rarity totals cover the same loot items as the timeline, excluding items without a rarity.
-        const rarityCounts: Partial<Record<ItemRarity, number>> = {};
-
-        for (const row of result) {
-          const date = row.date.toISOString();
-          const entry = timelineMap.get(date) ?? { total: 0, byRarity: {} };
-          const count = Number(row.count);
-          entry.total += count;
-
-          if (row.rarity) {
-            entry.byRarity[row.rarity] =
-              (entry.byRarity[row.rarity] ?? 0) + count;
-            rarityCounts[row.rarity] = (rarityCounts[row.rarity] ?? 0) + count;
-          }
-
-          timelineMap.set(date, entry);
-        }
-
-        const rarityTotal = Object.values(rarityCounts).reduce(
-          (total, count) => total + count,
-          0,
-        );
-
-        const byRarity = mapValues(rarityCounts, (count): RarityStats => ({
-          count,
-          percentage: Math.round((count / rarityTotal) * 100 * 10) / 10,
-        }));
-
-        const timeline = Array.from(timelineMap.entries()).map(
-          ([date, data]): TimelinePoint => ({
-            date,
-            total: data.total,
-            byRarity: data.byRarity,
-          }),
-        );
-
-        return { byRarity, timeline };
-      }),
-    );
-  }
-
   private getTimelineTruncUnit(period: Period): "hour" | "day" | "week" {
     switch (period) {
       case "24h":
@@ -300,27 +229,6 @@ export class LootStatsService {
       default:
         return "day";
     }
-  }
-
-  private getTopNpcs(
-    query: ReturnType<typeof buildLootStatsQueries>["topNpcs"],
-  ) {
-    return runLootStatsQuery("loot-stats.top-npcs", query).pipe(
-      Effect.map((result): TopNpc[] =>
-        result.map((row) => ({
-          npcId: row.npc_id,
-          name: row.name,
-          type: row.type,
-          lvl: row.lvl,
-          icon: row.icon,
-          count: Number(row.count),
-          byRarity: {
-            LEGENDARY: Number(row.legendary),
-            HEROIC: Number(row.heroic),
-          },
-        })),
-      ),
-    );
   }
 
   private getTopContributors(
@@ -344,26 +252,149 @@ export class LootStatsService {
       ),
     );
   }
-
-  private getTopLegendaryItems(
-    query: ReturnType<typeof buildLootStatsQueries>["topItems"],
-  ) {
-    return runLootStatsQuery("loot-stats.top-items", query).pipe(
-      Effect.map((result) =>
-        result.map((row) => ({
-          itemId: row.item_id,
-          hid: row.hid,
-          name: row.name,
-          icon: row.icon,
-          rarity: row.rarity,
-          lvl: row.lvl,
-          count: Number(row.count),
-        })),
-      ),
-      Effect.flatMap(
-        Schema.decodeUnknownEffect(LootStatsResponseSchema.fields.topItems),
-      ),
-      Effect.map((items) => Array.from(items)),
-    );
-  }
 }
+
+type OverviewRow = {
+  total_loots: number;
+  total_items: number;
+  legendary_items: number;
+  heroic_items: number;
+  avg_item_level: string | null;
+};
+
+export const readLootStatsOverview = <E>(
+  query: Effect.Effect<ReadonlyArray<OverviewRow>, E>,
+) =>
+  runLootStatsQuery("loot-stats.overview", query).pipe(
+    Effect.map((result): LootStatsOverview => {
+      const row = result[0];
+
+      return {
+        totalLoots: Number(row?.total_loots ?? 0),
+        totalItems: Number(row?.total_items ?? 0),
+        legendaryItems: Number(row?.legendary_items ?? 0),
+        heroicItems: Number(row?.heroic_items ?? 0),
+        avgItemLevel: row?.avg_item_level
+          ? Math.round(Number(row.avg_item_level))
+          : 0,
+      };
+    }),
+  );
+
+type TimelineRow = {
+  date: Date;
+  rarity: ItemRarity | null;
+  count: number;
+};
+
+export const readLootStatsRarityTimeline = <E>(
+  query: Effect.Effect<ReadonlyArray<TimelineRow>, E>,
+) =>
+  runLootStatsQuery("loot-stats.timeline", query).pipe(
+    Effect.map((result) => {
+      const timelineMap = new Map<
+        string,
+        { total: number; byRarity: Partial<Record<ItemRarity, number>> }
+      >();
+
+      // Rarity totals cover the same loot items as the timeline, excluding items without a rarity.
+      const rarityCounts: Partial<Record<ItemRarity, number>> = {};
+
+      for (const row of result) {
+        const date = row.date.toISOString();
+        const entry = timelineMap.get(date) ?? { total: 0, byRarity: {} };
+        const count = Number(row.count);
+        entry.total += count;
+
+        if (row.rarity) {
+          entry.byRarity[row.rarity] =
+            (entry.byRarity[row.rarity] ?? 0) + count;
+          rarityCounts[row.rarity] = (rarityCounts[row.rarity] ?? 0) + count;
+        }
+
+        timelineMap.set(date, entry);
+      }
+
+      const rarityTotal = Object.values(rarityCounts).reduce(
+        (total, count) => total + count,
+        0,
+      );
+
+      const byRarity = mapValues(rarityCounts, (count): RarityStats => ({
+        count,
+        percentage: Math.round((count / rarityTotal) * 100 * 10) / 10,
+      }));
+
+      const timeline = Array.from(timelineMap.entries()).map(
+        ([date, data]): TimelinePoint => ({
+          date,
+          total: data.total,
+          byRarity: data.byRarity,
+        }),
+      );
+
+      return { byRarity, timeline };
+    }),
+  );
+
+type TopNpcRow = {
+  npc_id: number;
+  name: string;
+  type: NpcType | null;
+  lvl: number | null;
+  icon: string | null;
+  count: number;
+  legendary: number;
+  heroic: number;
+};
+
+export const readLootStatsTopNpcs = <E>(
+  query: Effect.Effect<ReadonlyArray<TopNpcRow>, E>,
+) =>
+  runLootStatsQuery("loot-stats.top-npcs", query).pipe(
+    Effect.map((result): TopNpc[] =>
+      result.map((row) => ({
+        npcId: row.npc_id,
+        name: row.name,
+        type: row.type,
+        lvl: row.lvl,
+        icon: row.icon,
+        count: Number(row.count),
+        byRarity: {
+          LEGENDARY: Number(row.legendary),
+          HEROIC: Number(row.heroic),
+        },
+      })),
+    ),
+  );
+
+type TopItemRow = {
+  item_id: number;
+  hid: string | null;
+  name: string;
+  icon: string;
+  rarity: ItemRarity | null;
+  lvl: number | null;
+  count: number;
+};
+
+export const readLootStatsTopItems = <E>(
+  query: Effect.Effect<ReadonlyArray<TopItemRow>, E>,
+) =>
+  runLootStatsQuery("loot-stats.top-items", query).pipe(
+    Effect.map((result) =>
+      result.map((row) => ({
+        itemId: row.item_id,
+        hid: row.hid,
+        name: row.name,
+        icon: row.icon,
+        rarity: row.rarity,
+        lvl: row.lvl,
+        count: Number(row.count),
+      })),
+    ),
+    Effect.flatMap(
+      Schema.decodeUnknownEffect(LootStatsResponseSchema.fields.topItems),
+    ),
+    Effect.map((items) => Array.from(items)),
+  );

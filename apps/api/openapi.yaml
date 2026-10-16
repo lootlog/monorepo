@@ -4454,6 +4454,91 @@ paths:
                 additionalProperties: false
       description: Retrieve aggregated loot statistics for a guild with optional time period and filters
       summary: Get guild loot statistics
+  /users/@me/stats/loots:
+    get:
+      tags:
+        - loots
+      operationId: LootsController_getUserLootStats
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: string
+            enum:
+              - "7"
+              - "30"
+              - "90"
+              - "365"
+          required: false
+        - name: world
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          required: false
+        - name: characterId
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: UserLootStatsResponseDto_Output
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserLootStatsResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Loots of fights that a character registered by the authenticated user took part in, limited to loots their Organizations let them read. Days are calendar days in Europe/Warsaw; the timeline is daily up to 30 days and weekly beyond.
+      summary: Get personal loot statistics
   /guilds/{guildId}/loots/items/resolve:
     get:
       tags:
@@ -14939,7 +15024,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Calendar-day analytics in Europe/Warsaw. Current-day/hour data is partial; untimed lifetime history is never distributed backwards. Rankings are bounded to 20 NPCs and 10 gains. Comparisons exclude the current incomplete hour.
+      description: Calendar-day analytics in Europe/Warsaw. Current-day/hour data is partial; untimed lifetime history is never distributed backwards. The NPC ranking lists up to 500 NPCs killed in the period, most killed first. Comparisons exclude the current incomplete hour.
       summary: Get personal kill analytics
   /users/@me/stats/kills/activity:
     get:
@@ -19155,19 +19240,6 @@ components:
                 type: number
               share:
                 type: number
-              bestDay:
-                nullable: true
-                type: object
-                properties:
-                  date:
-                    type: string
-                  kills:
-                    nullable: true
-                    type: number
-                required:
-                  - date
-                  - kills
-                additionalProperties: false
             required:
               - world
               - npcId
@@ -19182,76 +19254,6 @@ components:
               - deltaKills
               - deltaPercent
               - share
-              - bestDay
-            additionalProperties: false
-        npcGains:
-          type: array
-          items:
-            type: object
-            properties:
-              world:
-                type: string
-              npcId:
-                type: number
-              npcName:
-                type: string
-              npcType:
-                type: string
-              npcLvl:
-                type: number
-              npcProf:
-                nullable: true
-                type: string
-              npcIcon:
-                nullable: true
-                type: string
-              totalKills:
-                type: integer
-                minimum: 0
-                maximum: 9007199254740991
-              previousKills:
-                type: integer
-                minimum: 0
-                maximum: 9007199254740991
-              comparisonKills:
-                type: integer
-                minimum: 0
-                maximum: 9007199254740991
-              deltaKills:
-                type: number
-              deltaPercent:
-                nullable: true
-                type: number
-              share:
-                type: number
-              bestDay:
-                nullable: true
-                type: object
-                properties:
-                  date:
-                    type: string
-                  kills:
-                    nullable: true
-                    type: number
-                required:
-                  - date
-                  - kills
-                additionalProperties: false
-            required:
-              - world
-              - npcId
-              - npcName
-              - npcType
-              - npcLvl
-              - npcProf
-              - npcIcon
-              - totalKills
-              - previousKills
-              - comparisonKills
-              - deltaKills
-              - deltaPercent
-              - share
-              - bestDay
             additionalProperties: false
         worlds:
           type: array
@@ -19313,7 +19315,6 @@ components:
         - hourlyWeekday
         - types
         - npcs
-        - npcGains
         - worlds
       additionalProperties: false
     UserKillStatsResponseDto_Output:
@@ -28987,6 +28988,194 @@ components:
         - rarity
         - lvl
         - prof
+      additionalProperties: false
+    UserLootStatsResponseDto_Output:
+      type: object
+      properties:
+        overview:
+          type: object
+          properties:
+            totalLoots:
+              type: number
+            totalItems:
+              type: number
+            legendaryItems:
+              type: number
+            heroicItems:
+              type: number
+            avgItemLevel:
+              type: number
+            caughtLegendaryItems:
+              type: number
+          required:
+            - totalLoots
+            - totalItems
+            - legendaryItems
+            - heroicItems
+            - avgItemLevel
+            - caughtLegendaryItems
+          additionalProperties: false
+        timeline:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              total:
+                type: number
+              byRarity:
+                type: object
+                additionalProperties:
+                  type: number
+            required:
+              - date
+              - total
+              - byRarity
+            additionalProperties: false
+        topNpcs:
+          type: array
+          items:
+            type: object
+            properties:
+              npcId:
+                type: number
+              name:
+                type: string
+              type:
+                nullable: true
+                type: string
+                enum:
+                  - COMMON
+                  - ELITE
+                  - ELITE2
+                  - ELITE3
+                  - HERO
+                  - EVENT_HERO
+                  - COLOSSUS
+                  - TITAN
+                  - NPC
+              lvl:
+                nullable: true
+                type: number
+              icon:
+                nullable: true
+                type: string
+              count:
+                type: number
+              byRarity:
+                type: object
+                additionalProperties:
+                  type: number
+            required:
+              - npcId
+              - name
+              - type
+              - lvl
+              - icon
+              - count
+              - byRarity
+            additionalProperties: false
+        legends:
+          type: array
+          items:
+            type: object
+            properties:
+              itemId:
+                type: number
+              name:
+                type: string
+              icon:
+                type: string
+              stat:
+                type: string
+              type:
+                nullable: true
+                type: string
+              world:
+                type: string
+              npc:
+                type: object
+                properties:
+                  id:
+                    type: number
+                  name:
+                    type: string
+                  lvl:
+                    nullable: true
+                    type: number
+                  icon:
+                    nullable: true
+                    type: string
+                required:
+                  - id
+                  - name
+                  - lvl
+                  - icon
+                additionalProperties: false
+              count:
+                type: number
+              caught:
+                type: number
+              npcKills:
+                type: number
+            required:
+              - itemId
+              - name
+              - icon
+              - stat
+              - type
+              - world
+              - npc
+              - count
+              - caught
+              - npcKills
+            additionalProperties: false
+        monsters:
+          type: array
+          items:
+            type: object
+            properties:
+              world:
+                type: string
+              npc:
+                type: object
+                properties:
+                  id:
+                    type: number
+                  name:
+                    type: string
+                  lvl:
+                    nullable: true
+                    type: number
+                  icon:
+                    nullable: true
+                    type: string
+                required:
+                  - id
+                  - name
+                  - lvl
+                  - icon
+                additionalProperties: false
+              kills:
+                type: number
+              legends:
+                type: number
+              caught:
+                type: number
+            required:
+              - world
+              - npc
+              - kills
+              - legends
+              - caught
+            additionalProperties: false
+      required:
+        - overview
+        - timeline
+        - topNpcs
+        - legends
+        - monsters
       additionalProperties: false
     LootStatsResponseDto_Output:
       type: object

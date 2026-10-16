@@ -51,7 +51,7 @@ export const StatsTile = ({
         {Icon && <Icon className="size-5 text-primary" aria-hidden="true" />}
       </div>
     )}
-    <div className="flex min-w-0 flex-col gap-0.5">
+    <div className="flex min-w-0 max-w-full flex-col gap-0.5">
       <div className="truncate text-xs font-medium text-muted-foreground">
         {label}
       </div>

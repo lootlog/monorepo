@@ -8,6 +8,7 @@ import type { GuildKillQueries } from "#src/kills/guild-kill-queries";
 import type { LootAllocationOperations } from "#src/loots/allocation/loot-allocation.operations";
 import type { LootSubmissionAcceptance } from "#src/loots/submission/loot-submission-acceptance.service";
 import type { LootStatsService } from "#src/loots/query/loot-stats.service";
+import type { makeUserLootStats } from "#src/loots/query/user-loot-stats";
 import type { LootsOperations } from "#src/loots/loots.operations";
 import {
   LootResponse,
@@ -37,6 +38,7 @@ export interface RecordsServices {
   readonly guildKillQueries: GuildKillQueries;
   readonly loots: LootsOperations;
   readonly lootStats: LootStatsService;
+  readonly userLootStats: ReturnType<typeof makeUserLootStats>;
   readonly lootSubmissionAcceptance: LootSubmissionAcceptance;
   readonly lootAllocation: LootAllocationOperations;
 }
@@ -220,6 +222,11 @@ export const recordsDataLayer = (services: RecordsServices) =>
           query.npcTypes ? query.npcTypes.split(",") : undefined,
           query.excludeColossus ?? false,
         ),
+      ),
+    getUserLootStats: (caller, query) =>
+      lootOperation(
+        "LootsController_getUserLootStats",
+        services.userLootStats(caller.discordId, query),
       ),
     resolveLootItem: (caller, query) =>
       lootOperation(

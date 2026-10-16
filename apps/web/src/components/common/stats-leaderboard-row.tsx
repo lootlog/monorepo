@@ -13,8 +13,6 @@ type StatsLeaderboardRowProps = {
   title: ReactNode;
   subtitle?: ReactNode;
   value: number;
-  /** The leader's value; the row's bar is drawn relative to it. */
-  maxValue: number;
   link?: LinkProps;
 };
 
@@ -26,40 +24,30 @@ export const StatsLeaderboardRow = ({
   title,
   subtitle,
   value,
-  maxValue,
   link,
 }: StatsLeaderboardRowProps) => {
-  const share = maxValue > 0 ? Math.max((value / maxValue) * 100, 2) : 0;
-
   const content = (
-    <>
-      <span
-        className="absolute inset-y-0 left-0 bg-primary/10"
-        style={{ width: `${share}%` }}
-        aria-hidden="true"
-      />
-      <span className="relative flex min-w-0 flex-1 items-center gap-3">
-        <RankBadge rank={rank} />
-        {media}
-        <span className="flex min-w-0 flex-1 flex-col">
-          <span className="truncate text-sm font-medium leading-tight">
-            {title}
+    <span className="flex min-w-0 flex-1 items-center gap-3">
+      <RankBadge rank={rank} />
+      {media}
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate text-sm font-medium leading-tight">
+          {title}
+        </span>
+        {subtitle && (
+          <span className="truncate text-xs text-muted-foreground">
+            {subtitle}
           </span>
-          {subtitle && (
-            <span className="truncate text-xs text-muted-foreground">
-              {subtitle}
-            </span>
-          )}
-        </span>
-        <span className="shrink-0 text-sm font-semibold tabular-nums">
-          {numberFormatter.format(value)}
-        </span>
+        )}
       </span>
-    </>
+      <span className="shrink-0 text-sm font-semibold tabular-nums">
+        {numberFormatter.format(value)}
+      </span>
+    </span>
   );
 
   const className = cn(
-    "relative flex min-h-12 min-w-0 items-center overflow-hidden py-1.5",
+    "flex min-h-12 min-w-0 items-center py-1.5",
     LIST_TILE_INSET_CLASS,
   );
 

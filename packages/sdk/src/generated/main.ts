@@ -8697,15 +8697,6 @@ export type UserKillAnalyticsResponseDtoOutputTypesItem = {
   share: number;
 };
 
-/**
- * @nullable
- */
-export type UserKillAnalyticsResponseDtoOutputNpcsItemBestDay = {
-  date: string;
-  /** @nullable */
-  kills: number | null;
-} | null;
-
 export type UserKillAnalyticsResponseDtoOutputNpcsItem = {
   world: string;
   npcId: number;
@@ -8735,50 +8726,6 @@ export type UserKillAnalyticsResponseDtoOutputNpcsItem = {
   /** @nullable */
   deltaPercent: number | null;
   share: number;
-  /** @nullable */
-  bestDay: UserKillAnalyticsResponseDtoOutputNpcsItemBestDay;
-};
-
-/**
- * @nullable
- */
-export type UserKillAnalyticsResponseDtoOutputNpcGainsItemBestDay = {
-  date: string;
-  /** @nullable */
-  kills: number | null;
-} | null;
-
-export type UserKillAnalyticsResponseDtoOutputNpcGainsItem = {
-  world: string;
-  npcId: number;
-  npcName: string;
-  npcType: string;
-  npcLvl: number;
-  /** @nullable */
-  npcProf: string | null;
-  /** @nullable */
-  npcIcon: string | null;
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  totalKills: number;
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  previousKills: number;
-  /**
-     * @minimum 0
-     * @maximum 9007199254740991
-     */
-  comparisonKills: number;
-  deltaKills: number;
-  /** @nullable */
-  deltaPercent: number | null;
-  share: number;
-  /** @nullable */
-  bestDay: UserKillAnalyticsResponseDtoOutputNpcGainsItemBestDay;
 };
 
 export type UserKillAnalyticsResponseDtoOutputWorldsItemDailyItem = {
@@ -8821,7 +8768,6 @@ export interface UserKillAnalyticsResponseDtoOutput {
   hourlyWeekday: UserKillAnalyticsResponseDtoOutputHourlyWeekdayItem[];
   types: UserKillAnalyticsResponseDtoOutputTypesItem[];
   npcs: UserKillAnalyticsResponseDtoOutputNpcsItem[];
-  npcGains: UserKillAnalyticsResponseDtoOutputNpcGainsItem[];
   worlds: UserKillAnalyticsResponseDtoOutputWorldsItem[];
 }
 
@@ -17531,7 +17477,7 @@ export const getKillsControllerGetUserKillAnalyticsUrl = (params?: KillsControll
 }
 
 /**
- * Calendar-day analytics in Europe/Warsaw. Current-day/hour data is partial; untimed lifetime history is never distributed backwards. Rankings are bounded to 20 NPCs and 10 gains. Comparisons exclude the current incomplete hour.
+ * Calendar-day analytics in Europe/Warsaw. Current-day/hour data is partial; untimed lifetime history is never distributed backwards. The NPC ranking lists up to 500 NPCs killed in the period, most killed first. Comparisons exclude the current incomplete hour.
  * @summary Get personal kill analytics
  */
 export const killsControllerGetUserKillAnalytics = async (params?: KillsControllerGetUserKillAnalyticsParams, options?: Parameters<typeof mainFetch>[1]): Promise<UserKillAnalyticsResponseDtoOutput> => {

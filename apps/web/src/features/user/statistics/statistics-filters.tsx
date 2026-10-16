@@ -2,7 +2,13 @@ import { WorldSwitcher } from "@/components/common/world-switcher";
 import { KillStatsNpcTypeSelect } from "@/features/kills/components/kill-stats-npc-type-select";
 import { TRACKABLE_NPC_TYPES } from "@/features/user/kills/npc-types";
 import { StatisticsPeriodSelect } from "./statistics-period-select";
-import type { StatisticsDays, StatisticsNpcType } from "./statistics-search";
+import type {
+  StatisticsDays,
+  StatisticsNpcType,
+  StatisticsSort,
+  StatisticsSortTab,
+} from "./statistics-search";
+import type { StatisticsSortValue } from "./statistics-sort";
 
 export type StatisticsFiltersProps = {
   world: string | undefined;
@@ -15,14 +21,27 @@ export type StatisticsFiltersProps = {
     value: StatisticsNpcType | undefined;
     onChange: (type: StatisticsNpcType | undefined) => void;
   };
+  /** A ranking tab's sort; wide pages sort from the table headers instead. */
+  sort?: {
+    tab: StatisticsSortTab;
+    fields: readonly StatisticsSort[];
+    value: StatisticsSortValue;
+    onChange: (sort: StatisticsSortValue) => void;
+  };
 };
 
 export const countActiveStatisticsFilters = ({
   world,
   days,
   npcType,
+  sort,
 }: StatisticsFiltersProps) =>
-  [Boolean(world), days !== 30, Boolean(npcType?.value)].filter(Boolean).length;
+  [
+    Boolean(world),
+    days !== 30,
+    Boolean(npcType?.value),
+    sort && (sort.value.field !== sort.fields[0] || sort.value.asc),
+  ].filter(Boolean).length;
 
 export const toNpcType = (value: string | null) =>
   TRACKABLE_NPC_TYPES.find((type) => type === value);

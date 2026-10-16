@@ -3,6 +3,19 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased (breaking): Gains and best days removed from personal kill analytics
+
+`GET /users/@me/stats/kills/analytics` no longer returns `npcGains` or the
+`bestDay` of each entry in `npcs`. Release the SDK as a breaking version.
+
+- `npcs` lists up to 500 monsters killed in the period, most killed first,
+  instead of the top 20. Each entry still has `deltaKills` and
+  `deltaPercent`; there is no separate ranking by growth.
+- `records.bestDay`, `records.bestWeek` and `records.bestMonth` for the whole
+  period are unchanged.
+- The SDK's `UserKillAnalyticsResponseDtoOutput` loses `npcGains`, and its
+  `npcs` items lose `bestDay`.
+
 ## Unreleased: Kill numbers in event kill history
 
 `GET /guilds/{guildId}/events/{eventId}/kill-history` returns `killNumber` on
