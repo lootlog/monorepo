@@ -717,7 +717,8 @@
     "summaryShort": "Podsumowanie",
     "manageShort": "Zarządzaj",
     "status": "Status",
-    "assignmentTimeout": "Przypisanie"
+    "assignmentTimeout": "Przypisanie",
+    "loadError": "Nie udało się wczytać eventu."
   },
   "points": {
     "edit": "Edytuj punkty",
@@ -771,6 +772,7 @@
   },
   "score": {
     "place": "{{place}}. miejsce",
-    "pointsValue": "{{points}} pkt"
+    "pointsValue": "{{points}} pkt",
+    "memberError": "Nie udało się sprawdzić Twojego miejsca w rankingu."
   }
 }

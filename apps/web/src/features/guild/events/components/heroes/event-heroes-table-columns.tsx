@@ -6,6 +6,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Link } from "@tanstack/react-router";
 import { Map as MapIcon, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,7 +31,7 @@ export type EventHeroTableRow = {
   hero: EventHeroNpc;
   stats?: EventHeroStats;
   timer?: EventTimer;
-  /** The player's place in the hero's ranking, for a standings table. */
+  /** The player's place in the hero's ranking; absent while it loads. */
   score?: MyHeroScore;
 };
 
@@ -180,7 +181,16 @@ export const createEventHeroesTableColumns = ({
       cell: ({ row }) => {
         const score = row.original.score;
 
-        return score?.place === undefined ? (
+        // No score yet: the player's place is still loading.
+        if (!score) {
+          return (
+            <span className="flex justify-end">
+              <Skeleton className="h-4 w-16" />
+            </span>
+          );
+        }
+
+        return score.place === undefined ? (
           <span className="text-muted-foreground">{EMPTY_VALUE}</span>
         ) : (
           <span className="flex flex-col items-end">
