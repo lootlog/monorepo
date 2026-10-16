@@ -1,6 +1,6 @@
 import type { GuildKillStatsResponseDtoOutputTimeline } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
-import { ChartCard } from "@/components/common/chart-card";
+import { ChartSection } from "@/components/common/chart-section";
 import { KillAnalyticsTrend } from "@/components/common/kill-analytics/kill-analytics-trend";
 import { formatStatisticsDate } from "@/components/common/kill-analytics/format-statistics-date";
 
@@ -22,9 +22,9 @@ export const KillStatsTimeline = ({
 
   if (isLoading) {
     return (
-      <ChartCard title={title} isLoading>
+      <ChartSection title={title} isLoading>
         {null}
-      </ChartCard>
+      </ChartSection>
     );
   }
 
@@ -32,9 +32,9 @@ export const KillStatsTimeline = ({
 
   if (data.points.every((point) => point.kills === 0)) {
     return (
-      <ChartCard title={title} emptyMessage={t("statistics.noData")}>
+      <ChartSection title={title} emptyMessage={t("statistics.noData")}>
         {null}
-      </ChartCard>
+      </ChartSection>
     );
   }
 

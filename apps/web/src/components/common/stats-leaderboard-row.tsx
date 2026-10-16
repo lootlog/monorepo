@@ -1,6 +1,11 @@
 import { Link, type LinkProps } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { RankBadge } from "@/components/common/rank-badge";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
+import { cn } from "cn";
 
 type StatsLeaderboardRowProps = {
   rank: number;
@@ -29,7 +34,7 @@ export const StatsLeaderboardRow = ({
   const content = (
     <>
       <span
-        className="absolute inset-y-0 left-0 rounded-lg bg-primary/10"
+        className="absolute inset-y-0 left-0 bg-primary/10"
         style={{ width: `${share}%` }}
         aria-hidden="true"
       />
@@ -53,15 +58,20 @@ export const StatsLeaderboardRow = ({
     </>
   );
 
-  const className =
-    "relative flex min-h-12 min-w-0 items-center overflow-hidden rounded-lg px-2 py-1.5";
+  const className = cn(
+    "relative flex min-h-12 min-w-0 items-center overflow-hidden py-1.5",
+    LIST_TILE_INSET_CLASS,
+  );
 
   return (
-    <li>
+    <li data-list-tile className={LIST_TILE_RULE_CLASS}>
       {link ? (
         <Link
           {...link}
-          className={`${className} outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring`}
+          className={cn(
+            className,
+            "outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+          )}
         >
           {content}
         </Link>

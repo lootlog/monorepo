@@ -11,6 +11,8 @@ interface PeriodSelectorProps {
   placeholder?: string;
   width?: string;
   className?: string;
+  /** The period differs from the page default. */
+  active?: boolean;
 }
 
 export function PeriodSelector({
@@ -21,6 +23,7 @@ export function PeriodSelector({
   placeholder,
   width = "w-[200px]",
   className,
+  active,
 }: PeriodSelectorProps) {
   const { t } = useTranslation();
 
@@ -53,6 +56,7 @@ export function PeriodSelector({
       width={width}
       triggerClassName={className}
       showSearch={false}
+      active={active}
     />
   );
 }

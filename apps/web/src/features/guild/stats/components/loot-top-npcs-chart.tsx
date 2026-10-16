@@ -13,7 +13,7 @@ import { useTranslation } from "react-i18next";
 import type { LootStatsResponseDtoOutputTopNpcsItem } from "@lootlog/client/main";
 import { LOOT_RARITY_CHART_COLORS } from "@/features/guild/loots-list/loot-rarity-colors";
 import { getLootRarityChartConfig } from "./loot-rarity-chart-config";
-import { ChartCard } from "@/components/common/chart-card";
+import { ChartSection } from "@/components/common/chart-section";
 import { CHART_SERIES_ANIMATION } from "@/lib/motion";
 
 type LootTopNpcsChartProps = {
@@ -43,7 +43,7 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
     })) ?? [];
 
   return (
-    <ChartCard
+    <ChartSection
       title={t("loots.stats.topNpcs.title")}
       description={t("loots.stats.topNpcs.description")}
       isLoading={isLoading}
@@ -53,7 +53,7 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
     >
       <ChartContainer
         config={getLootRarityChartConfig(t)}
-        className="h-full min-h-[250px] w-full flex-1"
+        className="h-[250px] w-full"
       >
         <BarChart
           data={chartData}
@@ -99,6 +99,6 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
           />
         </BarChart>
       </ChartContainer>
-    </ChartCard>
+    </ChartSection>
   );
 };

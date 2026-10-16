@@ -15,6 +15,8 @@ export const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
+        // A filter in a page's filter bar: quiet until it narrows the results.
+        chip: "font-medium text-foreground hover:bg-muted/60 focus-visible:ring-inset focus-visible:ring-offset-0 data-popup-open:bg-muted/60 data-active:bg-primary/15 data-active:text-primary data-active:hover:bg-primary/20",
       },
       size: {
         xs: "h-7 gap-1.5 px-2 text-xs",
@@ -28,6 +30,9 @@ export const buttonVariants = cva(
         "icon-lg": "size-10",
       },
     },
+    compoundVariants: [
+      { variant: "chip", size: "lg", class: "gap-1.5 px-2.5" },
+    ],
     defaultVariants: {
       variant: "default",
       size: "default",

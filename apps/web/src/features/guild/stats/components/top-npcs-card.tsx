@@ -8,12 +8,14 @@ import {
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { LEADERBOARD_SIZE } from "../constants";
 
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 import { buildGuildTopNpcsParams } from "../utils/build-stats-query-params";
-import { StatsLeaderboardCard } from "./stats-leaderboard-card";
-import { StatsLeaderboardRow } from "./stats-leaderboard-row";
+import {
+  LEADERBOARD_SIZE,
+  StatsLeaderboardSection,
+} from "@/components/common/stats-leaderboard-section";
+import { StatsLeaderboardRow } from "@/components/common/stats-leaderboard-row";
 
 type TopNpcsCardProps = {
   guildId: string;
@@ -65,7 +67,7 @@ export const TopNpcsCard = ({
     (period !== undefined && period !== "all");
 
   return (
-    <StatsLeaderboardCard
+    <StatsLeaderboardSection
       title={t("kills.topNpcs.title")}
       description={t("kills.topNpcs.description", {
         type: t(`npcType.${npcType}`),
@@ -119,6 +121,6 @@ export const TopNpcsCard = ({
           }}
         />
       ))}
-    </StatsLeaderboardCard>
+    </StatsLeaderboardSection>
   );
 };

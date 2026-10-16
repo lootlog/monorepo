@@ -95,15 +95,16 @@ function renderStatistics(
   return { router, requests };
 }
 
-it("restores URL filters, keeps them while changing tabs, and fetches the selected period", async () => {
+it("restores URL filters, keeps them while changing tabs, narrows only the monster ranking to the NPC type, and fetches the selected period", async () => {
   const { router, requests } = renderStatistics(
-    "/@me/statistics?tab=activity&days=90&world=luvia",
+    "/@me/statistics?tab=activity&days=90&world=luvia&npcType=HERO",
   );
 
   await screen.findByRole("heading", { level: 1, name: "Statystyki" });
   await waitFor(() => expect(requests).toHaveLength(1));
   expect(requests[0]?.searchParams.get("days")).toBe("90");
   expect(requests[0]?.searchParams.get("world")).toBe("luvia");
+  expect(requests[0]?.searchParams.has("npcType")).toBe(false);
   expect(
     screen
       .getByRole("link", { name: "Aktywność" })
@@ -118,7 +119,13 @@ it("restores URL filters, keeps them while changing tabs, and fetches the select
       tab: "monsters",
       days: 90,
       world: "luvia",
+      npcType: "HERO",
     }),
+  );
+  await waitFor(() =>
+    expect(requests[requests.length - 1]?.searchParams.get("npcType")).toBe(
+      "HERO",
+    ),
   );
   expect(
     screen.getByRole("link", { name: "Potwory" }).getAttribute("aria-current"),
@@ -128,7 +135,9 @@ it("restores URL filters, keeps them while changing tabs, and fetches the select
       .getByRole("link", { name: "Aktywność" })
       .getAttribute("aria-current"),
   ).toBeNull();
-  fireEvent.click(screen.getByRole("combobox", { name: "Okres" }));
+  // Below the results table width the filters open from a floating button.
+  fireEvent.click(screen.getByRole("button", { name: /^Filtry/ }));
+  fireEvent.click(await screen.findByRole("combobox", { name: "Okres" }));
   const weekOption = await screen.findByRole("option", { name: "7 dni" });
   fireEvent.pointerDown(weekOption, { pointerType: "mouse" });
   fireEvent.click(weekOption);

@@ -8468,6 +8468,21 @@ export interface UserKillStatsResponseDtoOutput {
   topNpcs: UserKillStatsResponseDtoOutputTopNpcsItem[];
 }
 
+export type NpcType = typeof NpcType[keyof typeof NpcType];
+
+
+export const NpcType = {
+  COMMON: 'COMMON',
+  ELITE: 'ELITE',
+  ELITE2: 'ELITE2',
+  ELITE3: 'ELITE3',
+  HERO: 'HERO',
+  EVENT_HERO: 'EVENT_HERO',
+  COLOSSUS: 'COLOSSUS',
+  TITAN: 'TITAN',
+  NPC: 'NPC',
+} as const;
+
 export type UserKillAnalyticsResponseDtoOutputMetaTimezone = typeof UserKillAnalyticsResponseDtoOutputMetaTimezone[keyof typeof UserKillAnalyticsResponseDtoOutputMetaTimezone];
 
 
@@ -8882,21 +8897,6 @@ export interface UserNpcKillsResponseDtoOutput {
   npcs: UserNpcKillsResponseDtoOutputNpcsItem[];
   pagination: UserNpcKillsResponseDtoOutputPagination;
 }
-
-export type NpcType = typeof NpcType[keyof typeof NpcType];
-
-
-export const NpcType = {
-  COMMON: 'COMMON',
-  ELITE: 'ELITE',
-  ELITE2: 'ELITE2',
-  ELITE3: 'ELITE3',
-  HERO: 'HERO',
-  EVENT_HERO: 'EVENT_HERO',
-  COLOSSUS: 'COLOSSUS',
-  TITAN: 'TITAN',
-  NPC: 'NPC',
-} as const;
 
 export type GuildTopNpcsResponseDtoOutputTopNpcsItem = {
   npcId: number;
@@ -12027,6 +12027,7 @@ days?: KillsControllerGetUserKillAnalyticsDays;
  * @maxLength 100
  */
 world?: string;
+npcType?: NpcType;
 };
 
 export type KillsControllerGetUserKillAnalyticsDays = typeof KillsControllerGetUserKillAnalyticsDays[keyof typeof KillsControllerGetUserKillAnalyticsDays];

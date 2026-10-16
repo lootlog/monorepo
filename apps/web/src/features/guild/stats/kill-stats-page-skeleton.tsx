@@ -1,11 +1,13 @@
 import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
 import { useMediaQuery } from "usehooks-ts";
-import { ChartCard } from "@/components/common/chart-card";
+import { ChartSection } from "@/components/common/chart-section";
+import { StatsSectionColumns } from "@/components/common/stats-section-columns";
 import { useTranslation } from "react-i18next";
-import { KillStatsOverview } from "./components/kill-stats-overview";
+import { KillStatsOverview } from "@/components/common/kill-analytics/kill-stats-overview";
+import { TRACKABLE_NPC_TYPES } from "./constants";
 import { FilterBar } from "@/components/common/filter-bar";
 import { StatsFiltersSkeleton } from "./components/stats-filters-skeleton";
-import { StatsLeaderboardCard } from "./components/stats-leaderboard-card";
+import { StatsLeaderboardSection } from "@/components/common/stats-leaderboard-section";
 
 export const KillStatsPageSkeleton = () => {
   const { t } = useTranslation();
@@ -17,23 +19,24 @@ export const KillStatsPageSkeleton = () => {
       <FilterBar ariaLabel={t("kills.filters.title")}>
         {usesFilterBar && <StatsFiltersSkeleton />}
       </FilterBar>
-      <div className="flex flex-col gap-3 p-3">
-        <KillStatsOverview isLoading />
-        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-          <StatsLeaderboardCard
-            title={t("kills.memberRanking.title")}
-            isLoading
-          >
-            {null}
-          </StatsLeaderboardCard>
-          <StatsLeaderboardCard title={t("kills.topNpcs.title")} isLoading>
-            {null}
-          </StatsLeaderboardCard>
-        </div>
-        <ChartCard title={t("statistics.daily")} isLoading>
+      <KillStatsOverview
+        isLoading
+        types={TRACKABLE_NPC_TYPES.map((type) => ({ type, kills: 0 }))}
+      />
+      <StatsSectionColumns className="xl:grid-cols-2">
+        <StatsLeaderboardSection
+          title={t("kills.memberRanking.title")}
+          isLoading
+        >
           {null}
-        </ChartCard>
-      </div>
+        </StatsLeaderboardSection>
+        <StatsLeaderboardSection title={t("kills.topNpcs.title")} isLoading>
+          {null}
+        </StatsLeaderboardSection>
+      </StatsSectionColumns>
+      <ChartSection title={t("statistics.daily")} isLoading>
+        {null}
+      </ChartSection>
     </div>
   );
 };

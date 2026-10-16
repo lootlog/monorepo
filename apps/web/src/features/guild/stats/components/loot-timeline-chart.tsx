@@ -13,21 +13,19 @@ import type {
 } from "@lootlog/client/main";
 import { LOOT_RARITY_CHART_COLORS } from "@/features/guild/loots-list/loot-rarity-colors";
 import { getLootRarityChartConfig } from "./loot-rarity-chart-config";
-import { ChartCard } from "@/components/common/chart-card";
+import { ChartSection } from "@/components/common/chart-section";
 import { CHART_SERIES_ANIMATION } from "@/lib/motion";
 
 type LootTimelineChartProps = {
   data?: LootStatsResponseDtoOutputTimelineItem[];
   period?: LootsControllerGetLootStatsPeriod;
   isLoading?: boolean;
-  className?: string;
 };
 
 export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
   data,
   period = "7d",
   isLoading,
-  className,
 }) => {
   const { t } = useTranslation();
 
@@ -64,10 +62,9 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
     })) ?? [];
 
   return (
-    <ChartCard
+    <ChartSection
       title={t("loots.stats.timeline.title")}
       description={t("loots.stats.timeline.description")}
-      className={className}
       isLoading={isLoading}
       emptyMessage={
         chartData.length === 0 ? t("loots.stats.timeline.noData") : undefined
@@ -75,7 +72,7 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
     >
       <ChartContainer
         config={getLootRarityChartConfig(t)}
-        className="h-[250px] w-full flex-1"
+        className="h-[250px] w-full"
       >
         <AreaChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -134,6 +131,6 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
           />
         </AreaChart>
       </ChartContainer>
-    </ChartCard>
+    </ChartSection>
   );
 };

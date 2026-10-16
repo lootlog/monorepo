@@ -48,7 +48,8 @@ export const BandSection = ({
       trailing={trailing}
       className={cn(
         LIST_BAND_HEADING_CLASS,
-        "sticky top-(--page-sticky-top) z-10",
+        // Under the page's `FilterBar`, when it has one.
+        "sticky top-[calc(var(--page-sticky-top)+var(--filter-bar-height,0px))] z-10",
       )}
     >
       {title}

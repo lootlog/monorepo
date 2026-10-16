@@ -41,6 +41,7 @@ export const AbyssSeasonFilter = ({
           ? t("battlePanel.abyss.noSeason")
           : t("battlePanel.abyss.selectSeason")
       }
+      label={t("battlePanel.abyss.season")}
       emptyMessage={t("battlePanel.abyss.noSeason")}
       width={width}
       triggerClassName="min-w-0"

@@ -33,7 +33,6 @@ export const AbyssFilterToolbar = ({
     />
     <AbyssSeasonFilter {...seasonFilter} width="w-[260px]" />
     <LevelRangeFilter
-      layout="inline"
       minLevel={minLevel}
       maxLevel={maxLevel}
       onMinLevelChange={onMinLevelChange}

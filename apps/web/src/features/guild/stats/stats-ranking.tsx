@@ -12,7 +12,7 @@ import {
 import { KillStatsSearch } from "@/features/kills/components/kill-stats-search";
 import { KillStatsStackedFilters } from "@/features/kills/components/kill-stats-stacked-filters";
 import { MemberNameWithColor } from "./components/member-name-with-color";
-import { StatsCountCell } from "./components/stats-count-cell";
+import { StatsCountCell } from "@/components/common/stats-count-cell";
 import { MemberAvatar } from "@/components/common/member-avatar";
 import { StatsMobileListSkeleton } from "./components/stats-mobile-list-skeleton";
 import { RankBadge } from "@/components/common/rank-badge";
@@ -20,7 +20,7 @@ import {
   STATS_TABLE_COUNT_COLUMN_ID,
   STATS_TABLE_POSITION_COLUMN_ID,
   StatsTable,
-} from "./components/stats-table";
+} from "@/components/common/stats-table";
 import { StatsTableResults } from "./components/stats-table-results";
 import { ResultsSurface } from "@/components/common/results-surface";
 import {
