@@ -1,6 +1,7 @@
 import { useRef, type ComponentProps, type ReactNode } from "react";
 import { useHorizontalWheelScroll } from "@lootlog/ui/hooks/use-horizontal-wheel-scroll";
 import { TabsList } from "@lootlog/ui/components/tabs";
+import { useInFilterBar } from "@lootlog/ui/components/filter-bar-context";
 
 interface EventScrollableTabsListProps {
   ariaLabel: string;
@@ -16,6 +17,7 @@ export const EventScrollableTabsList = ({
   children,
 }: EventScrollableTabsListProps) => {
   const viewportRef = useRef<HTMLDivElement>(null);
+  const inFilterBar = useInFilterBar();
   useHorizontalWheelScroll(viewportRef);
 
   return (
@@ -24,7 +26,12 @@ export const EventScrollableTabsList = ({
       aria-label={ariaLabel}
       size={size}
       variant={variant}
-      className="grid w-full grid-flow-col auto-cols-[minmax(max-content,1fr)]"
+      // Chips in a filter bar keep their own width; a strip shares the row.
+      className={
+        inFilterBar
+          ? undefined
+          : "grid w-full grid-flow-col auto-cols-[minmax(max-content,1fr)]"
+      }
     >
       {children}
     </TabsList>

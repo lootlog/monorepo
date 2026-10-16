@@ -62,7 +62,8 @@
     "selectCharacter": "Wybierz postać",
     "selectedCount": "Postacie: {{count}}",
     "searchPlaceholder": "Szukaj postaci...",
-    "empty": "Nie znaleziono postaci."
+    "empty": "Nie znaleziono postaci.",
+    "label": "Postać"
   },
   "searchCombobox": {
     "selectedCount_one": "{{count}} wybrany",
@@ -85,6 +86,11 @@
     "min": "Minimalny poziom",
     "max": "Maksymalny poziom",
     "minPlaceholder": "Min",
-    "maxPlaceholder": "Max"
+    "maxPlaceholder": "Max",
+    "short": "Poziom",
+    "any": "Wszystkie",
+    "from": "od {{level}}",
+    "to": "do {{level}}",
+    "clear": "Wyczyść"
   }
 }

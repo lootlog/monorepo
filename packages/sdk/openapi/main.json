@@ -20443,6 +20443,14 @@
               "maxLength": 100
             },
             "required": false
+          },
+          {
+            "name": "npcType",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/NpcType"
+            },
+            "required": false
           }
         ],
         "security": [
@@ -38499,6 +38507,20 @@
         "required": ["overview", "topNpcs"],
         "additionalProperties": false
       },
+      "NpcType": {
+        "type": "string",
+        "enum": [
+          "COMMON",
+          "ELITE",
+          "ELITE2",
+          "ELITE3",
+          "HERO",
+          "EVENT_HERO",
+          "COLOSSUS",
+          "TITAN",
+          "NPC"
+        ]
+      },
       "UserKillAnalyticsResponseDto_Output": {
         "type": "object",
         "properties": {
@@ -39253,20 +39275,6 @@
         },
         "required": ["npcs", "pagination"],
         "additionalProperties": false
-      },
-      "NpcType": {
-        "type": "string",
-        "enum": [
-          "COMMON",
-          "ELITE",
-          "ELITE2",
-          "ELITE3",
-          "HERO",
-          "EVENT_HERO",
-          "COLOSSUS",
-          "TITAN",
-          "NPC"
-        ]
       },
       "GuildTopNpcsResponseDto_Output": {
         "type": "object",

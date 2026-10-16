@@ -5,12 +5,14 @@ import type {
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { LEADERBOARD_SIZE } from "../constants";
 import { useGuildMemberMap } from "../hooks/use-guild-member-map";
 import { MemberNameWithColor } from "./member-name-with-color";
 import { MemberAvatar } from "@/components/common/member-avatar";
-import { StatsLeaderboardCard } from "./stats-leaderboard-card";
-import { StatsLeaderboardRow } from "./stats-leaderboard-row";
+import {
+  LEADERBOARD_SIZE,
+  StatsLeaderboardSection,
+} from "@/components/common/stats-leaderboard-section";
+import { StatsLeaderboardRow } from "@/components/common/stats-leaderboard-row";
 
 type MemberLeaderboardCardProps = {
   data?: GuildKillStatsResponseDtoOutputMemberRankingItem[];
@@ -40,7 +42,7 @@ export const MemberLeaderboardCard = ({
     .slice(0, LEADERBOARD_SIZE);
 
   return (
-    <StatsLeaderboardCard
+    <StatsLeaderboardSection
       title={t("kills.memberRanking.title")}
       description={t("kills.memberRanking.description", {
         type: t(`npcType.${npcType}`),
@@ -88,6 +90,6 @@ export const MemberLeaderboardCard = ({
           }}
         />
       ))}
-    </StatsLeaderboardCard>
+    </StatsLeaderboardSection>
   );
 };

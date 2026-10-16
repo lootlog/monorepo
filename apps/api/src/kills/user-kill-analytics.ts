@@ -370,7 +370,7 @@ export const makeUserKillAnalytics = (
 
     const load = Effect.gen(function* () {
       const rows = yield* database.execute(
-        userKillAnalyticsSql(userId, query.world, range, false),
+        userKillAnalyticsSql(userId, query.world, range, false, query.npcType),
       );
 
       const decoded = yield* Schema.decodeUnknownEffect(
@@ -393,6 +393,7 @@ export const makeUserKillAnalytics = (
       buildKillQueryCacheKey("user-analytics", userId, {
         days: query.days ?? 30,
         world: query.world,
+        npcType: query.npcType,
         through: range.through,
         version: 2,
       }),

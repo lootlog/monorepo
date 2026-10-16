@@ -36,6 +36,7 @@ export const KillStatsNpcTypeSelect = ({
       emptyMessage={t("common.noResults")}
       width={width}
       showSearch={false}
+      active={Boolean(value)}
     />
   );
 };

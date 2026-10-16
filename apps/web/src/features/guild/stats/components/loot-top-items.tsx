@@ -1,9 +1,11 @@
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import type { LootStatsResponseDtoOutputTopItemsItem } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
-import { LEADERBOARD_SIZE } from "../constants";
-import { StatsLeaderboardCard } from "./stats-leaderboard-card";
-import { StatsLeaderboardRow } from "./stats-leaderboard-row";
+import {
+  LEADERBOARD_SIZE,
+  StatsLeaderboardSection,
+} from "@/components/common/stats-leaderboard-section";
+import { StatsLeaderboardRow } from "@/components/common/stats-leaderboard-row";
 
 type LootTopItemsProps = {
   data?: LootStatsResponseDtoOutputTopItemsItem[];
@@ -15,7 +17,7 @@ export const LootTopItems = ({ data, isLoading }: LootTopItemsProps) => {
   const items = data?.slice(0, LEADERBOARD_SIZE) ?? [];
 
   return (
-    <StatsLeaderboardCard
+    <StatsLeaderboardSection
       title={t("loots.stats.topItems.title")}
       description={t("loots.stats.topItems.description")}
       isLoading={isLoading}
@@ -33,6 +35,6 @@ export const LootTopItems = ({ data, isLoading }: LootTopItemsProps) => {
           maxValue={items[0]?.count ?? 0}
         />
       ))}
-    </StatsLeaderboardCard>
+    </StatsLeaderboardSection>
   );
 };

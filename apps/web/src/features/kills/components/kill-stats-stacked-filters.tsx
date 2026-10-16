@@ -43,7 +43,7 @@ export const KillStatsStackedFilters = ({
       )}
       {level && (
         <FilterPanelField label={t("kills.filters.levelRange")}>
-          <KillStatsLevelRange level={level} layout="fill" />
+          <KillStatsLevelRange level={level} />
         </FilterPanelField>
       )}
     </>

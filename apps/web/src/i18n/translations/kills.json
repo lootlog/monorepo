@@ -1,8 +1,7 @@
 {
   "overview": {
     "totalKills": "Wszystkie bicia",
-    "participations": "{{value}} udziałów",
-    "pickType": "Pokaż typ potwora w czołówce"
+    "participations": "{{value}} udziałów"
   },
   "filters": {
     "title": "Filtry",
@@ -82,9 +81,6 @@
     "notFound": "Nie ma takiego członka w tym Lootlogu"
   },
   "level": "Poziom {{level}}",
-  "leaders": {
-    "titleWithType": "Czołówka: {{type}}"
-  },
   "timeline": {
     "untimed": "Historia godzinowa zaczyna się {{date}}. Wcześniejszych bić ({{kills}}) nie ma na wykresie, w rekordach ani na mapie."
   },
