@@ -171,6 +171,7 @@ it("records only the highest-weight defeated NPC", async () => {
     world: "luvia",
     characterId: "12345",
     accountId: "67890",
+    character: { name: "TestPlayer", lvl: 500, icon: "player.gif" },
     npc: { id: -200, name: "Titan", wt: 101 },
   });
 });

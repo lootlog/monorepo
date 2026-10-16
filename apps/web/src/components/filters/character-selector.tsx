@@ -14,9 +14,11 @@ import {
   CommandList,
 } from "@lootlog/ui/components/command";
 import { cn } from "cn";
-import { useBattlesControllerGetUserCharacters } from "@lootlog/client/battlelog";
 import { CharacterAvatar } from "@/components/filters/character-avatar";
-import { getCharacterDetails } from "./character-details";
+import {
+  getCharacterDetails,
+  type SelectableCharacter,
+} from "./character-details";
 import { CharacterSelectorTrigger } from "./character-selector-trigger";
 import { useTranslation } from "react-i18next";
 
@@ -37,6 +39,7 @@ type CharacterSelectorProps = (
   | SingleCharacterSelection
   | MultipleCharacterSelection
 ) & {
+  characters: readonly SelectableCharacter[];
   size?: "sm" | "default" | "lg";
   className?: string;
 };
@@ -48,12 +51,10 @@ const renderPlaceholderAvatar = () => (
 );
 
 export function CharacterSelector(props: CharacterSelectorProps) {
-  const { size = "lg", className } = props;
+  const { characters, size = "lg", className } = props;
   const [open, setOpen] = useState(false);
   const listId = useId();
-  const { data: charactersResponse } = useBattlesControllerGetUserCharacters();
   const { t } = useTranslation();
-  const characters = charactersResponse?.characters ?? [];
 
   const selectedIds = props.multiple
     ? (props.characterIds ?? [])

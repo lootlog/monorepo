@@ -23,6 +23,20 @@ const GLOBAL_CHAT_WORLD_PARAMETER: JsonValue = {
   required: false,
 };
 
+const USER_KILL_WORLD_PARAMETER = {
+  name: "world",
+  in: "query",
+  required: false,
+  schema: { type: "string", minLength: 1, maxLength: 100 },
+} as const;
+
+const USER_KILL_CHARACTER_PARAMETER = {
+  name: "characterId",
+  in: "query",
+  required: false,
+  schema: { type: "string", minLength: 1, maxLength: 100 },
+} as const;
+
 const USER_FEED_PARAMETERS: JsonValue[] = [
   {
     name: "excludedGuildIds",
@@ -2124,61 +2138,59 @@ const VERIFIED_ADDITIONS = new Map<string, Partial<Record<string, JsonValue>>>(
               "analytics",
               "KillsController_getUserKillAnalytics",
               "UserKillAnalyticsResponseDto_Output",
+              [
+                {
+                  name: "days",
+                  in: "query",
+                  required: false,
+                  schema: {
+                    type: "string",
+                    enum: ["7", "30", "90", "365"],
+                  },
+                },
+                USER_KILL_WORLD_PARAMETER,
+                // Narrows only the analytics rankings to one NPC type.
+                {
+                  name: "npcType",
+                  in: "query",
+                  required: false,
+                  schema: { $ref: "#/components/schemas/NpcType" },
+                },
+                USER_KILL_CHARACTER_PARAMETER,
+              ],
             ],
             [
               "activity",
               "KillsController_getUserKillActivity",
               "UserKillActivityResponseDto_Output",
+              [USER_KILL_WORLD_PARAMETER, USER_KILL_CHARACTER_PARAMETER],
+            ],
+            [
+              "characters",
+              "KillsController_getUserKillCharacters",
+              "UserKillCharactersResponseDto_Output",
+              [],
             ],
           ] as const
-        ).map(([path, operationId, response]): [string, JsonValue] => [
-          `GET /users/@me/stats/kills/${path}`,
-          {
-            operationId,
-            parameters: [
-              ...(path === "analytics"
-                ? [
-                    {
-                      name: "days",
-                      in: "query",
-                      required: false,
-                      schema: {
-                        type: "string",
-                        enum: ["7", "30", "90", "365"],
-                      },
+        ).map(
+          ([path, operationId, response, parameters]): [string, JsonValue] => [
+            `GET /users/@me/stats/kills/${path}`,
+            {
+              operationId,
+              parameters: [...parameters],
+              security: [{ bearer: [] }],
+              responses: {
+                "200": {
+                  content: {
+                    "application/json": {
+                      schema: { $ref: `#/components/schemas/${response}` },
                     },
-                  ]
-                : []),
-              {
-                name: "world",
-                in: "query",
-                required: false,
-                schema: { type: "string", minLength: 1, maxLength: 100 },
-              },
-              // Narrows only the analytics rankings to one NPC type.
-              ...(path === "analytics"
-                ? [
-                    {
-                      name: "npcType",
-                      in: "query",
-                      required: false,
-                      schema: { $ref: "#/components/schemas/NpcType" },
-                    },
-                  ]
-                : []),
-            ],
-            security: [{ bearer: [] }],
-            responses: {
-              "200": {
-                content: {
-                  "application/json": {
-                    schema: { $ref: `#/components/schemas/${response}` },
                   },
                 },
               },
             },
-          },
-        ]),
+          ],
+        ),
       ),
     },
   } satisfies Record<string, Record<string, JsonValue>>),

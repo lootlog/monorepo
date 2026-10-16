@@ -2280,6 +2280,73 @@ export const userKillBucketTable = pgTable(
   ],
 );
 
+/**
+ * Hourly personal kills per Margonem character, recorded alongside
+ * `UserKillBucket` since per-character tracking began. Older kills have no
+ * character and stay only in the account-wide tables. A TimescaleDB hypertable
+ * on `periodStart` where the extension is loaded.
+ */
+export const userCharacterKillBucketTable = pgTable(
+  "UserCharacterKillBucket",
+  {
+    periodStart: killTime("periodStart").notNull(),
+    discordUserId: text("discordUserId").notNull(),
+    world: text("world").notNull(),
+    characterId: text("characterId").notNull(),
+    npcId: integer("npcId").notNull(),
+    npcName: text("npcName").notNull(),
+    npcType: npcTypeEnum("npcType").notNull(),
+    npcLvl: integer("npcLvl").notNull(),
+    npcProf: text("npcProf"),
+    npcIcon: text("npcIcon"),
+    kills: integer("kills").notNull(),
+    lastKilledAt: killTime("lastKilledAt").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [
+        table.discordUserId,
+        table.world,
+        table.characterId,
+        table.npcId,
+        table.periodStart,
+      ],
+      name: "UserCharacterKillBucket_pkey",
+    }),
+    index("UserCharacterKillBucket_character_periodStart_idx").on(
+      table.discordUserId,
+      table.characterId,
+      table.periodStart.desc(),
+    ),
+  ],
+);
+
+/**
+ * A User's characters with recorded kills, described by the latest kill that
+ * reported them. `firstKilledAt` is when tracking this character began.
+ */
+export const userKillCharacterTable = pgTable(
+  "UserKillCharacter",
+  {
+    discordUserId: text("discordUserId").notNull(),
+    world: text("world").notNull(),
+    characterId: text("characterId").notNull(),
+    name: text("name"),
+    level: integer("level"),
+    profession: text("profession"),
+    icon: text("icon"),
+    kills: integer("kills").notNull(),
+    firstKilledAt: killTime("firstKilledAt").notNull(),
+    lastKilledAt: killTime("lastKilledAt").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.discordUserId, table.world, table.characterId],
+      name: "UserKillCharacter_pkey",
+    }),
+  ],
+);
+
 /** Hourly kills reported by an Organization member. */
 export const memberKillBucketTable = pgTable(
   "MemberKillBucket",

@@ -29,6 +29,8 @@ const killsDefaults: UserKillActivityResponseDtoOutput = {
     generatedAt: "2026-09-06T12:00:00Z",
     days: 112,
     world: null,
+    characterId: null,
+    trackedSince: null,
     startDate: "2026-05-18",
     endDate: "2026-09-06",
     firstBucketAt: null,

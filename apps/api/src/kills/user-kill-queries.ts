@@ -1,14 +1,18 @@
 import { makeUserKillAnalytics } from "./user-kill-analytics.js";
-import type {
-  UserKillAnalyticsQuery,
-  UserKillActivityQuery,
+import {
+  UserKillCharactersResponse,
+  type UserKillAnalyticsQuery,
+  type UserKillActivityQuery,
 } from "#src/contracts/kills/analytics-schemas";
 import { readNpcKillPage } from "./npc-kill-page.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, gte, ilike, inArray, lte, sql } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import type { userKillBucketTable } from "#src/database/drizzle/schema";
+import {
+  userKillCharacterTable,
+  type userKillBucketTable,
+} from "#src/database/drizzle/schema";
 import type { ApplicationLogger } from "#src/shared/application-logger";
 import {
   UserKillStatsResponse,
@@ -203,11 +207,51 @@ export const makeUserKillQueries = (
     );
   };
 
+  const getUserKillCharacters = (userId: string) =>
+    cached(
+      userId,
+      buildKillQueryCacheKey("user-characters", userId, {}),
+      "user kill characters",
+      UserKillCharactersResponse,
+      protect(
+        "kills.user-characters.query",
+        database
+          .select({
+            characterId: userKillCharacterTable.characterId,
+            world: userKillCharacterTable.world,
+            name: userKillCharacterTable.name,
+            level: userKillCharacterTable.level,
+            profession: userKillCharacterTable.profession,
+            icon: userKillCharacterTable.icon,
+            kills: userKillCharacterTable.kills,
+            firstKilledAt: userKillCharacterTable.firstKilledAt,
+            lastKilledAt: userKillCharacterTable.lastKilledAt,
+          })
+          .from(userKillCharacterTable)
+          .where(eq(userKillCharacterTable.discordUserId, userId))
+          .orderBy(
+            desc(userKillCharacterTable.lastKilledAt),
+            userKillCharacterTable.world,
+            userKillCharacterTable.characterId,
+          )
+          .pipe(
+            Effect.map((characters) => ({
+              characters: characters.map((character) => ({
+                ...character,
+                firstKilledAt: character.firstKilledAt.toISOString(),
+                lastKilledAt: character.lastKilledAt.toISOString(),
+              })),
+            })),
+          ),
+      ),
+    );
+
   const analytics = makeUserKillAnalytics(database, cache);
 
   return {
     getUserKillStats,
     getUserNpcKills,
+    getUserKillCharacters,
     getUserKillAnalytics: (userId: string, query: UserKillAnalyticsQuery) =>
       protect(
         "kills.user-analytics",

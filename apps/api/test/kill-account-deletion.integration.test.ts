@@ -16,6 +16,8 @@ import {
   memberTable,
   userKillTotalTable,
   userKillBucketTable,
+  userCharacterKillBucketTable,
+  userKillCharacterTable,
 } from "../src/database/drizzle/schema.js";
 import { makeUserAccountDeletion } from "../src/http-api/handlers/account-organization/user-account-deletion.data-layer.js";
 import { createGuildFixture } from "./organization-fixtures.js";
@@ -52,7 +54,12 @@ afterAll(async () => {
         yield* db.delete(table).where(eq(table.guildId, guildId));
       }
 
-      for (const table of [userKillBucketTable, userKillTotalTable]) {
+      for (const table of [
+        userKillBucketTable,
+        userKillTotalTable,
+        userCharacterKillBucketTable,
+        userKillCharacterTable,
+      ]) {
         yield* db
           .delete(table)
           .where(inArray(table.discordUserId, [deletedUser, keptUser]));
@@ -72,12 +79,16 @@ test("account deletion removes personal and member kills from compressed Timesca
       const db = yield* ApiDatabase;
 
       const hypertables = yield* db.execute(
-        sql`select hypertable_name, compression_enabled from timescaledb_information.hypertables where hypertable_name in ('UserKillBucket', 'MemberKillBucket', 'GuildKillBucket') order by 1`,
+        sql`select hypertable_name, compression_enabled from timescaledb_information.hypertables where hypertable_name in ('UserKillBucket', 'MemberKillBucket', 'GuildKillBucket', 'UserCharacterKillBucket') order by 1`,
       );
 
       expect(decodeResult(hypertables).rows).toEqual([
         { hypertable_name: "GuildKillBucket", compression_enabled: true },
         { hypertable_name: "MemberKillBucket", compression_enabled: true },
+        {
+          hypertable_name: "UserCharacterKillBucket",
+          compression_enabled: true,
+        },
         { hypertable_name: "UserKillBucket", compression_enabled: true },
       ]);
 
@@ -147,6 +158,25 @@ test("account deletion removes personal and member kills from compressed Timesca
           kills: 2,
         })),
       );
+      yield* db.insert(userCharacterKillBucketTable).values(
+        [deletedUser, keptUser].map((discordUserId) => ({
+          ...npc,
+          periodStart,
+          discordUserId,
+          characterId: "character",
+          kills: 3,
+        })),
+      );
+      yield* db.insert(userKillCharacterTable).values(
+        [deletedUser, keptUser].map((discordUserId) => ({
+          discordUserId,
+          world: npc.world,
+          characterId: "character",
+          kills: 3,
+          firstKilledAt: periodStart,
+          lastKilledAt: periodStart,
+        })),
+      );
       yield* db
         .insert(guildKillBucketTable)
         .values({ ...npc, periodStart, guildId, kills: 3 });
@@ -155,12 +185,13 @@ test("account deletion removes personal and member kills from compressed Timesca
         sql`select count(compress_chunk(chunk, if_not_compressed => true))::int as chunks from (
           select show_chunks('"MemberKillBucket"', older_than => interval '7 days') as chunk
           union all select show_chunks('"UserKillBucket"', older_than => interval '7 days')
+          union all select show_chunks('"UserCharacterKillBucket"', older_than => interval '7 days')
         ) chunks`,
       );
 
       expect(
         decodeResult(compressed).rows[0]?.["chunks"],
-      ).toBeGreaterThanOrEqual(2);
+      ).toBeGreaterThanOrEqual(3);
 
       yield* makeUserAccountDeletion(db, {
         cleanupBattlelog: () => Effect.void,
@@ -175,7 +206,9 @@ test("account deletion removes personal and member kills from compressed Timesca
           | typeof memberKillBucketTable
           | typeof memberKillTotalTable
           | typeof userKillBucketTable
-          | typeof userKillTotalTable,
+          | typeof userKillTotalTable
+          | typeof userCharacterKillBucketTable
+          | typeof userKillCharacterTable,
       ) =>
         db
           .select({ discordUserId: table.discordUserId })
@@ -187,6 +220,8 @@ test("account deletion removes personal and member kills from compressed Timesca
         memberKillTotalTable,
         userKillBucketTable,
         userKillTotalTable,
+        userCharacterKillBucketTable,
+        userKillCharacterTable,
       ]) {
         expect(yield* remaining(table)).toEqual([{ discordUserId: keptUser }]);
       }

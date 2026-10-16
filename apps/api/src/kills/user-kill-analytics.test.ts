@@ -1,5 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { DateTime } from "effect";
+import { DateTime, Exit, Schema } from "effect";
+import {
+  UserKillActivityQuery,
+  UserKillAnalyticsQuery,
+} from "#src/contracts/kills/analytics-schemas";
 import {
   buildKillActivity,
   buildKillAnalytics,
@@ -15,6 +19,7 @@ const base = {
   allTimeKills: 30,
   timedKills: 30,
   firstBucketAt: "2026-10-18T00:00:00Z",
+  trackedSince: null,
   daily: [
     { date: "2026-10-23", world: "tempest", kills: 8 },
     { date: "2026-10-24", world: "tempest", kills: 4 },
@@ -77,6 +82,49 @@ describe("personal kill analytics calendar semantics", () => {
       worlds: ["tempest"],
       partial: false,
     });
+  });
+  it("reports a character's days before per-character tracking as unknown, not zero", () => {
+    const character = { characterId: "123", world: "tempest" };
+
+    const result = buildKillActivity(
+      {
+        ...base,
+        firstBucketAt: "2026-10-23T10:00:00Z",
+        trackedSince: "2026-10-22T08:00:00Z",
+      },
+      range,
+      character,
+    );
+
+    expect(result.meta.coverage).toBe("partial");
+    expect(result.meta.characterId).toBe("123");
+    expect(result.meta.trackedSince).toBe("2026-10-22T08:00:00Z");
+    expect(result.daily.slice(0, 3).map((day) => day.kills)).toEqual([
+      null,
+      null,
+      null,
+    ]);
+    // Tracked but without kills of this character: a real zero.
+    expect(result.daily[3]).toMatchObject({ kills: 0, partial: true });
+    expect(result.daily[5]).toMatchObject({ kills: 4, partial: false });
+
+    const tracked = buildKillActivity(
+      { ...base, trackedSince: "2026-10-01T08:00:00Z" },
+      range,
+      character,
+    );
+
+    expect(tracked.meta.coverage).toBe("complete");
+    expect(tracked.daily[0]).toMatchObject({ kills: 0, partial: false });
+
+    const untracked = buildKillActivity(
+      { ...base, allTimeKills: 0, timedKills: 0, daily: [] },
+      range,
+      character,
+    );
+
+    expect(untracked.meta.coverage).toBe("unavailable");
+    expect(untracked.daily.every((day) => day.kills === null)).toBe(true);
   });
   it("lists only distinct worlds contributing positive observed kills to each day", () => {
     const result = buildKillActivity(
@@ -158,5 +206,18 @@ describe("personal kill analytics calendar semantics", () => {
     expect(result.daily.every((day) => day.kills === null)).toBe(true);
     expect(result.overview.averagePerDay).toBeNull();
     expect(result.records.bestDay).toBeNull();
+  });
+});
+
+describe("personal kill analytics character scope", () => {
+  it("rejects a character without its world, whose id other worlds reuse", () => {
+    for (const query of [UserKillAnalyticsQuery, UserKillActivityQuery]) {
+      const decode = Schema.decodeUnknownExit(query);
+
+      expect(Exit.isFailure(decode({ characterId: "7" }))).toBe(true);
+      expect(
+        Exit.isSuccess(decode({ characterId: "7", world: "tempest" })),
+      ).toBe(true);
+    }
   });
 });

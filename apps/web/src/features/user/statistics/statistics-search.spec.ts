@@ -8,8 +8,22 @@ describe("statistics URL", () => {
       parseStatisticsSearch({ days: "bogus", tab: "bad", world: 12 }),
     ).toEqual({ days: 30, tab: "overview", world: undefined });
     expect(
-      parseStatisticsSearch({ days: "90", tab: "monsters", world: " luvia " }),
-    ).toEqual({ days: 90, tab: "monsters", world: "luvia" });
+      parseStatisticsSearch({
+        days: "90",
+        tab: "monsters",
+        world: " luvia ",
+        characterId: " 123 ",
+      }),
+    ).toEqual({
+      days: 90,
+      tab: "monsters",
+      world: "luvia",
+      characterId: "123",
+    });
+    // Without its world the id could name characters on several worlds.
+    expect(
+      parseStatisticsSearch({ characterId: "123" }).characterId,
+    ).toBeUndefined();
   });
   it("isolates cached period and world data", () => {
     const all = getKillsControllerGetUserKillAnalyticsQueryKey({ days: "30" });

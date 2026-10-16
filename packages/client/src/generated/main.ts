@@ -1112,6 +1112,30 @@ export interface UserNpcKillsResponseDtoOutput {
   pagination: UserNpcKillsResponseDtoOutputPagination;
 }
 
+export type UserKillCharactersResponseDtoOutputCharactersItem = {
+  characterId: string;
+  world: string;
+  /** @nullable */
+  name: string | null;
+  /** @nullable */
+  level: number | null;
+  /** @nullable */
+  profession: string | null;
+  /** @nullable */
+  icon: string | null;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  kills: number;
+  firstKilledAt: string;
+  lastKilledAt: string;
+};
+
+export interface UserKillCharactersResponseDtoOutput {
+  characters: UserKillCharactersResponseDtoOutputCharactersItem[];
+}
+
 export type UserKillActivityResponseDtoOutputMetaTimezone = typeof UserKillActivityResponseDtoOutputMetaTimezone[keyof typeof UserKillActivityResponseDtoOutputMetaTimezone];
 
 
@@ -1138,6 +1162,10 @@ export type UserKillActivityResponseDtoOutputMeta = {
   days: number;
   /** @nullable */
   world: string | null;
+  /** @nullable */
+  characterId: string | null;
+  /** @nullable */
+  trackedSince: string | null;
   startDate: string;
   endDate: string;
   /** @nullable */
@@ -1200,6 +1228,10 @@ export type UserKillAnalyticsResponseDtoOutputMeta = {
   days: number;
   /** @nullable */
   world: string | null;
+  /** @nullable */
+  characterId: string | null;
+  /** @nullable */
+  trackedSince: string | null;
   startDate: string;
   endDate: string;
   /** @nullable */
@@ -1640,6 +1672,14 @@ export type CreateKillDtoNpc = {
   icon?: string;
 };
 
+export type CreateKillDtoCharacter = {
+  /** @minLength 1 */
+  name: string;
+  lvl: number;
+  prof?: string;
+  icon?: string;
+};
+
 export interface CreateKillDto {
   /** @minLength 1 */
   world: string;
@@ -1648,6 +1688,7 @@ export interface CreateKillDto {
   characterId: string;
   /** @minLength 1 */
   accountId: string;
+  character?: CreateKillDtoCharacter;
 }
 
 export type StatusOkResponseDtoOutputStatus = typeof StatusOkResponseDtoOutputStatus[keyof typeof StatusOkResponseDtoOutputStatus];
@@ -14236,6 +14277,11 @@ days?: KillsControllerGetUserKillAnalyticsDays;
  */
 world?: string;
 npcType?: NpcType;
+/**
+ * @minLength 1
+ * @maxLength 100
+ */
+characterId?: string;
 };
 
 export type KillsControllerGetUserKillAnalyticsDays = typeof KillsControllerGetUserKillAnalyticsDays[keyof typeof KillsControllerGetUserKillAnalyticsDays];
@@ -14266,6 +14312,11 @@ export type KillsControllerGetUserKillActivityParams = {
  * @maxLength 100
  */
 world?: string;
+/**
+ * @minLength 1
+ * @maxLength 100
+ */
+characterId?: string;
 };
 
 export type KillsControllerGetUserKillActivity401 = ReauthenticationRequiredEncoded | {
@@ -14277,6 +14328,18 @@ export type KillsControllerGetUserKillActivity403 = {
 };
 
 export type KillsControllerGetUserKillActivity429 = {
+  message: string;
+};
+
+export type KillsControllerGetUserKillCharacters401 = ReauthenticationRequiredEncoded | {
+  message: string;
+};
+
+export type KillsControllerGetUserKillCharacters403 = {
+  message: string;
+};
+
+export type KillsControllerGetUserKillCharacters429 = {
   message: string;
 };
 
@@ -36807,6 +36870,150 @@ export const useGetKillsControllerGetUserKillActivityQueryData = () => {
   const queryClient = useQueryClient();
   return (params?: KillsControllerGetUserKillActivityParams,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>>(getKillsControllerGetUserKillActivityQueryKey(params));
+}
+
+
+
+export const getKillsControllerGetUserKillCharactersUrl = () => {
+
+
+
+
+  return `/users/@me/stats/kills/characters`
+}
+
+/**
+ * Characters of the authenticated user with kills recorded since per-character tracking began, most recently active first.
+ * @summary List characters with personal kills
+ */
+export const killsControllerGetUserKillCharacters = async ( options?: Parameters<typeof mainFetch>[1]): Promise<UserKillCharactersResponseDtoOutput> => {
+
+  return mainFetch<UserKillCharactersResponseDtoOutput>(getKillsControllerGetUserKillCharactersUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getKillsControllerGetUserKillCharactersQueryKey = () => {
+    return [
+    `/users/@me/stats/kills/characters`
+    ] as const;
+    }
+
+
+export const getKillsControllerGetUserKillCharactersQueryOptions = <TData = Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>>, TError = ErrorType<RequestValidationError | KillsControllerGetUserKillCharacters401 | KillsControllerGetUserKillCharacters403 | KillsControllerGetUserKillCharacters429>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getKillsControllerGetUserKillCharactersQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>>> = ({ signal }) => killsControllerGetUserKillCharacters({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type KillsControllerGetUserKillCharactersQueryResult = NonNullable<Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>>>
+export type KillsControllerGetUserKillCharactersQueryError = ErrorType<RequestValidationError | KillsControllerGetUserKillCharacters401 | KillsControllerGetUserKillCharacters403 | KillsControllerGetUserKillCharacters429>
+
+
+export function useKillsControllerGetUserKillCharacters<TData = Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>>, TError = ErrorType<RequestValidationError | KillsControllerGetUserKillCharacters401 | KillsControllerGetUserKillCharacters403 | KillsControllerGetUserKillCharacters429>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>>,
+          TError,
+          Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useKillsControllerGetUserKillCharacters<TData = Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>>, TError = ErrorType<RequestValidationError | KillsControllerGetUserKillCharacters401 | KillsControllerGetUserKillCharacters403 | KillsControllerGetUserKillCharacters429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>>,
+          TError,
+          Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useKillsControllerGetUserKillCharacters<TData = Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>>, TError = ErrorType<RequestValidationError | KillsControllerGetUserKillCharacters401 | KillsControllerGetUserKillCharacters403 | KillsControllerGetUserKillCharacters429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List characters with personal kills
+ */
+
+export function useKillsControllerGetUserKillCharacters<TData = Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>>, TError = ErrorType<RequestValidationError | KillsControllerGetUserKillCharacters401 | KillsControllerGetUserKillCharacters403 | KillsControllerGetUserKillCharacters429>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getKillsControllerGetUserKillCharactersQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List characters with personal kills
+ */
+export const prefetchKillsControllerGetUserKillCharactersQuery = async <TData = Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>>, TError = ErrorType<RequestValidationError | KillsControllerGetUserKillCharacters401 | KillsControllerGetUserKillCharacters403 | KillsControllerGetUserKillCharacters429>>(
+ queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getKillsControllerGetUserKillCharactersQueryOptions(options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useKillsControllerGetUserKillCharacters} query
+ */
+export const invalidateKillsControllerGetUserKillCharacters = async (
+ queryClient: QueryClient,  options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getKillsControllerGetUserKillCharactersQueryKey() }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary List characters with personal kills
+ */
+export const useSetKillsControllerGetUserKillCharactersQueryData = () => {
+  const queryClient = useQueryClient();
+  return (updater: Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>> | undefined | ((old: Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>> | undefined) => Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>>>({ exact: $exactMatch, queryKey: getKillsControllerGetUserKillCharactersQueryKey() }, updater);
+  };
+}
+
+/**
+ * @summary List characters with personal kills
+ */
+export const useGetKillsControllerGetUserKillCharactersQueryData = () => {
+  const queryClient = useQueryClient();
+  return () =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof killsControllerGetUserKillCharacters>>>(getKillsControllerGetUserKillCharactersQueryKey());
 }
 
 

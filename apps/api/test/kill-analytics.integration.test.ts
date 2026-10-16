@@ -181,7 +181,7 @@ describe("personal kill analytics PostgreSQL boundary", () => {
     const query = new PgDialect().sqlToQuery(
       userKillAnalyticsSql(
         "analytics-owner",
-        undefined,
+        {},
         getKillAnalyticsRange(DateTime.makeUnsafe(now), 7),
         false,
       ),
