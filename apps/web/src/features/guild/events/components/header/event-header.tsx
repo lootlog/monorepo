@@ -1,10 +1,13 @@
 import { DetailBar } from "@/components/common/detail-bar";
+import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
+import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { EventRulesDialog } from "../dialogs/event-rules-dialog";
 import { EventSummaryDialog } from "../dialogs/event-summary-dialog";
 import { EventStatusDialogs } from "../../event-status-dialogs";
 import { useEventHeader } from "../../use-event-header";
 import { EventHeaderActions } from "./event-header-actions";
 import { EventHeaderMeta } from "./event-header-meta";
+import { EventHeaderSkeleton } from "./event-header-skeleton";
 import { EventPageTabs, type EventTab } from "./event-page-tabs";
 
 type EventHeaderProps = {
@@ -21,7 +24,29 @@ export const EventHeader = ({ tab }: EventHeaderProps) => {
   const header = useEventHeader();
   const { event, t } = header;
 
-  if (!event) return null;
+  if (!event) {
+    // A page with data of its own can show while the event fails: keep the
+    // way to the other sections and a way to load the event again.
+    if (!header.isEventError) return <EventHeaderSkeleton tab={tab} />;
+
+    return (
+      <>
+        <QueryErrorNotice
+          message={t("events.header.loadError")}
+          onRetry={() => void header.refetchEvent()}
+          isRetrying={header.isEventFetching}
+          className={LIST_TILE_RULE_CLASS}
+        />
+        {tab && (
+          <EventPageTabs
+            guildId={header.queryGuildId}
+            eventId={header.queryEventId}
+            activeId={tab}
+          />
+        )}
+      </>
+    );
+  }
 
   const meta = (
     <EventHeaderMeta

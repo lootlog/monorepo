@@ -101,7 +101,12 @@ export const useEventHeader = () => {
 
   const eventIsPinned = eventId ? isPinned(eventId) : false;
 
-  const { data: event } = useShowEventOverview(
+  const {
+    data: event,
+    isError: isEventError,
+    isFetching: isEventFetching,
+    refetch: refetchEvent,
+  } = useShowEventOverview(
     { guildId: queryGuildId, eventId: queryEventId },
     {
       query: {
@@ -173,6 +178,9 @@ export const useEventHeader = () => {
   return {
     t,
     event,
+    isEventError,
+    isEventFetching,
+    refetchEvent,
     eventId,
     queryGuildId,
     queryEventId,

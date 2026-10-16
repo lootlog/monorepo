@@ -53,7 +53,7 @@ export const EventDetail = () => {
     isMapsLoading,
   } = useEventDetail();
 
-  const { data: currentMember } = useCurrentMember(queryGuildId);
+  const currentMember = useCurrentMember(queryGuildId);
 
   if (isLoading || isMapsLoading) {
     return <EventDetailSkeleton />;
@@ -70,13 +70,17 @@ export const EventDetail = () => {
     );
   }
 
-  const scores = getMyHeroScores(heroes, rankings, currentMember?.id);
+  // Places are unknown until the player's Member is; a missing Member means
+  // the player is in no ranking.
+  const scores = currentMember.isSuccess
+    ? getMyHeroScores(heroes, rankings, currentMember.data?.id)
+    : undefined;
 
   const heroesTable = (
     <EventHeroesTable
       rows={heroes.map((hero, index) => ({
         hero,
-        score: scores[index],
+        score: scores?.[index],
         timer: findEventHeroTimer(heroTimers, {
           heroNpcId: hero.npcId,
           heroName: hero.npcName,
@@ -96,7 +100,7 @@ export const EventDetail = () => {
       onManageMaps={handleManageMaps}
       onDeleteHero={handleDeleteHero}
       isDeleteHeroPending={isDeleteHeroPending}
-      showStandings
+      showStandings={!currentMember.isError}
     />
   );
 
@@ -153,6 +157,14 @@ export const EventDetail = () => {
               message={t("events.maps.error")}
               onRetry={() => void refetchMaps()}
               isRetrying={isMapsFetching}
+              className={LIST_TILE_RULE_CLASS}
+            />
+          )}
+          {currentMember.isError && (
+            <QueryErrorNotice
+              message={t("events.score.memberError")}
+              onRetry={() => void currentMember.refetch()}
+              isRetrying={currentMember.isFetching}
               className={LIST_TILE_RULE_CLASS}
             />
           )}
