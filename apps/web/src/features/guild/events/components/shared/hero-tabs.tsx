@@ -68,5 +68,6 @@ export const HeroTabs = ({
     return tabs;
   }
 
-  return <FilterBar>{tabs}</FilterBar>;
+  // The heroes lead the bar, as view tabs, where a search would sit.
+  return <FilterBar search={tabs} />;
 };

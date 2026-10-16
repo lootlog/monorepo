@@ -128,6 +128,7 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
         )}
         contentClassName={cn("max-h-64", contentClassName)}
         showSearch
+        active={showAllOption && value !== null}
       />
     </div>
   );

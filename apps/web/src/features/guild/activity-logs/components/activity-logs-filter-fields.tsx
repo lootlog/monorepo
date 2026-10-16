@@ -1,5 +1,5 @@
 import { FilterPanelField } from "@/components/filters/filter-panel-field";
-import { Button } from "@lootlog/ui/components/button";
+import { FilterChipTrigger } from "@lootlog/ui/components/filter-chip-trigger";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import {
   Popover,
@@ -12,6 +12,8 @@ import { useTranslation } from "react-i18next";
 import { ActivityLogsDateRangeFields } from "./activity-logs-date-range-fields";
 import { ActorNameSelector } from "./actor-name-selector";
 import type { useActivityLogsFilterModel } from "./use-activity-logs-filter-model";
+
+const dayFormatter = new Intl.DateTimeFormat("pl-PL");
 
 type ActivityLogsFilterFieldsProps = {
   model: ReturnType<typeof useActivityLogsFilterModel>;
@@ -47,6 +49,15 @@ export const ActivityLogsFilterFields = ({
       ? t("activityLogs.filters.selectedCount", { count })
       : placeholder;
 
+  const formatDay = (date: Date) => dayFormatter.format(date);
+
+  const { startDateValue, endDateValue } = model;
+
+  const dateRangeValue =
+    startDateValue || endDateValue
+      ? `${startDateValue ? formatDay(startDateValue) : "…"} – ${endDateValue ? formatDay(endDateValue) : "…"}`
+      : undefined;
+
   const dateRangeFields = (
     <ActivityLogsDateRangeFields
       filters={filters}
@@ -70,6 +81,7 @@ export const ActivityLogsFilterFields = ({
           onSearchChange={(value) => updateFilters({ clanName: value })}
           onValueChange={(value) => updateFilters({ clanName: value })}
           placeholder={t("activityLogs.filters.clanSearchPlaceholder")}
+          label={t("activityLogs.filters.clanName")}
           className={stacked ? "w-full" : "w-[200px]"}
         />,
       )}
@@ -126,15 +138,13 @@ export const ActivityLogsFilterFields = ({
         <Popover>
           <PopoverTrigger
             render={
-              <Button
+              <FilterChipTrigger
                 type="button"
-                variant="outline"
-                size="lg"
-                className="gap-2"
-              >
-                <CalendarRange className="size-4" aria-hidden="true" />
-                {t("activityLogs.filters.dateRange")}
-              </Button>
+                icon={CalendarRange}
+                label={t("activityLogs.filters.dateRange")}
+                value={dateRangeValue}
+                active={dateRangeValue !== undefined}
+              />
             }
           />
           <PopoverContent align="end" className="w-[300px] p-4">

@@ -3,6 +3,7 @@ import {
   ToggleGroupItem,
 } from "@lootlog/ui/components/toggle-group";
 import { cn } from "cn";
+import { useInFilterBar } from "@lootlog/ui/components/filter-bar-context";
 import type { LucideIcon } from "lucide-react";
 
 type AnimatedToggleGroupProps<Value extends string> = {
@@ -30,6 +31,8 @@ export function AnimatedToggleGroup<Value extends string>({
   className,
 }: AnimatedToggleGroupProps<Value>) {
   const selectedIndex = options.findIndex((option) => option.value === value);
+  // In a filter bar the views read as chips, like the filters beside them.
+  const chips = useInFilterBar();
 
   return (
     <ToggleGroup
@@ -42,7 +45,8 @@ export function AnimatedToggleGroup<Value extends string>({
       }}
       spacing={0}
       className={cn(
-        "relative isolate grid max-w-full rounded-lg border border-input bg-background",
+        "relative isolate grid max-w-full",
+        !chips && "rounded-lg border border-input bg-background",
         { sm: "h-8", default: "h-9", lg: "h-10" }[size],
         className,
       )}
@@ -54,7 +58,10 @@ export function AnimatedToggleGroup<Value extends string>({
         <span
           aria-hidden
           className={cn(
-            "pointer-events-none absolute inset-y-0 left-0 -z-10 rounded-[calc(var(--radius-lg)-1px)] bg-primary",
+            "pointer-events-none absolute inset-y-0 left-0 -z-10",
+            chips
+              ? "rounded-control bg-primary/15"
+              : "rounded-[calc(var(--radius-lg)-1px)] bg-primary",
             !isStatic &&
               "transition-transform duration-150 ease-emphasized motion-reduce:transition-none",
           )}
@@ -74,6 +81,8 @@ export function AnimatedToggleGroup<Value extends string>({
           className={cn(
             "min-w-0 cursor-pointer disabled:cursor-default bg-transparent hover:bg-transparent aria-pressed:bg-transparent aria-pressed:text-primary-foreground data-[state=on]:bg-transparent transition-[color,scale] duration-150 ease-emphasized motion-reduce:transition-none",
             "h-full",
+            chips &&
+              "rounded-control px-3 font-medium text-muted-foreground hover:text-foreground aria-pressed:text-primary",
             !isStatic && "active:scale-[0.96] motion-reduce:active:scale-100",
           )}
         >

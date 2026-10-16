@@ -50,6 +50,6 @@ export const KillStatsFilters = ({
       className="w-[200px]"
     />
     {npcType && <KillStatsNpcTypeSelect {...npcType} />}
-    {level && <KillStatsLevelRange level={level} layout="inline" />}
+    {level && <KillStatsLevelRange level={level} />}
   </>
 );

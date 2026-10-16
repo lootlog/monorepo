@@ -1,5 +1,7 @@
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import { Button } from "@lootlog/ui/components/button";
+import { useInFilterBar } from "@lootlog/ui/components/filter-bar-context";
+import { FilterChipTrigger } from "@lootlog/ui/components/filter-chip-trigger";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Label } from "@lootlog/ui/components/label";
 import {
@@ -36,6 +38,7 @@ export const MoreFiltersPopover = ({
   showPhFilter: showPhFilterProp = true,
 }: MoreFiltersPopoverProps) => {
   const { t } = useTranslation();
+  const inFilterBar = useInFilterBar();
   const showPhFilter = showPhFilterProp && onPhChange !== undefined;
 
   const extraFiltersCount =
@@ -54,10 +57,19 @@ export const MoreFiltersPopover = ({
     <Popover>
       <PopoverTrigger
         render={
-          <Button type="button" variant="outline" size="lg" className="gap-2">
-            <SlidersHorizontal className="size-4" aria-hidden="true" />
-            {moreLabel}
-          </Button>
+          inFilterBar ? (
+            <FilterChipTrigger
+              type="button"
+              icon={SlidersHorizontal}
+              value={moreLabel}
+              active={extraFiltersCount > 0}
+            />
+          ) : (
+            <Button type="button" variant="outline" size="lg" className="gap-2">
+              <SlidersHorizontal className="size-4" aria-hidden="true" />
+              {moreLabel}
+            </Button>
+          )
         }
       />
       <PopoverContent align="end" className="w-[300px] p-4">
