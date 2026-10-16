@@ -1,4 +1,5 @@
 import { CharacterSelector } from "@/components/filters/character-selector";
+import { useBattleCharacters } from "@/components/filters/use-battle-characters";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import {
   AbyssSeasonFilter,
@@ -23,20 +24,25 @@ export const AbyssFilterToolbar = ({
   onMinLevelChange,
   onMaxLevelChange,
   ...seasonFilter
-}: AbyssFiltersProps) => (
-  <>
-    <CharacterSelector
-      characterId={characterId}
-      onCharacterChange={onCharacterChange}
-      allowAllCharacters={false}
-      className="w-[220px]"
-    />
-    <AbyssSeasonFilter {...seasonFilter} width="w-[260px]" />
-    <LevelRangeFilter
-      minLevel={minLevel}
-      maxLevel={maxLevel}
-      onMinLevelChange={onMinLevelChange}
-      onMaxLevelChange={onMaxLevelChange}
-    />
-  </>
-);
+}: AbyssFiltersProps) => {
+  const characters = useBattleCharacters();
+
+  return (
+    <>
+      <CharacterSelector
+        characters={characters}
+        characterId={characterId}
+        onCharacterChange={onCharacterChange}
+        allowAllCharacters={false}
+        className="w-[220px]"
+      />
+      <AbyssSeasonFilter {...seasonFilter} width="w-[260px]" />
+      <LevelRangeFilter
+        minLevel={minLevel}
+        maxLevel={maxLevel}
+        onMinLevelChange={onMinLevelChange}
+        onMaxLevelChange={onMaxLevelChange}
+      />
+    </>
+  );
+};

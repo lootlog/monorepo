@@ -1,4 +1,5 @@
 import { CharacterSelector } from "@/components/filters/character-selector";
+import { useBattleCharacters } from "@/components/filters/use-battle-characters";
 import { FilterPanelField } from "@/components/filters/filter-panel-field";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import { PeriodSelector } from "@/components/filters/period-selector";
@@ -23,6 +24,7 @@ export const StatisticsStackedFilters = ({
   ph,
   onPhChange,
 }: StatisticsFiltersProps) => {
+  const characters = useBattleCharacters();
   const { t } = useTranslation();
   const phCheckboxId = useId();
 
@@ -31,6 +33,7 @@ export const StatisticsStackedFilters = ({
       {onCharacterChange && (
         <FilterPanelField label={t("battlePanel.filters.character")}>
           <CharacterSelector
+            characters={characters}
             characterId={characterId}
             onCharacterChange={onCharacterChange}
             allowAllCharacters={allowAllCharacters}

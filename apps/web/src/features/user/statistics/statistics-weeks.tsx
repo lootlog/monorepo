@@ -6,11 +6,16 @@ import { StatisticsWeekChart } from "./statistics-week-chart";
 import { summarizeWeeks } from "./summarize-weeks";
 
 /** This week next to the previous one, whatever period the page shows. */
-export function StatisticsWeeks({ world }: { world: string | undefined }) {
+type StatisticsWeeksProps = {
+  world: string | undefined;
+  characterId: string | undefined;
+};
+
+export function StatisticsWeeks({ world, characterId }: StatisticsWeeksProps) {
   const { t } = useTranslation();
 
   const activity = useKillsControllerGetUserKillActivity(
-    { world },
+    { world, characterId },
     { query: { staleTime: 60_000 } },
   );
 

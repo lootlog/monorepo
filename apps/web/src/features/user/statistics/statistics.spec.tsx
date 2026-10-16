@@ -39,6 +39,25 @@ function renderStatistics(
             input instanceof Request ? input.url : input.toString(),
           );
 
+          if (url.pathname.endsWith("/characters"))
+            return Promise.resolve(
+              Response.json({
+                characters: [
+                  {
+                    characterId: "7",
+                    world: "tempest",
+                    name: "Alpha",
+                    level: 80,
+                    profession: "w",
+                    icon: null,
+                    kills: 3,
+                    firstKilledAt: "2026-09-01T10:00:00Z",
+                    lastKilledAt: "2026-09-05T10:00:00Z",
+                  },
+                ],
+              }),
+            );
+
           if (url.pathname.endsWith("/analytics")) {
             requests.push(url);
 
@@ -159,6 +178,8 @@ it("does not present unavailable dated history as zero kills", async () => {
       generatedAt: "2026-09-06T12:00:00Z",
       days: 30,
       world: null,
+      characterId: null,
+      trackedSince: null,
       startDate: "2026-08-08",
       endDate: "2026-09-06",
       firstBucketAt: null,
@@ -204,4 +225,93 @@ it("does not present unavailable dated history as zero kills", async () => {
   expect(
     screen.queryByRole("heading", { level: 2, name: "Przegląd" }),
   ).toBeNull();
+});
+
+it("narrows to a character on its world, says when its history starts, and drops it for another world", async () => {
+  const response: UserKillAnalyticsResponseDtoOutput = {
+    meta: {
+      timezone: "Europe/Warsaw",
+      generatedAt: "2026-09-06T12:00:00Z",
+      days: 30,
+      world: "tempest",
+      characterId: "7",
+      trackedSince: "2026-09-01T10:00:00Z",
+      startDate: "2026-08-08",
+      endDate: "2026-09-06",
+      firstBucketAt: "2026-09-01T10:00:00Z",
+      coverage: "partial",
+      allTimeKills: 3,
+      timedKills: 3,
+      untimedKills: 0,
+      includesCurrentHour: true,
+    },
+    overview: {
+      totalKills: 3,
+      activeDays: 1,
+      averagePerDay: 3,
+      currentStreak: 0,
+      longestStreak: 1,
+      uniqueNpcs: 1,
+    },
+    daily: [],
+    weekly: [],
+    hourlyWeekday: [],
+    types: [],
+    npcs: [],
+    npcGains: [],
+    worlds: [],
+    records: { bestDay: null, bestWeek: null, bestMonth: null },
+    comparison: {
+      currentKills: 3,
+      previousKills: 0,
+      deltaKills: 3,
+      deltaPercent: null,
+      currentThrough: "2026-09-06T12:00:00Z",
+      previousThrough: "2026-08-07T12:00:00Z",
+      partial: true,
+    },
+  };
+
+  const { router, requests } = renderStatistics(
+    "/@me/statistics?world=luvia",
+    response,
+  );
+
+  fireEvent.click(
+    await screen.findByRole("combobox", {
+      name: "Postać: Wszystkie postacie",
+    }),
+  );
+  fireEvent.click(await screen.findByRole("option", { name: /Alpha/ }));
+  await waitFor(() =>
+    expect(router.state.location.search).toMatchObject({
+      characterId: "7",
+      world: "tempest",
+    }),
+  );
+  await waitFor(() =>
+    expect(requests[requests.length - 1]?.searchParams.get("characterId")).toBe(
+      "7",
+    ),
+  );
+  expect(
+    await screen.findByText(/Bicia postaci zapisujemy od 1\.09\.2026/),
+  ).toBeTruthy();
+
+  await router.navigate({
+    to: "/@me/statistics",
+    search: { tab: "overview", days: 30, world: "tempest", characterId: "7" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: /^Filtry/ }));
+  fireEvent.click(await screen.findByRole("combobox", { name: "Świat" }));
+  const luvia = await screen.findByRole("option", { name: /Luvia/ });
+  fireEvent.pointerDown(luvia, { pointerType: "mouse" });
+  fireEvent.click(luvia);
+  await waitFor(() =>
+    expect(router.state.location.search).toEqual({
+      tab: "overview",
+      days: 30,
+      world: "luvia",
+    }),
+  );
 });

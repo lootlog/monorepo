@@ -46,7 +46,7 @@ export function StatisticsActivity({ data, search }: StatisticsTabProps) {
       <StatisticsPlayTimeTiles
         playTime={playTime}
         available={available}
-        world={search.world}
+        narrowed={Boolean(search.world || search.characterId)}
         coverage={
           search.days > ONLINE_HISTORY_DAYS
             ? t("statistics.onlineLastDays", { days: ONLINE_HISTORY_DAYS })
@@ -85,7 +85,7 @@ export function StatisticsActivity({ data, search }: StatisticsTabProps) {
           title={t("statistics.whenYouKill")}
         />
       </StatsSectionColumns>
-      <StatisticsWeeks world={search.world} />
+      <StatisticsWeeks world={search.world} characterId={search.characterId} />
     </>
   );
 }
