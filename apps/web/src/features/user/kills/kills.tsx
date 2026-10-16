@@ -221,7 +221,7 @@ export const KillsPage: React.FC = () => {
       return (
         <div className="p-3">
           <EmptyState
-            framed
+            fill
             icon={CircleAlert}
             title={t("statistics.killsLoadError")}
             action={
@@ -242,7 +242,7 @@ export const KillsPage: React.FC = () => {
       return (
         <div className="p-3">
           <EmptyState
-            framed
+            fill
             icon={SearchX}
             title={t(
               hasActiveFilters

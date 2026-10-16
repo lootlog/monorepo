@@ -189,12 +189,7 @@ export function OneVsOneStatsTable({
 
   if (!user || !opponent) {
     return (
-      <EmptyState
-        framed
-        compact
-        icon={Swords}
-        title={t("battleUi.oneVsOne.empty")}
-      />
+      <EmptyState compact icon={Swords} title={t("battleUi.oneVsOne.empty")} />
     );
   }
 

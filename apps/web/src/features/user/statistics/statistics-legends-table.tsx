@@ -185,7 +185,7 @@ export function StatisticsLegendsTable({
     return (
       <div className="p-3">
         <EmptyState
-          framed
+          fill
           icon={Crown}
           title={t(
             filtered ? "common.noResults" : "loots.stats.topItems.noData",

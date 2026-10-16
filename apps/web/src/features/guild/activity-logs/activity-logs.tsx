@@ -119,7 +119,7 @@ export const ActivityLogs = () => {
       return (
         <div className="p-3">
           <EmptyState
-            framed
+            fill
             icon={AlertCircle}
             title={t("common.activityLogs.loadError")}
           />
@@ -143,7 +143,7 @@ export const ActivityLogs = () => {
       return (
         <div className="p-3">
           <EmptyState
-            framed
+            fill
             icon={SearchX}
             title={t(themedKey("common.activityLogs.empty"))}
           />
