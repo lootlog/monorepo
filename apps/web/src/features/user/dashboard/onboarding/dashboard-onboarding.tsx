@@ -5,13 +5,16 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { Blocks, ExternalLink, ListChecks, PlusCircle, X } from "lucide-react";
 import { useLocalStorage } from "usehooks-ts";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { BandSection } from "@/components/common/band-section";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
+import { cn } from "cn";
 import { GETTING_STARTED_DOCS_URL } from "@/config/addon";
 import { MARGONEM_URL } from "@/constants/margonem";
 import { useGlobalContext } from "@/hooks/context/use-global-context";
@@ -40,7 +43,13 @@ export const DashboardOnboarding = () => {
 
   if (dismissed)
     return (
-      <div className="flex shrink-0 justify-end">
+      <div
+        className={cn(
+          "flex shrink-0 justify-end py-1",
+          LIST_TILE_RULE_CLASS,
+          LIST_TILE_INSET_CLASS,
+        )}
+      >
         <Button variant="ghost" onClick={() => setDismissed(false)}>
           <ListChecks aria-hidden="true" />
           {t("statistics.onboarding.restore")}
@@ -89,60 +98,58 @@ export const DashboardOnboarding = () => {
   };
 
   return (
-    <section aria-labelledby={TITLE_ID} className="shrink-0">
-      <SectionCard className="@container/onboarding">
-        <SectionCardHeader
-          id={TITLE_ID}
-          icon={ListChecks}
-          title={t("statistics.onboarding.title")}
-          description={t("statistics.onboarding.description")}
-          actions={
-            <>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Button
-                      aria-label={t("statistics.onboarding.dismiss")}
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => setDismissed(true)}
-                    >
-                      <X className="size-3.5" aria-hidden="true" />
-                    </Button>
-                  }
-                />
-                <TooltipContent>
-                  {t("statistics.onboarding.dismiss")}
-                </TooltipContent>
-              </Tooltip>
-              <ChevronLink
-                href={GETTING_STARTED_DOCS_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {t("statistics.onboarding.guide")}
-                <span className="sr-only">{t("ui.externalLink.newTab")}</span>
-              </ChevronLink>
-            </>
-          }
-        />
-        <SectionCardContent className="p-3 @min-[1000px]/onboarding:p-4">
-          <ol className="grid gap-3 @min-[800px]/onboarding:grid-cols-3">
-            {steps.map((step, index) => (
-              <DashboardOnboardingStep
-                key={step.id}
-                number={index + 1}
-                status={step.status}
-                title={t(`statistics.onboarding.steps.${step.id}.title`)}
-                description={t(
-                  `statistics.onboarding.steps.${step.id}.description`,
-                )}
-                action={actions[step.id](step.status)}
-              />
-            ))}
-          </ol>
-        </SectionCardContent>
-      </SectionCard>
-    </section>
+    <BandSection
+      id={TITLE_ID}
+      title={t("statistics.onboarding.title")}
+      description={t("statistics.onboarding.description")}
+      tiled
+      trailing={
+        <div className="flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  aria-label={t("statistics.onboarding.dismiss")}
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setDismissed(true)}
+                >
+                  <X className="size-3.5" aria-hidden="true" />
+                </Button>
+              }
+            />
+            <TooltipContent>
+              {t("statistics.onboarding.dismiss")}
+            </TooltipContent>
+          </Tooltip>
+          <ChevronLink
+            href={GETTING_STARTED_DOCS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {t("statistics.onboarding.guide")}
+            <span className="sr-only">{t("ui.externalLink.newTab")}</span>
+          </ChevronLink>
+        </div>
+      }
+    >
+      {/* Hairlines between the steps, as in a `StatsTileGrid`. */}
+      <div className="overflow-hidden">
+        <ol className="-mr-px grid grid-cols-1 lg:grid-cols-3">
+          {steps.map((step, index) => (
+            <DashboardOnboardingStep
+              key={step.id}
+              number={index + 1}
+              status={step.status}
+              title={t(`statistics.onboarding.steps.${step.id}.title`)}
+              description={t(
+                `statistics.onboarding.steps.${step.id}.description`,
+              )}
+              action={actions[step.id](step.status)}
+            />
+          ))}
+        </ol>
+      </div>
+    </BandSection>
   );
 };

@@ -6,6 +6,11 @@ import { upperFirst } from "es-toolkit";
 import { pl } from "date-fns/locale";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { useTranslation } from "react-i18next";
+import { cn } from "cn";
+import {
+  getListTileLinkClassName,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
 import type { BattlesListResponseDtoOutputBattlesItem } from "@lootlog/client/battlelog";
 import {
   getBattleResult,
@@ -30,11 +35,16 @@ export function DashboardRecentBattle({
     .join(", ");
 
   return (
-    <li className="group flex min-w-0 items-stretch border-b border-border last:border-b-0 hover:bg-muted/40 focus-within:bg-muted/40">
+    <li
+      className={cn(
+        "group flex min-w-0 items-stretch transition-colors hover:bg-muted/20 focus-within:bg-muted/20",
+        LIST_TILE_RULE_CLASS,
+      )}
+    >
       <Link
         to="/@me/battle-panel/battles/$battleId"
         params={{ battleId: battle.id }}
-        className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2 outline-none hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+        className={getListTileLinkClassName(true)}
       >
         <BattleResultStatus result={getBattleResult(battle)} />
         <div className="min-w-0 flex-1">

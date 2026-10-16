@@ -1,6 +1,10 @@
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
+import {
+  LIST_GROUP_HEADING_CLASS,
+  LIST_TILE_INSET_CLASS,
+} from "@/components/common/list-tile";
 
 export function LiveFeedSkeleton() {
   const { t } = useTranslation();
@@ -9,9 +13,11 @@ export function LiveFeedSkeleton() {
     <div role="status" aria-label={t("common.loading")}>
       <div
         aria-hidden="true"
-        className="relative py-1 before:absolute before:inset-y-0 before:left-[1.375rem] before:w-px before:bg-border/70 motion-reduce:[&_[data-slot=skeleton]]:animate-none"
+        className="relative before:absolute before:inset-y-0 before:left-[1.375rem] before:w-px before:bg-border/70 motion-reduce:[&_[data-slot=skeleton]]:animate-none"
       >
-        <Skeleton className="mx-4 mt-3 mb-1 h-3 w-28" />
+        <div className={cn(LIST_GROUP_HEADING_CLASS, LIST_TILE_INSET_CLASS)}>
+          <Skeleton className="h-3 w-28" />
+        </div>
         {Array.from({ length: 6 }, (_, index) => {
           const hasLoot = index % 3 !== 1;
 
@@ -21,7 +27,7 @@ export function LiveFeedSkeleton() {
               className="grid grid-cols-[0.75rem_2.5rem_minmax(0,1fr)] gap-x-3 px-4 py-3"
             >
               <span className="flex justify-center pt-4">
-                <Skeleton className="relative size-3 rounded-full ring-4 ring-card" />
+                <Skeleton className="relative size-3 rounded-full ring-4 ring-background" />
               </span>
               <Skeleton className="size-10" />
               <div className="flex min-w-0 flex-col gap-2">

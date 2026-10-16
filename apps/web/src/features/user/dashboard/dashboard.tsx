@@ -1,34 +1,32 @@
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useTranslation } from "react-i18next";
 import { MyReservationsCard } from "../reservations/my-reservations-card";
-import { DashboardKillSummary } from "./components/dashboard-kill-summary";
 import { DashboardLiveFeed } from "./feed/dashboard-live-feed";
 import { DashboardRecentBattles } from "./components/dashboard-recent-battles";
 import { DashboardActivity } from "./components/dashboard-activity";
+import { DashboardToday } from "./components/dashboard-today";
 import { DashboardOnboarding } from "./onboarding/dashboard-onboarding";
+import { DashboardColumns } from "./dashboard-columns";
 
 export const Dashboard = () => {
   const { t } = useTranslation();
 
   return (
     <ScrollArea data-under-top-bar className="h-full min-h-0">
-      <div className="@container/dashboard flex flex-col gap-3 p-3">
+      <div className="min-w-0">
         <h1 className="sr-only">{t("statistics.dashboard")}</h1>
         <DashboardOnboarding />
-        <DashboardKillSummary />
-        <div className="grid items-start gap-3 @3xl/dashboard:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-          <div className="min-w-0 w-full space-y-3 @3xl/dashboard:col-start-2 @3xl/dashboard:row-start-1">
-            <DashboardActivity />
-            <aside
-              aria-labelledby="dashboard-my-reservations-title"
-              className="min-w-0"
-            >
-              <MyReservationsCard />
-            </aside>
-            <DashboardRecentBattles />
-          </div>
-          <DashboardLiveFeed />
-        </div>
+        <DashboardToday />
+        <DashboardColumns
+          feed={<DashboardLiveFeed />}
+          reservations={<MyReservationsCard />}
+          aside={
+            <>
+              <DashboardRecentBattles />
+              <DashboardActivity />
+            </>
+          }
+        />
       </div>
     </ScrollArea>
   );
