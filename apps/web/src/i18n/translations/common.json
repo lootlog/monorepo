@@ -55,6 +55,19 @@
   },
   "save": "Zapisz",
   "close": "Zamknij",
+  "uiLabels": {
+    "sidebarTitle": "Nawigacja",
+    "sidebarDescription": "Menu nawigacji",
+    "toggleSidebar": "Przełącz menu boczne",
+    "commandPaletteTitle": "Paleta poleceń",
+    "commandPaletteDescription": "Wyszukaj polecenie",
+    "pagination": "Paginacja",
+    "previousPage": "Poprzednia strona",
+    "nextPage": "Następna strona",
+    "previous": "Poprzednia",
+    "next": "Następna",
+    "morePages": "Więcej stron"
+  },
   "unsavedChanges": "Masz niezapisane zmiany",
   "filterLabels": {
     "period": "Okres"
