@@ -99,6 +99,7 @@ export function Statistics() {
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <StatisticsCharacterSelect
                 characterId={search.characterId}
+                world={search.world}
                 onCharacterChange={(character) =>
                   update({
                     characterId: character?.characterId,

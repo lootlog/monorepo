@@ -16,6 +16,13 @@ const CharacterIdQuery = Schema.optionalKey(
   Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(100)),
 );
 
+// A character id is unique only within its world, so it never stands alone.
+const characterNeedsWorld = Schema.makeFilter(
+  ({ world, characterId }: { world?: string; characterId?: string }) =>
+    characterId === undefined || world !== undefined,
+  { expected: "a world alongside characterId" },
+);
+
 export const UserKillAnalyticsQuery = Schema.Struct({
   days: Schema.optionalKey(Schema.Literals([7, 30, 90, 365])),
   world: Schema.optionalKey(
@@ -24,7 +31,7 @@ export const UserKillAnalyticsQuery = Schema.Struct({
   /** Narrows the NPC rankings, not the totals, to one NPC type. */
   npcType: Schema.optionalKey(NpcType),
   characterId: CharacterIdQuery,
-});
+}).check(characterNeedsWorld);
 
 export type UserKillAnalyticsQuery = typeof UserKillAnalyticsQuery.Type;
 
@@ -33,7 +40,7 @@ export const UserKillActivityQuery = Schema.Struct({
     Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(100)),
   ),
   characterId: CharacterIdQuery,
-});
+}).check(characterNeedsWorld);
 
 export type UserKillActivityQuery = typeof UserKillActivityQuery.Type;
 

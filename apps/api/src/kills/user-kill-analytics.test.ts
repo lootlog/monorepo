@@ -1,5 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { DateTime } from "effect";
+import { DateTime, Exit, Schema } from "effect";
+import {
+  UserKillActivityQuery,
+  UserKillAnalyticsQuery,
+} from "#src/contracts/kills/analytics-schemas";
 import {
   buildKillActivity,
   buildKillAnalytics,
@@ -202,5 +206,18 @@ describe("personal kill analytics calendar semantics", () => {
     expect(result.daily.every((day) => day.kills === null)).toBe(true);
     expect(result.overview.averagePerDay).toBeNull();
     expect(result.records.bestDay).toBeNull();
+  });
+});
+
+describe("personal kill analytics character scope", () => {
+  it("rejects a character without its world, whose id other worlds reuse", () => {
+    for (const query of [UserKillAnalyticsQuery, UserKillActivityQuery]) {
+      const decode = Schema.decodeUnknownExit(query);
+
+      expect(Exit.isFailure(decode({ characterId: "7" }))).toBe(true);
+      expect(
+        Exit.isSuccess(decode({ characterId: "7", world: "tempest" })),
+      ).toBe(true);
+    }
   });
 });
