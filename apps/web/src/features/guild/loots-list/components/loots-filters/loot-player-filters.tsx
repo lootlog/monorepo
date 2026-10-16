@@ -49,7 +49,7 @@ export const LootPlayerFilters = ({
         <PlayerSearchTile
           icon={player.icon}
           name={player.name}
-          className="mr-0 h-9 w-6 cursor-default bg-[length:24px_36px]"
+          className="mr-0 h-9 w-6 bg-[length:24px_36px]"
         />
       ),
     };
