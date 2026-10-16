@@ -172,7 +172,11 @@ export function DashboardLiveFeed() {
         />
       </FiltersOverlay>
       {/* Floats under the pinned heading while older entries are on screen. */}
-      <div className="pointer-events-none sticky top-[calc(var(--page-sticky-top)+var(--filter-bar-height,0px)+3rem)] z-10 flex h-0 justify-center">
+      <div
+        // Announces the button, which appears while older entries are read.
+        aria-live="polite"
+        className="pointer-events-none sticky top-[calc(var(--page-sticky-top)+var(--filter-bar-height,0px)+3rem)] z-10 flex h-0 justify-center"
+      >
         {state.pending && !paused && (
           <Button
             size="sm"
