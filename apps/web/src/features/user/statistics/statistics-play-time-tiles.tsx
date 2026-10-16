@@ -18,6 +18,8 @@ type StatisticsPlayTimeTilesProps = {
   world?: string;
   /** Online time does not tell characters apart, so one has no kill rate. */
   characterSelected: boolean;
+  /** Names the shorter window online history covers, if it is shorter. */
+  coverage?: string;
   formatDuration: (seconds: number) => string;
 };
 
@@ -26,6 +28,7 @@ export function StatisticsPlayTimeTiles({
   available,
   world,
   characterSelected,
+  coverage,
   formatDuration,
 }: StatisticsPlayTimeTilesProps) {
   const { t } = useTranslation();
@@ -41,7 +44,9 @@ export function StatisticsPlayTimeTiles({
         icon={Clock}
         label={t("statistics.onlineTotal")}
         value={show(playTime.totalSeconds)}
-        detail={world ? upperFirst(world) : t("statistics.wholeAccount")}
+        detail={
+          coverage ?? (world ? upperFirst(world) : t("statistics.wholeAccount"))
+        }
       />
       <StatsTile
         icon={CalendarClock}

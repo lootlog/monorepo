@@ -40,6 +40,8 @@ export const UserOnlineResponse = Schema.Struct({
   trackingStartedAt: Schema.NullOr(DateTimeWithOffsetString),
   lastObservedAt: Schema.NullOr(DateTimeWithOffsetString),
   status: Schema.Literals(["fresh", "stale", "unavailable"]),
+  /** The world online time is counted on, or null for every world. */
+  world: Schema.NullOr(Schema.String),
   days: Schema.Array(
     Schema.Struct({
       date: CalendarDate,

@@ -127,6 +127,12 @@ const useFillRemainingHeight = (element: HTMLElement | null) => {
 
     observer.observe(scroller);
 
+    // Content above it, such as filter chips that wrap, moves it down.
+    for (const content of scroller === document.documentElement
+      ? [document.body]
+      : scroller.children)
+      observer.observe(content);
+
     return () => observer.disconnect();
   }, [element]);
 

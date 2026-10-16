@@ -207,6 +207,8 @@ export interface UserOnlineResponseDto {
      */
   lastObservedAt: string | null;
   status: UserOnlineResponseDtoStatus;
+  /** @nullable */
+  world: string | null;
   days: UserOnlineResponseDtoDaysItem[];
 }
 

@@ -81,9 +81,13 @@ const countCatches = (
     return character ? [{ ...character, caught: catches.length }] : [];
   });
 
-/** Each character's name as its latest snapshot calls it now. */
+/**
+ * Each character's name as the latest snapshot among the chosen loots calls
+ * it, so a name seen only in loots the user cannot see stays hidden.
+ */
 const readCharacterNames = (
   database: typeof ApiDatabase.Service,
+  lootIds: readonly number[],
   characters: readonly UserCharacter[],
 ) =>
   Effect.gen(function* () {
@@ -105,9 +109,16 @@ const readCharacterNames = (
             name: playerSnapshotTable.name,
           },
         )
-        .from(playerSnapshotTable)
+        .from(lootPlayerTable)
+        .innerJoin(
+          playerSnapshotTable,
+          eq(playerSnapshotTable.id, lootPlayerTable.playerSnapshotId),
+        )
         .where(
-          sql`(${playerSnapshotTable.world}, ${playerSnapshotTable.accountId}, ${playerSnapshotTable.characterId}) IN (SELECT * FROM unnest(${sql.param(characters.map((character) => character.world))}::text[], ${sql.param(characters.map((character) => character.accountId))}::int[], ${sql.param(characters.map((character) => character.characterId))}::int[]))`,
+          and(
+            sql`${lootPlayerTable.lootId} = ANY(${sql.param(lootIds)}::int[])`,
+            sql`(${playerSnapshotTable.world}, ${playerSnapshotTable.accountId}, ${playerSnapshotTable.characterId}) IN (SELECT * FROM unnest(${sql.param(characters.map((character) => character.world))}::text[], ${sql.param(characters.map((character) => character.accountId))}::int[], ${sql.param(characters.map((character) => character.characterId))}::int[]))`,
+          ),
         )
         .orderBy(
           playerSnapshotTable.world,
@@ -337,6 +348,7 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
 
     const characterNames = yield* readCharacterNames(
       database,
+      lootIds,
       Object.values(groupBy(catchesByLegend.flat(), characterKey)).flatMap(
         ([character]) => (character ? [character] : []),
       ),

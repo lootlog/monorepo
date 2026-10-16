@@ -182,6 +182,7 @@ export class OnlineRepository extends Context.Service<
             : meta?.healthy
               ? ("fresh" as const)
               : ("stale" as const),
+          world: query.world ?? null,
           days,
         };
       });

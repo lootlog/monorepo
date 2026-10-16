@@ -100,6 +100,7 @@
   "onlineThatDay": "Online tego dnia: {{duration}}",
   "onlineSoFar": "Łącznie: {{duration}}",
   "onlinePerDay": "Średnio na dzień gry",
+  "onlineLastDays": "Ostatnie {{days}} dni",
   "wholeAccount": "Całe konto",
   "unnamedCharacter": "Postać {{id}}",
   "characterHistory": "Bicia postaci zapisujemy od {{date}}. Wcześniejsze dni pokazujemy jako brak danych, a nie zero.",

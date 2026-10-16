@@ -274,6 +274,32 @@ describe("personal loot statistics", () => {
     ]);
   });
 
+  it("names a catching character as the user's visible loots last saw it", async () => {
+    const user = randomUUID();
+    const character = nextCharacterId++;
+    const guildId = await organization(user);
+    const otherGuildId = await organization(randomUUID());
+    await registerCharacter(user, character);
+
+    await loot({ guildIds: [guildId], characterId: character, name: "Archer" });
+    // A later fight the user cannot see must not reveal the new name.
+    await loot({
+      guildIds: [otherGuildId],
+      characterId: character,
+      name: "Renamed",
+    });
+
+    const result = await stats(user);
+
+    expect(result.legends).toEqual([
+      expect.objectContaining({
+        caughtBy: [
+          { characterId: String(character), name: "Archer", caught: 1 },
+        ],
+      }),
+    ]);
+  });
+
   it("sets a colossus legend against the kills recorded under its stable id", async () => {
     const user = randomUUID();
     const character = nextCharacterId++;
