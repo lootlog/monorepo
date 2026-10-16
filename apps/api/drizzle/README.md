@@ -1006,7 +1006,8 @@ dedup window counts once, for the character that reported it first.
 The migration only creates empty tables. Kills recorded before the API that
 writes them was deployed have no character; they stay in the account-wide
 tables, and per-character statistics report history from the user's first
-tracked kill. Apply the migration before deploying the API. Rolling the API
-back leaves the tables in place without new kills; account deletion of the
-rolled-back API does not clear them, so delete them again after rolling
-forward.
+tracked kill. Apply the migration before deploying the API.
+
+Rolling the API back stops new per-character rows but leaves the tables in
+place. The older API's account deletion does not clear them, so after rolling
+forward, delete their rows for accounts deleted in the meantime.
