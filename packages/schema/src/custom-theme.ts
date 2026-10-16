@@ -95,6 +95,7 @@ export const CUSTOM_THEME_TOKEN_KEYS = [
   "destructive",
   "destructive-foreground",
   "border",
+  "separator",
   "ring",
   "chart-1",
   "chart-2",
@@ -112,7 +113,6 @@ export const CUSTOM_THEME_TOKEN_KEYS = [
   "sidebar-primary-foreground",
   "sidebar-accent",
   "sidebar-accent-foreground",
-  "sidebar-border",
   "sidebar-ring",
 ] as const;
 

@@ -60,6 +60,7 @@ export const ThemeColorsSection = () => {
 
   const accentLabel = t("settings.appearance.editor.colors.accent");
   const backgroundLabel = t("settings.appearance.editor.colors.background");
+  const separatorLabel = t("settings.appearance.editor.tokens.separator");
 
   return (
     <BandSection
@@ -95,6 +96,29 @@ export const ThemeColorsSection = () => {
         >
           {colorField(backgroundLabel, pageColors.background, (color) =>
             update(withSurface(definition, surfaceFromColor(color))),
+          )}
+        </ThemeSettingRow>
+
+        <ThemeSettingRow
+          label={separatorLabel}
+          description={t(
+            "settings.appearance.editor.colors.separatorDescription",
+          )}
+          onReset={
+            definition.overrides.separator === undefined
+              ? undefined
+              : () =>
+                  update({
+                    ...definition,
+                    overrides: omit(definition.overrides, ["separator"]),
+                  })
+          }
+        >
+          {colorField(separatorLabel, pageColors.separator, (color) =>
+            update({
+              ...definition,
+              overrides: { ...definition.overrides, separator: color },
+            }),
           )}
         </ThemeSettingRow>
 
@@ -157,7 +181,10 @@ export const ThemeColorsSection = () => {
         </CollapsibleTrigger>
         <CollapsibleContent>
           <ul>
-            {CUSTOM_THEME_TOKEN_KEYS.map((token) => {
+            {/* The separator has its own row above. */}
+            {CUSTOM_THEME_TOKEN_KEYS.filter(
+              (token) => token !== "separator",
+            ).map((token) => {
               const label = t(`settings.appearance.editor.tokens.${token}`);
 
               return (

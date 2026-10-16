@@ -31,7 +31,6 @@ const SURFACE_LADDER = {
   "sidebar-accent": 0.055,
   secondary: 0.07,
   muted: 0.08,
-  "sidebar-border": 0.12,
   border: 0.135,
 } as const satisfies Partial<Record<CustomThemeTokenKey, number>>;
 
