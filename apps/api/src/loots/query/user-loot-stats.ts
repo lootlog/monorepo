@@ -2,9 +2,10 @@ import { groupBy } from "es-toolkit";
 import { DateTime, Effect } from "effect";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import type { ApiDatabase } from "#src/database/drizzle/database";
-import { and, eq, gte, inArray, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, or, sql } from "drizzle-orm";
 import {
   lootPlayerTable,
+  playerSnapshotTable,
   userCharacterKillBucketTable,
   userCharactersLootlogSettingsTable,
   userKillBucketTable,
@@ -49,6 +50,85 @@ const empty: UserLootStatsResponse = {
 /** The bosses the monster list counts kills of, as the kill statistics track them. */
 const BOSS_TYPES = ["TITAN", "COLOSSUS", "HERO", "ELITE3", "ELITE2"] as const;
 
+type CaughtItem = { lootId: number; hid: string };
+
+type UserCharacter = { world: string; accountId: string; characterId: string };
+
+const characterKey = (character: UserCharacter) =>
+  `${character.world}:${character.accountId}:${character.characterId}`;
+
+/** A legend's catches per character of the user, on its world. */
+const countCatches = (
+  rows: readonly { world: string; caught_items: readonly CaughtItem[] }[],
+  caughtCharacter:
+    | ((caughtItem: CaughtItem) => Omit<UserCharacter, "world"> | undefined)
+    | undefined,
+) =>
+  Object.values(
+    groupBy(
+      rows.flatMap((row) =>
+        row.caught_items.flatMap((caughtItem) => {
+          const character = caughtCharacter?.(caughtItem);
+
+          return character ? [{ ...character, world: row.world }] : [];
+        }),
+      ),
+      characterKey,
+    ),
+  ).flatMap((catches) => {
+    const [character] = catches;
+
+    return character ? [{ ...character, caught: catches.length }] : [];
+  });
+
+/** Each character's name as its latest snapshot calls it now. */
+const readCharacterNames = (
+  database: typeof ApiDatabase.Service,
+  characters: readonly UserCharacter[],
+) =>
+  Effect.gen(function* () {
+    if (!characters.length) return new Map<string, string>();
+
+    const snapshots = yield* runLootStatsQuery(
+      "loot-stats.user-caught-characters",
+      database
+        .selectDistinctOn(
+          [
+            playerSnapshotTable.world,
+            playerSnapshotTable.accountId,
+            playerSnapshotTable.characterId,
+          ],
+          {
+            world: playerSnapshotTable.world,
+            accountId: playerSnapshotTable.accountId,
+            characterId: playerSnapshotTable.characterId,
+            name: playerSnapshotTable.name,
+          },
+        )
+        .from(playerSnapshotTable)
+        .where(
+          sql`(${playerSnapshotTable.world}, ${playerSnapshotTable.accountId}, ${playerSnapshotTable.characterId}) IN (SELECT * FROM unnest(${sql.param(characters.map((character) => character.world))}::text[], ${sql.param(characters.map((character) => character.accountId))}::int[], ${sql.param(characters.map((character) => character.characterId))}::int[]))`,
+        )
+        .orderBy(
+          playerSnapshotTable.world,
+          playerSnapshotTable.accountId,
+          playerSnapshotTable.characterId,
+          desc(playerSnapshotTable.createdAt),
+        ),
+    );
+
+    return new Map(
+      snapshots.map((snapshot) => [
+        characterKey({
+          world: snapshot.world,
+          accountId: String(snapshot.accountId),
+          characterId: String(snapshot.characterId),
+        }),
+        snapshot.name,
+      ]),
+    );
+  });
+
 export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
   Effect.fn("loots.user-stats")(function* (
     discordId: string,
@@ -87,8 +167,7 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
     const lootIds = loots.map(({ lootId }) => lootId);
 
     const readLoots = Effect.gen(function* () {
-      // Loot shares name a player by character id followed by account id.
-      const shareKeys = (yield* database
+      const characters = yield* database
         .select({
           accountId: userCharactersLootlogSettingsTable.accountId,
           characterId: userCharactersLootlogSettingsTable.characterId,
@@ -104,7 +183,17 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
                   query.characterId,
                 ),
           ),
-        )).map(({ accountId, characterId }) => `${characterId}${accountId}`);
+        );
+
+      // Loot shares name a player by character id followed by account id.
+      const charactersByShareKey = new Map(
+        characters.map((character) => [
+          `${character.characterId}${character.accountId}`,
+          character,
+        ]),
+      );
+
+      const shareKeys = [...charactersByShareKey.keys()];
 
       const caughtItems = buildUserCaughtItemsQueries(database, {
         lootIds,
@@ -130,7 +219,7 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
       const queries = buildUserLootStatsQueries(database, {
         lootIds,
         soloLootIds: soloLoots.map(({ lootId }) => lootId),
-        sharedHids: sharedItems.map(({ hid }) => hid),
+        sharedHids: sharedItems.map(({ share: [, hid] }) => hid),
         truncUnit: days > 30 ? "week" : "day",
       });
 
@@ -144,11 +233,32 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
         { concurrency: "unbounded" },
       );
 
-      return { overview, timeline, topNpcs, legendRows };
+      // The character that caught each item, as the caught filter chose it.
+      const soloCharacters = new Map(
+        soloLoots.map(({ lootId, accountId, characterId }) => [
+          lootId,
+          { accountId: String(accountId), characterId: String(characterId) },
+        ]),
+      );
+
+      const sharedCharacters = new Map(
+        sharedItems.flatMap(({ share: [shareKey, hid] }) => {
+          const character = charactersByShareKey.get(shareKey);
+
+          return character ? [[hid, character] as const] : [];
+        }),
+      );
+
+      const caughtCharacter = (caughtItem: CaughtItem) =>
+        sharedCharacters.get(caughtItem.hid) ??
+        soloCharacters.get(caughtItem.lootId);
+
+      return { overview, timeline, topNpcs, legendRows, caughtCharacter };
     });
 
     const lootStats = lootIds.length ? yield* readLoots : undefined;
     const legendRows = lootStats?.legendRows ?? [];
+    const caughtCharacter = lootStats?.caughtCharacter;
 
     // A boss's name is unique on its world, while its id is not: kills name a
     // colossus by a stable id from its name, and older Game clients reported
@@ -217,10 +327,23 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
       killsByMonster.get(key)?.npcId ??
       Math.min(...(dropsByMonster[key] ?? []).map((row) => row.npc_id));
 
-    const legends = Object.values(
+    const legendGroups = Object.values(
       groupBy(legendRows, (row) => `${row.item_id}:${legendMonsterKey(row)}`),
-    )
-      .flatMap((rows) => {
+    );
+
+    const catchesByLegend = legendGroups.map((rows) =>
+      countCatches(rows, caughtCharacter),
+    );
+
+    const characterNames = yield* readCharacterNames(
+      database,
+      Object.values(groupBy(catchesByLegend.flat(), characterKey)).flatMap(
+        ([character]) => (character ? [character] : []),
+      ),
+    );
+
+    const legends = legendGroups
+      .flatMap((rows, index) => {
         const [row] = rows;
 
         if (!row) return [];
@@ -245,6 +368,25 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
               0,
             ),
             caught: rows.reduce((total, merged) => total + merged.caught, 0),
+            caughtBy: (catchesByLegend[index] ?? [])
+              .flatMap((character) => {
+                const name = characterNames.get(characterKey(character));
+
+                return name
+                  ? [
+                      {
+                        characterId: character.characterId,
+                        name,
+                        caught: character.caught,
+                      },
+                    ]
+                  : [];
+              })
+              .toSorted(
+                (left, right) =>
+                  right.caught - left.caught ||
+                  left.name.localeCompare(right.name, "pl"),
+              ),
             npcKills: killsByMonster.get(key)?.kills ?? 0,
           },
         ];

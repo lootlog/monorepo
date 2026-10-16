@@ -65,6 +65,8 @@ const organization = async (user: string) => {
 const loot = async (options: {
   guildIds: string[];
   characterId: number;
+  /** The character's name in the fight. */
+  name?: string;
   npc?: { type?: string; lvl?: number };
   world?: string;
   archived?: boolean;
@@ -108,9 +110,15 @@ const loot = async (options: {
     [lootId, hid],
   );
   await client.query(
-    `WITH player AS (INSERT INTO "PlayerSnapshot" (world,"accountId","characterId","snapshotHash",name) VALUES ($2,1,$3,$4,'Hunter') RETURNING id)
+    `WITH player AS (INSERT INTO "PlayerSnapshot" (world,"accountId","characterId","snapshotHash",name) VALUES ($2,1,$3,$4,$5) RETURNING id)
     INSERT INTO "LootPlayer" ("lootId","playerSnapshotId") SELECT $1,id FROM player`,
-    [lootId, world, options.characterId, randomUUID()],
+    [
+      lootId,
+      world,
+      options.characterId,
+      randomUUID(),
+      options.name ?? "Hunter",
+    ],
   );
 
   if (options.party)
@@ -221,16 +229,19 @@ describe("personal loot statistics", () => {
     ).toBe(0);
   });
 
-  it("counts as caught what the loot share gives the user's character or a solo fight leaves them, beside their kills of the monster", async () => {
+  it("counts as caught what the loot share gives the user's character or a solo fight leaves them, naming that character, beside their kills of the monster", async () => {
     const user = randomUUID();
     const character = nextCharacterId++;
+    const archer = nextCharacterId++;
     const guildId = await organization(user);
     await registerCharacter(user, character);
+    await registerCharacter(user, archer);
 
     await loot({ guildIds: [guildId], characterId: character });
     await loot({
       guildIds: [guildId],
-      characterId: character,
+      characterId: archer,
+      name: "Archer",
       party: true,
       shared: true,
     });
@@ -254,6 +265,10 @@ describe("personal loot statistics", () => {
         npc: expect.objectContaining({ id: 77, name: "Hero" }),
         count: 3,
         caught: 2,
+        caughtBy: [
+          { characterId: String(archer), name: "Archer", caught: 1 },
+          { characterId: String(character), name: "Hunter", caught: 1 },
+        ],
         npcKills: 30,
       }),
     ]);

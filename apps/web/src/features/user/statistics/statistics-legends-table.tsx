@@ -20,6 +20,7 @@ import {
 } from "@/components/common/list-tile";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { StatisticsSortableHeader } from "./statistics-sortable-header";
+import { StatisticsLegendCharacters } from "./statistics-legend-characters";
 import { StatisticsLegendItem } from "./statistics-legend-item";
 import {
   sortStatisticsRows,
@@ -55,6 +56,8 @@ type StatisticsLegendsTableProps = {
   onSortChange: (sort: StatisticsSortValue) => void;
   /** The legends are narrowed by a search, so none means no match. */
   filtered?: boolean;
+  /** All characters are shown, so each legend names the ones that caught it. */
+  showCharacters?: boolean;
 };
 
 /** Every legendary drop of the period: dropped, caught, and the user's kills of its monster. */
@@ -63,6 +66,7 @@ export function StatisticsLegendsTable({
   sort,
   onSortChange,
   filtered = false,
+  showCharacters = false,
 }: StatisticsLegendsTableProps) {
   const { t } = useTranslation();
 
@@ -112,6 +116,24 @@ export function StatisticsLegendsTable({
       cell: ({ row: { original } }) =>
         npcCell(original, upperFirst(original.world)),
     },
+    ...(showCharacters
+      ? [
+          {
+            id: "characters",
+            enableSorting: false,
+            header: () => t("statistics.legendsTable.characters"),
+            cell: ({ row: { original } }) =>
+              original.caughtBy.length ? (
+                <StatisticsLegendCharacters
+                  characters={original.caughtBy}
+                  className="max-w-64"
+                />
+              ) : (
+                "—"
+              ),
+          } satisfies ColumnDef<typeof coreTableFeatures, Legend>,
+        ]
+      : []),
     {
       id: STATS_TABLE_COUNT_COLUMN_ID,
       header: ({ column }) => (
@@ -200,6 +222,15 @@ export function StatisticsLegendsTable({
                   }),
                 ].join(" · ")}
               </span>
+              {showCharacters && legend.caughtBy.length > 0 && (
+                <StatisticsLegendCharacters
+                  characters={legend.caughtBy}
+                  label={(characters) =>
+                    t("statistics.legend.caughtBy", { characters })
+                  }
+                  className="text-xs text-muted-foreground"
+                />
+              )}
             </span>
             <span className="flex shrink-0 flex-col items-end">
               <span className="text-sm font-semibold tabular-nums">

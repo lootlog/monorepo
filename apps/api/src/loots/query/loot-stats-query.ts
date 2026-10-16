@@ -421,18 +421,25 @@ export const buildUserCaughtItemsQueries = (
   const selected = (lootId: SQLWrapper) =>
     sql`${lootId} = ANY(${sql.param(options.lootIds)}::int[])`;
 
+  // The loot's only player, who caught every item.
   const soloLoots = database
-    .select({ lootId: lootPlayer.lootId })
+    .select({
+      lootId: lootPlayer.lootId,
+      accountId: min(player.accountId),
+      characterId: min(player.characterId),
+    })
     .from(lootPlayer)
+    .innerJoin(player, eq(player.id, lootPlayer.playerSnapshotId))
     .where(selected(lootPlayer.lootId))
     .groupBy(lootPlayer.lootId)
     .having(eq(count(), 1));
 
   const shareKeys = sql`${sql.param(options.shareKeys)}::text[]`;
 
-  // The loot's shared items of every key of the user, as one array.
+  // The loot's shared items of every key of the user, as one array of
+  // [share key, hid] pairs.
   const sharedArray = sql`(
-    select coalesce(jsonb_agg(shared.hid), '[]'::jsonb)
+    select coalesce(jsonb_agg(jsonb_build_array(share_key, shared.hid)), '[]'::jsonb)
     from unnest(${shareKeys}) as share_key,
       jsonb_array_elements(
         case jsonb_typeof(${loot.lootShare} -> share_key)
@@ -444,7 +451,9 @@ export const buildUserCaughtItemsQueries = (
 
   const sharedItems = database
     .select({
-      hid: sql<string>`jsonb_array_elements_text(${sharedArray})`.as("hid"),
+      share: sql<
+        [shareKey: string, hid: string]
+      >`jsonb_array_elements(${sharedArray})`.as("share"),
     })
     .from(loot)
     .where(
@@ -586,6 +595,9 @@ export const buildUserLootStatsQueries = (
       npc_icon: rankedNpcs.icon,
       count: count(),
       caught: sql<number>`count(*) filter (where ${caught})`.mapWith(Number),
+      caught_items: sql<
+        { lootId: number; hid: string }[]
+      >`coalesce(jsonb_agg(jsonb_build_object('lootId', ${lootItem.lootId}, 'hid', ${lootItem.hid})) filter (where ${caught}), '[]'::jsonb)`,
     })
     .from(rankedNpcs)
     .innerJoin(lootItem, eq(lootItem.lootId, rankedNpcs.lootId))

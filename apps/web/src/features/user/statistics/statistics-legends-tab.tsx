@@ -21,6 +21,7 @@ export function StatisticsLegendsTab({ search }: { search: StatisticsSearch }) {
               matchesStatisticsQuery(search.q, legend.name, legend.npc.name),
             )}
             filtered={Boolean(search.q?.trim())}
+            showCharacters={!search.characterId}
             sort={sort}
             onSortChange={onSortChange}
           />
