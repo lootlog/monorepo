@@ -14,6 +14,7 @@ export const ReservationsPageSkeleton = () => {
     RESERVATIONS_VIEW_MODE_KEY,
     "grid",
     RESERVATIONS_GRID_MEDIA_QUERY,
+    "grid",
   );
 
   return (

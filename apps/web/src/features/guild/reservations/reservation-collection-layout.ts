@@ -8,7 +8,10 @@ import { cn } from "cn";
 
 export const RESERVATIONS_VIEW_MODE_KEY = "reservations-view-mode";
 
-/** Tailwind `lg`, where the spot grid gets its second column. */
+/**
+ * Tailwind `lg`, where the spot grid gets its second column. Below it the page
+ * keeps the one-column grid, whose tiles also show the spot's NPC images.
+ */
 export const RESERVATIONS_GRID_MEDIA_QUERY = "(min-width: 64rem)";
 
 /** Spot tiles and skeleton tiles share the collection and cell classes. */
