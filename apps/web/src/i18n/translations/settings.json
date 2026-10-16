@@ -1018,6 +1018,8 @@
       "customizeLabel": "Dostosuj motyw {{name}}",
       "deleteLabel": "Usuń motyw {{name}}",
       "shareLabel": "Udostępnij motyw {{name}}",
+      "sharedLabel": "Motyw {{name}} jest udostępniony linkiem. Zarządzaj linkiem",
+      "shared": "Udostępniony linkiem",
       "inUse": "W użyciu"
     },
     "basedOn": "Na bazie: {{base}}",
@@ -1126,6 +1128,8 @@
       "active": "Aktywny motyw",
       "share": {
         "action": "Udostępnij",
+        "shared": "Udostępniony",
+        "sharedMeta": "Udostępniony linkiem",
         "title": "Udostępnij „{{name}}”",
         "description": "Każdy, kto ma link, może zapisać kopię tego motywu u siebie. Link nie pokazuje, kto go stworzył.",
         "linkLabel": "Link do motywu",
