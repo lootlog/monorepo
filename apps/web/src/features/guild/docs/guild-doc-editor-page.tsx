@@ -79,7 +79,7 @@ export const GuildDocEditorPage = () => {
         <ScrollArea className="min-h-0 flex-1">
           <div className="px-3 py-3">
             <EmptyState
-              framed
+              fill
               icon={FileX2}
               title={t("docs.editor.loadError")}
               description={t("docs.editor.loadErrorDescription")}

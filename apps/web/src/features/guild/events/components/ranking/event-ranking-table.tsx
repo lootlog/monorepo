@@ -306,7 +306,7 @@ export const EventRankingTable = ({
       return isPage ? (
         <div className="p-3">
           <EmptyState
-            framed
+            fill
             icon={Trophy}
             title={t("events.ranking.noRanking")}
           />

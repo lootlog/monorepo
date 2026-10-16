@@ -37,7 +37,7 @@ export const StatsTableResults = ({
   if (emptyMessage) {
     return (
       <div className="p-3">
-        <EmptyState framed icon={SearchX} title={emptyMessage} />
+        <EmptyState fill icon={SearchX} title={emptyMessage} />
       </div>
     );
   }

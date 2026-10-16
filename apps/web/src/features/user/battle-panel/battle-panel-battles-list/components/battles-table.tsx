@@ -269,7 +269,6 @@ export const BattlesTable = ({
         {!isLoading && battles.length === 0 ? (
           <div className="p-3">
             <EmptyState
-              framed
               icon={Shield}
               title={t("battlePanel.list.empty")}
               description={t("battlePanel.list.emptyDescription")}

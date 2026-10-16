@@ -63,7 +63,7 @@ export const LootsList = () => {
     return (
       <div className="p-3">
         <EmptyState
-          framed
+          fill
           icon={CircleAlert}
           title={t("loots.list.loadError")}
           description={t("loots.list.loadErrorDescription")}
@@ -87,7 +87,7 @@ export const LootsList = () => {
       <div className="p-3">
         {hasActiveFilters ? (
           <EmptyState
-            framed
+            fill
             icon={SearchX}
             title={t("loots.list.noResults")}
             description={t("loots.list.noResultsDescription")}
@@ -99,7 +99,7 @@ export const LootsList = () => {
           />
         ) : (
           <EmptyState
-            framed
+            fill
             media={
               <EmptyMedia variant="icon">
                 <ThemeEmptyStateIcon fallback=<PackageOpen /> />

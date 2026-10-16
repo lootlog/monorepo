@@ -123,7 +123,7 @@ export function Reservations() {
   ) : sortedSpots.length === 0 ? (
     <div className="p-3">
       <EmptyState
-        framed
+        fill
         icon={SearchX}
         title={t("reservations.empty.title")}
         description={
@@ -191,7 +191,7 @@ export function Reservations() {
       {spotsQuery.isError ? (
         <div className="p-3">
           <EmptyState
-            framed
+            fill
             icon={CircleAlert}
             title={t("reservations.error.title")}
             description={t("reservations.error.description")}
