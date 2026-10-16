@@ -1,10 +1,8 @@
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
-import { Skull } from "lucide-react";
-import { SectionCard } from "@/components/common/section-card/section-card";
+import { BandSection } from "@/components/common/band-section";
 import { useRecentHeroKills } from "../../hooks/queries/use-recent-hero-kills";
 import type { EventHeroNpc } from "../../types/api";
 import { HeroTabs } from "../shared/hero-tabs";
@@ -49,32 +47,31 @@ export const RecentKillsPreview = ({
   });
 
   return (
-    <SectionCard className="overflow-clip">
-      <SectionCardHeader
-        icon={Skull}
-        title={t("events.kills.recentTitle")}
-        actions={
-          kills && kills.length > 0 ? (
-            <ChevronLink
-              render=<Link
-                to={
-                  activeHeroId
-                    ? "/$guildId/events/$eventId/heroes/$heroId/kills"
-                    : "/$guildId/events/$eventId/kills"
-                }
-                params={
-                  activeHeroId
-                    ? { guildId, eventId, heroId: activeHeroId }
-                    : { guildId, eventId }
-                }
-              />
-            >
-              {t("events.kills.viewAll")}
-            </ChevronLink>
-          ) : null
-        }
-      />
-
+    <BandSection
+      id="event-recent-kills"
+      title={t("events.kills.recentTitle")}
+      tiled
+      trailing={
+        kills && kills.length > 0 ? (
+          <ChevronLink
+            render=<Link
+              to={
+                activeHeroId
+                  ? "/$guildId/events/$eventId/heroes/$heroId/kills"
+                  : "/$guildId/events/$eventId/kills"
+              }
+              params={
+                activeHeroId
+                  ? { guildId, eventId, heroId: activeHeroId }
+                  : { guildId, eventId }
+              }
+            />
+          >
+            {t("events.kills.viewAll")}
+          </ChevronLink>
+        ) : null
+      }
+    >
       {showHeroTabs && heroNpcs && (
         <HeroTabs
           placement="section"
@@ -95,6 +92,6 @@ export const RecentKillsPreview = ({
         onRetry={() => void refetch()}
         isRetrying={isFetching}
       />
-    </SectionCard>
+    </BandSection>
   );
 };

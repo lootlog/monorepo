@@ -1,17 +1,14 @@
 import { EventEditSkeleton } from "./event-edit-skeleton";
 import { EventLoadError } from "./components/event-load-error";
 import { useEventEditRoute } from "./hooks/queries/use-event-edit-route";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { PageHeader } from "@/components/common/page-header";
+import { BandSection } from "@/components/common/band-section";
 import { useQueryClient } from "@tanstack/react-query";
 import { useId } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
-import { RefreshCw, Trophy } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
@@ -177,68 +174,64 @@ const EventEditScoringForm = ({
   };
 
   return (
-    <div className="flex flex-col gap-3 px-3 py-3">
-      <PageHeader
-        icon={Trophy}
-        title={event.name}
-        actions={
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleRecalculate}
-            loading={recalculatePoints.isPending}
-            icon=<RefreshCw className="size-3.5" />
-            title={t("events.scoring.recalculateHint")}
-          >
-            {t("events.scoring.recalculateButton")}
-          </Button>
-        }
-      />
+    <>
+      <h1 className="sr-only">{event.name}</h1>
 
-      <form className="space-y-3 pb-24" onSubmit={form.handleSubmit(onSubmit)}>
-        <SectionCard>
-          <SectionCardHeader
-            id={modeHeadingId}
-            title={t("events.scoring.mode")}
+      <form className="pb-24" onSubmit={form.handleSubmit(onSubmit)}>
+        <BandSection
+          id={modeHeadingId}
+          title={t("events.scoring.mode")}
+          trailing={
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={handleRecalculate}
+              loading={recalculatePoints.isPending}
+              icon=<RefreshCw className="size-3.5" />
+              title={t("events.scoring.recalculateHint")}
+            >
+              {t("events.scoring.recalculateButton")}
+            </Button>
+          }
+        >
+          <Controller
+            control={form.control}
+            name="scoringMode"
+            render={({ field }) => (
+              <ScoringModeSelector
+                aria-labelledby={modeHeadingId}
+                value={normalizeEventScoringMode(field.value)}
+                onChange={(mode) => field.onChange(mode)}
+              />
+            )}
           />
-          <SectionCardContent>
+        </BandSection>
+
+        {scoringMode === "ADVANCED" && (
+          <BandSection
+            id="event-scoring-rules"
+            title={t("events.scoring.title")}
+            wide
+          >
             <Controller
               control={form.control}
-              name="scoringMode"
-              render={({ field }) => (
-                <ScoringModeSelector
-                  aria-labelledby={modeHeadingId}
-                  value={normalizeEventScoringMode(field.value)}
-                  onChange={(mode) => field.onChange(mode)}
+              name="scoringRules"
+              rules={{
+                validate: (value) =>
+                  hasValidScoringNumbers(value) ||
+                  t("events.scoring.validation.invalidRules"),
+              }}
+              render={({ field, fieldState }) => (
+                <ScoringRulesEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={fieldState.error?.message}
+                  ref={field.ref}
                 />
               )}
             />
-          </SectionCardContent>
-        </SectionCard>
-
-        {scoringMode === "ADVANCED" && (
-          <SectionCard>
-            <SectionCardHeader title={t("events.scoring.title")} />
-            <SectionCardContent>
-              <Controller
-                control={form.control}
-                name="scoringRules"
-                rules={{
-                  validate: (value) =>
-                    hasValidScoringNumbers(value) ||
-                    t("events.scoring.validation.invalidRules"),
-                }}
-                render={({ field, fieldState }) => (
-                  <ScoringRulesEditor
-                    value={field.value}
-                    onChange={field.onChange}
-                    error={fieldState.error?.message}
-                    ref={field.ref}
-                  />
-                )}
-              />
-            </SectionCardContent>
-          </SectionCard>
+          </BandSection>
         )}
 
         <UnsavedChangesBar
@@ -247,6 +240,6 @@ const EventEditScoringForm = ({
           onReset={() => form.reset(toScoringDefaults(event))}
         />
       </form>
-    </div>
+    </>
   );
 };

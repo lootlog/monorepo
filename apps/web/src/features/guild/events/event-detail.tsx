@@ -1,23 +1,22 @@
 import { EventLoadError } from "./components/event-load-error";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
-import { EventRulesDialog } from "./components/dialogs/event-rules-dialog";
-import { EventSummaryDialog } from "./components/dialogs/event-summary-dialog";
 import { HeroManageDialog } from "./components/dialogs/hero-manage-dialog";
 import { MapManageDialog } from "./components/dialogs/map-manage-dialog";
+import { EventHeader } from "./components/header/event-header";
 import { EventHeroesTable } from "./components/heroes/event-heroes-table";
 import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
 import { EventRankingPreview } from "./components/ranking/event-ranking-preview";
-import { EventActionsCard } from "./components/shared/event-actions-card";
 import { EventHeroLoots } from "./components/stats/event-hero-loots";
-import { EventDetailHeader } from "./event-detail-header";
 import { EventDetailSkeleton } from "./event-detail-skeleton";
-import { EventStatusDialogs } from "./event-status-dialogs";
 import { findEventHeroTimer } from "./utils/find-event-hero-timer";
 
 import { useEventDetail } from "./use-event-detail";
+import { useCurrentMember } from "./hooks/queries/use-current-member";
+import { getMyHeroScores } from "./utils/my-hero-scores";
 import { QueryErrorNotice } from "@/components/common/query-error-notice";
-import { SectionCard } from "@/components/common/section-card/section-card";
+import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
+import { EventOverviewColumns } from "./event-overview-columns";
 
 export const EventDetail = () => {
   const {
@@ -31,35 +30,9 @@ export const EventDetail = () => {
     selectedHero,
     mapDialogOpen,
     setMapDialogOpen,
-    endDialogOpen,
-    setEndDialogOpen,
-    updateEvent,
     t,
     error,
-    resumeDialogOpen,
-    setResumeDialogOpen,
-    deleteDialogOpen,
-    setDeleteDialogOpen,
-    deleteEvent,
-    navigate,
-    rulesDialogOpen,
-    setRulesDialogOpen,
-    scoringMode,
-    scoringRules,
-    summaryDialogOpen,
-    setSummaryDialogOpen,
-    eventStatusVariant,
-    eventStatusLabel,
-    eventDateRangeLabel,
-    isPinPending,
-    eventIsPinned,
-    pinActionLabel,
-    isEventActive,
-    togglePin,
     canManage,
-    canDeleteEvent,
-    navigateToEventEdit,
-    openEventStatusDialog,
     refetchEvent,
     mapsError,
     rankingError,
@@ -80,6 +53,8 @@ export const EventDetail = () => {
     isMapsLoading,
   } = useEventDetail();
 
+  const currentMember = useCurrentMember(queryGuildId);
+
   if (isLoading || isMapsLoading) {
     return <EventDetailSkeleton />;
   }
@@ -95,192 +70,126 @@ export const EventDetail = () => {
     );
   }
 
+  // Places are unknown until the player's Member is; a missing Member means
+  // the player is in no ranking.
+  const scores = currentMember.isSuccess
+    ? getMyHeroScores(heroes, rankings, currentMember.data?.id)
+    : undefined;
+
+  const heroesTable = (
+    <EventHeroesTable
+      rows={heroes.map((hero, index) => ({
+        hero,
+        score: scores?.[index],
+        timer: findEventHeroTimer(heroTimers, {
+          heroNpcId: hero.npcId,
+          heroName: hero.npcName,
+        }),
+        stats: heroStats?.find(
+          (statistic) => hero.npcId !== null && statistic.npcId === hero.npcId,
+        ),
+      }))}
+      guildId={queryGuildId}
+      eventId={queryEventId}
+      canManage={canManage}
+      onAddHero={() => {
+        setSelectedHeroId(null);
+        setHeroDialogOpen(true);
+      }}
+      onEditHero={handleEditHero}
+      onManageMaps={handleManageMaps}
+      onDeleteHero={handleDeleteHero}
+      isDeleteHeroPending={isDeleteHeroPending}
+      showStandings={!currentMember.isError}
+    />
+  );
+
+  const recentKills = (
+    <RecentKillsPreview
+      guildId={queryGuildId}
+      eventId={queryEventId}
+      limit={10}
+    />
+  );
+
+  const recentLoots = (
+    <EventHeroLoots
+      guildId={queryGuildId}
+      heroNpcNames={heroes.map((h) => h.npcName)}
+      heroNpcs={heroes}
+      world={event.world}
+      limit={8}
+    />
+  );
+
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex h-full min-h-0 flex-col">
       <EventParticipationConfirmationDialog
         guildId={guildId}
         eventId={eventId}
       />
-      {event && (
-        <>
-          {heroDialogOpen && (
-            <HeroManageDialog
-              key={selectedHero?.id ?? "new"}
-              open={heroDialogOpen}
-              onOpenChange={setHeroDialogOpen}
-              guildId={queryGuildId}
-              eventId={queryEventId}
-              hero={selectedHero}
-            />
-          )}
-          {selectedHero && (
-            <MapManageDialog
-              key={selectedHero.id}
-              open={mapDialogOpen}
-              onOpenChange={setMapDialogOpen}
-              guildId={queryGuildId}
-              eventId={queryEventId}
-              hero={selectedHero}
-            />
-          )}
-          <EventStatusDialogs
-            endDialogOpen={endDialogOpen}
-            setEndDialogOpen={setEndDialogOpen}
-            event={event}
-            updateEvent={updateEvent}
-            queryGuildId={queryGuildId}
-            queryEventId={queryEventId}
-            t={t}
-            resumeDialogOpen={resumeDialogOpen}
-            setResumeDialogOpen={setResumeDialogOpen}
-            deleteDialogOpen={deleteDialogOpen}
-            setDeleteDialogOpen={setDeleteDialogOpen}
-            deleteEvent={deleteEvent}
-            navigate={navigate}
-          />
-          <EventRulesDialog
-            open={rulesDialogOpen}
-            onOpenChange={setRulesDialogOpen}
-            eventName={event.name}
-            rulebookMarkdown={event.rulebookMarkdown}
-            scoringMode={scoringMode}
-            scoringRules={scoringRules}
-          />
-          <EventSummaryDialog
-            open={summaryDialogOpen}
-            onOpenChange={setSummaryDialogOpen}
-            guildId={queryGuildId}
-            eventId={queryEventId}
-            eventName={event.name}
-          />
-        </>
+      {heroDialogOpen && (
+        <HeroManageDialog
+          key={selectedHero?.id ?? "new"}
+          open={heroDialogOpen}
+          onOpenChange={setHeroDialogOpen}
+          guildId={queryGuildId}
+          eventId={queryEventId}
+          hero={selectedHero}
+        />
+      )}
+      {selectedHero && (
+        <MapManageDialog
+          key={selectedHero.id}
+          open={mapDialogOpen}
+          onOpenChange={setMapDialogOpen}
+          guildId={queryGuildId}
+          eventId={queryEventId}
+          hero={selectedHero}
+        />
       )}
 
-      <ScrollArea data-under-top-bar className="flex-1 min-h-0">
-        <div className="px-3 py-3 flex flex-col gap-3">
-          <EventDetailHeader
-            event={event}
-            eventStatusVariant={eventStatusVariant}
-            eventStatusLabel={eventStatusLabel}
-            t={t}
-            eventDateRangeLabel={eventDateRangeLabel}
-            isPinPending={isPinPending}
-            eventIsPinned={eventIsPinned}
-            pinActionLabel={pinActionLabel}
-            eventId={eventId}
-            isEventActive={isEventActive}
-            togglePin={togglePin}
-            queryGuildId={queryGuildId}
-            queryEventId={queryEventId}
-            setSummaryDialogOpen={setSummaryDialogOpen}
-            setRulesDialogOpen={setRulesDialogOpen}
-          />
-
-          <EventActionsCard
-            className="xl:hidden"
-            canManage={canManage}
-            canDeleteEvent={canDeleteEvent}
-            isActive={isEventActive}
-            isUpdatePending={updateEvent.isPending}
-            isDeletePending={deleteEvent.isPending}
-            onEdit={navigateToEventEdit}
-            onToggleStatus={openEventStatusDialog}
-            onDelete={() => setDeleteDialogOpen(true)}
-          />
-
+      <ScrollArea data-under-top-bar className="min-h-0 flex-1">
+        <EventHeader tab="overview" />
+        <div className="min-w-0">
           {mapsError && (
-            <SectionCard>
-              <QueryErrorNotice
-                message={t("events.maps.error")}
-                onRetry={() => void refetchMaps()}
-                isRetrying={isMapsFetching}
-              />
-            </SectionCard>
+            <QueryErrorNotice
+              message={t("events.maps.error")}
+              onRetry={() => void refetchMaps()}
+              isRetrying={isMapsFetching}
+              className={LIST_TILE_RULE_CLASS}
+            />
+          )}
+          {currentMember.isError && (
+            <QueryErrorNotice
+              message={t("events.score.memberError")}
+              onRetry={() => void currentMember.refetch()}
+              isRetrying={currentMember.isFetching}
+              className={LIST_TILE_RULE_CLASS}
+            />
           )}
           {rankingError && (
-            <SectionCard>
-              <QueryErrorNotice
-                message={t("events.ranking.error")}
-                onRetry={() => void refetchRanking()}
-                isRetrying={isRankingFetching}
-              />
-            </SectionCard>
+            <QueryErrorNotice
+              message={t("events.ranking.error")}
+              onRetry={() => void refetchRanking()}
+              isRetrying={isRankingFetching}
+              className={LIST_TILE_RULE_CLASS}
+            />
           )}
-          <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
-            <div className="contents xl:block xl:min-w-0 xl:space-y-3">
-              <div className="order-1 xl:order-none">
-                <EventHeroesTable
-                  rows={heroes.map((hero) => ({
-                    hero,
-                    timer: findEventHeroTimer(heroTimers, {
-                      heroNpcId: hero.npcId,
-                      heroName: hero.npcName,
-                    }),
-                    stats: heroStats?.find(
-                      (statistic) =>
-                        hero.npcId !== null && statistic.npcId === hero.npcId,
-                    ),
-                  }))}
-                  guildId={queryGuildId}
-                  eventId={queryEventId}
-                  canManage={canManage}
-                  onAddHero={() => {
-                    setSelectedHeroId(null);
-                    setHeroDialogOpen(true);
-                  }}
-                  onEditHero={handleEditHero}
-                  onManageMaps={handleManageMaps}
-                  onDeleteHero={handleDeleteHero}
-                  isDeleteHeroPending={isDeleteHeroPending}
-                />
-              </div>
-
-              <div className="order-4 xl:order-none">
-                <EventHeroLoots
-                  guildId={queryGuildId}
-                  heroNpcNames={heroes.map((h) => h.npcName)}
-                  heroNpcs={heroes}
-                  showHeroTabs
-                  world={event.world}
-                  limit={5}
-                />
-              </div>
-            </div>
-
-            <div className="contents xl:block xl:min-w-0 xl:space-y-3">
-              <EventActionsCard
-                className="hidden xl:flex"
-                canManage={canManage}
-                canDeleteEvent={canDeleteEvent}
-                isActive={isEventActive}
-                isUpdatePending={updateEvent.isPending}
-                isDeletePending={deleteEvent.isPending}
-                onEdit={navigateToEventEdit}
-                onToggleStatus={openEventStatusDialog}
-                onDelete={() => setDeleteDialogOpen(true)}
+          <EventOverviewColumns
+            heroes={heroesTable}
+            loots={recentLoots}
+            ranking={
+              <EventRankingPreview
+                rankings={rankings}
+                heroNpcs={heroes}
+                guildId={queryGuildId}
+                eventId={queryEventId}
+                limit={5}
               />
-
-              <div className="order-2 xl:order-none">
-                <EventRankingPreview
-                  rankings={rankings}
-                  heroNpcs={heroes}
-                  guildId={queryGuildId}
-                  eventId={queryEventId}
-                  limit={5}
-                />
-              </div>
-
-              <div className="order-3 xl:order-none">
-                <RecentKillsPreview
-                  guildId={queryGuildId}
-                  eventId={queryEventId}
-                  heroNpcs={heroes}
-                  showHeroTabs
-                  limit={5}
-                />
-              </div>
-            </div>
-          </div>
+            }
+            kills={recentKills}
+          />
         </div>
       </ScrollArea>
     </div>

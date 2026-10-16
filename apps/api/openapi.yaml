@@ -17271,6 +17271,9 @@ components:
                 border:
                   type: string
                   pattern: ^#[\dA-Fa-f]{6}$
+                separator:
+                  type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 ring:
                   type: string
                   pattern: ^#[\dA-Fa-f]{6}$
@@ -17320,9 +17323,6 @@ components:
                   type: string
                   pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-accent-foreground:
-                  type: string
-                  pattern: ^#[\dA-Fa-f]{6}$
-                sidebar-border:
                   type: string
                   pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-ring:
@@ -17494,6 +17494,9 @@ components:
                 border:
                   type: string
                   pattern: ^#[\dA-Fa-f]{6}$
+                separator:
+                  type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 ring:
                   type: string
                   pattern: ^#[\dA-Fa-f]{6}$
@@ -17543,9 +17546,6 @@ components:
                   type: string
                   pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-accent-foreground:
-                  type: string
-                  pattern: ^#[\dA-Fa-f]{6}$
-                sidebar-border:
                   type: string
                   pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-ring:
@@ -17722,6 +17722,9 @@ components:
                 border:
                   type: string
                   pattern: ^#[\dA-Fa-f]{6}$
+                separator:
+                  type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 ring:
                   type: string
                   pattern: ^#[\dA-Fa-f]{6}$
@@ -17771,9 +17774,6 @@ components:
                   type: string
                   pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-accent-foreground:
-                  type: string
-                  pattern: ^#[\dA-Fa-f]{6}$
-                sidebar-border:
                   type: string
                   pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-ring:
@@ -17924,6 +17924,9 @@ components:
                 border:
                   type: string
                   pattern: ^#[\dA-Fa-f]{6}$
+                separator:
+                  type: string
+                  pattern: ^#[\dA-Fa-f]{6}$
                 ring:
                   type: string
                   pattern: ^#[\dA-Fa-f]{6}$
@@ -17973,9 +17976,6 @@ components:
                   type: string
                   pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-accent-foreground:
-                  type: string
-                  pattern: ^#[\dA-Fa-f]{6}$
-                sidebar-border:
                   type: string
                   pattern: ^#[\dA-Fa-f]{6}$
                 sidebar-ring:

@@ -1,6 +1,5 @@
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
+import { BandSection } from "@/components/common/band-section";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Package } from "lucide-react";
@@ -32,23 +31,22 @@ export const MatchingLootsSection = ({
   const { t } = useTranslation();
 
   return (
-    <SectionCard data-testid="matching-loots-card" className="overflow-hidden">
-      <SectionCardHeader
-        icon={Package}
-        title={t("events.killDetail.matchingLoots")}
-        actions={
-          <ChevronLink
-            render=<Link
-              to="/$guildId"
-              params={{ guildId }}
-              search={{ npcs: npcName }}
-            />
-          >
-            {t("events.loots.showAll")}
-          </ChevronLink>
-        }
-      />
-
+    <BandSection
+      id="kill-matching-loots"
+      title={t("events.killDetail.matchingLoots")}
+      tiled
+      trailing={
+        <ChevronLink
+          render=<Link
+            to="/$guildId"
+            params={{ guildId }}
+            search={{ npcs: npcName }}
+          />
+        >
+          {t("events.loots.showAll")}
+        </ChevronLink>
+      }
+    >
       {hasError && (
         <QueryErrorNotice
           message={t("events.killDetail.lootsError")}
@@ -65,12 +63,12 @@ export const MatchingLootsSection = ({
           title={t("events.killDetail.noLoots")}
         />
       ) : (
-        <div className="divide-y divide-border/70">
+        <div className="divide-y divide-sidebar-border">
           {loots.map((loot) => (
             <LootsListItem key={loot.id} loot={loot} variant="embedded" />
           ))}
         </div>
       )}
-    </SectionCard>
+    </BandSection>
   );
 };

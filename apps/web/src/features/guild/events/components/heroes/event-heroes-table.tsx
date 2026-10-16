@@ -1,12 +1,10 @@
-import { PAGE_STICKY_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
+import { BandSection } from "@/components/common/band-section";
 import { EmptyState } from "@/components/common/empty-state";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTable } from "@tanstack/react-table";
 import { Plus, Swords } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
-import { SectionCard } from "@/components/common/section-card/section-card";
 import { Table } from "@lootlog/ui/components/table";
 import { cn } from "cn";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
@@ -29,6 +27,7 @@ type EventHeroesTableProps = {
   onEditHero: (hero: EventHeroNpc) => void;
   onManageMaps: (hero: EventHeroNpc) => void;
   rows: EventHeroTableRow[];
+  showStandings?: boolean;
 };
 
 const getColumnClassName = (columnId: string) => {
@@ -38,7 +37,10 @@ const getColumnClassName = (columnId: string) => {
     return "hidden w-0 text-right lg:table-cell lg:w-16";
   }
 
-  if (columnId === "timer") return "w-24 text-right sm:w-28";
+  if (columnId === "timer") return "w-28 text-right";
+
+  // Below `lg` the hero's own line names the place.
+  if (columnId === "mine") return "hidden w-0 text-right lg:table-cell lg:w-24";
 
   if (columnId === "actions") return "w-16 text-right";
 
@@ -55,6 +57,7 @@ export const EventHeroesTable = ({
   onEditHero,
   onManageMaps,
   rows,
+  showStandings = false,
 }: EventHeroesTableProps) => {
   const { t } = useTranslation();
   const [heroToDelete, setHeroToDelete] = useState<EventHeroNpc | null>(null);
@@ -66,6 +69,7 @@ export const EventHeroesTable = ({
     onRequestDeleteHero: setHeroToDelete,
     onEditHero,
     onManageMaps,
+    showStandings,
     t,
   });
 
@@ -76,35 +80,31 @@ export const EventHeroesTable = ({
   });
 
   return (
-    <SectionCard className="h-fit gap-0 overflow-clip border-border bg-card p-0">
-      <SectionCardHeader
-        icon={Swords}
-        title={t("events.heroes.title")}
-        actions={
-          <>
-            {canManage ? (
-              <Button
-                variant="outline"
-                size="sm"
-                className="shrink-0"
-                onClick={onAddHero}
-                icon=<Plus className="size-4" />
-              >
-                {t("events.heroes.addButton")}
-              </Button>
-            ) : null}
-          </>
-        }
-      />
-
+    <BandSection
+      id="event-heroes"
+      title={t("events.heroes.title")}
+      tiled
+      trailing={
+        canManage && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onAddHero}
+            icon=<Plus className="size-4" />
+          >
+            {t("events.heroes.addButton")}
+          </Button>
+        )
+      }
+    >
       {rows.length === 0 ? (
         <EmptyState icon={Swords} title={t("events.heroes.empty")} />
       ) : (
-        <Table className="w-full table-auto lg:table-fixed">
+        <Table className="w-full table-fixed">
           <TanStackTableHeader
             table={table}
-            className={PAGE_STICKY_TABLE_HEADER_CLASS}
-            rowClassName="border-b-1! border-border"
+            className="bg-sidebar"
+            rowClassName="border-b-1! border-sidebar-border"
             getHeadClassName={(header) =>
               cn(
                 "whitespace-nowrap align-middle",
@@ -114,7 +114,7 @@ export const EventHeroesTable = ({
           />
           <TanStackTableBody
             table={table}
-            rowClassName="h-14 border-b border-border hover:bg-muted/40"
+            rowClassName="h-14 border-b border-sidebar-border hover:bg-muted/40"
             getCellClassName={(cell) =>
               cn(
                 "h-14 overflow-hidden align-middle",
@@ -139,6 +139,6 @@ export const EventHeroesTable = ({
         actionLabelKey="events.heroes.deleteAction"
         variant="destructive"
       />
-    </SectionCard>
+    </BandSection>
   );
 };

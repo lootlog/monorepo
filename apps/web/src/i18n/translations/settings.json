@@ -1051,6 +1051,7 @@
         "accentDescription": "Przyciski, zaznaczenia i aktywne elementy.",
         "background": "Tło",
         "backgroundDescription": "Tło stron, kart i paska bocznego. Kolor tekstu dobiera się sam, żeby zawsze był czytelny.",
+        "separatorDescription": "Linie między sekcjami, kolumnami, wierszami i kartami.",
         "hexLabel": "Kod koloru: {{name}}",
         "transparency": "Przezroczystość",
         "transparencyDescription": "Jak mocno tapeta prześwituje przez tło, listy i karty. Tekst zawsze zostaje czytelny.",
@@ -1101,6 +1102,7 @@
         "destructive": "Niebezpieczne akcje",
         "destructive-foreground": "Tekst na niebezpiecznych akcjach",
         "border": "Obramowanie",
+        "separator": "Separatory",
         "ring": "Obwódka fokusu",
         "chart-1": "Wykres 1",
         "chart-2": "Wykres 2",
@@ -1118,7 +1120,6 @@
         "sidebar-primary-foreground": "Tekst na akcencie paska bocznego",
         "sidebar-accent": "Podświetlenie paska bocznego",
         "sidebar-accent-foreground": "Tekst na podświetleniu paska bocznego",
-        "sidebar-border": "Obramowanie paska bocznego",
         "sidebar-ring": "Obwódka fokusu paska bocznego"
       },
       "unsavedChanges": "Masz niezapisane zmiany w motywie",

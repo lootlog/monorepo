@@ -1,10 +1,9 @@
 import { EmptyState } from "@/components/common/empty-state";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
-import { SectionCard } from "@/components/common/section-card/section-card";
+import { BandSection } from "@/components/common/band-section";
 import { Package } from "lucide-react";
 import { useEventLoots } from "../../hooks/queries/use-event-loots";
 import type { EventHeroNpc } from "../../types/api";
@@ -47,25 +46,24 @@ export const EventHeroLoots = ({
 
   return (
     <>
-      <SectionCard className="overflow-hidden">
-        <SectionCardHeader
-          icon={Package}
-          title={t("events.loots.title")}
-          actions={
-            <ChevronLink
-              render=<Link
-                to="/$guildId"
-                params={{ guildId }}
-                search={{
-                  npcs: activeHeroName ?? heroNpcNames.join(","),
-                }}
-              />
-            >
-              {t("events.loots.showAll")}
-            </ChevronLink>
-          }
-        />
-
+      <BandSection
+        id="event-recent-loots"
+        title={t("events.loots.title")}
+        tiled
+        trailing={
+          <ChevronLink
+            render=<Link
+              to="/$guildId"
+              params={{ guildId }}
+              search={{
+                npcs: activeHeroName ?? heroNpcNames.join(","),
+              }}
+            />
+          >
+            {t("events.loots.showAll")}
+          </ChevronLink>
+        }
+      >
         {showHeroTabs && heroNpcs && (
           <HeroTabs
             placement="section"
@@ -88,14 +86,14 @@ export const EventHeroLoots = ({
         ) : (
           <div
             key={activeHeroName}
-            className="divide-y divide-border/70 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200"
+            className="divide-y divide-sidebar-border motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200"
           >
             {loots.map((loot) => (
               <LootsListItem key={loot.id} loot={loot} variant="embedded" />
             ))}
           </div>
         )}
-      </SectionCard>
+      </BandSection>
       <LootDetailsDialog />
     </>
   );

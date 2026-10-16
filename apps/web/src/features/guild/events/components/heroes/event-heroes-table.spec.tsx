@@ -11,7 +11,9 @@ import {
   screen,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { EMPTY_VALUE } from "@/constants/empty-value";
 import { EventHeroesTable } from "./event-heroes-table";
+import type { MyHeroScore } from "../../utils/my-hero-scores";
 
 await initializeTestTranslations({
   "events.heroes.columns.idValue": "ID: {{id}}",
@@ -175,10 +177,29 @@ describe("EventHeroesTable", () => {
     ).toBeNull();
   });
 
-  it("keeps the empty state inside the card", async () => {
-    await render(<EventHeroesTable {...defaultProps} rows={[]} />);
+  it("keeps the player's place unknown while it loads, and empty only once known", async () => {
+    const withScore = (score?: Omit<MyHeroScore, "hero">) =>
+      defaultProps.rows.map((row) => ({
+        ...row,
+        score: score && { ...score, hero: row.hero },
+      }));
 
-    const emptyState = screen.getByText("events.heroes.empty");
-    expect(emptyState.closest('[data-slot="card"]')).toBeTruthy();
+    await render(
+      <EventHeroesTable {...defaultProps} rows={withScore()} showStandings />,
+    );
+
+    // A place still loading must not read as "not in the ranking".
+    expect(screen.queryByText(EMPTY_VALUE)).toBeNull();
+
+    cleanup();
+    await render(
+      <EventHeroesTable
+        {...defaultProps}
+        rows={withScore({ playerCount: 4, points: 0, kills: 0 })}
+        showStandings
+      />,
+    );
+
+    expect(await screen.findByText(EMPTY_VALUE)).toBeTruthy();
   });
 });

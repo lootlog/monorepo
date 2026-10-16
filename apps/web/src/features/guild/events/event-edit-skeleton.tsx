@@ -1,47 +1,38 @@
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { PageHeaderSkeleton } from "@/components/common/page-header-skeleton";
+import {
+  LIST_BAND_HEADING_CLASS,
+  LIST_GROUP_HEADING_CLASS,
+  LIST_TILE_INSET_CLASS,
+} from "@/components/common/list-tile";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { cn } from "cn";
 
-export const EventEditSkeleton = () => {
-  return (
-    <div aria-busy="true" className="flex flex-col gap-3 px-3 py-3">
-      <PageHeaderSkeleton withDescription={false} />
+const FieldSkeleton = () => (
+  <div className="space-y-2">
+    <Skeleton className="h-3 w-24" />
+    <Skeleton className="h-9 w-full" />
+  </div>
+);
 
-      <SectionCard>
-        <SectionCardContent>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Skeleton className="h-3 w-16" />
-              <Skeleton className="h-9 w-full" />
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Skeleton className="h-3 w-24" />
-                <Skeleton className="h-9 w-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-3 w-24" />
-                <Skeleton className="h-9 w-full" />
-              </div>
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-2">
-                <Skeleton className="h-3 w-24" />
-                <Skeleton className="h-9 w-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-3 w-24" />
-                <Skeleton className="h-9 w-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-3 w-24" />
-                <Skeleton className="h-9 w-full" />
-              </div>
-            </div>
-          </div>
-        </SectionCardContent>
-      </SectionCard>
+/** Stands in for an event edit tab: a banded section of fields. */
+export const EventEditSkeleton = () => (
+  <section aria-busy="true">
+    <div
+      className={cn(
+        LIST_GROUP_HEADING_CLASS,
+        LIST_BAND_HEADING_CLASS,
+        LIST_TILE_INSET_CLASS,
+      )}
+    >
+      <Skeleton className="h-4 w-40" />
     </div>
-  );
-};
+    <div className={cn("py-5", LIST_TILE_INSET_CLASS)}>
+      <div className="flex max-w-3xl flex-col gap-4">
+        <FieldSkeleton />
+        <div className="grid gap-4 md:grid-cols-2">
+          <FieldSkeleton />
+          <FieldSkeleton />
+        </div>
+      </div>
+    </div>
+  </section>
+);

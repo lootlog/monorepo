@@ -126,7 +126,8 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
     >
       <TanStackTableHeader
         table={table}
-        className={FILTERED_TABLE_HEADER_CLASS}
+        // A short preview scrolls past whole; only the history pins it.
+        className={isPreview ? "bg-sidebar" : FILTERED_TABLE_HEADER_CLASS}
         rowClassName="border-b-1! border-border hover:bg-transparent"
         getHeadClassName={(header) =>
           cn(
