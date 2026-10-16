@@ -1,5 +1,5 @@
 import { useId, useState } from "react";
-import { Check, ChevronsUpDown, Users } from "lucide-react";
+import { Check, Users } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -13,12 +13,11 @@ import {
   CommandItem,
   CommandList,
 } from "@lootlog/ui/components/command";
-import { Button } from "@lootlog/ui/components/button";
 import { cn } from "cn";
 import { useBattlesControllerGetUserCharacters } from "@lootlog/client/battlelog";
 import { CharacterAvatar } from "@/components/filters/character-avatar";
-import type { BattleCharacter } from "@/lib/api/battlelog-types";
-import { upperFirst } from "es-toolkit";
+import { getCharacterDetails } from "./character-details";
+import { CharacterSelectorTrigger } from "./character-selector-trigger";
 import { useTranslation } from "react-i18next";
 
 type SingleCharacterSelection = {
@@ -42,27 +41,11 @@ type CharacterSelectorProps = (
   className?: string;
 };
 
-const MAX_TRIGGER_AVATARS = 3;
-
 const renderPlaceholderAvatar = () => (
   <span className="flex size-7 shrink-0 items-center justify-center">
     <Users className="size-4" aria-hidden="true" />
   </span>
 );
-
-// The level and profession come from the character's latest battle, so a
-// character without battles only has its world.
-const getCharacterDetails = (character: BattleCharacter) => {
-  const world = upperFirst(character.world);
-
-  // A battlelog deployed before these fields existed omits them entirely.
-  const level = character.lvl ?? null;
-  const profession = character.prof ?? null;
-
-  return level === null || profession === null
-    ? world
-    : `${world} · ${level}${profession}`;
-};
 
 export function CharacterSelector(props: CharacterSelectorProps) {
   const { size = "lg", className } = props;
@@ -84,7 +67,6 @@ export function CharacterSelector(props: CharacterSelectorProps) {
     selectedIdSet.has(character.id),
   );
 
-  const [selectedCharacter] = selectedCharacters;
   const allowAllCharacters = !props.multiple && props.allowAllCharacters;
 
   const placeholder =
@@ -107,57 +89,19 @@ export function CharacterSelector(props: CharacterSelectorProps) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
-          <Button
-            variant="outline"
+          <CharacterSelectorTrigger
+            selectedCharacters={selectedCharacters}
+            placeholder={placeholder}
+            // A required character is the page's subject, not a narrowing.
+            active={
+              Boolean(props.multiple || allowAllCharacters) &&
+              selectedCharacters.length > 0
+            }
             size={size}
-            role="combobox"
+            className={className}
             aria-controls={listId}
             aria-expanded={open}
-            className={cn(
-              "min-w-0 justify-between gap-2",
-              // Without a character, the icon and label line up with the
-              // filter popovers beside it.
-              selectedCharacter ? "px-2" : "px-3",
-              className,
-            )}
-          >
-            <span className="flex min-w-0 items-center gap-2">
-              {selectedCharacters.length > 1 ? (
-                <span className="flex shrink-0 -space-x-1.5">
-                  {selectedCharacters
-                    .slice(0, MAX_TRIGGER_AVATARS)
-                    .map((character) => (
-                      <CharacterAvatar
-                        key={character.id}
-                        icon={character.icon}
-                      />
-                    ))}
-                </span>
-              ) : selectedCharacter ? (
-                <CharacterAvatar icon={selectedCharacter.icon} />
-              ) : (
-                <Users className="size-4 shrink-0" aria-hidden="true" />
-              )}
-              <span className="flex min-w-0 flex-col items-start leading-tight">
-                <span className="max-w-full truncate">
-                  {selectedCharacters.length > 1
-                    ? t("ui.characterSelector.selectedCount", {
-                        count: selectedCharacters.length,
-                      })
-                    : (selectedCharacter?.name ?? placeholder)}
-                </span>
-                {selectedCharacters.length === 1 && selectedCharacter && (
-                  <span className="text-[11px] font-normal text-muted-foreground">
-                    {getCharacterDetails(selectedCharacter)}
-                  </span>
-                )}
-              </span>
-            </span>
-            <ChevronsUpDown
-              className="size-4 shrink-0 opacity-50"
-              aria-hidden="true"
-            />
-          </Button>
+          />
         }
       />
       <PopoverContent align="start" className="w-[280px] p-0">

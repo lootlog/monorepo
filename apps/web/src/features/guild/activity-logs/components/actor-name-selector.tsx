@@ -14,6 +14,8 @@ import {
   useComboboxAnchor,
 } from "@lootlog/ui/components/combobox";
 import { Button } from "@lootlog/ui/components/button";
+import { useInFilterBar } from "@lootlog/ui/components/filter-bar-context";
+import { FilterChipTrigger } from "@lootlog/ui/components/filter-chip-trigger";
 import {
   INLINE_SEARCH_INPUT_CLASS,
   InlineSearchField,
@@ -31,6 +33,8 @@ interface ActorNameSelectorProps {
   searchValue: string;
   onSearchChange: (value: string) => void;
   placeholder: string;
+  /** The filter's name for its chip in a filter bar. */
+  label?: string;
   /**
    * A filter bar's leading search: a borderless field typed into in place,
    * with the suggestions listed under the whole field, instead of a button
@@ -48,9 +52,11 @@ export function ActorNameSelector({
   onSearchChange,
   placeholder,
   inline = false,
+  label,
   className,
 }: ActorNameSelectorProps) {
   const { t } = useTranslation();
+  const inFilterBar = useInFilterBar();
   const [open, setOpen] = useState(false);
   const anchor = useComboboxAnchor();
   const customValue = searchValue.trim();
@@ -124,6 +130,19 @@ export function ActorNameSelector({
             className={INLINE_SEARCH_INPUT_CLASS}
           />
         </InlineSearchField>
+      ) : inFilterBar && label ? (
+        // Picking another name replaces the chosen one; the popup's search
+        // clears it.
+        <ComboboxTrigger
+          render={
+            <FilterChipTrigger
+              icon={Search}
+              label={label}
+              value={value || undefined}
+              active={Boolean(value)}
+            />
+          }
+        />
       ) : (
         <div className={cn("relative", className)}>
           <ComboboxTrigger

@@ -3,6 +3,7 @@
 import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 
 import { cn } from "cn";
+import { useInFilterBar } from "@lootlog/ui/components/filter-bar-context";
 
 function Tabs({ className, ...props }: TabsPrimitive.Root.Props) {
   return (
@@ -25,6 +26,8 @@ const tabsListVariants = {
   pill: "rounded-lg border border-border",
   /** A square strip that fills a card row between its separators. */
   flush: "rounded-none",
+  /** Views in a filter bar, frameless like the filter chips beside them. */
+  chips: "gap-1 rounded-control bg-transparent",
 };
 
 /** Looks like the animated toggle group: a lime pill slides to the active tab. */
@@ -38,15 +41,18 @@ function TabsList({
   size?: keyof typeof tabsListSizes;
   variant?: keyof typeof tabsListVariants;
 }) {
+  // A filter bar shows every view switch as chips, whatever the caller asked.
+  const shownVariant = useInFilterBar() ? "chips" : variant;
+
   return (
     <TabsPrimitive.List
       data-slot="tabs-list"
       data-size={size}
-      data-variant={variant}
+      data-variant={shownVariant}
       className={cn(
         tabsListSizes[size],
-        tabsListVariants[variant],
-        "relative isolate inline-flex w-fit max-w-full items-stretch overflow-x-auto bg-background [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        "group/tabs-list relative isolate inline-flex w-fit max-w-full items-stretch overflow-x-auto bg-background [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        tabsListVariants[shownVariant],
         className,
       )}
       {...props}
@@ -54,7 +60,7 @@ function TabsList({
       {children}
       <TabsPrimitive.Indicator
         data-slot="tabs-indicator"
-        className="absolute top-0 left-(--active-tab-left) -z-10 h-full w-(--active-tab-width) rounded-[inherit] bg-primary transition-[left,width] duration-150 ease-emphasized motion-reduce:transition-none"
+        className="absolute top-0 left-(--active-tab-left) -z-10 h-full w-(--active-tab-width) rounded-[inherit] bg-primary transition-[left,width] duration-150 ease-emphasized group-data-[variant=chips]/tabs-list:bg-primary/15 motion-reduce:transition-none"
       />
     </TabsPrimitive.List>
   );
@@ -65,7 +71,7 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
     <TabsPrimitive.Tab
       data-slot="tabs-trigger"
       className={cn(
-        "inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[inherit] px-3 text-sm font-medium whitespace-nowrap text-foreground outline-none transition-[color,scale] duration-150 ease-emphasized focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset active:scale-[0.96] disabled:pointer-events-none disabled:opacity-50 data-active:text-primary-foreground motion-reduce:transition-none motion-reduce:active:scale-100 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[inherit] px-3 text-sm font-medium whitespace-nowrap text-foreground outline-none transition-[color,scale] duration-150 ease-emphasized focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset active:scale-[0.96] disabled:pointer-events-none disabled:opacity-50 data-active:text-primary-foreground group-data-[variant=chips]/tabs-list:text-muted-foreground group-data-[variant=chips]/tabs-list:hover:text-foreground group-data-[variant=chips]/tabs-list:data-active:text-primary motion-reduce:transition-none motion-reduce:active:scale-100 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}

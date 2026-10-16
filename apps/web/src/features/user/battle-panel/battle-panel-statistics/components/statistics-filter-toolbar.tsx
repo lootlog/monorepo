@@ -50,6 +50,7 @@ export const StatisticsFilterToolbar = ({
         value={period}
         onValueChange={onPeriodChange}
         width="w-[170px]"
+        active={period !== "30d"}
       />
       <MoreFiltersPopover
         minLevel={minLevel}

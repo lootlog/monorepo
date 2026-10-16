@@ -11,7 +11,6 @@ export type KillStatsLevelRangeValue = {
 
 type KillStatsLevelRangeProps = {
   level: KillStatsLevelRangeValue;
-  layout: "inline" | "fill";
 };
 
 // Callers debounce the request on their own, so the inputs commit sooner than
@@ -22,12 +21,8 @@ const toLevelParam = (value: number | undefined) =>
   value === undefined ? "" : String(value);
 
 /** The kill statistics level range, over the bounds as persisted strings. */
-export const KillStatsLevelRange = ({
-  level,
-  layout,
-}: KillStatsLevelRangeProps) => (
+export const KillStatsLevelRange = ({ level }: KillStatsLevelRangeProps) => (
   <LevelRangeFilter
-    layout={layout}
     debounceMs={LEVEL_COMMIT_DELAY_MS}
     minLevel={parseKillStatsLevel(level.minLvl)}
     maxLevel={parseKillStatsLevel(level.maxLvl)}

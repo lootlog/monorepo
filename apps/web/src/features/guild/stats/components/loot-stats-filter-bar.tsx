@@ -3,7 +3,8 @@ import { FilterBar } from "@/components/common/filter-bar";
 import { PeriodSelector } from "@/components/filters/period-selector";
 import type { ComponentProps } from "react";
 import { useTranslation } from "react-i18next";
-import { LootStatsExcludeColossus } from "./loot-stats-exclude-colossus";
+import { Button } from "@lootlog/ui/components/button";
+import { Ban, Check } from "lucide-react";
 import { LootStatsStackedFilters } from "./loot-stats-stacked-filters";
 
 type LootStatsFilterBarProps = ComponentProps<typeof LootStatsStackedFilters>;
@@ -25,15 +26,23 @@ export const LootStatsFilterBar = (props: LootStatsFilterBarProps) => {
       <PeriodSelector
         value={props.period}
         onValueChange={props.onPeriodChange}
+        active={props.period !== "7d"}
       />
-      {/* Framed like the selects next to it. */}
-      <div className="flex h-10 items-center rounded-lg border border-input bg-background px-3 transition-colors hover:border-foreground/20 hover:bg-foreground/[0.04]">
-        <LootStatsExcludeColossus
-          id="loot-stats-exclude-colossus"
-          checked={props.excludeColossus}
-          onCheckedChange={props.onExcludeColossusChange}
-        />
-      </div>
+      <Button
+        type="button"
+        variant="chip"
+        size="lg"
+        aria-pressed={props.excludeColossus}
+        data-active={props.excludeColossus || undefined}
+        onClick={() => props.onExcludeColossusChange(!props.excludeColossus)}
+      >
+        {props.excludeColossus ? (
+          <Check aria-hidden="true" />
+        ) : (
+          <Ban className="text-muted-foreground" aria-hidden="true" />
+        )}
+        {t("loots.stats.excludeColossus")}
+      </Button>
     </FilterBar>
   );
 };

@@ -28,6 +28,7 @@ export const KillStatsPeriodSelect: React.FC<KillStatsPeriodSelectProps> = ({
       allLabel={allLabel}
       width={className ?? "w-[140px]"}
       className={triggerClassName}
+      active={value !== "all"}
     />
   );
 };

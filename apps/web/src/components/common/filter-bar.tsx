@@ -6,6 +6,7 @@ import { useMediaQuery } from "usehooks-ts";
 import { FilterChipList, type FilterChip } from "./filter-chip-list";
 import { LIST_TILE_INSET_CLASS, LIST_TILE_RULE_CLASS } from "./list-tile";
 import { RESULTS_TABLE_MEDIA_QUERY } from "./page-sticky-table-header";
+import { FilterBarContext } from "@lootlog/ui/components/filter-bar-context";
 
 type FilterBarProps = {
   /** Names the group of filters and their panel; a skeleton has none. */
@@ -102,13 +103,16 @@ export const FilterBar = ({
               LIST_TILE_INSET_CLASS,
             )}
           >
-            {search}
-            {!usesPanel && children && (
-              // Wraps under the search as a whole once both no longer fit.
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                {children}
-              </div>
-            )}
+            <FilterBarContext value>
+              {search}
+              {!usesPanel && children && (
+                // At the bar's end; wraps under the search as a whole once
+                // both no longer fit.
+                <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-1">
+                  {children}
+                </div>
+              )}
+            </FilterBarContext>
           </div>
         )}
         {clearFiltersLabel !== undefined && onClearFilters && (
