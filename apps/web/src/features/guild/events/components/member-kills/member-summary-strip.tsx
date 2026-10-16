@@ -1,4 +1,4 @@
-import { KpiCard } from "@/components/common/kpi-card";
+import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
 import { formatPoints } from "../../utils/format-points";
 import { useTranslation } from "react-i18next";
 import { Clock, Moon, Sparkles, Swords } from "lucide-react";
@@ -46,8 +46,8 @@ export const MemberSummaryStrip = ({
     contextStats.totalKills > 0 ? 100 - contextStats.avgAfkPercentage : null;
 
   return (
-    <div className="grid grid-cols-2 gap-3 p-3 lg:grid-cols-4">
-      <KpiCard
+    <StatsTileGrid className="grid-cols-2 xl:grid-cols-4">
+      <StatsTile
         icon={Swords}
         label={t("events.kills.kpiKills")}
         value={contextStats.totalKills}
@@ -62,23 +62,22 @@ export const MemberSummaryStrip = ({
           ) : null
         }
       />
-      <KpiCard
+      <StatsTile
         icon={Sparkles}
         label={t("events.kills.kpiPoints")}
         value={
-          <>
+          <span className="text-primary">
             {formatPoints(contextStats.totalPoints)}
             <span className="ml-1 text-sm font-medium text-primary/75">
               {t("events.common.pointsShort")}
             </span>
-          </>
+          </span>
         }
-        valueClassName="text-primary"
         detail={t("events.kills.kpiPerKill", {
           value: formatPoints(contextStats.avgPointsPerKill),
         })}
       />
-      <KpiCard
+      <StatsTile
         icon={Clock}
         label={t("events.kills.kpiTotalTime")}
         value={formatDurationHuman(contextStats.totalTimeSeconds)}
@@ -88,7 +87,7 @@ export const MemberSummaryStrip = ({
           ),
         })}
       />
-      <KpiCard
+      <StatsTile
         icon={Moon}
         label={t("events.kills.kpiAvgAfk")}
         value={formatPercentage(contextStats.avgAfkPercentage)}
@@ -103,6 +102,6 @@ export const MemberSummaryStrip = ({
           ) : null
         }
       />
-    </div>
+    </StatsTileGrid>
   );
 };

@@ -41,6 +41,7 @@ afterEach(() => {
 async function renderPage(
   data: EventCoordinationResponseDto | "loading" | "forbidden",
   capabilities: Permission[] = [],
+  { overviewFails = false }: { overviewFails?: boolean } = {},
 ) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity } },
@@ -55,14 +56,29 @@ async function renderPage(
     configureApiClients({
       main: {
         baseUrl: "https://api.test",
-        fetch: () =>
-          data === "loading"
-            ? new Promise<Response>(() => {})
-            : Promise.resolve(
-                data === "forbidden"
-                  ? Response.json({}, { status: 403 })
-                  : Response.json(data),
-              ),
+        fetch: (input: RequestInfo | URL) => {
+          const path = new URL(input instanceof Request ? input.url : input)
+            .pathname;
+
+          if (overviewFails) {
+            // Only the event itself fails; other requests have nothing.
+            if (path.endsWith("/events/event-1/overview")) {
+              return Promise.resolve(Response.json({}, { status: 500 }));
+            }
+
+            if (!path.endsWith("/coordination")) {
+              return Promise.resolve(Response.json([]));
+            }
+          }
+
+          if (data === "loading") return new Promise<Response>(() => {});
+
+          return Promise.resolve(
+            data === "forbidden"
+              ? Response.json({}, { status: 403 })
+              : Response.json(data),
+          );
+        },
       },
     }),
   );
@@ -89,7 +105,8 @@ async function renderPage(
     </QueryClientProvider>,
   );
 
-  await act(() => vi.advanceTimersByTimeAsync(0));
+  // A failing request is retried with backoff before the page shows it failed.
+  await act(() => vi.advanceTimersByTimeAsync(overviewFails ? 60_000 : 0));
 
   return container.innerHTML;
 }
@@ -121,6 +138,17 @@ describe("EventCoordinationPage", () => {
     expect(html).toContain("events.coordination.actions.selfAssign");
     expect(html).toContain("events.coordination.actions.close_window");
   });
+  it("keeps the event's sections and a retry when only the event fails to load", async () => {
+    const html = await renderPage(createCoordination([]), [], {
+      overviewFails: true,
+    });
+
+    expect(html).toContain("events.coordination.empty");
+    expect(html).toContain("events.header.loadError");
+    expect(html).toContain("events.tabs.ranking");
+    expect(html).toContain("common.actions.retry");
+  });
+
   it("disables self assignment and shows a countdown before the assignment window", async () => {
     const html = await renderPage(
       createCoordination([

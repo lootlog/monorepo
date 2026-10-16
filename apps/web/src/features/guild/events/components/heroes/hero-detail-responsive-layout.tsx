@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { StatsSectionColumns } from "@/components/common/stats-section-columns";
 
 interface HeroDetailResponsiveLayoutProps {
   maps: ReactNode;
@@ -6,40 +7,23 @@ interface HeroDetailResponsiveLayoutProps {
   sidebar: ReactNode;
 }
 
+/**
+ * The hero's maps beside who takes part and the hero's ranking, kills and
+ * loots. Narrower pages stack participants first, so a player finds
+ * themselves before the long list of maps.
+ */
 export const HeroDetailResponsiveLayout = ({
   maps,
   participants,
   sidebar,
 }: HeroDetailResponsiveLayoutProps) => (
-  <div
-    className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]"
-    data-hero-detail-layout
-  >
-    <div
-      className="order-2 xl:col-start-1 xl:row-start-1"
-      data-hero-detail-slot="maps"
-    >
-      {maps}
+  <StatsSectionColumns className="xl:grid-cols-[minmax(0,1fr)_440px]">
+    <div className="min-w-0 max-xl:order-2">{maps}</div>
+    <div className="min-w-0 max-xl:contents">
+      {participants && (
+        <div className="min-w-0 max-xl:order-1">{participants}</div>
+      )}
+      <div className="min-w-0 max-xl:order-3">{sidebar}</div>
     </div>
-
-    <div
-      className="contents xl:col-start-2 xl:row-start-1 xl:block xl:space-y-3"
-      data-hero-detail-slot="secondary"
-    >
-      {participants ? (
-        <div
-          className="order-1 xl:order-none"
-          data-hero-detail-slot="participants"
-        >
-          {participants}
-        </div>
-      ) : null}
-      <div
-        className="order-3 space-y-3 xl:order-none"
-        data-hero-detail-slot="sidebar"
-      >
-        {sidebar}
-      </div>
-    </div>
-  </div>
+  </StatsSectionColumns>
 );

@@ -25,7 +25,7 @@ export const PageTabs = ({
     aria-label={ariaLabel}
     data-page-tabs
     data-list-tile
-    className="sticky top-(--page-sticky-top) z-20 h-(--page-tabs-height) border-b border-sidebar-border backdrop-blur-sm"
+    className="sticky top-(--page-sticky-top) z-20 h-(--page-tabs-height) border-b border-border backdrop-blur-sm"
   >
     {tabs.map((tab) => {
       const active = tab.id === activeId;

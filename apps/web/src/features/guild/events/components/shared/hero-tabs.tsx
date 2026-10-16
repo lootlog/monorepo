@@ -42,7 +42,9 @@ export const HeroTabs = ({
         onValueChange(nextValue === ALL_HEROES_VALUE ? undefined : nextValue)
       }
       className={
-        placement === "section" ? "border-b border-border/70" : "min-w-0 flex-1"
+        placement === "section"
+          ? "border-b border-sidebar-border"
+          : "min-w-0 flex-1"
       }
     >
       <EventScrollableTabsList

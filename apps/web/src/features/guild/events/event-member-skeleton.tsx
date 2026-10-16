@@ -1,5 +1,6 @@
 import { DetailSkeleton } from "@/components/common/detail-skeleton";
-import { KpiCard } from "@/components/common/kpi-card";
+import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { SkeletonLine } from "@/components/common/skeleton-line";
 import { Clock, Moon, Sparkles, Swords } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -28,17 +29,16 @@ export const EventMemberSkeleton = () => {
       }
     >
       <SkeletonFilterBar />
-      <div className="grid grid-cols-2 gap-3 p-3 lg:grid-cols-4">
+      <StatsTileGrid className="grid-cols-2 xl:grid-cols-4">
         {KPIS.map((kpi) => (
-          <KpiCard
+          <StatsTile
             key={kpi.labelKey}
             icon={kpi.icon}
             label={t(kpi.labelKey)}
-            value={null}
-            isLoading
+            value={<Skeleton className="my-0.5 h-6 w-16" />}
           />
         ))}
-      </div>
+      </StatsTileGrid>
       <MemberKillRowsSkeleton />
     </DetailSkeleton>
   );

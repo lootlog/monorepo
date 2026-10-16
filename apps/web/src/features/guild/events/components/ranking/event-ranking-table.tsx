@@ -71,7 +71,7 @@ const getColumnClassName = (
 
   if (columnId === "points") {
     if (variant === "compact") {
-      return "w-20 text-right @md/ranking:w-36";
+      return "w-32 text-right @md/ranking:w-36";
     }
 
     return "w-28 text-right md:w-36";
@@ -334,7 +334,10 @@ export const EventRankingTable = ({
       <Table className={cn("w-full table-fixed", isPage && "border-b")}>
         <TanStackTableHeader
           table={table}
-          className={FILTERED_TABLE_HEADER_CLASS}
+          // A short preview scrolls past whole; only the full ranking pins it.
+          className={
+            variant === "compact" ? "bg-sidebar" : FILTERED_TABLE_HEADER_CLASS
+          }
           rowClassName="border-b-1! border-border hover:bg-transparent"
           getHeadClassName={(header) =>
             cn(

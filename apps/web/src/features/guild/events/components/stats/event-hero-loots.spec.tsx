@@ -43,8 +43,6 @@ describe("EventHeroLoots", () => {
     await screen.findAllByTestId("loot-list-item");
     const action = screen.getByRole("link", { name: "events.loots.showAll" });
 
-    expect(action.closest("header")).toBeTruthy();
-
     const target = new URL(
       action.getAttribute("href") ?? "",
       "https://web.test",

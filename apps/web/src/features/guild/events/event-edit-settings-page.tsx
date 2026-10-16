@@ -1,16 +1,13 @@
 import { EventEditSkeleton } from "./event-edit-skeleton";
 import { EventLoadError } from "./components/event-load-error";
 import { useEventEditRoute } from "./hooks/queries/use-event-edit-route";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { PageHeader } from "@/components/common/page-header";
+import { BandSection } from "@/components/common/band-section";
 import { useEffect, useId } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
-import { Settings } from "lucide-react";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import {
@@ -164,128 +161,111 @@ export const EventEditSettingsPage = () => {
   }
 
   return (
-    <div className="flex flex-col gap-3 px-3 py-3">
-      <PageHeader icon={Settings} title={event.name} />
+    <>
+      <h1 className="sr-only">{event.name}</h1>
 
-      <form className="space-y-3 pb-24" onSubmit={form.handleSubmit(onSubmit)}>
-        <SectionCard>
-          <SectionCardContent className="flex min-h-0 flex-col gap-3">
-            <div className="grid gap-4">
+      <form className="pb-24" onSubmit={form.handleSubmit(onSubmit)}>
+        <BandSection
+          id="event-settings-general"
+          title={t("events.settings.sections.general")}
+        >
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <Label htmlFor={`${fieldIdPrefix}-name`}>
+                {t("events.settings.nameLabel")}
+              </Label>
+              <Input
+                id={`${fieldIdPrefix}-name`}
+                {...form.register("name", { required: true })}
+              />
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-2">
-                <Label
-                  htmlFor={`${fieldIdPrefix}-name`}
-                  className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-                >
-                  {t("events.settings.nameLabel")}
+                <Label htmlFor={`${fieldIdPrefix}-startsAt`}>
+                  {t("events.settings.startsAt")}
                 </Label>
                 <Input
-                  id={`${fieldIdPrefix}-name`}
-                  {...form.register("name", { required: true })}
-                  className="text-sm"
+                  type="datetime-local"
+                  id={`${fieldIdPrefix}-startsAt`}
+                  {...form.register("startsAt")}
                 />
               </div>
-
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor={`${fieldIdPrefix}-startsAt`}
-                    className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t("events.settings.startsAt")}
-                  </Label>
-                  <Input
-                    type="datetime-local"
-                    id={`${fieldIdPrefix}-startsAt`}
-                    {...form.register("startsAt")}
-                    className="text-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor={`${fieldIdPrefix}-endsAt`}
-                    className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t("events.settings.endsAt")}
-                  </Label>
-                  <Input
-                    type="datetime-local"
-                    id={`${fieldIdPrefix}-endsAt`}
-                    {...form.register("endsAt")}
-                    className="text-sm"
-                  />
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t("events.settings.datesHint")}
-              </p>
-
-              <div className="grid gap-3 xl:grid-cols-3">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor={`${fieldIdPrefix}-assignmentTimeoutMinutes`}
-                    className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t("events.settings.assignmentTimeout")}
-                  </Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    id={`${fieldIdPrefix}-assignmentTimeoutMinutes`}
-                    {...form.register("assignmentTimeoutMinutes", {
-                      valueAsNumber: true,
-                    })}
-                    className="text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {t("events.settings.assignmentTimeoutDescription")}
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor={`${fieldIdPrefix}-participationConfirmationMinutes`}
-                    className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t("events.settings.participationConfirmation")}
-                  </Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    id={`${fieldIdPrefix}-participationConfirmationMinutes`}
-                    {...form.register("participationConfirmationMinutes", {
-                      valueAsNumber: true,
-                    })}
-                    className="text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {t("events.settings.participationConfirmationDescription")}
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor={`${fieldIdPrefix}-mapAssignmentCap`}
-                    className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-                  >
-                    {t("events.settings.mapAssignmentCap")}
-                  </Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    id={`${fieldIdPrefix}-mapAssignmentCap`}
-                    {...form.register("mapAssignmentCap", {
-                      valueAsNumber: true,
-                    })}
-                    className="text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {t("events.settings.mapAssignmentCapDescription")}
-                  </p>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor={`${fieldIdPrefix}-endsAt`}>
+                  {t("events.settings.endsAt")}
+                </Label>
+                <Input
+                  type="datetime-local"
+                  id={`${fieldIdPrefix}-endsAt`}
+                  {...form.register("endsAt")}
+                />
               </div>
             </div>
-          </SectionCardContent>
-        </SectionCard>
+            <p className="text-xs text-muted-foreground">
+              {t("events.settings.datesHint")}
+            </p>
+          </div>
+        </BandSection>
+        <BandSection
+          id="event-settings-assignments"
+          title={t("events.settings.sections.assignments")}
+        >
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor={`${fieldIdPrefix}-assignmentTimeoutMinutes`}>
+                {t("events.settings.assignmentTimeout")}
+              </Label>
+              <Input
+                type="number"
+                min={0}
+                id={`${fieldIdPrefix}-assignmentTimeoutMinutes`}
+                {...form.register("assignmentTimeoutMinutes", {
+                  valueAsNumber: true,
+                })}
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("events.settings.assignmentTimeoutDescription")}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor={`${fieldIdPrefix}-participationConfirmationMinutes`}
+              >
+                {t("events.settings.participationConfirmation")}
+              </Label>
+              <Input
+                type="number"
+                min={0}
+                id={`${fieldIdPrefix}-participationConfirmationMinutes`}
+                {...form.register("participationConfirmationMinutes", {
+                  valueAsNumber: true,
+                })}
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("events.settings.participationConfirmationDescription")}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor={`${fieldIdPrefix}-mapAssignmentCap`}>
+                {t("events.settings.mapAssignmentCap")}
+              </Label>
+              <Input
+                type="number"
+                min={0}
+                id={`${fieldIdPrefix}-mapAssignmentCap`}
+                {...form.register("mapAssignmentCap", {
+                  valueAsNumber: true,
+                })}
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("events.settings.mapAssignmentCapDescription")}
+              </p>
+            </div>
+          </div>
+        </BandSection>
 
         <UnsavedChangesBar
           isDirty={form.formState.isDirty}
@@ -293,6 +273,6 @@ export const EventEditSettingsPage = () => {
           onReset={() => form.reset()}
         />
       </form>
-    </div>
+    </>
   );
 };
