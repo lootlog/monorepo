@@ -5,7 +5,3 @@
   );
   height: calc(7 * var(--activity-cell) + 112px);
 }
-
-.dashboard-activity-placeholder {
-  height: calc(7 * var(--activity-cell) + 168px);
-}

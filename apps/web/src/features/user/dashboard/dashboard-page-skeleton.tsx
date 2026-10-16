@@ -1,48 +1,78 @@
-import {
-  calendarOffset,
-  calendarRange,
-} from "@/components/common/activity-heatmap/activity-calendar";
-import type { CSSProperties } from "react";
-import "./components/dashboard-activity.css";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { Clock, Crown, Swords, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
+import { BandSection } from "@/components/common/band-section";
+import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
+import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
+import { DashboardColumns } from "./dashboard-columns";
+import { LiveFeedSkeleton } from "./feed/live-feed-skeleton";
+
+const TODAY_TILES = [
+  { key: "kills", icon: Swords },
+  { key: "online", icon: Clock },
+  { key: "streak", icon: Zap },
+  { key: "weekMonster", icon: Crown },
+] as const;
 
 export function DashboardPageSkeleton() {
   const { t } = useTranslation();
-  const now = useMinuteTimestamp();
-
-  const calendarStyle: CSSProperties & { "--activity-weeks": number } = {
-    containerType: "inline-size",
-    "--activity-weeks": Math.ceil(
-      (112 + calendarOffset(calendarRange(new Date(now), 112).from)) / 7,
-    ),
-  };
 
   return (
-    <ScrollArea className="h-full min-h-0">
-      <div
-        className="@container/dashboard flex flex-col gap-3 p-3"
-        role="status"
-        aria-label={t("common.loading")}
-      >
-        <SectionCard>
-          <SectionCardContent>
-            <Skeleton className="h-20 w-full" />
-          </SectionCardContent>
-        </SectionCard>
-        <div className="grid items-start gap-3 @3xl/dashboard:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-          <div className="space-y-3 @3xl/dashboard:col-start-2 @3xl/dashboard:row-start-1">
-            <div style={calendarStyle}>
-              <Skeleton className="dashboard-activity-content dashboard-activity-placeholder w-full" />
-            </div>
-            <Skeleton className="h-48 w-full" />
-          </div>
-          <Skeleton className="h-[36rem] w-full @3xl/dashboard:col-start-1 @3xl/dashboard:row-start-1" />
-        </div>
+    <ScrollArea data-under-top-bar className="h-full min-h-0">
+      <div className="min-w-0" role="status" aria-label={t("common.loading")}>
+        <BandSection
+          id="dashboard-today-skeleton"
+          title={t("statistics.today.title")}
+          tiled
+        >
+          <StatsTileGrid className="grid-cols-2 xl:grid-cols-4">
+            {TODAY_TILES.map(({ key, icon }) => (
+              <StatsTile
+                key={key}
+                icon={icon}
+                label={
+                  key === "streak"
+                    ? t("kills.records.streak")
+                    : t(`statistics.today.${key}`)
+                }
+                value={<Skeleton className="my-0.5 h-6 w-16" />}
+              />
+            ))}
+          </StatsTileGrid>
+        </BandSection>
+        <DashboardColumns
+          feed={
+            <BandSection
+              id="dashboard-feed-skeleton"
+              title={t("statistics.feedTitle")}
+              tiled
+            >
+              <LiveFeedSkeleton />
+            </BandSection>
+          }
+          reservations={
+            <BandSection
+              id="dashboard-reservations-skeleton"
+              title={t("reservations.my.title")}
+              tiled
+            >
+              <ListTileSkeleton />
+              <ListTileSkeleton />
+            </BandSection>
+          }
+          aside={
+            <BandSection
+              id="dashboard-battles-skeleton"
+              title={t("statistics.recentBattles.title")}
+              tiled
+            >
+              {Array.from({ length: 5 }, (_, key) => (
+                <ListTileSkeleton key={key} actions={2} />
+              ))}
+            </BandSection>
+          }
+        />
       </div>
     </ScrollArea>
   );

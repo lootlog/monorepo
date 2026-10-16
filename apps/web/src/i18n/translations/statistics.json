@@ -13,7 +13,6 @@
   "sourceWorldsIncomplete": "Część aktywności nie ma zapisanej informacji o świecie.",
   "online": "Online",
   "kills": "Bicia",
-  "killSummaryTitle": "Statystyki bić",
   "total": "Wszystkie bicia",
   "allTime": "Od początku zbierania danych",
   "days": "{{count}} dni",
@@ -86,7 +85,6 @@
   "monsterDrops": {
     "title": "Potwory i legendy"
   },
-
   "versusPrevious": "względem poprzednich {{days}} dni",
   "favouriteNpc": "Ulubiony potwór",
   "longestStreakDetail_one": "najdłuższa: {{count}} dzień",
@@ -204,5 +202,19 @@
         "action": "Przejdź do gry"
       }
     }
-  }
+  },
+  "today": {
+    "title": "Twój dzień",
+    "kills": "Bicia dziś",
+    "versusAverage": "vs średnia dnia gry",
+    "averageOnline": "śr. {{duration}} na dzień gry",
+    "online": "W grze dziś",
+    "onlineNow": "Teraz w grze",
+    "onlineStale": "Dane mogą być niepełne",
+    "onlineError": "Nie udało się pobrać czasu w grze.",
+    "duration": "{{hours}} h {{minutes}} min",
+    "minutes": "{{minutes}} min",
+    "weekMonster": "Potwór tygodnia"
+  },
+  "feedFilters": "Filtry feedu"
 }

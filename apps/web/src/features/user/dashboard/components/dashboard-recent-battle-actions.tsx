@@ -10,6 +10,7 @@ import {
 import { Copy, Lock, Share2, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
+import { LIST_TILE_ACTIONS_CLASS } from "@/components/common/list-tile";
 
 export function DashboardRecentBattleActions({
   battle,
@@ -51,7 +52,7 @@ export function DashboardRecentBattleActions({
   ];
 
   return (
-    <div className="flex shrink-0 items-center gap-0.5 pr-2">
+    <div className={cn("gap-0.5", LIST_TILE_ACTIONS_CLASS)}>
       <Separator
         orientation="vertical"
         className="mr-1 self-center data-[orientation=vertical]:h-8"

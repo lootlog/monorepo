@@ -3,6 +3,7 @@ import { Check } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
+import { STATS_TILE_CELL_CLASS } from "@/components/common/stats-tile";
 import type { OnboardingStepStatus } from "./onboarding-steps";
 
 type DashboardOnboardingStepProps = {
@@ -26,8 +27,9 @@ export const DashboardOnboardingStep = ({
   return (
     <li
       className={cn(
-        "flex min-w-0 flex-col gap-4 rounded-xl bg-muted/30 p-3 @min-[1000px]/onboarding:p-4",
-        status === "current" && "ring-1 ring-inset ring-primary/40",
+        "flex flex-col gap-4 p-4",
+        STATS_TILE_CELL_CLASS,
+        status === "current" && "bg-primary/5",
       )}
       aria-current={status === "current" ? "step" : undefined}
     >
