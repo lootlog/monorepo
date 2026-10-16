@@ -1257,9 +1257,9 @@
       }
     },
     "announcement": {
-      "newTheme": "Nowy motyw: {{title}}",
-      "description": "Czarne tła i przygaszone kolory, bez jaskrawych akcentów.",
-      "tryIt": "Wypróbuj",
+      "title": "Własne motywy",
+      "description": "Ustaw własne kolory, tapetę, czcionkę i zaokrąglenia, a gotowym motywem podziel się linkiem.",
+      "create": "Stwórz motyw",
       "dismiss": "Ukryj ogłoszenie"
     }
   }
