@@ -230,7 +230,10 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
       const queries = buildUserLootStatsQueries(database, {
         lootIds,
         soloLootIds: soloLoots.map(({ lootId }) => lootId),
-        sharedHids: sharedItems.map(({ share: [, hid] }) => hid),
+        sharedItems: sharedItems.map(({ lootId, share: [, hid] }) => ({
+          lootId,
+          hid,
+        })),
         truncUnit: days > 30 ? "week" : "day",
       });
 
@@ -253,15 +256,15 @@ export const makeUserLootStats = (database: typeof ApiDatabase.Service) =>
       );
 
       const sharedCharacters = new Map(
-        sharedItems.flatMap(({ share: [shareKey, hid] }) => {
+        sharedItems.flatMap(({ lootId, share: [shareKey, hid] }) => {
           const character = charactersByShareKey.get(shareKey);
 
-          return character ? [[hid, character] as const] : [];
+          return character ? [[`${lootId}:${hid}`, character] as const] : [];
         }),
       );
 
       const caughtCharacter = (caughtItem: CaughtItem) =>
-        sharedCharacters.get(caughtItem.hid) ??
+        sharedCharacters.get(`${caughtItem.lootId}:${caughtItem.hid}`) ??
         soloCharacters.get(caughtItem.lootId);
 
       return { overview, timeline, topNpcs, legendRows, caughtCharacter };

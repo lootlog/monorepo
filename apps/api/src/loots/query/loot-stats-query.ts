@@ -451,6 +451,7 @@ export const buildUserCaughtItemsQueries = (
 
   const sharedItems = database
     .select({
+      lootId: loot.id,
       share: sql<
         [shareKey: string, hid: string]
       >`jsonb_array_elements(${sharedArray})`.as("share"),
@@ -473,8 +474,8 @@ export const buildUserLootStatsQueries = (
     lootIds: number[];
     /** Loots of a lone character of the user, who took every item. */
     soloLootIds: number[];
-    /** Items the loot shares give the user's characters. */
-    sharedHids: string[];
+    /** Items the loot shares give the user's characters, by their loot. */
+    sharedItems: { lootId: number; hid: string }[];
     truncUnit: "day" | "week";
   },
 ) => {
@@ -488,8 +489,8 @@ export const buildUserLootStatsQueries = (
       options.soloLootIds.length
         ? sql`${lootItem.lootId} = ANY(${sql.param(options.soloLootIds)}::int[])`
         : undefined,
-      options.sharedHids.length
-        ? sql`${lootItem.hid} = ANY(${sql.param(options.sharedHids)}::text[])`
+      options.sharedItems.length
+        ? sql`(${lootItem.lootId}, ${lootItem.hid}) IN (SELECT * FROM unnest(${sql.param(options.sharedItems.map((shared) => shared.lootId))}::int[], ${sql.param(options.sharedItems.map((shared) => shared.hid))}::text[]))`
         : undefined,
     ) ?? sql`false`;
 

@@ -1,14 +1,16 @@
 import { cn } from "cn";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@lootlog/ui/components/popover";
 import type { UserLootStatsResponseDtoOutputLegendsItem } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
 
-/** Characters named in the row; the rest wait in a tooltip so it stays narrow. */
+/**
+ * Characters named in the row; the rest wait in a popover so it stays narrow.
+ * A tooltip would not open on touch, where the tiles are shown.
+ */
 const VISIBLE_CHARACTERS = 2;
 
 type StatisticsLegendCharactersProps = {
@@ -42,30 +44,29 @@ export function StatisticsLegendCharacters({
     <span className={cn("flex min-w-0 items-center gap-1.5", className)}>
       <span className="truncate">{label(visible.join(", "))}</span>
       {hidden.length > 0 && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <button
-                  type="button"
-                  aria-label={t("statistics.legend.moreCharacters", {
-                    characters: hidden.join(", "),
-                  })}
-                  className="shrink-0 cursor-help rounded-sm font-medium text-muted-foreground tabular-nums outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-                />
-              }
-            >
-              {t("statistics.legend.moreCount", { count: hidden.length })}
-            </TooltipTrigger>
-            <TooltipContent>
-              <ul>
-                {hidden.map((name) => (
-                  <li key={name}>{name}</li>
-                ))}
-              </ul>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Popover>
+          <PopoverTrigger
+            openOnHover
+            render={
+              <button
+                type="button"
+                aria-label={t("statistics.legend.moreCharacters", {
+                  characters: hidden.join(", "),
+                })}
+                className="shrink-0 cursor-pointer rounded-sm font-medium text-muted-foreground tabular-nums outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            }
+          >
+            {t("statistics.legend.moreCount", { count: hidden.length })}
+          </PopoverTrigger>
+          <PopoverContent className="w-auto max-w-64 px-3 py-2 text-sm">
+            <ul>
+              {hidden.map((name) => (
+                <li key={name}>{name}</li>
+              ))}
+            </ul>
+          </PopoverContent>
+        </Popover>
       )}
     </span>
   );
