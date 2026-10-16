@@ -20,23 +20,30 @@ export function StatisticsWeeks({ world, characterId }: StatisticsWeeksProps) {
   );
 
   const weeks = activity.data && summarizeWeeks(activity.data.daily);
-  const delta = weeks ? weeks.currentKills - weeks.previousKills : 0;
+
+  // Days without history leave the comparison open instead of counting zero.
+  const totals =
+    weeks && weeks.currentKills !== null && weeks.previousKills !== null
+      ? { current: weeks.currentKills, previous: weeks.previousKills }
+      : null;
+
+  const delta = totals ? totals.current - totals.previous : 0;
 
   return (
     <ChartSection
       title={t("statistics.weeks")}
       description={
-        weeks
-          ? t("statistics.weeksSummary", { count: weeks.currentKills })
-          : undefined
+        totals
+          ? t("statistics.weeksSummary", { count: totals.current })
+          : weeks
+            ? t("statistics.weeksIncomplete")
+            : undefined
       }
       actions={
-        weeks && (
+        totals && (
           <StatisticsDelta
             delta={delta}
-            percent={
-              weeks.previousKills ? (delta / weeks.previousKills) * 100 : null
-            }
+            percent={totals.previous ? (delta / totals.previous) * 100 : null}
           />
         )
       }

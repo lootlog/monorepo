@@ -25,6 +25,7 @@ import { ReservationCard } from "./reservation-card";
 import { ReservationCardSkeleton } from "./reservation-card-skeleton";
 import {
   getReservationCollectionClassName,
+  RESERVATIONS_GRID_MEDIA_QUERY,
   RESERVATIONS_VIEW_MODE_KEY,
 } from "./reservation-collection-layout";
 import {
@@ -54,7 +55,12 @@ export function Reservations() {
     "all",
   );
 
-  const { viewMode, setViewMode } = useViewMode(RESERVATIONS_VIEW_MODE_KEY);
+  const { viewMode, setViewMode, canChooseViewMode } = useViewMode(
+    RESERVATIONS_VIEW_MODE_KEY,
+    "grid",
+    RESERVATIONS_GRID_MEDIA_QUERY,
+    "grid",
+  );
 
   const spotsQuery = useListReservationSpots(
     { guildId },
@@ -170,15 +176,17 @@ export function Reservations() {
     <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("layout.navigation.reservations")}</h1>
       {/* The view sits in the top bar, as on the loot and timer lists. */}
-      <HeaderSlotPortal slot="actions">
-        <ViewModeToggle
-          value={viewMode}
-          onChange={setViewMode}
-          listLabel={t("reservations.view.list")}
-          gridLabel={t("reservations.view.grid")}
-          size="default"
-        />
-      </HeaderSlotPortal>
+      {canChooseViewMode && (
+        <HeaderSlotPortal slot="actions">
+          <ViewModeToggle
+            value={viewMode}
+            onChange={setViewMode}
+            listLabel={t("reservations.view.list")}
+            gridLabel={t("reservations.view.grid")}
+            size="default"
+          />
+        </HeaderSlotPortal>
+      )}
 
       {spotsQuery.isError ? (
         <div className="p-3">
