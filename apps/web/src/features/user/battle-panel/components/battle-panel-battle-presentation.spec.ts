@@ -96,6 +96,11 @@ describe("battle panel battle presentation", () => {
     expect(getBattleResult(createBattle({ winningTeam: 2 }))).toBe("won");
     expect(getBattleResult(createBattle({ winningTeam: 1 }))).toBe("lost");
     expect(getBattleResult(createBattle({ hasFlee: true }))).toBe("flee");
+    expect(
+      getBattleResult(
+        createBattle({ unfinished: true, winningTeam: 0, losingTeam: 0 }),
+      ),
+    ).toBe("unfinished");
   });
 
   it("derives player-vs-player results from winner and flee state", () => {

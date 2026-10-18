@@ -50,7 +50,11 @@ export const BattleCompactOverviewCard: FC<BattleCompactOverviewCardProps> = ({
   );
 
   const getTeamResult = (teamNumber: number) => {
-    if (battle.winningTeam === null || battle.winningTeam === undefined) {
+    if (
+      battle.unfinished ||
+      battle.winningTeam === null ||
+      battle.winningTeam === undefined
+    ) {
       return null;
     }
 

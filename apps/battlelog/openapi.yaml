@@ -3333,6 +3333,8 @@ components:
           type: number
         hasFlee:
           type: boolean
+        unfinished:
+          type: boolean
         matchmaking:
           type: boolean
         statistics:
@@ -3837,6 +3839,7 @@ components:
         - losingTeam
         - honorPoints
         - hasFlee
+        - unfinished
         - matchmaking
         - statistics
         - difficultyRank
@@ -4698,6 +4701,8 @@ components:
                 type: number
               hasFlee:
                 type: boolean
+              unfinished:
+                type: boolean
               matchmaking:
                 type: boolean
               statistics:
@@ -5202,6 +5207,7 @@ components:
               - losingTeam
               - honorPoints
               - hasFlee
+              - unfinished
               - matchmaking
               - statistics
               - difficultyRank

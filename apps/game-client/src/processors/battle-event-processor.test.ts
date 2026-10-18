@@ -94,6 +94,46 @@ it("submits actual mapped PvP events with stable identity and clears finished st
   expect(useBattleStore.getState().lastBattleHash).toMatch(/^[a-f0-9]{64}$/);
 });
 
+it("submits the capture when the dead player closes a battle that goes on", async () => {
+  const fixture = createBattleTest();
+  const processor = new BattleEventProcessor();
+  await processor.handle(pvpStart());
+  await processor.handle({ f: { m: ["hero-dies"] } });
+  await processor.handle({ f: { close: 1 } });
+
+  expect(fixture.battles()).toHaveLength(1);
+  const submission = await fixture.battles()[0]?.json();
+  expect(submission.events).toHaveLength(3);
+  expect(
+    submission.events.some(
+      (event: { f: { endBattle?: number } }) => event.f.endBattle,
+    ),
+  ).toBe(false);
+  expect(useBattleStore.getState().battleState).toBe("idle");
+  expect(useBattleStore.getState().events).toEqual([]);
+});
+
+it("does not resubmit or record a kill when the player closes a finished battle", async () => {
+  const fixture = createBattleTest();
+  const processor = new BattleEventProcessor();
+  await processor.handle(pvpStart());
+  await processor.handle(end);
+  await processor.handle({ f: { close: 1 } });
+  expect(fixture.battles()).toHaveLength(1);
+
+  await processor.handle({
+    f: {
+      init: "1",
+      w: {
+        "111": createBattleWarrior(111),
+        "-100": createBattleWarrior(-100),
+      },
+    },
+  });
+  await processor.handle({ f: { close: 1 } });
+  expect(fixture.kills()).toHaveLength(0);
+});
+
 it("stops capturing once an NPC joins and never submits that battle", async () => {
   const fixture = createBattleTest();
   const processor = new BattleEventProcessor();
