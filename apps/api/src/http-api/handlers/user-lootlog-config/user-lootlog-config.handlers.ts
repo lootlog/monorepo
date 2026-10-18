@@ -1,7 +1,10 @@
 import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
 import { emptyStatusResponse } from "#src/shared/http/handler-response";
-import { selectAccessibleGuilds } from "#src/members/member-access-query";
+import {
+  selectAccessibleGuilds,
+  selectGuildIdsGrantingPermissions,
+} from "#src/members/member-access-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
 
@@ -79,7 +82,11 @@ export class UserLootlogConfigData extends Context.Service<
         const findGuilds = (discordId: string, permission: Permission) =>
           selectAccessibleGuilds(database, discordId, [permission]).pipe(
             Effect.map((rows) =>
-              rows.map(({ guild }) => ({ id: guild.id, name: guild.name })),
+              rows.map(({ guild }) => ({
+                id: guild.id,
+                name: guild.name,
+                ownerId: guild.ownerId,
+              })),
             ),
           );
 
@@ -290,14 +297,27 @@ export class UserLootlogConfigData extends Context.Service<
                   )
                   .orderBy(desc(userCharactersLootlogSettingsTable.createdAt));
 
+                // A stored choice outlives the owner's Discord membership; show
+                // only Organizations where the owner can still submit loot.
+                const writableByOwner =
+                  yield* selectGuildIdsGrantingPermissions(
+                    database,
+                    configs.map(({ userId }) => userId),
+                    guilds,
+                    [Permission.LOOTLOG_LOOTS_WRITE],
+                  );
+
                 const visibleByPlayer = new Map<string, Set<string>>();
 
                 for (const config of configs) {
                   const key = getPlayerConfigKey(config);
                   const visible = visibleByPlayer.get(key) ?? new Set<string>();
+                  const writable = writableByOwner.get(config.userId);
 
                   for (const guildId of config.catchingGuildIds) {
-                    if (guildById.has(guildId)) visible.add(guildId);
+                    if (guildById.has(guildId) && writable?.has(guildId)) {
+                      visible.add(guildId);
+                    }
                   }
 
                   visibleByPlayer.set(key, visible);
