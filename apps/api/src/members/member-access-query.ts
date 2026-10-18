@@ -2,7 +2,16 @@ import type { ApiDatabase } from "#src/database/drizzle/database";
 import { apiKeyOrganizationFilter } from "#src/runtime/auth/organization-scope";
 import { Effect } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
-import { and, arrayOverlaps, eq, isNotNull, or, sql } from "drizzle-orm";
+import {
+  type SQL,
+  and,
+  arrayOverlaps,
+  eq,
+  inArray,
+  isNotNull,
+  or,
+  sql,
+} from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import {
   guildTable,
@@ -11,16 +20,15 @@ import {
   roleTable,
 } from "#src/database/drizzle/schema";
 
+const activeMemberWhere = (user: SQL) =>
+  and(user, eq(memberTable.active, true), isNotNull(memberTable.globalUserId));
+
 const activeMember = (discordId: string) =>
-  and(
-    eq(memberTable.userId, discordId),
-    eq(memberTable.active, true),
-    isNotNull(memberTable.globalUserId),
-  );
+  activeMemberWhere(eq(memberTable.userId, discordId));
 
 export const activeGuildMemberJoin = (
   discordId: string,
-  guildId: AnyPgColumn = guildTable.id,
+  guildId: AnyPgColumn | string = guildTable.id,
 ) => and(eq(memberTable.guildId, guildId), activeMember(discordId));
 
 export const selectAccessibleGuilds = (
@@ -71,4 +79,58 @@ export const accessibleGuildsQuery = (
           ),
         ),
       );
+  });
+
+/**
+ * Resolve which of `guilds` still grant one of `permissions` to each of
+ * `discordIds`, using the same owner and active-member role rules as
+ * {@link accessibleGuildsQuery}. Callers pass guilds they already resolved for
+ * the requester, so the requester's key scope stays applied.
+ */
+export const selectGuildIdsGrantingPermissions = (
+  database: typeof ApiDatabase.Service,
+  discordIds: ReadonlyArray<string>,
+  guilds: ReadonlyArray<{ id: string; ownerId: string }>,
+  permissions: ReadonlyArray<Permission>,
+) =>
+  Effect.gen(function* () {
+    const granted = new Map<string, Set<string>>();
+
+    const grant = (discordId: string, guildId: string) => {
+      const guildIds = granted.get(discordId) ?? new Set<string>();
+      guildIds.add(guildId);
+
+      granted.set(discordId, guildIds);
+    };
+
+    const requested = new Set(discordIds);
+
+    for (const guild of guilds) {
+      if (requested.has(guild.ownerId)) grant(guild.ownerId, guild.id);
+    }
+
+    if (requested.size === 0 || guilds.length === 0) return granted;
+
+    const rows = yield* database
+      .selectDistinct({
+        discordId: memberTable.userId,
+        guildId: memberTable.guildId,
+      })
+      .from(memberTable)
+      .innerJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
+      .innerJoin(roleTable, eq(roleTable.id, memberToRoleTable.B))
+      .where(
+        and(
+          activeMemberWhere(inArray(memberTable.userId, [...requested])),
+          inArray(
+            memberTable.guildId,
+            guilds.map(({ id }) => id),
+          ),
+          arrayOverlaps(roleTable.permissions, [...permissions]),
+        ),
+      );
+
+    for (const row of rows) grant(row.discordId, row.guildId);
+
+    return granted;
   });
