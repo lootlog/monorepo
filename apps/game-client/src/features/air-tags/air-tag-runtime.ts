@@ -14,7 +14,6 @@ import {
   airTagObservationController,
 } from "./air-tag-observation-controller";
 import { airTagReceiveController } from "./air-tag-receive-controller";
-import { airTagRenderer } from "./air-tag-renderer";
 
 interface AirTagRuntimeState {
   enabled: boolean;
@@ -63,12 +62,9 @@ export class AirTagRuntime {
 
     if (!nextEnabled) {
       airTagReceiveController.clear();
-      airTagRenderer.unregister();
 
       return;
     }
-
-    airTagRenderer.register();
 
     if (!isPublishing) {
       if (this.policyRefreshTimer !== null)
@@ -101,7 +97,6 @@ export class AirTagRuntime {
     airTagReceiveController.clear();
 
     if (this.isPublishing(this.state)) {
-      airTagRenderer.register();
       this.subscribeCurrentMap({ id: mapId, name: mapName });
     }
   }
@@ -190,7 +185,6 @@ export class AirTagRuntime {
     this.currentMapName = null;
     airTagObservationController.clear();
     airTagReceiveController.clear();
-    airTagRenderer.unregister();
   }
 
   private schedulePolicySubscription(): void {
