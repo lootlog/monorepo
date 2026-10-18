@@ -155,6 +155,15 @@ export class BattleEventProcessor {
     const battleState = startsBattle ? "in-battle" : stateAtIngress.battleState;
     const endsBattle = event.f.endBattle === 1 && battleState === "in-battle";
 
+    // A player who dies in a group battle may close it while the others fight
+    // on. Margonem then sends `close` and never `endBattle`, so the capture so
+    // far is submitted as an unfinished battle.
+    const leavesBattle =
+      !endsBattle &&
+      !startsBattle &&
+      event.f.close !== undefined &&
+      battleState === "in-battle";
+
     if (
       battleState === "in-battle" &&
       battlePanelStore.isBattleCollectionEnabled &&
@@ -163,7 +172,7 @@ export class BattleEventProcessor {
       battleStore.addEvent(event);
     }
 
-    if (!endsBattle) {
+    if (!endsBattle && !leavesBattle) {
       battleStore.applyBatch({
         battleState: startsBattle ? "in-battle" : undefined,
         battleWarriors: startsBattle || event.f.w ? battleWarriors : undefined,
@@ -188,12 +197,13 @@ export class BattleEventProcessor {
       getNpcBattleSummary(battleWarriors);
 
     const [killResult, battleResult] = await Promise.all([
+      // The NPCs of a battle that goes on without the player may still die.
       this.resolveKillIntent({
         deadNpcs,
         hasNpcInBattle,
         game,
         lastKillHash: stateAtIngress.lastKillHash,
-        topNpc,
+        topNpc: endsBattle ? topNpc : null,
       }),
       this.resolveBattleIntent({
         capture,

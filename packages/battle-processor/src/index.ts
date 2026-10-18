@@ -11,6 +11,7 @@ export type BattleEvent = {
   ev?: number;
   f?: {
     m?: string[];
+    endBattle?: number;
     w?: Record<string, BattleWarriorSnapshot>;
   };
   match_summary?: {
@@ -330,6 +331,8 @@ export type BattleAnalysis = {
     winningTeam: number | null;
     losingTeam: number | null;
     hasFlee: boolean;
+    /** The submitter left before Margonem ended the battle; it has no result. */
+    unfinished: boolean;
   };
   type: string;
   battleTimeline: BattleTimelineTurn[];
@@ -861,6 +864,7 @@ export class BattleProcessor {
     winningTeam: null,
     losingTeam: null,
     hasFlee: false,
+    unfinished: false,
   };
   private battleType = "";
   private lastAttackerId: string | null = null;
@@ -878,7 +882,21 @@ export class BattleProcessor {
 
     const moves = this.extractAndParseMoves(battleData.events);
     this.calculateBattleStats(moves, { characterId: battleData.characterId });
-    this.determineOutcomeTeams();
+
+    // A player who dies in a group battle may close it before Margonem ends
+    // it. That capture has neither the end packet nor its outcome lines, so
+    // no team can be named the winner.
+    const ended =
+      battleData.events.some((event) => event.f?.endBattle) ||
+      this.battleOutcome.winner !== "" ||
+      this.battleOutcome.loser !== "";
+
+    if (ended) {
+      this.determineOutcomeTeams();
+    } else {
+      this.markUnfinished();
+    }
+
     this.calculateDerivedStats();
 
     return {
@@ -2473,6 +2491,14 @@ export class BattleProcessor {
     }
 
     return undefined;
+  }
+
+  private markUnfinished(): void {
+    this.battleOutcome.winner = "";
+    this.battleOutcome.loser = "";
+    this.battleOutcome.winningTeam = 0;
+    this.battleOutcome.losingTeam = 0;
+    this.battleOutcome.unfinished = true;
   }
 
   private determineOutcomeTeams(): void {

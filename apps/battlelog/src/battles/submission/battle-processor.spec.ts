@@ -166,6 +166,51 @@ describe("BattleProcessor", () => {
   });
 
   describe("processBattle", () => {
+    it("names no winner for a group battle closed before it ended", () => {
+      const warrior = (originalId: number, team: number) => ({
+        originalId,
+        name: `Warrior${originalId}`,
+        lvl: 50,
+        prof: "w",
+        icon: "icon",
+        team,
+      });
+
+      const battleData: CreateBattleInput = {
+        accountId: "test-account",
+        characterId: "101",
+        world: "test-world",
+        events: [
+          {
+            ev: 1000,
+            f: {
+              init: "1",
+              w: {
+                "101": warrior(101, 1),
+                "102": warrior(102, 1),
+                "201": warrior(201, 2),
+                "202": warrior(202, 2),
+              },
+              m: ["201=100;101=0;+dmg=900;-dmg=900"],
+            },
+          },
+          // Margonem keeps the battle running for the others after the dead
+          // player closes it, so no end packet or outcome line follows.
+          { ev: 1003, f: { m: ["102=100;201=60;+dmg=400;-dmg=400"] } },
+        ],
+      };
+
+      const result = processBattleWithStatisticsParity(battleData);
+
+      expect(result.outcome).toMatchObject({
+        unfinished: true,
+        winner: "",
+        loser: "",
+        winningTeam: 0,
+        losingTeam: 0,
+      });
+    });
+
     it("should process a simple 1v1 battle", () => {
       const battleData: CreateBattleInput = {
         accountId: "test-account",
