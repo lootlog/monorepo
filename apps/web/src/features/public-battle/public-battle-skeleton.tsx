@@ -2,7 +2,7 @@ import { BattlePanelSingleBattleSkeleton } from "@/features/user/battle-panel/ba
 
 export const PublicBattleSkeleton = () => {
   return (
-    <div className="min-h-dvh bg-background md:h-dvh md:min-h-0 md:overflow-hidden">
+    <div className="min-h-dvh bg-background [--page-sticky-top:0px] md:h-dvh md:min-h-0 md:overflow-hidden">
       <BattlePanelSingleBattleSkeleton />
     </div>
   );

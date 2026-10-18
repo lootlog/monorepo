@@ -92,11 +92,13 @@ export const StatsCustomizationModal = ({
 
   const triggerButton = (
     <Button
+      // In a band heading it sits among the heading's other ghost actions.
+      variant={compactTrigger ? "ghost" : "default"}
       size={compactTrigger ? "icon-sm" : "sm"}
       aria-label={triggerLabel}
       className={cn(!compactTrigger && "gap-2")}
     >
-      <Settings2 className="h-4 w-4" />
+      <Settings2 className={compactTrigger ? "size-3.5" : "size-4"} />
       {compactTrigger ? (
         <span className="sr-only">{triggerLabel}</span>
       ) : (

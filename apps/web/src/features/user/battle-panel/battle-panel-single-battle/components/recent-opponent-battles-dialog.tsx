@@ -7,11 +7,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@lootlog/ui/components/dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
+import { DETAIL_BAR_TOOLBAR_CELL_CLASS } from "@/components/common/detail-bar";
+import { cn } from "cn";
 import { History } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { getRecentOpponentBattleContext } from "./recent-opponent-battle-context";
@@ -35,25 +32,19 @@ export function RecentOpponentBattlesDialog({
 
   return (
     <Dialog>
-      <Tooltip>
-        <TooltipTrigger
-          render=<DialogTrigger
-            render={
-              <Button
-                aria-label={t("battlePanel.single.recentOpponent.openDialog")}
-                variant="ghost"
-                size="icon-sm"
-                className={className}
-              >
-                <History className="h-3.5 w-3.5" />
-              </Button>
-            }
-          />
-        />
-        <TooltipContent>
-          {t("battlePanel.single.recentOpponent.openDialog")}
-        </TooltipContent>
-      </Tooltip>
+      <DialogTrigger
+        render={
+          <Button
+            size="lg"
+            variant="chip"
+            className={cn(DETAIL_BAR_TOOLBAR_CELL_CLASS, className)}
+            aria-label={t("battlePanel.single.recentOpponent.openDialog")}
+          >
+            <History className="size-4" />
+            {t("battlePanel.single.recentOpponent.title")}
+          </Button>
+        }
+      />
       <DialogContent className="flex max-h-[85dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
         <DialogHeader className="border-b px-4 py-3">
           <DialogTitle className="text-base">

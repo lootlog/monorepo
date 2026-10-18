@@ -76,6 +76,18 @@ function getRouteBattle(
   }
 }
 
+/** Names a battle: its two fighters for a duel, its id otherwise. */
+export function getBattleLabel(
+  battle: BattleLabel | undefined,
+  battleId: string,
+  t: Translate,
+) {
+  return (
+    getOneVsOneBattleLabel(battle, t) ??
+    t("battlePanel.navigation.battleFallback", { id: battleId })
+  );
+}
+
 export function getBattleRouteLabel(
   match: BattleRouteLabelMatch | undefined,
   t: Translate,
@@ -87,8 +99,5 @@ export function getBattleRouteLabel(
     return;
   }
 
-  return (
-    getOneVsOneBattleLabel(getRouteBattle(match, options), t) ??
-    t("battlePanel.navigation.battleFallback", { id: battleId })
-  );
+  return getBattleLabel(getRouteBattle(match, options), battleId, t);
 }

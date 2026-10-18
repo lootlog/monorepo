@@ -34,12 +34,12 @@ export const getOneVsOneStatsHeadClassName = ({
 }) =>
   columnId === ONE_VS_ONE_STATS_COLUMN_IDS.stat
     ? cn(
-        "sticky left-0 z-20 border-r border-b border-border/70 bg-muted shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
+        "sticky left-0 z-20 border-r border-b border-border bg-sidebar",
         topClassName,
         compact && "h-8 px-2",
       )
     : cn(
-        "sticky z-10 border-b border-border/70 text-center whitespace-wrap px-2",
+        "sticky z-10 border-b border-border text-center whitespace-wrap px-2",
         topClassName,
         columnId === ONE_VS_ONE_STATS_COLUMN_IDS.user
           ? BATTLE_SURFACE_COLORS.team.friendlyHeader

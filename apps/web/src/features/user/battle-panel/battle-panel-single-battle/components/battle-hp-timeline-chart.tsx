@@ -1,5 +1,8 @@
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { ListGroupHeading } from "@/components/common/list-group-heading";
+import {
+  LIST_BAND_HEADING_CLASS,
+  LIST_TILE_INSET_CLASS,
+} from "@/components/common/list-tile";
 import type { BattleTimelineResponseDtoOutput } from "@lootlog/client/battlelog";
 import { BattleHpTimelineDialog } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-dialog";
 import { getBattleHpTimelineEventLayerCounts } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-event-markers";
@@ -15,19 +18,14 @@ import {
 } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-settings.store";
 import { useBattleHpTimelineLayers } from "@/features/user/battle-panel/battle-panel-single-battle/components/use-battle-hp-timeline-layers";
 import { Button } from "@lootlog/ui/components/button";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import {
-  Activity,
-  ChevronsDownUp,
-  ChevronsUpDown,
-  Eye,
-  EyeOff,
-} from "lucide-react";
+import { cn } from "cn";
+import { ChevronsDownUp, ChevronsUpDown, Eye, EyeOff } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
+import { useId } from "react";
 import { useTranslation } from "react-i18next";
 
 type BattleHpTimelineChartProps = {
@@ -46,6 +44,7 @@ export function BattleHpTimelineChart({
   onTurnSelect,
 }: BattleHpTimelineChartProps) {
   const { t } = useTranslation();
+  const headingId = useId();
 
   const isChartHidden = useBattleHpTimelineSettingsStore(
     (state) => state.isChartHidden,
@@ -92,12 +91,12 @@ export function BattleHpTimelineChart({
     BATTLE_HP_TIMELINE_PLOT_HEIGHT_CLASS_NAMES[heightMode];
 
   return (
-    <SectionCard>
-      <SectionCardHeader
-        icon={Activity}
-        title={t("battlePanel.single.chart.title")}
-        actions={
-          <div className="flex items-center gap-2">
+    <section aria-labelledby={headingId}>
+      <ListGroupHeading
+        id={headingId}
+        className={LIST_BAND_HEADING_CLASS}
+        trailing={
+          <div className="flex items-center gap-1">
             <Tooltip>
               <TooltipTrigger
                 render={
@@ -147,9 +146,11 @@ export function BattleHpTimelineChart({
             />
           </div>
         }
-      />
+      >
+        {t("battlePanel.single.chart.title")}
+      </ListGroupHeading>
       {isChartHidden ? null : (
-        <SectionCardContent>
+        <div className={cn("py-3", LIST_TILE_INSET_CLASS)}>
           <BattleHpTimelinePlot
             timeline={timeline}
             warriors={warriors}
@@ -160,8 +161,8 @@ export function BattleHpTimelineChart({
             className={plotHeightClassName}
             onTurnSelect={onTurnSelect}
           />
-        </SectionCardContent>
+        </div>
       )}
-    </SectionCard>
+    </section>
   );
 }

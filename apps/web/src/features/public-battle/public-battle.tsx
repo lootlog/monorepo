@@ -49,7 +49,8 @@ export const PublicBattle = () => {
   }
 
   return (
-    <div className="min-h-dvh bg-background md:h-dvh md:min-h-0 md:overflow-hidden">
+    // No app bar here, so pinned content sticks to the top edge.
+    <div className="min-h-dvh bg-background [--page-sticky-top:0px] md:h-dvh md:min-h-0 md:overflow-hidden">
       <BattleDetailView
         battle={battle}
         battleId={battleId}

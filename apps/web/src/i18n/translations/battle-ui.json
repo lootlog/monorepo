@@ -26,7 +26,12 @@
   },
   "ranking": {
     "title": "Ranking graczy",
-    "metricLabel": "Statystyka rankingu"
+    "metricLabel": "Statystyka rankingu",
+    "metrics": {
+      "damageDealt": "Zadane",
+      "damageTaken": "Otrzymane",
+      "effectiveness": "Skuteczność"
+    }
   },
   "metadata": {
     "startTime": "Data i godzina rozpoczęcia walki",

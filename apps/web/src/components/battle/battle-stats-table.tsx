@@ -1,4 +1,3 @@
-import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { ExpandableDataTable } from "./expandable-data-table";
 import {
   getBattleStatsTableColumns,
@@ -6,18 +5,16 @@ import {
 } from "./battle-stats-table-columns-full";
 import { OneVsOneStatsTable } from "./one-vs-one-stats-table";
 import { BattleStatsTableHeader } from "./battle-stats-table-header";
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import type { StatsCustomizationConfig } from "@/types/stats-customization.types";
 import type { Battle } from "@/lib/api/battlelog-types";
-import { BATTLE_SURFACE_COLORS } from "./utils/battle-color-palette";
 
 interface BattleStatsTableProps {
   battle: Battle;
   className?: string;
-  cardClassName?: string;
   compact?: boolean;
   scrollClassName?: string;
   showHeader?: boolean;
@@ -33,7 +30,6 @@ interface BattleStatsTableProps {
 export function BattleStatsTable({
   battle,
   className,
-  cardClassName,
   compact,
   scrollClassName,
   showHeader = true,
@@ -45,6 +41,7 @@ export function BattleStatsTable({
   statsCustomizationConfig,
 }: BattleStatsTableProps) {
   const { t } = useTranslation();
+  const headingId = useId();
 
   const [expandedRows, setExpandedRows] = useState<
     Map<string, BattleStatsExpansionType>
@@ -95,7 +92,6 @@ export function BattleStatsTable({
     return (
       <OneVsOneStatsTable
         battle={battle}
-        cardClassName={cardClassName}
         compact={compact}
         scrollClassName={scrollClassName}
         showHeader={showHeader}
@@ -110,15 +106,14 @@ export function BattleStatsTable({
   }
 
   return (
-    <Card
-      className={cn(
-        // `isolate` keeps the sticky cells' z-indexes from competing with the pinned chart.
-        "isolate border-border bg-card overflow-hidden gap-0 p-0 w-full",
-        cardClassName,
-      )}
+    <section
+      aria-labelledby={showHeader ? headingId : undefined}
+      // `isolate` keeps the sticky cells' z-indexes from competing with the pinned chart.
+      className="isolate w-full"
     >
       {showHeader && (
         <BattleStatsTableHeader
+          id={headingId}
           title={headerTitle ?? t("battlePanel.single.statistics.title")}
           actions={headerActions}
         />
@@ -134,13 +129,8 @@ export function BattleStatsTable({
           columns={currentColumns}
           data={sortedWarriors}
           expandedRows={expandedRows}
-          getTeamClassName={(warrior) =>
-            warrior.team === userTeam
-              ? BATTLE_SURFACE_COLORS.team.friendlyStripe
-              : BATTLE_SURFACE_COLORS.team.enemyStripe
-          }
         />
       </ScrollArea>
-    </Card>
+    </section>
   );
 }

@@ -1,9 +1,11 @@
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCard } from "@/components/common/section-card/section-card";
+import { ListGroupHeading } from "@/components/common/list-group-heading";
+import {
+  LIST_BAND_HEADING_CLASS,
+  LIST_TILE_INSET_CLASS,
+} from "@/components/common/list-tile";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
-import { Activity } from "lucide-react";
+import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import {
   BATTLE_HP_TIMELINE_PLOT_HEIGHT_CLASS_NAMES,
@@ -16,6 +18,7 @@ const chartGridLines = Array.from({ length: 5 });
 
 export function BattleHpTimelineChartSkeleton() {
   const { t } = useTranslation();
+  const headingId = useId();
 
   // The settings are persisted, so the skeleton can already match a hidden or expanded chart.
   const isChartHidden = useBattleHpTimelineSettingsStore(
@@ -27,21 +30,23 @@ export function BattleHpTimelineChartSkeleton() {
   );
 
   return (
-    <SectionCard aria-hidden="true">
-      <SectionCardHeader
-        icon={Activity}
-        title={t("battlePanel.single.chart.title")}
-        actions={
-          <div className="flex items-center gap-2">
+    <section aria-hidden="true">
+      <ListGroupHeading
+        id={headingId}
+        className={LIST_BAND_HEADING_CLASS}
+        trailing={
+          <div className="flex items-center gap-1">
             {chartActions.map((_, index) => (
               <Skeleton key={index} className="size-8 rounded-md" />
             ))}
           </div>
         }
-      />
+      >
+        {t("battlePanel.single.chart.title")}
+      </ListGroupHeading>
 
       {isChartHidden ? null : (
-        <SectionCardContent>
+        <div className={cn("py-3", LIST_TILE_INSET_CLASS)}>
           <div
             className={cn(
               "flex gap-2",
@@ -66,8 +71,8 @@ export function BattleHpTimelineChartSkeleton() {
               <Skeleton className="mt-3 h-2 w-full" />
             </div>
           </div>
-        </SectionCardContent>
+        </div>
       )}
-    </SectionCard>
+    </section>
   );
 }

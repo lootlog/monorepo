@@ -117,13 +117,15 @@
     margin-top: -3.5rem;
   }
 
-  [data-under-top-bar] > [data-slot="scroll-area-viewport"] {
+  /* Pages outside the app shell, such as a public battle, have no bar. */
+  .app-content-frame [data-under-top-bar] > [data-slot="scroll-area-viewport"] {
     padding-top: 3.5rem;
     scroll-padding-top: 3.5rem;
   }
 
   /* Base UI pins the track with inline offsets. */
-  [data-under-top-bar]
+  .app-content-frame
+    [data-under-top-bar]
     > [data-slot="scroll-area-scrollbar"][data-orientation="vertical"] {
     top: 3.5rem !important;
     height: auto;
