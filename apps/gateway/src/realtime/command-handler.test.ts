@@ -13,7 +13,7 @@ import { TestClock } from "effect/testing";
 import { createGatewayWebSocket } from "#src/app";
 import { CommandHandler } from "./command-handler.js";
 import { CommandIngress } from "./command-ingress.js";
-import { JoinAdmission } from "./join-admission.js";
+import { CommandAdmission } from "./command-admission.js";
 import { canReadSourceEvent } from "./source-event-visibility.js";
 import {
   decodeServerEvent,
@@ -189,9 +189,12 @@ const setup = (
   updateSubscription: AirTagService["updateSubscription"] = () =>
     Promise.reject(new Error("Unexpected air tag subscribe")),
   realtimeHub?: ConstructorParameters<typeof CommandHandler>[3],
-  joinAdmission?: JoinAdmission,
+  joinAdmission?: CommandAdmission,
   registerInterest: AirTagService["registerInterest"] = () =>
     Promise.reject(new Error("Unexpected air tag interest")),
+  publishObservations: AirTagService["publishObservations"] = () =>
+    Promise.reject(new Error("Unexpected air tag observation")),
+  airTagObservationAdmission?: CommandAdmission,
 ) => {
   const guilds = new FakeGuildStore();
   const hub = new FakeHub();
@@ -210,8 +213,7 @@ const setup = (
     { send: () => Promise.reject(new Error("Unexpected battle ping")) },
     {
       updateSubscription,
-      publishObservations: () =>
-        Promise.reject(new Error("Unexpected air tag observation")),
+      publishObservations,
       fetchMapThreats: () =>
         Promise.reject(new Error("Unexpected map threat fetch")),
       registerInterest,
@@ -223,6 +225,7 @@ const setup = (
       fetch: () => Promise.reject(new Error("Unexpected NPC presence fetch")),
     },
     joinAdmission,
+    airTagObservationAdmission,
   );
 
   return { handler, guilds, hub, activity, presence };
@@ -969,7 +972,7 @@ describe("CommandHandler session lifecycle", () => {
       store,
       undefined,
       undefined,
-      new JoinAdmission(
+      new CommandAdmission(
         {
           ratePerSecond: 1,
           burst: 2,
@@ -1035,12 +1038,119 @@ describe("CommandHandler session lifecycle", () => {
     expect(requests).toBe(1);
   });
 
+  test("AirTag batches over replica capacity get a retry delay while heartbeats keep running", async () => {
+    const stalled = Promise.withResolvers<void>();
+    let merges = 0;
+
+    const { handler, hub, presence } = setup(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      async () => {
+        merges++;
+        await stalled.promise;
+
+        return { status: "accepted", acceptedScopes: 1, acceptedTargets: 1 };
+      },
+      new CommandAdmission(
+        {
+          ratePerSecond: 0,
+          burst: 2,
+          concurrent: 1,
+          retryAfterMs: { min: 1_000, max: 3_000 },
+        },
+        () => 0,
+        () => 0.5,
+      ),
+    );
+
+    presence.heartbeat = () => Effect.succeed(1_700_000_000_000);
+    const { socket } = makeSocket();
+    socket.data.joined = true;
+
+    const batch = {
+      expectedMapId: 12,
+      observations: [
+        { targetId: "7", nickname: "Wróg", relation: 2, x: 1, y: 1 },
+      ],
+    };
+
+    const observe = (requestId: string) =>
+      Effect.runPromise(
+        handler.handle(
+          socket,
+          Buffer.from(
+            encode({
+              v: 1,
+              type: "air-tag.observation",
+              requestId,
+              data: batch,
+            }),
+          ),
+        ),
+      );
+
+    const running = observe("running");
+
+    while (merges === 0) await Bun.sleep(1);
+    // The running batch holds the only slot; a second one must not queue behind it.
+    await observe("concurrent");
+    await Effect.runPromise(
+      handler.handle(
+        socket,
+        Buffer.from(
+          encode({
+            v: 1,
+            type: "presence.heartbeat",
+            requestId: "heartbeat",
+            data: { sessionId: "session-1" },
+          }),
+        ),
+      ),
+    );
+    stalled.resolve();
+    await running;
+    await observe("admitted");
+    // The burst is spent and nothing refills it.
+    await observe("drained");
+
+    expect(merges).toBe(2);
+    expect(
+      hub.responses.map((response) =>
+        Predicate.hasProperty(response, "requestId") &&
+        Predicate.hasProperty(response, "data")
+          ? [response.requestId, response.data]
+          : response,
+      ),
+    ).toEqual([
+      [
+        "concurrent",
+        { status: "rejected", code: "rate-limited", retryAfterMs: 2_000 },
+      ],
+      ["heartbeat", { lastSeen: 1_700_000_000_000 }],
+      [
+        "running",
+        { status: "accepted", acceptedScopes: 1, acceptedTargets: 1 },
+      ],
+      [
+        "admitted",
+        { status: "accepted", acceptedScopes: 1, acceptedTargets: 1 },
+      ],
+      [
+        "drained",
+        { status: "rejected", code: "rate-limited", retryAfterMs: 2_000 },
+      ],
+    ]);
+  });
+
   test("a join over capacity without a request ID closes the socket so the client retries", async () => {
     const { handler, hub } = setup(
       undefined,
       undefined,
       undefined,
-      new JoinAdmission({
+      new CommandAdmission({
         ratePerSecond: 0,
         burst: 0,
         concurrent: 1,

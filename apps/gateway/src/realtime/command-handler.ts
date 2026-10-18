@@ -40,7 +40,12 @@ import type {
   NpcPresenceReportAck,
   NpcPresenceSnapshot,
 } from "@lootlog/schema/npc-presence";
-import { JoinAdmission } from "#src/realtime/join-admission";
+import type { AirTagObservationAck } from "@lootlog/schema/air-tag";
+import {
+  AIR_TAG_OBSERVATION_ADMISSION_LIMITS,
+  CommandAdmission,
+  JOIN_ADMISSION_LIMITS,
+} from "#src/realtime/command-admission";
 import type { MapPingService } from "#src/realtime/map-ping-service";
 import { getGlobalChatStats } from "#src/realtime/gateway-metrics";
 import { canReadSourceEvent } from "#src/realtime/source-event-visibility";
@@ -217,9 +222,13 @@ export class CommandHandler {
       "report" | "refresh" | "withdraw" | "fetch"
     >,
     private readonly joinAdmission: Pick<
-      JoinAdmission,
+      CommandAdmission,
       "tryAcquire"
-    > = new JoinAdmission(),
+    > = new CommandAdmission(JOIN_ADMISSION_LIMITS),
+    private readonly airTagObservationAdmission: Pick<
+      CommandAdmission,
+      "tryAcquire"
+    > = new CommandAdmission(AIR_TAG_OBSERVATION_ADMISSION_LIMITS),
   ) {
     this.hub.onPermissionRebalance((discordId, userId) =>
       this.enforceRebalance(discordId, userId),
@@ -779,9 +788,20 @@ export class CommandHandler {
       case "air-tag.observation":
         return requireJoined.pipe(
           Effect.andThen(
-            fromPromise(() =>
-              this.airTags.publishObservations(socket, command.data),
-            ),
+            Effect.suspend(() => {
+              const admission = this.airTagObservationAdmission.tryAcquire();
+
+              if (!admission.admitted)
+                return Effect.succeed<AirTagObservationAck>({
+                  status: "rejected",
+                  code: "rate-limited",
+                  retryAfterMs: admission.retryAfterMs,
+                });
+
+              return fromPromise(() =>
+                this.airTags.publishObservations(socket, command.data),
+              ).pipe(Effect.ensuring(Effect.sync(admission.release)));
+            }),
           ),
         );
       case "air-tag.map-threats.fetch":
