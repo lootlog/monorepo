@@ -288,6 +288,26 @@ function installLegacyTooltips(): () => void {
   };
 }
 
+/**
+ * SI's newOther rewrites `#other{id}[tip]` on full updates, dropping the
+ * section. Called after the game applied an `other` packet, so it re-adds the
+ * section to the players that still need it.
+ */
+export function restoreLegacyShiftSections(otherIds: string[]): void {
+  if (
+    !legacyTooltipsInstalled ||
+    !useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed
+  ) {
+    return;
+  }
+
+  for (const id of otherIds) {
+    if (id === hoveredLegacyOtherId || legacyOtherIdsWithShiftSection.has(id)) {
+      setLegacyOtherShiftSection(id);
+    }
+  }
+}
+
 /** Adds or removes the Shift section on the tooltip under the cursor. */
 export function refreshActiveOtherTooltip(): void {
   if (legacyTooltipsInstalled) {

@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   installCharacterTooltipTransforms,
   refreshActiveOtherTooltip,
+  restoreLegacyShiftSections,
 } from "./patcher";
 import { characterTooltipTransforms } from "./registry";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
@@ -500,6 +501,28 @@ describe("installCharacterTooltipTransforms on SI", () => {
     refreshActiveOtherTooltip();
 
     expect(tipOf("617")).toBe("<b>Other 617</b>");
+    expect(tipOf("618")).toBe("<b>Other 618</b>");
+
+    cleanup();
+  });
+
+  it("re-adds the section after SI rewrites the hovered tooltip", () => {
+    setLegacyRuntime(["617", "618"]);
+    const cleanup = installCharacterTooltipTransforms();
+
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    hover("617");
+
+    // newOther rewrites the attribute when a full other update arrives.
+    document
+      .getElementById("other617")
+      ?.setAttribute("tip", "<b>Other 617</b>");
+    document
+      .getElementById("other618")
+      ?.setAttribute("tip", "<b>Other 618</b>");
+    restoreLegacyShiftSections(["617", "618"]);
+
+    expect(tipOf("617")).toBe("<b>Other 617</b><span>shift</span>");
     expect(tipOf("618")).toBe("<b>Other 618</b>");
 
     cleanup();
