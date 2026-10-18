@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { eq } from "drizzle-orm";
 import { Effect, Queue } from "effect";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
@@ -8,6 +9,7 @@ import {
 } from "../../../test/organization-fixtures.js";
 import {
   eventHeroNpcTable,
+  eventMapCoverageGapTable,
   eventMapTable,
   eventMapToMemberTable,
   eventPresenceLogTable,
@@ -224,6 +226,55 @@ describe("event presence tracking", () => {
 
     expect((await presenceLogs())[0]?.endedAt).toBeInstanceOf(Date);
     expect(emitted).toHaveLength(2);
+  });
+
+  it("moves a map whose assignees all left from uncovered to unassigned", async () => {
+    const { tracking } = makeTracking();
+    const database = boundary.database;
+
+    await boundary.run(
+      database
+        .update(memberTable)
+        .set({ active: false })
+        .where(eq(memberTable.id, 1)),
+    );
+    await boundary.run(
+      database
+        .insert(memberTable)
+        .values(createMemberFixture({ id: 2, userId: "user-2" })),
+    );
+    await boundary.run(
+      database.insert(eventMapCoverageGapTable).values({
+        id: "uncovered",
+        mapId: "map-active",
+        heroNpcId: "hero-active",
+        gapType: "UNCOVERED",
+        startedAt: new Date(),
+      }),
+    );
+
+    await boundary.run(
+      tracking.handlePlayerPresenceChange("guild-1", EVENT_MAP, "user-2", true),
+    );
+
+    const gaps = await boundary.run(
+      database
+        .select({
+          gapType: eventMapCoverageGapTable.gapType,
+          endedAt: eventMapCoverageGapTable.endedAt,
+        })
+        .from(eventMapCoverageGapTable),
+    );
+
+    expect(
+      gaps.map(({ gapType, endedAt }) => ({ gapType, open: endedAt === null })),
+    ).toEqual(
+      expect.arrayContaining([
+        { gapType: "UNCOVERED", open: false },
+        { gapType: "UNASSIGNED", open: true },
+      ]),
+    );
+    expect(gaps).toHaveLength(2);
   });
 
   it.each([
