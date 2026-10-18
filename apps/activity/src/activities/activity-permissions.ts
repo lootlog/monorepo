@@ -8,9 +8,7 @@ import { Redis } from "effect/persistence";
 import { ActivityConfig } from "#src/config/activity-config";
 import { ApiHttpClient } from "#src/http/api-http-client";
 
-const CachedPermissions = Schema.Array(UserGuildPermissionsDtoSchema);
-
-type CachedValue = string | typeof CachedPermissions.Type;
+const UserPermissions = Schema.Array(UserGuildPermissionsDtoSchema);
 
 export interface PermissionsValue {
   readonly resolveGuildId: (id: string) => Effect.Effect<string | null, Error>;
@@ -31,7 +29,7 @@ export class Permissions extends Context.Service<
       const config = yield* ActivityConfig;
       const apiHttpClient = yield* ApiHttpClient;
 
-      const memory = new Map<string, { value: CachedValue }>();
+      const memory = new Map<string, { value: string }>();
 
       const redis = yield* Redis.Redis;
 
@@ -80,7 +78,7 @@ export class Permissions extends Context.Service<
 
       const set = (
         key: string,
-        value: CachedValue,
+        value: string,
       ): Effect.Effect<void, Redis.RedisError> => {
         if (config.redisUrl) {
           return redis
@@ -98,7 +96,7 @@ export class Permissions extends Context.Service<
       );
 
       const decodePermissions = Schema.decodeUnknownSync(
-        Schema.fromJsonString(CachedPermissions),
+        Schema.fromJsonString(UserPermissions),
       );
 
       const resolveGuildId = Effect.fn("Permissions.resolveGuildId")(function* (
@@ -140,16 +138,10 @@ export class Permissions extends Context.Service<
         return guild.id;
       });
 
+      // The API owns the grants cache and invalidates it when a member leaves
+      // or their roles change; a copy here would outlive both.
       const getUserPermissions = Effect.fn("Permissions.getUserPermissions")(
         function* (discordId: string, userId: string) {
-          const key = `permissions:${userId}:${discordId}`;
-
-          const cached = yield* get(key, CachedPermissions).pipe(
-            Effect.catch(() => Effect.succeed(undefined)),
-          );
-
-          if (cached) return cached;
-
           const url = new URL(
             "/internal/guilds/user-permissions",
             config.apiServiceUrl,
@@ -178,8 +170,6 @@ export class Permissions extends Context.Service<
                 });
               }),
             );
-
-          yield* set(key, permissions).pipe(Effect.ignore);
 
           return permissions;
         },
