@@ -7928,119 +7928,6 @@ export interface UpdateKillPointDto {
   comment?: string;
 }
 
-export type EventCoordinationResponseDtoSummary = {
-  criticalCount: number;
-  warningCount: number;
-  coveredMaps: number;
-  totalMaps: number;
-  /**
-     * @nullable
-     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-     */
-  nextSpawnAt: string | null;
-};
-
-export type EventCoordinationResponseDtoHeroesItemTimerStatus = typeof EventCoordinationResponseDtoHeroesItemTimerStatus[keyof typeof EventCoordinationResponseDtoHeroesItemTimerStatus];
-
-
-export const EventCoordinationResponseDtoHeroesItemTimerStatus = {
-  OPEN: 'OPEN',
-  WAITING: 'WAITING',
-  OVERDUE: 'OVERDUE',
-  NONE: 'NONE',
-} as const;
-
-/**
- * @nullable
- */
-export type EventCoordinationResponseDtoHeroesItemTimer = {[key: string]: unknown} & ({
-  npcId: number;
-  world: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  minSpawnTime: string;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  maxSpawnTime: string;
-  status: EventCoordinationResponseDtoHeroesItemTimerStatus;
-  /** @nullable */
-  overdueMs: number | null;
-} | null) | null;
-
-export type EventCoordinationResponseDtoHeroesItemCoverage = {
-  totalMaps: number;
-  assignedMaps: number;
-  coveredMaps: number;
-  unassignedMaps: number;
-  uncoveredMaps: number;
-  activeGapCount: number;
-};
-
-export type EventCoordinationResponseDtoHeroesItemActiveGapsItemGapType = typeof EventCoordinationResponseDtoHeroesItemActiveGapsItemGapType[keyof typeof EventCoordinationResponseDtoHeroesItemActiveGapsItemGapType];
-
-
-export const EventCoordinationResponseDtoHeroesItemActiveGapsItemGapType = {
-  UNASSIGNED: 'UNASSIGNED',
-  UNCOVERED: 'UNCOVERED',
-} as const;
-
-export type EventCoordinationResponseDtoHeroesItemActiveGapsItem = {
-  id: string;
-  mapId: string;
-  numericMapId: number;
-  mapName: string;
-  gapType: EventCoordinationResponseDtoHeroesItemActiveGapsItemGapType;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  startedAt: string;
-  durationSeconds: number;
-};
-
-export type EventCoordinationResponseDtoHeroesItemPriority = typeof EventCoordinationResponseDtoHeroesItemPriority[keyof typeof EventCoordinationResponseDtoHeroesItemPriority];
-
-
-export const EventCoordinationResponseDtoHeroesItemPriority = {
-  CRITICAL: 'CRITICAL',
-  WARNING: 'WARNING',
-  OK: 'OK',
-  IDLE: 'IDLE',
-} as const;
-
-export type EventCoordinationResponseDtoHeroesItemRecommendedAction = typeof EventCoordinationResponseDtoHeroesItemRecommendedAction[keyof typeof EventCoordinationResponseDtoHeroesItemRecommendedAction];
-
-
-export const EventCoordinationResponseDtoHeroesItemRecommendedAction = {
-  CLOSE_WINDOW: 'CLOSE_WINDOW',
-  ASSIGN_MAPS: 'ASSIGN_MAPS',
-  JOIN_MAP: 'JOIN_MAP',
-  WAIT: 'WAIT',
-  NONE: 'NONE',
-} as const;
-
-export type EventCoordinationResponseDtoHeroesItem = {
-  heroId: string;
-  /** @nullable */
-  npcId: number | null;
-  npcName: string;
-  /** @nullable */
-  npcIcon: string | null;
-  /** @nullable */
-  npcLvl: number | null;
-  /** @nullable */
-  timer: EventCoordinationResponseDtoHeroesItemTimer;
-  coverage: EventCoordinationResponseDtoHeroesItemCoverage;
-  activeGaps: EventCoordinationResponseDtoHeroesItemActiveGapsItem[];
-  priority: EventCoordinationResponseDtoHeroesItemPriority;
-  recommendedAction: EventCoordinationResponseDtoHeroesItemRecommendedAction;
-};
-
-export interface EventCoordinationResponseDto {
-  assignmentTimeoutMinutes: number;
-  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
-  generatedAt: string;
-  eventId: string;
-  world: string;
-  summary: EventCoordinationResponseDtoSummary;
-  heroes: EventCoordinationResponseDtoHeroesItem[];
-}
-
 export type KillTimelineMapResponseDtoAssignmentsItem = {
   memberId: number;
   memberName: string;
@@ -11553,22 +11440,6 @@ export type EventsRankingControllerUpdateKillPoint403 = {
 };
 
 export type EventsRankingControllerUpdateKillPoint429 = {
-  message: string;
-};
-
-export type EventsMonitoringControllerGetCoordinationPathParameters = {
- guildId: string,
-    eventId: string,
- }
-export type EventsMonitoringControllerGetCoordination401 = ReauthenticationRequiredEncoded | {
-  message: string;
-};
-
-export type EventsMonitoringControllerGetCoordination403 = {
-  message: string;
-};
-
-export type EventsMonitoringControllerGetCoordination429 = {
   message: string;
 };
 
@@ -16828,31 +16699,6 @@ return mainFetch<void>(getEventsRankingControllerUpdateKillPointUrl({ guildId, e
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
     body: JSON.stringify(updateKillPointDto)
-  }
-);}
-
-
-
-export const getEventsMonitoringControllerGetCoordinationUrl = ({ guildId, eventId }: EventsMonitoringControllerGetCoordinationPathParameters,) => {
-
-
-
-
-  return `/guilds/${guildId}/events/${eventId}/coordination`
-}
-
-/**
- * Get respawn priorities, map coverage gaps, and recommended actions for an event
- * @summary Get event coordination overview
- */
-export const eventsMonitoringControllerGetCoordination = async ({ guildId, eventId }: EventsMonitoringControllerGetCoordinationPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<EventCoordinationResponseDto> => {
-
-  return mainFetch<EventCoordinationResponseDto>(getEventsMonitoringControllerGetCoordinationUrl({ guildId, eventId }),
-  {
-    ...options,
-    method: 'GET'
-
-
   }
 );}
 

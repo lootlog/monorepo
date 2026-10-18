@@ -2465,8 +2465,9 @@ if (import.meta.main) {
       assertVerifiedAddition(service.current, key, current.get(key));
     }
 
-    // User editing, the unused Organization loot count endpoint and the UUID
-    // kill history lists replaced by listEventKillHistory were removed.
+    // User editing, the unused Organization loot count endpoint, the UUID
+    // kill history lists replaced by listEventKillHistory and the unused event
+    // coordinator were removed.
     const expectedRemovals =
       service.current === "api"
         ? [
@@ -2475,6 +2476,7 @@ if (import.meta.main) {
             "GET /guilds/{guildId}/events/{eventId}/kills",
             "GET /guilds/{guildId}/events/{eventId}/members/{memberId}/kills",
             "GET /guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills",
+            "GET /guilds/{guildId}/events/{eventId}/coordination",
           ]
         : [];
 

@@ -1,7 +1,7 @@
 import { PageTabs } from "@/components/layout/page-tabs";
 import { useTranslation } from "react-i18next";
 
-export type EventTab = "overview" | "ranking" | "kills" | "coordination";
+export type EventTab = "overview" | "ranking" | "kills";
 
 type EventPageTabsProps = {
   guildId: string;
@@ -26,11 +26,6 @@ export const EventPageTabs = ({
         { id: "overview", label: t("events.tabs.overview"), href: "" },
         { id: "ranking", label: t("events.tabs.ranking"), href: "/ranking" },
         { id: "kills", label: t("events.tabs.kills"), href: "/kills" },
-        {
-          id: "coordination",
-          label: t("events.tabs.coordination"),
-          href: "/coordination",
-        },
       ]}
     />
   );

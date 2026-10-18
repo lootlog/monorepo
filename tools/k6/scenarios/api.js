@@ -366,14 +366,4 @@ function runEventReads(config, guildId, eventId, world) {
       query: { limit: 10, world },
     },
   );
-  apiRequest(
-    config,
-    "api",
-    "event-coordination",
-    "GET",
-    `/guilds/${guildId}/events/${eventId}/coordination`,
-    {
-      optional: true,
-    },
-  );
 }

@@ -2,7 +2,6 @@ import type { QueryClient } from "@tanstack/react-query";
 import type { AccessPolicyChange } from "@lootlog/protocol/realtime/access-policy";
 import { z } from "zod";
 import {
-  getEventsMonitoringControllerGetCoordinationQueryKey,
   getListEventMapsQueryKey,
   getListEventsQueryKey,
   getShowEventOverviewQueryKey,
@@ -42,19 +41,6 @@ export function reconcileEventPolicyQueries(
   queryClient.removeQueries({ ...filters, type: "inactive" });
 
   return queryClient.resetQueries({ ...filters, type: "active" });
-}
-
-export function invalidateEventCoordinationQuery(
-  queryClient: QueryClient,
-  guildId: string,
-  eventId: string,
-) {
-  return queryClient.invalidateQueries({
-    queryKey: getEventsMonitoringControllerGetCoordinationQueryKey({
-      guildId,
-      eventId,
-    }),
-  });
 }
 
 export function invalidateEventDetailQueries(
