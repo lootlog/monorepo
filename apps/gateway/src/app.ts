@@ -67,7 +67,11 @@ import { ActivityPublisher } from "#src/rabbit/activity-publisher";
 import { CoveragePublisher } from "#src/rabbit/coverage-publisher";
 import { CommandHandler } from "#src/realtime/command-handler";
 import { CommandIngress } from "#src/realtime/command-ingress";
-import { JoinAdmission } from "#src/realtime/join-admission";
+import {
+  AIR_TAG_OBSERVATION_ADMISSION_LIMITS,
+  CommandAdmission,
+  JOIN_ADMISSION_LIMITS,
+} from "#src/realtime/command-admission";
 import { AirTagService } from "#src/realtime/air-tag-service";
 import { MapPingService } from "#src/realtime/map-ping-service";
 import { BattlePingService } from "#src/realtime/battle-ping-service";
@@ -188,7 +192,11 @@ class GatewayApplication extends Context.Service<
       const npcPresence = new NpcPresenceService(redis, hub);
       yield* airTags.runInterestRefresh().pipe(Effect.forkScoped);
       const guilds = makeGuildStore(config, redis, httpClient);
-      const joinAdmission = new JoinAdmission();
+      const joinAdmission = new CommandAdmission(JOIN_ADMISSION_LIMITS);
+
+      const airTagObservationAdmission = new CommandAdmission(
+        AIR_TAG_OBSERVATION_ADMISSION_LIMITS,
+      );
 
       const commands = new CommandHandler(
         guilds,
@@ -201,6 +209,7 @@ class GatewayApplication extends Context.Service<
         airTags,
         npcPresence,
         joinAdmission,
+        airTagObservationAdmission,
       );
 
       const ingress = new CommandIngress(
@@ -247,7 +256,13 @@ class GatewayApplication extends Context.Service<
         runBackground,
       );
 
-      yield* new GatewayRuntimeMetrics(redis, hub, ingress, joinAdmission)
+      yield* new GatewayRuntimeMetrics(
+        redis,
+        hub,
+        ingress,
+        joinAdmission,
+        airTagObservationAdmission,
+      )
         .run()
         .pipe(Effect.forkScoped);
 
