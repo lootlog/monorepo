@@ -1,7 +1,6 @@
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { findNpcType, getNpcTypeSortIndex } from "@/constants/npc";
 import { EmptyState } from "@/components/common/empty-state";
-import { ViewModeToggle } from "@/components/ui/view-mode-toggle";
 import { useTimerExpiry } from "./use-timer-expiry";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Button } from "@lootlog/ui/components/button";
@@ -18,7 +17,6 @@ import {
   TIMERS_VIEW_MODE_KEY,
 } from "./timers-layout";
 import { ListGroupHeading } from "@/components/common/list-group-heading";
-import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
 import { cn } from "cn";
 import { TimersToolbar } from "./timers-toolbar";
 
@@ -131,6 +129,9 @@ export const Timers = () => {
       }))}
       selectedGroups={activeGroups}
       onSelectedGroupsChange={setSelectedGroups}
+      viewMode={viewMode}
+      onViewModeChange={setViewMode}
+      canChooseViewMode={canChooseViewMode}
     />
   );
 
@@ -164,7 +165,10 @@ export const Timers = () => {
     if (isPending) {
       return (
         <ScrollArea className="min-h-0 flex-1">
-          <TimersListSkeleton viewMode={viewMode} />
+          <TimersListSkeleton
+            viewMode={viewMode}
+            canChooseViewMode={canChooseViewMode}
+          />
         </ScrollArea>
       );
     }
@@ -254,18 +258,6 @@ export const Timers = () => {
     <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("layout.navigation.timers")}</h1>
       <GuildWorldHeaderSwitcher />
-      {/* The view sits in the top bar, as on the loot list. */}
-      {canChooseViewMode && (
-        <HeaderSlotPortal slot="actions">
-          <ViewModeToggle
-            value={viewMode}
-            onChange={setViewMode}
-            listLabel={t("timers.view.list")}
-            gridLabel={t("timers.view.grid")}
-            size="default"
-          />
-        </HeaderSlotPortal>
-      )}
 
       <div className="flex min-h-0 flex-1 flex-col">
         {isError && timers !== undefined && (

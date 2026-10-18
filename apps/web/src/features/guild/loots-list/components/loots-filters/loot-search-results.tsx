@@ -1,10 +1,4 @@
-import { NpcSearchTile, PlayerSearchTile } from "@/components/tiles";
-import { formatLevel } from "@lootlog/domain/profession";
-import { LOOT_RARITY_TEXT_CLASS } from "@/features/guild/loots-list/loot-rarity-colors";
 import { CommandGroup, CommandItem } from "@lootlog/ui/components/command";
-import { ItemImage } from "@lootlog/ui/components/item-image";
-import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
-import { cn } from "cn";
 import { upperFirst } from "es-toolkit";
 import * as m from "framer-motion/m";
 import {
@@ -15,6 +9,7 @@ import {
   SEARCH_ROW_CLASS_NAME,
   type GuildSearchScope,
 } from "./loot-search-presentation";
+import { LootSearchHitContent } from "./loot-search-hit-content";
 import { SearchRowEnterHint } from "./search-row-enter-hint";
 import type { useLootSearchCommand } from "./use-loot-search-command";
 
@@ -58,17 +53,7 @@ export const LootSearchResults = ({
             onSelect={() => handleSelectNpc(npc)}
             className={SEARCH_ROW_CLASS_NAME}
           >
-            <NpcSearchTile icon={npc.icon} name={npc.name} />
-            <span className="min-w-0 truncate font-medium">{npc.name}</span>
-            <span className="shrink-0 text-muted-foreground">
-              {t(`npcType.${npc.type}`)}
-            </span>
-            <span className="ml-auto shrink-0 text-xs text-muted-foreground tabular-nums max-sm:hidden">
-              {npc.lvl > 0 &&
-                t("loots.searchCommand.level", {
-                  level: formatLevel(npc.lvl, npc.prof),
-                })}
-            </span>
+            <LootSearchHitContent hit={{ kind: "npc", npc }} />
             <SearchRowEnterHint />
           </CommandItem>
         ))}
@@ -85,27 +70,7 @@ export const LootSearchResults = ({
             onSelect={() => handleSelectItem(item)}
             className={SEARCH_ROW_CLASS_NAME}
           >
-            <ItemImage
-              icon={item.icon}
-              rarity={resolveItemRarity(item.rarity)}
-            />
-            <span className="min-w-0 truncate font-medium">{item.name}</span>
-            {item.rarity && (
-              <span
-                className={cn(
-                  "shrink-0",
-                  LOOT_RARITY_TEXT_CLASS[resolveItemRarity(item.rarity)],
-                )}
-              >
-                {t(`itemRarity.${item.rarity}`, {
-                  defaultValue: item.rarity,
-                })}
-              </span>
-            )}
-            <span className="ml-auto shrink-0 text-xs text-muted-foreground tabular-nums max-sm:hidden">
-              {item.lvl > 0 &&
-                t("loots.searchCommand.level", { level: item.lvl })}
-            </span>
+            <LootSearchHitContent hit={{ kind: "item", item }} />
             <SearchRowEnterHint />
           </CommandItem>
         ))}
@@ -130,23 +95,7 @@ export const LootSearchResults = ({
             onSelect={() => handleSelectPlayer(player)}
             className={SEARCH_ROW_CLASS_NAME}
           >
-            <PlayerSearchTile
-              icon={player.icon}
-              name={player.name}
-              className="mr-0 scale-75"
-            />
-            <span className="min-w-0 truncate font-medium">{player.name}</span>
-            {!world && (
-              <span className="shrink-0 text-xs text-muted-foreground">
-                {upperFirst(player.world)}
-              </span>
-            )}
-            <span className="ml-auto shrink-0 text-xs text-muted-foreground tabular-nums max-sm:hidden">
-              {player.lvl > 0 &&
-                t("loots.searchCommand.level", {
-                  level: formatLevel(player.lvl, player.prof),
-                })}
-            </span>
+            <LootSearchHitContent hit={{ kind: "player", player, world }} />
             <SearchRowEnterHint />
           </CommandItem>
         ))}

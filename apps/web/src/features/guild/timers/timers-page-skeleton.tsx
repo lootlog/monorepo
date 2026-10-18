@@ -4,7 +4,7 @@ import { TIMERS_GRID_MEDIA_QUERY, TIMERS_VIEW_MODE_KEY } from "./timers-layout";
 
 /** Route-level stand-in for the timers page: grouped timer rows. */
 export const TimersPageSkeleton = () => {
-  const { viewMode } = useViewMode(
+  const { viewMode, canChooseViewMode } = useViewMode(
     TIMERS_VIEW_MODE_KEY,
     "list",
     TIMERS_GRID_MEDIA_QUERY,
@@ -12,7 +12,10 @@ export const TimersPageSkeleton = () => {
 
   return (
     <div aria-busy="true" className="min-h-0 flex-1 overflow-hidden">
-      <TimersListSkeleton viewMode={viewMode} />
+      <TimersListSkeleton
+        viewMode={viewMode}
+        canChooseViewMode={canChooseViewMode}
+      />
     </div>
   );
 };

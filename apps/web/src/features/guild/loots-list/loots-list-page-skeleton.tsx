@@ -3,6 +3,8 @@ import { useLocalStorage } from "usehooks-ts";
 import { useViewMode } from "@/hooks/use-view-mode";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { cn } from "cn";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { ListToolbarSkeleton } from "@/components/common/list-toolbar-skeleton";
 import { LootFiltersRailSkeleton } from "./components/loots-filters/loot-filters-rail-skeleton";
 import { LootsFiltersSidebarSkeleton } from "./components/loots-filters/loots-filters-sidebar-skeleton";
 import { LootsListSkeleton } from "./components/loots-list/loots-list-skeleton";
@@ -23,7 +25,7 @@ export const LootsListPageSkeleton = () => {
   const [isFiltersOpen] = useLocalStorage(LOOTS_FILTERS_OPEN_KEY, true);
   const isPanelDocked = !usesOverlayFilters && isFiltersOpen;
 
-  const { viewMode } = useViewMode(
+  const { viewMode, canChooseViewMode } = useViewMode(
     LOOTS_VIEW_MODE_KEY,
     "grid",
     LOOTS_GRID_MEDIA_QUERY,
@@ -36,6 +38,9 @@ export const LootsListPageSkeleton = () => {
     >
       <div className="flex flex-1 overflow-hidden">
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          <ListToolbarSkeleton>
+            {canChooseViewMode && <Skeleton className="h-8 w-16 rounded-lg" />}
+          </ListToolbarSkeleton>
           <LootsListSkeleton viewMode={viewMode} />
         </div>
         {!isMobile && (
