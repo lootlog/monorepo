@@ -12,7 +12,6 @@ export const SETTINGS_DOMAIN_VALUES = [
   "pings",
   "sounds",
   "controls",
-  "experimental",
   "diagnostics",
   "information",
 ] as const;
@@ -59,7 +58,6 @@ export const SETTINGS_SUBSECTION_DOMAINS = {
   "muted-npcs": "mutes",
   sounds: "sounds",
   hotkeys: "controls",
-  experimental: "experimental",
   "battle-panel": "battle-panel",
   pings: "pings",
   logs: "diagnostics",
@@ -107,7 +105,6 @@ const SETTINGS_PATHS: Record<SettingsTabValue, SettingsPath> = {
   pings: { domain: "pings", subsection: "pings" },
   sounds: { domain: "sounds", subsection: "sounds" },
   controls: { domain: "controls", subsection: "hotkeys" },
-  experimental: { domain: "experimental", subsection: "experimental" },
   diagnostics: { domain: "diagnostics", subsection: "logs" },
   information: { domain: "information", subsection: "build" },
   "game-data": CATCHING_SETTINGS_PATH,

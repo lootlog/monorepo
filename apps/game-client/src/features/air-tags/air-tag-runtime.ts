@@ -34,12 +34,11 @@ export class AirTagRuntime {
   private readonly pendingOrganizations = new Set<string>();
   private policyRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 
-  configure(nextState: AirTagRuntimeState): void {
+  /** AirTags run for everyone on the new interface; the socket decides when they publish. */
+  configure(nextState: Omit<AirTagRuntimeState, "enabled">): void {
     const previousState = this.state;
     const wasPublishing = this.isPublishing(previousState);
-
-    const nextEnabled =
-      nextState.enabled && useGameStore.getState().game?.interface === "ni";
+    const nextEnabled = useGameStore.getState().game?.interface === "ni";
 
     this.state = { ...nextState, enabled: nextEnabled };
     const isPublishing = this.isPublishing(this.state);
