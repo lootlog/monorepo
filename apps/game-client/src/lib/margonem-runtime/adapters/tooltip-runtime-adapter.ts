@@ -1,5 +1,5 @@
 import type { ApiEventCallback } from "@lootlog/margonem/api";
-import type { Other } from "@lootlog/margonem/others";
+import type { LegacyGameOther, Other } from "@lootlog/margonem/others";
 import type { CharacterTipUpdate } from "@lootlog/margonem/tooltip";
 import { isObjectRecord } from "@lootlog/schema/records";
 
@@ -18,6 +18,12 @@ type JQueryLike = {
 
 type TooltipRuntimeWindow = Window & {
   $?: (element: Element) => JQueryLike;
+  // SI keeps others in g.other and builds their tip html with g.tips.other,
+  // which newOther defines on the first other it receives (elements.js).
+  g?: {
+    other?: Record<string, LegacyGameOther | undefined>;
+    tips?: { other?: (other: LegacyGameOther) => string };
+  };
   API?: {
     addCallbackToEvent?: (event: string, callback: ApiEventCallback) => void;
     removeCallbackFromEvent?: (
@@ -82,6 +88,48 @@ export function subscribeCharacterTipUpdates(
       // The handler is gone either way.
     }
   };
+}
+
+const LEGACY_OTHER_ELEMENT_PREFIX = "other";
+
+/** The SI other whose map element (`#other{id}.other`) contains `target`. */
+export function getLegacyOtherIdAt(target: EventTarget | null): string | null {
+  if (!(target instanceof Element)) return null;
+
+  const element = target.closest(".other");
+  const id = element?.id;
+
+  if (!id?.startsWith(LEGACY_OTHER_ELEMENT_PREFIX)) return null;
+
+  return id.slice(LEGACY_OTHER_ELEMENT_PREFIX.length) || null;
+}
+
+export function isLegacyTooltipRuntimeAvailable(): boolean {
+  const runtimeWindow = getRuntimeWindow();
+
+  return !runtimeWindow.Engine && Boolean(runtimeWindow.g);
+}
+
+export function getLegacyRuntimeOther(id: string): LegacyGameOther | undefined {
+  return getRuntimeWindow().g?.other?.[id];
+}
+
+/** The tip html SI builds for an other, before any Lootlog section. */
+export function buildLegacyOtherTip(other: LegacyGameOther): string | null {
+  const buildTip = getRuntimeWindow().g?.tips?.other;
+
+  return buildTip ? String(buildTip(other)) : null;
+}
+
+/**
+ * SI's Tip shows the hovered element's `tip` attribute and re-reads it every
+ * 100 ms while the element stays hovered, so replacing the attribute also
+ * updates a tip that is already on screen.
+ */
+export function setLegacyOtherTip(id: string, html: string): void {
+  document
+    .getElementById(`${LEGACY_OTHER_ELEMENT_PREFIX}${id}`)
+    ?.setAttribute("tip", html);
 }
 
 export function refreshWhoIsHereRuntimeTooltip(

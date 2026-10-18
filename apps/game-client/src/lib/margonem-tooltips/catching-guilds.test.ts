@@ -100,6 +100,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
       appendCatchingGuildsTooltipSection({
         baseHtml: "<div>Other</div>",
         character: createOther(),
+        interface: "ni",
         currentHtml: "<div>Other</div>",
       }),
     ).toBe("<div>Other</div>");
@@ -115,6 +116,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
       appendCatchingGuildsTooltipSection({
         baseHtml: "<div>Other</div>",
         character: createOther(),
+        interface: "ni",
         currentHtml: "<div>Other</div>",
       }),
     ).toBe("<div>Other</div>");
@@ -128,6 +130,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
       appendCatchingGuildsTooltipSection({
         baseHtml: "<div>Other</div>",
         character: createOther(),
+        interface: "ni",
         currentHtml: "<div>Other</div>",
       }),
     ).toContain("Ładowanie…");
@@ -143,6 +146,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
       appendCatchingGuildsTooltipSection({
         baseHtml: "<div>Other</div>",
         character: createOther(),
+        interface: "ni",
         currentHtml: "<div>Other</div>",
       }),
     ).toContain("Ładowanie…");
@@ -164,6 +168,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
     const result = appendCatchingGuildsTooltipSection({
       baseHtml: "<div>Other</div>",
       character: createOther(),
+      interface: "ni",
       currentHtml: "<div>Other</div>",
     });
 
@@ -183,6 +188,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
       appendCatchingGuildsTooltipSection({
         baseHtml: "<div>Other</div>",
         character: createOther(),
+        interface: "ni",
         currentHtml: "<div>Other</div>",
       }),
     ).toContain("Brak wspólnych Lootlogów");
@@ -195,6 +201,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
       appendCatchingGuildsTooltipSection({
         baseHtml: "<div>Other</div>",
         character: createOther(),
+        interface: "ni",
         currentHtml: "<div>Other</div>",
       }),
     ).toContain("Nie gra z Twoim Lootlogiem");
@@ -210,6 +217,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
       appendCatchingGuildsTooltipSection({
         baseHtml: "<div>Other</div>",
         character: createOther(),
+        interface: "ni",
         currentHtml: "<div>Other</div>",
       }),
     ).toContain("Nie udało się pobrać danych z Lootloga");
@@ -223,6 +231,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
       appendCatchingGuildsTooltipSection({
         baseHtml: "<div>Other</div>",
         character: createOther(),
+        interface: "ni",
         currentHtml: "<div>Other</div>",
       }),
     ).toContain("Nie udało się pobrać danych z Lootloga");
@@ -236,6 +245,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
       appendCatchingGuildsTooltipSection({
         baseHtml: "<div>Other</div>",
         character: createOther(),
+        interface: "ni",
         currentHtml: "<div>Other</div>",
       }),
     ).toContain("Nie masz dostępu do graczy online");

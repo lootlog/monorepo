@@ -15,9 +15,9 @@ import * as tooltipPatcher from "@/lib/margonem-tooltips/patcher";
 
 let endpoint: ReturnType<typeof createCatchingGuildsHttp>;
 
-const refreshActiveOtherCanvasTooltip = vi.spyOn(
+const refreshActiveOtherTooltip = vi.spyOn(
   tooltipPatcher,
-  "refreshActiveOtherCanvasTooltip",
+  "refreshActiveOtherTooltip",
 );
 
 import { useCharacterTooltipCatchingGuilds } from "./use-character-tooltip-catching-guilds";
@@ -90,7 +90,7 @@ describe("useCharacterTooltipCatchingGuilds", () => {
       value: { hero: { d: { id: "hero-1" } } },
     });
     endpoint = createCatchingGuildsHttp();
-    refreshActiveOtherCanvasTooltip.mockClear();
+    refreshActiveOtherTooltip.mockClear();
   });
 
   it("fetches catching guilds on shift for the active other and caches the result", async () => {
@@ -314,9 +314,9 @@ describe("useCharacterTooltipCatchingGuilds", () => {
     });
 
     await waitFor(() => {
-      expect(refreshActiveOtherCanvasTooltip).toHaveBeenCalled();
+      expect(refreshActiveOtherTooltip).toHaveBeenCalled();
     });
-    refreshActiveOtherCanvasTooltip.mockClear();
+    refreshActiveOtherTooltip.mockClear();
 
     act(() => {
       const target = getOtherCatchingGuildsTarget(other);
@@ -328,7 +328,7 @@ describe("useCharacterTooltipCatchingGuilds", () => {
     });
 
     await waitFor(() => {
-      expect(refreshActiveOtherCanvasTooltip).toHaveBeenCalledOnce();
+      expect(refreshActiveOtherTooltip).toHaveBeenCalledOnce();
     });
     expect(endpoint).toHaveBeenCalledOnce();
   });

@@ -4,7 +4,7 @@ import { createNativeCharacterTips } from "@/test/native-character-tips";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   installCharacterTooltipTransforms,
-  refreshActiveOtherCanvasTooltip,
+  refreshActiveOtherTooltip,
 } from "./patcher";
 import { characterTooltipTransforms } from "./registry";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
@@ -261,7 +261,7 @@ describe("installCharacterTooltipTransforms", () => {
     originalCanvasTipShow.mockClear();
 
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
-    refreshActiveOtherCanvasTooltip();
+    refreshActiveOtherTooltip();
 
     expect(other.tip?.[0]).toBe("<div>Other</div><span>shift</span>");
     expect(originalCanvasTipShow).toHaveBeenCalledWith(hoverEvent, other);
@@ -308,7 +308,7 @@ describe("installCharacterTooltipTransforms", () => {
 
     originalCanvasTipShow.mockClear();
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(false);
-    refreshActiveOtherCanvasTooltip();
+    refreshActiveOtherTooltip();
 
     expect(other.tip?.[0]).toBe("<div>Other</div>");
     expect(originalCanvasTipShow).toHaveBeenCalledWith(hoverEvent, other);
@@ -343,7 +343,7 @@ describe("installCharacterTooltipTransforms", () => {
     departed.tipUpdate = departedTipUpdate;
 
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(false);
-    refreshActiveOtherCanvasTooltip();
+    refreshActiveOtherTooltip();
 
     expect(hovered.tip?.[0]).toBe("<div>Hovered</div>");
     expect(idle.tip?.[0]).toBe("<div>Idle</div>");
@@ -373,7 +373,7 @@ describe("installCharacterTooltipTransforms", () => {
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
     canvasTip.show({ clientX: 1, clientY: 2 }, other);
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(false);
-    refreshActiveOtherCanvasTooltip();
+    refreshActiveOtherTooltip();
     canvasTip.hide({});
 
     // Hover again without Shift; a window blur still reports Shift as released.
@@ -381,11 +381,142 @@ describe("installCharacterTooltipTransforms", () => {
     originalCanvasTipShow.mockClear();
     const builtBeforeBlur = builtTooltips;
 
-    refreshActiveOtherCanvasTooltip();
+    refreshActiveOtherTooltip();
 
     expect(originalCanvasTipShow).not.toHaveBeenCalled();
     expect(builtTooltips).toBe(builtBeforeBlur);
 
     cleanup();
+  });
+});
+
+describe("installCharacterTooltipTransforms on SI", () => {
+  const originalWindowG = Object.getOwnPropertyDescriptor(window, "g");
+
+  // SI keeps others in g.other, builds their html with g.tips.other and puts
+  // it in the `tip` attribute of `#other{id}.other` (elements.js newOther).
+  function setLegacyRuntime(ids: string[]) {
+    const other = Object.fromEntries(
+      ids.map((id) => [
+        id,
+        {
+          account: 9822301,
+          icon: "",
+          id,
+          lvl: 300,
+          nick: `Other ${id}`,
+          prof: "w",
+        },
+      ]),
+    );
+
+    Object.defineProperty(window, "Engine", {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(window, "g", {
+      configurable: true,
+      value: {
+        other,
+        tips: { other: (o: { nick: string }) => `<b>${o.nick}</b>` },
+      },
+    });
+
+    document.body.innerHTML = ids
+      .map(
+        (id) =>
+          `<div class="other" id="other${id}" tip="<b>Other ${id}</b>"><span></span></div>`,
+      )
+      .join("");
+  }
+
+  function hover(id: string | null) {
+    const target = id
+      ? document.querySelector(`#other${id} span`)
+      : document.body;
+
+    target?.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+  }
+
+  const tipOf = (id: string) =>
+    document.getElementById(`other${id}`)?.getAttribute("tip");
+
+  beforeEach(() => {
+    characterTooltipTransforms.clear();
+    useCharacterTooltipCatchingGuildsStore.getState().clear();
+    useOnlineCharacterOwnersStore.getState().clearOwners();
+    registerShiftSection();
+  });
+
+  afterEach(() => {
+    characterTooltipTransforms.clear();
+    useCharacterTooltipCatchingGuildsStore.getState().clear();
+    document.body.innerHTML = "";
+    Object.defineProperty(window, "Engine", {
+      configurable: true,
+      value: originalWindowEngine,
+    });
+
+    if (originalWindowG) {
+      Object.defineProperty(window, "g", originalWindowG);
+    } else {
+      Reflect.deleteProperty(window, "g");
+    }
+  });
+
+  it("adds the section to the player hovered while Shift is held", () => {
+    setLegacyRuntime(["617", "618"]);
+    const cleanup = installCharacterTooltipTransforms();
+
+    hover("617");
+    expect(tipOf("617")).toBe("<b>Other 617</b>");
+
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    refreshActiveOtherTooltip();
+    expect(tipOf("617")).toBe("<b>Other 617</b><span>shift</span>");
+
+    hover("618");
+    expect(tipOf("618")).toBe("<b>Other 618</b><span>shift</span>");
+    expect(
+      useCharacterTooltipCatchingGuildsStore.getState().activeOther?.d.id,
+    ).toBe("618");
+
+    cleanup();
+  });
+
+  it("removes the section from every SI tooltip when Shift is released", () => {
+    setLegacyRuntime(["617", "618"]);
+    const cleanup = installCharacterTooltipTransforms();
+
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    hover("617");
+    hover("618");
+    hover(null);
+    expect(
+      useCharacterTooltipCatchingGuildsStore.getState().activeOther,
+    ).toBeNull();
+
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(false);
+    refreshActiveOtherTooltip();
+
+    expect(tipOf("617")).toBe("<b>Other 617</b>");
+    expect(tipOf("618")).toBe("<b>Other 618</b>");
+
+    cleanup();
+  });
+
+  it("stops following the cursor and restores tooltips on cleanup", () => {
+    setLegacyRuntime(["617"]);
+    const cleanup = installCharacterTooltipTransforms();
+
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    hover("617");
+    cleanup();
+
+    expect(tipOf("617")).toBe("<b>Other 617</b>");
+
+    hover(null);
+    hover("617");
+    expect(tipOf("617")).toBe("<b>Other 617</b>");
   });
 });
