@@ -31,4 +31,15 @@ describe("ReservationFilters", () => {
 
     expect(onChange).toHaveBeenCalledWith("all");
   });
+
+  it("shows every spot when the all pill is pressed", () => {
+    const onChange = vi.fn();
+    render(<ReservationFilters value="available" onChange={onChange} />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "reservations.filters.all" }),
+    );
+
+    expect(onChange).toHaveBeenCalledWith("all");
+  });
 });

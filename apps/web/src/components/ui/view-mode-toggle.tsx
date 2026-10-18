@@ -7,7 +7,7 @@ type ViewModeToggleProps = {
   onChange: (value: ViewMode) => void;
   listLabel: string;
   gridLabel: string;
-  size?: "default" | "lg";
+  size?: "sm" | "default" | "lg";
   className?: string;
 };
 

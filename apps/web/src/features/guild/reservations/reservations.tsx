@@ -1,8 +1,6 @@
 import { EmptyState } from "@/components/common/empty-state";
 import { ListToolbar } from "@/components/common/list-toolbar";
-import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
 import { useState } from "react";
-import { useLocalStorage } from "usehooks-ts";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { CircleAlert, RotateCcw, SearchX } from "lucide-react";
@@ -50,10 +48,9 @@ export function Reservations() {
   const guildId = useGuildId() ?? "";
   const [searchValue, setSearchValue] = useState("");
 
-  const [filter, setFilter] = useLocalStorage<ReservationFilter>(
-    "reservations-filter",
-    "all",
-  );
+  // Not persisted: a narrowing filter left on from an earlier visit hid the
+  // occupied spots, whose future slots are still open for reservations.
+  const [filter, setFilter] = useState<ReservationFilter>("all");
 
   const { viewMode, setViewMode, canChooseViewMode } = useViewMode(
     RESERVATIONS_VIEW_MODE_KEY,
@@ -175,19 +172,6 @@ export function Reservations() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("layout.navigation.reservations")}</h1>
-      {/* The view sits in the top bar, as on the loot and timer lists. */}
-      {canChooseViewMode && (
-        <HeaderSlotPortal slot="actions">
-          <ViewModeToggle
-            value={viewMode}
-            onChange={setViewMode}
-            listLabel={t("reservations.view.list")}
-            gridLabel={t("reservations.view.grid")}
-            size="default"
-          />
-        </HeaderSlotPortal>
-      )}
-
       {spotsQuery.isError ? (
         <div className="p-3">
           <EmptyState
@@ -219,6 +203,15 @@ export function Reservations() {
             disabled={spotsQuery.isPending}
           >
             <ReservationFilters value={filter} onChange={setFilter} />
+            {canChooseViewMode && (
+              <ViewModeToggle
+                value={viewMode}
+                onChange={setViewMode}
+                listLabel={t("reservations.view.list")}
+                gridLabel={t("reservations.view.grid")}
+                size="sm"
+              />
+            )}
           </ListToolbar>
           {tiles}
         </ScrollArea>

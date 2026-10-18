@@ -23,6 +23,6 @@ export const getReservationCollectionClassName = (viewMode: ViewMode) =>
 export const getReservationCellClassName = (viewMode: ViewMode) =>
   viewMode === "grid" ? LIST_TILE_GRID_CELL_CLASS : LIST_TILE_RULE_CLASS;
 
-/** List rows put the status beside the name from `sm` up. */
+/** A list row: the spot, its status, then its actions, on one line. */
 export const RESERVATION_LIST_ROW_CLASS =
-  "sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(14rem,1fr)] sm:items-center";
+  "grid min-h-14 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-x-6 py-2";

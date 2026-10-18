@@ -256,7 +256,11 @@ describe("ReservationsSchedule nearest free slot", () => {
     expect(requests[requests.length - 1]?.searchParams.get("to")).toBe(
       new Date(2026, 0, 8, 12, 30).toISOString(),
     );
-    fireEvent.click(screen.getByRole("button", { name: "common.save" }));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "reservations.schedule.dialog.submit",
+      }),
+    );
     await waitFor(() => expect(writes).toHaveLength(1));
     expect(JSON.parse(writes[0] ?? "")).toMatchObject({
       startsAt: new Date(2026, 0, 1, 13).toISOString(),

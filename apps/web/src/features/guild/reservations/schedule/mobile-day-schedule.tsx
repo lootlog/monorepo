@@ -14,6 +14,7 @@ import {
 import { MobileDayPreview } from "./mobile-day-preview";
 import { MobileReservationHour } from "./mobile-reservation-hour";
 import { ReservationBlock } from "./reservation-block";
+import { ScheduleNowLine } from "./schedule-now-line";
 import { isReservationStartSelectable } from "./reservation-settings";
 import {
   useMobileDaySchedule,
@@ -218,9 +219,8 @@ export function MobileDaySchedule({
                 ))}
 
                 {isToday && (
-                  <div
+                  <ScheduleNowLine
                     ref={nowRef}
-                    className="pointer-events-none absolute z-20 h-px bg-destructive"
                     style={{
                       left: LABEL_COLUMN_WIDTH,
                       right: 0,
