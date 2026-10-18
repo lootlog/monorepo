@@ -13,7 +13,6 @@ import {
   inArray,
   isNotNull,
   lte,
-  ne,
   notInArray,
   sql,
   desc,
@@ -138,11 +137,12 @@ export const makeBattleAnalyticsQuery = (
     return and(
       buildCombatProfileWhere(battlesRef, params),
       eq(battlesRef.type, "1v1"),
-      // An unfinished battle has no result to count. It is stored with both
-      // teams 0; filtering on `unfinished` fails on TimescaleDB 2.24 chunks
-      // compressed before the column existed ("unexpected column type
-      // 'boolean'").
-      ne(battlesRef.winningTeam, 0),
+      // An unfinished battle has no result to count. Chunks compressed
+      // before `unfinished` existed hold only its default, and TimescaleDB
+      // 2.24 fails vectorized boolean filters on it ("unexpected column type
+      // 'boolean'"), including `= false` and `NOT`. `IS DISTINCT FROM` is
+      // not vectorized. Teams 0/0 cannot replace it: draws are stored so too.
+      sql`${battlesRef.unfinished} is distinct from true`,
       params.hasFlee !== undefined
         ? eq(battlesRef.hasFlee, params.hasFlee)
         : undefined,
