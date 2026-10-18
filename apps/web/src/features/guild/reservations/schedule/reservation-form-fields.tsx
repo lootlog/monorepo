@@ -69,33 +69,35 @@ export function ReservationFormFields({
 
   return (
     <>
-      <div className="space-y-2">
-        <Label>{t("reservations.schedule.dialog.startDate")}</Label>
-        <DateTimePicker
-          value={startsAt}
-          onChange={setStartsAt}
-          min={minStart}
-          max={maxStart}
-          minuteStep={settings.reservationTimeGranularityMinutes}
-          placeholder={t("reservations.schedule.dialog.startDatePlaceholder")}
-          timeLabel={t("reservations.datePicker.time")}
-          clearLabel={t("reservations.datePicker.clear")}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>{t("reservations.schedule.dialog.endDate")}</Label>
-        <DateTimePicker
-          value={endsAt}
-          onChange={setEndsAt}
-          min={minEnd}
-          max={maxEnd}
-          minuteStep={settings.reservationTimeGranularityMinutes}
-          placeholder={t("reservations.schedule.dialog.endDatePlaceholder")}
-          timeLabel={t("reservations.datePicker.time")}
-          clearLabel={t("reservations.datePicker.clear")}
-          required
-        />
+      <div className="grid gap-4 sm:grid-cols-2 sm:gap-3">
+        <div className="min-w-0 space-y-2">
+          <Label>{t("reservations.schedule.dialog.startDate")}</Label>
+          <DateTimePicker
+            value={startsAt}
+            onChange={setStartsAt}
+            min={minStart}
+            max={maxStart}
+            minuteStep={settings.reservationTimeGranularityMinutes}
+            placeholder={t("reservations.schedule.dialog.startDatePlaceholder")}
+            timeLabel={t("reservations.datePicker.time")}
+            clearLabel={t("reservations.datePicker.clear")}
+            required
+          />
+        </div>
+        <div className="min-w-0 space-y-2">
+          <Label>{t("reservations.schedule.dialog.endDate")}</Label>
+          <DateTimePicker
+            value={endsAt}
+            onChange={setEndsAt}
+            min={minEnd}
+            max={maxEnd}
+            minuteStep={settings.reservationTimeGranularityMinutes}
+            placeholder={t("reservations.schedule.dialog.endDatePlaceholder")}
+            timeLabel={t("reservations.datePicker.time")}
+            clearLabel={t("reservations.datePicker.clear")}
+            required
+          />
+        </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor={commentId}>

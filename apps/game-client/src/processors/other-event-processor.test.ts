@@ -28,7 +28,7 @@ describe("OtherEventProcessor", () => {
   let test: ReturnType<typeof createAirTagTest>;
   beforeEach(() => {
     test = createAirTagTest();
-    airTagRuntime.configure({ connected: true, enabled: true, joined: true });
+    airTagRuntime.configure({ connected: true, joined: true });
     test.wire.frames.length = 0;
   });
   afterEach(() => {

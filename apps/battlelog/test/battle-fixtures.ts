@@ -63,6 +63,7 @@ export const createBattleFixture = ({
   losingTeam: 2,
   honorPoints: 0,
   hasFlee: false,
+  unfinished: false,
   matchmaking: false,
 
   difficultyRank: null,

@@ -45,7 +45,6 @@ describe("BattleEventProcessor golden payload", () => {
       battleState: "idle",
       battleWarriors: {},
       events: [],
-      lastBattleHash: "",
       lastKillHash: "",
     });
     useGameStore.getState().replaceGame({
@@ -69,7 +68,7 @@ describe("BattleEventProcessor golden payload", () => {
     });
   });
 
-  it("keeps the normal battle DTO and both deterministic hashes stable", async () => {
+  it("keeps the normal battle DTO and its submission ID stable", async () => {
     const fixture = createBattleTest();
     const processor = new BattleEventProcessor();
 
@@ -79,9 +78,6 @@ describe("BattleEventProcessor golden payload", () => {
     expect(fixture.battles()).toHaveLength(1);
     expect(await fixture.battles()[0]?.text()).toBe(
       '{"accountId":"67890","characterId":"12345","submissionId":"caa56b24ec6eea4d1999bf8cecd663e45929e567e7fa98e1f6cd8f61d2d62552","events":[{"f":{"m":["alpha"],"init":"1","w":{"111":{"icon":"one.gif","lvl":100,"name":"Player1","originalId":111,"prof":"w","team":1},"222":{"icon":"two.gif","lvl":101,"name":"Player2","originalId":222,"prof":"m","team":2}}}},{"f":{"m":["omega"],"endBattle":1}}],"world":"luvia"}',
-    );
-    expect(useBattleStore.getState().lastBattleHash).toBe(
-      "90757b5e1de33a79eca635bda0f55da404fb206359ef757da52057ce2653b5f1",
     );
     expect(useBattleStore.getState().events).toEqual([]);
     expect(useBattleStore.getState().battleState).toBe("idle");

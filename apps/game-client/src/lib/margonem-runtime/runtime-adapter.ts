@@ -181,6 +181,7 @@ abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {
         id: map.id,
         name: map.name,
         visibility: map.visibility,
+        ...(map.pvp !== undefined && { pvp: map.pvp }),
       }),
       gameVersion: this.gameVersion,
       world,

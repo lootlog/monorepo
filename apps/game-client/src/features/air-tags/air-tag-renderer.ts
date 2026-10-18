@@ -12,7 +12,7 @@ import {
   type AirTagTarget,
 } from "@lootlog/schema/air-tag";
 import { getAirTagEffectiveRelation } from "@lootlog/domain/air-tag";
-import { isShownByGame } from "./air-tag-game-visibility";
+import { isSeenByHero, showsAirTagsOnMap } from "./air-tag-game-visibility";
 import { AirTagMotion } from "./air-tag-motion";
 import { airTagReceiveController } from "./air-tag-receive-controller";
 
@@ -50,7 +50,7 @@ export class AirTagRenderer {
   private enabled = false;
   private unsubscribeTargets: (() => void) | null = null;
   private readonly motion = new AirTagMotion();
-  /** Targets the game does not draw, with their positions this frame. */
+  /** Targets the hero cannot see, with their positions this frame. */
   private frameTargets: AirTagTarget[] = [];
   private framePositions: TilePosition[] = [];
   private frameTime = 0;
@@ -93,10 +93,12 @@ export class AirTagRenderer {
   private readonly handleDrawFrame = () => {
     this.frameTime = this.now();
 
-    const targets = airTagReceiveController.getRenderableTargets(
-      this.frameTime,
-      AIR_TAG_TARGET_TTL_MS,
-    );
+    const targets = showsAirTagsOnMap()
+      ? airTagReceiveController.getRenderableTargets(
+          this.frameTime,
+          AIR_TAG_TARGET_TTL_MS,
+        )
+      : [];
 
     if (targets.length === 0) {
       this.cancelExpiry();
@@ -114,7 +116,7 @@ export class AirTagRenderer {
     this.motion.beginFrame();
 
     for (const target of targets) {
-      if (isShownByGame(target.targetId)) continue;
+      if (isSeenByHero(target)) continue;
       this.frameTargets.push(target);
       this.framePositions.push(this.motion.position(target, this.frameTime));
     }
@@ -269,10 +271,12 @@ export class AirTagRenderer {
   private readonly refreshDrawRegistration = () => {
     if (!this.enabled) return;
 
-    const targets = airTagReceiveController.getRenderableTargets(
-      this.now(),
-      AIR_TAG_TARGET_TTL_MS,
-    );
+    const targets = showsAirTagsOnMap()
+      ? airTagReceiveController.getRenderableTargets(
+          this.now(),
+          AIR_TAG_TARGET_TTL_MS,
+        )
+      : [];
 
     if (targets.length === 0) {
       this.cancelExpiry();

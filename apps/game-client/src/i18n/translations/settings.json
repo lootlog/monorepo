@@ -16,7 +16,6 @@
     "pings": "Pingi",
     "sounds": "Dźwięki",
     "controls": "Sterowanie",
-    "experimental": "Eksperymentalne",
     "diagnostics": "Diagnostyka",
     "information": "Informacje"
   },
@@ -32,7 +31,6 @@
     "timerBehavior": "Działanie",
     "catching": "Zakres zbierania",
     "notificationRules": "Reguły",
-    "experimentalFeatures": "Funkcje",
     "battleDataCollection": "Zbieranie danych",
     "pings": "Pingi",
     "hiddenTimers": "Ukryte timery",
@@ -171,12 +169,6 @@
     "clearLocalDataConfirm": "Potwierdź",
     "clearLocalDataCancel": "Anuluj"
   },
-  "experimental": {
-    "sectionTitle": "Funkcje eksperymentalne",
-    "newInterfaceOnly": "Funkcje eksperymentalne są dostępne tylko w nowym interfejsie gry.",
-    "airTagsLabel": "AirTagi – współdzielona widoczność",
-    "airTagsDescription": "Udostępniaj Lootlogowi pozycje widocznych graczy i pokazuj świeże obserwacje z bieżącej mapy. Gracze z wrogich klanów, których zobaczysz, pojawią się też na timerach Twojego Lootloga."
-  },
   "information": {
     "title": "Informacje o kliencie",
     "description": "Informacje o aktualnie uruchomionej wersji dodatku.",
@@ -194,6 +186,7 @@
   },
   "airTags": {
     "seenSeconds": "widziany {{seconds}} s temu",
+    "seenAgo": "{{seconds}} s",
     "whoIsHereTitle": "Widziani przez Lootloga",
     "afk": "AFK"
   },

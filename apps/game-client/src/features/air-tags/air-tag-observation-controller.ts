@@ -1,5 +1,6 @@
 import { useGameStore } from "@/store/game.store";
 import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handles";
+import { isInHeroSight } from "./air-tag-game-visibility";
 import {
   AIR_TAG_MAX_BATCH_SIZE,
   isAirTagObservation,
@@ -314,15 +315,10 @@ export class AirTagObservationController {
    * or any player on a map without war shadow, has certainly left the map.
    */
   private getDepartureReason(target: LocalAirTagTarget): AirTagDepartureReason {
-    const game = useGameStore.getState().game;
+    if (useGameStore.getState().game?.map.id !== this.mapId)
+      return "out-of-sight";
 
-    if (!game || game.map.id !== this.mapId) return "out-of-sight";
-    const range = game.map.visibility;
-
-    if (range <= 0) return "left-map";
-
-    return Math.hypot(target.x - game.hero.x, target.y - game.hero.y) <=
-      range - AIR_TAG_SIGHT_MARGIN_TILES
+    return isInHeroSight(target, AIR_TAG_SIGHT_MARGIN_TILES)
       ? "left-map"
       : "out-of-sight";
   }

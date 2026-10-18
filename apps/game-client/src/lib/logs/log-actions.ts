@@ -285,7 +285,7 @@ const getResponseBody = (response: unknown): unknown => {
   return response.data ?? null;
 };
 
-const getErrorStatusCode = (cause: unknown): number | null => {
+export const getErrorStatusCode = (cause: unknown): number | null => {
   if (!isRecord(cause)) {
     return null;
   }
@@ -469,7 +469,7 @@ const delayRetry = (delayMs: number): Promise<void> => {
   });
 };
 
-const shouldRetryLoggedActionStatus = (
+export const shouldRetryLoggedActionStatus = (
   statusCode: number | null,
   retry: LoggedActionRetryOptions,
 ): boolean => {

@@ -30,7 +30,11 @@ export const BattleTeamsOverview: FC<BattleTeamsOverviewProps> = ({
   const isGroup = leftTeam.length > 1 || rightTeam.length > 1;
 
   const getTeamResult = (teamNumber: number) => {
-    if (battle.winningTeam === null || battle.winningTeam === undefined) {
+    if (
+      battle.unfinished ||
+      battle.winningTeam === null ||
+      battle.winningTeam === undefined
+    ) {
       return null;
     }
 
