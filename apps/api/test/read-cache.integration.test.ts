@@ -613,6 +613,7 @@ describe("Read cache Dragonfly integration", () => {
           yield* db.insert(memberTable).values({
             guildId,
             userId: discordId,
+            globalUserId: randomUUID(),
             name: "Owner",
             updatedAt: new Date(),
           });
