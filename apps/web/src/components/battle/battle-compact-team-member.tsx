@@ -1,9 +1,6 @@
 import { formatLevel } from "@lootlog/domain/profession";
 import { PlayerTile } from "@/components/battle/player-tile";
-import {
-  BATTLE_SURFACE_COLORS,
-  BATTLE_TEXT_COLORS,
-} from "@/components/battle/utils/battle-color-palette";
+import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { BattleDamageTags } from "@/features/user/battle-panel/components/battle-damage-tags";
 import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { EmergencyExitIcon } from "@lootlog/ui/components/emergency-exit-icon";
@@ -32,13 +29,7 @@ export const BattleCompactTeamMember: FC<BattleCompactTeamMemberProps> = ({
 
   return (
     <li
-      className={cn(
-        "flex min-w-0 items-center gap-2 rounded-md border bg-background/40 py-1",
-        compact ? "px-1 @2xl:pl-1.5 @2xl:pr-2.5" : "pl-1.5 pr-2.5",
-        isCurrentCharacter
-          ? BATTLE_SURFACE_COLORS.team.currentCharacterStrongBorder
-          : "border-border/70",
-      )}
+      className={cn("flex min-w-0 items-center gap-2", compact && "@2xl:pr-1")}
     >
       <div
         className={cn(
@@ -54,14 +45,14 @@ export const BattleCompactTeamMember: FC<BattleCompactTeamMemberProps> = ({
       </div>
       <div
         className={cn(
-          "min-w-0 flex-1 text-xs leading-tight",
+          "min-w-0 flex-1 text-sm leading-tight",
           compact && "sr-only @2xl:not-sr-only",
         )}
       >
         <div className="flex min-w-0 items-center gap-1">
           <span
             className={cn(
-              "truncate font-semibold",
+              "truncate font-medium",
               isCurrentCharacter && BATTLE_TEXT_COLORS.team.friendly,
             )}
           >
@@ -90,7 +81,7 @@ export const BattleCompactTeamMember: FC<BattleCompactTeamMemberProps> = ({
             />
           )}
         </div>
-        <div className="mt-0.5 flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground">
+        <div className="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
           <span className="tabular-nums">
             {formatLevel(member.lvl, member.prof)}
           </span>

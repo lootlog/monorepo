@@ -38,6 +38,9 @@ interface ConfirmDeleteDialogProps {
   cancelButtonLabel?: string;
   triggerTooltip?: ReactNode;
   triggerTooltipSide?: "top" | "right" | "bottom" | "left";
+  /** Opens the dialog from elsewhere, such as a menu item; it then renders no trigger. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function ConfirmDeleteDialog({
@@ -52,8 +55,18 @@ export function ConfirmDeleteDialog({
   cancelButtonLabel = "Anuluj",
   triggerTooltip,
   triggerTooltipSide = "top",
+  open,
+  onOpenChange,
 }: ConfirmDeleteDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const isControlled = open !== undefined;
+  const isOpen = open ?? uncontrolledOpen;
+
+  const setIsOpen = (nextOpen: boolean) => {
+    if (!isControlled) setUncontrolledOpen(nextOpen);
+    onOpenChange?.(nextOpen);
+  };
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const requiresConfirmation = confirmText !== undefined;
@@ -115,7 +128,7 @@ export function ConfirmDeleteDialog({
         if (!isSubmitting) handleOpenChange(nextOpen);
       }}
     >
-      {triggerTooltip ? (
+      {isControlled ? null : triggerTooltip ? (
         <Tooltip>
           <TooltipTrigger
             render={<span className="inline-flex">{triggerElement}</span>}

@@ -1,8 +1,16 @@
+import {
+  INLINE_SEARCH_INPUT_CLASS,
+  InlineSearchField,
+} from "@/components/common/inline-search-field";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
 import { Button } from "@lootlog/ui/components/button";
+import { cn } from "cn";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import type { ChangeEvent, FC, Ref } from "react";
+import type { FC, Ref } from "react";
 import { useTranslation } from "react-i18next";
-import { SearchInput } from "@/components/ui/search-input";
 
 export type BattleLogSearchToolbarProps = {
   ref?: Ref<HTMLDivElement>;
@@ -14,6 +22,11 @@ export type BattleLogSearchToolbarProps = {
   onNext: () => void;
 };
 
+/**
+ * The log's first row, like a list toolbar: a borderless search with the match counter and
+ * arrows. It pins at `--battle-log-sticky-top`, under the chart pinned above the log, or else
+ * under the page's pinned bars.
+ */
 export const BattleLogSearchToolbar: FC<BattleLogSearchToolbarProps> = ({
   ref,
   query,
@@ -27,58 +40,61 @@ export const BattleLogSearchToolbar: FC<BattleLogSearchToolbarProps> = ({
   const hasResults = query.trim().length > 0 && totalMatches > 0;
   const currentMatchNumber = hasResults ? currentIndex + 1 : 0;
 
-  const handleQueryChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    onQueryChange(event.target.value);
-  };
-
   return (
     <div
       ref={ref}
       data-battle-log-toolbar=""
-      className="sticky top-(--battle-log-sticky-top,0px) z-10 min-h-[49px] shrink-0 border-b border-border/70 bg-card px-3 py-2"
+      data-list-tile
+      className={cn(
+        "sticky top-[var(--battle-log-sticky-top,calc(var(--page-sticky-top,0px)+var(--filter-bar-height,0px)))] z-10 flex min-h-12 items-center gap-x-4 bg-background py-2 backdrop-blur-sm transition-colors has-[input:focus-visible]:border-primary motion-reduce:transition-none",
+        LIST_TILE_RULE_CLASS,
+        LIST_TILE_INSET_CLASS,
+      )}
     >
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <SearchInput
+      <InlineSearchField
+        className="min-w-0"
+        clearLabel={t("common.clear")}
+        onClear={query ? () => onQueryChange("") : undefined}
+      >
+        <input
+          type="search"
           value={query}
-          onChange={handleQueryChange}
+          onChange={(event) => onQueryChange(event.target.value)}
           aria-label={t("battlePanel.single.log.search.label")}
           placeholder={t("battlePanel.single.log.search.placeholder")}
-          size="sm"
-          wrapperClassName="min-w-0 flex-1"
+          className={INLINE_SEARCH_INPUT_CLASS}
         />
-        <div className="flex items-center justify-between gap-2 sm:justify-end">
-          <span
-            className="min-w-14 text-center text-xs font-medium tabular-nums text-muted-foreground"
-            aria-live="polite"
-          >
-            {t("battlePanel.single.log.search.counter", {
-              current: currentMatchNumber,
-              total: totalMatches,
-            })}
-          </span>
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              aria-label={t("battlePanel.single.log.search.previous")}
-              disabled={!hasResults}
-              onClick={onPrevious}
-            >
-              <ChevronUp className="h-4 w-4" />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              aria-label={t("battlePanel.single.log.search.next")}
-              disabled={!hasResults}
-              onClick={onNext}
-            >
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+      </InlineSearchField>
+      <div className="flex shrink-0 items-center gap-1">
+        <span
+          className="min-w-12 text-center text-xs font-medium tabular-nums text-muted-foreground"
+          aria-live="polite"
+        >
+          {t("battlePanel.single.log.search.counter", {
+            current: currentMatchNumber,
+            total: totalMatches,
+          })}
+        </span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={t("battlePanel.single.log.search.previous")}
+          disabled={!hasResults}
+          onClick={onPrevious}
+        >
+          <ChevronUp className="size-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={t("battlePanel.single.log.search.next")}
+          disabled={!hasResults}
+          onClick={onNext}
+        >
+          <ChevronDown className="size-4" />
+        </Button>
       </div>
     </div>
   );

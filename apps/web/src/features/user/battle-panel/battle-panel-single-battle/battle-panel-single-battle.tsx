@@ -1,8 +1,7 @@
-import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
 import { BattleDetailView } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-detail-view";
 import { BattlePanelSingleBattleActions } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-panel-single-battle-actions";
 import { getRecentOpponentBattleContext } from "@/features/user/battle-panel/battle-panel-single-battle/components/recent-opponent-battle-context";
-import { RecentOpponentBattlesCard } from "@/features/user/battle-panel/battle-panel-single-battle/components/recent-opponent-battles-card";
+import { RecentOpponentBattlesSection } from "@/features/user/battle-panel/battle-panel-single-battle/components/recent-opponent-battles-section";
 import {
   useBattlesControllerGetBattle,
   useBattlesControllerGetBattleRawData,
@@ -28,24 +27,20 @@ export const BattlePanelSingleBattle = () => {
     getRecentOpponentBattleContext(battle) !== null;
 
   return (
-    <>
-      {battle ? (
-        <HeaderSlotPortal slot="actions">
-          <BattlePanelSingleBattleActions battle={battle} />
-        </HeaderSlotPortal>
-      ) : null}
-      <BattleDetailView
-        battle={battle}
-        battleId={battleId}
-        isTimelinePending={isTimelinePending}
-        rawBattle={rawBattle?.rawData}
-        sideContent={
-          shouldShowRecentOpponentBattles ? (
-            <RecentOpponentBattlesCard battle={battle} />
-          ) : undefined
-        }
-        timeline={timeline}
-      />
-    </>
+    <BattleDetailView
+      actions={
+        battle ? <BattlePanelSingleBattleActions battle={battle} /> : undefined
+      }
+      battle={battle}
+      battleId={battleId}
+      isTimelinePending={isTimelinePending}
+      rawBattle={rawBattle?.rawData}
+      sideContent={
+        shouldShowRecentOpponentBattles ? (
+          <RecentOpponentBattlesSection battle={battle} />
+        ) : undefined
+      }
+      timeline={timeline}
+    />
   );
 };

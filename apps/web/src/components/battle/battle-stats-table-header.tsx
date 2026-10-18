@@ -1,36 +1,51 @@
-import { ChartArea } from "lucide-react";
+import { ListGroupHeading } from "@/components/common/list-group-heading";
+import {
+  LIST_BAND_HEADING_CLASS,
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@/components/common/list-tile";
 import type { ReactNode, Ref } from "react";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { cn } from "cn";
 
 type BattleStatsTableHeaderProps = {
-  title?: string;
+  id: string;
+  title: string;
   actions?: ReactNode;
-  leading?: ReactNode;
+  /** A row under the heading, such as the statistic search. */
+  toolbar?: ReactNode;
   className?: string;
   ref?: Ref<HTMLDivElement>;
 };
 
+/** The band heading of a statistics table, with its toolbar row under it. */
 export const BattleStatsTableHeader = ({
+  id,
   title,
   actions,
-  leading,
+  toolbar,
   className,
   ref,
 }: BattleStatsTableHeaderProps) => (
-  <div ref={ref} className={cn("min-w-0 shrink-0", className)}>
-    <SectionCardHeader
-      title={title}
-      icon={ChartArea}
-      actions={
-        actions && (
-          <div className="flex flex-wrap items-center gap-2">{actions}</div>
-        )
+  <div ref={ref} className={cn("min-w-0", className)}>
+    <ListGroupHeading
+      id={id}
+      className={LIST_BAND_HEADING_CLASS}
+      trailing={
+        actions && <div className="flex items-center gap-1">{actions}</div>
       }
-    />
-    {leading && (
-      <div className="min-w-0 border-b border-border/70 px-3 py-2">
-        {leading}
+    >
+      {title}
+    </ListGroupHeading>
+    {toolbar && (
+      <div
+        data-list-tile
+        className={cn(
+          "flex min-h-12 items-center bg-background py-2 transition-colors has-[input:focus-visible]:border-primary motion-reduce:transition-none",
+          LIST_TILE_RULE_CLASS,
+          LIST_TILE_INSET_CLASS,
+        )}
+      >
+        {toolbar}
       </div>
     )}
   </div>

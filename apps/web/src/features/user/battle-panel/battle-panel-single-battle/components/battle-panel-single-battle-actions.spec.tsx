@@ -86,10 +86,15 @@ it.each(["none", "invalidation", "navigation"])(
     );
 
     fireEvent.click(
-      screen.getByRole("button", { name: "battlePanel.actions.delete" }),
+      screen.getByRole("button", { name: "battlePanel.actions.more" }),
     );
     fireEvent.click(
-      screen.getByRole("button", {
+      await screen.findByRole("menuitem", {
+        name: "battlePanel.actions.delete",
+      }),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", {
         name: "battlePanel.dialogs.deleteBattle.confirm",
       }),
     );
@@ -119,13 +124,13 @@ it.each(["none", "invalidation", "navigation"])(
 
     expect(router.state.location.pathname).toBe(expectedPath);
 
-    const deleteTrigger = screen.queryByRole("button", {
-      name: "battlePanel.actions.delete",
+    const menuTrigger = screen.queryByRole("button", {
+      name: "battlePanel.actions.more",
     });
 
-    expect(deleteTrigger?.hasAttribute("disabled") ?? true).toBe(true);
+    expect(menuTrigger?.hasAttribute("disabled") ?? true).toBe(true);
 
-    if (deleteTrigger) fireEvent.click(deleteTrigger);
+    if (menuTrigger) fireEvent.click(menuTrigger);
     expect(screen.queryByRole("alertdialog")).toBeNull();
     expect(fetch).toHaveBeenCalledTimes(2);
     expect(String(fetch.mock.calls[1]?.[0])).toBe(

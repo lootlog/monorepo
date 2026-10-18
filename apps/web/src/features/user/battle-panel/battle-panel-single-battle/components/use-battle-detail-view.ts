@@ -72,14 +72,12 @@ export function useBattleDetailView({
   const is1v1 = battle?.type === "1v1";
   const isGroup = battle !== undefined && !is1v1;
   const scrollViewportRef = useRef<HTMLDivElement>(null);
-  const battleColumnViewportRef = useRef<HTMLDivElement>(null);
-  const battleColumnContentRef = useRef<HTMLDivElement>(null);
-  const panelsColumnViewportRef = useRef<HTMLDivElement>(null);
-  const chartSlotRef = useRef<HTMLDivElement>(null);
+  const logColumnViewportRef = useRef<HTMLDivElement>(null);
+  const mainColumnViewportRef = useRef<HTMLDivElement>(null);
 
-  // The wide layout scrolls the log with its column; below it, with the whole page.
+  // The wide rail scrolls the log on its own; below it the whole page scrolls it.
   const logScrollViewportRef = isWide
-    ? battleColumnViewportRef
+    ? logColumnViewportRef
     : scrollViewportRef;
 
   const battleLogWrapperRef = useRef<HTMLDivElement>(null);
@@ -92,14 +90,12 @@ export function useBattleDetailView({
   const hasTimeline = timelineTurns.length > 0;
   const hasSideContent = Boolean(sideContent);
 
-  // The wide layout gives the log its own column, so only the remaining panels share the tabs.
-  const panels: BattleDetailPanel[] = [
-    "stats",
-    ...(isWide ? [] : (["log"] as const)),
-    ...(hasSideContent ? (["recent"] as const) : []),
-  ];
+  const recentPanels = hasSideContent ? (["recent"] as const) : [];
 
-  const visiblePanel = panels.includes(activePanel) ? activePanel : "stats";
+  // The rail shares the log with the recent battles against the same opponent, if any.
+  const panels: BattleDetailPanel[] = ["log", ...recentPanels];
+
+  const visiblePanel = panels.includes(activePanel) ? activePanel : "log";
 
   const selectedTurnNumber = getBattlePanelSelectedTurn({
     availableTurns: timelineTurns.map((turn) => turn.turn),
@@ -155,7 +151,7 @@ export function useBattleDetailView({
     // Walking through the recent battles keeps the reader's place in that list.
     const keptViewport =
       useBattleDetailPanelStore.getState().activePanel === "recent"
-        ? panelsColumnViewportRef.current
+        ? logColumnViewportRef.current
         : null;
 
     scrollPageToTop();
@@ -176,39 +172,8 @@ export function useBattleDetailView({
   // Two averaged team lines say little about a group battle, so it has no chart for now.
   const hasChartSlot = !isGroup && (isTimelinePending || hasTimeline);
 
-  // The log's search bar sticks right under the pinned chart, whose height changes when the
-  // chart is hidden or expanded.
-  useLayoutEffect(() => {
-    const content = battleColumnContentRef.current;
-    const chartSlot = chartSlotRef.current;
-
-    if (!content) {
-      return;
-    }
-
-    const updatePinnedHeight = () => {
-      content.style.setProperty(
-        "--battle-log-sticky-top",
-        isWide && chartSlot
-          ? `${Math.ceil(chartSlot.getBoundingClientRect().height)}px`
-          : "0px",
-      );
-    };
-
-    updatePinnedHeight();
-
-    if (!chartSlot || typeof ResizeObserver === "undefined") {
-      return;
-    }
-
-    const resizeObserver = new ResizeObserver(updatePinnedHeight);
-    resizeObserver.observe(chartSlot);
-
-    return () => resizeObserver.disconnect();
-  }, [hasChartSlot, isWide]);
-
-  // Crossing the layout breakpoint remounts the log in its other slot, so bring it back to
-  // the turn the reader was on.
+  // Crossing the layout breakpoint hands the log to the other scroller, so bring it back to the
+  // turn the reader was on.
   useEffect(() => {
     const turn = selectedTurnRef.current;
 
@@ -229,8 +194,8 @@ export function useBattleDetailView({
     setScrollTargetRequestId((requestId) => requestId + 1);
     void setQueryState({ turn });
 
-    // Below the wide layout the log may be behind another tab when the chart picks a turn.
-    if (!isWide) setActivePanel("log");
+    // The log may be behind the recent battles when the chart picks a turn.
+    setActivePanel("log");
   };
 
   const handleTurnFocus = (turn: number) => {
@@ -334,10 +299,8 @@ export function useBattleDetailView({
 
   return {
     scrollViewportRef,
-    battleColumnViewportRef,
-    battleColumnContentRef,
-    panelsColumnViewportRef,
-    chartSlotRef,
+    logColumnViewportRef,
+    mainColumnViewportRef,
     logScrollViewportRef,
     handleBattleScroll,
     shouldRenderTimelineSlot: hasChartSlot,

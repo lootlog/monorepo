@@ -17,7 +17,7 @@ export const BattlePlayerRankingRow: FC<BattlePlayerRankingRowProps> = ({
   position,
 }) => (
   <li className="grid grid-cols-[1.25rem_minmax(0,9rem)_minmax(0,1fr)_auto] items-center gap-2 text-[13px]">
-    <span className="text-right text-[11px] tabular-nums text-muted-foreground">
+    <span className="text-right text-xs tabular-nums text-muted-foreground">
       {position}
     </span>
     <span className="flex min-w-0 items-baseline gap-1.5">
@@ -30,7 +30,7 @@ export const BattlePlayerRankingRow: FC<BattlePlayerRankingRowProps> = ({
       >
         {entry.warrior.name}
       </span>
-      <span className="shrink-0 text-[11px] text-muted-foreground">
+      <span className="shrink-0 text-xs text-muted-foreground">
         {formatLevel(entry.warrior.lvl, entry.warrior.prof)}
       </span>
     </span>
@@ -48,7 +48,7 @@ export const BattlePlayerRankingRow: FC<BattlePlayerRankingRowProps> = ({
     </span>
     <span className="flex items-baseline justify-end gap-1.5 tabular-nums">
       <span className="font-semibold">{formatNumber(entry.value)}</span>
-      <span className="w-9 text-right text-[11px] text-muted-foreground">
+      <span className="w-9 text-right text-xs text-muted-foreground">
         {Math.round(entry.share * 100)}%
       </span>
     </span>

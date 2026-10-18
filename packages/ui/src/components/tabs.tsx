@@ -28,6 +28,12 @@ const tabsListVariants = {
   flush: "rounded-none",
   /** Views in a filter bar, frameless like the filter chips beside them. */
   chips: "gap-1 rounded-control bg-transparent",
+  /**
+   * Panels of one page area as an edge-to-edge strip, like the page tabs
+   * (`HorizontalMenu`): a lime bar under the active tab.
+   */
+  underline:
+    "w-full rounded-none border-b border-border bg-transparent sm:px-1",
 };
 
 /** Looks like the animated toggle group: a lime pill slides to the active tab. */
@@ -60,7 +66,7 @@ function TabsList({
       {children}
       <TabsPrimitive.Indicator
         data-slot="tabs-indicator"
-        className="absolute top-0 left-(--active-tab-left) -z-10 h-full w-(--active-tab-width) rounded-[inherit] bg-primary transition-[left,width] duration-150 ease-emphasized group-data-[variant=chips]/tabs-list:bg-primary/15 motion-reduce:transition-none"
+        className="absolute top-0 left-(--active-tab-left) -z-10 h-full w-(--active-tab-width) rounded-[inherit] bg-primary transition-[left,width] duration-150 ease-emphasized group-data-[variant=chips]/tabs-list:bg-primary/15 group-data-[variant=underline]/tabs-list:top-auto group-data-[variant=underline]/tabs-list:bottom-0 group-data-[variant=underline]/tabs-list:z-0 group-data-[variant=underline]/tabs-list:h-0.5 group-data-[variant=underline]/tabs-list:rounded-full motion-reduce:transition-none"
       />
     </TabsPrimitive.List>
   );
@@ -71,7 +77,7 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
     <TabsPrimitive.Tab
       data-slot="tabs-trigger"
       className={cn(
-        "inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[inherit] px-3 text-sm font-medium whitespace-nowrap text-foreground outline-none transition-[color,scale] duration-150 ease-emphasized focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset active:scale-[0.96] disabled:pointer-events-none disabled:opacity-50 data-active:text-primary-foreground group-data-[variant=chips]/tabs-list:text-muted-foreground group-data-[variant=chips]/tabs-list:hover:text-foreground group-data-[variant=chips]/tabs-list:data-active:text-primary motion-reduce:transition-none motion-reduce:active:scale-100 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[inherit] px-3 text-sm font-medium whitespace-nowrap text-foreground outline-none transition-[color,scale] duration-150 ease-emphasized focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset active:scale-[0.96] disabled:pointer-events-none disabled:opacity-50 data-active:text-primary-foreground group-data-[variant=chips]/tabs-list:text-muted-foreground group-data-[variant=chips]/tabs-list:hover:text-foreground group-data-[variant=chips]/tabs-list:data-active:text-primary group-data-[variant=underline]/tabs-list:relative group-data-[variant=underline]/tabs-list:flex-none group-data-[variant=underline]/tabs-list:text-muted-foreground group-data-[variant=underline]/tabs-list:transition-colors group-data-[variant=underline]/tabs-list:hover:text-foreground group-data-[variant=underline]/tabs-list:focus-visible:ring-0 group-data-[variant=underline]/tabs-list:active:scale-100 group-data-[variant=underline]/tabs-list:data-active:text-foreground group-data-[variant=underline]/tabs-list:after:pointer-events-none group-data-[variant=underline]/tabs-list:after:absolute group-data-[variant=underline]/tabs-list:after:inset-x-1 group-data-[variant=underline]/tabs-list:after:inset-y-2 group-data-[variant=underline]/tabs-list:after:rounded-md group-data-[variant=underline]/tabs-list:focus-visible:after:ring-2 group-data-[variant=underline]/tabs-list:focus-visible:after:ring-ring motion-reduce:transition-none motion-reduce:active:scale-100 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}
