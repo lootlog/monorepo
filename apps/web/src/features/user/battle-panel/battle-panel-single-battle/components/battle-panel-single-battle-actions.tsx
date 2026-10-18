@@ -7,16 +7,19 @@ import {
   useBattlesControllerDeleteBattle,
 } from "@lootlog/client/battlelog";
 
+import { DETAIL_BAR_TOOLBAR_CELL_CLASS } from "@/components/common/detail-bar";
 import { Button } from "@lootlog/ui/components/button";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@lootlog/ui/components/dropdown-menu";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Copy, Lock, Share2, Trash2 } from "lucide-react";
+import { Copy, Lock, MoreHorizontal, Share2, Trash2 } from "lucide-react";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -43,6 +46,7 @@ export const BattlePanelSingleBattleActions: FC<
 
   const { mutateAsync: deleteBattle } = useBattlesControllerDeleteBattle();
   const [isDeletePending, setIsDeletePending] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletedBattleId, setDeletedBattleId] = useState<string | null>(null);
   const isBusy = isPending || isDeletePending || deletedBattleId === battle.id;
 
@@ -94,85 +98,82 @@ export const BattlePanelSingleBattleActions: FC<
   };
 
   return (
-    <div className="flex items-center gap-1">
+    <>
       <RecentOpponentBattlesDialog battle={battle} className="xl:hidden" />
 
       {battle.public ? (
-        <>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  aria-label={t("battlePanel.actions.copyLink")}
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={handleCopyClick}
-                  loading={pendingAction?.action === "copy"}
-                  disabled={isBusy}
-                >
-                  <Copy className="size-3.5" />
-                </Button>
-              }
-            />
-            <TooltipContent>{t("battlePanel.actions.copyLink")}</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  aria-label={t("battlePanel.actions.hide")}
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={handleUnshareClick}
-                  loading={pendingAction?.action === "unshare"}
-                  disabled={isBusy}
-                >
-                  <Lock className="size-3.5" />
-                </Button>
-              }
-            />
-            <TooltipContent>{t("battlePanel.actions.hide")}</TooltipContent>
-          </Tooltip>
-        </>
+        <Button
+          size="lg"
+          variant="chip"
+          className={DETAIL_BAR_TOOLBAR_CELL_CLASS}
+          onClick={handleCopyClick}
+          loading={pendingAction?.action === "copy"}
+          disabled={isBusy}
+        >
+          <Copy className="size-4" />
+          {t("battlePanel.actions.copyLink")}
+        </Button>
       ) : (
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                aria-label={t("battlePanel.actions.share")}
-                variant="ghost"
-                size="icon-sm"
-                onClick={handleShareClick}
-                loading={pendingAction?.action === "share"}
-                disabled={isBusy}
-              >
-                <Share2 className="size-3.5" />
-              </Button>
-            }
-          />
-          <TooltipContent>{t("battlePanel.actions.share")}</TooltipContent>
-        </Tooltip>
+        <Button
+          size="lg"
+          variant="chip"
+          className={DETAIL_BAR_TOOLBAR_CELL_CLASS}
+          onClick={handleShareClick}
+          loading={pendingAction?.action === "share"}
+          disabled={isBusy}
+        >
+          <Share2 className="size-4" />
+          {t("battlePanel.actions.share")}
+        </Button>
       )}
 
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              size="icon-lg"
+              variant="chip"
+              className={DETAIL_BAR_TOOLBAR_CELL_CLASS}
+              aria-label={t("battlePanel.actions.more")}
+              disabled={isBusy}
+            >
+              <MoreHorizontal className="size-4" />
+              <span className="hidden @max-[36rem]/detail-bar:inline">
+                {t("battlePanel.actions.moreShort")}
+              </span>
+            </Button>
+          }
+        />
+        <DropdownMenuContent align="end" className="w-48">
+          {battle.public ? (
+            <>
+              <DropdownMenuItem onClick={handleUnshareClick}>
+                <Lock className="size-4" />
+                {t("battlePanel.actions.hide")}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          ) : null}
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => setIsDeleteDialogOpen(true)}
+          >
+            <Trash2 className="size-4" />
+            {t("battlePanel.actions.delete")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
       <ConfirmDeleteDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleDeleteClick}
         disabled={isBusy}
         title={t("battlePanel.dialogs.deleteBattle.title")}
         description={t("battlePanel.dialogs.deleteBattle.description")}
         confirmButtonLabel={t("battlePanel.dialogs.deleteBattle.confirm")}
         cancelButtonLabel={t("common.cancel")}
-        triggerTooltip={t("battlePanel.actions.delete")}
-        trigger={
-          <Button
-            aria-label={t("battlePanel.actions.delete")}
-            variant="ghost"
-            size="icon-sm"
-            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-          >
-            <Trash2 className="size-3.5" />
-          </Button>
-        }
       />
-    </div>
+    </>
   );
 };

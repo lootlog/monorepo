@@ -1,17 +1,16 @@
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
+import { ListGroupHeading } from "@/components/common/list-group-heading";
+import { LIST_BAND_HEADING_CLASS } from "@/components/common/list-tile";
 import { buildBattleLogVisibleText } from "./utils/battle-log-visible-text";
 import type {
   BattleWarrior as Warrior,
   RawBattle,
 } from "@/lib/api/battlelog-types";
-import { SectionCard as Card } from "@/components/common/section-card/section-card";
-import { cn } from "cn";
 import { BattleLogList } from "./battle-log-list";
 import { BattleLogSearchToolbar } from "./battle-log-search-toolbar";
-import { Sword } from "lucide-react";
 import {
   useDeferredValue,
   useEffect,
+  useId,
   useRef,
   useState,
   type FC,
@@ -30,8 +29,6 @@ export type BattleLogProps = {
   scrollViewportRef: RefObject<HTMLDivElement | null>;
   rawBattle: RawBattle;
   warriors: Warrior[];
-  showHeader?: boolean;
-  className?: string;
   selectedTurn?: number | null;
   scrollToSelectedTurnRequestId?: number;
   onListScroll?: () => void;
@@ -45,8 +42,6 @@ export const BattleLog: FC<BattleLogProps> = ({
   rawBattle,
   scrollViewportRef,
   warriors,
-  showHeader = true,
-  className,
   selectedTurn,
   scrollToSelectedTurnRequestId = 0,
   onListScroll,
@@ -56,6 +51,7 @@ export const BattleLog: FC<BattleLogProps> = ({
   onTurnFocus,
 }) => {
   const { t } = useTranslation();
+  const headingId = useId();
   const [searchQuery, setSearchQuery] = useState("");
   const deferredQuery = useDeferredValue(searchQuery);
   const [activeSearchMatchIndex, setActiveSearchMatchIndex] = useState(-1);
@@ -185,31 +181,23 @@ export const BattleLog: FC<BattleLogProps> = ({
   );
 
   return (
-    <Card
-      className={cn(
-        // `overflow-clip` rounds the corners without becoming a scroll container, so the search
-        // bar can stick to the scroller the log lives in.
-        "isolate border-border bg-card overflow-clip gap-0 p-0",
-        className,
-      )}
-    >
-      {showHeader && (
-        <SectionCardHeader
-          className="shrink-0"
-          title={t("battlePanel.single.log.title")}
-          icon={Sword}
-          actions={
-            selectedTurn === null || selectedTurn === undefined ? undefined : (
-              <span className="text-xs tabular-nums text-muted-foreground">
-                {t("battlePanel.single.log.turnPosition", {
-                  current: selectedTurn,
-                  total: events.length,
-                })}
-              </span>
-            )
-          }
-        />
-      )}
+    <section aria-labelledby={headingId}>
+      <ListGroupHeading
+        id={headingId}
+        className={LIST_BAND_HEADING_CLASS}
+        trailing={
+          selectedTurn === null || selectedTurn === undefined ? undefined : (
+            <span className="font-normal tabular-nums text-muted-foreground">
+              {t("battlePanel.single.log.turnPosition", {
+                current: selectedTurn,
+                total: events.length,
+              })}
+            </span>
+          )
+        }
+      >
+        {t("battlePanel.single.log.title")}
+      </ListGroupHeading>
       <BattleLogSearchToolbar
         ref={toolbarRef}
         query={searchQuery}
@@ -220,6 +208,6 @@ export const BattleLog: FC<BattleLogProps> = ({
         onNext={handleNextSearchMatch}
       />
       {battleLogList}
-    </Card>
+    </section>
   );
 };

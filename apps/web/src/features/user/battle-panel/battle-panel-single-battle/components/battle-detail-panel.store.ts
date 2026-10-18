@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
-/** Below the wide layout only one of these panels is visible at a time. */
-export type BattleDetailPanel = "log" | "stats" | "recent";
+/** Behind tabs only one of these panels is visible at a time. */
+export type BattleDetailPanel = "log" | "recent";
 
 type BattleDetailPanelState = {
   activePanel: BattleDetailPanel;
@@ -15,7 +15,7 @@ type BattleDetailPanelState = {
  */
 export const useBattleDetailPanelStore = create<BattleDetailPanelState>()(
   (set) => ({
-    activePanel: "stats",
+    activePanel: "log",
     setActivePanel: (activePanel) => set({ activePanel }),
   }),
 );

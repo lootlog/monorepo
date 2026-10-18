@@ -61,6 +61,7 @@
     "share": "Udostępnij",
     "delete": "Usuń",
     "more": "Więcej akcji",
+    "moreShort": "Więcej",
     "close": "Zamknij"
   },
   "toasts": {
@@ -183,7 +184,6 @@
     "panels": {
       "label": "Widok szczegółów walki",
       "log": "Przebieg",
-      "stats": "Statystyki",
       "recent": "Ostatnie walki"
     },
     "log": {

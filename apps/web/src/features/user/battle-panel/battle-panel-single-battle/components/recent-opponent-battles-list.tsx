@@ -7,6 +7,7 @@ import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import {
   Tooltip,
   TooltipContent,
@@ -16,6 +17,7 @@ import { cn } from "cn";
 import { Link } from "@tanstack/react-router";
 import { CircleAlert, History, RotateCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useBattleSwitch } from "../hooks/use-battle-switch";
 import { useRecentOpponentBattles } from "../hooks/use-recent-opponent-battles";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
@@ -40,9 +42,11 @@ export function RecentOpponentBattlesList({
     refetch,
   } = useRecentOpponentBattles(battle);
 
+  const { pendingBattleId, prefetchBattle, openBattle } = useBattleSwitch();
+
   return (
     <ScrollArea className={cn("min-h-0 flex-1", className)}>
-      <div className="divide-y divide-border/70">
+      <div className="divide-y divide-sidebar-border border-b border-sidebar-border">
         {!context ? (
           <EmptyState
             compact
@@ -56,7 +60,7 @@ export function RecentOpponentBattlesList({
           Array.from({ length: 4 }).map((_, index) => (
             <div
               key={index}
-              className="grid h-14 grid-cols-[32px_minmax(0,1fr)_76px] items-center gap-2 px-2.5"
+              className="grid h-14 grid-cols-[32px_minmax(0,1fr)_76px] items-center gap-2 px-3 sm:px-4"
             >
               <Skeleton className="size-6 rounded-md" />
               <div className="flex min-w-0 items-center gap-3.5">
@@ -113,6 +117,7 @@ export function RecentOpponentBattlesList({
               detailedUserWarrior ?? recentBattle.userWarrior;
 
             const isCurrentBattle = recentBattle.battleId === battle?.id;
+            const isPending = recentBattle.battleId === pendingBattleId;
 
             return (
               <Link
@@ -121,13 +126,25 @@ export function RecentOpponentBattlesList({
                 params={{ battleId: recentBattle.battleId }}
                 preload={false}
                 aria-current={isCurrentBattle ? "page" : undefined}
+                aria-busy={isPending || undefined}
+                onPointerEnter={() => prefetchBattle(recentBattle.battleId)}
+                onFocus={() => prefetchBattle(recentBattle.battleId)}
+                onClick={(event) =>
+                  void openBattle(event, recentBattle.battleId)
+                }
                 className={cn(
-                  "grid h-14 grid-cols-[32px_minmax(0,1fr)_76px] items-center gap-1 px-2.5 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
+                  "grid h-14 grid-cols-[32px_minmax(0,1fr)_76px] items-center gap-1 px-3 text-left sm:px-4 transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
                   isCurrentBattle &&
                     "relative z-10 bg-primary/10 ring-1 ring-inset ring-primary/45",
+                  isPending && "bg-muted/40",
                 )}
               >
-                <BattleResultStatus result={result} />
+                {/* The battle loads before the page switches to it. */}
+                {isPending ? (
+                  <Spinner className="mx-1 size-4 text-muted-foreground" />
+                ) : (
+                  <BattleResultStatus result={result} />
+                )}
                 <div className="flex min-w-0 items-center gap-3.5 overflow-hidden">
                   <BattlePanelPvpWarriorSummary
                     warrior={userWarriorForTags}
@@ -142,14 +159,14 @@ export function RecentOpponentBattlesList({
                 </div>
                 <div className="flex min-w-0 flex-col items-end gap-0.5">
                   {isCurrentBattle ? (
-                    <span className="max-w-full truncate rounded-sm border border-primary/30 bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium leading-none text-primary">
+                    <span className="max-w-full truncate rounded-sm border border-primary/30 bg-primary/15 px-1.5 py-0.5 text-xs font-medium leading-none text-primary">
                       {t("battlePanel.single.recentOpponent.current")}
                     </span>
                   ) : null}
                   <Tooltip>
                     <TooltipTrigger
                       render={
-                        <span className="block whitespace-normal break-words text-right text-[11px] leading-snug text-muted-foreground">
+                        <span className="block whitespace-normal break-words text-right text-xs leading-snug text-muted-foreground">
                           {relativeTime}
                         </span>
                       }
