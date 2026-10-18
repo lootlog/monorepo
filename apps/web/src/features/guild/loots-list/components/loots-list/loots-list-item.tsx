@@ -31,7 +31,8 @@ export const LootsListItem = ({
       data-testid="loot-list-item"
       data-presentation={variant}
       className={cn(
-        "group relative flex h-full flex-col transition-colors hover:bg-muted/20",
+        // Isolated, so stack badges never paint over a pinned section heading.
+        "group relative isolate flex h-full flex-col transition-colors hover:bg-muted/20",
         variant === "tile" && LIST_TILE_RULE_CLASS,
         // Alternate embedded rows so neighbouring kills stay apart in a dense
         // list; legendary rows keep their own glow.
