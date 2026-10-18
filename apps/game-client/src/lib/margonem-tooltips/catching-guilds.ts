@@ -15,11 +15,13 @@ import {
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { escapeTooltipHtml } from "./html";
+import type { RuntimeInterface } from "@/lib/margonem-runtime/runtime.types";
 import type { CharacterTooltipTransform } from "./types";
 
 // The section is inserted into the game's own `t_other` tooltip, so it keeps
-// the game's palette (tipsParser.css) and its `.line` separator. Inline styles
-// keep it independent of Lootlog's stylesheet.
+// the game's palette (tipsParser.css). NI draws the game's `.line` separator;
+// SI's game.css has no such rule, so SI gets an inline rule. Inline styles
+// keep the section independent of Lootlog's stylesheet.
 const TEXT_COLOR = "#e6d6bf";
 
 const MUTED_COLOR = "#a8998a";
@@ -29,6 +31,9 @@ const ERROR_COLOR = "#ff8a73";
 const NO_LOOTLOG_DOT_COLOR = "#6b6460";
 
 const MAX_GUILD_CHIPS = 4;
+
+const SI_SEPARATOR =
+  '<div style="width:80%;height:1px;margin:4px auto 3px;background:rgba(255,255,255,.25);"></div>';
 
 const SECTION_STYLE = `font-size:11px;line-height:14px;color:${TEXT_COLOR};text-align:center;`;
 
@@ -122,8 +127,14 @@ function renderOwnerBody(
   return `${renderMessage(t("characterTooltip.catchingGuilds.title"))}${renderGuildChips(entry.guilds, selectedGuildId)}`;
 }
 
-function renderSection(content: string): string {
-  return `<div class="line"></div><div class="ll-character-tooltip-catching-guilds" style="${SECTION_STYLE}">${content}</div>`;
+function renderSection(
+  runtimeInterface: RuntimeInterface,
+  content: string,
+): string {
+  const separator =
+    runtimeInterface === "si" ? SI_SEPARATOR : '<div class="line"></div>';
+
+  return `${separator}<div class="ll-character-tooltip-catching-guilds" style="${SECTION_STYLE}">${content}</div>`;
 }
 
 function renderWithoutOwner(): string {
@@ -148,6 +159,7 @@ function renderWithoutOwner(): string {
 export const appendCatchingGuildsTooltipSection: CharacterTooltipTransform = ({
   character,
   currentHtml,
+  interface: runtimeInterface,
 }) => {
   const state = useCharacterTooltipCatchingGuildsStore.getState();
 
@@ -161,7 +173,8 @@ export const appendCatchingGuildsTooltipSection: CharacterTooltipTransform = ({
 
   const target = getOtherCatchingGuildsTarget(character);
 
-  if (!target) return `${currentHtml}${renderSection(renderWithoutOwner())}`;
+  if (!target)
+    return `${currentHtml}${renderSection(runtimeInterface, renderWithoutOwner())}`;
 
   const entry = state.entriesByKey[target.key];
 
@@ -170,5 +183,5 @@ export const appendCatchingGuildsTooltipSection: CharacterTooltipTransform = ({
     target.ownerName,
   );
 
-  return `${currentHtml}${renderSection(`${header}${renderOwnerBody(entry, selectedGuildId)}`)}`;
+  return `${currentHtml}${renderSection(runtimeInterface, `${header}${renderOwnerBody(entry, selectedGuildId)}`)}`;
 };

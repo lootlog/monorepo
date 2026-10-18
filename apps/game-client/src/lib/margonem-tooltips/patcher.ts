@@ -1,10 +1,15 @@
-import type { Other } from "@lootlog/margonem/others";
+import type { LegacyGameOther, Other } from "@lootlog/margonem/others";
 import type { CharacterTipUpdate } from "@lootlog/margonem/tooltip";
 import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handles";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { characterTooltipTransforms } from "./registry";
 import {
+  buildLegacyOtherTip,
+  getLegacyOtherIdAt,
+  getLegacyRuntimeOther,
   getRuntimeCanvasTip,
+  isLegacyTooltipRuntimeAvailable,
+  setLegacyOtherTip,
   subscribeCharacterTipUpdates,
   type RuntimeCanvasTip,
 } from "@/lib/margonem-runtime/adapters/tooltip-runtime-adapter";
@@ -48,6 +53,7 @@ function extendCharacterTip(update: CharacterTipUpdate): void {
 
   const html = characterTooltipTransforms.apply({
     character: other,
+    interface: "ni",
     baseHtml: update.text,
     currentHtml: update.text,
   });
@@ -154,7 +160,7 @@ function redrawOtherCanvasTooltip(other: Other): void {
   canvasTip.show(lastOtherCanvasTipEvent, other);
 }
 
-export function refreshActiveOtherCanvasTooltip(): void {
+function refreshActiveOtherCanvasTooltip(): void {
   const state = useCharacterTooltipCatchingGuildsStore.getState();
   const hoveredOther = state.activeOther ?? lastOtherCanvasTipObject;
 
@@ -181,6 +187,116 @@ export function refreshActiveOtherCanvasTooltip(): void {
   redrawOtherCanvasTooltip(hoveredOther);
 }
 
+// SI has no tooltip hook: its Tip shows the `tip` attribute of the hovered
+// `#other{id}` element, so Lootlog rewrites that attribute instead.
+let hoveredLegacyOtherId: string | null = null;
+
+const legacyOtherIdsWithShiftSection = new Set<string>();
+
+let legacyTooltipsInstalled = false;
+
+function toTooltipOther(other: LegacyGameOther): Other {
+  return { d: { ...other, id: String(other.id) } };
+}
+
+function setLegacyOtherShiftSection(id: string): void {
+  const legacyOther = getLegacyRuntimeOther(id);
+  const baseHtml = legacyOther ? buildLegacyOtherTip(legacyOther) : null;
+
+  if (!legacyOther || baseHtml === null) return;
+
+  const html = characterTooltipTransforms.apply({
+    character: toTooltipOther(legacyOther),
+    interface: "si",
+    baseHtml,
+    currentHtml: baseHtml,
+  });
+
+  if (html === baseHtml) return;
+
+  setLegacyOtherTip(id, html);
+  legacyOtherIdsWithShiftSection.add(id);
+}
+
+function removeLegacyShiftSections(): void {
+  const ids = [...legacyOtherIdsWithShiftSection];
+
+  legacyOtherIdsWithShiftSection.clear();
+
+  for (const id of ids) {
+    const legacyOther = getLegacyRuntimeOther(id);
+    const baseHtml = legacyOther ? buildLegacyOtherTip(legacyOther) : null;
+
+    // An other that left the map took its element with it.
+    if (baseHtml !== null) setLegacyOtherTip(id, baseHtml);
+  }
+}
+
+function showLegacyOtherShiftSection(id: string): void {
+  const legacyOther = getLegacyRuntimeOther(id);
+
+  if (!legacyOther) return;
+
+  useCharacterTooltipCatchingGuildsStore
+    .getState()
+    .setActiveOther(toTooltipOther(legacyOther));
+  setLegacyOtherShiftSection(id);
+}
+
+function refreshActiveLegacyOtherTooltip(): void {
+  const state = useCharacterTooltipCatchingGuildsStore.getState();
+
+  if (!state.isShiftPressed) {
+    state.clearActiveOther();
+    removeLegacyShiftSections();
+
+    return;
+  }
+
+  if (hoveredLegacyOtherId) showLegacyOtherShiftSection(hoveredLegacyOtherId);
+}
+
+function handleLegacyMouseOver(event: MouseEvent): void {
+  const id = getLegacyOtherIdAt(event.target);
+
+  if (id === hoveredLegacyOtherId) return;
+
+  hoveredLegacyOtherId = id;
+
+  if (!useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed) {
+    return;
+  }
+
+  if (id) {
+    showLegacyOtherShiftSection(id);
+  } else {
+    useCharacterTooltipCatchingGuildsStore.getState().clearActiveOther();
+  }
+}
+
+function installLegacyTooltips(): () => void {
+  legacyTooltipsInstalled = true;
+  // Capture runs before Tip's own delegated mouseover reads the attribute.
+  window.addEventListener("mouseover", handleLegacyMouseOver, true);
+
+  return () => {
+    window.removeEventListener("mouseover", handleLegacyMouseOver, true);
+    legacyTooltipsInstalled = false;
+    hoveredLegacyOtherId = null;
+    useCharacterTooltipCatchingGuildsStore.getState().clearActiveOther();
+    removeLegacyShiftSections();
+  };
+}
+
+/** Adds or removes the Shift section on the tooltip under the cursor. */
+export function refreshActiveOtherTooltip(): void {
+  if (legacyTooltipsInstalled) {
+    refreshActiveLegacyOtherTooltip();
+  } else {
+    refreshActiveOtherCanvasTooltip();
+  }
+}
+
 export function installCharacterTooltipTransforms(): () => void {
   if (cleanupCurrentInstallation) {
     return cleanupCurrentInstallation;
@@ -190,7 +306,16 @@ export function installCharacterTooltipTransforms(): () => void {
     subscribeCharacterTipUpdates(extendCharacterTip);
 
   if (!unsubscribeTipUpdates) {
-    return () => undefined;
+    if (!isLegacyTooltipRuntimeAvailable()) return () => undefined;
+
+    const cleanupLegacyTooltips = installLegacyTooltips();
+
+    cleanupCurrentInstallation = () => {
+      cleanupLegacyTooltips();
+      cleanupCurrentInstallation = null;
+    };
+
+    return cleanupCurrentInstallation;
   }
 
   const canvasTip = getRuntimeCanvasTip();

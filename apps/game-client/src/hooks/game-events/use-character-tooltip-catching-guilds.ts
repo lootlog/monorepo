@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { characterTooltipCatchingGuildsCoordinator } from "@/lib/character-tooltip-catching-guilds-coordinator";
 import { appendCatchingGuildsTooltipSection } from "@/lib/margonem-tooltips/catching-guilds";
-import { refreshActiveOtherCanvasTooltip } from "@/lib/margonem-tooltips/patcher";
+import { refreshActiveOtherTooltip } from "@/lib/margonem-tooltips/patcher";
 import { characterTooltipTransforms } from "@/lib/margonem-tooltips/registry";
 import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
 import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
@@ -9,10 +9,6 @@ import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-toolti
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 
 const EMPTY_OWNERS_BY_CHARACTER_KEY = Object.freeze({});
-
-function refreshActiveOtherTooltip(): void {
-  refreshActiveOtherCanvasTooltip();
-}
 
 function refreshActiveOtherTooltipIfCurrent(key: string): void {
   const state = useCharacterTooltipCatchingGuildsStore.getState();

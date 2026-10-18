@@ -23,6 +23,7 @@ describe("CharacterTooltipTransformRegistry", () => {
     expect(
       registry.apply({
         character: OTHER,
+        interface: "ni",
         baseHtml: "<div>base</div>",
         currentHtml: "<div>base</div>",
       }),
@@ -37,6 +38,7 @@ describe("CharacterTooltipTransformRegistry", () => {
     expect(
       registry.apply({
         character: OTHER,
+        interface: "ni",
         baseHtml: "<div>base</div>",
         currentHtml: "<div>base</div>",
       }),
@@ -52,6 +54,7 @@ describe("CharacterTooltipTransformRegistry", () => {
     expect(
       registry.apply({
         character: OTHER,
+        interface: "ni",
         baseHtml: "<div>base</div>",
         currentHtml: "<div>base</div>",
       }),
@@ -64,6 +67,7 @@ describe("CharacterTooltipTransformRegistry", () => {
     expect(
       registry.apply({
         character: OTHER,
+        interface: "ni",
         baseHtml: "base",
         currentHtml: "base",
       }),
@@ -82,6 +86,7 @@ describe("CharacterTooltipTransformRegistry", () => {
     expect(
       registry.apply({
         character: OTHER,
+        interface: "ni",
         baseHtml: "<div>base</div>",
         currentHtml: "<div>base</div>",
       }),
