@@ -1,4 +1,4 @@
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, expect, it, onTestFinished, vi } from "vitest";
 import { waitFor } from "@testing-library/react";
 import type { GameEvent, W } from "@lootlog/margonem/game-events";
 import {
@@ -91,7 +91,6 @@ it("submits actual mapped PvP events with stable identity and clears finished st
   });
   expect(useBattleStore.getState().battleState).toBe("idle");
   expect(useBattleStore.getState().events).toEqual([]);
-  expect(useBattleStore.getState().lastBattleHash).toMatch(/^[a-f0-9]{64}$/);
 });
 
 it("submits the capture when the dead player closes a battle that goes on", async () => {
@@ -289,15 +288,12 @@ it("does not submit the same completed battle twice", async () => {
 
 const deferNextDigest = () => {
   const actual = crypto.subtle.digest.bind(crypto.subtle);
-  const pending = Promise.withResolvers<ArrayBuffer>();
-  vi.spyOn(crypto.subtle, "digest").mockImplementationOnce(
-    () => pending.promise,
+  const pending = Promise.withResolvers<void>();
+  vi.spyOn(crypto.subtle, "digest").mockImplementationOnce((...args) =>
+    pending.promise.then(() => actual(...args)),
   );
 
-  return {
-    release: async () =>
-      pending.resolve(await actual("SHA-256", new Uint8Array([1]))),
-  };
+  return { release: async () => pending.resolve() };
 };
 
 it("publishes final warriors before digest completion", async () => {
@@ -480,6 +476,55 @@ it.each(["battle", "kill"] as const)(
     expect(fixture.requests).toHaveLength(1);
   },
 );
+
+// Margonem repeats a finished battle until the player closes it.
+const repeatOfPvpBattle: GameEvent = {
+  f: { ...pvpStart().f, endBattle: 1, m: ["start", "end"] },
+};
+
+it("never resubmits a repeated battle, however late or after a page reload", async () => {
+  const fixture = createBattleTest();
+  vi.useFakeTimers({ toFake: ["Date"] });
+  onTestFinished(() => {
+    vi.useRealTimers();
+  });
+  const processor = new BattleEventProcessor();
+  await processor.handle(pvpStart());
+  await processor.handle(end);
+
+  vi.setSystemTime(Date.now() + 60 * 60_000);
+  await processor.handle(repeatOfPvpBattle);
+  await new BattleEventProcessor().handle(repeatOfPvpBattle);
+
+  expect(fixture.battles()).toHaveLength(1);
+});
+
+it("lets a repeat resend a battle whose submission failed in transit", async () => {
+  const fixture = createBattleTest();
+  fixture.fail(503);
+  const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+  const processor = new BattleEventProcessor();
+  await processor.handle(pvpStart());
+  await processor.handle(end);
+  await waitFor(() => expect(warning).toHaveBeenCalled(), { timeout: 3_000 });
+
+  fixture.fail(201);
+  await processor.handle(repeatOfPvpBattle);
+  await waitFor(() => expect(fixture.battles()).toHaveLength(4));
+});
+
+it("does not resend a battle the server rejected", async () => {
+  const fixture = createBattleTest();
+  fixture.fail(400);
+  const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+  const processor = new BattleEventProcessor();
+  await processor.handle(pvpStart());
+  await processor.handle(end);
+  await waitFor(() => expect(warning).toHaveBeenCalled());
+
+  await processor.handle(repeatOfPvpBattle);
+  expect(fixture.battles()).toHaveLength(1);
+});
 
 it("ignores an end packet while no battle is active", async () => {
   const fixture = createBattleTest();

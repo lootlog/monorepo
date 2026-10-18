@@ -62,7 +62,6 @@ describe("debug legendary loot event", () => {
     useBattleStore.setState({
       battleState: "idle",
       battleWarriors: {},
-      lastBattleHash: "",
       lastKillHash: "",
     });
     useGameStore.getState().replaceGame(game);

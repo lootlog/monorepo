@@ -37,7 +37,6 @@ export function resetTransientRuntimeState(): void {
   useBattleStore.setState({
     battleState: "idle",
     battleWarriors: {},
-    lastBattleHash: "",
     lastKillHash: "",
   });
   useDialogStore.getState().clearNpcContext();
