@@ -44,11 +44,11 @@ const HEAD_CLASS_NAMES = new Map([
   ["actions", "w-11"],
 ]);
 
-const RIGHT_ALIGNED_COLUMN_IDS = new Set([
-  "timeCoverage",
-  "trackingTime",
-  "points",
-]);
+const RIGHT_ALIGNED_COLUMN_IDS = new Set(["timeCoverage", "trackingTime"]);
+
+// Cells with their own controls, such as the corrected-points tooltip and
+// the breakdown toggle, stay outside the row's link.
+const UNLINKED_COLUMN_IDS = new Set(["points", "actions"]);
 
 const CELL_CLASS_NAMES = new Map([
   ["killNumber", "w-12 py-0"],
@@ -158,13 +158,12 @@ export const MemberKillsList = ({
             getCellClassName={(cell) =>
               cn(
                 CELL_CLASS_NAMES.get(cell.column.id),
-                cell.column.id !== "actions" && "p-0!",
+                !UNLINKED_COLUMN_IDS.has(cell.column.id) && "p-0!",
               )
             }
-            // The whole row opens the kill; the breakdown toggle stays its own
-            // control, and only the first cell takes focus.
+            // The row opens the kill; only the monster cell takes focus.
             renderCellContent={(cell, content) =>
-              cell.column.id === "actions" ? (
+              UNLINKED_COLUMN_IDS.has(cell.column.id) ? (
                 content
               ) : (
                 <KillCellLink
