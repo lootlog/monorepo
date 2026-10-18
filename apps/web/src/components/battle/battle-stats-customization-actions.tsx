@@ -61,7 +61,6 @@ export function BattleStatsCustomizationActions({
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-pressed={hideZeros}
                 onClick={() => setHideZeros(!hideZeros)}
                 aria-label={
                   hideZeros
