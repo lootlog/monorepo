@@ -7,14 +7,13 @@ import { EmptyState } from "@/components/common/empty-state";
 import { RankBadge } from "@/components/common/rank-badge";
 import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { type Cell, type ColumnDef, useTable } from "@tanstack/react-table";
 import { Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { useUpdateRankingPoints } from "@lootlog/client/main";
 import { Badge } from "@lootlog/ui/components/badge";
-import { Table } from "@lootlog/ui/components/table";
+import { Table, TableCell, TableRow } from "@lootlog/ui/components/table";
 import { cn } from "cn";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
@@ -27,6 +26,7 @@ import { EventRankingPointsDialog } from "./event-ranking-points-dialog";
 import { getRankingMemberName } from "./get-ranking-member-name";
 import { EventRankingTiles } from "./event-ranking-tiles";
 import { RankingMemberName } from "./ranking-member-name";
+import { TableCellLink } from "@/components/ui/table-cell-link";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { EMPTY_VALUE } from "@/constants/empty-value";
 
@@ -37,6 +37,11 @@ type EventRankingTableProps = {
   canEdit?: boolean;
   currentMemberId?: number;
   variant?: "default" | "compact";
+  /**
+   * Shows only the leaders, plus the current member's own place below them
+   * when it falls outside.
+   */
+  limit?: number;
 };
 
 const LINK_COLUMN_IDS = new Set(["position", "member", "kills", "time", "afk"]);
@@ -91,6 +96,7 @@ export const EventRankingTable = ({
   canEdit = false,
   currentMemberId,
   variant = "default",
+  limit,
 }: EventRankingTableProps) => {
   const { t } = useTranslation();
   const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
@@ -144,6 +150,24 @@ export const EventRankingTable = ({
       rightRanking.totalPoints - leftRanking.totalPoints,
   );
 
+  const placeById = new Map(
+    sortedRankings.map((ranking, index) => [ranking.id, index + 1]),
+  );
+
+  const leaders =
+    limit === undefined ? sortedRankings : sortedRankings.slice(0, limit);
+
+  const ownRankingBelow =
+    limit === undefined
+      ? undefined
+      : sortedRankings
+          .slice(limit)
+          .find((ranking) => ranking.memberId === currentMemberId);
+
+  const visibleRankings = ownRankingBelow
+    ? [...leaders, ownRankingBelow]
+    : leaders;
+
   const allColumns: ColumnDef<typeof coreTableFeatures, EventRanking>[] = [
     {
       id: "position",
@@ -155,7 +179,9 @@ export const EventRankingTable = ({
           #
         </span>
       ),
-      cell: ({ row }) => <RankBadge rank={row.index + 1} />,
+      cell: ({ row }) => (
+        <RankBadge rank={placeById.get(row.original.id) ?? row.index + 1} />
+      ),
       enableSorting: false,
     },
     {
@@ -255,7 +281,7 @@ export const EventRankingTable = ({
 
   const table = useTable({
     features: coreTableFeatures,
-    data: sortedRankings,
+    data: visibleRankings,
     columns,
     getRowId: (ranking) => ranking.id,
   });
@@ -275,27 +301,22 @@ export const EventRankingTable = ({
     const isPrimaryLink = cell.column.id === PRIMARY_LINK_COLUMN_ID;
 
     return (
-      <Link
+      <TableCellLink
         to="/$guildId/events/$eventId/members/$memberId"
         params={{
           guildId,
           eventId,
           memberId: String(ranking.memberId),
         }}
-        aria-label={
-          isPrimaryLink
-            ? t("events.ranking.openMemberStats", { memberName: memberLabel })
-            : undefined
-        }
-        tabIndex={isPrimaryLink ? 0 : -1}
+        primary={isPrimaryLink}
+        label={t("events.ranking.openMemberStats", { memberName: memberLabel })}
         className={cn(
-          "flex min-h-14 w-full min-w-0 items-center px-2 text-inherit outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
           cell.column.id === "position" && "pl-4",
           RIGHT_ALIGNED_COLUMN_IDS.has(cell.column.id) && "justify-end",
         )}
       >
         {content}
-      </Link>
+      </TableCellLink>
     );
   };
 
@@ -331,7 +352,14 @@ export const EventRankingTable = ({
     }
 
     return (
-      <Table className={cn("w-full table-fixed", isPage && "border-b")}>
+      <Table
+        className={cn(
+          "w-full table-fixed",
+          isPage && "border-b",
+          // The preview ends inside a column, so its last row keeps its rule.
+          !isPage && "[&_tbody_tr:last-child]:border-b",
+        )}
+      >
         <TanStackTableHeader
           table={table}
           // A short preview scrolls past whole; only the full ranking pins it.
@@ -369,6 +397,29 @@ export const EventRankingTable = ({
               row.original.memberId === currentMemberId || undefined,
           })}
           renderCellContent={renderRankingLinkCell}
+          renderRowDetail={(row) =>
+            ownRankingBelow && row.index === leaders.length - 1 ? (
+              // The places skipped between the leaders and the member's own.
+              <TableRow
+                aria-hidden="true"
+                className="h-6 border-b border-border hover:bg-transparent"
+              >
+                {/* One cell per column, so hidden columns stay hidden here too. */}
+                {columns.map((column, index) => (
+                  <TableCell
+                    key={column.id}
+                    className={cn(
+                      "py-0 text-xs leading-none text-muted-foreground",
+                      getColumnClassName(column.id ?? "", variant),
+                      index === 0 && "pl-4!",
+                    )}
+                  >
+                    {index === 0 && "⋯"}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ) : null
+          }
         />
       </Table>
     );

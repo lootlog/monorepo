@@ -260,6 +260,7 @@ export const HeroDetail = () => {
                 guildId={queryGuildId}
                 eventId={queryEventId}
                 limit={5}
+                currentMemberId={currentMember?.id}
               />
 
               <RecentKillsPreview

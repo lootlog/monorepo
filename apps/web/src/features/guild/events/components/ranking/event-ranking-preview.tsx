@@ -7,7 +7,7 @@ import { Trophy } from "lucide-react";
 import type { EventRanking, EventHeroNpc } from "../../types/api";
 import { BandSection } from "@/components/common/band-section";
 import { useState } from "react";
-import { HeroTabs } from "../shared/hero-tabs";
+import { EventRankingHeroSelect } from "./event-ranking-hero-select";
 import { EventRankingTable } from "./event-ranking-table";
 
 interface EventRankingPreviewProps {
@@ -16,6 +16,8 @@ interface EventRankingPreviewProps {
   guildId: string;
   eventId: string;
   limit?: number;
+  /** Adds the member's own place when it falls outside the leaders. */
+  currentMemberId?: number;
 }
 
 export const EventRankingPreview = ({
@@ -24,6 +26,7 @@ export const EventRankingPreview = ({
   guildId,
   eventId,
   limit = 5,
+  currentMemberId,
 }: EventRankingPreviewProps) => {
   const { t } = useTranslation();
   const [selectedHeroName, setSelectedHeroName] = useState<string | null>(null);
@@ -33,13 +36,6 @@ export const EventRankingPreview = ({
     rankings,
     selectedHeroName,
   );
-
-  const sortedRankings = [...filteredRankings]
-    .sort(
-      (leftRanking, rightRanking) =>
-        rightRanking.totalPoints - leftRanking.totalPoints,
-    )
-    .slice(0, limit);
 
   if (heroNpcs.length === 0) {
     return null;
@@ -63,19 +59,18 @@ export const EventRankingPreview = ({
         ) : null
       }
     >
-      <HeroTabs
-        placement="section"
+      <EventRankingHeroSelect
         heroes={heroNpcs}
-        valueKey="npcName"
-        value={effectiveSelectedHeroName ?? undefined}
-        onValueChange={(heroName) => setSelectedHeroName(heroName ?? null)}
+        rankings={rankings}
+        value={effectiveSelectedHeroName}
+        onValueChange={setSelectedHeroName}
       />
 
       <div
         key={effectiveSelectedHeroName}
         className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200"
       >
-        {sortedRankings.length === 0 ? (
+        {filteredRankings.length === 0 ? (
           <EmptyState
             compact
             icon={Trophy}
@@ -83,10 +78,12 @@ export const EventRankingPreview = ({
           />
         ) : (
           <EventRankingTable
-            rankings={sortedRankings}
+            rankings={filteredRankings}
             guildId={guildId}
             eventId={eventId}
             variant="compact"
+            limit={limit}
+            currentMemberId={currentMemberId}
           />
         )}
       </div>

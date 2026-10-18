@@ -17,6 +17,7 @@ import { MemberKillBreakdownRow } from "./member-kill-breakdown-row";
 import { MemberKillRowsSkeleton } from "./member-kill-rows-skeleton";
 import { MemberKillTiles } from "./member-kill-tiles";
 import { createMemberKillsTableColumns } from "./member-kills-table-columns";
+import { KillCellLink } from "../kills/kill-cell-link";
 
 type MemberKillsListProps = {
   guildId: string;
@@ -41,6 +42,12 @@ const HEAD_CLASS_NAMES = new Map([
   ["trackingTime", "hidden w-0 text-right xl:table-cell xl:w-40"],
   ["points", "w-20 text-right sm:w-24"],
   ["actions", "w-11"],
+]);
+
+const RIGHT_ALIGNED_COLUMN_IDS = new Set([
+  "timeCoverage",
+  "trackingTime",
+  "points",
 ]);
 
 const CELL_CLASS_NAMES = new Map([
@@ -149,7 +156,31 @@ export const MemberKillsList = ({
             table={table}
             rowClassName="h-14 border-b border-border hover:bg-muted/40"
             getCellClassName={(cell) =>
-              CELL_CLASS_NAMES.get(cell.column.id) ?? ""
+              cn(
+                CELL_CLASS_NAMES.get(cell.column.id),
+                cell.column.id !== "actions" && "p-0!",
+              )
+            }
+            // The whole row opens the kill; the breakdown toggle stays its own
+            // control, and only the first cell takes focus.
+            renderCellContent={(cell, content) =>
+              cell.column.id === "actions" ? (
+                content
+              ) : (
+                <KillCellLink
+                  guildId={guildId}
+                  eventId={eventId}
+                  kill={cell.row.original}
+                  primary={cell.column.id === "monster"}
+                  className={cn(
+                    cell.column.id === columns[0]?.id && "pl-4",
+                    RIGHT_ALIGNED_COLUMN_IDS.has(cell.column.id) &&
+                      "justify-end",
+                  )}
+                >
+                  {content}
+                </KillCellLink>
+              )
             }
             getRowProps={(row) => ({
               "data-state": expandedKillIds.includes(row.id)

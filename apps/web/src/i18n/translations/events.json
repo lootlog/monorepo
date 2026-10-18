@@ -211,7 +211,10 @@
     "memberFallback": "Gracz #{{memberId}}",
     "openMemberStats": "Otwórz statystyki gracza {{memberName}}",
     "actions": "Akcje",
-    "moreActions": "Więcej akcji"
+    "moreActions": "Więcej akcji",
+    "playerCount_one": "{{count}} gracz",
+    "playerCount_few": "{{count}} graczy",
+    "playerCount_many": "{{count}} graczy"
   },
   "common": {
     "pointsShort": "pkt",
