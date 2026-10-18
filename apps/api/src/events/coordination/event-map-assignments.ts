@@ -235,6 +235,7 @@ export const makeEventMapAssignments = (
               and(
                 eq(memberTable.id, memberId),
                 eq(memberTable.guildId, guild.id),
+                eq(memberTable.active, true),
               ),
             )
             .limit(1),

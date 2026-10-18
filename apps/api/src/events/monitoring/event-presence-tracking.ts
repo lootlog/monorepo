@@ -271,7 +271,16 @@ export const makeEventPresenceTracking = (
             database
               .select({ mapId: eventMapToMemberTable.A })
               .from(eventMapToMemberTable)
-              .where(inArray(eventMapToMemberTable.A, mapIds)),
+              .innerJoin(
+                memberTable,
+                eq(memberTable.id, eventMapToMemberTable.B),
+              )
+              .where(
+                and(
+                  inArray(eventMapToMemberTable.A, mapIds),
+                  eq(memberTable.active, true),
+                ),
+              ),
           ),
           query(
             "events.presence.active",

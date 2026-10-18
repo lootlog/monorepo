@@ -12,6 +12,7 @@ import {
   eventMapTable,
   eventMapToMemberTable,
   eventTable,
+  memberTable,
 } from "#src/database/drizzle/schema";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { RedisService } from "#src/redis/redis.service";
@@ -205,7 +206,16 @@ export const makeEventRespawnCommands = (
                     eventMapTable,
                     eq(eventMapTable.id, eventMapToMemberTable.A),
                   )
-                  .where(eq(eventMapTable.heroNpcId, heroId)),
+                  .innerJoin(
+                    memberTable,
+                    eq(memberTable.id, eventMapToMemberTable.B),
+                  )
+                  .where(
+                    and(
+                      eq(eventMapTable.heroNpcId, heroId),
+                      eq(memberTable.active, true),
+                    ),
+                  ),
               );
 
         const assignedMapIds = new Set(assignments.map(({ mapId }) => mapId));

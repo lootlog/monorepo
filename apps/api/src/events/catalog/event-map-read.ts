@@ -40,9 +40,14 @@ export const makeEventMapRead = <Failure>(
         .from(eventMapToMemberTable)
         .innerJoin(memberTable, eq(memberTable.id, eventMapToMemberTable.B))
         .where(
-          inArray(
-            eventMapToMemberTable.A,
-            maps.map(({ id }) => id),
+          and(
+            inArray(
+              eventMapToMemberTable.A,
+              maps.map(({ id }) => id),
+            ),
+            // Members who left the Discord server keep their assignment rows
+            // until the window closes; they no longer cover the map.
+            eq(memberTable.active, true),
           ),
         )
         // Primary-key order keeps each map's members stable however many
