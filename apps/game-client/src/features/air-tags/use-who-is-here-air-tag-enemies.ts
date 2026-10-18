@@ -7,11 +7,12 @@ import { useGlobalStore } from "@/store/global.store";
 import { useOthersStore } from "@/store/others.store";
 import { isSeenByHero, showsAirTagsOnMap } from "./air-tag-game-visibility";
 import { airTagReceiveController } from "./air-tag-receive-controller";
-import { AIR_TAG_TARGET_TTL_MS } from "./air-tag-renderer";
 import {
   selectUnseenAirTagEnemies,
   type WhoIsHereAirTagEnemy,
 } from "./who-is-here-air-tag-enemies";
+
+const AIR_TAG_TARGET_TTL_MS = 10_000;
 
 const AGE_TICK_MS = 1_000;
 
