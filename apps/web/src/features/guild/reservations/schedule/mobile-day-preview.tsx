@@ -1,6 +1,15 @@
-import { HOURS, LABEL_COLUMN_WIDTH, MIN_ROW_HEIGHT } from "./constants";
+import { cn } from "cn";
+import {
+  HOURS,
+  LABEL_COLUMN_WIDTH,
+  MIN_ROW_HEIGHT,
+  SCHEDULE_HALF_HOUR_RULE_CLASS,
+  SCHEDULE_HOUR_LABEL_CLASS,
+  SCHEDULE_PAST_CLASS,
+} from "./constants";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { ReservationBlock } from "./reservation-block";
+import { ScheduleNowLine } from "./schedule-now-line";
 import { isReservationStartSelectable } from "./reservation-settings";
 import type { ReservationSegment } from "./types";
 
@@ -39,25 +48,24 @@ export function MobileDayPreview({
             }}
           >
             <div
-              className="shrink-0 border-r px-2 pt-1 text-[10px] text-muted-foreground"
+              className={cn("shrink-0 border-r", SCHEDULE_HOUR_LABEL_CLASS)}
               style={{ width: LABEL_COLUMN_WIDTH }}
             >
               {hour}
             </div>
             <div
-              className={
-                isSelectable
-                  ? "min-w-0 flex-1 bg-background"
-                  : "min-w-0 flex-1 bg-muted/20"
-              }
+              className={cn(
+                "relative min-w-0 flex-1 bg-background",
+                SCHEDULE_HALF_HOUR_RULE_CLASS,
+                !isSelectable && SCHEDULE_PAST_CLASS,
+              )}
             />
           </div>
         );
       })}
 
       {isToday && (
-        <div
-          className="pointer-events-none absolute z-20 h-px bg-destructive"
+        <ScheduleNowLine
           style={{
             left: LABEL_COLUMN_WIDTH,
             right: 0,
